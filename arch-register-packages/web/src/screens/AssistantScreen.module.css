@@ -25,23 +25,7 @@
 }
 
 .newChatBtn {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 32px;
-  padding: 0 12px;
-  border-radius: var(--r);
-  background: color-mix(in oklch, var(--accent-fg) 18%, var(--cmp-bg));
-  border: 1px solid color-mix(in oklch, var(--accent-fg) 45%, var(--cmp-border));
-  color: var(--base-fg);
-  font-size: 12.5px;
-  font-weight: 500;
-}
-
-.newChatBtn:hover {
-  background: color-mix(in oklch, var(--accent-fg) 28%, var(--cmp-bg));
-  border-color: var(--accent-fg);
+  width: calc(100% - 24px) !important;
 }
 
 .collapseBtn {
@@ -552,25 +536,6 @@
   display: flex;
   justify-content: center;
   padding: 16px 24px 20px;
-}
-
-.newChatCta {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 36px;
-  padding: 0 18px;
-  border-radius: var(--r);
-  background: color-mix(in oklch, var(--accent-fg) 18%, var(--cmp-bg));
-  border: 1px solid color-mix(in oklch, var(--accent-fg) 45%, var(--cmp-border));
-  color: var(--base-fg);
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.newChatCta:hover {
-  background: color-mix(in oklch, var(--accent-fg) 28%, var(--cmp-bg));
-  border-color: var(--accent-fg);
 }
 
 /* ── Markdown rendering ── */

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbSearch } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../components/Chip';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../components/MemberAvatar';
 import { useAuth } from '../auth/AuthContext';

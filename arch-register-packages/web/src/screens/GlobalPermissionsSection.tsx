@@ -5,7 +5,7 @@ import { GLOBAL_ROLES, type GlobalRole } from '@arch-register/permissions';
 import { useAuth } from '../auth/AuthContext';
 import { fetchUserGlobalRoles, type AuthUserInfo } from '../api';
 import { Chip } from '../components/Chip';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { MemberAvatar } from '../components/MemberAvatar';
 import { getUserLabel } from '../utils/userLabel';

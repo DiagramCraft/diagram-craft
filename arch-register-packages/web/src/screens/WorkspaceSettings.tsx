@@ -39,15 +39,18 @@ export const WorkspaceSettings = () => {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { section?: string };
   const ctx = useWorkspaceContext();
-  const workspace = ctx.workspace!;
+  const workspace = ctx.workspace;
   const workspaceSlug = ctx.workspaceSlug;
   const lifecycleStates = ctx.lifecycleStates;
   const availableSections = ctx.availableSettingsSections;
   const section = availableSections.includes(search.section ?? '') ? (search.section ?? 'general') : (ctx.defaultSettingsSection ?? 'general');
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
+  const [rolesAddDialogOpen, setRolesAddDialogOpen] = useState(false);
 
   const meta = SECTION_META[section] ?? SECTION_META['general']!;
+
+  if (!workspace) return null;
 
   if (!availableSections.includes(section)) {
     return (
@@ -97,6 +100,13 @@ export const WorkspaceSettings = () => {
             </Button>
           </div>
         )}
+        {section === 'roles' && (
+          <div className={styles.headActions}>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setRolesAddDialogOpen(true)}>
+              New custom role
+            </Button>
+          </div>
+        )}
       </div>
 
       {section === 'general' && (
@@ -109,7 +119,11 @@ export const WorkspaceSettings = () => {
         />
       )}
       {section === 'roles' && (
-        <RolesPermissionsSection workspaceSlug={workspaceSlug} />
+        <RolesPermissionsSection
+          workspaceSlug={workspaceSlug}
+          createDialogOpen={rolesAddDialogOpen}
+          onCloseCreateDialog={() => setRolesAddDialogOpen(false)}
+        />
       )}
       {section === 'teams' && (
         <TeamsSection

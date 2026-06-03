@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
-import { Dialog } from '../components/Dialog';
+import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { apiFetch, ApiError, SCHEMA_COLORS } from '../api';
 import type { Workspace } from '../api';
 import { ColorPicker } from '../components/ColorPicker';
@@ -204,13 +203,22 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
     onClose
   ]);
 
-  if (!open) return null;
-
   const activeTemplate = TEMPLATES.find(t => t.id === templateId);
   const fromWs = workspaces.find(w => w.id === copyFrom);
 
   return (
-    <Dialog open={open} onClose={onClose} title="New workspace" panelClassName={styles.dialogPanel}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      sup="New workspace"
+      title="Create a workspace"
+      width={620}
+      footerLeft={<KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'create']]} />}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        { label: submitting ? 'Creating…' : 'Create workspace', type: 'default', disabled: !canCreate || submitting, onClick: () => { void handleSubmit(); } }
+      ]}
+    >
       <div className={styles.body}>
         <div className={styles.section}>
           <div className={styles.sectionHead}>
@@ -382,32 +390,8 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
             )}
           </div>
         </div>
-      </div>
 
-      {error && <div className={styles.errorBar}>{error}</div>}
-
-      <div className={styles.footer}>
-        <div className={`${styles.footerHints} ${styles.mono}`}>
-          <span>
-            <kbd className={styles.kbd}>Esc</kbd> cancel
-          </span>
-          <span>
-            <kbd className={styles.kbd}>⌘</kbd>
-            <kbd className={styles.kbd}>↵</kbd> create
-          </span>
-        </div>
-        <div className={styles.footerActions}>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            disabled={!canCreate || submitting}
-            onClick={handleSubmit}
-          >
-            {submitting ? 'Creating…' : '+ Create workspace'}
-          </Button>
-        </div>
+        {error && <div className={styles.errorBar}>{error}</div>}
       </div>
     </Dialog>
   );

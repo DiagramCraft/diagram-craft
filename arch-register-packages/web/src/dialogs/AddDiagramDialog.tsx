@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { TbPlus, TbX, TbCheck } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { TbCheck } from 'react-icons/tb';
+import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { ApiError } from '../api';
 import type { FileEntry, ProjectFile } from '../api';
 import { useCreateDiagramFile, useProjectTemplates, useCreateDiagramFromTemplate } from '../hooks/useProjectFiles';
@@ -77,8 +77,6 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  if (!open) return null;
-
   const handleSubmit = async () => {
     const trimmed = name.trim();
     const fallbackName = selected === 'blank' ? 'Untitled diagram' : selected.name;
@@ -114,110 +112,90 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
 
   const isPending = createDiagramMutation.isPending || createFromTemplateMutation.isPending;
 
+  const sub = projectName
+    ? <span>Adds to <b>{projectName}</b>. Pick a template or start from a blank canvas.</span>
+    : undefined;
+
   return (
-    <div className={styles.backdrop} role="dialog" aria-modal="true" aria-labelledby="ndg-title">
-      <div className={styles.overlay} onClick={onClose} />
-      <div className={styles.modal}>
-        {/* Header */}
-        <div className={styles.header}>
-          <div className={styles.headerLeft}>
-            <div className={styles.eyebrow}>New diagram</div>
-            <h2 id="ndg-title" className={styles.title}>Choose a starting point</h2>
-            {projectName && (
-              <div className={styles.subtitle}>
-                Adds to <b>{projectName}</b>. Pick a template or start from a blank canvas.
-              </div>
-            )}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      sup="New diagram"
+      title="Choose a starting point"
+      sub={sub}
+      width={640}
+      footerLeft={<KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'create']]} />}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        { label: isPending ? 'Creating...' : 'Create diagram', type: 'default', disabled: isPending, onClick: () => { void handleSubmit(); } }
+      ]}
+    >
+      {/* Blank canvas option */}
+      <button
+        type="button"
+        className={`${styles.blankOption} ${selected === 'blank' ? styles.isActive : ''}`}
+        onClick={() => setSelected('blank')}
+      >
+        <span className={styles.blankThumb}><BlankPreview /></span>
+        <span className={styles.blankText}>
+          <span className={styles.blankName}>Blank canvas</span>
+          <span className={styles.blankDesc}>No template — start from an empty diagram.</span>
+        </span>
+        <span className={styles.radio}>
+          {selected === 'blank' && <TbCheck size={11} />}
+        </span>
+      </button>
+
+      {/* Template section */}
+      {!templatesLoading && allTemplates.length > 0 && (
+        <>
+          <div className={styles.divider}>
+            <span>Start from a template</span>
           </div>
-          <button type="button" className={styles.closeBtn} onClick={onClose} title="Close (Esc)">
-            <TbX size={14} />
-          </button>
-        </div>
 
-        {/* Body */}
-        <div className={styles.body}>
-          {/* Blank canvas option */}
-          <button
-            type="button"
-            className={`${styles.blankOption} ${selected === 'blank' ? styles.isActive : ''}`}
-            onClick={() => setSelected('blank')}
-          >
-            <span className={styles.blankThumb}><BlankPreview /></span>
-            <span className={styles.blankText}>
-              <span className={styles.blankName}>Blank canvas</span>
-              <span className={styles.blankDesc}>No template — start from an empty diagram.</span>
-            </span>
-            <span className={styles.radio}>
-              {selected === 'blank' && <TbCheck size={11} />}
-            </span>
-          </button>
-
-          {/* Template section */}
-          {!templatesLoading && allTemplates.length > 0 && (
-            <>
-              <div className={styles.divider}>
-                <span>Start from a template</span>
-              </div>
-
-              <div className={styles.grid}>
-                {allTemplates.map(t => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    className={`${styles.card} ${selected !== 'blank' && selected.id === t.id ? styles.isActive : ''}`}
-                    onClick={() => setSelected(t)}
-                    title={t.name}
-                  >
-                    <span className={styles.cardThumb}>
-                      {t.preview_svg ? (
-                        <div dangerouslySetInnerHTML={{ __html: t.preview_svg }} />
-                      ) : (
-                        <DummyPreview />
-                      )}
-                      {selected !== 'blank' && selected.id === t.id && (
-                        <span className={styles.cardCheck}><TbCheck size={10} /></span>
-                      )}
-                    </span>
-                    <span className={styles.cardName}>{t.name}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* Name field */}
-          <div className={styles.nameField}>
-            <label className={styles.nameLabel}>Diagram name</label>
-            <input
-              ref={nameRef}
-              className={styles.nameInput}
-              placeholder={selected === 'blank' ? 'Untitled diagram' : selected.name}
-              value={name}
-              onChange={e => setName(e.target.value)}
-            />
-            {folder && (
-              <div style={{ fontSize: 11, color: 'var(--base-fg-more-dim)', marginTop: 2 }}>
-                Will be created in <b>{folder}</b>
-              </div>
-            )}
-            {error && <div className={styles.error}>{error}</div>}
+          <div className={styles.grid}>
+            {allTemplates.map(t => (
+              <button
+                key={t.id}
+                type="button"
+                className={`${styles.card} ${selected !== 'blank' && selected.id === t.id ? styles.isActive : ''}`}
+                onClick={() => setSelected(t)}
+                title={t.name}
+              >
+                <span className={styles.cardThumb}>
+                  {t.preview_svg ? (
+                    <div dangerouslySetInnerHTML={{ __html: t.preview_svg }} />
+                  ) : (
+                    <DummyPreview />
+                  )}
+                  {selected !== 'blank' && selected.id === t.id && (
+                    <span className={styles.cardCheck}><TbCheck size={10} /></span>
+                  )}
+                </span>
+                <span className={styles.cardName}>{t.name}</span>
+              </button>
+            ))}
           </div>
-        </div>
+        </>
+      )}
 
-        {/* Footer */}
-        <div className={styles.footer}>
-          <div className={styles.footerLeft}>
-            <span><span className={styles.kbd}>Esc</span> to cancel</span>
-            <span><span className={styles.kbd}>⌘</span><span className={styles.kbd}>⏎</span> to create</span>
+      {/* Name field */}
+      <div className={styles.nameField}>
+        <label className={styles.nameLabel}>Diagram name</label>
+        <input
+          ref={nameRef}
+          className={styles.nameInput}
+          placeholder={selected === 'blank' ? 'Untitled diagram' : selected.name}
+          value={name}
+          onChange={e => setName(e.target.value)}
+        />
+        {folder && (
+          <div style={{ fontSize: 11, color: 'var(--base-fg-more-dim)', marginTop: 2 }}>
+            Will be created in <b>{folder}</b>
           </div>
-          <div className={styles.footerRight}>
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button variant="primary" icon={<TbPlus size={11} />} onClick={handleSubmit} disabled={isPending}>
-              {isPending ? 'Creating...' : 'Create diagram'}
-            </Button>
-          </div>
-        </div>
+        )}
+        {error && <div className={styles.error}>{error}</div>}
       </div>
-    </div>
+    </Dialog>
   );
 };

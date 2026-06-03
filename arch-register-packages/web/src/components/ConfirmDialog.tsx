@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { TbTrash, TbInfoCircle } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
-import { Dialog } from './Dialog';
+import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import styles from './ConfirmDialog.module.css';
 
 type ConfirmDialogProps = {
@@ -39,13 +38,22 @@ export const ConfirmDialog = ({
   }, [open, onConfirm]);
 
   return (
-    <Dialog open={open} onClose={onCancel} title="" panelClassName={styles.panel}>
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      title={title}
+      width={420}
+      footerLeft={<KbdHints hints={[['Esc', 'cancel']]} />}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onCancel },
+        { label: confirmLabel, type: 'danger', onClick: onConfirm }
+      ]}
+    >
       <div className={styles.body}>
         <div className={styles.icon}>
           <TbTrash size={16} />
         </div>
         <div className={styles.textBlock}>
-          <h2 className={styles.title}>{title}</h2>
           <p className={styles.message}>{message}</p>
           {detail && (
             <div className={styles.detail}>
@@ -53,21 +61,6 @@ export const ConfirmDialog = ({
               {detail}
             </div>
           )}
-        </div>
-      </div>
-      <div className={styles.footer}>
-        <div className={styles.footerHint}>
-          <span>
-            <span className={styles.kbd}>Esc</span> to cancel
-          </span>
-        </div>
-        <div className={styles.footerActions}>
-          <Button variant="ghost" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button variant="danger-solid" ref={confirmRef} icon={<TbTrash size={11} />} onClick={onConfirm}>
-            {confirmLabel}
-          </Button>
         </div>
       </div>
     </Dialog>

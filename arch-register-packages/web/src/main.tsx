@@ -18,6 +18,8 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import { PermissionProvider } from './auth/PermissionContext';
 import { queryClient } from './lib/queryClient';
 import { router } from './router';
+import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
+import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 
 const InnerApp = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -65,7 +67,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <PermissionProvider>
-        <InnerApp />
+        <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+          <PortalContextProvider>
+            <InnerApp />
+          </PortalContextProvider>
+        </DialogContextProvider>
       </PermissionProvider>
     </AuthProvider>
     <ReactQueryDevtools initialIsOpen={false} />

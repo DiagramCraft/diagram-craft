@@ -282,12 +282,18 @@ const AppMenu = ({
   const hasItems = hasCreateItems ?? onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems;
   if (!hasItems)
     return (
-      <Button variant="icon-only" title="Menu" icon={<TbMenu2 size={14} />} />
+      <Button variant="icon-only" className={styles.appMenuButton} title="Menu" icon={<TbMenu2 size={14} />} />
     );
 
   return (
     <div className={styles.appMenu} ref={ref}>
-      <Button variant="icon-only" title="Menu" icon={<TbMenu2 size={14} />} onClick={() => setOpen(o => !o)} />
+      <Button
+        variant="icon-only"
+        className={styles.appMenuButton}
+        title="Menu"
+        icon={<TbMenu2 size={14} />}
+        onClick={() => setOpen(o => !o)}
+      />
       {open && (
         <div className={styles.appMenuDrop}>
           {(hasCreateItems || showDisabledItems) && (

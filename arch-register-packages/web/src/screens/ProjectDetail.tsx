@@ -4,7 +4,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import styles from './ProjectDetail.module.css';
 import { AddFolderDialog } from '../dialogs/AddFolderDialog';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';

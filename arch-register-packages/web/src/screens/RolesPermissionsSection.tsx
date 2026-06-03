@@ -1,12 +1,12 @@
 import { useMemo, useState, Fragment, useEffect } from 'react';
 import { WORKSPACE_CAPABILITY_GROUPS } from '@arch-register/permissions';
-import { TbCheck, TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
+import { TbCheck, TbPencil, TbTrash } from 'react-icons/tb';
 import { ApiError, type WorkspaceRoleDefinition } from '../api';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types';
 import { useAuth } from '../auth/AuthContext';
 import { ColorPicker } from '../components/ColorPicker';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceMembers } from '../hooks/useWorkspaceMembers';
 import {
   useCreateWorkspaceRole,
@@ -38,11 +38,14 @@ const sortRoles = (roles: WorkspaceRoleDefinition[]) =>
 
 export const RolesPermissionsSection = ({
   workspaceSlug,
+  createDialogOpen,
+  onCloseCreateDialog,
 }: {
   workspaceSlug: string;
+  createDialogOpen: boolean;
+  onCloseCreateDialog: () => void;
 }) => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
   const [editRoleId, setEditRoleId] = useState<string | null>(null);
   const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null);
   const { data: members = [] } = useWorkspaceMembers(workspaceSlug);
@@ -134,10 +137,6 @@ export const RolesPermissionsSection = ({
             </div>
           );
         })}
-        <button type="button" className={styles.addRoleCard} onClick={() => setCreateOpen(true)}>
-          <TbPlus size={16} />
-          Create custom role
-        </button>
       </div>
 
       <div className={styles.matrixWrap}>
@@ -189,16 +188,16 @@ export const RolesPermissionsSection = ({
       </div>
 
       <RoleEditorDialog
-        open={createOpen}
+        open={createDialogOpen}
         title="Create custom role"
         initialRole={null}
         pending={createRole.isPending}
         errorMessage={createRole.error instanceof Error ? createRole.error.message : null}
-        onClose={() => setCreateOpen(false)}
+        onClose={onCloseCreateDialog}
         onSave={async draft => {
           await createRole.mutateAsync(draft);
           await reloadUser();
-          setCreateOpen(false);
+          onCloseCreateDialog();
         }}
       />
 
@@ -260,7 +259,7 @@ const RoleEditorDialog = ({
   if (!open) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} title={title} panelClassName={styles.dialogPanel}>
+    <Dialog open={open} onClose={onClose} title={title} className={styles.dialogPanel}>
       <div className={styles.dialogBody}>
         <label className={styles.dialogField}>
           <span className={styles.dialogLabel}>

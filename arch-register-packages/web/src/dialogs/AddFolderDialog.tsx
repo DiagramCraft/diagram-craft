@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { ApiError } from '../api';
 import { useCreateFolder } from '../hooks/useProjectFiles';
-import styles from './AddWorkspaceDialog.module.css';
+import styles from './AddEntityDialog.module.css';
 
 type AddFolderDialogProps = {
   open: boolean;
@@ -28,8 +27,7 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
     }
   }, [open]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
       setError('Name is required');
@@ -54,9 +52,20 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
     }
   };
 
+  const isPending = createFolderMutation.isPending;
+
   return (
-    <Dialog open={open} onClose={onClose} title="New folder">
-      <form className={styles.form} onSubmit={handleSubmit}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="New folder"
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        { label: isPending ? 'Creating...' : 'Create folder', type: 'default', disabled: isPending, onClick: () => { void handleSubmit(); } }
+      ]}
+    >
+      <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
+        <button type="submit" hidden />
         <div className={styles.field}>
           <label>Folder name</label>
           <input
@@ -72,12 +81,6 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
           </div>
         )}
         {error && <div className={styles.error}>{error}</div>}
-        <div className={styles.actions}>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" disabled={createFolderMutation.isPending} onClick={e => { e.preventDefault(); void handleSubmit(e as unknown as React.FormEvent); }}>
-            {createFolderMutation.isPending ? 'Creating...' : 'Create folder'}
-          </Button>
-        </div>
       </form>
     </Dialog>
   );

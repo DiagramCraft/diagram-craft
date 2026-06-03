@@ -32,7 +32,7 @@
 }
 
 .eyebrow button {
-  color: var(--accent-fg-hover);
+  color: var(--accent-fg);
   background: none;
   border: 0;
   padding: 0;

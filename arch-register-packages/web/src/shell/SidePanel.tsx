@@ -7,7 +7,7 @@ import { TypeBadge } from '../components/TypeBadge';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import {
   TbFolders, TbDatabase,
   TbUsers, TbFolderOpen,

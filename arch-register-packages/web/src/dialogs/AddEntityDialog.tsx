@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { apiFetch, ApiError } from '../api';
 import type { EntitySchema, EntitySummary, SchemaField, WorkspaceLifecycleState, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
@@ -98,8 +97,7 @@ export const AddEntityDialog = ({
   const setField = (id: string, value: string) => setFields(f => ({ ...f, [id]: value }));
   const setMetaField = (key: string, value: string) => setMeta(m => ({ ...m, [key]: value }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!schemaId) {
       setError('Please select a schema type');
       return;
@@ -159,8 +157,18 @@ export const AddEntityDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title="New entity" panelClassName={styles.dialogPanel}>
-      <form className={styles.form} onSubmit={handleSubmit}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="New entity"
+      width="min(1040px, calc(100vw - 48px))"
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        { label: submitting ? 'Creating...' : 'Create entity', type: 'default', disabled: submitting, onClick: () => { void handleSubmit(); } }
+      ]}
+    >
+      <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
+        <button type="submit" hidden />
         {/* Schema picker */}
         <div className={styles.field}>
           <label>Type <span className={styles.required}>*</span></label>
@@ -264,13 +272,6 @@ export const AddEntityDialog = ({
         </div>
 
         {error && <div className={styles.error}>{error}</div>}
-
-        <div className={styles.actions}>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" disabled={submitting} onClick={e => { e.preventDefault(); void handleSubmit(e as unknown as React.FormEvent); }}>
-            {submitting ? 'Creating...' : 'Create entity'}
-          </Button>
-        </div>
       </form>
     </Dialog>
   );

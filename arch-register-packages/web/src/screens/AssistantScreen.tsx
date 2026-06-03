@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { Button } from '@diagram-craft/app-components/Button';
 import {
   TbSparkles, TbPlus, TbMessageCircle, TbDots,
   TbPencil, TbTrash,
@@ -344,9 +345,9 @@ const ChatHistory = ({
   return (
     <div className={styles.history}>
       <div className={styles.historyHead}>
-        <button type="button" className={styles.newChatBtn} onClick={onNew}>
-          <TbPlus size={13} /> New chat
-        </button>
+        <Button variant="primary" className={styles.newChatBtn} onClick={onNew} icon={<TbPlus size={13} />}>
+          New chat
+        </Button>
       </div>
       <div className={styles.historyScroll}>
         {groups.map(g => (
@@ -677,9 +678,9 @@ export const AssistantScreen = () => {
           </>
         ) : (
           <div className={styles.noConversation}>
-            <button type="button" className={styles.newChatCta} onClick={handleNew}>
-              <TbPlus size={14} /> New chat
-            </button>
+            <Button variant="primary" onClick={handleNew} icon={<TbPlus size={14} />}>
+              New chat
+            </Button>
           </div>
         )}
       </div>

@@ -191,6 +191,10 @@
   position: relative;
 }
 
+.appMenuButton {
+  color: var(--base-fg-more-dim) !important;
+}
+
 .appMenuDrop {
   position: absolute;
   top: 32px;

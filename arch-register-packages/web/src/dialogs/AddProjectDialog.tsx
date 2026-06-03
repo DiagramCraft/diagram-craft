@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { createProject, ApiError } from '../api';
 import type { Project, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
@@ -49,8 +48,7 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
     }
   }, [canCreateWithoutOwner, creatableTeams, open]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
       setError('Name is required');
@@ -80,8 +78,17 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title="New project">
-      <form className={styles.form} onSubmit={handleSubmit}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="New project"
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        { label: submitting ? 'Creating...' : 'Create project', type: 'default', disabled: submitting, onClick: () => { void handleSubmit(); } }
+      ]}
+    >
+      <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
+        <button type="submit" hidden />
         <div className={styles.field}>
           <label>Name</label>
           <input
@@ -125,12 +132,6 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
           <ColorPicker value={color} onChange={setColor} size="small" />
         </div>
         {error && <div className={styles.error}>{error}</div>}
-        <div className={styles.actions}>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" disabled={submitting} onClick={e => { e.preventDefault(); void handleSubmit(e as unknown as React.FormEvent); }}>
-            {submitting ? 'Creating...' : 'Create project'}
-          </Button>
-        </div>
       </form>
     </Dialog>
   );

@@ -4,7 +4,7 @@ import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../components/Chip';
 import { ColorPicker } from '../components/ColorPicker';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../components/MemberAvatar';
 import { getUserLabel } from '../utils/userLabel';

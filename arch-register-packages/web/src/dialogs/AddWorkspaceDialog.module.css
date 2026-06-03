@@ -105,7 +105,7 @@
 }
 
 .badgeInput {
-  width: 56px;
+  width: 32px;
   text-align: center;
   text-transform: uppercase;
   font-weight: 600;
@@ -470,4 +470,3 @@
   color: var(--base-fg-more-dim);
   font-family: var(--font-mono);
 }
-
