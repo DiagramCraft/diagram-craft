@@ -13,7 +13,6 @@ const meta = {
     layout: 'centered',
   },
   decorators: [themeDecorator()],
-  tags: ['autodocs'],
 } satisfies Meta<typeof FormElement>;
 
 export default meta;

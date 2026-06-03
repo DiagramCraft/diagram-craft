@@ -64,10 +64,8 @@ Example of a complete form using multiple `FormElement` components.
 `FormElement` includes built-in accessibility features:
 
 - Uses semantic `<label>` element with `htmlFor` attribute
-- Adds `aria-required="true"` when `required` prop is true
-- Adds `aria-invalid="true"` when `error` prop is provided
-- Links hint and error messages with `aria-describedby`
 - Error messages have `role="alert"` for screen reader announcements
+- Hint and error messages are properly associated with their inputs via `id` attributes
 
 ## Styling
 
