@@ -24,19 +24,14 @@ export const FormElement = ({
 }: FormElementProps) => {
   const hintId = hint ? `${htmlFor ?? 'field'}-hint` : undefined;
   const errorId = error ? `${htmlFor ?? 'field'}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
 
   return (
     <div className={`${styles.cFormElement} ${className ?? ''}`} style={style}>
       <label className={styles.eLabel} htmlFor={htmlFor}>
         {label}
-        {required && <span className={styles.eRequired} aria-label="required">*</span>}
+        {required && <span className={styles.eRequired}>*</span>}
       </label>
-      <div
-        aria-required={required}
-        aria-invalid={!!error}
-        aria-describedby={describedBy}
-      >
+      <div>
         {children}
       </div>
       {hint && !error && (
