@@ -1,13 +1,11 @@
 import './tokens.css';
+import { applyTheme } from './hooks/useTheme';
 
 // Apply saved theme immediately to avoid flash of wrong theme
 (() => {
   try {
     const saved = localStorage.getItem('ar-theme');
-    if (saved === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.documentElement.classList.remove('dark');
-    }
+    applyTheme(saved === 'light' ? 'light' : 'dark');
   } catch { /* ignore */ }
 })();
 
@@ -20,6 +18,8 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import { PermissionProvider } from './auth/PermissionContext';
 import { queryClient } from './lib/queryClient';
 import { router } from './router';
+import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
+import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
 
 const InnerApp = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -43,15 +43,15 @@ const InnerApp = () => {
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '100vh',
-          background: 'var(--bg-1)'
+          background: 'var(--base-bg)'
         }}
       >
         <div
           style={{
             width: '40px',
             height: '40px',
-            border: '3px solid var(--border-1)',
-            borderTopColor: 'var(--accent)',
+            border: '3px solid var(--cmp-border)',
+            borderTopColor: 'var(--accent-fg)',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite'
           }}
@@ -67,7 +67,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <PermissionProvider>
-        <InnerApp />
+        <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+          <PortalContextProvider>
+            <InnerApp />
+          </PortalContextProvider>
+        </DialogContextProvider>
       </PermissionProvider>
     </AuthProvider>
     <ReactQueryDevtools initialIsOpen={false} />

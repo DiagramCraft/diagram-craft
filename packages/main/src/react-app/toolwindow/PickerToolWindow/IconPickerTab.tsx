@@ -294,7 +294,7 @@ export const IconPickerTab = () => {
             }}
             onClear={() => doSearch('')}
           />
-          <Button variant={'secondary'} onClick={() => doSearch(ref.current?.value ?? '')}>
+          <Button size="sm" onClick={() => doSearch(ref.current?.value ?? '')}>
             <TbSearch />
           </Button>
         </div>

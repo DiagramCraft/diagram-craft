@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../api';
 import { useCreateFolder } from '../hooks/useProjectFiles';
-import styles from './AddWorkspaceDialog.module.css';
+import styles from './AddEntityDialog.module.css';
 
 type AddFolderDialogProps = {
   open: boolean;
@@ -27,8 +29,7 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
     }
   }, [open]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
       setError('Name is required');
@@ -53,30 +54,35 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
     }
   };
 
+  const isPending = createFolderMutation.isPending;
+
   return (
-    <Dialog open={open} onClose={onClose} title="New folder">
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.field}>
-          <label>Folder name</label>
-          <input
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="New folder"
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        { label: isPending ? 'Creating...' : 'Create folder', type: 'default', disabled: isPending, onClick: () => { void handleSubmit(); } }
+      ]}
+    >
+      <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
+        <button type="submit" hidden />
+        <FormElement label="Folder name">
+          <TextInput
             ref={nameRef}
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={value => setName(value ?? '')}
             placeholder="e.g. Current state"
+            style={{ width: '100%' }}
           />
-        </div>
+        </FormElement>
         {parentFolder && (
           <div className="dim" style={{ fontSize: 12 }}>
             Will be created inside <strong>{parentFolder}</strong>
           </div>
         )}
         {error && <div className={styles.error}>{error}</div>}
-        <div className={styles.actions}>
-          <button type="button" className={styles.btnCancel} onClick={onClose}>Cancel</button>
-          <button type="submit" className={styles.btnSubmit} disabled={createFolderMutation.isPending}>
-            {createFolderMutation.isPending ? 'Creating...' : 'Create folder'}
-          </button>
-        </div>
       </form>
     </Dialog>
   );

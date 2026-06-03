@@ -1,12 +1,12 @@
 import { useMemo, useState, Fragment, useEffect } from 'react';
 import { WORKSPACE_CAPABILITY_GROUPS } from '@arch-register/permissions';
-import { TbCheck, TbPencil, TbPlus, TbTrash } from 'react-icons/tb';
+import { TbCheck, TbPencil, TbTrash } from 'react-icons/tb';
 import { ApiError, type WorkspaceRoleDefinition } from '../api';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types';
 import { useAuth } from '../auth/AuthContext';
 import { ColorPicker } from '../components/ColorPicker';
-import { ConfirmDialog } from '../components/ConfirmDialog';
-import { Dialog } from '../components/Dialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceMembers } from '../hooks/useWorkspaceMembers';
 import {
   useCreateWorkspaceRole,
@@ -26,7 +26,7 @@ type RoleDraft = {
 const buildDraft = (role?: WorkspaceRoleDefinition | null): RoleDraft => ({
   name: role?.name ?? '',
   description: role?.description ?? '',
-  tone: role?.tone ?? 'var(--accent)',
+  tone: role?.tone ?? 'var(--accent-fg)',
   capabilities: role?.capabilities ?? [],
 });
 
@@ -38,11 +38,14 @@ const sortRoles = (roles: WorkspaceRoleDefinition[]) =>
 
 export const RolesPermissionsSection = ({
   workspaceSlug,
+  createDialogOpen,
+  onCloseCreateDialog,
 }: {
   workspaceSlug: string;
+  createDialogOpen: boolean;
+  onCloseCreateDialog: () => void;
 }) => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
   const [editRoleId, setEditRoleId] = useState<string | null>(null);
   const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null);
   const { data: members = [] } = useWorkspaceMembers(workspaceSlug);
@@ -134,10 +137,6 @@ export const RolesPermissionsSection = ({
             </div>
           );
         })}
-        <button type="button" className={styles.addRoleCard} onClick={() => setCreateOpen(true)}>
-          <TbPlus size={16} />
-          Create custom role
-        </button>
       </div>
 
       <div className={styles.matrixWrap}>
@@ -189,16 +188,16 @@ export const RolesPermissionsSection = ({
       </div>
 
       <RoleEditorDialog
-        open={createOpen}
+        open={createDialogOpen}
         title="Create custom role"
         initialRole={null}
         pending={createRole.isPending}
         errorMessage={createRole.error instanceof Error ? createRole.error.message : null}
-        onClose={() => setCreateOpen(false)}
+        onClose={onCloseCreateDialog}
         onSave={async draft => {
           await createRole.mutateAsync(draft);
           await reloadUser();
-          setCreateOpen(false);
+          onCloseCreateDialog();
         }}
       />
 
@@ -234,6 +233,8 @@ export const RolesPermissionsSection = ({
   );
 };
 
+const ALL_CAPS = WORKSPACE_CAPABILITY_GROUPS.flatMap(g => g.caps.map(c => c.id));
+
 const RoleEditorDialog = ({
   open,
   title,
@@ -257,14 +258,62 @@ const RoleEditorDialog = ({
     setDraft(buildDraft(initialRole));
   }, [initialRole]);
 
+  const capSet = useMemo(() => new Set(draft.capabilities), [draft.capabilities]);
+  const selectedCount = draft.capabilities.length;
+  const allSelected = selectedCount === ALL_CAPS.length && ALL_CAPS.length > 0;
+
+  const toggleCap = (id: WorkspaceRoleCapability) => {
+    setDraft(current => ({
+      ...current,
+      capabilities: current.capabilities.includes(id)
+        ? current.capabilities.filter(existing => existing !== id)
+        : [...current.capabilities, id],
+    }));
+  };
+
+  const toggleGroup = (groupCapIds: WorkspaceRoleCapability[]) => {
+    const allOn = groupCapIds.every(id => draft.capabilities.includes(id));
+    setDraft(current => ({
+      ...current,
+      capabilities: allOn
+        ? current.capabilities.filter(id => !groupCapIds.includes(id))
+        : [...current.capabilities, ...groupCapIds.filter(id => !current.capabilities.includes(id))],
+    }));
+  };
+
+  const toggleAll = () => {
+    setDraft(current => ({
+      ...current,
+      capabilities: allSelected ? [] : [...ALL_CAPS],
+    }));
+  };
+
+  const canSave = draft.name.trim().length > 0 && draft.description.trim().length > 0;
+
   if (!open) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} title={title} panelClassName={styles.dialogPanel}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={title}
+      sup="Roles & permissions"
+      className={styles.dialogPanel}
+      footerLeft={<KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'save']]} />}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        {
+          label: pending ? 'Saving…' : 'Save role',
+          type: 'default',
+          disabled: pending || !canSave,
+          onClick: () => void onSave(draft),
+        },
+      ]}
+    >
       <div className={styles.dialogBody}>
         <label className={styles.dialogField}>
           <span className={styles.dialogLabel}>
-            Name <span className={styles.requiredMark}>Required</span>
+            Name <span className={styles.requiredMark} title="Required">*</span>
           </span>
           <input
             className={styles.dialogInput}
@@ -275,7 +324,7 @@ const RoleEditorDialog = ({
         </label>
         <label className={styles.dialogField}>
           <span className={styles.dialogLabel}>
-            Description <span className={styles.requiredMark}>Required</span>
+            Description <span className={styles.requiredMark} title="Required">*</span>
           </span>
           <textarea
             className={styles.dialogTextarea}
@@ -285,57 +334,69 @@ const RoleEditorDialog = ({
           />
         </label>
         <label className={styles.dialogField}>
-          <span className={styles.dialogLabel}>Role color <span className={styles.optionalMark}>Optional</span></span>
+          <span className={styles.dialogLabel}>Role color</span>
           <div className={styles.colorPickerWrap}>
             <ColorPicker
               value={draft.tone}
-              onChange={color => setDraft(current => ({ ...current, tone: color ?? 'var(--accent)' }))}
+              onChange={color => setDraft(current => ({ ...current, tone: color ?? 'var(--accent-fg)' }))}
               disabled={pending}
               size="small"
             />
           </div>
         </label>
-        <div className={styles.dialogMeta}>Capabilities are optional. Leave them all unchecked to create a no-access placeholder role.</div>
-        <div className={styles.capabilityList}>
-          {WORKSPACE_CAPABILITY_GROUPS.map(group => (
-            <div key={group.label} className={styles.capabilityGroup}>
-              <div className={styles.capabilityGroupTitle}>{group.label}</div>
-              {group.caps.map(cap => (
-                <label key={cap.id} className={styles.capabilityRow}>
-                  <input
-                    type="checkbox"
-                    className={styles.capabilityCheckbox}
-                    checked={draft.capabilities.includes(cap.id)}
-                    onChange={() =>
-                      setDraft(current => ({
-                        ...current,
-                        capabilities: current.capabilities.includes(cap.id)
-                          ? current.capabilities.filter(existing => existing !== cap.id)
-                          : [...current.capabilities, cap.id],
-                      }))
-                    }
-                    disabled={pending}
-                  />
-                  <span>{cap.name}</span>
-                </label>
-              ))}
-            </div>
-          ))}
+
+        <div className={styles.capSection}>
+          <div className={styles.capSectionHead}>
+            <span className={styles.capSectionTitle}>Capabilities</span>
+            <span className={styles.capCount}>{selectedCount} of {ALL_CAPS.length}</span>
+            <button type="button" className={styles.capSelectAll} onClick={toggleAll} disabled={pending}>
+              {allSelected ? 'Clear all' : 'Select all'}
+            </button>
+          </div>
+          <p className={styles.capNote}>
+            Optional — leave everything unchecked to create a no-access placeholder role.
+          </p>
+          <div className={styles.capabilityList}>
+            {WORKSPACE_CAPABILITY_GROUPS.map(group => {
+              const groupCapIds = group.caps.map(c => c.id);
+              const groupSelectedCount = groupCapIds.filter(id => capSet.has(id)).length;
+              const groupAllOn = groupSelectedCount === groupCapIds.length;
+              return (
+                <div key={group.label} className={styles.capabilityGroup}>
+                  <div className={styles.capabilityGroupHead}>
+                    <span className={styles.capabilityGroupTitle}>{group.label}</span>
+                    {groupSelectedCount > 0 && (
+                      <span className={styles.capGroupBadge}>{groupSelectedCount}</span>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.capGroupToggle}
+                      onClick={() => toggleGroup(groupCapIds)}
+                      disabled={pending}
+                    >
+                      {groupAllOn ? 'None' : 'All'}
+                    </button>
+                  </div>
+                  {group.caps.map(cap => (
+                    <label key={cap.id} className={`${styles.capabilityRow}${capSet.has(cap.id) ? ` ${styles.capabilityRowOn}` : ''}`}>
+                      <input
+                        type="checkbox"
+                        className={styles.capabilityCheckbox}
+                        checked={capSet.has(cap.id)}
+                        onChange={() => toggleCap(cap.id)}
+                        disabled={pending}
+                      />
+                      <span className={styles.capName}>{cap.name}</span>
+                      <span className={styles.capRowId}>{cap.id}</span>
+                    </label>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
+
         {errorMessage && <div className={styles.dialogError}>{errorMessage}</div>}
-        <div className={styles.dialogActions}>
-          <button type="button" className={styles.dialogBtn} onClick={onClose} disabled={pending}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.dialogBtnPrimary}
-            onClick={() => void onSave(draft)}
-            disabled={pending || draft.name.trim().length === 0 || draft.description.trim().length === 0}
-          >
-            {pending ? 'Saving…' : 'Save role'}
-          </button>
-        </div>
       </div>
     </Dialog>
   );
@@ -364,7 +425,7 @@ const RoleDeleteConfirmDialog = ({
       : error?.message ?? null;
 
   return (
-    <ConfirmDialog
+    <DeleteConfirmationDialog
       open={open}
       title={`Delete ${role.name}?`}
       message={`This will permanently remove the custom role "${role.name}".`}

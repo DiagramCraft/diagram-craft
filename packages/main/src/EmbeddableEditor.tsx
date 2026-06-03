@@ -64,6 +64,7 @@ import { CommentDialog } from './react-app/components/CommentDialog';
 import { CommandPalette } from './react-app/components/CommandPalette';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
+import { TopBar } from '@diagram-craft/app-components/TopBar';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
@@ -589,17 +590,21 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
             {extraDialogs?.(dialogStack)}
 
             <div id="app" className={themeModeClassName(userState.current.themeMode)}>
-              <div id="menu">
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  {headerLeft}
-                  <MainToolbar />
-                </div>
+              <TopBar
+                id="menu"
+                leftSlot={
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {headerLeft}
+                    <MainToolbar />
+                  </div>
+                }
+              >
                 <DocumentName dirty={externalDirty ?? false} name={documentName} />
                 <div style={{ display: 'flex', marginLeft: 'auto' }}>
                   <AwarenessToolbar />
                   <AuxToolbar />
                 </div>
-              </div>
+              </TopBar>
 
               <div id="window-area">
                 <div id="toolbar">

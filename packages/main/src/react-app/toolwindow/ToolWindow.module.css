@@ -1,4 +1,6 @@
 .icToolWindowTabs {
+  background-color: var(--panel-bg);
+
   .eTabActions {
     position: absolute;
     right: 0;
@@ -6,17 +8,12 @@
     height: var(--tab-height);
     display: flex;
     align-items: center;
-    padding-right: 0.5rem;
-    gap: 0.5rem;
+    padding-right: 0.25rem;
     z-index: 100;
 
     color: var(--base-fg-more-dim);
 
     > * {
-      color: var(--base-fg-more-dim);
-    }
-
-    > button {
       color: var(--base-fg-dim);
     }
   }

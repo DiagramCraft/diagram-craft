@@ -7,7 +7,7 @@ import { IconPickerTab } from './IconPickerTab';
 export const PickerToolWindow = () => {
   return (
     <ToolWindow.Root id={'picker'} defaultTab={'picker'}>
-      <ToolWindow.Tab id={'picker'} title={'Shapes'}>
+      <ToolWindow.Tab id={'picker'} title={'Shape'}>
         <ShapesPickerTab />
       </ToolWindow.Tab>
       <ToolWindow.Tab id={'recent'} title={'Recent'}>
@@ -18,7 +18,7 @@ export const PickerToolWindow = () => {
       <ToolWindow.Tab id={'model'} title={'Model'}>
         <ModelPickerTab />
       </ToolWindow.Tab>
-      <ToolWindow.Tab id={'icons'} title={'Icons'}>
+      <ToolWindow.Tab id={'icons'} title={'Icon'}>
         <IconPickerTab />
       </ToolWindow.Tab>
     </ToolWindow.Root>

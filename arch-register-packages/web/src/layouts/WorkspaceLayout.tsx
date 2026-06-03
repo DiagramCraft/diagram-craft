@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import styles from './WorkspaceLayout.module.css';
 import { TopBar } from '../shell/TopBar';
 import type { BreadcrumbItem } from '../shell/TopBar';
-import { NavRail } from '../shell/NavRail';
+import { NavRail, type NavRailItem } from '@diagram-craft/app-components/NavRail';
 import { SidePanel } from '../shell/SidePanel';
 import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
@@ -23,8 +23,31 @@ import type { ViewId } from './viewId';
 import type { Project } from '../api';
 import {
   TbHome, TbFolders, TbDatabase, TbCode, TbSearch, TbSettings,
-  TbSparkles, TbWand,
+  TbSparkles, TbWand, TbMessageCircleStar, TbFileAi,
 } from 'react-icons/tb';
+
+const ALL_RAIL_ITEMS: NavRailItem[] = [
+  { id: 'home', icon: TbHome, tooltip: 'Workspace overview' },
+  { id: 'projects', icon: TbFolders, tooltip: 'Projects' },
+  { id: 'entities', icon: TbDatabase, tooltip: 'Entities' },
+  { id: 'model', icon: TbCode, tooltip: 'Data model' },
+  { id: 'search', icon: TbSearch, tooltip: 'Search' },
+  { id: 'assistant', icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
+  { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' },
+];
+
+const VIEW_TO_RAIL: Record<string, string> = {
+  home: 'home',
+  'project-detail': 'projects',
+  'entity-browser': 'entities',
+  'entity-detail': 'entities',
+  'data-model': 'model',
+  search: 'search',
+  assistant: 'assistant',
+  extract: 'extract',
+};
+
+const SCHEMA_RESTRICTED_IDS = new Set(['home', 'projects', 'entities', 'search']);
 
 const RAIL_TO_PATH: Record<string, string> = {
   home: '',
@@ -150,6 +173,11 @@ export const WorkspaceLayout = () => {
     });
   }, [navigate, workspaceSlug]);
 
+  const visibleRailItems = useMemo(
+    () => canViewSchemas ? ALL_RAIL_ITEMS : ALL_RAIL_ITEMS.filter(item => SCHEMA_RESTRICTED_IDS.has(item.id)),
+    [canViewSchemas]
+  );
+
   const trail = buildTrail(activeView, workspaceSlug, projects, matches, navigate);
 
   const contextValue = useMemo(() => ({
@@ -205,9 +233,9 @@ export const WorkspaceLayout = () => {
         />
         <div className={`${styles.body} ${showSidebar ? '' : styles.bodyNoSidebar}`.trim()}>
           <NavRail
-            view={activeView}
-            onPick={handleRailPick}
-            visibleItemIds={canViewSchemas ? undefined : ['home', 'projects', 'entities', 'search']}
+            items={visibleRailItems}
+            value={VIEW_TO_RAIL[activeView] ?? 'home'}
+            onChange={id => { if (id !== null) handleRailPick(id); }}
           />
           {showSidebar && <SidePanel />}
           <main className={styles.main}>

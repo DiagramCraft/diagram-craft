@@ -1,0 +1,27 @@
+.button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r, 4px);
+  background: none;
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: var(--cmp-bg-hover);
+    color: var(--cmp-fg);
+  }
+
+  &[data-popup-open] {
+    background-color: var(--accent-bg-selected);
+    border: 1px solid var(--panel-border);
+    color: var(--accent-fg);
+  }
+
+  & svg {
+    display: block;
+  }
+}

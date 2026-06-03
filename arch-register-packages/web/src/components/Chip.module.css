@@ -5,17 +5,17 @@
   height: 20px;
   padding: 0 7px;
   border-radius: 99px;
-  background: var(--bg-3);
-  border: 1px solid var(--border-subtle);
-  color: var(--fg-1);
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--base-fg-dim);
   font-size: 11px;
   white-space: nowrap;
 }
 
 .ghost {
   background: transparent;
-  border-color: var(--border);
-  color: var(--fg-2);
+  border-color: var(--cmp-border);
+  color: var(--base-fg-more-dim);
 }
 
 .dot {

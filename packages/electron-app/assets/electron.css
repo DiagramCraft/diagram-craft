@@ -12,7 +12,7 @@
   }
 }
 
-#menu .menu-button {
+#menu [data-hamburger-menu] {
   > * {
     display: none !important;
   }
@@ -62,7 +62,7 @@
   }
 }
 
-body.fullscreen #menu .menu-button {
+body.fullscreen #menu [data-hamburger-menu] {
   display: none;
 }
 

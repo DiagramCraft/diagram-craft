@@ -1,10 +1,10 @@
 import React, { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import { useEventListener } from './hooks/useEventListener';
+import { NavRail, type NavRailItem } from '@diagram-craft/app-components/NavRail';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ErrorBoundary } from './ErrorBoundary';
 import { UserState } from '../UserState';
 import { IconType } from 'react-icons';
-import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import styles from './Sidebar.module.css';
 
 const MIN_WIDTH = 248;
@@ -140,45 +140,29 @@ export const Sidebar = (props: Props) => {
     }
   }, [props.side, selected, width]);
 
+  const navItems: NavRailItem[] = props.children
+    .map((c, idx) => {
+      const element = c as ReactElement<SideBarPageProps>;
+      if (!element) return null;
+      const item: NavRailItem = {
+        id: idx.toString(),
+        icon: element.props.icon,
+        tooltip: element.props.tooltip,
+      };
+      if (element.props.extra) item.extra = element.props.extra;
+      return item;
+    })
+    .filter((item): item is NavRailItem => item !== null);
+
   return (
     <div id={props.id} className={styles.icSidebar} data-side={props.side}>
-      <Toolbar.Root direction={'vertical'}>
-        <Toolbar.ToggleGroup type={'single'} value={selected.toString()} onChange={() => {}}>
-          {props.children.map((c, idx) => {
-            const element = c as ReactElement<SideBarPageProps>;
-            if (!element) return element;
-            const Icon = element.props.icon;
-            return (
-              <div
-                key={idx}
-                style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}
-              >
-                <Tooltip
-                  message={element.props.tooltip}
-                  element={
-                    <Toolbar.ToggleItem
-                      value={idx.toString()}
-                      onClick={() => {
-                        if (selected === idx) {
-                          updateSelected(-1);
-                          return;
-                        }
-                        updateSelected(idx);
-
-                        userState[propName] = idx;
-                      }}
-                    >
-                      <Icon size={'16px'} />
-                    </Toolbar.ToggleItem>
-                  }
-                />
-
-                {element.props.extra && element.props.extra}
-              </div>
-            );
-          })}
-        </Toolbar.ToggleGroup>
-      </Toolbar.Root>
+      <NavRail
+        items={navItems}
+        value={selected === -1 ? null : selected.toString()}
+        onChange={id => updateSelected(id === null ? -1 : parseInt(id, 10))}
+        toggle={true}
+        side={props.side}
+      />
 
       {props.bottom}
 

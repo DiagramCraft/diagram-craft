@@ -13,8 +13,8 @@
 }
 
 .roleCard {
-  background: var(--bg-1);
-  border: 1px solid var(--border);
+  background: var(--base-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: 8px;
   padding: 14px;
   cursor: pointer;
@@ -25,12 +25,12 @@
 }
 
 .roleCard:hover {
-  border-color: var(--fg-3);
+  border-color: var(--cmp-fg-disabled);
 }
 
 .roleCardSelected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  border-color: var(--accent-fg);
+  box-shadow: 0 0 0 1px var(--accent-fg);
 }
 
 .roleCardHeader {
@@ -45,7 +45,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--fg-0);
+  color: var(--base-fg);
 }
 
 .roleDot {
@@ -57,8 +57,8 @@
 
 .builtinChip {
   font-size: 10px;
-  color: var(--fg-3);
-  background: var(--bg-2);
+  color: var(--cmp-fg-disabled);
+  background: var(--panel-bg);
   border-radius: 4px;
   padding: 1px 6px;
   text-transform: uppercase;
@@ -67,7 +67,7 @@
 
 .roleDescription {
   font-size: 11px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   line-height: 1.4;
 }
 
@@ -75,41 +75,19 @@
   display: flex;
   gap: 12px;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   margin-top: auto;
   margin-bottom: 8px;
 }
 
 .roleStatValue {
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   font-weight: 600;
-}
-
-/* Add custom role button */
-.addRoleCard {
-  background: var(--bg-1);
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  cursor: pointer;
-  color: var(--fg-3);
-  font-size: 12px;
-  min-height: 100px;
-  transition: border-color 0.15s;
-}
-
-.addRoleCard:hover {
-  border-color: var(--accent);
 }
 
 /* Permission matrix */
 .matrixWrap {
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -124,11 +102,11 @@
 .matrix td {
   padding: 6px 12px;
   text-align: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--cmp-border);
 }
 
 .matrix th {
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   font-weight: 600;
   font-size: 11px;
   white-space: nowrap;
@@ -141,7 +119,7 @@
 }
 
 .matrixHeaderRow th {
-  background: var(--bg-1);
+  background: var(--base-bg);
   padding: 10px 12px;
   position: sticky;
   top: 0;
@@ -149,9 +127,9 @@
 }
 
 .matrixGroupRow td {
-  background: var(--bg-2);
+  background: var(--panel-bg);
   font-weight: 600;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -159,25 +137,25 @@
 }
 
 .matrixCapRow td {
-  background: var(--bg-0);
+  background: var(--base-bg);
 }
 
 .matrixCapName {
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
 }
 
 .matrixCheck {
-  color: var(--ok);
+  color: var(--green);
   font-size: 14px;
 }
 
 .matrixDash {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 11px;
 }
 
 .matrixColHighlight {
-  background: color-mix(in srgb, var(--accent) 8%, transparent) !important;
+  background: color-mix(in srgb, var(--accent-fg) 8%, transparent) !important;
 }
 
 .matrix tr:last-child td {
@@ -190,9 +168,9 @@
 }
 
 .roleActionBtn {
-  border: 1px solid var(--border);
-  background: var(--bg-0);
-  color: var(--fg-2);
+  border: 1px solid var(--cmp-border);
+  background: var(--base-bg);
+  color: var(--base-fg-more-dim);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 11px;
@@ -223,32 +201,24 @@
 
 .dialogLabel {
   font-size: 12px;
-  color: var(--fg-2);
-}
-
-.requiredMark,
-.optionalMark {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-left: 6px;
+  color: var(--base-fg-more-dim);
 }
 
 .requiredMark {
-  color: var(--danger);
-}
-
-.optionalMark {
-  color: var(--fg-3);
+  font-size: 13px;
+  font-weight: 600;
+  color: color-mix(in oklch, var(--error-fg) 80%, var(--base-fg-more-dim));
+  margin-left: 2px;
+  vertical-align: middle;
 }
 
 .dialogInput,
 .dialogTextarea {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--border);
-  background: var(--bg-0);
-  color: var(--fg-0);
+  border: 1px solid var(--cmp-border);
+  background: var(--base-bg);
+  color: var(--base-fg);
   border-radius: 6px;
   padding: 8px 10px;
 }
@@ -258,35 +228,113 @@
   resize: vertical;
 }
 
-.dialogMeta {
-  font-size: 12px;
-  color: var(--fg-3);
-}
-
 .colorPickerWrap {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+.capSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.capSectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.capSectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.capCount {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  padding: 1px 7px;
+  border: 1px solid var(--cmp-border);
+  border-radius: 999px;
+}
+
+.capSelectAll {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--accent-fg);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.capSelectAll:hover {
+  text-decoration: underline;
+}
+
+.capNote {
+  font-size: 11.5px;
+  color: var(--cmp-fg-disabled);
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+
 .capabilityList {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
+  align-items: start;
 }
 
 .capabilityGroup {
-  border: 1px solid var(--border);
+  background: var(--base-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: 8px;
-  padding: 10px;
+  padding: 10px 10px 6px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+}
+
+.capabilityGroupHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 2px 7px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--cmp-border);
 }
 
 .capabilityGroupTitle {
   font-size: 12px;
   font-weight: 600;
+  color: var(--base-fg);
+}
+
+.capGroupBadge {
+  font-size: 10px;
+  color: var(--accent-fg);
+  background: color-mix(in srgb, var(--accent-fg) 14%, transparent);
+  border-radius: 999px;
+  padding: 0 6px;
+  line-height: 15px;
+}
+
+.capGroupToggle {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.capGroupToggle:hover {
+  color: var(--base-fg);
+  background: var(--cmp-border);
 }
 
 .capabilityRow {
@@ -295,48 +343,48 @@
   gap: 8px;
   min-width: 0;
   font-size: 12px;
-  color: var(--fg-1);
-  padding: 6px 8px;
+  color: var(--base-fg-dim);
+  padding: 6px 6px;
   border-radius: 6px;
-  transition: background 0.15s ease;
+  cursor: pointer;
+  transition: background 70ms;
+}
+
+.capName {
+  font-size: 12.5px;
+  color: var(--base-fg-dim);
+  transition: color 70ms;
+}
+
+.capabilityRowOn .capName {
+  color: var(--base-fg);
 }
 
 .capabilityRow:hover {
-  background: var(--bg-1);
+  background: var(--base-bg);
+}
+
+.capRowId {
+  margin-left: auto;
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--base-fg-more-dim);
+  opacity: 0;
+  transition: opacity 70ms;
+  flex-shrink: 0;
+}
+
+.capabilityRow:hover .capRowId {
+  opacity: 1;
 }
 
 .capabilityCheckbox {
-  appearance: none;
-  width: 16px;
-  height: 16px;
+  accent-color: var(--accent-fg);
+  width: 14px;
+  height: 14px;
   margin: 0;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg-0);
-  display: grid;
-  place-content: center;
   flex-shrink: 0;
   cursor: pointer;
-}
-
-.capabilityCheckbox::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  transform: scale(0);
-  transition: transform 0.12s ease;
-  clip-path: polygon(14% 44%, 0 59%, 39% 100%, 100% 18%, 84% 4%, 39% 62%);
-  background: white;
-}
-
-.capabilityCheckbox:checked {
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
-}
-
-.capabilityCheckbox:checked::before {
-  transform: scale(1);
 }
 
 .capabilityCheckbox:disabled {
@@ -344,46 +392,15 @@
   cursor: not-allowed;
 }
 
-.dialogActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.dialogBtn,
-.dialogBtnPrimary,
-.dialogBtnDanger {
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 12px;
-}
-
-.dialogBtn {
-  border: 1px solid var(--border);
-  background: var(--bg-0);
-  color: var(--fg-1);
-}
-
-.dialogBtnPrimary {
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: white;
-}
-
-.dialogBtnDanger {
-  border: 1px solid var(--danger);
-  background: var(--danger);
-  color: white;
-}
 
 .dialogError {
-  color: var(--danger);
+  color: var(--error-fg);
   font-size: 12px;
 }
 
 .deleteCopy {
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
 }
 
 @media (max-width: 720px) {

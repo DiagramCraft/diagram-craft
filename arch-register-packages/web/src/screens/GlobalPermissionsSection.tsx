@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
+import { Button } from '@diagram-craft/app-components/Button';
+import { Select } from '@diagram-craft/app-components/Select';
 import { GLOBAL_ROLES, type GlobalRole } from '@arch-register/permissions';
 import { useAuth } from '../auth/AuthContext';
 import { fetchUserGlobalRoles, type AuthUserInfo } from '../api';
 import { Chip } from '../components/Chip';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { MemberAvatar } from '../components/MemberAvatar';
 import { getUserLabel } from '../utils/userLabel';
@@ -165,7 +167,7 @@ export const GlobalPermissionsSection = ({
                       />
                     </td>
                     <td>
-                      <Chip tone="ghost" dot={assignedUser.is_active ? 'var(--ok)' : 'var(--fg-3)'}>
+                      <Chip tone="ghost" dot={assignedUser.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}>
                         {assignedUser.is_active ? 'Active' : 'Inactive'}
                       </Chip>
                     </td>
@@ -263,17 +265,14 @@ const RoleAssignmentDialog = ({
           ))}
         </div>
         <div className={styles.dialogActions}>
-          <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.btnPrimary}
+          <Button onClick={onClose} disabled={isSaving}>Cancel</Button>
+          <Button
+            variant="primary"
             onClick={() => void onSave(draftRoles)}
             disabled={!isDirty || isSaving}
           >
             {isSaving ? 'Saving…' : 'Save roles'}
-          </button>
+          </Button>
         </div>
       </div>
     </Dialog>
@@ -292,12 +291,10 @@ const AddUserDialog = ({
   onSelect: (userId: string) => void;
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const selectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setSelectedUserId(users[0]?.id ?? '');
-    setTimeout(() => selectRef.current?.focus(), 0);
   }, [open, users]);
 
   if (!open) return null;
@@ -310,37 +307,33 @@ const AddUserDialog = ({
         ) : (
           <>
             <div className={styles.field}>
-              <div className={styles.fieldLeft}>
-                <div className={styles.fieldLabel}>User</div>
-                <div className={styles.fieldHint}>Select an existing user, then assign their global roles.</div>
-              </div>
-              <div className={styles.fieldRight}>
-                <select
-                  ref={selectRef}
-                  className={styles.select}
-                  value={selectedUserId}
-                  onChange={event => setSelectedUserId(event.target.value)}
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>User</div>
+              <div className={styles.fieldHint}>Select an existing user, then assign their global roles.</div>
+            </div>
+            <div className={styles.fieldRight}>
+                <Select.Root
+                  value={selectedUserId || undefined}
+                  onChange={value => setSelectedUserId(value ?? '')}
+                  style={{ width: '100%' }}
                 >
                   {users.map(candidate => (
-                    <option key={candidate.id} value={candidate.id}>
+                    <Select.Item key={candidate.id} value={candidate.id}>
                       {getUserLabel(candidate)}{candidate.email ? ` (${candidate.email})` : ''}
-                    </option>
+                    </Select.Item>
                   ))}
-                </select>
+                </Select.Root>
               </div>
             </div>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.btn} onClick={onClose}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={styles.btnPrimary}
+              <Button onClick={onClose}>Cancel</Button>
+              <Button
+                variant="primary"
                 onClick={() => onSelect(selectedUserId)}
                 disabled={!selectedUserId}
               >
                 Continue
-              </button>
+              </Button>
             </div>
           </>
         )}

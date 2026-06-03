@@ -1,42 +1,125 @@
 /**
- *  Button - .cButton - data-variant={primary,danger,icon-only}
+ *  Button - .cButton
+ *  data-variant: default | primary | secondary | ghost | danger | danger-solid | icon-only
+ *  data-size:    sm | md | lg
  */
 .cButton {
   flex: 0 0 auto;
-  color: var(--cmp-fg);
-  height: 23px;
-  padding: 0 5px;
   display: inline-flex;
-  font-size: 11px;
-  line-height: 1;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 1;
   border-radius: var(--cmp-radius);
   border: 1px solid var(--cmp-border);
   background-color: var(--cmp-bg);
+  color: var(--cmp-fg);
   margin: 0;
   width: fit-content !important;
   box-sizing: content-box;
+  transition: background 80ms, border-color 80ms, color 80ms;
 
-  &[data-variant="primary"] {
-    outline: 1px solid var(--cmp-border-focus);
-    outline-offset: -1px;
+  /* --- Sizes --- */
+
+  &[data-size="sm"] {
+    height: 23px;
+    padding: 0 8px;
+    font-size: 11.5px;
+    border-radius: max(calc(var(--cmp-radius) - 1px), 3px);
+    gap: 5px;
   }
 
-  &[data-variant="danger"] {
-    border: 1px solid var(--error-fg);
-    color: var(--error-fg);
+  &[data-size="lg"] {
+    height: 32px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
 
-    &:focus,
+  /* --- Variants --- */
+
+  &[data-variant="primary"] {
+    background-color: color-mix(in oklab, var(--accent-chroma) 22%, var(--cmp-bg));
+    border-color: color-mix(in oklch, var(--accent-chroma) 50%, var(--cmp-border));
+    color: var(--cmp-fg);
+
+    &:hover,
+    &[data-hover="true"] {
+      background-color: color-mix(in oklab, var(--accent-chroma) 30%, var(--cmp-bg));
+      border-color: var(--accent-chroma);
+    }
+
+    &:focus-visible,
     &[data-focus="true"] {
-      position: relative;
-      box-shadow: 0 0 0 2px var(--error-fg);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent-chroma) 22%, transparent);
       outline: none;
-      border: 1px solid transparent;
+      border-color: var(--accent-chroma);
     }
 
     &:disabled {
-      border: 1px solid var(--cmp-border);
+      background-color: color-mix(in oklab, var(--accent-chroma) 22%, var(--cmp-bg));
+      border-color: color-mix(in oklch, var(--accent-chroma) 50%, var(--cmp-border));
+    }
+  }
+
+  &[data-variant="ghost"],
+  &[data-variant="secondary"] {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--cmp-fg);
+
+    &:hover,
+    &[data-hover="true"] {
+      background-color: var(--cmp-bg);
+    }
+
+    &:disabled {
+      border-color: transparent;
+    }
+  }
+
+  &[data-variant="danger"] {
+    background-color: transparent;
+    border-color: color-mix(in oklch, var(--error-fg) 30%, var(--cmp-border));
+    color: var(--error-fg);
+
+    &:hover,
+    &[data-hover="true"] {
+      background-color: color-mix(in oklch, var(--error-fg) 12%, transparent);
+    }
+
+    &:focus-visible,
+    &[data-focus="true"] {
+      position: relative;
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--error-fg) 22%, transparent);
+      outline: none;
+      border-color: var(--error-fg);
+    }
+
+    &:disabled {
+      border-color: var(--cmp-border);
+      color: var(--cmp-fg-disabled);
+    }
+  }
+
+  &[data-variant="danger-solid"] {
+    background-color: var(--error-fg);
+    border-color: color-mix(in oklch, var(--error-fg) 70%, black);
+    color: oklch(0.98 0.01 25);
+
+    &:hover,
+    &[data-hover="true"] {
+      background-color: color-mix(in oklch, var(--error-fg) 85%, white);
+      border-color: var(--error-fg);
+    }
+
+    &:focus-visible,
+    &[data-focus="true"] {
+      outline: none;
+      border-color: color-mix(in oklch, var(--error-fg) 70%, black);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--error-fg) 32%, transparent);
     }
   }
 
@@ -46,6 +129,15 @@
     background: none;
     appearance: none;
     border: 1px solid transparent;
+    width: 28px !important;
+
+    &[data-size="sm"] {
+      width: 24px !important;
+    }
+
+    &[data-size="lg"] {
+      width: 32px !important;
+    }
 
     &:hover,
     &[data-hover="true"] {
@@ -54,26 +146,30 @@
     }
 
     &:disabled {
-      border: 1px solid transparent;
+      border-color: transparent;
     }
   }
+
+  /* --- Default hover / focus / disabled (applies to default variant too) --- */
 
   &:hover,
   &[data-hover="true"] {
     background-color: var(--cmp-bg-hover);
   }
 
-  &:focus,
+  &:focus-visible,
   &[data-focus="true"] {
     position: relative;
-    box-shadow: var(--cmp-border-shadow-focus);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent-chroma) 22%, transparent);
     outline: none;
-    border: 1px solid transparent;
+    border-color: var(--accent-chroma);
   }
 
   &:disabled {
     color: var(--cmp-fg-disabled);
-    border: 1px solid var(--cmp-border);
+    border-color: var(--cmp-border);
     pointer-events: none;
+    opacity: 0.6;
   }
 }
+

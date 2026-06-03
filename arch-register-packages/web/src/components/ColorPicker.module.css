@@ -42,25 +42,25 @@
 }
 
 .swatch.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--accent);
+  border-color: var(--accent-fg);
+  box-shadow: 0 0 0 2px var(--base-bg), 0 0 0 4px var(--accent-fg);
 }
 
 .clearButton {
   align-self: flex-start;
   padding: 4px 12px;
   font-size: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: 4px;
   cursor: pointer;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   transition: all 0.2s ease;
 }
 
 .clearButton:hover:not(:disabled) {
-  background: var(--bg-3);
-  color: var(--fg-1);
+  background: var(--cmp-bg);
+  color: var(--base-fg-dim);
 }
 
 .clearButton:disabled {

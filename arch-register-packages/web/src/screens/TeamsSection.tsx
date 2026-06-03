@@ -1,9 +1,13 @@
 import { type TeamRole } from '@arch-register/permissions';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Chip } from '../components/Chip';
 import { ColorPicker } from '../components/ColorPicker';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../components/MemberAvatar';
 import { getUserLabel } from '../utils/userLabel';
@@ -33,19 +37,19 @@ const TEAM_ROLE_OPTIONS: Array<{ value: TeamRole; label: string; tone: string; d
   {
     value: 'team_admin',
     label: 'Team admin',
-    tone: 'var(--danger)',
+    tone: 'var(--error-fg)',
     description: 'Full owner-team access plus team administration.',
   },
   {
     value: 'team_editor',
     label: 'Team editor',
-    tone: 'var(--accent)',
+    tone: 'var(--accent-fg)',
     description: 'Can edit owned entities and projects.',
   },
   {
     value: 'team_reviewer',
     label: 'Team reviewer',
-    tone: 'var(--ok)',
+    tone: 'var(--green)',
     description: 'Read-only access across owned content.',
   },
 ];
@@ -243,20 +247,8 @@ export const TeamsSection = ({
                 {isOpen && (
                   <div className={styles.teamCardBody}>
                     <div className={styles.teamActions}>
-                      <button
-                        type="button"
-                        className={styles.btnGhost}
-                        onClick={() => setEditTeamId(team.id)}
-                      >
-                        <TbEdit size={11} /> Edit team
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.btnGhost}
-                        onClick={() => setAddMembersTeamId(team.id)}
-                      >
-                        <TbPlus size={11} /> Add members
-                      </button>
+                      <Button variant="ghost" icon={<TbEdit size={11} />} onClick={() => setEditTeamId(team.id)}>Edit team</Button>
+                      <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => setAddMembersTeamId(team.id)}>Add members</Button>
                       <div style={{ flex: 1 }} />
                       <span className={styles.dim}>
                         {teamAssignments.length} {teamAssignments.length === 1 ? 'member' : 'members'}
@@ -419,6 +411,17 @@ const TeamDialog = ({
       open={open}
       onClose={onClose}
       title={mode === 'create' ? 'Add team' : 'Edit team'}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', disabled: isSaving, onClick: onClose },
+        {
+          label: isSaving ? 'Saving…' : mode === 'create' ? 'Add team' : 'Save team',
+          type: 'default',
+          disabled: !teamId.trim() || !isDirty || isSaving,
+          onClick: () => {
+            void onSave(teamId.trim(), color, description);
+          }
+        }
+      ]}
     >
       <div className={styles.dialogBody}>
         <div className={styles.field}>
@@ -427,12 +430,12 @@ const TeamDialog = ({
             <div className={styles.fieldHint}>Used as the owner value for entities and projects.</div>
           </div>
           <div className={styles.fieldRight}>
-            <input
+            <TextInput
               ref={teamInputRef}
-              className={styles.input}
               value={teamId}
-              onChange={event => setTeamId(event.target.value)}
+              onChange={value => setTeamId(value ?? '')}
               placeholder="platform-team"
+              style={{ width: '100%' }}
             />
           </div>
         </div>
@@ -443,12 +446,12 @@ const TeamDialog = ({
             <div className={styles.fieldHint}>Brief description of the team's responsibilities.</div>
           </div>
           <div className={styles.fieldRight}>
-            <textarea
-              className={styles.textarea}
+            <TextArea
               value={description}
-              onChange={event => setDescription(event.target.value)}
+              onChange={value => setDescription(value ?? '')}
               placeholder="Responsible for..."
               rows={3}
+              style={{ width: '100%' }}
             />
           </div>
         </div>
@@ -461,20 +464,6 @@ const TeamDialog = ({
           <div className={styles.fieldRight}>
             <ColorPicker value={color} onChange={setColor} disabled={isSaving} size="small" />
           </div>
-        </div>
-
-        <div className={styles.dialogActions}>
-          <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.btnPrimary}
-            onClick={() => void onSave(teamId.trim(), color, description)}
-            disabled={!teamId.trim() || !isDirty || isSaving}
-          >
-            {isSaving ? 'Saving…' : mode === 'create' ? 'Add team' : 'Save team'}
-          </button>
         </div>
       </div>
     </Dialog>
@@ -562,21 +551,21 @@ const AddMembersDialog = ({
             })}
 
             {availableUsers.length > 0 ? (
-              <select
-                className={styles.select}
-                value=""
-                onChange={e => {
-                  if (e.target.value) pickUser(e.target.value);
+              <Select.Root
+                value={undefined}
+                onChange={value => {
+                  if (value) pickUser(value);
                 }}
+                placeholder="Choose a person to add…"
+                style={{ width: '100%' }}
               >
-                <option value="">Choose a person to add…</option>
                 {availableUsers.map(user => (
-                  <option key={user.id} value={user.id}>
+                  <Select.Item key={user.id} value={user.id}>
                     {getUserLabel(user)}{user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
                     {!user.is_active ? ' - inactive' : ''}
-                  </option>
+                  </Select.Item>
                 ))}
-              </select>
+              </Select.Root>
             ) : assignments.length === 0 ? (
               <div className={styles.emptyInline}>All workspace users are already in this team.</div>
             ) : null}
@@ -584,17 +573,14 @@ const AddMembersDialog = ({
         )}
 
         <div className={styles.dialogActions}>
-          <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.btnPrimary}
+          <Button onClick={onClose} disabled={isSaving}>Cancel</Button>
+          <Button
+            variant="primary"
             onClick={() => void onSave(assignments)}
             disabled={assignments.length === 0 || isSaving}
           >
             {isSaving ? 'Saving…' : 'Add members'}
-          </button>
+          </Button>
         </div>
       </div>
     </Dialog>

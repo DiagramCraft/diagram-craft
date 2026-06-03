@@ -1,6 +1,12 @@
 import { Select } from '@diagram-craft/app-components/Select';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbArrowDownRight, TbChevronDown, TbChevronRight, TbClipboardCopy } from 'react-icons/tb';
+import {
+  TbArrowDownRight,
+  TbChevronDown,
+  TbChevronRight,
+  TbClipboardCopy,
+  TbSearch
+} from 'react-icons/tb';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useDiagram } from '../../../application';
@@ -159,31 +165,12 @@ export const DJQLSearchTab = () => {
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'end',
-                marginTop: '0.5rem',
+                marginTop: '1rem',
                 gap: '0.5rem'
               }}
             >
               <Button
-                variant={'secondary'}
-                onClick={() => {
-                  setExpanded([]);
-                }}
-              >
-                Save as...
-              </Button>
-              <Button variant={'secondary'} onClick={() => exportToFile()}>
-                Export
-              </Button>
-              <a
-                style={{ display: 'none' }}
-                download={'export.json'}
-                href={downloadLink}
-                ref={downloadRef}
-              >
-                -
-              </a>
-              <Button
+                size={'sm'}
                 onClick={() => {
                   if (ref.current?.getValue() === djqlQuery) {
                     redraw();
@@ -195,8 +182,29 @@ export const DJQLSearchTab = () => {
                   }
                 }}
               >
-                Run
+                <TbSearch />
+                Search
+              </Button>{' '}
+              <Button
+                size={'sm'}
+                variant={'secondary'}
+                onClick={() => {
+                  setExpanded([]);
+                }}
+              >
+                Save as...
               </Button>
+              <Button size="sm" variant={'secondary'} onClick={() => exportToFile()}>
+                Export
+              </Button>
+              <a
+                style={{ display: 'none' }}
+                download={'export.json'}
+                href={downloadLink}
+                ref={downloadRef}
+              >
+                -
+              </a>
             </div>
           </ToolWindowPanel>
 

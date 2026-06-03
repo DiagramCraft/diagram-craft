@@ -22,7 +22,7 @@
 }
 
 .backLink {
-  color: var(--accent-strong);
+  color: var(--accent-fg);
   background: none;
   border: 0;
   padding: 0;
@@ -38,13 +38,13 @@
 }
 
 .breadcrumbSep {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   margin: 0 4px;
   font-size: 12px;
 }
 
 .breadcrumbCurrent {
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   font-size: 12px;
 }
 
@@ -57,7 +57,7 @@
 
 .title {
   font-size: 22px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
   letter-spacing: -0.2px;
 }
@@ -67,7 +67,7 @@
   line-height: 1.5;
   max-width: 720px;
   margin-top: 4px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .headActions {
@@ -77,7 +77,7 @@
 }
 
 .emptyState {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 12px;
   padding: 8px 0;
 }
@@ -98,19 +98,19 @@
 
 /* Section (Block) */
 .section {
-  background: var(--bg-2);
-  border: 1px solid var(--border-subtle);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   overflow: hidden;
 }
 
 .sectionHead {
   padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .sectionTitle {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-size: 13.5px;
   font-weight: 500;
 }
@@ -118,7 +118,7 @@
 .sectionSub {
   font-size: 11.5px;
   margin-top: 2px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .sectionBody {
@@ -135,7 +135,7 @@
   grid-template-columns: 220px 1fr;
   gap: 24px;
   padding: 12px 0;
-  border-bottom: 1px dashed var(--border-subtle);
+  border-bottom: 1px dashed var(--panel-border);
   align-items: flex-start;
 }
 
@@ -148,7 +148,7 @@
 }
 
 .fieldLabel {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-size: 12.5px;
   font-weight: 500;
 }
@@ -158,7 +158,7 @@
   margin-top: 4px;
   line-height: 1.5;
   max-width: 200px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .fieldRight {
@@ -170,7 +170,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 12px 0;
-  border-bottom: 1px dashed var(--border-subtle);
+  border-bottom: 1px dashed var(--panel-border);
 }
 
 .teamCard:last-child {
@@ -198,7 +198,7 @@
 }
 
 .teamHint {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 11px;
 }
 
@@ -207,9 +207,9 @@
   height: 28px;
   padding: 0 8px;
   font-size: 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  color: var(--fg-0);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg);
   border-radius: var(--r);
   outline: none;
   width: 100%;
@@ -217,7 +217,7 @@
 }
 
 .input:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .input:disabled {
@@ -242,8 +242,8 @@
 .inputPrefix {
   display: inline-flex;
   align-items: center;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   height: 28px;
   padding: 0 8px;
@@ -252,11 +252,11 @@
 }
 
 .inputPrefix:focus-within {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .prefixText {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-family: var(--font-mono);
   font-size: 12px;
   flex-shrink: 0;
@@ -266,7 +266,7 @@
   background: none;
   border: none;
   outline: none;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-family: var(--font-mono);
   font-size: 12px;
   flex: 1;
@@ -277,44 +277,6 @@
 .inputUnstyled:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  color: var(--fg-1);
-  border-radius: var(--r);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.btn:hover {
-  background: var(--bg-4);
-  color: var(--fg-0);
-  border-color: var(--border-strong);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btnPrimary {
-  composes: btn;
-  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
-  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
-  color: var(--fg-0);
-}
-
-.btnPrimary:hover {
-  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
-  border-color: var(--accent);
 }
 
 /* Section actions (save/cancel row) */
@@ -338,7 +300,7 @@
 }
 
 .filterLabel {
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   font-size: 11px;
 }
 
@@ -351,7 +313,7 @@
 }
 
 .filterMeta {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 11.5px;
 }
 
@@ -369,10 +331,10 @@
   width: 100%;
   padding: 6px 6px;
   border-radius: var(--r);
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   text-align: left;
   border: 1px solid transparent;
-  border-bottom-color: var(--border-subtle);
+  border-bottom-color: var(--panel-border);
 }
 
 .activityRow:last-child {
@@ -380,9 +342,9 @@
 }
 
 .activityRow:hover {
-  background: var(--bg-3);
-  color: var(--fg-0);
-  border-color: var(--border-subtle);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  border-color: var(--panel-border);
 }
 
 .activityTypeBadge {
@@ -401,77 +363,65 @@
 }
 
 .typeWorkspace {
-  background: color-mix(in oklch, var(--accent) 16%, transparent);
-  border-color: color-mix(in oklch, var(--accent) 45%, var(--border));
+  background: color-mix(in oklch, var(--accent-fg) 16%, transparent);
+  border-color: color-mix(in oklch, var(--accent-fg) 45%, var(--cmp-border));
   color: oklch(0.82 0.07 250);
 }
 
 .typeSchema {
   background: color-mix(in oklch, var(--tag-system) 18%, transparent);
-  border-color: color-mix(in oklch, var(--tag-system) 50%, var(--border));
+  border-color: color-mix(in oklch, var(--tag-system) 50%, var(--cmp-border));
   color: var(--tag-system);
 }
 
 .typeEntity {
   background: color-mix(in oklch, var(--tag-component) 18%, transparent);
-  border-color: color-mix(in oklch, var(--tag-component) 50%, var(--border));
+  border-color: color-mix(in oklch, var(--tag-component) 50%, var(--cmp-border));
   color: var(--tag-component);
 }
 
 .typeProject {
-  background: color-mix(in oklch, var(--ok) 18%, transparent);
-  border-color: color-mix(in oklch, var(--ok) 50%, var(--border));
-  color: var(--ok);
+  background: color-mix(in oklch, var(--green) 18%, transparent);
+  border-color: color-mix(in oklch, var(--green) 50%, var(--cmp-border));
+  color: var(--green);
 }
 
 .typeFile {
-  background: color-mix(in oklch, var(--warn) 20%, transparent);
-  border-color: color-mix(in oklch, var(--warn) 55%, var(--border));
-  color: var(--warn);
+  background: color-mix(in oklch, var(--warning-fg) 20%, transparent);
+  border-color: color-mix(in oklch, var(--warning-fg) 55%, var(--cmp-border));
+  color: var(--warning-fg);
 }
 
 .activityDate {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 11px;
   white-space: nowrap;
 }
 
 .activityWho {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
 }
 
 .activityVerb,
 .activityDate,
 .activityVerb {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   text-transform: capitalize;
 }
 
 .activityTarget {
-  color: var(--fg-0);
+  color: var(--base-fg);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Danger button */
-.btnDanger {
-  composes: btn;
-  background: transparent;
-  border-color: color-mix(in oklch, var(--danger) 30%, var(--border));
-  color: oklch(0.72 0.16 25);
-}
-
-.btnDanger:hover {
-  background: color-mix(in oklch, var(--danger) 12%, transparent);
-}
-
 /* Danger card */
 .dangerCard {
-  background: var(--bg-2);
-  border: 1px solid color-mix(in oklch, var(--danger) 30%, var(--border-subtle));
+  background: var(--panel-bg);
+  border: 1px solid color-mix(in oklch, var(--error-fg) 30%, var(--panel-border));
   border-radius: var(--r-md);
   display: flex;
   align-items: flex-start;
@@ -491,7 +441,7 @@
 }
 
 .dangerCardText {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 12px;
   line-height: 1.5;
   margin-top: 4px;

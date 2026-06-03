@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './EntityBrowser.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
 import { Chip } from '../components/Chip';
@@ -11,7 +12,7 @@ import {
 import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
 import type { EntityRecord, EntitySchema, TreeNode, TreeEdge } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { useEntities, useEntityFacets, useEntityTree, useDeleteEntity, useCloneEntity } from '../hooks/useEntities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
@@ -159,9 +160,9 @@ export const EntityBrowser = () => {
           <div className={styles.sub}>Search, filter, and inspect everything in the IT landscape.</div>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={styles.btn} onClick={handleExport}><TbDownload size={12} /> Export CSV</button>
+          <Button icon={<TbDownload size={12} />} onClick={handleExport}>Export CSV</Button>
           {permissions.canCreateEntities && (
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={openAddEntityDialog}><TbPlus size={12} /> New entity</button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>New entity</Button>
           )}
         </div>
       </div>
@@ -265,7 +266,7 @@ export const EntityBrowser = () => {
         </>
       )}
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={!!deleteTarget}
         title="Delete entity?"
         message={deleteTarget ? <>The entity <b>{deleteTarget._name || deleteTarget._slug}</b> will be permanently deleted.</> : ''}
@@ -383,7 +384,7 @@ const CardsView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewPr
   <div className={styles.cardGrid}>
     {rows.map(e => {
       const s = schemaMap.get(e._schemaId);
-      const color = s ? resolveSchemaColor(s.schema, s.index) : 'var(--accent)';
+      const color = s ? resolveSchemaColor(s.schema, s.index) : 'var(--accent-fg)';
       return (
         <div
           key={e._uid}

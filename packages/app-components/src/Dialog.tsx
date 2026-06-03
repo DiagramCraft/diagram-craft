@@ -11,6 +11,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import styles from './Dialog.module.css';
 import { AlertDialog as BaseUIAlertDialog } from '@base-ui/react/alert-dialog';
 
+
 type DialogContextType = {
   onDialogShow: () => void;
   onDialogHide: () => void;
@@ -44,7 +45,7 @@ export const DialogContextProvider = (props: DialogProviderProps) => {
 const DialogButton = (props: Button) => {
   if (props.type === 'cancel') {
     return (
-      <BaseUIAlertDialog.Close className={styles.eButton} data-variant={'secondary'}>
+      <BaseUIAlertDialog.Close className={styles.eButton} data-variant={'ghost'} disabled={props.disabled}>
         {props.label}
       </BaseUIAlertDialog.Close>
     );
@@ -53,8 +54,9 @@ const DialogButton = (props: Button) => {
       <button
         type="button"
         className={styles.eButton}
-        data-variant={props.type}
+        data-variant={props.type === 'default' ? 'primary' : props.type}
         onClick={props.onClick}
+        disabled={props.disabled}
       >
         {props.label}
       </button>
@@ -62,7 +64,7 @@ const DialogButton = (props: Button) => {
   }
 };
 
-export const Dialog = ({ open, onClose, title, children, buttons, className }: Props) => {
+export const Dialog = ({ open, onClose, title, sup, sub, children, buttons = [], footerLeft, className, width }: Props) => {
   const portal = usePortal();
   const dialogContext = useDialogContext();
   const isOpenRef = useRef(false);
@@ -112,24 +114,37 @@ export const Dialog = ({ open, onClose, title, children, buttons, className }: P
 
   return (
     <BaseUIAlertDialog.Root open={open} defaultOpen={open} onOpenChange={handleOpenChange}>
-      <BaseUIAlertDialog.Portal container={portal} className={className}>
+      <BaseUIAlertDialog.Portal container={portal}>
         <BaseUIAlertDialog.Backdrop className={styles.cDialogBackdrop} />
-        <BaseUIAlertDialog.Viewport className={styles.cDialog}>
-          <BaseUIAlertDialog.Popup initialFocus={true}>
-            <BaseUIAlertDialog.Title
-              className={styles.eTitle}
-              render={p => <div {...p}>{title}</div>}
-            />
+        <BaseUIAlertDialog.Viewport className={styles.cDialogViewport}>
+          <BaseUIAlertDialog.Popup className={`${styles.cDialog}${className ? ` ${className}` : ''}`} style={width != null ? { width } : undefined} initialFocus={true}>
+            <div className={styles.eHeader}>
+              <div className={styles.eHeaderLeft}>
+                {sup && <div className={styles.eSup}>{sup}</div>}
+                <BaseUIAlertDialog.Title
+                  className={styles.eTitle}
+                  render={p => <div {...p}>{title}</div>}
+                />
+                {sub && <div className={styles.eSub}>{sub}</div>}
+              </div>
+
+            </div>
+
             <BaseUIAlertDialog.Description
-              className={styles.eContent}
+              className={styles.eBody}
               render={p => <div {...p}>{children}</div>}
             />
 
-            <div className={styles.eButtons}>
-              {buttons.map(btn => (
-                <DialogButton key={btn.label} {...btn} />
-              ))}
-            </div>
+            {(footerLeft || buttons.length > 0) && (
+              <div className={styles.eFooter}>
+                {footerLeft && <div className={styles.eFooterLeft}>{footerLeft}</div>}
+                <div className={styles.eFooterRight}>
+                  {buttons.map(btn => (
+                    <DialogButton key={btn.label} {...btn} />
+                  ))}
+                </div>
+              </div>
+            )}
           </BaseUIAlertDialog.Popup>
         </BaseUIAlertDialog.Viewport>
       </BaseUIAlertDialog.Portal>
@@ -141,13 +156,32 @@ type Props = {
   open: boolean;
   onClose: () => void;
   title: string;
+  sup?: string;
+  sub?: ReactNode;
   children: ReactNode | string;
-  buttons: Button[];
+  buttons?: Button[];
+  footerLeft?: ReactNode;
   className?: string;
+  width?: string | number;
 };
+
+/** Renders a single key badge, e.g. <Kbd>Esc</Kbd> */
+export const Kbd = ({ children }: { children: ReactNode }) => (
+  <span className={styles.eKbd}>{children}</span>
+);
+
+/** Renders a row of keyboard hint pairs: [['Esc', 'cancel'], ['⌘↵', 'create']] */
+export const KbdHints = ({ hints }: { hints: [key: string, label: string][] }) => (
+  <>
+    {hints.map(([key, label]) => (
+      <span key={key}><Kbd>{key}</Kbd> {label}</span>
+    ))}
+  </>
+);
 
 export type Button = {
   label: string;
   type: 'default' | 'secondary' | 'cancel' | 'danger';
+  disabled?: boolean;
   onClick: MouseEventHandler<HTMLButtonElement>;
 };

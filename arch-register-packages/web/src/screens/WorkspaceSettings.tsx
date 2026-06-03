@@ -1,5 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import styles from './WorkspaceSettings.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { Workspace } from '../api';
 import { SCHEMA_COLORS } from '../api';
 import { ColorPicker } from '../components/ColorPicker';
@@ -38,15 +41,18 @@ export const WorkspaceSettings = () => {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { section?: string };
   const ctx = useWorkspaceContext();
-  const workspace = ctx.workspace!;
+  const workspace = ctx.workspace;
   const workspaceSlug = ctx.workspaceSlug;
   const lifecycleStates = ctx.lifecycleStates;
   const availableSections = ctx.availableSettingsSections;
   const section = availableSections.includes(search.section ?? '') ? (search.section ?? 'general') : (ctx.defaultSettingsSection ?? 'general');
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
+  const [rolesAddDialogOpen, setRolesAddDialogOpen] = useState(false);
 
   const meta = SECTION_META[section] ?? SECTION_META['general']!;
+
+  if (!workspace) return null;
 
   if (!availableSections.includes(section)) {
     return (
@@ -84,24 +90,23 @@ export const WorkspaceSettings = () => {
         </div>
         {section === 'members' && (
           <div className={styles.headActions}>
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              onClick={() => setMembersAddDialogOpen(true)}
-            >
-              <TbPlus size={12} /> Add user
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setMembersAddDialogOpen(true)}>
+              Add user
+            </Button>
           </div>
         )}
         {section === 'teams' && (
           <div className={styles.headActions}>
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              onClick={() => setTeamsAddDialogOpen(true)}
-            >
-              <TbPlus size={12} /> Add team
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setTeamsAddDialogOpen(true)}>
+              Add team
+            </Button>
+          </div>
+        )}
+        {section === 'roles' && (
+          <div className={styles.headActions}>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setRolesAddDialogOpen(true)}>
+              New custom role
+            </Button>
           </div>
         )}
       </div>
@@ -116,7 +121,11 @@ export const WorkspaceSettings = () => {
         />
       )}
       {section === 'roles' && (
-        <RolesPermissionsSection workspaceSlug={workspaceSlug} />
+        <RolesPermissionsSection
+          workspaceSlug={workspaceSlug}
+          createDialogOpen={rolesAddDialogOpen}
+          onCloseCreateDialog={() => setRolesAddDialogOpen(false)}
+        />
       )}
       {section === 'teams' && (
         <TeamsSection
@@ -184,10 +193,10 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
   return (
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
-        <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || updateWorkspaceMutation.isPending}>
+        <Button onClick={handleCancel} disabled={!isDirty}>Cancel</Button>
+        <Button variant="primary" onClick={handleSave} disabled={!isDirty || updateWorkspaceMutation.isPending}>
           {updateWorkspaceMutation.isPending ? 'Saving...' : 'Save changes'}
-        </button>
+        </Button>
       </div>
       <div className={styles.section}>
         <div className={styles.sectionHead}>
@@ -201,10 +210,9 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
               <div className={styles.fieldHint}>Shown in the top-left switcher and on shared links.</div>
             </div>
             <div className={styles.fieldRight}>
-              <input
-                className={styles.input}
+              <TextInput
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={value => setName(value ?? '')}
                 style={{ maxWidth: 340 }}
               />
             </div>
@@ -215,10 +223,9 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
               <div className={styles.fieldLabel}>URL slug</div>
             </div>
             <div className={styles.fieldRight}>
-              <input
-                className={styles.input}
+              <TextInput
                 value={slug}
-                onChange={e => setSlug(e.target.value)}
+                onChange={value => setSlug(value ?? '')}
                 style={{ maxWidth: 340 }}
               />
             </div>
@@ -230,11 +237,10 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
               <div className={styles.fieldHint}>Two-letter badge used in tight UI like the switcher.</div>
             </div>
             <div className={styles.fieldRight}>
-              <input
-                className={`${styles.input} ${styles.mono}`}
+              <TextInput
                 value={shortCode}
-                onChange={e => setShortCode(e.target.value.toUpperCase().slice(0, 2))}
-                style={{ width: 80 }}
+                onChange={value => setShortCode((value ?? '').toUpperCase().slice(0, 2))}
+                style={{ width: 80, fontFamily: 'var(--mono)' }}
                 maxLength={2}
               />
             </div>
@@ -255,10 +261,10 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
               <div className={styles.fieldLabel}>Description</div>
             </div>
             <div className={styles.fieldRight}>
-              <textarea
-                className={styles.textarea}
+              <TextArea
                 value={description}
-                onChange={e => setDescription(e.target.value)}
+                onChange={value => setDescription(value ?? '')}
+                rows={5}
                 style={{ maxWidth: 540 }}
               />
             </div>
@@ -279,11 +285,11 @@ const buildLifecycleStateDraft = (lifecycleStates: WorkspaceLifecycleState[]) =>
   lifecycleStates.map(state => ({ id: state.id, label: state.label, color: state.color }));
 
 const COLOR_PRESETS = [
-  { value: 'var(--ok)', label: 'Green' },
-  { value: 'var(--accent)', label: 'Blue' },
-  { value: 'var(--warn)', label: 'Yellow' },
-  { value: 'var(--danger)', label: 'Red' },
-  { value: 'var(--fg-3)', label: 'Grey' },
+  { value: 'var(--green)', label: 'Green' },
+  { value: 'var(--accent-fg)', label: 'Blue' },
+  { value: 'var(--warning-fg)', label: 'Yellow' },
+  { value: 'var(--error-fg)', label: 'Red' },
+  { value: 'var(--cmp-fg-disabled)', label: 'Grey' },
 ];
 
 const LifecycleOwnersSection = ({
@@ -328,20 +334,19 @@ const LifecycleOwnersSection = ({
     setStates(prev => prev.filter((_, i) => i !== index));
 
   const addState = () =>
-    setStates(prev => [...prev, { id: '', label: '', color: 'var(--fg-3)' }]);
+    setStates(prev => [...prev, { id: '', label: '', color: 'var(--cmp-fg-disabled)' }]);
 
   return (
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
-        <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button
-          type="button"
-          className={styles.btnPrimary}
+        <Button onClick={handleCancel} disabled={!isDirty}>Cancel</Button>
+        <Button
+          variant="primary"
           onClick={handleSave}
           disabled={!isDirty || updateLifecycleStatesMutation.isPending}
         >
           {updateLifecycleStatesMutation.isPending ? 'Saving...' : 'Save changes'}
-        </button>
+        </Button>
       </div>
 
       <div className={styles.section}>
@@ -353,18 +358,19 @@ const LifecycleOwnersSection = ({
           {states.map((s, i) => (
             <div key={i} className={styles.field} style={{ gridTemplateColumns: '1fr 1fr auto auto' }}>
               <div className={styles.fieldRight}>
-                <input
-                  className={`${styles.input} ${styles.mono}`}
+                <TextInput
                   value={s.id}
-                  onChange={e => updateState(i, { id: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
+                  onChange={value =>
+                    updateState(i, { id: (value ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-') })
+                  }
                   placeholder="key (e.g. production)"
+                  style={{ fontFamily: 'var(--mono)' }}
                 />
               </div>
               <div className={styles.fieldRight}>
-                <input
-                  className={styles.input}
+                <TextInput
                   value={s.label}
-                  onChange={e => updateState(i, { label: e.target.value })}
+                  onChange={value => updateState(i, { label: value ?? '' })}
                   placeholder="Label (e.g. Production)"
                 />
               </div>
@@ -380,7 +386,7 @@ const LifecycleOwnersSection = ({
                       height: 18,
                       borderRadius: '50%',
                       background: c.value,
-                      border: s.color === c.value ? '2px solid var(--fg-0)' : '2px solid transparent',
+                      border: s.color === c.value ? '2px solid var(--base-fg)' : '2px solid transparent',
                       cursor: 'pointer',
                       padding: 0,
                       flexShrink: 0,
@@ -388,14 +394,10 @@ const LifecycleOwnersSection = ({
                   />
                 ))}
               </div>
-              <button type="button" className={styles.btn} onClick={() => removeState(i)} style={{ padding: '0 6px' }}>
-                <TbTrash size={12} />
-              </button>
+              <Button onClick={() => removeState(i)} style={{ padding: '0 6px' }}><TbTrash size={12} /></Button>
             </div>
           ))}
-          <button type="button" className={styles.btn} onClick={addState} style={{ marginTop: 8 }}>
-            <TbPlus size={12} /> Add state
-          </button>
+          <Button icon={<TbPlus size={12} />} onClick={addState} style={{ marginTop: 8 }}>Add state</Button>
         </div>
       </div>
     </div>
@@ -620,24 +622,22 @@ const DangerSection = ({
           </div>
           <div className={styles.dangerCardControls}>
             <div className={styles.fieldLabel}>Type the workspace name to confirm</div>
-            <input
-              className={`${styles.input} ${styles.mono}`}
+            <TextInput
               placeholder={workspace.name}
               value={confirm}
-              onChange={e => setConfirm(e.target.value)}
-              style={{ maxWidth: 320 }}
+              onChange={value => setConfirm(value ?? '')}
+              style={{ maxWidth: 320, fontFamily: 'var(--mono)' }}
             />
           </div>
         </div>
         <div className={styles.dangerCardActions}>
-          <button
-            type="button"
-            className={styles.btnDanger}
+          <Button
+            variant="danger"
             disabled={!canDelete || deleteWorkspaceMutation.isPending}
             onClick={handleDelete}
           >
             {deleteWorkspaceMutation.isPending ? 'Deleting...' : 'Delete workspace'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

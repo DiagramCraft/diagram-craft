@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Dialog } from '../components/Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { createProject, ApiError } from '../api';
 import type { Project, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
@@ -48,8 +52,7 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
     }
   }, [canCreateWithoutOwner, creatableTeams, open]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
       setError('Name is required');
@@ -79,57 +82,66 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title="New project">
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.field}>
-          <label>Name</label>
-          <input
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="New project"
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        { label: submitting ? 'Creating...' : 'Create project', type: 'default', disabled: submitting, onClick: () => { void handleSubmit(); } }
+      ]}
+    >
+      <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
+        <button type="submit" hidden />
+        <FormElement label="Name">
+          <TextInput
             ref={nameRef}
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={value => setName(value ?? '')}
             placeholder="e.g. Checkout Modernization"
+            style={{ width: '100%' }}
           />
-        </div>
-        <div className={styles.field}>
-          <label>Description</label>
-          <textarea
+        </FormElement>
+        <FormElement label="Description">
+          <TextArea
             value={description}
-            onChange={e => setDescription(e.target.value)}
+            onChange={value => setDescription(value ?? '')}
             placeholder="Optional — what is this project about?"
+            rows={3}
+            style={{ width: '100%' }}
           />
-        </div>
-        <div className={styles.field}>
-          <label>Status</label>
-          <select value={status} onChange={e => setStatus(e.target.value as 'pinned' | 'active' | 'archived')}>
+        </FormElement>
+        <FormElement label="Status">
+          <Select.Root
+            value={status}
+            onChange={value => setStatus((value as 'pinned' | 'active' | 'archived' | undefined) ?? 'active')}
+            style={{ width: '100%' }}
+          >
             {PROJECT_STATUSES.map(option => (
-              <option key={option.value} value={option.value}>
+              <Select.Item key={option.value} value={option.value}>
                 {option.label}
-              </option>
+              </Select.Item>
             ))}
-          </select>
-        </div>
-        <div className={styles.field}>
-          <label>Owner</label>
-          <select value={owner} onChange={e => setOwner(e.target.value)}>
-            {canCreateWithoutOwner && <option value="">No owner</option>}
+          </Select.Root>
+        </FormElement>
+        <FormElement label="Owner">
+          <Select.Root
+            value={owner || undefined}
+            onChange={value => setOwner(value ?? '')}
+            placeholder={canCreateWithoutOwner ? 'No owner' : 'Select owner'}
+            style={{ width: '100%' }}
+          >
             {creatableTeams.map(team => (
-              <option key={team.id} value={team.id}>
+              <Select.Item key={team.id} value={team.id}>
                 {team.id}
-              </option>
+              </Select.Item>
             ))}
-          </select>
-        </div>
-        <div className={styles.field}>
-          <label>Color</label>
+          </Select.Root>
+        </FormElement>
+        <FormElement label="Color">
           <ColorPicker value={color} onChange={setColor} size="small" />
-        </div>
+        </FormElement>
         {error && <div className={styles.error}>{error}</div>}
-        <div className={styles.actions}>
-          <button type="button" className={styles.btnCancel} onClick={onClose}>Cancel</button>
-          <button type="submit" className={styles.btnSubmit} disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create project'}
-          </button>
-        </div>
       </form>
     </Dialog>
   );

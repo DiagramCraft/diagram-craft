@@ -52,7 +52,7 @@ const Root = (props: RootProps) => {
       </BaseUISelect.Trigger>
 
       <BaseUISelect.Portal container={portal}>
-        <BaseUISelect.Positioner>
+        <BaseUISelect.Positioner className={styles.cSelectPositioner}>
           <BaseUISelect.Popup className={styles.cSelectContent}>
             <BaseUISelect.List className={styles.eList}>
               <BaseUISelect.Group>{props.children}</BaseUISelect.Group>

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, type ReactNode } from 'react';
-import styles from './DropdownMenu.module.css';
+import { useState, useRef, type ReactNode, type ReactElement } from 'react';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 export type MenuItem = {
   label: string;
@@ -17,51 +18,40 @@ type DropdownMenuProps = {
 
 export const DropdownMenu = ({ trigger, header, items }: DropdownMenuProps) => {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const keepOpenRef = useRef(false);
 
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [open]);
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && keepOpenRef.current) {
+      keepOpenRef.current = false;
+      return;
+    }
+    setOpen(nextOpen);
+  };
 
   return (
-    <div className={styles.wrap} ref={ref}>
-      <div onClick={() => setOpen(o => !o)}>{trigger}</div>
-      {open && (
-        <div className={styles.menu}>
-          {header && (
-            <>
-              <div className={styles.header}>{header}</div>
-              <div className={styles.separator} />
-            </>
-          )}
-          {items.map(item => (
-            <button
-              type="button"
-              key={item.label}
-              className={item.danger ? styles.itemDanger : styles.item}
-              onClick={() => {
-                if (!item.keepOpen) setOpen(false);
-                item.onClick();
-              }}
-            >
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <MenuButton.Root open={open} onOpenChange={handleOpenChange}>
+      <MenuButton.Trigger element={trigger as ReactElement} />
+      <MenuButton.Menu>
+        {header && (
+          <>
+            <div>{header}</div>
+            <Menu.Separator />
+          </>
+        )}
+        {items.map(item => (
+          <Menu.Item
+            key={item.label}
+            leftSlot={item.icon as ReactElement | undefined}
+            type={item.danger ? 'danger' : 'regular'}
+            onClick={() => {
+              if (item.keepOpen) keepOpenRef.current = true;
+              item.onClick();
+            }}
+          >
+            {item.label}
+          </Menu.Item>
+        ))}
+      </MenuButton.Menu>
+    </MenuButton.Root>
   );
 };

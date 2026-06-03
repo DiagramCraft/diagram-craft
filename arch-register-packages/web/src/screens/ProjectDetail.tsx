@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { Button } from '@diagram-craft/app-components/Button';
 import styles from './ProjectDetail.module.css';
 import { AddFolderDialog } from '../dialogs/AddFolderDialog';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
-import { Dialog } from '../components/Dialog';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ColorPicker } from '../components/ColorPicker';
@@ -392,19 +394,13 @@ export const ProjectDetail = () => {
         </div>
         <div className={styles.actions}>
           {!folderFilter && project.canEdit && (
-            <button type="button" className={styles.btn} onClick={() => setEditing(true)}>
-              <TbPencil size={12} /> Edit
-            </button>
+            <Button icon={<TbPencil size={12} />} onClick={() => setEditing(true)}>Edit</Button>
           )}
           {project.canManageFiles && (
-            <button type="button" className={styles.btn} onClick={() => setAddFolderOpen(true)}>
-              <TbFolderOpen size={12} /> New folder
-            </button>
+            <Button icon={<TbFolderOpen size={12} />} onClick={() => setAddFolderOpen(true)}>New folder</Button>
           )}
           {project.canManageFiles && (
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setAddDiagramOpen(true)}>
-              <TbPlus size={12} /> New diagram
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDiagramOpen(true)}>New diagram</Button>
           )}
         </div>
       </div>
@@ -428,11 +424,11 @@ export const ProjectDetail = () => {
 
       {/* Toolbar */}
       <div className={styles.tabBar}>
-        <div className={styles.tabs}>
-          <div className={`${styles.tab} ${styles.tabActive}`}>
-            Diagrams ({visibleFiles.length})
-          </div>
-        </div>
+        <Tabs.Root value="diagrams">
+          <Tabs.List>
+            <Tabs.Trigger value="diagrams">Diagrams ({visibleFiles.length})</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
         <div className={styles.tabBarRight}>
           <div className={styles.searchInline}>
             <TbSearch size={11} />
@@ -523,7 +519,7 @@ export const ProjectDetail = () => {
         onCancel={() => setRenameTarget(null)}
       />
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={!!deleteTarget}
         title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
         message={
@@ -568,12 +564,12 @@ const DiagramCard = ({
           <div dangerouslySetInnerHTML={{ __html: file.preview_svg }} />
         ) : (
           <svg viewBox="0 0 140 80" preserveAspectRatio="none">
-            <rect x="10" y="14" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
-            <rect x="56" y="6" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
-            <rect x="56" y="44" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
-            <rect x="100" y="26" width="32" height="18" rx="2" fill="color-mix(in oklch, var(--tag-component) 28%, var(--bg-3))" stroke="var(--tag-component)" />
+            <rect x="10" y="14" width="32" height="18" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" />
+            <rect x="56" y="6" width="32" height="18" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" />
+            <rect x="56" y="44" width="32" height="18" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" />
+            <rect x="100" y="26" width="32" height="18" rx="2" fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))" stroke="var(--tag-component)" />
             <path d="M42 23 L56 15 M42 23 L56 53 M88 15 L100 35 M88 53 L100 35"
-              stroke="var(--fg-3)" fill="none" />
+              stroke="var(--cmp-fg-disabled)" fill="none" />
           </svg>
         )}
       </div>
@@ -618,9 +614,7 @@ const EmptyState = ({
     <div className={styles.emptyTitle}>{title}</div>
     <div className={styles.emptySub}>{sub}</div>
     {actionLabel && (
-      <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onAction}>
-        {actionLabel}
-      </button>
+      <Button variant="primary" onClick={onAction}>{actionLabel}</Button>
     )}
   </div>
 );
@@ -697,7 +691,7 @@ const RenameDialog = ({
     <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: 'var(--fg-2)' }}>Name</label>
+          <label style={{ fontSize: 12, color: 'var(--base-fg-more-dim)' }}>Name</label>
           <input
             ref={inputRef}
             value={name}
@@ -705,17 +699,17 @@ const RenameDialog = ({
             style={{
               fontSize: 13,
               padding: '6px 8px',
-              background: 'var(--bg-1)',
-              border: '1px solid var(--border)',
+              background: 'var(--base-bg)',
+              border: '1px solid var(--cmp-border)',
               borderRadius: 'var(--r)',
-              color: 'var(--fg-0)',
+              color: 'var(--base-fg)',
               outline: 'none',
             }}
           />
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <button type="button" className={styles.btn} onClick={onCancel}>Cancel</button>
-          <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={!name.trim()}>Rename</button>
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button variant="primary" onClick={e => { e.preventDefault(); const trimmed = name.trim(); if (trimmed) onRename(trimmed); }} disabled={!name.trim()}>Rename</Button>
         </div>
       </form>
     </Dialog>
@@ -973,30 +967,21 @@ const ProjectSettings = ({
         <label className={styles.formLabel}>Color</label>
         <ColorPicker value={color} onChange={setColor} size="small" />
       </div>
-      {error && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--error-fg)' }}>{error}</div>}
       <div className={styles.formActions}>
-        <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={handleDelete}>
-          <TbTrash size={12} /> Delete project
-        </button>
+        <Button variant="danger" icon={<TbTrash size={12} />} onClick={handleDelete}>Delete project</Button>
         <div className={styles.formSpacer} />
-        <button
-          type="button"
-          className={styles.btn}
-          onClick={onClose}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          className={`${styles.btn} ${styles.btnPrimary}`}
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          variant="primary"
           onClick={handleSave}
           disabled={updateProject.isPending}
         >
           {updateProject.isPending ? 'Saving...' : 'Save'}
-        </button>
+        </Button>
       </div>
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete project?"
         message={<>The project <b>{project.name}</b> and all its diagrams will be permanently deleted.</>}

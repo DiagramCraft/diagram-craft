@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import styles from './WorkspaceHome.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../components/Chip';
 import { TypeBadge } from '../components/TypeBadge';
 import {
@@ -107,18 +108,10 @@ export const WorkspaceHome = () => {
         </div>
         <div className={styles.actions}>
           {canCreateProjects && (
-            <button type="button" className={styles.btn} onClick={openAddProjectDialog}>
-              <TbPlus size={12} /> New project
-            </button>
+            <Button icon={<TbPlus size={12} />} onClick={openAddProjectDialog}>New project</Button>
           )}
           {canCreateEntities && (
-            <button
-              type="button"
-              className={`${styles.btn} ${styles.btnPrimary}`}
-              onClick={openAddEntityDialog}
-            >
-              <TbPlus size={12} /> New entity
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>New entity</Button>
           )}
         </div>
       </div>

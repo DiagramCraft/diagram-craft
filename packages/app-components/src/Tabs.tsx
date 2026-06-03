@@ -24,7 +24,7 @@ type RootProps = {
 
 const List = (props: ListProps) => {
   return (
-    <BaseUITabs.List role="tablist" className={styles.eList}>
+    <BaseUITabs.List className={styles.eList}>
       {props.children}
     </BaseUITabs.List>
   );
@@ -37,7 +37,6 @@ type ListProps = {
 const Trigger = (props: TriggerProps) => {
   return (
     <BaseUITabs.Tab
-      role="tabpanel"
       className={styles.eTrigger}
       value={props.value}
       disabled={props.disabled}

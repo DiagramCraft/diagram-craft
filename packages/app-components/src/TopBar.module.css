@@ -1,0 +1,25 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  height: var(--topbar, 45px);
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.hamburger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0 6px;
+  border-radius: var(--r, 4px);
+  background: none;
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: var(--cmp-bg-hover);
+    color: var(--cmp-fg);
+  }
+}

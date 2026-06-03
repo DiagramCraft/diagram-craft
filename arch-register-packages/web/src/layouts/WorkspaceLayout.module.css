@@ -5,7 +5,7 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   font-size: 13px;
 }
 
@@ -21,7 +21,7 @@
 
 .main {
   overflow: auto;
-  background: var(--bg-1);
+  background: var(--base-bg);
 }
 
 .placeholder {
@@ -29,6 +29,6 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 14px;
 }

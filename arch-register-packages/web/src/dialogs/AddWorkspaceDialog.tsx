@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Dialog } from '../components/Dialog';
+import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { apiFetch, ApiError, SCHEMA_COLORS } from '../api';
 import type { Workspace } from '../api';
 import { ColorPicker } from '../components/ColorPicker';
@@ -203,13 +207,22 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
     onClose
   ]);
 
-  if (!open) return null;
-
   const activeTemplate = TEMPLATES.find(t => t.id === templateId);
   const fromWs = workspaces.find(w => w.id === copyFrom);
 
   return (
-    <Dialog open={open} onClose={onClose} title="New workspace" panelClassName={styles.dialogPanel}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      sup="New workspace"
+      title="Create a workspace"
+      width={620}
+      footerLeft={<KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'create']]} />}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        { label: submitting ? 'Creating...' : 'Create workspace', type: 'default', disabled: !canCreate || submitting, onClick: () => { void handleSubmit(); } }
+      ]}
+    >
       <div className={styles.body}>
         <div className={styles.section}>
           <div className={styles.sectionHead}>
@@ -224,7 +237,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 style={{
                   background: color
                     ? `linear-gradient(135deg, ${color}, color-mix(in oklch, ${color} 60%, oklch(0.35 0.12 290)))`
-                    : 'var(--bg-4)'
+                    : 'var(--cmp-bg-hover)'
                 }}
               >
                 {badge || '—'}
@@ -244,37 +257,33 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
             </div>
 
             <div className={styles.fields}>
-              <div className={styles.formRow}>
-                <label className={styles.label}>Workspace name</label>
-                <input
+              <FormElement label="Workspace name">
+                <TextInput
                   ref={nameRef}
-                  className={styles.input}
                   placeholder="e.g. Acme Payments Platform"
                   value={name}
-                  onChange={e => setName(e.target.value)}
+                  onChange={value => setName(value ?? '')}
+                  style={{ width: '100%' }}
                 />
-              </div>
+              </FormElement>
 
-              <div className={styles.formRow}>
-                <label className={styles.label}>Color</label>
+              <FormElement label="Color">
                 <ColorPicker
                   value={color}
                   onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)}
                   size="small"
                 />
-              </div>
+              </FormElement>
 
-              <div className={styles.formRow}>
-                <label className={styles.label}>
-                  Description <span className={styles.hint}>— optional</span>
-                </label>
-                <textarea
-                  className={`${styles.input} ${styles.textarea}`}
+              <FormElement label="Description" hint="optional">
+                <TextArea
                   placeholder="What lives in this workspace? Who owns it?"
                   value={description}
-                  onChange={e => setDescription(e.target.value)}
+                  onChange={value => setDescription(value ?? '')}
+                  rows={3}
+                  style={{ width: '100%' }}
                 />
-              </div>
+              </FormElement>
             </div>
           </div>
         </div>
@@ -339,23 +348,21 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
             {mode === 'copy' && (
               <div className={styles.copyPanel}>
-                <div className={styles.formRow}>
-                  <label className={styles.label}>Copy from</label>
-                  <select
-                    className={styles.input}
-                    value={copyFrom}
-                    onChange={e => setCopyFrom(e.target.value)}
+                <FormElement label="Copy from">
+                  <Select.Root
+                    value={copyFrom || undefined}
+                    onChange={value => setCopyFrom(value ?? '')}
+                    placeholder={workspaces.length === 0 ? 'Loading…' : 'Select workspace'}
+                    style={{ width: '100%' }}
                   >
-                    {workspaces.length === 0 && <option value="">Loading…</option>}
                     {workspaces.map(ws => (
-                      <option key={ws.id} value={ws.id}>
+                      <Select.Item key={ws.id} value={ws.id}>
                         {ws.name}
-                      </option>
+                      </Select.Item>
                     ))}
-                  </select>
-                </div>
-                <div className={styles.formRow}>
-                  <label className={styles.label}>Include</label>
+                  </Select.Root>
+                </FormElement>
+                <FormElement label="Include">
                   <div className={styles.copyInclude}>
                     {COPY_PARTS.map(p => (
                       <label key={p.id} className={styles.checkbox}>
@@ -370,7 +377,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                       </label>
                     ))}
                   </div>
-                </div>
+                </FormElement>
                 {fromWs && (
                   <div className={styles.note}>
                     Replicates the selected parts of <strong>{fromWs.name}</strong>. Changes won't
@@ -381,33 +388,8 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
             )}
           </div>
         </div>
-      </div>
 
-      {error && <div className={styles.errorBar}>{error}</div>}
-
-      <div className={styles.footer}>
-        <div className={`${styles.footerHints} ${styles.mono}`}>
-          <span>
-            <kbd className={styles.kbd}>Esc</kbd> cancel
-          </span>
-          <span>
-            <kbd className={styles.kbd}>⌘</kbd>
-            <kbd className={styles.kbd}>↵</kbd> create
-          </span>
-        </div>
-        <div className={styles.footerActions}>
-          <button className={styles.btnCancel} type="button" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            className={styles.btnSubmit}
-            type="button"
-            disabled={!canCreate || submitting}
-            onClick={handleSubmit}
-          >
-            {submitting ? 'Creating…' : '+ Create workspace'}
-          </button>
-        </div>
+        {error && <div className={styles.errorBar}>{error}</div>}
       </div>
     </Dialog>
   );

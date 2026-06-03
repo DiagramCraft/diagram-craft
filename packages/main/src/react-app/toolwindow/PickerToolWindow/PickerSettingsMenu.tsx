@@ -33,13 +33,13 @@ export const PickerSettingsMenu = ({
   };
 
   return (
-    <div style={{ marginLeft: '0.25rem' }}>
+    <div>
       <MenuButton.Root open={open} onOpenChange={setOpen}>
         <MenuButton.Trigger
           variant={'icon-only'}
           aria-label={'Open picker settings'}
           element={
-            <Button variant={'secondary'}>
+            <Button size={'sm'}>
               <TbSettings />
             </Button>
           }

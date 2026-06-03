@@ -1,8 +1,10 @@
 import { type KeyboardEvent as ReactKeyboardEvent, useState, useEffect, useRef } from 'react';
 import styles from './TopBar.module.css';
-import { IconButton } from '../components/IconButton';
+import { TopBar as SharedTopBar } from '@diagram-craft/app-components/TopBar';
+import { HamburgerMenu } from '@diagram-craft/app-components/HamburgerMenu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 import {
-  TbMenu2,
   TbChevronDown,
   TbChevronRight,
   TbSearch,
@@ -93,8 +95,9 @@ export const TopBar = ({
   }, []);
 
   return (
-    <div className={styles.topbar}>
-      <div className={styles.left}>
+    <SharedTopBar
+      className={styles.topbar}
+      leftSlot={
         <AppMenu
           onNewProject={canNewProject ? onNewProject : undefined}
           onNewEntity={canNewEntity ? onNewEntity : undefined}
@@ -103,6 +106,9 @@ export const TopBar = ({
           onOpenGlobalSettings={canOpenGlobalSettings ? onOpenGlobalSettings : undefined}
           showDisabledItems={hideWorkspaceSwitcher}
         />
+      }
+    >
+      <div className={styles.left}>
         {!hideWorkspaceSwitcher && (
           <>
             <div className={styles.sep} />
@@ -136,7 +142,7 @@ export const TopBar = ({
       <div className={styles.right}>
         <AccountMenu />
       </div>
-    </div>
+    </SharedTopBar>
   );
 };
 
@@ -259,118 +265,41 @@ const AppMenu = ({
   onOpenGlobalSettings?: () => void;
   showDisabledItems?: boolean;
 }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [open]);
-
   const hasCreateItems = onNewProject ?? onNewEntity;
   const hasItems = hasCreateItems ?? onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems;
-  if (!hasItems)
-    return (
-      <IconButton title="Menu">
-        <TbMenu2 size={14} />
-      </IconButton>
-    );
+
+  if (!hasItems) return <HamburgerMenu>{null}</HamburgerMenu>;
 
   return (
-    <div className={styles.appMenu} ref={ref}>
-      <IconButton title="Menu" onClick={() => setOpen(o => !o)}>
-        <TbMenu2 size={14} />
-      </IconButton>
-      {open && (
-        <div className={styles.appMenuDrop}>
-          {(hasCreateItems || showDisabledItems) && (
-            <>
-              <div className={styles.menuLabel}>Create</div>
-              <button
-                type="button"
-                className={styles.menuItem}
-                onClick={() => {
-                  if (onNewProject) {
-                    setOpen(false);
-                    onNewProject();
-                  }
-                }}
-                disabled={!onNewProject}
-              >
-                <TbFolders size={14} /> New project
-              </button>
-              <button
-                type="button"
-                className={styles.menuItem}
-                onClick={() => {
-                  if (onNewEntity) {
-                    setOpen(false);
-                    onNewEntity();
-                  }
-                }}
-                disabled={!onNewEntity}
-              >
-                <TbDatabase size={14} /> New entity
-              </button>
-            </>
-          )}
-          {(onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems) && (
-            <>
-              {(hasCreateItems || showDisabledItems) && <div className={styles.menuSep} />}
-              <button
-                type="button"
-                className={styles.menuItem}
-                onClick={() => {
-                  if (onAddWorkspace) {
-                    setOpen(false);
-                    onAddWorkspace();
-                  }
-                }}
-                disabled={!onAddWorkspace}
-              >
-                <TbBuildingCommunity size={14} /> New workspace
-              </button>
-              <button
-                type="button"
-                className={styles.menuItem}
-                onClick={() => {
-                  if (onOpenSettings) {
-                    setOpen(false);
-                    onOpenSettings();
-                  }
-                }}
-                disabled={!onOpenSettings}
-              >
-                <TbSettings size={14} /> Workspace settings
-              </button>
-              {onOpenGlobalSettings && (
-                <button
-                  type="button"
-                  className={styles.menuItem}
-                  onClick={() => {
-                    setOpen(false);
-                    onOpenGlobalSettings();
-                  }}
-                >
-                  <TbSettings size={14} /> Global settings
-                </button>
-              )}
-            </>
-          )}
-        </div>
+    <HamburgerMenu align="start">
+      {(hasCreateItems || showDisabledItems) && (
+        <>
+          <div className={styles.menuLabel}>Create</div>
+          <Menu.Item leftSlot={<TbFolders size={14} />} disabled={!onNewProject} onClick={onNewProject}>
+            New project
+          </Menu.Item>
+          <Menu.Item leftSlot={<TbDatabase size={14} />} disabled={!onNewEntity} onClick={onNewEntity}>
+            New entity
+          </Menu.Item>
+        </>
       )}
-    </div>
+      {(onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems) && (
+        <>
+          {(hasCreateItems || showDisabledItems) && <Menu.Separator />}
+          <Menu.Item leftSlot={<TbBuildingCommunity size={14} />} disabled={!onAddWorkspace} onClick={onAddWorkspace}>
+            New workspace
+          </Menu.Item>
+          <Menu.Item leftSlot={<TbSettings size={14} />} disabled={!onOpenSettings} onClick={onOpenSettings}>
+            Workspace settings
+          </Menu.Item>
+          {onOpenGlobalSettings && (
+            <Menu.Item leftSlot={<TbSettings size={14} />} onClick={onOpenGlobalSettings}>
+              Global settings
+            </Menu.Item>
+          )}
+        </>
+      )}
+    </HamburgerMenu>
   );
 };
 
@@ -378,79 +307,44 @@ const AccountMenu = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [open]);
 
   const displayName = user?.display_name ?? '';
   const email = user?.email ?? '';
   const avatarColor = resolveAvatarBackground(user?.id ?? '', user?.color);
 
   return (
-    <div className={styles.acctMenu} ref={ref}>
-      <button
-        type="button"
-        className={styles.avatar}
-        title={displayName}
-        onClick={() => setOpen(o => !o)}
-        style={{ background: avatarColor }}
-      >
-        {getInitials(displayName)}
-      </button>
-      {open && (
-        <div className={styles.acctMenuDrop}>
-          <div className={styles.acctHeader}>
-            <div className={styles.acctAvatar} style={{ background: avatarColor }}>
-              {getInitials(displayName)}
-            </div>
-            <div className={styles.acctInfo}>
-              <div className={styles.acctName}>{displayName}</div>
-              {email && <div className={styles.acctEmail}>{email}</div>}
-            </div>
+    <MenuButton.Root>
+      <MenuButton.Trigger element={
+        <button type="button" className={styles.avatar} title={displayName} style={{ background: avatarColor }}>
+          {getInitials(displayName)}
+        </button>
+      } />
+      <MenuButton.Menu align="end">
+        <div className={styles.acctHeader}>
+          <div className={styles.acctAvatar} style={{ background: avatarColor }}>
+            {getInitials(displayName)}
           </div>
-          <div className={styles.menuSep} />
-          <button
-            type="button"
-            className={styles.menuItem}
-            onClick={() => {
-              setOpen(false);
-              navigate({ to: '/$workspaceSlug/account', params: { workspaceSlug: window.location.pathname.split('/')[1] ?? '' } });
-            }}
-          >
-            <TbUser size={14} /> Account Settings
-          </button>
-          <div className={styles.menuSep} />
-          <div className={styles.menuLabel}>Theme</div>
-          <ThemeToggle theme={theme} onSetTheme={setTheme} />
-          <div className={styles.menuSep} />
-          <button
-            type="button"
-            className={styles.menuItem}
-            onClick={() => {
-              setOpen(false);
-              logout();
-            }}
-          >
-            <TbLogout size={14} /> Sign out
-          </button>
+          <div className={styles.acctInfo}>
+            <div className={styles.acctName}>{displayName}</div>
+            {email && <div className={styles.acctEmail}>{email}</div>}
+          </div>
         </div>
-      )}
-    </div>
+        <Menu.Separator />
+        <Menu.Item
+          leftSlot={<TbUser size={14} />}
+          onClick={() => navigate({ to: '/$workspaceSlug/account', params: { workspaceSlug: window.location.pathname.split('/')[1] ?? '' } })}
+        >
+          Account Settings
+        </Menu.Item>
+        <Menu.Separator />
+        <div className={styles.menuLabel}>Theme</div>
+        <ThemeToggle theme={theme} onSetTheme={setTheme} />
+        <Menu.Separator />
+        <Menu.Item leftSlot={<TbLogout size={14} />} onClick={logout}>
+          Sign out
+        </Menu.Item>
+      </MenuButton.Menu>
+    </MenuButton.Root>
   );
 };
 

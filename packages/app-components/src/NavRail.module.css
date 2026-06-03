@@ -1,0 +1,83 @@
+/**
+ *  NavRail - .cNavRail [data-side="left"|"right"]
+ *  | Item - .eItem
+ *  |   Button - .eButton [aria-pressed]
+ *  | Separator - .eSeparator
+ */
+.cNavRail {
+  background: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  height: 100%;
+  box-sizing: border-box;
+  width: 100%;
+
+  &[data-side="left"] {
+    border-right: 1px solid var(--panel-border);
+
+    .eItem:has([aria-pressed="true"])::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: var(--accent-fg);
+      border-radius: 2px;
+    }
+  }
+
+  &[data-side="right"] {
+    border-left: 1px solid var(--panel-border);
+
+    .eItem:has([aria-pressed="true"])::before {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: var(--accent-fg);
+      border-radius: 2px;
+    }
+  }
+
+  .eItem {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .eButton {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--base-fg-more-dim);
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      background: var(--cmp-bg);
+      color: var(--base-fg);
+    }
+
+    &[aria-pressed="true"] {
+      color: var(--accent-fg);
+    }
+  }
+
+  .eSeparator {
+    height: 1px;
+    background: var(--panel-border);
+    margin: 4px 6px;
+    width: calc(100% - 12px);
+  }
+}

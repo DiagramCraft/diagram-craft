@@ -4,6 +4,7 @@
   bottom: 0;
   padding: 0.125rem;
   background: transparent;
+  border: none;
   color: var(--cmp-fg-dimmed);
   display: flex;
   align-items: center;

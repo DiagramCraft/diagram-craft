@@ -15,7 +15,6 @@ import {
   TbPlus,
   TbRefresh,
   TbSearch,
-  TbSettings,
   TbTrash
 } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
@@ -37,7 +36,6 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementDataEntry } from '@diagram-craft/model/diagramProps';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
@@ -483,11 +481,7 @@ const DataProviderQueryView = (props: {
           </Select.Root>
         </div>
 
-        <Button
-          variant={'secondary'}
-          onClick={() => props.showItemAddDialog()}
-          disabled={!('addData' in db)}
-        >
+        <Button onClick={() => props.showItemAddDialog()} disabled={!('addData' in db)} size={'sm'}>
           <TbPlus />
         </Button>
       </div>
@@ -524,7 +518,7 @@ const DataProviderQueryView = (props: {
             props.onSearch(search);
             ref.current?.blur();
           }}
-          variant={'secondary'}
+          size={'sm'}
         >
           <TbSearch />
         </Button>
@@ -643,6 +637,7 @@ export const ModelPickerTab = () => {
       <ToolWindow.TabActions>
         <LinkButton
           variant={'icon-only'}
+          size={'sm'}
           aria-disabled={!('refreshData' in db) && !('refreshSchemas' in db)}
           onClick={async () => {
             assert.present(db);
@@ -656,20 +651,6 @@ export const ModelPickerTab = () => {
           }}
         >
           <TbRefresh />
-        </LinkButton>
-        <LinkButton
-          variant={'icon-only'}
-          onClick={() => {
-            application.ui.showDialog(
-              new ModelCenterDialogCommand(
-                { defaultTab: 'model-providers' },
-                () => {},
-                () => {}
-              )
-            );
-          }}
-        >
-          <TbSettings />
         </LinkButton>
       </ToolWindow.TabActions>
       <ToolWindow.TabContent>

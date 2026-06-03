@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './DataModelEditor.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TypeBadge } from '../components/TypeBadge';
 import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { resolveSchemaColor, FIELD_TYPES, SCHEMA_COLORS, SCHEMA_ICONS } from '../api';
@@ -8,7 +12,7 @@ import type { EntitySchema, SchemaField, FieldType, WorkspaceEnum } from '../api
 import { ICON_MAP } from '../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../hooks/useSchemas';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { EnumEditor } from './EnumEditor';
 
 export const DataModelEditor = () => {
@@ -151,9 +155,9 @@ export const DataModelEditor = () => {
         </div>
         <div className={styles.actions}>
           {canEdit && (
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleCreateType}>
-              <TbPlus size={12} /> New entity type
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateType}>
+              New entity type
+            </Button>
           )}
         </div>
       </div>
@@ -193,14 +197,14 @@ export const DataModelEditor = () => {
                 <div className={styles.formRow}>
                   <div>
                     <div className={styles.formLabel}>Name</div>
-                    <input
-                      className={styles.input}
+                    <TextInput
                       value={name}
-                      readOnly={!canEdit}
-                      onChange={e => {
-                        setName(e.target.value);
+                      disabled={!canEdit}
+                      onChange={value => {
+                        setName(value ?? '');
                         setDirty(true);
                       }}
+                      style={{ width: '100%' }}
                     />
                   </div>
                 </div>
@@ -209,15 +213,16 @@ export const DataModelEditor = () => {
                 <div className={styles.formRow}>
                   <div>
                     <div className={styles.formLabel}>Description</div>
-                    <textarea
-                      className={`${styles.input} ${styles.textarea}`}
+                    <TextArea
                       value={description}
-                      readOnly={!canEdit}
+                      disabled={!canEdit}
                       placeholder="What does this entity type represent?"
-                      onChange={e => {
-                        setDescription(e.target.value);
+                      onChange={value => {
+                        setDescription(value ?? '');
                         setDirty(true);
                       }}
+                      rows={4}
+                      style={{ width: '100%' }}
                     />
                   </div>
                 </div>
@@ -265,9 +270,9 @@ export const DataModelEditor = () => {
                 <div className={styles.fieldsHead}>
                   <div className={styles.sectionLabel}>Fields</div>
                   {canEdit && (
-                    <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={addField}>
-                      <TbPlus size={11} /> Add field
-                    </button>
+                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>
+                      Add field
+                    </Button>
                   )}
                 </div>
 
@@ -301,7 +306,7 @@ export const DataModelEditor = () => {
                   </div>
                 ) : (
                   <div className={styles.fieldsTable}>
-                    <div style={{ padding: '16px', color: 'var(--fg-3)', textAlign: 'center', fontSize: 12 }}>
+                    <div style={{ padding: '16px', color: 'var(--cmp-fg-disabled)', textAlign: 'center', fontSize: 12 }}>
                       No fields defined yet. Click "Add field" to get started.
                     </div>
                   </div>
@@ -310,24 +315,23 @@ export const DataModelEditor = () => {
                 {/* Save / Delete actions */}
                 <div className={styles.formActions}>
                   {canEdit && (
-                    <button
-                      type="button"
-                      className={`${styles.btn} ${styles.btnDanger}`}
+                    <Button
+                      variant="danger"
+                      icon={<TbTrash size={12} />}
                       onClick={handleDeleteType}
                     >
-                      <TbTrash size={12} /> Delete type
-                    </button>
+                      Delete type
+                    </Button>
                   )}
                   <div style={{ flex: 1 }} />
                   {canEdit && dirty && (
-                    <button
-                      type="button"
-                      className={`${styles.btn} ${styles.btnPrimary}`}
+                    <Button
+                      variant="primary"
                       onClick={handleSave}
                       disabled={updateSchemaMutation.isPending}
                     >
                       {updateSchemaMutation.isPending ? 'Saving...' : 'Save'}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </>
@@ -346,7 +350,7 @@ export const DataModelEditor = () => {
         </div>
       )}
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete entity type?"
         message={selected ? <>The entity type <b>{selected.name}</b> will be permanently deleted.</> : ''}
@@ -381,32 +385,32 @@ const FieldRow = ({
   const optionsDisplay = () => {
     if (field.type === 'select') {
       return (
-        <select
-          className={styles.inlineSelect}
-          value={field.enumId ?? ''}
+        <Select.Root
+          value={field.enumId || undefined}
           disabled={!canEdit}
-          onChange={e => onUpdate({ enumId: e.target.value } as Partial<SchemaField>)}
+          onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
+          placeholder="Select enum..."
+          style={{ width: '100%' }}
         >
-          <option value="">Select enum...</option>
           {enums.map(e => (
-            <option key={e.id} value={e.id}>{e.name}</option>
+            <Select.Item key={e.id} value={e.id}>{e.name}</Select.Item>
           ))}
-        </select>
+        </Select.Root>
       );
     }
     if (field.type === 'reference' || field.type === 'containment') {
       return (
-        <select
-          className={styles.inlineSelect}
-          value={field.schemaId}
+        <Select.Root
+          value={field.schemaId || undefined}
           disabled={!canEdit}
-          onChange={e => onUpdate({ schemaId: e.target.value } as Partial<SchemaField>)}
+          onChange={value => onUpdate({ schemaId: value ?? '' } as Partial<SchemaField>)}
+          placeholder="Select type..."
+          style={{ width: '100%' }}
         >
-          <option value="">Select type...</option>
           {schemas.map(s => (
-            <option key={s.id} value={s.id}>{s.name}</option>
+            <Select.Item key={s.id} value={s.id}>{s.name}</Select.Item>
           ))}
-        </select>
+        </Select.Root>
       );
     }
     return <span className="dim">&mdash;</span>;
@@ -418,22 +422,30 @@ const FieldRow = ({
         <TbGripVertical size={14} />
       </span>
       <span className={styles.fieldName}>{field.id}</span>
-      <input
-        className={styles.inlineInput}
+      <TextInput
         value={field.name}
-        readOnly={!canEdit}
-        onChange={e => onUpdate({ name: e.target.value })}
+        disabled={!canEdit}
+        onChange={value => onUpdate({ name: value ?? '' })}
+        style={{ width: '100%' }}
       />
-      <select
-        className={styles.inlineSelect}
+      <Select.Root
         value={field.type}
         disabled={!canEdit}
-        onChange={e => onChangeType(e.target.value as FieldType)}
+        onChange={value => {
+          if (value) onChangeType(value as FieldType);
+        }}
+        style={{ width: '100%' }}
       >
         {FIELD_TYPES.map(t => (
-          <option key={t.value} value={t.value} disabled={t.value === 'containment' && containmentDisabled}>{t.label}</option>
+          <Select.Item
+            key={t.value}
+            value={t.value}
+            disabled={t.value === 'containment' && containmentDisabled}
+          >
+            {t.label}
+          </Select.Item>
         ))}
-      </select>
+      </Select.Root>
       <span className={styles.fieldOptions}>{optionsDisplay()}</span>
       <span style={{ textAlign: 'center' }}>
         <input type="checkbox" className={styles.checkbox} disabled={!canEdit} />

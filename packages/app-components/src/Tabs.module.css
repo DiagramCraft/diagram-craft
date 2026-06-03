@@ -17,7 +17,6 @@
     font-size: 12px;
     font-weight: bold;
     line-height: 1;
-    background-color: var(--panel-bg);
     border-bottom: 1px solid var(--panel-border);
     height: var(--tab-height);
 
@@ -28,15 +27,24 @@
 
     .eTrigger {
       font-size: 12px;
-      padding: 7.75px 9px;
+      padding: 7.75px 9px 5px 9px;
       background: none;
       color: var(--panel-fg);
       border-width: 0;
       position: relative;
       border-bottom: 2px solid transparent;
+      cursor: default;
 
       &[data-active] {
         border-bottom: 2px solid var(--accent-chroma);
+      }
+
+      &:not([data-active]) {
+        color: var(--base-fg-more-dim);
+
+        &:hover {
+          color: var(--panel-fg);
+        }
       }
 
       &:disabled {

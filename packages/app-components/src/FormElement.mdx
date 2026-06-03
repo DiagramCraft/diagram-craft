@@ -1,0 +1,100 @@
+import { Meta, Canvas, Controls } from '@storybook/blocks';
+import * as FormElementStories from './FormElement.stories';
+
+<Meta of={FormElementStories} />
+
+# FormElement
+
+A wrapper component that provides consistent label styling and layout for form inputs. Use `FormElement` to wrap `TextInput`, `TextArea`, or `Select` components when you need a vertical label layout.
+
+## When to Use
+
+- ✅ Use `FormElement` for vertical form layouts (label above input)
+- ✅ Use when you need consistent label styling across forms
+- ✅ Use when you need required indicators, hints, or error messages
+- ❌ Don't use for horizontal layouts (use `KeyValueTable` instead)
+- ❌ Don't use when there's no label needed
+
+## Basic Usage
+
+<Canvas of={FormElementStories.WithTextInput} />
+
+## With Required Indicator
+
+Add the `required` prop to display an asterisk (*) next to the label.
+
+<Canvas of={FormElementStories.WithRequired} />
+
+## With Hint Text
+
+Use the `hint` prop to provide helpful information below the input.
+
+<Canvas of={FormElementStories.WithHint} />
+
+## With Error Message
+
+Use the `error` prop to display validation errors. The error message replaces the hint text when present.
+
+<Canvas of={FormElementStories.WithError} />
+
+## With TextArea
+
+`FormElement` works with any form component, including `TextArea`.
+
+<Canvas of={FormElementStories.WithTextArea} />
+
+## With Select
+
+`FormElement` also works with `Select` components.
+
+<Canvas of={FormElementStories.WithSelect} />
+
+## Multiple Fields
+
+Example of a complete form using multiple `FormElement` components.
+
+<Canvas of={FormElementStories.MultipleFields} />
+
+## Props
+
+<Controls />
+
+## Accessibility
+
+`FormElement` includes built-in accessibility features:
+
+- Uses semantic `<label>` element with `htmlFor` attribute
+- Error messages have `role="alert"` for screen reader announcements
+- Hint and error messages are properly associated with their inputs via `id` attributes
+
+## Styling
+
+The component uses CSS variables for theming:
+
+- `--base-fg` - Label text color
+- `--base-fg-dim` - Hint text color
+- `--danger-fg` - Required indicator and error color
+
+## Migration from Custom Labels
+
+### Before
+```tsx
+<div className={styles.field}>
+  <label>Name <span className={styles.required}>*</span></label>
+  <TextInput value={name} onChange={setName} />
+</div>
+```
+
+### After
+```tsx
+<FormElement label="Name" required>
+  <TextInput value={name} onChange={setName} />
+</FormElement>
+```
+
+## Related Components
+
+- `TextInput` - Text input component
+- `TextArea` - Multi-line text input component
+- `Select` - Dropdown select component
+- `KeyValueTable` - For horizontal label/value layouts

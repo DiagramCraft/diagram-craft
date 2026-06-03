@@ -76,7 +76,7 @@ export const SCHEMA_COLORS = [
   'var(--tag-service)',
   'var(--tag-database)',
   'var(--tag-system)',
-  'var(--danger)',
+  'var(--error-fg)',
   'oklch(0.65 0.15 340)',
   'oklch(0.65 0.12 170)',
   'oklch(0.65 0.14 200)',

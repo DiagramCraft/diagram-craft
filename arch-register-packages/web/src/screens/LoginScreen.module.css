@@ -8,8 +8,8 @@
   display: grid;
   grid-template-rows: 1fr 24px;
   height: 100vh;
-  background: var(--bg-1);
-  color: var(--fg-1);
+  background: var(--base-bg);
+  color: var(--base-fg-dim);
   font-family: var(--font-sans);
   font-size: 12.5px;
   line-height: 1.4;
@@ -40,8 +40,8 @@
 .card {
   position: relative;
   width: 360px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-subtle);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   box-shadow:
     0 1px 0 oklch(1 0 0 / 0.02) inset,
@@ -57,8 +57,8 @@
   background: linear-gradient(
     90deg,
     transparent 0,
-    var(--accent) 30%,
-    var(--accent) 70%,
+    var(--accent-fg) 30%,
+    var(--accent-fg) 70%,
     transparent 100%
   );
   opacity: 0.85;
@@ -78,7 +78,7 @@
   height: 28px;
   border-radius: 5px;
   background: linear-gradient(135deg, oklch(0.60 0.14 258), oklch(0.50 0.10 290));
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.3px;
@@ -90,7 +90,7 @@
 }
 
 .brandName {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: -0.1px;
@@ -98,7 +98,7 @@
 
 .brandSub {
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 /* ── Title row ───────────────────────────────────────────────── */
@@ -109,7 +109,7 @@
 
 .title {
   font-size: 17px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
   letter-spacing: -0.2px;
   margin: 0;
@@ -117,7 +117,7 @@
 
 .sub {
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   margin-top: 4px;
   line-height: 1.45;
 }
@@ -141,7 +141,7 @@
   font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -152,26 +152,26 @@
   display: flex;
   align-items: center;
   height: 32px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   padding: 0 8px 0 28px;
   transition: border-color 80ms;
 }
 
 .inputWrap:focus-within {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .inputIcon {
   position: absolute;
   left: 8px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   display: inline-flex;
 }
 
 .inputWrap:focus-within .inputIcon {
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
 }
 
 .input {
@@ -179,7 +179,7 @@
   background: transparent;
   border: 0;
   outline: 0;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-size: 12.5px;
   height: 100%;
   padding: 0;
@@ -187,7 +187,7 @@
 }
 
 .input::placeholder {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .inputMono {
@@ -204,7 +204,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   border-radius: var(--r-sm);
   flex-shrink: 0;
   margin-right: -4px;
@@ -215,8 +215,8 @@
 }
 
 .eye:hover {
-  color: var(--fg-0);
-  background: var(--bg-3);
+  color: var(--base-fg);
+  background: var(--cmp-bg);
 }
 
 /* ── Row / checkbox ──────────────────────────────────────────── */
@@ -233,20 +233,20 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   cursor: pointer;
   user-select: none;
 }
 
 .check input {
-  accent-color: var(--accent);
+  accent-color: var(--accent-fg);
   width: 13px;
   height: 13px;
   margin: 0;
 }
 
 .check:hover {
-  color: var(--fg-0);
+  color: var(--base-fg);
 }
 
 /* ── Submit button ───────────────────────────────────────────── */
@@ -259,9 +259,9 @@
   width: 100%;
   height: 32px;
   margin-top: 6px;
-  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
-  border: 1px solid color-mix(in oklch, var(--accent) 50%, var(--border));
-  color: var(--fg-0);
+  background: color-mix(in oklch, var(--accent-fg) 22%, var(--cmp-bg));
+  border: 1px solid color-mix(in oklch, var(--accent-fg) 50%, var(--cmp-border));
+  color: var(--base-fg);
   border-radius: var(--r);
   font-size: 12.5px;
   font-weight: 500;
@@ -271,8 +271,8 @@
 }
 
 .submit:hover:not(:disabled) {
-  background: color-mix(in oklch, var(--accent) 32%, var(--bg-3));
-  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent-fg) 32%, var(--cmp-bg));
+  border-color: var(--accent-fg);
 }
 
 .submit:active:not(:disabled) {
@@ -292,8 +292,8 @@
   gap: 6px;
   font-size: 11.5px;
   color: oklch(0.78 0.14 25);
-  background: color-mix(in oklch, var(--danger) 12%, transparent);
-  border: 1px solid color-mix(in oklch, var(--danger) 30%, var(--border));
+  background: color-mix(in oklch, var(--error-fg) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--error-fg) 30%, var(--cmp-border));
   border-radius: var(--r);
   padding: 6px 8px;
   margin-bottom: 2px;
@@ -310,28 +310,28 @@
 /* ── Footer ──────────────────────────────────────────────────── */
 
 .foot {
-  border-top: 1px solid var(--border-subtle);
-  background: var(--bg-1);
+  border-top: 1px solid var(--panel-border);
+  background: var(--base-bg);
   padding: 10px 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 /* ── Status bar ──────────────────────────────────────────────── */
 
 .statusbar {
   height: 24px;
-  background: var(--bg-2);
-  border-top: 1px solid var(--border-subtle);
+  background: var(--panel-bg);
+  border-top: 1px solid var(--panel-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 10px;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .statusbarL,
@@ -357,11 +357,11 @@
 
 .statusbarDotOk {
   composes: statusbarDot;
-  background: var(--ok);
+  background: var(--green);
 }
 
 .statusbarHighlight {
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
 }
 
 /* ── OIDC container ──────────────────────────────────────────── */
@@ -379,8 +379,8 @@
   width: 24px;
   height: 24px;
   margin: 24px auto;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
+  border: 2px solid var(--cmp-border);
+  border-top-color: var(--accent-fg);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -393,7 +393,7 @@
 
 .loadingText {
   text-align: center;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 12px;
   margin: 0 0 20px;
 }

@@ -1,5 +1,5 @@
 .icSidebar {
-  --_width: 43px;
+  --_width: 44px;
 
   anchor-name: --sidebar;
   anchor-scope: --sidebar;
@@ -64,8 +64,6 @@
   }
 
   &[data-side="left"] {
-    border-right: 1px solid var(--panel-border);
-
     .eExpanded {
       position-anchor: --sidebar;
       left: anchor(right);
@@ -80,38 +78,9 @@
     .eBottomContainer {
       left: 0;
     }
-
-    > div:nth-child(-n + 2) {
-      button {
-        padding: 0;
-        color: var(--base-fg-more-dim);
-      }
-
-      button[data-state="on"],
-      button[data-pressed] {
-        color: var(--accent-fg);
-        background-color: transparent;
-      }
-    }
-
-    > div:nth-child(1) {
-      button[data-state="on"],
-      button[data-pressed] {
-        &:after {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 11px;
-          bottom: 2px;
-          border-left: 1px solid var(--accent-fg);
-        }
-      }
-    }
   }
 
   &[data-side="right"] {
-    border-left: 1px solid var(--panel-border);
-
     .eExpanded {
       position-anchor: --sidebar;
       right: anchor(left);
@@ -126,32 +95,17 @@
     .eBottomContainer {
       right: 0;
     }
+  }
 
-    > div:nth-child(-n + 2) {
-      button {
-        padding: 0;
-        color: var(--base-fg-more-dim);
-      }
-
-      button[data-state="on"],
-      button[data-pressed] {
-        color: var(--accent-fg);
-        background-color: transparent;
-      }
+  .eBottomContainer {
+    button {
+      padding: 0;
+      color: var(--base-fg-more-dim);
     }
 
-    > div:nth-child(1) {
-      button[data-state="on"],
-      button[data-pressed] {
-        &:after {
-          content: '';
-          position: absolute;
-          right: 0;
-          top: 11px;
-          bottom: 2px;
-          border-right: 1px solid var(--accent-fg);
-        }
-      }
+    button[data-pressed] {
+      color: var(--accent-fg);
+      background-color: transparent;
     }
   }
 }

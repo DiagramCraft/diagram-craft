@@ -3,16 +3,21 @@ import styles from './Button.module.css';
 import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { DataAttributes } from './utils';
 
+const CUSTOM_PROPS = ['variant', 'size', 'icon', 'iconRight'] as const;
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps<HTMLButtonElement>>(
   (props, forwardedRef) => {
     return (
       <button
-        {...PropsUtils.filter(props, 'variant')}
+        {...PropsUtils.filter(props, ...CUSTOM_PROPS)}
         className={`${styles.cButton} ${props.className ?? ''}`}
-        data-variant={props.variant ?? 'primary'}
+        data-variant={props.variant ?? 'default'}
+        data-size={props.size ?? 'md'}
         ref={forwardedRef}
       >
+        {props.icon}
         {props.children}
+        {props.iconRight}
       </button>
     );
   }
@@ -22,12 +27,15 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonProps<HTMLAn
   (props, forwardedRef) => {
     return (
       <a
-        {...PropsUtils.filter(props, 'variant')}
+        {...PropsUtils.filter(props, ...CUSTOM_PROPS)}
         className={`${styles.cButton} ${props.className ?? ''}`}
-        data-variant={props.variant ?? 'primary'}
+        data-variant={props.variant ?? 'default'}
+        data-size={props.size ?? 'md'}
         ref={forwardedRef}
       >
+        {props.icon}
         {props.children}
+        {props.iconRight}
       </a>
     );
   }
@@ -38,8 +46,11 @@ export namespace Button {
 }
 
 type ButtonProps<E> = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger' | 'icon-only';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-solid' | 'icon-only';
+  size?: 'sm' | 'md' | 'lg';
+  icon?: React.ReactNode;
+  iconRight?: React.ReactNode;
 } & Omit<React.HTMLAttributes<E>, 'type'> &
   DataAttributes;

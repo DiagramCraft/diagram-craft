@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useMatches, useSearch } from '@tanstack/react-router';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import styles from './SidePanel.module.css';
 import { TreeRow } from '../components/TreeRow';
 import { TypeBadge } from '../components/TypeBadge';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { ConfirmDialog } from '../components/ConfirmDialog';
-import { Dialog } from '../components/Dialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import {
   TbFolders, TbDatabase,
   TbUsers, TbFolderOpen,
@@ -97,7 +98,11 @@ const SectionHeader = ({
   actions?: React.ReactNode;
 }) => (
   <div className={`${styles.header} ${styles.tabHeader}`}>
-    <div className={`${styles.headerTab} ${styles.headerTabActive}`}>{title}</div>
+    <Tabs.Root value="section">
+      <Tabs.List>
+        <Tabs.Trigger value="section">{title}</Tabs.Trigger>
+      </Tabs.List>
+    </Tabs.Root>
     {actions && <div className={styles.headerActions}>{actions}</div>}
   </div>
 );
@@ -200,7 +205,7 @@ const SidebarRenameDialog = ({
     <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: 'var(--fg-2)' }}>Name</label>
+          <label style={{ fontSize: 12, color: 'var(--base-fg-more-dim)' }}>Name</label>
           <input
             ref={inputRef}
             value={name}
@@ -208,10 +213,10 @@ const SidebarRenameDialog = ({
             style={{
               fontSize: 13,
               padding: '6px 8px',
-              background: 'var(--bg-1)',
-              border: '1px solid var(--border)',
+              background: 'var(--base-bg)',
+              border: '1px solid var(--cmp-border)',
               borderRadius: 'var(--r)',
-              color: 'var(--fg-0)',
+              color: 'var(--base-fg)',
               outline: 'none',
             }}
           />
@@ -492,20 +497,15 @@ const ProjectsSidebar = ({
   return (
     <>
       <div className={`${styles.header} ${styles.tabHeader}`}>
-        <button
-          type="button"
-          className={`${styles.headerTab} ${projectSidebarTab === 'projects' ? styles.headerTabActive : ''}`}
-          onClick={() => activateTab('projects')}
+        <Tabs.Root
+          value={projectSidebarTab}
+          onValueChange={value => activateTab(value as 'projects' | 'archive')}
         >
-          Projects
-        </button>
-        <button
-          type="button"
-          className={`${styles.headerTab} ${projectSidebarTab === 'archive' ? styles.headerTabActive : ''}`}
-          onClick={() => activateTab('archive')}
-        >
-          Archive
-        </button>
+          <Tabs.List>
+            <Tabs.Trigger value="projects">Projects</Tabs.Trigger>
+            <Tabs.Trigger value="archive">Archive</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
       </div>
       <div className={styles.scroll}>
         {projectGroups.length > 0 ? projectGroups.map(group => (
@@ -582,7 +582,7 @@ const ProjectsSidebar = ({
         />
       )}
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={!!deleteTarget && deleteTarget.type !== 'project'}
         title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
         message={
@@ -767,20 +767,15 @@ const DataModelSidebar = ({
   return (
     <>
       <div className={`${styles.header} ${styles.tabHeader}`}>
-        <button
-          type="button"
-          className={`${styles.headerTab} ${activeTab === 'types' ? styles.headerTabActive : ''}`}
-          onClick={() => activateTab('types')}
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={value => activateTab(value as 'types' | 'enums')}
         >
-          Types
-        </button>
-        <button
-          type="button"
-          className={`${styles.headerTab} ${activeTab === 'enums' ? styles.headerTabActive : ''}`}
-          onClick={() => activateTab('enums')}
-        >
-          Enums
-        </button>
+          <Tabs.List>
+            <Tabs.Trigger value="types">Types</Tabs.Trigger>
+            <Tabs.Trigger value="enums">Enums</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
       </div>
       {activeTab === 'types' ? (
         <div className={styles.scroll}>

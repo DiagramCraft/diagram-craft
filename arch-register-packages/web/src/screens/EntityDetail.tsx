@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import styles from './EntityDetail.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
 import { Chip } from '../components/Chip';
@@ -11,7 +13,7 @@ import {
 import { resolveSchemaColor } from '../api';
 import type { EntityRecord, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { useEntity, useEntityRelations, useUpdateEntity, useDeleteEntity, useCloneEntity, useEntitiesBySchema } from '../hooks/useEntities';
 import { useAuditLog } from '../hooks/useAudit';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
@@ -77,7 +79,7 @@ export const EntityDetail = () => {
   }, [entity, schemas]);
 
   const schema = schemaEntry?.schema ?? null;
-  const color = schemaEntry ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index) : 'var(--accent)';
+  const color = schemaEntry ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index) : 'var(--accent-fg)';
 
   // Get reference field schema IDs
   const referenceSchemaIds = useMemo(() => {
@@ -225,9 +227,9 @@ export const EntityDetail = () => {
       <div className={styles.empty}>
         <div className={styles.emptyTitle}>Entity not found</div>
         <div>The entity may have been deleted.</div>
-        <button type="button" className={styles.btn} onClick={() => navigateToEntities()}>
-          <TbChevronLeft size={12} /> Back to entities
-        </button>
+        <Button icon={<TbChevronLeft size={12} />} onClick={() => navigateToEntities()}>
+          Back to entities
+        </Button>
       </div>
     );
   }
@@ -258,18 +260,18 @@ export const EntityDetail = () => {
         </div>
         <div className={styles.headActions}>
           {!editing ? (
-            entity.canEdit ? <button type="button" className={styles.btn} onClick={startEdit}><TbEdit size={12} /> Edit</button> : null
+            entity.canEdit ? <Button icon={<TbEdit size={12} />} onClick={startEdit}>Edit</Button> : null
           ) : (
             <>
               {entity.canDelete && (
-                <button type="button" className={styles.btnDanger} onClick={handleDelete}>
-                  <TbTrash size={12} /> Delete
-                </button>
+                <Button variant="danger" icon={<TbTrash size={12} />} onClick={handleDelete}>
+                  Delete
+                </Button>
               )}
-              <button type="button" className={styles.btn} onClick={cancelEdit}>Cancel</button>
-              <button type="button" className={styles.btnPrimary} onClick={saveEdit} disabled={updateEntity.isPending}>
+              <Button onClick={cancelEdit}>Cancel</Button>
+              <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending}>
                 {updateEntity.isPending ? 'Saving...' : 'Save'}
-              </button>
+              </Button>
             </>
           )}
           {menuItems.length > 0 && (
@@ -283,38 +285,16 @@ export const EntityDetail = () => {
 
       {/* Tabs */}
       <div className={styles.tabBar}>
-        <div className={styles.tabs}>
-          <button
-            type="button"
-            className={`${styles.tab} ${tab === 'overview' ? styles.tabActive : ''}`}
-            onClick={() => setTab('overview')}
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${tab === 'topology' ? styles.tabActive : ''}`}
-            onClick={() => setTab('topology')}
-          >
-            Topology
-          </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${tab === 'relations' ? styles.tabActive : ''}`}
-            onClick={() => setTab('relations')}
-          >
-            Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
-          </button>
-          {canViewAudit && (
-            <button
-              type="button"
-              className={`${styles.tab} ${tab === 'changes' ? styles.tabActive : ''}`}
-              onClick={() => setTab('changes')}
-            >
-              Change history
-            </button>
-          )}
-        </div>
+        <Tabs.Root value={tab} onValueChange={value => setTab(value as TabId)}>
+          <Tabs.List>
+            <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+            <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
+            <Tabs.Trigger value="relations">
+              Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
+            </Tabs.Trigger>
+            {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
+          </Tabs.List>
+        </Tabs.Root>
       </div>
 
       {/* Overview */}
@@ -496,7 +476,7 @@ export const EntityDetail = () => {
         <ChangeHistory auditLog={auditLog} loading={loadingAudit} />
       )}
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete entity?"
         message={<>The entity <b>{entityName}</b> will be permanently deleted.</>}
@@ -689,7 +669,7 @@ const RelationRow = ({
   const targetSchemaId = direction === 'outgoing' ? relation.entitySchemaId : relation.entitySchemaId;
   const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
   const targetSchema = schemaIdx >= 0 ? schemas[schemaIdx] : null;
-  const targetColor = targetSchema ? resolveSchemaColor(targetSchema, schemaIdx) : 'var(--accent)';
+  const targetColor = targetSchema ? resolveSchemaColor(targetSchema, schemaIdx) : 'var(--accent-fg)';
 
   return (
     <button
@@ -867,7 +847,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
   const resolveRelColor = useCallback((rel: Relation) => {
     const idx = schemas.findIndex(s => s.id === rel.entitySchemaId);
     const s = idx >= 0 ? schemas[idx] : null;
-    return { schema: s, color: s ? resolveSchemaColor(s, idx) : 'var(--accent)' };
+    return { schema: s, color: s ? resolveSchemaColor(s, idx) : 'var(--accent-fg)' };
   }, [schemas]);
 
   const setCardRef = useCallback((key: string) => (el: HTMLElement | null) => {
@@ -945,7 +925,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
           <path
             key={edge.key}
             d={edge.d}
-            stroke="var(--border-strong)"
+            stroke="var(--base-fg-more-dim)"
             strokeWidth={1.2}
             fill="none"
             opacity={0.7}
@@ -968,7 +948,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
             })}
           </div>
           <svg width="12" height="18" viewBox="0 0 12 18" className={styles.topoParentArrow}>
-            <path d="M 6 0 L 6 14 M 2 10 L 6 14 L 10 10" stroke="var(--border-strong)" strokeWidth="1.2" fill="none" />
+            <path d="M 6 0 L 6 14 M 2 10 L 6 14 L 10 10" stroke="var(--base-fg-more-dim)" strokeWidth="1.2" fill="none" />
           </svg>
         </div>
       )}

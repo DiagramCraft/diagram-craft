@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import styles from './SidePanel.module.css';
 import { TreeRow } from '../components/TreeRow';
 import { TbShieldLock } from 'react-icons/tb';
@@ -22,7 +23,11 @@ const GroupLabel = ({ children }: { children: React.ReactNode }) => (
 
 const SectionHeader = ({ title }: { title: string }) => (
   <div className={`${styles.header} ${styles.tabHeader}`}>
-    <div className={`${styles.headerTab} ${styles.headerTabActive}`}>{title}</div>
+    <Tabs.Root value="section">
+      <Tabs.List>
+        <Tabs.Trigger value="section">{title}</Tabs.Trigger>
+      </Tabs.List>
+    </Tabs.Root>
   </div>
 );
 

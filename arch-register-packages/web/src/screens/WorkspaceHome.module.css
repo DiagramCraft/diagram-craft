@@ -16,19 +16,19 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   margin-bottom: 4px;
 }
 
 .title {
   font-size: 22px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
   letter-spacing: -0.2px;
 }
 
 .sub {
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   margin-top: 4px;
   max-width: 640px;
 }
@@ -39,40 +39,8 @@
   align-items: center;
 }
 
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  color: var(--fg-1);
-  border-radius: var(--r);
-  font-size: 12px;
-  transition: background 80ms, border-color 80ms, color 80ms;
-}
-
-.btn:hover {
-  background: var(--bg-4);
-  color: var(--fg-0);
-  border-color: var(--border-strong);
-}
-
-.btnPrimary {
-  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
-  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
-  color: var(--fg-0);
-}
-
-.btnPrimary:hover {
-  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
-  border-color: var(--accent);
-}
-
 .link {
-  color: var(--accent-strong);
+  color: var(--accent-fg-hover);
   background: none;
   border: 0;
   padding: 0;
@@ -95,8 +63,8 @@
 }
 
 .stat {
-  background: var(--bg-2);
-  border: 1px solid var(--border-subtle);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   padding: 12px 14px;
   position: relative;
@@ -107,19 +75,19 @@
   position: absolute;
   right: 12px;
   top: 12px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .statLabel {
   font-size: 11px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .statValue {
   font-size: 26px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
   margin-top: 4px;
   letter-spacing: -0.5px;
@@ -131,17 +99,17 @@
 }
 
 .statAccent {
-  border-color: color-mix(in oklch, var(--accent) 30%, var(--border));
+  border-color: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-border));
 }
 
 .statAccent .statValue {
-  color: var(--accent-strong);
+  color: var(--accent-fg-hover);
 }
 
 /* Panels */
 .panel {
-  background: var(--bg-2);
-  border: 1px solid var(--border-subtle);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   overflow: hidden;
   display: flex;
@@ -154,12 +122,12 @@
   justify-content: space-between;
   height: 36px;
   padding: 0 14px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .panelTitle {
   font-size: 12px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
 }
 
@@ -197,7 +165,7 @@
   padding: 8px;
   border-radius: var(--r);
   text-align: left;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
 }
 
 .projectColorBar {
@@ -210,18 +178,18 @@
 }
 
 .projectRow:hover {
-  background: var(--bg-3);
+  background: var(--cmp-bg);
 }
 
 .projectRowL {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
 }
 
 .projectName {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
 }
 
@@ -237,21 +205,21 @@
   justify-content: flex-end;
   gap: 8px;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   text-align: right;
 }
 
 .progress {
   height: 4px;
   width: 100%;
-  background: var(--bg-1);
+  background: var(--base-bg);
   border-radius: 2px;
   overflow: hidden;
 }
 
 .progressBar {
   height: 100%;
-  background: var(--accent);
+  background: var(--accent-fg);
   border-radius: 2px;
 }
 
@@ -269,14 +237,14 @@
   gap: 10px;
   padding: 8px 8px 8px 14px;
   border-radius: var(--r);
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   text-align: left;
   border: 1px solid transparent;
 }
 
 .typecard:hover {
-  background: var(--bg-3);
-  border-color: var(--border-subtle);
+  background: var(--cmp-bg);
+  border-color: var(--panel-border);
 }
 
 .typecardBar {
@@ -302,23 +270,23 @@
 }
 
 .typecardName {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
   font-size: 12.5px;
 }
 
 .typecardMeta {
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .typecardAdd {
-  color: var(--fg-2);
-  border: 1px dashed var(--border);
+  color: var(--base-fg-more-dim);
+  border: 1px dashed var(--cmp-border);
 }
 
 .typecardAdd:hover {
-  background: var(--bg-3);
+  background: var(--cmp-bg);
 }
 
 /* Activity feed */
@@ -337,20 +305,20 @@
 }
 
 .activityRow:hover {
-  background: var(--bg-3);
+  background: var(--cmp-bg);
 }
 
 .activityWho {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
 }
 
 .activityTarget {
-  color: var(--fg-0);
+  color: var(--base-fg);
 }
 
 .activityTime {
   margin-left: auto;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
