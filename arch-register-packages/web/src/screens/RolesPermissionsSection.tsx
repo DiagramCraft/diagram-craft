@@ -5,7 +5,7 @@ import { ApiError, type WorkspaceRoleDefinition } from '../api';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types';
 import { useAuth } from '../auth/AuthContext';
 import { ColorPicker } from '../components/ColorPicker';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceMembers } from '../hooks/useWorkspaceMembers';
 import {
@@ -363,7 +363,7 @@ const RoleDeleteConfirmDialog = ({
       : error?.message ?? null;
 
   return (
-    <ConfirmDialog
+    <DeleteConfirmationDialog
       open={open}
       title={`Delete ${role.name}?`}
       message={`This will permanently remove the custom role "${role.name}".`}

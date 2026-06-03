@@ -6,7 +6,7 @@ import { TreeRow } from '../components/TreeRow';
 import { TypeBadge } from '../components/TypeBadge';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import {
   TbFolders, TbDatabase,
@@ -582,7 +582,7 @@ const ProjectsSidebar = ({
         />
       )}
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={!!deleteTarget && deleteTarget.type !== 'project'}
         title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
         message={

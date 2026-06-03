@@ -13,7 +13,7 @@ import {
 import { resolveSchemaColor } from '../api';
 import type { EntityRecord, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { useEntity, useEntityRelations, useUpdateEntity, useDeleteEntity, useCloneEntity, useEntitiesBySchema } from '../hooks/useEntities';
 import { useAuditLog } from '../hooks/useAudit';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
@@ -476,7 +476,7 @@ export const EntityDetail = () => {
         <ChangeHistory auditLog={auditLog} loading={loadingAudit} />
       )}
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete entity?"
         message={<>The entity <b>{entityName}</b> will be permanently deleted.</>}

@@ -9,7 +9,7 @@ import type { EntitySchema, SchemaField, FieldType, WorkspaceEnum } from '../api
 import { ICON_MAP } from '../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../hooks/useSchemas';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { EnumEditor } from './EnumEditor';
 
 export const DataModelEditor = () => {
@@ -346,7 +346,7 @@ export const DataModelEditor = () => {
         </div>
       )}
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete entity type?"
         message={selected ? <>The entity type <b>{selected.name}</b> will be permanently deleted.</> : ''}

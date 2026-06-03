@@ -5,7 +5,7 @@ import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../hooks/useEnums';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 
 export const EnumEditor = () => {
   const navigate = useNavigate();
@@ -198,7 +198,7 @@ export const EnumEditor = () => {
         </div>
       )}
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete enum?"
         message={selected ? <>The enum <b>{selected.name}</b> will be permanently deleted.</> : ''}

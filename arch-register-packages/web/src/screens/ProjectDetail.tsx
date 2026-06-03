@@ -5,7 +5,7 @@ import styles from './ProjectDetail.module.css';
 import { AddFolderDialog } from '../dialogs/AddFolderDialog';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ColorPicker } from '../components/ColorPicker';
@@ -519,7 +519,7 @@ export const ProjectDetail = () => {
         onCancel={() => setRenameTarget(null)}
       />
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={!!deleteTarget}
         title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
         message={
@@ -981,7 +981,7 @@ const ProjectSettings = ({
         </Button>
       </div>
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete project?"
         message={<>The project <b>{project.name}</b> and all its diagrams will be permanently deleted.</>}

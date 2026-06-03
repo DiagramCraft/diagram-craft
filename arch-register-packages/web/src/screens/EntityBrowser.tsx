@@ -12,7 +12,7 @@ import {
 import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
 import type { EntityRecord, EntitySchema, TreeNode, TreeEdge } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { useEntities, useEntityFacets, useEntityTree, useDeleteEntity, useCloneEntity } from '../hooks/useEntities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
@@ -266,7 +266,7 @@ export const EntityBrowser = () => {
         </>
       )}
 
-      <ConfirmDialog
+      <DeleteConfirmationDialog
         open={!!deleteTarget}
         title="Delete entity?"
         message={deleteTarget ? <>The entity <b>{deleteTarget._name || deleteTarget._slug}</b> will be permanently deleted.</> : ''}
