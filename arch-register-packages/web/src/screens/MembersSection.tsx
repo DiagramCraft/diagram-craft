@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TbSearch } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Select } from '@diagram-craft/app-components/Select';
 import { Chip } from '../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
@@ -277,13 +278,11 @@ const AddMemberDialog = ({
 }) => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState('viewer');
-  const userRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setSelectedUserId(users[0]?.id ?? '');
     setSelectedRole(roles.find(role => role.id === 'viewer')?.id ?? roles[0]?.id ?? '');
-    setTimeout(() => userRef.current?.focus(), 0);
   }, [open, roles, users]);
 
   if (!open) return null;
@@ -303,38 +302,37 @@ const AddMemberDialog = ({
                 <div className={styles.fieldHint}>Choose an existing user to add to this workspace.</div>
               </div>
               <div className={styles.fieldRight}>
-                <select
-                  ref={userRef}
-                  className={styles.select}
-                  value={selectedUserId}
-                  onChange={event => setSelectedUserId(event.target.value)}
+                <Select.Root
+                  value={selectedUserId || undefined}
+                  onChange={value => setSelectedUserId(value ?? '')}
+                  style={{ width: '100%' }}
                 >
                   {users.map(user => (
-                    <option key={user.id} value={user.id}>
+                    <Select.Item key={user.id} value={user.id}>
                       {getUserLabel(user)}{user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
                       {!user.is_active ? ' - inactive' : ''}
-                    </option>
+                    </Select.Item>
                   ))}
-                </select>
+                </Select.Root>
               </div>
             </div>
             <div className={styles.field}>
               <div className={styles.fieldLeft}>
-                <div className={styles.fieldLabel}>Role</div>
-                <div className={styles.fieldHint}>Set the workspace role that will be stored on this membership.</div>
+              <div className={styles.fieldLabel}>Role</div>
+              <div className={styles.fieldHint}>Set the workspace role that will be stored on this membership.</div>
               </div>
               <div className={styles.fieldRight}>
-                <select
-                  className={styles.select}
-                  value={selectedRole}
-                  onChange={event => setSelectedRole(event.target.value)}
+                <Select.Root
+                  value={selectedRole || undefined}
+                  onChange={value => setSelectedRole(value ?? '')}
+                  style={{ width: '100%' }}
                 >
                   {roles.map(role => (
-                    <option key={role.id} value={role.id}>
+                    <Select.Item key={role.id} value={role.id}>
                       {role.name}
-                    </option>
+                    </Select.Item>
                   ))}
-                </select>
+                </Select.Root>
               </div>
             </div>
             <div className={styles.dialogActions}>

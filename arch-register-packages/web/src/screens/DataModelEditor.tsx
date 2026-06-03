@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './DataModelEditor.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TypeBadge } from '../components/TypeBadge';
 import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { resolveSchemaColor, FIELD_TYPES, SCHEMA_COLORS, SCHEMA_ICONS } from '../api';
@@ -194,14 +197,14 @@ export const DataModelEditor = () => {
                 <div className={styles.formRow}>
                   <div>
                     <div className={styles.formLabel}>Name</div>
-                    <input
-                      className={styles.input}
+                    <TextInput
                       value={name}
-                      readOnly={!canEdit}
-                      onChange={e => {
-                        setName(e.target.value);
+                      disabled={!canEdit}
+                      onChange={value => {
+                        setName(value ?? '');
                         setDirty(true);
                       }}
+                      style={{ width: '100%' }}
                     />
                   </div>
                 </div>
@@ -210,15 +213,16 @@ export const DataModelEditor = () => {
                 <div className={styles.formRow}>
                   <div>
                     <div className={styles.formLabel}>Description</div>
-                    <textarea
-                      className={`${styles.input} ${styles.textarea}`}
+                    <TextArea
                       value={description}
-                      readOnly={!canEdit}
+                      disabled={!canEdit}
                       placeholder="What does this entity type represent?"
-                      onChange={e => {
-                        setDescription(e.target.value);
+                      onChange={value => {
+                        setDescription(value ?? '');
                         setDirty(true);
                       }}
+                      rows={4}
+                      style={{ width: '100%' }}
                     />
                   </div>
                 </div>
@@ -381,32 +385,32 @@ const FieldRow = ({
   const optionsDisplay = () => {
     if (field.type === 'select') {
       return (
-        <select
-          className={styles.inlineSelect}
-          value={field.enumId ?? ''}
+        <Select.Root
+          value={field.enumId || undefined}
           disabled={!canEdit}
-          onChange={e => onUpdate({ enumId: e.target.value } as Partial<SchemaField>)}
+          onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
+          placeholder="Select enum..."
+          style={{ width: '100%' }}
         >
-          <option value="">Select enum...</option>
           {enums.map(e => (
-            <option key={e.id} value={e.id}>{e.name}</option>
+            <Select.Item key={e.id} value={e.id}>{e.name}</Select.Item>
           ))}
-        </select>
+        </Select.Root>
       );
     }
     if (field.type === 'reference' || field.type === 'containment') {
       return (
-        <select
-          className={styles.inlineSelect}
-          value={field.schemaId}
+        <Select.Root
+          value={field.schemaId || undefined}
           disabled={!canEdit}
-          onChange={e => onUpdate({ schemaId: e.target.value } as Partial<SchemaField>)}
+          onChange={value => onUpdate({ schemaId: value ?? '' } as Partial<SchemaField>)}
+          placeholder="Select type..."
+          style={{ width: '100%' }}
         >
-          <option value="">Select type...</option>
           {schemas.map(s => (
-            <option key={s.id} value={s.id}>{s.name}</option>
+            <Select.Item key={s.id} value={s.id}>{s.name}</Select.Item>
           ))}
-        </select>
+        </Select.Root>
       );
     }
     return <span className="dim">&mdash;</span>;
@@ -418,22 +422,30 @@ const FieldRow = ({
         <TbGripVertical size={14} />
       </span>
       <span className={styles.fieldName}>{field.id}</span>
-      <input
-        className={styles.inlineInput}
+      <TextInput
         value={field.name}
-        readOnly={!canEdit}
-        onChange={e => onUpdate({ name: e.target.value })}
+        disabled={!canEdit}
+        onChange={value => onUpdate({ name: value ?? '' })}
+        style={{ width: '100%' }}
       />
-      <select
-        className={styles.inlineSelect}
+      <Select.Root
         value={field.type}
         disabled={!canEdit}
-        onChange={e => onChangeType(e.target.value as FieldType)}
+        onChange={value => {
+          if (value) onChangeType(value as FieldType);
+        }}
+        style={{ width: '100%' }}
       >
         {FIELD_TYPES.map(t => (
-          <option key={t.value} value={t.value} disabled={t.value === 'containment' && containmentDisabled}>{t.label}</option>
+          <Select.Item
+            key={t.value}
+            value={t.value}
+            disabled={t.value === 'containment' && containmentDisabled}
+          >
+            {t.label}
+          </Select.Item>
         ))}
-      </select>
+      </Select.Root>
       <span className={styles.fieldOptions}>{optionsDisplay()}</span>
       <span style={{ textAlign: 'center' }}>
         <input type="checkbox" className={styles.checkbox} disabled={!canEdit} />

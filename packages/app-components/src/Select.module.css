@@ -4,6 +4,7 @@
  *
  *  Under portal:
  *
+ *  SelectPositioner - .cSelectPositioner
  *  SelectContent - .cSelectContent
  *  | List - .eList
  *  | | Item [0..*] - .eItem
@@ -62,11 +63,15 @@
   }
 }
 
+.cSelectPositioner {
+  z-index: 1100;
+}
+
 .cSelectContent {
   overflow: hidden;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   color: var(--cmp-fg);
   background-color: var(--cmp-bg);
-  z-index: 600;
   border-radius: 6px;
   box-shadow: var(--popover-shadow);
 

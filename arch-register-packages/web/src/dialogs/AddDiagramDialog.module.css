@@ -290,22 +290,6 @@
   letter-spacing: 0.03em;
 }
 
-.nameInput {
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r, 4px);
-  padding: 6px 8px;
-  font-size: 13px;
-  color: var(--base-fg);
-  font-family: var(--font-sans, inherit);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.nameInput:focus {
-  border-color: var(--accent-fg);
-}
-
 .error {
   font-size: 12px;
   color: var(--error-fg, #e55);
@@ -348,4 +332,3 @@
   align-items: center;
   gap: 8px;
 }
-

@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { apiFetch, ApiError, SCHEMA_COLORS } from '../api';
 import type { Workspace } from '../api';
 import { ColorPicker } from '../components/ColorPicker';
@@ -255,12 +258,12 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
             <div className={styles.fields}>
               <div className={styles.formRow}>
                 <label className={styles.label}>Workspace name</label>
-                <input
+                <TextInput
                   ref={nameRef}
-                  className={styles.input}
                   placeholder="e.g. Acme Payments Platform"
                   value={name}
-                  onChange={e => setName(e.target.value)}
+                  onChange={value => setName(value ?? '')}
+                  style={{ width: '100%' }}
                 />
               </div>
 
@@ -277,11 +280,12 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 <label className={styles.label}>
                   Description <span className={styles.hint}>— optional</span>
                 </label>
-                <textarea
-                  className={`${styles.input} ${styles.textarea}`}
+                <TextArea
                   placeholder="What lives in this workspace? Who owns it?"
                   value={description}
-                  onChange={e => setDescription(e.target.value)}
+                  onChange={value => setDescription(value ?? '')}
+                  rows={3}
+                  style={{ width: '100%' }}
                 />
               </div>
             </div>
@@ -350,18 +354,18 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
               <div className={styles.copyPanel}>
                 <div className={styles.formRow}>
                   <label className={styles.label}>Copy from</label>
-                  <select
-                    className={styles.input}
-                    value={copyFrom}
-                    onChange={e => setCopyFrom(e.target.value)}
+                  <Select.Root
+                    value={copyFrom || undefined}
+                    onChange={value => setCopyFrom(value ?? '')}
+                    placeholder={workspaces.length === 0 ? 'Loading…' : 'Select workspace'}
+                    style={{ width: '100%' }}
                   >
-                    {workspaces.length === 0 && <option value="">Loading…</option>}
                     {workspaces.map(ws => (
-                      <option key={ws.id} value={ws.id}>
+                      <Select.Item key={ws.id} value={ws.id}>
                         {ws.name}
-                      </option>
+                      </Select.Item>
                     ))}
-                  </select>
+                  </Select.Root>
                 </div>
                 <div className={styles.formRow}>
                   <label className={styles.label}>Include</label>

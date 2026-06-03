@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../api';
 import { useCreateFolder } from '../hooks/useProjectFiles';
 import styles from './AddEntityDialog.module.css';
@@ -68,11 +69,12 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
         <button type="submit" hidden />
         <div className={styles.field}>
           <label>Folder name</label>
-          <input
+          <TextInput
             ref={nameRef}
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={value => setName(value ?? '')}
             placeholder="e.g. Current state"
+            style={{ width: '100%' }}
           />
         </div>
         {parentFolder && (

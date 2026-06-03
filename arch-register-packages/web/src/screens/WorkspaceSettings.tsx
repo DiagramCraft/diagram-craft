@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { Workspace } from '../api';
 import { SCHEMA_COLORS } from '../api';
 import { ColorPicker } from '../components/ColorPicker';
@@ -208,10 +210,9 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
               <div className={styles.fieldHint}>Shown in the top-left switcher and on shared links.</div>
             </div>
             <div className={styles.fieldRight}>
-              <input
-                className={styles.input}
+              <TextInput
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={value => setName(value ?? '')}
                 style={{ maxWidth: 340 }}
               />
             </div>
@@ -222,10 +223,9 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
               <div className={styles.fieldLabel}>URL slug</div>
             </div>
             <div className={styles.fieldRight}>
-              <input
-                className={styles.input}
+              <TextInput
                 value={slug}
-                onChange={e => setSlug(e.target.value)}
+                onChange={value => setSlug(value ?? '')}
                 style={{ maxWidth: 340 }}
               />
             </div>
@@ -237,11 +237,10 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
               <div className={styles.fieldHint}>Two-letter badge used in tight UI like the switcher.</div>
             </div>
             <div className={styles.fieldRight}>
-              <input
-                className={`${styles.input} ${styles.mono}`}
+              <TextInput
                 value={shortCode}
-                onChange={e => setShortCode(e.target.value.toUpperCase().slice(0, 2))}
-                style={{ width: 80 }}
+                onChange={value => setShortCode((value ?? '').toUpperCase().slice(0, 2))}
+                style={{ width: 80, fontFamily: 'var(--mono)' }}
                 maxLength={2}
               />
             </div>
@@ -262,10 +261,10 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
               <div className={styles.fieldLabel}>Description</div>
             </div>
             <div className={styles.fieldRight}>
-              <textarea
-                className={styles.textarea}
+              <TextArea
                 value={description}
-                onChange={e => setDescription(e.target.value)}
+                onChange={value => setDescription(value ?? '')}
+                rows={5}
                 style={{ maxWidth: 540 }}
               />
             </div>
@@ -359,18 +358,19 @@ const LifecycleOwnersSection = ({
           {states.map((s, i) => (
             <div key={i} className={styles.field} style={{ gridTemplateColumns: '1fr 1fr auto auto' }}>
               <div className={styles.fieldRight}>
-                <input
-                  className={`${styles.input} ${styles.mono}`}
+                <TextInput
                   value={s.id}
-                  onChange={e => updateState(i, { id: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
+                  onChange={value =>
+                    updateState(i, { id: (value ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-') })
+                  }
                   placeholder="key (e.g. production)"
+                  style={{ fontFamily: 'var(--mono)' }}
                 />
               </div>
               <div className={styles.fieldRight}>
-                <input
-                  className={styles.input}
+                <TextInput
                   value={s.label}
-                  onChange={e => updateState(i, { label: e.target.value })}
+                  onChange={value => updateState(i, { label: value ?? '' })}
                   placeholder="Label (e.g. Production)"
                 />
               </div>
@@ -622,12 +622,11 @@ const DangerSection = ({
           </div>
           <div className={styles.dangerCardControls}>
             <div className={styles.fieldLabel}>Type the workspace name to confirm</div>
-            <input
-              className={`${styles.input} ${styles.mono}`}
+            <TextInput
               placeholder={workspace.name}
               value={confirm}
-              onChange={e => setConfirm(e.target.value)}
-              style={{ maxWidth: 320 }}
+              onChange={value => setConfirm(value ?? '')}
+              style={{ maxWidth: 320, fontFamily: 'var(--mono)' }}
             />
           </div>
         </div>

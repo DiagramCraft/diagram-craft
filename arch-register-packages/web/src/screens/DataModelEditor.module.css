@@ -132,31 +132,6 @@
   margin-bottom: 6px;
 }
 
-.input {
-  height: 28px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  color: var(--base-fg);
-  padding: 0 8px;
-  border-radius: var(--r);
-  font-size: 12px;
-  width: 100%;
-  outline: none;
-}
-
-.input:focus {
-  border-color: var(--accent-fg);
-}
-
-.textarea {
-  height: auto;
-  min-height: 52px;
-  padding: 5px 8px;
-  resize: vertical;
-  line-height: 1.45;
-  font-family: var(--font-sans);
-}
-
 /* Fields section */
 .fieldsHead {
   display: flex;
@@ -229,45 +204,6 @@
 
 .fieldOptions {
   font-size: 11px;
-}
-
-.inlineInput {
-  height: 24px;
-  padding: 0 6px;
-  font-size: 12px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  color: var(--base-fg);
-  border-radius: var(--r);
-  outline: none;
-  width: 100%;
-}
-
-.inlineInput:focus {
-  border-color: var(--accent-fg);
-}
-
-.inlineSelect {
-  height: 24px;
-  padding: 0 6px;
-  font-size: 12px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  color: var(--base-fg);
-  border-radius: var(--r);
-  outline: none;
-  width: 100%;
-  appearance: none;
-  padding-right: 22px;
-  background-image: linear-gradient(45deg, transparent 50%, var(--base-fg-more-dim) 50%),
-    linear-gradient(135deg, var(--base-fg-more-dim) 50%, transparent 50%);
-  background-position: calc(100% - 13px) 10px, calc(100% - 9px) 10px;
-  background-size: 4px 4px, 4px 4px;
-  background-repeat: no-repeat;
-}
-
-.inlineSelect:focus {
-  border-color: var(--accent-fg);
 }
 
 /* JSON view */

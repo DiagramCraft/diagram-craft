@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { createProject, ApiError } from '../api';
 import type { Project, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
@@ -91,41 +94,52 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
         <button type="submit" hidden />
         <div className={styles.field}>
           <label>Name</label>
-          <input
+          <TextInput
             ref={nameRef}
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={value => setName(value ?? '')}
             placeholder="e.g. Checkout Modernization"
+            style={{ width: '100%' }}
           />
         </div>
         <div className={styles.field}>
           <label>Description</label>
-          <textarea
+          <TextArea
             value={description}
-            onChange={e => setDescription(e.target.value)}
+            onChange={value => setDescription(value ?? '')}
             placeholder="Optional — what is this project about?"
+            rows={3}
+            style={{ width: '100%' }}
           />
         </div>
         <div className={styles.field}>
           <label>Status</label>
-          <select value={status} onChange={e => setStatus(e.target.value as 'pinned' | 'active' | 'archived')}>
+          <Select.Root
+            value={status}
+            onChange={value => setStatus((value as 'pinned' | 'active' | 'archived' | undefined) ?? 'active')}
+            style={{ width: '100%' }}
+          >
             {PROJECT_STATUSES.map(option => (
-              <option key={option.value} value={option.value}>
+              <Select.Item key={option.value} value={option.value}>
                 {option.label}
-              </option>
+              </Select.Item>
             ))}
-          </select>
+          </Select.Root>
         </div>
         <div className={styles.field}>
           <label>Owner</label>
-          <select value={owner} onChange={e => setOwner(e.target.value)}>
-            {canCreateWithoutOwner && <option value="">No owner</option>}
+          <Select.Root
+            value={owner || undefined}
+            onChange={value => setOwner(value ?? '')}
+            placeholder={canCreateWithoutOwner ? 'No owner' : 'Select owner'}
+            style={{ width: '100%' }}
+          >
             {creatableTeams.map(team => (
-              <option key={team.id} value={team.id}>
+              <Select.Item key={team.id} value={team.id}>
                 {team.id}
-              </option>
+              </Select.Item>
             ))}
-          </select>
+          </Select.Root>
         </div>
         <div className={styles.field}>
           <label>Color</label>

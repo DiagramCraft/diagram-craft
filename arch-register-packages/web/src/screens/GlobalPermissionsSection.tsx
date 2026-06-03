@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Select } from '@diagram-craft/app-components/Select';
 import { GLOBAL_ROLES, type GlobalRole } from '@arch-register/permissions';
 import { useAuth } from '../auth/AuthContext';
 import { fetchUserGlobalRoles, type AuthUserInfo } from '../api';
@@ -290,12 +291,10 @@ const AddUserDialog = ({
   onSelect: (userId: string) => void;
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const selectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setSelectedUserId(users[0]?.id ?? '');
-    setTimeout(() => selectRef.current?.focus(), 0);
   }, [open, users]);
 
   if (!open) return null;
@@ -308,23 +307,22 @@ const AddUserDialog = ({
         ) : (
           <>
             <div className={styles.field}>
-              <div className={styles.fieldLeft}>
-                <div className={styles.fieldLabel}>User</div>
-                <div className={styles.fieldHint}>Select an existing user, then assign their global roles.</div>
-              </div>
-              <div className={styles.fieldRight}>
-                <select
-                  ref={selectRef}
-                  className={styles.select}
-                  value={selectedUserId}
-                  onChange={event => setSelectedUserId(event.target.value)}
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>User</div>
+              <div className={styles.fieldHint}>Select an existing user, then assign their global roles.</div>
+            </div>
+            <div className={styles.fieldRight}>
+                <Select.Root
+                  value={selectedUserId || undefined}
+                  onChange={value => setSelectedUserId(value ?? '')}
+                  style={{ width: '100%' }}
                 >
                   {users.map(candidate => (
-                    <option key={candidate.id} value={candidate.id}>
+                    <Select.Item key={candidate.id} value={candidate.id}>
                       {getUserLabel(candidate)}{candidate.email ? ` (${candidate.email})` : ''}
-                    </option>
+                    </Select.Item>
                   ))}
-                </select>
+                </Select.Root>
               </div>
             </div>
             <div className={styles.dialogActions}>

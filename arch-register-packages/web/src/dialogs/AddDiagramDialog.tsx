@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { TbCheck } from 'react-icons/tb';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../api';
 import type { FileEntry, ProjectFile } from '../api';
 import { useCreateDiagramFile, useProjectTemplates, useCreateDiagramFromTemplate } from '../hooks/useProjectFiles';
@@ -182,12 +183,12 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
       {/* Name field */}
       <div className={styles.nameField}>
         <label className={styles.nameLabel}>Diagram name</label>
-        <input
+        <TextInput
           ref={nameRef}
-          className={styles.nameInput}
           placeholder={selected === 'blank' ? 'Untitled diagram' : selected.name}
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={value => setName(value ?? '')}
+          style={{ width: '100%' }}
         />
         {folder && (
           <div style={{ fontSize: 11, color: 'var(--base-fg-more-dim)', marginTop: 2 }}>

@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { apiFetch, ApiError } from '../api';
 import type { EntitySchema, EntitySummary, SchemaField, WorkspaceLifecycleState, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
@@ -172,14 +175,18 @@ export const AddEntityDialog = ({
         {/* Schema picker */}
         <div className={styles.field}>
           <label>Type <span className={styles.required}>*</span></label>
-          <select value={schemaId} onChange={e => setSchemaId(e.target.value)}>
-            <option value="">Select a type</option>
+          <Select.Root
+            value={schemaId || undefined}
+            onChange={value => setSchemaId(value ?? '')}
+            placeholder="Select a type"
+            style={{ width: '100%' }}
+          >
             {schemas.map(s => (
-              <option key={s.id} value={s.id}>
+              <Select.Item key={s.id} value={s.id}>
                 {s.name}
-              </option>
+              </Select.Item>
             ))}
-          </select>
+          </Select.Root>
           {selectedSchema?.description && (
             <div className={styles.hint}>{selectedSchema.description}</div>
           )}
@@ -188,11 +195,12 @@ export const AddEntityDialog = ({
         {/* Name field */}
         <div className={styles.field}>
           <label>Name <span className={styles.required}>*</span></label>
-          <input
+          <TextInput
             ref={nameRef}
             value={entityName}
-            onChange={e => setEntityName(e.target.value)}
+            onChange={value => setEntityName(value ?? '')}
             placeholder="Entity name"
+            style={{ width: '100%' }}
           />
         </div>
 
@@ -224,47 +232,59 @@ export const AddEntityDialog = ({
             </div>
             <div className={styles.field}>
               <label>Description</label>
-              <textarea
+              <TextArea
                 value={meta.description}
-                onChange={e => setMetaField('description', e.target.value)}
+                onChange={value => setMetaField('description', value ?? '')}
                 placeholder="Brief description of this entity"
+                rows={3}
+                style={{ width: '100%' }}
               />
             </div>
             <div className={styles.row}>
               <div className={styles.field}>
                 <label>Owner</label>
-                <select value={meta.owner} onChange={e => setMetaField('owner', e.target.value)}>
-                  {canCreateWithoutOwner && <option value="">—</option>}
+                <Select.Root
+                  value={meta.owner || undefined}
+                  onChange={value => setMetaField('owner', value ?? '')}
+                  placeholder="—"
+                  style={{ width: '100%' }}
+                >
                   {creatableTeams.map(team => (
-                    <option key={team.id} value={team.id}>{team.id}</option>
+                    <Select.Item key={team.id} value={team.id}>{team.id}</Select.Item>
                   ))}
-                </select>
+                </Select.Root>
               </div>
               <div className={styles.field}>
                 <label>Lifecycle</label>
-                <select value={meta.lifecycle} onChange={e => setMetaField('lifecycle', e.target.value)}>
-                  <option value="">—</option>
+                <Select.Root
+                  value={meta.lifecycle || undefined}
+                  onChange={value => setMetaField('lifecycle', value ?? '')}
+                  placeholder="—"
+                  style={{ width: '100%' }}
+                >
                   {lifecycleStates.map(s => (
-                    <option key={s.id} value={s.id}>{s.label}</option>
+                    <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>
                   ))}
-                </select>
+                </Select.Root>
               </div>
             </div>
             <div className={styles.row}>
               <div className={styles.field}>
                 <label>Namespace</label>
-                <input
+                <TextInput
                   value={meta.namespace}
-                  onChange={e => setMetaField('namespace', e.target.value)}
+                  onChange={value => setMetaField('namespace', value ?? '')}
                   placeholder="default"
+                  style={{ width: '100%' }}
                 />
               </div>
               <div className={styles.field}>
                 <label>Tags</label>
-                <input
+                <TextInput
                   value={meta.tags}
-                  onChange={e => setMetaField('tags', e.target.value)}
+                  onChange={value => setMetaField('tags', value ?? '')}
                   placeholder="comma-separated"
+                  style={{ width: '100%' }}
                 />
               </div>
             </div>
@@ -295,14 +315,18 @@ const FieldInput = ({
     return (
       <div className={styles.field}>
         <label>{field.name}</label>
-        <select value={value} onChange={e => onChange(e.target.value)}>
-          <option value="">—</option>
+        <Select.Root
+          value={value || undefined}
+          onChange={nextValue => onChange(nextValue ?? '')}
+          placeholder="—"
+          style={{ width: '100%' }}
+        >
           {candidates.map(entity => (
-            <option key={entity._uid} value={entity._uid}>
+            <Select.Item key={entity._uid} value={entity._uid}>
               {entity._name || entity._slug}
-            </option>
+            </Select.Item>
           ))}
-        </select>
+        </Select.Root>
       </div>
     );
   }
@@ -311,12 +335,16 @@ const FieldInput = ({
     return (
       <div className={styles.field}>
         <label>{field.name}</label>
-        <select value={value} onChange={e => onChange(e.target.value)}>
-          <option value="">—</option>
+        <Select.Root
+          value={value || undefined}
+          onChange={nextValue => onChange(nextValue ?? '')}
+          placeholder="—"
+          style={{ width: '100%' }}
+        >
           {field.options.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+            <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
           ))}
-        </select>
+        </Select.Root>
       </div>
     );
   }
@@ -325,7 +353,12 @@ const FieldInput = ({
     return (
       <div className={styles.field}>
         <label>{field.name}</label>
-        <textarea value={value} onChange={e => onChange(e.target.value)} />
+        <TextArea
+          value={value}
+          onChange={nextValue => onChange(nextValue ?? '')}
+          rows={3}
+          style={{ width: '100%' }}
+        />
       </div>
     );
   }
@@ -348,10 +381,11 @@ const FieldInput = ({
   return (
     <div className={styles.field}>
       <label>{field.name}</label>
-      <input
+      <TextInput
         ref={field.id === 'name' ? nameRef : undefined}
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={nextValue => onChange(nextValue ?? '')}
+        style={{ width: '100%' }}
       />
     </div>
   );

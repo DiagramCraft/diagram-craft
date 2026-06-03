@@ -160,29 +160,6 @@
   letter-spacing: 0;
 }
 
-.input {
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-  padding: 5px 8px;
-  font-size: 12.5px;
-  color: var(--base-fg);
-  font-family: var(--font-sans);
-  outline: none;
-  transition: border-color 0.15s;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.input:focus {
-  border-color: var(--accent-fg);
-}
-
-.textarea {
-  min-height: 44px;
-  resize: vertical;
-}
-
 .mono {
   font-family: var(--font-mono);
 }

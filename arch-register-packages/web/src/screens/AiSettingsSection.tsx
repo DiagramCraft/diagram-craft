@@ -1,4 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
+import { Select } from '@diagram-craft/app-components/Select';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import styles from './WorkspaceSettings.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useAiConfig, useUpdateAiConfig } from '../hooks/useAiConfig';
@@ -124,15 +127,14 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
               <div className={styles.fieldLabel}>Provider</div>
             </div>
             <div className={styles.fieldRight}>
-              <select
-                className={styles.input}
+              <Select.Root
                 value={provider}
-                onChange={e => setProvider(e.target.value as AiProvider)}
+                onChange={value => setProvider((value as AiProvider | undefined) ?? 'openrouter')}
                 style={{ maxWidth: 340 }}
               >
-                <option value="openrouter">OpenRouter</option>
-                <option value="openai">OpenAI</option>
-              </select>
+                <Select.Item value="openrouter">OpenRouter</Select.Item>
+                <Select.Item value="openai">OpenAI</Select.Item>
+              </Select.Root>
             </div>
           </div>
 
@@ -145,10 +147,9 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
                 </div>
               </div>
               <div className={styles.fieldRight}>
-                <input
-                  className={styles.input}
+                <TextInput
                   value={baseUrl}
-                  onChange={e => setBaseUrl(e.target.value)}
+                  onChange={value => setBaseUrl(value ?? '')}
                   placeholder="https://api.openai.com/v1"
                   style={{ maxWidth: 340 }}
                 />
@@ -166,11 +167,10 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
               </div>
             </div>
             <div className={styles.fieldRight}>
-              <input
-                className={styles.input}
+              <TextInput
                 type="password"
                 value={apiKey}
-                onChange={e => setApiKey(e.target.value)}
+                onChange={value => setApiKey(value ?? '')}
                 placeholder={config?.has_api_key ? '••••••••' : provider === 'openai' ? 'sk-...' : 'sk-or-...'}
                 autoComplete="off"
                 style={{ maxWidth: 340 }}
@@ -188,10 +188,9 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
               </div>
             </div>
             <div className={styles.fieldRight}>
-              <input
-                className={styles.input}
+              <TextInput
                 value={model}
-                onChange={e => setModel(e.target.value)}
+                onChange={value => setModel(value ?? '')}
                 placeholder={provider === 'openai' ? 'gpt-4o' : 'anthropic/claude-sonnet-4-20250514'}
                 style={{ maxWidth: 340 }}
               />
@@ -229,10 +228,9 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
               </div>
             </div>
             <div className={styles.fieldRight}>
-              <textarea
-                className={styles.textarea}
+              <TextArea
                 value={systemPrompt}
-                onChange={e => setSystemPrompt(e.target.value)}
+                onChange={value => setSystemPrompt(value ?? '')}
                 placeholder="Optional extra instructions for the AI..."
                 rows={4}
                 style={{ maxWidth: 500 }}

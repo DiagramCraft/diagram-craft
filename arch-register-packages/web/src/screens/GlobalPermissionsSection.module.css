@@ -208,16 +208,6 @@
   min-width: 0;
 }
 
-.select {
-  width: 100%;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-  font-size: 12px;
-}
 
 .emptyInline {
   color: var(--cmp-fg-disabled);
