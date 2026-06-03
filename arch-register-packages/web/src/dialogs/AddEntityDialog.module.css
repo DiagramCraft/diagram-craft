@@ -13,6 +13,7 @@
   min-width: 0;
 }
 
+/* Boolean checkbox field - still uses .field for custom layout */
 .field {
   display: flex;
   flex-direction: column;
@@ -21,57 +22,16 @@
 }
 
 .field label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--base-fg-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.field input,
-.field textarea,
-.field select {
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-  padding: 6px 8px;
   font-size: 13px;
   color: var(--base-fg);
-  font-family: var(--font-sans);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.field input:focus,
-.field textarea:focus,
-.field select:focus {
-  border-color: var(--accent-fg);
-}
-
-.field textarea {
-  min-height: 48px;
-  resize: vertical;
-  max-width: 100%;
-}
-
-.field select {
-  appearance: none;
   cursor: pointer;
-  padding-right: 22px;
 }
 
-.hint {
-  font-size: 11px;
-  color: var(--cmp-fg-disabled);
-  margin-top: 2px;
-}
-
-.required {
-  color: var(--error-fg);
-  font-weight: bold;
+.field input[type="checkbox"] {
+  cursor: pointer;
 }
 
 /* Section dividers */

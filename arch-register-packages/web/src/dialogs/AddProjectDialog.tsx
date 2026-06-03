@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -92,8 +93,7 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
     >
       <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
         <button type="submit" hidden />
-        <div className={styles.field}>
-          <label>Name</label>
+        <FormElement label="Name">
           <TextInput
             ref={nameRef}
             value={name}
@@ -101,9 +101,8 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
             placeholder="e.g. Checkout Modernization"
             style={{ width: '100%' }}
           />
-        </div>
-        <div className={styles.field}>
-          <label>Description</label>
+        </FormElement>
+        <FormElement label="Description">
           <TextArea
             value={description}
             onChange={value => setDescription(value ?? '')}
@@ -111,9 +110,8 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
             rows={3}
             style={{ width: '100%' }}
           />
-        </div>
-        <div className={styles.field}>
-          <label>Status</label>
+        </FormElement>
+        <FormElement label="Status">
           <Select.Root
             value={status}
             onChange={value => setStatus((value as 'pinned' | 'active' | 'archived' | undefined) ?? 'active')}
@@ -125,9 +123,8 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
               </Select.Item>
             ))}
           </Select.Root>
-        </div>
-        <div className={styles.field}>
-          <label>Owner</label>
+        </FormElement>
+        <FormElement label="Owner">
           <Select.Root
             value={owner || undefined}
             onChange={value => setOwner(value ?? '')}
@@ -140,11 +137,10 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
               </Select.Item>
             ))}
           </Select.Root>
-        </div>
-        <div className={styles.field}>
-          <label>Color</label>
+        </FormElement>
+        <FormElement label="Color">
           <ColorPicker value={color} onChange={setColor} size="small" />
-        </div>
+        </FormElement>
         {error && <div className={styles.error}>{error}</div>}
       </form>
     </Dialog>

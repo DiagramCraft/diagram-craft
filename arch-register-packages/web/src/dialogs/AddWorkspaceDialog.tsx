@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -256,8 +257,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
             </div>
 
             <div className={styles.fields}>
-              <div className={styles.formRow}>
-                <label className={styles.label}>Workspace name</label>
+              <FormElement label="Workspace name">
                 <TextInput
                   ref={nameRef}
                   placeholder="e.g. Acme Payments Platform"
@@ -265,21 +265,17 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                   onChange={value => setName(value ?? '')}
                   style={{ width: '100%' }}
                 />
-              </div>
+              </FormElement>
 
-              <div className={styles.formRow}>
-                <label className={styles.label}>Color</label>
+              <FormElement label="Color">
                 <ColorPicker
                   value={color}
                   onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)}
                   size="small"
                 />
-              </div>
+              </FormElement>
 
-              <div className={styles.formRow}>
-                <label className={styles.label}>
-                  Description <span className={styles.hint}>— optional</span>
-                </label>
+              <FormElement label="Description" hint="optional">
                 <TextArea
                   placeholder="What lives in this workspace? Who owns it?"
                   value={description}
@@ -287,7 +283,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                   rows={3}
                   style={{ width: '100%' }}
                 />
-              </div>
+              </FormElement>
             </div>
           </div>
         </div>
@@ -352,8 +348,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
             {mode === 'copy' && (
               <div className={styles.copyPanel}>
-                <div className={styles.formRow}>
-                  <label className={styles.label}>Copy from</label>
+                <FormElement label="Copy from">
                   <Select.Root
                     value={copyFrom || undefined}
                     onChange={value => setCopyFrom(value ?? '')}
@@ -366,9 +361,8 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                       </Select.Item>
                     ))}
                   </Select.Root>
-                </div>
-                <div className={styles.formRow}>
-                  <label className={styles.label}>Include</label>
+                </FormElement>
+                <FormElement label="Include">
                   <div className={styles.copyInclude}>
                     {COPY_PARTS.map(p => (
                       <label key={p.id} className={styles.checkbox}>
@@ -383,7 +377,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                       </label>
                     ))}
                   </div>
-                </div>
+                </FormElement>
                 {fromWs && (
                   <div className={styles.note}>
                     Replicates the selected parts of <strong>{fromWs.name}</strong>. Changes won't

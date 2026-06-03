@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { TbCheck } from 'react-icons/tb';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../api';
 import type { FileEntry, ProjectFile } from '../api';
@@ -182,20 +183,19 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
 
       {/* Name field */}
       <div className={styles.nameField}>
-        <label className={styles.nameLabel}>Diagram name</label>
-        <TextInput
-          ref={nameRef}
-          placeholder={selected === 'blank' ? 'Untitled diagram' : selected.name}
-          value={name}
-          onChange={value => setName(value ?? '')}
-          style={{ width: '100%' }}
-        />
-        {folder && (
-          <div style={{ fontSize: 11, color: 'var(--base-fg-more-dim)', marginTop: 2 }}>
-            Will be created in <b>{folder}</b>
-          </div>
-        )}
-        {error && <div className={styles.error}>{error}</div>}
+        <FormElement 
+          label="Diagram name"
+          hint={folder ? `Will be created in ${folder}` : undefined}
+          error={error}
+        >
+          <TextInput
+            ref={nameRef}
+            placeholder={selected === 'blank' ? 'Untitled diagram' : selected.name}
+            value={name}
+            onChange={value => setName(value ?? '')}
+            style={{ width: '100%' }}
+          />
+        </FormElement>
       </div>
     </Dialog>
   );

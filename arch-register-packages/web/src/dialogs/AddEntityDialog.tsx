@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -173,8 +174,7 @@ export const AddEntityDialog = ({
       <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
         <button type="submit" hidden />
         {/* Schema picker */}
-        <div className={styles.field}>
-          <label>Type <span className={styles.required}>*</span></label>
+        <FormElement label="Type" required hint={selectedSchema?.description}>
           <Select.Root
             value={schemaId || undefined}
             onChange={value => setSchemaId(value ?? '')}
@@ -187,14 +187,10 @@ export const AddEntityDialog = ({
               </Select.Item>
             ))}
           </Select.Root>
-          {selectedSchema?.description && (
-            <div className={styles.hint}>{selectedSchema.description}</div>
-          )}
-        </div>
+        </FormElement>
 
         {/* Name field */}
-        <div className={styles.field}>
-          <label>Name <span className={styles.required}>*</span></label>
+        <FormElement label="Name" required>
           <TextInput
             ref={nameRef}
             value={entityName}
@@ -202,7 +198,7 @@ export const AddEntityDialog = ({
             placeholder="Entity name"
             style={{ width: '100%' }}
           />
-        </div>
+        </FormElement>
 
         <div className={styles.contentGrid}>
           {/* Schema-specific fields */}
@@ -230,8 +226,7 @@ export const AddEntityDialog = ({
             <div className={styles.metaSectionLabel}>
               <TbInfoCircle size={11} /> Metadata
             </div>
-            <div className={styles.field}>
-              <label>Description</label>
+            <FormElement label="Description">
               <TextArea
                 value={meta.description}
                 onChange={value => setMetaField('description', value ?? '')}
@@ -239,10 +234,9 @@ export const AddEntityDialog = ({
                 rows={3}
                 style={{ width: '100%' }}
               />
-            </div>
+            </FormElement>
             <div className={styles.row}>
-              <div className={styles.field}>
-                <label>Owner</label>
+              <FormElement label="Owner">
                 <Select.Root
                   value={meta.owner || undefined}
                   onChange={value => setMetaField('owner', value ?? '')}
@@ -253,9 +247,8 @@ export const AddEntityDialog = ({
                     <Select.Item key={team.id} value={team.id}>{team.id}</Select.Item>
                   ))}
                 </Select.Root>
-              </div>
-              <div className={styles.field}>
-                <label>Lifecycle</label>
+              </FormElement>
+              <FormElement label="Lifecycle">
                 <Select.Root
                   value={meta.lifecycle || undefined}
                   onChange={value => setMetaField('lifecycle', value ?? '')}
@@ -266,27 +259,25 @@ export const AddEntityDialog = ({
                     <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>
                   ))}
                 </Select.Root>
-              </div>
+              </FormElement>
             </div>
             <div className={styles.row}>
-              <div className={styles.field}>
-                <label>Namespace</label>
+              <FormElement label="Namespace">
                 <TextInput
                   value={meta.namespace}
                   onChange={value => setMetaField('namespace', value ?? '')}
                   placeholder="default"
                   style={{ width: '100%' }}
                 />
-              </div>
-              <div className={styles.field}>
-                <label>Tags</label>
+              </FormElement>
+              <FormElement label="Tags">
                 <TextInput
                   value={meta.tags}
                   onChange={value => setMetaField('tags', value ?? '')}
                   placeholder="comma-separated"
                   style={{ width: '100%' }}
                 />
-              </div>
+              </FormElement>
             </div>
           </div>
         </div>
@@ -313,8 +304,7 @@ const FieldInput = ({
   if (field.type === 'reference' || field.type === 'containment') {
     const candidates = referenceOptions?.[field.schemaId] ?? [];
     return (
-      <div className={styles.field}>
-        <label>{field.name}</label>
+      <FormElement label={field.name}>
         <Select.Root
           value={value || undefined}
           onChange={nextValue => onChange(nextValue ?? '')}
@@ -327,14 +317,13 @@ const FieldInput = ({
             </Select.Item>
           ))}
         </Select.Root>
-      </div>
+      </FormElement>
     );
   }
 
   if (field.type === 'select') {
     return (
-      <div className={styles.field}>
-        <label>{field.name}</label>
+      <FormElement label={field.name}>
         <Select.Root
           value={value || undefined}
           onChange={nextValue => onChange(nextValue ?? '')}
@@ -345,21 +334,20 @@ const FieldInput = ({
             <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
           ))}
         </Select.Root>
-      </div>
+      </FormElement>
     );
   }
 
   if (field.type === 'longtext') {
     return (
-      <div className={styles.field}>
-        <label>{field.name}</label>
+      <FormElement label={field.name}>
         <TextArea
           value={value}
           onChange={nextValue => onChange(nextValue ?? '')}
           rows={3}
           style={{ width: '100%' }}
         />
-      </div>
+      </FormElement>
     );
   }
 
@@ -379,14 +367,13 @@ const FieldInput = ({
   }
 
   return (
-    <div className={styles.field}>
-      <label>{field.name}</label>
+    <FormElement label={field.name}>
       <TextInput
         ref={field.id === 'name' ? nameRef : undefined}
         value={value}
         onChange={nextValue => onChange(nextValue ?? '')}
         style={{ width: '100%' }}
       />
-    </div>
+    </FormElement>
   );
 };

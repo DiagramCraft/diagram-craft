@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../api';
 import { useCreateFolder } from '../hooks/useProjectFiles';
@@ -67,8 +68,7 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
     >
       <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
         <button type="submit" hidden />
-        <div className={styles.field}>
-          <label>Folder name</label>
+        <FormElement label="Folder name">
           <TextInput
             ref={nameRef}
             value={name}
@@ -76,7 +76,7 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
             placeholder="e.g. Current state"
             style={{ width: '100%' }}
           />
-        </div>
+        </FormElement>
         {parentFolder && (
           <div className="dim" style={{ fontSize: 12 }}>
             Will be created inside <strong>{parentFolder}</strong>
