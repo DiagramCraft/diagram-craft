@@ -173,6 +173,11 @@ export const WorkspaceLayout = () => {
     });
   }, [navigate, workspaceSlug]);
 
+  const visibleRailItems = useMemo(
+    () => canViewSchemas ? ALL_RAIL_ITEMS : ALL_RAIL_ITEMS.filter(item => SCHEMA_RESTRICTED_IDS.has(item.id)),
+    [canViewSchemas]
+  );
+
   const trail = buildTrail(activeView, workspaceSlug, projects, matches, navigate);
 
   const contextValue = useMemo(() => ({
@@ -228,7 +233,7 @@ export const WorkspaceLayout = () => {
         />
         <div className={`${styles.body} ${showSidebar ? '' : styles.bodyNoSidebar}`.trim()}>
           <NavRail
-            items={canViewSchemas ? ALL_RAIL_ITEMS : ALL_RAIL_ITEMS.filter(item => SCHEMA_RESTRICTED_IDS.has(item.id))}
+            items={visibleRailItems}
             value={VIEW_TO_RAIL[activeView] ?? 'home'}
             onChange={id => { if (id !== null) handleRailPick(id); }}
           />

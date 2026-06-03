@@ -220,7 +220,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
       footerLeft={<KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'create']]} />}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
-        { label: submitting ? 'Creating…' : 'Create workspace', type: 'default', disabled: !canCreate || submitting, onClick: () => { void handleSubmit(); } }
+        { label: submitting ? 'Creating...' : 'Create workspace', type: 'default', disabled: !canCreate || submitting, onClick: () => { void handleSubmit(); } }
       ]}
     >
       <div className={styles.body}>

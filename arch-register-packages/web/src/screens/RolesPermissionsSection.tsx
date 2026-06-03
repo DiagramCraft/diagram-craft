@@ -258,6 +258,7 @@ const RoleEditorDialog = ({
     setDraft(buildDraft(initialRole));
   }, [initialRole]);
 
+  const capSet = useMemo(() => new Set(draft.capabilities), [draft.capabilities]);
   const selectedCount = draft.capabilities.length;
   const allSelected = selectedCount === ALL_CAPS.length && ALL_CAPS.length > 0;
 
@@ -358,7 +359,7 @@ const RoleEditorDialog = ({
           <div className={styles.capabilityList}>
             {WORKSPACE_CAPABILITY_GROUPS.map(group => {
               const groupCapIds = group.caps.map(c => c.id);
-              const groupSelectedCount = groupCapIds.filter(id => draft.capabilities.includes(id)).length;
+              const groupSelectedCount = groupCapIds.filter(id => capSet.has(id)).length;
               const groupAllOn = groupSelectedCount === groupCapIds.length;
               return (
                 <div key={group.label} className={styles.capabilityGroup}>
@@ -377,11 +378,11 @@ const RoleEditorDialog = ({
                     </button>
                   </div>
                   {group.caps.map(cap => (
-                    <label key={cap.id} className={`${styles.capabilityRow}${draft.capabilities.includes(cap.id) ? ` ${styles.capabilityRowOn}` : ''}`}>
+                    <label key={cap.id} className={`${styles.capabilityRow}${capSet.has(cap.id) ? ` ${styles.capabilityRowOn}` : ''}`}>
                       <input
                         type="checkbox"
                         className={styles.capabilityCheckbox}
-                        checked={draft.capabilities.includes(cap.id)}
+                        checked={capSet.has(cap.id)}
                         onChange={() => toggleCap(cap.id)}
                         disabled={pending}
                       />

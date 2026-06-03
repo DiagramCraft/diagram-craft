@@ -132,7 +132,6 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
         { label: isPending ? 'Creating...' : 'Create diagram', type: 'default', disabled: isPending, onClick: () => { void handleSubmit(); } }
       ]}
     >
-      {/* Blank canvas option */}
       <button
         type="button"
         className={`${styles.blankOption} ${selected === 'blank' ? styles.isActive : ''}`}
@@ -148,7 +147,6 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
         </span>
       </button>
 
-      {/* Template section */}
       {!templatesLoading && allTemplates.length > 0 && (
         <>
           <div className={styles.divider}>
@@ -156,32 +154,34 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
           </div>
 
           <div className={styles.grid}>
-            {allTemplates.map(t => (
-              <button
-                key={t.id}
-                type="button"
-                className={`${styles.card} ${selected !== 'blank' && selected.id === t.id ? styles.isActive : ''}`}
-                onClick={() => setSelected(t)}
-                title={t.name}
-              >
-                <span className={styles.cardThumb}>
-                  {t.preview_svg ? (
-                    <div dangerouslySetInnerHTML={{ __html: t.preview_svg }} />
-                  ) : (
-                    <DummyPreview />
-                  )}
-                  {selected !== 'blank' && selected.id === t.id && (
-                    <span className={styles.cardCheck}><TbCheck size={10} /></span>
-                  )}
-                </span>
-                <span className={styles.cardName}>{t.name}</span>
-              </button>
-            ))}
+            {allTemplates.map(t => {
+              const isSelected = selected !== 'blank' && selected.id === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`${styles.card} ${isSelected ? styles.isActive : ''}`}
+                  onClick={() => setSelected(t)}
+                  title={t.name}
+                >
+                  <span className={styles.cardThumb}>
+                    {t.preview_svg ? (
+                      <div dangerouslySetInnerHTML={{ __html: t.preview_svg }} />
+                    ) : (
+                      <DummyPreview />
+                    )}
+                    {isSelected && (
+                      <span className={styles.cardCheck}><TbCheck size={10} /></span>
+                    )}
+                  </span>
+                  <span className={styles.cardName}>{t.name}</span>
+                </button>
+              );
+            })}
           </div>
         </>
       )}
 
-      {/* Name field */}
       <div className={styles.nameField}>
         <FormElement 
           label="Diagram name"
