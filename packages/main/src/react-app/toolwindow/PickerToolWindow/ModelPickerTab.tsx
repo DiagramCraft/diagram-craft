@@ -15,7 +15,6 @@ import {
   TbPlus,
   TbRefresh,
   TbSearch,
-  TbSettings,
   TbTrash
 } from 'react-icons/tb';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
@@ -37,7 +36,6 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { ModelCenterDialogCommand } from '../../components/ModelCenterDialog/ModelCenterDialog';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementDataEntry } from '@diagram-craft/model/diagramProps';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
