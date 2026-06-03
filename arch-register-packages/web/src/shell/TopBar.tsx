@@ -1,10 +1,10 @@
 import { type KeyboardEvent as ReactKeyboardEvent, useState, useEffect, useRef } from 'react';
 import styles from './TopBar.module.css';
-import { Button } from '@diagram-craft/app-components/Button';
+import { TopBar as SharedTopBar } from '@diagram-craft/app-components/TopBar';
+import { HamburgerMenu } from '@diagram-craft/app-components/HamburgerMenu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import {
-  TbMenu2,
   TbChevronDown,
   TbChevronRight,
   TbSearch,
@@ -95,8 +95,9 @@ export const TopBar = ({
   }, []);
 
   return (
-    <div className={styles.topbar}>
-      <div className={styles.left}>
+    <SharedTopBar
+      className={styles.topbar}
+      leftSlot={
         <AppMenu
           onNewProject={canNewProject ? onNewProject : undefined}
           onNewEntity={canNewEntity ? onNewEntity : undefined}
@@ -105,6 +106,9 @@ export const TopBar = ({
           onOpenGlobalSettings={canOpenGlobalSettings ? onOpenGlobalSettings : undefined}
           showDisabledItems={hideWorkspaceSwitcher}
         />
+      }
+    >
+      <div className={styles.left}>
         {!hideWorkspaceSwitcher && (
           <>
             <div className={styles.sep} />
@@ -138,7 +142,7 @@ export const TopBar = ({
       <div className={styles.right}>
         <AccountMenu />
       </div>
-    </div>
+    </SharedTopBar>
   );
 };
 
@@ -264,46 +268,38 @@ const AppMenu = ({
   const hasCreateItems = onNewProject ?? onNewEntity;
   const hasItems = hasCreateItems ?? onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems;
 
-  if (!hasItems)
-    return (
-      <Button variant="icon-only" className={styles.appMenuButton} title="Menu" icon={<TbMenu2 size={14} />} />
-    );
+  if (!hasItems) return <HamburgerMenu>{null}</HamburgerMenu>;
 
   return (
-    <MenuButton.Root>
-      <MenuButton.Trigger element={
-        <Button variant="icon-only" className={styles.appMenuButton} title="Menu" icon={<TbMenu2 size={14} />} />
-      } />
-      <MenuButton.Menu align="start">
-        {(hasCreateItems || showDisabledItems) && (
-          <>
-            <div className={styles.menuLabel}>Create</div>
-            <Menu.Item leftSlot={<TbFolders size={14} />} disabled={!onNewProject} onClick={onNewProject}>
-              New project
+    <HamburgerMenu align="start">
+      {(hasCreateItems || showDisabledItems) && (
+        <>
+          <div className={styles.menuLabel}>Create</div>
+          <Menu.Item leftSlot={<TbFolders size={14} />} disabled={!onNewProject} onClick={onNewProject}>
+            New project
+          </Menu.Item>
+          <Menu.Item leftSlot={<TbDatabase size={14} />} disabled={!onNewEntity} onClick={onNewEntity}>
+            New entity
+          </Menu.Item>
+        </>
+      )}
+      {(onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems) && (
+        <>
+          {(hasCreateItems || showDisabledItems) && <Menu.Separator />}
+          <Menu.Item leftSlot={<TbBuildingCommunity size={14} />} disabled={!onAddWorkspace} onClick={onAddWorkspace}>
+            New workspace
+          </Menu.Item>
+          <Menu.Item leftSlot={<TbSettings size={14} />} disabled={!onOpenSettings} onClick={onOpenSettings}>
+            Workspace settings
+          </Menu.Item>
+          {onOpenGlobalSettings && (
+            <Menu.Item leftSlot={<TbSettings size={14} />} onClick={onOpenGlobalSettings}>
+              Global settings
             </Menu.Item>
-            <Menu.Item leftSlot={<TbDatabase size={14} />} disabled={!onNewEntity} onClick={onNewEntity}>
-              New entity
-            </Menu.Item>
-          </>
-        )}
-        {(onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems) && (
-          <>
-            {(hasCreateItems || showDisabledItems) && <Menu.Separator />}
-            <Menu.Item leftSlot={<TbBuildingCommunity size={14} />} disabled={!onAddWorkspace} onClick={onAddWorkspace}>
-              New workspace
-            </Menu.Item>
-            <Menu.Item leftSlot={<TbSettings size={14} />} disabled={!onOpenSettings} onClick={onOpenSettings}>
-              Workspace settings
-            </Menu.Item>
-            {onOpenGlobalSettings && (
-              <Menu.Item leftSlot={<TbSettings size={14} />} onClick={onOpenGlobalSettings}>
-                Global settings
-              </Menu.Item>
-            )}
-          </>
-        )}
-      </MenuButton.Menu>
-    </MenuButton.Root>
+          )}
+        </>
+      )}
+    </HamburgerMenu>
   );
 };
 

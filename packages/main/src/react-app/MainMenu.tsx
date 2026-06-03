@@ -1,4 +1,3 @@
-import { TbMenu2 } from 'react-icons/tb';
 import { urlToName } from '@diagram-craft/utils/url';
 import { $t, type TranslatedString } from '@diagram-craft/utils/localize';
 import { Application, useApplication } from '../application';
@@ -6,7 +5,7 @@ import { mainMenuStructure } from './mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import type { UserState } from '../UserState';
 import { Menu } from '@diagram-craft/app-components/Menu';
-import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { HamburgerMenu } from '@diagram-craft/app-components/HamburgerMenu';
 import { ActionMenuItem } from './components/ActionMenuItem';
 import { ActionToggleMenuItem } from './components/ActionToggleMenuItem';
 
@@ -76,20 +75,8 @@ export const MainMenu = () => {
   const userState = application.userState;
 
   return (
-    <MenuButton.Root>
-      <MenuButton.Trigger
-        element={
-          // Intentionally use a class rather than an id here. Base UI manages trigger ids
-          // internally, and overriding the trigger's id caused submenu navigation to break.
-          <button type={'button'} className={'menu-button'}>
-            <TbMenu2 size={'24px'} />
-          </button>
-        }
-      />
-
-      <MenuButton.Menu>
-        {mainMenuStructure.map(item => renderMenuItem(item, application, userState))}
-      </MenuButton.Menu>
-    </MenuButton.Root>
+    <HamburgerMenu>
+      {mainMenuStructure.map(item => renderMenuItem(item, application, userState))}
+    </HamburgerMenu>
   );
 };

@@ -1,9 +1,4 @@
 .topbar {
-  display: flex;
-  align-items: center;
-  height: var(--topbar);
-  background: var(--base-bg);
-  border-bottom: 1px solid var(--panel-border);
   padding: 0 6px;
   gap: 8px;
 }
@@ -187,13 +182,6 @@
 }
 
 /* App menu */
-.appMenu {
-  position: relative;
-}
-
-.appMenuButton {
-  color: var(--base-fg-more-dim) !important;
-}
 
 .appMenuDrop {
   position: absolute;

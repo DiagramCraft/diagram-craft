@@ -53,7 +53,7 @@
 
   /* TODO: This should be removed */
 
-  #menu button,
+  #menu button:not(.embeddable-back-button),
   .cToolbar button {
     border: 1px solid transparent;
     font-family: inherit;
@@ -217,46 +217,13 @@
 }
 
 #menu {
-  align-items: center;
   grid-area: menu;
-  background: var(--base-bg);
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  border-bottom: 1px solid var(--panel-border);
 
-  .menu-button {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
+  [data-hamburger-menu] {
     margin-left: 6px;
     margin-right: 1rem;
-    background-color: var(--base-bg);
-    border-radius: 4px;
-
-    &:hover {
-      background-color: var(--cmp-bg-hover);
-
-      & svg {
-        color: var(--cmp-fg);
-      }
-    }
-
-    &[data-popup-open] {
-      background-color: var(--accent-bg-selected);
-      border: 1px solid var(--panel-border);
-
-      & svg {
-        color: var(--accent-fg);
-      }
-    }
-
-    & svg {
-      width: 14px;
-      display: block;
-      color: var(--base-fg-more-dim);
-    }
 
     &:after {
       content: '';
