@@ -75,38 +75,26 @@
 .tabBar {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--panel-border);
   padding: 0 24px;
   margin-bottom: 0;
+  border-bottom: 1px solid var(--panel-border);
 }
 
-.tabs {
-  display: flex;
-  align-items: stretch;
+.tabBar :global(.cTabs) {
+  width: auto;
+}
+
+.tabBar :global(.eList) {
+  height: 32px;
+  background: transparent;
+  border-bottom: 0;
   gap: 0;
 }
 
-.tab {
+.tabBar :global(.eTrigger) {
   height: 32px;
   padding: 0 10px;
-  color: var(--base-fg-more-dim);
-  border-bottom: 1.5px solid transparent;
-  font-size: 12px;
-  position: relative;
-  background: none;
-  border-top: none;
-  border-left: none;
-  border-right: none;
-  cursor: pointer;
-}
-
-.tab:hover {
-  color: var(--base-fg);
-}
-
-.tabActive {
-  color: var(--base-fg);
-  border-bottom-color: var(--accent-chroma);
+  margin-bottom: -1px;
 }
 
 /* Overview grid */

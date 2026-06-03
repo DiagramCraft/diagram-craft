@@ -1,4 +1,6 @@
 .icToolWindowTabs {
+  background-color: var(--panel-bg);
+
   .eTabActions {
     position: absolute;
     right: 0;

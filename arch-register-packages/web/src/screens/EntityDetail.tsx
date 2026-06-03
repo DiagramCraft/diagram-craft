@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import styles from './EntityDetail.module.css';
 import { TypeBadge } from '../components/TypeBadge';
@@ -283,38 +284,16 @@ export const EntityDetail = () => {
 
       {/* Tabs */}
       <div className={styles.tabBar}>
-        <div className={styles.tabs}>
-          <button
-            type="button"
-            className={`${styles.tab} ${tab === 'overview' ? styles.tabActive : ''}`}
-            onClick={() => setTab('overview')}
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${tab === 'topology' ? styles.tabActive : ''}`}
-            onClick={() => setTab('topology')}
-          >
-            Topology
-          </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${tab === 'relations' ? styles.tabActive : ''}`}
-            onClick={() => setTab('relations')}
-          >
-            Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
-          </button>
-          {canViewAudit && (
-            <button
-              type="button"
-              className={`${styles.tab} ${tab === 'changes' ? styles.tabActive : ''}`}
-              onClick={() => setTab('changes')}
-            >
-              Change history
-            </button>
-          )}
-        </div>
+        <Tabs.Root value={tab} onValueChange={value => setTab(value as TabId)}>
+          <Tabs.List>
+            <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+            <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
+            <Tabs.Trigger value="relations">
+              Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
+            </Tabs.Trigger>
+            {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
+          </Tabs.List>
+        </Tabs.Root>
       </div>
 
       {/* Overview */}

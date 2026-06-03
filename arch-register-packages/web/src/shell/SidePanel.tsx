@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useMatches, useSearch } from '@tanstack/react-router';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import styles from './SidePanel.module.css';
 import { TreeRow } from '../components/TreeRow';
 import { TypeBadge } from '../components/TypeBadge';
@@ -97,7 +98,11 @@ const SectionHeader = ({
   actions?: React.ReactNode;
 }) => (
   <div className={`${styles.header} ${styles.tabHeader}`}>
-    <div className={`${styles.headerTab} ${styles.headerTabActive}`}>{title}</div>
+    <Tabs.Root value="section">
+      <Tabs.List>
+        <Tabs.Trigger value="section">{title}</Tabs.Trigger>
+      </Tabs.List>
+    </Tabs.Root>
     {actions && <div className={styles.headerActions}>{actions}</div>}
   </div>
 );
@@ -492,20 +497,15 @@ const ProjectsSidebar = ({
   return (
     <>
       <div className={`${styles.header} ${styles.tabHeader}`}>
-        <button
-          type="button"
-          className={`${styles.headerTab} ${projectSidebarTab === 'projects' ? styles.headerTabActive : ''}`}
-          onClick={() => activateTab('projects')}
+        <Tabs.Root
+          value={projectSidebarTab}
+          onValueChange={value => activateTab(value as 'projects' | 'archive')}
         >
-          Projects
-        </button>
-        <button
-          type="button"
-          className={`${styles.headerTab} ${projectSidebarTab === 'archive' ? styles.headerTabActive : ''}`}
-          onClick={() => activateTab('archive')}
-        >
-          Archive
-        </button>
+          <Tabs.List>
+            <Tabs.Trigger value="projects">Projects</Tabs.Trigger>
+            <Tabs.Trigger value="archive">Archive</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
       </div>
       <div className={styles.scroll}>
         {projectGroups.length > 0 ? projectGroups.map(group => (
@@ -767,20 +767,15 @@ const DataModelSidebar = ({
   return (
     <>
       <div className={`${styles.header} ${styles.tabHeader}`}>
-        <button
-          type="button"
-          className={`${styles.headerTab} ${activeTab === 'types' ? styles.headerTabActive : ''}`}
-          onClick={() => activateTab('types')}
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={value => activateTab(value as 'types' | 'enums')}
         >
-          Types
-        </button>
-        <button
-          type="button"
-          className={`${styles.headerTab} ${activeTab === 'enums' ? styles.headerTabActive : ''}`}
-          onClick={() => activateTab('enums')}
-        >
-          Enums
-        </button>
+          <Tabs.List>
+            <Tabs.Trigger value="types">Types</Tabs.Trigger>
+            <Tabs.Trigger value="enums">Enums</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
       </div>
       {activeTab === 'types' ? (
         <div className={styles.scroll}>

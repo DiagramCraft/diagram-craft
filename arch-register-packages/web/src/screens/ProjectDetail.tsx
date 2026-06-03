@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import styles from './ProjectDetail.module.css';
 import { AddFolderDialog } from '../dialogs/AddFolderDialog';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
@@ -428,11 +429,11 @@ export const ProjectDetail = () => {
 
       {/* Toolbar */}
       <div className={styles.tabBar}>
-        <div className={styles.tabs}>
-          <div className={`${styles.tab} ${styles.tabActive}`}>
-            Diagrams ({visibleFiles.length})
-          </div>
-        </div>
+        <Tabs.Root value="diagrams">
+          <Tabs.List>
+            <Tabs.Trigger value="diagrams">Diagrams ({visibleFiles.length})</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
         <div className={styles.tabBarRight}>
           <div className={styles.searchInline}>
             <TbSearch size={11} />

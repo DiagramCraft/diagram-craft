@@ -216,41 +216,26 @@
 .tabBar {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--panel-border);
   padding: 0;
   margin-bottom: 12px;
+  border-bottom: 1px solid var(--panel-border);
 }
 
-.tabs {
-  display: flex;
-  align-items: stretch;
+.tabBar :global(.cTabs) {
+  width: auto;
+}
+
+.tabBar :global(.eList) {
+  height: 28px;
+  background: transparent;
+  border-bottom: 0;
   gap: 0;
-  margin-bottom: -3px;
 }
 
-.tab {
-  display: flex;
-  align-items: center;
+.tabBar :global(.eTrigger) {
   height: 28px;
   padding: 0 10px;
-  color: var(--base-fg-more-dim);
-  border-bottom: 1.5px solid transparent;
-  font-size: 12px;
-  position: relative;
-  background: none;
-  border-top: none;
-  border-left: none;
-  border-right: none;
-  cursor: pointer;
-}
-
-.tab:hover {
-  color: var(--base-fg);
-}
-
-.tabActive {
-  color: var(--base-fg);
-  border-bottom-color: var(--accent-chroma);
+  margin-bottom: -1px;
 }
 
 .tabBarRight {
