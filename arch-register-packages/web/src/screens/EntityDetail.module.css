@@ -21,7 +21,7 @@
 }
 
 .backLink {
-  color: var(--accent-fg-hover);
+  color: var(--accent-fg);
   background: none;
   border: 0;
   padding: 0;
@@ -217,7 +217,7 @@
 }
 
 .propLink {
-  color: var(--accent-fg-hover);
+  color: var(--accent-fg);
   display: inline-flex;
   align-items: center;
   gap: 6px;
