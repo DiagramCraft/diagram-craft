@@ -92,7 +92,11 @@ class SegmentList {
           dest.push(new QuadSegment(end, { x: seg[1], y: seg[2] }, { x: seg[3], y: seg[4] }));
           break;
         case 'T': {
-          const cp = (dest.at(-1) as QuadSegment).quadP1;
+          const previous = dest.at(-1);
+          if (!(previous instanceof QuadSegment)) {
+            assert.fail('T segment requires a preceding quadratic segment');
+          }
+          const cp = previous.quadP1;
           const cp2 = Point.add(end, Point.subtract(end, cp));
           dest.push(new QuadSegment(end, cp2, { x: seg[1], y: seg[2] }));
           break;
@@ -225,7 +229,14 @@ export class Path {
   static join(...paths: Path[]) {
     assert.arrayNotEmpty(paths);
     const dest: RawSegment[] = [];
-    for (const path of paths) {
+    for (let i = 0; i < paths.length; i++) {
+      const path = paths[i]!;
+      if (i > 0) {
+        assert.true(
+          Point.isEqual(paths[i - 1]!.end, path.start),
+          'Joined paths must be contiguous'
+        );
+      }
       dest.push(...path.#path);
     }
     return new Path(paths[0].start, dest);
