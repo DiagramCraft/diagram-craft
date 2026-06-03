@@ -25,14 +25,14 @@ export const SearchPanel = ({
   return (
     <ToolWindowPanel mode={'headless'} id={'search-input'} title={'Search'}>
       <div>
-        <div style={{ marginBottom: '0.25rem' }}>
+        <div style={{ marginBottom: '0.5rem' }}>
           <Select.Root onChange={value => onScopeChange(value ?? 'active-diagram')} value={scope}>
             <Select.Item value={'active-layer'}>Active Layer</Select.Item>
             <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
             <Select.Item value={'active-document'}>Active Document</Select.Item>
           </Select.Root>
         </div>
-        <div className={'util-hstack'}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <TextInput
             ref={ref}
             value={searchText}
@@ -54,18 +54,17 @@ export const SearchPanel = ({
                 }, 0);
               }
             }}
-            onClear={() => {
-              onSearchTextChange('');
-            }}
+            onClear={() => onSearchTextChange('')}
           />
+
           <Button
             onClick={() => {
               onSearch(ref.current?.value ?? '');
               ref.current?.blur();
             }}
-            variant={'secondary'}
+            size={'sm'}
           >
-            <TbSearch />
+            <TbSearch /> Search
           </Button>
         </div>
       </div>

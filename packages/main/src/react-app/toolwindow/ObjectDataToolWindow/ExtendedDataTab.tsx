@@ -188,6 +188,7 @@ export const ExtendedDataTab = () => {
       <ToolWindow.TabActions>
         <LinkButton
           variant={'icon-only'}
+          size={'sm'}
           style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
           onClick={() => setEditMode(v => !v)}
         >

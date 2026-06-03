@@ -25,7 +25,7 @@
   /* --- Sizes --- */
 
   &[data-size="sm"] {
-    height: 24px;
+    height: 23px;
     padding: 0 8px;
     font-size: 11.5px;
     border-radius: max(calc(var(--cmp-radius) - 1px), 3px);
@@ -131,8 +131,13 @@
     border: 1px solid transparent;
     width: 28px !important;
 
-    &[data-size="sm"] { width: 24px !important; }
-    &[data-size="lg"] { width: 32px !important; }
+    &[data-size="sm"] {
+      width: 24px !important;
+    }
+
+    &[data-size="lg"] {
+      width: 32px !important;
+    }
 
     &:hover,
     &[data-hover="true"] {

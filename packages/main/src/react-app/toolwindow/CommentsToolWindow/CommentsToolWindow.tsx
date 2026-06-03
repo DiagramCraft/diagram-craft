@@ -107,7 +107,11 @@ export const CommentsToolWindow = () => {
     <ToolWindow.Root id={'comments'} defaultTab={'comments'}>
       <ToolWindow.Tab title={'Comments'} id={'comments'}>
         <ToolWindow.TabActions>
-          <Button variant={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+          <Button
+            size="sm"
+            variant={'icon-only'}
+            onClick={() => application.actions.COMMENT_ADD!.execute()}
+          >
             <TbPlus />
           </Button>
           <CommentsSortMenu
@@ -132,7 +136,11 @@ export const CommentsToolWindow = () => {
       </ToolWindow.Tab>
       <ToolWindow.Tab title={'My Threads'} id={'my-threads'}>
         <ToolWindow.TabActions>
-          <Button variant={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+          <Button
+            size="sm"
+            variant={'icon-only'}
+            onClick={() => application.actions.COMMENT_ADD!.execute()}
+          >
             <TbPlus />
           </Button>
           <CommentsSortMenu

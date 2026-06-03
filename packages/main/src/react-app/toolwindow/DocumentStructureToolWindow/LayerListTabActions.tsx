@@ -35,7 +35,12 @@ export const LayerListTabActions = () => {
       <Popover.Root open={viewsOpen} onOpenChange={setViewsOpen}>
         <Popover.Trigger
           element={
-            <Button variant={'icon-only'} aria-label={'Manage views'} title={'Manage views'}>
+            <Button
+              size="sm"
+              variant={'icon-only'}
+              aria-label={'Manage views'}
+              title={'Manage views'}
+            >
               <TbEyeDotted />
             </Button>
           }
@@ -48,7 +53,7 @@ export const LayerListTabActions = () => {
       <MenuButton.Root>
         <MenuButton.Trigger
           element={
-            <Button variant={'icon-only'} aria-label={'Add layer'} title={'Add layer'}>
+            <Button size="sm" variant={'icon-only'} aria-label={'Add layer'} title={'Add layer'}>
               <TbPlus />
             </Button>
           }

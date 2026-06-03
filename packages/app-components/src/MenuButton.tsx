@@ -27,7 +27,11 @@ const Trigger = (props: TriggerProps) => {
   if ('element' in props) {
     return <BaseUIMenu.Trigger render={props.element} />;
   } else if ('children' in props) {
-    return <BaseUIMenu.Trigger render={<Button {...props} />}>{props.children}</BaseUIMenu.Trigger>;
+    return (
+      <BaseUIMenu.Trigger render={<Button size={'sm'} {...props} />}>
+        {props.children}
+      </BaseUIMenu.Trigger>
+    );
   } else {
     VERIFY_NOT_REACHED();
   }

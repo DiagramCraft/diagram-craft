@@ -66,7 +66,7 @@ export const PickerSearchPanel = (props: Props) => {
             doSearch(ref.current?.value ?? '');
             ref.current?.blur();
           }}
-          variant={'secondary'}
+          size={'sm'}
         >
           <TbSearch />
         </Button>

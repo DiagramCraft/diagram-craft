@@ -51,7 +51,10 @@
     text-decoration: inherit;
   }
 
-  button {
+  /* TODO: This should be removed */
+
+  #menu button,
+  .cToolbar button {
     border: 1px solid transparent;
     font-family: inherit;
   }

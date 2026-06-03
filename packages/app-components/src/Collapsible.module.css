@@ -25,6 +25,7 @@
       color: var(--base-fg-dim);
       display: flex;
       justify-content: space-between;
+      border: 1px solid transparent;
 
       &[data-panel-open],
       &:hover {

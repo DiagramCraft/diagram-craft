@@ -219,10 +219,10 @@ export const AIToolWindow = () => {
                 className={styles.eInput}
               />
               <div className={styles.eActions}>
-                <Button onClick={clear} disabled={isDisabled} variant="secondary">
+                <Button size="sm" onClick={clear} disabled={isDisabled} variant="secondary">
                   Clear
                 </Button>
-                <Button onClick={sendMessage} disabled={isDisabled || !input.trim()}>
+                <Button size="sm" onClick={sendMessage} disabled={isDisabled || !input.trim()}>
                   {loading ? 'Generating...' : 'Send'}
                 </Button>
               </div>

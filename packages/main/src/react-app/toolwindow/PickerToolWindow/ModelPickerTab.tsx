@@ -483,11 +483,7 @@ const DataProviderQueryView = (props: {
           </Select.Root>
         </div>
 
-        <Button
-          variant={'secondary'}
-          onClick={() => props.showItemAddDialog()}
-          disabled={!('addData' in db)}
-        >
+        <Button onClick={() => props.showItemAddDialog()} disabled={!('addData' in db)} size={'sm'}>
           <TbPlus />
         </Button>
       </div>
@@ -524,7 +520,7 @@ const DataProviderQueryView = (props: {
             props.onSearch(search);
             ref.current?.blur();
           }}
-          variant={'secondary'}
+          size={'sm'}
         >
           <TbSearch />
         </Button>
@@ -643,6 +639,7 @@ export const ModelPickerTab = () => {
       <ToolWindow.TabActions>
         <LinkButton
           variant={'icon-only'}
+          size={'sm'}
           aria-disabled={!('refreshData' in db) && !('refreshSchemas' in db)}
           onClick={async () => {
             assert.present(db);
@@ -659,6 +656,7 @@ export const ModelPickerTab = () => {
         </LinkButton>
         <LinkButton
           variant={'icon-only'}
+          size={'sm'}
           onClick={() => {
             application.ui.showDialog(
               new ModelCenterDialogCommand(

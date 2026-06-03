@@ -23,7 +23,7 @@ export const HistoryToolWindow = () => {
       )}
       <ToolWindow.Tab id={'history'} title={'Document History'}>
         <ToolWindow.TabContent>
-          <div className={'cmp-panel__headless'} style={{ fontSize: '11px' }}>
+          <div className={'cmp-panel__headless'} style={{ fontSize: '11px', padding: '0.5rem' }}>
             <div>Document History</div>
           </div>
         </ToolWindow.TabContent>
