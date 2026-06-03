@@ -356,49 +356,6 @@
   line-height: 1.5;
 }
 
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  color: var(--base-fg-dim);
-  border-radius: var(--r);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.btn:hover {
-  background: var(--cmp-bg-hover);
-  color: var(--base-fg);
-  border-color: var(--base-fg-more-dim);
-}
-
-.btnPrimary {
-  composes: btn;
-  background: color-mix(in oklch, var(--accent-fg) 22%, var(--cmp-bg));
-  border-color: color-mix(in oklch, var(--accent-fg) 50%, var(--cmp-border));
-  color: var(--base-fg);
-}
-
-.btnPrimary:hover {
-  background: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-bg));
-  border-color: var(--accent-fg);
-}
-
-.btnDanger {
-  composes: btn;
-  background: transparent;
-  border-color: color-mix(in oklch, var(--error-fg) 30%, var(--cmp-border));
-  color: oklch(0.72 0.16 25);
-}
-
-.btnDanger:hover {
-  background: color-mix(in oklch, var(--error-fg) 12%, transparent);
-}
 
 .iconBtn {
   width: 28px;

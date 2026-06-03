@@ -1,6 +1,7 @@
 import { type TeamRole } from '@arch-register/permissions';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../components/Chip';
 import { ColorPicker } from '../components/ColorPicker';
 import { Dialog } from '../components/Dialog';
@@ -243,20 +244,8 @@ export const TeamsSection = ({
                 {isOpen && (
                   <div className={styles.teamCardBody}>
                     <div className={styles.teamActions}>
-                      <button
-                        type="button"
-                        className={styles.btnGhost}
-                        onClick={() => setEditTeamId(team.id)}
-                      >
-                        <TbEdit size={11} /> Edit team
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.btnGhost}
-                        onClick={() => setAddMembersTeamId(team.id)}
-                      >
-                        <TbPlus size={11} /> Add members
-                      </button>
+                      <Button variant="ghost" icon={<TbEdit size={11} />} onClick={() => setEditTeamId(team.id)}>Edit team</Button>
+                      <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => setAddMembersTeamId(team.id)}>Add members</Button>
                       <div style={{ flex: 1 }} />
                       <span className={styles.dim}>
                         {teamAssignments.length} {teamAssignments.length === 1 ? 'member' : 'members'}
@@ -464,17 +453,14 @@ const TeamDialog = ({
         </div>
 
         <div className={styles.dialogActions}>
-          <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.btnPrimary}
+          <Button onClick={onClose} disabled={isSaving}>Cancel</Button>
+          <Button
+            variant="primary"
             onClick={() => void onSave(teamId.trim(), color, description)}
             disabled={!teamId.trim() || !isDirty || isSaving}
           >
             {isSaving ? 'Saving…' : mode === 'create' ? 'Add team' : 'Save team'}
-          </button>
+          </Button>
         </div>
       </div>
     </Dialog>
@@ -584,17 +570,14 @@ const AddMembersDialog = ({
         )}
 
         <div className={styles.dialogActions}>
-          <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.btnPrimary}
+          <Button onClick={onClose} disabled={isSaving}>Cancel</Button>
+          <Button
+            variant="primary"
             onClick={() => void onSave(assignments)}
             disabled={assignments.length === 0 || isSaving}
           >
             {isSaving ? 'Saving…' : 'Add members'}
-          </button>
+          </Button>
         </div>
       </div>
     </Dialog>

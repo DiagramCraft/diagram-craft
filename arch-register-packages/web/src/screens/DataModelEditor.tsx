@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './DataModelEditor.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../components/TypeBadge';
 import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { resolveSchemaColor, FIELD_TYPES, SCHEMA_COLORS, SCHEMA_ICONS } from '../api';
@@ -151,9 +152,9 @@ export const DataModelEditor = () => {
         </div>
         <div className={styles.actions}>
           {canEdit && (
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleCreateType}>
-              <TbPlus size={12} /> New entity type
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateType}>
+              New entity type
+            </Button>
           )}
         </div>
       </div>
@@ -265,9 +266,9 @@ export const DataModelEditor = () => {
                 <div className={styles.fieldsHead}>
                   <div className={styles.sectionLabel}>Fields</div>
                   {canEdit && (
-                    <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={addField}>
-                      <TbPlus size={11} /> Add field
-                    </button>
+                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>
+                      Add field
+                    </Button>
                   )}
                 </div>
 
@@ -310,24 +311,23 @@ export const DataModelEditor = () => {
                 {/* Save / Delete actions */}
                 <div className={styles.formActions}>
                   {canEdit && (
-                    <button
-                      type="button"
-                      className={`${styles.btn} ${styles.btnDanger}`}
+                    <Button
+                      variant="danger"
+                      icon={<TbTrash size={12} />}
                       onClick={handleDeleteType}
                     >
-                      <TbTrash size={12} /> Delete type
-                    </button>
+                      Delete type
+                    </Button>
                   )}
                   <div style={{ flex: 1 }} />
                   {canEdit && dirty && (
-                    <button
-                      type="button"
-                      className={`${styles.btn} ${styles.btnPrimary}`}
+                    <Button
+                      variant="primary"
                       onClick={handleSave}
                       disabled={updateSchemaMutation.isPending}
                     >
                       {updateSchemaMutation.isPending ? 'Saving...' : 'Save'}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </>

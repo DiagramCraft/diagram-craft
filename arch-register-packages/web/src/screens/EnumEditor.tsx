@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './DataModelEditor.module.css';
 import { TbPlus, TbTrash } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../hooks/useEnums';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -99,9 +100,7 @@ export const EnumEditor = () => {
         </div>
         <div className={styles.actions}>
           {canEdit && (
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleCreateEnum}>
-              <TbPlus size={12} /> New enum
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateEnum}>New enum</Button>
           )}
         </div>
       </div>
@@ -136,9 +135,7 @@ export const EnumEditor = () => {
             <div className={styles.fieldsHead}>
               <div className={styles.sectionLabel}>Options</div>
               {canEdit && (
-                <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={addOption}>
-                  <TbPlus size={11} /> Add option
-                </button>
+                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addOption}>Add option</Button>
               )}
             </div>
 
@@ -183,24 +180,13 @@ export const EnumEditor = () => {
 
             <div className={styles.formActions}>
               {canEdit && (
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnDanger}`}
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  <TbTrash size={12} /> Delete enum
-                </button>
+                <Button variant="danger" icon={<TbTrash size={12} />} onClick={() => setConfirmDelete(true)}>Delete enum</Button>
               )}
               <div style={{ flex: 1 }} />
               {canEdit && dirty && (
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                  onClick={handleSave}
-                  disabled={updateEnumMutation.isPending}
-                >
+                <Button variant="primary" onClick={handleSave} disabled={updateEnumMutation.isPending}>
                   {updateEnumMutation.isPending ? 'Saving...' : 'Save'}
-                </button>
+                </Button>
               )}
             </div>
           </div>

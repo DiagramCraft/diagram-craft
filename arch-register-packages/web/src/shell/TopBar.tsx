@@ -1,6 +1,6 @@
 import { type KeyboardEvent as ReactKeyboardEvent, useState, useEffect, useRef } from 'react';
 import styles from './TopBar.module.css';
-import { IconButton } from '../components/IconButton';
+import { Button } from '@diagram-craft/app-components/Button';
 import {
   TbMenu2,
   TbChevronDown,
@@ -282,16 +282,12 @@ const AppMenu = ({
   const hasItems = hasCreateItems ?? onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems;
   if (!hasItems)
     return (
-      <IconButton title="Menu">
-        <TbMenu2 size={14} />
-      </IconButton>
+      <Button variant="icon-only" title="Menu" icon={<TbMenu2 size={14} />} />
     );
 
   return (
     <div className={styles.appMenu} ref={ref}>
-      <IconButton title="Menu" onClick={() => setOpen(o => !o)}>
-        <TbMenu2 size={14} />
-      </IconButton>
+      <Button variant="icon-only" title="Menu" icon={<TbMenu2 size={14} />} onClick={() => setOpen(o => !o)} />
       {open && (
         <div className={styles.appMenuDrop}>
           {(hasCreateItems || showDisabledItems) && (

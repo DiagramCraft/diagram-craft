@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
+import { Button } from '@diagram-craft/app-components/Button';
 import { GLOBAL_ROLES, type GlobalRole } from '@arch-register/permissions';
 import { useAuth } from '../auth/AuthContext';
 import { fetchUserGlobalRoles, type AuthUserInfo } from '../api';
@@ -263,17 +264,14 @@ const RoleAssignmentDialog = ({
           ))}
         </div>
         <div className={styles.dialogActions}>
-          <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.btnPrimary}
+          <Button onClick={onClose} disabled={isSaving}>Cancel</Button>
+          <Button
+            variant="primary"
             onClick={() => void onSave(draftRoles)}
             disabled={!isDirty || isSaving}
           >
             {isSaving ? 'Saving…' : 'Save roles'}
-          </button>
+          </Button>
         </div>
       </div>
     </Dialog>
@@ -330,17 +328,14 @@ const AddUserDialog = ({
               </div>
             </div>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.btn} onClick={onClose}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={styles.btnPrimary}
+              <Button onClick={onClose}>Cancel</Button>
+              <Button
+                variant="primary"
                 onClick={() => onSelect(selectedUserId)}
                 disabled={!selectedUserId}
               >
                 Continue
-              </button>
+              </Button>
             </div>
           </>
         )}

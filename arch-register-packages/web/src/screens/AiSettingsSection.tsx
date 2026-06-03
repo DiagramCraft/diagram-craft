@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import styles from './WorkspaceSettings.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 import { useAiConfig, useUpdateAiConfig } from '../hooks/useAiConfig';
 import type { UpsertAiConfigRequest, AiProvider } from '@arch-register/api-types';
 
@@ -68,10 +69,10 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
   return (
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
-        <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || updateConfig.isPending}>
+        <Button onClick={handleCancel} disabled={!isDirty}>Cancel</Button>
+        <Button variant="primary" onClick={handleSave} disabled={!isDirty || updateConfig.isPending}>
           {updateConfig.isPending ? 'Saving...' : 'Save changes'}
-        </button>
+        </Button>
       </div>
 
       <div className={styles.section}>

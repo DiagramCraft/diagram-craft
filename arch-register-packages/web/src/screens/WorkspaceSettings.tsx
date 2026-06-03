@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import styles from './WorkspaceSettings.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 import type { Workspace } from '../api';
 import { SCHEMA_COLORS } from '../api';
 import { ColorPicker } from '../components/ColorPicker';
@@ -84,24 +85,16 @@ export const WorkspaceSettings = () => {
         </div>
         {section === 'members' && (
           <div className={styles.headActions}>
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              onClick={() => setMembersAddDialogOpen(true)}
-            >
-              <TbPlus size={12} /> Add user
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setMembersAddDialogOpen(true)}>
+              Add user
+            </Button>
           </div>
         )}
         {section === 'teams' && (
           <div className={styles.headActions}>
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              onClick={() => setTeamsAddDialogOpen(true)}
-            >
-              <TbPlus size={12} /> Add team
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setTeamsAddDialogOpen(true)}>
+              Add team
+            </Button>
           </div>
         )}
       </div>
@@ -184,10 +177,10 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
   return (
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
-        <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || updateWorkspaceMutation.isPending}>
+        <Button onClick={handleCancel} disabled={!isDirty}>Cancel</Button>
+        <Button variant="primary" onClick={handleSave} disabled={!isDirty || updateWorkspaceMutation.isPending}>
           {updateWorkspaceMutation.isPending ? 'Saving...' : 'Save changes'}
-        </button>
+        </Button>
       </div>
       <div className={styles.section}>
         <div className={styles.sectionHead}>
@@ -333,15 +326,14 @@ const LifecycleOwnersSection = ({
   return (
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
-        <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button
-          type="button"
-          className={styles.btnPrimary}
+        <Button onClick={handleCancel} disabled={!isDirty}>Cancel</Button>
+        <Button
+          variant="primary"
           onClick={handleSave}
           disabled={!isDirty || updateLifecycleStatesMutation.isPending}
         >
           {updateLifecycleStatesMutation.isPending ? 'Saving...' : 'Save changes'}
-        </button>
+        </Button>
       </div>
 
       <div className={styles.section}>
@@ -388,14 +380,10 @@ const LifecycleOwnersSection = ({
                   />
                 ))}
               </div>
-              <button type="button" className={styles.btn} onClick={() => removeState(i)} style={{ padding: '0 6px' }}>
-                <TbTrash size={12} />
-              </button>
+              <Button onClick={() => removeState(i)} style={{ padding: '0 6px' }}><TbTrash size={12} /></Button>
             </div>
           ))}
-          <button type="button" className={styles.btn} onClick={addState} style={{ marginTop: 8 }}>
-            <TbPlus size={12} /> Add state
-          </button>
+          <Button icon={<TbPlus size={12} />} onClick={addState} style={{ marginTop: 8 }}>Add state</Button>
         </div>
       </div>
     </div>
@@ -630,14 +618,13 @@ const DangerSection = ({
           </div>
         </div>
         <div className={styles.dangerCardActions}>
-          <button
-            type="button"
-            className={styles.btnDanger}
+          <Button
+            variant="danger"
             disabled={!canDelete || deleteWorkspaceMutation.isPending}
             onClick={handleDelete}
           >
             {deleteWorkspaceMutation.isPending ? 'Deleting...' : 'Delete workspace'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

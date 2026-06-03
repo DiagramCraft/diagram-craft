@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '../components/Dialog';
 import { apiFetch, ApiError, SCHEMA_COLORS } from '../api';
 import type { Workspace } from '../api';
@@ -396,17 +397,16 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
           </span>
         </div>
         <div className={styles.footerActions}>
-          <button className={styles.btnCancel} type="button" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            className={styles.btnSubmit}
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
             disabled={!canCreate || submitting}
             onClick={handleSubmit}
           >
             {submitting ? 'Creating…' : '+ Create workspace'}
-          </button>
+          </Button>
         </div>
       </div>
     </Dialog>

@@ -371,37 +371,6 @@
   background: var(--cmp-bg);
 }
 
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  color: var(--base-fg-dim);
-  border-radius: var(--r);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.btn:hover {
-  background: var(--cmp-bg-hover);
-  color: var(--base-fg);
-  border-color: var(--base-fg-more-dim);
-}
-
-.btnPrimary {
-  background: color-mix(in oklch, var(--accent-fg) 22%, var(--cmp-bg));
-  border-color: color-mix(in oklch, var(--accent-fg) 50%, var(--cmp-border));
-  color: var(--base-fg);
-}
-
-.btnPrimary:hover {
-  background: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-bg));
-  border-color: var(--accent-fg);
-}
 
 /* Empty state */
 .empty {

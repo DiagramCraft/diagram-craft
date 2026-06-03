@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '../components/Dialog';
 import { ApiError } from '../api';
 import { useCreateFolder } from '../hooks/useProjectFiles';
@@ -72,10 +73,10 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
         )}
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.actions}>
-          <button type="button" className={styles.btnCancel} onClick={onClose}>Cancel</button>
-          <button type="submit" className={styles.btnSubmit} disabled={createFolderMutation.isPending}>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" disabled={createFolderMutation.isPending} onClick={e => { e.preventDefault(); void handleSubmit(e as unknown as React.FormEvent); }}>
             {createFolderMutation.isPending ? 'Creating...' : 'Create folder'}
-          </button>
+          </Button>
         </div>
       </form>
     </Dialog>

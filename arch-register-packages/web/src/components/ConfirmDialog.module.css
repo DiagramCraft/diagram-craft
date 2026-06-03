@@ -97,48 +97,6 @@
   gap: 8px;
 }
 
-.btnCancel {
-  height: 28px;
-  padding: 0 12px;
-  border-radius: var(--r);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--base-fg-more-dim);
-}
-
-.btnCancel:hover {
-  background: var(--cmp-bg);
-  color: var(--base-fg);
-}
-
-.btnConfirm {
-  height: 28px;
-  padding: 0 12px;
-  border-radius: var(--r);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--error-fg);
-  border: 1px solid color-mix(in oklch, var(--error-fg) 70%, black);
-  color: oklch(0.98 0.01 25);
-}
-
-.btnConfirm:hover {
-  background: oklch(0.66 0.19 25);
-  border-color: var(--error-fg);
-  color: oklch(0.99 0.01 25);
-}
-
-.btnConfirm:focus-visible {
-  outline: 2px solid color-mix(in oklch, var(--error-fg) 60%, transparent);
-  outline-offset: 1px;
-}
 
 .panel {
   width: 420px;

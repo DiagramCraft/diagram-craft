@@ -149,37 +149,6 @@
   margin-top: 8px;
 }
 
-.actions button {
-  padding: 6px 14px;
-  border-radius: var(--r);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-}
-
-.btnCancel {
-  background: var(--cmp-bg);
-  color: var(--base-fg-dim);
-}
-
-.btnCancel:hover {
-  background: var(--cmp-bg-hover);
-}
-
-.btnSubmit {
-  background: var(--accent-fg);
-  color: white;
-}
-
-.btnSubmit:hover {
-  background: var(--accent-fg-hover);
-}
-
-.btnSubmit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 .error {
   font-size: 12px;

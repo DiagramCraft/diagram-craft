@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import styles from './EntityDetail.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
 import { Chip } from '../components/Chip';
@@ -226,9 +227,9 @@ export const EntityDetail = () => {
       <div className={styles.empty}>
         <div className={styles.emptyTitle}>Entity not found</div>
         <div>The entity may have been deleted.</div>
-        <button type="button" className={styles.btn} onClick={() => navigateToEntities()}>
-          <TbChevronLeft size={12} /> Back to entities
-        </button>
+        <Button icon={<TbChevronLeft size={12} />} onClick={() => navigateToEntities()}>
+          Back to entities
+        </Button>
       </div>
     );
   }
@@ -259,18 +260,18 @@ export const EntityDetail = () => {
         </div>
         <div className={styles.headActions}>
           {!editing ? (
-            entity.canEdit ? <button type="button" className={styles.btn} onClick={startEdit}><TbEdit size={12} /> Edit</button> : null
+            entity.canEdit ? <Button icon={<TbEdit size={12} />} onClick={startEdit}>Edit</Button> : null
           ) : (
             <>
               {entity.canDelete && (
-                <button type="button" className={styles.btnDanger} onClick={handleDelete}>
-                  <TbTrash size={12} /> Delete
-                </button>
+                <Button variant="danger" icon={<TbTrash size={12} />} onClick={handleDelete}>
+                  Delete
+                </Button>
               )}
-              <button type="button" className={styles.btn} onClick={cancelEdit}>Cancel</button>
-              <button type="button" className={styles.btnPrimary} onClick={saveEdit} disabled={updateEntity.isPending}>
+              <Button onClick={cancelEdit}>Cancel</Button>
+              <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending}>
                 {updateEntity.isPending ? 'Saving...' : 'Save'}
-              </button>
+              </Button>
             </>
           )}
           {menuItems.length > 0 && (

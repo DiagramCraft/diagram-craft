@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '../components/Dialog';
 import { createProject, ApiError } from '../api';
 import type { Project, WorkspaceTeam } from '../api';
@@ -125,10 +126,10 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
         </div>
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.actions}>
-          <button type="button" className={styles.btnCancel} onClick={onClose}>Cancel</button>
-          <button type="submit" className={styles.btnSubmit} disabled={submitting}>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" disabled={submitting} onClick={e => { e.preventDefault(); void handleSubmit(e as unknown as React.FormEvent); }}>
             {submitting ? 'Creating...' : 'Create project'}
-          </button>
+          </Button>
         </div>
       </form>
     </Dialog>

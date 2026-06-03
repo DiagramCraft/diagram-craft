@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './EntityBrowser.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
 import { Chip } from '../components/Chip';
@@ -159,9 +160,9 @@ export const EntityBrowser = () => {
           <div className={styles.sub}>Search, filter, and inspect everything in the IT landscape.</div>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={styles.btn} onClick={handleExport}><TbDownload size={12} /> Export CSV</button>
+          <Button icon={<TbDownload size={12} />} onClick={handleExport}>Export CSV</Button>
           {permissions.canCreateEntities && (
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={openAddEntityDialog}><TbPlus size={12} /> New entity</button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>New entity</Button>
           )}
         </div>
       </div>

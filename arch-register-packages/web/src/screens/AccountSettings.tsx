@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck, TbChevronLeft } from 'react-icons/tb';
 import { useAuth } from '../auth/AuthContext';
 import { ColorPicker } from '../components/ColorPicker';
@@ -94,30 +95,25 @@ export const AccountSettings = () => {
         {section === 'profile' && (
           <>
             <div className={styles.sectionActions}>
-              <button
-                type="button"
-                className={styles.btn}
+              <Button
                 onClick={() => setDisplayName(user.display_name)}
                 disabled={!hasChanges || isSaving}
               >
                 Reset
-              </button>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnPrimary}`}
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleSave}
                 disabled={!hasChanges || isSaving}
               >
                 {isSaving ? (
                   'Saving...'
                 ) : saveSuccess ? (
-                  <>
-                    <TbCheck size={14} /> Saved
-                  </>
+                  <><TbCheck size={14} /> Saved</>
                 ) : (
                   'Save Changes'
                 )}
-              </button>
+              </Button>
             </div>
             <div className={styles.section}>
               <div className={styles.sectionHead}>
@@ -168,30 +164,25 @@ export const AccountSettings = () => {
         {section === 'appearance' && (
           <>
             <div className={styles.sectionActions}>
-              <button
-                type="button"
-                className={styles.btn}
+              <Button
                 onClick={() => setSelectedColor(user.color)}
                 disabled={!hasChanges || isSaving}
               >
                 Reset
-              </button>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnPrimary}`}
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleSave}
                 disabled={!hasChanges || isSaving}
               >
                 {isSaving ? (
                   'Saving...'
                 ) : saveSuccess ? (
-                  <>
-                    <TbCheck size={14} /> Saved
-                  </>
+                  <><TbCheck size={14} /> Saved</>
                 ) : (
                   'Save Changes'
                 )}
-              </button>
+              </Button>
             </div>
             <div className={styles.section}>
               <div className={styles.sectionHead}>

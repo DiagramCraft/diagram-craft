@@ -115,44 +115,6 @@
   font-size: 12px;
 }
 
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 10px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  color: var(--base-fg-dim);
-  border-radius: var(--r);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.btn:hover {
-  background: var(--cmp-bg-hover);
-  color: var(--base-fg);
-  border-color: var(--base-fg-more-dim);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btnPrimary {
-  composes: btn;
-  background: color-mix(in oklch, var(--accent-fg) 22%, var(--cmp-bg));
-  border-color: color-mix(in oklch, var(--accent-fg) 50%, var(--cmp-border));
-  color: var(--base-fg);
-}
-
-.btnPrimary:hover {
-  background: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-bg));
-  border-color: var(--accent-fg);
-}
-
 .empty {
   padding: 18px 16px;
   color: var(--cmp-fg-disabled);

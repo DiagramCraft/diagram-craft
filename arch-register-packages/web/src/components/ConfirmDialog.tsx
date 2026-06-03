@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { TbTrash, TbInfoCircle } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from './Dialog';
 import styles from './ConfirmDialog.module.css';
 
@@ -61,12 +62,12 @@ export const ConfirmDialog = ({
           </span>
         </div>
         <div className={styles.footerActions}>
-          <button type="button" className={styles.btnCancel} onClick={onCancel}>
+          <Button variant="ghost" onClick={onCancel}>
             Cancel
-          </button>
-          <button type="button" ref={confirmRef} className={styles.btnConfirm} onClick={onConfirm}>
-            <TbTrash size={11} /> {confirmLabel}
-          </button>
+          </Button>
+          <Button variant="danger-solid" ref={confirmRef} icon={<TbTrash size={11} />} onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
         </div>
       </div>
     </Dialog>

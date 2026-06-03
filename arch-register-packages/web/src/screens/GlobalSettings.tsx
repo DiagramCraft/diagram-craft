@@ -2,6 +2,7 @@ import { useState } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import { useNavigate } from '@tanstack/react-router';
 import { TbChevronLeft, TbPlus } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
 import { GlobalPermissionsSection } from './GlobalPermissionsSection';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
@@ -42,13 +43,9 @@ export const GlobalSettings = () => {
           <div className={styles.sub}>{meta.sub}</div>
         </div>
         <div className={styles.headActions}>
-          <button
-            type="button"
-            className={styles.btnPrimary}
-            onClick={() => setGlobalPermissionsAddDialogOpen(true)}
-          >
-            <TbPlus size={12} /> Add user
-          </button>
+          <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setGlobalPermissionsAddDialogOpen(true)}>
+            Add user
+          </Button>
         </div>
       </div>
 

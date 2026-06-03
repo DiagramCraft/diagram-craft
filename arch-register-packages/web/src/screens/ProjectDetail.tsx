@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { Button } from '@diagram-craft/app-components/Button';
 import styles from './ProjectDetail.module.css';
 import { AddFolderDialog } from '../dialogs/AddFolderDialog';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
@@ -393,19 +394,13 @@ export const ProjectDetail = () => {
         </div>
         <div className={styles.actions}>
           {!folderFilter && project.canEdit && (
-            <button type="button" className={styles.btn} onClick={() => setEditing(true)}>
-              <TbPencil size={12} /> Edit
-            </button>
+            <Button icon={<TbPencil size={12} />} onClick={() => setEditing(true)}>Edit</Button>
           )}
           {project.canManageFiles && (
-            <button type="button" className={styles.btn} onClick={() => setAddFolderOpen(true)}>
-              <TbFolderOpen size={12} /> New folder
-            </button>
+            <Button icon={<TbFolderOpen size={12} />} onClick={() => setAddFolderOpen(true)}>New folder</Button>
           )}
           {project.canManageFiles && (
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setAddDiagramOpen(true)}>
-              <TbPlus size={12} /> New diagram
-            </button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDiagramOpen(true)}>New diagram</Button>
           )}
         </div>
       </div>
@@ -619,9 +614,7 @@ const EmptyState = ({
     <div className={styles.emptyTitle}>{title}</div>
     <div className={styles.emptySub}>{sub}</div>
     {actionLabel && (
-      <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onAction}>
-        {actionLabel}
-      </button>
+      <Button variant="primary" onClick={onAction}>{actionLabel}</Button>
     )}
   </div>
 );
@@ -715,8 +708,8 @@ const RenameDialog = ({
           />
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <button type="button" className={styles.btn} onClick={onCancel}>Cancel</button>
-          <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={!name.trim()}>Rename</button>
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button variant="primary" onClick={e => { e.preventDefault(); const trimmed = name.trim(); if (trimmed) onRename(trimmed); }} disabled={!name.trim()}>Rename</Button>
         </div>
       </form>
     </Dialog>
@@ -976,25 +969,16 @@ const ProjectSettings = ({
       </div>
       {error && <div style={{ fontSize: 12, color: 'var(--error-fg)' }}>{error}</div>}
       <div className={styles.formActions}>
-        <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={handleDelete}>
-          <TbTrash size={12} /> Delete project
-        </button>
+        <Button variant="danger" icon={<TbTrash size={12} />} onClick={handleDelete}>Delete project</Button>
         <div className={styles.formSpacer} />
-        <button
-          type="button"
-          className={styles.btn}
-          onClick={onClose}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          className={`${styles.btn} ${styles.btnPrimary}`}
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          variant="primary"
           onClick={handleSave}
           disabled={updateProject.isPending}
         >
           {updateProject.isPending ? 'Saving...' : 'Save'}
-        </button>
+        </Button>
       </div>
 
       <ConfirmDialog

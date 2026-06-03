@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbSearch } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
@@ -337,17 +338,14 @@ const AddMemberDialog = ({
               </div>
             </div>
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={styles.btnPrimary}
+              <Button onClick={onClose} disabled={isSaving}>Cancel</Button>
+              <Button
+                variant="primary"
                 onClick={() => void onSave(selectedUserId, selectedRole)}
                 disabled={!selectedUserId || isSaving}
               >
                 {isSaving ? 'Adding…' : 'Add member'}
-              </button>
+              </Button>
             </div>
           </>
         )}
