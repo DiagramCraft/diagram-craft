@@ -25,6 +25,9 @@ export const Default: Story = {
 export const DefaultHover: Story = {
   args: { 'children': 'Edit', 'onClick': () => {}, 'data-hover': 'true' }
 };
+export const DefaultFocus: Story = {
+  args: { 'children': 'Edit', 'onClick': () => {}, 'data-focus': 'true' }
+};
 export const DefaultDisabled: Story = {
   args: { children: 'Edit', onClick: () => {}, disabled: true }
 };
@@ -51,6 +54,9 @@ export const Ghost: Story = {
 };
 export const GhostHover: Story = {
   args: { 'variant': 'ghost', 'children': 'Cancel', 'onClick': () => {}, 'data-hover': 'true' }
+};
+export const GhostFocus: Story = {
+  args: { 'variant': 'ghost', 'children': 'Cancel', 'onClick': () => {}, 'data-focus': 'true' }
 };
 export const GhostDisabled: Story = {
   args: { variant: 'ghost', children: 'Cancel', onClick: () => {}, disabled: true }
@@ -79,6 +85,9 @@ export const DangerSolid: Story = {
 export const DangerSolidHover: Story = {
   args: { 'variant': 'danger-solid', 'icon': <TbTrash />, 'children': 'Delete permanently', 'onClick': () => {}, 'data-hover': 'true' }
 };
+export const DangerSolidFocus: Story = {
+  args: { 'variant': 'danger-solid', 'icon': <TbTrash />, 'children': 'Delete permanently', 'onClick': () => {}, 'data-focus': 'true' }
+};
 
 // ---- Sizes -------------------------------------------------------------
 
@@ -102,6 +111,9 @@ export const WithTrailingIcon: Story = {
 };
 export const IconOnly: Story = {
   args: { variant: 'icon-only', icon: <TbBold />, onClick: () => {} }
+};
+export const IconOnlyFocus: Story = {
+  args: { 'variant': 'icon-only', 'icon': <TbBold />, 'onClick': () => {}, 'data-focus': 'true' }
 };
 export const IconOnlySmall: Story = {
   args: { variant: 'icon-only', size: 'sm', icon: <TbBold />, onClick: () => {} }

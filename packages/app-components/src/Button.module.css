@@ -51,11 +51,11 @@
       border-color: var(--accent-chroma);
     }
 
-    &:focus,
+    &:focus-visible,
     &[data-focus="true"] {
-      box-shadow: var(--cmp-border-shadow-focus);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent-chroma) 22%, transparent);
       outline: none;
-      border-color: transparent;
+      border-color: var(--accent-chroma);
     }
 
     &:disabled {
@@ -90,12 +90,12 @@
       background-color: color-mix(in oklch, var(--error-fg) 12%, transparent);
     }
 
-    &:focus,
+    &:focus-visible,
     &[data-focus="true"] {
       position: relative;
-      box-shadow: 0 0 0 2px var(--error-fg);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--error-fg) 22%, transparent);
       outline: none;
-      border-color: transparent;
+      border-color: var(--error-fg);
     }
 
     &:disabled {
@@ -115,9 +115,11 @@
       border-color: var(--error-fg);
     }
 
-    &:focus-visible {
-      outline: 2px solid color-mix(in oklch, var(--error-fg) 60%, transparent);
-      outline-offset: 1px;
+    &:focus-visible,
+    &[data-focus="true"] {
+      outline: none;
+      border-color: color-mix(in oklch, var(--error-fg) 70%, black);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--error-fg) 32%, transparent);
     }
   }
 
@@ -150,12 +152,12 @@
     background-color: var(--cmp-bg-hover);
   }
 
-  &:focus,
+  &:focus-visible,
   &[data-focus="true"] {
     position: relative;
-    box-shadow: var(--cmp-border-shadow-focus);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent-chroma) 22%, transparent);
     outline: none;
-    border-color: transparent;
+    border-color: var(--accent-chroma);
   }
 
   &:disabled {
