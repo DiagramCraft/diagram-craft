@@ -654,21 +654,6 @@ export const ModelPickerTab = () => {
         >
           <TbRefresh />
         </LinkButton>
-        <LinkButton
-          variant={'icon-only'}
-          size={'sm'}
-          onClick={() => {
-            application.ui.showDialog(
-              new ModelCenterDialogCommand(
-                { defaultTab: 'model-providers' },
-                () => {},
-                () => {}
-              )
-            );
-          }}
-        >
-          <TbSettings />
-        </LinkButton>
       </ToolWindow.TabActions>
       <ToolWindow.TabContent>
         <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
