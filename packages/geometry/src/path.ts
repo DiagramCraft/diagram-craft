@@ -93,7 +93,9 @@ class SegmentList {
           break;
         case 'T': {
           const previous = dest.at(-1);
-          assert.true(previous instanceof QuadSegment, 'T segment requires a preceding quadratic segment');
+          if (!(previous instanceof QuadSegment)) {
+            assert.fail('T segment requires a preceding quadratic segment');
+          }
           const cp = previous.quadP1;
           const cp2 = Point.add(end, Point.subtract(end, cp));
           dest.push(new QuadSegment(end, cp2, { x: seg[1], y: seg[2] }));
