@@ -4,6 +4,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './FileDialog.module.css';
+import browserStyles from './FileBrowser.module.css';
 import {
   TbAlertTriangle,
   TbArrowDown,
@@ -23,7 +24,7 @@ import { EmptyObject } from '@diagram-craft/utils/types';
 import { AppConfig } from '../appConfig';
 import { $t } from '@diagram-craft/utils/localize';
 
-type DirEntry = {
+export type DirEntry = {
   name: string;
   isDirectory: boolean;
   size?: number;
@@ -97,6 +98,86 @@ const sortEntries = (entries: DirEntry[], key: SortKey, dir: 1 | -1): DirEntry[]
     return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
   });
 };
+
+type FileBrowserToolbarProps = {
+  path: string[];
+  navigateTo: (index: number) => void;
+  children?: React.ReactNode;
+};
+
+export const FileBrowserToolbar = ({ path, navigateTo, children }: FileBrowserToolbarProps) => (
+  <div className={browserStyles.eToolbar}>
+    <Button
+      size="sm"
+      disabled={path.length === 0}
+      onClick={() => navigateTo(path.length - 1)}
+      title="Up one level"
+    >
+      <TbCornerLeftUp size={15} />
+    </Button>
+    <nav className={browserStyles.eBreadcrumb} aria-label="Path">
+      <span className={browserStyles.eCrumbLabel}>Path:</span>
+      <button
+        type="button"
+        className={browserStyles.eCrumb}
+        data-current={path.length === 0 ? 'true' : undefined}
+        onClick={path.length > 0 ? () => navigateTo(0) : undefined}
+        disabled={path.length === 0}
+      >
+        <TbHome size={13} />
+        <span>Home</span>
+      </button>
+      {path.map((segment, i) => (
+        <React.Fragment key={`${i}__${segment}`}>
+          <span className={browserStyles.eCrumbSep}>
+            <TbChevronRight size={13} />
+          </span>
+          <button
+            type="button"
+            className={browserStyles.eCrumb}
+            data-current={i === path.length - 1 ? 'true' : undefined}
+            onClick={i < path.length - 1 ? () => navigateTo(i + 1) : undefined}
+            disabled={i === path.length - 1}
+          >
+            <span>{segment}</span>
+          </button>
+        </React.Fragment>
+      ))}
+    </nav>
+    {children}
+  </div>
+);
+
+type FileBrowserListProps = {
+  isLoading: boolean;
+  isEmpty: boolean;
+  emptyMessage: React.ReactNode;
+  header?: React.ReactNode;
+  children: React.ReactNode;
+};
+
+export const FileBrowserList = ({
+  isLoading,
+  isEmpty,
+  emptyMessage,
+  header,
+  children
+}: FileBrowserListProps) => (
+  <div className={browserStyles.eListWrap}>
+    {header}
+    <div className={browserStyles.eList}>
+      {isLoading ? (
+        <div className={browserStyles.eEmpty}>
+          <p>Loading…</p>
+        </div>
+      ) : isEmpty ? (
+        <div className={browserStyles.eEmpty}>{emptyMessage}</div>
+      ) : (
+        children
+      )}
+    </div>
+  </div>
+);
 
 export const FileDialog = (props: Props) => {
   const [path, setPath] = useState<string[]>([]);
@@ -251,7 +332,7 @@ export const FileDialog = (props: Props) => {
 
   const footerLeft =
     mode === 'open' ? (
-      <span className={styles.eFooterMeta}>
+      <span className={browserStyles.eFooterMeta}>
         {selected && !selected.isDirectory ? (
           <>
             <strong>{selected.name}</strong>
@@ -265,7 +346,7 @@ export const FileDialog = (props: Props) => {
         )}
       </span>
     ) : (
-      <span className={styles.eFooterPath}>
+      <span className={browserStyles.eFooterPath}>
         <TbDeviceFloppy size={13} />
         <span>{currentPathDisplay}</span>
       </span>
@@ -311,46 +392,7 @@ export const FileDialog = (props: Props) => {
     >
       <div className={styles.icFileDialog}>
         {/* Toolbar */}
-        <div className={styles.eToolbar}>
-          <Button
-            size="sm"
-            disabled={path.length === 0}
-            onClick={() => navigateTo(path.length - 1)}
-            title="Up one level"
-          >
-            <TbCornerLeftUp size={15} />
-          </Button>
-
-          <nav className={styles.eBreadcrumb} aria-label="Path">
-            <span className={styles.eCrumbLabel}>Path:</span>
-            <button
-              type="button"
-              className={styles.eCrumb}
-              data-current={path.length === 0 ? 'true' : undefined}
-              onClick={path.length > 0 ? () => navigateTo(0) : undefined}
-              disabled={path.length === 0}
-            >
-              <TbHome size={13} />
-              <span>Home</span>
-            </button>
-            {path.map((segment, i) => (
-              <React.Fragment key={`${i}__${segment}`}>
-                <span className={styles.eCrumbSep}>
-                  <TbChevronRight size={13} />
-                </span>
-                <button
-                  type="button"
-                  className={styles.eCrumb}
-                  data-current={i === path.length - 1 ? 'true' : undefined}
-                  onClick={i < path.length - 1 ? () => navigateTo(i + 1) : undefined}
-                  disabled={i === path.length - 1}
-                >
-                  <span>{segment}</span>
-                </button>
-              </React.Fragment>
-            ))}
-          </nav>
-
+        <FileBrowserToolbar path={path} navigateTo={navigateTo}>
           {mode === 'open' ? (
             <TextInput
               variant="search"
@@ -376,109 +418,104 @@ export const FileDialog = (props: Props) => {
               {creatingFolder ? 'Creating…' : 'New folder'}
             </Button>
           )}
-        </div>
+        </FileBrowserToolbar>
 
         {/* File list */}
-        <div className={styles.eListWrap}>
-          {/* Column header */}
-          <div className={styles.eColHead}>
-            <button
-              type="button"
-              className={styles.eColBtn}
-              data-sorted={sortKey === 'name' ? 'true' : undefined}
-              onClick={() => handleSort('name')}
-            >
-              Name{' '}
-              {sortKey === 'name' ? (
-                sortDir === 1 ? (
-                  <TbArrowUp size={12} />
-                ) : (
-                  <TbArrowDown size={12} />
-                )
-              ) : null}
-            </button>
-            <button
-              type="button"
-              className={styles.eColBtn}
-              data-right="true"
-              data-sorted={sortKey === 'size' ? 'true' : undefined}
-              onClick={() => handleSort('size')}
-            >
-              Size{' '}
-              {sortKey === 'size' ? (
-                sortDir === 1 ? (
-                  <TbArrowUp size={12} />
-                ) : (
-                  <TbArrowDown size={12} />
-                )
-              ) : null}
-            </button>
-            <button
-              type="button"
-              className={styles.eColBtn}
-              data-right="true"
-              data-sorted={sortKey === 'modified' ? 'true' : undefined}
-              onClick={() => handleSort('modified')}
-            >
-              Modified{' '}
-              {sortKey === 'modified' ? (
-                sortDir === 1 ? (
-                  <TbArrowUp size={12} />
-                ) : (
-                  <TbArrowDown size={12} />
-                )
-              ) : null}
-            </button>
-          </div>
-
-          {/* Rows */}
-          <div className={styles.eList}>
-            {list === undefined ? (
-              <div className={styles.eEmpty}>
-                <p>Loading…</p>
-              </div>
-            ) : sortedFiltered.length === 0 ? (
-              <div className={styles.eEmpty}>
-                <TbFolderSearch size={28} />
-                <p>{filter ? `No items match "${filter}".` : 'This folder is empty.'}</p>
-              </div>
-            ) : (
-              sortedFiltered.map(entry => {
-                const isSelected = selected === entry;
-                const isFile = !entry.isDirectory;
-                return (
-                  <button
-                    key={entry.name}
-                    type="button"
-                    role="option"
-                    aria-selected={isSelected}
-                    className={styles.eRow}
-                    data-selected={isSelected ? 'true' : undefined}
-                    data-dimmed={isFile && mode === 'saveAs' ? 'true' : undefined}
-                    data-kind={entry.isDirectory ? 'dir' : getFileType(entry.name)}
-                    onClick={() => handleRowClick(entry)}
-                    onDoubleClick={() => handleRowDoubleClick(entry)}
-                  >
-                    <span className={styles.eName}>
-                      {entry.isDirectory ? (
-                        <TbFolder size={16} />
-                      ) : getFileType(entry.name) === 'svg' ? (
-                        <TbFileVector size={16} />
-                      ) : (
-                        <TbFileCode size={16} />
-                      )}
-                      <span className={styles.eNameText}>{entry.name}</span>
-                    </span>
-                    <span className={styles.eCell}>
-                      {entry.isDirectory ? '—' : fmtSize(entry.size)}
-                    </span>
-                    <span className={styles.eCell}>{fmtDate(entry.modifiedAt)}</span>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
+        <FileBrowserList
+          isLoading={list === undefined}
+          isEmpty={sortedFiltered.length === 0}
+          emptyMessage={
+            <>
+              <TbFolderSearch size={28} />
+              <p>{filter ? `No items match "${filter}".` : 'This folder is empty.'}</p>
+            </>
+          }
+          header={
+            <div className={styles.eColHead}>
+              <button
+                type="button"
+                className={styles.eColBtn}
+                data-sorted={sortKey === 'name' ? 'true' : undefined}
+                onClick={() => handleSort('name')}
+              >
+                Name{' '}
+                {sortKey === 'name' ? (
+                  sortDir === 1 ? (
+                    <TbArrowUp size={12} />
+                  ) : (
+                    <TbArrowDown size={12} />
+                  )
+                ) : null}
+              </button>
+              <button
+                type="button"
+                className={styles.eColBtn}
+                data-right="true"
+                data-sorted={sortKey === 'size' ? 'true' : undefined}
+                onClick={() => handleSort('size')}
+              >
+                Size{' '}
+                {sortKey === 'size' ? (
+                  sortDir === 1 ? (
+                    <TbArrowUp size={12} />
+                  ) : (
+                    <TbArrowDown size={12} />
+                  )
+                ) : null}
+              </button>
+              <button
+                type="button"
+                className={styles.eColBtn}
+                data-right="true"
+                data-sorted={sortKey === 'modified' ? 'true' : undefined}
+                onClick={() => handleSort('modified')}
+              >
+                Modified{' '}
+                {sortKey === 'modified' ? (
+                  sortDir === 1 ? (
+                    <TbArrowUp size={12} />
+                  ) : (
+                    <TbArrowDown size={12} />
+                  )
+                ) : null}
+              </button>
+            </div>
+          }
+        >
+          {sortedFiltered.map(entry => {
+            const isSelected = selected === entry;
+            const isFile = !entry.isDirectory;
+            return (
+              <button
+                key={entry.name}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                className={styles.eRow}
+                data-selected={isSelected ? 'true' : undefined}
+                data-dimmed={isFile && mode === 'saveAs' ? 'true' : undefined}
+                data-kind={entry.isDirectory ? 'dir' : getFileType(entry.name)}
+                onClick={() => handleRowClick(entry)}
+                onDoubleClick={() => handleRowDoubleClick(entry)}
+              >
+                <span className={styles.eName}>
+                  {entry.isDirectory ? (
+                    <TbFolder size={16} />
+                  ) : getFileType(entry.name) === 'svg' ? (
+                    <TbFileVector size={16} />
+                  ) : (
+                    <TbFileCode size={16} />
+                  )}
+                  <span className={styles.eNameText}>{entry.name}</span>
+                </span>
+                <span className={styles.eCell}>
+                  {entry.isDirectory ? '—' : fmtSize(entry.size)}
+                </span>
+                <span className={styles.eCell}>{fmtDate(entry.modifiedAt)}</span>
+              </button>
+            );
+          })}
+        </FileBrowserList>
 
         {/* Save As fields */}
         {mode === 'saveAs' && (
