@@ -112,7 +112,11 @@ export const ShapesPickerTab = () => {
 
   useEventListener(stencilRegistry, 'change', () => {
     setActiveStencils(
-      getVisibleStencilPackages(stencilRegistry, AppConfig.get().stencils.registry, activePackageIds)
+      getVisibleStencilPackages(
+        stencilRegistry,
+        AppConfig.get().stencils.registry,
+        activePackageIds
+      )
     );
     redraw();
   });
@@ -186,13 +190,7 @@ export const ShapesPickerTab = () => {
       <StencilPackageDialog
         open={manageStencilsOpen}
         onClose={() => setManageStencilsOpen(false)}
-        packages={AppConfig.get().stencils.registry.map(pkg => ({
-          id: pkg.id,
-          name: pkg.name,
-          description: pkg.description,
-          icon: pkg.icon,
-          group: pkg.group
-        }))}
+        packages={AppConfig.get().stencils.registry.map(pkg => ({ ...pkg }))}
         activePackageIds={activePackageIds}
         onSave={onSaveActivePackages}
       />

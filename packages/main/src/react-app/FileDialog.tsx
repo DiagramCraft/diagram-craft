@@ -323,6 +323,7 @@ export const FileDialog = (props: Props) => {
                 setSelected(null);
               }}
               placeholder="Filter this folder"
+              style={{ flex: '0 0 190px' }}
             />
           ) : (
             <button className={styles.eNewFolderBtn} onClick={handleNewFolder}>
