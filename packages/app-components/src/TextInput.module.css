@@ -35,6 +35,7 @@
     color: var(--panel-fg);
     border: none;
     background: none;
+    font-family: inherit;
     font-size: 11px;
     width: 100%;
 

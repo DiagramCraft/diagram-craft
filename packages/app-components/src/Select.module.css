@@ -22,6 +22,7 @@
   min-width: 0;
   border-radius: var(--cmp-radius);
   padding: 0 5px;
+  font-family: inherit;
   font-size: 11px;
   line-height: 1;
   height: 25px;
