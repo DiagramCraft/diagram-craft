@@ -1,48 +1,184 @@
-.icInsertImageDialog {
-  .ePath {
-    margin-bottom: 0.5rem;
+/* ===== Mode switcher spacing ===== */
+.eModeWrap {
+  margin-bottom: 14px;
+}
 
-    & > a {
-      color: var(--base-fg-dim);
-      margin-right: 0.25rem;
+/* ===== Toolbar ===== */
+.eToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
 
-      &:hover {
-        color: var(--accent-fg);
-      }
+.eUpBtn {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--cmp-radius, 4px);
+  color: var(--cmp-fg-dimmed);
+  cursor: pointer;
+  transition: background 80ms, border-color 80ms, color 80ms;
 
-      &:not(:first-child) {
-        margin-left: 0.25rem;
-      }
-    }
+  &:hover:not(:disabled) {
+    background: var(--cmp-bg-hover);
+    color: var(--base-fg);
+    border-color: var(--cmp-border);
   }
 
-  .eList {
-    background-color: var(--base-bg);
-    border: 1px solid var(--panel-border);
-    border-radius: var(--cmp-radius);
-    padding: 0.5rem 0 0.5rem 0.5rem;
-
-    & > div {
-      height: 10rem;
-      overflow: scroll;
-    }
-
-    ul {
-      margin: 0;
-      padding-left: 0;
-    }
-
-    ul > li {
-      list-style: none;
-      margin-bottom: 0.25rem;
-
-      a {
-        color: var(--base-fg-dim);
-
-        &:hover {
-          color: var(--accent-fg);
-        }
-      }
-    }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 }
+
+/* ===== Breadcrumb ===== */
+.eBreadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 6px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.eCrumbLabel {
+  color: var(--cmp-fg-dimmed);
+  font-size: 11.5px;
+  padding: 0 6px 0 4px;
+  flex-shrink: 0;
+}
+
+.eCrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 3px;
+  color: var(--cmp-fg);
+  font-size: 12px;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 80ms, color 80ms;
+
+  &:hover:not(:disabled) {
+    background: var(--cmp-bg-hover);
+    color: var(--base-fg);
+  }
+}
+
+.eCrumbCurrent {
+  color: var(--base-fg);
+  font-weight: 500;
+  cursor: default;
+
+  &:hover {
+    background: transparent !important;
+  }
+}
+
+.eCrumbSep {
+  color: var(--cmp-fg-dimmed);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ===== File list wrapper ===== */
+.eListWrap {
+  display: flex;
+  flex-direction: column;
+  background: var(--base-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: 5px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ===== Scrollable list ===== */
+.eList {
+  flex: 1;
+  min-height: 190px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+/* ===== File row ===== */
+.eRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 30px;
+  padding: 0 8px 0 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  color: var(--cmp-fg);
+  text-align: left;
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 70ms, border-color 70ms, color 70ms;
+
+  &:hover {
+    background: var(--cmp-bg);
+  }
+}
+
+.eRowSelected {
+  background: color-mix(in oklab, var(--accent-chroma) 10%, transparent) !important;
+  border-color: color-mix(in oklch, var(--accent-chroma) 45%, var(--cmp-border)) !important;
+  color: var(--base-fg) !important;
+}
+
+.eNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== Empty state ===== */
+.eEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 140px;
+  color: var(--cmp-fg-dimmed);
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 12px;
+  }
+}
+
+/* ===== Footer meta ===== */
+.eFooterMeta {
+  font-size: 11.5px;
+  color: var(--cmp-fg-dimmed);
+
+  strong {
+    color: var(--cmp-fg);
+    font-weight: 500;
+  }
+}
+

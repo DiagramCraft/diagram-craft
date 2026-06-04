@@ -74,6 +74,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'default',
         name: 'Basic shapes',
+        description: 'Rectangles, ellipses, lines and connectors',
+        icon: 'TbShape',
+        group: 'General',
         includedByDefault: true,
         loader: 'basic',
         opts: {
@@ -86,6 +89,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'arrow',
         name: 'Arrow',
+        description: 'Directional arrows and flow markers',
+        icon: 'TbArrowRight',
+        group: 'General',
         includedByDefault: true,
         loader: 'basic',
         opts: {
@@ -98,6 +104,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'bpmn2',
         name: 'BPMN 2.0',
+        description: 'Business process model & notation',
+        icon: 'TbBinaryTree',
+        group: 'Modelling',
         includedByDefault: true,
         loader: 'basic',
         opts: {
@@ -108,6 +117,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'uml',
         name: 'UML',
+        description: 'Class, sequence, activity and state diagrams',
+        icon: 'TbBox',
+        group: 'Modelling',
         includedByDefault: true,
         loader: 'basic',
         opts: {
@@ -118,6 +130,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'data-modelling',
         name: 'Data Modelling',
+        description: 'Entities, relationships and tables',
+        icon: 'TbDatabase',
+        group: 'Modelling',
         includedByDefault: true,
         loader: 'basic',
         opts: {
@@ -130,6 +145,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'c4',
         name: 'C4',
+        description: 'Context, container and component views',
+        icon: 'TbStack2',
+        group: 'Modelling',
         includedByDefault: true,
         loader: 'basic',
         opts: {
@@ -140,6 +158,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'archimate',
         name: 'ArchiMate',
+        description: 'Enterprise architecture notation',
+        icon: 'TbNetwork',
+        group: 'Modelling',
         includedByDefault: true,
         loader: 'basic',
         opts: {
@@ -152,6 +173,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'drawioUml',
         name: 'UML (DrawIO)',
+        description: 'DrawIO-compatible UML stencil set',
+        icon: 'TbBox',
+        group: 'Modelling',
         includedByDefault: false,
         loader: 'basic',
         opts: {
@@ -164,6 +188,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'GCP',
         name: 'GCP',
+        description: 'Google Cloud Platform service icons',
+        icon: 'TbCloud',
+        group: 'Cloud & infra',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -175,6 +202,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'AWS',
         name: 'AWS',
+        description: 'Amazon Web Services icon library',
+        icon: 'TbCloud',
+        group: 'Cloud & infra',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -186,6 +216,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Azure',
         name: 'Azure',
+        description: 'Microsoft Azure service icons',
+        icon: 'TbCloud',
+        group: 'Cloud & infra',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -197,6 +230,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Fluid Power',
         name: 'Fluid Power',
+        description: 'Hydraulic and pneumatic circuit symbols',
+        icon: 'TbCircuitResistor',
+        group: 'Engineering',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -208,6 +244,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'IBM',
         name: 'IBM',
+        description: 'IBM service icons',
+        icon: 'TbCloud',
+        group: 'Cloud & infra',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -219,6 +258,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Web Logos',
         name: 'Web Logos',
+        description: 'Brand and product logos',
+        icon: 'TbBrandChrome',
+        group: 'Web',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -230,6 +272,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Web Icons',
         name: 'Web Icons',
+        description: 'General web and UI icons',
+        icon: 'TbGlobe',
+        group: 'Web',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -241,6 +286,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'EIP',
         name: 'EIP',
+        description: 'Enterprise integration patterns',
+        icon: 'TbRoute',
+        group: 'Modelling',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -252,6 +300,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Arrows',
         name: 'Arrows',
+        description: 'Extended arrow and connector shapes',
+        icon: 'TbArrowsRandom',
+        group: 'General',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -263,6 +314,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Basic',
         name: 'Basic',
+        description: 'Basic DrawIO shape set',
+        icon: 'TbSquare',
+        group: 'General',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {
@@ -274,6 +328,9 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'BPMN',
         name: 'BPMN',
+        description: 'DrawIO-compatible BPMN stencil set',
+        icon: 'TbGitFork',
+        group: 'Modelling',
         includedByDefault: false,
         loader: 'drawioXml',
         opts: {

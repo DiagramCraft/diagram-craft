@@ -11,6 +11,8 @@ export type FileSystemDirectoryResult = {
   entries: Array<{
     name: string;
     isDirectory: boolean;
+    size?: number;
+    modifiedAt?: number;
   }>;
 };
 

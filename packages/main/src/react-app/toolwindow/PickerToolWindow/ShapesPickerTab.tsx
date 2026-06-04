@@ -186,7 +186,13 @@ export const ShapesPickerTab = () => {
       <StencilPackageDialog
         open={manageStencilsOpen}
         onClose={() => setManageStencilsOpen(false)}
-        packages={AppConfig.get().stencils.registry.map(pkg => ({ id: pkg.id, name: pkg.name }))}
+        packages={AppConfig.get().stencils.registry.map(pkg => ({
+          id: pkg.id,
+          name: pkg.name,
+          description: pkg.description,
+          icon: pkg.icon,
+          group: pkg.group
+        }))}
         activePackageIds={activePackageIds}
         onSave={onSaveActivePackages}
       />
