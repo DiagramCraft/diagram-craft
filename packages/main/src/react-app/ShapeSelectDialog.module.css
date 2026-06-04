@@ -43,6 +43,12 @@
         border-radius: 4px;
       }
 
+      &[data-selected='true'] {
+        background: color-mix(in oklab, var(--accent-chroma) 22%, var(--cmp-bg));
+        border: 1px solid color-mix(in oklch, var(--accent-chroma) 50%, var(--cmp-border));
+        border-radius: 4px;
+      }
+
       & svg {
         margin: 0.2rem;
         display: block;
@@ -99,6 +105,12 @@
         &:hover {
           background: var(--base-bg);
           border: 1px solid var(--cmp-border);
+          border-radius: 4px;
+        }
+
+        &[data-selected='true'] {
+          background: color-mix(in oklab, var(--accent-chroma) 22%, var(--cmp-bg));
+          border: 1px solid color-mix(in oklch, var(--accent-chroma) 50%, var(--cmp-border));
           border-radius: 4px;
         }
       }
