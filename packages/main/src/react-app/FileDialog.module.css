@@ -1,6 +1,6 @@
 /**
  * FileDialog - .icFileDialog
- * | Toolbar - .eToolbar > .eUpBtn, .eBreadcrumb (.eCrumbLabel, .eCrumb, .eCrumbSep), .eNewFolderBtn
+ * | Toolbar - .eToolbar > .eBreadcrumb (.eCrumbLabel, .eCrumb, .eCrumbSep)
  * | File list - .eListWrap > .eColHead (.eColBtn), .eList > .eRow (.eName, .eNameText, .eCell)
  * | Save fields - .eSaveFields > .eSaveField > .eFieldLabel
  * | Warn - .eWarn
@@ -16,31 +16,6 @@
     margin-bottom: 10px;
   }
 
-  .eUpBtn {
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--cmp-bg);
-    border: 1px solid var(--cmp-border);
-    border-radius: var(--cmp-radius, 4px);
-    color: var(--cmp-fg-dimmed);
-    cursor: pointer;
-    transition: background 80ms, border-color 80ms, color 80ms;
-
-    &:hover:not(:disabled) {
-      background: var(--cmp-bg-hover);
-      color: var(--base-fg);
-      border-color: var(--cmp-border);
-    }
-
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-  }
 
   .eBreadcrumb {
     display: flex;
@@ -51,8 +26,8 @@
     height: 24px;
     padding: 0 6px;
     background: var(--cmp-bg);
-    border: 1px solid var(--cmp-border);
-    border-radius: 5px;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--cmp-radius);
     overflow: hidden;
   }
 
@@ -101,27 +76,6 @@
     align-items: center;
   }
 
-  .eNewFolderBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 26px;
-    padding: 0 10px;
-    background: var(--cmp-bg);
-    border: 1px solid var(--cmp-border);
-    border-radius: var(--cmp-radius, 4px);
-    color: var(--cmp-fg);
-    font-size: 12px;
-    font-family: inherit;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 80ms, border-color 80ms, color 80ms;
-
-    &:hover {
-      background: var(--cmp-bg-hover);
-      color: var(--base-fg);
-    }
-  }
 
   .eListWrap {
     display: flex;

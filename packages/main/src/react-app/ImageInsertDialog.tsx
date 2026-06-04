@@ -1,4 +1,5 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { Button } from '@diagram-craft/app-components/Button';
 import React, { useEffect, useState } from 'react';
 import styles from './ImageInsertDialog.module.css';
 import {
@@ -24,8 +25,7 @@ type DirEntry = {
 
 const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg']);
 
-const isImageFile = (name: string) =>
-  IMAGE_EXTS.has(name.split('.').pop()?.toLowerCase() ?? '');
+const isImageFile = (name: string) => IMAGE_EXTS.has(name.split('.').pop()?.toLowerCase() ?? '');
 
 const MODES = [
   { value: 'device', label: 'From device' },
@@ -83,15 +83,19 @@ export const ImageInsertDialog = (props: Props) => {
 
   const filteredList = list?.filter(e => e.isDirectory || isImageFile(e.name)) ?? [];
 
-  const footerLeft = mode === 'server' ? (
-    <span className={styles.eFooterMeta}>
-      {selected && !selected.isDirectory ? (
-        <><strong>{selected.name}</strong>{' · '}Image</>
-      ) : (
-        'Nothing selected'
-      )}
-    </span>
-  ) : undefined;
+  const footerLeft =
+    mode === 'server' ? (
+      <span className={styles.eFooterMeta}>
+        {selected && !selected.isDirectory ? (
+          <>
+            <strong>{selected.name}</strong>
+            {' · '}Image
+          </>
+        ) : (
+          'Nothing selected'
+        )}
+      </span>
+    ) : undefined;
 
   return (
     <Dialog
@@ -103,124 +107,140 @@ export const ImageInsertDialog = (props: Props) => {
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: props.onCancel! },
         ...(mode === 'server'
-          ? [{
-              label: 'Insert',
-              type: 'default' as const,
-              disabled: !selected || selected.isDirectory,
-              onClick: handleInsert
-            }]
+          ? [
+              {
+                label: 'Insert',
+                type: 'default' as const,
+                disabled: !selected || selected.isDirectory,
+                onClick: handleInsert
+              }
+            ]
           : [])
       ]}
     >
       <div className={styles.icInsertImageDialog}>
-      <div className={styles.eModeWrap}>
-        <ModeSwitcher modes={MODES} value={mode} onChange={m => { setMode(m); setSelected(null); }} />
-      </div>
-
-      {mode === 'device' && (
-        <>
-          <label
-            className={buttonStyles.cButton}
-            style={{ fontSize: '11px', justifyContent: 'left' }}
-            htmlFor="file-upload"
-          >
-            Upload...
-          </label>
-          <input
-            id="file-upload"
-            type="file"
-            style={{ display: 'none', width: 0 }}
-            onChange={async e => { props.onOk(e.target.files![0]!); }}
+        <div className={styles.eModeWrap}>
+          <ModeSwitcher
+            modes={MODES}
+            value={mode}
+            onChange={m => {
+              setMode(m);
+              setSelected(null);
+            }}
           />
-        </>
-      )}
+        </div>
 
-      {mode === 'server' && (
-        <>
-          {/* Toolbar */}
-          <div className={styles.eToolbar}>
-            <button
-              type="button"
-              className={styles.eUpBtn}
-              disabled={path.length === 0}
-              onClick={() => navigateTo(path.length - 1)}
-              title="Up one level"
+        {mode === 'device' && (
+          <>
+            <label
+              className={buttonStyles.cButton}
+              style={{ fontSize: '11px', justifyContent: 'left' }}
+              htmlFor="file-upload"
             >
-              <TbCornerLeftUp size={15} />
-            </button>
+              Upload...
+            </label>
+            <input
+              id="file-upload"
+              type="file"
+              style={{ display: 'none', width: 0 }}
+              onChange={async e => {
+                const file = e.target.files?.[0];
+                if (file == null) return;
+                props.onOk(file);
+              }}
+            />
+          </>
+        )}
 
-            <nav className={styles.eBreadcrumb} aria-label="Path">
-              <span className={styles.eCrumbLabel}>Path:</span>
-              <button
-                type="button"
-                className={styles.eCrumb}
-                data-current={path.length === 0 ? 'true' : undefined}
-                onClick={path.length > 0 ? () => navigateTo(0) : undefined}
+        {mode === 'server' && (
+          <>
+            {/* Toolbar */}
+            <div className={styles.eToolbar}>
+              <Button
+                size="sm"
                 disabled={path.length === 0}
+                onClick={() => navigateTo(path.length - 1)}
+                title="Up one level"
               >
-                <TbHome size={13} />
-                <span>Home</span>
-              </button>
-              {path.map((segment, i) => (
-                <React.Fragment key={`${i}__${segment}`}>
-                  <span className={styles.eCrumbSep}><TbChevronRight size={13} /></span>
-                  <button
-                    type="button"
-                    className={styles.eCrumb}
-                    data-current={i === path.length - 1 ? 'true' : undefined}
-                    onClick={i < path.length - 1 ? () => navigateTo(i + 1) : undefined}
-                    disabled={i === path.length - 1}
-                  >
-                    <span>{segment}</span>
-                  </button>
-                </React.Fragment>
-              ))}
-            </nav>
-          </div>
+                <TbCornerLeftUp size={15} />
+              </Button>
 
-          {/* File list */}
-          <div className={styles.eListWrap}>
-            <div className={styles.eList}>
-              {list === undefined ? (
-                <div className={styles.eEmpty}><p>Loading…</p></div>
-              ) : filteredList.length === 0 ? (
-                <div className={styles.eEmpty}>
-                  <TbFolderSearch size={28} />
-                  <p>No images in this folder.</p>
-                </div>
-              ) : (
-                filteredList.map(entry => (
-                  <button
-                    key={entry.name}
-                    type="button"
-                    role="option"
-                    aria-selected={selected === entry}
-                    className={styles.eRow}
-                    data-selected={selected === entry ? 'true' : undefined}
-                    onClick={() => setSelected(entry)}
-                    onDoubleClick={() => {
-                      if (entry.isDirectory) navigateInto(entry);
-                      else {
-                        const fullPath = [...path, entry.name].join('/');
-                        props.onOk(fullPath);
-                      }
-                    }}
-                  >
-                    {entry.isDirectory ? (
-                      <TbFolder size={15} />
-                    ) : entry.name.toLowerCase().endsWith('.png') ? (
-                      <TbFileTypePng size={15} />
-                    ) : (
-                      <TbPhoto size={15} />
-                    )}
-                    <span className={styles.eNameText}>{entry.name}</span>
-                  </button>
-                ))
-              )}
+              <nav className={styles.eBreadcrumb} aria-label="Path">
+                <span className={styles.eCrumbLabel}>Path:</span>
+                <button
+                  type="button"
+                  className={styles.eCrumb}
+                  data-current={path.length === 0 ? 'true' : undefined}
+                  onClick={path.length > 0 ? () => navigateTo(0) : undefined}
+                  disabled={path.length === 0}
+                >
+                  <TbHome size={13} />
+                  <span>Home</span>
+                </button>
+                {path.map((segment, i) => (
+                  <React.Fragment key={`${i}__${segment}`}>
+                    <span className={styles.eCrumbSep}>
+                      <TbChevronRight size={13} />
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.eCrumb}
+                      data-current={i === path.length - 1 ? 'true' : undefined}
+                      onClick={i < path.length - 1 ? () => navigateTo(i + 1) : undefined}
+                      disabled={i === path.length - 1}
+                    >
+                      <span>{segment}</span>
+                    </button>
+                  </React.Fragment>
+                ))}
+              </nav>
             </div>
-          </div>
-        </>
-      )}
+
+            {/* File list */}
+            <div className={styles.eListWrap}>
+              <div className={styles.eList}>
+                {list === undefined ? (
+                  <div className={styles.eEmpty}>
+                    <p>Loading…</p>
+                  </div>
+                ) : filteredList.length === 0 ? (
+                  <div className={styles.eEmpty}>
+                    <TbFolderSearch size={28} />
+                    <p>No images in this folder.</p>
+                  </div>
+                ) : (
+                  filteredList.map(entry => (
+                    <button
+                      key={entry.name}
+                      type="button"
+                      role="option"
+                      aria-selected={selected === entry}
+                      className={styles.eRow}
+                      data-selected={selected === entry ? 'true' : undefined}
+                      onClick={() => setSelected(entry)}
+                      onDoubleClick={() => {
+                        if (entry.isDirectory) navigateInto(entry);
+                        else {
+                          const fullPath = [...path, entry.name].join('/');
+                          props.onOk(fullPath);
+                        }
+                      }}
+                    >
+                      {entry.isDirectory ? (
+                        <TbFolder size={15} />
+                      ) : entry.name.toLowerCase().endsWith('.png') ? (
+                        <TbFileTypePng size={15} />
+                      ) : (
+                        <TbPhoto size={15} />
+                      )}
+                      <span className={styles.eNameText}>{entry.name}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </Dialog>
   );

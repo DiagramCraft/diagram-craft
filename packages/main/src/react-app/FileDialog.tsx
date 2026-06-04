@@ -1,4 +1,5 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -32,6 +33,11 @@ type DirEntry = {
 type SortKey = 'name' | 'size' | 'modified';
 type FileType = 'json' | 'svg';
 
+const FILE_TYPE_SUFFIXES: Record<FileType, string> = {
+  json: '.json',
+  svg: '.diagramCraft.svg'
+};
+
 const fmtSize = (bytes?: number): string => {
   if (bytes == null) return '—';
   if (bytes < 1024) return `${bytes} B`;
@@ -49,9 +55,24 @@ const fmtDate = (ms?: number): string => {
 };
 
 const parseDefaultFilename = (name: string): { base: string; type: FileType } => {
-  if (name.endsWith('.svg')) return { base: name.slice(0, -4), type: 'svg' };
+  if (name.endsWith(FILE_TYPE_SUFFIXES.svg))
+    return { base: name.slice(0, -FILE_TYPE_SUFFIXES.svg.length), type: 'svg' };
   if (name.endsWith('.json')) return { base: name.slice(0, -5), type: 'json' };
   return { base: name, type: 'json' };
+};
+
+const getFileType = (name: string): FileType => {
+  if (name.endsWith(FILE_TYPE_SUFFIXES.svg)) return 'svg';
+  return 'json';
+};
+
+const getFilenameBase = (name: string) => {
+  const type = getFileType(name);
+  const suffix = FILE_TYPE_SUFFIXES[type];
+  if (name.endsWith(suffix)) return name.slice(0, -suffix.length);
+
+  const dot = name.lastIndexOf('.');
+  return dot > 0 ? name.slice(0, dot) : name;
 };
 
 const sortEntries = (entries: DirEntry[], key: SortKey, dir: 1 | -1): DirEntry[] => {
@@ -81,6 +102,7 @@ export const FileDialog = (props: Props) => {
   const [path, setPath] = useState<string[]>([]);
   const [list, setList] = useState<DirEntry[] | undefined>(undefined);
   const [selected, setSelected] = useState<DirEntry | null>(null);
+  const [creatingFolder, setCreatingFolder] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<1 | -1>(1);
   const [filter, setFilter] = useState('');
@@ -155,11 +177,8 @@ export const FileDialog = (props: Props) => {
   const handleRowClick = (entry: DirEntry) => {
     setSelected(entry);
     if (mode === 'saveAs' && !entry.isDirectory) {
-      const dot = entry.name.lastIndexOf('.');
-      const base = dot > 0 ? entry.name.slice(0, dot) : entry.name;
-      setFilename(base);
-      if (entry.name.endsWith('.svg')) setFileType('svg');
-      else setFileType('json');
+      setFilename(getFilenameBase(entry.name));
+      setFileType(getFileType(entry.name));
     }
   };
 
@@ -180,7 +199,8 @@ export const FileDialog = (props: Props) => {
 
   const isValidFilename = filename.trim().length > 0 && !/[/\\]/.test(filename);
 
-  const currentFilename = `${filename.trim() || 'Untitled'}.${fileType}`;
+  const trimmedFilename = filename.trim();
+  const currentFilename = `${trimmedFilename === '' ? 'Untitled' : trimmedFilename}${FILE_TYPE_SUFFIXES[fileType]}`;
 
   const hasConflict =
     mode === 'saveAs' &&
@@ -193,18 +213,37 @@ export const FileDialog = (props: Props) => {
     props.onOk(fullPath);
   };
 
-  const handleNewFolder = () => {
-    if (!list) return;
-    const existingNames = new Set(list.map(e => e.name.toLowerCase()));
+  const handleNewFolder = async () => {
+    if (!list || creatingFolder) return;
+    const existingNames = new Set(list.filter(e => e.isDirectory).map(e => e.name.toLowerCase()));
     let name = 'untitled folder';
     let n = 2;
     while (existingNames.has(name.toLowerCase())) name = `untitled folder ${n++}`;
-    const newEntry: DirEntry = { name, isDirectory: true };
-    const newList = sortEntries([...list, newEntry], 'name', 1);
-    setList(newList);
-    setSortKey('name');
-    setSortDir(1);
-    setSelected(newEntry);
+    const folderPath = path.length > 0 ? `${path.join('/')}/${name}` : name;
+
+    setCreatingFolder(true);
+    try {
+      const response = await fetch(`${AppConfig.get().filesystem.endpoint}/api/fs/${folderPath}`, {
+        method: 'PUT',
+        headers: {
+          'X-Diagram-Craft-Create-Directory': 'true'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Failed to create directory');
+        return;
+      }
+
+      const newEntry: DirEntry = { name, isDirectory: true };
+      const newList = sortEntries([...list, newEntry], 'name', 1);
+      setList(newList);
+      setSortKey('name');
+      setSortDir(1);
+      setSelected(newEntry);
+    } finally {
+      setCreatingFolder(false);
+    }
   };
 
   const breadcrumbPath = path.join(' / ');
@@ -217,7 +256,7 @@ export const FileDialog = (props: Props) => {
           <>
             <strong>{selected.name}</strong>
             {' · '}
-            {selected.name.endsWith('.svg') ? 'SVG file' : 'JSON file'}
+            {getFileType(selected.name) === 'svg' ? 'SVG file' : 'JSON file'}
             {' · '}
             {fmtSize(selected.size)}
           </>
@@ -273,15 +312,14 @@ export const FileDialog = (props: Props) => {
       <div className={styles.icFileDialog}>
         {/* Toolbar */}
         <div className={styles.eToolbar}>
-          <button
-            type="button"
-            className={styles.eUpBtn}
+          <Button
+            size="sm"
             disabled={path.length === 0}
             onClick={() => navigateTo(path.length - 1)}
             title="Up one level"
           >
             <TbCornerLeftUp size={15} />
-          </button>
+          </Button>
 
           <nav className={styles.eBreadcrumb} aria-label="Path">
             <span className={styles.eCrumbLabel}>Path:</span>
@@ -329,10 +367,14 @@ export const FileDialog = (props: Props) => {
               style={{ flex: '0 0 190px' }}
             />
           ) : (
-            <button type="button" className={styles.eNewFolderBtn} onClick={handleNewFolder}>
-              <TbFolderPlus size={13} />
-              New folder
-            </button>
+            <Button
+              size="sm"
+              onClick={() => void handleNewFolder()}
+              disabled={creatingFolder}
+              icon={<TbFolderPlus size={13} />}
+            >
+              {creatingFolder ? 'Creating…' : 'New folder'}
+            </Button>
           )}
         </div>
 
@@ -413,16 +455,14 @@ export const FileDialog = (props: Props) => {
                     className={styles.eRow}
                     data-selected={isSelected ? 'true' : undefined}
                     data-dimmed={isFile && mode === 'saveAs' ? 'true' : undefined}
-                    data-kind={
-                      entry.isDirectory ? 'dir' : entry.name.endsWith('.svg') ? 'svg' : 'json'
-                    }
+                    data-kind={entry.isDirectory ? 'dir' : getFileType(entry.name)}
                     onClick={() => handleRowClick(entry)}
                     onDoubleClick={() => handleRowDoubleClick(entry)}
                   >
                     <span className={styles.eName}>
                       {entry.isDirectory ? (
                         <TbFolder size={16} />
-                      ) : entry.name.endsWith('.svg') ? (
+                      ) : getFileType(entry.name) === 'svg' ? (
                         <TbFileVector size={16} />
                       ) : (
                         <TbFileCode size={16} />
@@ -469,8 +509,8 @@ export const FileDialog = (props: Props) => {
                   value={fileType}
                   onChange={v => setFileType((v ?? 'json') as FileType)}
                 >
-                  <Select.Item value="json">Arch Register diagram (.json)</Select.Item>
-                  <Select.Item value="svg">Scalable Vector Graphic (.svg)</Select.Item>
+                  <Select.Item value="json">Diagram document (.json)</Select.Item>
+                  <Select.Item value="svg">Diagram SVG (.diagramCraft.svg)</Select.Item>
                 </Select.Root>
               </div>
             </div>

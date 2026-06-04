@@ -1,7 +1,7 @@
 /**
  * ImageInsertDialog - .icInsertImageDialog
  * | Mode wrap - .eModeWrap
- * | Toolbar - .eToolbar > .eUpBtn, .eBreadcrumb (.eCrumbLabel, .eCrumb, .eCrumbSep)
+ * | Toolbar - .eToolbar > .eBreadcrumb (.eCrumbLabel, .eCrumb, .eCrumbSep)
  * | File list - .eListWrap > .eList > .eRow (.eNameText)
  *
  * Footer (rendered outside dialog body): .eFooterMeta
@@ -19,31 +19,6 @@
     margin-bottom: 10px;
   }
 
-  .eUpBtn {
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--cmp-bg);
-    border: 1px solid var(--cmp-border);
-    border-radius: var(--cmp-radius, 4px);
-    color: var(--cmp-fg-dimmed);
-    cursor: pointer;
-    transition: background 80ms, border-color 80ms, color 80ms;
-
-    &:hover:not(:disabled) {
-      background: var(--cmp-bg-hover);
-      color: var(--base-fg);
-      border-color: var(--cmp-border);
-    }
-
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-  }
 
   .eBreadcrumb {
     display: flex;
@@ -54,8 +29,8 @@
     height: 24px;
     padding: 0 6px;
     background: var(--cmp-bg);
-    border: 1px solid var(--cmp-border);
-    border-radius: 5px;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--cmp-radius);
     overflow: hidden;
   }
 
