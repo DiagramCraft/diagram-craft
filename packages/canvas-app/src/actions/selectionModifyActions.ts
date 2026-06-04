@@ -41,15 +41,24 @@ export class SelectionSelectConnectedAction extends AbstractSelectionAction {
     const graph = new DiagramGraph(diagram.activeLayer as RegularLayer);
 
     const elements = new Set(selection.elements);
+    const addComponent = (nodeId: string) => {
+      const component = getConnectedComponent(graph, nodeId);
+      for (const node of component?.vertices ?? []) {
+        elements.add(node.data);
+      }
+      for (const edge of component?.edges ?? []) {
+        elements.add(edge.data);
+      }
+    };
+
     for (const element of selection.elements) {
-      // TODO: Handle edges as well
       if (isNode(element)) {
-        const component = getConnectedComponent(graph, element.id);
-        for (const node of component?.vertices ?? []) {
-          elements.add(node.data);
-        }
-        for (const edge of component?.edges ?? []) {
-          elements.add(edge.data);
+        addComponent(element.id);
+      } else if (isEdge(element)) {
+        if (element.start instanceof NodeConnectedEndpoint) {
+          addComponent(element.start.node.id);
+        } else if (element.end instanceof NodeConnectedEndpoint) {
+          addComponent(element.end.node.id);
         }
       }
     }
@@ -159,6 +168,29 @@ export class SelectionSelectShrinkAction extends AbstractSelectionAction {
     return connectedCount;
   }
 
+  private normalizeSelection(elementSet: Set<DiagramElement>): Set<DiagramElement> {
+    let changed = true;
+
+    while (changed) {
+      changed = false;
+
+      for (const element of [...elementSet]) {
+        if (
+          isEdge(element) &&
+          (!(element.start instanceof NodeConnectedEndpoint) ||
+            !(element.end instanceof NodeConnectedEndpoint) ||
+            !elementSet.has(element.start.node) ||
+            !elementSet.has(element.end.node))
+        ) {
+          elementSet.delete(element);
+          changed = true;
+        }
+      }
+    }
+
+    return elementSet;
+  }
+
   execute(): void {
     const diagram = this.context.model.activeDiagram;
     const selection = diagram.selection;
@@ -195,6 +227,7 @@ export class SelectionSelectShrinkAction extends AbstractSelectionAction {
       for (const element of toRemove) {
         testSet.delete(element);
       }
+      this.normalizeSelection(testSet);
 
       // Check if removing these elements would eliminate any connected component
       const testComponents = getComponents(testSet);
