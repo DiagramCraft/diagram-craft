@@ -125,12 +125,23 @@ export const runSqliteMigrations = (db: SqliteDatabase): void => {
 };
 
 export const runPostgresMigrations = async (sql: PostgresSqlClient): Promise<void> => {
-  await sql`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
-      version    TEXT        PRIMARY KEY,
-      applied_at TIMESTAMPTZ NOT NULL
-    )
+  const migrationTableExists = await sql<{ exists: boolean }[]>`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = current_schema()
+        AND table_name = 'schema_migrations'
+    ) AS exists
   `;
+
+  if (!migrationTableExists[0]?.exists) {
+    await sql`
+      CREATE TABLE schema_migrations (
+        version    TEXT        PRIMARY KEY,
+        applied_at TIMESTAMPTZ NOT NULL
+      )
+    `;
+  }
 
   const rows = await sql<{ version: string }[]>`SELECT version FROM schema_migrations`;
   const applied = new Set(rows.map(r => r.version));
