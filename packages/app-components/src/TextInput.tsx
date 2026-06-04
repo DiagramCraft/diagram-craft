@@ -3,7 +3,7 @@ import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './TextInput.module.css';
 import { Button } from './Button';
-import { TbX } from 'react-icons/tb';
+import { TbSearch, TbX } from 'react-icons/tb';
 
 export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [error, setError] = useState(false);
@@ -22,9 +22,11 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
       {...extractDataAttributes(props)}
       data-error={error}
       data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
+      data-variant={props.variant ?? 'default'}
       style={props.style ?? {}}
     >
       {props.label && <div className={styles.eLabel}>{props.label}</div>}
+      {props.variant === 'search' && <TbSearch className={styles.eSearchIcon} size={12} />}
       <input
         ref={ref}
         className={styles.eInput}
@@ -81,6 +83,7 @@ type Props = {
   label?: string;
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';
+  variant?: 'default' | 'search';
   onClear?: () => void;
   onChange?: (value: string | undefined, ev: ChangeEvent<HTMLInputElement>) => void;
 } & Omit<

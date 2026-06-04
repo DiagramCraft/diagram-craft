@@ -53,32 +53,6 @@
     flex-wrap: wrap;
   }
 
-  .eSearchInline {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 26px;
-    padding: 0 10px;
-    background: var(--cmp-bg);
-    border: 1px solid var(--panel-border);
-    border-radius: var(--cmp-radius);
-    color: var(--base-fg-more-dim);
-    min-width: 200px;
-
-    input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--base-fg);
-      font-size: 12px;
-      width: 100%;
-
-      &::placeholder {
-        color: var(--cmp-fg-disabled);
-      }
-    }
-  }
-
   .eFilter {
     display: inline-flex;
     align-items: center;
@@ -225,4 +199,3 @@
     }
   }
 }
-

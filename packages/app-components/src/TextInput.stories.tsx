@@ -73,3 +73,12 @@ export const WithLabel: Story = {
     label: 'x'
   }
 };
+
+export const Search: Story = {
+  args: {
+    value: '',
+    onChange: () => {},
+    variant: 'search',
+    placeholder: 'Search by name, owner...'
+  }
+};

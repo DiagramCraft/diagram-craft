@@ -43,6 +43,7 @@ export const PickerSearchPanel = (props: Props) => {
         <TextInput
           ref={ref}
           value={search}
+          variant={'search'}
           style={{ flexGrow: 1 }}
           onKeyDown={e => {
             if (e.key === 'Enter') {

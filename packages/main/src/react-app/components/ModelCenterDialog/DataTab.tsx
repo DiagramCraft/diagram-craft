@@ -3,7 +3,8 @@ import { useApplication, useDiagram, useDocument } from '../../../application';
 import { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbChevronDown, TbDots, TbPlus, TbSearch, TbTrash } from 'react-icons/tb';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TbChevronDown, TbDots, TbPlus, TbTrash } from 'react-icons/tb';
 import { EditItemDialog } from '../EditItemDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './DataTab.module.css';
@@ -309,23 +310,22 @@ export const DataTab = () => {
               </select>
               <TbChevronDown size={10} />
             </label>
-            <div className={styles.eSearchInline}>
-              <TbSearch size={12} />
-              <input
-                ref={searchRef}
-                placeholder="Search…"
-                value={searchText}
-                onChange={e => setSearchText(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Escape') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setSearchText('');
-                    searchRef.current?.blur();
-                  }
-                }}
-              />
-            </div>
+            <TextInput
+              ref={searchRef}
+              variant={'search'}
+              placeholder="Search…"
+              value={searchText}
+              onChange={value => setSearchText(value ?? '')}
+              onKeyDown={e => {
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSearchText('');
+                  searchRef.current?.blur();
+                }
+              }}
+              style={{ minWidth: '200px' }}
+            />
           </div>
 
           {filteredDataItems.length === 0 && (

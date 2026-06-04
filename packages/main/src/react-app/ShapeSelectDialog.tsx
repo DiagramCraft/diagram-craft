@@ -5,7 +5,6 @@ import { PickerCanvas } from './PickerCanvas';
 import styles from './ShapeSelectDialog.module.css';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { Button } from '@diagram-craft/app-components/Button';
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { copyStyles, Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
 import { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
@@ -16,11 +15,10 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { IconifyIconService } from '@diagram-craft/canvas-app/icon/IconifyIconService';
-import { flattenIcons, type CollectionInfo } from '@diagram-craft/canvas-app/icon/IconService';
+import { type CollectionInfo, flattenIcons } from '@diagram-craft/canvas-app/icon/IconService';
 import { Select } from '@diagram-craft/app-components/Select';
 import { range } from '@diagram-craft/utils/array';
 import { safeSplit } from '@diagram-craft/utils/safe';
-import objectPickerStyles from './ObjectPicker.module.css';
 
 const SIZE = 35;
 
@@ -56,7 +54,7 @@ const StencilView = (props: { stencil: Stencil; diagram: Diagram; onClick: () =>
   const stencilDiagram = getDiagram(props);
 
   return (
-    <div className={styles.icStencilView} data-width={stencilDiagram.viewBox.dimensions.w}>
+    <div className={styles.eStencilView} data-width={stencilDiagram.viewBox.dimensions.w}>
       <PickerCanvas
         size={SIZE}
         diagram={stencilDiagram}
@@ -70,7 +68,7 @@ const StencilView = (props: { stencil: Stencil; diagram: Diagram; onClick: () =>
 };
 
 const iconService = new IconifyIconService();
-const ICON_PAGE_SIZE = 44;
+const ICON_PAGE_SIZE = 4 * 11;
 let lastSelectedCollection = '';
 
 const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => {
@@ -142,10 +140,11 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
 
   return (
     <div className={styles.icIconsTabs}>
-      <div className={'util-hstack'}>
+      <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
         <TextInput
           ref={searchRef}
           value={iconSearch}
+          variant={'search'}
           placeholder={'Search icons...'}
           onKeyDown={e => {
             if (e.key !== 'Enter') return;
@@ -153,15 +152,12 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
           }}
           style={{ flexGrow: 1, minWidth: '30%' }}
         />
-        <Button size={'sm'} onClick={() => doIconSearch(searchRef.current?.value ?? '')}>
-          Search
-        </Button>
-        &nbsp;&nbsp;
         <Select.Root
           value={selectedCollection}
           onChange={handleCollectionChange}
           placeholder={'All collections'}
           disabled={!iconCollections}
+          style={{ maxWidth: '30%' }}
         >
           {sortedCollections.map(([prefix, info]) => (
             <Select.Item key={prefix} value={prefix}>
@@ -172,20 +168,25 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
       </div>
 
       <div className={styles.eIconGrid}>
-        <div className={`${objectPickerStyles.icObjectPicker} ${styles.eIconGridInner}`}>
+        <div className={styles.eIconGridInner}>
           {pageIcons.map(icon => {
             const [prefix, name] = safeSplit(icon, ':', 2, 2);
             return (
-              <img
+              <button
                 key={icon}
-                src={iconService.getIconUrl(prefix, name, '#fefefe')}
-                alt={name}
-                width={35}
-                height={35}
+                type="button"
                 title={icon}
                 className={styles.eItem}
                 onClick={() => props.onOk({ id: icon, type: 'icon' })}
-              />
+              >
+                <img
+                  src={iconService.getIconUrl(prefix, name, '#fefefe')}
+                  alt={name}
+                  width={35}
+                  height={35}
+                  className={styles.eItemImage}
+                />
+              </button>
             );
           })}
         </div>
@@ -193,7 +194,6 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
 
       {totalPages > 1 && (
         <div className={styles.ePagination}>
-          Page:
           {range(0, Math.min(25, totalPages)).map(p => (
             <a
               key={p}
@@ -272,21 +272,21 @@ export const ShapeSelectDialog = (props: Props) => {
 
   const tabContent: Record<ShapeSelectTab, ReactElement> = {
     recent: (
-      <div
-        className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.icRecentStencils}`}
-      >
-        {recentStencils.map(stencilId => {
-          const stencil = stencilRegistry.getStencil(stencilId);
-          if (!stencil) return null;
-          return (
-            <StencilView
-              key={stencilId}
-              stencil={stencil}
-              diagram={diagram}
-              onClick={() => props.onOk({ id: stencil.id, type: 'stencil' })}
-            />
-          );
-        })}
+      <div className={styles.icObjectGrid}>
+        <div className={styles.eGrid}>
+          {recentStencils.map(stencilId => {
+            const stencil = stencilRegistry.getStencil(stencilId);
+            if (!stencil) return null;
+            return (
+              <StencilView
+                key={stencilId}
+                stencil={stencil}
+                diagram={diagram}
+                onClick={() => props.onOk({ id: stencil.id, type: 'stencil' })}
+              />
+            );
+          })}
+        </div>
       </div>
     ),
     search: (
@@ -295,6 +295,7 @@ export const ShapeSelectDialog = (props: Props) => {
           <TextInput
             ref={ref}
             value={search}
+            variant={'search'}
             placeholder={'Search shapes...'}
             onKeyDown={e => {
               if (e.key !== 'Enter') return;
@@ -302,24 +303,21 @@ export const ShapeSelectDialog = (props: Props) => {
             }}
             style={{ flexGrow: 1 }}
           />
-          <Button size="sm" onClick={() => doSearch(ref.current?.value ?? '')}>
-            Search
-          </Button>
         </div>
-        <div
-          className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.icSearchResults}`}
-        >
-          {!isEmptyString(search) &&
-            stencils
-              .filter(shouldIncludeStencil)
-              .map(stencil => (
-                <StencilView
-                  key={stencil.id}
-                  stencil={stencil}
-                  diagram={diagram}
-                  onClick={() => props.onOk({ id: stencil.id, type: 'stencil' })}
-                />
-              ))}
+        <div className={styles.icObjectGrid}>
+          <div className={styles.eGrid}>
+            {!isEmptyString(search) &&
+              stencils
+                .filter(shouldIncludeStencil)
+                .map(stencil => (
+                  <StencilView
+                    key={stencil.id}
+                    stencil={stencil}
+                    diagram={diagram}
+                    onClick={() => props.onOk({ id: stencil.id, type: 'stencil' })}
+                  />
+                ))}
+          </div>
         </div>
       </>
     ),
@@ -338,7 +336,7 @@ export const ShapeSelectDialog = (props: Props) => {
             onChange={setMode}
           />
         </div>
-        <div style={{ height: '16rem' }}>{tabContent[mode]}</div>
+        <div style={{ height: '18rem' }}>{tabContent[mode]}</div>
       </>
     );
 

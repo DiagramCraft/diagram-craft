@@ -1,6 +1,7 @@
 /**
  *  TextInput - .cTextInput
  *  | Label - .eLabel
+ *  | SearchIcon - .eSearchIcon
  *  | Input - .eInput
  *  | Clear - .eClear
  */
@@ -16,6 +17,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: 0.25rem;
 
   .eLabel {
     font-size: 11px;
@@ -49,6 +51,11 @@
     }
   }
 
+  .eSearchIcon {
+    color: var(--base-fg-more-dim);
+    flex-shrink: 0;
+  }
+
   .eClear {
     padding-right: 0.25rem;
   }
@@ -68,5 +75,19 @@
 
   &:has(.eInput:disabled) {
     border-color: transparent;
+  }
+
+  &[data-variant='search'] {
+    height: 26px;
+    padding: 0 10px;
+    border-color: var(--panel-border);
+
+    .eInput {
+      font-size: 12px;
+
+      &::placeholder {
+        color: var(--cmp-fg-disabled);
+      }
+    }
   }
 }

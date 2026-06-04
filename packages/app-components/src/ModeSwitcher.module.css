@@ -35,7 +35,7 @@
     &[data-active='true'] {
       background: var(--cmp-bg);
       color: var(--base-fg);
-      border-color: var(--cmp-border);
+      border-color: var(--panel-border);
       box-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
     }
   }
