@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram, useDocument } from '../../../application';
 import { DataSchema, SchemaMetadata } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TbChevronDown, TbDots, TbPlus, TbTrash } from 'react-icons/tb';
 import { EditSchemaDialog } from '../EditSchemaDialog';
@@ -39,23 +38,23 @@ export const SchemasTab = () => {
   const [selectedProviderId, setSelectedProviderId] = useState<string>('all');
 
   const db = document.data.db;
-  const dbUndoable = new DataManagerUndoableFacade(diagram.undoManager, db);
+  const dbUndoable = useMemo(
+    () => new DataManagerUndoableFacade(diagram.undoManager, db),
+    [diagram.undoManager, db]
+  );
 
   const providers = document.data.providers;
 
-  // Listen for schema updates to re-render when metadata changes
   useEffect(() => {
     document.data._schemas.on('update', redraw);
     return () => document.data._schemas.off('update', redraw);
   }, [document, redraw]);
 
-  // Filter schemas by selected provider
   const schemas =
     selectedProviderId === 'all'
       ? db.schemas
       : db.schemas.filter(schema => schema.providerId === selectedProviderId);
 
-  // Handle schema operations
   const handleAddSchema = async (providerId: string, schema: DataSchema) => {
     try {
       await dbUndoable.addSchema(schema, providerId);
@@ -180,73 +179,72 @@ export const SchemasTab = () => {
 
       {schemas.length > 0 && (
         <div className={styles.eTableWrap}>
-        <table className={styles.eTable}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Field Names</th>
-              <th>Source</th>
-              <th>Available for Element Data</th>
-              <th>Use Document Overrides</th>
-              {canMutateSchemas && <th style={{ width: 28 }} />}
-            </tr>
-          </thead>
-          <tbody>
-            {schemas.map(schema => {
-              const metadata = document.data.getSchemaMetadata(schema.id);
-              const isDefaultProvider = schema.providerId === 'default';
-              const isEditable = canMutateSchemas && db.isSchemasEditable(schema.providerId);
-              return (
-                <tr
-                  key={schema.id}
-                  onClick={isEditable ? () => setEditSchemaDialog({ open: true, schema }) : undefined}
-                  style={isEditable ? { cursor: 'pointer' } : undefined}
-                >
-                  <td>{schema.name}</td>
-                  <td>{getFieldNamesDisplay(schema)}</td>
-                  <td>{schema.providerId}</td>
-                  <td onClick={ev => ev.stopPropagation()}>
-                    <Checkbox
-                      value={metadata.availableForElementLocalData ?? false}
-                      onChange={checked =>
-                        handleMetadataChange(
-                          schema.id,
-                          'availableForElementLocalData',
-                          checked ?? false
-                        )
-                      }
-                    />
-                  </td>
-                  <td onClick={ev => ev.stopPropagation()}>
-                    <Checkbox
-                      value={metadata.useDocumentOverrides ?? false}
-                      disabled={isDefaultProvider}
-                      onChange={checked =>
-                        handleMetadataChange(schema.id, 'useDocumentOverrides', checked ?? false)
-                      }
-                    />
-                  </td>
-                  {canMutateSchemas && (
+          <table className={styles.eTable}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Field Names</th>
+                <th>Source</th>
+                <th>Available for Element Data</th>
+                <th>Use Document Overrides</th>
+                {canMutateSchemas && <th style={{ width: 28 }} />}
+              </tr>
+            </thead>
+            <tbody>
+              {schemas.map(schema => {
+                const metadata = document.data.getSchemaMetadata(schema.id);
+                const isDefaultProvider = schema.providerId === 'default';
+                const isEditable = canMutateSchemas && db.isSchemasEditable(schema.providerId);
+                return (
+                  <tr
+                    key={schema.id}
+                    onClick={isEditable ? () => setEditSchemaDialog({ open: true, schema }) : undefined}
+                    style={isEditable ? { cursor: 'pointer' } : undefined}
+                  >
+                    <td>{schema.name}</td>
+                    <td>{getFieldNamesDisplay(schema)}</td>
+                    <td>{schema.providerId}</td>
                     <td onClick={ev => ev.stopPropagation()}>
-                      {isEditable && (
-                        <MenuButton.Root>
-                          <MenuButton.Trigger element={<button type="button" className={styles.eDotsBtn}><TbDots size={14} /></button>} />
-                          <MenuButton.Menu>
-                            <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => handleDeleteSchema(schema)}>Delete</Menu.Item>
-                          </MenuButton.Menu>
-                        </MenuButton.Root>
-                      )}
+                      <Checkbox
+                        value={metadata.availableForElementLocalData ?? false}
+                        onChange={checked =>
+                          handleMetadataChange(
+                            schema.id,
+                            'availableForElementLocalData',
+                            checked ?? false
+                          )
+                        }
+                      />
                     </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    <td onClick={ev => ev.stopPropagation()}>
+                      <Checkbox
+                        value={metadata.useDocumentOverrides ?? false}
+                        disabled={isDefaultProvider}
+                        onChange={checked =>
+                          handleMetadataChange(schema.id, 'useDocumentOverrides', checked ?? false)
+                        }
+                      />
+                    </td>
+                    {canMutateSchemas && (
+                      <td onClick={ev => ev.stopPropagation()}>
+                        {isEditable && (
+                          <MenuButton.Root>
+                            <MenuButton.Trigger element={<button type="button" className={styles.eDotsBtn}><TbDots size={14} /></button>} />
+                            <MenuButton.Menu>
+                              <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => handleDeleteSchema(schema)}>Delete</Menu.Item>
+                            </MenuButton.Menu>
+                          </MenuButton.Root>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Schema Management Dialogs */}
       <EditSchemaDialog
         title="Add Schema"
         open={addSchemaDialog.open}

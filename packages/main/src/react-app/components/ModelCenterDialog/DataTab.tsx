@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApplication, useDiagram, useDocument } from '../../../application';
 import { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
@@ -74,7 +74,6 @@ export const DataTab = () => {
   const searchRef = useRef<HTMLInputElement>(null);
 
   const [allDataItems, setAllDataItems] = useState<DataItemWithSchema[]>([]);
-  const [filteredDataItems, setFilteredDataItems] = useState<DataItemWithSchema[]>([]);
   const [selectedSchemaId, setSelectedSchemaId] = useState<string>('all');
   const [searchText, setSearchText] = useState<string>('');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -90,36 +89,23 @@ export const DataTab = () => {
   });
 
   const db = document.data.db;
-  const dbUndoable = new DataManagerUndoableFacade(diagram.undoManager, document.data.db);
-
-  // Collect all data items from all schemas
-  useEffect(() => {
-    const allItems: DataItemWithSchema[] = [];
-
-    for (const schema of db.schemas) {
-      const schemaData = db.getData(schema);
-      const itemsWithSchema = schemaData.map(
-        item => ({ ...item, _schema: schema }) as DataItemWithSchema
-      );
-      allItems.push(...itemsWithSchema);
-    }
-
-    setAllDataItems(allItems);
-  }, [db]);
+  const dbUndoable = useMemo(
+    () => new DataManagerUndoableFacade(diagram.undoManager, db),
+    [diagram.undoManager, db]
+  );
 
   useEffect(() => {
-    const handleDataChange = () => {
+    const buildItems = () => {
       const allItems: DataItemWithSchema[] = [];
       for (const schema of db.schemas) {
-        const schemaData = db.getData(schema);
-        const itemsWithSchema = schemaData.map(
-          item => ({ ...item, _schema: schema }) as DataItemWithSchema
-        );
-        allItems.push(...itemsWithSchema);
+        allItems.push(...db.getData(schema).map(item => ({ ...item, _schema: schema }) as DataItemWithSchema));
       }
-      setAllDataItems(allItems);
+      return allItems;
     };
 
+    setAllDataItems(buildItems());
+
+    const handleDataChange = () => setAllDataItems(buildItems());
     db.on('addData', handleDataChange);
     db.on('updateData', handleDataChange);
     db.on('deleteData', handleDataChange);
@@ -131,10 +117,10 @@ export const DataTab = () => {
     };
   }, [db]);
 
-  useEffect(() => {
-    const filtered = filterItems(allDataItems, selectedSchemaId, searchText);
-    setFilteredDataItems(filtered);
-  }, [allDataItems, selectedSchemaId, searchText]);
+  const filteredDataItems = useMemo(
+    () => filterItems(allDataItems, selectedSchemaId, searchText),
+    [allDataItems, selectedSchemaId, searchText]
+  );
 
   const handleDeleteItem = (item: DataItemWithSchema) => {
     const displayValue = item._schema.fields[0] ? item[item._schema.fields[0].id] : item._uid;
@@ -254,11 +240,10 @@ export const DataTab = () => {
     <div className={styles.icDataTab}>
       <div className={styles.eHeader}>
         <p className={styles.eTitle}>Data</p>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div className={styles.eHeaderActions}>
           <Button
             onClick={handleApplySelectedOverrides}
             disabled={!allSelectedHaveOverrides}
-            style={{ display: 'flex', gap: '0.25rem' }}
           >
             Apply Overrides
           </Button>
@@ -266,7 +251,6 @@ export const DataTab = () => {
             variant="danger"
             onClick={handleClearSelectedOverrides}
             disabled={!allSelectedHaveOverrides}
-            style={{ display: 'flex', gap: '0.25rem' }}
           >
             Clear Overrides
           </Button>
@@ -274,7 +258,6 @@ export const DataTab = () => {
             <MenuButton.Trigger
               variant="primary"
               size={"md"}
-              className={styles.eAddBtn}
               disabled={!(canMutateData && hasSchemas)}
               style={{ display: 'flex', gap: '0.25rem' }}
             >
@@ -345,7 +328,6 @@ export const DataTab = () => {
             </div>
           </div>
 
-          {/* Data Results */}
           {filteredDataItems.length === 0 && (
             <div className={styles.eMessage}>
               {allDataItems.length === 0 ? (
@@ -358,7 +340,7 @@ export const DataTab = () => {
 
           {filteredDataItems.length > 0 && (
             <div className={styles.eTableWrap}>
-            <table className={styles.eTable}>
+              <table className={styles.eTable}>
               <thead>
                 <tr>
                   <th className={styles.eCheckbox}>
@@ -382,7 +364,7 @@ export const DataTab = () => {
               <tbody>
                 {filteredDataItems.map(item => {
                   const primaryField = item._schema.fields[0];
-                  const displayFields = item._schema.fields.slice(1, 3); // Show up to 2 additional fields
+                  const displayFields = item._schema.fields.slice(1, 3);
                   const overrideStatus = getOverrideStatus(document, item);
 
                   const isEditable = canMutateData && db.isDataEditable(item._schema);
@@ -431,7 +413,7 @@ export const DataTab = () => {
                   );
                 })}
               </tbody>
-            </table>
+              </table>
             </div>
           )}
         </>

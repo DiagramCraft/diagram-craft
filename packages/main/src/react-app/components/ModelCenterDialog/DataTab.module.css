@@ -2,8 +2,9 @@
  *  DataTab - .icDataTab
  *  | Header - .eHeader
  *  | | Title - .eTitle
+ *  | | HeaderActions - .eHeaderActions
  *  | Message [0..1] - .eMessage
- *  | SearchControls - .eSearchControls
+ *  | Toolbar - .eToolbar
  */
 .icDataTab {
   display: flex;
@@ -19,9 +20,12 @@
       margin: 0;
     }
 
-    .eAddBtn {
-      align-self: end;
-    }
+  }
+
+  .eHeaderActions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
   }
 
   .eMessage {
