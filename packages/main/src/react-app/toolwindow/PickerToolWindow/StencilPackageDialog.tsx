@@ -1,6 +1,7 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Scrollable } from '@diagram-craft/app-components/Scrollable';
-import { useEffect, useRef, useState } from 'react';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { useEffect, useMemo, useState } from 'react';
 import type { ComponentType } from 'react';
 import {
   TbArrowRight,
@@ -17,12 +18,11 @@ import {
   TbNetwork,
   TbPackage,
   TbRoute,
-  TbSearch,
   TbShape,
   TbSquare,
-  TbStack2,
-  TbX
+  TbStack2
 } from 'react-icons/tb';
+import styles from './StencilPackageDialog.module.css';
 
 type IconComponent = ComponentType<{ size?: number; style?: React.CSSProperties }>;
 
@@ -42,7 +42,7 @@ const ICON_MAP: Record<string, IconComponent> = {
   TbRoute,
   TbShape,
   TbSquare,
-  TbStack2,
+  TbStack2
 };
 
 export type StencilPackageOption = {
@@ -86,7 +86,6 @@ export const StencilPackageDialog = ({
 }: Props) => {
   const [draft, setDraft] = useState<string[]>(activePackageIds as string[]);
   const [query, setQuery] = useState('');
-  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -104,25 +103,26 @@ export const StencilPackageDialog = ({
     });
   };
 
-  const q = query.trim().toLowerCase();
-  const filtered = q
-    ? packages.filter(
-        p =>
-          p.name.toLowerCase().includes(q) ||
-          (p.description ?? '').toLowerCase().includes(q) ||
-          (p.group ?? '').toLowerCase().includes(q)
-      )
-    : packages;
-
-  const grouped = groupPackages(filtered);
+  const grouped = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const filtered = q
+      ? packages.filter(
+          p =>
+            p.name.toLowerCase().includes(q) ||
+            (p.description ?? '').toLowerCase().includes(q) ||
+            (p.group ?? '').toLowerCase().includes(q)
+        )
+      : packages;
+    return groupPackages(filtered);
+  }, [packages, query]);
   const enabledCount = draft.length;
   const totalCount = packages.length;
 
   const footerLeft = (
-    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--cmp-fg-dimmed)', fontSize: '11.5px' }}>
+    <span className={styles.eFooterLeft}>
       <TbStack2 size={13} />
       <span>
-        <strong style={{ color: 'var(--base-fg)', fontWeight: 600 }}>{enabledCount}</strong>
+        <strong>{enabledCount}</strong>
         {' of '}
         {totalCount}
         {' packages enabled'}
@@ -135,7 +135,9 @@ export const StencilPackageDialog = ({
       open={open}
       onClose={onClose}
       title={'Stencil packages'}
-      sub={'Choose which shape libraries appear in the editor sidebar. Enabled packages load when you open a diagram.'}
+      sub={
+        'Choose which shape libraries appear in the editor sidebar. Enabled packages load when you open a diagram.'
+      }
       width={620}
       footerLeft={footerLeft}
       buttons={[
@@ -154,118 +156,54 @@ export const StencilPackageDialog = ({
         }
       ]}
     >
-      {/* Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-        <div
+      <div className={styles.icStencilPackageDialog}>
+        <div className={styles.eToolbar}>
+          <TextInput
+            variant="search"
+            value={query}
+            onChange={v => setQuery(v ?? '')}
+            onClear={() => setQuery('')}
+            placeholder="Search packages"
+            style={{ flex: 1 }}
+          />
+        </div>
+
+        <Scrollable
+          maxHeight={'calc(100vh - 54vh)'}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '7px',
-            flex: 1,
-            minWidth: 0,
-            height: '30px',
-            padding: '0 9px',
-            background: 'var(--cmp-bg)',
             border: '1px solid var(--cmp-border)',
             borderRadius: '5px',
-            color: 'var(--cmp-fg-dimmed)'
+            background: 'var(--base-bg)'
           }}
         >
-          <TbSearch size={14} style={{ flexShrink: 0 }} />
-          <input
-            ref={searchRef}
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Search packages"
-            style={{
-              background: 'transparent',
-              border: 0,
-              outline: 0,
-              flex: 1,
-              minWidth: 0,
-              color: 'var(--base-fg)',
-              fontSize: '12px',
-              fontFamily: 'inherit'
-            }}
-          />
-          {query && (
-            <button
-              onClick={() => { setQuery(''); searchRef.current?.focus(); }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '2px',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--cmp-fg-dimmed)',
-                borderRadius: '3px',
-                flexShrink: 0
-              }}
-            >
-              <TbX size={11} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Package list */}
-      <Scrollable
-        maxHeight={'calc(100vh - 34vh)'}
-        style={{
-          border: '1px solid var(--cmp-border)',
-          borderRadius: '5px',
-          background: 'var(--base-bg)'
-        }}
-      >
-        {grouped.size === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '120px',
-              color: 'var(--cmp-fg-dimmed)',
-              fontSize: '12px'
-            }}
-          >
-            No packages match &ldquo;{query.trim()}&rdquo;
-          </div>
-        ) : (
-          <div style={{ padding: '4px' }}>
-            {Array.from(grouped.entries()).map(([groupName, pkgs]) => (
-              <div key={groupName}>
-                <div
-                  style={{
-                    padding: '8px 8px 4px',
-                    fontSize: '10px',
-                    letterSpacing: '0.7px',
-                    textTransform: 'uppercase',
-                    color: 'var(--cmp-fg-dimmed)'
-                  }}
-                >
-                  {groupName}
+          {grouped.size === 0 ? (
+            <div className={styles.eEmpty}>
+              No packages match &ldquo;{query.trim()}&rdquo;
+            </div>
+          ) : (
+            <div className={styles.ePackageList}>
+              {Array.from(grouped.entries()).map(([groupName, pkgs]) => (
+                <div key={groupName}>
+                  <div className={styles.eGroupLabel}>{groupName}</div>
+                  {pkgs.map(pkg => {
+                    const isOn = draft.includes(pkg.id);
+                    const IconComp = ICON_MAP[pkg.icon ?? ''] ?? TbPackage;
+                    return (
+                      <PackageRow
+                        key={pkg.id}
+                        pkg={pkg}
+                        isOn={isOn}
+                        IconComp={IconComp}
+                        onToggle={() => toggle(pkg.id)}
+                      />
+                    );
+                  })}
                 </div>
-                {pkgs.map(pkg => {
-                  const isOn = draft.includes(pkg.id);
-                  const IconComp = ICON_MAP[pkg.icon ?? ''] ?? TbPackage;
-                  return (
-                    <PackageRow
-                      key={pkg.id}
-                      pkg={pkg}
-                      isOn={isOn}
-                      IconComp={IconComp}
-                      onToggle={() => toggle(pkg.id)}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        )}
-      </Scrollable>
+              ))}
+            </div>
+          )}
+        </Scrollable>
+      </div>
     </Dialog>
   );
 };
@@ -278,100 +216,23 @@ type PackageRowProps = {
 };
 
 const PackageRow = ({ pkg, isOn, IconComp, onToggle }: PackageRowProps) => {
-  const [hovered, setHovered] = useState(false);
-
   return (
     <button
       role="checkbox"
       aria-checked={isOn}
       onClick={onToggle}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        width: '100%',
-        padding: '7px 8px',
-        borderRadius: '4px',
-        border: '1px solid transparent',
-        textAlign: 'left',
-        cursor: 'pointer',
-        background: hovered
-          ? isOn
-            ? 'color-mix(in oklab, var(--accent-chroma) 12%, transparent)'
-            : 'var(--cmp-bg)'
-          : isOn
-            ? 'color-mix(in oklab, var(--accent-chroma) 7%, transparent)'
-            : 'transparent',
-        fontFamily: 'inherit'
-      }}
+      className={styles.eRow}
     >
-      {/* Checkbox */}
-      <span
-        style={{
-          width: '11px',
-          height: '11px',
-          flexShrink: 0,
-          borderRadius: '3px',
-          border: `1.5px solid ${isOn ? 'var(--accent-chroma)' : hovered ? 'var(--cmp-fg-dimmed)' : 'var(--cmp-border)'}`,
-          background: isOn ? 'var(--accent-chroma)' : 'var(--cmp-bg)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: isOn ? 'white' : 'transparent',
-          transition: 'background 80ms, border-color 80ms, color 80ms'
-        }}
-      >
+      <span className={styles.eCheckmark}>
         <TbCheck size={8} />
       </span>
-
-      {/* Icon */}
-      <span
-        style={{
-          width: '30px',
-          height: '30px',
-          flexShrink: 0,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '4px',
-          border: `1px solid ${isOn ? 'color-mix(in oklch, var(--accent-chroma) 35%, var(--cmp-border))' : 'var(--cmp-border)'}`,
-          background: 'var(--cmp-bg)',
-          color: isOn ? 'var(--accent-chroma)' : 'var(--cmp-fg-dimmed)'
-        }}
-      >
+      <span className={styles.eIcon}>
         <IconComp size={16} />
       </span>
-
-      {/* Text */}
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span
-          style={{
-            display: 'block',
-            fontSize: '13px',
-            color: isOn ? 'var(--base-fg)' : 'var(--cmp-fg)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {pkg.name}
-        </span>
+      <span className={styles.eText}>
+        <span className={styles.eName}>{pkg.name}</span>
         {pkg.description && (
-          <span
-            style={{
-              display: 'block',
-              fontSize: '11.5px',
-              color: 'var(--cmp-fg-dimmed)',
-              marginTop: '2px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {pkg.description}
-          </span>
+          <span className={styles.eDesc}>{pkg.description}</span>
         )}
       </span>
     </button>

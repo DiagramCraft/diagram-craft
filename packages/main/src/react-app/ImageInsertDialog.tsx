@@ -42,16 +42,19 @@ export const ImageInsertDialog = (props: Props) => {
 
   useEffect(() => {
     if (mode !== 'server') return;
+    const controller = new AbortController();
     setList(undefined);
     setSelected(null);
     const getData = async () => {
       const response = await fetch(
-        `${AppConfig.get().filesystem.endpoint}/api/fs/${path.join('/')}`
+        `${AppConfig.get().filesystem.endpoint}/api/fs/${path.join('/')}`,
+        { signal: controller.signal }
       );
       const data = await response.json();
       setList(data.entries as DirEntry[]);
     };
     getData();
+    return () => controller.abort();
   }, [path, mode]);
 
   useEffect(() => {
@@ -109,6 +112,7 @@ export const ImageInsertDialog = (props: Props) => {
           : [])
       ]}
     >
+      <div className={styles.icInsertImageDialog}>
       <div className={styles.eModeWrap}>
         <ModeSwitcher modes={MODES} value={mode} onChange={m => { setMode(m); setSelected(null); }} />
       </div>
@@ -147,7 +151,8 @@ export const ImageInsertDialog = (props: Props) => {
             <nav className={styles.eBreadcrumb} aria-label="Path">
               <span className={styles.eCrumbLabel}>Path:</span>
               <button
-                className={`${styles.eCrumb} ${path.length === 0 ? styles.eCrumbCurrent : ''}`}
+                className={styles.eCrumb}
+                data-current={path.length === 0 ? 'true' : undefined}
                 onClick={path.length > 0 ? () => navigateTo(0) : undefined}
                 disabled={path.length === 0}
               >
@@ -158,7 +163,8 @@ export const ImageInsertDialog = (props: Props) => {
                 <React.Fragment key={`${i}__${segment}`}>
                   <span className={styles.eCrumbSep}><TbChevronRight size={13} /></span>
                   <button
-                    className={`${styles.eCrumb} ${i === path.length - 1 ? styles.eCrumbCurrent : ''}`}
+                    className={styles.eCrumb}
+                    data-current={i === path.length - 1 ? 'true' : undefined}
                     onClick={i < path.length - 1 ? () => navigateTo(i + 1) : undefined}
                     disabled={i === path.length - 1}
                   >
@@ -185,7 +191,8 @@ export const ImageInsertDialog = (props: Props) => {
                     key={entry.name}
                     role="option"
                     aria-selected={selected === entry}
-                    className={[styles.eRow, selected === entry ? styles.eRowSelected : ''].join(' ')}
+                    className={styles.eRow}
+                    data-selected={selected === entry ? 'true' : undefined}
                     onClick={() => setSelected(entry)}
                     onDoubleClick={() => {
                       if (entry.isDirectory) navigateInto(entry);
@@ -210,6 +217,7 @@ export const ImageInsertDialog = (props: Props) => {
           </div>
         </>
       )}
+      </div>
     </Dialog>
   );
 };

@@ -1,7 +1,7 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './FileDialog.module.css';
 import {
   TbAlertTriangle,
@@ -83,24 +83,24 @@ export const FileDialog = (props: Props) => {
   const [filename, setFilename] = useState<string>(() => parseDefaultFilename(props.defaultFilename ?? '').base);
   const [fileType, setFileType] = useState<FileType>(() => parseDefaultFilename(props.defaultFilename ?? '').type);
 
-  const filenameRef = useRef<HTMLInputElement>(null);
-
   const mode = props.mode ?? 'open';
 
   useEffect(() => {
+    const controller = new AbortController();
     const getData = async () => {
       setList(undefined);
       setSelected(null);
       const response = await fetch(
-        `${AppConfig.get().filesystem.endpoint}/api/fs/${path.join('/')}`
+        `${AppConfig.get().filesystem.endpoint}/api/fs/${path.join('/')}`,
+        { signal: controller.signal }
       );
       const data = await response.json();
       setList(data.entries as DirEntry[]);
     };
     getData();
+    return () => controller.abort();
   }, [path]);
 
-  // Reset state when dialog opens
   useEffect(() => {
     if (props.open) {
       setPath([]);
@@ -114,15 +114,14 @@ export const FileDialog = (props: Props) => {
     }
   }, [props.open]);
 
-  const sortedFiltered = (() => {
+  const sortedFiltered = useMemo(() => {
     if (!list) return [];
-    let items = list;
-    if (filter.trim()) {
-      const q = filter.trim().toLowerCase();
-      items = items.filter(e => e.name.toLowerCase().includes(q));
-    }
+    const trimmed = filter.trim();
+    const items = trimmed
+      ? list.filter(e => e.name.toLowerCase().includes(trimmed.toLowerCase()))
+      : list;
     return sortEntries(items, sortKey, sortDir);
-  })();
+  }, [list, filter, sortKey, sortDir]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -261,6 +260,7 @@ export const FileDialog = (props: Props) => {
             ]
       }
     >
+      <div className={styles.icFileDialog}>
       {/* Toolbar */}
       <div className={styles.eToolbar}>
         <button
@@ -275,7 +275,8 @@ export const FileDialog = (props: Props) => {
         <nav className={styles.eBreadcrumb} aria-label="Path">
           <span className={styles.eCrumbLabel}>Path:</span>
           <button
-            className={`${styles.eCrumb} ${path.length === 0 ? styles.eCrumbCurrent : ''}`}
+            className={styles.eCrumb}
+            data-current={path.length === 0 ? 'true' : undefined}
             onClick={path.length > 0 ? () => navigateTo(0) : undefined}
             disabled={path.length === 0}
           >
@@ -286,7 +287,8 @@ export const FileDialog = (props: Props) => {
             <React.Fragment key={`${i}__${segment}`}>
               <span className={styles.eCrumbSep}><TbChevronRight size={13} /></span>
               <button
-                className={`${styles.eCrumb} ${i === path.length - 1 ? styles.eCrumbCurrent : ''}`}
+                className={styles.eCrumb}
+                data-current={i === path.length - 1 ? 'true' : undefined}
                 onClick={i < path.length - 1 ? () => navigateTo(i + 1) : undefined}
                 disabled={i === path.length - 1}
               >
@@ -318,19 +320,24 @@ export const FileDialog = (props: Props) => {
         {/* Column header */}
         <div className={styles.eColHead}>
           <button
-            className={`${styles.eColBtn} ${sortKey === 'name' ? styles.eColBtnSorted : ''}`}
+            className={styles.eColBtn}
+            data-sorted={sortKey === 'name' ? 'true' : undefined}
             onClick={() => handleSort('name')}
           >
             Name {sortKey === 'name' ? (sortDir === 1 ? <TbArrowUp size={12} /> : <TbArrowDown size={12} />) : null}
           </button>
           <button
-            className={`${styles.eColBtn} ${styles.eColBtnRight} ${sortKey === 'size' ? styles.eColBtnSorted : ''}`}
+            className={styles.eColBtn}
+            data-right="true"
+            data-sorted={sortKey === 'size' ? 'true' : undefined}
             onClick={() => handleSort('size')}
           >
             Size {sortKey === 'size' ? (sortDir === 1 ? <TbArrowUp size={12} /> : <TbArrowDown size={12} />) : null}
           </button>
           <button
-            className={`${styles.eColBtn} ${styles.eColBtnRight} ${sortKey === 'modified' ? styles.eColBtnSorted : ''}`}
+            className={styles.eColBtn}
+            data-right="true"
+            data-sorted={sortKey === 'modified' ? 'true' : undefined}
             onClick={() => handleSort('modified')}
           >
             Modified {sortKey === 'modified' ? (sortDir === 1 ? <TbArrowUp size={12} /> : <TbArrowDown size={12} />) : null}
@@ -357,11 +364,9 @@ export const FileDialog = (props: Props) => {
                   key={entry.name}
                   role="option"
                   aria-selected={isSelected}
-                  className={[
-                    styles.eRow,
-                    isSelected ? styles.eRowSelected : '',
-                    isFile && mode === 'saveAs' ? styles.eRowFile : ''
-                  ].join(' ')}
+                  className={styles.eRow}
+                  data-selected={isSelected ? 'true' : undefined}
+                  data-dimmed={isFile && mode === 'saveAs' ? 'true' : undefined}
                   data-kind={entry.isDirectory ? 'dir' : entry.name.endsWith('.svg') ? 'svg' : 'json'}
                   onClick={() => handleRowClick(entry)}
                   onDoubleClick={() => handleRowDoubleClick(entry)}
@@ -394,7 +399,6 @@ export const FileDialog = (props: Props) => {
                 {$t('dialog.file.filename', 'Filename')}
               </label>
               <TextInput
-                ref={filenameRef}
                 id="fd-filename"
                 value={filename}
                 onChange={v => setFilename(v ?? '')}
@@ -426,6 +430,7 @@ export const FileDialog = (props: Props) => {
           )}
         </>
       )}
+      </div>
     </Dialog>
   );
 };
