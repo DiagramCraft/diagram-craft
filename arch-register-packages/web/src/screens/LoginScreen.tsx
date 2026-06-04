@@ -102,10 +102,10 @@ export const LoginScreen = () => {
           {authMode === 'local' ? (
             <div className={styles.form}>
               {sessionMessage && !error && (
-                <div className={styles.error} role="status" aria-live="polite">
+                <output className={styles.error} aria-live="polite">
                   <span className={styles.errorDot} />
                   <span>{sessionMessage}</span>
-                </div>
+                </output>
               )}
               {error && (
                 <div className={styles.error} role="alert" aria-live="polite">
@@ -192,10 +192,10 @@ export const LoginScreen = () => {
           ) : (
             <div className={styles.oidcContainer}>
               {sessionMessage && !error && (
-                <div className={styles.error} role="status" aria-live="polite">
+                <output className={styles.error} aria-live="polite">
                   <span className={styles.errorDot} />
                   <span>{sessionMessage}</span>
-                </div>
+                </output>
               )}
               {error && (
                 <div className={styles.error} role="alert" aria-live="polite">
