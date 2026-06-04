@@ -1,6 +1,14 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { AuthorizationDataProvider } from './AuthorizationDataContext';
 import type { User, GlobalPermission, GlobalRole, WorkspaceTeam, AuthBaseData } from './types';
+import {
+  clearAccessTokenExpiry,
+  fetchWithAuthResponse,
+  getAccessTokenExpiresAt,
+  refreshAccessToken,
+  registerSessionExpiredHandler,
+  setAccessTokenExpiryFromSeconds
+} from './authClient';
 
 export type { User, GlobalPermission, GlobalRole, WorkspaceTeam, AuthBaseData };
 
@@ -19,24 +27,27 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
-
-const authFetch = (path: string, init?: RequestInit) =>
-  fetch(`${BASE}${path}`, { ...init, credentials: 'include' });
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [authBaseData, setAuthBaseData] = useState<AuthBaseData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const tokenExpiresAt = useRef<number | null>(null);
 
-  const fetchCurrentUser = useCallback(async (): Promise<boolean> => {
+  const clearAuthState = useCallback(() => {
+    clearAccessTokenExpiry();
+    setUser(null);
+    setAuthBaseData(null);
+  }, []);
+
+  const fetchCurrentUser = useCallback(async (retryOnUnauthorized = true): Promise<boolean> => {
     try {
-      const res = await authFetch('/api/auth/me');
+      const res = await fetchWithAuthResponse(
+        '/api/auth/me',
+        undefined,
+        { retryOnUnauthorized }
+      );
 
       if (!res.ok) {
-        setUser(null);
-        setAuthBaseData(null);
+        clearAuthState();
         return false;
       }
 
@@ -61,39 +72,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } catch (error) {
       console.error('Failed to fetch user:', error);
-      setUser(null);
-      setAuthBaseData(null);
+      clearAuthState();
       return false;
     }
-  }, []);
+  }, [clearAuthState]);
 
-  const refreshToken = useCallback(async () => {
-    try {
-      const res = await authFetch('/api/auth/refresh', { method: 'POST' });
+  const refreshToken = useCallback(
+    async (reloadUser = true) => {
+      try {
+        const refreshed = await refreshAccessToken();
+        if (!refreshed) {
+          clearAuthState();
+          throw new Error('Failed to refresh token');
+        }
 
-      if (!res.ok) {
-        setUser(null);
-        setAuthBaseData(null);
-        throw new Error('Failed to refresh token');
+        if (reloadUser) {
+          await fetchCurrentUser();
+        }
+      } catch (error) {
+        clearAuthState();
+        throw error;
       }
-
-      const data = await res.json();
-      tokenExpiresAt.current = Date.now() + data.expires_in * 1000;
-      await fetchCurrentUser();
-    } catch (error) {
-      setUser(null);
-      setAuthBaseData(null);
-      throw error;
-    }
-  }, [fetchCurrentUser]);
+    },
+    [clearAuthState, fetchCurrentUser]
+  );
 
   const login = useCallback(
     async (username: string, password: string) => {
-      const res = await authFetch('/api/auth/login', {
+      const res = await fetchWithAuthResponse(
+        '/api/auth/login',
+        {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
-      });
+        },
+        { requiresAuth: false, retryOnUnauthorized: false }
+      );
 
       if (!res.ok) {
         const error = await res.json().catch(() => ({ message: 'Login failed' }));
@@ -101,14 +115,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const data = await res.json();
-      tokenExpiresAt.current = Date.now() + data.expires_in * 1000;
+      setAccessTokenExpiryFromSeconds(data.expires_in);
       await fetchCurrentUser();
     },
     [fetchCurrentUser]
   );
 
   const loginWithOidc = useCallback(async () => {
-    const res = await authFetch('/api/auth/oidc/authorize');
+    const res = await fetchWithAuthResponse(
+      '/api/auth/oidc/authorize',
+      undefined,
+      { requiresAuth: false, retryOnUnauthorized: false }
+    );
     if (!res.ok) {
       throw new Error('Failed to initiate OIDC login');
     }
@@ -118,17 +136,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-    tokenExpiresAt.current = null;
-    setUser(null);
-    setAuthBaseData(null);
-  }, []);
+    await fetchWithAuthResponse(
+      '/api/auth/logout',
+      { method: 'POST' },
+      { requiresAuth: false, retryOnUnauthorized: false }
+    ).catch(() => {});
+    clearAuthState();
+  }, [clearAuthState]);
 
   useEffect(() => {
     const checkTokenExpiry = () => {
-      if (!tokenExpiresAt.current || !user) return;
+      const tokenExpiresAt = getAccessTokenExpiresAt();
+      if (!tokenExpiresAt || !user) return;
 
-      const timeUntilExpiry = tokenExpiresAt.current - Date.now();
+      const timeUntilExpiry = tokenExpiresAt - Date.now();
       if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
         refreshToken().catch(console.error);
       }
@@ -140,8 +161,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const init = async () => {
-      const ok = await fetchCurrentUser();
-      if (!ok) {
+      const ok = await fetchCurrentUser(false);
+      if (ok) {
+        if (getAccessTokenExpiresAt() == null) {
+          try {
+            await refreshToken(false);
+          } catch {
+            // Session could not be refreshed, leave user signed out.
+          }
+        }
+      } else {
         try {
           await refreshToken();
         } catch {
@@ -153,6 +182,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     init();
   }, [fetchCurrentUser, refreshToken]);
 
+  useEffect(() => {
+    return registerSessionExpiredHandler(({ redirectTo, reason }) => {
+      clearAuthState();
+
+      if (window.location.pathname === '/login') {
+        return;
+      }
+
+      const params = new URLSearchParams({
+        redirect: redirectTo,
+        reason
+      });
+      window.location.assign(`/login?${params.toString()}`);
+    });
+  }, [clearAuthState]);
+
   const authValue: AuthContextType = {
     user,
     isLoading,
@@ -160,7 +205,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     login,
     loginWithOidc,
     logout,
-    refreshToken,
+    refreshToken: () => refreshToken(),
     reloadUser: async () => {
       await fetchCurrentUser();
     }

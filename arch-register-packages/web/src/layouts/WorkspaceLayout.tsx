@@ -21,6 +21,8 @@ import { WorkspaceContext } from './WorkspaceContext';
 import { deriveActiveView } from './deriveActiveView';
 import type { ViewId } from './viewId';
 import type { Project } from '../api';
+import { RouteContentBoundary } from '../routes/RouteContentBoundary';
+import { AppErrorState } from '../components/AppErrorState';
 import {
   TbHome, TbFolders, TbDatabase, TbCode, TbSearch, TbSettings,
   TbSparkles, TbWand, TbMessageCircleStar, TbFileAi,
@@ -78,12 +80,12 @@ export const WorkspaceLayout = () => {
   const [addEntityOpen, setAddEntityOpen] = useState(false);
   const [addProjectOpen, setAddProjectOpen] = useState(false);
 
-  const { data: workspaces = [] } = useWorkspaces();
+  const { data: workspaces = [], error: workspacesError, isLoading: isLoadingWorkspaces } = useWorkspaces();
   const ws = workspaces.find(w => w.url_slug === workspaceSlug) ?? null;
 
-  const { data: schemas = [] } = useSchemas(workspaceSlug, !!workspaceSlug);
-  const { data: enums = [] } = useEnums(workspaceSlug, !!workspaceSlug);
-  const { data: projects = [] } = useProjects(workspaceSlug);
+  const { data: schemas = [], error: schemasError } = useSchemas(workspaceSlug, !!workspaceSlug);
+  const { data: enums = [], error: enumsError } = useEnums(workspaceSlug, !!workspaceSlug);
+  const { data: projects = [], error: projectsError } = useProjects(workspaceSlug);
   const { lifecycleStates, teams } = useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
 
   const {
@@ -209,6 +211,30 @@ export const WorkspaceLayout = () => {
     availableSettingsSections, defaultSettingsSection,
   ]);
 
+  if (workspacesError || projectsError || schemasError || enumsError) {
+    const error = workspacesError ?? projectsError ?? schemasError ?? enumsError;
+    return (
+      <AppErrorState
+        fullScreen
+        title="Workspace data could not be loaded"
+        message="Arch Register could not load the data needed for this workspace. Reload the page to retry."
+        details={error instanceof Error ? error.message : null}
+        primaryAction={{ label: 'Reload page', onClick: () => window.location.reload() }}
+      />
+    );
+  }
+
+  if (!isLoadingWorkspaces && !ws) {
+    return (
+      <AppErrorState
+        fullScreen
+        title="Workspace not found"
+        message="The requested workspace could not be resolved from the current account."
+        primaryAction={{ label: 'Reload page', onClick: () => window.location.reload() }}
+      />
+    );
+  }
+
   return (
     <WorkspaceContext.Provider value={contextValue}>
       <div className={`ar-app ${styles.shell}`}>
@@ -239,7 +265,11 @@ export const WorkspaceLayout = () => {
           />
           {showSidebar && <SidePanel />}
           <main className={styles.main}>
-            {activeView !== 'diagram' && <Outlet />}
+            {activeView !== 'diagram' && (
+              <RouteContentBoundary>
+                <Outlet />
+              </RouteContentBoundary>
+            )}
           </main>
         </div>
         {canManageWorkspaces && (
@@ -286,7 +316,11 @@ export const WorkspaceLayout = () => {
           />
         )}
       </div>
-      {activeView === 'diagram' && <Outlet />}
+      {activeView === 'diagram' && (
+        <RouteContentBoundary>
+          <Outlet />
+        </RouteContentBoundary>
+      )}
     </WorkspaceContext.Provider>
   );
 };

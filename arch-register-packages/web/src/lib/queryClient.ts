@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { ApiError } from '../api';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -8,7 +9,12 @@ export const queryClient = new QueryClient({
       // Keep unused data in cache for 10 minutes
       gcTime: 10 * 60 * 1000,
       // Retry failed requests 3 times with exponential backoff
-      retry: 3,
+      retry: (failureCount, error) => {
+        if (error instanceof ApiError && error.status === 401) {
+          return false;
+        }
+        return failureCount < 3;
+      },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       // Refetch on window focus for fresh data
       refetchOnWindowFocus: true,
@@ -19,7 +25,12 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       // Retry mutations once on failure
-      retry: 1,
+      retry: (failureCount, error) => {
+        if (error instanceof ApiError && error.status === 401) {
+          return false;
+        }
+        return failureCount < 1;
+      },
     },
   },
 });

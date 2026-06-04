@@ -21,6 +21,7 @@ import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationC
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../auth/AuthContext';
+import { apiFetchResponse } from '../api';
 import { projectFileKeys } from '../hooks/useProjectFiles';
 import { projectKeys } from '../hooks/useProjects';
 import { stableHue } from '../components/MemberAvatar';
@@ -120,7 +121,7 @@ export const DiagramScreen = () => {
 
     try {
       const serialized = await serializeDiagramDocument(docRef.current);
-      const response = await fetch(
+      const response = await apiFetchResponse(
         `/api/${workspaceId}/projects/${projectId}/files/${fileInfoRef.current.path}`,
         {
           method: 'PUT',
@@ -128,7 +129,7 @@ export const DiagramScreen = () => {
           body: JSON.stringify(serialized)
         }
       );
-      if (!response.ok) throw new Error('Failed to save diagram');
+      await response.json().catch(() => undefined);
     } catch (err) {
       console.error('Save failed:', err);
     }
@@ -208,8 +209,7 @@ export const DiagramScreen = () => {
         const includedPackages = getIncludedPackages();
 
         // Fetch project to get file info
-        const projectResponse = await fetch(`/api/${workspaceId}/projects/${projectId}`);
-        if (!projectResponse.ok) throw new Error('Failed to load project');
+        const projectResponse = await apiFetchResponse(`/api/${workspaceId}/projects/${projectId}`);
         const project = await projectResponse.json();
 
         // Find the file in the project
@@ -258,10 +258,9 @@ export const DiagramScreen = () => {
         // If the CRDT already has state (another client is connected), use it directly.
         // Otherwise, this is the first client — load from REST and deserialize.
         if (document.diagrams.length === 0) {
-          const diagramResponse = await fetch(
+          const diagramResponse = await apiFetchResponse(
             `/api/${workspaceId}/projects/${projectId}/files/${file.path}`
           );
-          if (!diagramResponse.ok) throw new Error('Failed to load diagram content');
           const rawDiagramData = await diagramResponse.json();
           const serializedDiagramData = rawDiagramData as SerializedDiagramDocument;
           const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas);

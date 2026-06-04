@@ -2,7 +2,6 @@ import {
   createRootRouteWithContext,
   createRoute,
   redirect,
-  Outlet,
 } from '@tanstack/react-router';
 import type { RouterContext } from '../routerContext';
 import { LoginScreen } from '../screens/LoginScreen';
@@ -30,10 +29,13 @@ import {
   validateModelSearch,
   validateAssistantSearch,
 } from './searchParams';
+import { RootLayout } from '../layouts/RootLayout';
+import { RouteErrorComponent } from './RouteErrorComponent';
 
 // ─── Root Route ───────────────────────────────────────────────
 const rootRoute = createRootRouteWithContext<RouterContext>()({
-  component: Outlet,
+  component: RootLayout,
+  errorComponent: RouteErrorComponent,
 });
 
 // ─── Login Route ──────────────────────────────────────────────
@@ -43,7 +45,11 @@ const loginRoute = createRoute({
   component: LoginScreen,
   validateSearch: (search: Record<string, unknown>) => {
     const redirect = search.redirect as string | undefined;
-    return redirect ? { redirect } : {};
+    const reason = search.reason === 'session-expired' ? 'session-expired' : undefined;
+    return {
+      ...(redirect ? { redirect } : {}),
+      ...(reason ? { reason } : {}),
+    };
   },
   beforeLoad: ({ context, search }) => {
     if (context.auth.isAuthenticated) {
@@ -92,7 +98,8 @@ const authenticatedRoute = createRoute({
       });
     }
   },
-  component: Outlet,
+  component: RootLayout,
+  errorComponent: RouteErrorComponent,
 });
 
 // ─── Workspace Layout Route ──────────────────────────────────

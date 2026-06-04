@@ -16,6 +16,10 @@ export const LoginScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const authMode = authConfig?.mode ?? 'local';
+  const sessionMessage =
+    search.reason === 'session-expired'
+      ? 'Your session expired while Arch Register was open. Sign in again to continue where you left off.'
+      : '';
 
   const handleLocalLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +101,12 @@ export const LoginScreen = () => {
 
           {authMode === 'local' ? (
             <div className={styles.form}>
+              {sessionMessage && !error && (
+                <output className={styles.error} aria-live="polite">
+                  <span className={styles.errorDot} />
+                  <span>{sessionMessage}</span>
+                </output>
+              )}
               {error && (
                 <div className={styles.error} role="alert" aria-live="polite">
                   <span className={styles.errorDot} />
@@ -181,6 +191,12 @@ export const LoginScreen = () => {
             </div>
           ) : (
             <div className={styles.oidcContainer}>
+              {sessionMessage && !error && (
+                <output className={styles.error} aria-live="polite">
+                  <span className={styles.errorDot} />
+                  <span>{sessionMessage}</span>
+                </output>
+              )}
               {error && (
                 <div className={styles.error} role="alert" aria-live="polite">
                   <span className={styles.errorDot} />
