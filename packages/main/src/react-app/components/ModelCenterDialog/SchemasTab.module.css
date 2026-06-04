@@ -31,30 +31,108 @@
     }
   }
 
-  .eFilterControls {
-    background-color: var(--panel-bg);
-    padding: 1rem;
+  .eToolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .eFilter {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 26px;
+    padding: 0 8px 0 10px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
     border-radius: var(--cmp-radius);
+    color: var(--base-fg-dim);
+    font-size: 12px;
+    cursor: pointer;
 
-    .eGroup {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-
-      .eLabel {
-        display: block;
-        font-size: 13px;
-      }
+    &:hover {
+      border-color: var(--base-fg-more-dim);
     }
+
+    .eFilterLabel {
+      color: var(--cmp-fg-disabled);
+      font-size: 11px;
+    }
+
+    .eFilterSelect {
+      appearance: none;
+      background: transparent;
+      border: 0;
+      outline: 0;
+      color: var(--base-fg);
+      padding-right: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+  }
+
+  .eTableWrap {
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--panel-bg);
   }
 
   .eTable {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-bottom: 0;
+    font-size: 12px;
 
-    .eActions {
-      display: flex;
-      gap: 4px;
+    thead th {
+      text-align: left;
+      font-weight: 500;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--cmp-fg-disabled);
+      background: var(--base-bg);
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--cmp-border);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      cursor: pointer;
+
+      &:hover td {
+        background: var(--cmp-bg);
+      }
+
+      &:not(:last-child) td {
+        border-bottom: 1px solid var(--panel-border);
+      }
+    }
+
+    td {
+      padding: 8px 10px;
+      vertical-align: middle;
+    }
+
+    .eDotsBtn {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--cmp-radius);
+      color: var(--cmp-fg-disabled);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+
+      &:hover {
+        color: var(--base-fg-dim);
+        background: var(--cmp-bg);
+      }
     }
   }
 }

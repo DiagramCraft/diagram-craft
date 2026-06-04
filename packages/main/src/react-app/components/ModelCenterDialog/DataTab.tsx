@@ -3,9 +3,7 @@ import { useApplication, useDiagram, useDocument } from '../../../application';
 import { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { Select } from '@diagram-craft/app-components/Select';
-import { TbPencil, TbPlus, TbSearch, TbTrash } from 'react-icons/tb';
+import { TbChevronDown, TbDots, TbPlus, TbSearch, TbTrash } from 'react-icons/tb';
 import { EditItemDialog } from '../EditItemDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './DataTab.module.css';
@@ -134,9 +132,9 @@ export const DataTab = () => {
   }, [db]);
 
   useEffect(() => {
-    const filtered = filterItems(allDataItems, selectedSchemaId, '');
+    const filtered = filterItems(allDataItems, selectedSchemaId, searchText);
     setFilteredDataItems(filtered);
-  }, [allDataItems, selectedSchemaId]);
+  }, [allDataItems, selectedSchemaId, searchText]);
 
   const handleDeleteItem = (item: DataItemWithSchema) => {
     const displayValue = item._schema.fields[0] ? item[item._schema.fields[0].id] : item._uid;
@@ -230,12 +228,6 @@ export const DataTab = () => {
     );
   };
 
-  const handleSearch = () => {
-    const filtered = filterItems(allDataItems, selectedSchemaId, searchText);
-    setFilteredDataItems(filtered);
-    searchRef.current?.blur();
-  };
-
   const getDisplayValue = (
     item: DataItemWithSchema,
     field: { id: string; name: string }
@@ -264,7 +256,6 @@ export const DataTab = () => {
         <p className={styles.eTitle}>Data</p>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Button
-            variant="secondary"
             onClick={handleApplySelectedOverrides}
             disabled={!allSelectedHaveOverrides}
             style={{ display: 'flex', gap: '0.25rem' }}
@@ -281,7 +272,8 @@ export const DataTab = () => {
           </Button>
           <MenuButton.Root>
             <MenuButton.Trigger
-              variant="secondary"
+              variant="primary"
+              size={"md"}
               className={styles.eAddBtn}
               disabled={!(canMutateData && hasSchemas)}
               style={{ display: 'flex', gap: '0.25rem' }}
@@ -319,50 +311,37 @@ export const DataTab = () => {
 
       {hasSchemas && (
         <>
-          <div className={styles.eSearchControls}>
-            <div>
-              <label className={styles.eFilterLabel}>Filter by Schema:</label>
-              <Select.Root value={selectedSchemaId} onChange={v => setSelectedSchemaId(v ?? 'all')}>
-                <Select.Item value="all">All Schemas ({allDataItems.length} items)</Select.Item>
-                {db.schemas.map(schema => {
-                  return (
-                    <Select.Item key={schema.id} value={schema.id}>
-                      {schema.name}
-                    </Select.Item>
-                  );
-                })}
-              </Select.Root>
-            </div>
-
-            <div>
-              <label className={styles.eFilterLabel}>Search:</label>
-              <div className={styles.eInputGroup}>
-                <TextInput
-                  ref={searchRef}
-                  value={searchText}
-                  onChange={v => setSearchText(v ?? '')}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      handleSearch();
-                    } else if (e.key === 'Escape') {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setSearchText('');
-                      const filtered = filterItems(allDataItems, selectedSchemaId, '');
-                      setFilteredDataItems(filtered);
-                      searchRef.current?.blur();
-                    }
-                  }}
-                  className={styles.eSearchInput}
-                />
-                <Button
-                  variant="secondary"
-                  onClick={handleSearch}
-                  style={{ display: 'flex', gap: '0.25rem' }}
-                >
-                  <TbSearch /> Search
-                </Button>
-              </div>
+          <div className={styles.eToolbar}>
+            <label className={styles.eFilter}>
+              <span className={styles.eFilterLabel}>Schema</span>
+              <select
+                className={styles.eFilterSelect}
+                value={selectedSchemaId}
+                onChange={e => setSelectedSchemaId(e.target.value)}
+              >
+                <option value="all">All ({allDataItems.length})</option>
+                {db.schemas.map(schema => (
+                  <option key={schema.id} value={schema.id}>{schema.name}</option>
+                ))}
+              </select>
+              <TbChevronDown size={10} />
+            </label>
+            <div className={styles.eSearchInline}>
+              <TbSearch size={12} />
+              <input
+                ref={searchRef}
+                placeholder="Search…"
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSearchText('');
+                    searchRef.current?.blur();
+                  }
+                }}
+              />
             </div>
           </div>
 
@@ -378,10 +357,11 @@ export const DataTab = () => {
           )}
 
           {filteredDataItems.length > 0 && (
+            <div className={styles.eTableWrap}>
             <table className={styles.eTable}>
               <thead>
                 <tr>
-                  <th style={{ width: '40px' }}>
+                  <th className={styles.eCheckbox}>
                     <input
                       type="checkbox"
                       checked={
@@ -396,7 +376,7 @@ export const DataTab = () => {
                   <th>Schema</th>
                   <th>Data</th>
                   <th>Overridden</th>
-                  {canMutateData && <th>Actions</th>}
+                  {canMutateData && <th style={{ width: 28 }} />}
                 </tr>
               </thead>
               <tbody>
@@ -405,9 +385,14 @@ export const DataTab = () => {
                   const displayFields = item._schema.fields.slice(1, 3); // Show up to 2 additional fields
                   const overrideStatus = getOverrideStatus(document, item);
 
+                  const isEditable = canMutateData && db.isDataEditable(item._schema);
                   return (
-                    <tr key={item._uid}>
-                      <td>
+                    <tr
+                      key={item._uid}
+                      onClick={isEditable ? () => setEditItemDialog({ open: true, item, schema: item._schema }) : undefined}
+                      style={isEditable ? { cursor: 'pointer' } : undefined}
+                    >
+                      <td className={styles.eCheckbox} onClick={ev => ev.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedItems.has(item._uid)}
@@ -431,27 +416,15 @@ export const DataTab = () => {
                         {overrideStatus.text}
                       </td>
                       {canMutateData && (
-                        <td>
-                          <div className={styles.eActions}>
-                            <Button
-                              variant="icon-only"
-                              onClick={() =>
-                                setEditItemDialog({ open: true, item, schema: item._schema })
-                              }
-                              title="Edit item"
-                              disabled={!db.isDataEditable(item._schema)}
-                            >
-                              <TbPencil />
-                            </Button>
-                            <Button
-                              variant="icon-only"
-                              onClick={() => handleDeleteItem(item)}
-                              title="Delete item"
-                              disabled={!db.isDataEditable(item._schema)}
-                            >
-                              <TbTrash />
-                            </Button>
-                          </div>
+                        <td onClick={ev => ev.stopPropagation()}>
+                          {isEditable && (
+                            <MenuButton.Root>
+                              <MenuButton.Trigger element={<button type="button" className={styles.eDotsBtn}><TbDots size={14} /></button>} />
+                              <MenuButton.Menu>
+                                <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => handleDeleteItem(item)}>Delete</Menu.Item>
+                              </MenuButton.Menu>
+                            </MenuButton.Root>
+                          )}
                         </td>
                       )}
                     </tr>
@@ -459,6 +432,7 @@ export const DataTab = () => {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </>
       )}

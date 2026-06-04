@@ -20,6 +20,10 @@
   background-color: transparent !important;
   border: none !important;
   min-width: 60px;
+
+  &::after {
+    display: none !important;
+  }
 }
 
 #document {
