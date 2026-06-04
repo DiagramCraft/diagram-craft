@@ -140,6 +140,7 @@ export const ImageInsertDialog = (props: Props) => {
           {/* Toolbar */}
           <div className={styles.eToolbar}>
             <button
+              type="button"
               className={styles.eUpBtn}
               disabled={path.length === 0}
               onClick={() => navigateTo(path.length - 1)}
@@ -151,6 +152,7 @@ export const ImageInsertDialog = (props: Props) => {
             <nav className={styles.eBreadcrumb} aria-label="Path">
               <span className={styles.eCrumbLabel}>Path:</span>
               <button
+                type="button"
                 className={styles.eCrumb}
                 data-current={path.length === 0 ? 'true' : undefined}
                 onClick={path.length > 0 ? () => navigateTo(0) : undefined}
@@ -163,6 +165,7 @@ export const ImageInsertDialog = (props: Props) => {
                 <React.Fragment key={`${i}__${segment}`}>
                   <span className={styles.eCrumbSep}><TbChevronRight size={13} /></span>
                   <button
+                    type="button"
                     className={styles.eCrumb}
                     data-current={i === path.length - 1 ? 'true' : undefined}
                     onClick={i < path.length - 1 ? () => navigateTo(i + 1) : undefined}
@@ -189,6 +192,7 @@ export const ImageInsertDialog = (props: Props) => {
                 filteredList.map(entry => (
                   <button
                     key={entry.name}
+                    type="button"
                     role="option"
                     aria-selected={selected === entry}
                     className={styles.eRow}

@@ -120,7 +120,7 @@ export const FileDialog = (props: Props) => {
       setFilename(parsed.base);
       setFileType(parsed.type);
     }
-  }, [props.open]);
+  }, [props.open, props.defaultFilename]);
 
   const sortedFiltered = useMemo(() => {
     if (!list) return [];
@@ -274,6 +274,7 @@ export const FileDialog = (props: Props) => {
         {/* Toolbar */}
         <div className={styles.eToolbar}>
           <button
+            type="button"
             className={styles.eUpBtn}
             disabled={path.length === 0}
             onClick={() => navigateTo(path.length - 1)}
@@ -285,6 +286,7 @@ export const FileDialog = (props: Props) => {
           <nav className={styles.eBreadcrumb} aria-label="Path">
             <span className={styles.eCrumbLabel}>Path:</span>
             <button
+              type="button"
               className={styles.eCrumb}
               data-current={path.length === 0 ? 'true' : undefined}
               onClick={path.length > 0 ? () => navigateTo(0) : undefined}
@@ -299,6 +301,7 @@ export const FileDialog = (props: Props) => {
                   <TbChevronRight size={13} />
                 </span>
                 <button
+                  type="button"
                   className={styles.eCrumb}
                   data-current={i === path.length - 1 ? 'true' : undefined}
                   onClick={i < path.length - 1 ? () => navigateTo(i + 1) : undefined}
@@ -326,7 +329,7 @@ export const FileDialog = (props: Props) => {
               style={{ flex: '0 0 190px' }}
             />
           ) : (
-            <button className={styles.eNewFolderBtn} onClick={handleNewFolder}>
+            <button type="button" className={styles.eNewFolderBtn} onClick={handleNewFolder}>
               <TbFolderPlus size={13} />
               New folder
             </button>
@@ -338,6 +341,7 @@ export const FileDialog = (props: Props) => {
           {/* Column header */}
           <div className={styles.eColHead}>
             <button
+              type="button"
               className={styles.eColBtn}
               data-sorted={sortKey === 'name' ? 'true' : undefined}
               onClick={() => handleSort('name')}
@@ -352,6 +356,7 @@ export const FileDialog = (props: Props) => {
               ) : null}
             </button>
             <button
+              type="button"
               className={styles.eColBtn}
               data-right="true"
               data-sorted={sortKey === 'size' ? 'true' : undefined}
@@ -367,6 +372,7 @@ export const FileDialog = (props: Props) => {
               ) : null}
             </button>
             <button
+              type="button"
               className={styles.eColBtn}
               data-right="true"
               data-sorted={sortKey === 'modified' ? 'true' : undefined}
@@ -401,6 +407,7 @@ export const FileDialog = (props: Props) => {
                 return (
                   <button
                     key={entry.name}
+                    type="button"
                     role="option"
                     aria-selected={isSelected}
                     className={styles.eRow}
