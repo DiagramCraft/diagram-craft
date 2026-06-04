@@ -1,5 +1,10 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { SelectionSelectGrowAction, SelectionSelectShrinkAction } from './selectionModifyActions';
+import {
+  SelectionSelectConnectedAction,
+  SelectionSelectGrowAction,
+  SelectionSelectShrinkAction,
+  SelectionSelectTreeAction
+} from './selectionModifyActions';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { model } from '@diagram-craft/canvas/modelState';
 import {
@@ -9,6 +14,61 @@ import {
 } from '@diagram-craft/model/test-support/testModel';
 
 const context: ActionContext = { model };
+const sortIds = <T extends { id: string }>(elements: T[]) => elements.map(e => e.id).sort();
+
+describe('SelectionSelectConnectedAction', () => {
+  let diagram: TestDiagramBuilder;
+  let layer: TestLayerBuilder;
+
+  beforeEach(() => {
+    diagram = TestModel.newDiagram();
+    layer = diagram.newLayer();
+    model.activeDiagram = diagram;
+  });
+
+  test('should expand an edge selection to its full connected component', () => {
+    layer.addNode({ id: 'node1', bounds: { x: 0, y: 0, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node2', bounds: { x: 100, y: 0, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node3', bounds: { x: 200, y: 0, w: 50, h: 50, r: 0 } });
+    const edge1 = layer.addEdge({ id: 'edge1', startNodeId: 'node1', endNodeId: 'node2' });
+    layer.addEdge({ id: 'edge2', startNodeId: 'node2', endNodeId: 'node3' });
+
+    diagram.selection.setElements([edge1]);
+
+    new SelectionSelectConnectedAction(context).execute();
+
+    expect(sortIds(diagram.selection.nodes)).toEqual(['node1', 'node2', 'node3']);
+    expect(sortIds(diagram.selection.edges)).toEqual(['edge1', 'edge2']);
+  });
+});
+
+describe('SelectionSelectTreeAction', () => {
+  let diagram: TestDiagramBuilder;
+  let layer: TestLayerBuilder;
+
+  beforeEach(() => {
+    diagram = TestModel.newDiagram();
+    layer = diagram.newLayer();
+    model.activeDiagram = diagram;
+  });
+
+  test('should select a maximal tree without cycle edges', () => {
+    const node1 = layer.addNode({ id: 'node1', bounds: { x: 0, y: 0, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node2', bounds: { x: 100, y: 0, w: 50, h: 50, r: 0 } });
+    layer.addNode({ id: 'node3', bounds: { x: 200, y: 0, w: 50, h: 50, r: 0 } });
+    layer.addEdge({ id: 'edge1', startNodeId: 'node1', endNodeId: 'node2' });
+    layer.addEdge({ id: 'edge2', startNodeId: 'node2', endNodeId: 'node3' });
+    layer.addEdge({ id: 'edge3', startNodeId: 'node3', endNodeId: 'node1' });
+
+    diagram.selection.setElements([node1]);
+
+    new SelectionSelectTreeAction(context).execute();
+
+    expect(sortIds(diagram.selection.nodes)).toEqual(['node1', 'node2', 'node3']);
+    expect(diagram.selection.edges).toHaveLength(2);
+    expect(sortIds(diagram.selection.edges)).not.toEqual(['edge1', 'edge2', 'edge3']);
+  });
+});
 
 describe('SelectionSelectGrowAction', () => {
   let diagram: TestDiagramBuilder;
@@ -34,9 +94,8 @@ describe('SelectionSelectGrowAction', () => {
     action.execute();
 
     // Verify: Should now have both the node and the edge selected
-    expect(diagram.selection.elements).toHaveLength(2);
-    expect(diagram.selection.nodes.map(n => n.id)).toContain('node1');
-    expect(diagram.selection.edges.map(e => e.id)).toContain('edge1');
+    expect(sortIds(diagram.selection.nodes)).toEqual(['node1']);
+    expect(sortIds(diagram.selection.edges)).toEqual(['edge1']);
   });
 
   test('should grow selection from an edge to include its connected nodes', () => {
@@ -53,10 +112,8 @@ describe('SelectionSelectGrowAction', () => {
     action.execute();
 
     // Verify: Should now have the edge and both nodes selected
-    expect(diagram.selection.elements).toHaveLength(3);
-    expect(diagram.selection.nodes.map(n => n.id)).toContain('node1');
-    expect(diagram.selection.nodes.map(n => n.id)).toContain('node2');
-    expect(diagram.selection.edges.map(e => e.id)).toContain('edge1');
+    expect(sortIds(diagram.selection.nodes)).toEqual(['node1', 'node2']);
+    expect(sortIds(diagram.selection.edges)).toEqual(['edge1']);
   });
 
   test('should grow selection from multiple nodes to include all connected edges', () => {
@@ -75,11 +132,8 @@ describe('SelectionSelectGrowAction', () => {
     action.execute();
 
     // Verify: Should have both nodes and both edges selected
-    expect(diagram.selection.elements).toHaveLength(4);
-    expect(diagram.selection.nodes.map(n => n.id)).toContain('node1');
-    expect(diagram.selection.nodes.map(n => n.id)).toContain('node2');
-    expect(diagram.selection.edges.map(e => e.id)).toContain('edge1');
-    expect(diagram.selection.edges.map(e => e.id)).toContain('edge2');
+    expect(sortIds(diagram.selection.nodes)).toEqual(['node1', 'node2']);
+    expect(sortIds(diagram.selection.edges)).toEqual(['edge1', 'edge2']);
   });
 });
 
@@ -109,7 +163,8 @@ describe('SelectionSelectShrinkAction', () => {
     action.execute();
 
     // Verify: Should remove the leaf nodes and edges with only one connection
-    expect(diagram.selection.elements.length).toBeLessThan(5);
+    expect(sortIds(diagram.selection.nodes)).toEqual(['node2']);
+    expect(diagram.selection.edges).toEqual([]);
   });
 
   test('should not shrink if selection is empty', () => {
@@ -142,8 +197,7 @@ describe('SelectionSelectShrinkAction', () => {
     action.execute();
 
     // Verify: Should remove outer nodes that have only one connection
-    expect(diagram.selection.elements.length).toBeLessThan(7);
-    // The center node should still be selected as it has multiple connections
-    expect(diagram.selection.nodes.map(n => n.id)).toContain('center');
+    expect(sortIds(diagram.selection.nodes)).toEqual(['center']);
+    expect(diagram.selection.edges).toEqual([]);
   });
 });
