@@ -1,5 +1,5 @@
 import { H3, defineHandler } from 'h3';
-import { newid } from '@diagram-craft/utils/id';
+import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../db/database.js';
 import type { EntitySchema } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
@@ -92,7 +92,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       try {
         const timestamp = new Date();
         const row = await db.catalog.createSchema({
-          id: newid(),
+          id: randomUUID(),
           workspace,
           name: name as string,
           description: typeof description === 'string' ? description : '',

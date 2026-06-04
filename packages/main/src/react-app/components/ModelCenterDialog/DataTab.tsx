@@ -329,11 +329,14 @@ export const DataTab = () => {
           </div>
 
           {filteredDataItems.length === 0 && (
-            <div className={styles.eMessage}>
+            <div className={styles.eEmpty}>
               {allDataItems.length === 0 ? (
-                <p>No data items yet</p>
+                <div className={styles.eEmptyTitle}>No data items yet</div>
               ) : (
-                <p>No items match your current filters</p>
+                <>
+                  <div className={styles.eEmptyTitle}>No items found</div>
+                  <div>Try adjusting your search or filters.</div>
+                </>
               )}
             </div>
           )}

@@ -168,11 +168,14 @@ export const SchemasTab = () => {
       )}
 
       {schemas.length === 0 && canMutateSchemas && (
-        <div className={styles.eMessage}>
+        <div className={styles.eEmpty}>
           {db.schemas.length === 0 ? (
-            <p>No schemas defined yet</p>
+            <div className={styles.eEmptyTitle}>No schemas defined yet</div>
           ) : (
-            <p>No schemas match your current filter</p>
+            <>
+              <div className={styles.eEmptyTitle}>No schemas found</div>
+              <div>Try adjusting your filter.</div>
+            </>
           )}
         </div>
       )}

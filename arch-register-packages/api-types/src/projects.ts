@@ -23,6 +23,8 @@ export type ProjectFile = {
   path: string;
   name: string;
   size_bytes: number;
+  comment_count?: number;
+  unresolved_comment_count?: number;
   created_at: string;
   updated_at: string;
   is_template?: boolean;

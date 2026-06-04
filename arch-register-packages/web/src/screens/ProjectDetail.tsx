@@ -12,7 +12,7 @@ import { ColorPicker } from '../components/ColorPicker';
 import {
   TbPlus, TbFolder, TbFolderOpen, TbSearch,
   TbLayoutGrid, TbList, TbTrash, TbPencil, TbStar,
-  TbCopy,
+  TbCopy, TbMessageCircle, TbCheck,
 } from 'react-icons/tb';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
@@ -545,6 +545,55 @@ const MetaItem = ({ label, value }: { label: string; value: React.ReactNode }) =
   </div>
 );
 
+// Frosted pill overlay — sits bottom-left on the diagram thumbnail in grid view.
+// Two segments: amber dot+count for open threads, or green check when all resolved;
+// then the total comment count.
+const CommentPill = ({ file }: { file: FileEntry }) => {
+  const total = file.comment_count ?? 0;
+  const unresolved = file.unresolved_comment_count ?? 0;
+  if (total === 0) return null;
+  return (
+    <span
+      className={styles.cmtPill}
+      title={
+        unresolved > 0
+          ? `${unresolved} unresolved of ${total} comment${total === 1 ? '' : 's'}`
+          : `${total} comment${total === 1 ? '' : 's'} · all resolved`
+      }
+    >
+      {unresolved > 0 ? (
+        <span className={styles.cmtOpen}>
+          <span className={styles.cmtOpenDot} />
+          {unresolved}
+        </span>
+      ) : (
+        <span className={styles.cmtDone}><TbCheck size={10} /></span>
+      )}
+      <span className={styles.cmtTotal}><TbMessageCircle size={10} />{total}</span>
+    </span>
+  );
+};
+
+// Compact inline chip used in the list row.
+const CommentChip = ({ file }: { file: FileEntry }) => {
+  const total = file.comment_count ?? 0;
+  const unresolved = file.unresolved_comment_count ?? 0;
+  if (total === 0) return null;
+  return (
+    <span
+      className={`${styles.cmtChip} ${unresolved > 0 ? styles.cmtChipOpen : ''}`}
+      title={
+        unresolved > 0
+          ? `${unresolved} unresolved of ${total} comment${total === 1 ? '' : 's'}`
+          : `${total} comment${total === 1 ? '' : 's'} · all resolved`
+      }
+    >
+      <TbMessageCircle size={10} />
+      {unresolved > 0 ? unresolved : total}
+    </span>
+  );
+};
+
 const DiagramCard = ({
   file,
   folder,
@@ -573,20 +622,23 @@ const DiagramCard = ({
           </svg>
         )}
       </div>
+      <CommentPill file={file} />
     </div>
     <div className={styles.diagramMeta}>
       <div className={styles.diagramName}>
-        {file.name}
-        {file.is_workspace_template && (
-          <span className={styles.templateBadge} title="Workspace template">
-            <TbStar size={10} /> Workspace
-          </span>
-        )}
-        {file.is_template && !file.is_workspace_template && (
-          <span className={styles.templateBadge} title="Project template">
-            <TbStar size={10} /> Project
-          </span>
-        )}
+        <span>{file.name}</span>
+        <div className={styles.diagramNameBadges}>
+          {file.is_workspace_template && (
+            <span className={styles.templateBadge} title="Workspace template">
+              <TbStar size={10} /> Workspace
+            </span>
+          )}
+          {file.is_template && !file.is_workspace_template && (
+            <span className={styles.templateBadge} title="Project template">
+              <TbStar size={10} /> Project
+            </span>
+          )}
+        </div>
       </div>
       <div className={styles.diagramSub}>
         {folder && <><TbFolder size={10} /> {folder} &middot; </>}
@@ -632,7 +684,8 @@ const DiagramRow = ({
 }) => (
   <button type="button" className={styles.diagramRow} onClick={onOpen} onContextMenu={onContextMenu}>
     <div className={styles.diagramRowName}>
-      {file.name}
+      <span>{file.name}</span>
+      <CommentChip file={file} />
     </div>
     <div className={styles.diagramRowTemplate}>
       {file.is_workspace_template && (

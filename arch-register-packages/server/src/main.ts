@@ -9,6 +9,7 @@ import { createAIRoutes } from './routes/ai.js';
 import { createApp } from './app.js';
 import { SERVER_DEFAULTS } from './constants.js';
 import { generateSvgPreview } from './preview/svgPreviewGenerator.js';
+import { getDiagramCommentCounts } from './diagrams/commentCounts.js';
 
 const PORT = Number(process.env['PORT'] ?? SERVER_DEFAULTS.PORT);
 
@@ -30,23 +31,34 @@ const main = async () => {
     if (fileId.endsWith('.json')) fileId = fileId.slice(0, -5);
 
     const buf = Buffer.from(content, 'utf8');
+    const updatedAt = new Date();
     await storage.write(workspace, projectId, fileId, buf);
-    await db.projectsFiles.updateProjectFileSizeById(
-      workspace,
-      projectId,
-      fileId,
-      buf.length,
-      new Date()
-    );
 
     try {
       const parsed = JSON.parse(content);
+      const commentCounts = getDiagramCommentCounts(parsed);
       const previewSvg = generateSvgPreview(parsed);
-      if (previewSvg) {
-        await db.projectsFiles.updateProjectFilePreview(workspace, projectId, fileId, previewSvg);
-      }
+      await db.projectsFiles.updateProjectFileDerivedData(
+        workspace,
+        projectId,
+        fileId,
+        buf.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        previewSvg ?? null,
+        updatedAt
+      );
     } catch {
-      // Preview generation is best-effort
+      await db.projectsFiles.updateProjectFileDerivedData(
+        workspace,
+        projectId,
+        fileId,
+        buf.length,
+        0,
+        0,
+        null,
+        updatedAt
+      );
     }
   };
 

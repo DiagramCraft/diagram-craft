@@ -176,6 +176,8 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   path: file.path,
   name: file.name,
   size_bytes: file.size_bytes,
+  comment_count: file.comment_count,
+  unresolved_comment_count: file.unresolved_comment_count,
   is_template: file.is_template,
   is_workspace_template: file.is_workspace_template,
   preview_svg: file.preview_svg,

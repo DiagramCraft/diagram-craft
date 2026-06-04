@@ -6,7 +6,7 @@ import {
   AR_COLOR_YELLOW,
   AR_COLOR_RED,
 } from '@arch-register/api-types/colors';
-import { newid } from '@diagram-craft/utils/id';
+import { randomUUID } from 'node:crypto';
 import type { CreateSchemaInput } from './db/database.js';
 import type { SchemaField } from './types.js';
 
@@ -481,7 +481,7 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Cr
   const now = new Date();
   const idMap = new Map<string, string>();
   for (const schema of template.schemas) {
-    idMap.set(schema.symId, newid());
+    idMap.set(schema.symId, randomUUID());
   }
 
   return template.schemas.map(schema => {
