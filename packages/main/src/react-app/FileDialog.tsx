@@ -106,7 +106,7 @@ type FileBrowserToolbarProps = {
 };
 
 export const FileBrowserToolbar = ({ path, navigateTo, children }: FileBrowserToolbarProps) => (
-  <div className={browserStyles.eToolbar}>
+  <div className={browserStyles.icFileBrowserToolbar}>
     <Button
       size="sm"
       disabled={path.length === 0}
@@ -163,7 +163,7 @@ export const FileBrowserList = ({
   header,
   children
 }: FileBrowserListProps) => (
-  <div className={browserStyles.eListWrap}>
+  <div className={browserStyles.icFileBrowserList}>
     {header}
     <div className={browserStyles.eList}>
       {isLoading ? (
