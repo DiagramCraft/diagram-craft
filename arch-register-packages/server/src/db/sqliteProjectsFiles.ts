@@ -1,3 +1,4 @@
+import { newid } from '@diagram-craft/utils/id';
 import type {
   CreateProjectInput,
   ProjectsFilesDatabase,
@@ -124,7 +125,7 @@ export class SqliteProjectsFilesDatabase
   }
 
   async upsertProjectFile(input: UpsertProjectFileInput) {
-    const id = crypto.randomUUID();
+    const id = newid();
     const tx = this.db.transaction(() => {
       const existing = this.get<{ id: string; created_at: string }>(
         'SELECT id, created_at FROM project_file WHERE workspace = ? AND project_id = ? AND path = ?',

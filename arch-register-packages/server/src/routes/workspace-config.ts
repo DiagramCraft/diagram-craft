@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto';
 import { AR_COLOR_BLUE } from '@arch-register/api-types/colors';
+import { newid } from '@diagram-craft/utils/id';
 import { H3, defineHandler } from 'h3';
 import {
   BUILTIN_WORKSPACE_ROLES,
@@ -171,7 +171,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
 
       const now = new Date();
       return await db.workspaceAdmin.createCustomWorkspaceRole({
-        id: randomUUID(),
+        id: newid(),
         workspace,
         name: input.name,
         description: input.description,

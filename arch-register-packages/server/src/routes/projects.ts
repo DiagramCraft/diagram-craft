@@ -1,4 +1,5 @@
 import { H3, H3Event, HTTPError, defineHandler } from 'h3';
+import { newid } from '@diagram-craft/utils/id';
 import type { DatabaseAdapter } from '../db/database.js';
 import type { ProjectFile } from '../types.js';
 import type { StorageAdapter } from '../storage/storage.js';
@@ -159,7 +160,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           );
         const timestamp = new Date();
         const row = await db.projectsFiles.createProject({
-          id: crypto.randomUUID(),
+          id: newid(),
           workspace,
           name: name as string,
           description: typeof description === 'string' ? description : '',

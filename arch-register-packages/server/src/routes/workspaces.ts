@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto';
 import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/api-types/colors';
+import { newid } from '@diagram-craft/utils/id';
 import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
@@ -102,7 +102,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
             for (const role of srcRoles) {
               await db.workspaceAdmin.createCustomWorkspaceRole({
                 ...role,
-                id: randomUUID(),
+                id: newid(),
                 workspace: id,
                 created_at: timestamp,
                 updated_at: timestamp,
@@ -123,7 +123,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           }
 
           if (includeSet.has('schemas')) {
-            const idMap = new Map<string, string>(srcSchemas.map(s => [s.id, randomUUID()]));
+            const idMap = new Map<string, string>(srcSchemas.map(s => [s.id, newid()]));
             for (const schema of srcSchemas) {
               const remappedFields = schema.fields.map(field => {
                 if (field.type === 'reference' || field.type === 'containment') {
