@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { AR_COLOR_BLUE } from '@arch-register/api-types/colors';
 import { H3, defineHandler } from 'h3';
 import {
   BUILTIN_WORKSPACE_ROLES,
@@ -50,7 +51,7 @@ const parseWorkspaceRoleInput = (body: unknown) => {
 
   const name = sanitizeText(data['name'] as string);
   const description = data['description'] !== undefined ? sanitizeText(data['description'] as string) : '';
-  const tone = data['tone'] !== undefined ? (data['tone'] as string).trim() : 'var(--accent)';
+  const tone = data['tone'] !== undefined ? (data['tone'] as string).trim() : AR_COLOR_BLUE;
   
   httpAssert.true(name.length > 0 && name.length <= 100, {
     message: 'name must be between 1 and 100 characters'
@@ -58,7 +59,7 @@ const parseWorkspaceRoleInput = (body: unknown) => {
   httpAssert.true(description.length <= 500, {
     message: 'description must not exceed 500 characters'
   });
-  httpAssert.true(/^(var\(--[\w-]+\)|#[0-9a-fA-F]{3,8}|rgb|hsl)/.test(tone), {
+  httpAssert.true(/^(oklch\(|var\(--[\w-]+\)|#[0-9a-fA-F]{3,8}|rgb|hsl)/.test(tone), {
     message: 'tone must be a valid CSS color value'
   });
 

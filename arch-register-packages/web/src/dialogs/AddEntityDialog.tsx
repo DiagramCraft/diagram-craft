@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { FormGroup } from '@diagram-craft/app-components/FormGroup';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -8,7 +9,7 @@ import { apiFetch, ApiError } from '../api';
 import type { EntitySchema, EntitySummary, SchemaField, WorkspaceLifecycleState, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
-import { TbInfoCircle } from 'react-icons/tb';
+import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
 
 type EntityApiResponse = {
@@ -202,30 +203,24 @@ export const AddEntityDialog = ({
 
         <div className={styles.contentGrid}>
           {/* Schema-specific fields */}
-          <div className={styles.propertiesSection}>
+          <FormGroup label="Properties" icon={<TbAdjustments size={12} />}>
             {selectedSchema && (
-              <>
-                <div className={styles.sectionLabel}>Properties</div>
-                <div className={styles.propertiesList}>
-                  {selectedSchema.fields.filter(f => f.id !== 'name').map(f => (
-                    <FieldInput
-                      key={f.id}
-                      field={f}
-                      value={fields[f.id] ?? ''}
-                      onChange={v => setField(f.id, v)}
-                      referenceOptions={derivedReferenceOptions}
-                    />
-                  ))}
-                </div>
-              </>
+              <div className={styles.propertiesList}>
+                {selectedSchema.fields.filter(f => f.id !== 'name').map(f => (
+                  <FieldInput
+                    key={f.id}
+                    field={f}
+                    value={fields[f.id] ?? ''}
+                    onChange={v => setField(f.id, v)}
+                    referenceOptions={derivedReferenceOptions}
+                  />
+                ))}
+              </div>
             )}
-          </div>
+          </FormGroup>
 
           {/* Metadata */}
-          <div className={styles.metaSection}>
-            <div className={styles.metaSectionLabel}>
-              <TbInfoCircle size={11} /> Metadata
-            </div>
+          <FormGroup label="Metadata" icon={<TbInfoCircle size={11} />}>
             <FormElement label="Description">
               <TextArea
                 value={meta.description}
@@ -279,7 +274,7 @@ export const AddEntityDialog = ({
                 />
               </FormElement>
             </div>
-          </div>
+          </FormGroup>
         </div>
 
         {error && <div className={styles.error}>{error}</div>}

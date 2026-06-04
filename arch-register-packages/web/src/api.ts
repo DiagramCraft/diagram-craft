@@ -1,4 +1,5 @@
 import type { GlobalRole } from '@arch-register/permissions';
+import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import type {
   Workspace,
   EntitySchema,
@@ -70,18 +71,6 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'containment', label: 'Containment' },
 ];
 
-export const SCHEMA_COLORS = [
-  'var(--tag-component)',
-  'var(--tag-api)',
-  'var(--tag-service)',
-  'var(--tag-database)',
-  'var(--tag-system)',
-  'var(--error-fg)',
-  'oklch(0.65 0.15 340)',
-  'oklch(0.65 0.12 170)',
-  'oklch(0.65 0.14 200)',
-  'oklch(0.70 0.14 55)',
-];
 
 export const schemaColor = (index: number): string =>
   SCHEMA_COLORS[index % SCHEMA_COLORS.length]!;

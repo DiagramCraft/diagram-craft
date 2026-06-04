@@ -1,0 +1,46 @@
+/**
+ * FormGroup - .cFormGroup
+ * | Head - .eHead
+ *   | Icon - .eIcon
+ *   | Label - .eLabel
+ *   | Action - .eAction
+ */
+
+.cFormGroup {
+  --cmp-bg: var(--gray-2);
+
+  background: var(--base-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+
+  .eHead {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--cmp-border);
+
+    .eIcon {
+      display: flex;
+      align-items: center;
+      color: var(--base-fg-dim);
+    }
+
+    .eLabel {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--base-fg-dim);
+    }
+
+    .eAction {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+}

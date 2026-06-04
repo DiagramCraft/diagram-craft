@@ -4,7 +4,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { Workspace } from '../api';
-import { SCHEMA_COLORS } from '../api';
+import { LIFECYCLE_COLOR_PRESETS, SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../components/ColorPicker';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
@@ -284,13 +284,7 @@ type EditLifecycleState = {
 const buildLifecycleStateDraft = (lifecycleStates: WorkspaceLifecycleState[]) =>
   lifecycleStates.map(state => ({ id: state.id, label: state.label, color: state.color }));
 
-const COLOR_PRESETS = [
-  { value: 'var(--green)', label: 'Green' },
-  { value: 'var(--accent-fg)', label: 'Blue' },
-  { value: 'var(--warning-fg)', label: 'Yellow' },
-  { value: 'var(--error-fg)', label: 'Red' },
-  { value: 'var(--cmp-fg-disabled)', label: 'Grey' },
-];
+const COLOR_PRESETS = LIFECYCLE_COLOR_PRESETS;
 
 const LifecycleOwnersSection = ({
   workspace,

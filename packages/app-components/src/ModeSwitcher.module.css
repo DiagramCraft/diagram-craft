@@ -1,0 +1,56 @@
+/**
+ * ModeSwitcher - .cModeSwitcher
+ * | Button - .eBtn [data-active="true"]
+ * |   | Icon - .eIcon
+ */
+
+.cModeSwitcher {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 6px;
+  background: var(--base-bg);
+  padding: 4px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--panel-border);
+
+  .eBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 30px;
+    border-radius: var(--r);
+    color: var(--base-fg-more-dim);
+    background: transparent;
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: background 80ms, color 80ms, border-color 80ms;
+
+    &:hover {
+      color: var(--base-fg);
+    }
+
+    &[data-active='true'] {
+      background: var(--cmp-bg);
+      color: var(--base-fg);
+      border-color: var(--cmp-border);
+      box-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
+    }
+  }
+
+  .eIcon {
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+  }
+}
+
+:global(.light-theme) .cModeSwitcher .eBtn[data-active='true'] {
+  background: white;
+}
+
+:global(.dark-theme) .cModeSwitcher .eBtn[data-active='true'] {
+  background: var(--gray-2);
+}
