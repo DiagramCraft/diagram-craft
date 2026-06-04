@@ -2325,6 +2325,10 @@ components:
           type: string
         size_bytes:
           type: integer
+        comment_count:
+          type: integer
+        unresolved_comment_count:
+          type: integer
         is_template:
           type: boolean
           description: Whether this file is marked as a template
@@ -2337,7 +2341,7 @@ components:
         updated_at:
           type: string
           format: date-time
-      required: [id, path, name, size_bytes, is_template, is_workspace_template, created_at, updated_at]
+      required: [id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at]
 
     FileFolder:
       type: object

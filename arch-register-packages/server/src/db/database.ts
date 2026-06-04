@@ -104,6 +104,8 @@ export type UpsertProjectFileInput = {
   path: string;
   name: string;
   size_bytes: number;
+  comment_count: number;
+  unresolved_comment_count: number;
   updated_at: Date;
   created_atIfNew: Date;
 };
@@ -219,6 +221,16 @@ export type ProjectsFilesDatabase = {
     projectId: string,
     fileId: string,
     previewSvg: string | null
+  ): Promise<void>;
+  updateProjectFileDerivedData(
+    ws: string,
+    projectId: string,
+    fileId: string,
+    sizeBytes: number,
+    commentCount: number,
+    unresolvedCommentCount: number,
+    previewSvg: string | null,
+    updated_at: Date
   ): Promise<void>;
   updateProjectFileTemplateStatus(
     ws: string,

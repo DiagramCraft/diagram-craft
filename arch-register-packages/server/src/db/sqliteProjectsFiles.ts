@@ -110,6 +110,37 @@ export class SqliteProjectsFilesDatabase
     );
   }
 
+  async updateProjectFileDerivedData(
+    workspace: string,
+    projectId: string,
+    fileId: string,
+    sizeBytes: number,
+    commentCount: number,
+    unresolvedCommentCount: number,
+    previewSvg: string | null,
+    updated_at: Date
+  ) {
+    this.run(
+      `UPDATE project_file
+       SET size_bytes = ?,
+           comment_count = ?,
+           unresolved_comment_count = ?,
+           preview_svg = ?,
+           updated_at = ?
+       WHERE workspace = ? AND project_id = ? AND id = ?`,
+      [
+        sizeBytes,
+        commentCount,
+        unresolvedCommentCount,
+        previewSvg,
+        updated_at.toISOString(),
+        workspace,
+        projectId,
+        fileId
+      ]
+    );
+  }
+
   async updateProjectFileTemplateStatus(
     workspace: string,
     projectId: string,
@@ -134,12 +165,19 @@ export class SqliteProjectsFilesDatabase
 
       if (existing) {
         this.run(
-          'UPDATE project_file SET name = ?, size_bytes = ?, updated_at = ? WHERE id = ?',
-          [input.name, input.size_bytes, input.updated_at.toISOString(), existing.id]
+          'UPDATE project_file SET name = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ? WHERE id = ?',
+          [
+            input.name,
+            input.size_bytes,
+            input.comment_count,
+            input.unresolved_comment_count,
+            input.updated_at.toISOString(),
+            existing.id
+          ]
         );
       } else {
         this.run(
-          'INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
@@ -147,6 +185,8 @@ export class SqliteProjectsFilesDatabase
             input.path,
             input.name,
             input.size_bytes,
+            input.comment_count,
+            input.unresolved_comment_count,
             0,
             0,
             input.created_atIfNew.toISOString(),

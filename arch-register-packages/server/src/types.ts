@@ -157,6 +157,8 @@ export type ProjectFile = {
   path: string;
   name: string;
   size_bytes: number;
+  comment_count: number;
+  unresolved_comment_count: number;
   is_template: boolean;
   is_workspace_template: boolean;
   preview_svg: string | null;

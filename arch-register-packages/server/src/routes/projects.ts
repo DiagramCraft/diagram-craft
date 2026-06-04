@@ -397,12 +397,15 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const isUpdate = !!existingFile;
 
         const timestamp = new Date();
+        const commentCounts = getDiagramCommentCounts(body as SerializedDiagramDocument);
         const row = await db.projectsFiles.upsertProjectFile({
           workspace,
           project_id: id,
           path: filePath,
           name: String(displayName),
           size_bytes: content.length,
+          comment_count: commentCounts.commentCount,
+          unresolved_comment_count: commentCounts.unresolvedCommentCount,
           created_atIfNew: existingFile?.created_at ?? timestamp,
           updated_at: timestamp
         });
@@ -411,11 +414,27 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         try {
           const previewSvg = generateSvgPreview(body as SerializedDiagramDocument);
-          if (previewSvg) {
-            await db.projectsFiles.updateProjectFilePreview(workspace, id, row.id, previewSvg);
-          }
+          await db.projectsFiles.updateProjectFileDerivedData(
+            workspace,
+            id,
+            row.id,
+            content.length,
+            commentCounts.commentCount,
+            commentCounts.unresolvedCommentCount,
+            previewSvg ?? null,
+            timestamp
+          );
         } catch {
-          // Preview generation is best-effort — don't fail the save
+          await db.projectsFiles.updateProjectFileDerivedData(
+            workspace,
+            id,
+            row.id,
+            content.length,
+            commentCounts.commentCount,
+            commentCounts.unresolvedCommentCount,
+            null,
+            timestamp
+          );
         }
 
         if (isUpdate) {
@@ -555,6 +574,8 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         }
 
         const timestamp = new Date();
+        const updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
+        const commentCounts = getDiagramCommentCounts(fileData as SerializedDiagramDocument);
 
         // Create at new path
         const newFile = await db.projectsFiles.upsertProjectFile({
@@ -562,7 +583,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           project_id: id,
           path: newPath,
           name: displayName,
-          size_bytes: content.length,
+          size_bytes: updatedContent.length,
+          comment_count: commentCounts.commentCount,
+          unresolved_comment_count: commentCounts.unresolvedCommentCount,
           created_atIfNew: existingFile.created_at,
           updated_at: timestamp
         });
@@ -579,8 +602,25 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           );
         }
 
+        let previewSvg: string | null = null;
+        try {
+          previewSvg = generateSvgPreview(fileData as SerializedDiagramDocument) ?? null;
+        } catch {
+          previewSvg = null;
+        }
+        await db.projectsFiles.updateProjectFileDerivedData(
+          workspace,
+          id,
+          newFile.id,
+          updatedContent.length,
+          commentCounts.commentCount,
+          commentCounts.unresolvedCommentCount,
+          previewSvg,
+          timestamp
+        );
+
         // Write updated content to storage
-        await storage.write(workspace, id, newFile.id, Buffer.from(JSON.stringify(fileData), 'utf8'));
+        await storage.write(workspace, id, newFile.id, updatedContent);
 
         // Delete old file
         await db.projectsFiles.deleteProjectFileByPath(workspace, id, filePath);
@@ -651,6 +691,8 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           path: markerPath,
           name: '.keep',
           size_bytes: 0,
+          comment_count: 0,
+          unresolved_comment_count: 0,
           created_atIfNew: timestamp,
           updated_at: timestamp
         });

@@ -134,6 +134,8 @@ export const sqliteMappers = {
     path: String(row['path']),
     name: String(row['name']),
     size_bytes: Number(row['size_bytes']),
+    comment_count: Number(row['comment_count'] ?? 0),
+    unresolved_comment_count: Number(row['unresolved_comment_count'] ?? 0),
     is_template: Boolean(row['is_template']),
     is_workspace_template: Boolean(row['is_workspace_template']),
     preview_svg: row['preview_svg'] == null ? null : String(row['preview_svg']),

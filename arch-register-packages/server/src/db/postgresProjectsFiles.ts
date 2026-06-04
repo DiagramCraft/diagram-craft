@@ -120,6 +120,31 @@ export class PostgresProjectsFilesDatabase
     }
   }
 
+  async updateProjectFileDerivedData(
+    workspace: string,
+    projectId: string,
+    fileId: string,
+    sizeBytes: number,
+    commentCount: number,
+    unresolvedCommentCount: number,
+    previewSvg: string | null,
+    updated_at: Date
+  ) {
+    try {
+      await this.sql`
+        UPDATE project_file
+        SET size_bytes = ${sizeBytes},
+            comment_count = ${commentCount},
+            unresolved_comment_count = ${unresolvedCommentCount},
+            preview_svg = ${previewSvg},
+            updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
   async updateProjectFileTemplateStatus(
     workspace: string,
     projectId: string,
@@ -142,11 +167,14 @@ export class PostgresProjectsFilesDatabase
   async upsertProjectFile(input: UpsertProjectFileInput) {
     try {
       const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
-        VALUES (${newid()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
+        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path)
         DO UPDATE SET
           name = EXCLUDED.name,
           size_bytes = EXCLUDED.size_bytes,
+          comment_count = EXCLUDED.comment_count,
+          unresolved_comment_count = EXCLUDED.unresolved_comment_count,
           updated_at = EXCLUDED.updated_at
         RETURNING *
       `;
@@ -161,7 +189,6 @@ export class PostgresProjectsFilesDatabase
   ) {
     try {
       const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
-        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, is_template, is_workspace_template, created_at, updated_at)
         INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
         VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path) DO NOTHING

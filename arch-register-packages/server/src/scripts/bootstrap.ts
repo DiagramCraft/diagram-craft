@@ -188,6 +188,8 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
       path: file.path,
       name: file.name,
       size_bytes: file.size_bytes,
+      comment_count: 0,
+      unresolved_comment_count: 0,
       created_atIfNew: file.created_at,
       updated_at: file.updated_at
     });
