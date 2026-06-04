@@ -31,6 +31,22 @@
     }
   }
 
+  .eEmpty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    gap: 8px;
+    color: var(--base-fg-more-dim);
+
+    .eEmptyTitle {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--base-fg-dim);
+    }
+  }
+
   .eToolbar {
     display: flex;
     align-items: center;
