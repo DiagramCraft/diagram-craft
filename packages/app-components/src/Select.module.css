@@ -70,6 +70,7 @@
 
 .cSelectContent {
   overflow: hidden;
+  min-width: var(--anchor-width);
   font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   color: var(--cmp-fg);
   background-color: var(--cmp-bg);
