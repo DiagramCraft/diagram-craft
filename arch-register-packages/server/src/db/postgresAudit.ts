@@ -1,4 +1,3 @@
-import { newid } from '@diagram-craft/utils/id';
 import type { AuditDatabase, CreateAuditLogInput } from './database.js';
 import { normalizePostgresError, PostgresDatabaseBase, type PostgresRowTypes } from './postgresBase.js';
 
@@ -17,7 +16,7 @@ export class PostgresAuditDatabase extends PostgresDatabaseBase implements Audit
       const [row] = await this.sql<PostgresRowTypes['auditLog'][]>`
         INSERT INTO audit_log (id, workspace, timestamp, user_id, operation, entity_type, entity_id, entity_name, entity_slug, schema_id, changes, metadata)
         VALUES (
-          ${newid()},
+          gen_random_uuid(),
           ${input.workspace},
           ${input.timestamp},
           ${input.user_id},

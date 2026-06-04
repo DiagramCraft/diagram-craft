@@ -1,4 +1,4 @@
-import { newid } from '@diagram-craft/utils/id';
+import { randomUUID } from 'node:crypto';
 import { H3, defineHandler, HTTPError } from 'h3';
 import { chat, chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack/ai';
 import type { DatabaseAdapter } from '../db/database.js';
@@ -76,7 +76,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
 
           if (textContent) {
             await db.ai.createMessage({
-              id: newid(),
+              id: randomUUID(),
               conversation_id: conversationId,
               role: 'user',
               content: textContent,
@@ -105,7 +105,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
           const metadata: Record<string, unknown> = {};
           if (capturedToolCalls.length > 0) metadata.toolCalls = capturedToolCalls;
           await db.ai.createMessage({
-            id: newid(),
+            id: randomUUID(),
             conversation_id: conversationId,
             role: 'assistant',
             content,
@@ -172,7 +172,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
 
       const now = new Date();
       return await db.ai.createConversation({
-        id: newid(),
+        id: randomUUID(),
         workspace,
         user_id: user.id,
         title,

@@ -1,5 +1,5 @@
 import { H3, H3Event, HTTPError, defineHandler } from 'h3';
-import { newid } from '@diagram-craft/utils/id';
+import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../db/database.js';
 import type { ProjectFile } from '../types.js';
 import type { StorageAdapter } from '../storage/storage.js';
@@ -19,6 +19,7 @@ import { toApiProject, toApiProjectFile, toApiProjectDetail } from '../api/trans
 import type { FileTree } from '@arch-register/api-types';
 import { generateSvgPreview } from '../preview/svgPreviewGenerator.js';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
+import { getDiagramCommentCounts } from '../diagrams/commentCounts.js';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
@@ -160,7 +161,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           );
         const timestamp = new Date();
         const row = await db.projectsFiles.createProject({
-          id: newid(),
+          id: randomUUID(),
           workspace,
           name: name as string,
           description: typeof description === 'string' ? description : '',

@@ -1,5 +1,5 @@
 import { defineHandler, getQuery, H3 } from 'h3';
-import { newid } from '@diagram-craft/utils/id';
+import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../db/database.js';
 import {
   decodeRefs,
@@ -563,7 +563,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         const role = typed['role'] as 'viewer' | 'editor' | 'contributor' | 'entity_admin';
         const appliesTo = typed['applies_to'] as 'self' | 'subtree';
         return {
-          id: newid(),
+          id: randomUUID(),
           workspace,
           entity_id: id,
           principal_type: principalType,
@@ -670,7 +670,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         }
         const timestamp = new Date();
         const row = await db.catalog.createEntity({
-          id: newid(),
+          id: randomUUID(),
           workspace,
           slug,
           namespace,
@@ -838,7 +838,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         const baseSlug = slugify(baseName);
         const timestamp = new Date();
         const row = await db.catalog.createEntity({
-          id: newid(),
+          id: randomUUID(),
           workspace,
           slug: baseSlug,
           namespace: source.namespace,
