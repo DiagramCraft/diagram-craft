@@ -8,7 +8,7 @@ export type ModeSwitcherMode<T extends string> = {
 };
 
 export type ModeSwitcherProps<T extends string> = {
-  modes: ModeSwitcherMode<T>[];
+  modes: readonly ModeSwitcherMode<T>[];
   value: T;
   onChange: (value: T) => void;
 };
