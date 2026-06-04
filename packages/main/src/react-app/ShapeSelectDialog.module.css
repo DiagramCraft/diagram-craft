@@ -1,57 +1,167 @@
-.icStencilView {
-  background: transparent;
+
+.icObjectGrid {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--base-fg-more-dim) var(--panel-bg);
+
+  overflow-y: scroll;
+  overflow-x: hidden;
+
+  width: calc(100% + 12px);
+
+  margin-top: 0.5rem;
+  height: 15rem;
+
+
+  .eGrid {
+    --icon-grid-columns: 11;
+    --icon-grid-gap: 4px;
+
+    margin-top: 0;
+
+    display: grid;
+    grid-template-columns: repeat(var(--icon-grid-columns), minmax(0, 1fr));
+    gap: var(--icon-grid-gap);
+    width: calc(100% - 16px);
+
+    overflow: visible;
+
+    .eStencilView {
+      background: transparent;
+
+      padding: 2px;
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid transparent;
+
+      &:hover {
+        background: var(--base-bg);
+        border: 1px solid var(--cmp-border);
+        border-radius: 4px;
+      }
+
+      &[data-selected='true'] {
+        background: color-mix(in oklab, var(--accent-chroma) 22%, var(--cmp-bg));
+        border: 1px solid color-mix(in oklch, var(--accent-chroma) 50%, var(--cmp-border));
+        border-radius: 4px;
+      }
+
+      & svg {
+        margin: 0.2rem;
+        display: block;
+        cursor: pointer;
+        background-color: transparent;
+
+        *:not(:global(.uScale), :global(.uScale) *) {
+          vector-effect: non-scaling-stroke;
+        }
+      }
+    }
+  }
+}
+
+:global(.light-theme) .eStencilView {
+  --canvas-fg: var(--theme-light-sidebar-canvas-fg, var(--gray-11));
+  --canvas-bg: var(--theme-light-sidebar-canvas-bg, var(--gray-4));
+  --canvas-bg2: var(--theme-light-sidebar-canvas-bg2, var(--gray-3));
+}
+
+:global(.dark-theme) .eStencilView {
+  --canvas-fg: var(--theme-dark-sidebar-canvas-fg, var(--gray-11));
+  --canvas-bg: var(--theme-dark-sidebar-canvas-bg, var(--gray-2));
+  --canvas-bg2: var(--theme-dark-sidebar-canvas-bg2, var(--gray-3));
 }
 
 .icIconsTabs {
+  --icon-grid-columns: 11;
+  --icon-grid-gap: 4px;
+
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   height: 100%;
 
   .eIconGrid {
-    min-height: 12rem;
-
     .eIconGridInner {
-      max-width: 31rem;
-      margin-top: 1rem;
-      max-height: 14rem;
-      overflow: auto;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: repeat(var(--icon-grid-columns), minmax(0, 1fr));
+      gap: var(--icon-grid-gap);
 
       .eItem {
+        border: 1px solid transparent;
         cursor: pointer;
+        background: transparent;
+        padding: 6px;
+        width: 100%;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+
+        &:hover {
+          background: var(--base-bg);
+          border: 1px solid var(--cmp-border);
+          border-radius: 4px;
+        }
+
+        &[data-selected='true'] {
+          background: color-mix(in oklab, var(--accent-chroma) 22%, var(--cmp-bg));
+          border: 1px solid color-mix(in oklch, var(--accent-chroma) 50%, var(--cmp-border));
+          border-radius: 4px;
+        }
+      }
+
+      .eItemImage {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
       }
     }
   }
 
   .ePagination {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.25rem;
     align-items: center;
     margin-top: 1rem;
+    justify-content: center;
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0;
+    right: 0;
 
     .eLink {
-      color: var(--cmp-fg);
+      color: var(--cmp-fg-dimmed);
       font-weight: normal;
+      aspect-ratio: 1;
+      width: 1.3rem;
+      text-align: center;
+      display: flex;
+      align-content: center;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid transparent;
+      border-radius: 4px;
+
+      &:hover {
+        background: var(--base-bg);
+      }
 
       &[data-active='true'] {
-        font-weight: bold;
+        background-color: color-mix(in oklab, var(--accent-chroma) 22%, var(--cmp-bg));
+        border: 1px solid color-mix(in oklch, var(--accent-chroma) 50%, var(--cmp-border));
+        color: var(--cmp-fg);
       }
     }
   }
 
 }
 
-.icRecentStencils {
-  max-width: 30rem;
-}
-
-.icSearchResults {
-  max-width: 31rem;
-  margin-top: 1rem;
-  max-height: 14rem;
-  overflow: auto;
-}
 
 .icSingleTabContent {
   height: 16rem;

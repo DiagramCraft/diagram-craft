@@ -4,6 +4,7 @@ import styles from './ModelCenterDialog.module.css';
 import { TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { TopBar } from '@diagram-craft/app-components/TopBar';
 import { DataTab } from './DataTab';
 import { SchemasTab } from './SchemasTab';
 import { ModelProvidersTab } from './ModelProvidersTab';
@@ -56,8 +57,10 @@ export const ModelCenterDialog = (props: Props) => {
           <BaseUIAlertDialog.Backdrop className={styles.eOverlay} />
           <BaseUIAlertDialog.Viewport className={styles.eContent}>
             <BaseUIAlertDialog.Popup initialFocus={false}>
-              <BaseUIAlertDialog.Title className={styles.eTitle}>
-                Model Center
+              <TopBar className={styles.eTopBar} leftSlot={<div className={styles.eSpacer} />}>
+                <BaseUIAlertDialog.Title className={styles.eTitle}>
+                  Model Center
+                </BaseUIAlertDialog.Title>
                 <div className={styles.eActions}>
                   <BaseUIAlertDialog.Close
                     render={
@@ -67,7 +70,7 @@ export const ModelCenterDialog = (props: Props) => {
                     }
                   />
                 </div>
-              </BaseUIAlertDialog.Title>
+              </TopBar>
               <div className={styles.eMainContent}>
                 <Tabs.Root
                   value={activeTab}

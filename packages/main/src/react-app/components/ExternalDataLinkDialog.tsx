@@ -124,6 +124,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
                 <TextInput
                   onChange={v => setSearch(v ?? '')}
                   value={search}
+                  variant={'search'}
                   onKeyDown={ev => {
                     if (ev.key === 'Enter') {
                       setActiveQuery(search);
@@ -211,6 +212,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
             <TextInput
               onChange={v => setSearch(v ?? '')}
               value={search}
+              variant={'search'}
               onKeyDown={ev => {
                 if (ev.key === 'Enter') {
                   setActiveQuery(search);

@@ -489,6 +489,7 @@ const DataProviderQueryView = (props: {
         <TextInput
           ref={ref}
           value={search}
+          variant={'search'}
           style={{ flexGrow: 1 }}
           onChange={v => setSearch(v ?? '')}
           onKeyDown={ev => {

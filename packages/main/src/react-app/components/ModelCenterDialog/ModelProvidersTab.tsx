@@ -16,10 +16,12 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbPencil, TbPlus, TbTrash, TbRefresh } from 'react-icons/tb';
+import { TbDots, TbPlus, TbRefresh, TbTrash } from 'react-icons/tb';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './ModelProvidersTab.module.css';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 type ProviderSettingsProps<T extends DataProvider> = {
   provider: T;
@@ -232,88 +234,73 @@ export const ModelProvidersTab = () => {
 
   return (
     <div className={styles.icModelProvidersTab}>
-      <div className={styles.eFieldStack}>
-        <div className={styles.eTabHeader}>
-          <p className={styles.eTitle}>Model Providers</p>
-          <div className={styles.eActions}>
-            <Button
-              variant="secondary"
-              onClick={handleRefreshAll}
-              style={{ display: 'flex', gap: '0.25rem' }}
-            >
-              <TbRefresh /> Refresh All
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={handleAddProvider}
-              style={{ display: 'flex', gap: '0.25rem' }}
-            >
-              <TbPlus /> Add Provider
-            </Button>
-          </div>
+      <div className={styles.eHeader}>
+        <p className={styles.eTitle}>Model Providers</p>
+        <div className={styles.eActions}>
+          <Button onClick={handleRefreshAll}>
+            <TbRefresh /> Refresh All
+          </Button>
+          <Button variant="primary" size={'md'} onClick={handleAddProvider}>
+            <TbPlus /> Add Provider
+          </Button>
         </div>
+      </div>
 
-        {errorMessage && (
-          <div className={styles.icMessage} data-type="error">
-            {errorMessage}
-          </div>
-        )}
-        {successMessage && (
-          <div className={styles.icMessage} data-type="success">
-            {successMessage}
-          </div>
-        )}
+      {errorMessage && (
+        <div className={styles.icMessage} data-type="error">
+          {errorMessage}
+        </div>
+      )}
+      {successMessage && (
+        <div className={styles.icMessage} data-type="success">
+          {successMessage}
+        </div>
+      )}
 
-        {providers.length === 0 ? (
-          <div className={styles.eEmptyState}>
-            <p>No providers configured</p>
-            <Button variant="primary" onClick={handleAddProvider}>
-              <TbPlus /> Add Your First Provider
-            </Button>
-          </div>
-        ) : (
+      {providers.length === 0 ? (
+        <div className={styles.eEmptyState}>
+          <p>No providers configured</p>
+          <Button variant="primary" onClick={handleAddProvider}>
+            <TbPlus /> Add Your First Provider
+          </Button>
+        </div>
+      ) : (
+        <div className={styles.eTableWrap}>
           <table className={styles.eTable}>
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Type</th>
                 <th>Configuration</th>
-                <th>Actions</th>
+                <th style={{ width: 28 }} />
               </tr>
             </thead>
             <tbody>
               {providers.map(providerWithId => (
-                <tr key={providerWithId.id}>
+                <tr
+                  key={providerWithId.id}
+                  onClick={!providerWithId.isFirst ? () => handleEditProvider(providerWithId) : undefined}
+                  style={!providerWithId.isFirst ? { cursor: 'pointer' } : undefined}
+                >
                   <td>{providerWithId.id}</td>
                   <td>{getProviderTypeName(providerWithId.provider.providerId)}</td>
                   <td>{getProviderConfigDisplay(providerWithId.provider)}</td>
-                  <td>
-                    <div className={styles.eActions}>
-                      <Button
-                        variant="icon-only"
-                        onClick={() => handleEditProvider(providerWithId)}
-                        title="Edit provider"
-                        disabled={providerWithId.isFirst}
-                      >
-                        <TbPencil />
-                      </Button>
-                      {!providerWithId.isFirst && (
-                        <Button
-                          variant="icon-only"
-                          onClick={() => handleDeleteProvider(providerWithId)}
-                          title="Delete provider"
-                        >
-                          <TbTrash />
-                        </Button>
-                      )}
-                    </div>
+                  <td onClick={ev => ev.stopPropagation()}>
+                    {!providerWithId.isFirst && (
+                      <MenuButton.Root>
+                        <MenuButton.Trigger element={<button type="button" className={styles.eDotsBtn}><TbDots size={14} /></button>} />
+                        <MenuButton.Menu>
+                          <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => handleDeleteProvider(providerWithId)}>Delete</Menu.Item>
+                        </MenuButton.Menu>
+                      </MenuButton.Root>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
 
       {editingProvider.open && (
         <ProviderEditDialog

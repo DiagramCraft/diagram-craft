@@ -68,6 +68,8 @@
 
   .eAddBtn {
     background-color: transparent;
+    border-top: 0;
+    border-bottom: 0;
     border-right: 1px solid var(--cmp-border);
     border-left: 1px solid var(--cmp-border);
     color: var(--panel-fg);

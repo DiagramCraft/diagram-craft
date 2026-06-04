@@ -36,6 +36,7 @@ export const SearchPanel = ({
           <TextInput
             ref={ref}
             value={searchText}
+            variant={'search'}
             onChange={value => onSearchTextChange(value ?? '')}
             placeholder="Search..."
             style={{ flexGrow: 1 }}

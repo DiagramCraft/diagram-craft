@@ -1,6 +1,7 @@
 /**
  *  TextInput - .cTextInput
  *  | Label - .eLabel
+ *  | SearchIcon - .eSearchIcon
  *  | Input - .eInput
  *  | Clear - .eClear
  */
@@ -16,6 +17,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: 0.25rem;
 
   .eLabel {
     font-size: 11px;
@@ -35,6 +37,7 @@
     color: var(--panel-fg);
     border: none;
     background: none;
+    font-family: inherit;
     font-size: 11px;
     width: 100%;
 
@@ -46,6 +49,11 @@
     &:disabled {
       color: var(--cmp-fg-disabled);
     }
+  }
+
+  .eSearchIcon {
+    color: var(--base-fg-more-dim);
+    flex-shrink: 0;
   }
 
   .eClear {
@@ -67,5 +75,19 @@
 
   &:has(.eInput:disabled) {
     border-color: transparent;
+  }
+
+  &[data-variant='search'] {
+    height: 26px;
+    padding: 0 10px;
+    border-color: var(--panel-border);
+
+    .eInput {
+      font-size: 12px;
+
+      &::placeholder {
+        color: var(--cmp-fg-disabled);
+      }
+    }
   }
 }

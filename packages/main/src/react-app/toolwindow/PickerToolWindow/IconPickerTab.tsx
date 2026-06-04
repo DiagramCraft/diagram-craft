@@ -279,6 +279,7 @@ export const IconPickerTab = () => {
           <TextInput
             ref={ref}
             value={searchQuery}
+            variant={'search'}
             style={{ flexGrow: 1 }}
             onKeyDown={e => {
               if (e.key === 'Enter') {
