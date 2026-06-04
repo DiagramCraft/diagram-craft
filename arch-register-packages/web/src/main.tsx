@@ -20,6 +20,7 @@ import { queryClient } from './lib/queryClient';
 import { router } from './router';
 import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
 import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
+import { GlobalErrorBoundary } from './components/GlobalErrorBoundary';
 
 const InnerApp = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -65,15 +66,17 @@ const InnerApp = () => {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <PermissionProvider>
-        <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
-          <PortalContextProvider>
-            <InnerApp />
-          </PortalContextProvider>
-        </DialogContextProvider>
-      </PermissionProvider>
-    </AuthProvider>
+    <GlobalErrorBoundary>
+      <AuthProvider>
+        <PermissionProvider>
+          <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+            <PortalContextProvider>
+              <InnerApp />
+            </PortalContextProvider>
+          </DialogContextProvider>
+        </PermissionProvider>
+      </AuthProvider>
+    </GlobalErrorBoundary>
     <ReactQueryDevtools initialIsOpen={false} />
   </QueryClientProvider>
 );

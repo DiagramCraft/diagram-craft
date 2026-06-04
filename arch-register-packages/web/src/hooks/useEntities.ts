@@ -1,5 +1,6 @@
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+  apiFetch,
   fetchEntities,
   fetchEntity,
   fetchEntityFacets,
@@ -111,13 +112,10 @@ export const useUpdateEntity = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: ({ entityId, data }: { entityId: string; data: Record<string, unknown> }) =>
-      fetch(`/api/${workspaceId}/data/${entityId}`, {
+      apiFetch(`/api/${workspaceId}/data/${entityId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      }).then(res => {
-        if (!res.ok) throw new Error('Failed to update entity');
-        return res.json();
       }),
     onSuccess: (_, variables) => {
       // Invalidate the specific entity and relations

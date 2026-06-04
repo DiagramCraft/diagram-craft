@@ -33,6 +33,7 @@ import type {
   SerializedLayer,
   SerializedStyles,
 } from '@diagram-craft/model/serialization/serializedTypes';
+import { fetchWithAuthResponse } from './auth/authClient';
 
 // Re-export commonly used types for convenience
 export type {
@@ -126,30 +127,45 @@ export const SCHEMA_ICONS = [
 
 export type SchemaIconId = (typeof SCHEMA_ICONS)[number];
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
-
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
   }
 }
 
-export const apiFetch = async <T>(path: string, init?: RequestInit): Promise<T> => {
+export const apiFetchResponse = async (
+  path: string,
+  init?: RequestInit,
+  options?: { requiresAuth?: boolean; retryOnUnauthorized?: boolean }
+) => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...init?.headers,
   };
 
-  const res = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers,
-    credentials: 'include',
-  });
+  const res = await fetchWithAuthResponse(
+    path,
+    {
+      ...init,
+      headers,
+    },
+    options
+  );
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.message ?? res.statusText);
   }
+
+  return res;
+};
+
+export const apiFetch = async <T>(
+  path: string,
+  init?: RequestInit,
+  options?: { requiresAuth?: boolean; retryOnUnauthorized?: boolean }
+): Promise<T> => {
+  const res = await apiFetchResponse(path, init, options);
   return res.json();
 };
 
@@ -239,18 +255,14 @@ export const fetchEntityTree = (workspace: string, options: FetchEntitiesOptions
   );
 
 export const exportEntitiesToCSV = (workspace: string, options: FetchEntitiesOptions = {}): Promise<Blob> => {
-  const url = `${BASE}/api/${workspace}/data/export${buildQuery({
-    _schemaId: options.schemaId ?? null,
-    owner: options.owner ?? null,
-    lifecycle: options.lifecycle ?? null,
-    q: options.q ?? null,
-  })}`;
-  
-  return fetch(url)
-    .then(res => {
-      if (!res.ok) throw new ApiError(res.status, res.statusText);
-      return res.blob();
-    });
+  return apiFetchResponse(
+    `/api/${workspace}/data/export${buildQuery({
+      _schemaId: options.schemaId ?? null,
+      owner: options.owner ?? null,
+      lifecycle: options.lifecycle ?? null,
+      q: options.q ?? null,
+    })}`
+  ).then(res => res.blob());
 };
 
 export const fetchEntity = (workspace: string, id: string) =>
