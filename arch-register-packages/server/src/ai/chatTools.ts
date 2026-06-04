@@ -1,5 +1,6 @@
 import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import { toolDefinition } from '@tanstack/ai';
+import { newid } from '@diagram-craft/utils/id';
 import type { DatabaseAdapter } from '../db/database.js';
 import { decodeRefs, type Entity, type SchemaField } from '../types.js';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization.js';
@@ -482,7 +483,7 @@ export const createAiChatTools = (
 
     const timestamp = new Date();
     const entity = await db.catalog.createEntity({
-      id: crypto.randomUUID(),
+      id: newid(),
       workspace: workspaceId,
       slug:
         typeof args.slug === 'string' && args.slug.trim().length > 0

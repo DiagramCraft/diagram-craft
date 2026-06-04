@@ -1,4 +1,5 @@
 import { H3, defineHandler } from 'h3';
+import { newid } from '@diagram-craft/utils/id';
 import type { DatabaseAdapter } from '../db/database.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { handleDbError } from '../utils/http.js';
@@ -64,7 +65,7 @@ export function createEnumRoutes(db: DatabaseAdapter) {
       try {
         const timestamp = new Date();
         const row = await db.catalog.createEnum({
-          id: crypto.randomUUID(),
+          id: newid(),
           workspace,
           name: name as string,
           options: Array.isArray(options) ? (options as Array<{ value: string; label: string }>) : [],

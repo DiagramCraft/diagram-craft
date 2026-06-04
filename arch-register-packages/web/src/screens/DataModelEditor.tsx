@@ -14,6 +14,7 @@ import { ICON_MAP } from '../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../hooks/useSchemas';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { newid } from '@diagram-craft/utils/id';
 import { EnumEditor } from './EnumEditor';
 
 export const DataModelEditor = () => {
@@ -109,7 +110,7 @@ export const DataModelEditor = () => {
 
   const addField = () => {
     const newField: SchemaField = {
-      id: crypto.randomUUID().slice(0, 8),
+      id: newid(),
       name: 'new_field',
       type: 'text',
     };

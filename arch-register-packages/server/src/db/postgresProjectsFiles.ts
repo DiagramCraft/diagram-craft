@@ -1,3 +1,4 @@
+import { newid } from '@diagram-craft/utils/id';
 import type {
   CreateProjectInput,
   ProjectsFilesDatabase,
@@ -143,7 +144,7 @@ export class PostgresProjectsFilesDatabase
     try {
       const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
         INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, is_template, is_workspace_template, created_at, updated_at)
-        VALUES (${crypto.randomUUID()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+        VALUES (${newid()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path)
         DO UPDATE SET
           name = EXCLUDED.name,
@@ -163,7 +164,7 @@ export class PostgresProjectsFilesDatabase
     try {
       const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
         INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, is_template, is_workspace_template, created_at, updated_at)
-        VALUES (${crypto.randomUUID()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+        VALUES (${newid()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path) DO NOTHING
         RETURNING *
       `;
