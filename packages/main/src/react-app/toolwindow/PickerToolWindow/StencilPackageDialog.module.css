@@ -30,7 +30,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    width: 100%;
+    width: calc(100% - 6px);
     padding: 7px 8px;
     border-radius: 4px;
     border: 1px solid transparent;
@@ -43,36 +43,16 @@
       background: var(--cmp-bg);
     }
 
-    &[aria-checked='true'] {
+    input[type='checkbox'] {
+      accent-color: var(--cmp-border);
+    }
+
+    &:has(input:checked) {
       background: color-mix(in oklab, var(--accent-chroma) 7%, transparent);
 
       &:hover {
         background: color-mix(in oklab, var(--accent-chroma) 12%, transparent);
       }
-    }
-
-    .eCheckmark {
-      width: 11px;
-      height: 11px;
-      flex-shrink: 0;
-      border-radius: 3px;
-      border: 1.5px solid var(--cmp-border);
-      background: var(--cmp-bg);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: transparent;
-      transition: background 80ms, border-color 80ms, color 80ms;
-    }
-
-    &:hover .eCheckmark {
-      border-color: var(--cmp-fg-dimmed);
-    }
-
-    &[aria-checked='true'] .eCheckmark {
-      border-color: var(--accent-chroma);
-      background: var(--accent-chroma);
-      color: white;
     }
 
     .eIcon {
@@ -88,7 +68,7 @@
       color: var(--cmp-fg-dimmed);
     }
 
-    &[aria-checked='true'] .eIcon {
+    &:has(input:checked) .eIcon {
       border-color: color-mix(in oklch, var(--accent-chroma) 35%, var(--cmp-border));
       color: var(--accent-chroma);
     }
@@ -107,7 +87,7 @@
       white-space: nowrap;
     }
 
-    &[aria-checked='true'] .eName {
+    &:has(input:checked) .eName {
       color: var(--base-fg);
     }
 

@@ -20,8 +20,8 @@
   }
 
   .eUpBtn {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
@@ -51,7 +51,7 @@
     gap: 1px;
     flex: 1;
     min-width: 0;
-    height: 30px;
+    height: 24px;
     padding: 0 6px;
     background: var(--cmp-bg);
     border: 1px solid var(--cmp-border);

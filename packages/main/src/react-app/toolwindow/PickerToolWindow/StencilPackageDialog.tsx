@@ -9,7 +9,6 @@ import {
   TbBinaryTree,
   TbBox,
   TbBrandChrome,
-  TbCheck,
   TbCircuitResistor,
   TbCloud,
   TbDatabase,
@@ -217,15 +216,8 @@ type PackageRowProps = {
 
 const PackageRow = ({ pkg, isOn, IconComp, onToggle }: PackageRowProps) => {
   return (
-    <button
-      role="checkbox"
-      aria-checked={isOn}
-      onClick={onToggle}
-      className={styles.eRow}
-    >
-      <span className={styles.eCheckmark}>
-        <TbCheck size={8} />
-      </span>
+    <label className={styles.eRow}>
+      <input type="checkbox" checked={isOn} onChange={onToggle} />
       <span className={styles.eIcon}>
         <IconComp size={16} />
       </span>
@@ -235,6 +227,6 @@ const PackageRow = ({ pkg, isOn, IconComp, onToggle }: PackageRowProps) => {
           <span className={styles.eDesc}>{pkg.description}</span>
         )}
       </span>
-    </button>
+    </label>
   );
 };
