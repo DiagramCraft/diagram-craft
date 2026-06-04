@@ -1,4 +1,4 @@
-import { SCHEMA_COLORS } from '../api';
+import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import styles from './ColorPicker.module.css';
 
 export const ColorPicker = ({

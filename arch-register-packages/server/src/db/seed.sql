@@ -36,7 +36,7 @@ INSERT INTO entity_schema (id, workspace, name, fields, color, icon) VALUES
   'default',
   'Domain',
   '[]',
-  'var(--tag-system)', 'globe'
+  'oklch(0.66 0.14 80)', 'globe'
 ),
 (
   '00000000-0000-0000-0000-000000000002',
@@ -46,7 +46,7 @@ INSERT INTO entity_schema (id, workspace, name, fields, color, icon) VALUES
     {"id": "domain",       "name": "Domain",        "type": "containment",
      "schemaId": "00000000-0000-0000-0000-000000000001", "minCount": 1, "maxCount": 1}
   ]',
-  'var(--tag-database)', 'layers'
+  'oklch(0.62 0.14 295)', 'layers'
 ),
 (
   '00000000-0000-0000-0000-000000000003',
@@ -63,7 +63,7 @@ INSERT INTO entity_schema (id, workspace, name, fields, color, icon) VALUES
     {"id": "depends_on",   "name": "Depends On",   "type": "reference",
      "schemaId": "00000000-0000-0000-0000-000000000003", "minCount": 0, "maxCount": -1}
   ]',
-  'var(--tag-component)', 'box'
+  'oklch(0.62 0.13 145)', 'box'
 ),
 (
   '00000000-0000-0000-0000-000000000004',
@@ -80,7 +80,7 @@ INSERT INTO entity_schema (id, workspace, name, fields, color, icon) VALUES
     {"id": "system",       "name": "System",        "type": "containment",
      "schemaId": "00000000-0000-0000-0000-000000000002", "minCount": 1, "maxCount": 1}
   ]',
-  'var(--tag-api)', 'api'
+  'oklch(0.66 0.16 258)', 'api'
 ),
 (
   '00000000-0000-0000-0000-000000000005',
@@ -91,7 +91,7 @@ INSERT INTO entity_schema (id, workspace, name, fields, color, icon) VALUES
     {"id": "system",       "name": "System",        "type": "containment",
      "schemaId": "00000000-0000-0000-0000-000000000002", "minCount": 0, "maxCount": 1}
   ]',
-  'var(--tag-service)', 'database'
+  'oklch(0.66 0.14 35)', 'database'
 );
 
 

@@ -1,0 +1,53 @@
+/**
+ * FormSection - .cFormSection
+ * | Head - .eHead
+ * |   | Step - .eStep
+ * |   | Title - .eTitle
+ * | Body - .eBody
+ */
+
+.cFormSection {
+  padding: 11px 0;
+
+  .eHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 9px;
+
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--panel-border);
+      margin-left: 4px;
+    }
+
+    .eStep {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--base-bg);
+      color: var(--base-fg-more-dim);
+      border: 1px solid var(--cmp-border);
+      border-radius: var(--r-sm);
+      font-size: 10.5px;
+      flex-shrink: 0;
+    }
+
+    .eTitle {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--base-fg);
+      letter-spacing: 0.1px;
+    }
+  }
+
+  .eBody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}

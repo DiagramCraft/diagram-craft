@@ -221,6 +221,12 @@
   color: var(--base-fg);
   border-radius: 6px;
   padding: 8px 10px;
+  outline: none;
+}
+
+.dialogInput:focus,
+.dialogTextarea:focus {
+  box-shadow: var(--cmp-border-shadow-focus);
 }
 
 .dialogTextarea {
@@ -286,30 +292,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   align-items: start;
-}
-
-.capabilityGroup {
-  background: var(--base-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: 8px;
-  padding: 10px 10px 6px;
-  display: flex;
-  flex-direction: column;
-}
-
-.capabilityGroupHead {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 0 2px 7px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid var(--cmp-border);
-}
-
-.capabilityGroupTitle {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--base-fg);
 }
 
 .capGroupBadge {
@@ -379,12 +361,33 @@
 }
 
 .capabilityCheckbox {
-  accent-color: var(--accent-fg);
+  appearance: none;
   width: 14px;
   height: 14px;
+  border: 1px solid var(--base-fg-more-dim);
+  border-radius: 3px;
+  background: transparent;
   margin: 0;
   flex-shrink: 0;
   cursor: pointer;
+  position: relative;
+}
+
+.capabilityCheckbox:checked {
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
+}
+
+.capabilityCheckbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
 }
 
 .capabilityCheckbox:disabled {

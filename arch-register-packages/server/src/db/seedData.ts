@@ -11,6 +11,18 @@ import type {
   WorkspaceMember,
   WorkspaceOwner,
 } from '../types.js';
+import {
+  AR_COLOR_GREEN,
+  AR_COLOR_BLUE,
+  AR_COLOR_ORANGE,
+  AR_COLOR_PURPLE,
+  AR_COLOR_YELLOW,
+  AR_COLOR_RED,
+  AR_COLOR_PINK,
+  AR_COLOR_CYAN,
+  AR_COLOR_TEAL,
+  AR_COLOR_AMBER,
+} from '@arch-register/api-types/colors';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -28,10 +40,10 @@ export const seedWorkspaces: Workspace[] = [
 ];
 
 export const seedLifecycleStates: WorkspaceLifecycleState[] = [
-  { id: 'proposed', workspace: 'default', label: 'Proposed', color: 'var(--accent)', sort_order: 0, created_at: now },
-  { id: 'experimental', workspace: 'default', label: 'Experimental', color: 'var(--accent)', sort_order: 1, created_at: now },
-  { id: 'production', workspace: 'default', label: 'Production', color: 'var(--ok)', sort_order: 2, created_at: now },
-  { id: 'deprecated', workspace: 'default', label: 'Deprecated', color: 'var(--warn)', sort_order: 3, created_at: now },
+  { id: 'proposed', workspace: 'default', label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: now },
+  { id: 'experimental', workspace: 'default', label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: now },
+  { id: 'production', workspace: 'default', label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: now },
+  { id: 'deprecated', workspace: 'default', label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: now },
 ];
 
 export const seedOwners: WorkspaceOwner[] = [
@@ -39,7 +51,7 @@ export const seedOwners: WorkspaceOwner[] = [
     id: 'Platform Engineering', 
     workspace: 'default', 
     sort_order: 0, 
-    color: 'var(--tag-component)',
+    color: AR_COLOR_GREEN,
     description: 'Responsible for platform infrastructure and core services',
     created_at: now 
   },
@@ -47,7 +59,7 @@ export const seedOwners: WorkspaceOwner[] = [
     id: 'Design Systems', 
     workspace: 'default', 
     sort_order: 1, 
-    color: 'var(--tag-api)',
+    color: AR_COLOR_BLUE,
     description: 'Maintains design system and UI component libraries',
     created_at: now 
   },
@@ -55,7 +67,7 @@ export const seedOwners: WorkspaceOwner[] = [
     id: 'Security & Compliance', 
     workspace: 'default', 
     sort_order: 2, 
-    color: 'var(--danger)',
+    color: AR_COLOR_RED,
     description: 'Ensures security standards and regulatory compliance',
     created_at: now 
   },
@@ -63,23 +75,23 @@ export const seedOwners: WorkspaceOwner[] = [
     id: 'Data Platform', 
     workspace: 'default', 
     sort_order: 3, 
-    color: 'var(--tag-database)',
+    color: AR_COLOR_PURPLE,
     description: 'Manages data infrastructure and analytics pipelines',
     created_at: now 
   },
 ];
 
 export const seedLocalUsers = [
-  { id: 'globaladmin', email: 'emma.lindqvist@example.com', display_name: 'Emma Lindqvist', color: 'var(--tag-component)' },
-  { id: 'workspaceadmin', email: 'james.chen@example.com', display_name: 'James Chen', color: 'var(--tag-api)' },
-  { id: 'workspaceowner', email: 'sofia.martinez@example.com', display_name: 'Sofia Martinez', color: 'var(--tag-service)' },
-  { id: 'platformteamadmin', email: 'daniel.okonkwo@example.com', display_name: 'Daniel Okonkwo', color: 'var(--tag-database)' },
-  { id: 'platformteameditor', email: 'anna.kowalski@example.com', display_name: 'Anna Kowalski', color: 'var(--tag-system)' },
-  { id: 'designteamadmin', email: 'marcus.berg@example.com', display_name: 'Marcus Berg', color: 'var(--danger)' },
-  { id: 'securityteamadmin', email: 'lena.hoffmann@example.com', display_name: 'Lena Hoffmann', color: 'oklch(0.65 0.15 340)' },
-  { id: 'workspaceeditor', email: 'raj.patel@example.com', display_name: 'Raj Patel', color: 'oklch(0.65 0.12 170)' },
-  { id: 'workspacereviewer', email: 'clara.dubois@example.com', display_name: 'Clara Dubois', color: 'oklch(0.65 0.14 200)' },
-  { id: 'workspaceviewer', email: 'oscar.nilsson@example.com', display_name: 'Oscar Nilsson', color: 'oklch(0.70 0.14 55)' },
+  { id: 'globaladmin', email: 'emma.lindqvist@example.com', display_name: 'Emma Lindqvist', color: AR_COLOR_GREEN },
+  { id: 'workspaceadmin', email: 'james.chen@example.com', display_name: 'James Chen', color: AR_COLOR_BLUE },
+  { id: 'workspaceowner', email: 'sofia.martinez@example.com', display_name: 'Sofia Martinez', color: AR_COLOR_ORANGE },
+  { id: 'platformteamadmin', email: 'daniel.okonkwo@example.com', display_name: 'Daniel Okonkwo', color: AR_COLOR_PURPLE },
+  { id: 'platformteameditor', email: 'anna.kowalski@example.com', display_name: 'Anna Kowalski', color: AR_COLOR_YELLOW },
+  { id: 'designteamadmin', email: 'marcus.berg@example.com', display_name: 'Marcus Berg', color: AR_COLOR_RED },
+  { id: 'securityteamadmin', email: 'lena.hoffmann@example.com', display_name: 'Lena Hoffmann', color: AR_COLOR_PINK },
+  { id: 'workspaceeditor', email: 'raj.patel@example.com', display_name: 'Raj Patel', color: AR_COLOR_CYAN },
+  { id: 'workspacereviewer', email: 'clara.dubois@example.com', display_name: 'Clara Dubois', color: AR_COLOR_TEAL },
+  { id: 'workspaceviewer', email: 'oscar.nilsson@example.com', display_name: 'Oscar Nilsson', color: AR_COLOR_AMBER },
 ] as const;
 
 export const seedTeamAssignments: TeamMembership[] = [
@@ -148,7 +160,7 @@ export const seedSchemas: EntitySchema[] = [
     name: 'Domain',
     description: 'A high-level grouping that owns one or more Systems.',
     fields: [],
-    color: 'var(--tag-system)',
+    color: AR_COLOR_YELLOW,
     icon: 'globe',
     default_owner: null,
     created_at: now,
@@ -169,7 +181,7 @@ export const seedSchemas: EntitySchema[] = [
         maxCount: 1,
       },
     ],
-    color: 'var(--tag-database)',
+    color: AR_COLOR_PURPLE,
     icon: 'layers',
     default_owner: null,
     created_at: now,
@@ -215,7 +227,7 @@ export const seedSchemas: EntitySchema[] = [
         maxCount: -1,
       },
     ],
-    color: 'var(--tag-component)',
+    color: AR_COLOR_GREEN,
     icon: 'box',
     default_owner: null,
     created_at: now,
@@ -242,7 +254,7 @@ export const seedSchemas: EntitySchema[] = [
         maxCount: 1,
       },
     ],
-    color: 'var(--tag-api)',
+    color: AR_COLOR_BLUE,
     icon: 'api',
     default_owner: null,
     created_at: now,
@@ -264,7 +276,7 @@ export const seedSchemas: EntitySchema[] = [
         maxCount: 1,
       },
     ],
-    color: 'var(--tag-service)',
+    color: AR_COLOR_ORANGE,
     icon: 'database',
     default_owner: null,
     created_at: now,
@@ -453,7 +465,7 @@ export const seedProjects: Project[] = [
     description: 'Redesign of the customer portal frontend and API layer.',
     owner: 'Design Systems',
     status: 'active',
-    color: 'var(--tag-api)',
+    color: AR_COLOR_BLUE,
     created_at: now,
     updated_at: now,
   },
@@ -464,7 +476,7 @@ export const seedProjects: Project[] = [
     description: 'Migration from legacy auth to the new identity platform.',
     owner: 'Security & Compliance',
     status: 'pinned',
-    color: 'var(--danger)',
+    color: AR_COLOR_RED,
     created_at: now,
     updated_at: now,
   },

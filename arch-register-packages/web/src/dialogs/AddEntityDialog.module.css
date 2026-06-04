@@ -34,20 +34,6 @@
   cursor: pointer;
 }
 
-/* Section dividers */
-.sectionLabel {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--cmp-fg-disabled);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
 .contentGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -56,43 +42,10 @@
   min-width: 0;
 }
 
-.propertiesSection {
-  background: var(--base-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
 .propertiesList {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-/* Metadata section - dimmer background */
-.metaSection {
-  background: var(--base-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-.metaSectionLabel {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--cmp-fg-disabled);
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .row {

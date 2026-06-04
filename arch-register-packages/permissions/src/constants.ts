@@ -10,6 +10,13 @@ import type {
   WorkspaceRole,
   WorkspaceRoleDefinition
 } from './types.js';
+import {
+  AR_COLOR_GREEN,
+  AR_COLOR_BLUE,
+  AR_COLOR_RED,
+  AR_COLOR_YELLOW,
+  AR_COLOR_GREY,
+} from '@arch-register/api-types/colors';
 
 /**
  * Maps entity roles to the actions they can perform
@@ -77,13 +84,13 @@ export const GLOBAL_ROLES: Array<{
     id: 'global_admin',
     name: 'Global admin',
     description: 'Full platform access, including user administration and all global settings.',
-    tone: 'var(--danger)',
+    tone: AR_COLOR_RED,
   },
   {
     id: 'workspace_admin',
     name: 'Workspace admin',
     description: 'Can create workspaces and manage global workspace-role assignments.',
-    tone: 'var(--accent)',
+    tone: AR_COLOR_BLUE,
   },
 ];
 
@@ -125,7 +132,7 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     id: 'owner',
     name: 'Owner',
     description: 'Full access to everything, including billing and workspace deletion.',
-    tone: 'var(--tag-system)',
+    tone: AR_COLOR_YELLOW,
     builtin: true,
     capabilities: WORKSPACE_ROLE_CAPABILITIES['owner'],
   },
@@ -133,7 +140,7 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     id: 'admin',
     name: 'Admin',
     description: 'Manage members, teams, integrations and the data model.',
-    tone: 'var(--accent)',
+    tone: AR_COLOR_BLUE,
     builtin: true,
     capabilities: WORKSPACE_ROLE_CAPABILITIES['admin'],
   },
@@ -141,7 +148,7 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     id: 'editor',
     name: 'Editor',
     description: 'Create and edit diagrams, entities and projects.',
-    tone: 'var(--tag-component)',
+    tone: AR_COLOR_GREEN,
     builtin: true,
     capabilities: WORKSPACE_ROLE_CAPABILITIES['editor'],
   },
@@ -149,7 +156,7 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     id: 'reviewer',
     name: 'Reviewer',
     description: 'Comment on diagrams and propose changes — read-only otherwise.',
-    tone: 'var(--tag-api)',
+    tone: AR_COLOR_BLUE,
     builtin: true,
     capabilities: WORKSPACE_ROLE_CAPABILITIES['reviewer'],
   },
@@ -157,7 +164,7 @@ export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
     id: 'viewer',
     name: 'Viewer',
     description: 'Read-only access to all content in the workspace.',
-    tone: 'var(--fg-3)',
+    tone: AR_COLOR_GREY,
     builtin: true,
     capabilities: WORKSPACE_ROLE_CAPABILITIES['viewer'],
   },

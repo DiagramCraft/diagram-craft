@@ -1,4 +1,12 @@
 import { randomUUID } from 'node:crypto';
+import {
+  AR_COLOR_GREEN,
+  AR_COLOR_BLUE,
+  AR_COLOR_ORANGE,
+  AR_COLOR_PURPLE,
+  AR_COLOR_YELLOW,
+  AR_COLOR_RED,
+} from '@arch-register/api-types/colors';
 import type { CreateSchemaInput } from './db/database.js';
 import type { SchemaField } from './types.js';
 
@@ -33,7 +41,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'domain',
         name: 'Domain',
         description: 'A high-level grouping that owns one or more Systems.',
-        color: 'var(--tag-system)',
+        color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: [],
       },
@@ -41,7 +49,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'system',
         name: 'System',
         description: 'A collection of resources that exposes one or more APIs to users and other Systems.',
-        color: 'var(--tag-database)',
+        color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
           { id: 'domain', name: 'Domain', type: 'containment', symSchemaId: 'domain', minCount: 1, maxCount: 1 },
@@ -51,7 +59,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'api',
         name: 'API',
         description: 'A machine-readable interface definition (OpenAPI, gRPC, GraphQL, AsyncAPI).',
-        color: 'var(--tag-api)',
+        color: AR_COLOR_BLUE,
         icon: 'api',
         fields: [
           { id: 'api_type', name: 'Type', type: 'select', enumId: '' },
@@ -62,7 +70,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'component',
         name: 'Component',
         description: 'A deployable unit of code within a System (service, library, website, etc.).',
-        color: 'var(--tag-component)',
+        color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
@@ -76,7 +84,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'resource',
         name: 'Resource',
         description: 'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
-        color: 'var(--tag-service)',
+        color: AR_COLOR_ORANGE,
         icon: 'database',
         fields: [
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
@@ -94,7 +102,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'person',
         name: 'Person',
         description: 'A user or actor that interacts with one or more Software Systems.',
-        color: 'var(--tag-system)',
+        color: AR_COLOR_YELLOW,
         icon: 'user',
         fields: [
           { id: 'description', name: 'Description', type: 'longtext' },
@@ -104,7 +112,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'software_system',
         name: 'Software System',
         description: 'The highest level of abstraction — something that delivers value to users.',
-        color: 'var(--tag-database)',
+        color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
           { id: 'description', name: 'Description', type: 'longtext' },
@@ -114,7 +122,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'container',
         name: 'Container',
         description: 'A separately deployable/runnable unit within a Software System (app, service, DB, etc.).',
-        color: 'var(--tag-component)',
+        color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
@@ -126,7 +134,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'component',
         name: 'Component',
         description: 'A grouping of related functionality within a Container.',
-        color: 'var(--tag-api)',
+        color: AR_COLOR_BLUE,
         icon: 'settings',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
@@ -145,7 +153,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'organization',
         name: 'Organization',
         description: 'A business unit or department that owns one or more Business Services.',
-        color: 'var(--tag-system)',
+        color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: [],
       },
@@ -153,7 +161,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'business_service',
         name: 'Business Service',
         description: 'An IT-enabled capability delivered to the business by one or more Applications.',
-        color: 'var(--tag-database)',
+        color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
           { id: 'organization', name: 'Organization', type: 'containment', symSchemaId: 'organization', minCount: 0, maxCount: 1 },
@@ -163,7 +171,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'application',
         name: 'Application',
         description: 'A software application that supports a Business Service.',
-        color: 'var(--tag-component)',
+        color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
@@ -175,7 +183,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'database',
         name: 'Database',
         description: 'A data store used by one or more Applications.',
-        color: 'var(--tag-database)',
+        color: AR_COLOR_PURPLE,
         icon: 'database',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
@@ -186,7 +194,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'host',
         name: 'Host',
         description: 'A physical or virtual machine that runs Applications and Databases.',
-        color: 'var(--tag-service)',
+        color: AR_COLOR_ORANGE,
         icon: 'server',
         fields: [
           { id: 'host_type', name: 'Type', type: 'select', enumId: '' },
@@ -204,7 +212,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'domain',
         name: 'Domain',
         description: 'A bounded context representing a distinct area of business knowledge.',
-        color: 'var(--tag-system)',
+        color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: [],
       },
@@ -212,7 +220,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'team',
         name: 'Team',
         description: 'An engineering team that owns one or more Services.',
-        color: 'var(--tag-service)',
+        color: AR_COLOR_ORANGE,
         icon: 'users',
         fields: [],
       },
@@ -220,7 +228,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'service',
         name: 'Service',
         description: 'A deployable unit that implements domain logic within a bounded context.',
-        color: 'var(--tag-component)',
+        color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
@@ -233,7 +241,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'event',
         name: 'Event',
         description: 'An asynchronous message (command, event, or query) exchanged between Services.',
-        color: 'var(--tag-api)',
+        color: AR_COLOR_BLUE,
         icon: 'zap',
         fields: [
           { id: 'event_type', name: 'Type', type: 'select', enumId: '' },
@@ -252,7 +260,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'team',
         name: 'Team',
         description: 'An engineering team classified by its topology type (stream-aligned, platform, enabling, complicated-subsystem).',
-        color: 'var(--tag-system)',
+        color: AR_COLOR_YELLOW,
         icon: 'users',
         fields: [
           { id: 'team_type', name: 'Type', type: 'select', enumId: '' },
@@ -263,7 +271,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'system',
         name: 'System',
         description: 'A software system owned by a Team.',
-        color: 'var(--tag-database)',
+        color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
           { id: 'owning_team', name: 'Owning Team', type: 'containment', symSchemaId: 'team', minCount: 0, maxCount: 1 },
@@ -274,7 +282,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'interaction',
         name: 'Team Interaction',
         description: 'A defined collaboration mode between two Teams (collaboration, X-as-a-Service, facilitating).',
-        color: 'var(--tag-api)',
+        color: AR_COLOR_BLUE,
         icon: 'arrow-right',
         fields: [
           { id: 'mode', name: 'Mode', type: 'select', enumId: '' },
@@ -294,7 +302,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'domain',
         name: 'Domain',
         description: 'A business domain that owns one or more Data Products.',
-        color: 'var(--tag-system)',
+        color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: [],
       },
@@ -302,7 +310,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'source_system',
         name: 'Source System',
         description: 'An operational system that produces raw data consumed by Data Products.',
-        color: 'var(--tag-database)',
+        color: AR_COLOR_PURPLE,
         icon: 'database',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
@@ -313,7 +321,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'data_product',
         name: 'Data Product',
         description: 'A self-contained, domain-owned data asset with defined SLOs.',
-        color: 'var(--tag-component)',
+        color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
           { id: 'dp_type', name: 'Type', type: 'select', enumId: '' },
@@ -326,7 +334,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'dataset',
         name: 'Dataset',
         description: 'A versioned, schema-defined output port of a Data Product.',
-        color: 'var(--tag-api)',
+        color: AR_COLOR_BLUE,
         icon: 'table',
         fields: [
           { id: 'format', name: 'Format', type: 'select', enumId: '' },
@@ -338,7 +346,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'pipeline',
         name: 'Pipeline',
         description: 'A data transformation job that consumes and produces Datasets.',
-        color: 'var(--tag-service)',
+        color: AR_COLOR_ORANGE,
         icon: 'git-branch',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
@@ -357,7 +365,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'business_capability',
         name: 'Business Capability',
         description: 'A high-level ability the organisation needs to execute its strategy.',
-        color: 'var(--tag-system)',
+        color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: [
           { id: 'parent', name: 'Parent Capability', type: 'containment', symSchemaId: 'business_capability', minCount: 0, maxCount: 1 },
@@ -367,7 +375,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'business_process',
         name: 'Business Process',
         description: 'A sequence of activities that realises a Business Capability.',
-        color: 'var(--tag-service)',
+        color: AR_COLOR_ORANGE,
         icon: 'git-merge',
         fields: [
           { id: 'capability', name: 'Capability', type: 'containment', symSchemaId: 'business_capability', minCount: 0, maxCount: 1 },
@@ -377,7 +385,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'application_component',
         name: 'Application Component',
         description: 'A modular part of the application layer that realises a Business Process.',
-        color: 'var(--tag-component)',
+        color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
@@ -389,7 +397,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'application_service',
         name: 'Application Service',
         description: 'An externally visible function exposed by an Application Component.',
-        color: 'var(--tag-api)',
+        color: AR_COLOR_BLUE,
         icon: 'api',
         fields: [
           { id: 'component', name: 'Component', type: 'containment', symSchemaId: 'application_component', minCount: 0, maxCount: 1 },
@@ -399,7 +407,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'technology_component',
         name: 'Technology Component',
         description: 'Infrastructure that hosts and runs Application Components (device, system software, artifact).',
-        color: 'var(--tag-database)',
+        color: AR_COLOR_PURPLE,
         icon: 'server',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
@@ -418,7 +426,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'asset',
         name: 'Asset',
         description: 'A data, service, infrastructure, or credential item that requires protection.',
-        color: 'var(--tag-system)',
+        color: AR_COLOR_YELLOW,
         icon: 'shield',
         fields: [
           { id: 'classification', name: 'Classification', type: 'select', enumId: '' },
@@ -429,7 +437,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'threat',
         name: 'Threat',
         description: 'A potential adverse action classified by STRIDE category.',
-        color: 'var(--danger)',
+        color: AR_COLOR_RED,
         icon: 'alert-triangle',
         fields: [
           { id: 'stride_category', name: 'STRIDE Category', type: 'select', enumId: '' },
@@ -441,7 +449,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'control',
         name: 'Control',
         description: 'A safeguard or countermeasure that mitigates one or more Threats.',
-        color: 'var(--ok)',
+        color: AR_COLOR_GREEN,
         icon: 'check-circle',
         fields: [
           { id: 'control_type', name: 'Type', type: 'select', enumId: '' },
@@ -453,7 +461,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'risk',
         name: 'Risk',
         description: 'The combination of a Threat and its potential impact, rated by likelihood and severity.',
-        color: 'var(--warn)',
+        color: AR_COLOR_YELLOW,
         icon: 'zap',
         fields: [
           { id: 'likelihood', name: 'Likelihood', type: 'select', enumId: '' },

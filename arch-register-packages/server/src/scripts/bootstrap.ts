@@ -198,7 +198,7 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
 
 async function main() {
   console.log('Bootstrapping database...');
-  const db = await createDatabase();
+  const db = await createDatabase({ initialize: false });
 
   console.log('Resetting schema...');
   await db.core.reset();

@@ -24,6 +24,7 @@
   .eRequired {
     color: var(--danger-fg);
     font-weight: bold;
+    margin-left: -2px;
   }
 
   .eHint {

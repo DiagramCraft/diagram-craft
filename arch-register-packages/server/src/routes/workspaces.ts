@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/api-types/colors';
 import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
@@ -88,10 +89,10 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
             const lifecycleStates = srcLifecycle.length > 0
               ? srcLifecycle.map(s => ({ ...s, workspace: id, created_at: timestamp }))
               : [
-                  { id: 'proposed', workspace: id, label: 'Proposed', color: 'var(--accent)', sort_order: 0, created_at: timestamp },
-                  { id: 'experimental', workspace: id, label: 'Experimental', color: 'var(--accent)', sort_order: 1, created_at: timestamp },
-                  { id: 'production', workspace: id, label: 'Production', color: 'var(--ok)', sort_order: 2, created_at: timestamp },
-                  { id: 'deprecated', workspace: id, label: 'Deprecated', color: 'var(--warn)', sort_order: 3, created_at: timestamp },
+                  { id: 'proposed', workspace: id, label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: timestamp },
+                  { id: 'experimental', workspace: id, label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: timestamp },
+                  { id: 'production', workspace: id, label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: timestamp },
+                  { id: 'deprecated', workspace: id, label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: timestamp },
                 ];
             await db.workspaceAdmin.replaceLifecycleStates(id, lifecycleStates);
             await db.workspaceAdmin.replaceTeams(
@@ -109,10 +110,10 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
             }
           } else {
             await db.workspaceAdmin.replaceLifecycleStates(id, [
-              { id: 'proposed', workspace: id, label: 'Proposed', color: 'var(--accent)', sort_order: 0, created_at: timestamp },
-              { id: 'experimental', workspace: id, label: 'Experimental', color: 'var(--accent)', sort_order: 1, created_at: timestamp },
-              { id: 'production', workspace: id, label: 'Production', color: 'var(--ok)', sort_order: 2, created_at: timestamp },
-              { id: 'deprecated', workspace: id, label: 'Deprecated', color: 'var(--warn)', sort_order: 3, created_at: timestamp },
+              { id: 'proposed', workspace: id, label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: timestamp },
+              { id: 'experimental', workspace: id, label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: timestamp },
+              { id: 'production', workspace: id, label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: timestamp },
+              { id: 'deprecated', workspace: id, label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: timestamp },
             ]);
             await db.workspaceAdmin.replaceTeams(id, [
               { id: 'platform-team', workspace: id, sort_order: 0, color: null, description: '', created_at: timestamp },
@@ -146,10 +147,10 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           }
         } else {
           await db.workspaceAdmin.replaceLifecycleStates(id, [
-            { id: 'proposed', workspace: id, label: 'Proposed', color: 'var(--accent)', sort_order: 0, created_at: timestamp },
-            { id: 'experimental', workspace: id, label: 'Experimental', color: 'var(--accent)', sort_order: 1, created_at: timestamp },
-            { id: 'production', workspace: id, label: 'Production', color: 'var(--ok)', sort_order: 2, created_at: timestamp },
-            { id: 'deprecated', workspace: id, label: 'Deprecated', color: 'var(--warn)', sort_order: 3, created_at: timestamp },
+            { id: 'proposed', workspace: id, label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: timestamp },
+            { id: 'experimental', workspace: id, label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: timestamp },
+            { id: 'production', workspace: id, label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: timestamp },
+            { id: 'deprecated', workspace: id, label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: timestamp },
           ]);
 
           await db.workspaceAdmin.replaceTeams(id, [

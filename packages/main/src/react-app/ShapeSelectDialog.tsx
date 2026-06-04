@@ -1,5 +1,5 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { useDiagram, useDocument } from '../application';
 import { PickerCanvas } from './PickerCanvas';
 import styles from './ShapeSelectDialog.module.css';
@@ -153,7 +153,7 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
           }}
           style={{ flexGrow: 1, minWidth: '30%' }}
         />
-        <Button variant={'primary'} onClick={() => doIconSearch(searchRef.current?.value ?? '')}>
+        <Button size={'sm'} onClick={() => doIconSearch(searchRef.current?.value ?? '')}>
           Search
         </Button>
         &nbsp;&nbsp;
@@ -232,8 +232,11 @@ export const ShapeSelectDialog = (props: Props) => {
   // biome-ignore lint/correctness/useExhaustiveDependencies: we want to trigger re-render in case document is changed
   useEffect(() => redraw(), [document, redraw]);
 
+  const activeTabs = props.tabs ?? (['recent', 'search', 'icons'] as ShapeSelectTab[]);
+
   const [search, setSearch] = useState('');
   const [stencils, setStencils] = useState<Stencil[]>([]);
+  const [mode, setMode] = useState<ShapeSelectTab>(activeTabs[0]!);
 
   const shouldIncludeStencil = useCallback(
     (stencil: Stencil) => {
@@ -267,8 +270,6 @@ export const ShapeSelectDialog = (props: Props) => {
     return shouldIncludeStencil(stencil);
   });
 
-  const activeTabs = props.tabs ?? ['recent', 'search', 'icons'];
-
   const tabContent: Record<ShapeSelectTab, ReactElement> = {
     recent: (
       <div
@@ -301,7 +302,7 @@ export const ShapeSelectDialog = (props: Props) => {
             }}
             style={{ flexGrow: 1 }}
           />
-          <Button variant={'primary'} onClick={() => doSearch(ref.current?.value ?? '')}>
+          <Button size="sm" onClick={() => doSearch(ref.current?.value ?? '')}>
             Search
           </Button>
         </div>
@@ -329,24 +330,16 @@ export const ShapeSelectDialog = (props: Props) => {
     activeTabs.length === 1 ? (
       <div className={styles.icSingleTabContent}>{tabContent[activeTabs[0]!]}</div>
     ) : (
-      <Tabs.Root
-        defaultValue={
-          activeTabs.includes('recent') && recentStencils.length > 0 ? 'recent' : activeTabs[0]!
-        }
-      >
-        <Tabs.List>
-          {activeTabs.map(tab => (
-            <Tabs.Trigger key={tab} value={tab}>
-              {TAB_LABELS[tab]}
-            </Tabs.Trigger>
-          ))}
-        </Tabs.List>
-        {activeTabs.map(tab => (
-          <Tabs.Content key={tab} value={tab} style={{ height: '16rem' }}>
-            {tabContent[tab]}
-          </Tabs.Content>
-        ))}
-      </Tabs.Root>
+      <>
+        <div style={{ marginBottom: '0.75rem' }}>
+          <ModeSwitcher
+            modes={activeTabs.map(tab => ({ value: tab, label: TAB_LABELS[tab] }))}
+            value={mode}
+            onChange={setMode}
+          />
+        </div>
+        <div style={{ height: '16rem' }}>{tabContent[mode]}</div>
+      </>
     );
 
   return (

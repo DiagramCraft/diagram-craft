@@ -11,7 +11,8 @@
     "./workspaces": "./src/workspaces.ts",
     "./search": "./src/search.ts",
     "./audit": "./src/audit.ts",
-    "./common": "./src/common.ts"
+    "./common": "./src/common.ts",
+    "./colors": "./src/colors.ts"
   },
   "scripts": {
     "build": "tsc",

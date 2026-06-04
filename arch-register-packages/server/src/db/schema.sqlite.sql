@@ -1,3 +1,5 @@
+-- Base schema only. Keep this file at the pre-migration baseline and let
+-- runSqliteMigrations() apply all incremental changes.
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE workspace (
@@ -246,8 +248,3 @@ CREATE TABLE ai_message (
 );
 
 CREATE INDEX ai_message_conversation_idx ON ai_message(conversation_id, created_at);
-
-CREATE TABLE schema_migrations (
-  version    TEXT PRIMARY KEY,
-  applied_at TEXT NOT NULL
-);

@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { FormSection } from '@diagram-craft/app-components/FormSection';
+import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { apiFetch, ApiError, SCHEMA_COLORS } from '../api';
+import { apiFetch, ApiError } from '../api';
+import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import type { Workspace } from '../api';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';
@@ -217,19 +220,28 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
       sup="New workspace"
       title="Create a workspace"
       width={620}
-      footerLeft={<KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'create']]} />}
+      footerLeft={
+        <KbdHints
+          hints={[
+            ['Esc', 'cancel'],
+            ['⌘↵', 'create']
+          ]}
+        />
+      }
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
-        { label: submitting ? 'Creating...' : 'Create workspace', type: 'default', disabled: !canCreate || submitting, onClick: () => { void handleSubmit(); } }
+        {
+          label: submitting ? 'Creating...' : 'Create workspace',
+          type: 'default',
+          disabled: !canCreate || submitting,
+          onClick: () => {
+            void handleSubmit();
+          }
+        }
       ]}
     >
       <div className={styles.body}>
-        <div className={styles.section}>
-          <div className={styles.sectionHead}>
-            <span className={styles.sectionStep}>1</span>
-            <span className={styles.sectionTitle}>Identity</span>
-          </div>
-
+        <FormSection step={1} title="Identity">
           <div className={styles.identity}>
             <div className={styles.badgeCol}>
               <div
@@ -275,119 +287,108 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 />
               </FormElement>
 
-              <FormElement label="Description" hint="optional">
+              <FormElement label="Description">
                 <TextArea
                   placeholder="What lives in this workspace? Who owns it?"
                   value={description}
                   onChange={value => setDescription(value ?? '')}
                   rows={3}
                   style={{ width: '100%' }}
+                  allowMaximize={false}
                 />
               </FormElement>
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        {/* Step 2: Schema setup */}
-        <div className={styles.section}>
-          <div className={styles.sectionHead}>
-            <span className={styles.sectionStep}>2</span>
-            <span className={styles.sectionTitle}>Schema setup</span>
-            <span className={styles.sectionOpt}>how the data model starts</span>
-          </div>
+        <FormSection step={2} title="Schema setup">
+          <ModeSwitcher
+            modes={[
+              { value: 'blank', label: 'Start blank' },
+              { value: 'template', label: 'Template' },
+              { value: 'copy', label: 'Copy' }
+            ]}
+            value={mode}
+            onChange={setMode}
+          />
 
-          <div className={styles.sectionBody}>
-            <div className={styles.startSeg}>
-              {(['blank', 'template', 'copy'] as Mode[]).map(m => (
-                <button
-                  key={m}
-                  type="button"
-                  className={`${styles.startBtn} ${mode === m ? styles.startBtnActive : ''}`}
-                  onClick={() => setMode(m)}
-                >
-                  {m === 'blank' ? 'Start blank' : m === 'template' ? 'Template' : 'Copy'}
-                </button>
-              ))}
+          {mode === 'blank' && (
+            <div className={styles.note}>
+              Starts with no entity types. You'll define your own data model from scratch in the
+              Data model editor.
             </div>
+          )}
 
-            {mode === 'blank' && (
-              <div className={styles.note}>
-                Starts with no entity types. You'll define your own data model from scratch in the
-                Data model editor.
+          {mode === 'template' && (
+            <>
+              <div className={styles.templateGrid}>
+                {TEMPLATES.map(t => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={`${styles.templateCard} ${templateId === t.id ? styles.templateCardActive : ''}`}
+                    onClick={() => setTemplateId(t.id)}
+                  >
+                    <div className={styles.templateCardHead}>
+                      <span className={styles.templateCardName}>{t.name}</span>
+                      {templateId === t.id && <span className={styles.templateCardCheck}>✓</span>}
+                    </div>
+                    <div className={styles.templateCardDesc}>{t.desc}</div>
+                    <div className={`${styles.templateCardMeta} ${styles.mono}`}>
+                      {t.types.length} entity types
+                    </div>
+                  </button>
+                ))}
               </div>
-            )}
+              {activeTemplate && (
+                <div className={styles.note}>
+                  <strong>{activeTemplate.name}</strong> seeds: {activeTemplate.types.join(', ')}.
+                </div>
+              )}
+            </>
+          )}
 
-            {mode === 'template' && (
-              <>
-                <div className={styles.templateGrid}>
-                  {TEMPLATES.map(t => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      className={`${styles.templateCard} ${templateId === t.id ? styles.templateCardActive : ''}`}
-                      onClick={() => setTemplateId(t.id)}
-                    >
-                      <div className={styles.templateCardHead}>
-                        <span className={styles.templateCardName}>{t.name}</span>
-                        {templateId === t.id && <span className={styles.templateCardCheck}>✓</span>}
-                      </div>
-                      <div className={styles.templateCardDesc}>{t.desc}</div>
-                      <div className={`${styles.templateCardMeta} ${styles.mono}`}>
-                        {t.types.length} entity types
-                      </div>
-                    </button>
+          {mode === 'copy' && (
+            <div className={styles.copyPanel}>
+              <FormElement label="Copy from">
+                <Select.Root
+                  value={copyFrom || undefined}
+                  onChange={value => setCopyFrom(value ?? '')}
+                  placeholder={workspaces.length === 0 ? 'Loading…' : 'Select workspace'}
+                  style={{ width: '100%' }}
+                >
+                  {workspaces.map(ws => (
+                    <Select.Item key={ws.id} value={ws.id}>
+                      {ws.name}
+                    </Select.Item>
+                  ))}
+                </Select.Root>
+              </FormElement>
+              <FormElement label="Include">
+                <div className={styles.copyInclude}>
+                  {COPY_PARTS.map(p => (
+                    <label key={p.id} className={styles.checkbox}>
+                      <input
+                        type="checkbox"
+                        checked={!!copyParts[p.id]}
+                        onChange={e =>
+                          setCopyParts(prev => ({ ...prev, [p.id]: e.target.checked }))
+                        }
+                      />
+                      {p.label}
+                    </label>
                   ))}
                 </div>
-                {activeTemplate && (
-                  <div className={styles.note}>
-                    <strong>{activeTemplate.name}</strong> seeds: {activeTemplate.types.join(', ')}.
-                  </div>
-                )}
-              </>
-            )}
-
-            {mode === 'copy' && (
-              <div className={styles.copyPanel}>
-                <FormElement label="Copy from">
-                  <Select.Root
-                    value={copyFrom || undefined}
-                    onChange={value => setCopyFrom(value ?? '')}
-                    placeholder={workspaces.length === 0 ? 'Loading…' : 'Select workspace'}
-                    style={{ width: '100%' }}
-                  >
-                    {workspaces.map(ws => (
-                      <Select.Item key={ws.id} value={ws.id}>
-                        {ws.name}
-                      </Select.Item>
-                    ))}
-                  </Select.Root>
-                </FormElement>
-                <FormElement label="Include">
-                  <div className={styles.copyInclude}>
-                    {COPY_PARTS.map(p => (
-                      <label key={p.id} className={styles.checkbox}>
-                        <input
-                          type="checkbox"
-                          checked={!!copyParts[p.id]}
-                          onChange={e =>
-                            setCopyParts(prev => ({ ...prev, [p.id]: e.target.checked }))
-                          }
-                        />
-                        {p.label}
-                      </label>
-                    ))}
-                  </div>
-                </FormElement>
-                {fromWs && (
-                  <div className={styles.note}>
-                    Replicates the selected parts of <strong>{fromWs.name}</strong>. Changes won't
-                    sync back.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+              </FormElement>
+              {fromWs && (
+                <div className={styles.note}>
+                  Replicates the selected parts of <strong>{fromWs.name}</strong>. Changes won't
+                  sync back.
+                </div>
+              )}
+            </div>
+          )}
+        </FormSection>
 
         {error && <div className={styles.errorBar}>{error}</div>}
       </div>

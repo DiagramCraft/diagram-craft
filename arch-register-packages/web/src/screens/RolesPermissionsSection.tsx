@@ -1,12 +1,14 @@
 import { useMemo, useState, Fragment, useEffect } from 'react';
 import { WORKSPACE_CAPABILITY_GROUPS } from '@arch-register/permissions';
-import { TbCheck, TbPencil, TbTrash } from 'react-icons/tb';
+import { TbBuilding, TbCheck, TbDatabase, TbFiles, TbPencil, TbTrash, TbUsers } from 'react-icons/tb';
+import type { IconType } from 'react-icons';
 import { ApiError, type WorkspaceRoleDefinition } from '../api';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types';
 import { useAuth } from '../auth/AuthContext';
 import { ColorPicker } from '../components/ColorPicker';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
+import { FormGroup } from '@diagram-craft/app-components/FormGroup';
 import { useWorkspaceMembers } from '../hooks/useWorkspaceMembers';
 import {
   useCreateWorkspaceRole,
@@ -235,6 +237,13 @@ export const RolesPermissionsSection = ({
 
 const ALL_CAPS = WORKSPACE_CAPABILITY_GROUPS.flatMap(g => g.caps.map(c => c.id));
 
+const CAPABILITY_GROUP_ICONS: Record<string, IconType> = {
+  Workspace: TbBuilding,
+  People: TbUsers,
+  Content: TbFiles,
+  Schema: TbDatabase,
+};
+
 const RoleEditorDialog = ({
   open,
   title,
@@ -361,22 +370,28 @@ const RoleEditorDialog = ({
               const groupCapIds = group.caps.map(c => c.id);
               const groupSelectedCount = groupCapIds.filter(id => capSet.has(id)).length;
               const groupAllOn = groupSelectedCount === groupCapIds.length;
+              const GroupIcon = CAPABILITY_GROUP_ICONS[group.label];
               return (
-                <div key={group.label} className={styles.capabilityGroup}>
-                  <div className={styles.capabilityGroupHead}>
-                    <span className={styles.capabilityGroupTitle}>{group.label}</span>
-                    {groupSelectedCount > 0 && (
-                      <span className={styles.capGroupBadge}>{groupSelectedCount}</span>
-                    )}
-                    <button
-                      type="button"
-                      className={styles.capGroupToggle}
-                      onClick={() => toggleGroup(groupCapIds)}
-                      disabled={pending}
-                    >
-                      {groupAllOn ? 'None' : 'All'}
-                    </button>
-                  </div>
+                <FormGroup
+                  key={group.label}
+                  label={group.label}
+                  icon={GroupIcon ? <GroupIcon size={12} /> : undefined}
+                  action={
+                    <>
+                      {groupSelectedCount > 0 && (
+                        <span className={styles.capGroupBadge}>{groupSelectedCount}</span>
+                      )}
+                      <button
+                        type="button"
+                        className={styles.capGroupToggle}
+                        onClick={() => toggleGroup(groupCapIds)}
+                        disabled={pending}
+                      >
+                        {groupAllOn ? 'None' : 'All'}
+                      </button>
+                    </>
+                  }
+                >
                   {group.caps.map(cap => (
                     <label key={cap.id} className={`${styles.capabilityRow}${capSet.has(cap.id) ? ` ${styles.capabilityRowOn}` : ''}`}>
                       <input
@@ -390,7 +405,7 @@ const RoleEditorDialog = ({
                       <span className={styles.capRowId}>{cap.id}</span>
                     </label>
                   ))}
-                </div>
+                </FormGroup>
               );
             })}
           </div>

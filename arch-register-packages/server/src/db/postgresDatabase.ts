@@ -15,6 +15,7 @@ import { SERVER_DEFAULTS } from '../constants.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
+const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
 
 export class PostgresDatabase implements DatabaseAdapter {
   private readonly sql: PostgresSqlClient;
@@ -31,7 +32,13 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.sql = postgres(connectionString, {
       max: SERVER_DEFAULTS.MAX_DB_CONNECTIONS,
       idle_timeout: SERVER_DEFAULTS.DB_IDLE_TIMEOUT,
-      connect_timeout: SERVER_DEFAULTS.DB_CONNECT_TIMEOUT
+      connect_timeout: SERVER_DEFAULTS.DB_CONNECT_TIMEOUT,
+      onnotice: notice => {
+        if (notice.code === '42710' && notice.message === PGCRYPTO_EXISTS_NOTICE) {
+          return;
+        }
+        console.log(notice);
+      }
     });
 
     this.workspaceAdmin = new PostgresWorkspaceAdminDatabase(this.sql);

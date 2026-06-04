@@ -2,7 +2,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import React, { useEffect, useState } from 'react';
 import styles from './ImageInsertDialog.module.css';
 import { TbFile, TbFolder } from 'react-icons/tb';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { DialogCommand } from '@diagram-craft/canvas/context';
 import { EmptyObject } from '@diagram-craft/utils/types';
 import { AppConfig } from '../appConfig';
@@ -83,7 +83,16 @@ const ImageInsertDialogBrowser = (props: Props) => {
   );
 };
 
+const MODES = [
+  { value: 'device', label: 'From device' },
+  { value: 'server', label: 'From server' }
+] as const;
+
+type Mode = (typeof MODES)[number]['value'];
+
 export const ImageInsertDialog = (props: Props) => {
+  const [mode, setMode] = useState<Mode>('device');
+
   return (
     <Dialog
       open={props.open}
@@ -91,12 +100,12 @@ export const ImageInsertDialog = (props: Props) => {
       title={'Insert Image'}
       buttons={[{ label: 'Cancel', type: 'cancel', onClick: props.onCancel! }]}
     >
-      <Tabs.Root defaultValue={'device'}>
-        <Tabs.List>
-          <Tabs.Trigger value={'device'}>From device</Tabs.Trigger>
-          <Tabs.Trigger value={'server'}>From server</Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content value={'device'}>
+      <div style={{ marginBottom: '0.75rem' }}>
+        <ModeSwitcher modes={MODES} value={mode} onChange={setMode} />
+      </div>
+
+      {mode === 'device' && (
+        <>
           <label
             className={buttonStyles.cButton}
             style={{ fontSize: '11px', justifyContent: 'left' }}
@@ -113,11 +122,10 @@ export const ImageInsertDialog = (props: Props) => {
               props.onOk(e.target.files![0]!);
             }}
           />
-        </Tabs.Content>
-        <Tabs.Content value={'server'}>
-          <ImageInsertDialogBrowser {...props} />
-        </Tabs.Content>
-      </Tabs.Root>
+        </>
+      )}
+
+      {mode === 'server' && <ImageInsertDialogBrowser {...props} />}
     </Dialog>
   );
 };
