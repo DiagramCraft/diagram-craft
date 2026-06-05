@@ -18,7 +18,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest watch",
     "test:bench": "vitest bench --run",
-    "lint:tsc": "tsc -b --incremental false tsconfig.workspace.json arch-register-packages/server/tsconfig.json",
+    "lint:tsc": "tsc --noEmit",
     "lint": "biome lint --max-diagnostics=100 && pnpm lint:tsc",
     "doc": "typedoc"
   },
@@ -29,7 +29,6 @@
     "@codspeed/vitest-plugin": "^5.2.0",
     "@rollup/plugin-yaml": "^5.0.0",
     "@types/jsdom": "^28.0.1",
-    "@types/node": "^20.19.41",
     "@vitest/coverage-v8": "^4.1.7",
     "jsdom": "^29.0.2",
     "prettier": "^3.6.2",
