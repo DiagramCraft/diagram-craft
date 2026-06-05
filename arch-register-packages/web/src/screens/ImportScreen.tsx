@@ -30,11 +30,15 @@ type ParsedRow = {
   expanded: boolean;
   isUpdate: boolean;
   hasChanges: boolean;
-  matchType: 'id' | 'name' | 'none';
+  matchType: 'id' | 'slug' | 'name' | 'none';
   nameMatches: Array<{ id: string; name: string; slug?: string; namespace?: string }>;
   userChoice?: 'update' | 'create'; // User's decision for name matches
   existingId?: string;
   existingEntity?: Record<string, unknown> | null;
+  constraintViolations?: Array<{
+    type: 'duplicate_slug' | 'wrong_workspace' | 'wrong_schema';
+    message: string;
+  }>;
 };
 
 type CommittedEntity = {
@@ -293,11 +297,14 @@ export const ImportScreen = () => {
           // For name matches, don't auto-accept - require user decision
           const needsUserDecision = matchType === 'name';
           
+          // Don't auto-accept if there are constraint violations
+          const hasConstraintViolations = (e.constraintViolations?.length ?? 0) > 0;
+          
           return {
             rowNumber: e.rowNumber,
             errors: e.errors,
             entity: e.entity,
-            accepted: e.errors.length === 0 && hasChanges && !needsUserDecision,
+            accepted: e.errors.length === 0 && hasChanges && !needsUserDecision && !hasConstraintViolations,
             expanded: false,
             isUpdate: e.isUpdate,
             hasChanges,
@@ -305,7 +312,8 @@ export const ImportScreen = () => {
             nameMatches: e.nameMatches || [],
             userChoice: undefined, // User hasn't made a choice yet
             existingId: e.existingId,
-            existingEntity: e.existingEntity
+            existingEntity: e.existingEntity,
+            constraintViolations: e.constraintViolations
           };
         })
       );
@@ -497,12 +505,31 @@ export const ImportScreen = () => {
                   </>
                 )}
               </span>
-              {validRows < totalRows && (
-                <span className={styles.errorBadge}>
-                  <TbAlertCircle size={12} /> {totalRows - validRows} error
-                  {totalRows - validRows !== 1 ? 's' : ''}
-                </span>
-              )}
+              {(() => {
+                const errorCount = rows.filter(r => r.errors.length > 0).length;
+                const constraintCount = rows.filter(r => (r.constraintViolations?.length ?? 0) > 0).length;
+                const decisionCount = rows.filter(r => r.matchType === 'name' && !r.userChoice).length;
+                
+                return (
+                  <>
+                    {errorCount > 0 && (
+                      <span className={styles.errorBadge}>
+                        <TbAlertCircle size={12} /> {errorCount} error{errorCount !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {constraintCount > 0 && (
+                      <span className={styles.errorBadge}>
+                        <TbAlertCircle size={12} /> {constraintCount} constraint violation{constraintCount !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {decisionCount > 0 && (
+                      <span className={styles.errorBadge} style={{ background: 'oklch(0.65 0.15 40 / 0.1)' }}>
+                        <TbAlertCircle size={12} /> {decisionCount} decision{decisionCount !== 1 ? 's' : ''} required
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
 
@@ -563,17 +590,31 @@ export const ImportScreen = () => {
                                 label: 'Update existing entity',
                                 icon: <TbCheck size={12} />,
                                 onClick: () => setUserChoice(r.rowNumber, 'update'),
+                                disabled: r.constraintViolations?.some(v => 
+                                  v.type === 'wrong_workspace' || v.type === 'wrong_schema'
+                                )
                               },
                               {
                                 label: 'Create new entity',
                                 icon: <TbPlus size={12} />,
                                 onClick: () => setUserChoice(r.rowNumber, 'create'),
+                                disabled: r.constraintViolations?.some(v => 
+                                  v.type === 'duplicate_slug'
+                                )
                               },
                             ]}
                           />
                         ) : r.isUpdate && !r.hasChanges ? (
                           <Chip tone="ghost" dot="var(--cmp-fg-disabled)">
                             No Changes
+                          </Chip>
+                        ) : r.matchType === 'id' ? (
+                          <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
+                            Update (ID)
+                          </Chip>
+                        ) : r.matchType === 'slug' ? (
+                          <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
+                            Update (Slug)
                           </Chip>
                         ) : r.isUpdate ? (
                           <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
@@ -586,11 +627,16 @@ export const ImportScreen = () => {
                         )}
                       </td>
                       <td>
-                        {r.errors.length > 0 ? (
+                        {r.errors.length > 0 || (r.constraintViolations && r.constraintViolations.length > 0) ? (
                           <span className={styles.errorList}>
                             {r.errors.map((err, i) => (
                               <span key={i} className={styles.errorItem}>
                                 <TbAlertCircle size={10} /> {err}
+                              </span>
+                            ))}
+                            {r.constraintViolations?.map((violation, i) => (
+                              <span key={`cv-${i}`} className={styles.errorItem}>
+                                <TbAlertCircle size={10} /> {violation.message}
                               </span>
                             ))}
                           </span>

@@ -488,20 +488,84 @@ export function createDataRoutes(db: DatabaseAdapter) {
         // Convert to entity format for preview
         const entities = validatedRows.map(row => {
           const rowName = row.data['Name']?.toLowerCase().trim();
-          const isUpdate = row.existingId && existingEntitiesMap.has(row.existingId);
-          let existingEntity = row.existingId ? existingEntitiesMap.get(row.existingId) : undefined;
-          let matchType: 'id' | 'name' | 'none' = 'none';
-          let nameMatches: typeof allEntities = [];
+          const rowSlug = row.data['Slug']?.trim();
+          const rowNamespace = row.data['Namespace']?.trim() || 'default';
           
-          // Determine match type
-          if (row.existingId && existingEntity) {
-            matchType = 'id';
-          } else if (!row.existingId && rowName && entitiesByName.has(rowName)) {
+          let existingEntity: typeof allEntities[0] | undefined;
+          let matchType: 'id' | 'slug' | 'name' | 'none' = 'none';
+          let nameMatches: typeof allEntities = [];
+          const constraintViolations: Array<{ type: 'duplicate_slug' | 'wrong_workspace' | 'wrong_schema'; message: string }> = [];
+          
+          // Step 1: Try ID matching with workspace+schema validation
+          if (row.existingId) {
+            const entityById = existingEntitiesMap.get(row.existingId);
+            if (entityById) {
+              if (entityById.workspace !== workspace) {
+                constraintViolations.push({
+                  type: 'wrong_workspace',
+                  message: 'ID exists but belongs to different workspace'
+                });
+                row.errors.push('ID exists but belongs to different workspace');
+              } else if (entityById.schema_id !== body.schemaId) {
+                constraintViolations.push({
+                  type: 'wrong_schema',
+                  message: 'ID exists but belongs to different schema type'
+                });
+                row.errors.push('ID exists but belongs to different schema type');
+              } else {
+                matchType = 'id';
+                existingEntity = entityById;
+              }
+            }
+          }
+          
+          // Step 2: Try slug+namespace matching (if no valid ID match)
+          if (matchType === 'none' && rowSlug) {
+            const entityBySlug = allEntities.find(e => 
+              e.workspace === workspace &&
+              e.schema_id === body.schemaId &&
+              e.slug === rowSlug &&
+              e.namespace === rowNamespace
+            );
+            
+            if (entityBySlug) {
+              matchType = 'slug';
+              existingEntity = entityBySlug;
+            }
+          }
+          
+          // Step 3: Try name matching (if no ID or slug match)
+          if (matchType === 'none' && rowName && entitiesByName.has(rowName)) {
             matchType = 'name';
             nameMatches = entitiesByName.get(rowName)!;
-            // For name matches, use the first match as the potential existing entity
             existingEntity = nameMatches[0];
           }
+          
+          // Step 4: Validate CREATE action for slug uniqueness
+          if (matchType === 'none' || matchType === 'name') {
+            const proposedSlug = rowSlug || (rowName ? rowName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '');
+            
+            if (proposedSlug) {
+              const wouldConflict = allEntities.some(e =>
+                e.workspace === workspace &&
+                e.schema_id === body.schemaId &&
+                e.slug === proposedSlug &&
+                e.namespace === rowNamespace
+              );
+              
+              if (wouldConflict) {
+                constraintViolations.push({
+                  type: 'duplicate_slug',
+                  message: `Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`
+                });
+                if (matchType === 'none') {
+                  row.errors.push(`Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`);
+                }
+              }
+            }
+          }
+          
+          const isUpdate = matchType === 'id' || matchType === 'slug';
           
           // Check permissions for updates
           if ((isUpdate || matchType === 'name') && existingEntity) {
@@ -516,7 +580,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
                 matchType: 'none',
                 nameMatches: [],
                 existingId: row.existingId,
-                existingEntity: null
+                existingEntity: null,
+                constraintViolations
               };
             }
           }
@@ -545,7 +610,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
               // Only include _links if it has actual content
               ...(existingEntity.links && existingEntity.links.length > 0 ? { _links: existingEntity.links } : {}),
               ...existingEntity.data
-            } : null
+            } : null,
+            constraintViolations: constraintViolations.length > 0 ? constraintViolations : undefined
           };
         });
 
@@ -603,6 +669,37 @@ export function createDataRoutes(db: DatabaseAdapter) {
         // Create or update entities
         for (const entityData of body.entities) {
           const existingId = entityData._existingId as string | undefined;
+          
+          // Validate UPDATE operations
+          if (existingId) {
+            const existingEntity = allEntities.find(e => e.id === existingId);
+            if (!existingEntity) {
+              throw new Error(`Entity ${existingId} not found`);
+            }
+            if (existingEntity.workspace !== workspace) {
+              throw new Error(`Entity ${existingId} belongs to different workspace`);
+            }
+            if (existingEntity.schema_id !== body.schemaId) {
+              throw new Error(`Entity ${existingId} has different schema type`);
+            }
+          } else {
+            // Validate CREATE operations - check slug uniqueness
+            const proposedSlug = (entityData._slug as string) || 
+              ((entityData._name as string) || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            const proposedNamespace = (entityData._namespace as string) || 'default';
+            
+            const conflictingEntity = allEntities.find(e =>
+              e.workspace === workspace &&
+              e.schema_id === body.schemaId &&
+              e.slug === proposedSlug &&
+              e.namespace === proposedNamespace
+            );
+            
+            if (conflictingEntity) {
+              throw new Error(`Slug "${proposedSlug}" already exists in namespace "${proposedNamespace}"`);
+            }
+          }
+          
           const isUpdate = existingId && allEntities.some(e => e.id === existingId);
           const owner = resolveCreateOwner(
             (entityData._owner as string | null) ?? null,

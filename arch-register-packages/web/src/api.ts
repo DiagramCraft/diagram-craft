@@ -284,10 +284,14 @@ export const parseCsvImport = (
     errors: string[];
     entity: Record<string, unknown> | null;
     isUpdate: boolean;
-    matchType?: 'id' | 'name' | 'none';
+    matchType?: 'id' | 'slug' | 'name' | 'none';
     nameMatches?: Array<{ id: string; name: string; slug?: string; namespace?: string }>;
     existingId?: string;
     existingEntity?: Record<string, unknown> | null;
+    constraintViolations?: Array<{
+      type: 'duplicate_slug' | 'wrong_workspace' | 'wrong_schema';
+      message: string;
+    }>;
   }>;
 }> => {
   return apiFetch(`/api/${workspace}/data/import/parse`, {
