@@ -81,18 +81,18 @@ export const SchemaGraphView = () => {
 
   if (schemas.length === 0) {
     return (
-      <div className={styles.empty}>
+      <div className={styles.eEmpty}>
         <TbVectorTriangle size={22} />
-        <div className={styles.emptyTitle}>No entity types defined yet.</div>
+        <div className={styles.eEmptyTitle}>No entity types defined yet.</div>
         <div>Add entity types to see their dependencies here.</div>
       </div>
     );
   }
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.toolbar}>
-        <span className={styles.toolbarLabel}>Layout</span>
+    <div className={styles.icSchemaGraphView}>
+      <div className={styles.eToolbar}>
+        <span className={styles.eToolbarLabel}>Layout</span>
         <Select.Root
           value={layout}
           onChange={v => {
@@ -105,11 +105,11 @@ export const SchemaGraphView = () => {
           <Select.Item value="tree">Tree</Select.Item>
         </Select.Root>
 
-        <div className={styles.toolbarSeparator} />
+        <div className={styles.eToolbarSeparator} />
 
         {(layout === 'hierarchy' || layout === 'layered' || layout === 'tree') && (
           <>
-            <span className={styles.toolbarLabel}>H-Space</span>
+            <span className={styles.eToolbarLabel}>H-Space</span>
             <NumberInput
               value={layoutOptions.horizontalSpacing ?? 200}
               onChange={v => setLayoutOptions(prev => ({ ...prev, horizontalSpacing: v }))}
@@ -118,7 +118,7 @@ export const SchemaGraphView = () => {
               step={10}
               style={{ width: '60px' }}
             />
-            <span className={styles.toolbarLabel}>V-Space</span>
+            <span className={styles.eToolbarLabel}>V-Space</span>
             <NumberInput
               value={layoutOptions.verticalSpacing ?? 108}
               onChange={v => setLayoutOptions(prev => ({ ...prev, verticalSpacing: v }))}
@@ -132,7 +132,7 @@ export const SchemaGraphView = () => {
 
         {(layout === 'hierarchy' || layout === 'layered') && (
           <>
-            <span className={styles.toolbarLabel}>Crossings</span>
+            <span className={styles.eToolbarLabel}>Crossings</span>
             <NumberInput
               value={layoutOptions.crossingMinimizationIterations ?? 10}
               onChange={v =>
@@ -148,7 +148,7 @@ export const SchemaGraphView = () => {
 
         {layout === 'force' && (
           <>
-            <span className={styles.toolbarLabel}>Iterations</span>
+            <span className={styles.eToolbarLabel}>Iterations</span>
             <NumberInput
               value={layoutOptions.iterations ?? 300}
               onChange={v => setLayoutOptions(prev => ({ ...prev, iterations: v }))}
@@ -157,7 +157,7 @@ export const SchemaGraphView = () => {
               step={50}
               style={{ width: '60px' }}
             />
-            <span className={styles.toolbarLabel}>Spring</span>
+            <span className={styles.eToolbarLabel}>Spring</span>
             <NumberInput
               value={layoutOptions.springStrength ?? 0.5}
               onChange={v => setLayoutOptions(prev => ({ ...prev, springStrength: v }))}
@@ -166,7 +166,7 @@ export const SchemaGraphView = () => {
               step={0.1}
               style={{ width: '50px' }}
             />
-            <span className={styles.toolbarLabel}>Repulsion</span>
+            <span className={styles.eToolbarLabel}>Repulsion</span>
             <NumberInput
               value={layoutOptions.repulsionStrength ?? 1.0}
               onChange={v => setLayoutOptions(prev => ({ ...prev, repulsionStrength: v }))}
@@ -175,7 +175,7 @@ export const SchemaGraphView = () => {
               step={0.1}
               style={{ width: '50px' }}
             />
-            <span className={styles.toolbarLabel}>Length</span>
+            <span className={styles.eToolbarLabel}>Length</span>
             <NumberInput
               value={layoutOptions.idealEdgeLength ?? 160}
               onChange={v => setLayoutOptions(prev => ({ ...prev, idealEdgeLength: v }))}
@@ -187,7 +187,7 @@ export const SchemaGraphView = () => {
           </>
         )}
       </div>
-      <div className={styles.canvas}>
+      <div className={styles.eCanvas}>
         <DependencyGraph<EntitySchema>
           nodes={nodes}
           edges={edges}
@@ -201,7 +201,7 @@ export const SchemaGraphView = () => {
             return (
               <>
                 <TypeBadge color={color} name={node.data.name} icon={node.data.icon} size={20} />
-                <span className={styles.nodeLabel}>{node.data.name}</span>
+                <span className={styles.eNodeLabel}>{node.data.name}</span>
               </>
             );
           }}

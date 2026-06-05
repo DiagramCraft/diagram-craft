@@ -1,58 +1,73 @@
-.root {
+/**
+ * DependencyGraph - .cDependencyGraph
+ * | Node Group - .eNode
+ *   | Node Rect - .eNodeRect
+ *   | Node Content - .eNodeContent
+ * | Edge - .eEdge
+ *   | [data-kind="containment"] - containment edge variant
+ *   | [data-highlighted="true"] - highlighted state
+ * | Arc Edge - .eArcEdge
+ *   | [data-highlighted="true"] - highlighted state
+ */
+
+.cDependencyGraph {
   width: 100%;
   height: 100%;
   display: block;
   touch-action: none;
-}
 
-.nodeRect {
-  fill: var(--panel-bg);
-  stroke: var(--panel-border);
-  stroke-width: 1.5;
-  transition: stroke 0.1s;
-}
+  .eNodeRect {
+    fill: var(--panel-bg);
+    stroke: var(--panel-border);
+    stroke-width: 1.5;
+    transition: stroke 0.1s;
 
-.nodeRect:hover {
-  stroke: var(--accent-fg);
-}
+    &:hover {
+      stroke: var(--accent-fg);
+    }
+  }
 
-.nodeContent {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  font-size: 12px;
-  color: var(--base-fg);
-  overflow: hidden;
-  pointer-events: none;
-  box-sizing: border-box;
-}
+  .eNodeContent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    font-size: 12px;
+    color: var(--base-fg);
+    overflow: hidden;
+    pointer-events: none;
+    box-sizing: border-box;
+  }
 
-.edge {
-  stroke: var(--base-fg-more-dim);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 3;
-  fill: none;
-}
+  .eEdge {
+    stroke: var(--base-fg-more-dim);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+    fill: none;
 
-.edgeContainment {
-  stroke: var(--base-fg-more-dim);
-  stroke-width: 1.5;
-  fill: none;
-}
+    &[data-kind="containment"] {
+      stroke-dasharray: none;
+    }
 
-/* Reference edges in hierarchy layout rendered as arcs */
-.arcEdge {
-  stroke: var(--base-fg-more-dim);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 3;
-  fill: none;
-}
+    &[data-highlighted="true"] {
+      stroke: var(--accent-fg);
+      stroke-width: 2.5;
+      opacity: 1;
+    }
+  }
 
-.edgeHighlighted {
-  stroke: var(--accent-fg) !important;
-  stroke-width: 2.5 !important;
-  opacity: 1 !important;
+  .eArcEdge {
+    stroke: var(--base-fg-more-dim);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+    fill: none;
+
+    &[data-highlighted="true"] {
+      stroke: var(--accent-fg);
+      stroke-width: 2.5;
+      opacity: 1;
+    }
+  }
 }

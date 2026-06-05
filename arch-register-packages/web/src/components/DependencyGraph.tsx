@@ -234,7 +234,7 @@ export const DependencyGraph = <T,>({
   const nh = nodeHeight;
 
   return (
-    <svg ref={svgRef} className={styles.root} viewBox={viewBox} xmlns="http://www.w3.org/2000/svg">
+    <svg ref={svgRef} className={styles.cDependencyGraph} viewBox={viewBox} xmlns="http://www.w3.org/2000/svg">
       <defs>
         {/*
           fill="context-stroke" makes the arrowhead inherit the stroke color of
@@ -271,8 +271,6 @@ export const DependencyGraph = <T,>({
           const y2 = toPos.y - uy * trimDst;
 
           const isHighlighted = connectedEdges.has(edge.id);
-          const edgeClass = edge.kind === 'containment' ? styles.edgeContainment : styles.edge;
-          const finalClass = isHighlighted ? `${edgeClass} ${styles.edgeHighlighted}` : edgeClass;
 
           return (
             <line
@@ -281,7 +279,9 @@ export const DependencyGraph = <T,>({
               y1={y1}
               x2={x2}
               y2={y2}
-              className={finalClass}
+              className={styles.eEdge}
+              data-kind={edge.kind}
+              data-highlighted={connectedEdges.has(edge.id)}
               markerEnd="url(#dep-arrow)"
             />
           );
@@ -308,13 +308,13 @@ export const DependencyGraph = <T,>({
                 width={nw}
                 height={nh}
                 rx={6}
-                className={styles.nodeRect}
+                className={styles.eNodeRect}
               />
               <foreignObject x={-nw / 2} y={-nh / 2} width={nw} height={nh}>
                 <div
                   // @ts-expect-error xmlns is required for foreignObject content in some renderers
                   xmlns="http://www.w3.org/1999/xhtml"
-                  className={styles.nodeContent}
+                  className={styles.eNodeContent}
                 >
                   {renderNode(nodeMap.get(node.id) ?? node)}
                 </div>
@@ -356,16 +356,13 @@ export const DependencyGraph = <T,>({
             const ex = x2 - uttx * dstTrim;
             const ey = y2 - utty * dstTrim;
 
-            const isHighlighted = connectedEdges.has(edge.id);
-            const finalClass = isHighlighted
-              ? `${styles.arcEdge} ${styles.edgeHighlighted}`
-              : styles.arcEdge;
 
             return (
               <path
                 key={edge.id}
                 d={`M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`}
-                className={finalClass}
+              className={styles.eArcEdge}
+              data-highlighted={connectedEdges.has(edge.id)}
                 markerEnd="url(#dep-arrow)"
               />
             );
