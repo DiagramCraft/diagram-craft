@@ -1,6 +1,8 @@
-import { defineHandler, getQuery, H3 } from 'h3';
+import { defineHandler, getQuery, H3, readBody } from 'h3';
 import { randomUUID } from 'node:crypto';
-import type { DatabaseAdapter } from '../db/database.js';
+import type { DatabaseAdapter, UpdateEntityInput, CreateEntityInput } from '../db/database.js';
+import { createLogger } from '../utils/logger.js';
+import { parseCsv, validateCsvData, csvRowToEntity } from '../utils/csvImport.js';
 import {
   decodeRefs,
   type Entity,
@@ -23,6 +25,8 @@ import {
   PermissionChecker
 } from '@arch-register/permissions';
 import { httpAssert } from '../utils/httpAssert';
+
+const logger = createLogger('data');
 
 const BASE = '/api/:workspace/data';
 
@@ -314,6 +318,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
               .map(entity => [entity.id, entity.name || entity.slug])
           );
           const columns = [
+            'ID',
             'Name',
             'Slug',
             'Namespace',
@@ -327,6 +332,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           ];
           const rows = entities.map(entity => {
             const row: Record<string, unknown> = {
+              ID: entity.id,
               Name: entity.name,
               Slug: entity.slug,
               Namespace: entity.namespace,
@@ -353,9 +359,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
             }
             return row;
           });
-          csvContent = generateCsv(rows, columns);
+          csvContent = generateCsv(rows, columns, ';');
         } else {
           const columns = [
+            'ID',
             'Name',
             'Slug',
             'Namespace',
@@ -367,6 +374,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             'Schema Type'
           ];
           const rows = entities.map(entity => ({
+            ID: entity.id,
             Name: entity.name,
             Slug: entity.slug,
             Namespace: entity.namespace,
@@ -377,7 +385,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             Links: entity.links.length.toString(),
             'Schema Type': schemaMap.get(entity.schema_id)?.name ?? entity.schema_id
           }));
-          csvContent = generateCsv(rows, columns);
+          csvContent = generateCsv(rows, columns, ';');
         }
 
         const timestamp = new Date().toISOString().split('T')[0];
@@ -392,6 +400,394 @@ export function createDataRoutes(db: DatabaseAdapter) {
         return csvContent;
       } catch (e) {
         handleError(e, 'Failed to export data');
+      }
+    })
+  );
+
+  // CSV Import endpoints
+  router.get(
+    `${BASE}/import/template/:schemaId`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const schemaId = event.context.params?.['schemaId'];
+      httpAssert.present(schemaId, { message: 'schemaId is required' });
+
+      try {
+        const schema = await db.catalog.getSchema(workspace, schemaId);
+        httpAssert.present(schema, { status: 404, message: 'Schema not found' });
+
+        // Build template columns
+        const columns = [
+          'ID',
+          'Name',
+          'Slug',
+          'Namespace',
+          'Description',
+          'Owner',
+          'Lifecycle',
+          'Tags',
+          ...schema.fields.map(f => f.name)
+        ];
+
+        // Generate empty CSV with just headers (using semicolon delimiter)
+        const csvContent = columns.map(col => `"${col}"`).join(';');
+
+        const filename = `${schema.name.toLowerCase().replace(/\s+/g, '-')}-import-template.csv`;
+        if (event?.res) {
+          event.res.headers.set('Content-Type', 'text/csv; charset=utf-8');
+          event.res.headers.set('Content-Disposition', `attachment; filename="${filename}"`);
+        }
+        return csvContent;
+      } catch (e) {
+        handleError(e, 'Failed to generate import template');
+      }
+    })
+  );
+
+  router.post(
+    `${BASE}/import/parse`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      const body = await readBody<{ schemaId: string; csvContent: string }>(event);
+      
+      httpAssert.present(body, { message: 'Request body is required' });
+      httpAssert.present(body.schemaId, { message: 'schemaId is required' });
+      httpAssert.present(body.csvContent, { message: 'csvContent is required' });
+
+      try {
+        const schema = await db.catalog.getSchema(workspace, body.schemaId);
+        httpAssert.present(schema, { status: 404, message: 'Schema not found' });
+
+        const parseResult = parseCsv(body.csvContent);
+        const validatedRows = validateCsvData(parseResult.rows, schema.fields);
+
+        const allEntities = await db.catalog.listEntities(workspace);
+        const schemaEntities = allEntities.filter(e => e.schema_id === body.schemaId);
+
+        const existingEntitiesMap = new Map(schemaEntities.map(e => [e.id, e]));
+        const entitiesBySlug = new Map(
+          schemaEntities.map(e => [`${e.namespace}:${e.slug}`, e])
+        );
+        const entitiesByName = new Map<string, typeof allEntities[0][]>();
+        for (const entity of schemaEntities) {
+          const name = entity.name.toLowerCase().trim();
+          const list = entitiesByName.get(name) ?? [];
+          list.push(entity);
+          entitiesByName.set(name, list);
+        }
+
+        // Convert to entity format for preview
+        const entities = validatedRows.map(row => {
+          const rowName = row.data['Name']?.toLowerCase().trim();
+          const rowSlug = row.data['Slug']?.trim();
+          const rowNamespace = row.data['Namespace']?.trim() || 'default';
+          
+          let existingEntity: typeof allEntities[0] | undefined;
+          let matchType: 'id' | 'slug' | 'name' | 'none' = 'none';
+          let nameMatches: typeof allEntities = [];
+          const constraintViolations: Array<{ type: 'duplicate_slug' | 'wrong_workspace' | 'wrong_schema'; message: string }> = [];
+          
+          if (row.existingId) {
+            const entityById = existingEntitiesMap.get(row.existingId);
+            if (entityById) {
+              if (entityById.workspace !== workspace) {
+                constraintViolations.push({
+                  type: 'wrong_workspace',
+                  message: 'ID exists but belongs to different workspace'
+                });
+                row.errors.push('ID exists but belongs to different workspace');
+              } else if (entityById.schema_id !== body.schemaId) {
+                constraintViolations.push({
+                  type: 'wrong_schema',
+                  message: 'ID exists but belongs to different schema type'
+                });
+                row.errors.push('ID exists but belongs to different schema type');
+              } else {
+                matchType = 'id';
+                existingEntity = entityById;
+              }
+            }
+          }
+
+          if (matchType === 'none' && rowSlug) {
+            const entityBySlug = entitiesBySlug.get(`${rowNamespace}:${rowSlug}`);
+            if (entityBySlug) {
+              matchType = 'slug';
+              existingEntity = entityBySlug;
+            }
+          }
+
+          if (matchType === 'none' && rowName && entitiesByName.has(rowName)) {
+            matchType = 'name';
+            nameMatches = entitiesByName.get(rowName)!;
+            existingEntity = nameMatches[0];
+          }
+
+          if (matchType === 'none' || matchType === 'name') {
+            const proposedSlug = rowSlug || (rowName ? slugify(rowName) : '');
+
+            if (proposedSlug) {
+              const wouldConflict = entitiesBySlug.has(`${rowNamespace}:${proposedSlug}`);
+
+              if (wouldConflict) {
+                constraintViolations.push({
+                  type: 'duplicate_slug',
+                  message: `Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`
+                });
+                if (matchType === 'none') {
+                  row.errors.push(`Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`);
+                }
+              }
+            }
+          }
+          
+          const isUpdate = matchType === 'id' || matchType === 'slug';
+          
+          // Check permissions for updates
+          if ((isUpdate || matchType === 'name') && existingEntity) {
+            const checker = new PermissionChecker();
+            const hasPermission = checker.hasEntityPermission(authCtx, existingEntity, 'edit_entity');
+            if (!hasPermission) {
+              return {
+                rowNumber: row.rowNumber,
+                errors: [...row.errors, 'No permission to update this entity'],
+                entity: null,
+                isUpdate: false,
+                matchType: 'none',
+                nameMatches: [],
+                existingId: row.existingId,
+                existingEntity: null,
+                constraintViolations
+              };
+            }
+          }
+          
+          return {
+            rowNumber: row.rowNumber,
+            errors: row.errors,
+            entity: row.errors.length === 0 ? csvRowToEntity(row.data, schema.fields) : null,
+            isUpdate,
+            matchType,
+            nameMatches: matchType === 'name' ? nameMatches.map(e => ({
+              id: e.id,
+              name: e.name,
+              slug: e.slug,
+              namespace: e.namespace
+            })) : [],
+            existingId: existingEntity?.id ?? row.existingId,
+            existingEntity: (isUpdate || matchType === 'name') && existingEntity ? {
+              _name: existingEntity.name,
+              _slug: existingEntity.slug,
+              _namespace: existingEntity.namespace,
+              _description: existingEntity.description,
+              _owner: existingEntity.owner,
+              _lifecycle: existingEntity.lifecycle,
+              _tags: existingEntity.tags,
+              // Only include _links if it has actual content
+              ...(existingEntity.links && existingEntity.links.length > 0 ? { _links: existingEntity.links } : {}),
+              ...existingEntity.data
+            } : null,
+            constraintViolations: constraintViolations.length > 0 ? constraintViolations : undefined
+          };
+        });
+
+        return {
+          schemaId: body.schemaId,
+          schemaName: schema.name,
+          totalRows: parseResult.totalRows,
+          validRows: parseResult.validRows,
+          entities
+        };
+      } catch (e) {
+        handleError(e, 'Failed to parse CSV');
+      }
+    })
+  );
+
+  router.post(
+    `${BASE}/import/commit`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      const body = await readBody<{
+        schemaId: string;
+        entities: Array<Record<string, unknown> & { _existingId?: string }>;
+      }>(event);
+
+      httpAssert.present(body, { message: 'Request body is required' });
+      httpAssert.present(body.schemaId, { message: 'schemaId is required' });
+      httpAssert.present(body.entities, { message: 'entities is required' });
+
+      try {
+        const schema = await db.catalog.getSchema(workspace, body.schemaId);
+        httpAssert.present(schema, { status: 404, message: 'Schema not found' });
+
+        requireCanCreateTopLevelEntity(
+          authCtx,
+          schema.id,
+          'You do not have permission to create entities of this type'
+        );
+
+        const [lifecycleValues, teamIds, allEntities] = await Promise.all([
+          getLifecycleValues(db, workspace),
+          getTeamIds(db, workspace),
+          db.catalog.listEntities(workspace)
+        ]);
+
+        const nameToId = new Map(allEntities.map(e => [e.name.toLowerCase(), e.id]));
+        const entitiesById = new Map(allEntities.map(e => [e.id, e]));
+        const entitiesBySlug = new Map(
+          allEntities
+            .filter(e => e.schema_id === body.schemaId && e.workspace === workspace)
+            .map(e => [`${e.namespace}:${e.slug}`, e])
+        );
+
+        const createdIds: string[] = [];
+        const updatedIds: string[] = [];
+
+        for (const entityData of body.entities) {
+          const existingId = entityData._existingId as string | undefined;
+          const existingEntity = existingId ? entitiesById.get(existingId) : undefined;
+
+          if (existingId) {
+            if (!existingEntity) {
+              throw new Error(`Entity ${existingId} not found`);
+            }
+            if (existingEntity.workspace !== workspace) {
+              throw new Error(`Entity ${existingId} belongs to different workspace`);
+            }
+            if (existingEntity.schema_id !== body.schemaId) {
+              throw new Error(`Entity ${existingId} has different schema type`);
+            }
+          } else {
+            const proposedSlug = (entityData._slug as string) || slugify((entityData._name as string) ?? '');
+            const proposedNamespace = (entityData._namespace as string) || 'default';
+
+            if (entitiesBySlug.has(`${proposedNamespace}:${proposedSlug}`)) {
+              throw new Error(`Slug "${proposedSlug}" already exists in namespace "${proposedNamespace}"`);
+            }
+          }
+
+          const isUpdate = !!existingEntity;
+          const owner = resolveCreateOwner(
+            (entityData._owner as string | null) ?? null,
+            [],
+            schema,
+            teamIds,
+            authCtx.userId
+          );
+
+          const lifecycle = (entityData._lifecycle as string | null) ?? null;
+          if (lifecycle && !lifecycleValues.has(lifecycle)) {
+            throw new Error(`Invalid lifecycle value: ${lifecycle}`);
+          }
+
+          // Resolve reference fields
+          const resolvedData = { ...entityData };
+          for (const field of schema.fields) {
+            if ((field.type === 'reference' || field.type === 'containment') && resolvedData[field.id]) {
+              const value = resolvedData[field.id];
+              if (typeof value === 'string') {
+                const refNames = value.split(',').map(n => n.trim()).filter(Boolean);
+                const refIds = refNames
+                  .map(name => nameToId.get(name.toLowerCase()))
+                  .filter((id): id is string => id !== undefined);
+                
+                if (refIds.length > 0) {
+                  resolvedData[field.id] = refIds.join(',');
+                } else {
+                  delete resolvedData[field.id];
+                }
+              }
+            }
+          }
+
+          if (isUpdate && existingId && existingEntity) {
+            requireEntityAction(
+              authCtx,
+              existingEntity,
+              'edit_entity',
+              'You do not have permission to update this entity'
+            );
+
+            const updateInput: UpdateEntityInput = {
+              name: (resolvedData._name as string) ?? existingEntity.name,
+              slug: (resolvedData._slug as string) ?? existingEntity.slug,
+              namespace: (resolvedData._namespace as string) ?? existingEntity.namespace,
+              description: (resolvedData._description as string) ?? existingEntity.description,
+              owner,
+              lifecycle,
+              tags: Array.isArray(resolvedData._tags) ? resolvedData._tags as string[] : existingEntity.tags,
+              links: existingEntity.links,
+              schema_id: existingEntity.schema_id,
+              data: extractEntityFields(resolvedData),
+              visibility_mode: existingEntity.visibility_mode,
+              updated_at: new Date()
+            };
+
+            const updatedEntity = await db.catalog.updateEntity(workspace, existingId, updateInput);
+            if (!updatedEntity) {
+              throw new Error(`Failed to update entity ${existingId}`);
+            }
+            await logAudit(db, {
+              workspace,
+              operation: 'update',
+              entityType: 'entity',
+              entityId: existingId,
+              entityName: updatedEntity.name,
+              entitySlug: updatedEntity.slug,
+              schemaId: updatedEntity.schema_id,
+              changes: computeChanges(existingEntity.data, updatedEntity.data)
+            });
+
+            updatedIds.push(existingId);
+            nameToId.set(updatedEntity.name.toLowerCase(), existingId);
+          } else {
+            // Create new entity
+            const createInput: CreateEntityInput = {
+              id: randomUUID(),
+              workspace,
+              schema_id: body.schemaId,
+              name: (resolvedData._name as string) ?? '',
+              slug: slugify((resolvedData._slug as string) ?? (resolvedData._name as string) ?? ''),
+              namespace: (resolvedData._namespace as string) ?? '',
+              description: (resolvedData._description as string) ?? '',
+              owner,
+              lifecycle,
+              tags: Array.isArray(resolvedData._tags) ? resolvedData._tags as string[] : [],
+              links: [],
+              data: extractEntityFields(resolvedData),
+              visibility_mode: null,
+              created_at: new Date(),
+              updated_at: new Date()
+            };
+
+            const entity = await db.catalog.createEntity(createInput);
+            await logAudit(db, {
+              workspace,
+              operation: 'create',
+              entityType: 'entity',
+              entityId: entity.id,
+              entityName: entity.name,
+              entitySlug: entity.slug,
+              schemaId: entity.schema_id,
+              changes: computeChanges({}, entity.data)
+            });
+
+            createdIds.push(entity.id);
+            nameToId.set(entity.name.toLowerCase(), entity.id);
+          }
+        }
+
+        return { 
+          created: createdIds.length, 
+          updated: updatedIds.length,
+          ids: [...createdIds, ...updatedIds] 
+        };
+      } catch (e) {
+        logger.error('Import entities error', e instanceof Error ? e : new Error(String(e)));
+        handleError(e, 'Failed to import entities');
       }
     })
   );

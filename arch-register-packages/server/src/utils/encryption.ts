@@ -1,4 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('encryption');
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
@@ -13,7 +16,7 @@ const getKey = (): Buffer | null => {
 export const encrypt = (plaintext: string): string => {
   const key = getKey();
   if (!key) {
-    console.warn('[encryption] AI_ENCRYPTION_KEY not set — storing API key as plaintext');
+    logger.warn('AI_ENCRYPTION_KEY not set — storing API key as plaintext');
     return plaintext;
   }
   const iv = randomBytes(IV_LENGTH);

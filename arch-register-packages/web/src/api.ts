@@ -265,6 +265,53 @@ export const exportEntitiesToCSV = (workspace: string, options: FetchEntitiesOpt
   ).then(res => res.blob());
 };
 
+
+export const downloadCsvTemplate = (workspace: string, schemaId: string): Promise<Blob> => {
+  return apiFetchResponse(`/api/${workspace}/data/import/template/${schemaId}`).then(res => res.blob());
+};
+
+export const parseCsvImport = (
+  workspace: string,
+  schemaId: string,
+  csvContent: string
+): Promise<{
+  schemaId: string;
+  schemaName: string;
+  totalRows: number;
+  validRows: number;
+  entities: Array<{
+    rowNumber: number;
+    errors: string[];
+    entity: Record<string, unknown> | null;
+    isUpdate: boolean;
+    matchType?: 'id' | 'slug' | 'name' | 'none';
+    nameMatches?: Array<{ id: string; name: string; slug?: string; namespace?: string }>;
+    existingId?: string;
+    existingEntity?: Record<string, unknown> | null;
+    constraintViolations?: Array<{
+      type: 'duplicate_slug' | 'wrong_workspace' | 'wrong_schema';
+      message: string;
+    }>;
+  }>;
+}> => {
+  return apiFetch(`/api/${workspace}/data/import/parse`, {
+    method: 'POST',
+    body: JSON.stringify({ schemaId, csvContent }),
+  });
+};
+
+export const commitCsvImport = (
+  workspace: string,
+  schemaId: string,
+  entities: Array<Record<string, unknown>>
+): Promise<{ created: number; updated: number; ids: string[] }> => {
+  return apiFetch(`/api/${workspace}/data/import/commit`, {
+    method: 'POST',
+    body: JSON.stringify({ schemaId, entities }),
+  });
+};
+
+
 export const fetchEntity = (workspace: string, id: string) =>
   apiFetch<EntityRecord>(`/api/${workspace}/data/${id}`);
 

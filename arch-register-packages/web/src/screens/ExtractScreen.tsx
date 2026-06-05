@@ -374,6 +374,7 @@ export const ExtractScreen = () => {
             </button>
           </div>
 
+          <div className={styles.tableScroll}>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -454,6 +455,7 @@ export const ExtractScreen = () => {
                 ))}
               </tbody>
             </table>
+          </div>
           </div>
 
           <div className={styles.reviewFoot}>

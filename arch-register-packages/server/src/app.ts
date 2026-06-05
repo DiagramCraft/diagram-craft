@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
-import { H3, defineHandler, handleCors } from 'h3';
+import { H3, defineHandler, handleCors, getRequestPath, getMethod } from 'h3';
 import type { DatabaseAdapter } from './db/database.js';
 import type { StorageAdapter } from './storage/storage.js';
+import { createLogger } from './utils/logger.js';
 import { createDataRoutes } from './routes/data.js';
 import { createProjectRoutes } from './routes/projects.js';
 import { createSearchRoutes } from './routes/search.js';
@@ -18,8 +19,23 @@ import { requireAuth } from './middleware/auth.js';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
+const httpLogger = createLogger('http');
+
 export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
-  const app = new H3();
+  const app = new H3({
+    onError: (error, event) => {
+      const method = getMethod(event);
+      const path = getRequestPath(event);
+      if (error.status >= 500) {
+        const cause = error.cause instanceof Error ? error.cause : error;
+        httpLogger.error(`${error.status} ${method} ${path}: ${error.message}`, cause);
+      } else if (error.status === 404) {
+        httpLogger.info(`404 ${method} ${path}`);
+      } else {
+        httpLogger.warn(`${error.status} ${method} ${path}: ${error.message}`);
+      }
+    }
+  });
 
   const corsOriginEnv = process.env['CORS_ORIGIN'] ?? '*';
   const corsOrigin: '*' | string[] =

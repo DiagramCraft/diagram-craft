@@ -17,7 +17,7 @@ export const setLogLevel = (level: LogLevel) => {
 const isEnabled = (level: LogLevel) => LEVELS[level] >= LEVELS[activeLevel];
 
 const format = (level: LogLevel, ns: string, msg: string) =>
-  `[${level.toUpperCase()}] [${ns}] ${msg}`;
+  `${new Date().toISOString()} [${level.toUpperCase()}] [${ns}] ${msg}`;
 
 const extra = (context?: unknown) => (context !== undefined ? [context] : []);
 
@@ -35,6 +35,12 @@ export const createLogger = (ns: string) => ({
     if (isEnabled('warn')) console.warn(format('warn', ns, msg), ...extra(context));
   },
   error: (msg: string, context?: unknown) => {
-    if (isEnabled('error')) console.error(format('error', ns, msg), ...extra(context));
+    if (!isEnabled('error')) return;
+    if (context instanceof Error) {
+      console.error(format('error', ns, msg));
+      console.error(context.stack ?? context.message);
+    } else {
+      console.error(format('error', ns, msg), ...extra(context));
+    }
   }
 });
