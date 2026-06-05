@@ -110,7 +110,7 @@ export const DependencyGraph = <T,>({
 
     svg.addEventListener('wheel', handleWheel);
     return () => svg.removeEventListener('wheel', handleWheel);
-  }, []);
+  }, [zoom]);
 
   const positions = useMemo((): Map<string, Point> => {
     if (nodes.length === 0) return new Map();
@@ -206,9 +206,9 @@ export const DependencyGraph = <T,>({
     if (positions.size === 0) return '0 0 400 300';
 
     const posValues = Array.from(positions.values());
-    let minX = Math.min(...posValues.map(p => p.x)) - nodeWidth / 2 - PADDING;
-    let minY = Math.min(...posValues.map(p => p.y)) - nodeHeight / 2 - PADDING;
-    let maxX = Math.max(...posValues.map(p => p.x)) + nodeWidth / 2 + PADDING;
+    const minX = Math.min(...posValues.map(p => p.x)) - nodeWidth / 2 - PADDING;
+    const minY = Math.min(...posValues.map(p => p.y)) - nodeHeight / 2 - PADDING;
+    const maxX = Math.max(...posValues.map(p => p.x)) + nodeWidth / 2 + PADDING;
     let maxY = Math.max(...posValues.map(p => p.y)) + nodeHeight / 2 + PADDING;
 
     // For hierarchy layout, extend the viewBox downward to include arc peaks for reference edges
@@ -269,9 +269,6 @@ export const DependencyGraph = <T,>({
           const y1 = fromPos.y + uy * trimSrc;
           const x2 = toPos.x - ux * trimDst;
           const y2 = toPos.y - uy * trimDst;
-
-          const isHighlighted = connectedEdges.has(edge.id);
-
           return (
             <line
               key={edge.id}
@@ -361,8 +358,8 @@ export const DependencyGraph = <T,>({
               <path
                 key={edge.id}
                 d={`M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`}
-              className={styles.eArcEdge}
-              data-highlighted={connectedEdges.has(edge.id)}
+                className={styles.eArcEdge}
+                data-highlighted={connectedEdges.has(edge.id)}
                 markerEnd="url(#dep-arrow)"
               />
             );
