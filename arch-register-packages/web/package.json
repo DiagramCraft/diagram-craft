@@ -24,6 +24,7 @@
     "@diagram-craft/stencil-c4": "workspace:^",
     "@diagram-craft/stencil-data-modelling": "workspace:^",
     "@diagram-craft/stencil-uml": "workspace:^",
+    "@diagram-craft/graph": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@radix-ui/colors": "^3.0.0",
     "@tanstack/ai-react": "^0.13.1",
