@@ -59,7 +59,9 @@ export class LocalFileSystemServer implements FileSystemServer {
           const entryStats = fs.statSync(path.join(fullPath, entry));
           return {
             name: entry,
-            isDirectory: entryStats.isDirectory()
+            isDirectory: entryStats.isDirectory(),
+            size: entryStats.isFile() ? entryStats.size : undefined,
+            modifiedAt: entryStats.isFile() ? entryStats.mtimeMs : undefined
           };
         })
     };

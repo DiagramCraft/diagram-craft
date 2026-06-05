@@ -67,11 +67,7 @@ async function saveToPath(context: Application, path: string): Promise<void> {
 async function checkFileExists(path: string): Promise<boolean> {
   try {
     const response = await fetch(`${AppConfig.get().filesystem.endpoint}/api/fs/${path}`);
-    if (!response.ok) return false;
-
-    const data = await response.json();
-    // If it has content property, it's a file, not a directory
-    return data.content !== undefined;
+    return response.ok;
   } catch {
     return false;
   }

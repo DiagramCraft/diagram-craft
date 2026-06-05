@@ -143,6 +143,9 @@ export const stencilEntry = <T extends keyof StencilLoaderOpts>(
 export type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
   id: string;
   name: string;
+  description?: string;
+  icon?: string;
+  group?: string;
   includedByDefault: boolean;
   loader: K;
   opts: StencilLoaderOpts[K];

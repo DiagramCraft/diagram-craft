@@ -1,87 +1,18 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './ImageInsertDialog.module.css';
-import { TbFile, TbFolder } from 'react-icons/tb';
+import { TbFileTypePng, TbFolder, TbFolderSearch, TbPhoto } from 'react-icons/tb';
 import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { DialogCommand } from '@diagram-craft/canvas/context';
 import { EmptyObject } from '@diagram-craft/utils/types';
 import { AppConfig } from '../appConfig';
 import buttonStyles from '@diagram-craft/app-components/Button.module.css';
+import browserStyles from './FileBrowser.module.css';
+import { DirEntry, FileBrowserList, FileBrowserToolbar } from './FileDialog';
 
-type DirEntry = {
-  name: string;
-  isDirectory: boolean;
-};
+const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg']);
 
-const ImageInsertDialogBrowser = (props: Props) => {
-  const [path, setPath] = useState<string[]>([]);
-  const [list, setList] = useState<DirEntry[] | undefined>(undefined);
-
-  useEffect(() => {
-    const getData = async () => {
-      const response = await fetch(
-        `${AppConfig.get().filesystem.endpoint}/api/fs/${path.join('/')}`
-      );
-      const data = await response.json();
-      setList(data.entries);
-    };
-    getData();
-  }, [path]);
-
-  return (
-    <div className={styles.icInsertImageDialog}>
-      <div className={styles.ePath}>
-        Path:{' '}
-        <a href={'#'} onClick={() => setPath([])}>
-          Home
-        </a>
-        {path.map((p, i) => (
-          <React.Fragment key={`${i}__${p}`}>
-            /
-            <a
-              href={'#'}
-              key={p}
-              onClick={() => {
-                setPath(path.slice(0, i + 1));
-              }}
-            >
-              {p}
-            </a>
-          </React.Fragment>
-        ))}
-      </div>
-
-      {list === undefined ? (
-        <p>Loading...</p>
-      ) : (
-        <div className={styles.eList}>
-          <div>
-            <ul>
-              {list.map(entry => (
-                <li key={entry.name}>
-                  {entry.isDirectory ? (
-                    <a href={'#'} onClick={() => setPath(p => [...p, entry.name])}>
-                      <TbFolder /> {entry.name}
-                    </a>
-                  ) : (
-                    <a
-                      href={'#'}
-                      onClick={() => {
-                        props.onOk(`${path.join('/')}/${entry.name}`);
-                      }}
-                    >
-                      <TbFile /> {entry.name}
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+const isImageFile = (name: string) => IMAGE_EXTS.has(name.split('.').pop()?.toLowerCase() ?? '');
 
 const MODES = [
   { value: 'device', label: 'From device' },
@@ -92,40 +23,167 @@ type Mode = (typeof MODES)[number]['value'];
 
 export const ImageInsertDialog = (props: Props) => {
   const [mode, setMode] = useState<Mode>('device');
+  const [path, setPath] = useState<string[]>([]);
+  const [list, setList] = useState<DirEntry[] | undefined>(undefined);
+  const [selected, setSelected] = useState<DirEntry | null>(null);
+
+  useEffect(() => {
+    if (mode !== 'server') return;
+    const controller = new AbortController();
+    setList(undefined);
+    setSelected(null);
+    const getData = async () => {
+      const response = await fetch(
+        `${AppConfig.get().filesystem.endpoint}/api/fs/${path.join('/')}`,
+        { signal: controller.signal }
+      );
+      const data = await response.json();
+      setList(data.entries as DirEntry[]);
+    };
+    getData();
+    return () => controller.abort();
+  }, [path, mode]);
+
+  useEffect(() => {
+    if (props.open) {
+      setPath([]);
+      setSelected(null);
+      setList(undefined);
+    }
+  }, [props.open]);
+
+  const navigateInto = (entry: DirEntry) => {
+    setPath(p => [...p, entry.name]);
+    setSelected(null);
+  };
+
+  const navigateTo = (index: number) => {
+    setPath(p => p.slice(0, index));
+    setSelected(null);
+  };
+
+  const handleInsert = () => {
+    if (!selected || selected.isDirectory) return;
+    const fullPath = [...path, selected.name].join('/');
+    props.onOk(fullPath);
+  };
+
+  const filteredList = list?.filter(e => e.isDirectory || isImageFile(e.name)) ?? [];
+
+  const footerLeft =
+    mode === 'server' ? (
+      <span className={browserStyles.eFooterMeta}>
+        {selected && !selected.isDirectory ? (
+          <>
+            <strong>{selected.name}</strong>
+            {' · '}Image
+          </>
+        ) : (
+          'Nothing selected'
+        )}
+      </span>
+    ) : undefined;
 
   return (
     <Dialog
       open={props.open}
       onClose={props.onCancel!}
-      title={'Insert Image'}
-      buttons={[{ label: 'Cancel', type: 'cancel', onClick: props.onCancel! }]}
+      title="Insert Image"
+      width={560}
+      footerLeft={footerLeft}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: props.onCancel! },
+        ...(mode === 'server'
+          ? [
+              {
+                label: 'Insert',
+                type: 'default' as const,
+                disabled: !selected || selected.isDirectory,
+                onClick: handleInsert
+              }
+            ]
+          : [])
+      ]}
     >
-      <div style={{ marginBottom: '0.75rem' }}>
-        <ModeSwitcher modes={MODES} value={mode} onChange={setMode} />
-      </div>
-
-      {mode === 'device' && (
-        <>
-          <label
-            className={buttonStyles.cButton}
-            style={{ fontSize: '11px', justifyContent: 'left' }}
-            htmlFor={'file-upload'}
-          >
-            Upload...
-          </label>
-
-          <input
-            id={'file-upload'}
-            type={'file'}
-            style={{ display: 'none', width: 0 }}
-            onChange={async e => {
-              props.onOk(e.target.files![0]!);
+      <div className={styles.icInsertImageDialog}>
+        <div className={styles.eModeWrap}>
+          <ModeSwitcher
+            modes={MODES}
+            value={mode}
+            onChange={m => {
+              setMode(m);
+              setSelected(null);
             }}
           />
-        </>
-      )}
+        </div>
 
-      {mode === 'server' && <ImageInsertDialogBrowser {...props} />}
+        {mode === 'device' && (
+          <>
+            <label
+              className={buttonStyles.cButton}
+              style={{ fontSize: '11px', justifyContent: 'left' }}
+              htmlFor="file-upload"
+            >
+              Upload...
+            </label>
+            <input
+              id="file-upload"
+              type="file"
+              style={{ display: 'none', width: 0 }}
+              onChange={async e => {
+                const file = e.target.files?.[0];
+                if (file == null) return;
+                props.onOk(file);
+              }}
+            />
+          </>
+        )}
+
+        {mode === 'server' && (
+          <>
+            <FileBrowserToolbar path={path} navigateTo={navigateTo} />
+
+            <FileBrowserList
+              isLoading={list === undefined}
+              isEmpty={filteredList.length === 0}
+              emptyMessage={
+                <>
+                  <TbFolderSearch size={28} />
+                  <p>No images in this folder.</p>
+                </>
+              }
+            >
+              {filteredList.map(entry => (
+                <button
+                  key={entry.name}
+                  type="button"
+                  role="option"
+                  aria-selected={selected === entry}
+                  className={styles.eRow}
+                  data-selected={selected === entry ? 'true' : undefined}
+                  onClick={() => setSelected(entry)}
+                  onDoubleClick={() => {
+                    if (entry.isDirectory) navigateInto(entry);
+                    else {
+                      const fullPath = [...path, entry.name].join('/');
+                      props.onOk(fullPath);
+                    }
+                  }}
+                >
+                  {entry.isDirectory ? (
+                    <TbFolder size={15} />
+                  ) : entry.name.toLowerCase().endsWith('.png') ? (
+                    <TbFileTypePng size={15} />
+                  ) : (
+                    <TbPhoto size={15} />
+                  )}
+                  <span className={styles.eNameText}>{entry.name}</span>
+                </button>
+              ))}
+            </FileBrowserList>
+          </>
+        )}
+      </div>
     </Dialog>
   );
 };

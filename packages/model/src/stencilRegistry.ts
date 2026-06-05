@@ -77,6 +77,8 @@ export type StencilSubPackage = {
 export type StencilPackage = {
   id: string;
   name?: string;
+  description?: string;
+  icon?: string;
   stencils: Array<Stencil>;
   type: 'default' | string;
 

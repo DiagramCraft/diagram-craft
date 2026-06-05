@@ -1,0 +1,127 @@
+/**
+ * StencilPackageDialog - .icStencilPackageDialog
+ * | Toolbar - .eToolbar
+ * | Package list - .ePackageList > .eGroupLabel, .eRow [aria-checked] (.eCheckmark, .eIcon, .eText (.eName, .eDesc))
+ * | Empty state - .eEmpty
+ *
+ * Footer (rendered outside dialog body): .eFooterLeft
+ */
+
+.icStencilPackageDialog {
+  .eToolbar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .ePackageList {
+    padding: 4px;
+  }
+
+  .eGroupLabel {
+    padding: 8px 8px 4px;
+    font-size: 10px;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    color: var(--cmp-fg-dimmed);
+  }
+
+  .eRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: calc(100% - 6px);
+    padding: 7px 8px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    text-align: left;
+    cursor: pointer;
+    background: transparent;
+    font-family: inherit;
+
+    &:hover {
+      background: var(--cmp-bg);
+    }
+
+    input[type='checkbox'] {
+      accent-color: var(--cmp-border);
+    }
+
+    &:has(input:checked) {
+      background: color-mix(in oklab, var(--accent-chroma) 7%, transparent);
+
+      &:hover {
+        background: color-mix(in oklab, var(--accent-chroma) 12%, transparent);
+      }
+    }
+
+    .eIcon {
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      border: 1px solid var(--cmp-border);
+      background: var(--cmp-bg);
+      color: var(--cmp-fg-dimmed);
+    }
+
+    &:has(input:checked) .eIcon {
+      border-color: color-mix(in oklch, var(--accent-chroma) 35%, var(--cmp-border));
+      color: var(--accent-chroma);
+    }
+
+    .eText {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .eName {
+      display: block;
+      font-size: 13px;
+      color: var(--cmp-fg);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &:has(input:checked) .eName {
+      color: var(--base-fg);
+    }
+
+    .eDesc {
+      display: block;
+      font-size: 11.5px;
+      color: var(--cmp-fg-dimmed);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .eEmpty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    color: var(--cmp-fg-dimmed);
+    font-size: 12px;
+  }
+}
+
+/* Footer element rendered outside the dialog body via the footerLeft prop */
+.eFooterLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cmp-fg-dimmed);
+  font-size: 11.5px;
+
+  strong {
+    color: var(--base-fg);
+    font-weight: 600;
+  }
+}

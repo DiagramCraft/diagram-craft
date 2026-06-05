@@ -60,9 +60,12 @@ export function createFilesystemRoutes(fileSystemServer: FileSystemServer) {
   router.put(
     API_FS_WILDCARD,
     defineHandler(async event => {
+      const createDirectory = event.req.headers.get('x-diagram-craft-create-directory') === 'true';
       const contentTypeValue = event.req.headers.get('content-type') ?? undefined;
       const contentLength = parseInt(event.req.headers.get('content-length') ?? '0', 10);
-      const body = await event.req.arrayBuffer().catch(() => undefined);
+      const body = createDirectory
+        ? undefined
+        : await event.req.arrayBuffer().catch(() => undefined);
 
       return fileSystemServer.put(event.context.params!._!, {
         contentType: contentTypeValue,
