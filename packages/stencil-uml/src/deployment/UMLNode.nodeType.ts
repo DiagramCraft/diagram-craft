@@ -15,7 +15,7 @@ import {
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Point, _p } from '@diagram-craft/geometry/point';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
-import { resolveCssColor } from '@diagram-craft/utils/dom';
+import { resolveCssColor } from '@diagram-craft/utils-dom/dom';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import {
   renderStereotypeIconInBounds,

@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+  },
+  "include": [
+    "../../packages/**/*",
+    "../../packages/**/.storybook/**/*",
+    "../api-types/src/**/*",
+    "../permissions/src/**/*",
+    "./src/**/*"
+  ]
+}

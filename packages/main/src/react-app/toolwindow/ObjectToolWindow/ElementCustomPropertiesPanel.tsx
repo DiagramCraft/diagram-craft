@@ -28,7 +28,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { TbPencil, TbX } from 'react-icons/tb';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
-import { resolveCssColor } from '@diagram-craft/utils/dom';
+import { resolveCssColor } from '@diagram-craft/utils-dom/dom';
 
 const iconService = new IconifyIconService();
 

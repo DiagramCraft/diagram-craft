@@ -27,6 +27,7 @@ import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
 import { applyTemplate } from '@diagram-craft/utils/template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
+import { htmlToText } from '@diagram-craft/utils/html';
 import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
@@ -637,15 +638,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       const metadata = this.dataForTemplate;
 
       if (text[0] === '<') {
-        try {
-          const d = new DOMParser().parseFromString(text, 'text/html');
-          const textContent = d.body.textContent;
-          if (textContent) {
-            this.cache.set('name', applyTemplate(textContent, metadata));
-            return textContent;
-          }
-        } catch (_e) {
-          // Ignore
+        const textContent = htmlToText(text);
+        if (textContent !== '') {
+          this.cache.set('name', applyTemplate(textContent, metadata));
+          return textContent;
         }
       }
 

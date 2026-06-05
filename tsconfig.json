@@ -25,6 +25,7 @@
       "@diagram-craft/collaboration/*": ["./packages/collaboration/src/*"],
       "@diagram-craft/app-components/*": ["./packages/app-components/src/*"],
       "@diagram-craft/utils/*": ["./packages/utils/src/*"],
+      "@diagram-craft/utils-dom/*": ["./packages/utils-dom/src/*"],
       "@diagram-craft/geometry/*": ["./packages/geometry/src/*"],
       "@diagram-craft/graph/*": ["./packages/graph/src/*"],
       "@diagram-craft/model/*": ["./packages/model/src/*"],

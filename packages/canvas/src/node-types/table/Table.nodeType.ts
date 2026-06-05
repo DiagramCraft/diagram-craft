@@ -21,7 +21,7 @@ import {
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../../highlight';
 import { renderChildren } from '../../components/renderElement';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import {
   assertTableCell,
   assertTableRow,

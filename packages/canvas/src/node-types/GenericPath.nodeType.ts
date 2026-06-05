@@ -9,7 +9,7 @@ import * as svg from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Zoom } from '../components/zoom';
 

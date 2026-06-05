@@ -8,8 +8,8 @@ import {
   DragEvents,
   resolveCanvasDragElementId
 } from '@diagram-craft/canvas/dragDropManager';
-import { setPosition } from '@diagram-craft/utils/dom';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { setPosition } from '@diagram-craft/utils-dom/dom';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Translation } from '@diagram-craft/geometry/transform';

@@ -39,7 +39,13 @@ export const makeDefaultDocumentFactory = (registry: Registry): DocumentFactory 
     ) => {
       const root = CRDT.makeRoot();
       if (url) {
-        if (location.hash !== '') {
+        const locationHash =
+          'location' in globalThis
+            ? // biome-ignore lint/suspicious/noExplicitAny: browser-only lookup
+              (((globalThis as any).location?.hash as string | undefined) ?? '')
+            : '';
+
+        if (locationHash !== '') {
           // TODO: This is a hack for the testing setup
           await CollaborationConfig.Backend.connect(
             `${url}__${newid()}`,

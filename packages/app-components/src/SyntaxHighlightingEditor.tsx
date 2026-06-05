@@ -9,7 +9,7 @@ import React, {
 import { extractDataAttributes } from './utils';
 import styles from './SyntaxHighlightingEditor.module.css';
 import { assert } from '@diagram-craft/utils/assert';
-import { Browser } from '@diagram-craft/utils/browser';
+import { Browser } from '@diagram-craft/utils-dom/browser';
 import { MaximizedTextDialog } from './MaximizedTextDialog';
 import { MaximizeButton } from './MaximizeButton';
 

@@ -16,7 +16,7 @@ import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DASH_PATTERNS } from '../dashPatterns';
 import * as svg from '../component/vdom-svg';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { Browser } from '@diagram-craft/utils/browser';
+import { Browser } from '@diagram-craft/utils-dom/browser';
 
 /**
  * Extend Effect interface with rendering methods

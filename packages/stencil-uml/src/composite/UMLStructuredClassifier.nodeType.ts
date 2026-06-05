@@ -39,7 +39,7 @@ import {
   UmlStereotypeIcon
 } from '@diagram-craft/stencil-uml/common/stereotypeIcon';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
-import { resolveCssColor } from '@diagram-craft/utils/dom';
+import { resolveCssColor } from '@diagram-craft/utils-dom/dom';
 
 const DEFAULT_TITLE_SIZE = 20;
 

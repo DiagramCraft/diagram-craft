@@ -8,7 +8,7 @@ import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights } from '../highlight';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';

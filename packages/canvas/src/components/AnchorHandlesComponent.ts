@@ -6,7 +6,7 @@ import { Transforms } from '../component/vdom-svg';
 import { VNode } from '../component/vdom';
 import { MoveDrag } from '../drag/moveDrag';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { AnchorHandleDrag } from '../drag/anchorHandleDrag';
 import { projectToPointHandle } from '../drag/anchorHandleDragSource';
 import { Zoom } from './zoom';

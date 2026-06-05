@@ -1,7 +1,7 @@
 import { useEventListener } from './hooks/useEventListener';
 import { useRedraw } from './hooks/useRedraw';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { useDiagram } from '../application';
 import { UserState } from '../UserState';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';

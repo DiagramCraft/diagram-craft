@@ -5,10 +5,7 @@ import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Registry } from './elementDefinitionRegistry';
 import { getRemoteUnitOfWork, UnitOfWork, type UOWTrackable, UOWRegistry } from './unitOfWork';
-import {
-  DiagramDocumentUOWAdapter,
-  DocumentDiagramChildAdapter
-} from './diagramDocument.uow';
+import { DiagramDocumentUOWAdapter, DocumentDiagramChildAdapter } from './diagramDocument.uow';
 import { DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './data-providers/dataProviderUrl';
@@ -127,7 +124,10 @@ export class DiagramDocument
     CollaborationConfig.Backend.connect(this.url, this.root, userState, callback);
 
     // TODO: Move this to the caller
-    window.onbeforeunload = () => this.deactivate(() => {});
+    if ('window' in globalThis) {
+      // biome-ignore lint/suspicious/noExplicitAny: browser-only hook
+      (globalThis as any).window.onbeforeunload = () => this.deactivate(() => {});
+    }
   }
 
   deactivate(callback: ProgressCallback) {
@@ -177,7 +177,9 @@ export class DiagramDocument
 
   insertDiagram(diagram: Diagram, position: number, parent?: Diagram, uow?: UnitOfWork) {
     if (uow) {
-      uow.executeAdd(diagram, this, position, () => this.#doInsertDiagram(diagram, position, parent, uow));
+      uow.executeAdd(diagram, this, position, () =>
+        this.#doInsertDiagram(diagram, position, parent, uow)
+      );
     } else {
       UnitOfWork.executeSilently(diagram, localUow =>
         this.#doInsertDiagram(diagram, position, parent, localUow)
@@ -185,7 +187,12 @@ export class DiagramDocument
     }
   }
 
-  #doInsertDiagram(diagram: Diagram, position: number, parent: Diagram | undefined, uow: UnitOfWork) {
+  #doInsertDiagram(
+    diagram: Diagram,
+    position: number,
+    parent: Diagram | undefined,
+    uow: UnitOfWork
+  ) {
     precondition.is.false(!!this.byId(diagram.id));
 
     diagram._prepareAttach(parent);
@@ -218,7 +225,11 @@ export class DiagramDocument
     this.emit('diagramChanged', { diagram: diagram });
   }
 
-  moveDiagram(diagram: Diagram, ref: { diagram: Diagram; relation: 'before' | 'after' }, uow?: UnitOfWork) {
+  moveDiagram(
+    diagram: Diagram,
+    ref: { diagram: Diagram; relation: 'before' | 'after' },
+    uow?: UnitOfWork
+  ) {
     if (uow) {
       uow.executeUpdate(this, () => this.#doMoveDiagram(diagram, ref));
     } else {

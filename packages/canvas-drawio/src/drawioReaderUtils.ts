@@ -1,7 +1,7 @@
 import { getParser } from './drawioShapeParserRegistry';
 import { getShapeBundle } from './drawioShapeBundleRegistry';
 import { Point } from '@diagram-craft/geometry/point';
-import { xNum } from '@diagram-craft/utils/xml';
+import { xNum } from '@diagram-craft/utils-dom/xml';
 
 export const angleFromDirection = (s: string) => {
   if (s === 'north') return -Math.PI / 2;

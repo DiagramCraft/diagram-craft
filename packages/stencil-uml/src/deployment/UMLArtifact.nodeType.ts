@@ -15,7 +15,7 @@ import {
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
-import { resolveCssColor } from '@diagram-craft/utils/dom';
+import { resolveCssColor } from '@diagram-craft/utils-dom/dom';
 import {
   renderStereotypeIconInBounds,
   UML_STEREOTYPE_ICON_OPTIONS,

@@ -9,7 +9,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
-import { resolveCssColor } from '@diagram-craft/utils/dom';
+import { resolveCssColor } from '@diagram-craft/utils-dom/dom';
 import {
   getStereotypeIconTextProps,
   renderStereotypeIcon,

@@ -1,4 +1,4 @@
-import { Browser } from '@diagram-craft/utils/browser';
+import { Browser } from '@diagram-craft/utils-dom/browser';
 import { ELEMENTS_CONTENT_TYPE } from './clipboardConstants';
 
 type ClipboardItem = {

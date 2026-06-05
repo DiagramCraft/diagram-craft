@@ -1,6 +1,6 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { resolveTargetElement } from '@diagram-craft/utils/dom';
+import { resolveTargetElement } from '@diagram-craft/utils-dom/dom';
 import { CanvasDomHelper } from './utils/canvasDomHelper';
 
 const removeSuffix = (s: string) => {
