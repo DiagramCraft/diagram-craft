@@ -2,8 +2,7 @@ import { defineHandler, getQuery, H3, readBody } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, UpdateEntityInput, CreateEntityInput } from '../db/database.js';
 import { createLogger } from '../utils/logger.js';
-
-const logger = createLogger('data');
+import { parseCsv, validateCsvData, csvRowToEntity } from '../utils/csvImport.js';
 import {
   decodeRefs,
   type Entity,
@@ -26,6 +25,8 @@ import {
   PermissionChecker
 } from '@arch-register/permissions';
 import { httpAssert } from '../utils/httpAssert';
+
+const logger = createLogger('data');
 
 const BASE = '/api/:workspace/data';
 
@@ -458,31 +459,22 @@ export function createDataRoutes(db: DatabaseAdapter) {
         const schema = await db.catalog.getSchema(workspace, body.schemaId);
         httpAssert.present(schema, { status: 404, message: 'Schema not found' });
 
-        // Import CSV parsing utilities
-        const { parseCsv, validateCsvData, csvRowToEntity } = await import('../utils/csvImport.js');
-
-        // Parse CSV
         const parseResult = parseCsv(body.csvContent);
-
-        // Validate against schema
         const validatedRows = validateCsvData(parseResult.rows, schema.fields);
 
-        // Get all entities to detect existing ones
         const allEntities = await db.catalog.listEntities(workspace);
-        const existingEntitiesMap = new Map(
-          allEntities
-            .filter(e => e.schema_id === body.schemaId)
-            .map(e => [e.id, e])
+        const schemaEntities = allEntities.filter(e => e.schema_id === body.schemaId);
+
+        const existingEntitiesMap = new Map(schemaEntities.map(e => [e.id, e]));
+        const entitiesBySlug = new Map(
+          schemaEntities.map(e => [`${e.namespace}:${e.slug}`, e])
         );
-        
-        // Build name-based lookup for ambiguous matches
         const entitiesByName = new Map<string, typeof allEntities[0][]>();
-        for (const entity of allEntities.filter(e => e.schema_id === body.schemaId)) {
+        for (const entity of schemaEntities) {
           const name = entity.name.toLowerCase().trim();
-          if (!entitiesByName.has(name)) {
-            entitiesByName.set(name, []);
-          }
-          entitiesByName.get(name)!.push(entity);
+          const list = entitiesByName.get(name) ?? [];
+          list.push(entity);
+          entitiesByName.set(name, list);
         }
 
         // Convert to entity format for preview
@@ -496,7 +488,6 @@ export function createDataRoutes(db: DatabaseAdapter) {
           let nameMatches: typeof allEntities = [];
           const constraintViolations: Array<{ type: 'duplicate_slug' | 'wrong_workspace' | 'wrong_schema'; message: string }> = [];
           
-          // Step 1: Try ID matching with workspace+schema validation
           if (row.existingId) {
             const entityById = existingEntitiesMap.get(row.existingId);
             if (entityById) {
@@ -518,41 +509,27 @@ export function createDataRoutes(db: DatabaseAdapter) {
               }
             }
           }
-          
-          // Step 2: Try slug+namespace matching (if no valid ID match)
+
           if (matchType === 'none' && rowSlug) {
-            const entityBySlug = allEntities.find(e => 
-              e.workspace === workspace &&
-              e.schema_id === body.schemaId &&
-              e.slug === rowSlug &&
-              e.namespace === rowNamespace
-            );
-            
+            const entityBySlug = entitiesBySlug.get(`${rowNamespace}:${rowSlug}`);
             if (entityBySlug) {
               matchType = 'slug';
               existingEntity = entityBySlug;
             }
           }
-          
-          // Step 3: Try name matching (if no ID or slug match)
+
           if (matchType === 'none' && rowName && entitiesByName.has(rowName)) {
             matchType = 'name';
             nameMatches = entitiesByName.get(rowName)!;
             existingEntity = nameMatches[0];
           }
-          
-          // Step 4: Validate CREATE action for slug uniqueness
+
           if (matchType === 'none' || matchType === 'name') {
-            const proposedSlug = rowSlug || (rowName ? rowName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '');
-            
+            const proposedSlug = rowSlug || (rowName ? slugify(rowName) : '');
+
             if (proposedSlug) {
-              const wouldConflict = allEntities.some(e =>
-                e.workspace === workspace &&
-                e.schema_id === body.schemaId &&
-                e.slug === proposedSlug &&
-                e.namespace === rowNamespace
-              );
-              
+              const wouldConflict = entitiesBySlug.has(`${rowNamespace}:${proposedSlug}`);
+
               if (wouldConflict) {
                 constraintViolations.push({
                   type: 'duplicate_slug',
@@ -658,21 +635,22 @@ export function createDataRoutes(db: DatabaseAdapter) {
           db.catalog.listEntities(workspace)
         ]);
 
-        // Build name-to-ID lookup for reference resolution
-        const nameToId = new Map(
-          allEntities.map(e => [e.name.toLowerCase(), e.id])
+        const nameToId = new Map(allEntities.map(e => [e.name.toLowerCase(), e.id]));
+        const entitiesById = new Map(allEntities.map(e => [e.id, e]));
+        const entitiesBySlug = new Map(
+          allEntities
+            .filter(e => e.schema_id === body.schemaId && e.workspace === workspace)
+            .map(e => [`${e.namespace}:${e.slug}`, e])
         );
 
         const createdIds: string[] = [];
         const updatedIds: string[] = [];
 
-        // Create or update entities
         for (const entityData of body.entities) {
           const existingId = entityData._existingId as string | undefined;
-          
-          // Validate UPDATE operations
+          const existingEntity = existingId ? entitiesById.get(existingId) : undefined;
+
           if (existingId) {
-            const existingEntity = allEntities.find(e => e.id === existingId);
             if (!existingEntity) {
               throw new Error(`Entity ${existingId} not found`);
             }
@@ -683,24 +661,15 @@ export function createDataRoutes(db: DatabaseAdapter) {
               throw new Error(`Entity ${existingId} has different schema type`);
             }
           } else {
-            // Validate CREATE operations - check slug uniqueness
-            const proposedSlug = (entityData._slug as string) || 
-              ((entityData._name as string) || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            const proposedSlug = (entityData._slug as string) || slugify((entityData._name as string) ?? '');
             const proposedNamespace = (entityData._namespace as string) || 'default';
-            
-            const conflictingEntity = allEntities.find(e =>
-              e.workspace === workspace &&
-              e.schema_id === body.schemaId &&
-              e.slug === proposedSlug &&
-              e.namespace === proposedNamespace
-            );
-            
-            if (conflictingEntity) {
+
+            if (entitiesBySlug.has(`${proposedNamespace}:${proposedSlug}`)) {
               throw new Error(`Slug "${proposedSlug}" already exists in namespace "${proposedNamespace}"`);
             }
           }
-          
-          const isUpdate = existingId && allEntities.some(e => e.id === existingId);
+
+          const isUpdate = !!existingEntity;
           const owner = resolveCreateOwner(
             (entityData._owner as string | null) ?? null,
             [],
@@ -722,9 +691,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
               if (typeof value === 'string') {
                 const refNames = value.split(',').map(n => n.trim()).filter(Boolean);
                 const refIds = refNames
-                  .map(name => nameToId.get(name.toLowerCase()) ?? createdIds.find(id => 
-                    allEntities.find(e => e.id === id)?.name.toLowerCase() === name.toLowerCase()
-                  ))
+                  .map(name => nameToId.get(name.toLowerCase()))
                   .filter((id): id is string => id !== undefined);
                 
                 if (refIds.length > 0) {
@@ -736,13 +703,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             }
           }
 
-          if (isUpdate && existingId) {
-            // Update existing entity
-            const existingEntity = allEntities.find(e => e.id === existingId);
-            if (!existingEntity) {
-              throw new Error(`Entity ${existingId} not found`);
-            }
-
+          if (isUpdate && existingId && existingEntity) {
             requireEntityAction(
               authCtx,
               existingEntity,

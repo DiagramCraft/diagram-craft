@@ -131,13 +131,7 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
     // Separate metadata and custom fields
     const metadataKeys = fieldsToCompare.filter(k => k.startsWith('_')).sort();
     const customKeys = fieldsToCompare.filter(k => !k.startsWith('_')).sort();
-    
-    // Helper to normalize values for comparison (treat empty string, null, undefined as equivalent)
-    const normalizeValue = (val: unknown) => {
-      if (val === '' || val === null || val === undefined) return null;
-      return val;
-    };
-    
+
     // Only show fields that have changed
     const changedMetadata = metadataKeys.filter(key => {
       const oldVal = normalizeValue(oldEntity[key]);
