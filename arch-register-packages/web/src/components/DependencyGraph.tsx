@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { SimpleGraph } from '@diagram-craft/graph/graph';
 import { getConnectedComponents } from '@diagram-craft/graph/connectivity';
 import { layoutLayered } from '@diagram-craft/graph/layout/layeredLayout';
@@ -22,10 +22,26 @@ export type DependencyGraphEdge = {
   kind?: string;
 };
 
+export type LayoutOptions = {
+  // Common options
+  horizontalSpacing?: number;
+  verticalSpacing?: number;
+
+  // Force-directed specific
+  iterations?: number;
+  springStrength?: number;
+  repulsionStrength?: number;
+  idealEdgeLength?: number;
+
+  // Layered specific
+  crossingMinimizationIterations?: number;
+};
+
 type Props<T> = {
   nodes: DependencyGraphNode<T>[];
   edges: DependencyGraphEdge[];
   layout: LayoutAlgorithm;
+  layoutOptions?: LayoutOptions;
   nodeWidth?: number;
   nodeHeight?: number;
   renderNode: (node: DependencyGraphNode<T>) => React.ReactNode;
@@ -53,11 +69,49 @@ export const DependencyGraph = <T,>({
   nodes,
   edges,
   layout,
+  layoutOptions = {},
   nodeWidth = 160,
   nodeHeight = 48,
   renderNode,
-  onNodeClick,
+  onNodeClick
 }: Props<T>) => {
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  const connectedEdges = useMemo(() => {
+    if (!hoveredNodeId) return new Set<string>();
+    return new Set(
+      edges.filter(e => e.from === hoveredNodeId || e.to === hoveredNodeId).map(e => e.id)
+    );
+  }, [hoveredNodeId, edges]);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.ctrlKey) {
+        // Pinch zoom (browser translates pinch to wheel + ctrlKey)
+        const delta = e.deltaY;
+        const normalized = -(delta % 3 ? delta * 10 : delta / 3);
+        const zoomFactor = normalized > 0 ? 1.008 : 1 / 1.008;
+        setZoom(prevZoom => Math.max(0.1, Math.min(10, prevZoom * zoomFactor)));
+      } else {
+        // Two-finger pan
+        setPan(prevPan => ({
+          x: prevPan.x - e.deltaX * zoom,
+          y: prevPan.y - e.deltaY * zoom
+        }));
+      }
+    };
+
+    svg.addEventListener('wheel', handleWheel);
+    return () => svg.removeEventListener('wheel', handleWheel);
+  }, []);
+
   const positions = useMemo((): Map<string, Point> => {
     if (nodes.length === 0) return new Map();
 
@@ -68,18 +122,23 @@ export const DependencyGraph = <T,>({
 
     // Hierarchy layout: only containment edges drive node positioning.
     // Reference edges are rendered as arcs and don't affect layout.
-    const layoutEdges = layout === 'hierarchy'
-      ? edges.filter(e => e.kind === 'containment')
-      : edges;
+    const layoutEdges =
+      layout === 'hierarchy' ? edges.filter(e => e.kind === 'containment') : edges;
 
     for (const edge of layoutEdges) {
-      graph.addEdge({ id: edge.id, from: edge.from, to: edge.to, weight: 1, data: { kind: edge.kind } });
+      graph.addEdge({
+        id: edge.id,
+        from: edge.from,
+        to: edge.to,
+        weight: 1,
+        data: { kind: edge.kind }
+      });
     }
 
     const components = getConnectedComponents(graph);
-    const hSpacing = nodeWidth + 40;
-    const vSpacing = nodeHeight + 60;
-    const idealLength = Math.max(nodeWidth, nodeHeight) * 2.5;
+    const hSpacing = layoutOptions.horizontalSpacing ?? nodeWidth + 40;
+    const vSpacing = layoutOptions.verticalSpacing ?? nodeHeight + 60;
+    const idealLength = layoutOptions.idealEdgeLength ?? Math.max(nodeWidth, nodeHeight);
 
     const result = new Map<string, Point>();
     let xOffset = 0;
@@ -97,19 +156,22 @@ export const DependencyGraph = <T,>({
             horizontalSpacing: hSpacing,
             verticalSpacing: vSpacing,
             direction: 'down',
+            crossingMinimizationIterations: layoutOptions.crossingMinimizationIterations ?? 10
           });
           break;
         case 'force':
           componentPositions = layoutForceDirected(graph, [startId], {
             idealEdgeLength: idealLength,
-            iterations: 300,
+            iterations: layoutOptions.iterations ?? 300,
+            springStrength: layoutOptions.springStrength ?? 0.5,
+            repulsionStrength: layoutOptions.repulsionStrength ?? 1.0
           });
           break;
         case 'tree':
           componentPositions = layoutTree(graph, startId, {
             horizontalSpacing: hSpacing,
             verticalSpacing: vSpacing,
-            direction: 'down',
+            direction: 'down'
           });
           break;
       }
@@ -138,7 +200,7 @@ export const DependencyGraph = <T,>({
     }
 
     return result;
-  }, [nodes, edges, layout, nodeWidth, nodeHeight]);
+  }, [nodes, edges, layout, layoutOptions, nodeWidth, nodeHeight]);
 
   const viewBox = useMemo(() => {
     if (positions.size === 0) return '0 0 400 300';
@@ -166,144 +228,149 @@ export const DependencyGraph = <T,>({
     return `${minX} ${minY} ${maxX - minX} ${maxY - minY}`;
   }, [positions, nodeWidth, nodeHeight, layout, edges]);
 
-  const nodeMap = useMemo(
-    () => new Map(nodes.map(n => [n.id, n])),
-    [nodes]
-  );
+  const nodeMap = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
 
   const nw = nodeWidth;
   const nh = nodeHeight;
 
   return (
-    <svg
-      className={styles.root}
-      viewBox={viewBox}
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg ref={svgRef} className={styles.root} viewBox={viewBox} xmlns="http://www.w3.org/2000/svg">
       <defs>
         {/*
           fill="context-stroke" makes the arrowhead inherit the stroke color of
           the line/path that references this marker, avoiding CSS-variable
           resolution issues inside <marker> defs.
         */}
-        <marker
-          id="dep-arrow"
-          markerWidth="8"
-          markerHeight="6"
-          refX="7"
-          refY="3"
-          orient="auto"
-        >
+        <marker id="dep-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
           <path d="M0,0 L0,6 L8,3 Z" style={{ fill: 'context-stroke' }} />
         </marker>
       </defs>
 
-      {/* Straight edges — rendered before nodes so nodes appear on top */}
-      {edges.map(edge => {
-        const fromPos = positions.get(edge.from);
-        const toPos = positions.get(edge.to);
-        if (!fromPos || !toPos) return null;
+      <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
+        {/* Straight edges — rendered before nodes so nodes appear on top */}
+        {edges.map(edge => {
+          const fromPos = positions.get(edge.from);
+          const toPos = positions.get(edge.to);
+          if (!fromPos || !toPos) return null;
 
-        // In hierarchy layout, reference edges are rendered as arcs in a later pass
-        if (layout === 'hierarchy' && edge.kind !== 'containment') return null;
+          // In hierarchy layout, reference edges are rendered as arcs in a later pass
+          if (layout === 'hierarchy' && edge.kind !== 'containment') return null;
 
-        const dx = toPos.x - fromPos.x;
-        const dy = toPos.y - fromPos.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist === 0) return null;
+          const dx = toPos.x - fromPos.x;
+          const dy = toPos.y - fromPos.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist === 0) return null;
 
-        const [ux, uy] = normalize(dx, dy);
-        const trimSrc = rectBorderDist(ux, uy, nw / 2, nh / 2);
-        const trimDst = rectBorderDist(ux, uy, nw / 2, nh / 2) + 2;
+          const [ux, uy] = normalize(dx, dy);
+          const trimSrc = rectBorderDist(ux, uy, nw / 2, nh / 2);
+          const trimDst = rectBorderDist(ux, uy, nw / 2, nh / 2) + 2;
 
-        const x1 = fromPos.x + ux * trimSrc;
-        const y1 = fromPos.y + uy * trimSrc;
-        const x2 = toPos.x - ux * trimDst;
-        const y2 = toPos.y - uy * trimDst;
+          const x1 = fromPos.x + ux * trimSrc;
+          const y1 = fromPos.y + uy * trimSrc;
+          const x2 = toPos.x - ux * trimDst;
+          const y2 = toPos.y - uy * trimDst;
 
-        return (
-          <line
-            key={edge.id}
-            x1={x1} y1={y1}
-            x2={x2} y2={y2}
-            className={edge.kind === 'containment' ? styles.edgeContainment : styles.edge}
-            markerEnd="url(#dep-arrow)"
-          />
-        );
-      })}
+          const isHighlighted = connectedEdges.has(edge.id);
+          const edgeClass = edge.kind === 'containment' ? styles.edgeContainment : styles.edge;
+          const finalClass = isHighlighted ? `${edgeClass} ${styles.edgeHighlighted}` : edgeClass;
 
-      {/* Nodes */}
-      {nodes.map(node => {
-        const pos = positions.get(node.id);
-        if (!pos) return null;
-
-        return (
-          <g
-            key={node.id}
-            transform={`translate(${pos.x}, ${pos.y})`}
-            onClick={() => onNodeClick?.(node.id)}
-            style={{ cursor: onNodeClick ? 'pointer' : 'default' }}
-          >
-            <rect
-              x={-nw / 2}
-              y={-nh / 2}
-              width={nw}
-              height={nh}
-              rx={6}
-              className={styles.nodeRect}
+          return (
+            <line
+              key={edge.id}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              className={finalClass}
+              markerEnd="url(#dep-arrow)"
             />
-            <foreignObject x={-nw / 2} y={-nh / 2} width={nw} height={nh}>
-              <div
-                // @ts-expect-error xmlns is required for foreignObject content in some renderers
-                xmlns="http://www.w3.org/1999/xhtml"
-                className={styles.nodeContent}
-              >
-                {renderNode(nodeMap.get(node.id) ?? node)}
-              </div>
-            </foreignObject>
-          </g>
-        );
-      })}
+          );
+        })}
 
-      {/* Arc edges for reference relations in hierarchy layout — rendered after nodes so arcs appear on top */}
-      {layout === 'hierarchy' && edges.map(edge => {
-        if (edge.kind === 'containment') return null;
-        const fromPos = positions.get(edge.from);
-        const toPos = positions.get(edge.to);
-        if (!fromPos || !toPos) return null;
+        {/* Nodes */}
+        {nodes.map(node => {
+          const pos = positions.get(node.id);
+          if (!pos) return null;
 
-        const x1 = fromPos.x, y1 = fromPos.y;
-        const x2 = toPos.x, y2 = toPos.y;
-        const dist = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-        if (dist === 0) return null;
+          return (
+            <g
+              key={node.id}
+              data-node
+              transform={`translate(${pos.x}, ${pos.y})`}
+              onClick={() => onNodeClick?.(node.id)}
+              onMouseEnter={() => setHoveredNodeId(node.id)}
+              onMouseLeave={() => setHoveredNodeId(null)}
+              style={{ cursor: onNodeClick ? 'pointer' : 'default' }}
+            >
+              <rect
+                x={-nw / 2}
+                y={-nh / 2}
+                width={nw}
+                height={nh}
+                rx={6}
+                className={styles.nodeRect}
+              />
+              <foreignObject x={-nw / 2} y={-nh / 2} width={nw} height={nh}>
+                <div
+                  // @ts-expect-error xmlns is required for foreignObject content in some renderers
+                  xmlns="http://www.w3.org/1999/xhtml"
+                  className={styles.nodeContent}
+                >
+                  {renderNode(nodeMap.get(node.id) ?? node)}
+                </div>
+              </foreignObject>
+            </g>
+          );
+        })}
 
-        // Control point bows downward (positive Y = below the nodes)
-        const cx = (x1 + x2) / 2;
-        const arcHeight = Math.max(dist * 0.35, nh);
-        const cy = (y1 + y2) / 2 + arcHeight;
+        {/* Arc edges for reference relations in hierarchy layout — rendered after nodes so arcs appear on top */}
+        {layout === 'hierarchy' &&
+          edges.map(edge => {
+            if (edge.kind === 'containment') return null;
+            const fromPos = positions.get(edge.from);
+            const toPos = positions.get(edge.to);
+            if (!fromPos || !toPos) return null;
 
-        // Source trim: tangent from source toward the control point
-        const [ustx, usty] = normalize(cx - x1, cy - y1);
-        const srcTrim = rectBorderDist(ustx, usty, nw / 2, nh / 2);
+            const x1 = fromPos.x,
+              y1 = fromPos.y;
+            const x2 = toPos.x,
+              y2 = toPos.y;
+            const dist = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+            if (dist === 0) return null;
 
-        // Target trim: tangent from the control point toward target
-        const [uttx, utty] = normalize(x2 - cx, y2 - cy);
-        const dstTrim = rectBorderDist(uttx, utty, nw / 2, nh / 2) + 2;
+            // Control point bows downward (positive Y = below the nodes)
+            const cx = (x1 + x2) / 2;
+            const arcHeight = Math.max(dist * 0.35, nh);
+            const cy = (y1 + y2) / 2 + arcHeight;
 
-        const sx = x1 + ustx * srcTrim;
-        const sy = y1 + usty * srcTrim;
-        const ex = x2 - uttx * dstTrim;
-        const ey = y2 - utty * dstTrim;
+            // Source trim: tangent from source toward the control point
+            const [ustx, usty] = normalize(cx - x1, cy - y1);
+            const srcTrim = rectBorderDist(ustx, usty, nw / 2, nh / 2);
 
-        return (
-          <path
-            key={edge.id}
-            d={`M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`}
-            className={styles.arcEdge}
-            markerEnd="url(#dep-arrow)"
-          />
-        );
-      })}
+            // Target trim: tangent from the control point toward target
+            const [uttx, utty] = normalize(x2 - cx, y2 - cy);
+            const dstTrim = rectBorderDist(uttx, utty, nw / 2, nh / 2) + 2;
+
+            const sx = x1 + ustx * srcTrim;
+            const sy = y1 + usty * srcTrim;
+            const ex = x2 - uttx * dstTrim;
+            const ey = y2 - utty * dstTrim;
+
+            const isHighlighted = connectedEdges.has(edge.id);
+            const finalClass = isHighlighted
+              ? `${styles.arcEdge} ${styles.edgeHighlighted}`
+              : styles.arcEdge;
+
+            return (
+              <path
+                key={edge.id}
+                d={`M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`}
+                className={finalClass}
+                markerEnd="url(#dep-arrow)"
+              />
+            );
+          })}
+      </g>
     </svg>
   );
 };

@@ -9,16 +9,35 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 24px;
+  padding: 4px 14px;
+  height: 35.5px;
   border-bottom: 1px solid var(--panel-border);
   flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  & > button {
+    width: 10rem;
+  }
+}
+
+.toolbarSeparator {
+  width: 1px;
+  height: 20px;
+  background-color: var(--panel-border);
+  margin: 0 8px;
 }
 
 .toolbarLabel {
   font-size: 12px;
   color: var(--base-fg-more-dim);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  margin-right: -4px;
+
+  &:first-child {
+    margin-left: 0;
+  }
 }
 
 .canvas {
