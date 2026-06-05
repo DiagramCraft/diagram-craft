@@ -13,6 +13,7 @@
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/canvas-nodes": "workspace:^",
     "@diagram-craft/canvas-app": "workspace:^",
+    "@diagram-craft/utils-dom": "workspace:^",
     "@diagram-craft/utils": "workspace:^"
   },
   "keywords": [],

@@ -5,7 +5,7 @@ import { ResizeDrag, ResizeType } from '../drag/resizeDrag';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { VNode } from '../component/vdom';
 import { Zoom } from './zoom';
 

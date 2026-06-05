@@ -14,7 +14,7 @@ import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { copyStyles, NodeLinkOptions, StencilStyle } from '@diagram-craft/model/stencilRegistry';
 import { AbstractPickerDrag } from './abstractPickerDrag';
 import { mustExist } from '@diagram-craft/utils/assert';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { isNode } from '@diagram-craft/model/diagramElement';
 
 export class ObjectPickerDrag extends AbstractPickerDrag {

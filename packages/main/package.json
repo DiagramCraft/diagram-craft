@@ -35,6 +35,7 @@
     "@diagram-craft/stencil-data-modelling": "workspace:^",
     "@diagram-craft/stencil-archimate": "workspace:^",
     "@diagram-craft/stencil-uml": "workspace:^",
+    "@diagram-craft/utils-dom": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@radix-ui/colors": "^3.0.0",
     "embeddable-jq": "^1.0.4",

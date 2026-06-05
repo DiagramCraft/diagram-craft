@@ -463,17 +463,27 @@ nodeDefaults.addPattern('actions.*', {
 export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   k: K,
   v: DeepRequired<CustomNodeProps[K]>
-) {
+): (d?: CustomNodeProps[K]) => DeepRequired<NonNullable<CustomNodeProps[K]>> {
   nodeDefaults.add(`custom.${k}`, v as PropPathValue<NodeProps, `custom.${K}`>);
 
-  return (d?: CustomNodeProps[K]) => deepMerge({}, v, d ?? undefined);
+  return (d?: CustomNodeProps[K]) =>
+    deepMerge(
+      {},
+      v as Partial<NonNullable<CustomNodeProps[K]>>,
+      d ?? undefined
+    ) as DeepRequired<NonNullable<CustomNodeProps[K]>>;
 }
 
 export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
   k: K,
   v: DeepRequired<CustomEdgeProps[K]>
-) {
+): (d?: CustomEdgeProps[K]) => DeepRequired<NonNullable<CustomEdgeProps[K]>> {
   edgeDefaults.add(`custom.${k}`, v as PropPathValue<EdgeProps, `custom.${K}`>);
 
-  return (d?: CustomEdgeProps[K]) => deepMerge({}, v, d ?? {});
+  return (d?: CustomEdgeProps[K]) =>
+    deepMerge(
+      {},
+      v as Partial<NonNullable<CustomEdgeProps[K]>>,
+      d ?? undefined
+    ) as DeepRequired<NonNullable<CustomEdgeProps[K]>>;
 }

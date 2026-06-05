@@ -23,7 +23,7 @@ import { coalesce } from '@diagram-craft/utils/strings';
 import { DrawioStencil } from '../drawioStencilLoader';
 import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Metrics } from '@diagram-craft/utils/metrics';
-import { xNum } from '@diagram-craft/utils/xml';
+import { xNum } from '@diagram-craft/utils-dom/xml';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';

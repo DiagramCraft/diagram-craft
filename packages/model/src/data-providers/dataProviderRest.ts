@@ -7,6 +7,14 @@ import {
 } from '../dataProvider';
 import { DataSchema } from '../diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
+import {
+  assertDataSchema,
+  assertDataWithSchema,
+  readJson,
+  readJsonArray,
+  type RequestInitWithCache,
+  withCacheMode
+} from './fetchJson';
 
 export const RestDataProviderId = 'restDataProvider';
 
@@ -39,15 +47,16 @@ export class RESTDataProvider
     }
   }
 
-  private async fetchWithTimeout(url: string, options?: RequestInit): Promise<Response> {
+  private async fetchWithTimeout(url: string, options?: RequestInitWithCache): Promise<Response> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.fetchTimeout);
 
     try {
-      return await fetch(url, {
+      const requestInit: RequestInitWithCache = {
         ...options,
         signal: controller.signal
-      });
+      };
+      return await fetch(url, requestInit);
     } finally {
       clearTimeout(timeoutId);
     }
@@ -80,7 +89,7 @@ export class RESTDataProvider
       throw new Error(`Failed to add data: ${res.statusText}`);
     }
 
-    const createdData = await res.json();
+    const createdData = await readJson(res, assertDataWithSchema);
     this.data.push(createdData);
     this.emit('addData', { data: [createdData] });
   }
@@ -102,7 +111,7 @@ export class RESTDataProvider
       throw new Error(`Failed to update data: ${res.statusText}`);
     }
 
-    const updatedData = await res.json();
+    const updatedData = await readJson(res, assertDataWithSchema);
     const index = this.data.findIndex(d => d._uid === data._uid);
     if (index !== -1) {
       this.data[index] = updatedData;
@@ -143,7 +152,7 @@ export class RESTDataProvider
       throw new Error(`Failed to add schema: ${res.statusText}`);
     }
 
-    const createdSchema: DataSchema = await res.json();
+    const createdSchema = await readJson(res, assertDataSchema);
     createdSchema.providerId = this.id;
     this.schemas.push(createdSchema);
     this.emit('addSchema', createdSchema);
@@ -167,7 +176,7 @@ export class RESTDataProvider
       throw new Error(`Failed to update schema: ${res.statusText}`);
     }
 
-    const updatedSchema: DataSchema = await res.json();
+    const updatedSchema = await readJson(res, assertDataSchema);
     updatedSchema.providerId = this.id;
     this.schemas[index] = updatedSchema;
     this.emit('updateSchema', updatedSchema);
@@ -202,29 +211,29 @@ export class RESTDataProvider
 
   protected async fetchData(force = true): Promise<DataWithSchema[]> {
     assert.present(this.baseUrl);
-    const res = await this.fetchWithTimeout(`${this.baseUrl}/data`, {
-      method: 'GET',
-      cache: force ? 'no-cache' : 'default'
-    });
+    const res = await this.fetchWithTimeout(
+      `${this.baseUrl}/data`,
+      withCacheMode(force, { method: 'GET' })
+    );
 
     if (!res.ok) {
       throw new Error(`Failed to fetch data: ${res.statusText}`);
     }
 
-    return res.json() as Promise<DataWithSchema[]>;
+    return readJsonArray(res, assertDataWithSchema);
   }
 
   protected async fetchSchemas(force = true): Promise<DataSchema[]> {
     assert.present(this.baseUrl);
-    const res = await this.fetchWithTimeout(`${this.baseUrl}/schemas`, {
-      method: 'GET',
-      cache: force ? 'no-cache' : 'default'
-    });
+    const res = await this.fetchWithTimeout(
+      `${this.baseUrl}/schemas`,
+      withCacheMode(force, { method: 'GET' })
+    );
 
     if (!res.ok) {
       throw new Error(`Failed to fetch schemas: ${res.statusText}`);
     }
 
-    return res.json() as Promise<DataSchema[]>;
+    return readJsonArray(res, assertDataSchema);
   }
 }

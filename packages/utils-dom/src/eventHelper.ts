@@ -3,9 +3,9 @@
  *
  * @example
  * ```ts
- * import { EventHelper } from '@diagram-craft/utils/eventHelper';
+ * import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
  *
- * element.addEventListener('click', (e) => {
+ * element.addEventListener('click', e => {
  *   const point = EventHelper.point(e);
  *   console.log(point.x, point.y);
  * });
@@ -16,21 +16,10 @@
 
 /** @namespace */
 export const EventHelper = {
-  /**
-   * Returns the point of the event
-   * @param e
-   */
   point: (e: { offsetX: number; offsetY: number }) => {
     return { x: e.offsetX, y: e.offsetY };
   },
 
-  // TODO: Not sure if this is actually needed much - should be better
-  //       to use offsetX/offsetY in most cases
-  /**
-   * Returns the point of the event with respect to the element
-   * @param e event
-   * @param el element
-   */
   pointWithRespectTo: (
     e: { clientX: number; clientY: number } | { x: number; y: number },
     el: HTMLElement | SVGElement

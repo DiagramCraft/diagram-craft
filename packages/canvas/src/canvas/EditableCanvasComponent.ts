@@ -17,7 +17,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 import { DiagramElement, getTopMostNode, isNode } from '@diagram-craft/model/diagramElement';
 import { Selection } from '@diagram-craft/model/selection';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { rawHTML } from '../component/vdom';
 import styles from './canvas.css?inline';
 import { Context } from '../context';
@@ -37,7 +37,7 @@ import { MoveTool } from '../tools/moveTool';
 import { PanTool } from '../tools/panTool';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { HoverOverlayComponent } from '../components/HoverOverlayComponent';
-import { getAncestorWithClass } from '@diagram-craft/utils/dom';
+import { getAncestorWithClass } from '@diagram-craft/utils-dom/dom';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');

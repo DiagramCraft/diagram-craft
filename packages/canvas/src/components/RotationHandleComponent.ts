@@ -4,7 +4,7 @@ import * as svg from '../component/vdom-svg';
 import { RotateDrag } from '../drag/rotateDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Zoom } from './zoom';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 
 type Props = {
   diagram: Diagram;

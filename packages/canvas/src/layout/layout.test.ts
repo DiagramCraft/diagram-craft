@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { layoutChildren, _test } from './layout';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
-import type { ElementLayoutInstructions, LayoutNode } from './layoutTree';
+import type { LayoutNode } from './layoutTree';
+import type { ElementLayoutInstructions } from '@diagram-craft/model/nodeDefinitionLayoutCapable';
 
 const createNode = (
   id: string,

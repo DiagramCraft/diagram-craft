@@ -9,7 +9,6 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { AbstractEdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
-import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { createLogger } from '../utils/logger.js';
 
@@ -27,7 +26,6 @@ class ServerEdgeDefinition extends AbstractEdgeDefinition {
 const makeServerRegistry = (): Registry => {
   const nodes = new NodeDefinitionRegistry();
   nodes.logMissingShapes = false;
-  nodes.register(new RectNodeDefinition());
   return {
     nodes,
     edges: new EdgeDefinitionRegistry(new ServerEdgeDefinition()),
@@ -99,7 +97,7 @@ export class DiagramAutoSave {
     }
 
     log.debug(`Serializing ${this.tempRelPath}...`);
-    const serialized = await serializeDiagramDocument(this.document);
+    const serialized = await serializeDiagramDocument(this.document, { anchorMode: 'stored' });
     if (serialized.diagrams.length === 0) {
       log.warn(`Skipping save for ${this.tempRelPath}: serialized document has no diagrams`);
       return;

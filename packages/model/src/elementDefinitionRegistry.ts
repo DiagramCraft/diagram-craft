@@ -487,9 +487,9 @@ export type AttachEdgeContext = {
 };
 
 const missing = new Set();
-if (typeof window !== 'undefined') {
+if ('window' in globalThis) {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
-  (window as any).dump_missing = () => {
+  (globalThis as any).window.dump_missing = () => {
     console.log([...missing].join('\n'));
   };
 }

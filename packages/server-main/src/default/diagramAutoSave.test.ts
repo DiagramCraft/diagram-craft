@@ -13,8 +13,9 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { AbstractEdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
-import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { before } from 'node:test';
+import { setLogLevel } from '../logger';
 
 class TestEdgeDefinition extends AbstractEdgeDefinition {
   constructor() {
@@ -23,10 +24,8 @@ class TestEdgeDefinition extends AbstractEdgeDefinition {
 }
 
 const makeRegistry = (): Registry => {
-  const nodes = new NodeDefinitionRegistry();
-  nodes.register(new RectNodeDefinition());
   return {
-    nodes,
+    nodes: new NodeDefinitionRegistry(),
     edges: new EdgeDefinitionRegistry(new TestEdgeDefinition()),
     stencils: new StencilRegistry()
   };
@@ -37,6 +36,8 @@ afterEach(() => {
 });
 
 describe('DiagramAutoSave', () => {
+  before(() => setLogLevel('error'));
+
   it('does not write autosave files when synced content still has no diagrams', async () => {
     vi.useFakeTimers();
 

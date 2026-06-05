@@ -65,7 +65,12 @@ import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/t
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
-import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
+import {
+  ensureCustomProp,
+  type CustomEdgeProps,
+  type EdgeProps,
+  type ElementMetadata
+} from './diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
 import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
 import {
@@ -267,15 +272,11 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       [edgeCrdt]
     );
 
-    this.#attachedEdges = new MappedCRDTMap(
-      attachedEdgesMap,
-      makeAttachedEdgesMapper(this),
-      {
-        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
-        onRemoteAdd: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
-        onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
-      }
-    );
+    this.#attachedEdges = new MappedCRDTMap(attachedEdgesMap, makeAttachedEdgesMapper(this), {
+      onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
+      onRemoteAdd: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
+      onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
+    });
     this._releasables.add(this.#attachedEdges);
     this._releasables.add(attachedEdgesMap);
 
@@ -505,8 +506,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   ) {
     this.updateProps(p => {
       p.custom ??= {};
-      p.custom[key] ??= {};
-      callback(p.custom[key]!);
+      callback(ensureCustomProp(p.custom, key));
     }, uow);
   }
 
@@ -552,7 +552,9 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     if (isConnectedEndpoint(this.start) || isConnectedEndpoint(this.end)) {
       let s = '';
       if (isConnectedEndpoint(this.start)) {
-        s = isNodeConnectedEndpoint(this.start) ? this.start.node.name : (this.start.edge?.name ?? '');
+        s = isNodeConnectedEndpoint(this.start)
+          ? this.start.node.name
+          : (this.start.edge?.name ?? '');
       }
       s += ' - ';
       if (isConnectedEndpoint(this.end)) {

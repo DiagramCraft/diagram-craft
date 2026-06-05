@@ -6,7 +6,7 @@ import { rawHTML } from '../component/vdom';
 import styles from './canvas.css?inline';
 import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
 import { createEffect, onEvent } from '../component/component';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { Viewbox } from '@diagram-craft/model/viewBox';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';

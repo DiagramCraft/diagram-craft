@@ -32,7 +32,7 @@ import {
 } from './shapes/basicShapes';
 import { StyleManager } from './styleManager';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { xIterElements, xNum } from '@diagram-craft/utils/xml';
+import { xIterElements, xNum } from '@diagram-craft/utils-dom/xml';
 import { parseNum } from '@diagram-craft/utils/number';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { getParser, shapeParsers } from './drawioShapeParserRegistry';
@@ -52,7 +52,7 @@ import {
   MxPoint,
   parseStencilString
 } from './drawioReaderUtils';
-import { sanitizeHtml } from '@diagram-craft/utils/dom';
+import { sanitizeHtml } from '@diagram-craft/utils-dom/dom';
 import { adjustShape } from '@diagram-craft/canvas-drawio/drawioAdjustShape';
 
 type Parent = RegularLayer | DiagramNode | DiagramEdge;

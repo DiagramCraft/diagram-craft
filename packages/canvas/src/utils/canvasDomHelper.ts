@@ -2,7 +2,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { getAncestorWithClass, resolveTargetElement } from '@diagram-craft/utils/dom';
+import { getAncestorWithClass, resolveTargetElement } from '@diagram-craft/utils-dom/dom';
 
 /**
  * Helper utilities for managing DOM IDs of diagram elements.

@@ -1,5 +1,5 @@
 import { assert, mustExist } from '@diagram-craft/utils/assert';
-import { xNum } from '@diagram-craft/utils/xml';
+import { xNum } from '@diagram-craft/utils-dom/xml';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 

@@ -27,6 +27,7 @@ import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
 import { applyTemplate } from '@diagram-craft/utils/template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
+import { htmlToText } from '@diagram-craft/utils/html';
 import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
@@ -49,7 +50,13 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { LabelNode } from './labelNode';
 import { EffectsRegistry } from './effect';
-import type { CustomNodeProps, EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
+import {
+  ensureCustomProp,
+  type CustomNodeProps,
+  type EdgeProps,
+  type ElementMetadata,
+  type NodeProps
+} from './diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
 import { DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
@@ -176,6 +183,7 @@ export interface DiagramNode extends DiagramElement {
   invalidateAnchors(uow: UnitOfWork): void;
 
   get anchors(): ReadonlyArray<Anchor>;
+  getStoredAnchors(): ReadonlyArray<Anchor> | undefined;
   getAnchor(anchor: string): Anchor;
   duplicate(ctx?: DuplicationContext, id?: string): DiagramNode;
 
@@ -210,15 +218,11 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       [nodeCrdt]
     );
 
-    this.#edges = new MappedCRDTMap(
-      edgesMap,
-      makeEdgesMapper(this),
-      {
-        onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
-        onRemoteAdd: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
-        onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
-      }
-    );
+    this.#edges = new MappedCRDTMap(edgesMap, makeEdgesMapper(this), {
+      onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
+      onRemoteAdd: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
+      onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
+    });
     this._releasables.add(this.#edges);
     this._releasables.add(edgesMap);
 
@@ -342,7 +346,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     const registry = this.diagram.document.registry.nodes;
     if (!registry.hasRegistration(this.nodeType)) {
       scheduleNodeDefinitionLoad(this);
-      return registry.get('rect');
+      if (registry.hasRegistration('rect')) {
+        return registry.get('rect');
+      }
+      throw new Error(`Cannot find shape '${this.nodeType}' and no fallback 'rect' is registered`);
     }
     return registry.get(this.nodeType);
   }
@@ -527,16 +534,14 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     );
 
     // Exclude text.color from textStyleProps — color is owned by the node stylesheet
-    const filteredTextProps =
-      textStyleProps?.text
-        ? { ...textStyleProps, text: { ...textStyleProps.text, color: undefined } }
-        : textStyleProps;
+    const filteredTextProps = textStyleProps?.text
+      ? { ...textStyleProps, text: { ...textStyleProps.text, color: undefined } }
+      : textStyleProps;
 
     // Exclude text.color from ruleTextStyleProps for the same reason
-    const filteredRuleTextProps =
-      ruleTextStyleProps?.text
-        ? { ...ruleTextStyleProps, text: { ...ruleTextStyleProps.text, color: undefined } }
-        : ruleTextStyleProps;
+    const filteredRuleTextProps = ruleTextStyleProps?.text
+      ? { ...ruleTextStyleProps, text: { ...ruleTextStyleProps.text, color: undefined } }
+      : ruleTextStyleProps;
 
     const propsForEditing = deepMerge<NodeProps>(
       {},
@@ -605,8 +610,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   ) {
     this.updateProps(p => {
       p.custom ??= {};
-      p.custom[key] ??= {};
-      callback(p.custom[key]!);
+      callback(ensureCustomProp(p.custom, key));
     }, uow);
   }
 
@@ -637,15 +641,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       const metadata = this.dataForTemplate;
 
       if (text[0] === '<') {
-        try {
-          const d = new DOMParser().parseFromString(text, 'text/html');
-          const textContent = d.body.textContent;
-          if (textContent) {
-            this.cache.set('name', applyTemplate(textContent, metadata));
-            return textContent;
-          }
-        } catch (_e) {
-          // Ignore
+        const textContent = htmlToText(text);
+        if (textContent !== '') {
+          this.cache.set('name', applyTemplate(textContent, metadata));
+          return textContent;
         }
       }
 
@@ -709,6 +708,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     }
 
     return this.#anchors.get() ?? [];
+  }
+
+  getStoredAnchors(): ReadonlyArray<Anchor> | undefined {
+    return this.#anchors.get();
   }
 
   getAnchor(anchor: string) {
@@ -945,7 +948,13 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     uow: UnitOfWork
   ) {
     super._onAttach(layer, parent, uow);
-    this.getDefinition().onAdd(this, layer.diagram, uow);
+
+    const registry = layer.diagram.document.registry.nodes;
+    if (registry.hasRegistration(this.nodeType)) {
+      this.getDefinition().onAdd(this, layer.diagram, uow);
+    } else {
+      scheduleNodeDefinitionLoad(this);
+    }
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {
@@ -1040,7 +1049,13 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   invalidateAnchors(uow: UnitOfWork) {
-    const def = this.diagram.document.registry.nodes.get(this.nodeType);
+    const registry = this.diagram.document.registry.nodes;
+    if (!registry.hasRegistration(this.nodeType)) {
+      scheduleNodeDefinitionLoad(this);
+      return;
+    }
+
+    const def = registry.get(this.nodeType);
     uow.executeUpdate(this, () => this.#anchors.set(def.getAnchors(this)));
   }
 

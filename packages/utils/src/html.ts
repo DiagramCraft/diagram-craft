@@ -47,6 +47,16 @@ export const stripTags = (
     .replace(tags, ($0, $1) => (allowed.includes($1.toLowerCase()) ? $0 : ''));
 };
 
+const decodeHtmlEntities = (input: string) => {
+  return input
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+};
+
 /**
  * Callback interface for HTML parsing events.
  */
@@ -165,3 +175,41 @@ export class HTMLParser {
     return attributes;
   }
 }
+
+export const htmlToText = (input: string) => {
+  const blocks = new Set(['br', 'div', 'p', 'li', 'tr', 'td', 'th', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+  const parts: string[] = [];
+  let needsSpacing = false;
+
+  const pushSpacing = () => {
+    if (!needsSpacing || parts.length === 0) return;
+    if (parts[parts.length - 1] !== ' ') {
+      parts.push(' ');
+    }
+    needsSpacing = false;
+  };
+
+  new HTMLParser({
+    onStart: () => {},
+    onEnd: () => {},
+    onTagOpen: tag => {
+      if (blocks.has(tag.toLowerCase())) {
+        needsSpacing = true;
+      }
+    },
+    onTagClose: tag => {
+      if (blocks.has(tag.toLowerCase())) {
+        needsSpacing = true;
+      }
+    },
+    onText: text => {
+      const normalized = decodeHtmlEntities(text).replace(/\s+/g, ' ').trim();
+      if (normalized === '') return;
+      pushSpacing();
+      parts.push(normalized);
+      needsSpacing = true;
+    }
+  }).parse(input);
+
+  return parts.join('').trim();
+};

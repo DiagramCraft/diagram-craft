@@ -14,7 +14,6 @@
   "dependencies": {
     "@arch-register/api-types": "workspace:*",
     "@arch-register/permissions": "workspace:*",
-    "@diagram-craft/canvas": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/model": "workspace:^",

@@ -11,6 +11,7 @@
   "author": "Magnus Johansson",
   "dependencies": {
     "@base-ui/react": "1.4.1",
+    "@diagram-craft/utils-dom": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@radix-ui/colors": "^3.0.0",
     "react": "^19.2.6",

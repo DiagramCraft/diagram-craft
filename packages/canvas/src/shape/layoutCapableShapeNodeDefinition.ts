@@ -22,23 +22,8 @@ import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/l
 import { Point } from '@diagram-craft/geometry/point';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
 import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
-import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 type CollapsibleProps = { collapsible?: boolean; mode?: string; bounds?: string };
-
-declare global {
-  namespace DiagramCraft {
-    interface CustomNodePropsExtensions {
-      _collapsible?: CollapsibleProps;
-    }
-  }
-}
-
-registerCustomNodeDefaults('_collapsible', {
-  collapsible: false,
-  bounds: '',
-  mode: 'expanded'
-});
 
 export interface LayoutCapableShapeNodeDefinitionInterface extends NodeDefinition {
   getContainerPadding(node: DiagramNode): {

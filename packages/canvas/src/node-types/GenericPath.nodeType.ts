@@ -9,23 +9,8 @@ import * as svg from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { Zoom } from '../components/zoom';
-
-declare global {
-  namespace DiagramCraft {
-    interface CustomNodePropsExtensions {
-      genericPath?: {
-        path?: string;
-      };
-    }
-  }
-}
-
-const DEFAULT_PATH = 'M -1 1, L 1 1, L 1 -1, L -1 -1, L -1 1';
-
-registerCustomNodeDefaults('genericPath', { path: DEFAULT_PATH });
 
 export class GenericPathNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'generic-path', displayName = 'Path') {

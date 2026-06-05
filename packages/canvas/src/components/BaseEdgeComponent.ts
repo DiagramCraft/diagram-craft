@@ -1,7 +1,7 @@
 import { Component } from '../component/component';
 import { Path } from '@diagram-craft/geometry/path';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { EventHelper } from '@diagram-craft/utils-dom/eventHelper';
 import { applyLineHops, clipPath } from '@diagram-craft/model/diagramEdgeUtils';
 import * as svg from '../component/vdom-svg';
 import { VNode } from '../component/vdom';

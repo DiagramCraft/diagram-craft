@@ -133,7 +133,11 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     }
   }
 
-  setNodeLinkOptions(node: DiagramNode, options: NodeLinkOptions | undefined, uow: UnitOfWork): void {
+  setNodeLinkOptions(
+    node: DiagramNode,
+    options: NodeLinkOptions | undefined,
+    uow: UnitOfWork
+  ): void {
     node.updateMetadata(metadata => {
       if (options === undefined) {
         delete metadata.nodeLink;

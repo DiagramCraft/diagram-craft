@@ -30,11 +30,25 @@
  * img.src = dataURL;
  * ```
  */
-export const blobToDataURL = (blob: Blob): Promise<string> =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = _e => resolve(reader.result as string);
-    reader.onerror = _e => reject(reader.error === null ? new Error('Read error') : reader.error);
-    reader.onabort = _e => reject(new Error('Read aborted'));
-    reader.readAsDataURL(blob);
-  });
+const base64Encode = (bytes: Uint8Array) => {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(bytes).toString('base64');
+  }
+
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  if (typeof btoa === 'function') {
+    return btoa(binary);
+  }
+
+  throw new Error('No base64 encoder available');
+};
+
+export const blobToDataURL = async (blob: Blob): Promise<string> => {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const mimeType = blob.type || 'application/octet-stream';
+  return `data:${mimeType};base64,${base64Encode(bytes)}`;
+};

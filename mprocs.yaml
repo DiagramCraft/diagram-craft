@@ -27,6 +27,15 @@ procs:
     log:
       file: ar-server.log
 
+  "Storybook :6006":
+    cwd: "packages/main"
+    shell: |
+      pnpm storybook
+    autostart: false
+    stop: SIGKILL
+    log:
+      file: storybook.log
+
 proc_log:
   dir: .logs
   mode: truncate

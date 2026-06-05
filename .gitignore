@@ -56,6 +56,8 @@ node_modules/
 coverage/
 output/
 
+*.tsbuildinfo
+
 **/storybook-static
 **/local-tests
 **/playwright-report
