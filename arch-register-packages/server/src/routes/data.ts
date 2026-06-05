@@ -598,7 +598,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
               slug: e.slug,
               namespace: e.namespace
             })) : [],
-            existingId: row.existingId,
+            existingId: existingEntity?.id ?? row.existingId,
             existingEntity: (isUpdate || matchType === 'name') && existingEntity ? {
               _name: existingEntity.name,
               _slug: existingEntity.slug,

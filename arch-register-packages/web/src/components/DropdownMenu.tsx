@@ -7,6 +7,7 @@ export type MenuItem = {
   icon?: ReactNode;
   danger?: boolean;
   keepOpen?: boolean;
+  disabled?: boolean;
   onClick: () => void;
 };
 
@@ -43,6 +44,7 @@ export const DropdownMenu = ({ trigger, header, items }: DropdownMenuProps) => {
             key={item.label}
             leftSlot={item.icon as ReactElement | undefined}
             type={item.danger ? 'danger' : 'regular'}
+            disabled={item.disabled}
             onClick={() => {
               if (item.keepOpen) keepOpenRef.current = true;
               item.onClick();

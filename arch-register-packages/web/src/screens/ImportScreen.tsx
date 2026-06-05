@@ -257,7 +257,6 @@ export const ImportScreen = () => {
   const [file, setFile] = useState<File | null>(null);
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [totalRows, setTotalRows] = useState(0);
-  const [validRows, setValidRows] = useState(0);
   const [committed, setCommitted] = useState<CommittedEntity[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -318,7 +317,6 @@ export const ImportScreen = () => {
         })
       );
       setTotalRows(result.totalRows);
-      setValidRows(result.validRows);
       setPhase('review');
     } catch (error) {
       console.error('Failed to parse CSV:', error);
@@ -360,8 +358,9 @@ export const ImportScreen = () => {
         
         // Only include _existingId if:
         // 1. It's an ID-based match (matchType === 'id'), OR
-        // 2. It's a name-based match AND user chose 'update'
-        if (r.matchType === 'id' || (r.matchType === 'name' && r.userChoice === 'update')) {
+        // 2. It's a slug-based match (matchType === 'slug'), OR
+        // 3. It's a name-based match AND user chose 'update'
+        if (r.matchType === 'id' || r.matchType === 'slug' || (r.matchType === 'name' && r.userChoice === 'update')) {
           entity._existingId = r.existingId ?? r.nameMatches[0]?.id;
         }
         
