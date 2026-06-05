@@ -15,6 +15,7 @@ import { useSchemas } from '../hooks/useSchemas';
 import { useEnums } from '../hooks/useEnums';
 import { useProjects } from '../hooks/useProjects';
 import { useWorkspaceConfig } from '../hooks/useWorkspaceConfig';
+import { useAiConfig } from '../hooks/useAiConfig';
 import { useWorkspacePermissions } from '../auth/useWorkspacePermissions';
 import { useAuthorizationData } from '../auth/AuthorizationDataContext';
 import { WorkspaceContext } from './WorkspaceContext';
@@ -87,6 +88,7 @@ export const WorkspaceLayout = () => {
   const { data: enums = [], error: enumsError } = useEnums(workspaceSlug, !!workspaceSlug);
   const { data: projects = [], error: projectsError } = useProjects(workspaceSlug);
   const { lifecycleStates, teams } = useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
+  const { data: aiConfig } = useAiConfig(workspaceSlug, !!workspaceSlug);
 
   const {
     canManageWorkspaces,
@@ -175,10 +177,12 @@ export const WorkspaceLayout = () => {
     });
   }, [navigate, workspaceSlug]);
 
-  const visibleRailItems = useMemo(
-    () => canViewSchemas ? ALL_RAIL_ITEMS : ALL_RAIL_ITEMS.filter(item => SCHEMA_RESTRICTED_IDS.has(item.id)),
-    [canViewSchemas]
-  );
+  const visibleRailItems = useMemo(() => {
+    const aiEnabled = aiConfig?.enabled === true;
+    return ALL_RAIL_ITEMS
+      .filter(item => canViewSchemas || SCHEMA_RESTRICTED_IDS.has(item.id))
+      .filter(item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract'));
+  }, [canViewSchemas, aiConfig?.enabled]);
 
   const trail = buildTrail(activeView, workspaceSlug, projects, matches, navigate);
 
