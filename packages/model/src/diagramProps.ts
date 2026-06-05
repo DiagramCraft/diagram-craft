@@ -13,31 +13,6 @@ export function assertGridType(s: string | undefined): asserts s is GridType | u
 export type EdgeType = 'straight' | 'bezier' | 'curved' | 'orthogonal' | 'axis-aligned';
 
 export type FillType = 'solid' | 'gradient' | 'image' | 'texture' | 'pattern';
-export type BuiltInCustomNodeCollapsibleProps = {
-  collapsible?: boolean;
-  mode?: string;
-  bounds?: string;
-};
-export type BuiltInCustomNodeGenericPathProps = {
-  path?: string;
-};
-export type BuiltInContainerLayoutInstructions = {
-  direction: 'horizontal' | 'vertical';
-  gap?: number;
-  justifyContent?: 'start' | 'end' | 'center' | 'space-between';
-  alignItems?: 'start' | 'end' | 'center' | 'stretch' | 'preserve';
-  padding?: { top?: number; right?: number; bottom?: number; left?: number };
-  enabled?: boolean;
-  autoShrink?: boolean;
-};
-export type BuiltInElementLayoutInstructions = {
-  width?: { min?: number; max?: number };
-  height?: { min?: number; max?: number };
-  preserveAspectRatio?: boolean;
-  grow?: number;
-  shrink?: number;
-  isAbsolute?: boolean;
-};
 
 export type HAlign = 'left' | 'center' | 'right';
 
@@ -351,18 +326,10 @@ export interface DiagramProps extends DiagramCraft.DiagramPropsExtensions {
 declare global {
   namespace DiagramCraft {
     interface DiagramPropsExtensions {}
-    interface CustomNodePropsExtensions {
-      _collapsible?: BuiltInCustomNodeCollapsibleProps;
-      genericPath?: BuiltInCustomNodeGenericPathProps;
-    }
+    interface CustomNodePropsExtensions {}
     interface CustomEdgePropsExtensions {}
     interface ElementPropsExtensions {}
-    interface NodePropsExtensions {
-      layout?: {
-        container?: BuiltInContainerLayoutInstructions;
-        element?: BuiltInElementLayoutInstructions;
-      };
-    }
+    interface NodePropsExtensions {}
     interface EdgePropsExtensions {}
   }
 }

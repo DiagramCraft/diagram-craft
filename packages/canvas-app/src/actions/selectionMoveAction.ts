@@ -5,8 +5,8 @@ import { ActionContext } from '@diagram-craft/canvas/action';
 import { isNode, transformElements } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
-import type { Axis } from '@diagram-craft/canvas/layout/layoutTree';
 import { mustExist } from '@diagram-craft/utils/assert';
+import { Axis } from '@diagram-craft/canvas/layout/layoutTree';
 
 declare global {
   namespace DiagramCraft {

@@ -5,6 +5,23 @@ import { Point } from '@diagram-craft/geometry/point';
 import type { UnitOfWork } from './unitOfWork';
 import { EffectsRegistry } from './effect';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+
+type CollapsibleProps = { collapsible?: boolean; mode?: string; bounds?: string };
+
+declare global {
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      _collapsible?: CollapsibleProps;
+    }
+  }
+}
+
+registerCustomNodeDefaults('_collapsible', {
+  collapsible: false,
+  bounds: '',
+  mode: 'expanded'
+});
 
 /**
  * Finds the first collapsed ancestor container of a node.
