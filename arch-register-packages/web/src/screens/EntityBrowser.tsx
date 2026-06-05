@@ -6,7 +6,7 @@ import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
 import { Chip } from '../components/Chip';
 import {
-  TbSearch, TbDownload, TbPlus, TbList, TbLayoutGrid, TbBinaryTree2,
+  TbSearch, TbDownload, TbUpload, TbPlus, TbList, TbLayoutGrid, TbBinaryTree2,
   TbChevronDown, TbChevronRight, TbDots, TbUsers, TbCopy, TbTrash,
 } from 'react-icons/tb';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
@@ -162,7 +162,19 @@ export const EntityBrowser = () => {
         <div className={styles.actions}>
           <Button icon={<TbDownload size={12} />} onClick={handleExport}>Export CSV</Button>
           {permissions.canCreateEntities && (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>New entity</Button>
+            <>
+              <Button 
+                icon={<TbUpload size={12} />} 
+                onClick={() => navigate({ 
+                  to: '/$workspaceSlug/entities/import', 
+                  params: { workspaceSlug },
+                  search: typeFilter ? { type: typeFilter } : undefined
+                })}
+              >
+                Import CSV
+              </Button>
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>New entity</Button>
+            </>
           )}
         </div>
       </div>

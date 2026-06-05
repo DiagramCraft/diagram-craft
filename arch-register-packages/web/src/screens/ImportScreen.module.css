@@ -1,0 +1,92 @@
+/* Import all styles from ExtractScreen */
+@import './ExtractScreen.module.css';
+
+.inputFoot {
+  justify-content: flex-end;
+}
+
+/* Detail container and sections */
+.detailContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-fg);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+/* Full-width field for comparisons */
+.detailFieldWide {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comparisonRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.beforeAfter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.beforeLabel,
+.afterLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.beforeLabel {
+  color: var(--cmp-fg-disabled);
+}
+
+.afterLabel {
+  color: var(--accent-fg);
+}
+
+.oldValue {
+  color: var(--cmp-fg-disabled);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 6px 8px;
+  background: var(--panel-bg);
+  border-radius: 4px;
+  border: 1px solid var(--panel-border);
+}
+
+.newValue {
+  color: var(--base-fg);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 6px 8px;
+  background: var(--accent-bg);
+  border-radius: 4px;
+  border: 1px solid var(--accent-fg);
+}
+
+.emptyValue {
+  color: var(--cmp-fg-disabled);
+  font-style: italic;
+}

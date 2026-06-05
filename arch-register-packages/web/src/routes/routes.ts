@@ -21,6 +21,8 @@ import { ExtractScreen } from '../screens/ExtractScreen';
 import { apiFetch } from '../api';
 import type { Workspace } from '../api';
 import { workspaceKeys } from '../hooks/useWorkspaces';
+import { ImportScreen } from '../screens/ImportScreen';
+
 import {
   validateEntitySearch,
   validateProjectSearch,
@@ -199,6 +201,14 @@ const extractRoute = createRoute({
   component: ExtractScreen,
 });
 
+// ─── CSV Import ─────────────────────────────────────────────
+const importRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'entities/import',
+  component: ImportScreen,
+  validateSearch: validateEntitySearch,
+});
+
 // ─── Route Tree ──────────────────────────────────────────────
 export const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -217,6 +227,7 @@ export const routeTree = rootRoute.addChildren([
       accountSettingsRoute,
       assistantRoute,
       extractRoute,
+      importRoute,
     ]),
   ]),
 ]);
