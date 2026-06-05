@@ -6,13 +6,14 @@ import { applyTheme } from './hooks/useTheme';
   try {
     const saved = localStorage.getItem('ar-theme');
     applyTheme(saved === 'light' ? 'light' : 'dark');
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 })();
 
 import { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { RouterProvider } from '@tanstack/react-router';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { PermissionProvider } from './auth/PermissionContext';
@@ -77,6 +78,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </PermissionProvider>
       </AuthProvider>
     </GlobalErrorBoundary>
-    <ReactQueryDevtools initialIsOpen={false} />
   </QueryClientProvider>
 );

@@ -70,4 +70,21 @@
       opacity: 1;
     }
   }
+
+  .eEdgeLabel {
+    font-size: 11px;
+    fill: var(--base-fg);
+    pointer-events: none;
+    user-select: none;
+    paint-order: stroke fill;
+    stroke: var(--panel-bg);
+    stroke-width: 3px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    &[data-highlighted="true"] {
+      fill: var(--accent-fg);
+      font-weight: 600;
+    }
+  }
 }

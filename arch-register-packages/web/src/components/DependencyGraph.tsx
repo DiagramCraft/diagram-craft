@@ -122,8 +122,11 @@ export const DependencyGraph = <T,>({
 
     // Hierarchy layout: only containment edges drive node positioning.
     // Reference edges are rendered as arcs and don't affect layout.
+    // Self-referencing edges are excluded from layout to avoid cycles.
     const layoutEdges =
-      layout === 'hierarchy' ? edges.filter(e => e.kind === 'containment') : edges;
+      layout === 'hierarchy' 
+        ? edges.filter(e => e.kind === 'containment' && e.from !== e.to)
+        : edges.filter(e => e.from !== e.to);
 
     for (const edge of layoutEdges) {
       graph.addEdge({
@@ -256,6 +259,48 @@ export const DependencyGraph = <T,>({
           // In hierarchy layout, reference edges are rendered as arcs in a later pass
           if (layout === 'hierarchy' && edge.kind !== 'containment') return null;
 
+          // Self-referencing edge: create a loop
+          if (edge.from === edge.to) {
+            const loopSize = Math.max(nw, nh) * 0.8;
+            const startX = fromPos.x + nw / 2;
+            const startY = fromPos.y;
+            const endX = fromPos.x;
+            const endY = fromPos.y + nh / 2;
+            const c1x = startX + loopSize;
+            const c1y = startY;
+            const c2x = endX;
+            const c2y = endY + loopSize;
+            
+            // Label position at the furthest point of the loop
+            const labelX = fromPos.x + loopSize * 0.7;
+            const labelY = fromPos.y + loopSize * 0.7;
+
+            return (
+              <g key={edge.id}>
+                <path
+                  d={`M ${startX} ${startY} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${endX} ${endY}`}
+                  className={styles.eEdge}
+                  data-kind={edge.kind}
+                  data-highlighted={connectedEdges.has(edge.id)}
+                  fill="none"
+                  markerEnd="url(#dep-arrow)"
+                />
+                {edge.label && (
+                  <text
+                    x={labelX}
+                    y={labelY}
+                    className={styles.eEdgeLabel}
+                    data-highlighted={connectedEdges.has(edge.id)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    {edge.label}
+                  </text>
+                )}
+              </g>
+            );
+          }
+
           const dx = toPos.x - fromPos.x;
           const dy = toPos.y - fromPos.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
@@ -269,18 +314,35 @@ export const DependencyGraph = <T,>({
           const y1 = fromPos.y + uy * trimSrc;
           const x2 = toPos.x - ux * trimDst;
           const y2 = toPos.y - uy * trimDst;
+
+          const midX = (x1 + x2) / 2;
+          const midY = (y1 + y2) / 2;
+
           return (
-            <line
-              key={edge.id}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              className={styles.eEdge}
-              data-kind={edge.kind}
-              data-highlighted={connectedEdges.has(edge.id)}
-              markerEnd="url(#dep-arrow)"
-            />
+            <g key={edge.id}>
+              <line
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                className={styles.eEdge}
+                data-kind={edge.kind}
+                data-highlighted={connectedEdges.has(edge.id)}
+                markerEnd="url(#dep-arrow)"
+              />
+              {edge.label && (
+                <text
+                  x={midX}
+                  y={midY}
+                  className={styles.eEdgeLabel}
+                    data-highlighted={connectedEdges.has(edge.id)}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  {edge.label}
+                </text>
+              )}
+            </g>
           );
         })}
 
@@ -328,6 +390,46 @@ export const DependencyGraph = <T,>({
             const toPos = positions.get(edge.to);
             if (!fromPos || !toPos) return null;
 
+            // Self-referencing edge in hierarchy layout
+            if (edge.from === edge.to) {
+              const loopSize = Math.max(nw, nh) * 0.8;
+              const startX = fromPos.x + nw / 2;
+              const startY = fromPos.y;
+              const endX = fromPos.x;
+              const endY = fromPos.y + nh / 2;
+              const c1x = startX + loopSize;
+              const c1y = startY;
+              const c2x = endX;
+              const c2y = endY + loopSize;
+              
+              const labelX = fromPos.x + loopSize * 0.7;
+              const labelY = fromPos.y + loopSize * 0.7;
+
+              return (
+                <g key={edge.id}>
+                  <path
+                    d={`M ${startX} ${startY} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${endX} ${endY}`}
+                    className={styles.eArcEdge}
+                    data-highlighted={connectedEdges.has(edge.id)}
+                    fill="none"
+                    markerEnd="url(#dep-arrow)"
+                  />
+                  {edge.label && (
+                    <text
+                      x={labelX}
+                      y={labelY}
+                      className={styles.eEdgeLabel}
+                    data-highlighted={connectedEdges.has(edge.id)}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      {edge.label}
+                    </text>
+                  )}
+                </g>
+              );
+            }
+
             const x1 = fromPos.x,
               y1 = fromPos.y;
             const x2 = toPos.x,
@@ -353,15 +455,32 @@ export const DependencyGraph = <T,>({
             const ex = x2 - uttx * dstTrim;
             const ey = y2 - utty * dstTrim;
 
+            // Position label at t=0.5 on the quadratic bezier curve
+            const t = 0.5;
+            const labelX = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cx + t * t * ex;
+            const labelY = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * cy + t * t * ey;
 
             return (
-              <path
-                key={edge.id}
-                d={`M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`}
-                className={styles.eArcEdge}
-                data-highlighted={connectedEdges.has(edge.id)}
-                markerEnd="url(#dep-arrow)"
-              />
+              <g key={edge.id}>
+                <path
+                  d={`M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`}
+                  className={styles.eArcEdge}
+                  data-highlighted={connectedEdges.has(edge.id)}
+                  markerEnd="url(#dep-arrow)"
+                />
+                {edge.label && (
+                  <text
+                    x={labelX}
+                    y={labelY}
+                    className={styles.eEdgeLabel}
+                    data-highlighted={connectedEdges.has(edge.id)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    {edge.label}
+                  </text>
+                )}
+              </g>
             );
           })}
       </g>

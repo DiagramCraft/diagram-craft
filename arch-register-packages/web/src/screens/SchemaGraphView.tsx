@@ -32,38 +32,42 @@ export const SchemaGraphView = () => {
   const nodes = useMemo(() => schemas.map(s => ({ id: s.id, data: s })), [schemas]);
 
   const edges = useMemo((): DependencyGraphEdge[] => {
-    const seen = new Set<string>();
-    const result: DependencyGraphEdge[] = [];
+    const edgeMap = new Map<string, { fields: string[]; kind: string }>();
+    
     for (const schema of schemas) {
       for (const field of schema.fields) {
         if (field.type !== 'reference' && field.type !== 'containment') continue;
-        if (!field.schemaId || field.schemaId === schema.id) continue;
+        if (!field.schemaId) continue;
 
-        // Deduplicate: prefer containment over reference for same from+to pair
         const pairKey = `${schema.id}::${field.schemaId}`;
-        const existingIdx = result.findIndex(e => e.from === schema.id && e.to === field.schemaId);
-        if (existingIdx >= 0) {
+        const existing = edgeMap.get(pairKey);
+        
+        if (existing) {
+          // Add field name to existing edge
+          existing.fields.push(field.name);
           // Upgrade to containment if this field is containment
-          if (field.type === 'containment' && result[existingIdx]!.kind !== 'containment') {
-            result[existingIdx] = {
-              ...result[existingIdx]!,
-              id: `${schema.id}-${field.id}`,
-              kind: 'containment'
-            };
+          if (field.type === 'containment' && existing.kind !== 'containment') {
+            existing.kind = 'containment';
           }
-          continue;
+        } else {
+          edgeMap.set(pairKey, {
+            fields: [field.name],
+            kind: field.type
+          });
         }
-        seen.add(pairKey);
-        result.push({
-          id: `${schema.id}-${field.id}`,
-          from: schema.id,
-          to: field.schemaId,
-          label: field.name,
-          kind: field.type
-        });
       }
     }
-    return result;
+
+    return Array.from(edgeMap.entries()).map(([pairKey, data]) => {
+      const [from, to] = pairKey.split('::');
+      return {
+        id: pairKey,
+        from: from!,
+        to: to!,
+        label: data.fields.join(', '),
+        kind: data.kind
+      };
+    });
   }, [schemas]);
 
   const handleNodeClick = useCallback(
