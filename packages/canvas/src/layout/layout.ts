@@ -1,11 +1,11 @@
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
+import type { LayoutNode } from './layoutTree';
 import type {
   AlignItems,
   Axis,
   ContainerLayoutInstructions,
-  JustifyContent,
-  LayoutNode
-} from './layoutTree';
+  JustifyContent
+} from '@diagram-craft/model/nodeDefinitionLayoutCapable';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 /**

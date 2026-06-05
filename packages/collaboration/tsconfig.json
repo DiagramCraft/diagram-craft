@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": false,
+    "outDir": "dist",
+    "emitDeclarationOnly": true,
+    "lib": ["ESNext"],
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts"],
+  "references": [
+    { "path": "../utils" }
+  ]
+}

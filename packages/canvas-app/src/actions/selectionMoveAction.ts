@@ -6,7 +6,7 @@ import { isNode, transformElements } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { mustExist } from '@diagram-craft/utils/assert';
-import { Axis } from '@diagram-craft/canvas/layout/layoutTree';
+import type { Axis } from '@diagram-craft/model/nodeDefinitionLayoutCapable';
 
 declare global {
   namespace DiagramCraft {

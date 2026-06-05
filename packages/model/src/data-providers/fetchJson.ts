@@ -68,7 +68,10 @@ export function assertDataSchema(value: unknown): asserts value is DataSchema {
   const schema = value as Record<string, unknown>;
   assertString(schema.id, 'Schema id');
   assertString(schema.name, 'Schema name');
-  assertString(schema.providerId, 'Schema providerId');
+  // providerId is optional during fetch - it gets set by the data provider after fetching
+  if (schema.providerId !== undefined) {
+    assertString(schema.providerId, 'Schema providerId');
+  }
   if (!Array.isArray(schema.fields)) {
     throw new Error('Schema fields must be an array');
   }

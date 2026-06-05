@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": false,
+    "outDir": "dist",
+    "emitDeclarationOnly": true,
+    "lib": ["ESNext"],
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts", "**/*.bench.ts", "src/test-support"],
+  "references": [
+    { "path": "../utils" },
+    { "path": "../geometry" },
+    { "path": "../graph" },
+    { "path": "../collaboration" }
+  ]
+}

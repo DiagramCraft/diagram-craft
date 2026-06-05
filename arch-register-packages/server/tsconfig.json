@@ -2,14 +2,16 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "lib": ["ESNext"],
-    "types": ["node"],
-    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+    "types": ["node"]
   },
-  "include": [
-    "../../packages/**/*",
-    "../../packages/**/.storybook/**/*",
-    "../api-types/src/**/*",
-    "../permissions/src/**/*",
-    "./src/**/*"
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../../packages/utils" },
+    { "path": "../../packages/geometry" },
+    { "path": "../../packages/graph" },
+    { "path": "../../packages/collaboration" },
+    { "path": "../../packages/model" },
+    { "path": "../api-types" },
+    { "path": "../permissions" }
   ]
 }
