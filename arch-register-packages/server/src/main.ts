@@ -10,6 +10,9 @@ import { createApp } from './app.js';
 import { SERVER_DEFAULTS } from './constants.js';
 import { generateSvgPreview } from './preview/svgPreviewGenerator.js';
 import { getDiagramCommentCounts } from './diagrams/commentCounts.js';
+import { createLogger } from './utils/logger.js';
+
+const logger = createLogger('server');
 
 const PORT = Number(process.env['PORT'] ?? SERVER_DEFAULTS.PORT);
 
@@ -21,7 +24,7 @@ const main = async () => {
   const autoSaveWriter = async (relPath: string, content: string) => {
     const parts = relPath.split('/');
     if (parts.length < 3) {
-      console.warn(`[AutoSave] Unexpected room path format: ${relPath}`);
+      logger.warn(`Unexpected room path format: ${relPath}`);
       return;
     }
 
@@ -81,18 +84,18 @@ const main = async () => {
   const collaborationServer = new YjsCollaborationServer('/ws', autoSaveWriter, name => name, wsAuthenticator);
 
   app.use(createAIRoutes(db));
-  console.log('AI routes enabled');
+  logger.info('AI routes enabled');
 
   const server = createServer(toNodeListener(app));
   collaborationServer.bind(server);
 
   server.listen(PORT, () => {
-    console.log(`Server listening on http://localhost:${PORT}`);
-    console.log(`WebSocket collaboration listening on ws://localhost:${PORT}/ws`);
+    logger.info(`Server listening on http://localhost:${PORT}`);
+    logger.info(`WebSocket collaboration listening on ws://localhost:${PORT}/ws`);
   });
 
   const shutdown = async () => {
-    console.log('Shutting down...');
+    logger.info('Shutting down...');
     await collaborationServer.close();
     await db.core.close();
     server.close();
@@ -104,6 +107,6 @@ const main = async () => {
 };
 
 main().catch(error => {
-  console.error('Failed to start server:', error);
+  logger.error('Failed to start server', error instanceof Error ? error : new Error(String(error)));
   process.exit(1);
 });

@@ -1,6 +1,9 @@
 import { defineHandler, getQuery, H3, readBody } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, UpdateEntityInput, CreateEntityInput } from '../db/database.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('data');
 import {
   decodeRefs,
   type Entity,
@@ -692,7 +695,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           ids: [...createdIds, ...updatedIds] 
         };
       } catch (e) {
-        console.error('Import entities error:', e);
+        logger.error('Import entities error', e instanceof Error ? e : new Error(String(e)));
         handleError(e, 'Failed to import entities');
       }
     })

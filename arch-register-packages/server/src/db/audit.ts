@@ -1,5 +1,8 @@
 import type { AuditOperation, AuditEntityType } from '../types.js';
 import type { DatabaseAdapter } from './database.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('audit');
 
 const STATIC_USER = 'system'; // Until authentication is implemented
 
@@ -50,7 +53,7 @@ export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Pro
     });
   } catch (error) {
     // Log error but don't fail the main operation
-    console.error('Failed to write audit log:', error);
+    logger.error('Failed to write audit log', error instanceof Error ? error : new Error(String(error)));
   }
 };
 
