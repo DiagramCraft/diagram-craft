@@ -2,6 +2,7 @@ import { Diagram } from '../diagram';
 import { DiagramDocument } from '../diagramDocument';
 import { Layer } from '../diagramLayer';
 import { DiagramElement, isEdge, isNode } from '../diagramElement';
+import type { DiagramNode } from '../diagramNode';
 import {
   SerializedDiagram,
   SerializedDiagramDocument,
@@ -26,13 +27,18 @@ import { CommentManager, SerializedComment } from '../comment';
 import { hash64 } from '@diagram-craft/utils/hash';
 import type { DataManager } from '../diagramDocumentData';
 
+export type SerializeDiagramOptions = {
+  anchorMode?: 'resolved' | 'stored';
+};
+
 export const serializeDiagramDocument = async (
-  document: DiagramDocument
+  document: DiagramDocument,
+  options: SerializeDiagramOptions = {}
 ): Promise<SerializedDiagramDocument> => {
   const schemaMetadata = serializeSchemaMetadata(document.data._schemas);
   const stories = document.stories.stories;
   const serialized = {
-    diagrams: document.diagrams.map(serializeDiagram),
+    diagrams: document.diagrams.map(diagram => serializeDiagram(diagram, options)),
     attachments: await serializeAttachments(document.attachments),
     customPalette: serializeCustomPalette(document.customPalette),
     styles: serializeStyles(document.styles),
@@ -122,15 +128,18 @@ const serializeAttachments = async (
   return dest;
 };
 
-export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
+export const serializeDiagram = (
+  diagram: Diagram,
+  options: SerializeDiagramOptions = {}
+): SerializedDiagram => {
   return {
     id: diagram.id,
     name: diagram.name,
-    layers: diagram.layers.all.map(l => serializeLayer(l)),
+    layers: diagram.layers.all.map(l => serializeLayer(l, options)),
     activeLayerId: diagram.activeLayer.id,
     visibleLayers: diagram.layers.visible.map(l => l.id),
     views: diagram.views.all.length > 0 ? diagram.views.all : undefined,
-    diagrams: diagram.diagrams.map(d => serializeDiagram(d)),
+    diagrams: diagram.diagrams.map(d => serializeDiagram(d, options)),
     guides: diagram.guides.length > 0 ? diagram.guides : undefined,
     comments: serializeComments(diagram.commentManager),
     zoom: {
@@ -142,7 +151,10 @@ export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
   };
 };
 
-export const serializeLayer = (layer: Layer): SerializedLayer => {
+export const serializeLayer = (
+  layer: Layer,
+  options: SerializeDiagramOptions = {}
+): SerializedLayer => {
   if (layer.type === 'regular') {
     return {
       id: layer.id,
@@ -150,7 +162,7 @@ export const serializeLayer = (layer: Layer): SerializedLayer => {
       type: 'layer',
       layerType: 'regular',
       elements: (layer as RegularLayer).elements.map(
-        element => serializeDiagramElement(element) as SerializedRegularElement
+        element => serializeDiagramElement(element, options) as SerializedRegularElement
       ),
       isLocked: layer.isLocked()
     };
@@ -181,7 +193,7 @@ export const serializeLayer = (layer: Layer): SerializedLayer => {
         id: m.id,
         type: m.type,
         element: m.element
-          ? (serializeDiagramElement(m.element) as SerializedModificationElement)
+          ? (serializeDiagramElement(m.element, options) as SerializedModificationElement)
           : undefined
       })),
       isLocked: layer.isLocked()
@@ -191,7 +203,18 @@ export const serializeLayer = (layer: Layer): SerializedLayer => {
   }
 };
 
-export const serializeDiagramElement = (element: DiagramElement): SerializedElement => {
+const serializeNodeAnchors = (node: DiagramNode, options: SerializeDiagramOptions) => {
+  if (options.anchorMode === 'stored') {
+    return node.getStoredAnchors() ?? [];
+  } else {
+    return node.anchors;
+  }
+};
+
+export const serializeDiagramElement = (
+  element: DiagramElement,
+  options: SerializeDiagramOptions = {}
+): SerializedElement => {
   if (isNode(element)) {
     const node = element;
     return {
@@ -199,8 +222,10 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       type: node.type as 'node' | 'delegating-node',
       nodeType: node.nodeType,
       bounds: node.bounds,
-      anchors: node.anchors,
-      children: node.children.map(serializeDiagramElement) as SerializedNode[],
+      anchors: serializeNodeAnchors(node, options),
+      children: node.children.map(child =>
+        serializeDiagramElement(child, options)
+      ) as SerializedNode[],
       props: node.storedProps,
       metadata: node.metadata,
       texts: node.texts,
@@ -223,7 +248,9 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       waypoints: edge.waypoints,
       props: edge.storedProps,
       metadata: edge.metadata,
-      children: edge.children.map(serializeDiagramElement) as SerializedNode[],
+      children: edge.children.map(child =>
+        serializeDiagramElement(child, options)
+      ) as SerializedNode[],
       tags: edge.tags.length > 0 ? edge.tags : undefined
     };
   } else {

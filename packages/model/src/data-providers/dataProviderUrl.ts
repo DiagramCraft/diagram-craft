@@ -2,6 +2,7 @@ import { BaseHTTPDataProvider } from './dataProviderBaseHttp';
 import { type DataWithSchema } from '../dataProvider';
 import { DataSchema } from '../diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
+import { assertDataSchema, assertDataWithSchema, readJsonArray, withCacheMode } from './fetchJson';
 
 export const UrlDataProviderId = 'urlDataProvider';
 
@@ -51,17 +52,13 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
 
   protected async fetchData(force = true): Promise<DataWithSchema[]> {
     assert.present(this.dataUrl);
-    const res = await fetch(this.dataUrl, {
-      cache: force ? 'no-cache' : 'default'
-    });
-    return res.json() as Promise<DataWithSchema[]>;
+    const res = await fetch(this.dataUrl, withCacheMode(force));
+    return readJsonArray(res, assertDataWithSchema);
   }
 
   protected async fetchSchemas(force = true): Promise<DataSchema[]> {
     assert.present(this.schemaUrl);
-    const res = await fetch(this.schemaUrl, {
-      cache: force ? 'no-cache' : 'default'
-    });
-    return res.json() as Promise<DataSchema[]>;
+    const res = await fetch(this.schemaUrl, withCacheMode(force));
+    return readJsonArray(res, assertDataSchema);
   }
 }

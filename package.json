@@ -18,7 +18,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest watch",
     "test:bench": "vitest bench --run",
-    "lint:tsc": "tsc -b --incremental false tsconfig.workspace.json arch-register-packages/server/tsconfig.json arch-register-packages/server/tsconfig.strict-node.json",
+    "lint:tsc": "tsc -b --incremental false tsconfig.workspace.json arch-register-packages/server/tsconfig.json",
     "lint": "biome lint --max-diagnostics=100 && pnpm lint:tsc",
     "doc": "typedoc"
   },

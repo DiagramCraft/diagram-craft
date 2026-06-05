@@ -13,7 +13,6 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { AbstractEdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
-import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 class TestEdgeDefinition extends AbstractEdgeDefinition {
@@ -23,10 +22,8 @@ class TestEdgeDefinition extends AbstractEdgeDefinition {
 }
 
 const makeRegistry = (): Registry => {
-  const nodes = new NodeDefinitionRegistry();
-  nodes.register(new RectNodeDefinition());
   return {
-    nodes,
+    nodes: new NodeDefinitionRegistry(),
     edges: new EdgeDefinitionRegistry(new TestEdgeDefinition()),
     stencils: new StencilRegistry()
   };

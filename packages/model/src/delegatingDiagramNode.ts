@@ -26,7 +26,12 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { LabelNode } from './labelNode';
-import type { CustomNodeProps, ElementMetadata, NodeProps } from './diagramProps';
+import {
+  ensureCustomProp,
+  type CustomNodeProps,
+  type ElementMetadata,
+  type NodeProps
+} from './diagramProps';
 import { DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
@@ -163,11 +168,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     callback: (props: NonNullable<CustomNodeProps[K]>) => void,
     uow: UnitOfWork
   ): void {
-    this.updateProps(p => {
-      p.custom ??= {};
-      p.custom[key] ??= {};
-      callback(p.custom[key]!);
-    }, uow);
+    this.updateProps(p => callback(ensureCustomProp(p.custom, key)), uow);
   }
 
   getPropsInfo<T extends PropPath<NodeProps>>(
@@ -302,6 +303,10 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
   get anchors(): ReadonlyArray<Anchor> {
     return this.delegate.anchors;
+  }
+
+  getStoredAnchors(): ReadonlyArray<Anchor> | undefined {
+    return this.delegate.getStoredAnchors();
   }
 
   getAnchor(anchor: string): Anchor {
