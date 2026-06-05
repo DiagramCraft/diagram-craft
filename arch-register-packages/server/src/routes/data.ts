@@ -474,14 +474,37 @@ export function createDataRoutes(db: DatabaseAdapter) {
             .filter(e => e.schema_id === body.schemaId)
             .map(e => [e.id, e])
         );
+        
+        // Build name-based lookup for ambiguous matches
+        const entitiesByName = new Map<string, typeof allEntities[0][]>();
+        for (const entity of allEntities.filter(e => e.schema_id === body.schemaId)) {
+          const name = entity.name.toLowerCase().trim();
+          if (!entitiesByName.has(name)) {
+            entitiesByName.set(name, []);
+          }
+          entitiesByName.get(name)!.push(entity);
+        }
 
         // Convert to entity format for preview
         const entities = validatedRows.map(row => {
+          const rowName = row.data['Name']?.toLowerCase().trim();
           const isUpdate = row.existingId && existingEntitiesMap.has(row.existingId);
-          const existingEntity = row.existingId ? existingEntitiesMap.get(row.existingId) : undefined;
+          let existingEntity = row.existingId ? existingEntitiesMap.get(row.existingId) : undefined;
+          let matchType: 'id' | 'name' | 'none' = 'none';
+          let nameMatches: typeof allEntities = [];
+          
+          // Determine match type
+          if (row.existingId && existingEntity) {
+            matchType = 'id';
+          } else if (!row.existingId && rowName && entitiesByName.has(rowName)) {
+            matchType = 'name';
+            nameMatches = entitiesByName.get(rowName)!;
+            // For name matches, use the first match as the potential existing entity
+            existingEntity = nameMatches[0];
+          }
           
           // Check permissions for updates
-          if (isUpdate && existingEntity) {
+          if ((isUpdate || matchType === 'name') && existingEntity) {
             const checker = new PermissionChecker();
             const hasPermission = checker.hasEntityPermission(authCtx, existingEntity, 'edit_entity');
             if (!hasPermission) {
@@ -490,6 +513,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
                 errors: [...row.errors, 'No permission to update this entity'],
                 entity: null,
                 isUpdate: false,
+                matchType: 'none',
+                nameMatches: [],
                 existingId: row.existingId,
                 existingEntity: null
               };
@@ -501,8 +526,15 @@ export function createDataRoutes(db: DatabaseAdapter) {
             errors: row.errors,
             entity: row.errors.length === 0 ? csvRowToEntity(row.data, schema.fields) : null,
             isUpdate,
+            matchType,
+            nameMatches: matchType === 'name' ? nameMatches.map(e => ({
+              id: e.id,
+              name: e.name,
+              slug: e.slug,
+              namespace: e.namespace
+            })) : [],
             existingId: row.existingId,
-            existingEntity: isUpdate && existingEntity ? {
+            existingEntity: (isUpdate || matchType === 'name') && existingEntity ? {
               _name: existingEntity.name,
               _slug: existingEntity.slug,
               _namespace: existingEntity.namespace,
@@ -510,7 +542,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
               _owner: existingEntity.owner,
               _lifecycle: existingEntity.lifecycle,
               _tags: existingEntity.tags,
-              _links: existingEntity.links,
+              // Only include _links if it has actual content
+              ...(existingEntity.links && existingEntity.links.length > 0 ? { _links: existingEntity.links } : {}),
               ...existingEntity.data
             } : null
           };

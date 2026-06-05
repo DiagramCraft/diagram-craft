@@ -284,6 +284,8 @@ export const parseCsvImport = (
     errors: string[];
     entity: Record<string, unknown> | null;
     isUpdate: boolean;
+    matchType?: 'id' | 'name' | 'none';
+    nameMatches?: Array<{ id: string; name: string; slug?: string; namespace?: string }>;
     existingId?: string;
     existingEntity?: Record<string, unknown> | null;
   }>;

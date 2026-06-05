@@ -7,12 +7,13 @@ import {
   TbCheck,
   TbUpload,
   TbChevronRight,
-  TbX,
   TbAlertCircle,
   TbPlus
 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Chip } from '../components/Chip';
+import { DropdownMenu } from '../components/DropdownMenu';
 import styles from './ImportScreen.module.css';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { downloadCsvTemplate, parseCsvImport, commitCsvImport } from '../api';
@@ -28,6 +29,10 @@ type ParsedRow = {
   accepted: boolean;
   expanded: boolean;
   isUpdate: boolean;
+  hasChanges: boolean;
+  matchType: 'id' | 'name' | 'none';
+  nameMatches: Array<{ id: string; name: string; slug?: string; namespace?: string }>;
+  userChoice?: 'update' | 'create'; // User's decision for name matches
   existingId?: string;
   existingEntity?: Record<string, unknown> | null;
 };
@@ -66,6 +71,24 @@ const Stepper = ({ phase }: { phase: Phase }) => {
   );
 };
 
+// Helper to normalize values for comparison (treat empty string, null, undefined as equivalent)
+const normalizeValue = (val: unknown) => {
+  if (val === '' || val === null || val === undefined) return null;
+  return val;
+};
+
+// Helper to detect if an update has actual changes
+const hasActualChanges = (newEntity: Record<string, unknown>, oldEntity: Record<string, unknown>): boolean => {
+  const newEntityKeys = Object.keys(newEntity);
+  const fieldsToCompare = newEntityKeys.filter(k => !['_existingId', '_schemaId'].includes(k));
+  
+  return fieldsToCompare.some(key => {
+    const oldVal = normalizeValue(oldEntity[key]);
+    const newVal = normalizeValue(newEntity[key]);
+    return JSON.stringify(oldVal) !== JSON.stringify(newVal);
+  });
+};
+
 const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
   if (!row.entity) return null;
 
@@ -92,26 +115,35 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
     const newEntity = row.entity;
     const oldEntity = row.existingEntity;
     
-    // Get all keys from both entities
-    const allKeys = new Set([
-      ...Object.keys(newEntity),
-      ...Object.keys(oldEntity)
-    ]);
+    // Only compare fields that are present in the new entity (from CSV)
+    // This excludes internal fields and fields not in the CSV
+    const newEntityKeys = Object.keys(newEntity);
+    
+    // Filter out internal fields that shouldn't be shown in comparison
+    const fieldsToCompare = newEntityKeys.filter(k => 
+      !['_existingId', '_schemaId'].includes(k)
+    );
     
     // Separate metadata and custom fields
-    const metadataKeys = Array.from(allKeys).filter(k => k.startsWith('_')).sort();
-    const customKeys = Array.from(allKeys).filter(k => !k.startsWith('_')).sort();
+    const metadataKeys = fieldsToCompare.filter(k => k.startsWith('_')).sort();
+    const customKeys = fieldsToCompare.filter(k => !k.startsWith('_')).sort();
+    
+    // Helper to normalize values for comparison (treat empty string, null, undefined as equivalent)
+    const normalizeValue = (val: unknown) => {
+      if (val === '' || val === null || val === undefined) return null;
+      return val;
+    };
     
     // Only show fields that have changed
     const changedMetadata = metadataKeys.filter(key => {
-      const oldVal = oldEntity[key];
-      const newVal = newEntity[key];
+      const oldVal = normalizeValue(oldEntity[key]);
+      const newVal = normalizeValue(newEntity[key]);
       return JSON.stringify(oldVal) !== JSON.stringify(newVal);
     });
     
     const changedCustom = customKeys.filter(key => {
-      const oldVal = oldEntity[key];
-      const newVal = newEntity[key];
+      const oldVal = normalizeValue(oldEntity[key]);
+      const newVal = normalizeValue(newEntity[key]);
       return JSON.stringify(oldVal) !== JSON.stringify(newVal);
     });
     
@@ -252,16 +284,30 @@ export const ImportScreen = () => {
       const text = await file.text();
       const result = await parseCsvImport(workspaceSlug, selectedSchemaId, text);
       setRows(
-        result.entities.map(e => ({
-          rowNumber: e.rowNumber,
-          errors: e.errors,
-          entity: e.entity,
-          accepted: e.errors.length === 0,
-          expanded: false,
-          isUpdate: e.isUpdate,
-          existingId: e.existingId,
-          existingEntity: e.existingEntity
-        }))
+        result.entities.map(e => {
+          const matchType = e.matchType || 'none';
+          const hasChanges = e.isUpdate && e.entity && e.existingEntity 
+            ? hasActualChanges(e.entity, e.existingEntity)
+            : true; // Creates always have "changes"
+          
+          // For name matches, don't auto-accept - require user decision
+          const needsUserDecision = matchType === 'name';
+          
+          return {
+            rowNumber: e.rowNumber,
+            errors: e.errors,
+            entity: e.entity,
+            accepted: e.errors.length === 0 && hasChanges && !needsUserDecision,
+            expanded: false,
+            isUpdate: e.isUpdate,
+            hasChanges,
+            matchType,
+            nameMatches: e.nameMatches || [],
+            userChoice: undefined, // User hasn't made a choice yet
+            existingId: e.existingId,
+            existingEntity: e.existingEntity
+          };
+        })
       );
       setTotalRows(result.totalRows);
       setValidRows(result.validRows);
@@ -281,14 +327,38 @@ export const ImportScreen = () => {
     setRows(rs => rs.map(r => (r.rowNumber === rowNumber ? { ...r, expanded: !r.expanded } : r)));
   }, []);
 
+  const setUserChoice = useCallback((rowNumber: number, choice: 'update' | 'create') => {
+    setRows(rs => rs.map(r => {
+      if (r.rowNumber === rowNumber) {
+        return { 
+          ...r, 
+          userChoice: choice,
+          accepted: true, // Auto-accept once user makes a choice
+          isUpdate: choice === 'update'
+        };
+      }
+      return r;
+    }));
+  }, []);
+
   const commit = useCallback(async () => {
     const accepted = rows.filter(r => r.accepted && r.entity);
     try {
-      const entities = accepted.map(r => ({ 
-        ...r.entity!, 
-        _schemaId: selectedSchemaId,
-        _existingId: r.existingId 
-      }));
+      const entities = accepted.map(r => {
+        const entity: Record<string, unknown> = {
+          ...r.entity!,
+          _schemaId: selectedSchemaId
+        };
+        
+        // Only include _existingId if:
+        // 1. It's an ID-based match (matchType === 'id'), OR
+        // 2. It's a name-based match AND user chose 'update'
+        if (r.matchType === 'id' || (r.matchType === 'name' && r.userChoice === 'update')) {
+          entity._existingId = r.existingId ?? r.nameMatches[0]?.id;
+        }
+        
+        return entity;
+      });
       const result = await commitCsvImport(workspaceSlug, selectedSchemaId, entities);
       setCommitted(
         accepted.map((r, i) => ({
@@ -447,17 +517,16 @@ export const ImportScreen = () => {
                   <th>Name</th>
                   <th>Action</th>
                   <th>Status</th>
-                  <th />
                 </tr>
               </thead>
               <tbody>
                 {rows.map(r => (
                   <React.Fragment key={r.rowNumber}>
                     <tr
-                      className={`${r.accepted ? '' : styles.rowRejected} ${r.expanded ? styles.rowExpanded : ''}`}
+                      className={`${r.accepted || (r.matchType === 'name' && !r.userChoice) ? '' : styles.rowRejected} ${r.expanded ? styles.rowExpanded : ''}`}
                     >
                       <td className={styles.tdExp}>
-                        {r.entity && (
+                        {r.entity && (r.hasChanges || r.matchType === 'name' || !r.isUpdate) && (
                           <Button
                             variant="icon-only"
                             size="sm"
@@ -480,14 +549,40 @@ export const ImportScreen = () => {
                       <td>{r.rowNumber}</td>
                       <td>{r.entity?._name ? String(r.entity._name) : <em>No name</em>}</td>
                       <td>
-                        {r.isUpdate ? (
-                          <span className={`${styles.actionPill} ${styles.actionUpdate}`}>
-                            <TbCheck size={10} /> Update
-                          </span>
+                        {r.matchType === 'name' && !r.userChoice ? (
+                          <DropdownMenu
+                            trigger={
+                              <button type="button" className={styles.chipButton}>
+                                <Chip tone="ghost" dot="oklch(0.65 0.15 40)">
+                                  <TbAlertCircle size={10} /> Decision Required
+                                </Chip>
+                              </button>
+                            }
+                            items={[
+                              {
+                                label: 'Update existing entity',
+                                icon: <TbCheck size={12} />,
+                                onClick: () => setUserChoice(r.rowNumber, 'update'),
+                              },
+                              {
+                                label: 'Create new entity',
+                                icon: <TbPlus size={12} />,
+                                onClick: () => setUserChoice(r.rowNumber, 'create'),
+                              },
+                            ]}
+                          />
+                        ) : r.isUpdate && !r.hasChanges ? (
+                          <Chip tone="ghost" dot="var(--cmp-fg-disabled)">
+                            No Changes
+                          </Chip>
+                        ) : r.isUpdate ? (
+                          <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
+                            Update
+                          </Chip>
                         ) : (
-                          <span className={`${styles.actionPill} ${styles.actionAdd}`}>
-                            <TbPlus size={10} /> Create
-                          </span>
+                          <Chip tone="ghost" dot="var(--green)">
+                            Create
+                          </Chip>
                         )}
                       </td>
                       <td>
@@ -503,18 +598,6 @@ export const ImportScreen = () => {
                           <span className={styles.statusOk}>
                             <TbCheck size={10} /> Valid
                           </span>
-                        )}
-                      </td>
-                      <td>
-                        {r.errors.length === 0 && (
-                          <Button
-                            variant="icon-only"
-                            size="sm"
-                            title={r.accepted ? 'Reject' : 'Accept'}
-                            onClick={() => toggleRow(r.rowNumber)}
-                          >
-                            {r.accepted ? <TbX size={12} /> : <TbCheck size={12} />}
-                          </Button>
                         )}
                       </td>
                     </tr>
