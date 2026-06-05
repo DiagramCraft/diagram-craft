@@ -14,6 +14,8 @@ import {
 import { AbstractEdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { before } from 'node:test';
+import { setLogLevel } from '../logger';
 
 class TestEdgeDefinition extends AbstractEdgeDefinition {
   constructor() {
@@ -34,6 +36,8 @@ afterEach(() => {
 });
 
 describe('DiagramAutoSave', () => {
+  before(() => setLogLevel('error'));
+
   it('does not write autosave files when synced content still has no diagrams', async () => {
     vi.useFakeTimers();
 
