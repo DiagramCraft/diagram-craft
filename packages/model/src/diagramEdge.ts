@@ -504,7 +504,10 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ) {
-    this.updateProps(p => callback(ensureCustomProp(p.custom, key)), uow);
+    this.updateProps(p => {
+      p.custom ??= {};
+      callback(ensureCustomProp(p.custom, key));
+    }, uow);
   }
 
   inferControlPoints(i: number) {

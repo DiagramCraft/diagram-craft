@@ -196,7 +196,10 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
     uow: UnitOfWork
   ): void {
-    this.updateProps(p => callback(ensureCustomProp(p.custom, key)), uow);
+    this.updateProps(p => {
+      p.custom ??= {};
+      callback(ensureCustomProp(p.custom, key));
+    }, uow);
   }
 
   getPropsInfo<T extends PropPath<EdgeProps>>(path: T): PropertyInfo<PropPathValue<EdgeProps, T>> {

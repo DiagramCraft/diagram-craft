@@ -215,13 +215,18 @@ export interface CustomEdgeProps extends DiagramCraft.CustomEdgePropsExtensions 
 export interface CustomNodeProps extends DiagramCraft.CustomNodePropsExtensions {}
 
 export const ensureCustomProp = <T extends object, K extends keyof T>(
-  customProps: T | undefined,
+  customProps: T,
   key: K
 ): NonNullable<T[K]> => {
   // TypeScript cannot prove that a generic indexed write preserves the key-specific type,
   // even though all custom props are object-shaped and initialized here before mutation.
-  const customPropsMap = (customProps ??= {} as T);
-  return ((customPropsMap[key] ??= {} as NonNullable<T[K]>) as NonNullable<T[K]>);
+  customProps ??= {} as T;
+  const customPropsMap = customProps;
+  // Must separate init from access: setting an empty object on a FlatObjectMapProxy stores
+  // `undefined` in the flat map (marking the key as present), and the ??= expression returns
+  // the plain {} rather than a live sub-proxy. Re-accessing after init returns the sub-proxy.
+  customPropsMap[key] ??= {} as NonNullable<T[K]>;
+  return customPropsMap[key] as NonNullable<T[K]>;
 };
 
 export type NodeActionType = 'url' | 'diagram' | 'layer' | 'none';
