@@ -12,13 +12,17 @@ export type {
 
 // ── Schema Types ──────────────────────────────────────────────
 export type {
+  RequirementLevel,
+  FieldOption,
   TextField,
   BooleanField,
   DateField,
   SelectField,
+  ApiSelectField,
   ReferenceField,
   ContainmentField,
   SchemaField,
+  ApiSchemaField,
   FieldType,
   EntitySchema,
   CreateSchemaRequest,

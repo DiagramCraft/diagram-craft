@@ -1,57 +1,16 @@
-export type TextField = {
-  id: string;
-  name: string;
-  type: 'text' | 'longtext';
-};
-
-export type BooleanField = {
-  id: string;
-  name: string;
-  type: 'boolean';
-};
-
-export type DateField = {
-  id: string;
-  name: string;
-  type: 'date';
-};
-
-export type SelectField = {
-  id: string;
-  name: string;
-  type: 'select';
-  enumId: string;
-};
-
-// Points to another entity of a given schema type; multiple values stored as comma-separated UUIDs.
-// maxCount: -1 means unbounded.
-export type ReferenceField = {
-  id: string;
-  name: string;
-  type: 'reference';
-  schemaId: string;
-  minCount: number;
-  maxCount: number;
-};
-
-// Like ReferenceField but expresses a parent/child containment relationship.
-// The child entity stores the parent's UUID in its data.
-export type ContainmentField = {
-  id: string;
-  name: string;
-  type: 'containment';
-  schemaId: string;
-  minCount: number;
-  maxCount: number;
-};
-
-export type SchemaField =
-  | TextField
-  | BooleanField
-  | DateField
-  | SelectField
-  | ReferenceField
-  | ContainmentField;
+export type {
+  EntityCapabilities,
+  ProjectCapabilities,
+  RequirementLevel,
+  TextField,
+  BooleanField,
+  DateField,
+  SelectField,
+  ReferenceField,
+  ContainmentField,
+  SchemaField,
+} from '@arch-register/api-types';
+import type { SchemaField } from '@arch-register/api-types/schemas';
 
 export type Workspace = {
   id: string;
@@ -246,10 +205,7 @@ export type User = {
 
 export type GlobalRole = 'global_admin' | 'workspace_admin';
 
-export type GlobalPermission =
-  | 'admin_platform'
-  | 'create_workspaces'
-  | 'manage_workspace_roles';
+export type GlobalPermission = 'admin_platform' | 'create_workspaces' | 'manage_workspace_roles';
 
 export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
 
@@ -309,20 +265,6 @@ export type GlobalRoleAssignment = {
 export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 export type EntityGrantScope = 'self' | 'subtree';
 
-export type EntityCapabilities = {
-  canView: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-  canAdmin: boolean;
-  canCreateChild: boolean;
-};
-
-export type ProjectCapabilities = {
-  canEdit: boolean;
-  canDelete: boolean;
-  canManageFiles: boolean;
-};
-
 export type EntityGrant = {
   id: string;
   workspace: string;
@@ -365,13 +307,6 @@ export type AiMessage = {
   content: string;
   metadata: Record<string, unknown>;
   created_at: Date;
-};
-
-export type OidcAuthState = {
-  state: string;
-  nonce: string;
-  code_verifier: string;
-  expires_at: Date;
 };
 
 export type JWTPayload = {

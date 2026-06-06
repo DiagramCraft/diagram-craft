@@ -6,15 +6,33 @@ import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
 import { Chip } from '../components/Chip';
 import {
-  TbSearch, TbDownload, TbUpload, TbPlus, TbList, TbLayoutGrid, TbBinaryTree2,
-  TbChevronDown, TbChevronRight, TbDots, TbUsers, TbCopy, TbTrash, TbChartRadar,
+  TbSearch,
+  TbDownload,
+  TbUpload,
+  TbPlus,
+  TbList,
+  TbLayoutGrid,
+  TbBinaryTree2,
+  TbChevronDown,
+  TbChevronRight,
+  TbDots,
+  TbUsers,
+  TbCopy,
+  TbTrash,
+  TbChartRadar
 } from 'react-icons/tb';
 import { RadarView } from './RadarView';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
 import type { EntityRecord, EntitySchema, TreeNode, TreeEdge } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { useEntities, useEntityFacets, useEntityTree, useDeleteEntity, useCloneEntity } from '../hooks/useEntities';
+import {
+  useEntities,
+  useEntityFacets,
+  useEntityTree,
+  useDeleteEntity,
+  useCloneEntity
+} from '../hooks/useEntities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
 type BrowserView = 'table' | 'cards' | 'tree' | 'radar';
@@ -32,11 +50,7 @@ const formatDateValue = (value: unknown) => {
   return Number.isNaN(date.getTime()) ? parsed : date.toLocaleDateString();
 };
 
-const matchesDateFilter = (
-  value: unknown,
-  operator: DateFilterOperator,
-  expected: string
-) => {
+const matchesDateFilter = (value: unknown, operator: DateFilterOperator, expected: string) => {
   const parsed = parseDateValue(value);
   if (operator === 'empty') return parsed == null;
   if (parsed == null || expected === '') return true;
@@ -52,7 +66,8 @@ const matchesDateFilter = (
 
 export const EntityBrowser = () => {
   const navigate = useNavigate();
-  const { workspaceSlug, schemas, lifecycleStates, permissions, openAddEntityDialog } = useWorkspaceContext();
+  const { workspaceSlug, schemas, lifecycleStates, permissions, openAddEntityDialog } =
+    useWorkspaceContext();
   const search = useSearch({ strict: false }) as { type?: string; status?: string; owner?: string };
   const typeFilter = search.type ?? null;
   const statusFilter = search.status ?? null;
@@ -72,7 +87,7 @@ export const EntityBrowser = () => {
     owner: ownerFilter,
     lifecycle: statusFilter,
     q,
-    view: 'summary',
+    view: 'summary'
   });
 
   const { data: facets } = useEntityFacets(workspaceId);
@@ -81,7 +96,7 @@ export const EntityBrowser = () => {
     schemaId: typeFilter,
     owner: ownerFilter,
     lifecycle: statusFilter,
-    q,
+    q
   });
 
   const treeNodes = treeData?.nodes ?? [];
@@ -104,23 +119,39 @@ export const EntityBrowser = () => {
       .sort();
   }, [facets]);
 
-  const navigateEntities = useCallback((params: { type?: string; status?: string; owner?: string }) => {
-    navigate({
-      to: '/$workspaceSlug/entities',
-      params: { workspaceSlug },
-      search: params,
-    });
-  }, [navigate, workspaceSlug]);
+  const navigateEntities = useCallback(
+    (params: { type?: string; status?: string; owner?: string }) => {
+      navigate({
+        to: '/$workspaceSlug/entities',
+        params: { workspaceSlug },
+        search: params
+      });
+    },
+    [navigate, workspaceSlug]
+  );
 
-  const navigateToEntity = useCallback((entityId: string) => {
-    navigate({
-      to: '/$workspaceSlug/entities/$entityId',
-      params: { workspaceSlug, entityId },
-    });
-  }, [navigate, workspaceSlug]);
+  const navigateToEntity = useCallback(
+    (entityId: string) => {
+      navigate({
+        to: '/$workspaceSlug/entities/$entityId',
+        params: { workspaceSlug, entityId }
+      });
+    },
+    [navigate, workspaceSlug]
+  );
 
-  const setStatusFilter = (v: string) => navigateEntities({ type: typeFilter ?? undefined, status: v || undefined, owner: ownerFilter ?? undefined });
-  const setOwnerFilter = (v: string) => navigateEntities({ type: typeFilter ?? undefined, status: statusFilter ?? undefined, owner: v || undefined });
+  const setStatusFilter = (v: string) =>
+    navigateEntities({
+      type: typeFilter ?? undefined,
+      status: v || undefined,
+      owner: ownerFilter ?? undefined
+    });
+  const setOwnerFilter = (v: string) =>
+    navigateEntities({
+      type: typeFilter ?? undefined,
+      status: statusFilter ?? undefined,
+      owner: v || undefined
+    });
 
   const handleExport = async () => {
     try {
@@ -128,9 +159,9 @@ export const EntityBrowser = () => {
         schemaId: typeFilter,
         owner: ownerFilter,
         lifecycle: statusFilter,
-        q,
+        q
       });
-      
+
       // Trigger download
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -170,13 +201,17 @@ export const EntityBrowser = () => {
   };
 
   const typeName = typeFilter
-    ? schemaMap.get(typeFilter)?.schema.name ?? 'Entities'
+    ? (schemaMap.get(typeFilter)?.schema.name ?? 'Entities')
     : 'All entities';
 
   const lifecycles = lifecycleStates;
-  const selectedSchema = typeFilter != null ? schemaMap.get(typeFilter)?.schema ?? null : null;
+  const selectedSchema = typeFilter != null ? (schemaMap.get(typeFilter)?.schema ?? null) : null;
   const dateFields = useMemo(
-    () => selectedSchema?.fields.filter((field): field is Extract<EntitySchema['fields'][number], { type: 'date' }> => field.type === 'date') ?? [],
+    () =>
+      selectedSchema?.fields.filter(
+        (field): field is Extract<EntitySchema['fields'][number], { type: 'date' }> =>
+          field.type === 'date'
+      ) ?? [],
     [selectedSchema]
   );
 
@@ -200,14 +235,18 @@ export const EntityBrowser = () => {
     }
   }, [dateFields, sort, view]);
 
-  const sortOptions = useMemo(() => [
-    { value: 'name', label: 'Name' },
-    { value: 'type', label: 'Type' },
-    { value: 'owner', label: 'Owner' },
-    ...(view === 'table'
-      ? dateFields.map(field => ({ value: `date:${field.id}`, label: `${field.name} date` }))
-      : []),
-  ], [dateFields, view]);
+  const sortOptions = useMemo(
+    () => [
+      { value: 'name', label: 'Name' },
+      { value: 'type', label: 'Type' },
+      { value: 'owner', label: 'Owner' },
+      { value: 'completeness', label: 'Completeness' },
+      ...(view === 'table'
+        ? dateFields.map(field => ({ value: `date:${field.id}`, label: `${field.name} date` }))
+        : [])
+    ],
+    [dateFields, view]
+  );
 
   const activeDateFieldId = useMemo(() => {
     if (dateFilterField !== '') return dateFilterField;
@@ -232,6 +271,8 @@ export const EntityBrowser = () => {
     if (sort === 'name') xs.sort((a, b) => (a._name ?? a._slug).localeCompare(b._name ?? b._slug));
     if (sort === 'type') xs.sort((a, b) => a._schemaId.localeCompare(b._schemaId));
     if (sort === 'owner') xs.sort((a, b) => (a._owner ?? '').localeCompare(b._owner ?? ''));
+    if (sort === 'completeness')
+      xs.sort((a, b) => (a._completeness ?? -1) - (b._completeness ?? -1));
     if (dateBrowserEnabled && sort.startsWith('date:')) {
       const fieldId = sort.slice(5);
       xs.sort((a, b) => {
@@ -241,7 +282,15 @@ export const EntityBrowser = () => {
       });
     }
     return xs;
-  }, [entities, sort, activeDateField, dateBrowserEnabled, dateFilterField, dateFilterOperator, dateFilterValue]);
+  }, [
+    entities,
+    sort,
+    activeDateField,
+    dateBrowserEnabled,
+    dateFilterField,
+    dateFilterOperator,
+    dateFilterValue
+  ]);
 
   return (
     <div className={styles.screen}>
@@ -252,23 +301,31 @@ export const EntityBrowser = () => {
             <div className={styles.title}>{typeName}</div>
             <span className={styles.count}>{filtered.length}</span>
           </div>
-          <div className={styles.sub}>Search, filter, and inspect everything in the IT landscape.</div>
+          <div className={styles.sub}>
+            Search, filter, and inspect everything in the IT landscape.
+          </div>
         </div>
         <div className={styles.actions}>
-          <Button icon={<TbDownload size={12} />} onClick={handleExport}>Export CSV</Button>
+          <Button icon={<TbDownload size={12} />} onClick={handleExport}>
+            Export CSV
+          </Button>
           {permissions.canCreateEntities && (
             <>
-              <Button 
-                icon={<TbUpload size={12} />} 
-                onClick={() => navigate({ 
-                  to: '/$workspaceSlug/entities/import', 
-                  params: { workspaceSlug },
-                  search: typeFilter ? { type: typeFilter } : undefined
-                })}
+              <Button
+                icon={<TbUpload size={12} />}
+                onClick={() =>
+                  navigate({
+                    to: '/$workspaceSlug/entities/import',
+                    params: { workspaceSlug },
+                    search: typeFilter ? { type: typeFilter } : undefined
+                  })
+                }
               >
                 Import CSV
               </Button>
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>New entity</Button>
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
+                New entity
+              </Button>
             </>
           )}
         </div>
@@ -287,10 +344,16 @@ export const EntityBrowser = () => {
         <FilterDropdown
           label="Type"
           value={typeFilter ?? ''}
-          onChange={v => navigateEntities({ type: v || undefined, status: statusFilter ?? undefined, owner: ownerFilter ?? undefined })}
+          onChange={v =>
+            navigateEntities({
+              type: v || undefined,
+              status: statusFilter ?? undefined,
+              owner: ownerFilter ?? undefined
+            })
+          }
           options={[
             { value: '', label: 'All types' },
-            ...schemas.map(s => ({ value: s.id, label: s.name })),
+            ...schemas.map(s => ({ value: s.id, label: s.name }))
           ]}
         />
         <FilterDropdown
@@ -299,24 +362,16 @@ export const EntityBrowser = () => {
           onChange={setStatusFilter}
           options={[
             { value: '', label: 'Any' },
-            ...lifecycles.map(s => ({ value: s.id, label: s.label })),
+            ...lifecycles.map(s => ({ value: s.id, label: s.label }))
           ]}
         />
         <FilterDropdown
           label="Owner"
           value={ownerFilter ?? ''}
           onChange={setOwnerFilter}
-          options={[
-            { value: '', label: 'Any' },
-            ...owners.map(o => ({ value: o, label: o })),
-          ]}
+          options={[{ value: '', label: 'Any' }, ...owners.map(o => ({ value: o, label: o }))]}
         />
-        <FilterDropdown
-          label="Sort"
-          value={sort}
-          onChange={setSort}
-          options={sortOptions}
-        />
+        <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
 
         {dateBrowserEnabled && (
           <div className={styles.dateFilters}>
@@ -334,7 +389,7 @@ export const EntityBrowser = () => {
                 { value: 'on', label: 'On' },
                 { value: 'before', label: 'Before' },
                 { value: 'after', label: 'After' },
-                { value: 'empty', label: 'Empty' },
+                { value: 'empty', label: 'Empty' }
               ]}
             />
             {dateFilterOperator !== 'empty' && (
@@ -390,7 +445,12 @@ export const EntityBrowser = () => {
       </div>
 
       {view === 'radar' ? (
-        <RadarView onEntityClick={navigateToEntity} owner={ownerFilter} lifecycle={statusFilter} q={q} />
+        <RadarView
+          onEntityClick={navigateToEntity}
+          owner={ownerFilter}
+          lifecycle={statusFilter}
+          q={q}
+        />
       ) : view === 'tree' ? (
         treeNodes.length === 0 ? (
           <div className={styles.empty}>
@@ -398,7 +458,14 @@ export const EntityBrowser = () => {
             <div>Try adjusting your search or filters.</div>
           </div>
         ) : (
-          <TreeView nodes={treeNodes} edges={treeEdges} schemaMap={schemaMap} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />
+          <TreeView
+            nodes={treeNodes}
+            edges={treeEdges}
+            schemaMap={schemaMap}
+            onEntityClick={navigateToEntity}
+            onDelete={handleDeleteEntity}
+            onClone={handleCloneEntity}
+          />
         )
       ) : filtered.length === 0 ? (
         <div className={styles.empty}>
@@ -407,15 +474,41 @@ export const EntityBrowser = () => {
         </div>
       ) : (
         <>
-          {view === 'table' && <TableView rows={filtered} schemaMap={schemaMap} activeDateField={dateBrowserEnabled ? activeDateField : null} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
-          {view === 'cards' && <CardsView rows={filtered} schemaMap={schemaMap} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
+          {view === 'table' && (
+            <TableView
+              rows={filtered}
+              schemaMap={schemaMap}
+              activeDateField={dateBrowserEnabled ? activeDateField : null}
+              onEntityClick={navigateToEntity}
+              onDelete={handleDeleteEntity}
+              onClone={handleCloneEntity}
+            />
+          )}
+          {view === 'cards' && (
+            <CardsView
+              rows={filtered}
+              schemaMap={schemaMap}
+              onEntityClick={navigateToEntity}
+              onDelete={handleDeleteEntity}
+              onClone={handleCloneEntity}
+            />
+          )}
         </>
       )}
 
       <DeleteConfirmationDialog
         open={!!deleteTarget}
         title="Delete entity?"
-        message={deleteTarget ? <>The entity <b>{deleteTarget._name || deleteTarget._slug}</b> will be permanently deleted.</> : ''}
+        message={
+          deleteTarget ? (
+            <>
+              The entity <b>{deleteTarget._name || deleteTarget._slug}</b> will be permanently
+              deleted.
+            </>
+          ) : (
+            ''
+          )
+        }
         detail="This can't be undone."
         confirmLabel="Delete entity"
         onConfirm={doDeleteEntity}
@@ -429,7 +522,7 @@ const FilterDropdown = ({
   label,
   value,
   onChange,
-  options,
+  options
 }: {
   label: string;
   value: string;
@@ -438,13 +531,11 @@ const FilterDropdown = ({
 }) => (
   <label className={styles.filter}>
     <span className={styles.filterLabel}>{label}</span>
-    <select
-      className={styles.filterSelect}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-    >
+    <select className={styles.filterSelect} value={value} onChange={e => onChange(e.target.value)}>
       {options.map(o => (
-        <option key={o.value} value={o.value}>{o.label}</option>
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
       ))}
     </select>
     <TbChevronDown size={10} />
@@ -465,29 +556,42 @@ const entityName = (e: EntityRecord) => e._name || e._slug;
 const entityMenuItems = (
   entity: EntityRecord,
   onClone: (entity: EntityRecord) => void,
-  onDelete: (entity: EntityRecord) => void,
+  onDelete: (entity: EntityRecord) => void
 ): MenuItem[] => {
   const items: MenuItem[] = [];
   if (entity.canCreateChild) {
     items.push({ label: 'Clone', icon: <TbCopy size={14} />, onClick: () => onClone(entity) });
   }
   if (entity.canDelete) {
-    items.push({ label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: () => onDelete(entity) });
+    items.push({
+      label: 'Delete',
+      icon: <TbTrash size={14} />,
+      danger: true,
+      onClick: () => onDelete(entity)
+    });
   }
   return items;
 };
 
-const TableView = ({ rows, schemaMap, activeDateField, onEntityClick, onDelete, onClone }: ViewProps) => (
+const TableView = ({
+  rows,
+  schemaMap,
+  activeDateField,
+  onEntityClick,
+  onDelete,
+  onClone
+}: ViewProps) => (
   <div className={styles.tableWrap}>
     <table className={styles.table}>
       <thead>
         <tr>
-          <th style={{ minWidth: 240 }}>Name</th>
+          <th style={{ minWidth: 200 }}>Name</th>
           <th>Type</th>
           <th>Owner</th>
           <th>Status</th>
           {activeDateField && <th>{activeDateField.name}</th>}
-          <th style={{ width: 110 }}>Namespace</th>
+          <th style={{ width: 80 }}>NS</th>
+          <th style={{ width: 80 }}></th>
           <th style={{ width: 28 }} />
         </tr>
       </thead>
@@ -495,13 +599,17 @@ const TableView = ({ rows, schemaMap, activeDateField, onEntityClick, onDelete, 
         {rows.map(e => {
           const s = schemaMap.get(e._schemaId);
           return (
-            <tr
-              key={e._uid}
-              onClick={() => onEntityClick(e._uid)}
-            >
+            <tr key={e._uid} onClick={() => onEntityClick(e._uid)}>
               <td>
                 <div className={styles.tableName}>
-                  {s && <TypeBadge color={resolveSchemaColor(s.schema, s.index)} name={s.schema.name} icon={s.schema.icon} size={18} />}
+                  {s && (
+                    <TypeBadge
+                      color={resolveSchemaColor(s.schema, s.index)}
+                      name={s.schema.name}
+                      icon={s.schema.icon}
+                      size={18}
+                    />
+                  )}
                   <div>
                     <div className={styles.tableNameMain}>{entityName(e)}</div>
                     {e._description && <div className={styles.tableNameSub}>{e._description}</div>}
@@ -509,14 +617,29 @@ const TableView = ({ rows, schemaMap, activeDateField, onEntityClick, onDelete, 
                 </div>
               </td>
               <td>{s && <Chip tone="ghost">{s.schema.name}</Chip>}</td>
-              <td><span className="dim">{e._owner ?? '—'}</span></td>
+              <td>
+                <span className="dim">{e._owner ?? '—'}</span>
+              </td>
               <td>{e._lifecycle && <StatusChip value={e._lifecycle} />}</td>
-              {activeDateField && <td><span className="dim">{formatDateValue(e[activeDateField.id])}</span></td>}
-              <td><span className="dim">{e._namespace}</span></td>
+              {activeDateField && (
+                <td>
+                  <span className="dim">{formatDateValue(e[activeDateField.id])}</span>
+                </td>
+              )}
+              <td>
+                <span className="dim">{e._namespace}</span>
+              </td>
+              <td>
+                <CompletenessCell value={e._completeness} />
+              </td>
               <td onClick={ev => ev.stopPropagation()}>
                 {entityMenuItems(e, onClone, onDelete).length > 0 && (
                   <DropdownMenu
-                    trigger={<button type="button" className={styles.dotsBtn}><TbDots size={14} /></button>}
+                    trigger={
+                      <button type="button" className={styles.dotsBtn}>
+                        <TbDots size={14} />
+                      </button>
+                    }
                     items={entityMenuItems(e, onClone, onDelete)}
                   />
                 )}
@@ -535,11 +658,7 @@ const CardsView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewPr
       const s = schemaMap.get(e._schemaId);
       const color = s ? resolveSchemaColor(s.schema, s.index) : 'var(--accent-fg)';
       return (
-        <div
-          key={e._uid}
-          className={styles.card}
-          onClick={() => onEntityClick(e._uid)}
-        >
+        <div key={e._uid} className={styles.card} onClick={() => onEntityClick(e._uid)}>
           <span className={styles.cardBar} style={{ background: color }} />
           <div className={styles.cardHead}>
             {s && <TypeBadge color={color} name={s.schema.name} size={22} />}
@@ -548,7 +667,11 @@ const CardsView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewPr
               {entityMenuItems(e, onClone, onDelete).length > 0 && (
                 <span onClick={ev => ev.stopPropagation()}>
                   <DropdownMenu
-                    trigger={<button type="button" className={styles.dotsBtn}><TbDots size={14} /></button>}
+                    trigger={
+                      <button type="button" className={styles.dotsBtn}>
+                        <TbDots size={14} />
+                      </button>
+                    }
                     items={entityMenuItems(e, onClone, onDelete)}
                   />
                 </span>
@@ -558,7 +681,9 @@ const CardsView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewPr
           <div className={styles.cardName}>{entityName(e)}</div>
           {e._description && <div className={styles.cardDesc}>{e._description}</div>}
           <div className={styles.cardMeta}>
-            <Chip tone="ghost" icon={<TbUsers size={10} />}>{e._owner ?? '—'}</Chip>
+            <Chip tone="ghost" icon={<TbUsers size={10} />}>
+              {e._owner ?? '—'}
+            </Chip>
             {s && <Chip tone="ghost">{s.schema.name}</Chip>}
           </div>
         </div>
@@ -621,7 +746,15 @@ const TreeView = ({ nodes, edges, schemaMap, onEntityClick, onDelete, onClone }:
         </thead>
         <tbody>
           {roots.map(item => (
-            <TreeNodeRow key={item._uid} item={item} depth={0} schemaMap={schemaMap} onEntityClick={onEntityClick} onDelete={onDelete} onClone={onClone} />
+            <TreeNodeRow
+              key={item._uid}
+              item={item}
+              depth={0}
+              schemaMap={schemaMap}
+              onEntityClick={onEntityClick}
+              onDelete={onDelete}
+              onClone={onClone}
+            />
           ))}
         </tbody>
       </table>
@@ -635,7 +768,7 @@ const TreeNodeRow = ({
   schemaMap,
   onEntityClick,
   onDelete,
-  onClone,
+  onClone
 }: {
   item: TreeItem;
   depth: number;
@@ -661,14 +794,24 @@ const TreeNodeRow = ({
               <button
                 type="button"
                 className={styles.treeToggle}
-                onClick={e => { e.stopPropagation(); setExpanded(v => !v); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  setExpanded(v => !v);
+                }}
               >
                 {expanded ? <TbChevronDown size={12} /> : <TbChevronRight size={12} />}
               </button>
             ) : (
               <span className={styles.treeToggleSpacer} />
             )}
-            {s && <TypeBadge color={resolveSchemaColor(s.schema, s.index)} name={s.schema.name} icon={s.schema.icon} size={18} />}
+            {s && (
+              <TypeBadge
+                color={resolveSchemaColor(s.schema, s.index)}
+                name={s.schema.name}
+                icon={s.schema.icon}
+                size={18}
+              />
+            )}
             <div>
               <div className={styles.tableNameMain}>{item._name || item._slug}</div>
               {item._description && <div className={styles.tableNameSub}>{item._description}</div>}
@@ -676,21 +819,64 @@ const TreeNodeRow = ({
           </div>
         </td>
         <td>{s && <Chip tone="ghost">{s.schema.name}</Chip>}</td>
-        <td><span className="dim">{item._owner ?? '—'}</span></td>
+        <td>
+          <span className="dim">{item._owner ?? '—'}</span>
+        </td>
         <td>{item._lifecycle && <StatusChip value={item._lifecycle} />}</td>
-        <td><span className="dim">{item._namespace}</span></td>
+        <td>
+          <span className="dim">{item._namespace}</span>
+        </td>
         <td onClick={ev => ev.stopPropagation()}>
           {entityMenuItems(item as unknown as EntityRecord, onClone, onDelete).length > 0 && (
             <DropdownMenu
-              trigger={<button type="button" className={styles.dotsBtn}><TbDots size={14} /></button>}
+              trigger={
+                <button type="button" className={styles.dotsBtn}>
+                  <TbDots size={14} />
+                </button>
+              }
               items={entityMenuItems(item as unknown as EntityRecord, onClone, onDelete)}
             />
           )}
         </td>
       </tr>
-      {expanded && item.children.map(child => (
-        <TreeNodeRow key={child._uid} item={child} depth={depth + 1} schemaMap={schemaMap} onEntityClick={onEntityClick} onDelete={onDelete} onClone={onClone} />
-      ))}
+      {expanded &&
+        item.children.map(child => (
+          <TreeNodeRow
+            key={child._uid}
+            item={child}
+            depth={depth + 1}
+            schemaMap={schemaMap}
+            onEntityClick={onEntityClick}
+            onDelete={onDelete}
+            onClone={onClone}
+          />
+        ))}
     </>
+  );
+};
+
+const CompletenessCell = ({ value }: { value: number | null }) => {
+  if (value == null) return <span className="dim">—</span>;
+  const barColor = value <= 75 ? '#f59e0b' : '#22c55e';
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span
+        style={{
+          display: 'inline-block',
+          width: 36,
+          height: 4,
+          borderRadius: 2,
+          background: 'var(--cmp-border)',
+          overflow: 'hidden'
+        }}
+      >
+        <span
+          style={{ display: 'block', width: `${value}%`, height: '100%', background: barColor }}
+        />
+      </span>
+      <span className="dim" style={{ fontSize: 11 }}>
+        {value}%
+      </span>
+    </span>
   );
 };

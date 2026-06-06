@@ -15,6 +15,7 @@ import { computeChanges, extractEntityFields, logAudit } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { formatArrayForCsv, generateCsv } from '../utils/csv.js';
 import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
+import { computeEntityCompleteness } from '../utils/completeness.js';
 import {
   buildApiAuthCtx,
   requireCanCreateTopLevelEntity,
@@ -157,15 +158,26 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const limit = parsePositiveInt(query['limit'], 'limit');
       const offset = parsePositiveInt(query['offset'], 'offset') ?? 0;
       try {
-        const visibleEntities = (await db.catalog.listEntities(workspace)).filter(entity =>
+        const [allEntities, schemas] = await Promise.all([
+          db.catalog.listEntities(workspace),
+          db.catalog.listSchemas(workspace),
+        ]);
+        const schemaMap = new Map(schemas.map(s => [s.id, s]));
+        const visibleEntities = allEntities.filter(entity =>
           checker.hasEntityPermission(authCtx, entity, 'view_entity')
         );
         const rows = filterEntities(visibleEntities, { schemaId, owner, lifecycle, q })
           .sort((a, b) => a.name.localeCompare(b.name))
           .slice(offset, limit != null ? offset + limit : undefined);
         return view === 'summary'
-          ? rows.map(row => toApiEntitySummary(row, authCtx))
-          : rows.map(row => toApiEntity(row, authCtx));
+          ? rows.map(row => {
+              const schema = schemaMap.get(row.schema_id);
+              return toApiEntitySummary(row, authCtx, schema != null ? computeEntityCompleteness(row, schema) : null);
+            })
+          : rows.map(row => {
+              const schema = schemaMap.get(row.schema_id);
+              return toApiEntity(row, authCtx, schema != null ? computeEntityCompleteness(row, schema) : null);
+            });
       } catch (e) {
         handleError(e, 'Failed to retrieve data');
       }
@@ -178,7 +190,12 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
-        const entities = (await db.catalog.listEntities(workspace)).filter(entity =>
+        const [allEntities, schemas] = await Promise.all([
+          db.catalog.listEntities(workspace),
+          db.catalog.listSchemas(workspace),
+        ]);
+        const schemaMap = new Map(schemas.map(s => [s.id, s]));
+        const entities = allEntities.filter(entity =>
           checker.hasEntityPermission(authCtx, entity, 'view_entity')
         );
         const countBy = <T extends string | null>(values: T[]) =>
@@ -192,6 +209,18 @@ export function createDataRoutes(db: DatabaseAdapter) {
           ]
             .map(([value, count]) => ({ value, count }))
             .sort((a, b) => b.count - a.count || String(a.value).localeCompare(String(b.value)));
+
+        const completenessScores = entities.map(entity => {
+          const schema = schemaMap.get(entity.schema_id);
+          return schema ? computeEntityCompleteness(entity, schema) : null;
+        });
+        const scored = completenessScores.filter((s): s is number => s !== null);
+        const completeness = {
+          below50: scored.filter(s => s < 50).length,
+          below80: scored.filter(s => s >= 50 && s < 80).length,
+          above80: scored.filter(s => s >= 80).length,
+        };
+
         return {
           total: entities.length,
           lifecycle: countBy(entities.map(entity => entity.lifecycle)),
@@ -199,7 +228,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
           schema: countBy(entities.map(entity => entity.schema_id)).map(({ value, count }) => ({
             schemaId: value!,
             count
-          }))
+          })),
+          completeness,
         };
       } catch (e) {
         handleError(e, 'Failed to retrieve data facets');
@@ -800,7 +830,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
       try {
-        const row = await db.catalog.getEntity(workspace, id);
+        const [row, schemas] = await Promise.all([
+          db.catalog.getEntity(workspace, id),
+          db.catalog.listSchemas(workspace),
+        ]);
         httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
         requireEntityAction(
           authCtx,
@@ -808,7 +841,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
           'view_entity',
           'You do not have access to view this entity'
         );
-        return toApiEntity(row, authCtx);
+        const schema = schemas.find(s => s.id === row.schema_id);
+        return toApiEntity(row, authCtx, schema != null ? computeEntityCompleteness(row, schema) : null);
       } catch (e) {
         handleError(e, 'Failed to retrieve data record');
       }

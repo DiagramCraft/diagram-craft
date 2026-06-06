@@ -1,29 +1,39 @@
 // ── Schema Field Types ────────────────────────────────────────
 
+export type RequirementLevel = 'required' | 'expected' | 'optional';
+
+export type FieldOption = {
+  value: string;
+  label: string;
+};
+
 export type TextField = {
   id: string;
   name: string;
   type: 'text' | 'longtext';
+  requirementLevel?: RequirementLevel;
 };
 
 export type BooleanField = {
   id: string;
   name: string;
   type: 'boolean';
+  requirementLevel?: RequirementLevel;
 };
 
 export type DateField = {
   id: string;
   name: string;
   type: 'date';
+  requirementLevel?: RequirementLevel;
 };
 
 export type SelectField = {
   id: string;
   name: string;
   type: 'select';
-  options: Array<{ value: string; label: string }>;
-  enumId?: string;
+  enumId: string;
+  requirementLevel?: RequirementLevel;
 };
 
 export type ReferenceField = {
@@ -33,6 +43,7 @@ export type ReferenceField = {
   schemaId: string;
   minCount: number;
   maxCount: number;
+  requirementLevel?: RequirementLevel;
 };
 
 export type ContainmentField = {
@@ -42,6 +53,7 @@ export type ContainmentField = {
   schemaId: string;
   minCount: number;
   maxCount: number;
+  requirementLevel?: RequirementLevel;
 };
 
 export type SchemaField =
@@ -49,6 +61,18 @@ export type SchemaField =
   | BooleanField
   | DateField
   | SelectField
+  | ReferenceField
+  | ContainmentField;
+
+export type ApiSelectField = SelectField & {
+  options: FieldOption[];
+};
+
+export type ApiSchemaField =
+  | TextField
+  | BooleanField
+  | DateField
+  | ApiSelectField
   | ReferenceField
   | ContainmentField;
 
@@ -61,7 +85,7 @@ export type EntitySchema = {
   workspace: string;
   name: string;
   description: string;
-  fields: SchemaField[];
+  fields: ApiSchemaField[];
   color: string | null;
   icon: string | null;
   entity_count: number;
@@ -95,7 +119,7 @@ export type WorkspaceEnum = {
   id: string;
   workspace: string;
   name: string;
-  options: Array<{ value: string; label: string }>;
+  options: FieldOption[];
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -103,7 +127,7 @@ export type WorkspaceEnum = {
 
 export type CreateEnumRequest = {
   name: string;
-  options?: Array<{ value: string; label: string }>;
+  options?: FieldOption[];
   sort_order?: number;
 };
 

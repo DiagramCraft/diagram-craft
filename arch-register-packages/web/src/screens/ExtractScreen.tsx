@@ -8,8 +8,7 @@ import {
 import styles from './ExtractScreen.module.css';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { apiFetch, createEntity } from '../api';
-import { entityKeys } from '../hooks/useEntities';
-import { schemaKeys } from '../hooks/useSchemas';
+import { entityKeys, schemaKeys } from '../hooks/queryKeys';
 
 type Phase = 'input' | 'scanning' | 'review' | 'done';
 type InputTab = 'paste' | 'upload';

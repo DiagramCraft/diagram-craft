@@ -202,8 +202,36 @@
 }
 
 .propReq {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: color-mix(in oklch, var(--error-fg) 12%, transparent);
   color: var(--error-fg);
-  font-weight: bold;
+  font-weight: 500;
+}
+
+.propExpected {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--cmp-fg-disabled);
+}
+
+.propRowError .propLabel {
+  color: var(--error-fg);
+}
+
+.propRowError .propValue {
+  outline: 1px solid var(--error-fg);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.propErrorMsg {
+  font-size: 11px;
+  color: var(--error-fg);
 }
 
 .propType {

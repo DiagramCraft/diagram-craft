@@ -17,8 +17,7 @@ import { DropdownMenu } from '../components/DropdownMenu';
 import styles from './ImportScreen.module.css';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { downloadCsvTemplate, parseCsvImport, commitCsvImport } from '../api';
-import { entityKeys } from '../hooks/useEntities';
-import { schemaKeys } from '../hooks/useSchemas';
+import { entityKeys, schemaKeys } from '../hooks/queryKeys';
 
 type Phase = 'upload' | 'parsing' | 'review' | 'done';
 

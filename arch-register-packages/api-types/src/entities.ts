@@ -15,6 +15,7 @@ export type EntitySummary = EntityCapabilities & {
   _tags: string[];
   _links: EntityLink[];
   _visibilityMode: VisibilityMode | null;
+  _completeness: number | null;
 };
 
 export type EntityRecord = EntitySummary & {
@@ -56,6 +57,7 @@ export type EntityFacets = {
   lifecycle: EntityFacetBucket[];
   owner: EntityFacetBucket[];
   schema: EntitySchemaFacetBucket[];
+  completeness: { below50: number; below80: number; above80: number };
 };
 
 // ── Relations ─────────────────────────────────────────────────

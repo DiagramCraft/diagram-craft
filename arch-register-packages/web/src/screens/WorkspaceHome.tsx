@@ -6,11 +6,12 @@ import { Chip } from '../components/Chip';
 import { TypeBadge } from '../components/TypeBadge';
 import {
   TbDatabase, TbFolders, TbFileVector, TbGitBranch,
-  TbPlus, TbChevronRight,
+  TbPlus, TbChevronRight, TbChartBar,
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../api';
 import type { AuditLogEntry, Project } from '../api';
 import { useAuditLog } from '../hooks/useAudit';
+import { useEntityFacets } from '../hooks/useEntities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
 const PROJECT_STATUS_META = {
@@ -38,6 +39,8 @@ export const WorkspaceHome = () => {
   const visibleProjects = showAllProjects
     ? projects
     : nonArchivedProjects.slice(0, collapsedProjectCount);
+
+  const { data: facets } = useEntityFacets(workspaceSlug);
 
   // Fetch recent activity from audit log using TanStack Query
   const { data: recentActivity = [], isLoading: activityLoading } = useAuditLog(
@@ -141,6 +144,15 @@ export const WorkspaceHome = () => {
           sub="defined schemas"
           icon={<TbGitBranch size={14} />}
         />
+        {facets && (
+          <StatCard
+            label="Well documented"
+            value={facets.completeness.above80}
+            sub={`${facets.completeness.below50} below 50% complete`}
+            icon={<TbChartBar size={14} />}
+            onClick={() => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug }, search: {} })}
+          />
+        )}
       </div>
 
       <div className={styles.homeGrid}>
@@ -274,14 +286,22 @@ const StatCard = ({
   sub,
   icon,
   accent,
+  onClick,
 }: {
   label: string;
   value: number;
   sub: string;
   icon: React.ReactNode;
   accent?: boolean;
+  onClick?: () => void;
 }) => (
-  <div className={`${styles.stat} ${accent ? styles.statAccent : ''}`}>
+  <div
+    className={`${styles.stat} ${accent ? styles.statAccent : ''} ${onClick ? styles.statClickable : ''}`}
+    onClick={onClick}
+    role={onClick ? 'button' : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); } : undefined}
+  >
     <div className={styles.statIcon}>{icon}</div>
     <div className={styles.statLabel}>{label}</div>
     <div className={`${styles.statValue} tabular`}>{value}</div>
