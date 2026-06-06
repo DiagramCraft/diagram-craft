@@ -65,6 +65,50 @@ const normalize = (dx: number, dy: number): [number, number] => {
   return len > 1e-6 ? [dx / len, dy / len] : [0, 0];
 };
 
+const renderSelfLoop = (
+  edge: DependencyGraphEdge,
+  pos: Point,
+  nodeWidth: number,
+  nodeHeight: number,
+  edgeClass: string,
+  highlighted: boolean,
+  includeKind: boolean
+): React.JSX.Element => {
+  const loopSize = Math.max(nodeWidth, nodeHeight) * 0.8;
+  const startX = pos.x + nodeWidth / 2;
+  const startY = pos.y;
+  const endX = pos.x;
+  const endY = pos.y + nodeHeight / 2;
+  const c1x = startX + loopSize;
+  const c2y = endY + loopSize;
+  const labelX = pos.x + loopSize * 0.7;
+  const labelY = pos.y + loopSize * 0.7;
+  return (
+    <g key={edge.id}>
+      <path
+        d={`M ${startX} ${startY} C ${c1x} ${startY}, ${endX} ${c2y}, ${endX} ${endY}`}
+        className={edgeClass}
+        {...(includeKind ? { 'data-kind': edge.kind } : {})}
+        data-highlighted={highlighted}
+        fill="none"
+        markerEnd="url(#dep-arrow)"
+      />
+      {edge.label && (
+        <text
+          x={labelX}
+          y={labelY}
+          className={styles.eEdgeLabel}
+          data-highlighted={highlighted}
+          textAnchor="middle"
+          dominantBaseline="middle"
+        >
+          {edge.label}
+        </text>
+      )}
+    </g>
+  );
+};
+
 export const DependencyGraph = <T,>({
   nodes,
   edges,
@@ -79,6 +123,10 @@ export const DependencyGraph = <T,>({
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
+  // Kept in a ref so the wheel handler always reads the current zoom without
+  // needing to re-register the listener on every zoom change.
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
 
   const connectedEdges = useMemo(() => {
     if (!hoveredNodeId) return new Set<string>();
@@ -102,15 +150,15 @@ export const DependencyGraph = <T,>({
       } else {
         // Two-finger pan
         setPan(prevPan => ({
-          x: prevPan.x - e.deltaX * zoom,
-          y: prevPan.y - e.deltaY * zoom
+          x: prevPan.x - e.deltaX * zoomRef.current,
+          y: prevPan.y - e.deltaY * zoomRef.current
         }));
       }
     };
 
     svg.addEventListener('wheel', handleWheel);
     return () => svg.removeEventListener('wheel', handleWheel);
-  }, [zoom]);
+  }, []);
 
   const positions = useMemo((): Map<string, Point> => {
     if (nodes.length === 0) return new Map();
@@ -124,7 +172,7 @@ export const DependencyGraph = <T,>({
     // Reference edges are rendered as arcs and don't affect layout.
     // Self-referencing edges are excluded from layout to avoid cycles.
     const layoutEdges =
-      layout === 'hierarchy' 
+      layout === 'hierarchy'
         ? edges.filter(e => e.kind === 'containment' && e.from !== e.to)
         : edges.filter(e => e.from !== e.to);
 
@@ -208,11 +256,17 @@ export const DependencyGraph = <T,>({
   const viewBox = useMemo(() => {
     if (positions.size === 0) return '0 0 400 300';
 
-    const posValues = Array.from(positions.values());
-    const minX = Math.min(...posValues.map(p => p.x)) - nodeWidth / 2 - PADDING;
-    const minY = Math.min(...posValues.map(p => p.y)) - nodeHeight / 2 - PADDING;
-    const maxX = Math.max(...posValues.map(p => p.x)) + nodeWidth / 2 + PADDING;
-    let maxY = Math.max(...posValues.map(p => p.y)) + nodeHeight / 2 + PADDING;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of positions.values()) {
+      if (p.x < minX) minX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y > maxY) maxY = p.y;
+    }
+    const vbMinX = minX - nodeWidth / 2 - PADDING;
+    const vbMinY = minY - nodeHeight / 2 - PADDING;
+    const vbMaxX = maxX + nodeWidth / 2 + PADDING;
+    let vbMaxY = maxY + nodeHeight / 2 + PADDING;
 
     // For hierarchy layout, extend the viewBox downward to include arc peaks for reference edges
     if (layout === 'hierarchy') {
@@ -224,17 +278,12 @@ export const DependencyGraph = <T,>({
         const dist = Math.sqrt((toPos.x - fromPos.x) ** 2 + (toPos.y - fromPos.y) ** 2);
         const arcHeight = Math.max(dist * 0.35, nodeHeight);
         const peakY = (fromPos.y + toPos.y) / 2 + arcHeight;
-        maxY = Math.max(maxY, peakY + PADDING);
+        vbMaxY = Math.max(vbMaxY, peakY + PADDING);
       }
     }
 
-    return `${minX} ${minY} ${maxX - minX} ${maxY - minY}`;
+    return `${vbMinX} ${vbMinY} ${vbMaxX - vbMinX} ${vbMaxY - vbMinY}`;
   }, [positions, nodeWidth, nodeHeight, layout, edges]);
-
-  const nodeMap = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
-
-  const nw = nodeWidth;
-  const nh = nodeHeight;
 
   return (
     <svg ref={svgRef} className={styles.cDependencyGraph} viewBox={viewBox} xmlns="http://www.w3.org/2000/svg">
@@ -259,45 +308,10 @@ export const DependencyGraph = <T,>({
           // In hierarchy layout, reference edges are rendered as arcs in a later pass
           if (layout === 'hierarchy' && edge.kind !== 'containment') return null;
 
-          // Self-referencing edge: create a loop
           if (edge.from === edge.to) {
-            const loopSize = Math.max(nw, nh) * 0.8;
-            const startX = fromPos.x + nw / 2;
-            const startY = fromPos.y;
-            const endX = fromPos.x;
-            const endY = fromPos.y + nh / 2;
-            const c1x = startX + loopSize;
-            const c1y = startY;
-            const c2x = endX;
-            const c2y = endY + loopSize;
-            
-            // Label position at the furthest point of the loop
-            const labelX = fromPos.x + loopSize * 0.7;
-            const labelY = fromPos.y + loopSize * 0.7;
-
-            return (
-              <g key={edge.id}>
-                <path
-                  d={`M ${startX} ${startY} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${endX} ${endY}`}
-                  className={styles.eEdge}
-                  data-kind={edge.kind}
-                  data-highlighted={connectedEdges.has(edge.id)}
-                  fill="none"
-                  markerEnd="url(#dep-arrow)"
-                />
-                {edge.label && (
-                  <text
-                    x={labelX}
-                    y={labelY}
-                    className={styles.eEdgeLabel}
-                    data-highlighted={connectedEdges.has(edge.id)}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                  >
-                    {edge.label}
-                  </text>
-                )}
-              </g>
+            return renderSelfLoop(
+              edge, fromPos, nodeWidth, nodeHeight,
+              styles.eEdge!, connectedEdges.has(edge.id), true
             );
           }
 
@@ -307,13 +321,12 @@ export const DependencyGraph = <T,>({
           if (dist === 0) return null;
 
           const [ux, uy] = normalize(dx, dy);
-          const trimSrc = rectBorderDist(ux, uy, nw / 2, nh / 2);
-          const trimDst = rectBorderDist(ux, uy, nw / 2, nh / 2) + 2;
+          const trim = rectBorderDist(ux, uy, nodeWidth / 2, nodeHeight / 2);
 
-          const x1 = fromPos.x + ux * trimSrc;
-          const y1 = fromPos.y + uy * trimSrc;
-          const x2 = toPos.x - ux * trimDst;
-          const y2 = toPos.y - uy * trimDst;
+          const x1 = fromPos.x + ux * trim;
+          const y1 = fromPos.y + uy * trim;
+          const x2 = toPos.x - ux * (trim + 2);
+          const y2 = toPos.y - uy * (trim + 2);
 
           const midX = (x1 + x2) / 2;
           const midY = (y1 + y2) / 2;
@@ -335,7 +348,7 @@ export const DependencyGraph = <T,>({
                   x={midX}
                   y={midY}
                   className={styles.eEdgeLabel}
-                    data-highlighted={connectedEdges.has(edge.id)}
+                  data-highlighted={connectedEdges.has(edge.id)}
                   textAnchor="middle"
                   dominantBaseline="middle"
                 >
@@ -362,20 +375,20 @@ export const DependencyGraph = <T,>({
               style={{ cursor: onNodeClick ? 'pointer' : 'default' }}
             >
               <rect
-                x={-nw / 2}
-                y={-nh / 2}
-                width={nw}
-                height={nh}
+                x={-nodeWidth / 2}
+                y={-nodeHeight / 2}
+                width={nodeWidth}
+                height={nodeHeight}
                 rx={6}
                 className={styles.eNodeRect}
               />
-              <foreignObject x={-nw / 2} y={-nh / 2} width={nw} height={nh}>
+              <foreignObject x={-nodeWidth / 2} y={-nodeHeight / 2} width={nodeWidth} height={nodeHeight}>
                 <div
                   // @ts-expect-error xmlns is required for foreignObject content in some renderers
                   xmlns="http://www.w3.org/1999/xhtml"
                   className={styles.eNodeContent}
                 >
-                  {renderNode(nodeMap.get(node.id) ?? node)}
+                  {renderNode(node)}
                 </div>
               </foreignObject>
             </g>
@@ -390,43 +403,10 @@ export const DependencyGraph = <T,>({
             const toPos = positions.get(edge.to);
             if (!fromPos || !toPos) return null;
 
-            // Self-referencing edge in hierarchy layout
             if (edge.from === edge.to) {
-              const loopSize = Math.max(nw, nh) * 0.8;
-              const startX = fromPos.x + nw / 2;
-              const startY = fromPos.y;
-              const endX = fromPos.x;
-              const endY = fromPos.y + nh / 2;
-              const c1x = startX + loopSize;
-              const c1y = startY;
-              const c2x = endX;
-              const c2y = endY + loopSize;
-              
-              const labelX = fromPos.x + loopSize * 0.7;
-              const labelY = fromPos.y + loopSize * 0.7;
-
-              return (
-                <g key={edge.id}>
-                  <path
-                    d={`M ${startX} ${startY} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${endX} ${endY}`}
-                    className={styles.eArcEdge}
-                    data-highlighted={connectedEdges.has(edge.id)}
-                    fill="none"
-                    markerEnd="url(#dep-arrow)"
-                  />
-                  {edge.label && (
-                    <text
-                      x={labelX}
-                      y={labelY}
-                      className={styles.eEdgeLabel}
-                    data-highlighted={connectedEdges.has(edge.id)}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                    >
-                      {edge.label}
-                    </text>
-                  )}
-                </g>
+              return renderSelfLoop(
+                edge, fromPos, nodeWidth, nodeHeight,
+                styles.eArcEdge!, connectedEdges.has(edge.id), false
               );
             }
 
@@ -439,16 +419,16 @@ export const DependencyGraph = <T,>({
 
             // Control point bows downward (positive Y = below the nodes)
             const cx = (x1 + x2) / 2;
-            const arcHeight = Math.max(dist * 0.35, nh);
+            const arcHeight = Math.max(dist * 0.35, nodeHeight);
             const cy = (y1 + y2) / 2 + arcHeight;
 
             // Source trim: tangent from source toward the control point
             const [ustx, usty] = normalize(cx - x1, cy - y1);
-            const srcTrim = rectBorderDist(ustx, usty, nw / 2, nh / 2);
+            const srcTrim = rectBorderDist(ustx, usty, nodeWidth / 2, nodeHeight / 2);
 
             // Target trim: tangent from the control point toward target
             const [uttx, utty] = normalize(x2 - cx, y2 - cy);
-            const dstTrim = rectBorderDist(uttx, utty, nw / 2, nh / 2) + 2;
+            const dstTrim = rectBorderDist(uttx, utty, nodeWidth / 2, nodeHeight / 2) + 2;
 
             const sx = x1 + ustx * srcTrim;
             const sy = y1 + usty * srcTrim;
