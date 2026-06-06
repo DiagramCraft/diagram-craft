@@ -71,6 +71,7 @@ describe('parseCsv', () => {
 
 describe('validateCsvData', () => {
   const boolField: SchemaField = { id: 'active', name: 'Active', type: 'boolean' };
+  const dateField: SchemaField = { id: 'go_live', name: 'Go Live', type: 'date' };
 
   it('passes through rows with no schema fields', () => {
     const rows = [{ rowNumber: 2, data: { Name: 'Foo' }, errors: [] }];
@@ -109,6 +110,24 @@ describe('validateCsvData', () => {
   it('skips boolean validation when value is empty', () => {
     const rows = [{ rowNumber: 2, data: { Active: '' }, errors: [] }];
     const result = validateCsvData(rows, [boolField]);
+    expect(result[0]!.errors).toHaveLength(0);
+  });
+
+  it('accepts valid ISO date values', () => {
+    const rows = [{ rowNumber: 2, data: { 'Go Live': '2026-06-30' }, errors: [] }];
+    const result = validateCsvData(rows, [dateField]);
+    expect(result[0]!.errors).toHaveLength(0);
+  });
+
+  it('rejects invalid date value', () => {
+    const rows = [{ rowNumber: 2, data: { 'Go Live': 'June 30 2026' }, errors: [] }];
+    const result = validateCsvData(rows, [dateField]);
+    expect(result[0]!.errors).toContain('Go Live must be a date in YYYY-MM-DD format');
+  });
+
+  it('skips date validation when value is empty', () => {
+    const rows = [{ rowNumber: 2, data: { 'Go Live': '' }, errors: [] }];
+    const result = validateCsvData(rows, [dateField]);
     expect(result[0]!.errors).toHaveLength(0);
   });
 
@@ -181,6 +200,12 @@ describe('csvRowToEntity', () => {
     const textField: SchemaField = { id: 'note', name: 'Note', type: 'text' };
     const result = csvRowToEntity({ Name: 'X', Note: 'hello' }, [textField]);
     expect(result.note).toBe('hello');
+  });
+
+  it('stores date fields as string', () => {
+    const dateField: SchemaField = { id: 'go_live', name: 'Go Live', type: 'date' };
+    const result = csvRowToEntity({ Name: 'X', 'Go Live': '2026-06-30' }, [dateField]);
+    expect(result.go_live).toBe('2026-06-30');
   });
 
   it('skips custom field with empty value', () => {

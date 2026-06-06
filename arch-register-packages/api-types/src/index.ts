@@ -14,6 +14,7 @@ export type {
 export type {
   TextField,
   BooleanField,
+  DateField,
   SelectField,
   ReferenceField,
   ContainmentField,

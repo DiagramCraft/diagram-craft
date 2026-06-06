@@ -7,7 +7,7 @@ import type {
 } from '../types.js';
 
 export type DiagramCraftSchemaField =
-  | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'select' }>
+  | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' | 'select' }>
   | (Omit<ReferenceField, 'type'> & { type: 'reference' | 'containment' });
 
 export type DiagramCraftSchema = {
@@ -28,6 +28,7 @@ export const toDiagramCraftField = (
     case 'text':
     case 'longtext':
     case 'boolean':
+    case 'date':
     case 'select':
     case 'reference':
     case 'containment':

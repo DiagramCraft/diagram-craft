@@ -127,6 +127,7 @@ export const DataModelEditor = () => {
         switch (newType) {
           case 'text':
           case 'longtext':
+          case 'date':
             return { ...base, type: newType };
           case 'boolean':
             return { ...base, type: 'boolean' };

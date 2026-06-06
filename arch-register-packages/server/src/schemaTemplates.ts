@@ -11,7 +11,7 @@ import type { CreateSchemaInput } from './db/database.js';
 import type { SchemaField } from './types.js';
 
 type SymbolicField =
-  | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' }
+  | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' }
   | { id: string; name: string; type: 'select'; enumId: string }
   | { id: string; name: string; type: 'reference' | 'containment'; symSchemaId: string; minCount: number; maxCount: number };
 
@@ -75,6 +75,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
           { id: 'technology', name: 'Technology', type: 'text' },
+          { id: 'go_live_date', name: 'Go Live Date', type: 'date' },
           { id: 'system', name: 'System', type: 'containment', symSchemaId: 'system', minCount: 1, maxCount: 1 },
           { id: 'provides_apis', name: 'Provided APIs', type: 'reference', symSchemaId: 'api', minCount: 0, maxCount: -1 },
           { id: 'consumes_apis', name: 'Consumed APIs', type: 'reference', symSchemaId: 'api', minCount: 0, maxCount: -1 },
@@ -88,6 +89,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'database',
         fields: [
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
+          { id: 'planned_decommission', name: 'Planned Decommission', type: 'date' },
           { id: 'system', name: 'System', type: 'containment', symSchemaId: 'system', minCount: 0, maxCount: 1 },
         ],
       },
@@ -176,6 +178,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'tier', name: 'Tier', type: 'select', enumId: '' },
+          { id: 'sunset_date', name: 'Sunset Date', type: 'date' },
           { id: 'service', name: 'Business Service', type: 'containment', symSchemaId: 'business_service', minCount: 0, maxCount: 1 },
         ],
       },
@@ -199,6 +202,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'host_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'environment', name: 'Environment', type: 'select', enumId: '' },
+          { id: 'patch_deadline', name: 'Patch Deadline', type: 'date' },
         ],
       },
     ],
@@ -326,6 +330,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'dp_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'slo', name: 'SLOs', type: 'longtext' },
+          { id: 'review_date', name: 'Review Date', type: 'date' },
           { id: 'domain', name: 'Domain', type: 'containment', symSchemaId: 'domain', minCount: 1, maxCount: 1 },
           { id: 'source_systems', name: 'Source Systems', type: 'reference', symSchemaId: 'source_system', minCount: 0, maxCount: -1 },
         ],
@@ -339,6 +344,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'format', name: 'Format', type: 'select', enumId: '' },
           { id: 'schema_url', name: 'Schema URL', type: 'text' },
+          { id: 'deprecation_date', name: 'Deprecation Date', type: 'date' },
           { id: 'data_product', name: 'Data Product', type: 'containment', symSchemaId: 'data_product', minCount: 1, maxCount: 1 },
         ],
       },
@@ -369,6 +375,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'globe',
         fields: [
           { id: 'parent', name: 'Parent Capability', type: 'containment', symSchemaId: 'business_capability', minCount: 0, maxCount: 1 },
+          { id: 'target_date', name: 'Target Date', type: 'date' },
         ],
       },
       {
@@ -390,6 +397,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'layer', name: 'Layer', type: 'select', enumId: '' },
+          { id: 'retirement_date', name: 'Retirement Date', type: 'date' },
           { id: 'realises', name: 'Realises Process', type: 'reference', symSchemaId: 'business_process', minCount: 0, maxCount: -1 },
         ],
       },
@@ -412,6 +420,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
+          { id: 'end_of_support', name: 'End of Support', type: 'date' },
           { id: 'hosts', name: 'Hosts', type: 'reference', symSchemaId: 'application_component', minCount: 0, maxCount: -1 },
         ],
       },
@@ -441,6 +450,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'alert-triangle',
         fields: [
           { id: 'stride_category', name: 'STRIDE Category', type: 'select', enumId: '' },
+          { id: 'discovered_on', name: 'Discovered On', type: 'date' },
           { id: 'affected_assets', name: 'Affected Assets', type: 'reference', symSchemaId: 'asset', minCount: 0, maxCount: -1 },
           { id: 'description', name: 'Description', type: 'longtext' },
         ],
@@ -453,6 +463,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'check-circle',
         fields: [
           { id: 'control_type', name: 'Type', type: 'select', enumId: '' },
+          { id: 'last_verified', name: 'Last Verified', type: 'date' },
           { id: 'mitigates', name: 'Mitigates', type: 'reference', symSchemaId: 'threat', minCount: 0, maxCount: -1 },
           { id: 'protects', name: 'Protects', type: 'reference', symSchemaId: 'asset', minCount: 0, maxCount: -1 },
         ],
@@ -466,6 +477,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'likelihood', name: 'Likelihood', type: 'select', enumId: '' },
           { id: 'impact', name: 'Impact', type: 'select', enumId: '' },
+          { id: 'review_due', name: 'Review Due', type: 'date' },
           { id: 'threat', name: 'Threat', type: 'reference', symSchemaId: 'threat', minCount: 0, maxCount: -1 },
           { id: 'controls', name: 'Controls', type: 'reference', symSchemaId: 'control', minCount: 0, maxCount: -1 },
         ],

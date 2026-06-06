@@ -4,6 +4,14 @@
 
 import type { SchemaField } from '../types.js';
 
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const isValidIsoDate = (value: string) => {
+  if (!ISO_DATE_PATTERN.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+};
+
 export type ParsedCsvRow = {
   rowNumber: number;
   data: Record<string, string>;
@@ -165,6 +173,11 @@ export const validateCsvData = (
               errors.push(`${field.name} must be a boolean (true/false)`);
             }
             break;
+          case 'date':
+            if (!isValidIsoDate(value)) {
+              errors.push(`${field.name} must be a date in YYYY-MM-DD format`);
+            }
+            break;
         }
       }
     }
@@ -244,6 +257,7 @@ export const csvRowToEntity = (
         // Store as comma-separated names for now, will be resolved later
         entity[field.id] = trimmedValue;
         break;
+      case 'date':
       case 'text':
       case 'longtext':
         entity[field.id] = trimmedValue;

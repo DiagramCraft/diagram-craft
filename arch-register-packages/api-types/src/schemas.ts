@@ -12,6 +12,12 @@ export type BooleanField = {
   type: 'boolean';
 };
 
+export type DateField = {
+  id: string;
+  name: string;
+  type: 'date';
+};
+
 export type SelectField = {
   id: string;
   name: string;
@@ -38,7 +44,13 @@ export type ContainmentField = {
   maxCount: number;
 };
 
-export type SchemaField = TextField | BooleanField | SelectField | ReferenceField | ContainmentField;
+export type SchemaField =
+  | TextField
+  | BooleanField
+  | DateField
+  | SelectField
+  | ReferenceField
+  | ContainmentField;
 
 export type FieldType = SchemaField['type'];
 
