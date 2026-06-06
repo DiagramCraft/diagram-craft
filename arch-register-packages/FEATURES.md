@@ -4,7 +4,7 @@
 
 **Entity management.** The catalog is the core of arch-register. Entities represent any architectural concept — services, applications, platforms, teams, databases, and so on. Each entity has a name, description, lifecycle state, and owner, plus any custom fields defined by its schema. Entities can be created, edited, cloned, and deleted, with all changes captured in the audit log.
 
-**Custom entity schemas.** Administrators define entity types through schemas, each with a name, icon, color, and a set of typed fields. Supported field types are Text, Long Text, Boolean, Select (with configurable options), Reference (link to another entity), and Containment (parent–child hierarchy). Each field can have cardinality constraints and a default owner.
+**Custom entity schemas.** Administrators define entity types through schemas, each with a name, icon, color, and a set of typed fields. Supported field types are Text, Long Text, Boolean, Date, Select (with configurable options), Reference (link to another entity), and Containment (parent–child hierarchy). Each field can have cardinality constraints and a default owner.
 
 **Lifecycle states.** Each workspace defines its own lifecycle states (e.g. Proposed, Experimental, Production, Deprecated) with labels and colors. Any entity can be assigned a lifecycle state, enabling filtering and governance workflows around where each system sits in its maturity curve.
 

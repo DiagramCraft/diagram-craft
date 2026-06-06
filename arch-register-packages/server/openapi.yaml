@@ -1822,6 +1822,19 @@ components:
       required: [id, name, type]
       additionalProperties: false
 
+    DateField:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [date]
+      required: [id, name, type]
+      additionalProperties: false
+
     SelectOption:
       type: object
       properties:
@@ -1893,6 +1906,7 @@ components:
       oneOf:
         - $ref: '#/components/schemas/TextField'
         - $ref: '#/components/schemas/BooleanField'
+        - $ref: '#/components/schemas/DateField'
         - $ref: '#/components/schemas/SelectField'
         - $ref: '#/components/schemas/ReferenceField'
         - $ref: '#/components/schemas/ContainmentField'

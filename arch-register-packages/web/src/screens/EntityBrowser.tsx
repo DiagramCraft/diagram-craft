@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './EntityBrowser.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -17,6 +17,37 @@ import { useEntities, useEntityFacets, useEntityTree, useDeleteEntity, useCloneE
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
 type BrowserView = 'table' | 'cards' | 'tree';
+type DateFilterOperator = 'on' | 'before' | 'after' | 'empty';
+
+const parseDateValue = (value: unknown) => {
+  if (typeof value !== 'string' || value === '') return null;
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+};
+
+const formatDateValue = (value: unknown) => {
+  const parsed = parseDateValue(value);
+  if (parsed == null) return '—';
+  const date = new Date(`${parsed}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? parsed : date.toLocaleDateString();
+};
+
+const matchesDateFilter = (
+  value: unknown,
+  operator: DateFilterOperator,
+  expected: string
+) => {
+  const parsed = parseDateValue(value);
+  if (operator === 'empty') return parsed == null;
+  if (parsed == null || expected === '') return true;
+  switch (operator) {
+    case 'on':
+      return parsed === expected;
+    case 'before':
+      return parsed < expected;
+    case 'after':
+      return parsed > expected;
+  }
+};
 
 export const EntityBrowser = () => {
   const navigate = useNavigate();
@@ -29,6 +60,9 @@ export const EntityBrowser = () => {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('name');
   const [view, setView] = useState<BrowserView>('table');
+  const [dateFilterField, setDateFilterField] = useState('');
+  const [dateFilterOperator, setDateFilterOperator] = useState<DateFilterOperator>('on');
+  const [dateFilterValue, setDateFilterValue] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
 
   // Use TanStack Query hooks for data fetching
@@ -68,14 +102,6 @@ export const EntityBrowser = () => {
       .filter((value): value is string => value != null && value !== '')
       .sort();
   }, [facets]);
-
-  const filtered = useMemo(() => {
-    const xs = entities.slice();
-    if (sort === 'name') xs.sort((a, b) => (a._name ?? a._slug).localeCompare(b._name ?? b._slug));
-    if (sort === 'type') xs.sort((a, b) => a._schemaId.localeCompare(b._schemaId));
-    if (sort === 'owner') xs.sort((a, b) => (a._owner ?? '').localeCompare(b._owner ?? ''));
-    return xs;
-  }, [entities, sort]);
 
   const navigateEntities = useCallback((params: { type?: string; status?: string; owner?: string }) => {
     navigate({
@@ -147,6 +173,74 @@ export const EntityBrowser = () => {
     : 'All entities';
 
   const lifecycles = lifecycleStates;
+  const selectedSchema = typeFilter != null ? schemaMap.get(typeFilter)?.schema ?? null : null;
+  const dateFields = useMemo(
+    () => selectedSchema?.fields.filter((field): field is Extract<EntitySchema['fields'][number], { type: 'date' }> => field.type === 'date') ?? [],
+    [selectedSchema]
+  );
+
+  useEffect(() => {
+    if (dateFields.length === 0) {
+      setDateFilterField('');
+      setDateFilterOperator('on');
+      setDateFilterValue('');
+      return;
+    }
+    if (!dateFields.some(field => field.id === dateFilterField)) {
+      setDateFilterField(dateFields[0]?.id ?? '');
+    }
+  }, [dateFields, dateFilterField]);
+
+  useEffect(() => {
+    if (!sort.startsWith('date:')) return;
+    const fieldId = sort.slice(5);
+    if (view !== 'table' || !dateFields.some(field => field.id === fieldId)) {
+      setSort('name');
+    }
+  }, [dateFields, sort, view]);
+
+  const sortOptions = useMemo(() => [
+    { value: 'name', label: 'Name' },
+    { value: 'type', label: 'Type' },
+    { value: 'owner', label: 'Owner' },
+    ...(view === 'table'
+      ? dateFields.map(field => ({ value: `date:${field.id}`, label: `${field.name} date` }))
+      : []),
+  ], [dateFields, view]);
+
+  const activeDateFieldId = useMemo(() => {
+    if (dateFilterField !== '') return dateFilterField;
+    if (sort.startsWith('date:')) return sort.slice(5);
+    return dateFields[0]?.id ?? null;
+  }, [dateFields, dateFilterField, sort]);
+
+  const activeDateField = useMemo(
+    () => dateFields.find(field => field.id === activeDateFieldId) ?? null,
+    [dateFields, activeDateFieldId]
+  );
+  const dateBrowserEnabled = view === 'table' && selectedSchema != null && dateFields.length > 0;
+
+  const filtered = useMemo(() => {
+    const xs = entities
+      .filter(entity => {
+        if (!dateBrowserEnabled || activeDateField == null || dateFilterField === '') return true;
+        return matchesDateFilter(entity[dateFilterField], dateFilterOperator, dateFilterValue);
+      })
+      .slice();
+
+    if (sort === 'name') xs.sort((a, b) => (a._name ?? a._slug).localeCompare(b._name ?? b._slug));
+    if (sort === 'type') xs.sort((a, b) => a._schemaId.localeCompare(b._schemaId));
+    if (sort === 'owner') xs.sort((a, b) => (a._owner ?? '').localeCompare(b._owner ?? ''));
+    if (dateBrowserEnabled && sort.startsWith('date:')) {
+      const fieldId = sort.slice(5);
+      xs.sort((a, b) => {
+        const aValue = parseDateValue(a[fieldId]) ?? '9999-99-99';
+        const bValue = parseDateValue(b[fieldId]) ?? '9999-99-99';
+        return aValue.localeCompare(bValue);
+      });
+    }
+    return xs;
+  }, [entities, sort, activeDateField, dateBrowserEnabled, dateFilterField, dateFilterOperator, dateFilterValue]);
 
   return (
     <div className={styles.screen}>
@@ -220,12 +314,41 @@ export const EntityBrowser = () => {
           label="Sort"
           value={sort}
           onChange={setSort}
-          options={[
-            { value: 'name', label: 'Name' },
-            { value: 'type', label: 'Type' },
-            { value: 'owner', label: 'Owner' },
-          ]}
+          options={sortOptions}
         />
+
+        {dateBrowserEnabled && (
+          <div className={styles.dateFilters}>
+            <FilterDropdown
+              label="Date field"
+              value={dateFilterField}
+              onChange={setDateFilterField}
+              options={dateFields.map(field => ({ value: field.id, label: field.name }))}
+            />
+            <FilterDropdown
+              label="When"
+              value={dateFilterOperator}
+              onChange={value => setDateFilterOperator(value as DateFilterOperator)}
+              options={[
+                { value: 'on', label: 'On' },
+                { value: 'before', label: 'Before' },
+                { value: 'after', label: 'After' },
+                { value: 'empty', label: 'Empty' },
+              ]}
+            />
+            {dateFilterOperator !== 'empty' && (
+              <label className={styles.dateInputWrap}>
+                <span className={styles.filterLabel}>Date</span>
+                <input
+                  className={styles.dateInput}
+                  type="date"
+                  value={dateFilterValue}
+                  onChange={e => setDateFilterValue(e.target.value)}
+                />
+              </label>
+            )}
+          </div>
+        )}
 
         <div style={{ flex: 1 }} />
 
@@ -273,7 +396,7 @@ export const EntityBrowser = () => {
         </div>
       ) : (
         <>
-          {view === 'table' && <TableView rows={filtered} schemaMap={schemaMap} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
+          {view === 'table' && <TableView rows={filtered} schemaMap={schemaMap} activeDateField={dateBrowserEnabled ? activeDateField : null} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
           {view === 'cards' && <CardsView rows={filtered} schemaMap={schemaMap} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
         </>
       )}
@@ -320,6 +443,7 @@ const FilterDropdown = ({
 type ViewProps = {
   rows: EntityRecord[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
+  activeDateField?: Extract<EntitySchema['fields'][number], { type: 'date' }> | null;
   onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
@@ -342,7 +466,7 @@ const entityMenuItems = (
   return items;
 };
 
-const TableView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewProps) => (
+const TableView = ({ rows, schemaMap, activeDateField, onEntityClick, onDelete, onClone }: ViewProps) => (
   <div className={styles.tableWrap}>
     <table className={styles.table}>
       <thead>
@@ -351,6 +475,7 @@ const TableView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewPr
           <th>Type</th>
           <th>Owner</th>
           <th>Status</th>
+          {activeDateField && <th>{activeDateField.name}</th>}
           <th style={{ width: 110 }}>Namespace</th>
           <th style={{ width: 28 }} />
         </tr>
@@ -375,6 +500,7 @@ const TableView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewPr
               <td>{s && <Chip tone="ghost">{s.schema.name}</Chip>}</td>
               <td><span className="dim">{e._owner ?? '—'}</span></td>
               <td>{e._lifecycle && <StatusChip value={e._lifecycle} />}</td>
+              {activeDateField && <td><span className="dim">{formatDateValue(e[activeDateField.id])}</span></td>}
               <td><span className="dim">{e._namespace}</span></td>
               <td onClick={ev => ev.stopPropagation()}>
                 {entityMenuItems(e, onClone, onDelete).length > 0 && (

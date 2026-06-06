@@ -35,6 +35,13 @@ type RefLookup = Map<string, EntitySummary>;
 const slugify = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+const formatDateValue = (value: unknown) => {
+  if (typeof value !== 'string' || value === '') return '—';
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString();
+};
+
 export const EntityDetail = () => {
   const navigate = useNavigate();
   const { entityId } = useParams({ strict: false }) as { entityId: string };
@@ -615,6 +622,16 @@ const PropertyRow = ({
         />
       );
     }
+    if (field.type === 'date') {
+      return (
+        <input
+          className={styles.inputInline}
+          type="date"
+          value={(editValue as string) ?? ''}
+          onChange={e => onChange(e.target.value)}
+        />
+      );
+    }
     return (
       <input
         className={styles.inputInline}
@@ -653,6 +670,7 @@ const PropertyRow = ({
         </>
       );
     }
+    if (field.type === 'date') return <span>{formatDateValue(value)}</span>;
     return <span>{String(value)}</span>;
   };
 

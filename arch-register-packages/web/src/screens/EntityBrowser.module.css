@@ -124,6 +124,33 @@
   font-size: 12px;
 }
 
+.dateFilters {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dateInputWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+}
+
+.dateInput {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--base-fg);
+  font-size: 12px;
+}
+
 /* View switcher */
 .segmented {
   display: inline-flex;

@@ -167,6 +167,7 @@ describe('toApiSchema', () => {
     fields: [
       { id: 'env', name: 'Env', type: 'select', enumId: 'enum-env' },
       { id: 'notes', name: 'Notes', type: 'text' },
+      { id: 'go_live', name: 'Go Live', type: 'date' },
     ],
     color: null,
     icon: null,
@@ -191,6 +192,12 @@ describe('toApiSchema', () => {
     const result = toApiSchema(schema, 5, []);
     const notesField = result.fields.find(f => f.id === 'notes');
     expect(notesField).toEqual({ id: 'notes', name: 'Notes', type: 'text' });
+  });
+
+  it('passes through date fields unchanged', () => {
+    const result = toApiSchema(schema, 5, []);
+    const dateField = result.fields.find(f => f.id === 'go_live');
+    expect(dateField).toEqual({ id: 'go_live', name: 'Go Live', type: 'date' });
   });
 
   it('includes entity count and serializes dates', () => {

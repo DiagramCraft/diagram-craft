@@ -361,6 +361,19 @@ const FieldInput = ({
     );
   }
 
+  if (field.type === 'date') {
+    return (
+      <FormElement label={field.name}>
+        <input
+          type="date"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          style={{ width: '100%' }}
+        />
+      </FormElement>
+    );
+  }
+
   return (
     <FormElement label={field.name}>
       <TextInput
