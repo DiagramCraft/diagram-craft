@@ -16,7 +16,7 @@ const getExpiry = (type: 'access' | 'refresh'): string => {
   return process.env['JWT_REFRESH_TOKEN_EXPIRY'] ?? '7d';
 };
 
-const parseExpiryToSeconds = (expiry: string): number => {
+export const parseExpiryToSeconds = (expiry: string): number => {
   const match = expiry.match(/^(\d+)(s|m|h|d)$/);
   if (!match?.[1] || !match[2]) return 3600;
   const value = parseInt(match[1], 10);
