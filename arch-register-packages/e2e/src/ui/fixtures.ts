@@ -12,4 +12,5 @@ export const test = baseTest.extend<{ loggedInPage: Page }>({
   }
 });
 
+/** biome-ignore lint/performance/noBarrelFile: ok */
 export { expect } from '@playwright/test';

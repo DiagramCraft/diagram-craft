@@ -9,6 +9,7 @@ interface Fixtures {
 
 export const test = baseTest.extend<Fixtures>({
   server: [
+    // biome-ignore lint/correctness/noEmptyPattern: ok
     async ({}, use) => {
       const server = await startTestServer();
       await seedMinimal(server.db);
@@ -25,4 +26,5 @@ export const test = baseTest.extend<Fixtures>({
   ]
 });
 
+// biome-ignore lint/performance/noBarrelFile: ok
 export { expect } from 'vitest';
