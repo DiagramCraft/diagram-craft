@@ -80,7 +80,7 @@ test.describe('GET /api/:workspace/audit', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as Array<{ entity_id: string }>;
     expect(body.length).toBe(1);
-    expect(body[0].entity_id).toBe('e2e-e-1');
+    expect(body[0]?.entity_id).toBe('e2e-e-1');
   });
 
   test('filters by operation', async ({ server, auth, seeded: _ }) => {
@@ -130,7 +130,7 @@ test.describe('GET /api/:workspace/audit', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as Array<{ entity_id: string }>;
     expect(body.length).toBe(1);
-    expect(body[0].entity_id).toBe('e2e-e-2');
+    expect(body[0]?.entity_id).toBe('e2e-e-2');
   });
 
   test('limit=1 returns one entry', async ({ server, auth, seeded: _ }) => {
@@ -154,7 +154,7 @@ test.describe('GET /api/:workspace/audit', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as Array<{ id: string }>;
     expect(body.length).toBe(1);
-    expect(body[0].id).toBe(all[1].id);
+    expect(body[0]?.id).toBe(all[1]?.id);
   });
 
   test('invalid limit returns 400', async ({ server, auth }) => {
