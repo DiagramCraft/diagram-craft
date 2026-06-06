@@ -80,6 +80,8 @@ const RING_BG = [
   'oklch(0.12 0.005 260)',
 ];
 
+const LIFECYCLE_FIELD_ID = '_lifecycle';
+
 // ── Config helpers ────────────────────────────────────────────────────────────
 
 const configKey = (workspaceSlug: string) => `ar-radar-config-${workspaceSlug}`;
@@ -108,7 +110,7 @@ const getSelectableFields = (
   ...schema.fields
     .filter((f): f is Extract<typeof f, { type: 'select' }> => f.type === 'select')
     .map(f => ({ id: f.id, label: f.name })),
-  ...(lifecycleStates.length > 0 ? [{ id: '_lifecycle', label: 'Lifecycle' }] : []),
+  ...(lifecycleStates.length > 0 ? [{ id: LIFECYCLE_FIELD_ID, label: 'Lifecycle' }] : []),
 ];
 
 const getFieldValues = (
@@ -116,7 +118,7 @@ const getFieldValues = (
   fieldId: string,
   lifecycleStates: WorkspaceLifecycleState[]
 ): Array<{ value: string; label: string }> => {
-  if (fieldId === '_lifecycle') {
+  if (fieldId === LIFECYCLE_FIELD_ID) {
     return [...lifecycleStates]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(s => ({ value: s.id, label: s.label }));
@@ -127,7 +129,7 @@ const getFieldValues = (
 };
 
 const getEntityFieldValue = (entity: EntityRecord, fieldId: string): string | null => {
-  if (fieldId === '_lifecycle') return entity._lifecycle ?? null;
+  if (fieldId === LIFECYCLE_FIELD_ID) return entity._lifecycle ?? null;
   const val = entity[fieldId];
   return typeof val === 'string' ? val : null;
 };
@@ -167,8 +169,8 @@ function rHash(s: string): number {
 }
 
 function getBlipXY(entityId: string, quad: Quadrant, ring: Ring): { x: number; y: number } {
-  const h1 = rHash(entityId + '~a');
-  const h2 = rHash(entityId + '~b');
+  const h1 = rHash(`${entityId}~a`);
+  const h2 = rHash(`${entityId}~b`);
   const aSpread = (quad.endAngle - quad.startAngle) * 0.78;
   const angle = quad.startAngle + (quad.endAngle - quad.startAngle) * 0.11 + (h1 % 9973) / 9973 * aSpread;
   const rMin = ring.innerR < 10 ? 14 : ring.innerR + 10;
@@ -193,12 +195,15 @@ function buildBlips(
     return qv != null && rv != null && quadMap.has(qv) && ringMap.has(rv);
   });
 
+  const quadIdx = new Map(quadrants.map((q, i) => [q.value, i]));
+  const ringIdx = new Map(rings.map((r, i) => [r.value, i]));
+
   valid.sort((a, b) => {
-    const qa = quadrants.findIndex(q => q.value === getEntityFieldValue(a, quadrantFieldId));
-    const qb = quadrants.findIndex(q => q.value === getEntityFieldValue(b, quadrantFieldId));
+    const qa = quadIdx.get(getEntityFieldValue(a, quadrantFieldId)!) ?? 0;
+    const qb = quadIdx.get(getEntityFieldValue(b, quadrantFieldId)!) ?? 0;
     if (qa !== qb) return qa - qb;
-    const ra = rings.findIndex(r => r.value === getEntityFieldValue(a, ringFieldId));
-    const rb = rings.findIndex(r => r.value === getEntityFieldValue(b, ringFieldId));
+    const ra = ringIdx.get(getEntityFieldValue(a, ringFieldId)!) ?? 0;
+    const rb = ringIdx.get(getEntityFieldValue(b, ringFieldId)!) ?? 0;
     if (ra !== rb) return ra - rb;
     return (a._name ?? '').localeCompare(b._name ?? '');
   });
@@ -261,9 +266,7 @@ export const RadarView = ({
   const ringValues = useMemo(() => {
     if (!config || !schema) return [];
     const all = getFieldValues(schema, config.ringFieldId, lifecycleStates);
-    // Empty ringOrder = no explicit selection → use all values (up to 5) in natural order
     if (config.ringOrder.length === 0) return all.slice(0, 5);
-    // Non-empty ringOrder = explicit selection, only show those values
     const ordered: Array<{ value: string; label: string }> = [];
     for (const v of config.ringOrder) {
       const found = all.find(av => av.value === v);
@@ -293,9 +296,18 @@ export const RadarView = ({
   }, [allBlips, quadFilter, ringFilter, q, qProp]);
 
   const activeId = pinned ?? hovered;
-  const activeBlip = activeId ? (allBlips.find(b => b.id === activeId) ?? null) : null;
-  const activeQuad = activeBlip ? (quadrants.find(q => q.value === activeBlip.quadrantValue) ?? null) : null;
-  const activeRing = activeBlip ? (rings.find(r => r.value === activeBlip.ringValue) ?? null) : null;
+  const activeBlip = useMemo(
+    () => activeId ? (allBlips.find(b => b.id === activeId) ?? null) : null,
+    [activeId, allBlips]
+  );
+  const activeQuad = useMemo(
+    () => activeBlip ? (quadrants.find(q => q.value === activeBlip.quadrantValue) ?? null) : null,
+    [activeBlip, quadrants]
+  );
+  const activeRing = useMemo(
+    () => activeBlip ? (rings.find(r => r.value === activeBlip.ringValue) ?? null) : null,
+    [activeBlip, rings]
+  );
 
   const onSvgMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!wrapRef.current) return;
@@ -503,7 +515,7 @@ const RadarGrid = ({
       {/* Ring fills — outermost first so inner circles cover */}
       {[...rings].reverse().map((ring, i) => (
         <circle
-          key={'f' + ring.value}
+          key={`f${ring.value}`}
           cx={CX} cy={CY} r={ring.outerR}
           fill={RING_BG[(rings.length - 1 - i) % RING_BG.length]}
         />
@@ -531,7 +543,7 @@ const RadarGrid = ({
       {/* Ring borders */}
       {rings.map(ring => (
         <circle
-          key={'b' + ring.value}
+          key={`b${ring.value}`}
           cx={CX} cy={CY} r={ring.outerR}
           fill="none"
           stroke="var(--panel-border)"
@@ -545,7 +557,7 @@ const RadarGrid = ({
         const y = CY + (MAX_R + 3) * Math.sin(quad.startAngle);
         return (
           <line
-            key={'div' + quad.value}
+            key={`div${quad.value}`}
             x1={CX} y1={CY}
             x2={x.toFixed(1)} y2={y.toFixed(1)}
             stroke="var(--panel-border)"
@@ -560,12 +572,11 @@ const RadarGrid = ({
       {/* Ring labels — one per ring, placed along the top divider line */}
       {rings.map(ring => {
         const mid = (ring.innerR + ring.outerR) / 2;
-        // Place label at top (–90°), 12px to the right of the divider line
         const lx = CX + 12;
         const ly = CY - mid;
         return (
           <text
-            key={'rl' + ring.value}
+            key={`rl${ring.value}`}
             x={lx.toFixed(1)}
             y={ly.toFixed(1)}
             dominantBaseline="central"
@@ -594,7 +605,7 @@ const RadarGrid = ({
           Math.abs(cosMid) < 0.15 ? 'middle' : cosMid > 0 ? 'start' : 'end';
         return (
           <text
-            key={'ql' + quad.value}
+            key={`ql${quad.value}`}
             x={lx.toFixed(1)}
             y={ly.toFixed(1)}
             textAnchor={anchor}
@@ -799,20 +810,17 @@ const RadarSettings = ({
     setRingOrder([]);
   };
 
-  // When ring field changes, reset ring order
   const handleRingFieldChange = (fieldId: string) => {
     setRingFieldId(fieldId);
     setRingOrder([]);
   };
 
-  // Ring values for the ring ordering UI
   const ringFieldValues = useMemo(() => {
     if (!selectedSchema || !ringFieldId) return [];
     return getFieldValues(selectedSchema, ringFieldId, lifecycleStates);
   }, [selectedSchema, ringFieldId, lifecycleStates]);
 
-  // Effective order: only explicitly selected values (those in ringOrder that still exist)
-  // If ringOrder is empty, default to all values (up to 5) so existing configs work
+  // Default to all values (up to 5) when ringOrder is empty so old configs still render
   const effectiveOrder = useMemo(() => {
     const valid = ringOrder.filter(v => ringFieldValues.some(rv => rv.value === v));
     if (valid.length > 0) return valid;
