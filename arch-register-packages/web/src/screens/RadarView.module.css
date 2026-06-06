@@ -1,0 +1,557 @@
+/* Screen */
+.screen {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-height: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--base-fg-more-dim);
+  margin-bottom: 2px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.edition {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--base-fg-more-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sub {
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.searchInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  min-width: 200px;
+  padding: 0 10px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  color: var(--base-fg-more-dim);
+}
+
+.searchInline input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--base-fg);
+  font-size: 12px;
+  width: 100%;
+}
+
+.searchInline input::placeholder {
+  color: var(--cmp-fg-disabled);
+}
+
+/* Filter pills */
+.pills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pillsLabel {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  white-space: nowrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 11px;
+  background: var(--panel-bg);
+  color: var(--base-fg-dim);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.pill:hover {
+  border-color: var(--base-fg-more-dim);
+  background: var(--cmp-bg);
+}
+
+.pillActive {
+  border-color: var(--accent-fg-dimmed);
+  background: var(--accent-bg);
+  color: var(--accent-fg-hover);
+}
+
+.pillDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Body: SVG + Legend */
+.body {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.svgWrap {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  max-width: 800px;
+  max-height: 800px;
+  display: block;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  width: 260px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.tooltipPinned {
+  pointer-events: all;
+  border-color: var(--accent-fg-dimmed);
+}
+
+.tooltipHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.tooltipNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.tooltipName {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltipClose {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--base-fg-more-dim);
+  font-size: 10px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.tooltipClose:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+.tooltipChips {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.tooltipChip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--panel-border);
+  border-radius: 9px;
+  font-size: 10px;
+}
+
+.tooltipDesc {
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  line-height: 1.45;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tooltipOpen {
+  font-size: 11px;
+  color: var(--accent-fg);
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.tooltipOpen:hover {
+  color: var(--accent-fg-hover);
+  text-decoration: underline;
+}
+
+.tooltipHint {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+}
+
+/* Legend panel */
+.legend {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.legendHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--base-fg-dim);
+  flex-shrink: 0;
+}
+
+.legendCount {
+  color: var(--base-fg-more-dim);
+  font-family: var(--font-mono);
+}
+
+.legendScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.legendSection {
+  padding: 4px 0;
+}
+
+.legendSection + .legendSection {
+  border-top: 1px solid var(--panel-border);
+}
+
+.legendQuad {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--base-fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.legendQuadDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 12px;
+  text-align: left;
+  font-size: 11.5px;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.legendRow:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+.legendRowActive {
+  background: var(--accent-bg);
+  color: var(--accent-fg-hover);
+}
+
+.legendRowNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 7.5px;
+  font-weight: 700;
+  color: white;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.legendRowName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendRowRing {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  gap: 8px;
+  color: var(--base-fg-more-dim);
+  flex: 1;
+}
+
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--base-fg-dim);
+}
+
+/* Settings dialog body */
+.settingsBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.settingsRow {
+  display: flex;
+  gap: 12px;
+}
+
+.settingsField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.settingsLabel {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}
+
+
+.settingsNote {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  line-height: 1.5;
+  padding: 6px 8px;
+  background: var(--cmp-bg);
+  border-radius: var(--r);
+  border-left: 2px solid var(--accent-fg-dimmed);
+}
+
+/* Ring order list */
+.ringOrderList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ringOrderRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  font-size: 12px;
+  color: var(--base-fg-dim);
+}
+
+.ringOrderRowChecked {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+.ringOrderCheck {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--base-fg-more-dim);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ringOrderCheck:checked {
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
+}
+
+.ringOrderCheck:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.ringOrderCheck:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ringOrderDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ringOrderLabel {
+  flex: 1;
+}
+
+.ringOrderIdx {
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+  font-family: var(--font-mono);
+  min-width: 60px;
+  text-align: right;
+}
+
+.ringOrderBtns {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ringOrderBtn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.ringOrderBtn:hover:not(:disabled) {
+  background: var(--cmp-bg-hover);
+  border-color: var(--base-fg-more-dim);
+  color: var(--base-fg);
+}
+
+.ringOrderBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
