@@ -199,6 +199,12 @@ importers:
       '@diagram-craft/collaboration':
         specifier: workspace:^
         version: link:../../packages/collaboration
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../../packages/geometry
+      '@diagram-craft/graph':
+        specifier: workspace:^
+        version: link:../../packages/graph
       '@diagram-craft/main':
         specifier: workspace:^
         version: link:../../packages/main

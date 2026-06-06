@@ -1,0 +1,90 @@
+/**
+ * DependencyGraph - .cDependencyGraph
+ * | Node Group - .eNode
+ *   | Node Rect - .eNodeRect
+ *   | Node Content - .eNodeContent
+ * | Edge - .eEdge
+ *   | [data-kind="containment"] - containment edge variant
+ *   | [data-highlighted="true"] - highlighted state
+ * | Arc Edge - .eArcEdge
+ *   | [data-highlighted="true"] - highlighted state
+ */
+
+.cDependencyGraph {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+
+  .eNodeRect {
+    fill: var(--panel-bg);
+    stroke: var(--panel-border);
+    stroke-width: 1.5;
+    transition: stroke 0.1s;
+
+    &:hover {
+      stroke: var(--accent-fg);
+    }
+  }
+
+  .eNodeContent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    font-size: 12px;
+    color: var(--base-fg);
+    overflow: hidden;
+    pointer-events: none;
+    box-sizing: border-box;
+  }
+
+  .eEdge {
+    stroke: var(--base-fg-more-dim);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+    fill: none;
+
+    &[data-kind="containment"] {
+      stroke-dasharray: none;
+    }
+
+    &[data-highlighted="true"] {
+      stroke: var(--accent-fg);
+      stroke-width: 2.5;
+      opacity: 1;
+    }
+  }
+
+  .eArcEdge {
+    stroke: var(--base-fg-more-dim);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+    fill: none;
+
+    &[data-highlighted="true"] {
+      stroke: var(--accent-fg);
+      stroke-width: 2.5;
+      opacity: 1;
+    }
+  }
+
+  .eEdgeLabel {
+    font-size: 11px;
+    fill: var(--base-fg);
+    pointer-events: none;
+    user-select: none;
+    paint-order: stroke fill;
+    stroke: var(--panel-bg);
+    stroke-width: 3px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    &[data-highlighted="true"] {
+      fill: var(--accent-fg);
+      font-weight: 600;
+    }
+  }
+}

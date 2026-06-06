@@ -16,10 +16,11 @@ import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { newid } from '@diagram-craft/utils/id';
 import { EnumEditor } from './EnumEditor';
+import { SchemaGraphView } from './SchemaGraphView';
 
 export const DataModelEditor = () => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { tab?: 'types' | 'enums'; schema?: string; enumId?: string };
+  const search = useSearch({ strict: false }) as { tab?: 'types' | 'enums' | 'graph'; schema?: string; enumId?: string };
   const selectedSchemaId = search.schema;
   const activeTab = search.tab ?? 'types';
   const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();
@@ -143,6 +144,10 @@ export const DataModelEditor = () => {
 
   if (activeTab === 'enums') {
     return <EnumEditor />;
+  }
+
+  if (activeTab === 'graph') {
+    return <SchemaGraphView />;
   }
 
   return (

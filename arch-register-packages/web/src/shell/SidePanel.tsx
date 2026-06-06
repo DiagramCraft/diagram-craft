@@ -13,7 +13,7 @@ import {
   TbUsers, TbFolderOpen,
   TbSettings, TbTrash, TbTag, TbHistory,
   TbShieldLock, TbPlus, TbPencil, TbCopy,
-  TbFolder, TbSparkles, TbTable,
+  TbFolder, TbSparkles, TbTable, TbVectorTriangle,
 } from 'react-icons/tb';
 import { fetchEntityFacets, resolveSchemaColor } from '../api';
 import type { FileEntry } from '../api';
@@ -751,8 +751,9 @@ const DataModelSidebar = ({
   workspaceSlug: string;
 }) => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { tab?: 'types' | 'enums'; schema?: string; enumId?: string };
-  const activeTab = search.tab ?? 'types';
+  const search = useSearch({ strict: false }) as { tab?: 'types' | 'enums' | 'graph'; schema?: string; enumId?: string };
+  const activeTab = search.tab === 'enums' ? 'enums' : 'types';
+  const isGraphOverviewActive = search.tab === 'graph';
   const schemaId = search.schema ?? null;
   const enumId = search.enumId ?? null;
 
@@ -795,6 +796,17 @@ const DataModelSidebar = ({
               trailing={<span className="dim mono">{s.fields.length}</span>}
             />
           ))}
+          <GroupLabel>Views</GroupLabel>
+          <TreeRow
+            icon={<TbVectorTriangle size={12} />}
+            label="Graph Overview"
+            active={isGraphOverviewActive}
+            onClick={() => navigate({
+              to: '/$workspaceSlug/model',
+              params: { workspaceSlug },
+              search: { tab: 'graph' },
+            })}
+          />
         </div>
       ) : (
         <div className={styles.scroll}>

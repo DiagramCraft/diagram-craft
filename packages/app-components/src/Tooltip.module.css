@@ -5,6 +5,7 @@
 .cTooltip {
   border-radius: var(--cmp-radius);
   padding: 10px;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   font-size: 11px;
   background-color: var(--panel-bg);
   color: var(--panel-fg);
