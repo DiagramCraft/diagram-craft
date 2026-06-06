@@ -290,7 +290,7 @@ const FieldInput = ({
   nameRef,
   referenceOptions,
 }: {
-  field: SchemaField;
+  field: EntitySchema['fields'][number];
   value: string;
   onChange: (v: string) => void;
   nameRef?: React.RefObject<HTMLInputElement | null>;

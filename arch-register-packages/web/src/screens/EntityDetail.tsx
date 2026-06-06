@@ -587,7 +587,7 @@ const PropertyRow = ({
   onEntityClick,
   hasError,
 }: {
-  field: SchemaField;
+  field: EntitySchema['fields'][number];
   value: unknown;
   editing: boolean;
   editValue: unknown;

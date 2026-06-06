@@ -6,7 +6,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { FormSection } from '@diagram-craft/app-components/FormSection';
 import { Select } from '@diagram-craft/app-components/Select';
-import type { EntityRecord, EntitySchema, WorkspaceLifecycleState, SelectField } from '../api';
+import type { EntityRecord, EntitySchema, WorkspaceLifecycleState, ApiSelectField } from '../api';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { useEntities } from '../hooks/useEntities';
 
@@ -125,7 +125,7 @@ const getFieldValues = (
   }
   const field = schema.fields.find(f => f.id === fieldId);
   if (!field || field.type !== 'select') return [];
-  return (field as SelectField).options ?? [];
+  return (field as ApiSelectField).options ?? [];
 };
 
 const getEntityFieldValue = (entity: EntityRecord, fieldId: string): string | null => {

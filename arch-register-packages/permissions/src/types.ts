@@ -8,6 +8,8 @@ import type {
   ReferenceField,
   ContainmentField,
   SchemaField,
+  EntityCapabilities,
+  ProjectCapabilities,
   VisibilityMode as ApiVisibilityMode,
 } from '@arch-register/api-types';
 
@@ -19,7 +21,9 @@ export type {
   SelectField,
   ReferenceField,
   ContainmentField,
-  SchemaField 
+  SchemaField,
+  EntityCapabilities,
+  ProjectCapabilities,
 };
 
 // Re-export VisibilityMode with local name
@@ -76,22 +80,6 @@ export type ProjectAction = 'edit_project' | 'delete_project' | 'manage_files';
 export type EntityGrantScope = 'self' | 'subtree';
 
 // Note: VisibilityMode is imported from @arch-register/api-types
-
-// ── Capability Types ──────────────────────────────────────────
-
-export type EntityCapabilities = {
-  canView: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-  canAdmin: boolean;
-  canCreateChild: boolean;
-};
-
-export type ProjectCapabilities = {
-  canEdit: boolean;
-  canDelete: boolean;
-  canManageFiles: boolean;
-};
 
 // ── Entity & Schema Types ─────────────────────────────────────
 // Note: EntityLink, SchemaField, and VisibilityMode are imported from @arch-register/api-types
