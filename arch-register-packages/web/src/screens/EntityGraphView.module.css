@@ -1,0 +1,108 @@
+/**
+ * EntityGraphView - .icEntityGraphView
+ * | Toolbar - .eToolbar
+ *   | Separator - .eToolbarSeparator
+ *   | Label - .eToolbarLabel
+ *   | Loading text - .eLoadingText
+ * | Canvas - .eCanvas
+ * | Node Name - .eNodeName
+ * | Hidden Badge - .eHiddenBadge
+ * | Empty State - .eEmpty
+ *   | Title - .eEmptyTitle
+ */
+
+.icEntityGraphView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  .eToolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 14px;
+    height: 35.5px;
+    border-bottom: 1px solid var(--panel-border);
+    flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    & > button {
+      width: 10rem;
+    }
+  }
+
+  .eToolbarSeparator {
+    width: 1px;
+    height: 20px;
+    background-color: var(--panel-border);
+    margin: 0 8px;
+  }
+
+  .eToolbarLabel {
+    font-size: 12px;
+    color: var(--base-fg-more-dim);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    margin-right: -4px;
+
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+
+  .eLoadingText {
+    font-size: 11px;
+    color: var(--base-fg-more-dim);
+    white-space: nowrap;
+  }
+
+  .eResetButton {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .eCanvas {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .eNodeName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    font-size: 12px;
+  }
+
+  .eHiddenBadge {
+    font-size: 10px;
+    background: var(--base-fg-more-dim);
+    color: var(--base-bg);
+    border-radius: 999px;
+    padding: 1px 5px;
+    flex-shrink: 0;
+    line-height: 1.5;
+  }
+
+  .eEmpty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 8px;
+    color: var(--base-fg-more-dim);
+    padding: 48px 24px;
+    text-align: center;
+  }
+
+  .eEmptyTitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--base-fg-dim);
+  }
+}

@@ -46,6 +46,8 @@ type Props<T> = {
   nodeHeight?: number;
   renderNode: (node: DependencyGraphNode<T>) => React.ReactNode;
   onNodeClick?: (id: string) => void;
+  onNodeContextMenu?: (id: string, event: React.MouseEvent) => void;
+  highlightedIds?: ReadonlySet<string>;
 };
 
 const PADDING = 48;
@@ -117,7 +119,9 @@ export const DependencyGraph = <T,>({
   nodeWidth = 160,
   nodeHeight = 48,
   renderNode,
-  onNodeClick
+  onNodeClick,
+  onNodeContextMenu,
+  highlightedIds
 }: Props<T>) => {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -370,6 +374,7 @@ export const DependencyGraph = <T,>({
               data-node
               transform={`translate(${pos.x}, ${pos.y})`}
               onClick={() => onNodeClick?.(node.id)}
+              onContextMenu={onNodeContextMenu ? e => { e.preventDefault(); onNodeContextMenu(node.id, e); } : undefined}
               onMouseEnter={() => setHoveredNodeId(node.id)}
               onMouseLeave={() => setHoveredNodeId(null)}
               style={{ cursor: onNodeClick ? 'pointer' : 'default' }}
@@ -381,6 +386,7 @@ export const DependencyGraph = <T,>({
                 height={nodeHeight}
                 rx={6}
                 className={styles.eNodeRect}
+                data-selected={highlightedIds?.has(node.id) || undefined}
               />
               <foreignObject x={-nodeWidth / 2} y={-nodeHeight / 2} width={nodeWidth} height={nodeHeight}>
                 <div

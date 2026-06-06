@@ -9,6 +9,7 @@ import {
   deleteEntity,
   cloneEntity,
 } from '../api';
+import type { EntityRelation } from '../api';
 import { schemaKeys } from './useSchemas';
 
 // Query keys factory for better organization and type safety
@@ -137,6 +138,39 @@ export const useCloneEntity = (workspaceId: string) => {
       queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
     },
   });
+};
+
+// Type for per-entity relation data returned by useMultipleEntityRelations
+export type EntityRelationData = {
+  outgoing: EntityRelation[];
+  incoming: EntityRelation[];
+  isLoading: boolean;
+};
+
+// Hook for fetching relations for multiple entities at once
+export const useMultipleEntityRelations = (
+  workspaceId: string,
+  entityIds: string[]
+): Map<string, EntityRelationData> => {
+  const results = useQueries({
+    queries: entityIds.map(entityId => ({
+      queryKey: entityKeys.relations(workspaceId, entityId),
+      queryFn: () => fetchEntityRelations(workspaceId, entityId),
+      enabled: !!workspaceId && !!entityId,
+    })),
+  });
+
+  const map = new Map<string, EntityRelationData>();
+  for (let i = 0; i < entityIds.length; i++) {
+    const id = entityIds[i]!;
+    const result = results[i];
+    map.set(id, {
+      outgoing: result?.data?.outgoing ?? [],
+      incoming: result?.data?.incoming ?? [],
+      isLoading: result?.isLoading ?? true,
+    });
+  }
+  return map;
 };
 
 // Hook for fetching entities by multiple schema IDs
