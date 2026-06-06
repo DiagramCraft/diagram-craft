@@ -17,8 +17,9 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { useEntity, useEntityRelations, useUpdateEntity, useDeleteEntity, useCloneEntity, useEntitiesBySchema } from '../hooks/useEntities';
 import { useAuditLog } from '../hooks/useAudit';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
+import { EntityGraphView } from './EntityGraphView';
 
-type TabId = 'overview' | 'topology' | 'relations' | 'changes';
+type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes';
 
 type Relation = {
   entityId: string;
@@ -241,7 +242,7 @@ export const EntityDetail = () => {
   ];
 
   return (
-    <div className={styles.screen}>
+    <div className={`${styles.screen} ${tab === 'graph' ? styles.graphMode : ''}`}>
       {/* Header */}
       <div className={styles.head}>
         <div className={styles.headLeft}>
@@ -289,6 +290,7 @@ export const EntityDetail = () => {
           <Tabs.List>
             <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
             <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
+            <Tabs.Trigger value="graph">Graph</Tabs.Trigger>
             <Tabs.Trigger value="relations">
               Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
             </Tabs.Trigger>
@@ -440,6 +442,20 @@ export const EntityDetail = () => {
           lifecycleStates={lifecycleStates}
           onEntityClick={navigateToEntity}
         />
+      )}
+
+      {/* Graph */}
+      {tab === 'graph' && entity && (
+        <div className={styles.graphPanel}>
+          <EntityGraphView
+            workspaceId={workspaceId}
+            rootEntityId={entityId}
+            rootEntityName={entity._name || entity._slug}
+            rootEntitySchemaId={entity._schemaId}
+            schemas={schemas}
+            onEntityClick={navigateToEntity}
+          />
+        </div>
       )}
 
       {/* Relationships */}

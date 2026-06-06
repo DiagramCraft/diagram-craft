@@ -6,6 +6,16 @@
   overflow-y: auto;
 }
 
+.screen.graphMode {
+  overflow: hidden;
+}
+
+.graphPanel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* Header */
 .head {
   display: flex;

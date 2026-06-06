@@ -25,6 +25,11 @@
     &:hover {
       stroke: var(--accent-fg);
     }
+
+    &[data-selected] {
+      stroke: var(--accent-fg);
+      stroke-width: 2.5;
+    }
   }
 
   .eNodeContent {
