@@ -96,7 +96,6 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
     const queue: Array<{ id: string; depth: number }> = [{ id: rootEntityId, depth: 0 }];
     const visited = new Set<string>([rootEntityId]);
 
-    // Seed root node with the known name and schema
     visibleNodes.set(rootEntityId, {
       entityId: rootEntityId,
       entityName: rootEntityName,
@@ -117,7 +116,6 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
         if (excludedIds.has(rel.entityId)) continue;
         if (!visited.has(rel.entityId)) {
           visited.add(rel.entityId);
-          // Populate node data from the relation record immediately
           visibleNodes.set(rel.entityId, {
             entityId: rel.entityId,
             entityName: rel.entityName,
@@ -129,30 +127,9 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
       }
     }
 
-    // Build edges between visible nodes only, deduplicating by from::to::fieldName
+    // Build edges (deduplicating by from::to::fieldName) and hidden counts in one pass
     const edgeSet = new Set<string>();
     const visibleEdges: DependencyGraphEdge[] = [];
-    for (const [id] of visibleNodes) {
-      const data = relationsData.get(id);
-      if (!data) continue;
-      for (const rel of data.outgoing) {
-        if (!visibleNodes.has(rel.entityId)) continue;
-        const edgeId = `${id}::${rel.entityId}::${rel.fieldName}`;
-        if (!edgeSet.has(edgeId)) {
-          edgeSet.add(edgeId);
-          visibleEdges.push({
-            id: edgeId,
-            from: id,
-            to: rel.entityId,
-            label: rel.fieldName,
-            kind: rel.kind
-          });
-        }
-      }
-    }
-
-    // Compute hidden count per node: neighbors (both directions) not in visibleNodes,
-    // including explicitly excluded ones so they still appear in the badge
     const hiddenCountMap = new Map<string, number>();
     for (const [id] of visibleNodes) {
       const data = relationsData.get(id);
@@ -160,10 +137,22 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
         hiddenCountMap.set(id, 0);
         continue;
       }
-      const hidden = [...data.outgoing, ...data.incoming].filter(
-        rel => !visibleNodes.has(rel.entityId)
-      ).length;
-      hiddenCountMap.set(id, hidden);
+      let hiddenCount = 0;
+      for (const rel of data.outgoing) {
+        if (visibleNodes.has(rel.entityId)) {
+          const edgeId = `${id}::${rel.entityId}::${rel.fieldName}`;
+          if (!edgeSet.has(edgeId)) {
+            edgeSet.add(edgeId);
+            visibleEdges.push({ id: edgeId, from: id, to: rel.entityId, label: rel.fieldName, kind: rel.kind });
+          }
+        } else {
+          hiddenCount++;
+        }
+      }
+      for (const rel of data.incoming) {
+        if (!visibleNodes.has(rel.entityId)) hiddenCount++;
+      }
+      hiddenCountMap.set(id, hiddenCount);
     }
 
     const nodeArray: DependencyGraphNode<EntityNodeData>[] = Array.from(visibleNodes.entries()).map(
@@ -175,17 +164,17 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
 
   const isAnyLoading = Array.from(relationsData.values()).some(d => d.isLoading);
 
-  const schemaIndexMap = useMemo(
-    () => new Map(schemas.map((s, i) => [s.id, i])),
+  const schemaMap = useMemo(
+    () => new Map(schemas.map((s, i) => [s.id, { schema: s, idx: i }])),
     [schemas]
   );
 
   const renderNode = useCallback(
     (node: DependencyGraphNode<EntityNodeData>) => {
       const { entitySchemaId, entityName } = node.data;
-      const idx = schemaIndexMap.get(entitySchemaId) ?? -1;
-      const schema = idx >= 0 ? schemas[idx] : undefined;
-      const color = schema ? resolveSchemaColor(schema, idx) : 'var(--accent-fg)';
+      const entry = schemaMap.get(entitySchemaId);
+      const schema = entry?.schema;
+      const color = schema ? resolveSchemaColor(schema, entry!.idx) : 'var(--accent-fg)';
       const hiddenCount = hiddenCountMap.get(node.id) ?? 0;
       return (
         <>
@@ -195,7 +184,7 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
         </>
       );
     },
-    [schemas, schemaIndexMap, hiddenCountMap]
+    [schemaMap, hiddenCountMap]
   );
 
   const handleNodeContextMenu = useCallback((id: string, e: React.MouseEvent) => {
@@ -373,7 +362,6 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
             onClick={() => {
               const id = contextMenu.id;
               setManuallyExpanded(prev => new Set([...prev, id]));
-              // Un-exclude any neighbors of this node so they re-appear
               const nodeData = relationsData.get(id);
               if (nodeData) {
                 const neighborIds = new Set(
