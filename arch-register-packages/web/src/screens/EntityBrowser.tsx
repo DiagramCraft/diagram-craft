@@ -7,8 +7,9 @@ import { StatusChip } from '../components/StatusChip';
 import { Chip } from '../components/Chip';
 import {
   TbSearch, TbDownload, TbUpload, TbPlus, TbList, TbLayoutGrid, TbBinaryTree2,
-  TbChevronDown, TbChevronRight, TbDots, TbUsers, TbCopy, TbTrash,
+  TbChevronDown, TbChevronRight, TbDots, TbUsers, TbCopy, TbTrash, TbChartRadar,
 } from 'react-icons/tb';
+import { RadarView } from './RadarView';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
 import type { EntityRecord, EntitySchema, TreeNode, TreeEdge } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
@@ -16,7 +17,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { useEntities, useEntityFacets, useEntityTree, useDeleteEntity, useCloneEntity } from '../hooks/useEntities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
-type BrowserView = 'table' | 'cards' | 'tree';
+type BrowserView = 'table' | 'cards' | 'tree' | 'radar';
 type DateFilterOperator = 'on' | 'before' | 'after' | 'empty';
 
 const parseDateValue = (value: unknown) => {
@@ -377,10 +378,20 @@ export const EntityBrowser = () => {
           >
             <TbBinaryTree2 size={13} />
           </button>
+          <button
+            type="button"
+            className={view === 'radar' ? styles.segmentedActive : ''}
+            onClick={() => setView('radar')}
+            title="Radar"
+          >
+            <TbChartRadar size={13} />
+          </button>
         </div>
       </div>
 
-      {view === 'tree' ? (
+      {view === 'radar' ? (
+        <RadarView onEntityClick={navigateToEntity} owner={ownerFilter} lifecycle={statusFilter} q={q} />
+      ) : view === 'tree' ? (
         treeNodes.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyTitle}>No entities found</div>
