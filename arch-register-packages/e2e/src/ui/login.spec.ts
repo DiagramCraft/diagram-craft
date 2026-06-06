@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-const TEST_EMAIL = 'admin@e2e.test';
-const TEST_PASSWORD = 'TestPassword123!';
+import { TEST_ADMIN } from '../helpers/seedHelper';
 
 test('shows login form', async ({ page }) => {
   await page.goto('/login');
@@ -22,8 +20,8 @@ test('shows error on invalid credentials', async ({ page }) => {
 
 test('redirects to workspace after successful login', async ({ page }) => {
   await page.goto('/login');
-  await page.getByLabel('Username').fill(TEST_EMAIL);
-  await page.locator('#lg-pass').fill(TEST_PASSWORD);
+  await page.getByLabel('Username').fill(TEST_ADMIN.email);
+  await page.locator('#lg-pass').fill(TEST_ADMIN.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL('**/default**');
   await expect(page).toHaveURL(/\/default/);
