@@ -94,7 +94,7 @@ Diagram Craft is organized as a monorepo using pnpm workspaces. The project is d
 - `pnpm client:dev`: Start the development server for the main client application
 - `pnpm client:build`: Build the client application for production
 - `pnpm client:preview`: Preview the production build
-- `pnpm test`: Run tests
+- `pnpm test`: Run unit tests
 - `pnpm lint`: Run linting checks
 
 ### Server
@@ -110,4 +110,43 @@ pnpm run dev
 ```bash
 pnpm install
 pnpm run client:dev
+```
+
+### E2E Tests (diagram-craft)
+
+Functional Playwright tests for the diagram editor live in `packages/e2e/`. They auto-start the Vite dev server before running.
+
+```bash
+pnpm --filter @diagram-craft/e2e test
+```
+
+## Arch Register
+
+Arch Register is a companion application for managing architectural entities, schemas, and documentation. It lives in `arch-register-packages/` as a set of independently deployable packages within this monorepo.
+
+See [`arch-register-packages/README.md`](arch-register-packages/README.md) for full documentation.
+
+### Quick start
+
+```bash
+# Terminal 1 — API server (port 3010)
+cd arch-register-packages/server
+pnpm dev
+
+# Terminal 2 — Web client (port 5174)
+cd arch-register-packages/web
+pnpm dev
+```
+
+### Testing
+
+```bash
+# Unit tests (all packages, from repo root)
+pnpm test
+
+# API integration tests — starts a real server with SQLite, no browser
+pnpm --filter @arch-register/e2e test:api
+
+# UI e2e tests — auto-starts server + web dev server
+pnpm --filter @arch-register/e2e test:ui
 ```

@@ -42,7 +42,8 @@
       "@diagram-craft/stencil-archimate/*": ["./packages/stencil-archimate/src/*"],
       "@diagram-craft/stencil-data-modelling/*": ["./packages/stencil-data-modelling/src/*"],
       "@diagram-craft/markdown/*": ["./packages/markdown/src/*"],
-      "@diagram-craft/playwright/*": ["./packages/playwright/src/*"]
+      "@diagram-craft/playwright/*": ["./packages/playwright/src/*"],
+      "@arch-register/server/*": ["./arch-register-packages/server/src/*"]
     }
   },
   "exclude": ["node_modules", "dist", "**/vite.config.ts", "**/playground"]
