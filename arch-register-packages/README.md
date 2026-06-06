@@ -159,11 +159,35 @@ cd api-types
 pnpm validate:openapi
 ```
 
-### Server Tests
+### Unit Tests
 ```bash
-cd server
+# From repository root (all packages)
 pnpm test
+
+# Server package only
+cd server && pnpm test
 ```
+
+### E2E / Integration Tests
+
+E2E tests live in `e2e/` and are split into two suites.
+
+**API tests** — start a real H3 server with an in-memory SQLite database and test REST endpoints directly. No browser required.
+
+```bash
+pnpm --filter @arch-register/e2e test:api
+```
+
+**UI tests** — Playwright tests that auto-start both the server and the web dev server before running.
+
+```bash
+pnpm --filter @arch-register/e2e test:ui
+
+# With browser visible
+pnpm --filter @arch-register/e2e test:ui:headed
+```
+
+The UI test suite seeds a test user (`admin@e2e.test` / `TestPassword123!`) and a default workspace on startup. The server runs on port 3011 to avoid conflicting with a locally running dev server.
 
 ## 📝 Key Files
 

@@ -1,0 +1,21 @@
+{
+  "name": "@arch-register/e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:api": "vitest run",
+    "test:api:watch": "vitest watch",
+    "test:ui": "playwright test",
+    "test:ui:headed": "playwright test --headed"
+  },
+  "dependencies": {
+    "@arch-register/server": "workspace:*",
+    "h3": "^2.0.1-rc.22"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^20.14.2",
+    "vitest": "^4.1.7"
+  }
+}
