@@ -1,17 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { EntitySchema, SchemaField } from '../api';
 import { apiFetch } from '../api';
-import { entityKeys } from './useEntities';
-
-// Query keys factory
-export const schemaKeys = {
-  all: ['schemas'] as const,
-  lists: () => [...schemaKeys.all, 'list'] as const,
-  list: (workspaceId: string) => [...schemaKeys.lists(), workspaceId] as const,
-  details: () => [...schemaKeys.all, 'detail'] as const,
-  detail: (workspaceId: string, schemaId: string) =>
-    [...schemaKeys.details(), workspaceId, schemaId] as const,
-};
+import { entityKeys, schemaKeys } from './queryKeys';
 
 // Hook for fetching schemas
 export const useSchemas = (workspaceSlug: string, enabled = true) => {
@@ -63,6 +53,7 @@ export const useUpdateSchema = (workspaceId: string) => {
       queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
       // Completeness scores are computed server-side from the schema, so entity lists must be refreshed too
       queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: entityKeys.facets(workspaceId) });
     },
   });
 };

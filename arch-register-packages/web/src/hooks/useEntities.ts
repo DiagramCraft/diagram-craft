@@ -10,23 +10,7 @@ import {
   cloneEntity,
 } from '../api';
 import type { EntityRelation } from '../api';
-import { schemaKeys } from './useSchemas';
-
-// Query keys factory for better organization and type safety
-export const entityKeys = {
-  all: ['entities'] as const,
-  lists: () => [...entityKeys.all, 'list'] as const,
-  list: (workspaceId: string, filters: Record<string, unknown>) =>
-    [...entityKeys.lists(), workspaceId, filters] as const,
-  details: () => [...entityKeys.all, 'detail'] as const,
-  detail: (workspaceId: string, entityId: string) =>
-    [...entityKeys.details(), workspaceId, entityId] as const,
-  facets: (workspaceId: string) => [...entityKeys.all, 'facets', workspaceId] as const,
-  relations: (workspaceId: string, entityId: string) =>
-    [...entityKeys.all, 'relations', workspaceId, entityId] as const,
-  tree: (workspaceId: string, filters: Record<string, unknown>) =>
-    [...entityKeys.all, 'tree', workspaceId, filters] as const,
-};
+import { entityKeys, schemaKeys } from './queryKeys';
 
 // Hook for fetching entity list
 export const useEntities = (

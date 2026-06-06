@@ -183,7 +183,7 @@ export const EntityDetail = () => {
     for (const f of schema.fields) {
       if (f.requirementLevel === 'required') {
         const val = editState[f.id];
-        const isEmpty = val == null || (typeof val === 'string' && val.trim() === '') || val === false;
+        const isEmpty = val == null || (typeof val === 'string' && val.trim() === '');
         if (isEmpty) errors.add(f.id);
       }
     }
