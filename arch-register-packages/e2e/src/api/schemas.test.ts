@@ -1,20 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { startTestServer, type TestServer } from '../helpers/serverHelper';
-import { seedMinimal, makeAuthHeader } from '../helpers/seedHelper';
+import { test, expect } from '../helpers/fixtures';
 
-let server: TestServer;
-let auth: string;
-
-beforeAll(async () => {
-  server = await startTestServer();
-  await seedMinimal(server.db);
-  auth = await makeAuthHeader(server.db);
-});
-
-afterAll(() => server.stop());
-
-describe('GET /api/:workspace/schemas', () => {
-  it('returns schemas for the default workspace', async () => {
+test.describe('GET /api/:workspace/schemas', () => {
+  test('returns schemas for the default workspace', async ({ server, auth }) => {
     const res = await fetch(`${server.baseUrl}/api/default/schemas`, {
       headers: { Authorization: auth }
     });
@@ -23,7 +10,7 @@ describe('GET /api/:workspace/schemas', () => {
     expect(body.length).toBeGreaterThan(0);
   });
 
-  it('returns 404 for unknown workspace', async () => {
+  test('returns 404 for unknown workspace', async ({ server, auth }) => {
     const res = await fetch(`${server.baseUrl}/api/nonexistent/schemas`, {
       headers: { Authorization: auth }
     });

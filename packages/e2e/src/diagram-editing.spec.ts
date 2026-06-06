@@ -1,9 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { waitForApplicationLoaded } from './helpers/testUtils.js';
+import { test, expect } from './fixtures';
 
-test('canvas is present and visible', async ({ page }) => {
-  await page.goto('/?crdtClear=true#/BPMN.json');
-  await waitForApplicationLoaded(page);
-  const canvas = page.locator('canvas').first();
-  await expect(canvas).toBeVisible();
+test('canvas is present and visible', async ({ appPage }) => {
+  await expect(appPage.locator('canvas').first()).toBeVisible();
 });

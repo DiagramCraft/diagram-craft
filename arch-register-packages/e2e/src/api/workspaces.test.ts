@@ -1,20 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { startTestServer, type TestServer } from '../helpers/serverHelper';
-import { seedMinimal, makeAuthHeader } from '../helpers/seedHelper';
+import { test, expect } from '../helpers/fixtures';
 
-let server: TestServer;
-let auth: string;
-
-beforeAll(async () => {
-  server = await startTestServer();
-  await seedMinimal(server.db);
-  auth = await makeAuthHeader(server.db);
-});
-
-afterAll(() => server.stop());
-
-describe('GET /api/workspaces', () => {
-  it('returns seeded workspaces', async () => {
+test.describe('GET /api/workspaces', () => {
+  test('returns seeded workspaces', async ({ server, auth }) => {
     const res = await fetch(`${server.baseUrl}/api/workspaces`, {
       headers: { Authorization: auth }
     });
@@ -23,7 +10,7 @@ describe('GET /api/workspaces', () => {
     expect(body.length).toBeGreaterThan(0);
   });
 
-  it('returns 401 without token', async () => {
+  test('returns 401 without token', async ({ server }) => {
     const res = await fetch(`${server.baseUrl}/api/workspaces`);
     expect(res.status).toBe(401);
   });
