@@ -189,6 +189,7 @@ export type EntityFacets = {
   lifecycle: EntityFacetBucket[];
   owner: EntityFacetBucket[];
   schema: EntitySchemaFacetBucket[];
+  completeness: { below50: number; below80: number; above80: number };
 };
 
 export type EntityRelation = {

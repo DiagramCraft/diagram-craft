@@ -204,6 +204,7 @@ export const EntityBrowser = () => {
     { value: 'name', label: 'Name' },
     { value: 'type', label: 'Type' },
     { value: 'owner', label: 'Owner' },
+    { value: 'completeness', label: 'Completeness' },
     ...(view === 'table'
       ? dateFields.map(field => ({ value: `date:${field.id}`, label: `${field.name} date` }))
       : []),
@@ -232,6 +233,7 @@ export const EntityBrowser = () => {
     if (sort === 'name') xs.sort((a, b) => (a._name ?? a._slug).localeCompare(b._name ?? b._slug));
     if (sort === 'type') xs.sort((a, b) => a._schemaId.localeCompare(b._schemaId));
     if (sort === 'owner') xs.sort((a, b) => (a._owner ?? '').localeCompare(b._owner ?? ''));
+    if (sort === 'completeness') xs.sort((a, b) => (a._completeness ?? -1) - (b._completeness ?? -1));
     if (dateBrowserEnabled && sort.startsWith('date:')) {
       const fieldId = sort.slice(5);
       xs.sort((a, b) => {
@@ -488,6 +490,7 @@ const TableView = ({ rows, schemaMap, activeDateField, onEntityClick, onDelete, 
           <th>Status</th>
           {activeDateField && <th>{activeDateField.name}</th>}
           <th style={{ width: 110 }}>Namespace</th>
+          <th style={{ width: 80 }}>Completeness</th>
           <th style={{ width: 28 }} />
         </tr>
       </thead>
@@ -513,6 +516,7 @@ const TableView = ({ rows, schemaMap, activeDateField, onEntityClick, onDelete, 
               <td>{e._lifecycle && <StatusChip value={e._lifecycle} />}</td>
               {activeDateField && <td><span className="dim">{formatDateValue(e[activeDateField.id])}</span></td>}
               <td><span className="dim">{e._namespace}</span></td>
+              <td><CompletenessCell value={e._completeness} /></td>
               <td onClick={ev => ev.stopPropagation()}>
                 {entityMenuItems(e, onClone, onDelete).length > 0 && (
                   <DropdownMenu
@@ -692,5 +696,28 @@ const TreeNodeRow = ({
         <TreeNodeRow key={child._uid} item={child} depth={depth + 1} schemaMap={schemaMap} onEntityClick={onEntityClick} onDelete={onDelete} onClone={onClone} />
       ))}
     </>
+  );
+};
+
+const CompletenessCell = ({ value }: { value: number | null }) => {
+  if (value == null) return <span className="dim">—</span>;
+  const low = value <= 75;
+  const barColor = low ? 'var(--status-warn)' : 'var(--status-active)';
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span
+        style={{
+          display: 'inline-block',
+          width: 36,
+          height: 4,
+          borderRadius: 2,
+          background: 'var(--cmp-border)',
+          overflow: 'hidden',
+        }}
+      >
+        <span style={{ display: 'block', width: `${value}%`, height: '100%', background: barColor }} />
+      </span>
+      <span style={{ fontSize: 11, color: low ? 'var(--status-warn)' : undefined }}>{value}%</span>
+    </span>
   );
 };

@@ -54,7 +54,11 @@ const getEntityCapabilities = (context: AuthorizationContext | null, entity: Ent
   };
 };
 
-export const toApiEntity = (entity: Entity, authCtx: AuthorizationContext | null): EntityRecord => ({
+export const toApiEntity = (
+  entity: Entity,
+  authCtx: AuthorizationContext | null,
+  completeness: number | null = null
+): EntityRecord => ({
   _uid: entity.id,
   _workspace: entity.workspace,
   _schemaId: entity.schema_id,
@@ -67,13 +71,15 @@ export const toApiEntity = (entity: Entity, authCtx: AuthorizationContext | null
   _tags: entity.tags,
   _links: entity.links,
   _visibilityMode: entity.visibility_mode,
+  _completeness: completeness,
   ...getEntityCapabilities(authCtx, entity),
   ...entity.data,
 });
 
 export const toApiEntitySummary = (
   entity: Entity,
-  authCtx: AuthorizationContext | null
+  authCtx: AuthorizationContext | null,
+  completeness: number | null = null
 ): EntitySummary => ({
   _uid: entity.id,
   _workspace: entity.workspace,
@@ -87,6 +93,7 @@ export const toApiEntitySummary = (
   _tags: entity.tags,
   _links: entity.links,
   _visibilityMode: entity.visibility_mode,
+  _completeness: completeness,
   ...getEntityCapabilities(authCtx, entity),
 });
 

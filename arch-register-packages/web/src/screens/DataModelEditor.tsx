@@ -292,7 +292,7 @@ export const DataModelEditor = () => {
                       <span>Label</span>
                       <span>Type</span>
                       <span>Options / Ref</span>
-                      <span style={{ textAlign: 'center' }}>Req</span>
+                      <span>Completeness</span>
                       <span />
                     </div>
                     {fields.map((f) => {
@@ -455,9 +455,16 @@ const FieldRow = ({
         ))}
       </Select.Root>
       <span className={styles.fieldOptions}>{optionsDisplay()}</span>
-      <span style={{ textAlign: 'center' }}>
-        <input type="checkbox" className={styles.checkbox} disabled={!canEdit} />
-      </span>
+      <Select.Root
+        value={field.requirementLevel ?? 'optional'}
+        disabled={!canEdit}
+        onChange={value => onUpdate({ requirementLevel: (value ?? 'optional') as SchemaField['requirementLevel'] } as Partial<SchemaField>)}
+        style={{ width: '100%' }}
+      >
+        <Select.Item value="optional">Optional</Select.Item>
+        <Select.Item value="expected">Expected</Select.Item>
+        <Select.Item value="required">Required</Select.Item>
+      </Select.Root>
       {onRemove && (
         <button type="button" className={styles.iconBtn} onClick={onRemove}>
           <TbTrash size={13} />

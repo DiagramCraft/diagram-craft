@@ -2,18 +2,21 @@ export type TextField = {
   id: string;
   name: string;
   type: 'text' | 'longtext';
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type BooleanField = {
   id: string;
   name: string;
   type: 'boolean';
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type DateField = {
   id: string;
   name: string;
   type: 'date';
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type SelectField = {
@@ -21,6 +24,7 @@ export type SelectField = {
   name: string;
   type: 'select';
   enumId: string;
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 // Points to another entity of a given schema type; multiple values stored as comma-separated UUIDs.
@@ -32,6 +36,7 @@ export type ReferenceField = {
   schemaId: string;
   minCount: number;
   maxCount: number;
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 // Like ReferenceField but expresses a parent/child containment relationship.
@@ -43,6 +48,7 @@ export type ContainmentField = {
   schemaId: string;
   minCount: number;
   maxCount: number;
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type SchemaField =

@@ -61,6 +61,7 @@ export const EntityDetail = () => {
   const [editState, setEditState] = useState<Record<string, unknown>>({});
   const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
 
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
@@ -134,6 +135,7 @@ export const EntityDetail = () => {
         _tags: [],
         _links: [],
         _visibilityMode: null,
+        _completeness: null,
         canView: true,
         canEdit: false,
         canDelete: false,
@@ -171,10 +173,25 @@ export const EntityDetail = () => {
     setEditing(false);
     setEditState({});
     setEditLinks([]);
+    setValidationErrors(new Set());
   };
 
   const saveEdit = async () => {
     if (!entity || !schema) return;
+
+    const errors = new Set<string>();
+    for (const f of schema.fields) {
+      if (f.requirementLevel === 'required') {
+        const val = editState[f.id];
+        const isEmpty = val == null || (typeof val === 'string' && val.trim() === '') || val === false;
+        if (isEmpty) errors.add(f.id);
+      }
+    }
+    if (errors.size > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    setValidationErrors(new Set());
 
     const dataFields: Record<string, unknown> = {};
     for (const f of schema.fields) {
@@ -321,10 +338,14 @@ export const EntityDetail = () => {
                       value={entity[f.id]}
                       editing={editing}
                       editValue={editState[f.id]}
-                      onChange={v => setEditState(s => ({ ...s, [f.id]: v }))}
+                      onChange={v => {
+                        setEditState(s => ({ ...s, [f.id]: v }));
+                        if (validationErrors.has(f.id)) setValidationErrors(s => { const n = new Set(s); n.delete(f.id); return n; });
+                      }}
                       refLookup={refLookup}
                       referenceOptions={referenceOptions}
                       onEntityClick={navigateToEntity}
+                      hasError={validationErrors.has(f.id)}
                     />
                   ))}
                 </div>
@@ -564,6 +585,7 @@ const PropertyRow = ({
   refLookup,
   referenceOptions,
   onEntityClick,
+  hasError,
 }: {
   field: SchemaField;
   value: unknown;
@@ -573,6 +595,7 @@ const PropertyRow = ({
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
   onEntityClick: (entityId: string) => void;
+  hasError?: boolean;
 }) => {
   const renderEditor = () => {
     if (field.type === 'reference' || field.type === 'containment') {
@@ -677,13 +700,16 @@ const PropertyRow = ({
   const typeLabel = field.type.charAt(0).toUpperCase() + field.type.slice(1);
 
   return (
-    <div className={styles.propRow}>
+    <div className={`${styles.propRow} ${hasError ? styles.propRowError : ''}`}>
       <div className={styles.propLabel}>
         {field.name}
         <span className={styles.propType}>{typeLabel}</span>
+        {field.requirementLevel === 'required' && <span className={styles.propReq}>Required</span>}
+        {field.requirementLevel === 'expected' && <span className={styles.propExpected}>Expected</span>}
       </div>
-      <div className={styles.propValue}>
+      <div className={styles.propValue} style={hasError ? { flexDirection: 'column', alignItems: 'flex-start' } : undefined}>
         {editing ? renderEditor() : renderDisplay()}
+        {hasError && <span className={styles.propErrorMsg}>This field is required</span>}
       </div>
     </div>
   );

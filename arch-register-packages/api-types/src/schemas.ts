@@ -4,18 +4,21 @@ export type TextField = {
   id: string;
   name: string;
   type: 'text' | 'longtext';
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type BooleanField = {
   id: string;
   name: string;
   type: 'boolean';
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type DateField = {
   id: string;
   name: string;
   type: 'date';
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type SelectField = {
@@ -24,6 +27,7 @@ export type SelectField = {
   type: 'select';
   options: Array<{ value: string; label: string }>;
   enumId?: string;
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type ReferenceField = {
@@ -33,6 +37,7 @@ export type ReferenceField = {
   schemaId: string;
   minCount: number;
   maxCount: number;
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type ContainmentField = {
@@ -42,6 +47,7 @@ export type ContainmentField = {
   schemaId: string;
   minCount: number;
   maxCount: number;
+  requirementLevel?: 'required' | 'expected' | 'optional';
 };
 
 export type SchemaField =

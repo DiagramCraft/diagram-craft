@@ -57,7 +57,7 @@
 /* Stat cards */
 .statGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 8px;
   margin-bottom: 16px;
 }
@@ -100,6 +100,14 @@
 
 .statAccent {
   border-color: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-border));
+}
+
+.statClickable {
+  cursor: pointer;
+}
+
+.statClickable:hover {
+  border-color: var(--cmp-border-hover);
 }
 
 .statAccent .statValue {
