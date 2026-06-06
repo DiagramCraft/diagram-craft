@@ -1,9 +1,9 @@
 import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import type { Entity, EntitySchema } from '../types.js';
-import { resolveWorkspace } from './workspace-resolver.js';
+import { resolveWorkspace } from '../utils/resolveWorkspace.js';
 import { handleDbError } from '../utils/http.js';
-import { toDiagramCraftData, toDiagramCraftSchema } from './public-shape.js';
+import { toDiagramCraftData, toDiagramCraftSchema } from '../api/public-transforms.js';
 
 const PUBLIC_SCHEMAS_BASE = '/api/public/:workspace/schemas';
 const PUBLIC_DATA_BASE = '/api/public/:workspace/data';

@@ -1,6 +1,6 @@
 import { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
-import { httpAssert } from '../utils/httpAssert.js';
+import { httpAssert } from './httpAssert.js';
 
 export const resolveWorkspace = async (event: H3Event, db: DatabaseAdapter): Promise<string> => {
   const slug = event.context.params?.['workspace'];

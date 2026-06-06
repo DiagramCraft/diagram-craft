@@ -2,11 +2,12 @@ import { createServer } from 'node:http';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { toNodeListener } from 'h3/node';
+import { toNodeHandler } from 'h3/node';
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
 import { createDatabase } from '@arch-register/server/db/factory';
 import { createStorage } from '@arch-register/server/storage/storage';
 import { createApp } from '@arch-register/server/app';
+import { setLogLevel } from '@arch-register/server/utils/logger';
 
 export type TestServer = {
   baseUrl: string;
@@ -15,6 +16,8 @@ export type TestServer = {
 };
 
 export async function startTestServer(): Promise<TestServer> {
+  setLogLevel('error');
+
   const tmpDir = await mkdtemp(join(tmpdir(), 'ar-e2e-api-'));
   const dbPath = join(tmpDir, 'test.sqlite');
 
@@ -30,7 +33,7 @@ export async function startTestServer(): Promise<TestServer> {
   const storage = createStorage();
   const app = createApp(db, storage);
 
-  const server = createServer(toNodeListener(app));
+  const server = createServer(toNodeHandler(app));
   await new Promise<void>((resolve, reject) => {
     server.listen(0, '127.0.0.1', resolve);
     server.once('error', reject);

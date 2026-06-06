@@ -1,6 +1,11 @@
 import { defineHandler, getQuery, H3, readBody } from 'h3';
 import { randomUUID } from 'node:crypto';
-import type { DatabaseAdapter, UpdateEntityInput, CreateEntityInput } from '../db/database.js';
+import type {
+  CreateEntityGrantInput,
+  DatabaseAdapter,
+  UpdateEntityInput,
+  CreateEntityInput
+} from '../db/database.js';
 import { createLogger } from '../utils/logger.js';
 import { parseCsv, validateCsvData, csvRowToEntity } from '../utils/csvImport.js';
 import {
@@ -12,7 +17,7 @@ import {
 } from '../types.js';
 import { toApiEntity, toApiEntitySummary } from '../api/transforms.js';
 import { computeChanges, extractEntityFields, logAudit } from '../db/audit.js';
-import { resolveWorkspace } from './workspace-resolver.js';
+import { resolveWorkspace } from '../utils/resolveWorkspace.js';
 import { formatArrayForCsv, generateCsv } from '../utils/csv.js';
 import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
 import { computeEntityCompleteness } from '../utils/completeness.js';
@@ -49,7 +54,7 @@ const includesQuery = (value: unknown, query: string) =>
     .toLowerCase()
     .includes(query);
 
-const resolveCreateOwner = (
+export const resolveCreateOwner = (
   explicitOwner: string | null,
   parentEntities: Entity[],
   schema: InternalEntitySchema,
@@ -65,7 +70,7 @@ const resolveCreateOwner = (
   return null;
 };
 
-const getEntityParentsFromPayload = (
+export const getEntityParentsFromPayload = (
   schema: InternalEntitySchema,
   payload: Record<string, unknown>,
   entityLookup: Map<string, Entity>
@@ -99,7 +104,7 @@ const entityMatchesPattern = (entity: Entity, pattern: string) => {
   );
 };
 
-const filterEntities = (
+export const filterEntities = (
   entities: Entity[],
   options: {
     schemaId: string | null;
@@ -134,11 +139,158 @@ type RelationsResponse = {
   incoming: RelationRecord[];
 };
 
+type EntityMutationPayload = {
+  schemaId: string;
+  name: string;
+  slug: string;
+  namespace: string;
+  description: string;
+  requestedOwner: string | null;
+  requestedLifecycle: string | null;
+  tags: string[];
+  links: EntityLink[];
+  visibilityMode: 'public' | 'restricted' | null;
+  fields: Record<string, unknown>;
+};
+
 const relationFields = (fields: SchemaField[]) =>
   fields.filter(
     (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
       field.type === 'reference' || field.type === 'containment'
   );
+
+export const parseEntityMutationPayload = (
+  body: Record<string, unknown>
+): EntityMutationPayload => {
+  const {
+    _schemaId,
+    _name,
+    _slug,
+    _namespace = 'default',
+    _description = '',
+    _owner = null,
+    _lifecycle = null,
+    _tags = [],
+    _links = [],
+    _visibilityMode,
+    ...fields
+  } = body;
+
+  httpAssert.string(_schemaId, {
+    message: '_schemaId is required and must be a string (UUID)'
+  });
+
+  const name =
+    typeof _name === 'string'
+      ? _name
+      : typeof fields['name'] === 'string'
+        ? fields['name']
+        : '';
+  delete fields['name'];
+
+  const slug = typeof _slug === 'string' && _slug ? _slug : slugify(name);
+  httpAssert.present(slug, {
+    message: '_slug (or a _name to derive it from) is required'
+  });
+
+  return {
+    schemaId: _schemaId,
+    name,
+    slug,
+    namespace: typeof _namespace === 'string' ? _namespace : 'default',
+    description: typeof _description === 'string' ? _description : '',
+    requestedOwner: typeof _owner === 'string' ? _owner : null,
+    requestedLifecycle: typeof _lifecycle === 'string' ? _lifecycle : null,
+    tags: Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [],
+    links: Array.isArray(_links) ? (_links as EntityLink[]) : [],
+    visibilityMode:
+      _visibilityMode === 'public' || _visibilityMode === 'restricted' ? _visibilityMode : null,
+    fields
+  };
+};
+
+export const buildEntityRelations = (
+  entity: Entity,
+  schemas: InternalEntitySchema[],
+  entities: Entity[]
+): RelationsResponse => {
+  const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
+  const entitySchema = schemaMap.get(entity.schema_id);
+  const outgoingFields = relationFields(entitySchema?.fields ?? []);
+  const entityLookup = new Map(entities.map(row => [row.id, row]));
+  const outgoing: RelationRecord[] = [];
+  for (const field of outgoingFields) {
+    for (const refId of decodeRefs(entity.data[field.id])) {
+      const target = entityLookup.get(refId);
+      if (!target) continue;
+      outgoing.push({
+        entityId: refId,
+        entitySlug: target.slug ?? refId,
+        entityName: target.name ?? target.slug ?? refId,
+        entitySchemaId: target.schema_id ?? field.schemaId,
+        fieldName: field.name,
+        kind: field.type
+      });
+    }
+  }
+
+  const incoming: RelationRecord[] = [];
+  for (const row of entities) {
+    if (row.id === entity.id) continue;
+    const rowSchema = schemaMap.get(row.schema_id);
+    if (!rowSchema) continue;
+    for (const field of relationFields(rowSchema.fields)) {
+      if (!decodeRefs(row.data[field.id]).includes(entity.id)) continue;
+      incoming.push({
+        entityId: row.id,
+        entitySlug: row.slug,
+        entityName: row.name || row.slug,
+        entitySchemaId: row.schema_id,
+        fieldName: field.name,
+        kind: field.type
+      });
+    }
+  }
+
+  return { outgoing, incoming };
+};
+
+export const buildEntityGrantInputs = (
+  workspace: string,
+  entityId: string,
+  grants: unknown[],
+  createdAt: Date,
+  idFactory: () => string = randomUUID
+): CreateEntityGrantInput[] =>
+  grants.map(grant => {
+    httpAssert.json(grant, { message: 'Each grant must be an object' });
+    const typed = grant as Record<string, unknown>;
+    httpAssert.true(typed['principal_type'] === 'user' || typed['principal_type'] === 'team', {
+      message: 'principal_type must be user or team'
+    });
+    httpAssert.string(typed['principal_id'], {
+      message: 'principal_id must be a non-empty string'
+    });
+    httpAssert.true(
+      ['viewer', 'editor', 'contributor', 'entity_admin'].includes(String(typed['role'])),
+      {
+        message: 'role must be viewer, editor, contributor, or entity_admin'
+      }
+    );
+    httpAssert.true(['self', 'subtree'].includes(String(typed['applies_to'])), {
+      message: 'applies_to must be self or subtree'
+    });
+    return {
+      id: idFactory(),
+      workspace,
+      entity_id: entityId,
+      principal_type: typed['principal_type'] as 'user' | 'team',
+      principal_id: typed['principal_id'] as string,
+      role: typed['role'] as 'viewer' | 'editor' | 'contributor' | 'entity_admin',
+      applies_to: typed['applies_to'] as 'self' | 'subtree',
+      created_at: createdAt
+    };
+  });
 
 export function createDataRoutes(db: DatabaseAdapter) {
   const checker = new PermissionChecker();
@@ -874,46 +1026,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
           : entitiesRaw;
 
-        const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
-        const entitySchema = schemaMap.get(entity.schema_id);
-        const outgoingFields = relationFields(entitySchema?.fields ?? []);
-        const entityLookup = new Map(entities.map(row => [row.id, row]));
-        const outgoing: RelationRecord[] = [];
-        for (const field of outgoingFields) {
-          for (const refId of decodeRefs(entity.data[field.id])) {
-            const target = entityLookup.get(refId);
-            if (!target) continue;
-            outgoing.push({
-              entityId: refId,
-              entitySlug: target?.slug ?? refId,
-              entityName: target?.name ?? target?.slug ?? refId,
-              entitySchemaId: target?.schema_id ?? field.schemaId,
-              fieldName: field.name,
-              kind: field.type
-            });
-          }
-        }
-
-        const incoming: RelationRecord[] = [];
-        for (const row of entities) {
-          if (row.id === id) continue;
-          const rowSchema = schemaMap.get(row.schema_id);
-          if (!rowSchema) continue;
-          for (const field of relationFields(rowSchema.fields)) {
-            if (!decodeRefs(row.data[field.id]).includes(id)) continue;
-            incoming.push({
-              entityId: row.id,
-              entitySlug: row.slug,
-              entityName: row.name || row.slug,
-              entitySchemaId: row.schema_id,
-              fieldName: field.name,
-              kind: field.type
-            });
-          }
-        }
-
-        const response: RelationsResponse = { outgoing, incoming };
-        return response;
+        return buildEntityRelations(entity, schemas, entities);
       } catch (e) {
         handleError(e, 'Failed to retrieve data relations');
       }
@@ -971,38 +1084,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       httpAssert.array(grants, { message: 'grants must be an array' });
       const grantRows = grants as unknown[];
 
-      const rows = grantRows.map(grant => {
-        httpAssert.json(grant, { message: 'Each grant must be an object' });
-        const typed = grant as Record<string, unknown>;
-        httpAssert.true(typed['principal_type'] === 'user' || typed['principal_type'] === 'team', {
-          message: 'principal_type must be user or team'
-        });
-        httpAssert.string(typed['principal_id'], {
-          message: 'principal_id must be a non-empty string'
-        });
-        httpAssert.true(
-          ['viewer', 'editor', 'contributor', 'entity_admin'].includes(String(typed['role'])),
-          {
-            message: 'role must be viewer, editor, contributor, or entity_admin'
-          }
-        );
-        httpAssert.true(['self', 'subtree'].includes(String(typed['applies_to'])), {
-          message: 'applies_to must be self or subtree'
-        });
-        const principalType = typed['principal_type'] as 'user' | 'team';
-        const role = typed['role'] as 'viewer' | 'editor' | 'contributor' | 'entity_admin';
-        const appliesTo = typed['applies_to'] as 'self' | 'subtree';
-        return {
-          id: randomUUID(),
-          workspace,
-          entity_id: id,
-          principal_type: principalType,
-          principal_id: typed['principal_id'],
-          role,
-          applies_to: appliesTo,
-          created_at: new Date()
-        };
-      });
+      const rows = buildEntityGrantInputs(workspace, id, grantRows, new Date());
 
       return {
         owner: entity.owner,
@@ -1020,61 +1102,25 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
-      const {
-        _schemaId,
-        _name,
-        _slug,
-        _namespace = 'default',
-        _description = '',
-        _owner = null,
-        _lifecycle = null,
-        _tags = [],
-        _links = [],
-        _visibilityMode,
-        ...fields
-      } = body as Record<string, unknown>;
-
-      httpAssert.string(_schemaId, {
-        message: '_schemaId is required and must be a string (UUID)'
-      });
-
-      const name =
-        typeof _name === 'string'
-          ? _name
-          : typeof fields['name'] === 'string'
-            ? fields['name']
-            : '';
-      delete fields['name'];
-
-      const slug = typeof _slug === 'string' && _slug ? _slug : slugify(name);
-      httpAssert.present(slug, {
-        message: '_slug (or a _name to derive it from) is required'
-      });
-
-      const namespace = typeof _namespace === 'string' ? _namespace : 'default';
-      const description = typeof _description === 'string' ? _description : '';
+      const payload = parseEntityMutationPayload(body as Record<string, unknown>);
       const lifecycleValues = await getLifecycleValues(db, workspace);
       const lifecycle =
-        typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
+        payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
+          ? payload.requestedLifecycle
+          : null;
       const teamIds = await getTeamIds(db, workspace);
-      const tags = Array.isArray(_tags)
-        ? _tags.filter((t): t is string => typeof t === 'string')
-        : [];
-      const links = Array.isArray(_links) ? (_links as EntityLink[]) : [];
-      const visibilityMode =
-        _visibilityMode === 'public' || _visibilityMode === 'restricted' ? _visibilityMode : null;
 
       try {
         const [schema, entities] = await Promise.all([
-          db.catalog.getSchema(workspace, _schemaId),
+          db.catalog.getSchema(workspace, payload.schemaId),
           db.catalog.listEntities(workspace)
         ]);
-        httpAssert.present(schema, { status: 404, message: `Schema '${_schemaId}' not found` });
+        httpAssert.present(schema, { status: 404, message: `Schema '${payload.schemaId}' not found` });
         const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
-        const parents = getEntityParentsFromPayload(schema, fields, entityLookup);
+        const parents = getEntityParentsFromPayload(schema, payload.fields, entityLookup);
         const fallbackOwner = (await db.workspaceAdmin.listTeams(workspace))[0]?.id ?? null;
         const owner = resolveCreateOwner(
-          typeof _owner === 'string' ? _owner : null,
+          payload.requestedOwner,
           parents,
           schema,
           teamIds,
@@ -1102,17 +1148,17 @@ export function createDataRoutes(db: DatabaseAdapter) {
         const row = await db.catalog.createEntity({
           id: randomUUID(),
           workspace,
-          slug,
-          namespace,
-          name,
-          description,
+          slug: payload.slug,
+          namespace: payload.namespace,
+          name: payload.name,
+          description: payload.description,
           owner,
           lifecycle,
-          tags,
-          links,
-          schema_id: _schemaId,
-          data: fields,
-          visibility_mode: visibilityMode,
+          tags: payload.tags,
+          links: payload.links,
+          schema_id: payload.schemaId,
+          data: payload.fields,
+          visibility_mode: payload.visibilityMode,
           created_at: timestamp,
           updated_at: timestamp
         });
@@ -1148,50 +1194,15 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
-      const {
-        _schemaId,
-        _name,
-        _slug,
-        _namespace,
-        _description = '',
-        _owner,
-        _lifecycle,
-        _tags = [],
-        _links = [],
-        _visibilityMode,
-        ...fields
-      } = body as Record<string, unknown>;
-
-      httpAssert.string(_schemaId, {
-        message: '_schemaId is required and must be a string (UUID)'
-      });
-
-      const name =
-        typeof _name === 'string'
-          ? _name
-          : typeof fields['name'] === 'string'
-            ? fields['name']
-            : '';
-      delete fields['name'];
-
-      const slug = typeof _slug === 'string' && _slug ? _slug : slugify(name);
-      httpAssert.string(slug, {
-        message: '_slug (or a _name to derive it from) is required'
-      });
-
-      const namespace = typeof _namespace === 'string' ? _namespace : 'default';
-      const description = typeof _description === 'string' ? _description : '';
+      const payload = parseEntityMutationPayload(body as Record<string, unknown>);
       const lifecycleValues = await getLifecycleValues(db, workspace);
       const lifecycle =
-        typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
+        payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
+          ? payload.requestedLifecycle
+          : null;
       const teamIds = await getTeamIds(db, workspace);
-      const owner = typeof _owner === 'string' && teamIds.has(_owner) ? _owner : null;
-      const tags = Array.isArray(_tags)
-        ? _tags.filter((t): t is string => typeof t === 'string')
-        : [];
-      const links = Array.isArray(_links) ? (_links as EntityLink[]) : [];
-      const visibilityMode =
-        _visibilityMode === 'public' || _visibilityMode === 'restricted' ? _visibilityMode : null;
+      const owner =
+        payload.requestedOwner && teamIds.has(payload.requestedOwner) ? payload.requestedOwner : null;
 
       try {
         const oldRow = await db.catalog.getEntity(workspace, id);
@@ -1203,7 +1214,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             'edit_entity',
             'You do not have permission to edit this entity'
           );
-        if (authCtx && (owner !== oldRow.owner || visibilityMode !== oldRow.visibility_mode)) {
+        if (authCtx && (owner !== oldRow.owner || payload.visibilityMode !== oldRow.visibility_mode)) {
           requireEntityAction(
             authCtx,
             oldRow,
@@ -1213,33 +1224,34 @@ export function createDataRoutes(db: DatabaseAdapter) {
         }
 
         const row = await db.catalog.updateEntity(workspace, id, {
-          slug,
-          namespace,
-          name,
-          description,
+          slug: payload.slug,
+          namespace: payload.namespace,
+          name: payload.name,
+          description: payload.description,
           owner,
           lifecycle,
-          tags,
-          links,
-          schema_id: _schemaId,
-          data: fields,
-          visibility_mode: visibilityMode,
+          tags: payload.tags,
+          links: payload.links,
+          schema_id: payload.schemaId,
+          data: payload.fields,
+          visibility_mode: payload.visibilityMode,
           updated_at: new Date()
         });
 
-        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
+        httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
+        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
         await logAudit(db, {
           workspace,
           operation: 'update',
           entityType: 'entity',
           entityId: id,
-          entityName: row!.name,
-          entitySlug: row!.slug,
-          schemaId: row!.schema_id,
+          entityName: row.name,
+          entitySlug: row.slug,
+          schemaId: row.schema_id,
           changes
         });
 
-        return toApiEntity(row!, authCtx);
+        return toApiEntity(row, authCtx);
       } catch (e) {
         handleError(e, 'Failed to update data record');
       }

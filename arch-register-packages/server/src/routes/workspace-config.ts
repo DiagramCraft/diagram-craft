@@ -7,10 +7,16 @@ import {
   resolveWorkspaceRoleDefinitions
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from './workspace-resolver.js';
+import { resolveWorkspace } from '../utils/resolveWorkspace.js';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
-import type { TeamRole, WorkspaceRoleCapability } from '../types.js';
+import type {
+  TeamMembership,
+  TeamRole,
+  WorkspaceLifecycleState,
+  WorkspaceOwner,
+  WorkspaceRoleCapability
+} from '../types.js';
 import { httpAssert } from '../utils/httpAssert.js';
 
 const BASE = '/api/:workspace/config';
@@ -18,7 +24,7 @@ const BASE = '/api/:workspace/config';
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
 const VALID_WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group => group.caps.map(cap => cap.id));
 
-const sanitizeText = (text: string): string => {
+export const sanitizeText = (text: string): string => {
   return text
     .replace(/[<>]/g, '')
     .replace(/javascript:/gi, '')
@@ -26,7 +32,7 @@ const sanitizeText = (text: string): string => {
     .trim();
 };
 
-const parseWorkspaceRoleInput = (body: unknown) => {
+export const parseWorkspaceRoleInput = (body: unknown) => {
   httpAssert.true(body != null && typeof body === 'object', {
     message: 'Request body must be a JSON object'
   });
@@ -71,6 +77,117 @@ const parseWorkspaceRoleInput = (body: unknown) => {
   };
 };
 
+export const buildLifecycleStateInputs = (
+  workspace: string,
+  body: unknown,
+  now: Date
+): WorkspaceLifecycleState[] => {
+  httpAssert.array(body, { message: 'Request body must be a JSON array' });
+
+  const states = body as Array<{
+    id?: unknown;
+    label?: unknown;
+    color?: unknown;
+    sort_order?: unknown;
+  }>;
+  for (const s of states) {
+    httpAssert.string(s.id, { message: 'Each lifecycle state must have a string id' });
+    httpAssert.string(s.label, { message: 'Each lifecycle state must have a string label' });
+    httpAssert.string(s.color, { message: 'Each lifecycle state must have a string color' });
+  }
+
+  const ids = states.map(s => s.id as string);
+  httpAssert.true(new Set(ids).size === ids.length, {
+    message: 'Duplicate lifecycle state ids'
+  });
+
+  return states.map((s, i) => ({
+    id: s.id as string,
+    workspace,
+    label: s.label as string,
+    color: s.color as string,
+    sort_order: i,
+    created_at: now
+  }));
+};
+
+export const buildWorkspaceOwnerInputs = (
+  workspace: string,
+  body: unknown,
+  now: Date
+): WorkspaceOwner[] => {
+  httpAssert.array(body, { message: 'Request body must be a JSON array' });
+
+  const owners = body as Array<{
+    id?: unknown;
+    sort_order?: unknown;
+    color?: unknown;
+    description?: unknown;
+  }>;
+  for (const o of owners) {
+    httpAssert.string(o.id, { message: 'Each owner must have a string id' });
+    if (o.color !== undefined && o.color !== null) {
+      httpAssert.string(o.color, { message: 'color must be a string if provided' });
+    }
+    if (o.description !== undefined) {
+      httpAssert.string(o.description, { message: 'description must be a string if provided' });
+    }
+  }
+
+  const ids = owners.map(o => o.id as string);
+  httpAssert.true(new Set(ids).size === ids.length, {
+    message: 'Duplicate owner ids'
+  });
+
+  return owners.map((o, i) => ({
+    id: o.id as string,
+    workspace,
+    sort_order: i,
+    color: (o.color as string | null | undefined) ?? null,
+    description: (o.description as string | undefined) ?? '',
+    created_at: now
+  }));
+};
+
+export const buildTeamMembershipInputs = (
+  workspace: string,
+  body: unknown,
+  ownerIds: Set<string>,
+  userIds: Set<string>,
+  now: Date
+): TeamMembership[] => {
+  httpAssert.array(body, { message: 'Request body must be a JSON array' });
+  const rows = body as unknown[];
+
+  return rows.map(row => {
+    httpAssert.true(row != null && typeof row === 'object', {
+      message: 'Each membership must be an object'
+    });
+    const membership = row as Record<string, unknown>;
+    const teamId = membership['team_id'];
+    httpAssert.true(typeof teamId === 'string' && ownerIds.has(teamId), {
+      message: 'team_id must reference an existing team'
+    });
+    const userId = membership['user_id'];
+    httpAssert.true(typeof userId === 'string' && userIds.has(userId), {
+      message: 'user_id must reference an existing user'
+    });
+    const roleValue = membership['role'];
+    httpAssert.true(
+      typeof roleValue === 'string' && VALID_TEAM_ROLES.includes(roleValue as TeamRole),
+      { message: `role must be one of: ${VALID_TEAM_ROLES.join(', ')}` }
+    );
+
+    return {
+      workspace,
+      team_id: teamId as string,
+      user_id: userId as string,
+      role: roleValue as TeamRole,
+      created_at: now
+    };
+  });
+};
+
 export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   const router = new H3();
 
@@ -93,36 +210,10 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.settings');
       const body = await event.req.json().catch(() => undefined);
-      httpAssert.array(body, { message: 'Request body must be a JSON array' });
-
-      const states = body as Array<{
-        id?: unknown;
-        label?: unknown;
-        color?: unknown;
-        sort_order?: unknown;
-      }>;
-      for (const s of states) {
-        httpAssert.string(s.id, { message: 'Each lifecycle state must have a string id' });
-        httpAssert.string(s.label, { message: 'Each lifecycle state must have a string label' });
-        httpAssert.string(s.color, { message: 'Each lifecycle state must have a string color' });
-      }
-
-      const ids = states.map(s => s.id as string);
-      httpAssert.true(new Set(ids).size === ids.length, {
-        message: 'Duplicate lifecycle state ids'
-      });
-
       const now = new Date();
       return await db.workspaceAdmin.replaceLifecycleStates(
         workspace,
-        states.map((s, i) => ({
-          id: s.id as string,
-          workspace,
-          label: s.label as string,
-          color: s.color as string,
-          sort_order: i,
-          created_at: now
-        }))
+        buildLifecycleStateInputs(workspace, body, now)
       );
     })
   );
@@ -249,36 +340,8 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
-      httpAssert.array(body, { message: 'Request body must be a JSON array' });
-
-      const owners = body as Array<{ id?: unknown; sort_order?: unknown; color?: unknown; description?: unknown }>;
-      for (const o of owners) {
-        httpAssert.string(o.id, { message: 'Each owner must have a string id' });
-        if (o.color !== undefined && o.color !== null) {
-          httpAssert.string(o.color, { message: 'color must be a string if provided' });
-        }
-        if (o.description !== undefined) {
-          httpAssert.string(o.description, { message: 'description must be a string if provided' });
-        }
-      }
-
-      const ids = owners.map(o => o.id as string);
-      httpAssert.true(new Set(ids).size === ids.length, {
-        message: 'Duplicate owner ids'
-      });
-
       const now = new Date();
-      return await db.workspaceAdmin.replaceTeams(
-        workspace,
-        owners.map((o, i) => ({
-          id: o.id as string,
-          workspace,
-          sort_order: i,
-          color: (o.color as string | null | undefined) ?? null,
-          description: (o.description as string | undefined) ?? '',
-          created_at: now
-        }))
-      );
+      return await db.workspaceAdmin.replaceTeams(workspace, buildWorkspaceOwnerInputs(workspace, body, now));
     })
   );
 
@@ -290,109 +353,48 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
-      httpAssert.array(body, { message: 'Request body must be a JSON array' });
-
-      const owners = body as Array<{ id?: unknown; sort_order?: unknown; color?: unknown; description?: unknown }>;
-      for (const o of owners) {
-        httpAssert.string(o.id, { message: 'Each owner must have a string id' });
-        if (o.color !== undefined && o.color !== null) {
-          httpAssert.string(o.color, { message: 'color must be a string if provided' });
-        }
-        if (o.description !== undefined) {
-          httpAssert.string(o.description, { message: 'description must be a string if provided' });
-        }
-      }
-
-      const ids = owners.map(o => o.id as string);
-      httpAssert.true(new Set(ids).size === ids.length, {
-        message: 'Duplicate owner ids'
-      });
-
       const now = new Date();
-      return await db.workspaceAdmin.replaceTeams(
+      return await db.workspaceAdmin.replaceTeams(workspace, buildWorkspaceOwnerInputs(workspace, body, now));
+    })
+  );
+
+  router.get(
+    `${BASE}/team-assignments`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.teams');
+      return await db.workspaceAdmin.listTeamAssignments(workspace);
+    })
+  );
+
+  router.get(
+    `${BASE}/team-memberships`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.teams');
+      return await db.workspaceAdmin.listTeamAssignments(workspace);
+    })
+  );
+
+  router.put(
+    `${BASE}/team-assignments`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.teams');
+      const body = await event.req.json().catch(() => undefined);
+      const owners = new Set((await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id));
+      const users = new Set((await db.identityAuth.listUsers()).map(user => user.id));
+      const now = new Date();
+      return await db.workspaceAdmin.replaceTeamAssignments(
         workspace,
-        owners.map((o, i) => ({
-          id: o.id as string,
-          workspace,
-          sort_order: i,
-          color: (o.color as string | null | undefined) ?? null,
-          description: (o.description as string | undefined) ?? '',
-          created_at: now
-        }))
+        buildTeamMembershipInputs(workspace, body, owners, users, now)
       );
     })
   );
 
-  router.get(
-    `${BASE}/team-assignments`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.teams');
-      return await db.workspaceAdmin.listTeamAssignments(workspace);
-    })
-  );
-
-  router.get(
-    `${BASE}/team-memberships`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.teams');
-      return await db.workspaceAdmin.listTeamAssignments(workspace);
-    })
-  );
-
-  router.put(
-    `${BASE}/team-assignments`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.teams');
-      const body = await event.req.json().catch(() => undefined);
-      httpAssert.array(body, { message: 'Request body must be a JSON array' });
-      const rows = body as unknown[];
-
-      const owners = new Set((await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id));
-      const users = new Set((await db.identityAuth.listUsers()).map(user => user.id));
-      const now = new Date();
-      const memberships: Array<{
-        workspace: string;
-        team_id: string;
-        user_id: string;
-        role: import('../types.js').TeamRole;
-        created_at: Date;
-      }> = rows.map(row => {
-        httpAssert.true(row != null && typeof row === 'object', {
-          message: 'Each membership must be an object'
-        });
-        const membership = row as Record<string, unknown>;
-        const teamId = membership['team_id'];
-        httpAssert.true(typeof teamId === 'string' && owners.has(teamId), {
-          message: 'team_id must reference an existing team'
-        });
-        const userId = membership['user_id'];
-        httpAssert.true(typeof userId === 'string' && users.has(userId), {
-          message: 'user_id must reference an existing user'
-        });
-        const roleValue = membership['role'];
-        httpAssert.true(
-          typeof roleValue === 'string' && VALID_TEAM_ROLES.includes(roleValue as TeamRole),
-          { message: `role must be one of: ${VALID_TEAM_ROLES.join(', ')}` }
-        );
-        return {
-          workspace,
-          team_id: teamId as string,
-          user_id: userId as string,
-          role: roleValue as TeamRole,
-          created_at: now
-        };
-      });
-
-      return await db.workspaceAdmin.replaceTeamAssignments(workspace, memberships);
-    })
-  );
-
   router.put(
     `${BASE}/team-memberships`,
     defineHandler(async event => {
@@ -400,46 +402,13 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
-      httpAssert.array(body, { message: 'Request body must be a JSON array' });
-      const rows = body as unknown[];
-
       const owners = new Set((await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id));
       const users = new Set((await db.identityAuth.listUsers()).map(user => user.id));
       const now = new Date();
-      const memberships: Array<{
-        workspace: string;
-        team_id: string;
-        user_id: string;
-        role: import('../types.js').TeamRole;
-        created_at: Date;
-      }> = rows.map(row => {
-        httpAssert.true(row != null && typeof row === 'object', {
-          message: 'Each membership must be an object'
-        });
-        const membership = row as Record<string, unknown>;
-        const teamId = membership['team_id'];
-        httpAssert.true(typeof teamId === 'string' && owners.has(teamId), {
-          message: 'team_id must reference an existing team'
-        });
-        const userId = membership['user_id'];
-        httpAssert.true(typeof userId === 'string' && users.has(userId), {
-          message: 'user_id must reference an existing user'
-        });
-        const roleValue = membership['role'];
-        httpAssert.true(
-          typeof roleValue === 'string' && VALID_TEAM_ROLES.includes(roleValue as TeamRole),
-          { message: `role must be one of: ${VALID_TEAM_ROLES.join(', ')}` }
-        );
-        return {
-          workspace,
-          team_id: teamId as string,
-          user_id: userId as string,
-          role: roleValue as TeamRole,
-          created_at: now
-        };
-      });
-
-      return await db.workspaceAdmin.replaceTeamAssignments(workspace, memberships);
+      return await db.workspaceAdmin.replaceTeamAssignments(
+        workspace,
+        buildTeamMembershipInputs(workspace, body, owners, users, now)
+      );
     })
   );
 

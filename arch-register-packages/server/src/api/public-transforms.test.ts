@@ -3,10 +3,10 @@ import {
   toDiagramCraftData,
   toDiagramCraftField,
   toDiagramCraftSchema
-} from './public-shape.js';
+} from './public-transforms.js';
 import type { Entity, EntitySchema } from '../types.js';
 
-describe('public route mappers', () => {
+describe('public transforms', () => {
   it('keeps containment fields in public schema responses', () => {
     const schema: EntitySchema = {
       id: 'schema-1',
@@ -64,6 +64,16 @@ describe('public route mappers', () => {
         { id: 'description', name: 'Description', type: 'longtext' },
         { id: 'technology', name: 'Technology', type: 'text' }
       ]
+    });
+  });
+
+  it('keeps date fields in public schema output', () => {
+    expect(
+      toDiagramCraftField({ id: 'go_live', name: 'Go Live', type: 'date' })
+    ).toEqual({
+      id: 'go_live',
+      name: 'Go Live',
+      type: 'date'
     });
   });
 

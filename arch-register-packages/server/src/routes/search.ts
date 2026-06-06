@@ -1,7 +1,7 @@
 import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import type { Entity, SchemaField } from '../types.js';
-import { resolveWorkspace } from './workspace-resolver.js';
+import { resolveWorkspace } from '../utils/resolveWorkspace.js';
 import { parsePositiveInt } from '../utils/http.js';
 import { SEARCH_DEFAULTS } from '../constants.js';
 import { buildApiAuthCtx, canAccessProject } from '../auth/authorization.js';
@@ -11,9 +11,9 @@ import { httpAssert } from '../utils/httpAssert.js';
 
 const BASE = '/api/:workspace/search';
 
-const SEARCH_TYPES = ['projects', 'files', 'entities', 'schemas'] as const;
+export const SEARCH_TYPES = ['projects', 'files', 'entities', 'schemas'] as const;
 
-type SearchType = (typeof SEARCH_TYPES)[number];
+export type SearchType = (typeof SEARCH_TYPES)[number];
 
 type ProjectSearchResult = {
   id: string;
@@ -62,7 +62,7 @@ type SearchResponse = {
   schemas: SchemaSearchResult[];
 };
 
-const parseTypes = (value: unknown): SearchType[] => {
+export const parseTypes = (value: unknown): SearchType[] => {
   if (value == null || value === '') return [...SEARCH_TYPES];
   const parsed = String(value)
     .split(',')
@@ -77,12 +77,12 @@ const parseTypes = (value: unknown): SearchType[] => {
   return [...new Set(parsed as SearchType[])];
 };
 
-const includesQuery = (value: unknown, query: string) =>
+export const includesQuery = (value: unknown, query: string) =>
   String(value ?? '')
     .toLowerCase()
     .includes(query);
 
-const collectMatchedMetadata = (entity: Entity, query: string) => {
+export const collectMatchedMetadata = (entity: Entity, query: string) => {
   const matches: string[] = [];
   if (includesQuery(entity.name, query)) matches.push('name');
   if (includesQuery(entity.slug, query)) matches.push('slug');
@@ -104,12 +104,12 @@ const collectMatchedMetadata = (entity: Entity, query: string) => {
   return matches;
 };
 
-const collectMatchedFields = (data: Entity['data'], query: string) =>
+export const collectMatchedFields = (data: Entity['data'], query: string) =>
   Object.entries(data)
     .filter(([, value]) => includesQuery(value, query))
     .map(([key]) => key);
 
-const collectFieldMatches = (fields: SchemaField[], query: string): SchemaFieldMatch[] =>
+export const collectFieldMatches = (fields: SchemaField[], query: string): SchemaFieldMatch[] =>
   fields
     .filter(field => includesQuery(field.id, query) || includesQuery(field.name, query))
     .map(field => ({

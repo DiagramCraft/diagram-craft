@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { H3, defineHandler, HTTPError } from 'h3';
 import { chat, chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack/ai';
 import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from './workspace-resolver.js';
+import { resolveWorkspace } from '../utils/resolveWorkspace.js';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';

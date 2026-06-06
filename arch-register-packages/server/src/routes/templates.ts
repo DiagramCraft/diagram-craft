@@ -1,6 +1,6 @@
 import { H3, H3Event, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from './workspace-resolver.js';
+import { resolveWorkspace } from '../utils/resolveWorkspace.js';
 import { handleDbError } from '../utils/http.js';
 import {
   buildApiAuthCtx,
@@ -11,7 +11,7 @@ import {
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
 import { toApiProjectFile } from '../api/transforms.js';
-import type { ProjectTemplatesResponse } from '@arch-register/api-types';
+import { buildAllTemplatesResponse, buildProjectTemplatesResponse, type ProjectWithFiles } from '../api/template-helpers.js';
 
 const BASE = '/api/:workspace';
 
@@ -40,36 +40,15 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
 
       try {
         const projects = await db.projectsFiles.listProjects(workspace);
-        const workspaceTemplates: ReturnType<typeof toApiProjectFile>[] = [];
-        const projectTemplatesMap = new Map<string, ReturnType<typeof toApiProjectFile>[]>();
+        const projectsWithFiles: ProjectWithFiles[] = [];
 
         for (const project of projects) {
-          // Check if user has access to this project
-          if (!authCtx || !canAccessProject(authCtx, project.owner)) {
-            continue;
-          }
-
+          if (!authCtx || !canAccessProject(authCtx, project.owner)) continue;
           const files = await db.projectsFiles.listProjectFiles(workspace, project.id);
-
-          for (const file of files) {
-            if (file.is_template) {
-              const apiFile = toApiProjectFile(file);
-
-              if (file.is_workspace_template) {
-                workspaceTemplates.push(apiFile);
-              } else {
-                const projectTemplates = projectTemplatesMap.get(project.id) ?? [];
-                projectTemplates.push(apiFile);
-                projectTemplatesMap.set(project.id, projectTemplates);
-              }
-            }
-          }
+          projectsWithFiles.push({ project, files });
         }
 
-        return {
-          workspaceTemplates,
-          projectTemplates: Object.fromEntries(projectTemplatesMap),
-        };
+        return buildAllTemplatesResponse(projectsWithFiles);
       } catch (e) {
         handleError(e, 'Failed to retrieve templates');
       }
@@ -90,39 +69,16 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
         httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
-        const workspaceTemplates: ReturnType<typeof toApiProjectFile>[] = [];
-        const projectTemplates: ReturnType<typeof toApiProjectFile>[] = [];
-
-        // Get all projects to find workspace templates
         const projects = await db.projectsFiles.listProjects(workspace);
+        const projectsWithFiles: ProjectWithFiles[] = [];
 
         for (const proj of projects) {
-          // Check if user has access to this project
-          if (authCtx && !canAccessProject(authCtx, proj.owner)) {
-            continue;
-          }
-
+          if (authCtx && !canAccessProject(authCtx, proj.owner)) continue;
           const files = await db.projectsFiles.listProjectFiles(workspace, proj.id);
-
-          for (const file of files) {
-            if (file.is_template) {
-              const apiFile = toApiProjectFile(file);
-
-              if (file.is_workspace_template) {
-                workspaceTemplates.push(apiFile);
-              } else if (proj.id === projectId) {
-                projectTemplates.push(apiFile);
-              }
-            }
-          }
+          projectsWithFiles.push({ project: proj, files });
         }
 
-        const response: ProjectTemplatesResponse = {
-          workspaceTemplates,
-          projectTemplates,
-        };
-
-        return response;
+        return buildProjectTemplatesResponse(projectsWithFiles, projectId);
       } catch (e) {
         handleError(e, 'Failed to retrieve project templates');
       }

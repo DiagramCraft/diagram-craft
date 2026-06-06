@@ -2,6 +2,7 @@ import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/a
 import { randomUUID } from 'node:crypto';
 import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
+import type { Workspace } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { handleDbError, slugify } from '../utils/http.js';
 import type { StorageAdapter } from '../storage/storage.js';
@@ -16,12 +17,85 @@ const BASE = '/api/workspaces';
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, { unique: 'A workspace with that name already exists' });
 
-const shortCode = (name: string): string =>
+export const shortCode = (name: string): string =>
   name
     .split(/\s+/)
     .map(w => (w[0] ?? '').toUpperCase())
     .join('')
     .slice(0, 2);
+
+export const buildDefaultLifecycleStates = (workspace: string, createdAt: Date) => [
+  { id: 'proposed', workspace, label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: createdAt },
+  { id: 'experimental', workspace, label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: createdAt },
+  { id: 'production', workspace, label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: createdAt },
+  { id: 'deprecated', workspace, label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: createdAt }
+];
+
+export const buildDefaultWorkspaceTeams = (workspace: string, createdAt: Date) => [
+  { id: 'platform-team', workspace, sort_order: 0, color: null, description: '', created_at: createdAt },
+  { id: 'ux-team', workspace, sort_order: 1, color: null, description: '', created_at: createdAt },
+  { id: 'security-team', workspace, sort_order: 2, color: null, description: '', created_at: createdAt }
+];
+
+export const buildWorkspaceCreateInput = (
+  body: Record<string, unknown>,
+  createdAt: Date
+) => {
+  const {
+    name,
+    description = '',
+    color = '',
+    slug: slugOverride,
+    badge
+  } = body;
+  httpAssert.string(name, { message: 'name is required and must be a string' });
+  const rawSlug = typeof slugOverride === 'string' && slugOverride ? slugOverride : name;
+  const id = slugify(rawSlug);
+  httpAssert.string(id, { message: 'name must contain at least one alphanumeric character' });
+
+  return {
+    id,
+    name,
+    url_slug: id,
+    short_code:
+      typeof badge === 'string' && badge ? badge.slice(0, 2).toUpperCase() : shortCode(name),
+    color: typeof color === 'string' ? color : '',
+    description: typeof description === 'string' ? description : '',
+    created_at: createdAt,
+    updated_at: createdAt
+  };
+};
+
+export const buildWorkspaceUpdateInput = (
+  body: Record<string, unknown>,
+  current: Workspace,
+  updatedAt: Date
+) => {
+  const { name, description, url_slug, short_code: sc, color } = body;
+  httpAssert.string(name, { status: 400, message: 'name is required and must be a string' });
+  if (url_slug != null && typeof url_slug === 'string') {
+    const cleaned = slugify(url_slug);
+    httpAssert.string(cleaned, {
+      message: 'url_slug must contain at least one alphanumeric character'
+    });
+  }
+
+  return {
+    name,
+    url_slug: typeof url_slug === 'string' ? slugify(url_slug) : current.url_slug,
+    short_code: typeof sc === 'string' ? sc : current.short_code,
+    color: typeof color === 'string' ? color : current.color,
+    description: typeof description === 'string' ? description : current.description,
+    updated_at: updatedAt
+  };
+};
+
+export const normalizeReplicationInclude = (include: unknown) =>
+  new Set<string>(
+    Array.isArray(include)
+      ? (include as unknown[]).filter((x): x is string => typeof x === 'string')
+      : ['schemas', 'settings']
+  );
 
 export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdapter) {
   const router = new H3();
@@ -52,31 +126,15 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       requireGlobalPermission(authCtx, 'admin_platform');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      const { name, description = '', color = '', slug: slugOverride, badge, template, replicate_from, include } = body as Record<string, unknown>;
-      httpAssert.string(name, { message: 'name is required and must be a string' });
-      const rawSlug = typeof slugOverride === 'string' && slugOverride ? slugOverride : (name as string);
-      const id = slugify(rawSlug);
-      httpAssert.string(id, { message: 'name must contain at least one alphanumeric character' });
-      const urlSlug = id;
-      const sc = typeof badge === 'string' && badge ? badge.slice(0, 2).toUpperCase() : shortCode(name as string);
-      const colorVal = typeof color === 'string' ? color : '';
+      const { template, replicate_from, include } = body as Record<string, unknown>;
       try {
         const timestamp = new Date();
-        const row = await db.workspaceAdmin.createWorkspace({
-          id,
-          name: name as string,
-          url_slug: urlSlug,
-          short_code: sc,
-          color: colorVal,
-          description: typeof description === 'string' ? description : '',
-          created_at: timestamp,
-          updated_at: timestamp
-        });
+        const row = await db.workspaceAdmin.createWorkspace(
+          buildWorkspaceCreateInput(body as Record<string, unknown>, timestamp)
+        );
 
         if (typeof replicate_from === 'string' && replicate_from) {
-          const includeSet = new Set<string>(
-            Array.isArray(include) ? (include as unknown[]).filter((x): x is string => typeof x === 'string') : ['schemas', 'settings']
-          );
+          const includeSet = normalizeReplicationInclude(include);
 
           const [srcLifecycle, srcTeams, srcRoles, srcSchemas] = await Promise.all([
             db.workspaceAdmin.listLifecycleStates(replicate_from),
@@ -87,39 +145,25 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
 
           if (includeSet.has('settings')) {
             const lifecycleStates = srcLifecycle.length > 0
-              ? srcLifecycle.map(s => ({ ...s, workspace: id, created_at: timestamp }))
-              : [
-                  { id: 'proposed', workspace: id, label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: timestamp },
-                  { id: 'experimental', workspace: id, label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: timestamp },
-                  { id: 'production', workspace: id, label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: timestamp },
-                  { id: 'deprecated', workspace: id, label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: timestamp },
-                ];
-            await db.workspaceAdmin.replaceLifecycleStates(id, lifecycleStates);
+              ? srcLifecycle.map(s => ({ ...s, workspace: row.id, created_at: timestamp }))
+              : buildDefaultLifecycleStates(row.id, timestamp);
+            await db.workspaceAdmin.replaceLifecycleStates(row.id, lifecycleStates);
             await db.workspaceAdmin.replaceTeams(
-              id,
-              srcTeams.map(t => ({ ...t, workspace: id, created_at: timestamp }))
+              row.id,
+              srcTeams.map(t => ({ ...t, workspace: row.id, created_at: timestamp }))
             );
             for (const role of srcRoles) {
               await db.workspaceAdmin.createCustomWorkspaceRole({
                 ...role,
                 id: randomUUID(),
-                workspace: id,
+                workspace: row.id,
                 created_at: timestamp,
                 updated_at: timestamp,
               });
             }
           } else {
-            await db.workspaceAdmin.replaceLifecycleStates(id, [
-              { id: 'proposed', workspace: id, label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: timestamp },
-              { id: 'experimental', workspace: id, label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: timestamp },
-              { id: 'production', workspace: id, label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: timestamp },
-              { id: 'deprecated', workspace: id, label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: timestamp },
-            ]);
-            await db.workspaceAdmin.replaceTeams(id, [
-              { id: 'platform-team', workspace: id, sort_order: 0, color: null, description: '', created_at: timestamp },
-              { id: 'ux-team', workspace: id, sort_order: 1, color: null, description: '', created_at: timestamp },
-              { id: 'security-team', workspace: id, sort_order: 2, color: null, description: '', created_at: timestamp },
-            ]);
+            await db.workspaceAdmin.replaceLifecycleStates(row.id, buildDefaultLifecycleStates(row.id, timestamp));
+            await db.workspaceAdmin.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
           }
 
           if (includeSet.has('schemas')) {
@@ -133,7 +177,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
               });
               await db.catalog.createSchema({
                 id: idMap.get(schema.id)!,
-                workspace: id,
+                workspace: row.id,
                 name: schema.name,
                 description: schema.description,
                 color: schema.color,
@@ -146,21 +190,12 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
             }
           }
         } else {
-          await db.workspaceAdmin.replaceLifecycleStates(id, [
-            { id: 'proposed', workspace: id, label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: timestamp },
-            { id: 'experimental', workspace: id, label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: timestamp },
-            { id: 'production', workspace: id, label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: timestamp },
-            { id: 'deprecated', workspace: id, label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: timestamp },
-          ]);
+          await db.workspaceAdmin.replaceLifecycleStates(row.id, buildDefaultLifecycleStates(row.id, timestamp));
 
-          await db.workspaceAdmin.replaceTeams(id, [
-            { id: 'platform-team', workspace: id, sort_order: 0, color: null, description: '', created_at: timestamp },
-            { id: 'ux-team', workspace: id, sort_order: 1, color: null, description: '', created_at: timestamp },
-            { id: 'security-team', workspace: id, sort_order: 2, color: null, description: '', created_at: timestamp },
-          ]);
+          await db.workspaceAdmin.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
 
           if (typeof template === 'string' && template && template !== 'blank') {
-            const schemas = instantiateTemplate(id, template);
+            const schemas = instantiateTemplate(row.id, template);
             for (const schema of schemas) {
               await db.catalog.createSchema(schema);
             }
@@ -194,48 +229,27 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       httpAssert.string(id, { message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      const { name, description, url_slug, short_code: sc, color } = body as Record<string, unknown>;
-      httpAssert.string(name, { status: 400, message: 'name is required and must be a string' });
-      if (url_slug != null && typeof url_slug === 'string') {
-        const cleaned = slugify(url_slug);
-        httpAssert.string(cleaned, {
-          message: 'url_slug must contain at least one alphanumeric character'
-        });
-      }
       try {
         const oldRow = await db.workspaceAdmin.getWorkspace(id);
         httpAssert.present(oldRow, { status: 404, message: `Workspace '${id}' not found` });
 
-        const row = await db.workspaceAdmin.updateWorkspace(id, {
-          name: name as string,
-          url_slug: typeof url_slug === 'string' ? slugify(url_slug) : oldRow.url_slug,
-          short_code: typeof sc === 'string' ? sc : oldRow.short_code,
-          color: typeof color === 'string' ? color : oldRow.color,
-          description: typeof description === 'string' ? description : oldRow.description,
-          updated_at: new Date()
+        const row = await db.workspaceAdmin.updateWorkspace(
+          id,
+          buildWorkspaceUpdateInput(body as Record<string, unknown>, oldRow, new Date())
+        );
+        httpAssert.present(row, { status: 404, message: `Workspace '${id}' not found` });
+        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
+
+        await logAudit(db, {
+          workspace: id,
+          operation: 'update',
+          entityType: 'workspace',
+          entityId: id,
+          entityName: row.name,
+          changes
         });
 
-                const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
-
-                await logAudit(db, {
-
-                  workspace: id,
-
-                  operation: 'update',
-
-                  entityType: 'workspace',
-
-                  entityId: id,
-
-                  entityName: row!.name,
-
-                  changes
-
-                });
-
-        
-
-                return toApiWorkspace(row!);
+        return toApiWorkspace(row);
       } catch (e) {
         handleError(e, 'Failed to update workspace');
       }
