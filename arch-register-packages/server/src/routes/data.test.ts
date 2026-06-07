@@ -6,8 +6,8 @@ import {
   getEntityParentsFromPayload,
   parseEntityMutationPayload,
   resolveCreateOwner
-} from './data.js';
-import type { Entity, EntitySchema } from '../types.js';
+} from './data';
+import type { Entity, EntitySchema } from '../types';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

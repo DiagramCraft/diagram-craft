@@ -1,15 +1,18 @@
 import type { H3Event } from 'h3';
 import { defineHandler, getCookie, getQuery, H3, HTTPError, readBody, redirect } from 'h3';
-import type { DatabaseAdapter } from '../db/database.js';
-import { verifyPassword } from '../utils/password.js';
-import { generateTokenPair, verifyToken } from '../utils/jwt.js';
-import { generateAuthUrl, handleCallback } from '../auth/oidcClient.js';
-import { clearAuthCookies, setAuthCookies } from '../utils/cookies.js';
-import type { GlobalRole, JWTPayload, User } from '../types.js';
-import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from '../auth/authorization.js';
-import { getGlobalPermissionsForRoles, resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
+import type { DatabaseAdapter } from '../db/database';
+import { verifyPassword } from '../utils/password';
+import { generateTokenPair, verifyToken } from '../utils/jwt';
+import { generateAuthUrl, handleCallback } from '../auth/oidcClient';
+import { clearAuthCookies, setAuthCookies } from '../utils/cookies';
+import type { GlobalRole, JWTPayload, User } from '../types';
+import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from '../auth/authorization';
+import {
+  getGlobalPermissionsForRoles,
+  resolveWorkspaceRoleDefinitions
+} from '@arch-register/permissions';
 import { AuthenticatedEvent } from '../middleware/auth';
-import { httpAssert } from '../utils/httpAssert.js';
+import { httpAssert } from '../utils/httpAssert';
 
 // Clean up expired OIDC states every 5 minutes
 const cleanupTimer = setInterval(
@@ -53,10 +56,8 @@ type WorkspaceMembershipData = {
 
 const getAuthMode = () => process.env['AUTH_MODE'] ?? 'local';
 
-export const selectRefreshToken = (
-  cookieToken: string | null | undefined,
-  body?: RefreshBody
-) => cookieToken ?? body?.refresh_token;
+export const selectRefreshToken = (cookieToken: string | null | undefined, body?: RefreshBody) =>
+  cookieToken ?? body?.refresh_token;
 
 export const buildAuthMeResponse = (
   user: User,
@@ -73,9 +74,7 @@ export const buildAuthMeResponse = (
       .filter(ws => ws.workspace_role != null)
       .map(ws => [ws.workspace_id, ws.workspace_role])
   );
-  const teamsByWorkspace = Object.fromEntries(
-    workspaceData.map(ws => [ws.workspace_id, ws.teams])
-  );
+  const teamsByWorkspace = Object.fromEntries(workspaceData.map(ws => [ws.workspace_id, ws.teams]));
   const workspaceRoleDefinitionsByWorkspace = Object.fromEntries(
     workspaceData.map(ws => [ws.workspace_id, ws.workspace_roles])
   );
@@ -115,8 +114,7 @@ export const buildUserUpdateInput = (body: UserUpdateBody, updatedAt: Date) => {
 export const parseRequestedGlobalRoles = (requestedRoles: unknown[]) => {
   const roles = requestedRoles.filter(
     (role): role is 'global_admin' | 'workspace_admin' =>
-      typeof role === 'string' &&
-      ['global_admin', 'workspace_admin'].includes(role)
+      typeof role === 'string' && ['global_admin', 'workspace_admin'].includes(role)
   );
   httpAssert.true(roles.length === requestedRoles.length, {
     message: 'roles contains invalid values'
@@ -127,7 +125,7 @@ export const parseRequestedGlobalRoles = (requestedRoles: unknown[]) => {
 export const createAuthRoutes = (db: DatabaseAdapter) => {
   // Set the cleanup adapter for the timer
   cleanupDbAdapter = db;
-  
+
   const app = new H3();
 
   // GET /api/auth/config - Get authentication configuration
@@ -243,7 +241,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       if (!redirectUri) {
         throw new Error('OIDC_REDIRECT_URI not configured');
       }
-      
+
       const callbackUrl = new URL(redirectUri);
       for (const [key, value] of Object.entries(query)) {
         callbackUrl.searchParams.set(key, String(value));
@@ -376,7 +374,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
             db.workspaceAdmin.listTeamAssignments(workspace.id),
             db.workspaceAdmin.listTeams(workspace.id),
             db.workspaceAdmin.getWorkspaceRole(workspace.id, user.id),
-            db.workspaceAdmin.listCustomWorkspaceRoles(workspace.id),
+            db.workspaceAdmin.listCustomWorkspaceRoles(workspace.id)
           ]);
           return {
             workspace_id: workspace.id,
@@ -386,10 +384,10 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
             teams: teams.map(team => ({
               id: team.id,
               name: team.id,
-              type: 'team' as const,
+              type: 'team' as const
             })),
             workspace_role: workspaceRole,
-            workspace_roles: resolveWorkspaceRoleDefinitions(customRoles),
+            workspace_roles: resolveWorkspaceRoleDefinitions(customRoles)
           };
         })
       );
@@ -429,7 +427,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         color: updatedUser.color,
         created_at: updatedUser.created_at.toISOString(),
         updated_at: updatedUser.updated_at.toISOString(),
-        last_login_at: updatedUser.last_login_at?.toISOString() ?? null,
+        last_login_at: updatedUser.last_login_at?.toISOString() ?? null
       };
     })
   );

@@ -1,7 +1,7 @@
 import { createOpenRouterText, openRouterText } from '@tanstack/ai-openrouter';
 import { createOpenaiChat, openaiText } from '@tanstack/ai-openai';
-import { decrypt } from '../utils/encryption.js';
-import type { DatabaseAdapter } from '../db/database.js';
+import { decrypt } from '../utils/encryption';
+import type { DatabaseAdapter } from '../db/database';
 
 import type { AiProvider } from '@arch-register/api-types';
 
@@ -38,13 +38,17 @@ export const resolveAiConfig = async (
   return {
     provider,
     apiKey,
-    baseUrl: wsConfig?.base_url ?? (provider === 'openai' ? process.env['OPENAI_BASE_URL'] ?? null : null),
-    model: wsConfig?.model ?? (provider === 'openai' ? process.env['OPENAI_MODEL'] : process.env['OPENROUTER_MODEL']) ?? defaultModel,
+    baseUrl:
+      wsConfig?.base_url ??
+      (provider === 'openai' ? (process.env['OPENAI_BASE_URL'] ?? null) : null),
+    model:
+      wsConfig?.model ??
+      (provider === 'openai' ? process.env['OPENAI_MODEL'] : process.env['OPENROUTER_MODEL']) ??
+      defaultModel,
     temperature: wsConfig?.temperature ?? DEFAULT_TEMPERATURE,
-    systemPrompt: wsConfig?.system_prompt ?? null,
+    systemPrompt: wsConfig?.system_prompt ?? null
   };
 };
-
 
 export const createAiTextAdapter = (config: EffectiveAiConfig) => {
   if (config.provider === 'openai') {
@@ -62,5 +66,8 @@ export const createAiTextAdapter = (config: EffectiveAiConfig) => {
   if (config.apiKey === process.env['OPENROUTER_API_KEY']) {
     return openRouterText(config.model as Parameters<typeof openRouterText>[0]);
   }
-  return createOpenRouterText(config.model as Parameters<typeof createOpenRouterText>[0], config.apiKey);
+  return createOpenRouterText(
+    config.model as Parameters<typeof createOpenRouterText>[0],
+    config.apiKey
+  );
 };

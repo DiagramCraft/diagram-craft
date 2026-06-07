@@ -1,4 +1,4 @@
-import type { AuditLogEntry as InternalAuditLogEntry } from '../types.js';
+import type { AuditLogEntry as InternalAuditLogEntry } from '../types';
 import type { AuditLogEntry, AuditStats } from '@arch-register/api-types';
 
 export type AuditListFilters = {
@@ -19,12 +19,16 @@ export const filterAndPaginateAuditLogs = (
   if (filters.entityType) result = result.filter(row => row.entity_type === filters.entityType);
   if (filters.entityId) result = result.filter(row => row.entity_id === filters.entityId);
   if (filters.operation) result = result.filter(row => row.operation === filters.operation);
-  if (filters.startDate) result = result.filter(row => row.timestamp >= new Date(filters.startDate!));
+  if (filters.startDate)
+    result = result.filter(row => row.timestamp >= new Date(filters.startDate!));
   if (filters.endDate) result = result.filter(row => row.timestamp <= new Date(filters.endDate!));
   return result.slice(filters.offset, filters.offset + filters.limit);
 };
 
-export const computeAuditStats = (rows: InternalAuditLogEntry[], nowMs = Date.now()): AuditStats => {
+export const computeAuditStats = (
+  rows: InternalAuditLogEntry[],
+  nowMs = Date.now()
+): AuditStats => {
   const byOperationMap = new Map<string, number>();
   const byEntityTypeMap = new Map<string, number>();
   const recentActivityMap = new Map<string, number>();
@@ -65,5 +69,5 @@ export const toApiAuditLogEntry = (entry: InternalAuditLogEntry): AuditLogEntry 
   entity_slug: entry.entity_slug,
   schema_id: entry.schema_id,
   changes: entry.changes,
-  metadata: entry.metadata,
+  metadata: entry.metadata
 });

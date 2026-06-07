@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearAuthCookies, setAuthCookies } from './cookies.js';
+import { clearAuthCookies, setAuthCookies } from './cookies';
 
 vi.mock('h3', () => ({
   setCookie: vi.fn()
@@ -21,8 +21,18 @@ describe('setAuthCookies', () => {
     setAuthCookies(mockEvent, 'access-tok', 'refresh-tok', 900);
 
     expect(mockSetCookie).toHaveBeenCalledTimes(2);
-    expect(mockSetCookie).toHaveBeenCalledWith(mockEvent, 'ar_access_token', 'access-tok', expect.any(Object));
-    expect(mockSetCookie).toHaveBeenCalledWith(mockEvent, 'ar_refresh_token', 'refresh-tok', expect.any(Object));
+    expect(mockSetCookie).toHaveBeenCalledWith(
+      mockEvent,
+      'ar_access_token',
+      'access-tok',
+      expect.any(Object)
+    );
+    expect(mockSetCookie).toHaveBeenCalledWith(
+      mockEvent,
+      'ar_refresh_token',
+      'refresh-tok',
+      expect.any(Object)
+    );
   });
 
   it('sets access token options correctly', () => {
@@ -77,7 +87,12 @@ describe('clearAuthCookies', () => {
     clearAuthCookies(mockEvent);
 
     expect(mockSetCookie).toHaveBeenCalledTimes(2);
-    expect(mockSetCookie).toHaveBeenCalledWith(mockEvent, 'ar_access_token', '', expect.objectContaining({ maxAge: 0 }));
+    expect(mockSetCookie).toHaveBeenCalledWith(
+      mockEvent,
+      'ar_access_token',
+      '',
+      expect.objectContaining({ maxAge: 0 })
+    );
     expect(mockSetCookie).toHaveBeenCalledWith(
       mockEvent,
       'ar_refresh_token',

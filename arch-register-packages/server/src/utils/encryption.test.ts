@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { decrypt, encrypt } from './encryption.js';
+import { decrypt, encrypt } from './encryption';
 
 const ENCRYPTION_KEY_ENV = 'AI_ENCRYPTION_KEY';
 

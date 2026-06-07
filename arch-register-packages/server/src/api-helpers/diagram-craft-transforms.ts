@@ -4,7 +4,7 @@ import type {
   EntitySchema,
   ReferenceField,
   SchemaField
-} from '../types.js';
+} from '../types';
 
 export type DiagramCraftSchemaField =
   | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' | 'select' }>
@@ -21,9 +21,7 @@ const DIAGRAM_CRAFT_METADATA_FIELDS: DiagramCraftSchemaField[] = [
   { id: 'description', name: 'Description', type: 'longtext' }
 ];
 
-export const toDiagramCraftField = (
-  field: SchemaField
-): DiagramCraftSchemaField | undefined => {
+export const toDiagramCraftField = (field: SchemaField): DiagramCraftSchemaField | undefined => {
   switch (field.type) {
     case 'text':
     case 'longtext':

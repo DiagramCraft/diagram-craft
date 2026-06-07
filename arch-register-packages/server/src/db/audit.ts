@@ -1,6 +1,6 @@
-import type { AuditOperation, AuditEntityType } from '../types.js';
-import type { AuditDatabase } from './database.js';
-import { createLogger } from '../utils/logger.js';
+import type { AuditOperation, AuditEntityType } from '../types';
+import type { AuditDatabase } from './database';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('audit');
 
@@ -53,7 +53,10 @@ export const logAudit = async (db: AuditDatabase, params: AuditLogParams): Promi
     });
   } catch (error) {
     // Log error but don't fail the main operation
-    logger.error('Failed to write audit log', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Failed to write audit log',
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 };
 

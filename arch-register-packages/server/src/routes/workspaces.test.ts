@@ -6,8 +6,8 @@ import {
   buildWorkspaceUpdateInput,
   normalizeReplicationInclude,
   shortCode
-} from './workspaces.js';
-import type { Workspace } from '../types.js';
+} from './workspaces';
+import type { Workspace } from '../types';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

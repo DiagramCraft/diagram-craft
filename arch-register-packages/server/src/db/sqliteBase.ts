@@ -18,9 +18,9 @@ import type {
   WorkspaceLifecycleState,
   WorkspaceRoleDefinition,
   WorkspaceOwner
-} from '../types.js';
-import { SQLITE_ERROR_PATTERNS } from '../constants.js';
-import { DatabaseError } from './database.js';
+} from '../types';
+import { SQLITE_ERROR_PATTERNS } from '../constants';
+import { DatabaseError } from './database';
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
   if (typeof value !== 'string' || value === '') return fallback;

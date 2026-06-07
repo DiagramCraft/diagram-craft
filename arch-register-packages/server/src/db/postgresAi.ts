@@ -1,6 +1,11 @@
-import type { AiDatabase, CreateConversationInput, CreateMessageInput, UpsertAiConfigInput } from './database.js';
-import { normalizePostgresError, PostgresDatabaseBase } from './postgresBase.js';
-import type { AiConversation, AiMessage, WorkspaceAiConfig } from '../types.js';
+import type {
+  AiDatabase,
+  CreateConversationInput,
+  CreateMessageInput,
+  UpsertAiConfigInput
+} from './database';
+import { normalizePostgresError, PostgresDatabaseBase } from './postgresBase';
+import type { AiConversation, AiMessage, WorkspaceAiConfig } from '../types';
 
 type AiConfigRow = WorkspaceAiConfig;
 type ConversationRow = AiConversation;

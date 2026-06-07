@@ -2,16 +2,16 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
-import type { DatabaseAdapter } from './database.js';
-import { getMigrationTables, runPostgresMigrations } from './migrate.js';
-import { normalizePostgresError, type PostgresSqlClient } from './postgresBase.js';
-import { PostgresAuditDatabase } from './postgresAudit.js';
-import { PostgresCatalogDatabase } from './postgresCatalog.js';
-import { PostgresIdentityAuthDatabase } from './postgresIdentityAuth.js';
-import { PostgresProjectsFilesDatabase } from './postgresProjectsFiles.js';
-import { PostgresWorkspaceAdminDatabase } from './postgresWorkspaceAdmin.js';
-import { PostgresAiDatabase } from './postgresAi.js';
-import { SERVER_DEFAULTS } from '../constants.js';
+import type { DatabaseAdapter } from './database';
+import { getMigrationTables, runPostgresMigrations } from './migrate';
+import { normalizePostgresError, type PostgresSqlClient } from './postgresBase';
+import { PostgresAuditDatabase } from './postgresAudit';
+import { PostgresCatalogDatabase } from './postgresCatalog';
+import { PostgresIdentityAuthDatabase } from './postgresIdentityAuth';
+import { PostgresProjectsFilesDatabase } from './postgresProjectsFiles';
+import { PostgresWorkspaceAdminDatabase } from './postgresWorkspaceAdmin';
+import { PostgresAiDatabase } from './postgresAi';
+import { SERVER_DEFAULTS } from '../constants';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
@@ -57,13 +57,13 @@ export class PostgresDatabase implements DatabaseAdapter {
         try {
           // Drop schema_migrations first to allow clean migration re-run
           await this.sql`DROP TABLE IF EXISTS schema_migrations CASCADE`;
-          
+
           // Drop tables created by migrations (in reverse order)
           const migrationTables = await getMigrationTables('postgres');
           for (const table of migrationTables) {
             await this.sql`DROP TABLE IF EXISTS ${this.sql(table)} CASCADE`;
           }
-          
+
           // Drop base schema tables
           await this.sql`DROP TABLE IF EXISTS ai_message CASCADE`;
           await this.sql`DROP TABLE IF EXISTS ai_conversation CASCADE`;
@@ -82,7 +82,7 @@ export class PostgresDatabase implements DatabaseAdapter {
           await this.sql`DROP TABLE IF EXISTS workspace_lifecycle_state CASCADE`;
           await this.sql`DROP TABLE IF EXISTS workspace_owner CASCADE`;
           await this.sql`DROP TABLE IF EXISTS workspace CASCADE`;
-          
+
           // Recreate base schema and run migrations
           const schemaSql = await readFile(schemaPath, 'utf8');
           await this.sql.unsafe(schemaSql);

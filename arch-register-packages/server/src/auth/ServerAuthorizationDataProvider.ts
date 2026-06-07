@@ -9,7 +9,7 @@ import {
   type WorkspaceRole,
   resolveWorkspaceRoleDefinitions
 } from '@arch-register/permissions';
-import type { DatabaseAdapter } from '../db/database.js';
+import type { DatabaseAdapter } from '../db/database';
 
 /**
  * Server-side data provider that fetches permission data from the database
@@ -51,6 +51,8 @@ export class ServerDataProvider implements PermissionDataProvider {
   }
 
   async getWorkspaceRoles(workspaceId: string) {
-    return resolveWorkspaceRoleDefinitions(await this.db.workspaceAdmin.listCustomWorkspaceRoles(workspaceId));
+    return resolveWorkspaceRoleDefinitions(
+      await this.db.workspaceAdmin.listCustomWorkspaceRoles(workspaceId)
+    );
   }
 }

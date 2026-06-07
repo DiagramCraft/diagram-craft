@@ -2,7 +2,7 @@ import type {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
   WorkspaceAdminDatabase
-} from './database.js';
+} from './database';
 import type {
   TeamMembership,
   WorkspaceMember,
@@ -10,8 +10,8 @@ import type {
   WorkspaceOwner,
   WorkspaceRole,
   WorkspaceRoleDefinition
-} from '../types.js';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
+} from '../types';
+import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
 
 export class SqliteWorkspaceAdminDatabase
   extends SqliteDatabaseBase
@@ -62,10 +62,9 @@ export class SqliteWorkspaceAdminDatabase
     const workspace = await this.getWorkspace(id);
     if (!workspace) return { workspace: null, projectIds: [] };
 
-    const projectIds = this.all<{ id: string }>(
-      'SELECT id FROM project WHERE workspace = ?',
-      [id]
-    ).map(project => project.id);
+    const projectIds = this.all<{ id: string }>('SELECT id FROM project WHERE workspace = ?', [
+      id
+    ]).map(project => project.id);
 
     const tx = this.db.transaction((workspaceId: string) => {
       this.run('DELETE FROM project_file WHERE workspace = ?', [workspaceId]);
@@ -139,10 +138,10 @@ export class SqliteWorkspaceAdminDatabase
         `DELETE FROM team_membership WHERE workspace = ? AND team_id NOT IN (${placeholders})`,
         [workspace, ...ownerIds]
       );
-      this.run(
-        `DELETE FROM workspace_owner WHERE workspace = ? AND id NOT IN (${placeholders})`,
-        [workspace, ...ownerIds]
-      );
+      this.run(`DELETE FROM workspace_owner WHERE workspace = ? AND id NOT IN (${placeholders})`, [
+        workspace,
+        ...ownerIds
+      ]);
 
       for (const owner of owners) {
         this.run(
@@ -153,7 +152,14 @@ export class SqliteWorkspaceAdminDatabase
              color = excluded.color,
              description = excluded.description,
              created_at = excluded.created_at`,
-          [owner.id, workspace, owner.sort_order, owner.color, owner.description, owner.created_at.toISOString()]
+          [
+            owner.id,
+            workspace,
+            owner.sort_order,
+            owner.color,
+            owner.description,
+            owner.created_at.toISOString()
+          ]
         );
       }
     });
@@ -199,7 +205,7 @@ export class SqliteWorkspaceAdminDatabase
         workspace: String(row.workspace),
         user_id: String(row.user_id),
         role: String(row.role) as WorkspaceRole,
-        created_at: new Date(String(row.created_at)),
+        created_at: new Date(String(row.created_at))
       })
     );
   }
@@ -212,7 +218,7 @@ export class SqliteWorkspaceAdminDatabase
         workspace: String(row.workspace),
         user_id: String(row.user_id),
         role: String(row.role) as WorkspaceRole,
-        created_at: new Date(String(row.created_at)),
+        created_at: new Date(String(row.created_at))
       })
     );
   }
@@ -230,7 +236,10 @@ export class SqliteWorkspaceAdminDatabase
   async removeWorkspaceMember(workspace: string, userId: string) {
     const member = await this.getWorkspaceMember(workspace, userId);
     if (!member) return null;
-    this.run('DELETE FROM workspace_member WHERE workspace = ? AND user_id = ?', [workspace, userId]);
+    this.run('DELETE FROM workspace_member WHERE workspace = ? AND user_id = ?', [
+      workspace,
+      userId
+    ]);
     return member;
   }
 
@@ -263,7 +272,7 @@ export class SqliteWorkspaceAdminDatabase
     if (existing) {
       throw new Error('A role with this name already exists');
     }
-    
+
     this.run(
       'INSERT INTO workspace_role (id, workspace, name, description, tone, capabilities, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -308,7 +317,7 @@ export class SqliteWorkspaceAdminDatabase
         sqliteMappers.workspaceRoleDefinition
       );
       if (!role) return null;
-      
+
       const memberCount = this.get<{ count: number }>(
         'SELECT COUNT(*) as count FROM workspace_member WHERE workspace = ? AND role = ?',
         [ws, rid]
@@ -316,11 +325,11 @@ export class SqliteWorkspaceAdminDatabase
       if (memberCount && memberCount.count > 0) {
         throw new Error('Role is still assigned to workspace members');
       }
-      
+
       this.run('DELETE FROM workspace_role WHERE workspace = ? AND id = ?', [ws, rid]);
       return role;
     });
-    
+
     return tx(workspace, roleId);
   }
 

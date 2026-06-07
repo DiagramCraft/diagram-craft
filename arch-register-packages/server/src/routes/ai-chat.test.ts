@@ -5,8 +5,8 @@ import {
   createAiConfigResponse,
   extractUserTextContent,
   parseExtractResponse
-} from './ai-chat.js';
-import type { WorkspaceAiConfig } from '../types.js';
+} from './ai-chat';
+import type { WorkspaceAiConfig } from '../types';
 
 const now = new Date('2026-06-07T10:00:00.000Z');
 
@@ -49,7 +49,9 @@ describe('ai chat route helpers', () => {
   it('builds conversation auto titles with truncation', () => {
     expect(buildConversationAutoTitle('Short title')).toBe('Short title');
     expect(
-      buildConversationAutoTitle('This is a deliberately long conversation title that should truncate')
+      buildConversationAutoTitle(
+        'This is a deliberately long conversation title that should truncate'
+      )
     ).toBe('This is a deliberately long conversation title ...');
   });
 
@@ -113,9 +115,7 @@ describe('ai chat route helpers', () => {
     expect(() => buildAiConfigInput({ temperature: 3 })).toThrowError(
       'temperature must be a number between 0 and 2'
     );
-    expect(() => buildAiConfigInput({ enabled: 'yes' })).toThrowError(
-      'enabled must be a boolean'
-    );
+    expect(() => buildAiConfigInput({ enabled: 'yes' })).toThrowError('enabled must be a boolean');
   });
 
   it('parses extraction responses and falls back to raw output', () => {

@@ -4,8 +4,8 @@ import type {
   ProjectsFilesDatabase,
   UpdateProjectInput,
   UpsertProjectFileInput
-} from './database.js';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
+} from './database';
+import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
 
 export class SqliteProjectsFilesDatabase
   extends SqliteDatabaseBase
@@ -151,7 +151,14 @@ export class SqliteProjectsFilesDatabase
   ) {
     this.run(
       'UPDATE project_file SET is_template = ?, is_workspace_template = ?, updated_at = ? WHERE workspace = ? AND project_id = ? AND id = ?',
-      [isTemplate ? 1 : 0, isWorkspaceTemplate ? 1 : 0, updated_at.toISOString(), workspace, projectId, fileId]
+      [
+        isTemplate ? 1 : 0,
+        isWorkspaceTemplate ? 1 : 0,
+        updated_at.toISOString(),
+        workspace,
+        projectId,
+        fileId
+      ]
     );
   }
 
@@ -203,11 +210,7 @@ export class SqliteProjectsFilesDatabase
   async createProjectFileIfAbsent(
     input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }
   ) {
-    const existing = await this.getProjectFileByPath(
-      input.workspace,
-      input.project_id,
-      input.path
-    );
+    const existing = await this.getProjectFileByPath(input.workspace, input.project_id, input.path);
     if (existing) return null;
     return await this.upsertProjectFile(input);
   }
@@ -271,10 +274,11 @@ export class SqliteProjectsFilesDatabase
     if (matching.length === 0) return [];
 
     const tx = this.db.transaction(() => {
-      this.run(
-        'DELETE FROM project_file WHERE workspace = ? AND project_id = ? AND path LIKE ?',
-        [workspace, projectId, `${folderPathPrefix}%`]
-      );
+      this.run('DELETE FROM project_file WHERE workspace = ? AND project_id = ? AND path LIKE ?', [
+        workspace,
+        projectId,
+        `${folderPathPrefix}%`
+      ]);
     });
 
     tx();

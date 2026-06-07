@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
-import { createLogger } from './logger.js';
+import { createLogger } from './logger';
 
 const logger = createLogger('encryption');
 

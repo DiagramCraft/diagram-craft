@@ -6,8 +6,8 @@ import {
   describeProjectFileRelocation,
   parseProjectStatus,
   resolveProjectOwner
-} from './projects.js';
-import type { Project, ProjectFile } from '../types.js';
+} from './projects';
+import type { Project, ProjectFile } from '../types';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

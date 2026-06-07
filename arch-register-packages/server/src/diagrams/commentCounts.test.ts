@@ -4,7 +4,7 @@ import type {
   SerializedDiagramDocument
 } from '@diagram-craft/model/serialization/serializedTypes';
 import type { SerializedComment } from '@diagram-craft/model/comment';
-import { getDiagramCommentCounts } from './commentCounts.js';
+import { getDiagramCommentCounts } from './commentCounts';
 
 const makeComment = (id: string, state: 'resolved' | 'unresolved'): SerializedComment => ({
   id,
@@ -46,7 +46,9 @@ describe('getDiagramCommentCounts', () => {
 
   it('counts root comments and unresolved root comments', () => {
     const result = getDiagramCommentCounts(
-      makeDocument([makeDiagram('root', [makeComment('a', 'unresolved'), makeComment('b', 'resolved')])])
+      makeDocument([
+        makeDiagram('root', [makeComment('a', 'unresolved'), makeComment('b', 'resolved')])
+      ])
     );
 
     expect(result).toEqual({ commentCount: 2, unresolvedCommentCount: 1 });
@@ -63,7 +65,10 @@ describe('getDiagramCommentCounts', () => {
   });
 
   it('counts comments recursively in nested diagrams', () => {
-    const child = makeDiagram('child', [makeComment('c1', 'resolved'), makeComment('c2', 'unresolved')]);
+    const child = makeDiagram('child', [
+      makeComment('c1', 'resolved'),
+      makeComment('c2', 'unresolved')
+    ]);
     const root = makeDiagram('root', [makeComment('r1', 'unresolved')], [child]);
 
     expect(getDiagramCommentCounts(makeDocument([root]))).toEqual({

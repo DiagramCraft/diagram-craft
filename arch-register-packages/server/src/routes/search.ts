@@ -1,13 +1,13 @@
 import { H3, defineHandler, getQuery } from 'h3';
-import type { DatabaseAdapter } from '../db/database.js';
-import type { Entity, SchemaField } from '../types.js';
-import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
-import { parsePositiveInt } from '../utils/http.js';
-import { SEARCH_DEFAULTS } from '../constants.js';
-import { buildApiAuthCtx, canAccessProject } from '../auth/authorization.js';
-import type { AuthenticatedEvent } from '../middleware/auth.js';
+import type { DatabaseAdapter } from '../db/database';
+import type { Entity, SchemaField } from '../types';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace';
+import { parsePositiveInt } from '../utils/http';
+import { SEARCH_DEFAULTS } from '../constants';
+import { buildApiAuthCtx, canAccessProject } from '../auth/authorization';
+import type { AuthenticatedEvent } from '../middleware/auth';
 import { PermissionChecker } from '@arch-register/permissions';
-import { httpAssert } from '../utils/httpAssert.js';
+import { httpAssert } from '../utils/httpAssert';
 
 const BASE = '/api/:workspace/search';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTemplateStatusUpdateInput, decodeRouteParam } from './templates.js';
+import { buildTemplateStatusUpdateInput, decodeRouteParam } from './templates';
 
 describe('template route helpers', () => {
   it('decodes route params', () => {

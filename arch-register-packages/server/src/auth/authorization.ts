@@ -1,6 +1,6 @@
-import type { AuthenticatedEvent } from '../middleware/auth.js';
-import type { DatabaseAdapter } from '../db/database.js';
-import { type Entity, type GlobalPermission } from '../types.js';
+import type { AuthenticatedEvent } from '../middleware/auth';
+import type { DatabaseAdapter } from '../db/database';
+import { type Entity, type GlobalPermission } from '../types';
 import {
   buildAuthorizationContext,
   fetchAuthorizationContextData,
@@ -11,7 +11,7 @@ import {
   CapabilityEvaluator,
   ProjectAction
 } from '@arch-register/permissions';
-import { ServerDataProvider } from './ServerAuthorizationDataProvider.js';
+import { ServerDataProvider } from './ServerAuthorizationDataProvider';
 import { httpAssert } from '../utils/httpAssert';
 
 export const GLOBAL_WS = '__global__';
@@ -22,7 +22,7 @@ const capabilities = new CapabilityEvaluator();
 
 /**
  * Require a specific entity action, throw 403 if not allowed.
- * 
+ *
  * This is an HTTP-specific helper that wraps PermissionChecker
  * and throws an appropriate HTTP error.
  */
@@ -84,13 +84,10 @@ export const requireWorkspaceCapability = (
  * 
  * Checks if user has workspace admin role or global admin permission.
  */
-export const requireWorkspaceAdmin = (
-  context: AuthorizationContext,
-  message?: string
-) => {
+export const requireWorkspaceAdmin = (context: AuthorizationContext, message?: string) => {
   const isWorkspaceAdmin = checker.hasWorkspaceCapability(context, 'people.role');
   const isGlobalAdmin = checker.hasGlobalPermission(context, 'admin_platform');
-  
+
   httpAssert.true(isWorkspaceAdmin || isGlobalAdmin, {
     status: 403,
     statusText: 'Forbidden',
@@ -100,7 +97,7 @@ export const requireWorkspaceAdmin = (
 
 /**
  * Require project action permission, throw 403 if not allowed.
- * 
+ *
  * This is an HTTP-specific helper that wraps PermissionChecker
  * and throws an appropriate HTTP error.
  */
@@ -117,10 +114,8 @@ export const requireProjectAction = (
   });
 };
 
-export const canAccessProject = (
-  context: AuthorizationContext,
-  ownerTeamId: string | null
-) => checker.hasProjectPermission(context, ownerTeamId, 'edit_project');
+export const canAccessProject = (context: AuthorizationContext, ownerTeamId: string | null) =>
+  checker.hasProjectPermission(context, ownerTeamId, 'edit_project');
 
 export const requireProjectAccess = (
   context: AuthorizationContext,
@@ -136,7 +131,7 @@ export const requireProjectAccess = (
 
 /**
  * Require project creation capability for specific owner, throw 403 if not allowed.
- * 
+ *
  * This is an HTTP-specific helper that wraps CapabilityEvaluator
  * and throws an appropriate HTTP error.
  */
@@ -154,7 +149,7 @@ export const requireCanCreateProject = (
 
 /**
  * Require top-level entity creation capability for specific owner, throw 403 if not allowed.
- * 
+ *
  * This is an HTTP-specific helper that wraps CapabilityEvaluator
  * and throws an appropriate HTTP error.
  */
@@ -166,13 +161,14 @@ export const requireCanCreateTopLevelEntity = (
   httpAssert.true(capabilities.canCreateTopLevelEntity(context, ownerTeamId), {
     status: 403,
     statusText: 'Forbidden',
-    message: message ?? 'You do not have permission to create a top-level entity for this owner team'
+    message:
+      message ?? 'You do not have permission to create a top-level entity for this owner team'
   });
 };
 
 /**
  * Build authorization context for an authenticated event.
- * 
+ *
  * This fetches all necessary permission data from the database
  * and constructs an AuthorizationContext that can be used with
  * PermissionChecker and CapabilityEvaluator.

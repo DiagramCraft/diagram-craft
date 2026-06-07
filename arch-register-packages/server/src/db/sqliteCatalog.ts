@@ -7,8 +7,8 @@ import type {
   UpdateEnumInput,
   UpdateEntityInput,
   UpdateSchemaInput
-} from './database.js';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
+} from './database';
+import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
 
 export class SqliteCatalogDatabase extends SqliteDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
@@ -216,11 +216,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async replaceEntityGrants(
-    workspace: string,
-    entityId: string,
-    grants: CreateEntityGrantInput[]
-  ) {
+  async replaceEntityGrants(workspace: string, entityId: string, grants: CreateEntityGrantInput[]) {
     const tx = this.db.transaction(() => {
       this.run('DELETE FROM entity_grant WHERE workspace = ? AND entity_id = ?', [
         workspace,

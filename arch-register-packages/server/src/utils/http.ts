@@ -1,5 +1,5 @@
 import { HTTPError } from 'h3';
-import { DatabaseError } from '../db/database.js';
+import { DatabaseError } from '../db/database';
 
 type DbErrorMapping = Partial<Record<DatabaseError['code'], string>>;
 
@@ -8,13 +8,16 @@ type DbErrorMapping = Partial<Record<DatabaseError['code'], string>>;
  * Re-throws existing HTTPErrors, maps known database codes to specific messages,
  * and falls back to 500 for everything else.
  */
-export const handleDbError = (error: unknown, fallback: string, dbCodes?: DbErrorMapping): never => {
+export const handleDbError = (
+  error: unknown,
+  fallback: string,
+  dbCodes?: DbErrorMapping
+): never => {
   if (HTTPError.isError(error)) throw error;
   if (error instanceof DatabaseError) {
     const message = dbCodes?.[error.code];
     if (message) {
-      const status =
-        error.code === 'unique' || error.code === 'foreign' ? 409 : 400;
+      const status = error.code === 'unique' || error.code === 'foreign' ? 409 : 400;
       const statusText = status === 409 ? 'Conflict' : 'Bad Request';
       throw new HTTPError({ status, statusText, message });
     }
@@ -36,4 +39,7 @@ export const parsePositiveInt = (value: unknown, field: string) => {
 };
 
 export const slugify = (name: string): string =>
-  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');

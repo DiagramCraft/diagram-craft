@@ -6,7 +6,7 @@ import {
   buildWorkspaceOwnerInputs,
   parseWorkspaceRoleInput,
   sanitizeText
-} from './workspace-config.js';
+} from './workspace-config';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

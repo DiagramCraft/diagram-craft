@@ -1,17 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { H3, defineHandler, HTTPError } from 'h3';
 import { chat, chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack/ai';
-import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
-import type { AuthenticatedEvent } from '../middleware/auth.js';
-import { httpAssert } from '../utils/httpAssert.js';
-import { encrypt } from '../utils/encryption.js';
-import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter.js';
-import { buildSystemPrompt } from '../ai/systemPromptBuilder.js';
-import { createAiChatTools } from '../ai/chatTools.js';
-import type { UpsertAiConfigInput } from '../db/database.js';
-import type { WorkspaceAiConfig } from '../types.js';
+import type { DatabaseAdapter } from '../db/database';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace';
+import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
+import type { AuthenticatedEvent } from '../middleware/auth';
+import { httpAssert } from '../utils/httpAssert';
+import { encrypt } from '../utils/encryption';
+import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter';
+import { buildSystemPrompt } from '../ai/systemPromptBuilder';
+import { createAiChatTools } from '../ai/chatTools';
+import type { UpsertAiConfigInput } from '../db/database';
+import type { WorkspaceAiConfig } from '../types';
 
 const BASE = '/api/:workspace/ai';
 

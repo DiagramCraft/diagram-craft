@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HTTPError } from 'h3';
-import { DatabaseError } from '../db/database.js';
-import { handleDbError, parsePositiveInt, slugify } from './http.js';
+import { DatabaseError } from '../db/database';
+import { handleDbError, parsePositiveInt, slugify } from './http';
 
 // ── slugify ───────────────────────────────────────────────────
 

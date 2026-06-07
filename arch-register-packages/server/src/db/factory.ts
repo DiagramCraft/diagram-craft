@@ -1,9 +1,9 @@
 import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import type { DatabaseAdapter } from './database.js';
-import { PostgresDatabase } from './postgresDatabase.js';
-import { SqliteDatabase } from './sqliteDatabase.js';
-import { DB_DEFAULTS } from '../constants.js';
+import type { DatabaseAdapter } from './database';
+import { PostgresDatabase } from './postgresDatabase';
+import { SqliteDatabase } from './sqliteDatabase';
+import { DB_DEFAULTS } from '../constants';
 import { assert } from '@diagram-craft/utils/assert';
 
 type CreateDatabaseOptions = {

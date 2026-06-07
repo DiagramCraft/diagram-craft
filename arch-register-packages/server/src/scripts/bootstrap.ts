@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createDatabase } from '../db/factory.js';
+import { createDatabase } from '../db/factory';
 import {
   seedEntities,
   seedGlobalRoleAssignments,
@@ -13,10 +13,10 @@ import {
   seedTeamAssignments,
   seedWorkspaceMembers,
   seedWorkspaces
-} from '../db/seedData.js';
-import type { ContainmentField, ReferenceField } from '../types.js';
-import { decodeRefs } from '../types.js';
-import { hashPassword } from '../utils/password.js';
+} from '../db/seedData';
+import type { ContainmentField, ReferenceField } from '../types';
+import { decodeRefs } from '../types';
+import { hashPassword } from '../utils/password';
 import { CreateUserInput } from '../db/database';
 
 async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
@@ -138,7 +138,11 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   }
 
   for (const user of seedLocalUsers) {
-    await db.identityAuth.replaceGlobalRoleAssignments(user.id, rolesByUser.get(user.id) ?? [], now);
+    await db.identityAuth.replaceGlobalRoleAssignments(
+      user.id,
+      rolesByUser.get(user.id) ?? [],
+      now
+    );
   }
 
   for (const member of seedWorkspaceMembers) {

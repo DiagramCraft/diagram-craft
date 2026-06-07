@@ -1,16 +1,13 @@
 import { defineHandler, EventHandlerRequest, H3, H3Event, HTTPError } from 'h3';
-import type { AIGenerateRequest } from '../ai/aiServer.js';
-import { ConfiguredAIServer } from '../ai/configuredAiServer.js';
-import { resolveAiConfig } from '../ai/tanstackAiAdapter.js';
-import type { DatabaseAdapter } from '../db/database.js';
-import type { Entity, EntitySchema } from '../types.js';
-import { handleDbError } from '../utils/http.js';
-import { httpAssert } from '../utils/httpAssert.js';
-import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
-import {
-  toDiagramCraftData,
-  toDiagramCraftSchema
-} from '../api-helpers/diagram-craft-transforms.js';
+import type { AIGenerateRequest } from '../ai/aiServer';
+import { ConfiguredAIServer } from '../ai/configuredAiServer';
+import { resolveAiConfig } from '../ai/tanstackAiAdapter';
+import type { DatabaseAdapter } from '../db/database';
+import type { Entity, EntitySchema } from '../types';
+import { handleDbError } from '../utils/http';
+import { httpAssert } from '../utils/httpAssert';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace';
+import { toDiagramCraftData, toDiagramCraftSchema } from '../api-helpers/diagram-craft-transforms';
 
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024;
 const CONTENT_TYPE_JSON = 'application/json';
@@ -21,9 +18,7 @@ const DIAGRAM_CRAFT_DATA_BASE = '/api/public/:workspace/data';
 const handleDiagramCraftError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback);
 
-export const validateDiagramCraftAIRequestHeaders = (
-  event: H3Event<EventHandlerRequest>
-) => {
+export const validateDiagramCraftAIRequestHeaders = (event: H3Event<EventHandlerRequest>) => {
   const contentTypeStr = event.req.headers.get('content-type');
   httpAssert.true(contentTypeStr?.startsWith(CONTENT_TYPE_JSON), {
     status: 415,

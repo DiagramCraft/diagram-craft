@@ -10,7 +10,7 @@ import {
 import { AbstractEdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger';
 
 const log = createLogger('DiagramAutoSave');
 
@@ -87,7 +87,7 @@ export class DiagramAutoSave {
     if (this.disposed) return;
     if (!this.document) {
       // Bind lazily after the update burst has settled so we do not attach a
-      // DiagramDocument while the initial Yjs sync transaction is still in flight.
+      // DiagramDocument while the initial  sync transaction is still in flight.
       log.debug(`First debounced save for ${this.tempRelPath} — creating DiagramDocument`);
       this.document = new DiagramDocument(makeServerRegistry(), false, new YJSRoot(this.yDoc));
     }

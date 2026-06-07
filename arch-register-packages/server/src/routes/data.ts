@@ -5,31 +5,29 @@ import type {
   DatabaseAdapter,
   UpdateEntityInput,
   CreateEntityInput
-} from '../db/database.js';
-import { createLogger } from '../utils/logger.js';
-import { parseCsv, validateCsvData, csvRowToEntity } from '../utils/csvImport.js';
+} from '../db/database';
+import { createLogger } from '../utils/logger';
+import { parseCsv, validateCsvData, csvRowToEntity } from '../utils/csvImport';
 import {
   decodeRefs,
   type Entity,
   type EntityLink,
   type EntitySchema as InternalEntitySchema,
   type SchemaField
-} from '../types.js';
-import { toApiEntity, toApiEntitySummary } from '../api-helpers/entity-helpers.js';
-import { computeChanges, extractEntityFields, logAudit } from '../db/audit.js';
-import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
-import { formatArrayForCsv, generateCsv } from '../utils/csv.js';
-import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
-import { computeEntityCompleteness } from '../utils/completeness.js';
+} from '../types';
+import { toApiEntity, toApiEntitySummary } from '../api-helpers/entity-helpers';
+import { computeChanges, extractEntityFields, logAudit } from '../db/audit';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace';
+import { formatArrayForCsv, generateCsv } from '../utils/csv';
+import { handleDbError, parsePositiveInt, slugify } from '../utils/http';
+import { computeEntityCompleteness } from '../utils/completeness';
 import {
   buildApiAuthCtx,
   requireCanCreateTopLevelEntity,
   requireEntityAction
-} from '../auth/authorization.js';
-import type { AuthenticatedEvent } from '../middleware/auth.js';
-import {
-  PermissionChecker
-} from '@arch-register/permissions';
+} from '../auth/authorization';
+import type { AuthenticatedEvent } from '../middleware/auth';
+import { PermissionChecker } from '@arch-register/permissions';
 import { httpAssert } from '../utils/httpAssert';
 
 const logger = createLogger('data');
@@ -123,8 +121,6 @@ export const filterEntities = (
   });
 };
 
-
-
 type RelationRecord = {
   entityId: string;
   entitySlug: string;
@@ -181,11 +177,7 @@ export const parseEntityMutationPayload = (
   });
 
   const name =
-    typeof _name === 'string'
-      ? _name
-      : typeof fields['name'] === 'string'
-        ? fields['name']
-        : '';
+    typeof _name === 'string' ? _name : typeof fields['name'] === 'string' ? fields['name'] : '';
   delete fields['name'];
 
   const slug = typeof _slug === 'string' && _slug ? _slug : slugify(name);
@@ -312,7 +304,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       try {
         const [allEntities, schemas] = await Promise.all([
           db.catalog.listEntities(workspace),
-          db.catalog.listSchemas(workspace),
+          db.catalog.listSchemas(workspace)
         ]);
         const schemaMap = new Map(schemas.map(s => [s.id, s]));
         const visibleEntities = allEntities.filter(entity =>
@@ -324,11 +316,19 @@ export function createDataRoutes(db: DatabaseAdapter) {
         return view === 'summary'
           ? rows.map(row => {
               const schema = schemaMap.get(row.schema_id);
-              return toApiEntitySummary(row, authCtx, schema != null ? computeEntityCompleteness(row, schema) : null);
+              return toApiEntitySummary(
+                row,
+                authCtx,
+                schema != null ? computeEntityCompleteness(row, schema) : null
+              );
             })
           : rows.map(row => {
               const schema = schemaMap.get(row.schema_id);
-              return toApiEntity(row, authCtx, schema != null ? computeEntityCompleteness(row, schema) : null);
+              return toApiEntity(
+                row,
+                authCtx,
+                schema != null ? computeEntityCompleteness(row, schema) : null
+              );
             });
       } catch (e) {
         handleError(e, 'Failed to retrieve data');
@@ -344,7 +344,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       try {
         const [allEntities, schemas] = await Promise.all([
           db.catalog.listEntities(workspace),
-          db.catalog.listSchemas(workspace),
+          db.catalog.listSchemas(workspace)
         ]);
         const schemaMap = new Map(schemas.map(s => [s.id, s]));
         const entities = allEntities.filter(entity =>
@@ -370,7 +370,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         const completeness = {
           below50: scored.filter(s => s < 50).length,
           below80: scored.filter(s => s >= 50 && s < 80).length,
-          above80: scored.filter(s => s >= 80).length,
+          above80: scored.filter(s => s >= 80).length
         };
 
         return {
@@ -381,7 +381,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             schemaId: value!,
             count
           })),
-          completeness,
+          completeness
         };
       } catch (e) {
         handleError(e, 'Failed to retrieve data facets');
@@ -514,15 +514,15 @@ export function createDataRoutes(db: DatabaseAdapter) {
           ];
           const rows = entities.map(entity => {
             const row: Record<string, unknown> = {
-              ID: entity.id,
-              Name: entity.name,
-              Slug: entity.slug,
-              Namespace: entity.namespace,
-              Description: entity.description,
-              Owner: entity.owner ?? '',
-              Lifecycle: entity.lifecycle ?? '',
-              Tags: formatArrayForCsv(entity.tags),
-              Links: entity.links.length.toString(),
+              'ID': entity.id,
+              'Name': entity.name,
+              'Slug': entity.slug,
+              'Namespace': entity.namespace,
+              'Description': entity.description,
+              'Owner': entity.owner ?? '',
+              'Lifecycle': entity.lifecycle ?? '',
+              'Tags': formatArrayForCsv(entity.tags),
+              'Links': entity.links.length.toString(),
               'Schema Type': schema.name
             };
             for (const field of schema.fields) {
@@ -556,15 +556,15 @@ export function createDataRoutes(db: DatabaseAdapter) {
             'Schema Type'
           ];
           const rows = entities.map(entity => ({
-            ID: entity.id,
-            Name: entity.name,
-            Slug: entity.slug,
-            Namespace: entity.namespace,
-            Description: entity.description,
-            Owner: entity.owner ?? '',
-            Lifecycle: entity.lifecycle ?? '',
-            Tags: formatArrayForCsv(entity.tags),
-            Links: entity.links.length.toString(),
+            'ID': entity.id,
+            'Name': entity.name,
+            'Slug': entity.slug,
+            'Namespace': entity.namespace,
+            'Description': entity.description,
+            'Owner': entity.owner ?? '',
+            'Lifecycle': entity.lifecycle ?? '',
+            'Tags': formatArrayForCsv(entity.tags),
+            'Links': entity.links.length.toString(),
             'Schema Type': schemaMap.get(entity.schema_id)?.name ?? entity.schema_id
           }));
           csvContent = generateCsv(rows, columns, ';');
@@ -632,7 +632,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const body = await readBody<{ schemaId: string; csvContent: string }>(event);
-      
+
       httpAssert.present(body, { message: 'Request body is required' });
       httpAssert.present(body.schemaId, { message: 'schemaId is required' });
       httpAssert.present(body.csvContent, { message: 'csvContent is required' });
@@ -648,10 +648,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
         const schemaEntities = allEntities.filter(e => e.schema_id === body.schemaId);
 
         const existingEntitiesMap = new Map(schemaEntities.map(e => [e.id, e]));
-        const entitiesBySlug = new Map(
-          schemaEntities.map(e => [`${e.namespace}:${e.slug}`, e])
-        );
-        const entitiesByName = new Map<string, typeof allEntities[0][]>();
+        const entitiesBySlug = new Map(schemaEntities.map(e => [`${e.namespace}:${e.slug}`, e]));
+        const entitiesByName = new Map<string, (typeof allEntities)[0][]>();
         for (const entity of schemaEntities) {
           const name = entity.name.toLowerCase().trim();
           const list = entitiesByName.get(name) ?? [];
@@ -664,12 +662,15 @@ export function createDataRoutes(db: DatabaseAdapter) {
           const rowName = row.data['Name']?.toLowerCase().trim();
           const rowSlug = row.data['Slug']?.trim();
           const rowNamespace = row.data['Namespace']?.trim() || 'default';
-          
-          let existingEntity: typeof allEntities[0] | undefined;
+
+          let existingEntity: (typeof allEntities)[0] | undefined;
           let matchType: 'id' | 'slug' | 'name' | 'none' = 'none';
           let nameMatches: typeof allEntities = [];
-          const constraintViolations: Array<{ type: 'duplicate_slug' | 'wrong_workspace' | 'wrong_schema'; message: string }> = [];
-          
+          const constraintViolations: Array<{
+            type: 'duplicate_slug' | 'wrong_workspace' | 'wrong_schema';
+            message: string;
+          }> = [];
+
           if (row.existingId) {
             const entityById = existingEntitiesMap.get(row.existingId);
             if (entityById) {
@@ -718,18 +719,24 @@ export function createDataRoutes(db: DatabaseAdapter) {
                   message: `Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`
                 });
                 if (matchType === 'none') {
-                  row.errors.push(`Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`);
+                  row.errors.push(
+                    `Slug "${proposedSlug}" already exists in namespace "${rowNamespace}"`
+                  );
                 }
               }
             }
           }
-          
+
           const isUpdate = matchType === 'id' || matchType === 'slug';
-          
+
           // Check permissions for updates
           if ((isUpdate || matchType === 'name') && existingEntity) {
             const checker = new PermissionChecker();
-            const hasPermission = checker.hasEntityPermission(authCtx, existingEntity, 'edit_entity');
+            const hasPermission = checker.hasEntityPermission(
+              authCtx,
+              existingEntity,
+              'edit_entity'
+            );
             if (!hasPermission) {
               return {
                 rowNumber: row.rowNumber,
@@ -744,32 +751,40 @@ export function createDataRoutes(db: DatabaseAdapter) {
               };
             }
           }
-          
+
           return {
             rowNumber: row.rowNumber,
             errors: row.errors,
             entity: row.errors.length === 0 ? csvRowToEntity(row.data, schema.fields) : null,
             isUpdate,
             matchType,
-            nameMatches: matchType === 'name' ? nameMatches.map(e => ({
-              id: e.id,
-              name: e.name,
-              slug: e.slug,
-              namespace: e.namespace
-            })) : [],
+            nameMatches:
+              matchType === 'name'
+                ? nameMatches.map(e => ({
+                    id: e.id,
+                    name: e.name,
+                    slug: e.slug,
+                    namespace: e.namespace
+                  }))
+                : [],
             existingId: existingEntity?.id ?? row.existingId,
-            existingEntity: (isUpdate || matchType === 'name') && existingEntity ? {
-              _name: existingEntity.name,
-              _slug: existingEntity.slug,
-              _namespace: existingEntity.namespace,
-              _description: existingEntity.description,
-              _owner: existingEntity.owner,
-              _lifecycle: existingEntity.lifecycle,
-              _tags: existingEntity.tags,
-              // Only include _links if it has actual content
-              ...(existingEntity.links && existingEntity.links.length > 0 ? { _links: existingEntity.links } : {}),
-              ...existingEntity.data
-            } : null,
+            existingEntity:
+              (isUpdate || matchType === 'name') && existingEntity
+                ? {
+                    _name: existingEntity.name,
+                    _slug: existingEntity.slug,
+                    _namespace: existingEntity.namespace,
+                    _description: existingEntity.description,
+                    _owner: existingEntity.owner,
+                    _lifecycle: existingEntity.lifecycle,
+                    _tags: existingEntity.tags,
+                    // Only include _links if it has actual content
+                    ...(existingEntity.links && existingEntity.links.length > 0
+                      ? { _links: existingEntity.links }
+                      : {}),
+                    ...existingEntity.data
+                  }
+                : null,
             constraintViolations: constraintViolations.length > 0 ? constraintViolations : undefined
           };
         });
@@ -843,11 +858,14 @@ export function createDataRoutes(db: DatabaseAdapter) {
               throw new Error(`Entity ${existingId} has different schema type`);
             }
           } else {
-            const proposedSlug = (entityData._slug as string) || slugify((entityData._name as string) ?? '');
+            const proposedSlug =
+              (entityData._slug as string) || slugify((entityData._name as string) ?? '');
             const proposedNamespace = (entityData._namespace as string) || 'default';
 
             if (entitiesBySlug.has(`${proposedNamespace}:${proposedSlug}`)) {
-              throw new Error(`Slug "${proposedSlug}" already exists in namespace "${proposedNamespace}"`);
+              throw new Error(
+                `Slug "${proposedSlug}" already exists in namespace "${proposedNamespace}"`
+              );
             }
           }
 
@@ -868,14 +886,20 @@ export function createDataRoutes(db: DatabaseAdapter) {
           // Resolve reference fields
           const resolvedData = { ...entityData };
           for (const field of schema.fields) {
-            if ((field.type === 'reference' || field.type === 'containment') && resolvedData[field.id]) {
+            if (
+              (field.type === 'reference' || field.type === 'containment') &&
+              resolvedData[field.id]
+            ) {
               const value = resolvedData[field.id];
               if (typeof value === 'string') {
-                const refNames = value.split(',').map(n => n.trim()).filter(Boolean);
+                const refNames = value
+                  .split(',')
+                  .map(n => n.trim())
+                  .filter(Boolean);
                 const refIds = refNames
                   .map(name => nameToId.get(name.toLowerCase()))
                   .filter((id): id is string => id !== undefined);
-                
+
                 if (refIds.length > 0) {
                   resolvedData[field.id] = refIds.join(',');
                 } else {
@@ -900,7 +924,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
               description: (resolvedData._description as string) ?? existingEntity.description,
               owner,
               lifecycle,
-              tags: Array.isArray(resolvedData._tags) ? resolvedData._tags as string[] : existingEntity.tags,
+              tags: Array.isArray(resolvedData._tags)
+                ? (resolvedData._tags as string[])
+                : existingEntity.tags,
               links: existingEntity.links,
               schema_id: existingEntity.schema_id,
               data: extractEntityFields(resolvedData),
@@ -937,7 +963,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
               description: (resolvedData._description as string) ?? '',
               owner,
               lifecycle,
-              tags: Array.isArray(resolvedData._tags) ? resolvedData._tags as string[] : [],
+              tags: Array.isArray(resolvedData._tags) ? (resolvedData._tags as string[]) : [],
               links: [],
               data: extractEntityFields(resolvedData),
               visibility_mode: null,
@@ -962,10 +988,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
           }
         }
 
-        return { 
-          created: createdIds.length, 
+        return {
+          created: createdIds.length,
           updated: updatedIds.length,
-          ids: [...createdIds, ...updatedIds] 
+          ids: [...createdIds, ...updatedIds]
         };
       } catch (e) {
         logger.error('Import entities error', e instanceof Error ? e : new Error(String(e)));
@@ -984,7 +1010,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       try {
         const [row, schemas] = await Promise.all([
           db.catalog.getEntity(workspace, id),
-          db.catalog.listSchemas(workspace),
+          db.catalog.listSchemas(workspace)
         ]);
         httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
         requireEntityAction(
@@ -994,7 +1020,11 @@ export function createDataRoutes(db: DatabaseAdapter) {
           'You do not have access to view this entity'
         );
         const schema = schemas.find(s => s.id === row.schema_id);
-        return toApiEntity(row, authCtx, schema != null ? computeEntityCompleteness(row, schema) : null);
+        return toApiEntity(
+          row,
+          authCtx,
+          schema != null ? computeEntityCompleteness(row, schema) : null
+        );
       } catch (e) {
         handleError(e, 'Failed to retrieve data record');
       }
@@ -1115,7 +1145,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
           db.catalog.getSchema(workspace, payload.schemaId),
           db.catalog.listEntities(workspace)
         ]);
-        httpAssert.present(schema, { status: 404, message: `Schema '${payload.schemaId}' not found` });
+        httpAssert.present(schema, {
+          status: 404,
+          message: `Schema '${payload.schemaId}' not found`
+        });
         const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
         const parents = getEntityParentsFromPayload(schema, payload.fields, entityLookup);
         const fallbackOwner = (await db.workspaceAdmin.listTeams(workspace))[0]?.id ?? null;
@@ -1202,7 +1235,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
           : null;
       const teamIds = await getTeamIds(db, workspace);
       const owner =
-        payload.requestedOwner && teamIds.has(payload.requestedOwner) ? payload.requestedOwner : null;
+        payload.requestedOwner && teamIds.has(payload.requestedOwner)
+          ? payload.requestedOwner
+          : null;
 
       try {
         const oldRow = await db.catalog.getEntity(workspace, id);
@@ -1214,7 +1249,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
             'edit_entity',
             'You do not have permission to edit this entity'
           );
-        if (authCtx && (owner !== oldRow.owner || payload.visibilityMode !== oldRow.visibility_mode)) {
+        if (
+          authCtx &&
+          (owner !== oldRow.owner || payload.visibilityMode !== oldRow.visibility_mode)
+        ) {
           requireEntityAction(
             authCtx,
             oldRow,

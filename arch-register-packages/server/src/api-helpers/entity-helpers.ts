@@ -1,5 +1,5 @@
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types';
-import type { Entity } from '../types.js';
+import type { Entity } from '../types';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 
@@ -12,7 +12,7 @@ const getEntityCapabilities = (context: AuthorizationContext | null, entity: Ent
       canEdit: true,
       canDelete: true,
       canAdmin: true,
-      canCreateChild: true,
+      canCreateChild: true
     };
   }
 
@@ -21,7 +21,7 @@ const getEntityCapabilities = (context: AuthorizationContext | null, entity: Ent
     canEdit: checker.hasEntityPermission(context, entity, 'edit_entity'),
     canDelete: checker.hasEntityPermission(context, entity, 'admin_entity'),
     canAdmin: checker.hasEntityPermission(context, entity, 'admin_entity'),
-    canCreateChild: checker.hasEntityPermission(context, entity, 'create_child'),
+    canCreateChild: checker.hasEntityPermission(context, entity, 'create_child')
   };
 };
 
@@ -44,7 +44,7 @@ export const toApiEntity = (
   _visibilityMode: entity.visibility_mode,
   _completeness: completeness,
   ...getEntityCapabilities(authCtx, entity),
-  ...entity.data,
+  ...entity.data
 });
 
 export const toApiEntitySummary = (
@@ -65,5 +65,5 @@ export const toApiEntitySummary = (
   _links: entity.links,
   _visibilityMode: entity.visibility_mode,
   _completeness: completeness,
-  ...getEntityCapabilities(authCtx, entity),
+  ...getEntityCapabilities(authCtx, entity)
 });

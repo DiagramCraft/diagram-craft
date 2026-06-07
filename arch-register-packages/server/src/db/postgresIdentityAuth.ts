@@ -1,10 +1,10 @@
-import type {
-  CreateUserInput,
-  IdentityAuthDatabase,
-  UpdateUserInput
-} from './database.js';
-import { normalizePostgresError, PostgresDatabaseBase, type PostgresRowTypes } from './postgresBase.js';
-import type { GlobalRole } from '../types.js';
+import type { CreateUserInput, IdentityAuthDatabase, UpdateUserInput } from './database';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  type PostgresRowTypes
+} from './postgresBase';
+import type { GlobalRole } from '../types';
 
 export class PostgresIdentityAuthDatabase
   extends PostgresDatabaseBase

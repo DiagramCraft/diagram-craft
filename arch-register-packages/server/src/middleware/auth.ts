@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3';
 import { defineHandler, getCookie, HTTPError } from 'h3';
-import { verifyToken } from '../utils/jwt.js';
-import type { IdentityAuthDatabase } from '../db/database.js';
-import type { JWTPayload, User } from '../types.js';
+import { verifyToken } from '../utils/jwt';
+import type { IdentityAuthDatabase } from '../db/database';
+import type { JWTPayload, User } from '../types';
 import { httpAssert } from '../utils/httpAssert';
 
 export type AuthenticatedEvent = H3Event & {

@@ -1,9 +1,9 @@
 import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import { toolDefinition } from '@tanstack/ai';
 import { randomUUID } from 'node:crypto';
-import type { DatabaseAdapter } from '../db/database.js';
-import { decodeRefs, type Entity, type SchemaField } from '../types.js';
-import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization.js';
+import type { DatabaseAdapter } from '../db/database';
+import { decodeRefs, type Entity, type SchemaField } from '../types';
+import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
 
 const checker = new PermissionChecker();
 
@@ -136,7 +136,8 @@ const getEntityDetailsTool = toolDefinition({
 
 const createEntityTool = toolDefinition({
   name: 'create_entity',
-  description: 'Create a new entity in the workspace. Requires explicit user approval before execution.',
+  description:
+    'Create a new entity in the workspace. Requires explicit user approval before execution.',
   needsApproval: true,
   inputSchema: {
     type: 'object',
@@ -168,7 +169,8 @@ const createEntityTool = toolDefinition({
 
 const updateEntityTool = toolDefinition({
   name: 'update_entity',
-  description: 'Update an existing entity in the workspace. Requires explicit user approval before execution.',
+  description:
+    'Update an existing entity in the workspace. Requires explicit user approval before execution.',
   needsApproval: true,
   inputSchema: {
     type: 'object',
@@ -203,10 +205,7 @@ const includesQuery = (value: unknown, query: string) =>
     .toLowerCase()
     .includes(query);
 
-const getVisibleEntities = (
-  entities: Entity[],
-  authCtx: AuthorizationContext | null
-) => {
+const getVisibleEntities = (entities: Entity[], authCtx: AuthorizationContext | null) => {
   if (authCtx === null) return entities;
   return entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'));
 };
@@ -263,10 +262,7 @@ const relationFields = (fields: SchemaField[]) =>
       field.type === 'reference' || field.type === 'containment'
   );
 
-const summarizeRelationTarget = (
-  entity: Entity,
-  schemaName: string | undefined
-) => ({
+const summarizeRelationTarget = (entity: Entity, schemaName: string | undefined) => ({
   id: entity.id,
   name: entity.name,
   slug: entity.slug,
@@ -275,12 +271,12 @@ const summarizeRelationTarget = (
 });
 
 const slugify = (name: string) =>
-  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 
-const summarizeEntity = (
-  entity: Entity,
-  schemaName: string | undefined
-) => ({
+const summarizeEntity = (entity: Entity, schemaName: string | undefined) => ({
   id: entity.id,
   name: entity.name,
   slug: entity.slug,
@@ -389,29 +385,30 @@ export const createAiChatTools = (
     const entityLookup = new Map(entities.map(candidate => [candidate.id, candidate]));
     const schema = schemaMap.get(entity.schema_id);
     const includeRelated = args.includeRelated ?? true;
-    const outgoingRelations = includeRelated && schema
-      ? relationFields(schema.fields).map(field => {
-          const ids = decodeRefs(entity.data[field.id]);
-          return {
-            fieldId: field.id,
-            fieldName: field.name,
-            kind: field.type,
-            targets: ids.map(id => {
-              const target = entityLookup.get(id);
-              if (!target) {
-                return {
-                  id,
-                  name: null,
-                  slug: null,
-                  schemaId: field.schemaId,
-                  schemaName: schemaMap.get(field.schemaId)?.name ?? field.schemaId
-                };
-              }
-              return summarizeRelationTarget(target, schemaMap.get(target.schema_id)?.name);
-            })
-          };
-        })
-      : [];
+    const outgoingRelations =
+      includeRelated && schema
+        ? relationFields(schema.fields).map(field => {
+            const ids = decodeRefs(entity.data[field.id]);
+            return {
+              fieldId: field.id,
+              fieldName: field.name,
+              kind: field.type,
+              targets: ids.map(id => {
+                const target = entityLookup.get(id);
+                if (!target) {
+                  return {
+                    id,
+                    name: null,
+                    slug: null,
+                    schemaId: field.schemaId,
+                    schemaName: schemaMap.get(field.schemaId)?.name ?? field.schemaId
+                  };
+                }
+                return summarizeRelationTarget(target, schemaMap.get(target.schema_id)?.name);
+              })
+            };
+          })
+        : [];
 
     const incomingRelations = includeRelated
       ? entities.flatMap(source => {
@@ -479,7 +476,9 @@ export const createAiChatTools = (
       (await db.workspaceAdmin.listLifecycleStates(workspaceId)).map(state => state.id)
     );
     const lifecycle =
-      typeof args.lifecycle === 'string' && lifecycleValues.has(args.lifecycle) ? args.lifecycle : null;
+      typeof args.lifecycle === 'string' && lifecycleValues.has(args.lifecycle)
+        ? args.lifecycle
+        : null;
 
     const timestamp = new Date();
     const entity = await db.catalog.createEntity({
@@ -518,13 +517,20 @@ export const createAiChatTools = (
     if (!current) throw new Error(`Entity '${args.entityId}' not found`);
 
     if (authCtx !== null) {
-      requireEntityAction(authCtx, current, 'edit_entity', 'You do not have permission to edit this entity');
+      requireEntityAction(
+        authCtx,
+        current,
+        'edit_entity',
+        'You do not have permission to edit this entity'
+      );
     }
 
     const teamIds = new Set((await db.workspaceAdmin.listTeams(workspaceId)).map(team => team.id));
     const nextOwner = normalizeOwner(args.owner, teamIds, current.owner);
     const nextVisibilityMode =
-      args.visibilityMode === undefined ? current.visibility_mode : normalizeVisibilityMode(args.visibilityMode);
+      args.visibilityMode === undefined
+        ? current.visibility_mode
+        : normalizeVisibilityMode(args.visibilityMode);
 
     if (
       authCtx !== null &&

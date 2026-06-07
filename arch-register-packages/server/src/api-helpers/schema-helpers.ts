@@ -1,8 +1,8 @@
 import type { EntitySchema, WorkspaceEnum } from '@arch-register/api-types';
 import type {
   EntitySchema as InternalEntitySchema,
-  WorkspaceEnum as InternalWorkspaceEnum,
-} from '../types.js';
+  WorkspaceEnum as InternalWorkspaceEnum
+} from '../types';
 
 export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
   id: e.id,
@@ -11,7 +11,7 @@ export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
   options: e.options,
   sort_order: e.sort_order,
   created_at: e.created_at.toISOString(),
-  updated_at: e.updated_at.toISOString(),
+  updated_at: e.updated_at.toISOString()
 });
 
 export const toApiSchema = (
@@ -25,7 +25,7 @@ export const toApiSchema = (
       const enumDef = enumMap.get(field.enumId);
       return {
         ...field,
-        options: enumDef?.options ?? [],
+        options: enumDef?.options ?? []
       };
     }
     return field;
@@ -40,6 +40,6 @@ export const toApiSchema = (
     icon: schema.icon,
     entity_count: entityCount,
     created_at: schema.created_at.toISOString(),
-    updated_at: schema.updated_at.toISOString(),
+    updated_at: schema.updated_at.toISOString()
   };
 };

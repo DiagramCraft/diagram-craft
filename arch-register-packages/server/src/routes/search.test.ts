@@ -5,8 +5,8 @@ import {
   collectMatchedMetadata,
   includesQuery,
   parseTypes
-} from './search.js';
-import type { Entity, SchemaField } from '../types.js';
+} from './search';
+import type { Entity, SchemaField } from '../types';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
@@ -24,7 +24,7 @@ const entity: Entity = {
   schema_id: 'schema-component',
   data: {
     technology: 'React',
-    runtime: 'Node.js',
+    runtime: 'Node',
     notes: 'Uses GraphQL gateway'
   },
   visibility_mode: null,
@@ -52,11 +52,7 @@ describe('search route helpers', () => {
   });
 
   it('parses, trims, and deduplicates requested types', () => {
-    expect(parseTypes(' files,entities ,files,schemas ')).toEqual([
-      'files',
-      'entities',
-      'schemas'
-    ]);
+    expect(parseTypes(' files,entities ,files,schemas ')).toEqual(['files', 'entities', 'schemas']);
   });
 
   it('rejects invalid search types', () => {
@@ -72,11 +68,7 @@ describe('search route helpers', () => {
   });
 
   it('collects matching entity metadata fields', () => {
-    expect(collectMatchedMetadata(entity, 'react')).toEqual([
-      'description',
-      'tags',
-      'links'
-    ]);
+    expect(collectMatchedMetadata(entity, 'react')).toEqual(['description', 'tags', 'links']);
     expect(collectMatchedMetadata(entity, 'design')).toEqual(['owner']);
   });
 

@@ -1,7 +1,10 @@
-import type { CatalogDatabase } from '../db/database.js';
-import { httpAssert } from '../utils/httpAssert.js';
+import type { CatalogDatabase } from '../db/database';
+import { httpAssert } from '../utils/httpAssert';
 
-export const resolveWorkspace = async (catalog: CatalogDatabase, slug: string | undefined): Promise<string> => {
+export const resolveWorkspace = async (
+  catalog: CatalogDatabase,
+  slug: string | undefined
+): Promise<string> => {
   httpAssert.string(slug, { message: 'workspace is required' });
 
   const row = await catalog.resolveWorkspaceSlug(slug);

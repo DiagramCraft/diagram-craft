@@ -7,8 +7,12 @@ import type {
   UpdateEnumInput,
   UpdateEntityInput,
   UpdateSchemaInput
-} from './database.js';
-import { normalizePostgresError, PostgresDatabaseBase, type PostgresRowTypes } from './postgresBase.js';
+} from './database';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  type PostgresRowTypes
+} from './postgresBase';
 
 export class PostgresCatalogDatabase extends PostgresDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
@@ -229,11 +233,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     `;
   }
 
-  async replaceEntityGrants(
-    workspace: string,
-    entityId: string,
-    grants: CreateEntityGrantInput[]
-  ) {
+  async replaceEntityGrants(workspace: string, entityId: string, grants: CreateEntityGrantInput[]) {
     try {
       await this.sql.begin(async tx => {
         await tx`DELETE FROM entity_grant WHERE workspace = ${workspace} AND entity_id = ${entityId}`;

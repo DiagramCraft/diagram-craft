@@ -1,6 +1,6 @@
 import { newid } from '@diagram-craft/utils/id';
-import type { AuditDatabase, CreateAuditLogInput } from './database.js';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
+import type { AuditDatabase, CreateAuditLogInput } from './database';
+import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
 
 export class SqliteAuditDatabase extends SqliteDatabaseBase implements AuditDatabase {
   async listAuditLogs(workspace: string) {

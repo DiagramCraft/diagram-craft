@@ -1,6 +1,6 @@
-import type { ProjectFile } from '../types.js';
+import type { ProjectFile } from '../types';
 import type { ProjectTemplatesResponse } from '@arch-register/api-types';
-import { toApiProjectFile } from './project-helpers.js';
+import { toApiProjectFile } from './project-helpers';
 
 export type ProjectWithFiles = {
   project: { id: string };
@@ -9,7 +9,10 @@ export type ProjectWithFiles = {
 
 export const buildAllTemplatesResponse = (
   projectsWithFiles: ProjectWithFiles[]
-): { workspaceTemplates: ReturnType<typeof toApiProjectFile>[]; projectTemplates: Record<string, ReturnType<typeof toApiProjectFile>[]> } => {
+): {
+  workspaceTemplates: ReturnType<typeof toApiProjectFile>[];
+  projectTemplates: Record<string, ReturnType<typeof toApiProjectFile>[]>;
+} => {
   const workspaceTemplates: ReturnType<typeof toApiProjectFile>[] = [];
   const projectTemplatesMap = new Map<string, ReturnType<typeof toApiProjectFile>[]>();
 

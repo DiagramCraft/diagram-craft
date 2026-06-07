@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildAllTemplatesResponse, buildProjectTemplatesResponse } from './template-helpers.js';
-import type { ProjectFile } from '../types.js';
+import { buildAllTemplatesResponse, buildProjectTemplatesResponse } from './template-helpers';
+import type { ProjectFile } from '../types';
 
 const now = new Date('2026-06-06T00:00:00.000Z');
 
@@ -56,9 +56,24 @@ describe('buildAllTemplatesResponse', () => {
   });
 
   it('separates templates from multiple projects correctly', () => {
-    const wsTemplate = makeFile({ id: 'ws-t', is_template: true, is_workspace_template: true, project_id: 'proj-1' });
-    const projTemplate1 = makeFile({ id: 'p1-t', is_template: true, is_workspace_template: false, project_id: 'proj-1' });
-    const projTemplate2 = makeFile({ id: 'p2-t', is_template: true, is_workspace_template: false, project_id: 'proj-2' });
+    const wsTemplate = makeFile({
+      id: 'ws-t',
+      is_template: true,
+      is_workspace_template: true,
+      project_id: 'proj-1'
+    });
+    const projTemplate1 = makeFile({
+      id: 'p1-t',
+      is_template: true,
+      is_workspace_template: false,
+      project_id: 'proj-1'
+    });
+    const projTemplate2 = makeFile({
+      id: 'p2-t',
+      is_template: true,
+      is_workspace_template: false,
+      project_id: 'proj-2'
+    });
     const nonTemplate = makeFile({ id: 'plain', is_template: false, project_id: 'proj-1' });
 
     const result = buildAllTemplatesResponse([
@@ -75,8 +90,18 @@ describe('buildAllTemplatesResponse', () => {
   });
 
   it('collects multiple workspace templates from different projects', () => {
-    const t1 = makeFile({ id: 'ws-t1', is_template: true, is_workspace_template: true, project_id: 'proj-1' });
-    const t2 = makeFile({ id: 'ws-t2', is_template: true, is_workspace_template: true, project_id: 'proj-2' });
+    const t1 = makeFile({
+      id: 'ws-t1',
+      is_template: true,
+      is_workspace_template: true,
+      project_id: 'proj-1'
+    });
+    const t2 = makeFile({
+      id: 'ws-t2',
+      is_template: true,
+      is_workspace_template: true,
+      project_id: 'proj-2'
+    });
 
     const result = buildAllTemplatesResponse([
       { project: proj1, files: [t1] },
@@ -111,39 +136,78 @@ describe('buildProjectTemplatesResponse', () => {
   });
 
   it('workspace templates from any project go into workspaceTemplates', () => {
-    const t1 = makeFile({ id: 'ws-t1', is_template: true, is_workspace_template: true, project_id: 'proj-1' });
-    const t2 = makeFile({ id: 'ws-t2', is_template: true, is_workspace_template: true, project_id: 'proj-2' });
+    const t1 = makeFile({
+      id: 'ws-t1',
+      is_template: true,
+      is_workspace_template: true,
+      project_id: 'proj-1'
+    });
+    const t2 = makeFile({
+      id: 'ws-t2',
+      is_template: true,
+      is_workspace_template: true,
+      project_id: 'proj-2'
+    });
 
-    const result = buildProjectTemplatesResponse([
-      { project: proj1, files: [t1] },
-      { project: proj2, files: [t2] }
-    ], 'proj-1');
+    const result = buildProjectTemplatesResponse(
+      [
+        { project: proj1, files: [t1] },
+        { project: proj2, files: [t2] }
+      ],
+      'proj-1'
+    );
 
     expect(result.workspaceTemplates).toHaveLength(2);
     expect(result.projectTemplates).toHaveLength(0);
   });
 
   it('project-level templates only from the target project go into projectTemplates', () => {
-    const ownTemplate = makeFile({ id: 'own', is_template: true, is_workspace_template: false, project_id: 'proj-1' });
-    const otherTemplate = makeFile({ id: 'other', is_template: true, is_workspace_template: false, project_id: 'proj-2' });
+    const ownTemplate = makeFile({
+      id: 'own',
+      is_template: true,
+      is_workspace_template: false,
+      project_id: 'proj-1'
+    });
+    const otherTemplate = makeFile({
+      id: 'other',
+      is_template: true,
+      is_workspace_template: false,
+      project_id: 'proj-2'
+    });
 
-    const result = buildProjectTemplatesResponse([
-      { project: proj1, files: [ownTemplate] },
-      { project: proj2, files: [otherTemplate] }
-    ], 'proj-1');
+    const result = buildProjectTemplatesResponse(
+      [
+        { project: proj1, files: [ownTemplate] },
+        { project: proj2, files: [otherTemplate] }
+      ],
+      'proj-1'
+    );
 
     expect(result.projectTemplates).toHaveLength(1);
     expect(result.projectTemplates[0]!.id).toBe('own');
   });
 
   it('mixes workspace and project templates correctly', () => {
-    const wsTemplate = makeFile({ id: 'ws-t', is_template: true, is_workspace_template: true, project_id: 'proj-2' });
-    const projTemplate = makeFile({ id: 'p-t', is_template: true, is_workspace_template: false, project_id: 'proj-1' });
+    const wsTemplate = makeFile({
+      id: 'ws-t',
+      is_template: true,
+      is_workspace_template: true,
+      project_id: 'proj-2'
+    });
+    const projTemplate = makeFile({
+      id: 'p-t',
+      is_template: true,
+      is_workspace_template: false,
+      project_id: 'proj-1'
+    });
 
-    const result = buildProjectTemplatesResponse([
-      { project: proj1, files: [projTemplate] },
-      { project: proj2, files: [wsTemplate] }
-    ], 'proj-1');
+    const result = buildProjectTemplatesResponse(
+      [
+        { project: proj1, files: [projTemplate] },
+        { project: proj2, files: [wsTemplate] }
+      ],
+      'proj-1'
+    );
 
     expect(result.workspaceTemplates).toHaveLength(1);
     expect(result.workspaceTemplates[0]!.id).toBe('ws-t');

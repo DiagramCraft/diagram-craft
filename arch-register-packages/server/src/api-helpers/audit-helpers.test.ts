@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { filterAndPaginateAuditLogs, computeAuditStats, toApiAuditLogEntry } from './audit-helpers.js';
-import type { AuditLogEntry } from '../types.js';
+import { filterAndPaginateAuditLogs, computeAuditStats, toApiAuditLogEntry } from './audit-helpers';
+import type { AuditLogEntry } from '../types';
 
 const makeEntry = (overrides: Partial<AuditLogEntry> & { id: string }): AuditLogEntry => ({
   workspace: 'ws-1',
@@ -18,9 +18,27 @@ const makeEntry = (overrides: Partial<AuditLogEntry> & { id: string }): AuditLog
 });
 
 // Three test entries covering different dimensions
-const entryA = makeEntry({ id: 'a', operation: 'create', entity_type: 'entity', entity_id: 'e-1', timestamp: new Date('2026-05-27T10:00:00.000Z') });
-const entryB = makeEntry({ id: 'b', operation: 'update', entity_type: 'entity', entity_id: 'e-2', timestamp: new Date('2026-05-17T10:00:00.000Z') });
-const entryC = makeEntry({ id: 'c', operation: 'delete', entity_type: 'project', entity_id: 'p-1', timestamp: new Date('2026-04-27T10:00:00.000Z') });
+const entryA = makeEntry({
+  id: 'a',
+  operation: 'create',
+  entity_type: 'entity',
+  entity_id: 'e-1',
+  timestamp: new Date('2026-05-27T10:00:00.000Z')
+});
+const entryB = makeEntry({
+  id: 'b',
+  operation: 'update',
+  entity_type: 'entity',
+  entity_id: 'e-2',
+  timestamp: new Date('2026-05-17T10:00:00.000Z')
+});
+const entryC = makeEntry({
+  id: 'c',
+  operation: 'delete',
+  entity_type: 'project',
+  entity_id: 'p-1',
+  timestamp: new Date('2026-04-27T10:00:00.000Z')
+});
 
 const allRows = [entryA, entryB, entryC];
 
@@ -62,14 +80,20 @@ describe('filterAndPaginateAuditLogs', () => {
 
   it('filters by startDate (excludes rows before)', () => {
     // 15 days before 2026-06-06 is 2026-05-22 — should include only entryA (May 27)
-    const result = filterAndPaginateAuditLogs(allRows, { ...baseFilters, startDate: '2026-05-22T00:00:00.000Z' });
+    const result = filterAndPaginateAuditLogs(allRows, {
+      ...baseFilters,
+      startDate: '2026-05-22T00:00:00.000Z'
+    });
     expect(result).toHaveLength(1);
     expect(result[0]!.id).toBe('a');
   });
 
   it('filters by endDate (excludes rows after)', () => {
     // Should include entryB (May 17) and entryC (Apr 27)
-    const result = filterAndPaginateAuditLogs(allRows, { ...baseFilters, endDate: '2026-05-20T00:00:00.000Z' });
+    const result = filterAndPaginateAuditLogs(allRows, {
+      ...baseFilters,
+      endDate: '2026-05-20T00:00:00.000Z'
+    });
     expect(result).toHaveLength(2);
     expect(result.map(r => r.id)).toContain('b');
     expect(result.map(r => r.id)).toContain('c');
@@ -126,11 +150,18 @@ describe('computeAuditStats', () => {
 
   it('byOperation counts each operation and sorts descending', () => {
     // Add an extra create so create×2, update×1, delete×1 — verifies sort
-    const extra = makeEntry({ id: 'd', operation: 'create', entity_type: 'entity', entity_id: 'e-3' });
+    const extra = makeEntry({
+      id: 'd',
+      operation: 'create',
+      entity_type: 'entity',
+      entity_id: 'e-3'
+    });
     const result = computeAuditStats([...allRows, extra], NOW_MS);
     expect(result.byOperation[0]!.operation).toBe('create');
     expect(result.byOperation[0]!.count).toBe(2);
-    expect(result.byOperation.every((a, i, arr) => i === 0 || arr[i - 1]!.count >= a.count)).toBe(true);
+    expect(result.byOperation.every((a, i, arr) => i === 0 || arr[i - 1]!.count >= a.count)).toBe(
+      true
+    );
   });
 
   it('byEntityType counts each entity_type and sorts descending', () => {
@@ -181,7 +212,7 @@ describe('toApiAuditLogEntry', () => {
       entity_slug: 'my-entity',
       schema_id: 'schema-1',
       changes: { new: { name: 'My Entity' } },
-      metadata: {},
+      metadata: {}
     };
     const result = toApiAuditLogEntry(entry);
     expect(result.id).toBe('audit-1');
