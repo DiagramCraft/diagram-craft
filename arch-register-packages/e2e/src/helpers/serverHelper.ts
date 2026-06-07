@@ -15,7 +15,11 @@ export type TestServer = {
   stop: () => Promise<void>;
 };
 
-export async function startTestServer(): Promise<TestServer> {
+type StartTestServerOptions = {
+  appOptions?: Parameters<typeof createApp>[2];
+};
+
+export async function startTestServer(options: StartTestServerOptions = {}): Promise<TestServer> {
   setLogLevel('error');
 
   const tmpDir = await mkdtemp(join(tmpdir(), 'ar-e2e-api-'));
@@ -31,7 +35,7 @@ export async function startTestServer(): Promise<TestServer> {
 
   const db = await createDatabase();
   const storage = createStorage();
-  const app = createApp(db, storage);
+  const app = createApp(db, storage, options.appOptions);
 
   const server = createServer(toNodeHandler(app));
   await new Promise<void>((resolve, reject) => {

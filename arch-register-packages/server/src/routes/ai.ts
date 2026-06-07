@@ -4,72 +4,89 @@ import { httpAssert } from '../utils/httpAssert.js';
 import type { DatabaseAdapter } from '../db/database.js';
 import { resolveAiConfig } from '../ai/tanstackAiAdapter.js';
 import { ConfiguredAIServer } from '../ai/configuredAiServer.js';
+import { resolveWorkspace } from '../utils/resolveWorkspace.js';
 
 // Constants
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024; // 1MB limit for AI requests
 const CONTENT_TYPE_JSON = 'application/json';
 const API_AI_PATH = '/api/:workspace/ai';
 
-export const createAIRoutes = (db: DatabaseAdapter) => {
-  const router = new H3();
+export const validateAIRequestHeaders = (event: H3Event<EventHandlerRequest>) => {
+  const contentTypeStr = event.req.headers.get('content-type');
+  httpAssert.true(contentTypeStr?.startsWith(CONTENT_TYPE_JSON), {
+    status: 415,
+    statusText: 'Unsupported Media Type',
+    message: `Content-Type must be ${CONTENT_TYPE_JSON}`
+  });
 
-  // Helper function to validate content type and size
-  const validateRequest = (event: H3Event<EventHandlerRequest>) => {
-    const contentTypeStr = event.req.headers.get('content-type');
-    httpAssert.true(contentTypeStr?.startsWith(CONTENT_TYPE_JSON), {
-      status: 415,
-      statusText: 'Unsupported Media Type',
-      message: `Content-Type must be ${CONTENT_TYPE_JSON}`
+  const contentLengthStr = event.req.headers.get('content-length');
+  const contentLength = parseInt(contentLengthStr ?? '0', 10);
+  httpAssert.true(contentLength <= MAX_REQUEST_SIZE, {
+    status: 413,
+    statusText: 'Payload Too Large',
+    message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
+  });
+};
+
+export const validateAIGenerateBody = (body: unknown): AIGenerateRequest => {
+  httpAssert.json(body, { message: 'Request body must be a valid JSON object' });
+  const input = body as Record<string, unknown>;
+
+  httpAssert.true(Array.isArray(input['messages']) && input['messages'].length > 0, {
+    message: 'messages array is required and must not be empty'
+  });
+
+  for (const message of input['messages'] as Array<Record<string, unknown>>) {
+    const role = message['role'];
+    const content = message['content'];
+    httpAssert.present(role, { message: 'Each message must have role' });
+    httpAssert.present(content, { message: 'Each message must have content' });
+    httpAssert.true(typeof role === 'string' && ['system', 'user', 'assistant'].includes(role), {
+      message: 'Message role must be system, user, or assistant'
     });
+  }
 
-    const contentLengthStr = event.req.headers.get('content-length');
-    const contentLength = parseInt(contentLengthStr ?? '0', 10);
-    httpAssert.true(contentLength <= MAX_REQUEST_SIZE, {
-      status: 413,
-      statusText: 'Payload Too Large',
-      message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
-    });
-  };
+  return body as AIGenerateRequest;
+};
 
-  // Helper function to handle errors consistently
-  const handleError = (error: unknown, fallbackMessage: string) => {
-    if (HTTPError.isError(error)) {
-      throw error;
-    }
+export const toAIHttpError = (error: unknown, fallbackMessage: string) => {
+  if (HTTPError.isError(error)) {
+    return error;
+  }
 
-    // Handle fetch errors
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new HTTPError({
-          status: 504,
-          statusText: 'Gateway Timeout',
-          message: 'AI request timed out'
-        });
-      }
-
-      // Pass through detailed error message for debugging
-      throw new HTTPError({
-        status: 500,
-        statusText: 'Internal Server Error',
-        message: `${fallbackMessage}: ${error.message}`
+  if (error instanceof Error) {
+    if (error.name === 'AbortError') {
+      return new HTTPError({
+        status: 504,
+        statusText: 'Gateway Timeout',
+        message: 'AI request timed out'
       });
     }
 
-    throw new HTTPError({
+    return new HTTPError({
       status: 500,
       statusText: 'Internal Server Error',
-      message: fallbackMessage
+      message: `${fallbackMessage}: ${error.message}`
     });
-  };
+  }
+
+  return new HTTPError({
+    status: 500,
+    statusText: 'Internal Server Error',
+    message: fallbackMessage
+  });
+};
+
+export const createAIRoutes = (db: DatabaseAdapter) => {
+  const router = new H3();
 
   // POST /api/:workspace/ai/generate
   router.post(
     `${API_AI_PATH}/generate`,
     defineHandler(async event => {
-      validateRequest(event);
+      validateAIRequestHeaders(event);
 
-      const workspace = event.context.params?.['workspace'];
-      httpAssert.string(workspace, { status: 400, message: 'workspace is required' });
+      const workspace = await resolveWorkspace(event, db);
 
       const aiConfig = await resolveAiConfig(db, workspace);
       if (!aiConfig) {
@@ -77,25 +94,9 @@ export const createAIRoutes = (db: DatabaseAdapter) => {
       }
 
       try {
-        const body = (await event.req.json().catch(() => undefined)) as
-          | AIGenerateRequest
-          | undefined;
-
-        // Validate request body
-        httpAssert.json(body, { message: 'Request body must be a valid JSON object' });
-
-        httpAssert.true(Array.isArray(body.messages) && body.messages.length > 0, {
-          message: 'messages array is required and must not be empty'
-        });
-
-        // Validate message structure
-        for (const message of body.messages) {
-          httpAssert.present(message.role, { message: 'Each message must have role' });
-          httpAssert.present(message.content, { message: 'Each message must have content' });
-          httpAssert.true(['system', 'user', 'assistant'].includes(message.role), {
-            message: 'Message role must be system, user, or assistant'
-          });
-        }
+        const body = validateAIGenerateBody(
+          (await event.req.json().catch(() => undefined)) as AIGenerateRequest | undefined
+        );
 
         const aiServer = new ConfiguredAIServer(aiConfig);
         const result = await aiServer.generate(body);
@@ -109,7 +110,7 @@ export const createAIRoutes = (db: DatabaseAdapter) => {
 
         return result.body;
       } catch (error: unknown) {
-        handleError(error, 'Failed to generate AI response');
+        throw toAIHttpError(error, 'Failed to generate AI response');
       }
     })
   );

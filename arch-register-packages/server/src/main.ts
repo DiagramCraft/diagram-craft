@@ -5,7 +5,6 @@ import { createDatabase } from './db/factory.js';
 import { createStorage } from './storage/storage.js';
 import { YjsCollaborationServer } from './collaboration/yjsCollaborationServer.js';
 import { verifyToken } from './utils/jwt.js';
-import { createAIRoutes } from './routes/ai.js';
 import { createApp } from './app.js';
 import { SERVER_DEFAULTS } from './constants.js';
 import { generateSvgPreview } from './preview/svgPreviewGenerator.js';
@@ -87,10 +86,6 @@ const main = async () => {
     name => name,
     wsAuthenticator
   );
-
-  app.use(createAIRoutes(db));
-  logger.info('AI routes enabled');
-
   const server = createServer(toNodeHandler(app));
   collaborationServer.bind(server);
 
