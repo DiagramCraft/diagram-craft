@@ -43,7 +43,8 @@
       "@diagram-craft/stencil-data-modelling/*": ["./packages/stencil-data-modelling/src/*"],
       "@diagram-craft/markdown/*": ["./packages/markdown/src/*"],
       "@diagram-craft/playwright/*": ["./packages/playwright/src/*"],
-      "@arch-register/server/*": ["./arch-register-packages/server/src/*"]
+      "@arch-register/server/*": ["./arch-register-packages/server/src/*"],
+      "@arch-register/api-types/*": ["./arch-register-packages/api-types/src/*"]
     }
   },
   "exclude": ["node_modules", "dist", "**/vite.config.ts", "**/playground"]
