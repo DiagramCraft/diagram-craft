@@ -158,9 +158,10 @@ export class EdgeEndpointMoveDrag extends Drag {
     // the one closest to the midpoint
 
     const midpoint = Line.midpoint(Line.of(this.edge.start.position, this.edge.end.position));
-    const normal = Vector.normalize(
-      Vector.tangentToNormal(Vector.from(midpoint, this.edge.start.position))
-    );
+    const direction = Vector.from(midpoint, this.edge.start.position);
+    if (Vector.length(direction) === 0) return;
+
+    const normal = Vector.normalize(Vector.tangentToNormal(direction));
 
     // Extend the normal to be sufficiently long to intersect with all parts of the shape boundary
     const ray = Line.extend(Line.of(midpoint, Point.add(midpoint, normal)), 100000, 100000);
@@ -186,12 +187,16 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     // Drop all points that are inside the node's bounding box
     potentialWaypoints = potentialWaypoints.filter(p => !Box.contains(node.bounds, p));
+    if (potentialWaypoints.length === 0) return;
 
     // Find the closest waypoint to the midpoint - however, ensure it is not too close
-    const closestWaypoint = potentialWaypoints.reduce((prev, curr) => {
-      const d = Point.distance(curr, midpoint);
-      return d > dimension / 3 && d < Point.distance(prev, midpoint) ? curr : prev;
-    }, potentialWaypoints[0]!);
+    const sufficientlyDistant = potentialWaypoints.filter(
+      waypoint => Point.distance(waypoint, midpoint) > dimension / 3
+    );
+    const candidates = sufficientlyDistant.length > 0 ? sufficientlyDistant : potentialWaypoints;
+    const closestWaypoint = candidates.reduce((prev, curr) =>
+      Point.distance(curr, midpoint) < Point.distance(prev, midpoint) ? curr : prev
+    );
 
     this.edge.addWaypoint({ point: closestWaypoint }, this.capture.uow);
   }
@@ -202,6 +207,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     }
 
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
+    this.context.help.pop('EdgeEndpointMoveDrag');
     this.capture.abort();
   }
 
