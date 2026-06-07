@@ -21,11 +21,28 @@ const handleError = (error: unknown, fallback: string): never =>
     foreign: 'Foreign key constraint violation',
   });
 
-const getParam = (event: H3Event, name: string) => {
-  const value = event.context.params?.[name];
+export const decodeRouteParam = (value: string | undefined, name: string) => {
   httpAssert.present(value, { message: `${name} is required` });
   return decodeURIComponent(value);
 };
+
+export const buildTemplateStatusUpdateInput = (body: unknown) => {
+  httpAssert.json(body, { message: 'Request body must be a JSON object' });
+
+  const { is_template, is_workspace_template } = body as Record<string, unknown>;
+  httpAssert.boolean(is_template, { message: 'is_template must be a boolean' });
+  httpAssert.boolean(is_workspace_template, {
+    message: 'is_workspace_template must be a boolean'
+  });
+
+  return {
+    is_template,
+    is_workspace_template
+  };
+};
+
+const getParam = (event: H3Event, name: string) =>
+  decodeRouteParam(event.context.params?.[name], name);
 
 export const createTemplateRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
@@ -95,11 +112,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
       const filePath = getParam(event, 'path');
 
       const body = await event.req.json().catch(() => undefined);
-      httpAssert.json(body, { message: 'Request body must be a JSON object' });
-
-      const { is_template, is_workspace_template } = body as Record<string, unknown>;
-      httpAssert.boolean(is_template, { message: 'is_template must be a boolean' });
-      httpAssert.boolean(is_workspace_template, { message: 'is_workspace_template must be a boolean' });
+      const { is_template, is_workspace_template } = buildTemplateStatusUpdateInput(body);
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);

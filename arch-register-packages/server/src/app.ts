@@ -12,8 +12,7 @@ import { createWorkspaceRoutes } from './routes/workspaces.js';
 import { createAuditRoutes } from './routes/audit.js';
 import { createWorkspaceConfigRoutes } from './routes/workspace-config.js';
 import { createAiChatRoutes } from './routes/ai-chat.js';
-import { createAIRoutes } from './routes/ai.js';
-import { createPublicRoutes } from './routes/public.js';
+import { createDiagramCraftRoutes } from './routes/diagram-craft.js';
 import { createAuthRoutes, createAuthProtectedRoutes } from './routes/auth.js';
 import { createTemplateRoutes } from './routes/templates.js';
 import { requireAuth } from './middleware/auth.js';
@@ -85,13 +84,12 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter, options:
   app.use(createSchemaRoutes(db));
   app.use(createEnumRoutes(db));
   app.use(createDataRoutes(db));
-  app.use(createPublicRoutes(db));
+  app.use(createDiagramCraftRoutes(db));
   app.use(createSearchRoutes(db));
   app.use(createTemplateRoutes(db));
   app.use(createProjectRoutes(db, storage));
   app.use(createAuditRoutes(db));
   app.use(createWorkspaceConfigRoutes(db));
-  app.use(createAIRoutes(db));
   app.use(createAiChatRoutes(db, options.routeOverrides?.aiChat));
 
   return app;

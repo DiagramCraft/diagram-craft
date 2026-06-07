@@ -9,6 +9,16 @@ import { filterAndPaginateAuditLogs, computeAuditStats } from '../api/audit-help
 
 const BASE = '/api/:workspace/audit';
 
+export const buildAuditListFilters = (query: Record<string, unknown>) => ({
+  entityType: typeof query['entityType'] === 'string' ? query['entityType'] : null,
+  entityId: typeof query['entityId'] === 'string' ? query['entityId'] : null,
+  operation: typeof query['operation'] === 'string' ? query['operation'] : null,
+  startDate: typeof query['startDate'] === 'string' ? query['startDate'] : null,
+  endDate: typeof query['endDate'] === 'string' ? query['endDate'] : null,
+  limit: parsePositiveInt(query['limit'], 'limit') ?? 50,
+  offset: parsePositiveInt(query['offset'], 'offset') ?? 0
+});
+
 export const createAuditRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
 
@@ -22,15 +32,7 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
 
       const query = getQuery(event);
 
-      const filters = {
-        entityType: typeof query['entityType'] === 'string' ? query['entityType'] : null,
-        entityId: typeof query['entityId'] === 'string' ? query['entityId'] : null,
-        operation: typeof query['operation'] === 'string' ? query['operation'] : null,
-        startDate: typeof query['startDate'] === 'string' ? query['startDate'] : null,
-        endDate: typeof query['endDate'] === 'string' ? query['endDate'] : null,
-        limit: parsePositiveInt(query['limit'], 'limit') ?? 50,
-        offset: parsePositiveInt(query['offset'], 'offset') ?? 0
-      };
+      const filters = buildAuditListFilters(query);
 
       const rows = await db.audit.listAuditLogs(workspace);
       return filterAndPaginateAuditLogs(rows, filters).map(toApiAuditLogEntry);

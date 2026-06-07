@@ -1,12 +1,11 @@
 import { seedEntities } from '@arch-register/server/db/seedData';
 import { test as baseTest, expect } from '../helpers/fixtures';
+import { seedCatalogEntities } from '../helpers/seedHelper';
 
 const test = baseTest.extend<{ seeded: true }>({
   seeded: [
     async ({ server }, use) => {
-      for (const entity of seedEntities) {
-        await server.db.catalog.createEntity(entity);
-      }
+      await seedCatalogEntities(server.db);
       await use(true);
     },
     { scope: 'file' }

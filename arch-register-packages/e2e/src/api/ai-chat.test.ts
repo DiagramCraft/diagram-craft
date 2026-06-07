@@ -1,6 +1,4 @@
-import { test as baseTest, expect } from 'vitest';
-import { startTestServer, type TestServer } from '../helpers/serverHelper';
-import { makeAuthHeader, seedMinimal } from '../helpers/seedHelper';
+import { createApiTest, expect } from '../helpers/fixtures';
 
 type SeededFixtures = {
   conversationId: string;
@@ -62,32 +60,15 @@ const mockAiChatOverrides = {
   })()
 } as const;
 
-const test = baseTest.extend<{
-  server: TestServer;
-  auth: string;
+const test = createApiTest({
+  appOptions: {
+    routeOverrides: {
+      aiChat: mockAiChatOverrides as never
+    }
+  }
+}).extend<{
   seeded: SeededFixtures;
 }>({
-  server: [
-    async ({}, use) => {
-      const server = await startTestServer({
-        appOptions: {
-          routeOverrides: {
-            aiChat: mockAiChatOverrides as never
-          }
-        }
-      });
-      await seedMinimal(server.db);
-      await use(server);
-      await server.stop();
-    },
-    { scope: 'file' }
-  ],
-  auth: [
-    async ({ server }, use) => {
-      await use(await makeAuthHeader(server.db));
-    },
-    { scope: 'file' }
-  ],
   seeded: [
     async ({ server }, use) => {
       const now = new Date('2026-06-07T12:00:00.000Z');
