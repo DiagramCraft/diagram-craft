@@ -209,6 +209,14 @@
   padding: 8px 10px;
   border-bottom: 1px solid var(--cmp-border);
   white-space: nowrap;
+
+  &:first-child {
+    border-radius: 4px 0 0 0;
+  }
+
+  &:last-child {
+    border-radius: 0 4px 0 0;
+  }
 }
 
 .table tbody tr {
@@ -222,6 +230,14 @@
 
 .table tbody tr:hover {
   background: var(--cmp-bg);
+}
+
+.tableRowSelected {
+  background: color-mix(in oklch, var(--accent-fg) 7%, var(--base-bg));
+}
+
+.tableRowSelected td {
+  border-bottom-color: color-mix(in oklch, var(--accent-fg) 15%, var(--panel-border));
 }
 
 .table td {
@@ -398,6 +414,160 @@
   background: var(--cmp-bg);
 }
 
+
+/* Checkboxes */
+.checkbox {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--base-fg-more-dim);
+  border-radius: 3px;
+  background: transparent;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.checkbox:checked {
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
+}
+
+.checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox:indeterminate {
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
+}
+
+.checkbox:indeterminate::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 5px;
+  width: 6px;
+  height: 1.5px;
+  background: white;
+}
+
+/* Bulk action bar */
+.bulkBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  height: 38px;
+  background: color-mix(in oklch, var(--accent-fg) 8%, var(--panel-bg));
+  border-bottom: 1px solid color-mix(in oklch, var(--accent-fg) 22%, var(--panel-border));
+  border-top: 2px solid var(--accent-fg);
+  flex-shrink: 0;
+  overflow: hidden;
+  animation: bulkBarIn 140ms ease;
+  margin-bottom: 1rem;
+}
+
+@keyframes bulkBarIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bulkBarConfirm {
+  background: color-mix(in oklch, var(--warning-fg) 7%, var(--panel-bg));
+  border-top-color: var(--warning-fg);
+  border-bottom-color: color-mix(in oklch, var(--warning-fg) 22%, var(--panel-border));
+}
+
+.bulkCount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.bulkCountPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--accent-fg);
+  color: var(--base-bg);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px 1px 5px;
+  border-radius: 999px;
+  line-height: 1;
+  height: 18px;
+}
+
+.bulkCountLabel {
+  font-size: 12px;
+  color: var(--base-fg-dim);
+  white-space: nowrap;
+}
+
+.bulkSep {
+  width: 1px;
+  height: 18px;
+  background: var(--panel-border);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.bulkField {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+}
+
+.bulkFieldLabel {
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bulkConfirmMsg {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--base-fg-dim);
+}
+
+.bulkWarnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--warning-fg);
+  color: var(--base-bg);
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.bulkDim {
+  color: var(--base-fg-more-dim);
+}
 
 /* Empty state */
 .empty {
