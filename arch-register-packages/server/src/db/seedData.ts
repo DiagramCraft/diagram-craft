@@ -664,14 +664,12 @@ export const seedSavedViews: SavedView[] = [
     name: 'Security Radar',
     description: 'Radar view of security-related components',
     view_mode: 'radar',
-    filters: {
-      owner: 'Security & Compliance'
-    },
+    filters: {},
     config: {
       radar: {
         schemaId: '00000000-0000-0000-0000-000000000003',
-        quadrantFieldId: 'technology',
-        ringFieldId: 'lifecycle',
+        quadrantFieldId: '_lifecycle',
+        ringFieldId: '_lifecycle',
         ringOrder: ['proposed', 'experimental', 'production', 'deprecated']
       }
     },

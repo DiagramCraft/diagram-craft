@@ -1,3 +1,4 @@
+-- @creates saved_view
 CREATE TABLE saved_view (
     id TEXT PRIMARY KEY,
     workspace TEXT NOT NULL REFERENCES workspace(id) ON DELETE CASCADE,
