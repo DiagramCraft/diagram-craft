@@ -124,7 +124,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const query = getQuery(event);
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';

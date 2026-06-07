@@ -76,7 +76,7 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter, options:
   app.use(createAuthRoutes(db));
 
   // Apply authentication middleware to all routes below
-  const authMiddleware = requireAuth(db);
+  const authMiddleware = requireAuth(db.identityAuth);
   app.use(authMiddleware);
 
   // Protected routes (require authentication)

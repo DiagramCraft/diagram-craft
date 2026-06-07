@@ -35,7 +35,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
   router.get(
     `${BASE}/templates`,
     defineHandler(async (event) => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
 
       try {
@@ -60,7 +60,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
   router.get(
     `${BASE}/projects/:projectId/templates`,
     defineHandler(async (event) => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const projectId = getParam(event, 'projectId');
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
 
@@ -90,7 +90,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
   router.put(
     `${BASE}/projects/:projectId/template-status/**:path`,
     defineHandler(async (event) => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const projectId = getParam(event, 'projectId');
       const filePath = getParam(event, 'path');
 

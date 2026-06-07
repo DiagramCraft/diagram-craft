@@ -102,7 +102,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       try {
@@ -127,7 +127,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       const id = event.context.params?.['id'];
@@ -149,7 +149,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
   router.post(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const body = await event.req.json().catch(() => undefined);
@@ -163,7 +163,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
           buildCreateSchemaInput(workspace, body as Record<string, unknown>, teamIds, timestamp)
         );
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'create',
           entityType: 'entity_schema',
@@ -185,7 +185,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const id = event.context.params?.['id'];
@@ -218,7 +218,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
         httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'update',
           entityType: 'entity_schema',
@@ -241,7 +241,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const id = event.context.params?.['id'];
@@ -260,7 +260,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
 
         await db.catalog.deleteSchema(workspace, id);
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'delete',
           entityType: 'entity_schema',

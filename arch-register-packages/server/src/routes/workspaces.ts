@@ -202,7 +202,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           }
         }
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace: row.id,
           operation: 'create',
           entityType: 'workspace',
@@ -240,7 +240,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
         httpAssert.present(row, { status: 404, message: `Workspace '${id}' not found` });
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace: id,
           operation: 'update',
           entityType: 'workspace',

@@ -69,7 +69,7 @@ export function createEnumRoutes(db: DatabaseAdapter) {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       try {
@@ -84,7 +84,7 @@ export function createEnumRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       const id = event.context.params?.['id'];
@@ -102,7 +102,7 @@ export function createEnumRoutes(db: DatabaseAdapter) {
   router.post(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const body = await event.req.json().catch(() => undefined);
@@ -122,7 +122,7 @@ export function createEnumRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const id = event.context.params?.['id'];
@@ -149,7 +149,7 @@ export function createEnumRoutes(db: DatabaseAdapter) {
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const id = event.context.params?.['id'];

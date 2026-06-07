@@ -155,7 +155,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
         const projects = await db.projectsFiles.listProjects(workspace);
@@ -188,7 +188,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = getParam(event, 'id');
       try {
@@ -208,7 +208,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.post(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
@@ -230,7 +230,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           );
         const row = await db.projectsFiles.createProject(input);
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'create',
           entityType: 'project',
@@ -251,7 +251,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
@@ -289,7 +289,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'update',
           entityType: 'project',
@@ -310,7 +310,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
@@ -326,7 +326,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         await db.projectsFiles.deleteProject(workspace, id);
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'delete',
           entityType: 'project',
@@ -349,7 +349,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.get(
     `${BASE}/:id/files`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
@@ -368,7 +368,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.get(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
@@ -403,7 +403,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.put(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
 
@@ -480,7 +480,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             extractEntityFields(existingFile),
             extractEntityFields(row)
           );
-          await logAudit(db, {
+          await logAudit(db.audit, {
             workspace,
             operation: 'update',
             entityType: 'project_file',
@@ -490,7 +490,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             metadata: { project_id: id, path: filePath }
           });
         } else {
-          await logAudit(db, {
+          await logAudit(db.audit, {
             workspace,
             operation: 'create',
             entityType: 'project_file',
@@ -513,7 +513,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.delete(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
@@ -533,7 +533,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         await db.projectsFiles.deleteProjectFileByPath(workspace, id, filePath);
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'delete',
           entityType: 'project_file',
@@ -557,7 +557,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.put(
     `${BASE}/:id/files/relocate/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
 
@@ -658,7 +658,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         await db.projectsFiles.deleteProjectFileByPath(workspace, id, filePath);
         await storage.delete(workspace, id, existingFile.id).catch(() => {});
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'update',
           entityType: 'project_file',
@@ -686,7 +686,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.post(
     `${BASE}/:id/folders`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
@@ -724,7 +724,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         }
 
         if (row) {
-          await logAudit(db, {
+          await logAudit(db.audit, {
             workspace,
             operation: 'create',
             entityType: 'project_file',
@@ -747,7 +747,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.put(
     `${BASE}/:id/folders/rename`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
@@ -790,7 +790,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.delete(
     `${BASE}/:id/folders/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const folderPath = getParam(event, 'path');
       try {

@@ -195,7 +195,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/lifecycle-states`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       return await db.workspaceAdmin.listLifecycleStates(workspace);
@@ -206,7 +206,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/lifecycle-states`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.settings');
       const body = await event.req.json().catch(() => undefined);
@@ -222,7 +222,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/teams`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       return await db.workspaceAdmin.listTeams(workspace);
@@ -233,7 +233,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/owners`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       return await db.workspaceAdmin.listTeams(workspace);
@@ -243,7 +243,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/roles`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.role');
       return resolveWorkspaceRoleDefinitions(await db.workspaceAdmin.listCustomWorkspaceRoles(workspace));
@@ -253,7 +253,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.post(
     `${BASE}/roles`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.role');
       const body = await event.req.json().catch(() => undefined);
@@ -278,7 +278,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/roles/:roleId`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.role');
 
@@ -309,7 +309,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.delete(
     `${BASE}/roles/:roleId`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.role');
 
@@ -336,7 +336,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/teams`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
@@ -349,7 +349,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/owners`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
@@ -361,7 +361,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/team-assignments`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       return await db.workspaceAdmin.listTeamAssignments(workspace);
@@ -371,7 +371,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/team-memberships`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       return await db.workspaceAdmin.listTeamAssignments(workspace);
@@ -381,7 +381,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/team-assignments`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
@@ -398,7 +398,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/team-memberships`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
@@ -416,7 +416,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/members`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.invite');
       const members = await db.workspaceAdmin.listWorkspaceMembers(workspace);
@@ -440,7 +440,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/users`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.invite');
 
@@ -460,7 +460,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/members/:userId/role`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.role');
 
@@ -498,7 +498,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   router.delete(
     `${BASE}/members/:userId`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.remove');
 

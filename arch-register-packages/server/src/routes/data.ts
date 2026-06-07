@@ -299,7 +299,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
@@ -339,7 +339,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/facets`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
         const [allEntities, schemas] = await Promise.all([
@@ -392,7 +392,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/tree`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
@@ -461,7 +461,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/export`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
@@ -590,7 +590,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/import/template/:schemaId`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const schemaId = event.context.params?.['schemaId'];
       httpAssert.present(schemaId, { message: 'schemaId is required' });
 
@@ -629,7 +629,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.post(
     `${BASE}/import/parse`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const body = await readBody<{ schemaId: string; csvContent: string }>(event);
       
@@ -790,7 +790,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.post(
     `${BASE}/import/commit`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const body = await readBody<{
         schemaId: string;
@@ -912,7 +912,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             if (!updatedEntity) {
               throw new Error(`Failed to update entity ${existingId}`);
             }
-            await logAudit(db, {
+            await logAudit(db.audit, {
               workspace,
               operation: 'update',
               entityType: 'entity',
@@ -946,7 +946,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             };
 
             const entity = await db.catalog.createEntity(createInput);
-            await logAudit(db, {
+            await logAudit(db.audit, {
               workspace,
               operation: 'create',
               entityType: 'entity',
@@ -977,7 +977,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
@@ -1004,7 +1004,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/:id/relations`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
@@ -1036,7 +1036,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.get(
     `${BASE}/:id/access`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
@@ -1062,7 +1062,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/:id/access`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
@@ -1097,7 +1097,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.post(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
@@ -1163,7 +1163,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           updated_at: timestamp
         });
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'create',
           entityType: 'entity',
@@ -1186,7 +1186,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
@@ -1240,7 +1240,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
 
         httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'update',
           entityType: 'entity',
@@ -1261,7 +1261,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.post(
     `${BASE}/:id/clone`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
@@ -1297,7 +1297,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           updated_at: timestamp
         });
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'create',
           entityType: 'entity',
@@ -1320,7 +1320,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
@@ -1336,7 +1336,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           );
 
         await db.catalog.deleteEntity(workspace, id);
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'delete',
           entityType: 'entity',

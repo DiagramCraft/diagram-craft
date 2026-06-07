@@ -253,7 +253,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   router.post(
     `${BASE}/chat`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
 
@@ -344,7 +344,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   router.get(
     `${BASE}/conversations`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       const user = (event as AuthenticatedEvent).context.user;
@@ -356,7 +356,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   router.post(
     `${BASE}/conversations`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       const user = (event as AuthenticatedEvent).context.user;
@@ -383,7 +383,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   router.patch(
     `${BASE}/conversations/:conversationId`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
 
@@ -417,7 +417,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   router.delete(
     `${BASE}/conversations/:conversationId`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
 
@@ -443,7 +443,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   router.get(
     `${BASE}/conversations/:conversationId/messages`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
 
@@ -467,7 +467,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   router.get(
     `${BASE}/config`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.settings');
 
@@ -480,7 +480,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   router.put(
     `${BASE}/config`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.settings');
 
@@ -498,7 +498,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   router.post(
     `${BASE}/extract`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
 

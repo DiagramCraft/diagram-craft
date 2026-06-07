@@ -86,7 +86,7 @@ export const createAIRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       validateAIRequestHeaders(event);
 
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
 
       const aiConfig = await resolveAiConfig(db, workspace);
       if (!aiConfig) {

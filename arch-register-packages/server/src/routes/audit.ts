@@ -15,7 +15,7 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
 
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.audit');
@@ -40,7 +40,7 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
   router.get(
     `${BASE}/stats`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.audit');
 

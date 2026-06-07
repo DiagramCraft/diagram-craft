@@ -16,7 +16,7 @@ export function createPublicRoutes(db: DatabaseAdapter) {
   router.get(
     PUBLIC_SCHEMAS_BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       try {
         const rows = (await db.catalog.listSchemas(workspace)) as EntitySchema[];
         return rows.map(toDiagramCraftSchema);
@@ -29,7 +29,7 @@ export function createPublicRoutes(db: DatabaseAdapter) {
   router.get(
     PUBLIC_DATA_BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       try {
         const rows = (await db.catalog.listEntities(workspace)) as Entity[];
         return rows.map(toDiagramCraftData);
