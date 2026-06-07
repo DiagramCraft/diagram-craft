@@ -187,7 +187,7 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
     await db.projectsFiles.createProject(project);
   }
   for (const view of seedSavedViews) {
-    await db.catalog.createSavedView(view);
+    await db.view.createSavedView(view);
   }
   for (const file of seedProjectFiles) {
     await db.projectsFiles.upsertProjectFile({

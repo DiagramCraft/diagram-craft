@@ -5,7 +5,11 @@ import { resolveWorkspace } from '../api-helpers/resolveWorkspace';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../middleware/auth';
 import { httpAssert } from '../utils/httpAssert';
-import type { CreateSavedViewRequest, UpdateSavedViewRequest, SavedView as ApiSavedView } from '@arch-register/api-types/views';
+import type {
+  CreateSavedViewRequest,
+  UpdateSavedViewRequest,
+  SavedView as ApiSavedView
+} from '@arch-register/api-types/views';
 import type { SavedView } from '../types';
 
 const BASE = '/api/:workspace/views';
@@ -31,8 +35,8 @@ export function createViewRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
-      
-      const views = await db.catalog.listSavedViews(workspace);
+
+      const views = await db.view.listSavedViews(workspace);
       return views.map(toApi);
     })
   );
@@ -50,7 +54,7 @@ export function createViewRoutes(db: DatabaseAdapter) {
       httpAssert.true(body.filters, { status: 400, message: 'filters is required' });
 
       const now = new Date();
-      const view = await db.catalog.createSavedView({
+      const view = await db.view.createSavedView({
         id: randomUUID(),
         workspace,
         name: body.name,
@@ -77,7 +81,7 @@ export function createViewRoutes(db: DatabaseAdapter) {
       httpAssert.true(id, { status: 400, message: 'ID is required' });
 
       const body = (await readBody(event)) as UpdateSavedViewRequest;
-      const updated = await db.catalog.updateSavedView(workspace, id, {
+      const updated = await db.view.updateSavedView(workspace, id, {
         name: body.name,
         description: body.description,
         view_mode: body.viewMode,
@@ -101,9 +105,9 @@ export function createViewRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'] ?? '';
       httpAssert.true(id, { status: 400, message: 'ID is required' });
 
-      const deleted = await db.catalog.deleteSavedView(workspace, id);
+      const deleted = await db.view.deleteSavedView(workspace, id);
       httpAssert.true(deleted, { status: 404, message: 'View not found' });
-      
+
       return { success: true };
     })
   );

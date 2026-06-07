@@ -137,7 +137,9 @@ export type CreateSavedViewInput = Omit<SavedView, 'created_at' | 'updated_at'> 
   updated_at: Date;
 };
 
-export type UpdateSavedViewInput = Partial<Omit<SavedView, 'id' | 'workspace' | 'created_at' | 'updated_at'>> & {
+export type UpdateSavedViewInput = Partial<
+  Omit<SavedView, 'id' | 'workspace' | 'created_at' | 'updated_at'>
+> & {
   updated_at: Date;
 };
 
@@ -213,7 +215,9 @@ export type CatalogDatabase = {
     entityId: string,
     grants: CreateEntityGrantInput[]
   ): Promise<EntityGrant[]>;
+};
 
+export type ViewDatabase = {
   listSavedViews(ws: string): Promise<SavedView[]>;
   getSavedView(ws: string, id: string): Promise<SavedView | null>;
   createSavedView(input: CreateSavedViewInput): Promise<SavedView>;
@@ -358,6 +362,7 @@ export type DatabaseAdapter = {
   core: CoreDatabase;
   workspaceAdmin: WorkspaceAdminDatabase;
   catalog: CatalogDatabase;
+  view: ViewDatabase;
   projectsFiles: ProjectsFilesDatabase;
   audit: AuditDatabase;
   identityAuth: IdentityAuthDatabase;

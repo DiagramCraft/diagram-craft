@@ -12,6 +12,7 @@ import { PostgresProjectsFilesDatabase } from './postgresProjectsFiles';
 import { PostgresWorkspaceAdminDatabase } from './postgresWorkspaceAdmin';
 import { PostgresAiDatabase } from './postgresAi';
 import { SERVER_DEFAULTS } from '../constants';
+import { PostgresViewDatabase } from '@arch-register/server/db/postgresView';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
@@ -22,6 +23,7 @@ export class PostgresDatabase implements DatabaseAdapter {
 
   readonly workspaceAdmin: PostgresWorkspaceAdminDatabase;
   readonly catalog: PostgresCatalogDatabase;
+  readonly view: PostgresViewDatabase;
   readonly projectsFiles: PostgresProjectsFilesDatabase;
   readonly audit: PostgresAuditDatabase;
   readonly identityAuth: PostgresIdentityAuthDatabase;
@@ -43,6 +45,7 @@ export class PostgresDatabase implements DatabaseAdapter {
 
     this.workspaceAdmin = new PostgresWorkspaceAdminDatabase(this.sql);
     this.catalog = new PostgresCatalogDatabase(this.sql);
+    this.view = new PostgresViewDatabase(this.sql);
     this.projectsFiles = new PostgresProjectsFilesDatabase(this.sql);
     this.audit = new PostgresAuditDatabase(this.sql);
     this.identityAuth = new PostgresIdentityAuthDatabase(this.sql);

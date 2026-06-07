@@ -68,7 +68,7 @@ export async function seedCatalogEntities(db: DatabaseAdapter): Promise<void> {
 
 export async function seedCatalogViews(db: DatabaseAdapter): Promise<void> {
   for (const view of seedSavedViews) {
-    await db.catalog.createSavedView(view);
+    await db.view.createSavedView(view);
   }
 }
 

@@ -10,6 +10,7 @@ import { SqliteIdentityAuthDatabase } from './sqliteIdentityAuth';
 import { SqliteProjectsFilesDatabase } from './sqliteProjectsFiles';
 import { SqliteWorkspaceAdminDatabase } from './sqliteWorkspaceAdmin';
 import { SqliteAiDatabase } from './sqliteAi';
+import { SqliteViewDatabase } from '@arch-register/server/db/sqliteView';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -18,6 +19,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly core;
   readonly workspaceAdmin;
   readonly catalog;
+  readonly view;
   readonly projectsFiles;
   readonly audit;
   readonly identityAuth;
@@ -31,6 +33,7 @@ export class SqliteDatabase implements DatabaseAdapter {
 
     this.workspaceAdmin = new SqliteWorkspaceAdminDatabase(() => this.db);
     this.catalog = new SqliteCatalogDatabase(() => this.db);
+    this.view = new SqliteViewDatabase(() => this.db);
     this.projectsFiles = new SqliteProjectsFilesDatabase(() => this.db);
     this.audit = new SqliteAuditDatabase(() => this.db);
     this.identityAuth = new SqliteIdentityAuthDatabase(() => this.db);
