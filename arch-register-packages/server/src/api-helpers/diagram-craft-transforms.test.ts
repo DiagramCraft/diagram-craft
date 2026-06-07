@@ -4,7 +4,7 @@ import {
   toDiagramCraftField,
   toDiagramCraftSchema
 } from './diagram-craft-transforms';
-import type { Entity, EntitySchema } from '../types';
+import type { Entity, EntitySchema, WorkspaceEnum } from '../types';
 
 describe('diagram craft transforms', () => {
   it('keeps containment fields in diagram craft schema responses', () => {
@@ -17,7 +17,7 @@ describe('diagram craft transforms', () => {
       ]
     } as EntitySchema;
 
-    expect(toDiagramCraftSchema(schema)).toEqual({
+    expect(toDiagramCraftSchema(schema, [])).toEqual({
       id: 'schema-1',
       name: 'System',
       fields: [
@@ -36,7 +36,7 @@ describe('diagram craft transforms', () => {
       fields: [{ id: 'technology', name: 'Technology', type: 'text' }]
     } as EntitySchema;
 
-    expect(toDiagramCraftSchema(schema).fields).toEqual([
+    expect(toDiagramCraftSchema(schema, []).fields).toEqual([
       { id: 'name', name: 'Name', type: 'text' },
       { id: 'description', name: 'Description', type: 'longtext' },
       { id: 'technology', name: 'Technology', type: 'text' }
@@ -44,10 +44,46 @@ describe('diagram craft transforms', () => {
   });
 
   it('keeps date fields in diagram craft schema output', () => {
-    expect(toDiagramCraftField({ id: 'go_live', name: 'Go Live', type: 'date' } as never)).toEqual({
+    expect(toDiagramCraftField({ id: 'go_live', name: 'Go Live', type: 'date' } as never, [])).toEqual({
       id: 'go_live',
       name: 'Go Live',
       type: 'date'
+    });
+  });
+
+  it('populates select field options from enums', () => {
+    const enumId = 'enum-1';
+    const enums: WorkspaceEnum[] = [
+      {
+        id: enumId,
+        workspace: 'ws-1',
+        name: 'My Enum',
+        options: [
+          { value: 'v1', label: 'L1' },
+          { value: 'v2', label: 'L2' }
+        ],
+        sort_order: 0,
+        created_at: new Date(),
+        updated_at: new Date()
+      }
+    ];
+
+    const field = {
+      id: 'choice',
+      name: 'Choice',
+      type: 'select',
+      enumId: enumId
+    } as any;
+
+    expect(toDiagramCraftField(field, enums)).toEqual({
+      id: 'choice',
+      name: 'Choice',
+      type: 'select',
+      enumId: enumId,
+      options: [
+        { value: 'v1', label: 'L1' },
+        { value: 'v2', label: 'L2' }
+      ]
     });
   });
 

@@ -86,8 +86,8 @@ export function assertDataWithSchema(value: unknown): asserts value is DataWithS
   assertString(data._schemaId, 'Data entry _schemaId');
 
   for (const [key, fieldValue] of Object.entries(data)) {
-    if (typeof fieldValue !== 'string') {
-      throw new Error(`Data entry field "${key}" must be a string`);
+    if (isObj(fieldValue) && fieldValue !== null) {
+      throw new Error(`Data entry field "${key}" must be a primitive or an array`);
     }
   }
 }

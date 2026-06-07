@@ -377,6 +377,76 @@ describe('UrlDataProvider', () => {
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(schemaUrl, { cache: 'default' });
     });
+
+    it('should handle schemas with select fields', async () => {
+      const provider = createEmptyProvider();
+
+      const schemaWithSelect = {
+        id: 'select-schema',
+        name: 'Select Schema',
+        fields: [
+          {
+            id: 'choice',
+            name: 'Choice',
+            type: 'select',
+            options: [{ value: 'v1', label: 'L1' }]
+          }
+        ]
+      };
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === schemaUrl) {
+          return Promise.resolve({
+            json: () => Promise.resolve([schemaWithSelect])
+          });
+        }
+        return Promise.reject(new Error(`Unexpected URL: ${url}`));
+      });
+
+      // Should not throw
+      await provider.refreshSchemas();
+
+      expect(provider.schemas).toHaveLength(1);
+      expect(provider.schemas[0]!.fields[0]!.type).toBe('select');
+      // @ts-ignore
+      expect(provider.schemas[0]!.fields[0]!.options).toHaveLength(1);
+    });
+
+    it('should handle data with non-string fields (boolean, array, number)', async () => {
+      const provider = createProviderWithSchemaAndData();
+
+      const dataWithNonStringFields = [
+        {
+          _uid: '1',
+          _schemaId: 'test-schema',
+          name: 'Value 1',
+          bool: true,
+          tags: ['tag1', 'tag2'],
+          num: 42
+        }
+      ];
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url === dataUrl) {
+          return Promise.resolve({
+            json: () => Promise.resolve(dataWithNonStringFields)
+          });
+        }
+        return Promise.reject(new Error(`Unexpected URL: ${url}`));
+      });
+
+      // Should not throw
+      await provider.refreshData();
+
+      const data = provider.getData(provider.schemas[0]!);
+      expect(data).toHaveLength(1);
+      // @ts-ignore - testing runtime behavior
+      expect(data[0]!.bool).toBe(true);
+      // @ts-ignore - testing runtime behavior
+      expect(data[0]!.tags).toEqual(['tag1', 'tag2']);
+      // @ts-ignore - testing runtime behavior
+      expect(data[0]!.num).toBe(42);
+    });
   });
 
   describe('serialize', () => {

@@ -3,11 +3,13 @@ import type {
   EntityApiResponse,
   EntitySchema,
   ReferenceField,
-  SchemaField
+  SchemaField,
+  WorkspaceEnum
 } from '../types';
 
 export type DiagramCraftSchemaField =
-  | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' | 'select' }>
+  | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' }>
+  | (Extract<SchemaField, { type: 'select' }> & { options: Array<{ value: string; label: string }> })
   | (Omit<ReferenceField, 'type'> & { type: 'reference' | 'containment' });
 
 export type DiagramCraftSchema = {
@@ -21,13 +23,23 @@ const DIAGRAM_CRAFT_METADATA_FIELDS: DiagramCraftSchemaField[] = [
   { id: 'description', name: 'Description', type: 'longtext' }
 ];
 
-export const toDiagramCraftField = (field: SchemaField): DiagramCraftSchemaField | undefined => {
+export const toDiagramCraftField = (
+  field: SchemaField,
+  enums: WorkspaceEnum[]
+): DiagramCraftSchemaField | undefined => {
   switch (field.type) {
     case 'text':
     case 'longtext':
     case 'boolean':
     case 'date':
-    case 'select':
+      return field;
+    case 'select': {
+      const e = enums.find(e => e.id === field.enumId);
+      return {
+        ...field,
+        options: e?.options ?? []
+      };
+    }
     case 'reference':
     case 'containment':
       return field;
@@ -36,7 +48,10 @@ export const toDiagramCraftField = (field: SchemaField): DiagramCraftSchemaField
   }
 };
 
-export const toDiagramCraftSchema = (schema: EntitySchema): DiagramCraftSchema => ({
+export const toDiagramCraftSchema = (
+  schema: EntitySchema,
+  enums: WorkspaceEnum[]
+): DiagramCraftSchema => ({
   id: schema.id,
   name: schema.name,
   fields: [
@@ -44,7 +59,7 @@ export const toDiagramCraftSchema = (schema: EntitySchema): DiagramCraftSchema =
       metadataField => !schema.fields.some(field => field.id === metadataField.id)
     ),
     ...schema.fields.flatMap(field => {
-      const normalized = toDiagramCraftField(field);
+      const normalized = toDiagramCraftField(field, enums);
       return normalized ? [normalized] : [];
     })
   ]

@@ -93,7 +93,8 @@ export const createDiagramCraftRoutes = (db: DatabaseAdapter) => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       try {
         const rows = (await db.catalog.listSchemas(workspace)) as EntitySchema[];
-        return rows.map(toDiagramCraftSchema);
+        const enums = await db.catalog.listEnums(workspace);
+        return rows.map(row => toDiagramCraftSchema(row, enums));
       } catch (error) {
         handleDiagramCraftError(error, 'Failed to retrieve Diagram Craft schemas');
       }
