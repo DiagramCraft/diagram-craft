@@ -99,19 +99,19 @@ export const GLOBAL_ROLES: Array<{
  */
 export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, WorkspaceCapability[]> = {
   owner: [
-    'ws.view', 'ws.settings', 'ws.delete', 'ws.audit',
+    'ws.view', 'ws.settings', 'ws.delete', 'ws.audit', 'ws.manage_views',
     'people.invite', 'people.role', 'people.remove', 'people.teams',
     'proj.create', 'proj.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
     'schema.edit', 'schema.publish',
   ],
   admin: [
-    'ws.view', 'ws.settings', 'ws.audit',
+    'ws.view', 'ws.settings', 'ws.audit', 'ws.manage_views',
     'people.invite', 'people.role', 'people.remove', 'people.teams',
     'proj.create', 'proj.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
     'schema.edit', 'schema.publish',
   ],
   editor: [
-    'ws.view',
+    'ws.view', 'ws.manage_views',
     'proj.create', 'proj.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
   ],
   reviewer: [
@@ -206,6 +206,7 @@ export const WORKSPACE_CAPABILITY_GROUPS: Array<{
       { id: 'proj.create', name: 'Create projects' },
       { id: 'proj.edit', name: 'Edit projects & diagrams' },
       { id: 'ent.edit', name: 'Edit entities' },
+      { id: 'ws.manage_views', name: 'Manage views' },
       { id: 'ent.propose', name: 'Propose entity changes' },
       { id: 'comments', name: 'Comment & discuss' },
       { id: 'export', name: 'Export schema / CSV' },

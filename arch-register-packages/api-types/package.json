@@ -3,17 +3,6 @@
   "version": "0.1.0",
   "type": "module",
   "main": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./entities": "./src/entities.ts",
-    "./schemas": "./src/schemas.ts",
-    "./projects": "./src/projects.ts",
-    "./workspaces": "./src/workspaces.ts",
-    "./search": "./src/search.ts",
-    "./audit": "./src/audit.ts",
-    "./common": "./src/common.ts",
-    "./colors": "./src/colors.ts"
-  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

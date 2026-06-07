@@ -9,6 +9,7 @@ import type {
   GlobalRoleAssignment,
   Project,
   ProjectFile,
+  SavedView,
   TeamMembership,
   User,
   Workspace,
@@ -131,6 +132,17 @@ export type CreateEntityGrantInput = Omit<EntityGrant, 'id'> & {
   id: string;
 };
 
+export type CreateSavedViewInput = Omit<SavedView, 'created_at' | 'updated_at'> & {
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type UpdateSavedViewInput = Partial<
+  Omit<SavedView, 'id' | 'workspace' | 'created_at' | 'updated_at'>
+> & {
+  updated_at: Date;
+};
+
 export type CoreDatabase = {
   driver: DbDriver;
   close(): Promise<void>;
@@ -203,6 +215,14 @@ export type CatalogDatabase = {
     entityId: string,
     grants: CreateEntityGrantInput[]
   ): Promise<EntityGrant[]>;
+};
+
+export type ViewDatabase = {
+  listSavedViews(ws: string): Promise<SavedView[]>;
+  getSavedView(ws: string, id: string): Promise<SavedView | null>;
+  createSavedView(input: CreateSavedViewInput): Promise<SavedView>;
+  updateSavedView(ws: string, id: string, input: UpdateSavedViewInput): Promise<SavedView | null>;
+  deleteSavedView(ws: string, id: string): Promise<SavedView | null>;
 };
 
 export type ProjectsFilesDatabase = {
@@ -342,6 +362,7 @@ export type DatabaseAdapter = {
   core: CoreDatabase;
   workspaceAdmin: WorkspaceAdminDatabase;
   catalog: CatalogDatabase;
+  view: ViewDatabase;
   projectsFiles: ProjectsFilesDatabase;
   audit: AuditDatabase;
   identityAuth: IdentityAuthDatabase;

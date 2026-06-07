@@ -21,6 +21,7 @@ type WorkspacePermissions = {
   canCreateProjects: boolean;
   canCreateEntities: boolean;
   canManageMembers: boolean;
+  canManageViews: boolean;
 };
 
 const checker = new PermissionChecker();
@@ -79,6 +80,8 @@ export const useWorkspacePermissions = (
     const canViewAudit = context != null && checker.hasWorkspaceCapability(context, 'ws.audit');
     const canManageMembers =
       context != null && checker.hasWorkspaceCapability(context, 'people.invite');
+    const canManageViews =
+      context != null && checker.hasWorkspaceCapability(context, 'ws.manage_views');
     const canCreateProjects =
       context != null &&
       (capabilities.canCreateProject(context, null) ||
@@ -101,7 +104,8 @@ export const useWorkspacePermissions = (
       canViewAudit,
       canCreateProjects,
       canCreateEntities,
-      canManageMembers
+      canManageMembers,
+      canManageViews
     };
   }, [authorizationData, workspaceId]);
 };

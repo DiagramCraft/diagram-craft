@@ -10,6 +10,11 @@ export type {
   ContainmentField,
   SchemaField,
 } from '@arch-register/api-types';
+import type {
+  BrowserView,
+  EntityFilters,
+  RadarViewConfig
+} from '@arch-register/api-types/views';
 import type { SchemaField } from '@arch-register/api-types/schemas';
 
 export type Workspace = {
@@ -42,6 +47,20 @@ export type WorkspaceEnum = {
   name: string;
   options: Array<{ value: string; label: string }>;
   sort_order: number;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type SavedView = {
+  id: string;
+  workspace: string;
+  name: string;
+  description: string | null;
+  view_mode: BrowserView;
+  filters: EntityFilters;
+  config: {
+    radar?: RadarViewConfig;
+  } | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -214,6 +233,7 @@ export type WorkspaceRoleCapability =
   | 'ws.settings'
   | 'ws.delete'
   | 'ws.audit'
+  | 'ws.manage_views'
   | 'people.invite'
   | 'people.role'
   | 'people.remove'

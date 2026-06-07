@@ -1,11 +1,11 @@
 import type {
   CatalogDatabase,
-  CreateEnumInput,
   CreateEntityGrantInput,
   CreateEntityInput,
+  CreateEnumInput,
   CreateSchemaInput,
-  UpdateEnumInput,
   UpdateEntityInput,
+  UpdateEnumInput,
   UpdateSchemaInput
 } from './database';
 import {

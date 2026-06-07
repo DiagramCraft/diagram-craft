@@ -12,7 +12,7 @@ import { useEntities } from '../hooks/useEntities';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type RadarConfig = {
+export type RadarConfig = {
   schemaId: string;
   quadrantFieldId: string;
   ringFieldId: string;
@@ -232,14 +232,20 @@ export const RadarView = ({
   owner,
   lifecycle,
   q: qProp,
+  config: configProp,
+  onConfigChange,
 }: {
   onEntityClick: (entityId: string) => void;
   owner?: string | null;
   lifecycle?: string | null;
   q?: string;
+  config?: RadarConfig | null;
+  onConfigChange?: (config: RadarConfig) => void;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
-  const [config, setConfig] = useState<RadarConfig | null>(() => loadConfig(workspaceSlug));
+  const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() => loadConfig(workspaceSlug));
+  const config = configProp ?? internalConfig;
+
   const [showSettings, setShowSettings] = useState(false);
   const [q, setQ] = useState('');
   const [quadFilter, setQuadFilter] = useState<string | null>(null);
@@ -323,8 +329,12 @@ export const RadarView = ({
   const onBlipClick = (id: string) => setPinned(p => p === id ? null : id);
 
   const handleSaveConfig = (newConfig: RadarConfig) => {
-    saveConfig(workspaceSlug, newConfig);
-    setConfig(newConfig);
+    if (onConfigChange) {
+      onConfigChange(newConfig);
+    } else {
+      saveConfig(workspaceSlug, newConfig);
+      setInternalConfig(newConfig);
+    }
     setShowSettings(false);
     setQuadFilter(null);
     setRingFilter(null);
@@ -851,6 +861,14 @@ const RadarSettings = ({
     ? ringFieldId
     : (fieldOptions[1]?.id ?? fieldOptions[0]?.id ?? '');
 
+  const displayRings = useMemo(() => {
+    const checked = ringFieldValues
+      .filter(rv => effectiveOrder.includes(rv.value))
+      .sort((a, b) => effectiveOrder.indexOf(a.value) - effectiveOrder.indexOf(b.value));
+    const unchecked = ringFieldValues.filter(rv => !effectiveOrder.includes(rv.value));
+    return [...checked, ...unchecked];
+  }, [ringFieldValues, effectiveOrder]);
+
   const canSave = !!schemaId && !!effectiveQuadrantFieldId && !!effectiveRingFieldId;
 
   const handleSave = () => {
@@ -930,7 +948,7 @@ const RadarSettings = ({
             </div>
           ) : (
               <div className={styles.ringOrderList}>
-                {ringFieldValues.map(rv => {
+                {displayRings.map(rv => {
                   const orderIdx = effectiveOrder.indexOf(rv.value);
                   const checked = orderIdx !== -1;
                   const disabledCheck = !checked && effectiveOrder.length >= 5;

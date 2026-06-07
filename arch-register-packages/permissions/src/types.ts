@@ -58,6 +58,7 @@ export type WorkspaceCapability =
   | 'ws.settings'
   | 'ws.delete'
   | 'ws.audit'
+  | 'ws.manage_views'
   | 'people.invite'
   | 'people.role'
   | 'people.remove'

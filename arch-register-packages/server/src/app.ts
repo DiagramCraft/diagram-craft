@@ -12,6 +12,7 @@ import { createWorkspaceRoutes } from './routes/workspaces';
 import { createAuditRoutes } from './routes/audit';
 import { createWorkspaceConfigRoutes } from './routes/workspace-config';
 import { createAiChatRoutes } from './routes/ai-chat';
+import { createViewRoutes } from './routes/views';
 import { createDiagramCraftRoutes } from './routes/diagram-craft';
 import { createAuthRoutes, createAuthProtectedRoutes } from './routes/auth';
 import { createTemplateRoutes } from './routes/templates';
@@ -88,6 +89,7 @@ export const createApp = (
   app.use(createSchemaRoutes(db));
   app.use(createEnumRoutes(db));
   app.use(createDataRoutes(db));
+  app.use(createViewRoutes(db));
   app.use(createDiagramCraftRoutes(db));
   app.use(createSearchRoutes(db));
   app.use(createTemplateRoutes(db));

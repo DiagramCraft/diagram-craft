@@ -17,7 +17,8 @@ import type {
   WorkspaceEnum,
   WorkspaceLifecycleState,
   WorkspaceRoleDefinition,
-  WorkspaceOwner
+  WorkspaceOwner,
+  SavedView
 } from '../types';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
@@ -202,6 +203,17 @@ export const sqliteMappers = {
     role: String(row['role']) as EntityGrant['role'],
     applies_to: String(row['applies_to']) as EntityGrant['applies_to'],
     created_at: toDate(row['created_at'])
+  }),
+  savedView: (row: Record<string, unknown>): SavedView => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    description: row['description'] == null ? null : String(row['description']),
+    view_mode: String(row['view_mode']) as SavedView['view_mode'],
+    filters: parseJson(row['filters'], {}),
+    config: parseJson(row['config'], null),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at'])
   }),
   aiConfig: (row: Record<string, unknown>): WorkspaceAiConfig => ({
     workspace: String(row['workspace']),

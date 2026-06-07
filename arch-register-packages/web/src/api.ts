@@ -30,6 +30,11 @@ import type {
   WorkspaceEnum,
 } from '@arch-register/api-types';
 import type {
+  SavedView,
+  CreateSavedViewRequest,
+  UpdateSavedViewRequest
+} from '@arch-register/api-types/views';
+import type {
   SerializedDiagram,
   SerializedDiagramDocument,
   SerializedLayer,
@@ -63,6 +68,7 @@ export type {
   WorkspaceMemberInfo,
   WorkspaceUserInfo,
   WorkspaceEnum,
+  SavedView,
 };
 
 export type FieldType = SchemaField['type'];
@@ -353,6 +359,28 @@ export const fetchEntityFacets = (workspace: string) =>
 
 export const fetchEntityRelations = (workspace: string, id: string) =>
   apiFetch<EntityRelations>(`/api/${workspace}/data/${id}/relations`);
+
+// ── Saved View API ────────────────────────────────────────────
+
+export const fetchSavedViews = (workspace: string) =>
+  apiFetch<SavedView[]>(`/api/${workspace}/views`);
+
+export const createSavedView = (workspace: string, body: CreateSavedViewRequest) =>
+  apiFetch<SavedView>(`/api/${workspace}/views`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+
+export const updateSavedView = (workspace: string, id: string, body: UpdateSavedViewRequest) =>
+  apiFetch<SavedView>(`/api/${workspace}/views/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+
+export const deleteSavedView = (workspace: string, id: string) =>
+  apiFetch<{ success: boolean }>(`/api/${workspace}/views/${id}`, {
+    method: 'DELETE',
+  });
 
 // ── Project types ─────────────────────────────────────────────
 

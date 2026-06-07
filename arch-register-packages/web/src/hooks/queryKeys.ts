@@ -21,3 +21,9 @@ export const entityKeys = {
   tree: (workspaceId: string, filters: Record<string, unknown>) =>
     [...entityKeys.all, 'tree', workspaceId, filters] as const,
 };
+
+export const viewKeys = {
+  all: ['views'] as const,
+  lists: () => [...viewKeys.all, 'list'] as const,
+  list: (workspaceId: string) => [...viewKeys.lists(), workspaceId] as const,
+};

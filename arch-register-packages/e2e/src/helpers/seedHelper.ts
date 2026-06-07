@@ -5,7 +5,8 @@ import {
   seedLifecycleStates,
   seedOwners,
   seedSchemas,
-  seedEnums
+  seedEnums,
+  seedSavedViews
 } from '@arch-register/server/db/seedData';
 import { generateTokenPair } from '@arch-register/server/utils/jwt';
 import { hashPassword } from '@arch-register/server/utils/password';
@@ -62,6 +63,12 @@ export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
 export async function seedCatalogEntities(db: DatabaseAdapter): Promise<void> {
   for (const entity of seedEntities) {
     await db.catalog.createEntity(entity);
+  }
+}
+
+export async function seedCatalogViews(db: DatabaseAdapter): Promise<void> {
+  for (const view of seedSavedViews) {
+    await db.view.createSavedView(view);
   }
 }
 

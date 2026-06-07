@@ -8,6 +8,7 @@ import {
   seedOwners,
   seedProjectFiles,
   seedProjects,
+  seedSavedViews,
   seedEnums,
   seedSchemas,
   seedTeamAssignments,
@@ -184,6 +185,9 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
   }
   for (const project of seedProjects) {
     await db.projectsFiles.createProject(project);
+  }
+  for (const view of seedSavedViews) {
+    await db.view.createSavedView(view);
   }
   for (const file of seedProjectFiles) {
     await db.projectsFiles.upsertProjectFile({
