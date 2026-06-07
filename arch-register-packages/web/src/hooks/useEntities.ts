@@ -8,9 +8,14 @@ import {
   fetchEntityTree,
   deleteEntity,
   cloneEntity,
+  fetchSavedViews,
+  createSavedView,
+  updateSavedView,
+  deleteSavedView,
 } from '../api';
 import type { EntityRelation } from '../api';
-import { entityKeys, schemaKeys } from './queryKeys';
+import type { CreateSavedViewRequest, UpdateSavedViewRequest } from '@arch-register/api-types/views';
+import { entityKeys, schemaKeys, viewKeys } from './queryKeys';
 
 // Hook for fetching entity list
 export const useEntities = (
@@ -165,5 +170,49 @@ export const useEntitiesBySchema = (workspaceId: string, schemaIds: string[]) =>
       queryFn: () => fetchEntities(workspaceId, { schemaId, view: 'summary' }),
       enabled: !!workspaceId && !!schemaId,
     })),
+  });
+};
+
+// ── Saved View Hooks ──────────────────────────────────────────
+
+export const useSavedViews = (workspaceId: string) => {
+  return useQuery({
+    queryKey: viewKeys.list(workspaceId),
+    queryFn: () => fetchSavedViews(workspaceId),
+    enabled: !!workspaceId,
+  });
+};
+
+export const useCreateSavedView = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: CreateSavedViewRequest) => createSavedView(workspaceId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: viewKeys.list(workspaceId) });
+    },
+  });
+};
+
+export const useUpdateSavedView = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateSavedViewRequest }) =>
+      updateSavedView(workspaceId, id, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: viewKeys.list(workspaceId) });
+    },
+  });
+};
+
+export const useDeleteSavedView = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteSavedView(workspaceId, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: viewKeys.list(workspaceId) });
+    },
   });
 };

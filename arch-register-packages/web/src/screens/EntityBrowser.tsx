@@ -24,18 +24,23 @@ import {
   TbCheck,
   TbX
 } from 'react-icons/tb';
-import { RadarView } from './RadarView';
+import { RadarView, type RadarConfig } from './RadarView';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
 import type { EntityRecord, EntitySchema, TreeNode, TreeEdge, WorkspaceLifecycleState } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import {
   useEntities,
   useEntityFacets,
   useEntityTree,
   useDeleteEntity,
   useCloneEntity,
-  useUpdateEntity
+  useUpdateEntity,
+  useCreateSavedView
 } from '../hooks/useEntities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
@@ -197,18 +202,87 @@ const BulkEditToolbar = ({
   </div>
 );
 
+const SaveViewDialog = ({
+  open,
+  onClose,
+  onSave
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave: (name: string, description: string) => void;
+}) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleSave = () => {
+    onSave(name, description);
+    setName('');
+    setDescription('');
+    onClose();
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Save current view"
+      sub="Save your current filters and view configuration to access them quickly later."
+      buttons={[
+        { label: 'Cancel', type: 'secondary', onClick: onClose },
+        { label: 'Save view', type: 'default', onClick: handleSave, disabled: !name.trim() }
+      ]}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <FormElement label="Name">
+          <TextInput
+            value={name}
+            onChange={v => setName(v ?? '')}
+            placeholder="e.g. Production components"
+            autoFocus
+          />
+        </FormElement>
+        <FormElement label="Description (optional)">
+          <TextArea
+            value={description}
+            onChange={v => setDescription(v ?? '')}
+            placeholder="What this view shows…"
+          />
+        </FormElement>
+      </div>
+    </Dialog>
+  );
+};
+
 export const EntityBrowser = () => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions, openAddEntityDialog } =
     useWorkspaceContext();
-  const search = useSearch({ strict: false }) as { type?: string; status?: string; owner?: string };
+  const search = useSearch({ strict: false }) as {
+    type?: string;
+    status?: string;
+    owner?: string;
+    q?: string;
+    viewMode?: BrowserView;
+    radarConfig?: string;
+  };
   const typeFilter = search.type ?? null;
   const statusFilter = search.status ?? null;
   const ownerFilter = search.owner ?? null;
   const workspaceId = workspaceSlug;
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(search.q ?? '');
   const [sort, setSort] = useState('name');
-  const [view, setView] = useState<BrowserView>('table');
+  const [view, setView] = useState<BrowserView>(search.viewMode ?? 'table');
+  const [radarConfig, setRadarConfig] = useState<RadarConfig | null>(() => {
+    if (search.radarConfig) {
+      try {
+        return JSON.parse(search.radarConfig);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
   const [dateFilterField, setDateFilterField] = useState('');
   const [dateFilterOperator, setDateFilterOperator] = useState<DateFilterOperator>('on');
   const [dateFilterValue, setDateFilterValue] = useState('');
@@ -217,6 +291,20 @@ export const EntityBrowser = () => {
   const [bulkConfirming, setBulkConfirming] = useState(false);
   const [bulkLifecycleValue, setBulkLifecycleValue] = useState('');
   const [bulkOwnerValue, setBulkOwnerValue] = useState('');
+  const [isSavingView, setIsSavingView] = useState(false);
+
+  // Sync view from search params when it changes (e.g. applying a saved view)
+  useEffect(() => {
+    if (search.viewMode) setView(search.viewMode);
+    if (search.q !== undefined) setQ(search.q);
+    if (search.radarConfig) {
+      try {
+        setRadarConfig(JSON.parse(search.radarConfig));
+      } catch {
+        // ignore
+      }
+    }
+  }, [search.viewMode, search.radarConfig, search.q]);
 
   // Use TanStack Query hooks for data fetching
   const { data: entities = [] } = useEntities(workspaceId, {
@@ -243,6 +331,7 @@ export const EntityBrowser = () => {
   const deleteMutation = useDeleteEntity(workspaceId);
   const cloneMutation = useCloneEntity(workspaceId);
   const updateEntityMutation = useUpdateEntity(workspaceId);
+  const createSavedViewMutation = useCreateSavedView(workspaceId);
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { schema: EntitySchema; index: number }>();
@@ -469,6 +558,29 @@ export const EntityBrowser = () => {
     setBulkOwnerValue('');
   };
 
+  const handleSaveView = async (name: string, description: string) => {
+    try {
+      await createSavedViewMutation.mutateAsync({
+        name,
+        description: description || null,
+        viewMode: view,
+        filters: {
+          schemaId: typeFilter,
+          status: statusFilter,
+          owner: ownerFilter,
+          q,
+          dateFilterField,
+          dateFilterOperator,
+          dateFilterValue,
+          sort
+        },
+        config: view === 'radar' && radarConfig ? { radar: radarConfig } : null
+      });
+    } catch {
+      // Error handling is done by TanStack Query
+    }
+  };
+
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
@@ -483,6 +595,11 @@ export const EntityBrowser = () => {
           </div>
         </div>
         <div className={styles.actions}>
+          {permissions.canManageViews && (
+            <Button icon={<TbCopy size={12} />} onClick={() => setIsSavingView(true)}>
+              Save view
+            </Button>
+          )}
           <Button icon={<TbDownload size={12} />} onClick={handleExport}>
             Export CSV
           </Button>
@@ -627,6 +744,8 @@ export const EntityBrowser = () => {
           owner={ownerFilter}
           lifecycle={statusFilter}
           q={q}
+          config={radarConfig}
+          onConfigChange={setRadarConfig}
         />
       ) : view === 'tree' ? (
         treeNodes.length === 0 ? (
@@ -715,6 +834,12 @@ export const EntityBrowser = () => {
         confirmLabel="Delete entity"
         onConfirm={doDeleteEntity}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <SaveViewDialog
+        open={isSavingView}
+        onClose={() => setIsSavingView(false)}
+        onSave={handleSaveView}
       />
     </div>
   );

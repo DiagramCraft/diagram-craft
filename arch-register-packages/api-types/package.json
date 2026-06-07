@@ -11,6 +11,7 @@
     "./workspaces": "./src/workspaces.ts",
     "./search": "./src/search.ts",
     "./audit": "./src/audit.ts",
+    "./views": "./src/views.ts",
     "./common": "./src/common.ts",
     "./colors": "./src/colors.ts"
   },

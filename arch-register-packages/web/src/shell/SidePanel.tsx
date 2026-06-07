@@ -9,11 +9,26 @@ import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import {
-  TbFolders, TbDatabase,
-  TbUsers, TbFolderOpen,
-  TbSettings, TbTrash, TbTag, TbHistory,
-  TbShieldLock, TbPlus, TbPencil, TbCopy,
-  TbFolder, TbSparkles, TbTable, TbVectorTriangle,
+  TbFolders,
+  TbDatabase,
+  TbUsers,
+  TbFolderOpen,
+  TbSettings,
+  TbTrash,
+  TbTag,
+  TbHistory,
+  TbShieldLock,
+  TbPlus,
+  TbPencil,
+  TbCopy,
+  TbFolder,
+  TbSparkles,
+  TbTable,
+  TbVectorTriangle,
+  TbChartRadar,
+  TbLayoutGrid,
+  TbList,
+  TbBinaryTree2
 } from 'react-icons/tb';
 import { fetchEntityFacets, resolveSchemaColor } from '../api';
 import type { FileEntry } from '../api';
@@ -24,9 +39,17 @@ import {
   useRenameProjectFolder,
   useCloneProjectFile,
   useRenameProjectFile,
-  useMoveProjectFile,
+  useMoveProjectFile
 } from '../hooks/useProjectFiles';
-import type { EntityFacets, EntitySchema, Project, WorkspaceEnum, WorkspaceLifecycleState } from '../api';
+import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../hooks/useEntities';
+import type {
+  EntityFacets,
+  EntitySchema,
+  Project,
+  WorkspaceEnum,
+  WorkspaceLifecycleState,
+  SavedView
+} from '../api';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { deriveActiveView } from '../layouts/deriveActiveView';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
@@ -36,7 +59,7 @@ import { AccountSettingsSidebar } from './AccountSettingsSidebar';
 
 const PROJECT_GROUPS = [
   { status: 'pinned', title: 'Pinned Projects' },
-  { status: 'active', title: 'Active Projects' },
+  { status: 'active', title: 'Active Projects' }
 ] as const;
 
 const ARCHIVED_PROJECT_GROUP = { status: 'archived', title: 'Archived Projects' } as const;
@@ -51,14 +74,15 @@ export const SidePanel = () => {
   let body: React.ReactNode;
 
   if (view === 'home') {
-    body = <HomeSidebar schemas={ctx.schemas} projects={ctx.projects} workspaceSlug={ctx.workspaceSlug} />;
-  } else if (view === 'project-detail') {
     body = (
-      <ProjectsSidebar
+      <HomeSidebar
+        schemas={ctx.schemas}
         projects={ctx.projects}
         workspaceSlug={ctx.workspaceSlug}
       />
     );
+  } else if (view === 'project-detail') {
+    body = <ProjectsSidebar projects={ctx.projects} workspaceSlug={ctx.workspaceSlug} />;
   } else if (view === 'entity-browser' || view === 'entity-detail') {
     body = (
       <EntitiesSidebar
@@ -68,7 +92,9 @@ export const SidePanel = () => {
       />
     );
   } else if (view === 'data-model') {
-    body = <DataModelSidebar schemas={ctx.schemas} enums={ctx.enums} workspaceSlug={ctx.workspaceSlug} />;
+    body = (
+      <DataModelSidebar schemas={ctx.schemas} enums={ctx.enums} workspaceSlug={ctx.workspaceSlug} />
+    );
   } else if (view === 'search') {
     body = <SearchSidebar />;
   } else if (view === 'workspace-settings') {
@@ -90,13 +116,7 @@ export const SidePanel = () => {
   return <div className={styles.panel}>{body}</div>;
 };
 
-const SectionHeader = ({
-  title,
-  actions,
-}: {
-  title: string;
-  actions?: React.ReactNode;
-}) => (
+const SectionHeader = ({ title, actions }: { title: string; actions?: React.ReactNode }) => (
   <div className={`${styles.header} ${styles.tabHeader}`}>
     <Tabs.Root value="section">
       <Tabs.List>
@@ -112,19 +132,25 @@ const GroupLabel = ({ children }: { children: React.ReactNode }) => (
 );
 
 const getSidebarProjectGroups = (projects: Project[]) =>
-  PROJECT_GROUPS
-    .map(group => ({
-      ...group,
-      projects: projects.filter(project => project.status === group.status),
-    }))
-    .filter(group => group.projects.length > 0);
+  PROJECT_GROUPS.map(group => ({
+    ...group,
+    projects: projects.filter(project => project.status === group.status)
+  })).filter(group => group.projects.length > 0);
 
 const getArchivedProjectGroup = (projects: Project[]) => ({
   ...ARCHIVED_PROJECT_GROUP,
-  projects: projects.filter(project => project.status === ARCHIVED_PROJECT_GROUP.status),
+  projects: projects.filter(project => project.status === ARCHIVED_PROJECT_GROUP.status)
 });
 
-const HomeSidebar = ({ schemas, projects, workspaceSlug }: { schemas: EntitySchema[]; projects: Project[]; workspaceSlug: string }) => {
+const HomeSidebar = ({
+  schemas,
+  projects,
+  workspaceSlug
+}: {
+  schemas: EntitySchema[];
+  projects: Project[];
+  workspaceSlug: string;
+}) => {
   const navigate = useNavigate();
   return (
     <>
@@ -138,11 +164,15 @@ const HomeSidebar = ({ schemas, projects, workspaceSlug }: { schemas: EntitySche
                 key={p.id}
                 icon={<TbFolders size={12} style={p.color ? { color: p.color } : undefined} />}
                 label={p.name}
-                onClick={() => navigate({
-                  to: '/$workspaceSlug/projects/$projectId',
-                  params: { workspaceSlug, projectId: p.id },
-                  search: { tab: p.status === 'archived' ? 'archive' as const : 'projects' as const },
-                })}
+                onClick={() =>
+                  navigate({
+                    to: '/$workspaceSlug/projects/$projectId',
+                    params: { workspaceSlug, projectId: p.id },
+                    search: {
+                      tab: p.status === 'archived' ? ('archive' as const) : ('projects' as const)
+                    }
+                  })
+                }
                 trailing={<span className="dim mono">{p.file_count}</span>}
                 tagColor={p.color ?? undefined}
               />
@@ -153,13 +183,17 @@ const HomeSidebar = ({ schemas, projects, workspaceSlug }: { schemas: EntitySche
         {schemas.map((s, i) => (
           <TreeRow
             key={s.id}
-            icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
+            icon={
+              <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />
+            }
             label={s.name}
-            onClick={() => navigate({
-              to: '/$workspaceSlug/entities',
-              params: { workspaceSlug },
-              search: { type: s.id },
-            })}
+            onClick={() =>
+              navigate({
+                to: '/$workspaceSlug/entities',
+                params: { workspaceSlug },
+                search: { type: s.id }
+              })
+            }
             trailing={<span className="dim mono">{s.entity_count}</span>}
             tagColor={resolveSchemaColor(s, i)}
           />
@@ -174,11 +208,11 @@ const SidebarRenameDialog = ({
   currentName,
   entityType,
   onRename,
-  onCancel,
+  onCancel
 }: {
   open: boolean;
   currentName: string;
-  entityType: 'diagram' | 'folder';
+  entityType: 'diagram' | 'folder' | 'view';
   onRename: (newName: string) => void;
   onCancel: () => void;
 }) => {
@@ -190,7 +224,10 @@ const SidebarRenameDialog = ({
       setName(currentName);
       setTimeout(() => {
         const el = inputRef.current;
-        if (el) { el.focus(); el.select(); }
+        if (el) {
+          el.focus();
+          el.select();
+        }
       }, 0);
     }
   }, [open, currentName]);
@@ -217,13 +254,17 @@ const SidebarRenameDialog = ({
               border: '1px solid var(--cmp-border)',
               borderRadius: 'var(--r)',
               color: 'var(--base-fg)',
-              outline: 'none',
+              outline: 'none'
             }}
           />
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-          <button type="button" className={styles.renameBtn} onClick={onCancel}>Cancel</button>
-          <button type="submit" className={styles.renameBtnPrimary} disabled={!name.trim()}>Rename</button>
+          <button type="button" className={styles.renameBtn} onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit" className={styles.renameBtnPrimary} disabled={!name.trim()}>
+            Rename
+          </button>
         </div>
       </form>
     </Dialog>
@@ -237,7 +278,7 @@ type SidebarMenuTarget =
 
 const ProjectsSidebar = ({
   projects,
-  workspaceSlug,
+  workspaceSlug
 }: {
   projects: Project[];
   workspaceSlug: string;
@@ -256,11 +297,19 @@ const ProjectsSidebar = ({
   const { data: fileTree = null } = useProjectFiles(workspaceSlug, projectId ?? '');
 
   // Context menu state
-  const [menu, setMenu] = useState<{ x: number; y: number; target: SidebarMenuTarget } | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; target: SidebarMenuTarget } | null>(
+    null
+  );
   const [renameTarget, setRenameTarget] = useState<SidebarMenuTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SidebarMenuTarget | null>(null);
-  const [addDiagramState, setAddDiagramState] = useState<{ projectId: string; folder: string | null } | null>(null);
-  const [addFolderState, setAddFolderState] = useState<{ projectId: string; parent: string | null } | null>(null);
+  const [addDiagramState, setAddDiagramState] = useState<{
+    projectId: string;
+    folder: string | null;
+  } | null>(null);
+  const [addFolderState, setAddFolderState] = useState<{
+    projectId: string;
+    parent: string | null;
+  } | null>(null);
 
   // Mutation hooks for the selected project
   const deleteFileMutation = useDeleteProjectFile(workspaceSlug, projectId ?? '');
@@ -285,15 +334,15 @@ const ProjectsSidebar = ({
   const buildFolderTree = (folders: string[]): FolderNode[] => {
     const root: FolderNode[] = [];
     const map = new Map<string, FolderNode>();
-    
+
     const sorted = [...folders].sort();
-    
+
     for (const path of sorted) {
       const parts = path.split('/');
       const name = parts[parts.length - 1] ?? path;
       const node: FolderNode = { path, name, children: [] };
       map.set(path, node);
-      
+
       if (parts.length === 1) {
         root.push(node);
       } else {
@@ -304,15 +353,17 @@ const ProjectsSidebar = ({
         }
       }
     }
-    
+
     return root;
   };
 
-
-
-  const renderMoveToSubmenu = (file: FileEntry, folders: string[], currentFolder: string | null) => {
+  const renderMoveToSubmenu = (
+    file: FileEntry,
+    folders: string[],
+    currentFolder: string | null
+  ) => {
     const folderTree = buildFolderTree(folders);
-    
+
     const renderFolderNodes = (nodes: FolderNode[]): React.ReactNode => {
       return nodes.map(node => {
         const isCurrentFolder = node.path === currentFolder;
@@ -342,7 +393,7 @@ const ProjectsSidebar = ({
         );
       });
     };
-    
+
     return (
       <>
         <Menu.Item
@@ -361,10 +412,16 @@ const ProjectsSidebar = ({
     if (target.type === 'project') {
       return (
         <>
-          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddDiagramState({ projectId: target.projectId, folder: null })}>
+          <Menu.Item
+            leftSlot={<TbPlus size={13} />}
+            onClick={() => setAddDiagramState({ projectId: target.projectId, folder: null })}
+          >
             New diagram
           </Menu.Item>
-          <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={() => setAddFolderState({ projectId: target.projectId, parent: null })}>
+          <Menu.Item
+            leftSlot={<TbFolderOpen size={13} />}
+            onClick={() => setAddFolderState({ projectId: target.projectId, parent: null })}
+          >
             New folder
           </Menu.Item>
         </>
@@ -373,10 +430,16 @@ const ProjectsSidebar = ({
     if (target.type === 'folder') {
       return (
         <>
-          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddDiagramState({ projectId: target.projectId, folder: target.path })}>
+          <Menu.Item
+            leftSlot={<TbPlus size={13} />}
+            onClick={() => setAddDiagramState({ projectId: target.projectId, folder: target.path })}
+          >
             New diagram
           </Menu.Item>
-          <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={() => setAddFolderState({ projectId: target.projectId, parent: target.path })}>
+          <Menu.Item
+            leftSlot={<TbFolderOpen size={13} />}
+            onClick={() => setAddFolderState({ projectId: target.projectId, parent: target.path })}
+          >
             New folder
           </Menu.Item>
           <Menu.Separator />
@@ -384,7 +447,11 @@ const ProjectsSidebar = ({
             Rename
           </Menu.Item>
           <Menu.Separator />
-          <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => setDeleteTarget(target)}>
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteTarget(target)}
+          >
             Delete
           </Menu.Item>
         </>
@@ -392,13 +459,16 @@ const ProjectsSidebar = ({
     }
     // diagram
     const allFolders = (fileTree?.folders ?? []).map(f => f.path);
-    const currentFolder = target.file.path.includes('/') 
+    const currentFolder = target.file.path.includes('/')
       ? target.file.path.substring(0, target.file.path.lastIndexOf('/'))
       : null;
-    
+
     return (
       <>
-        <Menu.Item leftSlot={<TbCopy size={13} />} onClick={() => cloneFileMutation.mutate(target.file)}>
+        <Menu.Item
+          leftSlot={<TbCopy size={13} />}
+          onClick={() => cloneFileMutation.mutate(target.file)}
+        >
           Clone
         </Menu.Item>
         <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
@@ -408,7 +478,11 @@ const ProjectsSidebar = ({
           Rename
         </Menu.Item>
         <Menu.Separator />
-        <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => setDeleteTarget(target)}>
+        <Menu.Item
+          type="danger"
+          leftSlot={<TbTrash size={13} />}
+          onClick={() => setDeleteTarget(target)}
+        >
           Delete
         </Menu.Item>
       </>
@@ -428,7 +502,10 @@ const ProjectsSidebar = ({
   const handleRenameConfirm = (newName: string) => {
     if (!renameTarget) return;
     const trimmed = newName.trim();
-    if (!trimmed) { setRenameTarget(null); return; }
+    if (!trimmed) {
+      setRenameTarget(null);
+      return;
+    }
     if (renameTarget.type === 'diagram') {
       if (trimmed !== renameTarget.file.name) {
         renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
@@ -441,12 +518,12 @@ const ProjectsSidebar = ({
     setRenameTarget(null);
   };
 
-  const toggle = (key: string) =>
-    setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggle = (key: string) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const projectGroups = projectSidebarTab === 'archive'
-    ? [getArchivedProjectGroup(projects)].filter(group => group.projects.length > 0)
-    : getSidebarProjectGroups(projects);
+  const projectGroups =
+    projectSidebarTab === 'archive'
+      ? [getArchivedProjectGroup(projects)].filter(group => group.projects.length > 0)
+      : getSidebarProjectGroups(projects);
 
   useEffect(() => {
     if (!selectedProject) return;
@@ -455,7 +532,7 @@ const ProjectsSidebar = ({
       navigate({
         to: '/$workspaceSlug/projects/$projectId',
         params: { workspaceSlug, projectId: selectedProject.id },
-        search: { tab: nextTab as 'projects' | 'archive', folder: folderFilter ?? undefined },
+        search: { tab: nextTab as 'projects' | 'archive', folder: folderFilter ?? undefined }
       });
     }
   }, [selectedProject, projectSidebarTab, navigate, workspaceSlug, folderFilter]);
@@ -466,15 +543,16 @@ const ProjectsSidebar = ({
       params: { workspaceSlug, projectId: project.id },
       search: {
         tab: (project.status === 'archived' ? 'archive' : 'projects') as 'projects' | 'archive',
-        folder: folder ?? undefined,
-      },
+        folder: folder ?? undefined
+      }
     });
   };
 
   const activateTab = (tab: ProjectSidebarTab) => {
-    const targetProjects = tab === 'archive'
-      ? projects.filter(project => project.status === 'archived')
-      : projects.filter(project => project.status !== 'archived');
+    const targetProjects =
+      tab === 'archive'
+        ? projects.filter(project => project.status === 'archived')
+        : projects.filter(project => project.status !== 'archived');
 
     if (!selectedProject || !targetProjects.some(project => project.id === selectedProject.id)) {
       const target = targetProjects[0];
@@ -482,14 +560,14 @@ const ProjectsSidebar = ({
         navigate({
           to: '/$workspaceSlug/projects/$projectId',
           params: { workspaceSlug, projectId: target.id },
-          search: { tab },
+          search: { tab }
         });
       }
     } else {
       navigate({
         to: '/$workspaceSlug/projects/$projectId',
         params: { workspaceSlug, projectId: selectedProject.id },
-        search: { tab },
+        search: { tab }
       });
     }
   };
@@ -508,54 +586,60 @@ const ProjectsSidebar = ({
         </Tabs.Root>
       </div>
       <div className={styles.scroll}>
-        {projectGroups.length > 0 ? projectGroups.map(group => (
-          <div key={group.status}>
-            <GroupLabel>{group.title}</GroupLabel>
-            {group.projects.map(p => {
-              const isSelected = p.id === projectId;
-              const isOpen = expanded[p.id] ?? isSelected;
-              const tree = isSelected ? fileTree : null;
+        {projectGroups.length > 0 ? (
+          projectGroups.map(group => (
+            <div key={group.status}>
+              <GroupLabel>{group.title}</GroupLabel>
+              {group.projects.map(p => {
+                const isSelected = p.id === projectId;
+                const isOpen = expanded[p.id] ?? isSelected;
+                const tree = isSelected ? fileTree : null;
 
-              return (
-                <div key={p.id}>
-                  <TreeRow
-                    expandable
-                    expanded={isOpen}
-                    onExpand={() => toggle(p.id)}
-                    icon={<TbFolders size={12} style={p.color ? { color: p.color } : undefined} />}
-                    label={p.name}
-                    active={isSelected && !folderFilter}
-                    onClick={() => navigateToProject(p)}
-                    onContextMenu={e => openMenu(e, { type: 'project', projectId: p.id })}
-                    trailing={<span className="dim mono">{p.file_count}</span>}
-                    tagColor={p.color ?? undefined}
-                  />
-                  {isOpen && tree && (
-                    tree.folders.map(folder => {
-                      const folderKey = `${p.id}:${folder.path}`;
-                      const folderOpen = expanded[folderKey] ?? true;
-                      return (
-                        <div key={folder.path}>
-                          <TreeRow
-                            depth={1}
-                            expandable
-                            expanded={folderOpen}
-                            onExpand={() => toggle(folderKey)}
-                            icon={<TbFolderOpen size={12} />}
-                            label={folder.path}
-                            active={isSelected && folderFilter === folder.path}
-                            onClick={() => navigateToProject(p, folder.path)}
-                            onContextMenu={e => openMenu(e, { type: 'folder', path: folder.path, projectId: p.id })}
-                          />
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )) : (
+                return (
+                  <div key={p.id}>
+                    <TreeRow
+                      expandable
+                      expanded={isOpen}
+                      onExpand={() => toggle(p.id)}
+                      icon={
+                        <TbFolders size={12} style={p.color ? { color: p.color } : undefined} />
+                      }
+                      label={p.name}
+                      active={isSelected && !folderFilter}
+                      onClick={() => navigateToProject(p)}
+                      onContextMenu={e => openMenu(e, { type: 'project', projectId: p.id })}
+                      trailing={<span className="dim mono">{p.file_count}</span>}
+                      tagColor={p.color ?? undefined}
+                    />
+                    {isOpen &&
+                      tree &&
+                      tree.folders.map(folder => {
+                        const folderKey = `${p.id}:${folder.path}`;
+                        const folderOpen = expanded[folderKey] ?? true;
+                        return (
+                          <div key={folder.path}>
+                            <TreeRow
+                              depth={1}
+                              expandable
+                              expanded={folderOpen}
+                              onExpand={() => toggle(folderKey)}
+                              icon={<TbFolderOpen size={12} />}
+                              label={folder.path}
+                              active={isSelected && folderFilter === folder.path}
+                              onClick={() => navigateToProject(p, folder.path)}
+                              onContextMenu={e =>
+                                openMenu(e, { type: 'folder', path: folder.path, projectId: p.id })
+                              }
+                            />
+                          </div>
+                        );
+                      })}
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        ) : (
           <div className={`${styles.emptyState} dim`}>
             {projectSidebarTab === 'archive' ? 'No archived projects.' : 'No projects.'}
           </div>
@@ -563,11 +647,7 @@ const ProjectsSidebar = ({
       </div>
 
       {menu && (
-        <ContextMenu.Imperative
-          x={menu.x}
-          y={menu.y}
-          onClose={() => setMenu(null)}
-        >
+        <ContextMenu.Imperative x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
           {renderMenu(menu.target)}
         </ContextMenu.Imperative>
       )}
@@ -587,12 +667,21 @@ const ProjectsSidebar = ({
         title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
         message={
           deleteTarget ? (
-            deleteTarget.type === 'folder'
-              ? <>The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently deleted.</>
-              : deleteTarget.type === 'diagram'
-                ? <>The diagram <b>{deleteTarget.file.name}</b> will be permanently deleted.</>
-                : ''
-          ) : ''
+            deleteTarget.type === 'folder' ? (
+              <>
+                The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently
+                deleted.
+              </>
+            ) : deleteTarget.type === 'diagram' ? (
+              <>
+                The diagram <b>{deleteTarget.file.name}</b> will be permanently deleted.
+              </>
+            ) : (
+              ''
+            )
+          ) : (
+            ''
+          )
         }
         detail="This can't be undone."
         confirmLabel={deleteTarget?.type === 'folder' ? 'Delete folder' : 'Delete diagram'}
@@ -628,19 +717,35 @@ const ProjectsSidebar = ({
 const EntitiesSidebar = ({
   schemas,
   lifecycleStates,
-  workspaceSlug,
+  workspaceSlug
 }: {
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   workspaceSlug: string;
 }) => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { type?: string; status?: string; owner?: string };
+  const { permissions } = useWorkspaceContext();
+  const search = useSearch({ strict: false }) as {
+    type?: string;
+    status?: string;
+    owner?: string;
+    q?: string;
+    viewMode?: string;
+    radarConfig?: string;
+    sidebarTab?: 'filters' | 'views';
+  };
   const typeFilter = search.type ?? null;
   const statusFilter = search.status ?? null;
   const ownerFilter = search.owner ?? null;
+  const sidebarTab = search.sidebarTab ?? 'filters';
 
   const [facets, setFacets] = useState<EntityFacets | null>(null);
+  const { data: savedViews = [] } = useSavedViews(workspaceSlug);
+  const deleteViewMutation = useDeleteSavedView(workspaceSlug);
+  const updateViewMutation = useUpdateSavedView(workspaceSlug);
+  const [deleteViewTarget, setDeleteViewTarget] = useState<SavedView | null>(null);
+  const [renameViewTarget, setRenameViewTarget] = useState<SavedView | null>(null);
+  const [viewMenu, setViewMenu] = useState<{ x: number; y: number; view: SavedView } | null>(null);
 
   useEffect(() => {
     if (!workspaceSlug) {
@@ -669,74 +774,215 @@ const EntitiesSidebar = ({
 
   const totalEntities = facets?.total ?? schemas.reduce((sum, s) => sum + s.entity_count, 0);
 
-  const navigateEntities = (params: { type?: string; status?: string; owner?: string }) => {
+  const navigateEntities = (params: {
+    type?: string;
+    status?: string;
+    owner?: string;
+    sidebarTab?: 'filters' | 'views';
+  }) => {
     navigate({
       to: '/$workspaceSlug/entities',
       params: { workspaceSlug },
-      search: params,
+      search: {
+        ...search,
+        ...params
+        // biome-ignore lint/suspicious/noExplicitAny: bypass
+      } as any
     });
+  };
+
+  const applySavedView = (view: SavedView) => {
+    navigate({
+      to: '/$workspaceSlug/entities',
+      params: { workspaceSlug },
+      search: {
+        type: view.filters.schemaId ?? undefined,
+        status: view.filters.status ?? undefined,
+        owner: view.filters.owner ?? undefined,
+        q: view.filters.q ?? undefined,
+        viewMode: view.viewMode,
+        radarConfig: view.config?.radar ? JSON.stringify(view.config.radar) : undefined,
+        sidebarTab: 'views'
+        // biome-ignore lint/suspicious/noExplicitAny: bypass
+      } as any
+    });
+  };
+
+  const getViewIcon = (mode: string) => {
+    switch (mode) {
+      case 'table':
+        return <TbList size={12} />;
+      case 'cards':
+        return <TbLayoutGrid size={12} />;
+      case 'tree':
+        return <TbBinaryTree2 size={12} />;
+      case 'radar':
+        return <TbChartRadar size={12} />;
+      default:
+        return <TbTable size={12} />;
+    }
   };
 
   return (
     <>
-      <SectionHeader title="Types" />
-      <div className={styles.scroll}>
-        <TreeRow
-          icon={<TbDatabase size={12} />}
-          label="All entities"
-          active={!typeFilter && !statusFilter && !ownerFilter}
-          onClick={() => navigateEntities({})}
-          trailing={<span className="dim mono">{totalEntities}</span>}
-        />
-        <GroupLabel>By type</GroupLabel>
-        {schemas.map((s, i) => (
-          <TreeRow
-            key={s.id}
-            icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
-            label={s.name}
-            active={typeFilter === s.id}
-            onClick={() => navigateEntities({ type: typeFilter === s.id ? undefined : s.id })}
-            trailing={<span className="dim mono">{s.entity_count}</span>}
-            tagColor={resolveSchemaColor(s, i)}
-          />
-        ))}
-        <GroupLabel>By status</GroupLabel>
-        {lifecycleStates.map(s => {
-          const count = statusCounts[s.id] ?? 0;
-          if (!count) return null;
-          return (
-            <TreeRow
-              key={s.id}
-              icon={
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: s.color,
-                  }}
-                />
-              }
-              label={s.label}
-              active={statusFilter === s.id}
-              onClick={() => navigateEntities({ status: statusFilter === s.id ? undefined : s.id })}
-              trailing={<span className="dim mono">{count}</span>}
-            />
-          );
-        })}
-        <GroupLabel>By owner</GroupLabel>
-        {owners.map(([owner, count]) => (
-          <TreeRow
-            key={owner}
-            icon={<TbUsers size={12} />}
-            label={owner}
-            active={ownerFilter === owner}
-            onClick={() => navigateEntities({ owner: ownerFilter === owner ? undefined : owner })}
-            trailing={<span className="dim mono">{count}</span>}
-          />
-        ))}
+      <div className={`${styles.header} ${styles.tabHeader}`}>
+        <Tabs.Root
+          value={sidebarTab}
+          onValueChange={v => navigateEntities({ sidebarTab: v as 'filters' | 'views' })}
+        >
+          <Tabs.List>
+            <Tabs.Trigger value="filters">Filters</Tabs.Trigger>
+            <Tabs.Trigger value="views">Views</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
       </div>
+
+      <div className={styles.scroll}>
+        {sidebarTab === 'filters' ? (
+          <>
+            <TreeRow
+              icon={<TbDatabase size={12} />}
+              label="All entities"
+              active={!typeFilter && !statusFilter && !ownerFilter}
+              onClick={() =>
+                navigateEntities({ type: undefined, status: undefined, owner: undefined })
+              }
+              trailing={<span className="dim mono">{totalEntities}</span>}
+            />
+            <GroupLabel>By type</GroupLabel>
+            {schemas.map((s, i) => (
+              <TreeRow
+                key={s.id}
+                icon={
+                  <TypeBadge
+                    color={resolveSchemaColor(s, i)}
+                    name={s.name}
+                    icon={s.icon}
+                    size={14}
+                  />
+                }
+                label={s.name}
+                active={typeFilter === s.id}
+                onClick={() => navigateEntities({ type: typeFilter === s.id ? undefined : s.id })}
+                trailing={<span className="dim mono">{s.entity_count}</span>}
+                tagColor={resolveSchemaColor(s, i)}
+              />
+            ))}
+            <GroupLabel>By status</GroupLabel>
+            {lifecycleStates.map(s => {
+              const count = statusCounts[s.id] ?? 0;
+              if (!count) return null;
+              return (
+                <TreeRow
+                  key={s.id}
+                  icon={
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: s.color
+                      }}
+                    />
+                  }
+                  label={s.label}
+                  active={statusFilter === s.id}
+                  onClick={() =>
+                    navigateEntities({ status: statusFilter === s.id ? undefined : s.id })
+                  }
+                  trailing={<span className="dim mono">{count}</span>}
+                />
+              );
+            })}
+            <GroupLabel>By owner</GroupLabel>
+            {owners.map(([owner, count]) => (
+              <TreeRow
+                key={owner}
+                icon={<TbUsers size={12} />}
+                label={owner}
+                active={ownerFilter === owner}
+                onClick={() =>
+                  navigateEntities({ owner: ownerFilter === owner ? undefined : owner })
+                }
+                trailing={<span className="dim mono">{count}</span>}
+              />
+            ))}
+          </>
+        ) : (
+          <>
+            <GroupLabel>Saved views</GroupLabel>
+            {savedViews.length === 0 && (
+              <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
+            )}
+            {savedViews.map(view => (
+              <TreeRow
+                key={view.id}
+                icon={getViewIcon(view.viewMode)}
+                label={view.name}
+                onClick={() => applySavedView(view)}
+                onContextMenu={e => {
+                  if (!permissions.canManageViews) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setViewMenu({ x: e.clientX, y: e.clientY, view });
+                }}
+              />
+            ))}
+          </>
+        )}
+      </div>
+
+      <DeleteConfirmationDialog
+        open={!!deleteViewTarget}
+        title="Delete view?"
+        message={
+          <>
+            The view <b>{deleteViewTarget?.name}</b> will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete view"
+        onConfirm={() => {
+          if (deleteViewTarget) {
+            deleteViewMutation.mutate(deleteViewTarget.id);
+            setDeleteViewTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteViewTarget(null)}
+      />
+
+      {viewMenu && (
+        <ContextMenu.Imperative x={viewMenu.x} y={viewMenu.y} onClose={() => setViewMenu(null)}>
+          <Menu.Item
+            leftSlot={<TbPencil size={13} />}
+            onClick={() => setRenameViewTarget(viewMenu.view)}
+          >
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteViewTarget(viewMenu.view)}
+          >
+            Delete
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
+
+      {renameViewTarget && (
+        <SidebarRenameDialog
+          open={true}
+          currentName={renameViewTarget.name}
+          entityType="view"
+          onRename={newName => {
+            updateViewMutation.mutate({ id: renameViewTarget.id, body: { name: newName } });
+            setRenameViewTarget(null);
+          }}
+          onCancel={() => setRenameViewTarget(null)}
+        />
+      )}
     </>
   );
 };
@@ -744,14 +990,18 @@ const EntitiesSidebar = ({
 const DataModelSidebar = ({
   schemas,
   enums,
-  workspaceSlug,
+  workspaceSlug
 }: {
   schemas: EntitySchema[];
   enums: WorkspaceEnum[];
   workspaceSlug: string;
 }) => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { tab?: 'types' | 'enums' | 'graph'; schema?: string; enumId?: string };
+  const search = useSearch({ strict: false }) as {
+    tab?: 'types' | 'enums' | 'graph';
+    schema?: string;
+    enumId?: string;
+  };
   const activeTab = search.tab === 'enums' ? 'enums' : 'types';
   const isGraphOverviewActive = search.tab === 'graph';
   const schemaId = search.schema ?? null;
@@ -761,7 +1011,7 @@ const DataModelSidebar = ({
     navigate({
       to: '/$workspaceSlug/model',
       params: { workspaceSlug },
-      search: { tab },
+      search: { tab }
     });
   };
 
@@ -784,14 +1034,18 @@ const DataModelSidebar = ({
           {schemas.map((s, i) => (
             <TreeRow
               key={s.id}
-              icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
+              icon={
+                <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />
+              }
               label={s.name}
               active={schemaId === s.id}
-              onClick={() => navigate({
-                to: '/$workspaceSlug/model',
-                params: { workspaceSlug },
-                search: { tab: 'types', schema: s.id },
-              })}
+              onClick={() =>
+                navigate({
+                  to: '/$workspaceSlug/model',
+                  params: { workspaceSlug },
+                  search: { tab: 'types', schema: s.id }
+                })
+              }
               tagColor={resolveSchemaColor(s, i)}
               trailing={<span className="dim mono">{s.fields.length}</span>}
             />
@@ -801,11 +1055,13 @@ const DataModelSidebar = ({
             icon={<TbVectorTriangle size={12} />}
             label="Graph Overview"
             active={isGraphOverviewActive}
-            onClick={() => navigate({
-              to: '/$workspaceSlug/model',
-              params: { workspaceSlug },
-              search: { tab: 'graph' },
-            })}
+            onClick={() =>
+              navigate({
+                to: '/$workspaceSlug/model',
+                params: { workspaceSlug },
+                search: { tab: 'graph' }
+              })
+            }
           />
         </div>
       ) : (
@@ -820,11 +1076,13 @@ const DataModelSidebar = ({
               icon={<TbTable size={12} />}
               label={e.name}
               active={enumId === e.id}
-              onClick={() => navigate({
-                to: '/$workspaceSlug/model',
-                params: { workspaceSlug },
-                search: { tab: 'enums', enumId: e.id },
-              })}
+              onClick={() =>
+                navigate({
+                  to: '/$workspaceSlug/model',
+                  params: { workspaceSlug },
+                  search: { tab: 'enums', enumId: e.id }
+                })
+              }
               trailing={<span className="dim mono">{e.options.length}</span>}
             />
           ))}
@@ -857,10 +1115,21 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },
-  { id: 'global-permissions', label: 'Global permissions', icon: <TbShieldLock size={12} />, group: 'Global Settings' },
+  {
+    id: 'global-permissions',
+    label: 'Global permissions',
+    icon: <TbShieldLock size={12} />,
+    group: 'Global Settings'
+  },
   { id: 'ai', label: 'AI', icon: <TbSparkles size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
-  { id: 'danger', label: 'Danger zone', icon: <TbTrash size={12} />, group: 'Workspace', tone: 'danger' },
+  {
+    id: 'danger',
+    label: 'Danger zone',
+    icon: <TbTrash size={12} />,
+    group: 'Workspace',
+    tone: 'danger'
+  }
 ];
 
 const SettingsSidebar = ({
@@ -868,7 +1137,7 @@ const SettingsSidebar = ({
   workspaceSlug,
   schemas,
   projects,
-  availableSections,
+  availableSections
 }: {
   workspace: import('../api').Workspace | null;
   workspaceSlug: string;
@@ -896,9 +1165,7 @@ const SettingsSidebar = ({
       <div className={styles.scroll}>
         {workspace && (
           <div className={styles.settingsWsHead}>
-            <div className={styles.settingsWsBadge}>
-              {workspace.short_code}
-            </div>
+            <div className={styles.settingsWsBadge}>{workspace.short_code}</div>
             <div>
               <div className={styles.settingsWsName}>{workspace.name}</div>
               <div className="dim" style={{ fontSize: 11 }}>
@@ -916,11 +1183,13 @@ const SettingsSidebar = ({
                 icon={s.icon}
                 label={s.label}
                 active={section === s.id}
-                onClick={() => navigate({
-                  to: '/$workspaceSlug/settings',
-                  params: { workspaceSlug },
-                  search: { section: s.id },
-                })}
+                onClick={() =>
+                  navigate({
+                    to: '/$workspaceSlug/settings',
+                    params: { workspaceSlug },
+                    search: { section: s.id }
+                  })
+                }
                 className={s.tone === 'danger' ? styles.dangerRow : undefined}
               />
             ))}

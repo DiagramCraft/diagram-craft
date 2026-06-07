@@ -13,7 +13,8 @@ import type {
   WorkspaceRoleDefinition,
   WorkspaceOwner,
   TeamMembership,
-  EntityGrant
+  EntityGrant,
+  SavedView
 } from '../types';
 import { DB_ERROR_CODES } from '../constants';
 import { DatabaseError } from './database';
@@ -52,6 +53,7 @@ export type PostgresRowTypes = {
   workspaceEnum: WorkspaceEnum;
   entity: Entity;
   entityGrant: EntityGrant;
+  savedView: SavedView;
   project: Project;
   projectFile: ProjectFile;
   auditLog: AuditLogEntry;

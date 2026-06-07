@@ -9,7 +9,8 @@ import type {
   WorkspaceEnum,
   WorkspaceLifecycleState,
   WorkspaceMember,
-  WorkspaceOwner
+  WorkspaceOwner,
+  SavedView
 } from '../types';
 import {
   AR_COLOR_GREEN,
@@ -637,6 +638,57 @@ export const seedProjects: Project[] = [
     owner: 'Security & Compliance',
     status: 'pinned',
     color: AR_COLOR_RED,
+    created_at: now,
+    updated_at: now
+  }
+];
+
+export const seedSavedViews: SavedView[] = [
+  {
+    id: '00000000-0000-0000-0020-000000000001',
+    workspace: 'default',
+    name: 'Production Systems',
+    description: 'All systems currently in production',
+    view_mode: 'table',
+    filters: {
+      status: 'production',
+      schemaId: '00000000-0000-0000-0000-000000000002'
+    },
+    config: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000002',
+    workspace: 'default',
+    name: 'Security Radar',
+    description: 'Radar view of security-related components',
+    view_mode: 'radar',
+    filters: {
+      owner: 'Security & Compliance'
+    },
+    config: {
+      radar: {
+        schemaId: '00000000-0000-0000-0000-000000000003',
+        quadrantFieldId: 'technology',
+        ringFieldId: 'lifecycle',
+        ringOrder: ['proposed', 'experimental', 'production', 'deprecated']
+      }
+    },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000003',
+    workspace: 'default',
+    name: 'Platform Components',
+    description: 'Components owned by Platform Engineering',
+    view_mode: 'cards',
+    filters: {
+      owner: 'Platform Engineering',
+      schemaId: '00000000-0000-0000-0000-000000000003'
+    },
+    config: null,
     created_at: now,
     updated_at: now
   }

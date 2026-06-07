@@ -18,6 +18,7 @@ export type WorkspaceContextType = {
     canCreateProjects: boolean;
     canCreateEntities: boolean;
     canManageMembers: boolean;
+    canManageViews: boolean;
   };
   availableSettingsSections: string[];
   defaultSettingsSection: string | null;
