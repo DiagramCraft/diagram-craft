@@ -1,15 +1,15 @@
 import 'dotenv/config';
 import { createServer } from 'node:http';
 import { toNodeHandler } from 'h3/node';
-import { createDatabase } from './db/factory.js';
-import { createStorage } from './storage/storage.js';
-import { YjsCollaborationServer } from './collaboration/yjsCollaborationServer.js';
-import { verifyToken } from './utils/jwt.js';
-import { createApp } from './app.js';
-import { SERVER_DEFAULTS } from './constants.js';
-import { generateSvgPreview } from './api-helpers/svgPreviewGenerator.js';
-import { getDiagramCommentCounts } from './diagrams/commentCounts.js';
-import { createLogger } from './utils/logger.js';
+import { createDatabase } from './db/factory';
+import { createStorage } from './storage/storage';
+import { YjsCollaborationServer } from './collaboration/yjsCollaborationServer';
+import { verifyToken } from './utils/jwt';
+import { createApp } from './app';
+import { SERVER_DEFAULTS } from './constants';
+import { generateSvgPreview } from './api-helpers/svgPreviewGenerator';
+import { getDiagramCommentCounts } from './diagrams/commentCounts';
+import { createLogger } from './utils/logger';
 
 const logger = createLogger('server');
 

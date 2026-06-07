@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildAuditListFilters } from './audit.js';
+import { buildAuditListFilters } from './audit';
 
 describe('audit route helpers', () => {
   it('builds normalized audit filters from query params', () => {

@@ -3,8 +3,12 @@ import type {
   ProjectsFilesDatabase,
   UpdateProjectInput,
   UpsertProjectFileInput
-} from './database.js';
-import { normalizePostgresError, PostgresDatabaseBase, type PostgresRowTypes } from './postgresBase.js';
+} from './database';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  type PostgresRowTypes
+} from './postgresBase';
 
 export class PostgresProjectsFilesDatabase
   extends PostgresDatabaseBase

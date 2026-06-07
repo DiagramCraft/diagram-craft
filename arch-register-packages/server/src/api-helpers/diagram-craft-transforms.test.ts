@@ -3,8 +3,8 @@ import {
   toDiagramCraftData,
   toDiagramCraftField,
   toDiagramCraftSchema
-} from './diagram-craft-transforms.js';
-import type { Entity, EntitySchema } from '../types.js';
+} from './diagram-craft-transforms';
+import type { Entity, EntitySchema } from '../types';
 
 describe('diagram craft transforms', () => {
   it('keeps containment fields in diagram craft schema responses', () => {
@@ -44,9 +44,7 @@ describe('diagram craft transforms', () => {
   });
 
   it('keeps date fields in diagram craft schema output', () => {
-    expect(
-      toDiagramCraftField({ id: 'go_live', name: 'Go Live', type: 'date' } as never)
-    ).toEqual({
+    expect(toDiagramCraftField({ id: 'go_live', name: 'Go Live', type: 'date' } as never)).toEqual({
       id: 'go_live',
       name: 'Go Live',
       type: 'date'

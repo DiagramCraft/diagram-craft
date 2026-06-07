@@ -4,8 +4,8 @@ import {
   buildUserUpdateInput,
   parseRequestedGlobalRoles,
   selectRefreshToken
-} from './auth.js';
-import type { User } from '../types.js';
+} from './auth';
+import type { User } from '../types';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
@@ -26,34 +26,36 @@ const user: User = {
 
 describe('auth route helpers', () => {
   it('prefers refresh token from cookie over request body', () => {
-    expect(
-      selectRefreshToken('cookie-token', { refresh_token: 'body-token' })
-    ).toBe('cookie-token');
+    expect(selectRefreshToken('cookie-token', { refresh_token: 'body-token' })).toBe(
+      'cookie-token'
+    );
   });
 
   it('falls back to refresh token from request body', () => {
-    expect(
-      selectRefreshToken(null, { refresh_token: 'body-token' })
-    ).toBe('body-token');
+    expect(selectRefreshToken(null, { refresh_token: 'body-token' })).toBe('body-token');
   });
 
   it('builds the auth me response maps and filters empty memberships', () => {
-    const result = buildAuthMeResponse(user, ['global_admin'], [
-      {
-        workspace_id: 'default',
-        team_assignments: [{ team_id: 'Platform Engineering', role: 'team_admin' }],
-        teams: [{ id: 'Platform Engineering', name: 'Platform Engineering', type: 'team' }],
-        workspace_role: 'admin',
-        workspace_roles: []
-      },
-      {
-        workspace_id: 'empty',
-        team_assignments: [],
-        teams: [],
-        workspace_role: null,
-        workspace_roles: []
-      }
-    ]);
+    const result = buildAuthMeResponse(
+      user,
+      ['global_admin'],
+      [
+        {
+          workspace_id: 'default',
+          team_assignments: [{ team_id: 'Platform Engineering', role: 'team_admin' }],
+          teams: [{ id: 'Platform Engineering', name: 'Platform Engineering', type: 'team' }],
+          workspace_role: 'admin',
+          workspace_roles: []
+        },
+        {
+          workspace_id: 'empty',
+          team_assignments: [],
+          teams: [],
+          workspace_role: null,
+          workspace_roles: []
+        }
+      ]
+    );
 
     expect(result).toMatchObject({
       id: 'user-1',
@@ -72,12 +74,7 @@ describe('auth route helpers', () => {
   });
 
   it('builds user update input with validated fields', () => {
-    expect(
-      buildUserUpdateInput(
-        { display_name: 'Updated User', color: '#abcdef' },
-        now
-      )
-    ).toEqual({
+    expect(buildUserUpdateInput({ display_name: 'Updated User', color: '#abcdef' }, now)).toEqual({
       display_name: 'Updated User',
       color: '#abcdef',
       updated_at: now
@@ -93,9 +90,10 @@ describe('auth route helpers', () => {
   });
 
   it('parses valid requested global roles', () => {
-    expect(
-      parseRequestedGlobalRoles(['global_admin', 'workspace_admin'])
-    ).toEqual(['global_admin', 'workspace_admin']);
+    expect(parseRequestedGlobalRoles(['global_admin', 'workspace_admin'])).toEqual([
+      'global_admin',
+      'workspace_admin'
+    ]);
   });
 
   it('rejects invalid requested global roles', () => {

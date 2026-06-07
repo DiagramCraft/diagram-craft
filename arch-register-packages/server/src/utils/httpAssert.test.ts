@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HTTPError } from 'h3';
-import { httpAssert } from './httpAssert.js';
+import { httpAssert } from './httpAssert';
 
 const statusOf = (fn: () => void): number => {
   try {

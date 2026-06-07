@@ -9,8 +9,8 @@ import type {
   WorkspaceEnum,
   WorkspaceLifecycleState,
   WorkspaceMember,
-  WorkspaceOwner,
-} from '../types.js';
+  WorkspaceOwner
+} from '../types';
 import {
   AR_COLOR_GREEN,
   AR_COLOR_BLUE,
@@ -21,7 +21,7 @@ import {
   AR_COLOR_PINK,
   AR_COLOR_CYAN,
   AR_COLOR_TEAL,
-  AR_COLOR_AMBER,
+  AR_COLOR_AMBER
 } from '@arch-register/api-types/colors';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
@@ -35,92 +35,248 @@ export const seedWorkspaces: Workspace[] = [
     description: 'The default workspace',
     color: '',
     created_at: now,
-    updated_at: now,
-  },
+    updated_at: now
+  }
 ];
 
 export const seedLifecycleStates: WorkspaceLifecycleState[] = [
-  { id: 'proposed', workspace: 'default', label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: now },
-  { id: 'experimental', workspace: 'default', label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: now },
-  { id: 'production', workspace: 'default', label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: now },
-  { id: 'deprecated', workspace: 'default', label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: now },
+  {
+    id: 'proposed',
+    workspace: 'default',
+    label: 'Proposed',
+    color: AR_COLOR_BLUE,
+    sort_order: 0,
+    created_at: now
+  },
+  {
+    id: 'experimental',
+    workspace: 'default',
+    label: 'Experimental',
+    color: AR_COLOR_BLUE,
+    sort_order: 1,
+    created_at: now
+  },
+  {
+    id: 'production',
+    workspace: 'default',
+    label: 'Production',
+    color: AR_COLOR_GREEN,
+    sort_order: 2,
+    created_at: now
+  },
+  {
+    id: 'deprecated',
+    workspace: 'default',
+    label: 'Deprecated',
+    color: AR_COLOR_YELLOW,
+    sort_order: 3,
+    created_at: now
+  }
 ];
 
 export const seedOwners: WorkspaceOwner[] = [
-  { 
-    id: 'Platform Engineering', 
-    workspace: 'default', 
-    sort_order: 0, 
+  {
+    id: 'Platform Engineering',
+    workspace: 'default',
+    sort_order: 0,
     color: AR_COLOR_GREEN,
     description: 'Responsible for platform infrastructure and core services',
-    created_at: now 
+    created_at: now
   },
-  { 
-    id: 'Design Systems', 
-    workspace: 'default', 
-    sort_order: 1, 
+  {
+    id: 'Design Systems',
+    workspace: 'default',
+    sort_order: 1,
     color: AR_COLOR_BLUE,
     description: 'Maintains design system and UI component libraries',
-    created_at: now 
+    created_at: now
   },
-  { 
-    id: 'Security & Compliance', 
-    workspace: 'default', 
-    sort_order: 2, 
+  {
+    id: 'Security & Compliance',
+    workspace: 'default',
+    sort_order: 2,
     color: AR_COLOR_RED,
     description: 'Ensures security standards and regulatory compliance',
-    created_at: now 
+    created_at: now
   },
-  { 
-    id: 'Data Platform', 
-    workspace: 'default', 
-    sort_order: 3, 
+  {
+    id: 'Data Platform',
+    workspace: 'default',
+    sort_order: 3,
     color: AR_COLOR_PURPLE,
     description: 'Manages data infrastructure and analytics pipelines',
-    created_at: now 
-  },
+    created_at: now
+  }
 ];
 
 export const seedLocalUsers = [
-  { id: 'globaladmin', email: 'emma.lindqvist@example.com', display_name: 'Emma Lindqvist', color: AR_COLOR_GREEN },
-  { id: 'workspaceadmin', email: 'james.chen@example.com', display_name: 'James Chen', color: AR_COLOR_BLUE },
-  { id: 'workspaceowner', email: 'sofia.martinez@example.com', display_name: 'Sofia Martinez', color: AR_COLOR_ORANGE },
-  { id: 'platformteamadmin', email: 'daniel.okonkwo@example.com', display_name: 'Daniel Okonkwo', color: AR_COLOR_PURPLE },
-  { id: 'platformteameditor', email: 'anna.kowalski@example.com', display_name: 'Anna Kowalski', color: AR_COLOR_YELLOW },
-  { id: 'designteamadmin', email: 'marcus.berg@example.com', display_name: 'Marcus Berg', color: AR_COLOR_RED },
-  { id: 'securityteamadmin', email: 'lena.hoffmann@example.com', display_name: 'Lena Hoffmann', color: AR_COLOR_PINK },
-  { id: 'workspaceeditor', email: 'raj.patel@example.com', display_name: 'Raj Patel', color: AR_COLOR_CYAN },
-  { id: 'workspacereviewer', email: 'clara.dubois@example.com', display_name: 'Clara Dubois', color: AR_COLOR_TEAL },
-  { id: 'workspaceviewer', email: 'oscar.nilsson@example.com', display_name: 'Oscar Nilsson', color: AR_COLOR_AMBER },
+  {
+    id: 'globaladmin',
+    email: 'emma.lindqvist@example.com',
+    display_name: 'Emma Lindqvist',
+    color: AR_COLOR_GREEN
+  },
+  {
+    id: 'workspaceadmin',
+    email: 'james.chen@example.com',
+    display_name: 'James Chen',
+    color: AR_COLOR_BLUE
+  },
+  {
+    id: 'workspaceowner',
+    email: 'sofia.martinez@example.com',
+    display_name: 'Sofia Martinez',
+    color: AR_COLOR_ORANGE
+  },
+  {
+    id: 'platformteamadmin',
+    email: 'daniel.okonkwo@example.com',
+    display_name: 'Daniel Okonkwo',
+    color: AR_COLOR_PURPLE
+  },
+  {
+    id: 'platformteameditor',
+    email: 'anna.kowalski@example.com',
+    display_name: 'Anna Kowalski',
+    color: AR_COLOR_YELLOW
+  },
+  {
+    id: 'designteamadmin',
+    email: 'marcus.berg@example.com',
+    display_name: 'Marcus Berg',
+    color: AR_COLOR_RED
+  },
+  {
+    id: 'securityteamadmin',
+    email: 'lena.hoffmann@example.com',
+    display_name: 'Lena Hoffmann',
+    color: AR_COLOR_PINK
+  },
+  {
+    id: 'workspaceeditor',
+    email: 'raj.patel@example.com',
+    display_name: 'Raj Patel',
+    color: AR_COLOR_CYAN
+  },
+  {
+    id: 'workspacereviewer',
+    email: 'clara.dubois@example.com',
+    display_name: 'Clara Dubois',
+    color: AR_COLOR_TEAL
+  },
+  {
+    id: 'workspaceviewer',
+    email: 'oscar.nilsson@example.com',
+    display_name: 'Oscar Nilsson',
+    color: AR_COLOR_AMBER
+  }
 ] as const;
 
 export const seedTeamAssignments: TeamMembership[] = [
   // Platform Engineering
-  { workspace: 'default', team_id: 'Platform Engineering', user_id: 'platformteamadmin', role: 'team_admin', created_at: now },
-  { workspace: 'default', team_id: 'Platform Engineering', user_id: 'platformteameditor', role: 'team_editor', created_at: now },
-  { workspace: 'default', team_id: 'Platform Engineering', user_id: 'workspaceeditor', role: 'team_reviewer', created_at: now },
-  { workspace: 'default', team_id: 'Platform Engineering', user_id: 'globaladmin', role: 'team_admin', created_at: now },
+  {
+    workspace: 'default',
+    team_id: 'Platform Engineering',
+    user_id: 'platformteamadmin',
+    role: 'team_admin',
+    created_at: now
+  },
+  {
+    workspace: 'default',
+    team_id: 'Platform Engineering',
+    user_id: 'platformteameditor',
+    role: 'team_editor',
+    created_at: now
+  },
+  {
+    workspace: 'default',
+    team_id: 'Platform Engineering',
+    user_id: 'workspaceeditor',
+    role: 'team_reviewer',
+    created_at: now
+  },
+  {
+    workspace: 'default',
+    team_id: 'Platform Engineering',
+    user_id: 'globaladmin',
+    role: 'team_admin',
+    created_at: now
+  },
 
   // Design Systems
-  { workspace: 'default', team_id: 'Design Systems', user_id: 'designteamadmin', role: 'team_admin', created_at: now },
-  { workspace: 'default', team_id: 'Design Systems', user_id: 'workspacereviewer', role: 'team_editor', created_at: now },
-  { workspace: 'default', team_id: 'Design Systems', user_id: 'workspaceviewer', role: 'team_reviewer', created_at: now },
+  {
+    workspace: 'default',
+    team_id: 'Design Systems',
+    user_id: 'designteamadmin',
+    role: 'team_admin',
+    created_at: now
+  },
+  {
+    workspace: 'default',
+    team_id: 'Design Systems',
+    user_id: 'workspacereviewer',
+    role: 'team_editor',
+    created_at: now
+  },
+  {
+    workspace: 'default',
+    team_id: 'Design Systems',
+    user_id: 'workspaceviewer',
+    role: 'team_reviewer',
+    created_at: now
+  },
 
   // Security & Compliance
-  { workspace: 'default', team_id: 'Security & Compliance', user_id: 'securityteamadmin', role: 'team_admin', created_at: now },
-  { workspace: 'default', team_id: 'Security & Compliance', user_id: 'workspaceadmin', role: 'team_editor', created_at: now },
-  { workspace: 'default', team_id: 'Security & Compliance', user_id: 'globaladmin', role: 'team_reviewer', created_at: now },
+  {
+    workspace: 'default',
+    team_id: 'Security & Compliance',
+    user_id: 'securityteamadmin',
+    role: 'team_admin',
+    created_at: now
+  },
+  {
+    workspace: 'default',
+    team_id: 'Security & Compliance',
+    user_id: 'workspaceadmin',
+    role: 'team_editor',
+    created_at: now
+  },
+  {
+    workspace: 'default',
+    team_id: 'Security & Compliance',
+    user_id: 'globaladmin',
+    role: 'team_reviewer',
+    created_at: now
+  },
 
   // Data Platform
-  { workspace: 'default', team_id: 'Data Platform', user_id: 'workspaceowner', role: 'team_admin', created_at: now },
-  { workspace: 'default', team_id: 'Data Platform', user_id: 'workspaceeditor', role: 'team_editor', created_at: now },
-  { workspace: 'default', team_id: 'Data Platform', user_id: 'workspaceviewer', role: 'team_reviewer', created_at: now },
+  {
+    workspace: 'default',
+    team_id: 'Data Platform',
+    user_id: 'workspaceowner',
+    role: 'team_admin',
+    created_at: now
+  },
+  {
+    workspace: 'default',
+    team_id: 'Data Platform',
+    user_id: 'workspaceeditor',
+    role: 'team_editor',
+    created_at: now
+  },
+  {
+    workspace: 'default',
+    team_id: 'Data Platform',
+    user_id: 'workspaceviewer',
+    role: 'team_reviewer',
+    created_at: now
+  }
 ];
 
 export const seedGlobalRoleAssignments: GlobalRoleAssignment[] = [
   { user_id: 'globaladmin', role: 'global_admin', created_at: now },
   { user_id: 'globaladmin', role: 'workspace_admin', created_at: now },
-  { user_id: 'workspaceadmin', role: 'workspace_admin', created_at: now },
+  { user_id: 'workspaceadmin', role: 'workspace_admin', created_at: now }
 ];
 
 export const seedWorkspaceMembers: WorkspaceMember[] = [
@@ -133,7 +289,7 @@ export const seedWorkspaceMembers: WorkspaceMember[] = [
   { workspace: 'default', user_id: 'securityteamadmin', role: 'editor', created_at: now },
   { workspace: 'default', user_id: 'workspaceeditor', role: 'editor', created_at: now },
   { workspace: 'default', user_id: 'workspacereviewer', role: 'reviewer', created_at: now },
-  { workspace: 'default', user_id: 'workspaceviewer', role: 'viewer', created_at: now },
+  { workspace: 'default', user_id: 'workspaceviewer', role: 'viewer', created_at: now }
 ];
 
 export const seedEnums: WorkspaceEnum[] = [
@@ -145,12 +301,12 @@ export const seedEnums: WorkspaceEnum[] = [
       { value: 'openapi', label: 'OpenAPI' },
       { value: 'grpc', label: 'gRPC' },
       { value: 'graphql', label: 'GraphQL' },
-      { value: 'asyncapi', label: 'AsyncAPI' },
+      { value: 'asyncapi', label: 'AsyncAPI' }
     ],
     sort_order: 0,
     created_at: now,
-    updated_at: now,
-  },
+    updated_at: now
+  }
 ];
 
 export const seedSchemas: EntitySchema[] = [
@@ -164,13 +320,14 @@ export const seedSchemas: EntitySchema[] = [
     icon: 'globe',
     default_owner: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0000-000000000002',
     workspace: 'default',
     name: 'System',
-    description: 'A collection of resources that exposes one or more APIs to users and other Systems.',
+    description:
+      'A collection of resources that exposes one or more APIs to users and other Systems.',
     fields: [
       {
         id: 'domain',
@@ -178,14 +335,14 @@ export const seedSchemas: EntitySchema[] = [
         type: 'containment',
         schemaId: '00000000-0000-0000-0000-000000000001',
         minCount: 1,
-        maxCount: 1,
-      },
+        maxCount: 1
+      }
     ],
     color: AR_COLOR_PURPLE,
     icon: 'layers',
     default_owner: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0000-000000000003',
@@ -200,7 +357,7 @@ export const seedSchemas: EntitySchema[] = [
         type: 'containment',
         schemaId: '00000000-0000-0000-0000-000000000002',
         minCount: 1,
-        maxCount: 1,
+        maxCount: 1
       },
       {
         id: 'provides_apis',
@@ -208,7 +365,7 @@ export const seedSchemas: EntitySchema[] = [
         type: 'reference',
         schemaId: '00000000-0000-0000-0000-000000000004',
         minCount: 0,
-        maxCount: -1,
+        maxCount: -1
       },
       {
         id: 'consumes_apis',
@@ -216,7 +373,7 @@ export const seedSchemas: EntitySchema[] = [
         type: 'reference',
         schemaId: '00000000-0000-0000-0000-000000000004',
         minCount: 0,
-        maxCount: -1,
+        maxCount: -1
       },
       {
         id: 'depends_on',
@@ -224,14 +381,14 @@ export const seedSchemas: EntitySchema[] = [
         type: 'reference',
         schemaId: '00000000-0000-0000-0000-000000000003',
         minCount: 0,
-        maxCount: -1,
-      },
+        maxCount: -1
+      }
     ],
     color: AR_COLOR_GREEN,
     icon: 'box',
     default_owner: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0000-000000000004',
@@ -243,7 +400,7 @@ export const seedSchemas: EntitySchema[] = [
         id: 'api_type',
         name: 'Type',
         type: 'select',
-        enumId: '00000000-0000-0000-0000-e00000000001',
+        enumId: '00000000-0000-0000-0000-e00000000001'
       },
       {
         id: 'system',
@@ -251,14 +408,14 @@ export const seedSchemas: EntitySchema[] = [
         type: 'containment',
         schemaId: '00000000-0000-0000-0000-000000000002',
         minCount: 1,
-        maxCount: 1,
-      },
+        maxCount: 1
+      }
     ],
     color: AR_COLOR_BLUE,
     icon: 'api',
     default_owner: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0000-000000000005',
@@ -273,15 +430,15 @@ export const seedSchemas: EntitySchema[] = [
         type: 'containment',
         schemaId: '00000000-0000-0000-0000-000000000002',
         minCount: 0,
-        maxCount: 1,
-      },
+        maxCount: 1
+      }
     ],
     color: AR_COLOR_ORANGE,
     icon: 'database',
     default_owner: null,
     created_at: now,
-    updated_at: now,
-  },
+    updated_at: now
+  }
 ];
 
 export const seedEntities: Entity[] = [
@@ -291,7 +448,8 @@ export const seedEntities: Entity[] = [
     slug: 'engineering',
     namespace: 'default',
     name: 'Engineering',
-    description: 'The core engineering domain covering all customer-facing products and infrastructure.',
+    description:
+      'The core engineering domain covering all customer-facing products and infrastructure.',
     owner: 'Platform Engineering',
     lifecycle: 'production',
     tags: ['core', 'customer-facing'],
@@ -300,7 +458,7 @@ export const seedEntities: Entity[] = [
     data: {},
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0002-000000000001',
@@ -317,7 +475,7 @@ export const seedEntities: Entity[] = [
     data: { domain: '00000000-0000-0000-0001-000000000001' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0002-000000000002',
@@ -334,7 +492,7 @@ export const seedEntities: Entity[] = [
     data: { domain: '00000000-0000-0000-0001-000000000001' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0004-000000000001',
@@ -351,7 +509,7 @@ export const seedEntities: Entity[] = [
     data: { api_type: 'openapi', system: '00000000-0000-0000-0002-000000000001' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0004-000000000002',
@@ -368,7 +526,7 @@ export const seedEntities: Entity[] = [
     data: { api_type: 'grpc', system: '00000000-0000-0000-0002-000000000002' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0003-000000000001',
@@ -383,14 +541,14 @@ export const seedEntities: Entity[] = [
     links: [{ url: 'https://github.com/example/api-gateway', title: 'Source', type: 'source' }],
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
-      technology: 'Node.js',
+      technology: 'Node',
       system: '00000000-0000-0000-0002-000000000001',
       provides_apis: '00000000-0000-0000-0004-000000000001',
-      consumes_apis: '00000000-0000-0000-0004-000000000002',
+      consumes_apis: '00000000-0000-0000-0004-000000000002'
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0003-000000000002',
@@ -408,11 +566,11 @@ export const seedEntities: Entity[] = [
       technology: 'React',
       system: '00000000-0000-0000-0002-000000000001',
       consumes_apis: '00000000-0000-0000-0004-000000000001',
-      depends_on: '00000000-0000-0000-0003-000000000001',
+      depends_on: '00000000-0000-0000-0003-000000000001'
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0003-000000000003',
@@ -429,11 +587,11 @@ export const seedEntities: Entity[] = [
     data: {
       technology: 'Go',
       system: '00000000-0000-0000-0002-000000000002',
-      provides_apis: '00000000-0000-0000-0004-000000000002',
+      provides_apis: '00000000-0000-0000-0004-000000000002'
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0005-000000000001',
@@ -445,16 +603,18 @@ export const seedEntities: Entity[] = [
     owner: 'Platform Engineering',
     lifecycle: 'production',
     tags: ['postgres', 'managed'],
-    links: [{ url: 'https://grafana.example.com/d/postgres-main', title: 'Dashboard', type: 'dashboard' }],
+    links: [
+      { url: 'https://grafana.example.com/d/postgres-main', title: 'Dashboard', type: 'dashboard' }
+    ],
     schema_id: '00000000-0000-0000-0000-000000000005',
     data: {
       resource_type: 'database',
-      system: '00000000-0000-0000-0002-000000000001',
+      system: '00000000-0000-0000-0002-000000000001'
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now,
-  },
+    updated_at: now
+  }
 ];
 
 export const seedProjects: Project[] = [
@@ -467,7 +627,7 @@ export const seedProjects: Project[] = [
     status: 'active',
     color: AR_COLOR_BLUE,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   },
   {
     id: '00000000-0000-0000-0010-000000000002',
@@ -478,8 +638,8 @@ export const seedProjects: Project[] = [
     status: 'pinned',
     color: AR_COLOR_RED,
     created_at: now,
-    updated_at: now,
-  },
+    updated_at: now
+  }
 ];
 
 export const seedProjectFiles: ProjectFile[] = [];

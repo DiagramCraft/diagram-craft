@@ -4,16 +4,23 @@ import {
   AR_COLOR_ORANGE,
   AR_COLOR_PURPLE,
   AR_COLOR_YELLOW,
-  AR_COLOR_RED,
+  AR_COLOR_RED
 } from '@arch-register/api-types/colors';
 import { randomUUID } from 'node:crypto';
-import type { CreateSchemaInput } from './db/database.js';
-import type { SchemaField } from './types.js';
+import type { CreateSchemaInput } from './db/database';
+import type { SchemaField } from './types';
 
 type SymbolicField =
   | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' }
   | { id: string; name: string; type: 'select'; enumId: string }
-  | { id: string; name: string; type: 'reference' | 'containment'; symSchemaId: string; minCount: number; maxCount: number };
+  | {
+      id: string;
+      name: string;
+      type: 'reference' | 'containment';
+      symSchemaId: string;
+      minCount: number;
+      maxCount: number;
+    };
 
 type TemplateSchema = {
   symId: string;
@@ -43,17 +50,25 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         description: 'A high-level grouping that owns one or more Systems.',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
-        fields: [],
+        fields: []
       },
       {
         symId: 'system',
         name: 'System',
-        description: 'A collection of resources that exposes one or more APIs to users and other Systems.',
+        description:
+          'A collection of resources that exposes one or more APIs to users and other Systems.',
         color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
-          { id: 'domain', name: 'Domain', type: 'containment', symSchemaId: 'domain', minCount: 1, maxCount: 1 },
-        ],
+          {
+            id: 'domain',
+            name: 'Domain',
+            type: 'containment',
+            symSchemaId: 'domain',
+            minCount: 1,
+            maxCount: 1
+          }
+        ]
       },
       {
         symId: 'api',
@@ -63,8 +78,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'api',
         fields: [
           { id: 'api_type', name: 'Type', type: 'select', enumId: '' },
-          { id: 'system', name: 'System', type: 'containment', symSchemaId: 'system', minCount: 1, maxCount: 1 },
-        ],
+          {
+            id: 'system',
+            name: 'System',
+            type: 'containment',
+            symSchemaId: 'system',
+            minCount: 1,
+            maxCount: 1
+          }
+        ]
       },
       {
         symId: 'component',
@@ -76,24 +98,53 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'go_live_date', name: 'Go Live Date', type: 'date' },
-          { id: 'system', name: 'System', type: 'containment', symSchemaId: 'system', minCount: 1, maxCount: 1 },
-          { id: 'provides_apis', name: 'Provided APIs', type: 'reference', symSchemaId: 'api', minCount: 0, maxCount: -1 },
-          { id: 'consumes_apis', name: 'Consumed APIs', type: 'reference', symSchemaId: 'api', minCount: 0, maxCount: -1 },
-        ],
+          {
+            id: 'system',
+            name: 'System',
+            type: 'containment',
+            symSchemaId: 'system',
+            minCount: 1,
+            maxCount: 1
+          },
+          {
+            id: 'provides_apis',
+            name: 'Provided APIs',
+            type: 'reference',
+            symSchemaId: 'api',
+            minCount: 0,
+            maxCount: -1
+          },
+          {
+            id: 'consumes_apis',
+            name: 'Consumed APIs',
+            type: 'reference',
+            symSchemaId: 'api',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
       },
       {
         symId: 'resource',
         name: 'Resource',
-        description: 'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
+        description:
+          'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
         color: AR_COLOR_ORANGE,
         icon: 'database',
         fields: [
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
           { id: 'planned_decommission', name: 'Planned Decommission', type: 'date' },
-          { id: 'system', name: 'System', type: 'containment', symSchemaId: 'system', minCount: 0, maxCount: 1 },
-        ],
-      },
-    ],
+          {
+            id: 'system',
+            name: 'System',
+            type: 'containment',
+            symSchemaId: 'system',
+            minCount: 0,
+            maxCount: 1
+          }
+        ]
+      }
+    ]
   },
   {
     id: 'c4',
@@ -106,9 +157,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         description: 'A user or actor that interacts with one or more Software Systems.',
         color: AR_COLOR_YELLOW,
         icon: 'user',
-        fields: [
-          { id: 'description', name: 'Description', type: 'longtext' },
-        ],
+        fields: [{ id: 'description', name: 'Description', type: 'longtext' }]
       },
       {
         symId: 'software_system',
@@ -116,21 +165,27 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         description: 'The highest level of abstraction — something that delivers value to users.',
         color: AR_COLOR_PURPLE,
         icon: 'layers',
-        fields: [
-          { id: 'description', name: 'Description', type: 'longtext' },
-        ],
+        fields: [{ id: 'description', name: 'Description', type: 'longtext' }]
       },
       {
         symId: 'container',
         name: 'Container',
-        description: 'A separately deployable/runnable unit within a Software System (app, service, DB, etc.).',
+        description:
+          'A separately deployable/runnable unit within a Software System (app, service, DB, etc.).',
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'description', name: 'Description', type: 'longtext' },
-          { id: 'system', name: 'Software System', type: 'containment', symSchemaId: 'software_system', minCount: 1, maxCount: 1 },
-        ],
+          {
+            id: 'system',
+            name: 'Software System',
+            type: 'containment',
+            symSchemaId: 'software_system',
+            minCount: 1,
+            maxCount: 1
+          }
+        ]
       },
       {
         symId: 'component',
@@ -140,16 +195,31 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'settings',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'container', name: 'Container', type: 'containment', symSchemaId: 'container', minCount: 1, maxCount: 1 },
-          { id: 'depends_on', name: 'Depends On', type: 'reference', symSchemaId: 'component', minCount: 0, maxCount: -1 },
-        ],
-      },
-    ],
+          {
+            id: 'container',
+            name: 'Container',
+            type: 'containment',
+            symSchemaId: 'container',
+            minCount: 1,
+            maxCount: 1
+          },
+          {
+            id: 'depends_on',
+            name: 'Depends On',
+            type: 'reference',
+            symSchemaId: 'component',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
+      }
+    ]
   },
   {
     id: 'itil',
     name: 'CMDB / ITIL',
-    description: 'IT Service Management — Organization, Business Service, Application, Database, Host',
+    description:
+      'IT Service Management — Organization, Business Service, Application, Database, Host',
     schemas: [
       {
         symId: 'organization',
@@ -157,17 +227,25 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         description: 'A business unit or department that owns one or more Business Services.',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
-        fields: [],
+        fields: []
       },
       {
         symId: 'business_service',
         name: 'Business Service',
-        description: 'An IT-enabled capability delivered to the business by one or more Applications.',
+        description:
+          'An IT-enabled capability delivered to the business by one or more Applications.',
         color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
-          { id: 'organization', name: 'Organization', type: 'containment', symSchemaId: 'organization', minCount: 0, maxCount: 1 },
-        ],
+          {
+            id: 'organization',
+            name: 'Organization',
+            type: 'containment',
+            symSchemaId: 'organization',
+            minCount: 0,
+            maxCount: 1
+          }
+        ]
       },
       {
         symId: 'application',
@@ -179,8 +257,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'tier', name: 'Tier', type: 'select', enumId: '' },
           { id: 'sunset_date', name: 'Sunset Date', type: 'date' },
-          { id: 'service', name: 'Business Service', type: 'containment', symSchemaId: 'business_service', minCount: 0, maxCount: 1 },
-        ],
+          {
+            id: 'service',
+            name: 'Business Service',
+            type: 'containment',
+            symSchemaId: 'business_service',
+            minCount: 0,
+            maxCount: 1
+          }
+        ]
       },
       {
         symId: 'database',
@@ -190,8 +275,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'database',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'application', name: 'Application', type: 'reference', symSchemaId: 'application', minCount: 0, maxCount: -1 },
-        ],
+          {
+            id: 'application',
+            name: 'Application',
+            type: 'reference',
+            symSchemaId: 'application',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
       },
       {
         symId: 'host',
@@ -202,10 +294,10 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'host_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'environment', name: 'Environment', type: 'select', enumId: '' },
-          { id: 'patch_deadline', name: 'Patch Deadline', type: 'date' },
-        ],
-      },
-    ],
+          { id: 'patch_deadline', name: 'Patch Deadline', type: 'date' }
+        ]
+      }
+    ]
   },
   {
     id: 'ddd',
@@ -218,7 +310,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         description: 'A bounded context representing a distinct area of business knowledge.',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
-        fields: [],
+        fields: []
       },
       {
         symId: 'team',
@@ -226,7 +318,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         description: 'An engineering team that owns one or more Services.',
         color: AR_COLOR_ORANGE,
         icon: 'users',
-        fields: [],
+        fields: []
       },
       {
         symId: 'service',
@@ -237,39 +329,69 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
           { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'domain', name: 'Domain', type: 'containment', symSchemaId: 'domain', minCount: 0, maxCount: 1 },
-          { id: 'depends_on', name: 'Depends On', type: 'reference', symSchemaId: 'service', minCount: 0, maxCount: -1 },
-        ],
+          {
+            id: 'domain',
+            name: 'Domain',
+            type: 'containment',
+            symSchemaId: 'domain',
+            minCount: 0,
+            maxCount: 1
+          },
+          {
+            id: 'depends_on',
+            name: 'Depends On',
+            type: 'reference',
+            symSchemaId: 'service',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
       },
       {
         symId: 'event',
         name: 'Event',
-        description: 'An asynchronous message (command, event, or query) exchanged between Services.',
+        description:
+          'An asynchronous message (command, event, or query) exchanged between Services.',
         color: AR_COLOR_BLUE,
         icon: 'zap',
         fields: [
           { id: 'event_type', name: 'Type', type: 'select', enumId: '' },
-          { id: 'producer', name: 'Producer', type: 'reference', symSchemaId: 'service', minCount: 0, maxCount: 1 },
-          { id: 'consumers', name: 'Consumers', type: 'reference', symSchemaId: 'service', minCount: 0, maxCount: -1 },
-        ],
-      },
-    ],
+          {
+            id: 'producer',
+            name: 'Producer',
+            type: 'reference',
+            symSchemaId: 'service',
+            minCount: 0,
+            maxCount: 1
+          },
+          {
+            id: 'consumers',
+            name: 'Consumers',
+            type: 'reference',
+            symSchemaId: 'service',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
+      }
+    ]
   },
   {
     id: 'team-topologies',
     name: 'Team Topologies',
-    description: 'Conway\'s Law model — Team, System, API (interaction modes)',
+    description: "Conway's Law model — Team, System, API (interaction modes)",
     schemas: [
       {
         symId: 'team',
         name: 'Team',
-        description: 'An engineering team classified by its topology type (stream-aligned, platform, enabling, complicated-subsystem).',
+        description:
+          'An engineering team classified by its topology type (stream-aligned, platform, enabling, complicated-subsystem).',
         color: AR_COLOR_YELLOW,
         icon: 'users',
         fields: [
           { id: 'team_type', name: 'Type', type: 'select', enumId: '' },
-          { id: 'cognitive_load', name: 'Cognitive Load Notes', type: 'longtext' },
-        ],
+          { id: 'cognitive_load', name: 'Cognitive Load Notes', type: 'longtext' }
+        ]
       },
       {
         symId: 'system',
@@ -278,29 +400,52 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
-          { id: 'owning_team', name: 'Owning Team', type: 'containment', symSchemaId: 'team', minCount: 0, maxCount: 1 },
-          { id: 'description', name: 'Description', type: 'longtext' },
-        ],
+          {
+            id: 'owning_team',
+            name: 'Owning Team',
+            type: 'containment',
+            symSchemaId: 'team',
+            minCount: 0,
+            maxCount: 1
+          },
+          { id: 'description', name: 'Description', type: 'longtext' }
+        ]
       },
       {
         symId: 'interaction',
         name: 'Team Interaction',
-        description: 'A defined collaboration mode between two Teams (collaboration, X-as-a-Service, facilitating).',
+        description:
+          'A defined collaboration mode between two Teams (collaboration, X-as-a-Service, facilitating).',
         color: AR_COLOR_BLUE,
         icon: 'arrow-right',
         fields: [
           { id: 'mode', name: 'Mode', type: 'select', enumId: '' },
-          { id: 'from_team', name: 'From Team', type: 'reference', symSchemaId: 'team', minCount: 1, maxCount: 1 },
-          { id: 'to_team', name: 'To Team', type: 'reference', symSchemaId: 'team', minCount: 1, maxCount: 1 },
-          { id: 'expected_duration', name: 'Expected Duration', type: 'text' },
-        ],
-      },
-    ],
+          {
+            id: 'from_team',
+            name: 'From Team',
+            type: 'reference',
+            symSchemaId: 'team',
+            minCount: 1,
+            maxCount: 1
+          },
+          {
+            id: 'to_team',
+            name: 'To Team',
+            type: 'reference',
+            symSchemaId: 'team',
+            minCount: 1,
+            maxCount: 1
+          },
+          { id: 'expected_duration', name: 'Expected Duration', type: 'text' }
+        ]
+      }
+    ]
   },
   {
     id: 'data-mesh',
     name: 'Data Mesh',
-    description: 'Data Mesh by Zhamak Dehghani — Domain, Data Product, Dataset, Pipeline, Source System',
+    description:
+      'Data Mesh by Zhamak Dehghani — Domain, Data Product, Dataset, Pipeline, Source System',
     schemas: [
       {
         symId: 'domain',
@@ -308,7 +453,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         description: 'A business domain that owns one or more Data Products.',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
-        fields: [],
+        fields: []
       },
       {
         symId: 'source_system',
@@ -318,8 +463,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'database',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'domain', name: 'Domain', type: 'containment', symSchemaId: 'domain', minCount: 0, maxCount: 1 },
-        ],
+          {
+            id: 'domain',
+            name: 'Domain',
+            type: 'containment',
+            symSchemaId: 'domain',
+            minCount: 0,
+            maxCount: 1
+          }
+        ]
       },
       {
         symId: 'data_product',
@@ -331,9 +483,23 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'dp_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'slo', name: 'SLOs', type: 'longtext' },
           { id: 'review_date', name: 'Review Date', type: 'date' },
-          { id: 'domain', name: 'Domain', type: 'containment', symSchemaId: 'domain', minCount: 1, maxCount: 1 },
-          { id: 'source_systems', name: 'Source Systems', type: 'reference', symSchemaId: 'source_system', minCount: 0, maxCount: -1 },
-        ],
+          {
+            id: 'domain',
+            name: 'Domain',
+            type: 'containment',
+            symSchemaId: 'domain',
+            minCount: 1,
+            maxCount: 1
+          },
+          {
+            id: 'source_systems',
+            name: 'Source Systems',
+            type: 'reference',
+            symSchemaId: 'source_system',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
       },
       {
         symId: 'dataset',
@@ -345,8 +511,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'format', name: 'Format', type: 'select', enumId: '' },
           { id: 'schema_url', name: 'Schema URL', type: 'text' },
           { id: 'deprecation_date', name: 'Deprecation Date', type: 'date' },
-          { id: 'data_product', name: 'Data Product', type: 'containment', symSchemaId: 'data_product', minCount: 1, maxCount: 1 },
-        ],
+          {
+            id: 'data_product',
+            name: 'Data Product',
+            type: 'containment',
+            symSchemaId: 'data_product',
+            minCount: 1,
+            maxCount: 1
+          }
+        ]
       },
       {
         symId: 'pipeline',
@@ -356,11 +529,25 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'git-branch',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          { id: 'inputs', name: 'Inputs', type: 'reference', symSchemaId: 'dataset', minCount: 0, maxCount: -1 },
-          { id: 'outputs', name: 'Outputs', type: 'reference', symSchemaId: 'dataset', minCount: 0, maxCount: -1 },
-        ],
-      },
-    ],
+          {
+            id: 'inputs',
+            name: 'Inputs',
+            type: 'reference',
+            symSchemaId: 'dataset',
+            minCount: 0,
+            maxCount: -1
+          },
+          {
+            id: 'outputs',
+            name: 'Outputs',
+            type: 'reference',
+            symSchemaId: 'dataset',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
+      }
+    ]
   },
   {
     id: 'archimate',
@@ -374,9 +561,16 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: [
-          { id: 'parent', name: 'Parent Capability', type: 'containment', symSchemaId: 'business_capability', minCount: 0, maxCount: 1 },
-          { id: 'target_date', name: 'Target Date', type: 'date' },
-        ],
+          {
+            id: 'parent',
+            name: 'Parent Capability',
+            type: 'containment',
+            symSchemaId: 'business_capability',
+            minCount: 0,
+            maxCount: 1
+          },
+          { id: 'target_date', name: 'Target Date', type: 'date' }
+        ]
       },
       {
         symId: 'business_process',
@@ -385,8 +579,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_ORANGE,
         icon: 'git-merge',
         fields: [
-          { id: 'capability', name: 'Capability', type: 'containment', symSchemaId: 'business_capability', minCount: 0, maxCount: 1 },
-        ],
+          {
+            id: 'capability',
+            name: 'Capability',
+            type: 'containment',
+            symSchemaId: 'business_capability',
+            minCount: 0,
+            maxCount: 1
+          }
+        ]
       },
       {
         symId: 'application_component',
@@ -398,8 +599,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'layer', name: 'Layer', type: 'select', enumId: '' },
           { id: 'retirement_date', name: 'Retirement Date', type: 'date' },
-          { id: 'realises', name: 'Realises Process', type: 'reference', symSchemaId: 'business_process', minCount: 0, maxCount: -1 },
-        ],
+          {
+            id: 'realises',
+            name: 'Realises Process',
+            type: 'reference',
+            symSchemaId: 'business_process',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
       },
       {
         symId: 'application_service',
@@ -408,23 +616,38 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_BLUE,
         icon: 'api',
         fields: [
-          { id: 'component', name: 'Component', type: 'containment', symSchemaId: 'application_component', minCount: 0, maxCount: 1 },
-        ],
+          {
+            id: 'component',
+            name: 'Component',
+            type: 'containment',
+            symSchemaId: 'application_component',
+            minCount: 0,
+            maxCount: 1
+          }
+        ]
       },
       {
         symId: 'technology_component',
         name: 'Technology Component',
-        description: 'Infrastructure that hosts and runs Application Components (device, system software, artifact).',
+        description:
+          'Infrastructure that hosts and runs Application Components (device, system software, artifact).',
         color: AR_COLOR_PURPLE,
         icon: 'server',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
           { id: 'end_of_support', name: 'End of Support', type: 'date' },
-          { id: 'hosts', name: 'Hosts', type: 'reference', symSchemaId: 'application_component', minCount: 0, maxCount: -1 },
-        ],
-      },
-    ],
+          {
+            id: 'hosts',
+            name: 'Hosts',
+            type: 'reference',
+            symSchemaId: 'application_component',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
+      }
+    ]
   },
   {
     id: 'security',
@@ -434,13 +657,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       {
         symId: 'asset',
         name: 'Asset',
-        description: 'A data, service, infrastructure, or credential item that requires protection.',
+        description:
+          'A data, service, infrastructure, or credential item that requires protection.',
         color: AR_COLOR_YELLOW,
         icon: 'shield',
         fields: [
           { id: 'classification', name: 'Classification', type: 'select', enumId: '' },
-          { id: 'asset_type', name: 'Type', type: 'select', enumId: '' },
-        ],
+          { id: 'asset_type', name: 'Type', type: 'select', enumId: '' }
+        ]
       },
       {
         symId: 'threat',
@@ -451,9 +675,16 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'stride_category', name: 'STRIDE Category', type: 'select', enumId: '' },
           { id: 'discovered_on', name: 'Discovered On', type: 'date' },
-          { id: 'affected_assets', name: 'Affected Assets', type: 'reference', symSchemaId: 'asset', minCount: 0, maxCount: -1 },
-          { id: 'description', name: 'Description', type: 'longtext' },
-        ],
+          {
+            id: 'affected_assets',
+            name: 'Affected Assets',
+            type: 'reference',
+            symSchemaId: 'asset',
+            minCount: 0,
+            maxCount: -1
+          },
+          { id: 'description', name: 'Description', type: 'longtext' }
+        ]
       },
       {
         symId: 'control',
@@ -464,29 +695,61 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'control_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'last_verified', name: 'Last Verified', type: 'date' },
-          { id: 'mitigates', name: 'Mitigates', type: 'reference', symSchemaId: 'threat', minCount: 0, maxCount: -1 },
-          { id: 'protects', name: 'Protects', type: 'reference', symSchemaId: 'asset', minCount: 0, maxCount: -1 },
-        ],
+          {
+            id: 'mitigates',
+            name: 'Mitigates',
+            type: 'reference',
+            symSchemaId: 'threat',
+            minCount: 0,
+            maxCount: -1
+          },
+          {
+            id: 'protects',
+            name: 'Protects',
+            type: 'reference',
+            symSchemaId: 'asset',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
       },
       {
         symId: 'risk',
         name: 'Risk',
-        description: 'The combination of a Threat and its potential impact, rated by likelihood and severity.',
+        description:
+          'The combination of a Threat and its potential impact, rated by likelihood and severity.',
         color: AR_COLOR_YELLOW,
         icon: 'zap',
         fields: [
           { id: 'likelihood', name: 'Likelihood', type: 'select', enumId: '' },
           { id: 'impact', name: 'Impact', type: 'select', enumId: '' },
           { id: 'review_due', name: 'Review Due', type: 'date' },
-          { id: 'threat', name: 'Threat', type: 'reference', symSchemaId: 'threat', minCount: 0, maxCount: -1 },
-          { id: 'controls', name: 'Controls', type: 'reference', symSchemaId: 'control', minCount: 0, maxCount: -1 },
-        ],
-      },
-    ],
-  },
+          {
+            id: 'threat',
+            name: 'Threat',
+            type: 'reference',
+            symSchemaId: 'threat',
+            minCount: 0,
+            maxCount: -1
+          },
+          {
+            id: 'controls',
+            name: 'Controls',
+            type: 'reference',
+            symSchemaId: 'control',
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
+      }
+    ]
+  }
 ];
 
-export const instantiateTemplate = (workspaceId: string, templateId: string): CreateSchemaInput[] => {
+export const instantiateTemplate = (
+  workspaceId: string,
+  templateId: string
+): CreateSchemaInput[] => {
   const template = SCHEMA_TEMPLATES.find(t => t.id === templateId);
   if (!template) return [];
 
@@ -500,7 +763,14 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Cr
     const resolvedFields: SchemaField[] = schema.fields.map(field => {
       if (field.type === 'reference' || field.type === 'containment') {
         const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
-        return { id: field.id, name: field.name, type: field.type, schemaId: resolvedId, minCount: field.minCount, maxCount: field.maxCount };
+        return {
+          id: field.id,
+          name: field.name,
+          type: field.type,
+          schemaId: resolvedId,
+          minCount: field.minCount,
+          maxCount: field.maxCount
+        };
       }
       if (field.type === 'select') {
         return { id: field.id, name: field.name, type: field.type, enumId: field.enumId };
@@ -518,7 +788,7 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Cr
       fields: resolvedFields,
       default_owner: null,
       created_at: now,
-      updated_at: now,
+      updated_at: now
     };
   });
 };

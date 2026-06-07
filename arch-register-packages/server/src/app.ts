@@ -1,21 +1,21 @@
 import { readFile } from 'node:fs/promises';
 import { H3, defineHandler, handleCors, getRequestPath, getMethod } from 'h3';
-import type { DatabaseAdapter } from './db/database.js';
-import type { StorageAdapter } from './storage/storage.js';
-import { createLogger } from './utils/logger.js';
-import { createDataRoutes } from './routes/data.js';
-import { createProjectRoutes } from './routes/projects.js';
-import { createSearchRoutes } from './routes/search.js';
-import { createSchemaRoutes } from './routes/schemas.js';
-import { createEnumRoutes } from './routes/enums.js';
-import { createWorkspaceRoutes } from './routes/workspaces.js';
-import { createAuditRoutes } from './routes/audit.js';
-import { createWorkspaceConfigRoutes } from './routes/workspace-config.js';
-import { createAiChatRoutes } from './routes/ai-chat.js';
-import { createDiagramCraftRoutes } from './routes/diagram-craft.js';
-import { createAuthRoutes, createAuthProtectedRoutes } from './routes/auth.js';
-import { createTemplateRoutes } from './routes/templates.js';
-import { requireAuth } from './middleware/auth.js';
+import type { DatabaseAdapter } from './db/database';
+import type { StorageAdapter } from './storage/storage';
+import { createLogger } from './utils/logger';
+import { createDataRoutes } from './routes/data';
+import { createProjectRoutes } from './routes/projects';
+import { createSearchRoutes } from './routes/search';
+import { createSchemaRoutes } from './routes/schemas';
+import { createEnumRoutes } from './routes/enums';
+import { createWorkspaceRoutes } from './routes/workspaces';
+import { createAuditRoutes } from './routes/audit';
+import { createWorkspaceConfigRoutes } from './routes/workspace-config';
+import { createAiChatRoutes } from './routes/ai-chat';
+import { createDiagramCraftRoutes } from './routes/diagram-craft';
+import { createAuthRoutes, createAuthProtectedRoutes } from './routes/auth';
+import { createTemplateRoutes } from './routes/templates';
+import { requireAuth } from './middleware/auth';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -27,7 +27,11 @@ type AppOptions = {
   };
 };
 
-export const createApp = (db: DatabaseAdapter, storage: StorageAdapter, options: AppOptions = {}) => {
+export const createApp = (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  options: AppOptions = {}
+) => {
   const app = new H3({
     onError: (error, event) => {
       const method = getMethod(event);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Entity } from '../types.js';
-import { toApiEntity, toApiEntitySummary } from './entity-helpers.js';
+import type { Entity } from '../types';
+import { toApiEntity, toApiEntitySummary } from './entity-helpers';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 
@@ -19,7 +19,7 @@ const baseEntity: Entity = {
   data: { custom: 'value' },
   visibility_mode: 'public',
   created_at: now,
-  updated_at: now,
+  updated_at: now
 };
 
 // ── toApiEntity ───────────────────────────────────────────────

@@ -1,5 +1,9 @@
-import type { AuditDatabase, CreateAuditLogInput } from './database.js';
-import { normalizePostgresError, PostgresDatabaseBase, type PostgresRowTypes } from './postgresBase.js';
+import type { AuditDatabase, CreateAuditLogInput } from './database';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  type PostgresRowTypes
+} from './postgresBase';
 
 export class PostgresAuditDatabase extends PostgresDatabaseBase implements AuditDatabase {
   async listAuditLogs(workspace: string) {

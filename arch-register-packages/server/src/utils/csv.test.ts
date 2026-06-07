@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escapeCsvValue, formatArrayForCsv, generateCsv } from './csv.js';
+import { escapeCsvValue, formatArrayForCsv, generateCsv } from './csv';
 
 describe('escapeCsvValue', () => {
   it('returns empty string for null', () => {

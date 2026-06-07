@@ -2,15 +2,19 @@ import type {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
   WorkspaceAdminDatabase
-} from './database.js';
-import { normalizePostgresError, PostgresDatabaseBase, type PostgresRowTypes } from './postgresBase.js';
+} from './database';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  type PostgresRowTypes
+} from './postgresBase';
 import type {
   WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
   TeamMembership,
   WorkspaceRoleDefinition
-} from '../types.js';
+} from '../types';
 
 export class PostgresWorkspaceAdminDatabase
   extends PostgresDatabaseBase

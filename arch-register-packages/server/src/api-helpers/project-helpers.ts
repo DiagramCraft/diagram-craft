@@ -1,16 +1,16 @@
 import type { Project, ProjectFile, FileTree, ProjectDetail } from '@arch-register/api-types';
-import type {
-  Project as InternalProject,
-  ProjectFile as InternalProjectFile,
-} from '../types.js';
+import type { Project as InternalProject, ProjectFile as InternalProjectFile } from '../types';
 import type { AuthorizationContext } from '@arch-register/permissions';
 
-const getProjectCapabilities = (context: AuthorizationContext | null, _ownerTeamId: string | null) => {
+const getProjectCapabilities = (
+  context: AuthorizationContext | null,
+  _ownerTeamId: string | null
+) => {
   if (!context) {
     return {
       canEdit: true,
       canDelete: true,
-      canManageFiles: true,
+      canManageFiles: true
     };
   }
 
@@ -19,7 +19,7 @@ const getProjectCapabilities = (context: AuthorizationContext | null, _ownerTeam
   return {
     canEdit: true,
     canDelete: true,
-    canManageFiles: true,
+    canManageFiles: true
   };
 };
 
@@ -38,7 +38,7 @@ export const toApiProject = (
   file_count: fileCount,
   created_at: project.created_at.toISOString(),
   updated_at: project.updated_at.toISOString(),
-  ...getProjectCapabilities(authCtx, project.owner),
+  ...getProjectCapabilities(authCtx, project.owner)
 });
 
 export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
@@ -53,7 +53,7 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   is_workspace_template: file.is_workspace_template,
   preview_svg: file.preview_svg,
   created_at: file.created_at.toISOString(),
-  updated_at: file.updated_at.toISOString(),
+  updated_at: file.updated_at.toISOString()
 });
 
 export const toApiProjectDetail = (
@@ -72,5 +72,5 @@ export const toApiProjectDetail = (
   created_at: project.created_at.toISOString(),
   updated_at: project.updated_at.toISOString(),
   ...getProjectCapabilities(authCtx, project.owner),
-  files,
+  files
 });

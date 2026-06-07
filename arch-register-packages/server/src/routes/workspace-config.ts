@@ -6,23 +6,25 @@ import {
   WORKSPACE_CAPABILITY_GROUPS,
   resolveWorkspaceRoleDefinitions
 } from '@arch-register/permissions';
-import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
-import type { AuthenticatedEvent } from '../middleware/auth.js';
+import type { DatabaseAdapter } from '../db/database';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace';
+import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
+import type { AuthenticatedEvent } from '../middleware/auth';
 import type {
   TeamMembership,
   TeamRole,
   WorkspaceLifecycleState,
   WorkspaceOwner,
   WorkspaceRoleCapability
-} from '../types.js';
-import { httpAssert } from '../utils/httpAssert.js';
+} from '../types';
+import { httpAssert } from '../utils/httpAssert';
 
 const BASE = '/api/:workspace/config';
 
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
-const VALID_WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group => group.caps.map(cap => cap.id));
+const VALID_WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group =>
+  group.caps.map(cap => cap.id)
+);
 
 export const sanitizeText = (text: string): string => {
   return text
@@ -49,16 +51,18 @@ export const parseWorkspaceRoleInput = (body: unknown) => {
 
   const capabilities = (data['capabilities'] as unknown[]).map(capability => {
     httpAssert.true(
-      typeof capability === 'string' && VALID_WORKSPACE_CAPABILITIES.includes(capability as WorkspaceRoleCapability),
+      typeof capability === 'string' &&
+        VALID_WORKSPACE_CAPABILITIES.includes(capability as WorkspaceRoleCapability),
       { message: 'capabilities contains invalid values' }
     );
     return capability as WorkspaceRoleCapability;
   });
 
   const name = sanitizeText(data['name'] as string);
-  const description = data['description'] !== undefined ? sanitizeText(data['description'] as string) : '';
+  const description =
+    data['description'] !== undefined ? sanitizeText(data['description'] as string) : '';
   const tone = data['tone'] !== undefined ? (data['tone'] as string).trim() : AR_COLOR_BLUE;
-  
+
   httpAssert.true(name.length > 0 && name.length <= 100, {
     message: 'name must be between 1 and 100 characters'
   });
@@ -73,7 +77,7 @@ export const parseWorkspaceRoleInput = (body: unknown) => {
     name,
     description,
     tone,
-    capabilities: [...new Set(capabilities)],
+    capabilities: [...new Set(capabilities)]
   };
 };
 
@@ -246,7 +250,9 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.role');
-      return resolveWorkspaceRoleDefinitions(await db.workspaceAdmin.listCustomWorkspaceRoles(workspace));
+      return resolveWorkspaceRoleDefinitions(
+        await db.workspaceAdmin.listCustomWorkspaceRoles(workspace)
+      );
     })
   );
 
@@ -270,7 +276,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         builtin: false,
         capabilities: input.capabilities,
         created_at: now,
-        updated_at: now,
+        updated_at: now
       });
     })
   );
@@ -299,7 +305,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         tone: input.tone,
         builtin: false,
         capabilities: input.capabilities,
-        updated_at: new Date(),
+        updated_at: new Date()
       });
       httpAssert.present(updated, { status: 404, message: 'Role not found' });
       return updated;
@@ -341,7 +347,10 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
       const now = new Date();
-      return await db.workspaceAdmin.replaceTeams(workspace, buildWorkspaceOwnerInputs(workspace, body, now));
+      return await db.workspaceAdmin.replaceTeams(
+        workspace,
+        buildWorkspaceOwnerInputs(workspace, body, now)
+      );
     })
   );
 
@@ -354,7 +363,10 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
       const now = new Date();
-      return await db.workspaceAdmin.replaceTeams(workspace, buildWorkspaceOwnerInputs(workspace, body, now));
+      return await db.workspaceAdmin.replaceTeams(
+        workspace,
+        buildWorkspaceOwnerInputs(workspace, body, now)
+      );
     })
   );
 
@@ -430,7 +442,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
           role: m.role,
           display_name: user?.display_name ?? m.user_id,
           email: user?.email ?? null,
-          created_at: m.created_at.toISOString(),
+          created_at: m.created_at.toISOString()
         };
       });
     })
@@ -451,7 +463,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         display_name: user.display_name,
         auth_provider: user.auth_provider,
         is_active: user.is_active,
-        color: user.color,
+        color: user.color
       }));
     })
   );
@@ -467,7 +479,9 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const userId = event.context.params?.['userId'];
       httpAssert.string(userId, { message: 'userId is required' });
 
-      const body = (await event.req.json().catch(() => undefined)) as { role?: unknown } | undefined;
+      const body = (await event.req.json().catch(() => undefined)) as
+        | { role?: unknown }
+        | undefined;
       const role = body?.role;
       httpAssert.string(role, { message: 'role is required and must be a string' });
 
@@ -475,14 +489,13 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         db.identityAuth.getUser(userId),
         db.workspaceAdmin.listCustomWorkspaceRoles(workspace)
       ]);
-      
+
       httpAssert.present(user, { status: 404, message: 'User not found' });
-      
+
       const validRoleIds = new Set(resolveWorkspaceRoleDefinitions(customRoles).map(r => r.id));
-      httpAssert.true(
-        validRoleIds.has(role),
-        { message: 'role must reference an existing workspace role' }
-      );
+      httpAssert.true(validRoleIds.has(role), {
+        message: 'role must reference an existing workspace role'
+      });
 
       const member = await db.workspaceAdmin.setWorkspaceMemberRole(
         workspace,

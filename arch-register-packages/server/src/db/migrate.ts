@@ -3,7 +3,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
-import type { PostgresSqlClient } from './postgresBase.js';
+import type { PostgresSqlClient } from './postgresBase';
 import { createLogger } from '@arch-register/server/utils/logger';
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations');

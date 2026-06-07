@@ -1,4 +1,4 @@
-import type { DatabaseAdapter } from '../db/database.js';
+import type { DatabaseAdapter } from '../db/database';
 
 export const buildSystemPrompt = async (
   db: DatabaseAdapter,
@@ -16,19 +16,21 @@ export const buildSystemPrompt = async (
     entityCountsBySchema.set(entity.schema_id, count + 1);
   }
 
-  const schemaDescriptions = schemas.map(s => {
-    const count = entityCountsBySchema.get(s.id) ?? 0;
-    const fields = s.fields.map(f => `  - ${f.name} (${f.type})`).join('\n');
-    return `### ${s.name} (${count} entities)\nFields:\n${fields}`;
-  }).join('\n\n');
+  const schemaDescriptions = schemas
+    .map(s => {
+      const count = entityCountsBySchema.get(s.id) ?? 0;
+      const fields = s.fields.map(f => `  - ${f.name} (${f.type})`).join('\n');
+      return `### ${s.name} (${count} entities)\nFields:\n${fields}`;
+    })
+    .join('\n\n');
 
-  const lifecycleDesc = lifecycleStates.length > 0
-    ? `Available lifecycle states: ${lifecycleStates.map(s => s.label).join(', ')}`
-    : 'No lifecycle states configured.';
+  const lifecycleDesc =
+    lifecycleStates.length > 0
+      ? `Available lifecycle states: ${lifecycleStates.map(s => s.label).join(', ')}`
+      : 'No lifecycle states configured.';
 
-  const teamsDesc = teams.length > 0
-    ? `Teams: ${teams.map(t => t.id).join(', ')}`
-    : 'No teams configured.';
+  const teamsDesc =
+    teams.length > 0 ? `Teams: ${teams.map(t => t.id).join(', ')}` : 'No teams configured.';
 
   const parts = [
     `You are an architecture assistant for an Enterprise Architecture tool called Arch Register.`,
@@ -57,7 +59,7 @@ export const buildSystemPrompt = async (
     `- If the user asks you to create or modify entities, use the mutation tools. Those changes require explicit approval from the user before they execute.`,
     `- When proposing changes, describe what you'd add or modify clearly.`,
     `- Use markdown formatting for readability (bold, bullets, etc).`,
-    `- If you don't have enough context to answer, say so.`,
+    `- If you don't have enough context to answer, say so.`
   ];
 
   if (customPrompt) {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { EntitySchema, WorkspaceEnum } from '../types.js';
-import { toApiEnum, toApiSchema } from './schema-helpers.js';
+import type { EntitySchema, WorkspaceEnum } from '../types';
+import { toApiEnum, toApiSchema } from './schema-helpers';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -16,7 +16,7 @@ describe('toApiEnum', () => {
       options: [{ value: 'active', label: 'Active' }],
       sort_order: 0,
       created_at: now,
-      updated_at: now,
+      updated_at: now
     };
     const result = toApiEnum(e);
     expect(result.id).toBe('enum-1');
@@ -36,7 +36,7 @@ describe('toApiSchema', () => {
     options: [{ value: 'prod', label: 'Production' }],
     sort_order: 0,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   };
 
   const schema: EntitySchema = {
@@ -47,13 +47,13 @@ describe('toApiSchema', () => {
     fields: [
       { id: 'env', name: 'Env', type: 'select', enumId: 'enum-env' },
       { id: 'notes', name: 'Notes', type: 'text' },
-      { id: 'go_live', name: 'Go Live', type: 'date' },
+      { id: 'go_live', name: 'Go Live', type: 'date' }
     ],
     color: null,
     icon: null,
     default_owner: null,
     created_at: now,
-    updated_at: now,
+    updated_at: now
   };
 
   it('resolves options for select fields', () => {

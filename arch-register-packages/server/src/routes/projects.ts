@@ -1,25 +1,25 @@
 import { H3, H3Event, HTTPError, defineHandler } from 'h3';
 import { randomUUID } from 'node:crypto';
-import type { CreateProjectInput, DatabaseAdapter, UpdateProjectInput } from '../db/database.js';
-import type { ProjectFile } from '../types.js';
-import type { StorageAdapter } from '../storage/storage.js';
-import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
-import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
-import { handleDbError } from '../utils/http.js';
+import type { CreateProjectInput, DatabaseAdapter, UpdateProjectInput } from '../db/database';
+import type { ProjectFile } from '../types';
+import type { StorageAdapter } from '../storage/storage';
+import { logAudit, extractEntityFields, computeChanges } from '../db/audit';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace';
+import { handleDbError } from '../utils/http';
 import {
   buildApiAuthCtx,
   canAccessProject,
   requireCanCreateProject,
   requireProjectAccess,
   requireProjectAction
-} from '../auth/authorization.js';
-import type { AuthenticatedEvent } from '../middleware/auth.js';
-import { httpAssert } from '../utils/httpAssert.js';
-import { toApiProject, toApiProjectFile, toApiProjectDetail } from '../api-helpers/project-helpers.js';
+} from '../auth/authorization';
+import type { AuthenticatedEvent } from '../middleware/auth';
+import { httpAssert } from '../utils/httpAssert';
+import { toApiProject, toApiProjectFile, toApiProjectDetail } from '../api-helpers/project-helpers';
 import type { FileTree } from '@arch-register/api-types';
-import { generateSvgPreview } from '../api-helpers/svgPreviewGenerator.js';
+import { generateSvgPreview } from '../api-helpers/svgPreviewGenerator';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
-import { getDiagramCommentCounts } from '../diagrams/commentCounts.js';
+import { getDiagramCommentCounts } from '../diagrams/commentCounts';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
@@ -53,9 +53,7 @@ export const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
   typeof owner === 'string' && teamIds.has(owner) ? owner : null;
 
 export const buildFileTree = (files: ProjectFile[]): FileTree => {
-  const rootFiles = files
-    .filter(f => f.path.indexOf('/') === -1)
-    .map(toApiProjectFile);
+  const rootFiles = files.filter(f => f.path.indexOf('/') === -1).map(toApiProjectFile);
 
   const folderMap = new Map<string, ProjectFile[]>();
 
@@ -74,8 +72,8 @@ export const buildFileTree = (files: ProjectFile[]): FileTree => {
 
   const folders = Array.from(folderMap.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([path, files]) => ({ 
-      path, 
+    .map(([path, files]) => ({
+      path,
       files: files.map(toApiProjectFile)
     }));
 
@@ -172,9 +170,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           }
         }
         return visibleProjects
-          .map(project =>
-            toApiProject(project, fileCounts.get(project.id) ?? 0, authCtx)
-          )
+          .map(project => toApiProject(project, fileCounts.get(project.id) ?? 0, authCtx))
           .sort((a, b) => {
             const rank = { pinned: 0, active: 1, archived: 2 } as const;
             return rank[a.status] - rank[b.status] || a.name.localeCompare(b.name);

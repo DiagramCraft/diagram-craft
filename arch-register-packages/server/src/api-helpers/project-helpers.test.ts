@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FileTree } from '@arch-register/api-types';
-import type { Project, ProjectFile } from '../types.js';
-import { toApiProject, toApiProjectDetail, toApiProjectFile } from './project-helpers.js';
+import type { Project, ProjectFile } from '../types';
+import { toApiProject, toApiProjectDetail, toApiProjectFile } from './project-helpers';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -15,7 +15,7 @@ const baseProject: Project = {
   status: 'active',
   color: '#ff0000',
   created_at: now,
-  updated_at: now,
+  updated_at: now
 };
 
 const baseProjectFile: ProjectFile = {
@@ -31,7 +31,7 @@ const baseProjectFile: ProjectFile = {
   is_workspace_template: false,
   preview_svg: null,
   created_at: now,
-  updated_at: now,
+  updated_at: now
 };
 
 // ── toApiProject ──────────────────────────────────────────────
@@ -65,21 +65,39 @@ describe('toApiProjectFile', () => {
 
 describe('toApiProjectDetail', () => {
   it('counts root files', () => {
-    const files: FileTree = { folders: [], rootFiles: [baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile, baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile] };
+    const files: FileTree = {
+      folders: [],
+      rootFiles: [
+        baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile,
+        baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile
+      ]
+    };
     const result = toApiProjectDetail(baseProject, files, null);
     expect(result.file_count).toBe(2);
   });
 
   it('counts files in folders', () => {
-    const folder = { path: '/diagrams', files: [baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile, baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile] };
+    const folder = {
+      path: '/diagrams',
+      files: [
+        baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile,
+        baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile
+      ]
+    };
     const files: FileTree = { folders: [folder], rootFiles: [] };
     const result = toApiProjectDetail(baseProject, files, null);
     expect(result.file_count).toBe(2);
   });
 
   it('sums files across folders and root', () => {
-    const folder = { path: '/diagrams', files: [baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile] };
-    const files: FileTree = { folders: [folder], rootFiles: [baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile] };
+    const folder = {
+      path: '/diagrams',
+      files: [baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile]
+    };
+    const files: FileTree = {
+      folders: [folder],
+      rootFiles: [baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile]
+    };
     const result = toApiProjectDetail(baseProject, files, null);
     expect(result.file_count).toBe(2);
   });

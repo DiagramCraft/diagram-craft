@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Entity, EntitySchema } from '../types.js';
-import { computeEntityCompleteness } from './completeness.js';
+import type { Entity, EntitySchema } from '../types';
+import { computeEntityCompleteness } from './completeness';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 
@@ -21,11 +21,11 @@ describe('computeEntityCompleteness', () => {
       data: {
         isCritical: false,
         notes: 'ready',
-        optionalField: '',
+        optionalField: ''
       },
       visibility_mode: 'public',
       created_at: now,
-      updated_at: now,
+      updated_at: now
     };
 
     const schema: EntitySchema = {
@@ -36,13 +36,13 @@ describe('computeEntityCompleteness', () => {
       fields: [
         { id: 'isCritical', name: 'Critical', type: 'boolean', requirementLevel: 'required' },
         { id: 'notes', name: 'Notes', type: 'text', requirementLevel: 'expected' },
-        { id: 'optionalField', name: 'Optional', type: 'text', requirementLevel: 'optional' },
+        { id: 'optionalField', name: 'Optional', type: 'text', requirementLevel: 'optional' }
       ],
       color: null,
       icon: null,
       default_owner: null,
       created_at: now,
-      updated_at: now,
+      updated_at: now
     };
 
     expect(computeEntityCompleteness(entity, schema)).toBe(60);

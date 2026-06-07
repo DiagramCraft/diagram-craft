@@ -1,7 +1,7 @@
 import { HTTPError } from 'h3';
-import type { AIGenerateRequest, AIResult, AIServer, AIMessage } from './aiServer.js';
-import { httpAssert } from '../utils/httpAssert.js';
-import type { EffectiveAiConfig } from './tanstackAiAdapter.js';
+import type { AIGenerateRequest, AIResult, AIServer, AIMessage } from './aiServer';
+import { httpAssert } from '../utils/httpAssert';
+import type { EffectiveAiConfig } from './tanstackAiAdapter';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
@@ -28,9 +28,7 @@ export class ConfiguredAIServer implements AIServer {
     };
 
     const isOpenAI = this.config.provider === 'openai';
-    const url = isOpenAI
-      ? (this.config.baseUrl ?? OPENAI_API_URL)
-      : OPENROUTER_API_URL;
+    const url = isOpenAI ? (this.config.baseUrl ?? OPENAI_API_URL) : OPENROUTER_API_URL;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

@@ -4,7 +4,7 @@ import {
   toDiagramCraftAIHttpError,
   validateDiagramCraftAIGenerateBody,
   validateDiagramCraftAIRequestHeaders
-} from './diagram-craft.js';
+} from './diagram-craft';
 
 const makeEvent = (headers: Record<string, string>) =>
   ({

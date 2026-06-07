@@ -1,4 +1,4 @@
-import type { Entity, EntitySchema } from '../types.js';
+import type { Entity, EntitySchema } from '../types';
 
 const isNonEmpty = (value: unknown): boolean => {
   if (value == null) return false;
@@ -7,7 +7,9 @@ const isNonEmpty = (value: unknown): boolean => {
 };
 
 export const computeEntityCompleteness = (entity: Entity, schema: EntitySchema): number => {
-  const expectedFields = schema.fields.filter(f => f.requirementLevel === 'required' || f.requirementLevel === 'expected');
+  const expectedFields = schema.fields.filter(
+    f => f.requirementLevel === 'required' || f.requirementLevel === 'expected'
+  );
 
   // Built-in fields always count: description, owner, lifecycle
   const total = expectedFields.length + 3;

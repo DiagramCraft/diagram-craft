@@ -1,24 +1,28 @@
 import { H3, H3Event, defineHandler } from 'h3';
-import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
-import { handleDbError } from '../utils/http.js';
+import type { DatabaseAdapter } from '../db/database';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace';
+import { handleDbError } from '../utils/http';
 import {
   buildApiAuthCtx,
   requireProjectAccess,
   requireWorkspaceAdmin,
-  canAccessProject,
-} from '../auth/authorization.js';
-import type { AuthenticatedEvent } from '../middleware/auth.js';
-import { httpAssert } from '../utils/httpAssert.js';
-import { toApiProjectFile } from '../api-helpers/project-helpers.js';
-import { buildAllTemplatesResponse, buildProjectTemplatesResponse, type ProjectWithFiles } from '../api-helpers/template-helpers.js';
+  canAccessProject
+} from '../auth/authorization';
+import type { AuthenticatedEvent } from '../middleware/auth';
+import { httpAssert } from '../utils/httpAssert';
+import { toApiProjectFile } from '../api-helpers/project-helpers';
+import {
+  buildAllTemplatesResponse,
+  buildProjectTemplatesResponse,
+  type ProjectWithFiles
+} from '../api-helpers/template-helpers';
 
 const BASE = '/api/:workspace';
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
     unique: 'Constraint violation',
-    foreign: 'Foreign key constraint violation',
+    foreign: 'Foreign key constraint violation'
   });
 
 export const decodeRouteParam = (value: string | undefined, name: string) => {
@@ -51,7 +55,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
   // Returns all templates in the workspace (workspace-level and all project-level)
   router.get(
     `${BASE}/templates`,
-    defineHandler(async (event) => {
+    defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
 
@@ -76,7 +80,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
   // Returns templates available for a specific project (workspace + project templates)
   router.get(
     `${BASE}/projects/:projectId/templates`,
-    defineHandler(async (event) => {
+    defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const projectId = getParam(event, 'projectId');
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
@@ -106,7 +110,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
   // Toggle template status for a diagram
   router.put(
     `${BASE}/projects/:projectId/template-status/**:path`,
-    defineHandler(async (event) => {
+    defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const projectId = getParam(event, 'projectId');
       const filePath = getParam(event, 'path');
@@ -121,10 +125,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
 
         // Check permissions
         if (is_workspace_template) {
-          requireWorkspaceAdmin(
-            authCtx,
-            'Only workspace admins can manage workspace templates'
-          );
+          requireWorkspaceAdmin(authCtx, 'Only workspace admins can manage workspace templates');
         } else {
           requireProjectAccess(authCtx, project.owner);
         }
@@ -143,7 +144,11 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
         );
 
         // Return updated file
-        const updatedFile = await db.projectsFiles.getProjectFileByPath(workspace, projectId, filePath);
+        const updatedFile = await db.projectsFiles.getProjectFileByPath(
+          workspace,
+          projectId,
+          filePath
+        );
         return toApiProjectFile(updatedFile!);
       } catch (e) {
         handleError(e, 'Failed to update template status');

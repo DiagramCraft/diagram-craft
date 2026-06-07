@@ -4,8 +4,8 @@ import {
   buildUpdateSchemaInput,
   isSchemaReferencedByEntities,
   resolveSchemaDefaultOwner
-} from './schemas.js';
-import type { EntitySchema } from '../types.js';
+} from './schemas';
+import type { EntitySchema } from '../types';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

@@ -7,9 +7,9 @@ import type { IncomingMessage } from 'node:http';
 import type { createServer } from 'node:http';
 import type { Socket } from 'node:net';
 import { WebSocketServer, type WebSocket } from 'ws';
-import type { CollaborationServer } from './collaborationServer.js';
-import { DiagramAutoSave, type AutoSaveWriter } from './diagramAutoSave.js';
-import { createLogger } from '../utils/logger.js';
+import type { CollaborationServer } from './collaborationServer';
+import { DiagramAutoSave, type AutoSaveWriter } from './diagramAutoSave';
+import { createLogger } from '../utils/logger';
 
 export type TempPathResolver = (name: string) => string;
 export type WebSocketAuthenticator = (request: IncomingMessage) => Promise<boolean>;
@@ -186,7 +186,11 @@ const setupYjsWebSocketConnection = (conn: WebSocket, docName: string) => {
 
   conn.on('message', (message: Buffer | ArrayBuffer | Buffer[]) => {
     const raw =
-      message instanceof Buffer ? message : Array.isArray(message) ? Buffer.concat(message) : message;
+      message instanceof Buffer
+        ? message
+        : Array.isArray(message)
+          ? Buffer.concat(message)
+          : message;
     const data = new Uint8Array(raw);
     messageListener(conn, doc, data);
   });
@@ -243,11 +247,7 @@ const setupYjsWebSocketConnection = (conn: WebSocket, docName: string) => {
 export class YjsCollaborationServer implements CollaborationServer {
   private readonly webSocketServer = new WebSocketServer({ noServer: true });
   private boundServer?: ReturnType<typeof createServer>;
-  private readonly upgradeHandler: (
-    request: IncomingMessage,
-    socket: Socket,
-    head: Buffer
-  ) => void;
+  private readonly upgradeHandler: (request: IncomingMessage, socket: Socket, head: Buffer) => void;
 
   constructor(
     private readonly basePath = YJS_WEBSOCKET_PATH,
@@ -313,12 +313,17 @@ export class YjsCollaborationServer implements CollaborationServer {
   ensureRoom(name: string) {
     const normalized = normalizeDocName(name);
     const doc = getOrCreateYDoc(normalized);
-    log.debug(`ensureRoom: name=${name} normalized=${normalized} hasWriter=${!!this.autoSaveWriter} hasAutoSave=${autoSaves.has(normalized)}`);
+    log.debug(
+      `ensureRoom: name=${name} normalized=${normalized} hasWriter=${!!this.autoSaveWriter} hasAutoSave=${autoSaves.has(normalized)}`
+    );
 
     if (!autoSaves.has(normalized) && this.autoSaveWriter && normalized.endsWith('.json')) {
       const tempPath = this.tempPathResolver?.(normalized) ?? normalized;
       log.debug(`Setting up auto-save for room: ${normalized}`);
-      autoSaves.set(normalized, new DiagramAutoSave(doc, normalized, tempPath, this.autoSaveWriter));
+      autoSaves.set(
+        normalized,
+        new DiagramAutoSave(doc, normalized, tempPath, this.autoSaveWriter)
+      );
     }
   }
 

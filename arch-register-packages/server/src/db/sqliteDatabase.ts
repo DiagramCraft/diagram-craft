@@ -2,14 +2,14 @@ import { mkdir, readFile, rm } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
-import type { DatabaseAdapter } from './database.js';
-import { runSqliteMigrations } from './migrate.js';
-import { SqliteAuditDatabase } from './sqliteAudit.js';
-import { SqliteCatalogDatabase } from './sqliteCatalog.js';
-import { SqliteIdentityAuthDatabase } from './sqliteIdentityAuth.js';
-import { SqliteProjectsFilesDatabase } from './sqliteProjectsFiles.js';
-import { SqliteWorkspaceAdminDatabase } from './sqliteWorkspaceAdmin.js';
-import { SqliteAiDatabase } from './sqliteAi.js';
+import type { DatabaseAdapter } from './database';
+import { runSqliteMigrations } from './migrate';
+import { SqliteAuditDatabase } from './sqliteAudit';
+import { SqliteCatalogDatabase } from './sqliteCatalog';
+import { SqliteIdentityAuthDatabase } from './sqliteIdentityAuth';
+import { SqliteProjectsFilesDatabase } from './sqliteProjectsFiles';
+import { SqliteWorkspaceAdminDatabase } from './sqliteWorkspaceAdmin';
+import { SqliteAiDatabase } from './sqliteAi';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -66,7 +66,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     const tableExists = this.db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='workspace'")
       .get();
-    
+
     if (!tableExists) {
       const schemaSql = readFileSync(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
       this.db.exec(schemaSql);

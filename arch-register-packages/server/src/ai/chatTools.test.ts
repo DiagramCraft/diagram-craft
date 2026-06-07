@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAiChatTools } from './chatTools.js';
-import type { DatabaseAdapter } from '../db/database.js';
-import type { Entity, EntitySchema } from '../types.js';
+import { createAiChatTools } from './chatTools';
+import type { DatabaseAdapter } from '../db/database';
+import type { Entity, EntitySchema } from '../types';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -13,7 +13,14 @@ const schemas: EntitySchema[] = [
     description: '',
     fields: [
       { id: 'tech', name: 'Tech', type: 'text' },
-      { id: 'dependsOn', name: 'Depends on', type: 'reference', schemaId: 'capability', minCount: 0, maxCount: -1 }
+      {
+        id: 'dependsOn',
+        name: 'Depends on',
+        type: 'reference',
+        schemaId: 'capability',
+        minCount: 0,
+        maxCount: -1
+      }
     ],
     color: null,
     icon: null,
@@ -26,9 +33,7 @@ const schemas: EntitySchema[] = [
     workspace: 'ws-1',
     name: 'Capability',
     description: '',
-    fields: [
-      { id: 'critical', name: 'Critical', type: 'boolean' }
-    ],
+    fields: [{ id: 'critical', name: 'Critical', type: 'boolean' }],
     color: null,
     icon: null,
     default_owner: null,
@@ -70,7 +75,7 @@ const entities: Entity[] = [
     links: [],
     schema_id: 'application',
     data: {
-      tech: 'Node.js',
+      tech: 'Node',
       dependsOn: 'entity-cap-1'
     },
     visibility_mode: 'public',
@@ -105,8 +110,10 @@ const db = {
   catalog: {
     listSchemas: async () => schemas,
     listEntities: async () => entities,
-    getSchema: async (_ws: string, schemaId: string) => schemas.find(schema => schema.id === schemaId) ?? null,
-    getEntity: async (_ws: string, entityId: string) => entities.find(entity => entity.id === entityId) ?? null,
+    getSchema: async (_ws: string, schemaId: string) =>
+      schemas.find(schema => schema.id === schemaId) ?? null,
+    getEntity: async (_ws: string, entityId: string) =>
+      entities.find(entity => entity.id === entityId) ?? null,
     createEntity: vi.fn(async (input: Entity) => {
       createdEntities.push(input);
       return input;
@@ -121,11 +128,32 @@ const db = {
   },
   workspaceAdmin: {
     listTeams: async () => [
-      { id: 'team-payments', workspace: 'ws-1', sort_order: 0, color: null, description: '', created_at: now },
-      { id: 'team-billing', workspace: 'ws-1', sort_order: 1, color: null, description: '', created_at: now }
+      {
+        id: 'team-payments',
+        workspace: 'ws-1',
+        sort_order: 0,
+        color: null,
+        description: '',
+        created_at: now
+      },
+      {
+        id: 'team-billing',
+        workspace: 'ws-1',
+        sort_order: 1,
+        color: null,
+        description: '',
+        created_at: now
+      }
     ],
     listLifecycleStates: async () => [
-      { id: 'production', workspace: 'ws-1', label: 'Production', color: '#000', sort_order: 0, created_at: now }
+      {
+        id: 'production',
+        workspace: 'ws-1',
+        label: 'Production',
+        color: '#000',
+        sort_order: 0,
+        created_at: now
+      }
     ]
   }
 } as unknown as DatabaseAdapter;

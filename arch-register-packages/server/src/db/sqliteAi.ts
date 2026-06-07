@@ -1,5 +1,10 @@
-import type { AiDatabase, CreateConversationInput, CreateMessageInput, UpsertAiConfigInput } from './database.js';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
+import type {
+  AiDatabase,
+  CreateConversationInput,
+  CreateMessageInput,
+  UpsertAiConfigInput
+} from './database';
+import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
 
 export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
   async getAiConfig(ws: string) {
@@ -79,7 +84,14 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
   async createConversation(input: CreateConversationInput) {
     this.run(
       'INSERT INTO ai_conversation (id, workspace, user_id, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [input.id, input.workspace, input.user_id, input.title, input.created_at.toISOString(), input.updated_at.toISOString()]
+      [
+        input.id,
+        input.workspace,
+        input.user_id,
+        input.title,
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
     );
     return (await this.getConversation(input.workspace, input.id))!;
   }
@@ -117,7 +129,14 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
   async createMessage(input: CreateMessageInput) {
     this.run(
       'INSERT INTO ai_message (id, conversation_id, role, content, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [input.id, input.conversation_id, input.role, input.content, JSON.stringify(input.metadata), input.created_at.toISOString()]
+      [
+        input.id,
+        input.conversation_id,
+        input.role,
+        input.content,
+        JSON.stringify(input.metadata),
+        input.created_at.toISOString()
+      ]
     );
     return (await this.get(
       'SELECT * FROM ai_message WHERE id = ?',

@@ -14,9 +14,9 @@ import type {
   WorkspaceOwner,
   TeamMembership,
   EntityGrant
-} from '../types.js';
-import { DB_ERROR_CODES } from '../constants.js';
-import { DatabaseError } from './database.js';
+} from '../types';
+import { DB_ERROR_CODES } from '../constants';
+import { DatabaseError } from './database';
 
 export type PostgresSqlClient = ReturnType<typeof postgres>;
 

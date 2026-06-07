@@ -1,16 +1,16 @@
 import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/api-types/colors';
 import { randomUUID } from 'node:crypto';
 import { H3, defineHandler } from 'h3';
-import type { DatabaseAdapter } from '../db/database.js';
-import type { Workspace } from '../types.js';
-import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
-import { handleDbError, slugify } from '../utils/http.js';
-import type { StorageAdapter } from '../storage/storage.js';
-import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization.js';
-import type { AuthenticatedEvent } from '../middleware/auth.js';
-import { httpAssert } from '../utils/httpAssert.js';
-import { toApiWorkspace } from '../api-helpers/workspace-helpers.js';
-import { SCHEMA_TEMPLATES, instantiateTemplate } from '../schemaTemplates.js';
+import type { DatabaseAdapter } from '../db/database';
+import type { Workspace } from '../types';
+import { logAudit, extractEntityFields, computeChanges } from '../db/audit';
+import { handleDbError, slugify } from '../utils/http';
+import type { StorageAdapter } from '../storage/storage';
+import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization';
+import type { AuthenticatedEvent } from '../middleware/auth';
+import { httpAssert } from '../utils/httpAssert';
+import { toApiWorkspace } from '../api-helpers/workspace-helpers';
+import { SCHEMA_TEMPLATES, instantiateTemplate } from '../schemaTemplates';
 
 const BASE = '/api/workspaces';
 
@@ -25,29 +25,62 @@ export const shortCode = (name: string): string =>
     .slice(0, 2);
 
 export const buildDefaultLifecycleStates = (workspace: string, createdAt: Date) => [
-  { id: 'proposed', workspace, label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: createdAt },
-  { id: 'experimental', workspace, label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: createdAt },
-  { id: 'production', workspace, label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: createdAt },
-  { id: 'deprecated', workspace, label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: createdAt }
+  {
+    id: 'proposed',
+    workspace,
+    label: 'Proposed',
+    color: AR_COLOR_BLUE,
+    sort_order: 0,
+    created_at: createdAt
+  },
+  {
+    id: 'experimental',
+    workspace,
+    label: 'Experimental',
+    color: AR_COLOR_BLUE,
+    sort_order: 1,
+    created_at: createdAt
+  },
+  {
+    id: 'production',
+    workspace,
+    label: 'Production',
+    color: AR_COLOR_GREEN,
+    sort_order: 2,
+    created_at: createdAt
+  },
+  {
+    id: 'deprecated',
+    workspace,
+    label: 'Deprecated',
+    color: AR_COLOR_YELLOW,
+    sort_order: 3,
+    created_at: createdAt
+  }
 ];
 
 export const buildDefaultWorkspaceTeams = (workspace: string, createdAt: Date) => [
-  { id: 'platform-team', workspace, sort_order: 0, color: null, description: '', created_at: createdAt },
+  {
+    id: 'platform-team',
+    workspace,
+    sort_order: 0,
+    color: null,
+    description: '',
+    created_at: createdAt
+  },
   { id: 'ux-team', workspace, sort_order: 1, color: null, description: '', created_at: createdAt },
-  { id: 'security-team', workspace, sort_order: 2, color: null, description: '', created_at: createdAt }
+  {
+    id: 'security-team',
+    workspace,
+    sort_order: 2,
+    color: null,
+    description: '',
+    created_at: createdAt
+  }
 ];
 
-export const buildWorkspaceCreateInput = (
-  body: Record<string, unknown>,
-  createdAt: Date
-) => {
-  const {
-    name,
-    description = '',
-    color = '',
-    slug: slugOverride,
-    badge
-  } = body;
+export const buildWorkspaceCreateInput = (body: Record<string, unknown>, createdAt: Date) => {
+  const { name, description = '', color = '', slug: slugOverride, badge } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const rawSlug = typeof slugOverride === 'string' && slugOverride ? slugOverride : name;
   const id = slugify(rawSlug);
@@ -140,13 +173,14 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
             db.workspaceAdmin.listLifecycleStates(replicate_from),
             db.workspaceAdmin.listTeams(replicate_from),
             db.workspaceAdmin.listCustomWorkspaceRoles(replicate_from),
-            db.catalog.listSchemas(replicate_from),
+            db.catalog.listSchemas(replicate_from)
           ]);
 
           if (includeSet.has('settings')) {
-            const lifecycleStates = srcLifecycle.length > 0
-              ? srcLifecycle.map(s => ({ ...s, workspace: row.id, created_at: timestamp }))
-              : buildDefaultLifecycleStates(row.id, timestamp);
+            const lifecycleStates =
+              srcLifecycle.length > 0
+                ? srcLifecycle.map(s => ({ ...s, workspace: row.id, created_at: timestamp }))
+                : buildDefaultLifecycleStates(row.id, timestamp);
             await db.workspaceAdmin.replaceLifecycleStates(row.id, lifecycleStates);
             await db.workspaceAdmin.replaceTeams(
               row.id,
@@ -158,12 +192,18 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
                 id: randomUUID(),
                 workspace: row.id,
                 created_at: timestamp,
-                updated_at: timestamp,
+                updated_at: timestamp
               });
             }
           } else {
-            await db.workspaceAdmin.replaceLifecycleStates(row.id, buildDefaultLifecycleStates(row.id, timestamp));
-            await db.workspaceAdmin.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
+            await db.workspaceAdmin.replaceLifecycleStates(
+              row.id,
+              buildDefaultLifecycleStates(row.id, timestamp)
+            );
+            await db.workspaceAdmin.replaceTeams(
+              row.id,
+              buildDefaultWorkspaceTeams(row.id, timestamp)
+            );
           }
 
           if (includeSet.has('schemas')) {
@@ -185,14 +225,20 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
                 fields: remappedFields,
                 default_owner: null,
                 created_at: timestamp,
-                updated_at: timestamp,
+                updated_at: timestamp
               });
             }
           }
         } else {
-          await db.workspaceAdmin.replaceLifecycleStates(row.id, buildDefaultLifecycleStates(row.id, timestamp));
+          await db.workspaceAdmin.replaceLifecycleStates(
+            row.id,
+            buildDefaultLifecycleStates(row.id, timestamp)
+          );
 
-          await db.workspaceAdmin.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
+          await db.workspaceAdmin.replaceTeams(
+            row.id,
+            buildDefaultWorkspaceTeams(row.id, timestamp)
+          );
 
           if (typeof template === 'string' && template && template !== 'blank') {
             const schemas = instantiateTemplate(row.id, template);

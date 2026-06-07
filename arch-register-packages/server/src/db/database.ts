@@ -18,7 +18,7 @@ import type {
   WorkspaceMember,
   WorkspaceOwner,
   WorkspaceRoleDefinition
-} from '../types.js';
+} from '../types';
 
 export type DbDriver = 'postgres' | 'sqlite';
 
@@ -156,7 +156,12 @@ export type WorkspaceAdminDatabase = {
 
   listWorkspaceMembers(ws: string): Promise<WorkspaceMember[]>;
   getWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMember | null>;
-  setWorkspaceMemberRole(ws: string, userId: string, role: string, createdAt: Date): Promise<WorkspaceMember>;
+  setWorkspaceMemberRole(
+    ws: string,
+    userId: string,
+    role: string,
+    createdAt: Date
+  ): Promise<WorkspaceMember>;
   removeWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMember | null>;
   getWorkspaceRole(ws: string, userId: string): Promise<string | null>;
   listCustomWorkspaceRoles(ws: string): Promise<WorkspaceRoleDefinition[]>;
@@ -278,8 +283,13 @@ export type IdentityAuthDatabase = {
     roles: GlobalRole[],
     createdAt: Date
   ): Promise<GlobalRoleAssignment[]>;
-  
-  storeOidcAuthState(state: string, nonce: string, codeVerifier: string, expiresAt: Date): Promise<void>;
+
+  storeOidcAuthState(
+    state: string,
+    nonce: string,
+    codeVerifier: string,
+    expiresAt: Date
+  ): Promise<void>;
   getOidcAuthState(state: string): Promise<{ nonce: string; code_verifier: string } | null>;
   deleteOidcAuthState(state: string): Promise<void>;
   cleanupExpiredOidcAuthStates(): Promise<void>;

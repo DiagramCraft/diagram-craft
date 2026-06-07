@@ -2,7 +2,7 @@
  * CSV import utility functions for parsing and validating CSV data
  */
 
-import type { SchemaField } from '../types.js';
+import type { SchemaField } from '../types';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -33,7 +33,7 @@ export type CsvParseResult = {
  */
 export const parseCsv = (csvContent: string): CsvParseResult => {
   const lines = csvContent.split(/\r?\n/).filter(line => line.trim());
-  
+
   if (lines.length === 0) {
     throw new Error('CSV file is empty');
   }
@@ -48,42 +48,42 @@ export const parseCsv = (csvContent: string): CsvParseResult => {
 
   // Parse header row
   const headers = parseCsvLine(firstLine, delimiter);
-  
+
   if (headers.length === 0) {
     throw new Error('CSV header row is empty');
   }
 
   // Parse data rows
   const rows: ParsedCsvRow[] = [];
-  
+
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
     if (!line) continue;
-    
+
     const values = parseCsvLine(line, delimiter);
     const errors: string[] = [];
     const data: Record<string, string> = {};
     let existingId: string | undefined;
-    
+
     // Map values to headers
     for (let j = 0; j < headers.length; j++) {
       const header = headers[j];
       if (!header) continue;
-      
+
       const value = values[j] ?? '';
       data[header] = value;
-      
+
       // Capture ID if present for upsert detection
       if (header === 'ID' && value.trim()) {
         existingId = value.trim();
       }
     }
-    
+
     // Check for missing required fields (Name is always required)
     if (!data['Name'] || data['Name'].trim() === '') {
       errors.push('Name is required');
     }
-    
+
     rows.push({
       rowNumber: i + 1,
       data,
@@ -91,9 +91,9 @@ export const parseCsv = (csvContent: string): CsvParseResult => {
       existingId
     });
   }
-  
+
   const validRows = rows.filter(r => r.errors.length === 0).length;
-  
+
   return {
     headers,
     rows,
@@ -109,11 +109,11 @@ const parseCsvLine = (line: string, delimiter: string = ','): string[] => {
   const values: string[] = [];
   let current = '';
   let inQuotes = false;
-  
+
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
     const nextChar = line[i + 1];
-    
+
     if (char === '"') {
       if (inQuotes && nextChar === '"') {
         // Escaped quote
@@ -131,10 +131,10 @@ const parseCsvLine = (line: string, delimiter: string = ','): string[] => {
       current += char;
     }
   }
-  
+
   // Add last value
   values.push(current);
-  
+
   return values;
 };
 
@@ -144,27 +144,37 @@ const parseCsvLine = (line: string, delimiter: string = ','): string[] => {
  * @param fields Schema fields to validate against
  * @returns Updated rows with validation errors
  */
-export const validateCsvData = (
-  rows: ParsedCsvRow[],
-  fields: SchemaField[]
-): ParsedCsvRow[] => {
+export const validateCsvData = (rows: ParsedCsvRow[], fields: SchemaField[]): ParsedCsvRow[] => {
   const fieldMap = new Map(fields.map(f => [f.name, f]));
-  
+
   return rows.map(row => {
     const errors = [...row.errors];
-    
+
     // Validate each field
     for (const [key, value] of Object.entries(row.data)) {
       const field = fieldMap.get(key);
-      
+
       if (!field) {
         // Skip standard fields and unknown fields
-        if (!['ID', 'Name', 'Slug', 'Namespace', 'Description', 'Owner', 'Lifecycle', 'Tags', 'Links', 'Schema Type'].includes(key)) {
+        if (
+          ![
+            'ID',
+            'Name',
+            'Slug',
+            'Namespace',
+            'Description',
+            'Owner',
+            'Lifecycle',
+            'Tags',
+            'Links',
+            'Schema Type'
+          ].includes(key)
+        ) {
           errors.push(`Unknown field: ${key}`);
         }
         continue;
       }
-      
+
       // Validate field types
       if (value && value.trim() !== '') {
         switch (field.type) {
@@ -181,7 +191,7 @@ export const validateCsvData = (
         }
       }
     }
-    
+
     return {
       ...row,
       errors
@@ -201,10 +211,10 @@ export const csvRowToEntity = (
 ): Record<string, unknown> => {
   const entity: Record<string, unknown> = {};
   const fieldMap = new Map(fields.map(f => [f.name, f]));
-  
+
   for (const [key, value] of Object.entries(row)) {
     const trimmedValue = value.trim();
-    
+
     // Handle standard fields
     if (key === 'Name') {
       entity._name = trimmedValue;
@@ -232,7 +242,10 @@ export const csvRowToEntity = (
     }
     if (key === 'Tags') {
       if (trimmedValue) {
-        entity._tags = trimmedValue.split(',').map(t => t.trim()).filter(Boolean);
+        entity._tags = trimmedValue
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean);
       }
       continue;
     }
@@ -240,17 +253,20 @@ export const csvRowToEntity = (
       // Skip these fields (ID is used for upsert detection, not entity data)
       continue;
     }
-    
+
     // Handle custom fields
     const field = fieldMap.get(key);
     if (!field || !trimmedValue) continue;
-    
+
     switch (field.type) {
       case 'boolean':
         entity[field.id] = ['true', 'yes', '1'].includes(trimmedValue.toLowerCase());
         break;
       case 'select':
-        entity[field.id] = trimmedValue.split(',').map(v => v.trim()).filter(Boolean);
+        entity[field.id] = trimmedValue
+          .split(',')
+          .map(v => v.trim())
+          .filter(Boolean);
         break;
       case 'reference':
       case 'containment':
@@ -264,6 +280,6 @@ export const csvRowToEntity = (
         break;
     }
   }
-  
+
   return entity;
 };

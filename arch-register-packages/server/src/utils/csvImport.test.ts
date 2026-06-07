@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { csvRowToEntity, parseCsv, validateCsvData } from './csvImport.js';
-import type { SchemaField } from '../types.js';
+import { csvRowToEntity, parseCsv, validateCsvData } from './csvImport';
+import type { SchemaField } from '../types';
 
 // ── parseCsv ──────────────────────────────────────────────────
 
@@ -86,7 +86,18 @@ describe('validateCsvData', () => {
   });
 
   it('does not report error for standard fields (ID, Name, Slug, etc.)', () => {
-    const standard = ['ID', 'Name', 'Slug', 'Namespace', 'Description', 'Owner', 'Lifecycle', 'Tags', 'Links', 'Schema Type'];
+    const standard = [
+      'ID',
+      'Name',
+      'Slug',
+      'Namespace',
+      'Description',
+      'Owner',
+      'Lifecycle',
+      'Tags',
+      'Links',
+      'Schema Type'
+    ];
     const data = Object.fromEntries(standard.map(k => [k, 'value']));
     const rows = [{ rowNumber: 2, data, errors: [] }];
     const result = validateCsvData(rows, []);
@@ -142,9 +153,23 @@ describe('validateCsvData', () => {
 
 describe('csvRowToEntity', () => {
   it('maps standard fields', () => {
-    const row = { Name: 'Foo', Slug: 'foo', Namespace: 'ns', Description: 'desc', Owner: 'team-a', Lifecycle: 'prod' };
+    const row = {
+      Name: 'Foo',
+      Slug: 'foo',
+      Namespace: 'ns',
+      Description: 'desc',
+      Owner: 'team-a',
+      Lifecycle: 'prod'
+    };
     const result = csvRowToEntity(row, []);
-    expect(result).toMatchObject({ _name: 'Foo', _slug: 'foo', _namespace: 'ns', _description: 'desc', _owner: 'team-a', _lifecycle: 'prod' });
+    expect(result).toMatchObject({
+      _name: 'Foo',
+      _slug: 'foo',
+      _namespace: 'ns',
+      _description: 'desc',
+      _owner: 'team-a',
+      _lifecycle: 'prod'
+    });
   });
 
   it('sets _owner and _lifecycle to null when empty', () => {
@@ -168,7 +193,7 @@ describe('csvRowToEntity', () => {
   });
 
   it('skips ID, Schema Type, and Links fields', () => {
-    const row = { Name: 'Foo', ID: 'abc', 'Schema Type': 'app', Links: 'http://x' };
+    const row = { 'Name': 'Foo', 'ID': 'abc', 'Schema Type': 'app', 'Links': 'http://x' };
     const result = csvRowToEntity(row, []);
     expect(result).not.toHaveProperty('ID');
     expect(result).not.toHaveProperty('Schema Type');
@@ -191,7 +216,14 @@ describe('csvRowToEntity', () => {
   });
 
   it('stores reference fields as string', () => {
-    const refField: SchemaField = { id: 'dep', name: 'Dep', type: 'reference', schemaId: 'svc', minCount: 0, maxCount: -1 };
+    const refField: SchemaField = {
+      id: 'dep',
+      name: 'Dep',
+      type: 'reference',
+      schemaId: 'svc',
+      minCount: 0,
+      maxCount: -1
+    };
     const result = csvRowToEntity({ Name: 'X', Dep: 'entity-1,entity-2' }, [refField]);
     expect(result.dep).toBe('entity-1,entity-2');
   });
@@ -204,7 +236,7 @@ describe('csvRowToEntity', () => {
 
   it('stores date fields as string', () => {
     const dateField: SchemaField = { id: 'go_live', name: 'Go Live', type: 'date' };
-    const result = csvRowToEntity({ Name: 'X', 'Go Live': '2026-06-30' }, [dateField]);
+    const result = csvRowToEntity({ 'Name': 'X', 'Go Live': '2026-06-30' }, [dateField]);
     expect(result.go_live).toBe('2026-06-30');
   });
 
