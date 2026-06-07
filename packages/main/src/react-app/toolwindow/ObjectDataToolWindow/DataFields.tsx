@@ -45,14 +45,14 @@ const DataField = (props: {
           <Select.Root
             value={
               (props.value[0]?.toString() === ''
-                ? props.field.options[0]?.value
+                ? (props.field.options ?? [])[0]?.value
                 : props.value[0]?.toString()) ?? ''
             }
             isIndeterminate={props.value.length > 1}
             disabled={props.disabled}
             onChange={props.onChange}
           >
-            {props.field.options.map(o => (
+            {(props.field.options ?? []).map(o => (
               <Select.Item key={o.value} value={o.value}>
                 {o.label}
               </Select.Item>
