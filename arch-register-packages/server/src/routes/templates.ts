@@ -1,6 +1,6 @@
 import { H3, H3Event, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from './workspace-resolver.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { handleDbError } from '../utils/http.js';
 import {
   buildApiAuthCtx,
@@ -10,8 +10,8 @@ import {
 } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
-import { toApiProjectFile } from '../api/transforms.js';
-import type { ProjectTemplatesResponse } from '@arch-register/api-types';
+import { toApiProjectFile } from '../api-helpers/project-helpers.js';
+import { buildAllTemplatesResponse, buildProjectTemplatesResponse, type ProjectWithFiles } from '../api-helpers/template-helpers.js';
 
 const BASE = '/api/:workspace';
 
@@ -21,11 +21,28 @@ const handleError = (error: unknown, fallback: string): never =>
     foreign: 'Foreign key constraint violation',
   });
 
-const getParam = (event: H3Event, name: string) => {
-  const value = event.context.params?.[name];
+export const decodeRouteParam = (value: string | undefined, name: string) => {
   httpAssert.present(value, { message: `${name} is required` });
   return decodeURIComponent(value);
 };
+
+export const buildTemplateStatusUpdateInput = (body: unknown) => {
+  httpAssert.json(body, { message: 'Request body must be a JSON object' });
+
+  const { is_template, is_workspace_template } = body as Record<string, unknown>;
+  httpAssert.boolean(is_template, { message: 'is_template must be a boolean' });
+  httpAssert.boolean(is_workspace_template, {
+    message: 'is_workspace_template must be a boolean'
+  });
+
+  return {
+    is_template,
+    is_workspace_template
+  };
+};
+
+const getParam = (event: H3Event, name: string) =>
+  decodeRouteParam(event.context.params?.[name], name);
 
 export const createTemplateRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
@@ -35,41 +52,20 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
   router.get(
     `${BASE}/templates`,
     defineHandler(async (event) => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
 
       try {
         const projects = await db.projectsFiles.listProjects(workspace);
-        const workspaceTemplates: ReturnType<typeof toApiProjectFile>[] = [];
-        const projectTemplatesMap = new Map<string, ReturnType<typeof toApiProjectFile>[]>();
+        const projectsWithFiles: ProjectWithFiles[] = [];
 
         for (const project of projects) {
-          // Check if user has access to this project
-          if (!authCtx || !canAccessProject(authCtx, project.owner)) {
-            continue;
-          }
-
+          if (!authCtx || !canAccessProject(authCtx, project.owner)) continue;
           const files = await db.projectsFiles.listProjectFiles(workspace, project.id);
-
-          for (const file of files) {
-            if (file.is_template) {
-              const apiFile = toApiProjectFile(file);
-
-              if (file.is_workspace_template) {
-                workspaceTemplates.push(apiFile);
-              } else {
-                const projectTemplates = projectTemplatesMap.get(project.id) ?? [];
-                projectTemplates.push(apiFile);
-                projectTemplatesMap.set(project.id, projectTemplates);
-              }
-            }
-          }
+          projectsWithFiles.push({ project, files });
         }
 
-        return {
-          workspaceTemplates,
-          projectTemplates: Object.fromEntries(projectTemplatesMap),
-        };
+        return buildAllTemplatesResponse(projectsWithFiles);
       } catch (e) {
         handleError(e, 'Failed to retrieve templates');
       }
@@ -81,7 +77,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
   router.get(
     `${BASE}/projects/:projectId/templates`,
     defineHandler(async (event) => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const projectId = getParam(event, 'projectId');
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
 
@@ -90,39 +86,16 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
         httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
-        const workspaceTemplates: ReturnType<typeof toApiProjectFile>[] = [];
-        const projectTemplates: ReturnType<typeof toApiProjectFile>[] = [];
-
-        // Get all projects to find workspace templates
         const projects = await db.projectsFiles.listProjects(workspace);
+        const projectsWithFiles: ProjectWithFiles[] = [];
 
         for (const proj of projects) {
-          // Check if user has access to this project
-          if (authCtx && !canAccessProject(authCtx, proj.owner)) {
-            continue;
-          }
-
+          if (authCtx && !canAccessProject(authCtx, proj.owner)) continue;
           const files = await db.projectsFiles.listProjectFiles(workspace, proj.id);
-
-          for (const file of files) {
-            if (file.is_template) {
-              const apiFile = toApiProjectFile(file);
-
-              if (file.is_workspace_template) {
-                workspaceTemplates.push(apiFile);
-              } else if (proj.id === projectId) {
-                projectTemplates.push(apiFile);
-              }
-            }
-          }
+          projectsWithFiles.push({ project: proj, files });
         }
 
-        const response: ProjectTemplatesResponse = {
-          workspaceTemplates,
-          projectTemplates,
-        };
-
-        return response;
+        return buildProjectTemplatesResponse(projectsWithFiles, projectId);
       } catch (e) {
         handleError(e, 'Failed to retrieve project templates');
       }
@@ -134,16 +107,12 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
   router.put(
     `${BASE}/projects/:projectId/template-status/**:path`,
     defineHandler(async (event) => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const projectId = getParam(event, 'projectId');
       const filePath = getParam(event, 'path');
 
       const body = await event.req.json().catch(() => undefined);
-      httpAssert.json(body, { message: 'Request body must be a JSON object' });
-
-      const { is_template, is_workspace_template } = body as Record<string, unknown>;
-      httpAssert.boolean(is_template, { message: 'is_template must be a boolean' });
-      httpAssert.boolean(is_workspace_template, { message: 'is_workspace_template must be a boolean' });
+      const { is_template, is_workspace_template } = buildTemplateStatusUpdateInput(body);
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);

@@ -5,7 +5,7 @@ import { verifyPassword } from '../utils/password.js';
 import { generateTokenPair, verifyToken } from '../utils/jwt.js';
 import { generateAuthUrl, handleCallback } from '../auth/oidcClient.js';
 import { clearAuthCookies, setAuthCookies } from '../utils/cookies.js';
-import type { JWTPayload, User } from '../types.js';
+import type { GlobalRole, JWTPayload, User } from '../types.js';
 import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from '../auth/authorization.js';
 import { getGlobalPermissionsForRoles, resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
 import { AuthenticatedEvent } from '../middleware/auth';
@@ -29,6 +29,101 @@ const setTokenCookies = (event: H3Event, tokens: ReturnType<typeof generateToken
   setAuthCookies(event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
 };
 
+type LoginBody = {
+  username?: string;
+  password?: string;
+};
+
+type RefreshBody = {
+  refresh_token?: string;
+};
+
+type UserUpdateBody = {
+  color?: unknown;
+  display_name?: unknown;
+};
+
+type WorkspaceMembershipData = {
+  workspace_id: string;
+  team_assignments: Array<{ team_id: string; role: string }>;
+  teams: Array<{ id: string; name: string; type: 'team' }>;
+  workspace_role: string | null;
+  workspace_roles: ReturnType<typeof resolveWorkspaceRoleDefinitions>;
+};
+
+const getAuthMode = () => process.env['AUTH_MODE'] ?? 'local';
+
+export const selectRefreshToken = (
+  cookieToken: string | null | undefined,
+  body?: RefreshBody
+) => cookieToken ?? body?.refresh_token;
+
+export const buildAuthMeResponse = (
+  user: User,
+  globalRoles: GlobalRole[],
+  workspaceData: WorkspaceMembershipData[]
+) => {
+  const teamAssignmentsByWorkspace = Object.fromEntries(
+    workspaceData
+      .filter(ws => ws.team_assignments.length > 0)
+      .map(ws => [ws.workspace_id, ws.team_assignments])
+  );
+  const workspaceRoles = Object.fromEntries(
+    workspaceData
+      .filter(ws => ws.workspace_role != null)
+      .map(ws => [ws.workspace_id, ws.workspace_role])
+  );
+  const teamsByWorkspace = Object.fromEntries(
+    workspaceData.map(ws => [ws.workspace_id, ws.teams])
+  );
+  const workspaceRoleDefinitionsByWorkspace = Object.fromEntries(
+    workspaceData.map(ws => [ws.workspace_id, ws.workspace_roles])
+  );
+
+  return {
+    id: user.id,
+    email: user.email,
+    display_name: user.display_name,
+    auth_provider: user.auth_provider,
+    color: user.color,
+    created_at: user.created_at.toISOString(),
+    last_login_at: user.last_login_at?.toISOString() ?? null,
+    global_roles: globalRoles,
+    global_permissions: [...getGlobalPermissionsForRoles(globalRoles)],
+    team_assignments_by_workspace: teamAssignmentsByWorkspace,
+    workspace_roles: workspaceRoles,
+    workspace_role_definitions_by_workspace: workspaceRoleDefinitionsByWorkspace,
+    teams_by_workspace: teamsByWorkspace
+  };
+};
+
+export const buildUserUpdateInput = (body: UserUpdateBody, updatedAt: Date) => {
+  if (body.color !== undefined && body.color !== null) {
+    httpAssert.string(body.color, { message: 'color must be a string if provided' });
+  }
+  if (body.display_name !== undefined) {
+    httpAssert.string(body.display_name, { message: 'display_name must be a string if provided' });
+  }
+
+  return {
+    display_name: body.display_name as string | undefined,
+    color: (body.color as string | null | undefined) ?? null,
+    updated_at: updatedAt
+  };
+};
+
+export const parseRequestedGlobalRoles = (requestedRoles: unknown[]) => {
+  const roles = requestedRoles.filter(
+    (role): role is 'global_admin' | 'workspace_admin' =>
+      typeof role === 'string' &&
+      ['global_admin', 'workspace_admin'].includes(role)
+  );
+  httpAssert.true(roles.length === requestedRoles.length, {
+    message: 'roles contains invalid values'
+  });
+  return roles;
+};
+
 export const createAuthRoutes = (db: DatabaseAdapter) => {
   // Set the cleanup adapter for the timer
   cleanupDbAdapter = db;
@@ -41,7 +136,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
-      const authMode = process.env['AUTH_MODE'] ?? 'local';
+      const authMode = getAuthMode();
       return { mode: authMode };
     })
   );
@@ -52,12 +147,12 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       httpAssert.true(event.req.method === 'POST', { status: 405, message: 'Method not allowed' });
 
-      const authMode = process.env['AUTH_MODE'] ?? 'local';
+      const authMode = getAuthMode();
       httpAssert.true(authMode === 'local', {
         message: 'Username/password authentication is not enabled'
       });
 
-      const body = (await readBody(event)) as { username?: string; password?: string } | undefined;
+      const body = (await readBody(event)) as LoginBody | undefined;
       const username = body?.username;
       const password = body?.password;
 
@@ -110,7 +205,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
-      const authMode = process.env['AUTH_MODE'] ?? 'local';
+      const authMode = getAuthMode();
       httpAssert.true(authMode === 'oidc', { message: 'OIDC authentication is not enabled' });
 
       const { url, state, nonce, codeVerifier } = await generateAuthUrl();
@@ -129,7 +224,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
-      const authMode = process.env['AUTH_MODE'] ?? 'local';
+      const authMode = getAuthMode();
       httpAssert.true(authMode === 'oidc', { message: 'OIDC authentication is not enabled' });
 
       const query = getQuery(event);
@@ -206,10 +301,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 
       // Accept refresh token from cookie or request body
       const cookieToken = getCookie(event, 'ar_refresh_token');
-      const body = (await readBody(event).catch(() => undefined)) as
-        | { refresh_token?: string }
-        | undefined;
-      const refreshToken = cookieToken ?? body?.refresh_token;
+      const body = (await readBody(event).catch(() => undefined)) as RefreshBody | undefined;
+      const refreshToken = selectRefreshToken(cookieToken, body);
 
       httpAssert.string(refreshToken, { message: 'Refresh token is required' });
 
@@ -276,7 +369,6 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         db.workspaceAdmin.listWorkspaces()
       ]);
       const globalRoles = roleAssignments.map(assignment => assignment.role);
-      const globalPermissions = [...getGlobalPermissionsForRoles(globalRoles)];
 
       const workspaceData = await Promise.all(
         workspaces.map(async workspace => {
@@ -302,37 +394,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         })
       );
 
-      const teamAssignmentsByWorkspace = Object.fromEntries(
-        workspaceData
-          .filter(ws => ws.team_assignments.length > 0)
-          .map(ws => [ws.workspace_id, ws.team_assignments])
-      );
-      const workspaceRoles = Object.fromEntries(
-        workspaceData
-          .filter(ws => ws.workspace_role != null)
-          .map(ws => [ws.workspace_id, ws.workspace_role])
-      );
-      const teamsByWorkspace = Object.fromEntries(
-        workspaceData.map(ws => [ws.workspace_id, ws.teams])
-      );
-      const workspaceRoleDefinitionsByWorkspace = Object.fromEntries(
-        workspaceData.map(ws => [ws.workspace_id, ws.workspace_roles])
-      );
-      return {
-        id: user.id,
-        email: user.email,
-        display_name: user.display_name,
-        auth_provider: user.auth_provider,
-        color: user.color,
-        created_at: user.created_at.toISOString(),
-        last_login_at: user.last_login_at?.toISOString() ?? null,
-        global_roles: globalRoles,
-        global_permissions: globalPermissions,
-        team_assignments_by_workspace: teamAssignmentsByWorkspace,
-        workspace_roles: workspaceRoles,
-        workspace_role_definitions_by_workspace: workspaceRoleDefinitionsByWorkspace,
-        teams_by_workspace: teamsByWorkspace,
-      };
+      return buildAuthMeResponse(user, globalRoles, workspaceData);
     })
   );
 
@@ -348,23 +410,13 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         message: 'You can only update your own account settings'
       });
 
-      const body = (await readBody(event).catch(() => undefined)) as
-        | { color?: unknown; display_name?: unknown }
-        | undefined;
+      const body = (await readBody(event).catch(() => undefined)) as UserUpdateBody | undefined;
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
-      if (body.color !== undefined && body.color !== null) {
-        httpAssert.string(body.color, { message: 'color must be a string if provided' });
-      }
-      if (body.display_name !== undefined) {
-        httpAssert.string(body.display_name, { message: 'display_name must be a string if provided' });
-      }
-
-      const updatedUser = await db.identityAuth.updateUser(id, {
-        display_name: body.display_name as string | undefined,
-        color: (body.color as string | null | undefined) ?? null,
-        updated_at: new Date()
-      });
+      const updatedUser = await db.identityAuth.updateUser(
+        id,
+        buildUserUpdateInput(body, new Date())
+      );
 
       httpAssert.present(updatedUser, { status: 404, message: 'User not found' });
 
@@ -423,15 +475,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         | { roles?: unknown }
         | undefined;
       httpAssert.array(body?.roles, { message: 'roles must be an array' });
-      const requestedRoles = body.roles as unknown[];
-      const roles = requestedRoles.filter(
-        (role): role is 'global_admin' | 'workspace_admin' =>
-          typeof role === 'string' &&
-          ['global_admin', 'workspace_admin'].includes(role)
-      );
-      httpAssert.true(roles.length === requestedRoles.length, {
-        message: 'roles contains invalid values'
-      });
+      const roles = parseRequestedGlobalRoles(body.roles);
       return await db.identityAuth.replaceGlobalRoleAssignments(userId, roles, new Date());
     })
   );

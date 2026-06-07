@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3';
 import { defineHandler, getCookie, HTTPError } from 'h3';
 import { verifyToken } from '../utils/jwt.js';
-import type { DatabaseAdapter } from '../db/database.js';
+import type { IdentityAuthDatabase } from '../db/database.js';
 import type { JWTPayload, User } from '../types.js';
 import { httpAssert } from '../utils/httpAssert';
 
@@ -22,7 +22,7 @@ const extractToken = (event: H3Event): string | null => {
   return getCookie(event, 'ar_access_token') ?? null;
 };
 
-export const createAuthMiddleware = (db: DatabaseAdapter) => {
+export const createAuthMiddleware = (db: IdentityAuthDatabase) => {
   return defineHandler(async event => {
     const token = extractToken(event);
 
@@ -45,7 +45,7 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
       });
     }
 
-    const user = await db.identityAuth.getUser(payload.sub);
+    const user = await db.getUser(payload.sub);
 
     httpAssert.present(user, { status: 401, message: 'User not found' });
     httpAssert.true(user.is_active, { status: 403, message: 'User account is inactive' });
@@ -56,4 +56,4 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
   });
 };
 
-export const requireAuth = (db: DatabaseAdapter) => createAuthMiddleware(db);
+export const requireAuth = (db: IdentityAuthDatabase) => createAuthMiddleware(db);

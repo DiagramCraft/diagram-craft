@@ -1,10 +1,10 @@
 import { H3, H3Event, HTTPError, defineHandler } from 'h3';
 import { randomUUID } from 'node:crypto';
-import type { DatabaseAdapter } from '../db/database.js';
+import type { CreateProjectInput, DatabaseAdapter, UpdateProjectInput } from '../db/database.js';
 import type { ProjectFile } from '../types.js';
 import type { StorageAdapter } from '../storage/storage.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
-import { resolveWorkspace } from './workspace-resolver.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { handleDbError } from '../utils/http.js';
 import {
   buildApiAuthCtx,
@@ -15,9 +15,9 @@ import {
 } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
-import { toApiProject, toApiProjectFile, toApiProjectDetail } from '../api/transforms.js';
+import { toApiProject, toApiProjectFile, toApiProjectDetail } from '../api-helpers/project-helpers.js';
 import type { FileTree } from '@arch-register/api-types';
-import { generateSvgPreview } from '../preview/svgPreviewGenerator.js';
+import { generateSvgPreview } from '../api-helpers/svgPreviewGenerator.js';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { getDiagramCommentCounts } from '../diagrams/commentCounts.js';
 
@@ -37,7 +37,7 @@ const getParam = (event: H3Event, name: string) => {
   return decodeURIComponent(value);
 };
 
-const parseProjectStatus = (value: unknown): ProjectStatus => {
+export const parseProjectStatus = (value: unknown): ProjectStatus => {
   if (value == null || value === '') return 'active';
   if (typeof value !== 'string' || !PROJECT_STATUSES.includes(value as ProjectStatus)) {
     throw new HTTPError({
@@ -49,10 +49,10 @@ const parseProjectStatus = (value: unknown): ProjectStatus => {
   return value as ProjectStatus;
 };
 
-const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
+export const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
   typeof owner === 'string' && teamIds.has(owner) ? owner : null;
 
-const buildFileTree = (files: ProjectFile[]): FileTree => {
+export const buildFileTree = (files: ProjectFile[]): FileTree => {
   const rootFiles = files
     .filter(f => f.path.indexOf('/') === -1)
     .map(toApiProjectFile);
@@ -82,13 +82,80 @@ const buildFileTree = (files: ProjectFile[]): FileTree => {
   return { folders, rootFiles };
 };
 
+export const buildCreateProjectInput = (
+  workspace: string,
+  body: Record<string, unknown>,
+  teamIds: Set<string>,
+  timestamp: Date
+): CreateProjectInput => {
+  const { name, description = '', owner, status, color } = body;
+  httpAssert.present(name, { message: 'name is required' });
+
+  return {
+    id: randomUUID(),
+    workspace,
+    name: name as string,
+    description: typeof description === 'string' ? description : '',
+    owner: resolveProjectOwner(owner, teamIds),
+    status: parseProjectStatus(status),
+    color: typeof color === 'string' ? color : null,
+    created_at: timestamp,
+    updated_at: timestamp
+  };
+};
+
+export const buildUpdateProjectInput = (
+  body: Record<string, unknown>,
+  existing: UpdateProjectInput & { owner: string | null },
+  teamIds: Set<string>,
+  updatedAt: Date
+) => {
+  const { name, description, owner, status, color } = body;
+  httpAssert.present(name, { message: 'name is required' });
+  const projectStatus = status === undefined ? undefined : parseProjectStatus(status);
+
+  return {
+    owner: owner !== undefined ? resolveProjectOwner(owner, teamIds) : existing.owner,
+    input: {
+      name: name as string,
+      description:
+        description !== undefined
+          ? typeof description === 'string'
+            ? description
+            : ''
+          : existing.description,
+      owner: owner !== undefined ? resolveProjectOwner(owner, teamIds) : existing.owner,
+      status: projectStatus ?? existing.status,
+      color: color !== undefined ? (typeof color === 'string' ? color : null) : existing.color,
+      updated_at: updatedAt
+    } satisfies UpdateProjectInput
+  };
+};
+
+export const describeProjectFileRelocation = (oldPath: string, newPath: string) => {
+  const oldFolder = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : null;
+  const newFolder = newPath.includes('/') ? newPath.substring(0, newPath.lastIndexOf('/')) : null;
+  const oldName = oldPath.includes('/') ? oldPath.substring(oldPath.lastIndexOf('/') + 1) : oldPath;
+  const newName = newPath.includes('/') ? newPath.substring(newPath.lastIndexOf('/') + 1) : newPath;
+
+  const isMoved = oldFolder !== newFolder;
+  const isRenamed = oldName !== newName;
+
+  return {
+    oldFolder,
+    newFolder,
+    displayName: newName.endsWith('.json') ? newName.slice(0, -5) : newName,
+    operation: isMoved && isRenamed ? 'move_rename' : isMoved ? 'move' : 'rename'
+  };
+};
+
 export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter) => {
   const router = new H3();
 
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
         const projects = await db.projectsFiles.listProjects(workspace);
@@ -121,7 +188,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = getParam(event, 'id');
       try {
@@ -141,38 +208,29 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.post(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-
-      const { name, description = '', owner, status, color } = body as Record<string, unknown>;
-      httpAssert.present(name, { message: 'name is required' });
-      const projectStatus = parseProjectStatus(status);
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const teamIds = new Set((await db.workspaceAdmin.listTeams(workspace)).map(row => row.id));
-        const resolvedOwner = resolveProjectOwner(owner, teamIds);
+        const timestamp = new Date();
+        const input = buildCreateProjectInput(
+          workspace,
+          body as Record<string, unknown>,
+          teamIds,
+          timestamp
+        );
         if (authCtx)
           requireCanCreateProject(
             authCtx,
-            resolvedOwner,
+            input.owner,
             'You do not have permission to create a project for this owner team'
           );
-        const timestamp = new Date();
-        const row = await db.projectsFiles.createProject({
-          id: randomUUID(),
-          workspace,
-          name: name as string,
-          description: typeof description === 'string' ? description : '',
-          owner: resolvedOwner,
-          status: projectStatus,
-          color: typeof color === 'string' ? color : null,
-          created_at: timestamp,
-          updated_at: timestamp
-        });
+        const row = await db.projectsFiles.createProject(input);
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'create',
           entityType: 'project',
@@ -193,22 +251,22 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-
-      const { name, description, owner, status, color } = body as Record<string, unknown>;
-      httpAssert.present(name, { message: 'name is required' });
-      const projectStatus = status === undefined ? undefined : parseProjectStatus(status);
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const oldRow = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(oldRow, { status: 404, message: `Project '${id}' not found` });
         const teamIds = new Set((await db.workspaceAdmin.listTeams(workspace)).map(row => row.id));
-        const resolvedOwner =
-          owner !== undefined ? resolveProjectOwner(owner, teamIds) : oldRow.owner;
+        const update = buildUpdateProjectInput(
+          body as Record<string, unknown>,
+          oldRow,
+          teamIds,
+          new Date()
+        );
         if (authCtx) {
           requireProjectAction(
             authCtx,
@@ -216,53 +274,33 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'edit_project',
             'You do not have permission to edit this project'
           );
-          if (resolvedOwner !== oldRow.owner) {
+          if (update.owner !== oldRow.owner) {
             requireProjectAction(
               authCtx,
-              resolvedOwner,
+              update.owner,
               'edit_project',
               'You do not have permission to transfer this project to the target owner team'
             );
           }
         }
 
-        const row = await db.projectsFiles.updateProject(workspace, id, {
-          name: name as string,
-          description:
-            description !== undefined
-              ? typeof description === 'string'
-                ? description
-                : ''
-              : oldRow.description,
-          owner: resolvedOwner,
-          status: projectStatus ?? oldRow.status,
-          color: color !== undefined ? (typeof color === 'string' ? color : null) : oldRow.color,
-          updated_at: new Date()
+        const row = await db.projectsFiles.updateProject(workspace, id, update.input);
+        httpAssert.present(row, { status: 404, message: `Project '${id}' not found` });
+
+        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
+
+        await logAudit(db.audit, {
+          workspace,
+          operation: 'update',
+          entityType: 'project',
+          entityId: id,
+          entityName: row.name,
+          changes
         });
 
-                const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
+        const fileCount = (await db.projectsFiles.listProjectFiles(workspace, id)).length;
 
-                await logAudit(db, {
-
-                  workspace,
-
-                  operation: 'update',
-
-                  entityType: 'project',
-
-                  entityId: id,
-
-                  entityName: row!.name,
-
-                  changes
-
-                });
-
-        
-
-                const fileCount = (await db.projectsFiles.listProjectFiles(workspace, id)).length;
-
-                return toApiProject(row!, fileCount, authCtx);
+        return toApiProject(row, fileCount, authCtx);
       } catch (e) {
         handleError(e, 'Failed to update project');
       }
@@ -272,7 +310,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
@@ -288,7 +326,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         await db.projectsFiles.deleteProject(workspace, id);
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'delete',
           entityType: 'project',
@@ -311,7 +349,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.get(
     `${BASE}/:id/files`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
@@ -330,7 +368,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.get(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
@@ -365,7 +403,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.put(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
 
@@ -442,7 +480,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             extractEntityFields(existingFile),
             extractEntityFields(row)
           );
-          await logAudit(db, {
+          await logAudit(db.audit, {
             workspace,
             operation: 'update',
             entityType: 'project_file',
@@ -452,7 +490,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             metadata: { project_id: id, path: filePath }
           });
         } else {
-          await logAudit(db, {
+          await logAudit(db.audit, {
             workspace,
             operation: 'create',
             entityType: 'project_file',
@@ -475,7 +513,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.delete(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
@@ -495,7 +533,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         await db.projectsFiles.deleteProjectFileByPath(workspace, id, filePath);
 
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'delete',
           entityType: 'project_file',
@@ -519,7 +557,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.put(
     `${BASE}/:id/files/relocate/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
 
@@ -561,16 +599,10 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const content = await storage.read(workspace, id, existingFile.id);
         const fileData = JSON.parse(content.toString('utf8'));
 
-        // Update internal name if filename changed
-        const newFileName = newPath.includes('/')
-          ? newPath.substring(newPath.lastIndexOf('/') + 1)
-          : newPath;
-        const displayName = newFileName.endsWith('.json')
-          ? newFileName.slice(0, -5)
-          : newFileName;
+        const relocation = describeProjectFileRelocation(filePath, newPath);
 
         if (fileData && typeof fileData === 'object' && 'name' in fileData) {
-          fileData.name = displayName;
+          fileData.name = relocation.displayName;
         }
 
         const timestamp = new Date();
@@ -582,7 +614,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           workspace,
           project_id: id,
           path: newPath,
-          name: displayName,
+          name: relocation.displayName,
           size_bytes: updatedContent.length,
           comment_count: commentCounts.commentCount,
           unresolved_comment_count: commentCounts.unresolvedCommentCount,
@@ -626,31 +658,21 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         await db.projectsFiles.deleteProjectFileByPath(workspace, id, filePath);
         await storage.delete(workspace, id, existingFile.id).catch(() => {});
 
-        // Determine operation type for audit log
-        const oldFolder = filePath.includes('/') ? filePath.substring(0, filePath.lastIndexOf('/')) : null;
-        const newFolder = newPath.includes('/') ? newPath.substring(0, newPath.lastIndexOf('/')) : null;
-        const oldName = filePath.includes('/') ? filePath.substring(filePath.lastIndexOf('/') + 1) : filePath;
-        const newName = newPath.includes('/') ? newPath.substring(newPath.lastIndexOf('/') + 1) : newPath;
-
-        const isMoved = oldFolder !== newFolder;
-        const isRenamed = oldName !== newName;
-        const operation = isMoved && isRenamed ? 'move_rename' : isMoved ? 'move' : 'rename';
-
-        await logAudit(db, {
+        await logAudit(db.audit, {
           workspace,
           operation: 'update',
           entityType: 'project_file',
           entityId: newFile.id,
-          entityName: displayName,
+          entityName: relocation.displayName,
           changes: {
             old: { path: filePath, name: existingFile.name },
-            new: { path: newPath, name: displayName }
+            new: { path: newPath, name: relocation.displayName }
           },
           metadata: {
             project_id: id,
-            operation,
-            from_folder: oldFolder,
-            to_folder: newFolder
+            operation: relocation.operation,
+            from_folder: relocation.oldFolder,
+            to_folder: relocation.newFolder
           }
         });
 
@@ -664,7 +686,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.post(
     `${BASE}/:id/folders`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
@@ -702,7 +724,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         }
 
         if (row) {
-          await logAudit(db, {
+          await logAudit(db.audit, {
             workspace,
             operation: 'create',
             entityType: 'project_file',
@@ -725,7 +747,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.put(
     `${BASE}/:id/folders/rename`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
@@ -768,7 +790,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
   router.delete(
     `${BASE}/:id/folders/**:path`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event, db);
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const id = getParam(event, 'id');
       const folderPath = getParam(event, 'path');
       try {

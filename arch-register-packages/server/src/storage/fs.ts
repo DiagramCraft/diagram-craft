@@ -1,6 +1,6 @@
 import { join, dirname } from 'node:path';
 import { mkdir, readFile, writeFile, unlink, rm } from 'node:fs/promises';
-import type { StorageAdapter } from './types.js';
+import type { StorageAdapter } from './storage.types.js';
 
 export class FilesystemStorage implements StorageAdapter {
   constructor(private baseDir: string) {}

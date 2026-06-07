@@ -1,0 +1,49 @@
+name: Arch Register API Tests
+
+on:
+  pull_request:
+    paths:
+      - 'arch-register-packages/server/**'
+      - 'arch-register-packages/e2e/**'
+      - 'arch-register-packages/api-types/**'
+      - 'arch-register-packages/permissions/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'arch-register-packages/server/**'
+      - 'arch-register-packages/e2e/**'
+      - 'arch-register-packages/api-types/**'
+      - 'arch-register-packages/permissions/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 11.5.0
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run API tests
+        run: pnpm --filter @arch-register/e2e test:api
