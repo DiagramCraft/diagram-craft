@@ -10,13 +10,13 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
-    "embeddable-jq": "^1.0.4",
+    "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/geometry": "workspace:^",
-    "@diagram-craft/utils": "workspace:^",
     "@diagram-craft/graph": "workspace:^",
-    "@diagram-craft/collaboration": "workspace:^"
+    "@diagram-craft/utils": "workspace:^",
+    "embeddable-jq": "^1.0.4"
   },
   "devDependencies": {
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.8"
   }
 }
