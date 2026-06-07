@@ -380,7 +380,7 @@ export const EntityBrowser = () => {
       owner: v || undefined
     });
 
-  const handleExport = async () => {
+  const handleExport = useCallback(async () => {
     try {
       const blob = await exportEntitiesToCSV(workspaceId, {
         schemaId: typeFilter,
@@ -402,7 +402,7 @@ export const EntityBrowser = () => {
       console.error('Export failed:', error);
       alert('Failed to export entities. Please try again.');
     }
-  };
+  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q]);
 
   const handleDeleteEntity = (entity: EntityRecord) => {
     setDeleteTarget(entity);
@@ -581,6 +581,45 @@ export const EntityBrowser = () => {
     }
   };
 
+  const menuItems = useMemo(() => {
+    const items: MenuItem[] = [];
+
+    if (permissions.canManageViews) {
+      items.push({
+        label: 'Save view',
+        icon: <TbCopy size={14} />,
+        onClick: () => setIsSavingView(true)
+      });
+    }
+
+    items.push({
+      label: 'Export CSV',
+      icon: <TbDownload size={14} />,
+      onClick: handleExport
+    });
+
+    if (permissions.canCreateEntities) {
+      items.push({
+        label: 'Import CSV',
+        icon: <TbUpload size={14} />,
+        onClick: () =>
+          navigate({
+            to: '/$workspaceSlug/entities/import',
+            params: { workspaceSlug },
+            search: typeFilter ? { type: typeFilter } : undefined
+          })
+      });
+    }
+
+    return items;
+  }, [
+    permissions,
+    handleExport,
+    navigate,
+    workspaceSlug,
+    typeFilter
+  ]);
+
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
@@ -595,33 +634,15 @@ export const EntityBrowser = () => {
           </div>
         </div>
         <div className={styles.actions}>
-          {permissions.canManageViews && (
-            <Button icon={<TbCopy size={12} />} onClick={() => setIsSavingView(true)}>
-              Save view
+          {permissions.canCreateEntities && (
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
+              New entity
             </Button>
           )}
-          <Button icon={<TbDownload size={12} />} onClick={handleExport}>
-            Export CSV
-          </Button>
-          {permissions.canCreateEntities && (
-            <>
-              <Button
-                icon={<TbUpload size={12} />}
-                onClick={() =>
-                  navigate({
-                    to: '/$workspaceSlug/entities/import',
-                    params: { workspaceSlug },
-                    search: typeFilter ? { type: typeFilter } : undefined
-                  })
-                }
-              >
-                Import CSV
-              </Button>
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
-                New entity
-              </Button>
-            </>
-          )}
+          <DropdownMenu
+            trigger={<Button icon={<TbDots size={14} />} />}
+            items={menuItems}
+          />
         </div>
       </div>
 
