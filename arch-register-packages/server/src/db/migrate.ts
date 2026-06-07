@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import type { PostgresSqlClient } from './postgresBase.js';
+import { createLogger } from '@arch-register/server/utils/logger';
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
 
@@ -14,14 +15,14 @@ const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations'
 const extractCreatedTables = (content: string): string[] => {
   const tables: string[] = [];
   const lines = content.split('\n');
-  
+
   for (const line of lines) {
     const match = line.match(/^--\s*@creates\s+(\w+)/);
     if (match?.[1]) {
       tables.push(match[1]);
     }
   }
-  
+
   return tables;
 };
 
@@ -31,7 +32,7 @@ const extractCreatedTables = (content: string): string[] => {
  */
 export const getMigrationTables = async (driver: 'postgres' | 'sqlite'): Promise<string[]> => {
   const extension = driver === 'postgres' ? '.postgres.sql' : '.sqlite.sql';
-  
+
   let files: string[];
   try {
     files = await readdir(migrationsDir);
@@ -45,13 +46,13 @@ export const getMigrationTables = async (driver: 'postgres' | 'sqlite'): Promise
     .reverse(); // Reverse order for proper cleanup
 
   const allTables: string[] = [];
-  
+
   for (const file of migrationFiles) {
     const content = await readFile(join(migrationsDir, file), 'utf8');
     const tables = extractCreatedTables(content);
     allTables.push(...tables);
   }
-  
+
   return allTables;
 };
 
@@ -60,7 +61,7 @@ export const getMigrationTables = async (driver: 'postgres' | 'sqlite'): Promise
  */
 export const getMigrationTablesSync = (driver: 'postgres' | 'sqlite'): string[] => {
   const extension = driver === 'postgres' ? '.postgres.sql' : '.sqlite.sql';
-  
+
   let files: string[];
   try {
     files = readdirSync(migrationsDir);
@@ -74,15 +75,17 @@ export const getMigrationTablesSync = (driver: 'postgres' | 'sqlite'): string[] 
     .reverse(); // Reverse order for proper cleanup
 
   const allTables: string[] = [];
-  
+
   for (const file of migrationFiles) {
     const content = readFileSync(join(migrationsDir, file), 'utf8');
     const tables = extractCreatedTables(content);
     allTables.push(...tables);
   }
-  
+
   return allTables;
 };
+
+const migrationLogger = createLogger('migrations');
 
 export const runSqliteMigrations = (db: SqliteDatabase): void => {
   db.exec(`
@@ -120,7 +123,7 @@ export const runSqliteMigrations = (db: SqliteDatabase): void => {
         new Date().toISOString()
       );
     })();
-    console.log(`[migrations] Applied: ${version}`);
+    migrationLogger.info(`Applied: ${version}`);
   }
 };
 

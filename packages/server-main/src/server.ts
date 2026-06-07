@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { toNodeListener } from 'h3';
+import { toNodeHandler } from 'h3/node';
 import { createServerApp } from './app';
 import type { ServerMainConfig } from './config';
 import { YJS_WEBSOCKET_PATH } from './default/yjsCollaborationServer';
@@ -23,7 +23,7 @@ const getUrlHost = (host: string) => {
 export const startServer = async (config: ServerMainConfig): Promise<RunningServer> => {
   const serverModules = createServerModules(config);
   const app = createServerApp(serverModules);
-  const nodeListener = toNodeListener(app);
+  const nodeListener = toNodeHandler(app);
   const server = createServer(nodeListener);
   serverModules.collaborationServer.bind(server);
 

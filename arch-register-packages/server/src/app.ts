@@ -12,7 +12,7 @@ import { createWorkspaceRoutes } from './routes/workspaces.js';
 import { createAuditRoutes } from './routes/audit.js';
 import { createWorkspaceConfigRoutes } from './routes/workspace-config.js';
 import { createAiChatRoutes } from './routes/ai-chat.js';
-import { createPublicRoutes } from './routes/public.js';
+import { createDiagramCraftRoutes } from './routes/diagram-craft.js';
 import { createAuthRoutes, createAuthProtectedRoutes } from './routes/auth.js';
 import { createTemplateRoutes } from './routes/templates.js';
 import { requireAuth } from './middleware/auth.js';
@@ -21,7 +21,13 @@ const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
 const httpLogger = createLogger('http');
 
-export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
+type AppOptions = {
+  routeOverrides?: {
+    aiChat?: Parameters<typeof createAiChatRoutes>[1];
+  };
+};
+
+export const createApp = (db: DatabaseAdapter, storage: StorageAdapter, options: AppOptions = {}) => {
   const app = new H3({
     onError: (error, event) => {
       const method = getMethod(event);
@@ -69,7 +75,7 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
   app.use(createAuthRoutes(db));
 
   // Apply authentication middleware to all routes below
-  const authMiddleware = requireAuth(db);
+  const authMiddleware = requireAuth(db.identityAuth);
   app.use(authMiddleware);
 
   // Protected routes (require authentication)
@@ -78,13 +84,13 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
   app.use(createSchemaRoutes(db));
   app.use(createEnumRoutes(db));
   app.use(createDataRoutes(db));
-  app.use(createPublicRoutes(db));
+  app.use(createDiagramCraftRoutes(db));
   app.use(createSearchRoutes(db));
   app.use(createTemplateRoutes(db));
   app.use(createProjectRoutes(db, storage));
   app.use(createAuditRoutes(db));
   app.use(createWorkspaceConfigRoutes(db));
-  app.use(createAiChatRoutes(db));
+  app.use(createAiChatRoutes(db, options.routeOverrides?.aiChat));
 
   return app;
 };

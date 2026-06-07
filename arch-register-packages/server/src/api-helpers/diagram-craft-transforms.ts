@@ -16,7 +16,7 @@ export type DiagramCraftSchema = {
   fields: DiagramCraftSchemaField[];
 };
 
-const PUBLIC_METADATA_FIELDS: DiagramCraftSchemaField[] = [
+const DIAGRAM_CRAFT_METADATA_FIELDS: DiagramCraftSchemaField[] = [
   { id: 'name', name: 'Name', type: 'text' },
   { id: 'description', name: 'Description', type: 'longtext' }
 ];
@@ -42,7 +42,7 @@ export const toDiagramCraftSchema = (schema: EntitySchema): DiagramCraftSchema =
   id: schema.id,
   name: schema.name,
   fields: [
-    ...PUBLIC_METADATA_FIELDS.filter(
+    ...DIAGRAM_CRAFT_METADATA_FIELDS.filter(
       metadataField => !schema.fields.some(field => field.id === metadataField.id)
     ),
     ...schema.fields.flatMap(field => {

@@ -355,6 +355,46 @@ describe('EdgeEndpointMoveDrag', () => {
     expect(definition.phases.at(-1)).toBe('dragEnd');
   });
 
+  test('pops help state when a drag is cancelled', () => {
+    const context = createContext();
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
+
+    const edge = layer.addEdge();
+    const drag = new EdgeEndpointMoveDrag(diagram, edge, 'end', context);
+
+    drag.cancel();
+
+    expect(context.help.pop).toHaveBeenCalledWith('EdgeEndpointMoveDrag');
+  });
+
+  test('does not add an invalid loop waypoint when both endpoints coincide on the same node', () => {
+    const context = createContext();
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
+
+    const node = layer.addNode({
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+      props: {
+        anchors: { type: 'none' }
+      }
+    });
+    const edge = layer.addEdge();
+
+    UnitOfWork.execute(diagram, uow => {
+      const endpoint = new PointInNodeEndpoint(node, undefined, { x: 0.5, y: 0.5 }, 'relative');
+      edge.setStart(endpoint, uow);
+      edge.setEnd(endpoint, uow);
+    });
+
+    const drag = new EdgeEndpointMoveDrag(diagram, edge, 'end', context);
+    drag.point = { x: 50, y: 50 };
+
+    expect(() => drag.onDragEnd()).not.toThrow();
+    expect(edge.waypoints).toHaveLength(0);
+  });
+
   test('starts anchor-handle drags from a projected edge anchor source', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     mountDiagramElement(CanvasDomHelper.diagramId(diagram));

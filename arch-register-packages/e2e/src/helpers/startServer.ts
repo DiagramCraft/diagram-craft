@@ -3,7 +3,7 @@
 import { createServer } from 'node:http';
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { toNodeListener } from 'h3/node';
+import { toNodeHandler } from 'h3/node';
 import { SqliteDatabase } from '@arch-register/server/db/sqliteDatabase';
 import { createApp } from '@arch-register/server/app';
 import { createStorage } from '@arch-register/server/storage/storage';
@@ -21,7 +21,7 @@ await seedMinimal(db);
 const storage = createStorage();
 const app = createApp(db, storage);
 
-const server = createServer(toNodeListener(app));
+const server = createServer(toNodeHandler(app));
 server.listen(PORT, () => {
   console.log(`E2E server running on http://localhost:${PORT}`);
 });

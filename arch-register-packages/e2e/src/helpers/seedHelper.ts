@@ -1,5 +1,6 @@
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
 import {
+  seedEntities,
   seedWorkspaces,
   seedLifecycleStates,
   seedOwners,
@@ -55,6 +56,12 @@ export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
   // Add as workspace admin member in each seeded workspace
   for (const ws of seedWorkspaces) {
     await db.workspaceAdmin.setWorkspaceMemberRole(ws.id, TEST_ADMIN.id, 'admin', now);
+  }
+}
+
+export async function seedCatalogEntities(db: DatabaseAdapter): Promise<void> {
+  for (const entity of seedEntities) {
+    await db.catalog.createEntity(entity);
   }
 }
 

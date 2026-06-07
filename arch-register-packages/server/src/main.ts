@@ -1,14 +1,13 @@
 import 'dotenv/config';
 import { createServer } from 'node:http';
-import { toNodeListener } from 'h3/node';
+import { toNodeHandler } from 'h3/node';
 import { createDatabase } from './db/factory.js';
 import { createStorage } from './storage/storage.js';
 import { YjsCollaborationServer } from './collaboration/yjsCollaborationServer.js';
 import { verifyToken } from './utils/jwt.js';
-import { createAIRoutes } from './routes/ai.js';
 import { createApp } from './app.js';
 import { SERVER_DEFAULTS } from './constants.js';
-import { generateSvgPreview } from './preview/svgPreviewGenerator.js';
+import { generateSvgPreview } from './api-helpers/svgPreviewGenerator.js';
 import { getDiagramCommentCounts } from './diagrams/commentCounts.js';
 import { createLogger } from './utils/logger.js';
 
@@ -81,12 +80,13 @@ const main = async () => {
     }
   };
 
-  const collaborationServer = new YjsCollaborationServer('/ws', autoSaveWriter, name => name, wsAuthenticator);
-
-  app.use(createAIRoutes(db));
-  logger.info('AI routes enabled');
-
-  const server = createServer(toNodeListener(app));
+  const collaborationServer = new YjsCollaborationServer(
+    '/ws',
+    autoSaveWriter,
+    name => name,
+    wsAuthenticator
+  );
+  const server = createServer(toNodeHandler(app));
   collaborationServer.bind(server);
 
   server.listen(PORT, () => {

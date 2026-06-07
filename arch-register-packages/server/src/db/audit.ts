@@ -1,5 +1,5 @@
 import type { AuditOperation, AuditEntityType } from '../types.js';
-import type { DatabaseAdapter } from './database.js';
+import type { AuditDatabase } from './database.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('audit');
@@ -24,7 +24,7 @@ type AuditLogParams = {
 /**
  * Records an audit log entry for a mutation operation.
  */
-export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Promise<void> => {
+export const logAudit = async (db: AuditDatabase, params: AuditLogParams): Promise<void> => {
   const {
     workspace,
     operation,
@@ -38,7 +38,7 @@ export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Pro
   } = params;
 
   try {
-    await db.audit.createAuditLog({
+    await db.createAuditLog({
       workspace,
       timestamp: new Date(),
       user_id: STATIC_USER,

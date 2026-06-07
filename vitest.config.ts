@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [yaml(), ...(!!process.env.CI ? [codspeedPlugin()] : [])],
   test: {
     environment: 'node',
-    exclude: ['**/*.spec.ts', '**/node_modules/**', '**/dist/**'],
+    exclude: ['**/*.spec.ts', '**/node_modules/**', '**/dist/**', '**/e2e/**'],
     fakeTimers: {
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask']
     },

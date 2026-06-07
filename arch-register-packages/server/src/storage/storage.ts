@@ -1,8 +1,8 @@
-import type { StorageAdapter } from './types.js';
+import type { StorageAdapter } from './storage.types.js';
 import { FilesystemStorage } from './fs.js';
 import { STORAGE_DEFAULTS } from '../constants.js';
 
-export type { StorageAdapter } from './types.js';
+export type { StorageAdapter } from './storage.types.js';
 
 export const createStorage = (): StorageAdapter => {
   const backend = process.env['STORAGE_BACKEND'] ?? STORAGE_DEFAULTS.BACKEND;
