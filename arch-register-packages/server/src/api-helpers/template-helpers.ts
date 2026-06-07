@@ -1,6 +1,6 @@
 import type { ProjectFile } from '../types.js';
 import type { ProjectTemplatesResponse } from '@arch-register/api-types';
-import { toApiProjectFile } from './transforms.js';
+import { toApiProjectFile } from './project-helpers.js';
 
 export type ProjectWithFiles = {
   project: { id: string };

@@ -1,12 +1,12 @@
 import { H3, defineHandler } from 'h3';
 import { newid } from '@diagram-craft/utils/id';
 import type { DatabaseAdapter, CreateEnumInput, UpdateEnumInput } from '../db/database.js';
-import { resolveWorkspace } from '../utils/resolveWorkspace.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { handleDbError } from '../utils/http.js';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
-import { toApiEnum } from '../api/transforms.js';
+import { toApiEnum } from '../api-helpers/schema-helpers.js';
 import type { EntitySchema, WorkspaceEnum } from '../types.js';
 
 const BASE = '/api/:workspace/enums';

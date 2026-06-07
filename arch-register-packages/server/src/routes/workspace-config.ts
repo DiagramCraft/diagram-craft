@@ -7,7 +7,7 @@ import {
   resolveWorkspaceRoleDefinitions
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from '../utils/resolveWorkspace.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import type {

@@ -1,6 +1,6 @@
 import { H3, H3Event, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from '../utils/resolveWorkspace.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { handleDbError } from '../utils/http.js';
 import {
   buildApiAuthCtx,
@@ -10,8 +10,8 @@ import {
 } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
-import { toApiProjectFile } from '../api/transforms.js';
-import { buildAllTemplatesResponse, buildProjectTemplatesResponse, type ProjectWithFiles } from '../api/template-helpers.js';
+import { toApiProjectFile } from '../api-helpers/project-helpers.js';
+import { buildAllTemplatesResponse, buildProjectTemplatesResponse, type ProjectWithFiles } from '../api-helpers/template-helpers.js';
 
 const BASE = '/api/:workspace';
 

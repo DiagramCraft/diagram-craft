@@ -1,5 +1,5 @@
-import type { AuditLogEntry } from '../types.js';
-import type { AuditStats } from '@arch-register/api-types';
+import type { AuditLogEntry as InternalAuditLogEntry } from '../types.js';
+import type { AuditLogEntry, AuditStats } from '@arch-register/api-types';
 
 export type AuditListFilters = {
   entityType: string | null;
@@ -12,9 +12,9 @@ export type AuditListFilters = {
 };
 
 export const filterAndPaginateAuditLogs = (
-  rows: AuditLogEntry[],
+  rows: InternalAuditLogEntry[],
   filters: AuditListFilters
-): AuditLogEntry[] => {
+): InternalAuditLogEntry[] => {
   let result = rows;
   if (filters.entityType) result = result.filter(row => row.entity_type === filters.entityType);
   if (filters.entityId) result = result.filter(row => row.entity_id === filters.entityId);
@@ -24,7 +24,7 @@ export const filterAndPaginateAuditLogs = (
   return result.slice(filters.offset, filters.offset + filters.limit);
 };
 
-export const computeAuditStats = (rows: AuditLogEntry[], nowMs = Date.now()): AuditStats => {
+export const computeAuditStats = (rows: InternalAuditLogEntry[], nowMs = Date.now()): AuditStats => {
   const byOperationMap = new Map<string, number>();
   const byEntityTypeMap = new Map<string, number>();
   const recentActivityMap = new Map<string, number>();
@@ -52,3 +52,18 @@ export const computeAuditStats = (rows: AuditLogEntry[], nowMs = Date.now()): Au
       .sort((a, b) => b.date.localeCompare(a.date))
   };
 };
+
+export const toApiAuditLogEntry = (entry: InternalAuditLogEntry): AuditLogEntry => ({
+  id: entry.id,
+  workspace: entry.workspace,
+  timestamp: entry.timestamp.toISOString(),
+  user_id: entry.user_id,
+  operation: entry.operation,
+  entity_type: entry.entity_type,
+  entity_id: entry.entity_id,
+  entity_name: entry.entity_name,
+  entity_slug: entry.entity_slug,
+  schema_id: entry.schema_id,
+  changes: entry.changes,
+  metadata: entry.metadata,
+});

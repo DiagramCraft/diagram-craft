@@ -6,11 +6,11 @@ import type { DatabaseAdapter } from '../db/database.js';
 import type { Entity, EntitySchema } from '../types.js';
 import { handleDbError } from '../utils/http.js';
 import { httpAssert } from '../utils/httpAssert.js';
-import { resolveWorkspace } from '../utils/resolveWorkspace.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import {
   toDiagramCraftData,
   toDiagramCraftSchema
-} from '../api/diagram-craft-transforms.js';
+} from '../api-helpers/diagram-craft-transforms.js';
 
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024;
 const CONTENT_TYPE_JSON = 'application/json';

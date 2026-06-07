@@ -1,7 +1,7 @@
 import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import type { Entity, SchemaField } from '../types.js';
-import { resolveWorkspace } from '../utils/resolveWorkspace.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { parsePositiveInt } from '../utils/http.js';
 import { SEARCH_DEFAULTS } from '../constants.js';
 import { buildApiAuthCtx, canAccessProject } from '../auth/authorization.js';

@@ -7,7 +7,7 @@ import { YjsCollaborationServer } from './collaboration/yjsCollaborationServer.j
 import { verifyToken } from './utils/jwt.js';
 import { createApp } from './app.js';
 import { SERVER_DEFAULTS } from './constants.js';
-import { generateSvgPreview } from './preview/svgPreviewGenerator.js';
+import { generateSvgPreview } from './api-helpers/svgPreviewGenerator.js';
 import { getDiagramCommentCounts } from './diagrams/commentCounts.js';
 import { createLogger } from './utils/logger.js';
 

@@ -3,12 +3,12 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../db/database';
 import type { EntitySchema } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
-import { resolveWorkspace } from '../utils/resolveWorkspace.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { handleDbError } from '../utils/http.js';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
-import { toApiSchema } from '../api/transforms.js';
+import { toApiSchema } from '../api-helpers/schema-helpers.js';
 
 const BASE = '/api/:workspace/schemas';
 

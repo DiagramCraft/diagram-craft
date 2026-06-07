@@ -4,7 +4,7 @@ import type { CreateProjectInput, DatabaseAdapter, UpdateProjectInput } from '..
 import type { ProjectFile } from '../types.js';
 import type { StorageAdapter } from '../storage/storage.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
-import { resolveWorkspace } from '../utils/resolveWorkspace.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { handleDbError } from '../utils/http.js';
 import {
   buildApiAuthCtx,
@@ -15,9 +15,9 @@ import {
 } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
-import { toApiProject, toApiProjectFile, toApiProjectDetail } from '../api/transforms.js';
+import { toApiProject, toApiProjectFile, toApiProjectDetail } from '../api-helpers/project-helpers.js';
 import type { FileTree } from '@arch-register/api-types';
-import { generateSvgPreview } from '../preview/svgPreviewGenerator.js';
+import { generateSvgPreview } from '../api-helpers/svgPreviewGenerator.js';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { getDiagramCommentCounts } from '../diagrams/commentCounts.js';
 

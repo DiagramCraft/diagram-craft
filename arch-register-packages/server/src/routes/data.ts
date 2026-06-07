@@ -15,9 +15,9 @@ import {
   type EntitySchema as InternalEntitySchema,
   type SchemaField
 } from '../types.js';
-import { toApiEntity, toApiEntitySummary } from '../api/transforms.js';
+import { toApiEntity, toApiEntitySummary } from '../api-helpers/entity-helpers.js';
 import { computeChanges, extractEntityFields, logAudit } from '../db/audit.js';
-import { resolveWorkspace } from '../utils/resolveWorkspace.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { formatArrayForCsv, generateCsv } from '../utils/csv.js';
 import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
 import { computeEntityCompleteness } from '../utils/completeness.js';

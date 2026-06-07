@@ -1,5 +1,5 @@
 import type { CatalogDatabase } from '../db/database.js';
-import { httpAssert } from './httpAssert.js';
+import { httpAssert } from '../utils/httpAssert.js';
 
 export const resolveWorkspace = async (catalog: CatalogDatabase, slug: string | undefined): Promise<string> => {
   httpAssert.string(slug, { message: 'workspace is required' });

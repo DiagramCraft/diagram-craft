@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterAndPaginateAuditLogs, computeAuditStats } from './audit-helpers.js';
+import { filterAndPaginateAuditLogs, computeAuditStats, toApiAuditLogEntry } from './audit-helpers.js';
 import type { AuditLogEntry } from '../types.js';
 
 const makeEntry = (overrides: Partial<AuditLogEntry> & { id: string }): AuditLogEntry => ({
@@ -162,5 +162,31 @@ describe('computeAuditStats', () => {
     const result = computeAuditStats(allRows, NOW_MS);
     const dates = result.recentActivity.map(r => r.date);
     expect(dates).toEqual([...dates].sort((a, b) => b.localeCompare(a)));
+  });
+});
+
+// ── toApiAuditLogEntry ────────────────────────────────────────
+
+describe('toApiAuditLogEntry', () => {
+  it('maps all fields and serializes timestamp', () => {
+    const entry: AuditLogEntry = {
+      id: 'audit-1',
+      workspace: 'ws-1',
+      timestamp: new Date('2025-06-01T12:00:00.000Z'),
+      user_id: 'u-1',
+      operation: 'create',
+      entity_type: 'entity',
+      entity_id: 'e-1',
+      entity_name: 'My Entity',
+      entity_slug: 'my-entity',
+      schema_id: 'schema-1',
+      changes: { new: { name: 'My Entity' } },
+      metadata: {},
+    };
+    const result = toApiAuditLogEntry(entry);
+    expect(result.id).toBe('audit-1');
+    expect(result.timestamp).toBe('2025-06-01T12:00:00.000Z');
+    expect(result.operation).toBe('create');
+    expect(result.changes).toEqual({ new: { name: 'My Entity' } });
   });
 });

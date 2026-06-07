@@ -1,11 +1,10 @@
 import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
-import { resolveWorkspace } from '../utils/resolveWorkspace.js';
+import { resolveWorkspace } from '../api-helpers/resolveWorkspace.js';
 import { parsePositiveInt } from '../utils/http.js';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
-import { toApiAuditLogEntry } from '../api/transforms.js';
-import { filterAndPaginateAuditLogs, computeAuditStats } from '../api/audit-helpers.js';
+import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from '../api-helpers/audit-helpers.js';
 
 const BASE = '/api/:workspace/audit';
 

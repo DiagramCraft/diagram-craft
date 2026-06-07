@@ -9,7 +9,7 @@ import type { StorageAdapter } from '../storage/storage.js';
 import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
-import { toApiWorkspace } from '../api/transforms.js';
+import { toApiWorkspace } from '../api-helpers/workspace-helpers.js';
 import { SCHEMA_TEMPLATES, instantiateTemplate } from '../schemaTemplates.js';
 
 const BASE = '/api/workspaces';
