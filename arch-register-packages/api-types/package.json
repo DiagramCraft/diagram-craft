@@ -20,10 +20,9 @@
     "clean": "rm -rf dist",
     "validate:openapi": "tsx scripts/validate-openapi.ts"
   },
-  "dependencies": {},
   "devDependencies": {
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "tsx": "^4.19.2",
     "yaml": "^2.6.1"
   }
 }
