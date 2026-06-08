@@ -3,12 +3,12 @@ import { createServer } from 'node:http';
 import { toNodeHandler } from 'h3/node';
 import { createDatabase } from './db/factory';
 import { createStorage } from './storage/storage';
-import { YjsCollaborationServer } from './collaboration/yjsCollaborationServer';
+import { YjsCollaborationServer } from './domain/collaboration/yjsCollaborationServer';
 import { verifyToken } from './utils/jwt';
 import { createApp } from './app';
 import { SERVER_DEFAULTS } from './constants';
-import { generateSvgPreview } from './api-helpers/svgPreviewGenerator';
-import { getDiagramCommentCounts } from './diagrams/commentCounts';
+import { generateSvgPreview } from './domain/diagram/svgPreviewGenerator';
+import { getDiagramCommentCounts } from './domain/diagram/commentCounts';
 import { createLogger } from './utils/logger';
 
 const logger = createLogger('server');
