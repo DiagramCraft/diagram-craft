@@ -1,4 +1,5 @@
 import type {
+  AuditOperation,
   Entity,
   EntitySchema,
   GlobalRoleAssignment,
@@ -707,6 +708,104 @@ export const seedSavedViews: SavedView[] = [
     config: null,
     created_at: now,
     updated_at: now
+  }
+];
+
+export const seedUserWatches = [
+  {
+    user_id: 'globaladmin',
+    workspace: 'default',
+    entity_id: '00000000-0000-0000-0002-000000000001',
+    created_at: new Date('2026-01-02T09:00:00.000Z')
+  },
+  {
+    user_id: 'globaladmin',
+    workspace: 'default',
+    entity_id: '00000000-0000-0000-0004-000000000001',
+    created_at: new Date('2026-01-02T09:05:00.000Z')
+  },
+  {
+    user_id: 'globaladmin',
+    workspace: 'default',
+    entity_id: '00000000-0000-0000-0003-000000000003',
+    created_at: new Date('2026-01-02T09:10:00.000Z')
+  }
+] as const;
+
+export const seedNotificationEvents: Array<{
+  workspace: string;
+  timestamp: Date;
+  user_id: string;
+  operation: AuditOperation;
+  entity_id: string;
+  entity_name: string;
+  entity_slug: string;
+  schema_id: string;
+  changed_by_display_name: string;
+  changes: {
+    old?: Record<string, unknown>;
+    new?: Record<string, unknown>;
+  };
+}> = [
+  {
+    workspace: 'default',
+    timestamp: new Date('2026-01-03T08:15:00.000Z'),
+    user_id: 'workspaceeditor',
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0002-000000000001',
+    entity_name: 'Customer Portal',
+    entity_slug: 'customer-portal',
+    schema_id: '00000000-0000-0000-0000-000000000002',
+    changed_by_display_name: 'Raj Patel',
+    changes: {
+      old: { _description: 'Public-facing portal for customer self-service.' },
+      new: { _description: 'Public-facing portal for customer self-service with a refreshed IA.' }
+    }
+  },
+  {
+    workspace: 'default',
+    timestamp: new Date('2026-01-04T11:40:00.000Z'),
+    user_id: 'platformteamadmin',
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0004-000000000001',
+    entity_name: 'Customer API',
+    entity_slug: 'customer-api',
+    schema_id: '00000000-0000-0000-0000-000000000004',
+    changed_by_display_name: 'Daniel Okonkwo',
+    changes: {
+      old: { _tags: ['rest', 'public'] },
+      new: { _tags: ['rest', 'public', 'versioned'] }
+    }
+  },
+  {
+    workspace: 'default',
+    timestamp: new Date('2026-01-05T13:05:00.000Z'),
+    user_id: 'securityteamadmin',
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0003-000000000003',
+    entity_name: 'Auth Service',
+    entity_slug: 'auth-service',
+    schema_id: '00000000-0000-0000-0000-000000000003',
+    changed_by_display_name: 'Lena Hoffmann',
+    changes: {
+      old: { _targetLifecycle: 'production' },
+      new: { _targetLifecycle: 'deprecated' }
+    }
+  },
+  {
+    workspace: 'default',
+    timestamp: new Date('2026-01-06T09:20:00.000Z'),
+    user_id: 'workspaceadmin',
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0002-000000000001',
+    entity_name: 'Customer Portal',
+    entity_slug: 'customer-portal',
+    schema_id: '00000000-0000-0000-0000-000000000002',
+    changed_by_display_name: 'James Chen',
+    changes: {
+      old: { _targetLifecycleDate: '2026-12-31' },
+      new: { _targetLifecycleDate: '2027-03-31' }
+    }
   }
 ];
 
