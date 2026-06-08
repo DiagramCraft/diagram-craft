@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '../api';
+import { apiFetch } from '../lib/api';
 import type { AiConversation } from '@arch-register/api-types';
 
 export const aiKeys = {
   all: ['ai'] as const,
   conversations: (ws: string) => [...aiKeys.all, 'conversations', ws] as const,
   messages: (ws: string, conversationId: string) =>
-    [...aiKeys.all, 'messages', ws, conversationId] as const,
+    [...aiKeys.all, 'messages', ws, conversationId] as const
 };
 
 export const useAiConversations = (workspaceSlug: string) => {
@@ -14,7 +14,7 @@ export const useAiConversations = (workspaceSlug: string) => {
     queryKey: aiKeys.conversations(workspaceSlug),
     queryFn: () => apiFetch<AiConversation[]>(`/api/${workspaceSlug}/ai/conversations`),
     enabled: !!workspaceSlug,
-    staleTime: 30_000,
+    staleTime: 30_000
   });
 };
 
@@ -24,11 +24,11 @@ export const useCreateConversation = (workspaceSlug: string) => {
     mutationFn: (title?: string) =>
       apiFetch<AiConversation>(`/api/${workspaceSlug}/ai/conversations`, {
         method: 'POST',
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ title })
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
-    },
+    }
   });
 };
 
@@ -38,11 +38,11 @@ export const useRenameConversation = (workspaceSlug: string) => {
     mutationFn: ({ id, title }: { id: string; title: string }) =>
       apiFetch<AiConversation>(`/api/${workspaceSlug}/ai/conversations/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ title })
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
-    },
+    }
   });
 };
 
@@ -51,20 +51,24 @@ export const useDeleteConversation = (workspaceSlug: string) => {
   return useMutation({
     mutationFn: (id: string) =>
       apiFetch<AiConversation>(`/api/${workspaceSlug}/ai/conversations/${id}`, {
-        method: 'DELETE',
+        method: 'DELETE'
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
-    },
+    }
   });
 };
 
-export const useConversationMessages = (workspaceSlug: string, conversationId: string | undefined) => {
+export const useConversationMessages = (
+  workspaceSlug: string,
+  conversationId: string | undefined
+) => {
   return useQuery({
     queryKey: aiKeys.messages(workspaceSlug, conversationId ?? ''),
-    queryFn: () => apiFetch<Array<{ id: string; role: string; content: string; created_at: string }>>(
-      `/api/${workspaceSlug}/ai/conversations/${conversationId}/messages`
-    ),
-    enabled: !!workspaceSlug && !!conversationId,
+    queryFn: () =>
+      apiFetch<Array<{ id: string; role: string; content: string; created_at: string }>>(
+        `/api/${workspaceSlug}/ai/conversations/${conversationId}/messages`
+      ),
+    enabled: !!workspaceSlug && !!conversationId
   });
 };

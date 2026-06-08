@@ -5,8 +5,14 @@ import { FormGroup } from '@diagram-craft/app-components/FormGroup';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { apiFetch, ApiError } from '../api';
-import type { EntitySchema, EntitySummary, SchemaField, WorkspaceLifecycleState, WorkspaceTeam } from '../api';
+import { apiFetch, ApiError } from '../lib/api';
+import type {
+  EntitySchema,
+  EntitySummary,
+  SchemaField,
+  WorkspaceLifecycleState,
+  WorkspaceTeam
+} from '../lib/api';
 import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
@@ -36,13 +42,19 @@ export const AddEntityDialog = ({
   schemas,
   lifecycleStates,
   teams,
-  preselectedSchemaId,
+  preselectedSchemaId
 }: AddEntityDialogProps) => {
   const { canCreateTopLevelEntity } = usePermissions();
   const [schemaId, setSchemaId] = useState('');
   const [entityName, setEntityName] = useState('');
   const [fields, setFields] = useState<Record<string, string>>({});
-  const [meta, setMeta] = useState({ description: '', owner: '', lifecycle: '', namespace: 'default', tags: '' });
+  const [meta, setMeta] = useState({
+    description: '',
+    owner: '',
+    lifecycle: '',
+    namespace: 'default',
+    tags: ''
+  });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -77,12 +89,13 @@ export const AddEntityDialog = ({
     return [
       ...new Set(
         selectedSchema.fields
-          .filter((field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-            field.type === 'reference' || field.type === 'containment'
+          .filter(
+            (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
+              field.type === 'reference' || field.type === 'containment'
           )
           .map(field => field.schemaId)
           .filter(Boolean)
-      ),
+      )
     ];
   }, [selectedSchema]);
 
@@ -129,7 +142,10 @@ export const AddEntityDialog = ({
       }
     }
 
-    const tags = meta.tags.split(',').map(s => s.trim()).filter(Boolean);
+    const tags = meta.tags
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
 
     const body = {
       _schemaId: schemaId,
@@ -140,13 +156,13 @@ export const AddEntityDialog = ({
       _namespace: meta.namespace.trim() || 'default',
       _tags: tags,
       _links: [],
-      ...dataFields,
+      ...dataFields
     };
 
     try {
       const entity = await apiFetch<EntityApiResponse>(`/api/${workspaceId}/data`, {
         method: 'POST',
-        body: JSON.stringify(body),
+        body: JSON.stringify(body)
       });
       onCreated(entity);
       onClose();
@@ -169,10 +185,23 @@ export const AddEntityDialog = ({
       width="min(1040px, calc(100vw - 48px))"
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
-        { label: submitting ? 'Creating...' : 'Create entity', type: 'default', disabled: submitting, onClick: () => { void handleSubmit(); } }
+        {
+          label: submitting ? 'Creating...' : 'Create entity',
+          type: 'default',
+          disabled: submitting,
+          onClick: () => {
+            void handleSubmit();
+          }
+        }
       ]}
     >
-      <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
+      <form
+        className={styles.form}
+        onSubmit={e => {
+          e.preventDefault();
+          void handleSubmit();
+        }}
+      >
         <button type="submit" hidden />
         {/* Schema picker */}
         <FormElement label="Type" required hint={selectedSchema?.description}>
@@ -206,15 +235,17 @@ export const AddEntityDialog = ({
           <FormGroup label="Properties" icon={<TbAdjustments size={12} />}>
             {selectedSchema && (
               <div className={styles.propertiesList}>
-                {selectedSchema.fields.filter(f => f.id !== 'name').map(f => (
-                  <FieldInput
-                    key={f.id}
-                    field={f}
-                    value={fields[f.id] ?? ''}
-                    onChange={v => setField(f.id, v)}
-                    referenceOptions={derivedReferenceOptions}
-                  />
-                ))}
+                {selectedSchema.fields
+                  .filter(f => f.id !== 'name')
+                  .map(f => (
+                    <FieldInput
+                      key={f.id}
+                      field={f}
+                      value={fields[f.id] ?? ''}
+                      onChange={v => setField(f.id, v)}
+                      referenceOptions={derivedReferenceOptions}
+                    />
+                  ))}
               </div>
             )}
           </FormGroup>
@@ -239,7 +270,9 @@ export const AddEntityDialog = ({
                   style={{ width: '100%' }}
                 >
                   {creatableTeams.map(team => (
-                    <Select.Item key={team.id} value={team.id}>{team.id}</Select.Item>
+                    <Select.Item key={team.id} value={team.id}>
+                      {team.id}
+                    </Select.Item>
                   ))}
                 </Select.Root>
               </FormElement>
@@ -251,7 +284,9 @@ export const AddEntityDialog = ({
                   style={{ width: '100%' }}
                 >
                   {lifecycleStates.map(s => (
-                    <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>
+                    <Select.Item key={s.id} value={s.id}>
+                      {s.label}
+                    </Select.Item>
                   ))}
                 </Select.Root>
               </FormElement>
@@ -288,7 +323,7 @@ const FieldInput = ({
   value,
   onChange,
   nameRef,
-  referenceOptions,
+  referenceOptions
 }: {
   field: EntitySchema['fields'][number];
   value: string;
@@ -326,7 +361,9 @@ const FieldInput = ({
           style={{ width: '100%' }}
         >
           {field.options.map(o => (
-            <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
+            <Select.Item key={o.value} value={o.value}>
+              {o.label}
+            </Select.Item>
           ))}
         </Select.Root>
       </FormElement>

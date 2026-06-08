@@ -3,9 +3,13 @@ import { TbCheck } from 'react-icons/tb';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { ApiError } from '../../api';
-import type { FileEntry, ProjectFile } from '../../api';
-import { useCreateDiagramFile, useProjectTemplates, useCreateDiagramFromTemplate } from '../../hooks/useProjectFiles';
+import { ApiError } from '../../lib/api';
+import type { FileEntry, ProjectFile } from '../../lib/api';
+import {
+  useCreateDiagramFile,
+  useProjectTemplates,
+  useCreateDiagramFromTemplate
+} from '../../hooks/useProjectFiles';
 import styles from './AddDiagramDialog.module.css';
 
 type AddDiagramDialogProps = {
@@ -21,36 +25,101 @@ type AddDiagramDialogProps = {
 // Dummy SVG preview (matches the one used in project detail grid cards)
 const DummyPreview = () => (
   <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid meet">
-    <rect x="14" y="18" width="36" height="20" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="1" />
-    <rect x="62" y="8" width="36" height="20" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="1" />
-    <rect x="62" y="52" width="36" height="20" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="1" />
-    <rect x="110" y="30" width="36" height="20" rx="2" fill="color-mix(in oklch, var(--accent-fg) 28%, var(--cmp-bg))" stroke="var(--accent-fg)" strokeWidth="1" />
-    <path d="M50 28 L62 18 M50 28 L62 62 M98 18 L110 40 M98 62 L110 40"
-      stroke="var(--cmp-fg-disabled)" fill="none" strokeWidth="1" />
+    <rect
+      x="14"
+      y="18"
+      width="36"
+      height="20"
+      rx="2"
+      fill="var(--cmp-bg)"
+      stroke="var(--base-fg-more-dim)"
+      strokeWidth="1"
+    />
+    <rect
+      x="62"
+      y="8"
+      width="36"
+      height="20"
+      rx="2"
+      fill="var(--cmp-bg)"
+      stroke="var(--base-fg-more-dim)"
+      strokeWidth="1"
+    />
+    <rect
+      x="62"
+      y="52"
+      width="36"
+      height="20"
+      rx="2"
+      fill="var(--cmp-bg)"
+      stroke="var(--base-fg-more-dim)"
+      strokeWidth="1"
+    />
+    <rect
+      x="110"
+      y="30"
+      width="36"
+      height="20"
+      rx="2"
+      fill="color-mix(in oklch, var(--accent-fg) 28%, var(--cmp-bg))"
+      stroke="var(--accent-fg)"
+      strokeWidth="1"
+    />
+    <path
+      d="M50 28 L62 18 M50 28 L62 62 M98 18 L110 40 M98 62 L110 40"
+      stroke="var(--cmp-fg-disabled)"
+      fill="none"
+      strokeWidth="1"
+    />
   </svg>
 );
 
 const BlankPreview = () => (
   <svg viewBox="0 0 160 90">
-    <rect x="20" y="14" width="120" height="62" rx="4" fill="none"
-      stroke="var(--cmp-border)" strokeWidth="1.5" strokeDasharray="5 5" />
-    <path d="M80 36v18M71 45h18" stroke="var(--cmp-fg-disabled)" strokeWidth="2" strokeLinecap="round" />
+    <rect
+      x="20"
+      y="14"
+      width="120"
+      height="62"
+      rx="4"
+      fill="none"
+      stroke="var(--cmp-border)"
+      strokeWidth="1.5"
+      strokeDasharray="5 5"
+    />
+    <path
+      d="M80 36v18M71 45h18"
+      stroke="var(--cmp-fg-disabled)"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
   </svg>
 );
 
-export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projectId, projectName, folder }: AddDiagramDialogProps) => {
+export const AddDiagramDialog = ({
+  open,
+  onClose,
+  onCreated,
+  workspaceId,
+  projectId,
+  projectName,
+  folder
+}: AddDiagramDialogProps) => {
   const [selected, setSelected] = useState<ProjectFile | 'blank'>('blank');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
 
-  const { data: templates, isLoading: templatesLoading } = useProjectTemplates(workspaceId, projectId);
+  const { data: templates, isLoading: templatesLoading } = useProjectTemplates(
+    workspaceId,
+    projectId
+  );
   const createDiagramMutation = useCreateDiagramFile(workspaceId, projectId);
   const createFromTemplateMutation = useCreateDiagramFromTemplate(workspaceId, projectId);
 
   const allTemplates = [
     ...(templates?.projectTemplates ?? []),
-    ...(templates?.workspaceTemplates ?? []),
+    ...(templates?.workspaceTemplates ?? [])
   ];
 
   // Reset on open
@@ -96,7 +165,7 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
         file = await createFromTemplateMutation.mutateAsync({
           name: finalName,
           templateFile: selected,
-          folder,
+          folder
         });
       } else {
         file = await createDiagramMutation.mutateAsync({ name: finalName, folder });
@@ -114,9 +183,11 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
 
   const isPending = createDiagramMutation.isPending || createFromTemplateMutation.isPending;
 
-  const sub = projectName
-    ? <span>Adds to <b>{projectName}</b>. Pick a template or start from a blank canvas.</span>
-    : undefined;
+  const sub = projectName ? (
+    <span>
+      Adds to <b>{projectName}</b>. Pick a template or start from a blank canvas.
+    </span>
+  ) : undefined;
 
   return (
     <Dialog
@@ -126,10 +197,24 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
       title="Choose a starting point"
       sub={sub}
       width={640}
-      footerLeft={<KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'create']]} />}
+      footerLeft={
+        <KbdHints
+          hints={[
+            ['Esc', 'cancel'],
+            ['⌘↵', 'create']
+          ]}
+        />
+      }
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
-        { label: isPending ? 'Creating...' : 'Create diagram', type: 'default', disabled: isPending, onClick: () => { void handleSubmit(); } }
+        {
+          label: isPending ? 'Creating...' : 'Create diagram',
+          type: 'default',
+          disabled: isPending,
+          onClick: () => {
+            void handleSubmit();
+          }
+        }
       ]}
     >
       <button
@@ -137,14 +222,14 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
         className={`${styles.blankOption} ${selected === 'blank' ? styles.isActive : ''}`}
         onClick={() => setSelected('blank')}
       >
-        <span className={styles.blankThumb}><BlankPreview /></span>
+        <span className={styles.blankThumb}>
+          <BlankPreview />
+        </span>
         <span className={styles.blankText}>
           <span className={styles.blankName}>Blank canvas</span>
           <span className={styles.blankDesc}>No template — start from an empty diagram.</span>
         </span>
-        <span className={styles.radio}>
-          {selected === 'blank' && <TbCheck size={11} />}
-        </span>
+        <span className={styles.radio}>{selected === 'blank' && <TbCheck size={11} />}</span>
       </button>
 
       {!templatesLoading && allTemplates.length > 0 && (
@@ -171,7 +256,9 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
                       <DummyPreview />
                     )}
                     {isSelected && (
-                      <span className={styles.cardCheck}><TbCheck size={10} /></span>
+                      <span className={styles.cardCheck}>
+                        <TbCheck size={10} />
+                      </span>
                     )}
                   </span>
                   <span className={styles.cardName}>{t.name}</span>
@@ -183,7 +270,7 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
       )}
 
       <div className={styles.nameField}>
-        <FormElement 
+        <FormElement
           label="Diagram name"
           hint={folder ? `Will be created in ${folder}` : undefined}
           error={error}

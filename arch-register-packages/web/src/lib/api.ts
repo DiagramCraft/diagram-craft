@@ -27,7 +27,7 @@ import type {
   CreateWorkspaceRoleRequest,
   UpdateWorkspaceRoleRequest,
   ProjectTemplatesResponse,
-  WorkspaceEnum,
+  WorkspaceEnum
 } from '@arch-register/api-types';
 import type {
   SavedView,
@@ -38,9 +38,9 @@ import type {
   SerializedDiagram,
   SerializedDiagramDocument,
   SerializedLayer,
-  SerializedStyles,
+  SerializedStyles
 } from '@diagram-craft/model/serialization/serializedTypes';
-import { fetchWithAuthResponse } from './auth/authClient';
+import { fetchWithAuthResponse } from '../auth/authClient';
 
 // Re-export commonly used types for convenience
 export type {
@@ -68,7 +68,7 @@ export type {
   WorkspaceMemberInfo,
   WorkspaceUserInfo,
   WorkspaceEnum,
-  SavedView,
+  SavedView
 };
 
 export type FieldType = SchemaField['type'];
@@ -80,12 +80,10 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'date', label: 'Date' },
   { value: 'select', label: 'Select' },
   { value: 'reference', label: 'Reference' },
-  { value: 'containment', label: 'Containment' },
+  { value: 'containment', label: 'Containment' }
 ];
 
-
-export const schemaColor = (index: number): string =>
-  SCHEMA_COLORS[index % SCHEMA_COLORS.length]!;
+export const schemaColor = (index: number): string => SCHEMA_COLORS[index % SCHEMA_COLORS.length]!;
 
 export const resolveSchemaColor = (schema: EntitySchema, index: number): string =>
   schema.color ?? schemaColor(index);
@@ -133,13 +131,16 @@ export const SCHEMA_ICONS = [
   'certificate',
   'bolt',
   'palette',
-  'microscope',
+  'microscope'
 ] as const;
 
 export type SchemaIconId = (typeof SCHEMA_ICONS)[number];
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string
+  ) {
     super(message);
   }
 }
@@ -151,14 +152,14 @@ export const apiFetchResponse = async (
 ) => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...init?.headers,
+    ...init?.headers
   };
 
   const res = await fetchWithAuthResponse(
     path,
     {
       ...init,
-      headers,
+      headers
     },
     options
   );
@@ -243,7 +244,7 @@ export const fetchEntities = (workspace: string, options: FetchEntitiesOptions =
       q: options.q ?? null,
       view: options.view ?? 'full',
       limit: options.limit ?? null,
-      offset: options.offset ?? null,
+      offset: options.offset ?? null
     })}`
   );
 
@@ -262,24 +263,28 @@ export const fetchEntityTree = (workspace: string, options: FetchEntitiesOptions
       _schemaId: options.schemaId ?? null,
       owner: options.owner ?? null,
       lifecycle: options.lifecycle ?? null,
-      q: options.q ?? null,
+      q: options.q ?? null
     })}`
   );
 
-export const exportEntitiesToCSV = (workspace: string, options: FetchEntitiesOptions = {}): Promise<Blob> => {
+export const exportEntitiesToCSV = (
+  workspace: string,
+  options: FetchEntitiesOptions = {}
+): Promise<Blob> => {
   return apiFetchResponse(
     `/api/${workspace}/data/export${buildQuery({
       _schemaId: options.schemaId ?? null,
       owner: options.owner ?? null,
       lifecycle: options.lifecycle ?? null,
-      q: options.q ?? null,
+      q: options.q ?? null
     })}`
   ).then(res => res.blob());
 };
 
-
 export const downloadCsvTemplate = (workspace: string, schemaId: string): Promise<Blob> => {
-  return apiFetchResponse(`/api/${workspace}/data/import/template/${schemaId}`).then(res => res.blob());
+  return apiFetchResponse(`/api/${workspace}/data/import/template/${schemaId}`).then(res =>
+    res.blob()
+  );
 };
 
 export const parseCsvImport = (
@@ -308,7 +313,7 @@ export const parseCsvImport = (
 }> => {
   return apiFetch(`/api/${workspace}/data/import/parse`, {
     method: 'POST',
-    body: JSON.stringify({ schemaId, csvContent }),
+    body: JSON.stringify({ schemaId, csvContent })
   });
 };
 
@@ -319,10 +324,9 @@ export const commitCsvImport = (
 ): Promise<{ created: number; updated: number; ids: string[] }> => {
   return apiFetch(`/api/${workspace}/data/import/commit`, {
     method: 'POST',
-    body: JSON.stringify({ schemaId, entities }),
+    body: JSON.stringify({ schemaId, entities })
   });
 };
-
 
 export const fetchEntity = (workspace: string, id: string) =>
   apiFetch<EntityRecord>(`/api/${workspace}/data/${id}`);
@@ -345,7 +349,7 @@ export const createEntity = (
 ) =>
   apiFetch<EntityRecord>(`/api/${workspace}/data`, {
     method: 'POST',
-    body: JSON.stringify(entity),
+    body: JSON.stringify(entity)
   });
 
 export const deleteEntity = (workspace: string, id: string) =>
@@ -368,18 +372,18 @@ export const fetchSavedViews = (workspace: string) =>
 export const createSavedView = (workspace: string, body: CreateSavedViewRequest) =>
   apiFetch<SavedView>(`/api/${workspace}/views`, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   });
 
 export const updateSavedView = (workspace: string, id: string, body: UpdateSavedViewRequest) =>
   apiFetch<SavedView>(`/api/${workspace}/views/${id}`, {
     method: 'PATCH',
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   });
 
 export const deleteSavedView = (workspace: string, id: string) =>
   apiFetch<{ success: boolean }>(`/api/${workspace}/views/${id}`, {
-    method: 'DELETE',
+    method: 'DELETE'
   });
 
 // ── Project types ─────────────────────────────────────────────
@@ -450,32 +454,44 @@ export const searchArchRegister = (
     `/api/${workspace}/search${buildQuery({
       q: options.q,
       limitPerType: options.limitPerType ?? null,
-      types: options.types?.join(',') ?? null,
+      types: options.types?.join(',') ?? null
     })}`
   );
 
 export const createProject = (
   workspace: string,
-  body: { name: string; description?: string; owner?: string | null; status?: 'pinned' | 'active' | 'archived'; color?: string | null }
+  body: {
+    name: string;
+    description?: string;
+    owner?: string | null;
+    status?: 'pinned' | 'active' | 'archived';
+    color?: string | null;
+  }
 ) =>
   apiFetch<Project>(`/api/${workspace}/projects`, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   });
 
 export const updateProject = (
   workspace: string,
   id: string,
-  body: { name: string; description?: string; owner?: string | null; status?: 'pinned' | 'active' | 'archived'; color?: string | null }
+  body: {
+    name: string;
+    description?: string;
+    owner?: string | null;
+    status?: 'pinned' | 'active' | 'archived';
+    color?: string | null;
+  }
 ) =>
   apiFetch<Project>(`/api/${workspace}/projects/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   });
 
 export const deleteProject = (workspace: string, id: string) =>
   apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${id}`, {
-    method: 'DELETE',
+    method: 'DELETE'
   });
 
 const randomId = () => Math.random().toString(36).substring(2, 9);
@@ -491,8 +507,8 @@ const makeEmptyDiagramTab = (name: string): SerializedDiagram => {
       type: 'layer',
       layerType: 'regular',
       elements: [],
-      isLocked: false,
-    },
+      isLocked: false
+    }
   ];
 
   return {
@@ -504,7 +520,7 @@ const makeEmptyDiagramTab = (name: string): SerializedDiagram => {
     diagrams: [],
     comments: [],
     zoom: { x: 0, y: 0, zoom: 1 },
-    canvas: { x: -20, y: -20, w: 1076, h: 904 },
+    canvas: { x: -20, y: -20, w: 1076, h: 904 }
   };
 };
 
@@ -514,8 +530,8 @@ const makeEmptyDiagramStyles = (): SerializedStyles => ({
       id: 'default-edge',
       name: 'Default',
       props: { stroke: { color: 'var(--canvas-fg)' }, type: 'straight' },
-      type: 'edge',
-    },
+      type: 'edge'
+    }
   ],
   nodeStyles: [
     {
@@ -524,9 +540,9 @@ const makeEmptyDiagramStyles = (): SerializedStyles => ({
       props: {
         fill: { color: 'var(--canvas-bg2)' },
         stroke: { color: 'var(--canvas-fg)' },
-        text: { color: 'var(--canvas-fg)' },
+        text: { color: 'var(--canvas-fg)' }
       },
-      type: 'node',
+      type: 'node'
     },
     {
       id: 'default-text',
@@ -534,19 +550,19 @@ const makeEmptyDiagramStyles = (): SerializedStyles => ({
       props: {
         fill: { enabled: false },
         stroke: { enabled: false },
-        text: { color: 'var(--canvas-fg)' },
+        text: { color: 'var(--canvas-fg)' }
       },
-      type: 'node',
-    },
+      type: 'node'
+    }
   ],
   textStyles: [
     {
       id: 'default-text-default',
       name: 'Default',
       props: {
-        text: { fontSize: 10, font: 'sans-serif', top: 0, left: 0, right: 0, bottom: 0 },
+        text: { fontSize: 10, font: 'sans-serif', top: 0, left: 0, right: 0, bottom: 0 }
       },
-      type: 'text',
+      type: 'text'
     },
     {
       id: 'h1',
@@ -560,12 +576,12 @@ const makeEmptyDiagramStyles = (): SerializedStyles => ({
           top: 6,
           left: 6,
           right: 6,
-          bottom: 6,
-        },
+          bottom: 6
+        }
       },
-      type: 'text',
-    },
-  ],
+      type: 'text'
+    }
+  ]
 });
 
 const emptyDiagram = (name: string) => {
@@ -583,30 +599,32 @@ const emptyDiagram = (name: string) => {
         providerId: 'default',
         fields: [
           { id: 'name', name: 'Name', type: 'text' },
-          { id: 'notes', name: 'Notes', type: 'longtext' },
-        ],
-      },
+          { id: 'notes', name: 'Notes', type: 'longtext' }
+        ]
+      }
     ],
-    schemaMetadata: { default: { availableForElementLocalData: false, useDocumentOverrides: false } },
+    schemaMetadata: {
+      default: { availableForElementLocalData: false, useDocumentOverrides: false }
+    },
     props: {
       query: { history: [], saved: [] },
       stencils: ['default@@rect'],
       activeStencilPackages: [],
-      recentEdgeStylesheets: [],
+      recentEdgeStylesheets: []
     },
     data: {
       providers: [
         {
           id: 'default',
           providerId: 'defaultDataProvider',
-          data: '{"schemas":[{"id":"default","name":"Default","providerId":"default","fields":[{"id":"name","name":"Name","type":"text"},{"id":"notes","name":"Notes","type":"longtext"}]}],"data":[]}',
-        },
+          data: '{"schemas":[{"id":"default","name":"Default","providerId":"default","fields":[{"id":"name","name":"Name","type":"text"},{"id":"notes","name":"Notes","type":"longtext"}]}],"data":[]}'
+        }
       ],
       templates: [],
-      overrides: {},
+      overrides: {}
     },
     activeDiagramId: diagram.id,
-    hash: randomId() + randomId(),
+    hash: randomId() + randomId()
   };
 };
 
@@ -624,42 +642,52 @@ export const prepareTemplateDiagramDocument = <
     ...templateContent,
     name,
     diagrams: nextDiagrams,
-    activeDiagramId: nextDiagrams[0]!.id,
+    activeDiagramId: nextDiagrams[0]!.id
   } as T & { name: string };
 };
 
 // Local alias for backward compatibility
 export type FileEntry = ProjectFile;
 
-export const createDiagramFile = (workspace: string, projectId: string, name: string, folder?: string | null) => {
+export const createDiagramFile = (
+  workspace: string,
+  projectId: string,
+  name: string,
+  folder?: string | null
+) => {
   const fileName = `${name}.json`;
   const filePath = folder ? `${folder}/${fileName}` : fileName;
   return apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/files/${filePath}`, {
     method: 'PUT',
-    body: JSON.stringify(emptyDiagram(name)),
+    body: JSON.stringify(emptyDiagram(name))
   });
 };
 
 export const createFolder = (workspace: string, projectId: string, path: string) =>
   apiFetch<{ success: boolean; path: string }>(`/api/${workspace}/projects/${projectId}/folders`, {
     method: 'POST',
-    body: JSON.stringify({ path }),
+    body: JSON.stringify({ path })
   });
 
 export const deleteProjectFile = (workspace: string, projectId: string, filePath: string) =>
   apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${projectId}/files/${filePath}`, {
-    method: 'DELETE',
+    method: 'DELETE'
   });
 
 export const deleteProjectFolder = (workspace: string, projectId: string, folderPath: string) =>
   apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${projectId}/folders/${folderPath}`, {
-    method: 'DELETE',
+    method: 'DELETE'
   });
 
-export const renameProjectFolder = (workspace: string, projectId: string, oldPath: string, newPath: string) =>
+export const renameProjectFolder = (
+  workspace: string,
+  projectId: string,
+  oldPath: string,
+  newPath: string
+) =>
   apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${projectId}/folders/rename`, {
     method: 'PUT',
-    body: JSON.stringify({ oldPath, newPath }),
+    body: JSON.stringify({ oldPath, newPath })
   });
 
 export const fetchProjectFileContent = (workspace: string, projectId: string, filePath: string) =>
@@ -669,14 +697,16 @@ export const cloneProjectFile = async (workspace: string, projectId: string, fil
   const content = await fetchProjectFileContent(workspace, projectId, file.path);
   const baseName = file.name;
   const cloneName = `${baseName} (copy)`;
-  const folder = file.path.includes('/') ? file.path.substring(0, file.path.lastIndexOf('/')) : null;
+  const folder = file.path.includes('/')
+    ? file.path.substring(0, file.path.lastIndexOf('/'))
+    : null;
   const clonePath = folder ? `${folder}/${cloneName}.json` : `${cloneName}.json`;
   if (content && typeof content === 'object' && 'name' in content) {
     (content as Record<string, unknown>).name = cloneName;
   }
   return apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/files/${clonePath}`, {
     method: 'PUT',
-    body: JSON.stringify(content),
+    body: JSON.stringify(content)
   });
 };
 
@@ -691,7 +721,7 @@ export const relocateProjectFile = async (
     `/api/${workspace}/projects/${projectId}/files/relocate/${file.path}`,
     {
       method: 'PUT',
-      body: JSON.stringify({ newPath }),
+      body: JSON.stringify({ newPath })
     }
   );
 };
@@ -706,9 +736,9 @@ export const moveProjectFile = async (
   const fileName = file.path.includes('/')
     ? file.path.substring(file.path.lastIndexOf('/') + 1)
     : file.path;
-  
+
   const newPath = targetFolder ? `${targetFolder}/${fileName}` : fileName;
-  
+
   return relocateProjectFile(workspace, projectId, file, newPath);
 };
 
@@ -719,15 +749,14 @@ export const renameProjectFile = async (
   file: ProjectFile,
   newName: string
 ) => {
-  const folder = file.path.includes('/') 
-    ? file.path.substring(0, file.path.lastIndexOf('/')) 
+  const folder = file.path.includes('/')
+    ? file.path.substring(0, file.path.lastIndexOf('/'))
     : null;
-  
+
   const newPath = folder ? `${folder}/${newName}.json` : `${newName}.json`;
-  
+
   return relocateProjectFile(workspace, projectId, file, newPath);
 };
-
 
 // ── Template API ──────────────────────────────────────────────
 
@@ -741,16 +770,13 @@ export const toggleTemplateStatus = (
   isTemplate: boolean,
   isWorkspaceTemplate: boolean
 ) =>
-  apiFetch<ProjectFile>(
-    `/api/${workspace}/projects/${projectId}/template-status/${filePath}`,
-    {
-      method: 'PUT',
-      body: JSON.stringify({ 
-        is_template: isTemplate, 
-        is_workspace_template: isWorkspaceTemplate 
-      }),
-    }
-  );
+  apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/template-status/${filePath}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      is_template: isTemplate,
+      is_workspace_template: isWorkspaceTemplate
+    })
+  });
 
 export const createDiagramFromTemplate = async (
   workspace: string,
@@ -770,20 +796,16 @@ export const createDiagramFromTemplate = async (
     templateContent as unknown as SerializedDiagramDocument & { name?: string },
     name
   );
-  
+
   // Create new diagram (template flags are in database, not file content)
   const fileName = `${name}.json`;
   const filePath = folder ? `${folder}/${fileName}` : fileName;
-  
-  return apiFetch<ProjectFile>(
-    `/api/${workspace}/projects/${projectId}/files/${filePath}`,
-    {
-      method: 'PUT',
-      body: JSON.stringify(newContent),
-    }
-  );
-};
 
+  return apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/files/${filePath}`, {
+    method: 'PUT',
+    body: JSON.stringify(newContent)
+  });
+};
 
 // ── Audit Log API ─────────────────────────────────────────────
 
@@ -817,7 +839,7 @@ export const fetchAuditLog = (workspace: string, options: FetchAuditLogOptions =
       startDate: options.startDate ?? null,
       endDate: options.endDate ?? null,
       limit: options.limit ?? null,
-      offset: options.offset ?? null,
+      offset: options.offset ?? null
     })}`
   );
 
@@ -839,7 +861,7 @@ export const fetchLifecycleStates = (workspace: string) =>
 export const updateLifecycleStates = (workspace: string, states: WorkspaceLifecycleState[]) =>
   apiFetch<WorkspaceLifecycleState[]>(`/api/${workspace}/config/lifecycle-states`, {
     method: 'PUT',
-    body: JSON.stringify(states),
+    body: JSON.stringify(states)
   });
 
 export const fetchTeams = (workspace: string) =>
@@ -848,7 +870,7 @@ export const fetchTeams = (workspace: string) =>
 export const updateTeams = (workspace: string, teams: WorkspaceTeam[]) =>
   apiFetch<WorkspaceTeam[]>(`/api/${workspace}/config/teams`, {
     method: 'PUT',
-    body: JSON.stringify(teams),
+    body: JSON.stringify(teams)
   });
 
 // ── Workspace Members ──────────────────────────────────────────
@@ -862,13 +884,10 @@ export const fetchWorkspaceUsers = (workspace: string) =>
 export const fetchWorkspaceRoles = (workspace: string) =>
   apiFetch<WorkspaceRoleDefinition[]>(`/api/${workspace}/config/roles`);
 
-export const createWorkspaceRole = (
-  workspace: string,
-  role: CreateWorkspaceRoleRequest
-) =>
+export const createWorkspaceRole = (workspace: string, role: CreateWorkspaceRoleRequest) =>
   apiFetch<WorkspaceRoleDefinition>(`/api/${workspace}/config/roles`, {
     method: 'POST',
-    body: JSON.stringify(role),
+    body: JSON.stringify(role)
   });
 
 export const updateWorkspaceRole = (
@@ -878,12 +897,12 @@ export const updateWorkspaceRole = (
 ) =>
   apiFetch<WorkspaceRoleDefinition>(`/api/${workspace}/config/roles/${roleId}`, {
     method: 'PUT',
-    body: JSON.stringify(role),
+    body: JSON.stringify(role)
   });
 
 export const deleteWorkspaceRole = (workspace: string, roleId: string) =>
   apiFetch<WorkspaceRoleDefinition>(`/api/${workspace}/config/roles/${roleId}`, {
-    method: 'DELETE',
+    method: 'DELETE'
   });
 
 export type TeamAssignmentInfo = {
@@ -903,17 +922,13 @@ export const updateTeamAssignments = (
 ) =>
   apiFetch<TeamAssignmentInfo[]>(`/api/${workspace}/config/team-assignments`, {
     method: 'PUT',
-    body: JSON.stringify(assignments),
+    body: JSON.stringify(assignments)
   });
 
-export const updateWorkspaceMemberRole = (
-  workspace: string,
-  userId: string,
-  role: string
-) =>
+export const updateWorkspaceMemberRole = (workspace: string, userId: string, role: string) =>
   apiFetch<WorkspaceMemberInfo>(`/api/${workspace}/config/members/${userId}/role`, {
     method: 'PUT',
-    body: JSON.stringify({ role }),
+    body: JSON.stringify({ role })
   });
 
 // ── Global Role Admin ─────────────────────────────────────────
@@ -932,8 +947,7 @@ export type GlobalRoleAssignment = {
   created_at: string;
 };
 
-export const fetchAuthUsers = () =>
-  apiFetch<AuthUserInfo[]>(`/api/auth/users`);
+export const fetchAuthUsers = () => apiFetch<AuthUserInfo[]>(`/api/auth/users`);
 
 export const fetchUserGlobalRoles = (userId: string) =>
   apiFetch<GlobalRoleAssignment[]>(`/api/auth/users/${userId}/global-roles`);
@@ -941,5 +955,5 @@ export const fetchUserGlobalRoles = (userId: string) =>
 export const updateUserGlobalRoles = (userId: string, roles: GlobalRole[]) =>
   apiFetch<GlobalRoleAssignment[]>(`/api/auth/users/${userId}/global-roles`, {
     method: 'PUT',
-    body: JSON.stringify({ roles }),
+    body: JSON.stringify({ roles })
   });

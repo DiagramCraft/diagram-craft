@@ -8,11 +8,15 @@ import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { useAuth } from '../../../auth/AuthContext';
 import { getUserLabel } from '../../../utils/userLabel';
-import { useWorkspaceMembers, useWorkspaceUsers, useUpdateWorkspaceMemberRole } from '../../../hooks/useWorkspaceMembers';
+import {
+  useWorkspaceMembers,
+  useWorkspaceUsers,
+  useUpdateWorkspaceMemberRole
+} from '../../../hooks/useWorkspaceMembers';
 import { useTeamAssignments, useTeams } from '../../../hooks/useWorkspaceConfig';
 import { useWorkspaceRoles } from '../../../hooks/useWorkspaceRoles';
 import styles from './MembersSubSection.module.css';
-import type { WorkspaceRoleDefinition } from '../../../api';
+import type { WorkspaceRoleDefinition } from '../../../lib/api';
 
 const TeamChip = ({ teamId }: { teamId: string }) => {
   const h = stableHue(teamId);
@@ -27,7 +31,7 @@ const TeamChip = ({ teamId }: { teamId: string }) => {
 const RoleMenu = ({
   current,
   roles,
-  onSelect,
+  onSelect
 }: {
   current: string;
   roles: WorkspaceRoleDefinition[];
@@ -40,13 +44,15 @@ const RoleMenu = ({
     <DropdownMenu
       trigger={
         <button type="button" className={styles.roleBtn}>
-          <Chip tone="ghost" dot={roleMeta.tone}>{roleMeta.name}</Chip>
+          <Chip tone="ghost" dot={roleMeta.tone}>
+            {roleMeta.name}
+          </Chip>
         </button>
       }
       items={roles.map(role => ({
         label: role.name,
         icon: <span className={styles.roleMenuDot} style={{ background: role.tone }} />,
-        onClick: () => onSelect(role.id),
+        onClick: () => onSelect(role.id)
       }))}
     />
   );
@@ -55,7 +61,7 @@ const RoleMenu = ({
 export const MembersSubSection = ({
   workspaceSlug,
   addDialogOpen,
-  onCloseAddDialog,
+  onCloseAddDialog
 }: {
   workspaceSlug: string;
   addDialogOpen: boolean;
@@ -87,12 +93,13 @@ export const MembersSubSection = ({
   const filteredMembers = useMemo(() => {
     let result = members;
     if (roleFilter) result = result.filter(m => m.role === roleFilter);
-    if (teamFilter) result = result.filter(m => (teamsByUser.get(m.user_id) ?? []).includes(teamFilter));
+    if (teamFilter)
+      result = result.filter(m => (teamsByUser.get(m.user_id) ?? []).includes(teamFilter));
     if (query) {
       const q = query.toLowerCase();
-      result = result.filter(m =>
-        m.display_name.toLowerCase().includes(q) ||
-        (m.email?.toLowerCase().includes(q) ?? false)
+      result = result.filter(
+        m =>
+          m.display_name.toLowerCase().includes(q) || (m.email?.toLowerCase().includes(q) ?? false)
       );
     }
     return result;
@@ -134,7 +141,9 @@ export const MembersSubSection = ({
             >
               <option value="">Any role</option>
               {roles.map(r => (
-                <option key={r.id} value={r.id}>{r.name}</option>
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
               ))}
             </select>
           </label>
@@ -147,7 +156,9 @@ export const MembersSubSection = ({
             >
               <option value="">Any team</option>
               {teams.map(t => (
-                <option key={t.id} value={t.id}>{t.id}</option>
+                <option key={t.id} value={t.id}>
+                  {t.id}
+                </option>
               ))}
             </select>
           </label>
@@ -172,7 +183,9 @@ export const MembersSubSection = ({
             <tbody>
               {filteredMembers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className={styles.empty}>No members match these filters.</td>
+                  <td colSpan={5} className={styles.empty}>
+                    No members match these filters.
+                  </td>
                 </tr>
               )}
               {filteredMembers.map(member => {
@@ -190,7 +203,9 @@ export const MembersSubSection = ({
                         />
                         <div>
                           <div className={styles.memberNameMain}>{member.display_name}</div>
-                          <div className={styles.memberNameSub}>{member.email ?? member.user_id}</div>
+                          <div className={styles.memberNameSub}>
+                            {member.email ?? member.user_id}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -199,11 +214,13 @@ export const MembersSubSection = ({
                         current={member.role}
                         roles={roles}
                         onSelect={role => {
-                          void updateMemberRole.mutateAsync({ userId: member.user_id, role }).then(() => {
-                            if (member.user_id === user?.id) {
-                              void reloadUser();
-                            }
-                          });
+                          void updateMemberRole
+                            .mutateAsync({ userId: member.user_id, role })
+                            .then(() => {
+                              if (member.user_id === user?.id) {
+                                void reloadUser();
+                              }
+                            });
                         }}
                       />
                     </td>
@@ -220,14 +237,19 @@ export const MembersSubSection = ({
                     </td>
                     <td>
                       {userInfo ? (
-                        <Chip tone="ghost" dot={userInfo.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}>
+                        <Chip
+                          tone="ghost"
+                          dot={userInfo.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                        >
                           {userInfo.is_active ? 'Active' : 'Inactive'}
                         </Chip>
                       ) : (
                         <span className={styles.dim}>—</span>
                       )}
                     </td>
-                    <td className={styles.dim}>{new Date(member.created_at).toLocaleDateString()}</td>
+                    <td className={styles.dim}>
+                      {new Date(member.created_at).toLocaleDateString()}
+                    </td>
                   </tr>
                 );
               })}
@@ -261,7 +283,7 @@ const AddMemberDialog = ({
   onClose,
   onSave,
   isSaving,
-  roles,
+  roles
 }: {
   open: boolean;
   users: Array<{
@@ -293,13 +315,17 @@ const AddMemberDialog = ({
         {loading ? (
           <div className={styles.empty}>Loading users…</div>
         ) : users.length === 0 ? (
-          <div className={styles.empty}>All existing users are already members of this workspace.</div>
+          <div className={styles.empty}>
+            All existing users are already members of this workspace.
+          </div>
         ) : (
           <>
             <div className={styles.field}>
               <div className={styles.fieldLeft}>
                 <div className={styles.fieldLabel}>User</div>
-                <div className={styles.fieldHint}>Choose an existing user to add to this workspace.</div>
+                <div className={styles.fieldHint}>
+                  Choose an existing user to add to this workspace.
+                </div>
               </div>
               <div className={styles.fieldRight}>
                 <Select.Root
@@ -309,7 +335,8 @@ const AddMemberDialog = ({
                 >
                   {users.map(user => (
                     <Select.Item key={user.id} value={user.id}>
-                      {getUserLabel(user)}{user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
+                      {getUserLabel(user)}
+                      {user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
                       {!user.is_active ? ' - inactive' : ''}
                     </Select.Item>
                   ))}
@@ -318,8 +345,10 @@ const AddMemberDialog = ({
             </div>
             <div className={styles.field}>
               <div className={styles.fieldLeft}>
-              <div className={styles.fieldLabel}>Role</div>
-              <div className={styles.fieldHint}>Set the workspace role that will be stored on this membership.</div>
+                <div className={styles.fieldLabel}>Role</div>
+                <div className={styles.fieldHint}>
+                  Set the workspace role that will be stored on this membership.
+                </div>
               </div>
               <div className={styles.fieldRight}>
                 <Select.Root
@@ -336,7 +365,9 @@ const AddMemberDialog = ({
               </div>
             </div>
             <div className={styles.dialogActions}>
-              <Button onClick={onClose} disabled={isSaving}>Cancel</Button>
+              <Button onClick={onClose} disabled={isSaving}>
+                Cancel
+              </Button>
               <Button
                 variant="primary"
                 onClick={() => void onSave(selectedUserId, selectedRole)}

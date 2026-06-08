@@ -4,8 +4,8 @@ import styles from './TimelineView.module.css';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import { Button } from '@diagram-craft/app-components/Button';
-import { resolveSchemaColor } from '../../../api';
-import type { EntityRecord, EntitySchema, WorkspaceLifecycleState } from '../../../api';
+import { resolveSchemaColor } from '../../../lib/api';
+import type { EntityRecord, EntitySchema, WorkspaceLifecycleState } from '../../../lib/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ const TL_LABEL_W = 252;
 const TL_COL_W = { month: 76, quarter: 106, year: 142 } as const;
 
 const METADATA_DATE_FIELDS: TimelineDateField[] = [
-  { id: '_targetLifecycleDate', name: 'Target Lifecycle Date', isMetadata: true },
+  { id: '_targetLifecycleDate', name: 'Target Lifecycle Date', isMetadata: true }
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -97,11 +97,7 @@ const buildCols = (minDate: Date, maxDate: Date, zoom: TimelineConfig['zoom']): 
     }
   } else if (zoom === 'quarter') {
     let d = new Date(minDate.getFullYear(), Math.floor(minDate.getMonth() / 3) * 3 - 3, 1);
-    const end = new Date(
-      maxDate.getFullYear(),
-      Math.ceil((maxDate.getMonth() + 1) / 3) * 3 + 3,
-      1
-    );
+    const end = new Date(maxDate.getFullYear(), Math.ceil((maxDate.getMonth() + 1) / 3) * 3 + 3, 1);
     while (d < end) {
       const q = Math.floor(d.getMonth() / 3) + 1;
       const todayQ = Math.floor(today.getMonth() / 3) + 1;
@@ -237,8 +233,7 @@ const ConfigBar = ({
     <div style={{ flex: 1 }} />
 
     <span className={styles.configMeta}>
-      {totalDated}{' '}
-      <span style={{ opacity: 0.6 }}>of {totalRows} with dates</span>
+      {totalDated} <span style={{ opacity: 0.6 }}>of {totalRows} with dates</span>
     </span>
   </div>
 );
@@ -317,9 +312,7 @@ const DetailPanel = ({
                 </div>
               </div>
             )}
-            {entity._description && (
-              <p className={styles.detailDesc}>{entity._description}</p>
-            )}
+            {entity._description && <p className={styles.detailDesc}>{entity._description}</p>}
           </div>
 
           <div className={styles.detailFooter}>
@@ -440,7 +433,8 @@ export const TimelineView = ({
   };
 
   const todayPx = useMemo(
-    () => (spanMs <= 0 ? 0 : tlClamp(((+TODAY - +rangeStart) / spanMs) * totalWidth, 0, totalWidth)),
+    () =>
+      spanMs <= 0 ? 0 : tlClamp(((+TODAY - +rangeStart) / spanMs) * totalWidth, 0, totalWidth),
     [TODAY, rangeStart, spanMs, totalWidth]
   );
 
@@ -500,10 +494,7 @@ export const TimelineView = ({
             </div>
 
             {/* Today line */}
-            <div
-              className={styles.todayLine}
-              style={{ left: TL_LABEL_W + todayPx }}
-            >
+            <div className={styles.todayLine} style={{ left: TL_LABEL_W + todayPx }}>
               <span className={styles.todayPip}>▾</span>
             </div>
 

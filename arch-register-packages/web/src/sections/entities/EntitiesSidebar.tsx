@@ -17,13 +17,8 @@ import {
   TbCalendarWeek,
   TbTable
 } from 'react-icons/tb';
-import { fetchEntityFacets, resolveSchemaColor } from '../../api';
-import type {
-  EntityFacets,
-  EntitySchema,
-  WorkspaceLifecycleState,
-  SavedView
-} from '../../api';
+import { fetchEntityFacets, resolveSchemaColor } from '../../lib/api';
+import type { EntityFacets, EntitySchema, WorkspaceLifecycleState, SavedView } from '../../lib/api';
 import type { FilterCondition } from '@arch-register/api-types/views';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -127,16 +122,22 @@ export const EntitiesSidebar = ({
     filters?: string;
   };
   const sidebarTab = search.sidebarTab ?? 'filters';
-  
+
   // Parse active filters from the filters JSON string
   const activeFilters = useMemo(() => {
     if (!search.filters) return { type: null, status: null, owner: null };
     try {
       const conditions = JSON.parse(search.filters) as FilterCondition[];
-      const result = { type: null as string | null, status: null as string | null, owner: null as string | null };
+      const result = {
+        type: null as string | null,
+        status: null as string | null,
+        owner: null as string | null
+      };
       for (const cond of conditions) {
-        if (cond.fieldId === '_schemaId' && cond.op === 'equals') result.type = cond.value as string;
-        if (cond.fieldId === '_lifecycle' && cond.op === 'equals') result.status = cond.value as string;
+        if (cond.fieldId === '_schemaId' && cond.op === 'equals')
+          result.type = cond.value as string;
+        if (cond.fieldId === '_lifecycle' && cond.op === 'equals')
+          result.status = cond.value as string;
         if (cond.fieldId === '_owner' && cond.op === 'equals') result.owner = cond.value as string;
       }
       return result;
@@ -144,7 +145,7 @@ export const EntitiesSidebar = ({
       return { type: null, status: null, owner: null };
     }
   }, [search.filters]);
-  
+
   const typeFilter = activeFilters.type;
   const statusFilter = activeFilters.status;
   const ownerFilter = activeFilters.owner;
@@ -183,13 +184,14 @@ export const EntitiesSidebar = ({
   }, [facets]);
 
   const totalEntities = facets?.total ?? schemas.reduce((sum, s) => sum + s.entity_count, 0);
-  const activeFilterKind = typeFilter != null
-    ? 'type'
-    : statusFilter != null
-      ? 'status'
-      : ownerFilter != null
-        ? 'owner'
-        : 'all';
+  const activeFilterKind =
+    typeFilter != null
+      ? 'type'
+      : statusFilter != null
+        ? 'status'
+        : ownerFilter != null
+          ? 'owner'
+          : 'all';
 
   const navigateEntities = (params: {
     type?: string;
@@ -203,14 +205,10 @@ export const EntitiesSidebar = ({
     };
 
     // If any filter is being set, reset to default list view and clear all other filters
-    if (
-      params.type !== undefined ||
-      params.status !== undefined ||
-      params.owner !== undefined
-    ) {
+    if (params.type !== undefined || params.status !== undefined || params.owner !== undefined) {
       // Set default list view
       nextSearch.viewMode = 'table';
-      
+
       // Build filter conditions for only the clicked filter
       const conditions: FilterCondition[] = [];
       if (params.type) conditions.push({ fieldId: '_schemaId', op: 'equals', value: params.type });
@@ -349,9 +347,7 @@ export const EntitiesSidebar = ({
                 icon={<TbUsers size={12} />}
                 label={owner}
                 active={activeFilterKind === 'owner' && ownerFilter === owner}
-                onClick={() =>
-                  navigateEntities({ type: undefined, status: undefined, owner })
-                }
+                onClick={() => navigateEntities({ type: undefined, status: undefined, owner })}
                 trailing={<span className="dim mono">{count}</span>}
               />
             ))}

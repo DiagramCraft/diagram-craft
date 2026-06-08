@@ -14,7 +14,7 @@ import {
   TbFolder,
   TbTrash
 } from 'react-icons/tb';
-import type { FileEntry, Project } from '../../api';
+import type { FileEntry, Project } from '../../lib/api';
 import {
   useProjectFiles,
   useDeleteProjectFile,

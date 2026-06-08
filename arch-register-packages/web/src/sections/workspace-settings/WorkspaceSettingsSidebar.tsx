@@ -9,7 +9,7 @@ import {
   TbHistory,
   TbTrash
 } from 'react-icons/tb';
-import type { EntitySchema, Project } from '../../api';
+import type { EntitySchema, Project } from '../../lib/api';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 
@@ -64,7 +64,7 @@ export const WorkspaceSettingsSidebar = ({
   projects,
   availableSections
 }: {
-  workspace: import('../../api').Workspace | null;
+  workspace: import('../../lib/api').Workspace | null;
   workspaceSlug: string;
   schemas: EntitySchema[];
   projects: Project[];

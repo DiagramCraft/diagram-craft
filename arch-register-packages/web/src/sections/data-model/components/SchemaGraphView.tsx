@@ -10,8 +10,8 @@ import type {
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { resolveSchemaColor } from '../../../api';
-import type { EntitySchema } from '../../../api';
+import { resolveSchemaColor } from '../../../lib/api';
+import type { EntitySchema } from '../../../lib/api';
 import { TbVectorTriangle } from 'react-icons/tb';
 import styles from './SchemaGraphView.module.css';
 
@@ -33,7 +33,7 @@ export const SchemaGraphView = () => {
 
   const edges = useMemo((): DependencyGraphEdge[] => {
     const edgeMap = new Map<string, { fields: string[]; kind: string }>();
-    
+
     for (const schema of schemas) {
       for (const field of schema.fields) {
         if (field.type !== 'reference' && field.type !== 'containment') continue;
@@ -41,7 +41,7 @@ export const SchemaGraphView = () => {
 
         const pairKey = `${schema.id}::${field.schemaId}`;
         const existing = edgeMap.get(pairKey);
-        
+
         if (existing) {
           // Add field name to existing edge
           existing.fields.push(field.name);

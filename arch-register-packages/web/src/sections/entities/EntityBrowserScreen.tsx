@@ -28,14 +28,14 @@ import {
 } from 'react-icons/tb';
 import { RadarView, type RadarConfig } from './components/RadarView';
 import { TimelineView, type TimelineConfig } from './components/TimelineView';
-import { resolveSchemaColor, exportEntitiesToCSV } from '../../api';
+import { resolveSchemaColor, exportEntitiesToCSV } from '../../lib/api';
 import type {
   EntityRecord,
   EntitySchema,
   TreeNode,
   TreeEdge,
   WorkspaceLifecycleState
-} from '../../api';
+} from '../../lib/api';
 import type { FilterCondition } from '@arch-register/api-types/views';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -188,9 +188,7 @@ const BulkEditToolbar = ({
                 </b>
               </>
             )}
-            {bulkLifecycleValue && bulkOwnerValue && (
-              <span className={styles.bulkDim}> · </span>
-            )}
+            {bulkLifecycleValue && bulkOwnerValue && <span className={styles.bulkDim}> · </span>}
             {bulkOwnerValue && (
               <>
                 <span className={styles.bulkDim}>Reassign owner →</span> <b>{bulkOwnerValue}</b>
@@ -279,8 +277,15 @@ const toSavedViewConfig = (
 
 export const EntityBrowserScreen = () => {
   const navigate = useNavigate();
-  const { workspaceSlug, schemas, enums, lifecycleStates, teams, permissions, openAddEntityDialog } =
-    useWorkspaceContext();
+  const {
+    workspaceSlug,
+    schemas,
+    enums,
+    lifecycleStates,
+    teams,
+    permissions,
+    openAddEntityDialog
+  } = useWorkspaceContext();
   const search = useSearch({ strict: false }) as {
     type?: string;
     status?: string;
@@ -312,15 +317,20 @@ export const EntityBrowserScreen = () => {
   });
 
   const typeFilter = useMemo(
-    () => (conditions.find(c => c.fieldId === '_schemaId' && c.op === 'equals')?.value as string) ?? null,
+    () =>
+      (conditions.find(c => c.fieldId === '_schemaId' && c.op === 'equals')?.value as string) ??
+      null,
     [conditions]
   );
   const statusFilter = useMemo(
-    () => (conditions.find(c => c.fieldId === '_lifecycle' && c.op === 'equals')?.value as string) ?? null,
+    () =>
+      (conditions.find(c => c.fieldId === '_lifecycle' && c.op === 'equals')?.value as string) ??
+      null,
     [conditions]
   );
   const ownerFilter = useMemo(
-    () => (conditions.find(c => c.fieldId === '_owner' && c.op === 'equals')?.value as string) ?? null,
+    () =>
+      (conditions.find(c => c.fieldId === '_owner' && c.op === 'equals')?.value as string) ?? null,
     [conditions]
   );
 
@@ -454,8 +464,7 @@ export const EntityBrowserScreen = () => {
           radarConfig:
             params.radarConfig ?? (radarConfig ? JSON.stringify(radarConfig) : undefined),
           timelineConfig:
-            params.timelineConfig ??
-            (timelineConfig ? JSON.stringify(timelineConfig) : undefined),
+            params.timelineConfig ?? (timelineConfig ? JSON.stringify(timelineConfig) : undefined),
           sidebarTab: params.sidebarTab ?? search.sidebarTab,
           filters: nextFilters.length > 0 ? JSON.stringify(nextFilters) : undefined
         }
@@ -624,8 +633,7 @@ export const EntityBrowserScreen = () => {
         return (a._name ?? a._slug ?? '').localeCompare(b._name ?? b._slug ?? '');
       if (sort === 'type') return a._schemaId.localeCompare(b._schemaId);
       if (sort === 'owner') return (a._owner ?? '').localeCompare(b._owner ?? '');
-      if (sort === 'completeness')
-        return (a._completeness ?? -1) - (b._completeness ?? -1);
+      if (sort === 'completeness') return (a._completeness ?? -1) - (b._completeness ?? -1);
       if (dateBrowserEnabled && sort.startsWith('date:')) {
         const fieldId = sort.slice(5);
         const aValue = parseDateValue(a[fieldId]) ?? '9999-99-99';
@@ -713,7 +721,7 @@ export const EntityBrowserScreen = () => {
             sort,
             conditions
           },
-          config: toSavedViewConfig(view, radarConfig, timelineConfig),
+          config: toSavedViewConfig(view, radarConfig, timelineConfig)
         }
       });
     } catch {
@@ -731,7 +739,7 @@ export const EntityBrowserScreen = () => {
     sort,
     conditions,
     radarConfig,
-    timelineConfig,
+    timelineConfig
   ]);
 
   const menuItems = useMemo(() => {
@@ -802,10 +810,7 @@ export const EntityBrowserScreen = () => {
               New entity
             </Button>
           )}
-          <DropdownMenu
-            trigger={<Button icon={<TbDots size={14} />} />}
-            items={menuItems}
-          />
+          <DropdownMenu trigger={<Button icon={<TbDots size={14} />} />} items={menuItems} />
         </div>
       </div>
 
@@ -831,7 +836,13 @@ export const EntityBrowserScreen = () => {
               </Button>
             }
           />
-          <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false} className={styles.filterPopover}>
+          <Popover.Content
+            sideOffset={4}
+            align="start"
+            arrow={false}
+            closeButton={false}
+            className={styles.filterPopover}
+          >
             <FilterBuilder
               conditions={conditions}
               onChange={c => navigateEntities({ filters: c })}
@@ -1148,7 +1159,11 @@ const TableView = ({
                 <td>
                   <span className="dim">{e._owner ?? '—'}</span>
                 </td>
-                <td>{e._lifecycle && <StatusChip value={e._lifecycle} lifecycleStates={lifecycleStates} />}</td>
+                <td>
+                  {e._lifecycle && (
+                    <StatusChip value={e._lifecycle} lifecycleStates={lifecycleStates} />
+                  )}
+                </td>
                 {activeDateField && (
                   <td>
                     <span className="dim">{formatDateValue(e[activeDateField.id])}</span>
@@ -1181,7 +1196,14 @@ const TableView = ({
   );
 };
 
-const CardsView = ({ rows, schemaMap, onEntityClick, onDelete, onClone, lifecycleStates }: ViewProps) => (
+const CardsView = ({
+  rows,
+  schemaMap,
+  onEntityClick,
+  onDelete,
+  onClone,
+  lifecycleStates
+}: ViewProps) => (
   <div className={styles.cardGrid}>
     {rows.map(e => {
       const s = schemaMap.get(e._schemaId);
@@ -1192,7 +1214,9 @@ const CardsView = ({ rows, schemaMap, onEntityClick, onDelete, onClone, lifecycl
           <div className={styles.cardHead}>
             {s && <TypeBadge color={color} name={s.schema.name} size={22} />}
             <div className={styles.cardHeadRight}>
-              {e._lifecycle && <StatusChip value={e._lifecycle} lifecycleStates={lifecycleStates} />}
+              {e._lifecycle && (
+                <StatusChip value={e._lifecycle} lifecycleStates={lifecycleStates} />
+              )}
               {entityMenuItems(e, onClone, onDelete).length > 0 && (
                 <span onClick={ev => ev.stopPropagation()}>
                   <DropdownMenu
@@ -1233,7 +1257,15 @@ type TreeViewProps = {
 
 type TreeItem = TreeNode & { children: TreeItem[] };
 
-const TreeView = ({ nodes, edges, schemaMap, onEntityClick, onDelete, onClone, lifecycleStates }: TreeViewProps) => {
+const TreeView = ({
+  nodes,
+  edges,
+  schemaMap,
+  onEntityClick,
+  onDelete,
+  onClone,
+  lifecycleStates
+}: TreeViewProps) => {
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();
     for (const n of nodes) nodeMap.set(n._uid, { ...n, children: [] });
@@ -1355,7 +1387,11 @@ const TreeNodeRow = ({
         <td>
           <span className="dim">{item._owner ?? '—'}</span>
         </td>
-        <td>{item._lifecycle && <StatusChip value={item._lifecycle} lifecycleStates={lifecycleStates} />}</td>
+        <td>
+          {item._lifecycle && (
+            <StatusChip value={item._lifecycle} lifecycleStates={lifecycleStates} />
+          )}
+        </td>
         <td>
           <span className="dim">{item._namespace}</span>
         </td>

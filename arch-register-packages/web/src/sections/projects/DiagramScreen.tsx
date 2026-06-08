@@ -21,7 +21,7 @@ import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationC
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../../auth/AuthContext';
-import { apiFetchResponse } from '../../api';
+import { apiFetchResponse } from '../../lib/api';
 import { projectFileKeys } from '../../hooks/useProjectFiles';
 import { projectKeys } from '../../hooks/useProjects';
 import { stableHue } from '../../components/MemberAvatar';
@@ -138,15 +138,15 @@ export const DiagramScreen = () => {
   const handleClose = useCallback(async () => {
     await save();
     await queryClient.refetchQueries({
-      queryKey: projectFileKeys.list(workspaceId, projectId),
+      queryKey: projectFileKeys.list(workspaceId, projectId)
     });
     await queryClient.refetchQueries({
-      queryKey: projectKeys.detail(workspaceId, projectId),
+      queryKey: projectKeys.detail(workspaceId, projectId)
     });
     navigate({
       to: '/$workspaceSlug/projects/$projectId',
       params: { workspaceSlug, projectId },
-      search: { tab: 'projects' as const },
+      search: { tab: 'projects' as const }
     });
   }, [save, queryClient, navigate, workspaceId, workspaceSlug, projectId]);
 
@@ -236,17 +236,18 @@ export const DiagramScreen = () => {
 
         // Connect to collaboration backend and sync CRDT state
         const config = AppConfig.get();
-        const userState = userId && userDisplayName
-          ? {
-              name: userDisplayName,
-              color: userColor ?? `oklch(0.52 0.13 ${stableHue(userId)})`,
-              avatar: config.awareness.avatar()
-            }
-          : {
-              name: config.awareness.name(),
-              color: config.awareness.color(),
-              avatar: config.awareness.avatar()
-            };
+        const userState =
+          userId && userDisplayName
+            ? {
+                name: userDisplayName,
+                color: userColor ?? `oklch(0.52 0.13 ${stableHue(userId)})`,
+                avatar: config.awareness.avatar()
+              }
+            : {
+                name: config.awareness.name(),
+                color: config.awareness.color(),
+                avatar: config.awareness.avatar()
+              };
 
         const root = await documentFactory.loadCRDT(roomName, userState, () => {});
         const document = await documentFactory.createDocument(root, roomName, () => {});
@@ -310,7 +311,7 @@ export const DiagramScreen = () => {
     makePublicProvider,
     userId,
     userDisplayName,
-    userColor,
+    userColor
   ]);
 
   const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);

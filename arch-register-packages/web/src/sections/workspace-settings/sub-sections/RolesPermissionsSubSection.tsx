@@ -1,8 +1,16 @@
 import { useMemo, useState, Fragment, useEffect } from 'react';
 import { WORKSPACE_CAPABILITY_GROUPS } from '@arch-register/permissions';
-import { TbBuilding, TbCheck, TbDatabase, TbFiles, TbPencil, TbTrash, TbUsers } from 'react-icons/tb';
+import {
+  TbBuilding,
+  TbCheck,
+  TbDatabase,
+  TbFiles,
+  TbPencil,
+  TbTrash,
+  TbUsers
+} from 'react-icons/tb';
 import type { IconType } from 'react-icons';
-import { ApiError, type WorkspaceRoleDefinition } from '../../../api';
+import { ApiError, type WorkspaceRoleDefinition } from '../../../lib/api';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types';
 import { useAuth } from '../../../auth/AuthContext';
 import { ColorPicker } from '../../../components/ColorPicker';
@@ -14,7 +22,7 @@ import {
   useCreateWorkspaceRole,
   useDeleteWorkspaceRole,
   useUpdateWorkspaceRole,
-  useWorkspaceRoles,
+  useWorkspaceRoles
 } from '../../../hooks/useWorkspaceRoles';
 import styles from './RolesPermissionsSubSection.module.css';
 
@@ -29,7 +37,7 @@ const buildDraft = (role?: WorkspaceRoleDefinition | null): RoleDraft => ({
   name: role?.name ?? '',
   description: role?.description ?? '',
   tone: role?.tone ?? 'var(--accent-fg)',
-  capabilities: role?.capabilities ?? [],
+  capabilities: role?.capabilities ?? []
 });
 
 const sortRoles = (roles: WorkspaceRoleDefinition[]) =>
@@ -41,7 +49,7 @@ const sortRoles = (roles: WorkspaceRoleDefinition[]) =>
 export const RolesPermissionsSubSection = ({
   workspaceSlug,
   createDialogOpen,
-  onCloseCreateDialog,
+  onCloseCreateDialog
 }: {
   workspaceSlug: string;
   createDialogOpen: boolean;
@@ -106,10 +114,12 @@ export const RolesPermissionsSubSection = ({
               <div className={styles.roleDescription}>{role.description}</div>
               <div className={styles.roleStats}>
                 <span>
-                  <span className={styles.roleStatValue}>{memberCountByRole[role.id] ?? 0}</span> members
+                  <span className={styles.roleStatValue}>{memberCountByRole[role.id] ?? 0}</span>{' '}
+                  members
                 </span>
                 <span>
-                  <span className={styles.roleStatValue}>{role.capabilities.length}</span> capabilities
+                  <span className={styles.roleStatValue}>{role.capabilities.length}</span>{' '}
+                  capabilities
                 </span>
               </div>
               {!role.builtin && (
@@ -149,7 +159,9 @@ export const RolesPermissionsSubSection = ({
               {roles.map(role => (
                 <th
                   key={role.id}
-                  className={selectedRoleDefinition?.id === role.id ? styles.matrixColHighlight : undefined}
+                  className={
+                    selectedRoleDefinition?.id === role.id ? styles.matrixColHighlight : undefined
+                  }
                 >
                   {role.name}
                 </th>
@@ -174,7 +186,9 @@ export const RolesPermissionsSubSection = ({
                           className={highlight ? styles.matrixColHighlight : undefined}
                         >
                           {has ? (
-                            <span className={styles.matrixCheck}><TbCheck /></span>
+                            <span className={styles.matrixCheck}>
+                              <TbCheck />
+                            </span>
                           ) : (
                             <span className={styles.matrixDash}>-</span>
                           )}
@@ -241,7 +255,7 @@ const CAPABILITY_GROUP_ICONS: Record<string, IconType> = {
   Workspace: TbBuilding,
   People: TbUsers,
   Content: TbFiles,
-  Schema: TbDatabase,
+  Schema: TbDatabase
 };
 
 const RoleEditorDialog = ({
@@ -251,7 +265,7 @@ const RoleEditorDialog = ({
   pending,
   errorMessage,
   onClose,
-  onSave,
+  onSave
 }: {
   open: boolean;
   title: string;
@@ -276,7 +290,7 @@ const RoleEditorDialog = ({
       ...current,
       capabilities: current.capabilities.includes(id)
         ? current.capabilities.filter(existing => existing !== id)
-        : [...current.capabilities, id],
+        : [...current.capabilities, id]
     }));
   };
 
@@ -286,14 +300,14 @@ const RoleEditorDialog = ({
       ...current,
       capabilities: allOn
         ? current.capabilities.filter(id => !groupCapIds.includes(id))
-        : [...current.capabilities, ...groupCapIds.filter(id => !current.capabilities.includes(id))],
+        : [...current.capabilities, ...groupCapIds.filter(id => !current.capabilities.includes(id))]
     }));
   };
 
   const toggleAll = () => {
     setDraft(current => ({
       ...current,
-      capabilities: allSelected ? [] : [...ALL_CAPS],
+      capabilities: allSelected ? [] : [...ALL_CAPS]
     }));
   };
 
@@ -308,21 +322,31 @@ const RoleEditorDialog = ({
       title={title}
       sup="Roles & permissions"
       className={styles.dialogPanel}
-      footerLeft={<KbdHints hints={[['Esc', 'cancel'], ['⌘↵', 'save']]} />}
+      footerLeft={
+        <KbdHints
+          hints={[
+            ['Esc', 'cancel'],
+            ['⌘↵', 'save']
+          ]}
+        />
+      }
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
           label: pending ? 'Saving…' : 'Save role',
           type: 'default',
           disabled: pending || !canSave,
-          onClick: () => void onSave(draft),
-        },
+          onClick: () => void onSave(draft)
+        }
       ]}
     >
       <div className={styles.dialogBody}>
         <label className={styles.dialogField}>
           <span className={styles.dialogLabel}>
-            Name <span className={styles.requiredMark} title="Required">*</span>
+            Name{' '}
+            <span className={styles.requiredMark} title="Required">
+              *
+            </span>
           </span>
           <input
             className={styles.dialogInput}
@@ -333,12 +357,17 @@ const RoleEditorDialog = ({
         </label>
         <label className={styles.dialogField}>
           <span className={styles.dialogLabel}>
-            Description <span className={styles.requiredMark} title="Required">*</span>
+            Description{' '}
+            <span className={styles.requiredMark} title="Required">
+              *
+            </span>
           </span>
           <textarea
             className={styles.dialogTextarea}
             value={draft.description}
-            onChange={event => setDraft(current => ({ ...current, description: event.target.value }))}
+            onChange={event =>
+              setDraft(current => ({ ...current, description: event.target.value }))
+            }
             disabled={pending}
           />
         </label>
@@ -347,7 +376,9 @@ const RoleEditorDialog = ({
           <div className={styles.colorPickerWrap}>
             <ColorPicker
               value={draft.tone}
-              onChange={color => setDraft(current => ({ ...current, tone: color ?? 'var(--accent-fg)' }))}
+              onChange={color =>
+                setDraft(current => ({ ...current, tone: color ?? 'var(--accent-fg)' }))
+              }
               disabled={pending}
               size="small"
             />
@@ -357,8 +388,15 @@ const RoleEditorDialog = ({
         <div className={styles.capSection}>
           <div className={styles.capSectionHead}>
             <span className={styles.capSectionTitle}>Capabilities</span>
-            <span className={styles.capCount}>{selectedCount} of {ALL_CAPS.length}</span>
-            <button type="button" className={styles.capSelectAll} onClick={toggleAll} disabled={pending}>
+            <span className={styles.capCount}>
+              {selectedCount} of {ALL_CAPS.length}
+            </span>
+            <button
+              type="button"
+              className={styles.capSelectAll}
+              onClick={toggleAll}
+              disabled={pending}
+            >
               {allSelected ? 'Clear all' : 'Select all'}
             </button>
           </div>
@@ -393,7 +431,10 @@ const RoleEditorDialog = ({
                   }
                 >
                   {group.caps.map(cap => (
-                    <label key={cap.id} className={`${styles.capabilityRow}${capSet.has(cap.id) ? ` ${styles.capabilityRowOn}` : ''}`}>
+                    <label
+                      key={cap.id}
+                      className={`${styles.capabilityRow}${capSet.has(cap.id) ? ` ${styles.capabilityRowOn}` : ''}`}
+                    >
                       <input
                         type="checkbox"
                         className={styles.capabilityCheckbox}
@@ -423,7 +464,7 @@ const RoleDeleteConfirmDialog = ({
   pending,
   error,
   onClose,
-  onDelete,
+  onDelete
 }: {
   open: boolean;
   role: WorkspaceRoleDefinition | null;
@@ -437,14 +478,17 @@ const RoleDeleteConfirmDialog = ({
   const message =
     error instanceof ApiError && error.status === 409
       ? `${role.name} is still assigned to workspace members. Reassign those members before deleting the role.`
-      : error?.message ?? null;
+      : (error?.message ?? null);
 
   return (
     <DeleteConfirmationDialog
       open={open}
       title={`Delete ${role.name}?`}
       message={`This will permanently remove the custom role "${role.name}".`}
-      detail={message ?? 'Built-in roles cannot be deleted, and assigned custom roles must be unassigned first.'}
+      detail={
+        message ??
+        'Built-in roles cannot be deleted, and assigned custom roles must be unassigned first.'
+      }
       confirmLabel={pending ? 'Deleting…' : 'Delete role'}
       onCancel={onClose}
       onConfirm={() => {

@@ -7,9 +7,9 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TypeBadge } from '../../components/TypeBadge';
 import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
-import { resolveSchemaColor, FIELD_TYPES, SCHEMA_ICONS } from '../../api';
+import { resolveSchemaColor, FIELD_TYPES, SCHEMA_ICONS } from '../../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import type { EntitySchema, SchemaField, FieldType, WorkspaceEnum } from '../../api';
+import type { EntitySchema, SchemaField, FieldType, WorkspaceEnum } from '../../lib/api';
 import { ICON_MAP } from '../../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../../hooks/useSchemas';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -20,7 +20,11 @@ import { SchemaGraphView } from './components/SchemaGraphView';
 
 export const DataModelEditorScreen = () => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { tab?: 'types' | 'enums' | 'graph'; schema?: string; enumId?: string };
+  const search = useSearch({ strict: false }) as {
+    tab?: 'types' | 'enums' | 'graph';
+    schema?: string;
+    enumId?: string;
+  };
   const selectedSchemaId = search.schema;
   const activeTab = search.tab ?? 'types';
   const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();
@@ -38,13 +42,16 @@ export const DataModelEditorScreen = () => {
   const updateSchemaMutation = useUpdateSchema(workspaceSlug);
   const deleteSchemaMutation = useDeleteSchema(workspaceSlug);
 
-  const onSelectSchema = useCallback((id: string) => {
-    navigate({
-      to: '/$workspaceSlug/model',
-      params: { workspaceSlug },
-      search: { schema: id || undefined },
-    });
-  }, [navigate, workspaceSlug]);
+  const onSelectSchema = useCallback(
+    (id: string) => {
+      navigate({
+        to: '/$workspaceSlug/model',
+        params: { workspaceSlug },
+        search: { schema: id || undefined }
+      });
+    },
+    [navigate, workspaceSlug]
+  );
 
   const selectedIndex = schemas.findIndex(s => s.id === selectedSchemaId);
   const selected = selectedIndex >= 0 ? schemas[selectedIndex] : null;
@@ -65,7 +72,7 @@ export const DataModelEditorScreen = () => {
     try {
       await updateSchemaMutation.mutateAsync({
         schemaId: selected.id,
-        data: { name, description, fields, color, icon },
+        data: { name, description, fields, color, icon }
       });
       setDirty(false);
     } catch {
@@ -100,7 +107,7 @@ export const DataModelEditorScreen = () => {
   }, [selected, deleteSchemaMutation, onSelectSchema, schemas]);
 
   const updateField = (fieldId: string, patch: Partial<SchemaField>) => {
-    setFields(prev => prev.map(f => (f.id === fieldId ? { ...f, ...patch } as SchemaField : f)));
+    setFields(prev => prev.map(f => (f.id === fieldId ? ({ ...f, ...patch } as SchemaField) : f)));
     setDirty(true);
   };
 
@@ -113,7 +120,7 @@ export const DataModelEditorScreen = () => {
     const newField: SchemaField = {
       id: newid(),
       name: 'new_field',
-      type: 'text',
+      type: 'text'
     };
     setFields(prev => [...prev, newField]);
     setDirty(true);
@@ -138,7 +145,7 @@ export const DataModelEditorScreen = () => {
           case 'containment':
             return { ...base, type: 'containment', schemaId: '', minCount: 0, maxCount: 1 };
         }
-      }),
+      })
     );
     setDirty(true);
   };
@@ -175,7 +182,12 @@ export const DataModelEditorScreen = () => {
           <div className={styles.editor}>
             <div className={styles.editorHead}>
               <div className={styles.editorTitleRow}>
-                <TypeBadge color={color ?? resolveSchemaColor(selected, selectedIndex)} name={selected.name} icon={icon} size={26} />
+                <TypeBadge
+                  color={color ?? resolveSchemaColor(selected, selectedIndex)}
+                  name={selected.name}
+                  icon={icon}
+                  size={26}
+                />
                 <div>
                   <div className={styles.editorTitle}>{name}</div>
                   <div className="dim">{selected.entity_count} entities</div>
@@ -247,7 +259,10 @@ export const DataModelEditorScreen = () => {
                           className={`${styles.swatch} ${color === c ? styles.swatchActive : ''}`}
                           style={{ background: c }}
                           disabled={!canEdit}
-                          onClick={() => { setColor(c); setDirty(true); }}
+                          onClick={() => {
+                            setColor(c);
+                            setDirty(true);
+                          }}
                         />
                       ))}
                     </div>
@@ -264,7 +279,10 @@ export const DataModelEditorScreen = () => {
                             className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
                             title={id}
                             disabled={!canEdit}
-                            onClick={() => { setIcon(id); setDirty(true); }}
+                            onClick={() => {
+                              setIcon(id);
+                              setDirty(true);
+                            }}
                           >
                             <Ic size={14} />
                           </button>
@@ -295,16 +313,18 @@ export const DataModelEditorScreen = () => {
                       <span>Completeness</span>
                       <span />
                     </div>
-                    {fields.map((f) => {
-                      const hasOtherContainment = fields.some(other => other.id !== f.id && other.type === 'containment');
+                    {fields.map(f => {
+                      const hasOtherContainment = fields.some(
+                        other => other.id !== f.id && other.type === 'containment'
+                      );
                       return (
                         <FieldRow
                           key={f.id}
                           field={f}
                           schemas={schemas}
                           enums={enums}
-                          onUpdate={(patch) => updateField(f.id, patch)}
-                          onChangeType={(t) => changeFieldType(f.id, t)}
+                          onUpdate={patch => updateField(f.id, patch)}
+                          onChangeType={t => changeFieldType(f.id, t)}
                           onRemove={canEdit ? () => removeField(f.id) : undefined}
                           containmentDisabled={hasOtherContainment}
                           canEdit={canEdit}
@@ -314,7 +334,14 @@ export const DataModelEditorScreen = () => {
                   </div>
                 ) : (
                   <div className={styles.fieldsTable}>
-                    <div style={{ padding: '16px', color: 'var(--cmp-fg-disabled)', textAlign: 'center', fontSize: 12 }}>
+                    <div
+                      style={{
+                        padding: '16px',
+                        color: 'var(--cmp-fg-disabled)',
+                        textAlign: 'center',
+                        fontSize: 12
+                      }}
+                    >
                       No fields defined yet. Click "Add field" to get started.
                     </div>
                   </div>
@@ -361,7 +388,15 @@ export const DataModelEditorScreen = () => {
       <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete entity type?"
-        message={selected ? <>The entity type <b>{selected.name}</b> will be permanently deleted.</> : ''}
+        message={
+          selected ? (
+            <>
+              The entity type <b>{selected.name}</b> will be permanently deleted.
+            </>
+          ) : (
+            ''
+          )
+        }
         detail="This can't be undone."
         confirmLabel="Delete type"
         onConfirm={doDeleteType}
@@ -379,7 +414,7 @@ const FieldRow = ({
   onChangeType,
   onRemove,
   containmentDisabled,
-  canEdit,
+  canEdit
 }: {
   field: SchemaField;
   schemas: EntitySchema[];
@@ -401,7 +436,9 @@ const FieldRow = ({
           style={{ width: '100%' }}
         >
           {enums.map(e => (
-            <Select.Item key={e.id} value={e.id}>{e.name}</Select.Item>
+            <Select.Item key={e.id} value={e.id}>
+              {e.name}
+            </Select.Item>
           ))}
         </Select.Root>
       );
@@ -416,7 +453,9 @@ const FieldRow = ({
           style={{ width: '100%' }}
         >
           {schemas.map(s => (
-            <Select.Item key={s.id} value={s.id}>{s.name}</Select.Item>
+            <Select.Item key={s.id} value={s.id}>
+              {s.name}
+            </Select.Item>
           ))}
         </Select.Root>
       );
@@ -458,7 +497,11 @@ const FieldRow = ({
       <Select.Root
         value={field.requirementLevel ?? 'optional'}
         disabled={!canEdit}
-        onChange={value => onUpdate({ requirementLevel: (value ?? 'optional') as SchemaField['requirementLevel'] } as Partial<SchemaField>)}
+        onChange={value =>
+          onUpdate({
+            requirementLevel: (value ?? 'optional') as SchemaField['requirementLevel']
+          } as Partial<SchemaField>)
+        }
         style={{ width: '100%' }}
       >
         <Select.Item value="optional">Optional</Select.Item>

@@ -3,7 +3,7 @@ import styles from './WorkspaceSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import type { Workspace } from '../../api';
+import type { Workspace } from '../../lib/api';
 import { LIFECYCLE_COLOR_PRESETS, SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../../components/ColorPicker';
 import { useNavigate, useSearch } from '@tanstack/react-router';
@@ -12,30 +12,48 @@ import type {
   WorkspaceLifecycleState,
   AuditEntityType,
   AuditLogEntry,
-  AuditOperation,
-} from '../../api';
+  AuditOperation
+} from '../../lib/api';
 import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
 import { useAuditLog } from '../../hooks/useAudit';
 import { useUpdateWorkspace, useDeleteWorkspace } from '../../hooks/useWorkspaces';
-import {
-  useUpdateLifecycleStates,
-} from '../../hooks/useWorkspaceConfig';
+import { useUpdateLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { RolesPermissionsSubSection } from './sub-sections/RolesPermissionsSubSection';
 import { MembersSubSection } from './sub-sections/MembersSubSection';
 import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
-  general: { title: 'General', sub: 'Name, description, and identity for this workspace.' },
-  'lifecycle-owners': { title: 'Lifecycle', sub: 'Configure valid lifecycle states for entities in this workspace.' },
-  roles: { title: 'Roles & permissions', sub: 'Manage built-in roles and create custom workspace roles.' },
-  teams: { title: 'Teams', sub: 'Manage owner teams and assign users a team role for owned entities and projects.' },
-  members: { title: 'Members', sub: 'Browse workspace members and the role assigned to each person.' },
-  ai: { title: 'AI', sub: 'Configure the AI provider, model, and system prompt for the Assistant and Extract features.' },
-  audit: { title: 'Audit log', sub: 'Browse recent activity across the workspace with filters for object type and date range.' },
-  danger: { title: 'Danger zone', sub: 'Operations that can\'t be undone. Read carefully before clicking.' },
+  'general': { title: 'General', sub: 'Name, description, and identity for this workspace.' },
+  'lifecycle-owners': {
+    title: 'Lifecycle',
+    sub: 'Configure valid lifecycle states for entities in this workspace.'
+  },
+  'roles': {
+    title: 'Roles & permissions',
+    sub: 'Manage built-in roles and create custom workspace roles.'
+  },
+  'teams': {
+    title: 'Teams',
+    sub: 'Manage owner teams and assign users a team role for owned entities and projects.'
+  },
+  'members': {
+    title: 'Members',
+    sub: 'Browse workspace members and the role assigned to each person.'
+  },
+  'ai': {
+    title: 'AI',
+    sub: 'Configure the AI provider, model, and system prompt for the Assistant and Extract features.'
+  },
+  'audit': {
+    title: 'Audit log',
+    sub: 'Browse recent activity across the workspace with filters for object type and date range.'
+  },
+  'danger': {
+    title: 'Danger zone',
+    sub: "Operations that can't be undone. Read carefully before clicking."
+  }
 };
-
 
 export const WorkspaceSettingsScreen = () => {
   const navigate = useNavigate();
@@ -45,7 +63,9 @@ export const WorkspaceSettingsScreen = () => {
   const workspaceSlug = ctx.workspaceSlug;
   const lifecycleStates = ctx.lifecycleStates;
   const availableSections = ctx.availableSettingsSections;
-  const section = availableSections.includes(search.section ?? '') ? (search.section ?? 'general') : (ctx.defaultSettingsSection ?? 'general');
+  const section = availableSections.includes(search.section ?? '')
+    ? (search.section ?? 'general')
+    : (ctx.defaultSettingsSection ?? 'general');
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
   const [rolesAddDialogOpen, setRolesAddDialogOpen] = useState(false);
@@ -59,7 +79,11 @@ export const WorkspaceSettingsScreen = () => {
       <div className={styles.screen}>
         <div className={styles.head}>
           <div className={styles.headLeft}>
-            <button type="button" className={styles.backLink} onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}>
+            <button
+              type="button"
+              className={styles.backLink}
+              onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}
+            >
               <TbChevronLeft size={12} /> {workspace.name}
             </button>
             <span className={styles.breadcrumbSep}>/</span>
@@ -67,7 +91,9 @@ export const WorkspaceSettingsScreen = () => {
             <div className={styles.titleRow}>
               <div className={styles.title}>Workspace settings</div>
             </div>
-            <div className={styles.sub}>No settings are available for your current permissions.</div>
+            <div className={styles.sub}>
+              No settings are available for your current permissions.
+            </div>
           </div>
         </div>
       </div>
@@ -78,7 +104,11 @@ export const WorkspaceSettingsScreen = () => {
     <div className={styles.screen}>
       <div className={styles.head}>
         <div className={styles.headLeft}>
-          <button type="button" className={styles.backLink} onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}>
+          <button
+            type="button"
+            className={styles.backLink}
+            onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}
+          >
             <TbChevronLeft size={12} /> {workspace.name}
           </button>
           <span className={styles.breadcrumbSep}>/</span>
@@ -90,35 +120,42 @@ export const WorkspaceSettingsScreen = () => {
         </div>
         {section === 'members' && (
           <div className={styles.headActions}>
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setMembersAddDialogOpen(true)}>
+            <Button
+              variant="primary"
+              icon={<TbPlus size={12} />}
+              onClick={() => setMembersAddDialogOpen(true)}
+            >
               Add user
             </Button>
           </div>
         )}
         {section === 'teams' && (
           <div className={styles.headActions}>
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setTeamsAddDialogOpen(true)}>
+            <Button
+              variant="primary"
+              icon={<TbPlus size={12} />}
+              onClick={() => setTeamsAddDialogOpen(true)}
+            >
               Add team
             </Button>
           </div>
         )}
         {section === 'roles' && (
           <div className={styles.headActions}>
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setRolesAddDialogOpen(true)}>
+            <Button
+              variant="primary"
+              icon={<TbPlus size={12} />}
+              onClick={() => setRolesAddDialogOpen(true)}
+            >
               New custom role
             </Button>
           </div>
         )}
       </div>
 
-      {section === 'general' && (
-        <GeneralSection workspace={workspace} />
-      )}
+      {section === 'general' && <GeneralSection workspace={workspace} />}
       {section === 'lifecycle-owners' && (
-        <LifecycleOwnersSection
-          workspace={workspace}
-          lifecycleStates={lifecycleStates}
-        />
+        <LifecycleOwnersSection workspace={workspace} lifecycleStates={lifecycleStates} />
       )}
       {section === 'roles' && (
         <RolesPermissionsSubSection
@@ -141,19 +178,14 @@ export const WorkspaceSettingsScreen = () => {
           onCloseAddDialog={() => setMembersAddDialogOpen(false)}
         />
       )}
-      {section === 'ai' && (
-        <AiSettingsSubSection workspaceSlug={workspaceSlug} />
-      )}
+      {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
       {section === 'audit' && (
         <AuditLogSection workspace={workspace} workspaceSlug={workspaceSlug} />
       )}
-      {section === 'danger' && (
-        <DangerSection workspace={workspace} />
-      )}
+      {section === 'danger' && <DangerSection workspace={workspace} />}
     </div>
   );
 };
-
 
 const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
   const [name, setName] = useState(workspace.name);
@@ -175,7 +207,7 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
     try {
       await updateWorkspaceMutation.mutateAsync({
         workspaceId: workspace.id,
-        data: { name, url_slug: slug, short_code: shortCode, color, description },
+        data: { name, url_slug: slug, short_code: shortCode, color, description }
       });
     } catch {
       // Error handling could be improved
@@ -193,8 +225,14 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
   return (
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
-        <Button onClick={handleCancel} disabled={!isDirty}>Cancel</Button>
-        <Button variant="primary" onClick={handleSave} disabled={!isDirty || updateWorkspaceMutation.isPending}>
+        <Button onClick={handleCancel} disabled={!isDirty}>
+          Cancel
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleSave}
+          disabled={!isDirty || updateWorkspaceMutation.isPending}
+        >
           {updateWorkspaceMutation.isPending ? 'Saving...' : 'Save changes'}
         </Button>
       </div>
@@ -207,7 +245,9 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
           <div className={styles.field}>
             <div className={styles.fieldLeft}>
               <div className={styles.fieldLabel}>Workspace name</div>
-              <div className={styles.fieldHint}>Shown in the top-left switcher and on shared links.</div>
+              <div className={styles.fieldHint}>
+                Shown in the top-left switcher and on shared links.
+              </div>
             </div>
             <div className={styles.fieldRight}>
               <TextInput
@@ -234,7 +274,9 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
           <div className={styles.field}>
             <div className={styles.fieldLeft}>
               <div className={styles.fieldLabel}>Short code</div>
-              <div className={styles.fieldHint}>Two-letter badge used in tight UI like the switcher.</div>
+              <div className={styles.fieldHint}>
+                Two-letter badge used in tight UI like the switcher.
+              </div>
             </div>
             <div className={styles.fieldRight}>
               <TextInput
@@ -252,7 +294,11 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
               <div className={styles.fieldHint}>Badge accent color in the workspace switcher.</div>
             </div>
             <div className={styles.fieldRight}>
-              <ColorPicker value={color} onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)} size="small" />
+              <ColorPicker
+                value={color}
+                onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)}
+                size="small"
+              />
             </div>
           </div>
 
@@ -288,12 +334,14 @@ const COLOR_PRESETS = LIFECYCLE_COLOR_PRESETS;
 
 const LifecycleOwnersSection = ({
   workspace,
-  lifecycleStates,
+  lifecycleStates
 }: {
   workspace: Workspace;
   lifecycleStates: WorkspaceLifecycleState[];
 }) => {
-  const [states, setStates] = useState<EditLifecycleState[]>(() => buildLifecycleStateDraft(lifecycleStates));
+  const [states, setStates] = useState<EditLifecycleState[]>(() =>
+    buildLifecycleStateDraft(lifecycleStates)
+  );
 
   const updateLifecycleStatesMutation = useUpdateLifecycleStates(workspace.url_slug);
 
@@ -322,10 +370,9 @@ const LifecycleOwnersSection = ({
   }, [states, statesDirty, updateLifecycleStatesMutation]);
 
   const updateState = (index: number, patch: Partial<EditLifecycleState>) =>
-    setStates(prev => prev.map((s, i) => i === index ? { ...s, ...patch } : s));
+    setStates(prev => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)));
 
-  const removeState = (index: number) =>
-    setStates(prev => prev.filter((_, i) => i !== index));
+  const removeState = (index: number) => setStates(prev => prev.filter((_, i) => i !== index));
 
   const addState = () =>
     setStates(prev => [...prev, { id: '', label: '', color: 'var(--cmp-fg-disabled)' }]);
@@ -333,7 +380,9 @@ const LifecycleOwnersSection = ({
   return (
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
-        <Button onClick={handleCancel} disabled={!isDirty}>Cancel</Button>
+        <Button onClick={handleCancel} disabled={!isDirty}>
+          Cancel
+        </Button>
         <Button
           variant="primary"
           onClick={handleSave}
@@ -346,11 +395,18 @@ const LifecycleOwnersSection = ({
       <div className={styles.section}>
         <div className={styles.sectionHead}>
           <div className={styles.sectionTitle}>Lifecycle states</div>
-          <div className={styles.sectionSub}>Define the lifecycle stages an entity can be in. Each state has a machine key, a display label, and a color.</div>
+          <div className={styles.sectionSub}>
+            Define the lifecycle stages an entity can be in. Each state has a machine key, a display
+            label, and a color.
+          </div>
         </div>
         <div className={styles.sectionBody}>
           {states.map((s, i) => (
-            <div key={i} className={styles.field} style={{ gridTemplateColumns: '1fr 1fr auto auto' }}>
+            <div
+              key={i}
+              className={styles.field}
+              style={{ gridTemplateColumns: '1fr 1fr auto auto' }}
+            >
               <div className={styles.fieldRight}>
                 <TextInput
                   value={s.id}
@@ -380,18 +436,23 @@ const LifecycleOwnersSection = ({
                       height: 18,
                       borderRadius: '50%',
                       background: c.value,
-                      border: s.color === c.value ? '2px solid var(--base-fg)' : '2px solid transparent',
+                      border:
+                        s.color === c.value ? '2px solid var(--base-fg)' : '2px solid transparent',
                       cursor: 'pointer',
                       padding: 0,
-                      flexShrink: 0,
+                      flexShrink: 0
                     }}
                   />
                 ))}
               </div>
-              <Button onClick={() => removeState(i)} style={{ padding: '0 6px' }}><TbTrash size={12} /></Button>
+              <Button onClick={() => removeState(i)} style={{ padding: '0 6px' }}>
+                <TbTrash size={12} />
+              </Button>
             </div>
           ))}
-          <Button icon={<TbPlus size={12} />} onClick={addState} style={{ marginTop: 8 }}>Add state</Button>
+          <Button icon={<TbPlus size={12} />} onClick={addState} style={{ marginTop: 8 }}>
+            Add state
+          </Button>
         </div>
       </div>
     </div>
@@ -404,20 +465,20 @@ const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> 
   { value: 'entity_schema', label: 'Schema' },
   { value: 'entity', label: 'Entity' },
   { value: 'project', label: 'Project' },
-  { value: 'project_file', label: 'Diagram / folder' },
+  { value: 'project_file', label: 'Diagram / folder' }
 ];
 
 const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
   { value: '', label: 'All actions' },
   { value: 'create', label: 'Created' },
   { value: 'update', label: 'Updated' },
-  { value: 'delete', label: 'Deleted' },
+  { value: 'delete', label: 'Deleted' }
 ];
 
 const OPERATION_LABELS: Record<AuditOperation, string> = {
   create: 'created',
   update: 'updated',
-  delete: 'deleted',
+  delete: 'deleted'
 };
 
 const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
@@ -425,7 +486,7 @@ const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   project: 'project',
   project_file: 'diagram',
   entity_schema: 'schema',
-  workspace: 'workspace',
+  workspace: 'workspace'
 };
 
 const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
@@ -433,7 +494,7 @@ const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   entity_schema: styles.typeSchema ?? '',
   entity: styles.typeEntity ?? '',
   project: styles.typeProject ?? '',
-  project_file: styles.typeFile ?? '',
+  project_file: styles.typeFile ?? ''
 };
 
 const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABELS[operation];
@@ -460,7 +521,13 @@ const formatRelativeTime = (timestamp: string): string => {
 const toStartOfDay = (date: string) => new Date(`${date}T00:00:00`).toISOString();
 const toEndOfDay = (date: string) => new Date(`${date}T23:59:59.999`).toISOString();
 
-const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; workspaceSlug: string }) => {
+const AuditLogSection = ({
+  workspace,
+  workspaceSlug
+}: {
+  workspace: Workspace;
+  workspaceSlug: string;
+}) => {
   const navigate = useNavigate();
   const [entityType, setEntityType] = useState<'' | AuditEntityType>('');
   const [operation, setOperation] = useState<'' | AuditOperation>('');
@@ -473,26 +540,38 @@ const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; w
     operation: operation || null,
     startDate: startDate ? toStartOfDay(startDate) : null,
     endDate: endDate ? toEndOfDay(endDate) : null,
-    limit: 100,
+    limit: 100
   });
 
   const handleEntryClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        navigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId: entry.entity_id } });
+        navigate({
+          to: '/$workspaceSlug/entities/$entityId',
+          params: { workspaceSlug, entityId: entry.entity_id }
+        });
         return;
       case 'project':
-        navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId: entry.entity_id }, search: { tab: 'projects' as const } });
+        navigate({
+          to: '/$workspaceSlug/projects/$projectId',
+          params: { workspaceSlug, projectId: entry.entity_id },
+          search: { tab: 'projects' as const }
+        });
         return;
       case 'entity_schema':
         navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } });
         return;
       case 'project_file': {
-        const projectId = typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
+        const projectId =
+          typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
         const path = typeof entry.metadata['path'] === 'string' ? entry.metadata['path'] : null;
         const folderFilter = path?.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
         if (projectId) {
-          navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId }, search: { tab: 'projects' as const, folder: folderFilter ?? undefined } });
+          navigate({
+            to: '/$workspaceSlug/projects/$projectId',
+            params: { workspaceSlug, projectId },
+            search: { tab: 'projects' as const, folder: folderFilter ?? undefined }
+          });
         }
       }
     }
@@ -510,7 +589,9 @@ const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; w
               onChange={e => setEntityType(e.target.value as '' | AuditEntityType)}
             >
               {AUDIT_ENTITY_TYPES.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
               ))}
             </select>
           </label>
@@ -523,7 +604,9 @@ const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; w
               onChange={e => setOperation(e.target.value as '' | AuditOperation)}
             >
               {AUDIT_OPERATIONS.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
               ))}
             </select>
           </label>
@@ -548,7 +631,6 @@ const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; w
             />
           </label>
         </div>
-
       </div>
 
       <div className={styles.section}>
@@ -564,7 +646,9 @@ const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; w
                   className={styles.activityRow}
                   onClick={() => handleEntryClick(entry)}
                 >
-                  <span className={`${styles.activityTypeBadge} ${getEntityTypeTone(entry.entity_type)}`}>
+                  <span
+                    className={`${styles.activityTypeBadge} ${getEntityTypeTone(entry.entity_type)}`}
+                  >
                     {getEntityTypeLabel(entry.entity_type)}
                   </span>
                   <span className={styles.activityDate}>{formatRelativeTime(entry.timestamp)}</span>
@@ -574,7 +658,9 @@ const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; w
                 </button>
               ))
             ) : (
-              <div className={styles.emptyState}>No audit log entries match the current filters.</div>
+              <div className={styles.emptyState}>
+                No audit log entries match the current filters.
+              </div>
             )}
           </div>
         </div>
@@ -583,11 +669,7 @@ const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; w
   );
 };
 
-const DangerSection = ({
-  workspace,
-}: {
-  workspace: Workspace;
-}) => {
+const DangerSection = ({ workspace }: { workspace: Workspace }) => {
   const navigate = useNavigate();
   const [confirm, setConfirm] = useState('');
 
@@ -611,8 +693,8 @@ const DangerSection = ({
         <div className={styles.dangerCardBody}>
           <div className={styles.dangerCardTitle}>Delete workspace permanently</div>
           <div className={styles.dangerCardText}>
-            This will permanently erase <strong>{workspace.name}</strong> — every project,
-            entity, diagram and integration. This cannot be undone.
+            This will permanently erase <strong>{workspace.name}</strong> — every project, entity,
+            diagram and integration. This cannot be undone.
           </div>
           <div className={styles.dangerCardControls}>
             <div className={styles.fieldLabel}>Type the workspace name to confirm</div>

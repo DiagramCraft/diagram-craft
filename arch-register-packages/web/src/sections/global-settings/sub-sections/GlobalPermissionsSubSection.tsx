@@ -4,13 +4,17 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { GLOBAL_ROLES, type GlobalRole } from '@arch-register/permissions';
 import { useAuth } from '../../../auth/AuthContext';
-import { fetchUserGlobalRoles, type AuthUserInfo } from '../../../api';
+import { fetchUserGlobalRoles, type AuthUserInfo } from '../../../lib/api';
 import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { getUserLabel } from '../../../utils/userLabel';
-import { useAuthUsers, useUpdateUserGlobalRoles, globalRolesKeys } from '../../../hooks/useGlobalRoles';
+import {
+  useAuthUsers,
+  useUpdateUserGlobalRoles,
+  globalRolesKeys
+} from '../../../hooks/useGlobalRoles';
 import styles from './GlobalPermissionsSubSection.module.css';
 
 const sameRoles = (left: GlobalRole[], right: GlobalRole[]) => {
@@ -22,7 +26,7 @@ const sameRoles = (left: GlobalRole[], right: GlobalRole[]) => {
 
 const RolesMenu = ({
   currentRoles,
-  onToggle,
+  onToggle
 }: {
   currentRoles: GlobalRole[];
   onToggle: (role: GlobalRole) => void;
@@ -36,7 +40,9 @@ const RolesMenu = ({
             {currentRoles.map(roleId => {
               const role = GLOBAL_ROLES.find(r => r.id === roleId);
               return role ? (
-                <Chip key={role.id} tone="ghost" dot={role.tone}>{role.name}</Chip>
+                <Chip key={role.id} tone="ghost" dot={role.tone}>
+                  {role.name}
+                </Chip>
               ) : null;
             })}
           </div>
@@ -50,7 +56,7 @@ const RolesMenu = ({
           </span>
         ),
         keepOpen: true,
-        onClick: () => onToggle(role.id),
+        onClick: () => onToggle(role.id)
       }))}
     />
   );
@@ -58,7 +64,7 @@ const RolesMenu = ({
 
 export const GlobalPermissionsSubSection = ({
   addDialogOpen,
-  onCloseAddDialog,
+  onCloseAddDialog
 }: {
   addDialogOpen: boolean;
   onCloseAddDialog: () => void;
@@ -78,8 +84,8 @@ export const GlobalPermissionsSubSection = ({
       queryKey: globalRolesKeys.roles(sortedUser.id),
       queryFn: () => fetchUserGlobalRoles(sortedUser.id),
       enabled: sortedUsers.length > 0,
-      staleTime: 60 * 1000,
-    })),
+      staleTime: 60 * 1000
+    }))
   });
 
   const roleMap = useMemo(() => {
@@ -110,11 +116,19 @@ export const GlobalPermissionsSubSection = ({
   const rolesError = roleQueries.find(query => query.error)?.error;
 
   if (error) {
-    return <div className={styles.container}><div className={styles.error}>Failed to load users.</div></div>;
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>Failed to load users.</div>
+      </div>
+    );
   }
 
   if (rolesError) {
-    return <div className={styles.container}><div className={styles.error}>Failed to load global role assignments.</div></div>;
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>Failed to load global role assignments.</div>
+      </div>
+    );
   }
 
   return (
@@ -160,14 +174,19 @@ export const GlobalPermissionsSubSection = ({
                           const next = assignedRoles.includes(role)
                             ? assignedRoles.filter(r => r !== role)
                             : [...assignedRoles, role];
-                          void updateMutation.mutateAsync({ userId: assignedUser.id, roles: next }).then(() => {
-                            if (assignedUser.id === user?.id) void reloadUser();
-                          });
+                          void updateMutation
+                            .mutateAsync({ userId: assignedUser.id, roles: next })
+                            .then(() => {
+                              if (assignedUser.id === user?.id) void reloadUser();
+                            });
                         }}
                       />
                     </td>
                     <td>
-                      <Chip tone="ghost" dot={assignedUser.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}>
+                      <Chip
+                        tone="ghost"
+                        dot={assignedUser.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                      >
                         {assignedUser.is_active ? 'Active' : 'Inactive'}
                       </Chip>
                     </td>
@@ -193,7 +212,7 @@ export const GlobalPermissionsSubSection = ({
           }
           setSelectedUserId(null);
         }}
-        savingUserId={updateMutation.isPending ? updateMutation.variables?.userId ?? null : null}
+        savingUserId={updateMutation.isPending ? (updateMutation.variables?.userId ?? null) : null}
       />
 
       <AddUserDialog
@@ -215,7 +234,7 @@ const RoleAssignmentDialog = ({
   assignedRoles,
   onClose,
   onSave,
-  savingUserId,
+  savingUserId
 }: {
   open: boolean;
   user: AuthUserInfo | null;
@@ -237,7 +256,9 @@ const RoleAssignmentDialog = ({
 
   const toggleRole = (role: GlobalRole) => {
     setDraftRoles(current =>
-      current.includes(role) ? current.filter(existingRole => existingRole !== role) : [...current, role]
+      current.includes(role)
+        ? current.filter(existingRole => existingRole !== role)
+        : [...current, role]
     );
   };
 
@@ -265,7 +286,9 @@ const RoleAssignmentDialog = ({
           ))}
         </div>
         <div className={styles.dialogActions}>
-          <Button onClick={onClose} disabled={isSaving}>Cancel</Button>
+          <Button onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
           <Button
             variant="primary"
             onClick={() => void onSave(draftRoles)}
@@ -283,7 +306,7 @@ const AddUserDialog = ({
   open,
   users,
   onClose,
-  onSelect,
+  onSelect
 }: {
   open: boolean;
   users: AuthUserInfo[];
@@ -303,15 +326,19 @@ const AddUserDialog = ({
     <Dialog open={open} onClose={onClose} title="Add user to global roles">
       <div className={styles.dialogBody}>
         {users.length === 0 ? (
-          <div className={styles.emptyInline}>All existing users already have a global role assignment.</div>
+          <div className={styles.emptyInline}>
+            All existing users already have a global role assignment.
+          </div>
         ) : (
           <>
             <div className={styles.field}>
-            <div className={styles.fieldLeft}>
-              <div className={styles.fieldLabel}>User</div>
-              <div className={styles.fieldHint}>Select an existing user, then assign their global roles.</div>
-            </div>
-            <div className={styles.fieldRight}>
+              <div className={styles.fieldLeft}>
+                <div className={styles.fieldLabel}>User</div>
+                <div className={styles.fieldHint}>
+                  Select an existing user, then assign their global roles.
+                </div>
+              </div>
+              <div className={styles.fieldRight}>
                 <Select.Root
                   value={selectedUserId || undefined}
                   onChange={value => setSelectedUserId(value ?? '')}
@@ -319,7 +346,8 @@ const AddUserDialog = ({
                 >
                   {users.map(candidate => (
                     <Select.Item key={candidate.id} value={candidate.id}>
-                      {getUserLabel(candidate)}{candidate.email ? ` (${candidate.email})` : ''}
+                      {getUserLabel(candidate)}
+                      {candidate.email ? ` (${candidate.email})` : ''}
                     </Select.Item>
                   ))}
                 </Select.Root>

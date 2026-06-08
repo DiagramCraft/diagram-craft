@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { TbFolders } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../api';
-import type { EntitySchema, Project } from '../../api';
+import { resolveSchemaColor } from '../../lib/api';
+import type { EntitySchema, Project } from '../../lib/api';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';

@@ -1,5 +1,5 @@
 import type { ErrorComponentProps } from '@tanstack/react-router';
-import { ApiError } from '../api';
+import { ApiError } from '../lib/api';
 import { AppErrorState } from '../components/AppErrorState';
 
 const getMessage = (error: unknown) => {
@@ -7,7 +7,8 @@ const getMessage = (error: unknown) => {
     if (error.status === 403) {
       return {
         title: 'You do not have access to this view',
-        message: 'Your account is signed in, but this action is not permitted with the current permissions.',
+        message:
+          'Your account is signed in, but this action is not permitted with the current permissions.',
         details: error.message
       };
     }
@@ -23,7 +24,8 @@ const getMessage = (error: unknown) => {
 
   return {
     title: 'This view could not be loaded',
-    message: 'Part of Arch Register failed while preparing the page. You can retry this view or reload the app.',
+    message:
+      'Part of Arch Register failed while preparing the page. You can retry this view or reload the app.',
     details: error instanceof Error ? error.message : null
   };
 };

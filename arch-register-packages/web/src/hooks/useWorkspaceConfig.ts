@@ -8,15 +8,17 @@ import {
   updateTeamAssignments,
   type TeamAssignmentInfo,
   type WorkspaceTeam,
-  type WorkspaceLifecycleState,
-} from '../api';
+  type WorkspaceLifecycleState
+} from '../lib/api';
 
 // Query keys factory
 export const workspaceConfigKeys = {
   all: ['workspace-config'] as const,
-  lifecycleStates: (workspaceId: string) => [...workspaceConfigKeys.all, 'lifecycle-states', workspaceId] as const,
+  lifecycleStates: (workspaceId: string) =>
+    [...workspaceConfigKeys.all, 'lifecycle-states', workspaceId] as const,
   teams: (workspaceId: string) => [...workspaceConfigKeys.all, 'teams', workspaceId] as const,
-  teamAssignments: (workspaceId: string) => [...workspaceConfigKeys.all, 'team-assignments', workspaceId] as const,
+  teamAssignments: (workspaceId: string) =>
+    [...workspaceConfigKeys.all, 'team-assignments', workspaceId] as const
 };
 
 // Hook for fetching lifecycle states
@@ -25,7 +27,7 @@ export const useLifecycleStates = (workspaceSlug: string, enabled = true) => {
     queryKey: workspaceConfigKeys.lifecycleStates(workspaceSlug),
     queryFn: () => fetchLifecycleStates(workspaceSlug),
     enabled: enabled && !!workspaceSlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
 };
 
@@ -34,7 +36,7 @@ export const useTeams = (workspaceSlug: string, enabled = true) => {
     queryKey: workspaceConfigKeys.teams(workspaceSlug),
     queryFn: () => fetchTeams(workspaceSlug),
     enabled: enabled && !!workspaceSlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
 };
 
@@ -43,7 +45,7 @@ export const useTeamAssignments = (workspaceSlug: string, enabled = true) => {
     queryKey: workspaceConfigKeys.teamAssignments(workspaceSlug),
     queryFn: () => fetchTeamAssignments(workspaceSlug),
     enabled: enabled && !!workspaceSlug,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 2 * 60 * 1000
   });
 };
 
@@ -52,15 +54,11 @@ export const useUpdateLifecycleStates = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (states: WorkspaceLifecycleState[]) =>
-      updateLifecycleStates(workspaceId, states),
-    onSuccess: (updatedStates) => {
+    mutationFn: (states: WorkspaceLifecycleState[]) => updateLifecycleStates(workspaceId, states),
+    onSuccess: updatedStates => {
       // Update the cache with the new states
-      queryClient.setQueryData(
-        workspaceConfigKeys.lifecycleStates(workspaceId),
-        updatedStates
-      );
-    },
+      queryClient.setQueryData(workspaceConfigKeys.lifecycleStates(workspaceId), updatedStates);
+    }
   });
 };
 
@@ -68,14 +66,10 @@ export const useUpdateTeams = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (teams: WorkspaceTeam[]) =>
-      updateTeams(workspaceId, teams),
+    mutationFn: (teams: WorkspaceTeam[]) => updateTeams(workspaceId, teams),
     onSuccess: updatedTeams => {
-      queryClient.setQueryData(
-        workspaceConfigKeys.teams(workspaceId),
-        updatedTeams
-      );
-    },
+      queryClient.setQueryData(workspaceConfigKeys.teams(workspaceId), updatedTeams);
+    }
   });
 };
 
@@ -83,15 +77,14 @@ export const useUpdateTeamAssignments = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (
-      assignments: Array<Pick<TeamAssignmentInfo, 'team_id' | 'user_id' | 'role'>>
-    ) => updateTeamAssignments(workspaceId, assignments),
+    mutationFn: (assignments: Array<Pick<TeamAssignmentInfo, 'team_id' | 'user_id' | 'role'>>) =>
+      updateTeamAssignments(workspaceId, assignments),
     onSuccess: updatedAssignments => {
       queryClient.setQueryData(
         workspaceConfigKeys.teamAssignments(workspaceId),
         updatedAssignments
       );
-    },
+    }
   });
 };
 
@@ -106,6 +99,6 @@ export const useWorkspaceConfig = (workspaceSlug: string, enabled = true) => {
     teams: teams.data ?? [],
     teamAssignments: teamAssignments.data ?? [],
     isLoading: lifecycleStates.isLoading || teams.isLoading || teamAssignments.isLoading,
-    isError: lifecycleStates.isError || teams.isError || teamAssignments.isError,
+    isError: lifecycleStates.isError || teams.isError || teamAssignments.isError
   };
 };

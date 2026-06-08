@@ -11,13 +11,13 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { getUserLabel } from '../../../utils/userLabel';
-import type { TeamAssignmentInfo, WorkspaceTeam, WorkspaceUserInfo } from '../../../api';
+import type { TeamAssignmentInfo, WorkspaceTeam, WorkspaceUserInfo } from '../../../lib/api';
 import { useWorkspaceUsers } from '../../../hooks/useWorkspaceMembers';
 import {
   useTeamAssignments,
   useTeams,
   useUpdateTeamAssignments,
-  useUpdateTeams,
+  useUpdateTeams
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './TeamsSubSection.module.css';
 
@@ -33,25 +33,30 @@ type EditAssignment = {
   role: TeamRole;
 };
 
-const TEAM_ROLE_OPTIONS: Array<{ value: TeamRole; label: string; tone: string; description: string }> = [
+const TEAM_ROLE_OPTIONS: Array<{
+  value: TeamRole;
+  label: string;
+  tone: string;
+  description: string;
+}> = [
   {
     value: 'team_admin',
     label: 'Team admin',
     tone: 'var(--error-fg)',
-    description: 'Full owner-team access plus team administration.',
+    description: 'Full owner-team access plus team administration.'
   },
   {
     value: 'team_editor',
     label: 'Team editor',
     tone: 'var(--accent-fg)',
-    description: 'Can edit owned entities and projects.',
+    description: 'Can edit owned entities and projects.'
   },
   {
     value: 'team_reviewer',
     label: 'Team reviewer',
     tone: 'var(--green)',
-    description: 'Read-only access across owned content.',
-  },
+    description: 'Read-only access across owned content.'
+  }
 ];
 
 const sortAssignments = (assignments: EditAssignment[]) =>
@@ -60,10 +65,7 @@ const sortAssignments = (assignments: EditAssignment[]) =>
     return userCompare !== 0 ? userCompare : left.role.localeCompare(right.role);
   });
 
-const buildTeamDrafts = (
-  teams: WorkspaceTeam[],
-  assignments: TeamAssignmentInfo[]
-): TeamDraft[] =>
+const buildTeamDrafts = (teams: WorkspaceTeam[], assignments: TeamAssignmentInfo[]): TeamDraft[] =>
   teams.map(team => ({
     id: team.id,
     color: team.color,
@@ -72,12 +74,12 @@ const buildTeamDrafts = (
       assignments
         .filter(assignment => assignment.team_id === team.id)
         .map(assignment => ({ user_id: assignment.user_id, role: assignment.role }))
-    ),
+    )
   }));
 
 const toOwnerPayload = (teams: TeamDraft[]): WorkspaceTeam[] =>
-  teams.map((team, index) => ({ 
-    id: team.id.trim(), 
+  teams.map((team, index) => ({
+    id: team.id.trim(),
     sort_order: index,
     color: team.color ?? null,
     description: team.description ?? ''
@@ -90,17 +92,16 @@ const toMembershipPayload = (teams: TeamDraft[]) =>
       .map(assignment => ({
         team_id: team.id.trim(),
         user_id: assignment.user_id,
-        role: assignment.role,
+        role: assignment.role
       }))
   );
 
-const getRoleOption = (role: TeamRole) =>
-  TEAM_ROLE_OPTIONS.find(r => r.value === role);
+const getRoleOption = (role: TeamRole) => TEAM_ROLE_OPTIONS.find(r => r.value === role);
 
 const RoleMenu = ({
   current,
   disabled,
-  onSelect,
+  onSelect
 }: {
   current: TeamRole;
   disabled: boolean;
@@ -110,7 +111,9 @@ const RoleMenu = ({
 
   if (disabled || !roleOpt) {
     return roleOpt ? (
-      <Chip tone="ghost" dot={roleOpt.tone}>{roleOpt.label}</Chip>
+      <Chip tone="ghost" dot={roleOpt.tone}>
+        {roleOpt.label}
+      </Chip>
     ) : null;
   }
 
@@ -118,13 +121,15 @@ const RoleMenu = ({
     <DropdownMenu
       trigger={
         <button type="button" className={styles.roleBtn}>
-          <Chip tone="ghost" dot={roleOpt.tone}>{roleOpt.label}</Chip>
+          <Chip tone="ghost" dot={roleOpt.tone}>
+            {roleOpt.label}
+          </Chip>
         </button>
       }
       items={TEAM_ROLE_OPTIONS.map(role => ({
         label: role.label,
         icon: <span className={styles.roleMenuDot} style={{ background: role.tone }} />,
-        onClick: () => onSelect(role.value),
+        onClick: () => onSelect(role.value)
       }))}
     />
   );
@@ -133,14 +138,22 @@ const RoleMenu = ({
 export const TeamsSubSection = ({
   workspaceSlug,
   addDialogOpen,
-  onCloseAddDialog,
+  onCloseAddDialog
 }: {
   workspaceSlug: string;
   addDialogOpen: boolean;
   onCloseAddDialog: () => void;
 }) => {
-  const { data: teams = [], isLoading: isLoadingTeams, error: teamsError } = useTeams(workspaceSlug);
-  const { data: assignments = [], isLoading: isLoadingAssignments, error: assignmentsError } = useTeamAssignments(workspaceSlug);
+  const {
+    data: teams = [],
+    isLoading: isLoadingTeams,
+    error: teamsError
+  } = useTeams(workspaceSlug);
+  const {
+    data: assignments = [],
+    isLoading: isLoadingAssignments,
+    error: assignmentsError
+  } = useTeamAssignments(workspaceSlug);
   const { data: users = [], isLoading: isLoadingUsers } = useWorkspaceUsers(workspaceSlug, true);
   const updateTeams = useUpdateTeams(workspaceSlug);
   const updateTeamAssignments = useUpdateTeamAssignments(workspaceSlug);
@@ -168,7 +181,7 @@ export const TeamsSubSection = ({
             ...team,
             assignments: team.assignments.map(a =>
               a.user_id === userId ? { ...a, role: newRole } : a
-            ),
+            )
           }
         : team
     );
@@ -206,7 +219,10 @@ export const TeamsSubSection = ({
             const adminAssignment = teamAssignments.find(a => a.role === 'team_admin');
             const leadUser = adminAssignment ? usersById.get(adminAssignment.user_id) : undefined;
             return (
-              <div key={team.id} className={`${styles.teamCard} ${isOpen ? styles.teamCardOpen : ''}`}>
+              <div
+                key={team.id}
+                className={`${styles.teamCard} ${isOpen ? styles.teamCardOpen : ''}`}
+              >
                 <button
                   type="button"
                   className={styles.teamCardHead}
@@ -219,12 +235,20 @@ export const TeamsSubSection = ({
                   <div className={styles.teamNameSection}>
                     <span className={styles.teamName}>{team.id}</span>
                   </div>
-                  {team.description && <span className={styles.teamDescription}>{team.description}</span>}
+                  {team.description && (
+                    <span className={styles.teamDescription}>{team.description}</span>
+                  )}
                   <span className={styles.teamLeadRow}>
                     {leadUser && (
                       <>
                         <span className={styles.dim}>Lead</span>
-                        <MemberAvatar name={leadUser.display_name} email={leadUser.email} userId={leadUser.id} color={leadUser.color ?? null} size={18} />
+                        <MemberAvatar
+                          name={leadUser.display_name}
+                          email={leadUser.email}
+                          userId={leadUser.id}
+                          color={leadUser.color ?? null}
+                          size={18}
+                        />
                         <span>{getUserLabel(leadUser)}</span>
                       </>
                     )}
@@ -233,7 +257,16 @@ export const TeamsSubSection = ({
                   <span className={styles.teamAvatars}>
                     {teamAssignments.slice(0, 4).map(a => {
                       const u = usersById.get(a.user_id);
-                      return u ? <MemberAvatar key={a.user_id} name={u.display_name} email={u.email} userId={u.id} color={u.color ?? null} size={20} /> : null;
+                      return u ? (
+                        <MemberAvatar
+                          key={a.user_id}
+                          name={u.display_name}
+                          email={u.email}
+                          userId={u.id}
+                          color={u.color ?? null}
+                          size={20}
+                        />
+                      ) : null;
                     })}
                     {teamAssignments.length > 4 && (
                       <span className={styles.avatarMore}>+{teamAssignments.length - 4}</span>
@@ -247,11 +280,24 @@ export const TeamsSubSection = ({
                 {isOpen && (
                   <div className={styles.teamCardBody}>
                     <div className={styles.teamActions}>
-                      <Button variant="ghost" icon={<TbEdit size={11} />} onClick={() => setEditTeamId(team.id)}>Edit team</Button>
-                      <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => setAddMembersTeamId(team.id)}>Add members</Button>
+                      <Button
+                        variant="ghost"
+                        icon={<TbEdit size={11} />}
+                        onClick={() => setEditTeamId(team.id)}
+                      >
+                        Edit team
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        icon={<TbPlus size={11} />}
+                        onClick={() => setAddMembersTeamId(team.id)}
+                      >
+                        Add members
+                      </Button>
                       <div style={{ flex: 1 }} />
                       <span className={styles.dim}>
-                        {teamAssignments.length} {teamAssignments.length === 1 ? 'member' : 'members'}
+                        {teamAssignments.length}{' '}
+                        {teamAssignments.length === 1 ? 'member' : 'members'}
                       </span>
                     </div>
                     <div className={styles.teamMembers}>
@@ -262,7 +308,13 @@ export const TeamsSubSection = ({
                           const user = usersById.get(a.user_id);
                           return (
                             <div key={a.user_id} className={styles.teamMember}>
-                              <MemberAvatar name={user?.display_name ?? ''} email={user?.email ?? null} userId={a.user_id} color={user?.color ?? null} size={24} />
+                              <MemberAvatar
+                                name={user?.display_name ?? ''}
+                                email={user?.email ?? null}
+                                userId={a.user_id}
+                                color={user?.color ?? null}
+                                size={24}
+                              />
                               <div className={styles.teamMemberName}>
                                 <div>{user ? getUserLabel(user) : a.user_id}</div>
                                 <div className={`${styles.dim} ${styles.mono}`}>
@@ -378,7 +430,7 @@ const TeamDialog = ({
   initialDescription,
   onClose,
   onSave,
-  isSaving,
+  isSaving
 }: {
   open: boolean;
   mode: 'create' | 'edit';
@@ -404,7 +456,8 @@ const TeamDialog = ({
 
   if (!open) return null;
 
-  const isDirty = teamId.trim() !== initialTeamId || color !== initialColor || description !== initialDescription;
+  const isDirty =
+    teamId.trim() !== initialTeamId || color !== initialColor || description !== initialDescription;
 
   return (
     <Dialog
@@ -427,7 +480,9 @@ const TeamDialog = ({
         <div className={styles.field}>
           <div className={styles.fieldLeft}>
             <div className={styles.fieldLabel}>Name</div>
-            <div className={styles.fieldHint}>Used as the owner value for entities and projects.</div>
+            <div className={styles.fieldHint}>
+              Used as the owner value for entities and projects.
+            </div>
           </div>
           <div className={styles.fieldRight}>
             <TextInput
@@ -443,7 +498,9 @@ const TeamDialog = ({
         <div className={styles.field}>
           <div className={styles.fieldLeft}>
             <div className={styles.fieldLabel}>Description</div>
-            <div className={styles.fieldHint}>Brief description of the team's responsibilities.</div>
+            <div className={styles.fieldHint}>
+              Brief description of the team's responsibilities.
+            </div>
           </div>
           <div className={styles.fieldRight}>
             <TextArea
@@ -478,7 +535,7 @@ const AddMembersDialog = ({
   loadingUsers,
   onClose,
   onSave,
-  isSaving,
+  isSaving
 }: {
   open: boolean;
   teamId: string;
@@ -508,9 +565,7 @@ const AddMembersDialog = ({
   };
 
   const updateRole = (index: number, role: TeamRole) => {
-    setAssignments(current =>
-      current.map((a, i) => (i === index ? { ...a, role } : a))
-    );
+    setAssignments(current => current.map((a, i) => (i === index ? { ...a, role } : a)));
   };
 
   const removeAssignment = (index: number) => {
@@ -528,7 +583,13 @@ const AddMembersDialog = ({
               const user = users.find(u => u.id === assignment.user_id);
               return (
                 <div key={assignment.user_id} className={styles.pickedRow}>
-                  <MemberAvatar name={user?.display_name ?? ''} email={user?.email ?? null} userId={assignment.user_id} color={user?.color ?? null} size={24} />
+                  <MemberAvatar
+                    name={user?.display_name ?? ''}
+                    email={user?.email ?? null}
+                    userId={assignment.user_id}
+                    color={user?.color ?? null}
+                    size={24}
+                  />
                   <div className={styles.pickedName}>
                     {user ? getUserLabel(user) : assignment.user_id}
                   </div>
@@ -561,19 +622,24 @@ const AddMembersDialog = ({
               >
                 {availableUsers.map(user => (
                   <Select.Item key={user.id} value={user.id}>
-                    {getUserLabel(user)}{user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
+                    {getUserLabel(user)}
+                    {user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
                     {!user.is_active ? ' - inactive' : ''}
                   </Select.Item>
                 ))}
               </Select.Root>
             ) : assignments.length === 0 ? (
-              <div className={styles.emptyInline}>All workspace users are already in this team.</div>
+              <div className={styles.emptyInline}>
+                All workspace users are already in this team.
+              </div>
             ) : null}
           </>
         )}
 
         <div className={styles.dialogActions}>
-          <Button onClick={onClose} disabled={isSaving}>Cancel</Button>
+          <Button onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
           <Button
             variant="primary"
             onClick={() => void onSave(assignments)}

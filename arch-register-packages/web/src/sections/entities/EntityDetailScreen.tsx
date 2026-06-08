@@ -7,15 +7,36 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { StatusChip } from '../../components/StatusChip';
 import { Chip } from '../../components/Chip';
 import {
-  TbChevronLeft, TbChevronRight, TbEdit, TbDots, TbExternalLink,
-  TbTrash, TbPlus, TbX, TbCopy,
+  TbChevronLeft,
+  TbChevronRight,
+  TbEdit,
+  TbDots,
+  TbExternalLink,
+  TbTrash,
+  TbPlus,
+  TbX,
+  TbCopy
 } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../api';
-import type { EntityRecord, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState } from '../../api';
+import { resolveSchemaColor } from '../../lib/api';
+import type {
+  EntityRecord,
+  EntitySchema,
+  EntitySummary,
+  SchemaField,
+  AuditLogEntry,
+  WorkspaceLifecycleState
+} from '../../lib/api';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
-import { useEntity, useEntityRelations, useUpdateEntity, useDeleteEntity, useCloneEntity, useEntitiesBySchema } from '../../hooks/useEntities';
+import {
+  useEntity,
+  useEntityRelations,
+  useUpdateEntity,
+  useDeleteEntity,
+  useCloneEntity,
+  useEntitiesBySchema
+} from '../../hooks/useEntities';
 import { useAuditLog } from '../../hooks/useAudit';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
@@ -34,7 +55,10 @@ type Relation = {
 type RefLookup = Map<string, EntitySummary>;
 
 const slugify = (name: string) =>
-  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 
 const formatDateValue = (value: unknown) => {
   if (typeof value !== 'string' || value === '') return '—';
@@ -50,9 +74,15 @@ export const EntityDetailScreen = () => {
   const workspaceId = workspaceSlug;
   const canViewAudit = permissions.canViewAudit;
 
-  const navigateToEntity = useCallback((id: string) => {
-    navigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId: id } });
-  }, [navigate, workspaceSlug]);
+  const navigateToEntity = useCallback(
+    (id: string) => {
+      navigate({
+        to: '/$workspaceSlug/entities/$entityId',
+        params: { workspaceSlug, entityId: id }
+      });
+    },
+    [navigate, workspaceSlug]
+  );
 
   const navigateToEntities = useCallback(() => {
     navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } });
@@ -66,7 +96,10 @@ export const EntityDetailScreen = () => {
 
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
-  const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(workspaceId, entityId);
+  const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(
+    workspaceId,
+    entityId
+  );
   const { data: auditLog = [], isLoading: loadingAudit } = useAuditLog(
     workspaceId,
     { entityId, limit: 100 },
@@ -89,19 +122,24 @@ export const EntityDetailScreen = () => {
   }, [entity, schemas]);
 
   const schema = schemaEntry?.schema ?? null;
-  const color = schemaEntry ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index) : 'var(--accent-fg)';
+  const color = schemaEntry
+    ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index)
+    : 'var(--accent-fg)';
 
   // Get reference field schema IDs
   const referenceSchemaIds = useMemo(() => {
     if (!schema) return [];
-    return [...new Set(
-      schema.fields
-        .filter((field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
-          field.type === 'reference' || field.type === 'containment'
-        )
-        .map(field => field.schemaId)
-        .filter(Boolean)
-    )];
+    return [
+      ...new Set(
+        schema.fields
+          .filter(
+            (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
+              field.type === 'reference' || field.type === 'containment'
+          )
+          .map(field => field.schemaId)
+          .filter(Boolean)
+      )
+    ];
   }, [schema]);
 
   // Fetch entities for each reference schema
@@ -143,7 +181,7 @@ export const EntityDetailScreen = () => {
         canEdit: false,
         canDelete: false,
         canAdmin: false,
-        canCreateChild: false,
+        canCreateChild: false
       });
     });
     return lookup;
@@ -164,7 +202,7 @@ export const EntityDetailScreen = () => {
       _targetLifecycle: entity._targetLifecycle ?? '',
       _targetLifecycleDate: entity._targetLifecycleDate ?? '',
       _namespace: entity._namespace ?? '',
-      _tags: (entity._tags ?? []).join(', '),
+      _tags: (entity._tags ?? []).join(', ')
     };
     for (const f of schema.fields) {
       state[f.id] = entity[f.id] ?? '';
@@ -204,7 +242,10 @@ export const EntityDetailScreen = () => {
     }
 
     const tagsStr = (editState['_tags'] as string) ?? '';
-    const tags = tagsStr.split(',').map(s => s.trim()).filter(Boolean);
+    const tags = tagsStr
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
 
     const body = {
       _schemaId: entity._schemaId,
@@ -218,7 +259,7 @@ export const EntityDetailScreen = () => {
       _targetLifecycleDate: (editState['_targetLifecycleDate'] as string) || null,
       _tags: tags,
       _links: editLinks.filter(l => l.url.trim() !== ''),
-      ...dataFields,
+      ...dataFields
     };
 
     updateEntity.mutate(
@@ -228,7 +269,7 @@ export const EntityDetailScreen = () => {
           setEditing(false);
           setEditState({});
           setEditLinks([]);
-        },
+        }
       }
     );
   };
@@ -240,13 +281,13 @@ export const EntityDetailScreen = () => {
   const doDelete = () => {
     setConfirmDelete(false);
     deleteEntity.mutate(entityId, {
-      onSuccess: () => navigateToEntities(),
+      onSuccess: () => navigateToEntities()
     });
   };
 
   const handleClone = async () => {
     cloneEntity.mutate(entityId, {
-      onSuccess: (cloned) => navigateToEntity(cloned._uid),
+      onSuccess: cloned => navigateToEntity(cloned._uid)
     });
   };
 
@@ -268,8 +309,12 @@ export const EntityDetailScreen = () => {
 
   const entityName = entity._name || entity._slug;
   const menuItems: MenuItem[] = [
-    ...(entity.canCreateChild ? [{ label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone }] : []),
-    ...(entity.canDelete ? [{ label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: handleDelete }] : []),
+    ...(entity.canCreateChild
+      ? [{ label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone }]
+      : []),
+    ...(entity.canDelete
+      ? [{ label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: handleDelete }]
+      : [])
   ];
 
   return (
@@ -286,7 +331,9 @@ export const EntityDetailScreen = () => {
               <div className={styles.eyebrow}>{schema?.name ?? 'Entity'}</div>
               <div className={styles.title}>{entityName}</div>
             </div>
-            {entity._lifecycle && <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />}
+            {entity._lifecycle && (
+              <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />
+            )}
             {entity._targetLifecycle && entity._targetLifecycle !== entity._lifecycle && (
               <>
                 <span>→</span>
@@ -298,7 +345,11 @@ export const EntityDetailScreen = () => {
         </div>
         <div className={styles.headActions}>
           {!editing ? (
-            entity.canEdit ? <Button icon={<TbEdit size={12} />} onClick={startEdit}>Edit</Button> : null
+            entity.canEdit ? (
+              <Button icon={<TbEdit size={12} />} onClick={startEdit}>
+                Edit
+              </Button>
+            ) : null
           ) : (
             <>
               {entity.canDelete && (
@@ -314,7 +365,11 @@ export const EntityDetailScreen = () => {
           )}
           {menuItems.length > 0 && (
             <DropdownMenu
-              trigger={<button type="button" className={styles.iconBtn}><TbDots size={14} /></button>}
+              trigger={
+                <button type="button" className={styles.iconBtn}>
+                  <TbDots size={14} />
+                </button>
+              }
               items={menuItems}
             />
           )}
@@ -342,7 +397,9 @@ export const EntityDetailScreen = () => {
           <div className={styles.propsPanel}>
             {schema && schema.fields.length > 0 && (
               <>
-                <div className={styles.sectionLabel} style={{ marginTop: 0 }}>Properties</div>
+                <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
+                  Properties
+                </div>
                 <div className={styles.propList}>
                   {schema.fields.map(f => (
                     <PropertyRow
@@ -353,7 +410,12 @@ export const EntityDetailScreen = () => {
                       editValue={editState[f.id]}
                       onChange={v => {
                         setEditState(s => ({ ...s, [f.id]: v }));
-                        if (validationErrors.has(f.id)) setValidationErrors(s => { const n = new Set(s); n.delete(f.id); return n; });
+                        if (validationErrors.has(f.id))
+                          setValidationErrors(s => {
+                            const n = new Set(s);
+                            n.delete(f.id);
+                            return n;
+                          });
                       }}
                       refLookup={refLookup}
                       referenceOptions={referenceOptions}
@@ -367,7 +429,9 @@ export const EntityDetailScreen = () => {
           </div>
 
           <div className={styles.sidePanel}>
-            <div className={styles.sectionLabel} style={{ marginTop: 0 }}>Metadata</div>
+            <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
+              Metadata
+            </div>
             {schema && <MetaPropRow label="Schema" value={schema.name} />}
             <MetaPropRow label="UID" value={entity._uid} />
             <MetaPropRow label="Workspace" value={entity._workspace} />
@@ -375,8 +439,20 @@ export const EntityDetailScreen = () => {
 
             <hr className={styles.divider} />
 
-            <MetaPropRow label="Name" value={entity._name || '—'} editing={editing} editValue={editState['_name'] as string} onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugify(v) }))} />
-            <MetaPropRow label="Slug" value={entity._slug} editing={editing} editValue={editState['_slug'] as string} onChange={v => setEditState(s => ({ ...s, _slug: v }))} />
+            <MetaPropRow
+              label="Name"
+              value={entity._name || '—'}
+              editing={editing}
+              editValue={editState['_name'] as string}
+              onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugify(v) }))}
+            />
+            <MetaPropRow
+              label="Slug"
+              value={entity._slug}
+              editing={editing}
+              editValue={editState['_slug'] as string}
+              onChange={v => setEditState(s => ({ ...s, _slug: v }))}
+            />
             {(entity._description || editing) && (
               <div className={styles.metaPropRow}>
                 <span className={styles.metaPropLabel}>Description</span>
@@ -393,10 +469,38 @@ export const EntityDetailScreen = () => {
                 </span>
               </div>
             )}
-            <MetaPropRow label="Owner" value={entity._owner ?? '—'} editing={editing} editValue={editState['_owner'] as string} onChange={v => setEditState(s => ({ ...s, _owner: v }))} selectOptions={['', ...teams.map(team => team.id)]} />
-            <MetaPropRow label="Lifecycle" value={entity._lifecycle ?? '—'} editing={editing} editValue={editState['_lifecycle'] as string} onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))} selectOptions={['', ...lifecycleStates.map(s => s.id)]} />
-            <MetaPropRow label="Target Lifecycle" value={entity._targetLifecycle ?? '—'} editing={editing} editValue={editState['_targetLifecycle'] as string} onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))} selectOptions={['', ...lifecycleStates.map(s => s.id)]} />
-            <MetaPropRow label="Target Date" value={entity._targetLifecycleDate ?? '—'} editing={editing} editValue={editState['_targetLifecycleDate'] as string} onChange={v => setEditState(s => ({ ...s, _targetLifecycleDate: v }))} type="date" />
+            <MetaPropRow
+              label="Owner"
+              value={entity._owner ?? '—'}
+              editing={editing}
+              editValue={editState['_owner'] as string}
+              onChange={v => setEditState(s => ({ ...s, _owner: v }))}
+              selectOptions={['', ...teams.map(team => team.id)]}
+            />
+            <MetaPropRow
+              label="Lifecycle"
+              value={entity._lifecycle ?? '—'}
+              editing={editing}
+              editValue={editState['_lifecycle'] as string}
+              onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))}
+              selectOptions={['', ...lifecycleStates.map(s => s.id)]}
+            />
+            <MetaPropRow
+              label="Target Lifecycle"
+              value={entity._targetLifecycle ?? '—'}
+              editing={editing}
+              editValue={editState['_targetLifecycle'] as string}
+              onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))}
+              selectOptions={['', ...lifecycleStates.map(s => s.id)]}
+            />
+            <MetaPropRow
+              label="Target Date"
+              value={entity._targetLifecycleDate ?? '—'}
+              editing={editing}
+              editValue={editState['_targetLifecycleDate'] as string}
+              onChange={v => setEditState(s => ({ ...s, _targetLifecycleDate: v }))}
+              type="date"
+            />
             {(entity._tags.length > 0 || editing) && (
               <div className={styles.metaPropRow}>
                 <span className={styles.metaPropLabel}>Tags</span>
@@ -410,7 +514,11 @@ export const EntityDetailScreen = () => {
                     />
                   ) : (
                     <span className={styles.tags}>
-                      {entity._tags.map(t => <Chip key={t} tone="ghost">{t}</Chip>)}
+                      {entity._tags.map(t => (
+                        <Chip key={t} tone="ghost">
+                          {t}
+                        </Chip>
+                      ))}
                     </span>
                   )}
                 </span>
@@ -424,20 +532,32 @@ export const EntityDetailScreen = () => {
                     <input
                       className={styles.inputInline}
                       value={l.type ?? ''}
-                      onChange={e => setEditLinks(ls => ls.map((x, j) => j === i ? { ...x, type: e.target.value } : x))}
+                      onChange={e =>
+                        setEditLinks(ls =>
+                          ls.map((x, j) => (j === i ? { ...x, type: e.target.value } : x))
+                        )
+                      }
                       placeholder="Type"
                       style={{ width: 70, flex: 'none' }}
                     />
                     <input
                       className={styles.inputInline}
                       value={l.title}
-                      onChange={e => setEditLinks(ls => ls.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                      onChange={e =>
+                        setEditLinks(ls =>
+                          ls.map((x, j) => (j === i ? { ...x, title: e.target.value } : x))
+                        )
+                      }
                       placeholder="Title"
                     />
                     <input
                       className={styles.inputInline}
                       value={l.url}
-                      onChange={e => setEditLinks(ls => ls.map((x, j) => j === i ? { ...x, url: e.target.value } : x))}
+                      onChange={e =>
+                        setEditLinks(ls =>
+                          ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x))
+                        )
+                      }
                       placeholder="URL"
                     />
                     <button
@@ -457,12 +577,20 @@ export const EntityDetailScreen = () => {
                   <TbPlus size={11} /> Add link
                 </button>
               </div>
-            ) : entity._links.length > 0 && (
+            ) : (
+              entity._links.length > 0 &&
               entity._links.map((l, i) => (
                 <div key={i} className={styles.metaPropRow}>
-                  <span className={styles.metaPropLabel}>{l.type ? l.type.charAt(0).toUpperCase() + l.type.slice(1) : 'Link'}</span>
+                  <span className={styles.metaPropLabel}>
+                    {l.type ? l.type.charAt(0).toUpperCase() + l.type.slice(1) : 'Link'}
+                  </span>
                   <span className={styles.metaPropValue}>
-                    <a className={styles.propLink} href={l.url.startsWith('http') ? l.url : `https://${l.url}`} target="_blank" rel="noopener noreferrer">
+                    <a
+                      className={styles.propLink}
+                      href={l.url.startsWith('http') ? l.url : `https://${l.url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <TbExternalLink size={11} /> {l.title || l.url}
                     </a>
                   </span>
@@ -514,16 +642,36 @@ export const EntityDetailScreen = () => {
               <div className={styles.sectionLabel}>Outgoing ({outgoing.length})</div>
               <div className={styles.relationsList}>
                 {outgoing.map((r, i) => (
-                  <RelationRow key={`o-${i}`} relation={r} direction="outgoing" schemas={schemas} onEntityClick={navigateToEntity} />
+                  <RelationRow
+                    key={`o-${i}`}
+                    relation={r}
+                    direction="outgoing"
+                    schemas={schemas}
+                    onEntityClick={navigateToEntity}
+                  />
                 ))}
-                {outgoing.length === 0 && <div className={styles.dim} style={{ padding: 8 }}>None</div>}
+                {outgoing.length === 0 && (
+                  <div className={styles.dim} style={{ padding: 8 }}>
+                    None
+                  </div>
+                )}
               </div>
               <div className={styles.sectionLabel}>Incoming ({incoming.length})</div>
               <div className={styles.relationsList}>
                 {incoming.map((r, i) => (
-                  <RelationRow key={`i-${i}`} relation={r} direction="incoming" schemas={schemas} onEntityClick={navigateToEntity} />
+                  <RelationRow
+                    key={`i-${i}`}
+                    relation={r}
+                    direction="incoming"
+                    schemas={schemas}
+                    onEntityClick={navigateToEntity}
+                  />
                 ))}
-                {incoming.length === 0 && <div className={styles.dim} style={{ padding: 8 }}>None</div>}
+                {incoming.length === 0 && (
+                  <div className={styles.dim} style={{ padding: 8 }}>
+                    None
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -531,14 +679,16 @@ export const EntityDetailScreen = () => {
       )}
 
       {/* Change history */}
-      {tab === 'changes' && (
-        <ChangeHistory auditLog={auditLog} loading={loadingAudit} />
-      )}
+      {tab === 'changes' && <ChangeHistory auditLog={auditLog} loading={loadingAudit} />}
 
       <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete entity?"
-        message={<>The entity <b>{entityName}</b> will be permanently deleted.</>}
+        message={
+          <>
+            The entity <b>{entityName}</b> will be permanently deleted.
+          </>
+        }
         detail="This can't be undone."
         confirmLabel="Delete entity"
         onConfirm={doDelete}
@@ -555,7 +705,7 @@ const MetaPropRow = ({
   editValue,
   onChange,
   selectOptions,
-  type = 'text',
+  type = 'text'
 }: {
   label: string;
   value: string;
@@ -576,7 +726,9 @@ const MetaPropRow = ({
             onChange={e => onChange(e.target.value)}
           >
             {selectOptions.map(o => (
-              <option key={o} value={o}>{o || '—'}</option>
+              <option key={o} value={o}>
+                {o || '—'}
+              </option>
             ))}
           </select>
         ) : type === 'date' ? (
@@ -608,7 +760,7 @@ const PropertyRow = ({
   refLookup,
   referenceOptions,
   onEntityClick,
-  hasError,
+  hasError
 }: {
   field: EntitySchema['fields'][number];
   value: unknown;
@@ -631,7 +783,9 @@ const PropertyRow = ({
         >
           <option value="">—</option>
           {candidates.map(e => (
-            <option key={e._uid} value={e._uid}>{e._name || e._slug}</option>
+            <option key={e._uid} value={e._uid}>
+              {e._name || e._slug}
+            </option>
           ))}
         </select>
       );
@@ -645,7 +799,9 @@ const PropertyRow = ({
         >
           <option value="">—</option>
           {field.options.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
           ))}
         </select>
       );
@@ -661,11 +817,7 @@ const PropertyRow = ({
     }
     if (field.type === 'boolean') {
       return (
-        <input
-          type="checkbox"
-          checked={!!editValue}
-          onChange={e => onChange(e.target.checked)}
-        />
+        <input type="checkbox" checked={!!editValue} onChange={e => onChange(e.target.checked)} />
       );
     }
     if (field.type === 'date') {
@@ -695,7 +847,10 @@ const PropertyRow = ({
       return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
     }
     if (field.type === 'reference' || field.type === 'containment') {
-      const ids = String(value).split(',').map(s => s.trim()).filter(Boolean);
+      const ids = String(value)
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
       if (ids.length === 0) return <span className={styles.dim}>—</span>;
       return (
         <>
@@ -728,9 +883,14 @@ const PropertyRow = ({
         {field.name}
         <span className={styles.propType}>{typeLabel}</span>
         {field.requirementLevel === 'required' && <span className={styles.propReq}>Required</span>}
-        {field.requirementLevel === 'expected' && <span className={styles.propExpected}>Expected</span>}
+        {field.requirementLevel === 'expected' && (
+          <span className={styles.propExpected}>Expected</span>
+        )}
       </div>
-      <div className={styles.propValue} style={hasError ? { flexDirection: 'column', alignItems: 'flex-start' } : undefined}>
+      <div
+        className={styles.propValue}
+        style={hasError ? { flexDirection: 'column', alignItems: 'flex-start' } : undefined}
+      >
         {editing ? renderEditor() : renderDisplay()}
         {hasError && <span className={styles.propErrorMsg}>This field is required</span>}
       </div>
@@ -742,17 +902,20 @@ const RelationRow = ({
   relation,
   direction,
   schemas,
-  onEntityClick,
+  onEntityClick
 }: {
   relation: Relation;
   direction: 'outgoing' | 'incoming';
   schemas: EntitySchema[];
   onEntityClick: (entityId: string) => void;
 }) => {
-  const targetSchemaId = direction === 'outgoing' ? relation.entitySchemaId : relation.entitySchemaId;
+  const targetSchemaId =
+    direction === 'outgoing' ? relation.entitySchemaId : relation.entitySchemaId;
   const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
   const targetSchema = schemaIdx >= 0 ? schemas[schemaIdx] : null;
-  const targetColor = targetSchema ? resolveSchemaColor(targetSchema, schemaIdx) : 'var(--accent-fg)';
+  const targetColor = targetSchema
+    ? resolveSchemaColor(targetSchema, schemaIdx)
+    : 'var(--accent-fg)';
 
   return (
     <button
@@ -762,7 +925,12 @@ const RelationRow = ({
     >
       <Chip tone="ghost">{relation.fieldName}</Chip>
       <TbChevronRight size={10} className={styles.dim} />
-      <TypeBadge color={targetColor} name={targetSchema?.name} icon={targetSchema?.icon} size={16} />
+      <TypeBadge
+        color={targetColor}
+        name={targetSchema?.name}
+        icon={targetSchema?.icon}
+        size={16}
+      />
       <span className={styles.relationName}>{relation.entityName}</span>
       <span className={styles.dim}>{relation.entitySlug}</span>
     </button>
@@ -792,10 +960,14 @@ const formatValue = (val: unknown) => {
 
 const getOperationLabel = (op: string) => {
   switch (op) {
-    case 'create': return 'created entity';
-    case 'update': return 'updated';
-    case 'delete': return 'deleted entity';
-    default: return op;
+    case 'create':
+      return 'created entity';
+    case 'update':
+      return 'updated';
+    case 'delete':
+      return 'deleted entity';
+    default:
+      return op;
   }
 };
 
@@ -837,7 +1009,7 @@ const flattenAuditEntries = (entries: AuditLogEntry[]): ChangeRowData[] => {
           who,
           what: `changed ${label}`,
           from: formatValue(oldData[key]),
-          to: formatValue(newData[key]),
+          to: formatValue(newData[key])
         });
       }
     });
@@ -915,7 +1087,16 @@ const groupByField = (rels: Relation[]): [string, Relation[]][] => {
   return [...groups.entries()];
 };
 
-const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, lifecycleStates, onEntityClick }: TopologyViewProps) => {
+const TopologyView = ({
+  entity,
+  schema,
+  color,
+  outgoing,
+  incoming,
+  schemas,
+  lifecycleStates,
+  onEntityClick
+}: TopologyViewProps) => {
   const parents = useMemo(() => outgoing.filter(r => r.kind === 'containment'), [outgoing]);
   const children = useMemo(() => incoming.filter(r => r.kind === 'containment'), [incoming]);
   const consumesRefs = useMemo(() => outgoing.filter(r => r.kind === 'reference'), [outgoing]);
@@ -927,22 +1108,31 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
   const [edges, setEdges] = useState<EdgePath[]>([]);
   const topologyVersion = `${parents.length}:${children.length}:${consumesRefs.length}:${usedByRefs.length}`;
 
-  const resolveRelColor = useCallback((rel: Relation) => {
-    const idx = schemas.findIndex(s => s.id === rel.entitySchemaId);
-    const s = idx >= 0 ? schemas[idx] : null;
-    return { schema: s, color: s ? resolveSchemaColor(s, idx) : 'var(--accent-fg)' };
-  }, [schemas]);
+  const resolveRelColor = useCallback(
+    (rel: Relation) => {
+      const idx = schemas.findIndex(s => s.id === rel.entitySchemaId);
+      const s = idx >= 0 ? schemas[idx] : null;
+      return { schema: s, color: s ? resolveSchemaColor(s, idx) : 'var(--accent-fg)' };
+    },
+    [schemas]
+  );
 
-  const setCardRef = useCallback((key: string) => (el: HTMLElement | null) => {
-    if (el) refCardRefs.current.set(key, el);
-    else refCardRefs.current.delete(key);
-  }, []);
+  const setCardRef = useCallback(
+    (key: string) => (el: HTMLElement | null) => {
+      if (el) refCardRefs.current.set(key, el);
+      else refCardRefs.current.delete(key);
+    },
+    []
+  );
 
   useLayoutEffect(() => {
     void topologyVersion;
     const container = containerRef.current;
     const entityBox = entityBoxRef.current;
-    if (!container || !entityBox) { setEdges([]); return; }
+    if (!container || !entityBox) {
+      setEdges([]);
+      return;
+    }
 
     const compute = () => {
       if (!containerRef.current || !entityBoxRef.current) return;
@@ -962,8 +1152,10 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
         else outMinLeft = Math.min(outMinLeft, r.left - cRect.left);
       });
 
-      const inTrunkX = inMaxRight !== -Infinity ? inMaxRight + 28 : eRect.left - cRect.left + eRect.width * 0.35;
-      const outTrunkX = outMinLeft !== Infinity ? outMinLeft - 28 : eRect.left - cRect.left + eRect.width * 0.65;
+      const inTrunkX =
+        inMaxRight !== -Infinity ? inMaxRight + 28 : eRect.left - cRect.left + eRect.width * 0.35;
+      const outTrunkX =
+        outMinLeft !== Infinity ? outMinLeft - 28 : eRect.left - cRect.left + eRect.width * 0.65;
 
       refCardRefs.current.forEach((el, key) => {
         const r = el.getBoundingClientRect();
@@ -972,14 +1164,16 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
         if (key.startsWith('out-')) {
           // Consumes: down from entity, right to card
           const cardLeft = r.left - cRect.left - 4;
-          const d = `M ${outTrunkX} ${entityBottom} L ${outTrunkX} ${cardMidY} L ${cardLeft} ${cardMidY}`
-            + ` M ${cardLeft - 4} ${cardMidY - 4} L ${cardLeft} ${cardMidY} L ${cardLeft - 4} ${cardMidY + 4}`;
+          const d =
+            `M ${outTrunkX} ${entityBottom} L ${outTrunkX} ${cardMidY} L ${cardLeft} ${cardMidY}` +
+            ` M ${cardLeft - 4} ${cardMidY - 4} L ${cardLeft} ${cardMidY} L ${cardLeft - 4} ${cardMidY + 4}`;
           next.push({ key, d });
         } else {
           // Used by: from card right, up to entity
           const cardRight = r.right - cRect.left + 4;
-          const d = `M ${cardRight} ${cardMidY} L ${inTrunkX} ${cardMidY} L ${inTrunkX} ${entityBottom}`
-            + ` M ${inTrunkX - 4} ${entityBottom + 4} L ${inTrunkX} ${entityBottom} L ${inTrunkX + 4} ${entityBottom + 4}`;
+          const d =
+            `M ${cardRight} ${cardMidY} L ${inTrunkX} ${cardMidY} L ${inTrunkX} ${entityBottom}` +
+            ` M ${inTrunkX - 4} ${entityBottom + 4} L ${inTrunkX} ${entityBottom} L ${inTrunkX + 4} ${entityBottom + 4}`;
           next.push({ key, d });
         }
       });
@@ -996,7 +1190,10 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
     debouncedCompute();
     const observer = new ResizeObserver(debouncedCompute);
     observer.observe(container);
-    return () => { observer.disconnect(); cancelAnimationFrame(raf); };
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(raf);
+    };
   }, [topologyVersion]);
 
   const isEmpty = parents.length + children.length + consumesRefs.length + usedByRefs.length === 0;
@@ -1022,7 +1219,12 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
             {parents.map((p, i) => {
               const { schema: ps, color: pc } = resolveRelColor(p);
               return (
-                <button key={i} type="button" className={styles.topoParentChip} onClick={() => onEntityClick(p.entityId)}>
+                <button
+                  key={i}
+                  type="button"
+                  className={styles.topoParentChip}
+                  onClick={() => onEntityClick(p.entityId)}
+                >
                   <TypeBadge color={pc} name={ps?.name} icon={ps?.icon} size={14} />
                   <span className={styles.topoParentName}>{p.entityName}</span>
                   <span className={styles.dim}>part of</span>
@@ -1031,7 +1233,12 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
             })}
           </div>
           <svg width="12" height="18" viewBox="0 0 12 18" className={styles.topoParentArrow}>
-            <path d="M 6 0 L 6 14 M 2 10 L 6 14 L 10 10" stroke="var(--base-fg-more-dim)" strokeWidth="1.2" fill="none" />
+            <path
+              d="M 6 0 L 6 14 M 2 10 L 6 14 L 10 10"
+              stroke="var(--base-fg-more-dim)"
+              strokeWidth="1.2"
+              fill="none"
+            />
           </svg>
         </div>
       )}
@@ -1044,7 +1251,9 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
             <div className={styles.topoEntityEyebrow}>{schema?.name ?? 'Entity'}</div>
             <div className={styles.topoEntityName}>{entity._name || entity._slug}</div>
           </div>
-          {entity._lifecycle && <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />}
+          {entity._lifecycle && (
+            <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />
+          )}
         </div>
 
         {children.length > 0 ? (
@@ -1057,7 +1266,12 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
               {children.map((c, i) => {
                 const { schema: cs, color: cc } = resolveRelColor(c);
                 return (
-                  <button key={i} type="button" className={styles.topoChildCard} onClick={() => onEntityClick(c.entityId)}>
+                  <button
+                    key={i}
+                    type="button"
+                    className={styles.topoChildCard}
+                    onClick={() => onEntityClick(c.entityId)}
+                  >
                     <span className={styles.topoCardBar} style={{ background: cc }} />
                     <div className={styles.topoChildHead}>
                       <TypeBadge color={cc} name={cs?.name} icon={cs?.icon} size={14} />
@@ -1072,17 +1286,23 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
             </div>
           </>
         ) : (
-          !isEmpty && <div className={`${styles.topoEntityEmpty} ${styles.dim}`}>No contained entities</div>
+          !isEmpty && (
+            <div className={`${styles.topoEntityEmpty} ${styles.dim}`}>No contained entities</div>
+          )
         )}
       </div>
 
       {(usedByRefs.length > 0 || consumesRefs.length > 0) && (
         <div className={styles.topoRefsGrid}>
           <div className={`${styles.topoRefsCol} ${styles.topoRefsColIn}`}>
-            {usedByRefs.length === 0 && <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No incoming references</div>}
+            {usedByRefs.length === 0 && (
+              <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No incoming references</div>
+            )}
             {groupByField(usedByRefs).map(([fieldName, rels]) => (
               <div key={fieldName} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>{fieldName} ({rels.length})</div>
+                <div className={styles.topoAxisLabel}>
+                  {fieldName} ({rels.length})
+                </div>
                 {rels.map((r, i) => {
                   const { schema: rs, color: rc } = resolveRelColor(r);
                   return (
@@ -1097,7 +1317,9 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
                       <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
                       <div className={styles.topoRefBody}>
                         <div className={styles.topoCardName}>{r.entityName}</div>
-                        {rs && <div className={`${styles.topoRefKind} ${styles.dim}`}>{rs.name}</div>}
+                        {rs && (
+                          <div className={`${styles.topoRefKind} ${styles.dim}`}>{rs.name}</div>
+                        )}
                       </div>
                     </button>
                   );
@@ -1106,10 +1328,14 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
             ))}
           </div>
           <div className={`${styles.topoRefsCol} ${styles.topoRefsColOut}`}>
-            {consumesRefs.length === 0 && <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No outgoing references</div>}
+            {consumesRefs.length === 0 && (
+              <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No outgoing references</div>
+            )}
             {groupByField(consumesRefs).map(([fieldName, rels]) => (
               <div key={fieldName} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>{fieldName} ({rels.length})</div>
+                <div className={styles.topoAxisLabel}>
+                  {fieldName} ({rels.length})
+                </div>
                 {rels.map((r, i) => {
                   const { schema: rs, color: rc } = resolveRelColor(r);
                   return (
@@ -1124,7 +1350,9 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
                       <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
                       <div className={styles.topoRefBody}>
                         <div className={styles.topoCardName}>{r.entityName}</div>
-                        {rs && <div className={`${styles.topoRefKind} ${styles.dim}`}>{rs.name}</div>}
+                        {rs && (
+                          <div className={`${styles.topoRefKind} ${styles.dim}`}>{rs.name}</div>
+                        )}
                       </div>
                     </button>
                   );

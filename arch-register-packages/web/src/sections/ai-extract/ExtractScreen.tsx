@@ -2,12 +2,18 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  TbWand, TbTextCaption, TbFileUpload, TbCheck,
-  TbUpload, TbPlus, TbChevronRight, TbX,
+  TbWand,
+  TbTextCaption,
+  TbFileUpload,
+  TbCheck,
+  TbUpload,
+  TbPlus,
+  TbChevronRight,
+  TbX
 } from 'react-icons/tb';
 import styles from './ExtractScreen.module.css';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { apiFetch, createEntity } from '../../api';
+import { apiFetch, createEntity } from '../../lib/api';
 import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
 
 type Phase = 'input' | 'scanning' | 'review' | 'done';
@@ -33,7 +39,7 @@ type CommittedEntity = {
 const STEPS = [
   { key: 'input', label: 'Provide' },
   { key: 'review', label: 'Review' },
-  { key: 'done', label: 'Add' },
+  { key: 'done', label: 'Add' }
 ] as const;
 
 const Stepper = ({ phase }: { phase: Phase }) => {
@@ -46,7 +52,9 @@ const Stepper = ({ phase }: { phase: Phase }) => {
         return (
           <span key={s.key} className={styles.stepperItem}>
             {i > 0 && <span className={`${styles.stepLine} ${done ? styles.stepLineDone : ''}`} />}
-            <span className={`${styles.step} ${active ? styles.stepActive : ''} ${done ? styles.stepDone : ''}`}>
+            <span
+              className={`${styles.step} ${active ? styles.stepActive : ''} ${done ? styles.stepDone : ''}`}
+            >
               <span className={styles.stepNum}>{done ? <TbCheck size={10} /> : i + 1}</span>
               <span className={styles.stepLabel}>{s.label}</span>
             </span>
@@ -58,7 +66,9 @@ const Stepper = ({ phase }: { phase: Phase }) => {
 };
 
 const ExpandedDetail = ({ row }: { row: ExtractedEntity }) => {
-  const entries = Object.entries(row.fields).filter(([, v]) => v !== undefined && v !== '' && v !== null);
+  const entries = Object.entries(row.fields).filter(
+    ([, v]) => v !== undefined && v !== '' && v !== null
+  );
   if (entries.length === 0) return null;
   return (
     <div className={styles.detailGrid}>
@@ -97,22 +107,24 @@ export const ExtractScreen = () => {
   const runExtract = useCallback(async () => {
     setPhase('scanning');
     try {
-      const result = await apiFetch<{ entities: Array<{
-        name: string;
-        schema_id: string;
-        fields: Record<string, string>;
-        confidence: number;
-        source: string;
-      }> }>(`/api/${workspaceSlug}/ai/extract`, {
+      const result = await apiFetch<{
+        entities: Array<{
+          name: string;
+          schema_id: string;
+          fields: Record<string, string>;
+          confidence: number;
+          source: string;
+        }>;
+      }>(`/api/${workspaceSlug}/ai/extract`, {
         method: 'POST',
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text })
       });
 
       const extracted: ExtractedEntity[] = (result.entities ?? []).map((e, i) => ({
         id: `extract-${i}`,
         ...e,
         accepted: true,
-        expanded: false,
+        expanded: false
       }));
       setRows(extracted);
       setPhase('review');
@@ -122,50 +134,55 @@ export const ExtractScreen = () => {
   }, [workspaceSlug, text]);
 
   const toggleRow = useCallback((id: string) => {
-    setRows(rs => rs.map(r => r.id === id ? { ...r, accepted: !r.accepted } : r));
+    setRows(rs => rs.map(r => (r.id === id ? { ...r, accepted: !r.accepted } : r)));
   }, []);
 
   const toggleExpand = useCallback((id: string) => {
-    setRows(rs => rs.map(r => r.id === id ? { ...r, expanded: !r.expanded } : r));
+    setRows(rs => rs.map(r => (r.id === id ? { ...r, expanded: !r.expanded } : r)));
   }, []);
 
   const updateRowName = useCallback((id: string, name: string) => {
-    setRows(rs => rs.map(r => r.id === id ? { ...r, name } : r));
+    setRows(rs => rs.map(r => (r.id === id ? { ...r, name } : r)));
   }, []);
 
   const commit = useCallback(async () => {
     const accepted = rows.filter(r => r.accepted);
-    
+
     try {
       // Build a map of entity names for reference resolution
       const nameToRow = new Map(accepted.map(row => [row.name.toLowerCase(), row]));
       const createdEntities: typeof accepted = [];
       const nameToId = new Map<string, string>();
-      
+
       // Helper to check if an entity has unresolved references
-      const hasUnresolvedRefs = (row: typeof accepted[0]) => {
+      const hasUnresolvedRefs = (row: (typeof accepted)[0]) => {
         const schema = schemas.find(s => s.id === row.schema_id);
         if (!schema) return false;
-        
-        const refFields = schema.fields.filter(f => f.type === 'reference' || f.type === 'containment');
+
+        const refFields = schema.fields.filter(
+          f => f.type === 'reference' || f.type === 'containment'
+        );
         return refFields.some(field => {
           const value = row.fields[field.id];
           if (!value || typeof value !== 'string') return false;
-          
+
           // Check if any referenced entity names haven't been created yet
-          const refNames = value.split(',').map(n => n.trim().toLowerCase()).filter(Boolean);
+          const refNames = value
+            .split(',')
+            .map(n => n.trim().toLowerCase())
+            .filter(Boolean);
           return refNames.some(name => nameToRow.has(name) && !nameToId.has(name));
         });
       };
-      
+
       // Create entities in order, resolving references as we go
       const remaining = [...accepted];
       let lastCount = remaining.length;
-      
+
       while (remaining.length > 0) {
         // Find entities that can be created (no unresolved references)
         const canCreate = remaining.filter(row => !hasUnresolvedRefs(row));
-        
+
         if (canCreate.length === 0) {
           // No progress possible - create remaining entities without resolving refs
           console.warn('Circular or unresolvable references detected, creating remaining entities');
@@ -174,23 +191,25 @@ export const ExtractScreen = () => {
               _schemaId: row.schema_id,
               _name: row.name,
               _description: '',
-              ...row.fields,
+              ...row.fields
             });
             nameToId.set(row.name.toLowerCase(), entity._uid);
             createdEntities.push(row);
           }
           break;
         }
-        
+
         // Create entities that are ready
         for (const row of canCreate) {
           const schema = schemas.find(s => s.id === row.schema_id);
           const fields = { ...row.fields };
-          
+
           // Resolve reference/containment fields to IDs
           if (schema) {
-            const refFields = schema.fields.filter(f => f.type === 'reference' || f.type === 'containment');
-            
+            const refFields = schema.fields.filter(
+              f => f.type === 'reference' || f.type === 'containment'
+            );
+
             for (const field of refFields) {
               // Check both field.id and field.name as keys (AI might use either)
               let value = fields[field.id];
@@ -203,13 +222,16 @@ export const ExtractScreen = () => {
                   fields[field.id] = value;
                 }
               }
-              
+
               if (value && typeof value === 'string') {
-                const refNames = value.split(',').map(n => n.trim()).filter(Boolean);
+                const refNames = value
+                  .split(',')
+                  .map(n => n.trim())
+                  .filter(Boolean);
                 const refIds = refNames
                   .map(name => nameToId.get(name.toLowerCase()))
                   .filter((id): id is string => id !== undefined);
-                
+
                 if (refIds.length > 0) {
                   fields[field.id] = refIds.join(',');
                 } else {
@@ -218,35 +240,37 @@ export const ExtractScreen = () => {
               }
             }
           }
-          
+
           const entity = await createEntity(workspaceSlug, {
             _schemaId: row.schema_id,
             _name: row.name,
             _description: '',
-            ...fields,
+            ...fields
           });
           nameToId.set(row.name.toLowerCase(), entity._uid);
           createdEntities.push(row);
           remaining.splice(remaining.indexOf(row), 1);
         }
-        
+
         // Safety check for infinite loops
         if (remaining.length === lastCount) {
           throw new Error('Unable to resolve entity references');
         }
         lastCount = remaining.length;
       }
-      
-      setCommitted(createdEntities.map(row => ({ 
-        id: nameToId.get(row.name.toLowerCase()) ?? row.id, 
-        name: row.name, 
-        schema_id: row.schema_id 
-      })));
-      
+
+      setCommitted(
+        createdEntities.map(row => ({
+          id: nameToId.get(row.name.toLowerCase()) ?? row.id,
+          name: row.name,
+          schema_id: row.schema_id
+        }))
+      );
+
       // Invalidate entity and schema queries to update counts and lists
       await queryClient.invalidateQueries({ queryKey: entityKeys.all });
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceSlug) });
-      
+
       setPhase('done');
     } catch (error) {
       console.error('Failed to create entities:', error);
@@ -270,11 +294,13 @@ export const ExtractScreen = () => {
     <div className={styles.extract}>
       <div className={styles.header}>
         <div className={styles.headerContent}>
-          <div className={styles.eyebrow}><TbWand size={11} /> Extract</div>
+          <div className={styles.eyebrow}>
+            <TbWand size={11} /> Extract
+          </div>
           <div className={styles.title}>Find entities in content</div>
           <div className={styles.desc}>
-            Paste a doc or drop a file. The assistant detects components, APIs and services,
-            maps them to your schema, and lets you review before anything is saved.
+            Paste a doc or drop a file. The assistant detects components, APIs and services, maps
+            them to your schema, and lets you review before anything is saved.
           </div>
         </div>
         <Stepper phase={phase} />
@@ -302,7 +328,9 @@ export const ExtractScreen = () => {
           {tab === 'paste' ? (
             <textarea
               className={styles.textarea}
-              placeholder={'Paste an architecture doc, RFC, meeting notes, an email thread...\n\ne.g. "The new Returns Service will let customers create RMAs. It calls the Shipping API for labels..."'}
+              placeholder={
+                'Paste an architecture doc, RFC, meeting notes, an email thread...\n\ne.g. "The new Returns Service will let customers create RMAs. It calls the Shipping API for labels..."'
+              }
               value={text}
               onChange={e => setText(e.target.value)}
             />
@@ -311,7 +339,10 @@ export const ExtractScreen = () => {
               className={`${styles.dropzone} ${file ? styles.dropzoneHasFile : ''}`}
               onClick={() => fileRef.current?.click()}
               onDragOver={e => e.preventDefault()}
-              onDrop={e => { e.preventDefault(); if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); }}
+              onDrop={e => {
+                e.preventDefault();
+                if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+              }}
             >
               <input
                 ref={fileRef}
@@ -326,7 +357,9 @@ export const ExtractScreen = () => {
               {file ? (
                 <>
                   <div className={styles.dropFileName}>{file.name}</div>
-                  <div className={styles.dropSub}>{(file.size / 1024).toFixed(1)} KB · click to replace</div>
+                  <div className={styles.dropSub}>
+                    {(file.size / 1024).toFixed(1)} KB · click to replace
+                  </div>
                 </>
               ) : (
                 <>
@@ -355,7 +388,9 @@ export const ExtractScreen = () => {
 
       {phase === 'scanning' && (
         <div className={styles.scanning}>
-          <div className={styles.scanPulse}><TbWand size={22} /></div>
+          <div className={styles.scanPulse}>
+            <TbWand size={22} />
+          </div>
           <div className={styles.scanTitle}>Scanning content…</div>
           <div className={styles.scanSub}>Detecting entities and mapping to your schema</div>
         </div>
@@ -366,95 +401,111 @@ export const ExtractScreen = () => {
           <div className={styles.reviewBar}>
             <div className={styles.reviewBarL}>
               <b>{rows.length}</b> detected &middot;{' '}
-              <span className={styles.sumAdd}><b>{acceptedCount}</b> to add</span>
+              <span className={styles.sumAdd}>
+                <b>{acceptedCount}</b> to add
+              </span>
             </div>
-            <button type="button" className={styles.ghostBtn} onClick={() => setRows(rs => rs.map(r => ({ ...r, accepted: true })))}>
+            <button
+              type="button"
+              className={styles.ghostBtn}
+              onClick={() => setRows(rs => rs.map(r => ({ ...r, accepted: true })))}
+            >
               Reset selection
             </button>
           </div>
 
           <div className={styles.tableScroll}>
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.thExp} />
-                  <th className={styles.thCheck} />
-                  <th>Name</th>
-                  <th>Change</th>
-                  <th>Type</th>
-                  <th>Confidence</th>
-                  <th>Source</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(r => (
-                  <React.Fragment key={r.id}>
-                    <tr
-                      className={`${r.accepted ? '' : styles.rowRejected} ${r.expanded ? styles.rowExpanded : ''}`}
-                    >
-                      <td className={styles.tdExp}>
-                        <button
-                          type="button"
-                          className={`${styles.expBtn} ${r.expanded ? styles.expBtnOpen : ''}`}
-                          title={r.expanded ? 'Collapse' : 'Expand fields'}
-                          onClick={() => toggleExpand(r.id)}
-                        >
-                          <TbChevronRight size={12} />
-                        </button>
-                      </td>
-                      <td className={styles.tdCheck}>
-                        <input type="checkbox" checked={r.accepted} onChange={() => toggleRow(r.id)} />
-                      </td>
-                      <td>
-                        <input
-                          className={`${styles.cellInput} ${styles.cellInputName}`}
-                          value={r.name}
-                          onChange={e => updateRowName(r.id, e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        <span className={`${styles.actionPill} ${styles.actionAdd}`}>
-                          <TbPlus size={10} /> Add
-                        </span>
-                      </td>
-                      <td>
-                        <span className={styles.typeTag}>
-                          {schemaMap.get(r.schema_id)?.name ?? r.schema_id}
-                        </span>
-                      </td>
-                      <td>
-                        <div className={styles.conf}>
-                          <div className={`${styles.confBar} ${r.confidence > 0.85 ? styles.confHi : r.confidence > 0.7 ? styles.confMid : styles.confLo}`}
-                            style={{ width: `${Math.round(r.confidence * 100)}%` }} />
-                          <span className={styles.confNum}>{Math.round(r.confidence * 100)}%</span>
-                        </div>
-                      </td>
-                      <td className={styles.tdSource} title={r.source}>{r.source}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className={styles.rejectBtn}
-                          title={r.accepted ? 'Reject' : 'Accept'}
-                          onClick={() => toggleRow(r.id)}
-                        >
-                          {r.accepted ? <TbX size={12} /> : <TbPlus size={12} />}
-                        </button>
-                      </td>
-                    </tr>
-                    {r.expanded && (
-                      <tr className={styles.detailRow}>
-                        <td colSpan={8}>
-                          <ExpandedDetail row={r} />
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.thExp} />
+                    <th className={styles.thCheck} />
+                    <th>Name</th>
+                    <th>Change</th>
+                    <th>Type</th>
+                    <th>Confidence</th>
+                    <th>Source</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(r => (
+                    <React.Fragment key={r.id}>
+                      <tr
+                        className={`${r.accepted ? '' : styles.rowRejected} ${r.expanded ? styles.rowExpanded : ''}`}
+                      >
+                        <td className={styles.tdExp}>
+                          <button
+                            type="button"
+                            className={`${styles.expBtn} ${r.expanded ? styles.expBtnOpen : ''}`}
+                            title={r.expanded ? 'Collapse' : 'Expand fields'}
+                            onClick={() => toggleExpand(r.id)}
+                          >
+                            <TbChevronRight size={12} />
+                          </button>
+                        </td>
+                        <td className={styles.tdCheck}>
+                          <input
+                            type="checkbox"
+                            checked={r.accepted}
+                            onChange={() => toggleRow(r.id)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            className={`${styles.cellInput} ${styles.cellInputName}`}
+                            value={r.name}
+                            onChange={e => updateRowName(r.id, e.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <span className={`${styles.actionPill} ${styles.actionAdd}`}>
+                            <TbPlus size={10} /> Add
+                          </span>
+                        </td>
+                        <td>
+                          <span className={styles.typeTag}>
+                            {schemaMap.get(r.schema_id)?.name ?? r.schema_id}
+                          </span>
+                        </td>
+                        <td>
+                          <div className={styles.conf}>
+                            <div
+                              className={`${styles.confBar} ${r.confidence > 0.85 ? styles.confHi : r.confidence > 0.7 ? styles.confMid : styles.confLo}`}
+                              style={{ width: `${Math.round(r.confidence * 100)}%` }}
+                            />
+                            <span className={styles.confNum}>
+                              {Math.round(r.confidence * 100)}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className={styles.tdSource} title={r.source}>
+                          {r.source}
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className={styles.rejectBtn}
+                            title={r.accepted ? 'Reject' : 'Accept'}
+                            onClick={() => toggleRow(r.id)}
+                          >
+                            {r.accepted ? <TbX size={12} /> : <TbPlus size={12} />}
+                          </button>
                         </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      {r.expanded && (
+                        <tr className={styles.detailRow}>
+                          <td colSpan={8}>
+                            <ExpandedDetail row={r} />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className={styles.reviewFoot}>
@@ -467,7 +518,8 @@ export const ExtractScreen = () => {
               disabled={acceptedCount === 0}
               onClick={commit}
             >
-              <TbCheck size={12} /> Add {acceptedCount} {acceptedCount === 1 ? 'entity' : 'entities'}
+              <TbCheck size={12} /> Add {acceptedCount}{' '}
+              {acceptedCount === 1 ? 'entity' : 'entities'}
             </button>
           </div>
         </div>
@@ -475,7 +527,9 @@ export const ExtractScreen = () => {
 
       {phase === 'done' && (
         <div className={styles.donePhase}>
-          <div className={styles.doneCheck}><TbCheck size={24} /></div>
+          <div className={styles.doneCheck}>
+            <TbCheck size={24} />
+          </div>
           <div className={styles.doneTitle}>
             Added {committed.length} {committed.length === 1 ? 'entity' : 'entities'}
           </div>
@@ -488,15 +542,19 @@ export const ExtractScreen = () => {
                 key={e.id}
                 type="button"
                 className={styles.doneItem}
-                onClick={() => navigate({
-                  to: '/$workspaceSlug/entities',
-                  params: { workspaceSlug },
-                })}
+                onClick={() =>
+                  navigate({
+                    to: '/$workspaceSlug/entities',
+                    params: { workspaceSlug }
+                  })
+                }
               >
                 <span className={`${styles.actionPill} ${styles.actionAdd}`}>
                   <TbPlus size={10} /> Add
                 </span>
-                <span className={styles.doneItemSchema}>{schemaMap.get(e.schema_id)?.name ?? e.schema_id}</span>
+                <span className={styles.doneItemSchema}>
+                  {schemaMap.get(e.schema_id)?.name ?? e.schema_id}
+                </span>
                 <span className={styles.doneItemName}>{e.name}</span>
                 <TbChevronRight size={11} className={styles.doneItemChevron} />
               </button>
@@ -506,10 +564,12 @@ export const ExtractScreen = () => {
             <button
               type="button"
               className={styles.primaryBtn}
-              onClick={() => navigate({
-                to: '/$workspaceSlug/entities',
-                params: { workspaceSlug },
-              })}
+              onClick={() =>
+                navigate({
+                  to: '/$workspaceSlug/entities',
+                  params: { workspaceSlug }
+                })
+              }
             >
               View in Entities
             </button>

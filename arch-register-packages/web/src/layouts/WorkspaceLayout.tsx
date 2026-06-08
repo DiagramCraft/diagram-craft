@@ -21,12 +21,20 @@ import { useAuthorizationData } from '../auth/AuthorizationDataContext';
 import { WorkspaceContext } from './WorkspaceContext';
 import { deriveActiveView } from './deriveActiveView';
 import type { ViewId } from './viewId';
-import type { Project } from '../api';
+import type { Project } from '../lib/api';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import {
-  TbHome, TbFolders, TbDatabase, TbCode, TbSearch, TbSettings,
-  TbSparkles, TbWand, TbMessageCircleStar, TbFileAi,
+  TbHome,
+  TbFolders,
+  TbDatabase,
+  TbCode,
+  TbSearch,
+  TbSettings,
+  TbSparkles,
+  TbWand,
+  TbMessageCircleStar,
+  TbFileAi
 } from 'react-icons/tb';
 
 const ALL_RAIL_ITEMS: NavRailItem[] = [
@@ -36,18 +44,18 @@ const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'model', icon: TbCode, tooltip: 'Data model' },
   { id: 'search', icon: TbSearch, tooltip: 'Search' },
   { id: 'assistant', icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
-  { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' },
+  { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' }
 ];
 
 const VIEW_TO_RAIL: Record<string, string> = {
-  home: 'home',
+  'home': 'home',
   'project-detail': 'projects',
   'entity-browser': 'entities',
   'entity-detail': 'entities',
   'data-model': 'model',
-  search: 'search',
-  assistant: 'assistant',
-  extract: 'extract',
+  'search': 'search',
+  'assistant': 'assistant',
+  'extract': 'extract'
 };
 
 const SCHEMA_RESTRICTED_IDS = new Set(['home', 'projects', 'entities', 'search']);
@@ -59,7 +67,7 @@ const RAIL_TO_PATH: Record<string, string> = {
   model: 'model',
   search: 'search',
   assistant: 'assistant',
-  extract: 'extract',
+  extract: 'extract'
 };
 
 const getProjectSidebarTab = (project: Project | undefined): 'projects' | 'archive' =>
@@ -67,7 +75,6 @@ const getProjectSidebarTab = (project: Project | undefined): 'projects' | 'archi
 
 const getDefaultProject = (projects: Project[]): Project | undefined =>
   projects.find(p => p.status !== 'archived') ?? projects[0];
-
 
 export const WorkspaceLayout = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
@@ -81,7 +88,11 @@ export const WorkspaceLayout = () => {
   const [addEntityOpen, setAddEntityOpen] = useState(false);
   const [addProjectOpen, setAddProjectOpen] = useState(false);
 
-  const { data: workspaces = [], error: workspacesError, isLoading: isLoadingWorkspaces } = useWorkspaces();
+  const {
+    data: workspaces = [],
+    error: workspacesError,
+    isLoading: isLoadingWorkspaces
+  } = useWorkspaces();
   const ws = workspaces.find(w => w.url_slug === workspaceSlug) ?? null;
 
   const { data: schemas = [], error: schemasError } = useSchemas(workspaceSlug, !!workspaceSlug);
@@ -99,80 +110,96 @@ export const WorkspaceLayout = () => {
     canCreateProjects,
     canCreateEntities,
     canManageMembers,
-    canManageViews,
+    canManageViews
   } = useWorkspacePermissions(ws?.id);
 
   // Get global permissions separately for the global settings link
   const authData = useAuthorizationData();
-  const canManageGlobalRoles = authData?.global_permissions?.includes('manage_workspace_roles') ?? false;
+  const canManageGlobalRoles =
+    authData?.global_permissions?.includes('manage_workspace_roles') ?? false;
 
-  const availableSettingsSections = useMemo(() => [
-    ...(canManageWorkspaces ? ['general', 'danger'] : []),
-    ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
-    ...(canManageMembers ? ['roles', 'members'] : []),
-    ...(canManageWorkspaces ? ['ai'] : []),
-    ...(canViewAudit ? ['audit'] : []),
-  ], [canManageWorkspaces, canManageTeams, canManageMembers, canViewAudit]);
+  const availableSettingsSections = useMemo(
+    () => [
+      ...(canManageWorkspaces ? ['general', 'danger'] : []),
+      ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
+      ...(canManageMembers ? ['roles', 'members'] : []),
+      ...(canManageWorkspaces ? ['ai'] : []),
+      ...(canViewAudit ? ['audit'] : [])
+    ],
+    [canManageWorkspaces, canManageTeams, canManageMembers, canViewAudit]
+  );
 
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
 
-  const showSidebar = activeView !== 'search' && activeView !== 'diagram'
-    && activeView !== 'assistant' && activeView !== 'extract';
+  const showSidebar =
+    activeView !== 'search' &&
+    activeView !== 'diagram' &&
+    activeView !== 'assistant' &&
+    activeView !== 'extract';
 
-  const handleRailPick = useCallback((id: string) => {
-    if (id === 'model' && !canViewSchemas) return;
-    if (id === 'projects') {
-      const defaultProject = getDefaultProject(projects);
-      if (defaultProject) {
-        navigate({
-          to: '/$workspaceSlug/projects/$projectId',
-          params: { workspaceSlug, projectId: defaultProject.id },
-          search: { tab: getProjectSidebarTab(defaultProject) },
-        });
-      } else {
-        setAddProjectOpen(true);
+  const handleRailPick = useCallback(
+    (id: string) => {
+      if (id === 'model' && !canViewSchemas) return;
+      if (id === 'projects') {
+        const defaultProject = getDefaultProject(projects);
+        if (defaultProject) {
+          navigate({
+            to: '/$workspaceSlug/projects/$projectId',
+            params: { workspaceSlug, projectId: defaultProject.id },
+            search: { tab: getProjectSidebarTab(defaultProject) }
+          });
+        } else {
+          setAddProjectOpen(true);
+        }
+        return;
       }
-      return;
-    }
-    const path = RAIL_TO_PATH[id];
-    if (path !== undefined) {
-      navigate({
-        to: path === '' ? '/$workspaceSlug' : `/$workspaceSlug/${path}` as string,
-        params: { workspaceSlug },
-      });
-    }
-  }, [canViewSchemas, navigate, projects, workspaceSlug]);
+      const path = RAIL_TO_PATH[id];
+      if (path !== undefined) {
+        navigate({
+          to: path === '' ? '/$workspaceSlug' : (`/$workspaceSlug/${path}` as string),
+          params: { workspaceSlug }
+        });
+      }
+    },
+    [canViewSchemas, navigate, projects, workspaceSlug]
+  );
 
-  const handlePickWs = useCallback((wsId: string) => {
-    const target = workspaces.find(w => w.id === wsId);
-    if (target) {
-      navigate({ to: '/$workspaceSlug', params: { workspaceSlug: target.url_slug } });
-    }
-  }, [navigate, workspaces]);
+  const handlePickWs = useCallback(
+    (wsId: string) => {
+      const target = workspaces.find(w => w.id === wsId);
+      if (target) {
+        navigate({ to: '/$workspaceSlug', params: { workspaceSlug: target.url_slug } });
+      }
+    },
+    [navigate, workspaces]
+  );
 
-  const handleQuerySubmit = useCallback((nextQuery: string) => {
-    const trimmed = nextQuery.trim();
-    if (trimmed !== '') {
-      navigate({
-        to: '/$workspaceSlug/search',
-        params: { workspaceSlug },
-        search: { q: trimmed },
-      });
-    }
-  }, [navigate, workspaceSlug]);
+  const handleQuerySubmit = useCallback(
+    (nextQuery: string) => {
+      const trimmed = nextQuery.trim();
+      if (trimmed !== '') {
+        navigate({
+          to: '/$workspaceSlug/search',
+          params: { workspaceSlug },
+          search: { q: trimmed }
+        });
+      }
+    },
+    [navigate, workspaceSlug]
+  );
 
   const handleOpenSettings = useCallback(() => {
     if (defaultSettingsSection) {
       navigate({
         to: '/$workspaceSlug/settings',
         params: { workspaceSlug },
-        search: { section: defaultSettingsSection },
+        search: { section: defaultSettingsSection }
       });
     }
   }, [defaultSettingsSection, navigate, workspaceSlug]);
 
   const handleOpenGlobalSettings = useCallback(() => {
-    navigate({ 
+    navigate({
       to: '/$workspaceSlug/settings/global',
       params: { workspaceSlug }
     });
@@ -180,22 +207,46 @@ export const WorkspaceLayout = () => {
 
   const visibleRailItems = useMemo(() => {
     const aiEnabled = aiConfig?.enabled === true;
-    return ALL_RAIL_ITEMS
-      .filter(item => canViewSchemas || SCHEMA_RESTRICTED_IDS.has(item.id))
-      .filter(item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract'));
+    return ALL_RAIL_ITEMS.filter(
+      item => canViewSchemas || SCHEMA_RESTRICTED_IDS.has(item.id)
+    ).filter(item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract'));
   }, [canViewSchemas, aiConfig?.enabled]);
 
   const trail = buildTrail(activeView, workspaceSlug, projects, matches, navigate);
 
-  const contextValue = useMemo(() => ({
-    workspace: ws,
-    workspaceSlug,
-    schemas,
-    enums,
-    projects,
-    lifecycleStates,
-    teams,
-    permissions: {
+  const contextValue = useMemo(
+    () => ({
+      workspace: ws,
+      workspaceSlug,
+      schemas,
+      enums,
+      projects,
+      lifecycleStates,
+      teams,
+      permissions: {
+        canManageWorkspaces,
+        canViewSchemas,
+        canEditSchemas,
+        canManageTeams,
+        canViewAudit,
+        canCreateProjects,
+        canCreateEntities,
+        canManageMembers,
+        canManageViews
+      },
+      availableSettingsSections,
+      defaultSettingsSection,
+      openAddProjectDialog: () => setAddProjectOpen(true),
+      openAddEntityDialog: () => setAddEntityOpen(true)
+    }),
+    [
+      ws,
+      workspaceSlug,
+      schemas,
+      enums,
+      projects,
+      lifecycleStates,
+      teams,
       canManageWorkspaces,
       canViewSchemas,
       canEditSchemas,
@@ -205,18 +256,10 @@ export const WorkspaceLayout = () => {
       canCreateEntities,
       canManageMembers,
       canManageViews,
-    },
-    availableSettingsSections,
-    defaultSettingsSection,
-    openAddProjectDialog: () => setAddProjectOpen(true),
-    openAddEntityDialog: () => setAddEntityOpen(true),
-  }), [
-    ws, workspaceSlug, schemas, enums, projects, lifecycleStates, teams,
-    canManageWorkspaces, canViewSchemas, canEditSchemas, canManageTeams,
-    canViewAudit, canCreateProjects, canCreateEntities, canManageMembers,
-    canManageViews,
-    availableSettingsSections, defaultSettingsSection,
-  ]);
+      availableSettingsSections,
+      defaultSettingsSection
+    ]
+  );
 
   if (workspacesError || projectsError || schemasError || enumsError) {
     const error = workspacesError ?? projectsError ?? schemasError ?? enumsError;
@@ -268,7 +311,9 @@ export const WorkspaceLayout = () => {
           <NavRail
             items={visibleRailItems}
             value={VIEW_TO_RAIL[activeView] ?? 'home'}
-            onChange={id => { if (id !== null) handleRailPick(id); }}
+            onChange={id => {
+              if (id !== null) handleRailPick(id);
+            }}
           />
           {showSidebar && <SidePanel />}
           <main className={styles.main}>
@@ -298,7 +343,7 @@ export const WorkspaceLayout = () => {
               navigate({
                 to: '/$workspaceSlug/projects/$projectId',
                 params: { workspaceSlug, projectId: project.id },
-                search: { tab: getProjectSidebarTab(project) },
+                search: { tab: getProjectSidebarTab(project) }
               });
             }}
             workspaceId={workspaceSlug}
@@ -312,7 +357,7 @@ export const WorkspaceLayout = () => {
             onCreated={entity => {
               navigate({
                 to: '/$workspaceSlug/entities/$entityId',
-                params: { workspaceSlug, entityId: entity._uid },
+                params: { workspaceSlug, entityId: entity._uid }
               });
             }}
             workspaceId={workspaceSlug}
@@ -337,14 +382,14 @@ const buildTrail = (
   workspaceSlug: string,
   projects: Project[],
   matches: Array<{ routeId: string; params: Record<string, string> }>,
-  navigate: ReturnType<typeof useNavigate>,
+  navigate: ReturnType<typeof useNavigate>
 ): BreadcrumbItem[] => {
   const items: BreadcrumbItem[] = [
     {
       label: 'Home',
       icon: <TbHome size={12} />,
-      onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }),
-    },
+      onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+    }
   ];
 
   // Extract params from route matches
@@ -361,10 +406,10 @@ const buildTrail = (
           if (def) {
             navigate({
               to: '/$workspaceSlug/projects/$projectId',
-              params: { workspaceSlug, projectId: def.id },
+              params: { workspaceSlug, projectId: def.id }
             });
           }
-        },
+        }
       });
       if (p) items.push({ label: p.name, onClick: () => {} });
       break;
@@ -373,14 +418,14 @@ const buildTrail = (
       items.push({
         label: 'Entities',
         icon: <TbDatabase size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } }),
+        onClick: () => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } })
       });
       break;
     case 'entity-detail':
       items.push({
         label: 'Entities',
         icon: <TbDatabase size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } }),
+        onClick: () => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } })
       });
       items.push({ label: 'Detail', onClick: () => {} });
       break;
@@ -388,7 +433,7 @@ const buildTrail = (
       items.push({
         label: 'Data model',
         icon: <TbCode size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } }),
+        onClick: () => navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } })
       });
       // Schema name from search params would need to be read separately
       break;
@@ -397,42 +442,43 @@ const buildTrail = (
       items.push({
         label: 'Settings',
         icon: <TbSettings size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/settings', params: { workspaceSlug } }),
+        onClick: () => navigate({ to: '/$workspaceSlug/settings', params: { workspaceSlug } })
       });
       break;
     case 'global-settings':
       items.push({
         label: 'Global Settings',
         icon: <TbSettings size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/settings/global', params: { workspaceSlug } }),
+        onClick: () =>
+          navigate({ to: '/$workspaceSlug/settings/global', params: { workspaceSlug } })
       });
       break;
     case 'account-settings':
       items.push({
         label: 'Account Settings',
         icon: <TbSettings size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/account', params: { workspaceSlug } }),
+        onClick: () => navigate({ to: '/$workspaceSlug/account', params: { workspaceSlug } })
       });
       break;
     case 'search':
       items.push({
         label: 'Search',
         icon: <TbSearch size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/search', params: { workspaceSlug } }),
+        onClick: () => navigate({ to: '/$workspaceSlug/search', params: { workspaceSlug } })
       });
       break;
     case 'assistant':
       items.push({
         label: 'AI Assistant',
         icon: <TbSparkles size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/assistant', params: { workspaceSlug } }),
+        onClick: () => navigate({ to: '/$workspaceSlug/assistant', params: { workspaceSlug } })
       });
       break;
     case 'extract':
       items.push({
         label: 'AI Extract',
         icon: <TbWand size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/extract', params: { workspaceSlug } }),
+        onClick: () => navigate({ to: '/$workspaceSlug/extract', params: { workspaceSlug } })
       });
       break;
     case 'diagram': {
@@ -445,10 +491,10 @@ const buildTrail = (
           if (def) {
             navigate({
               to: '/$workspaceSlug/projects/$projectId',
-              params: { workspaceSlug, projectId: def.id },
+              params: { workspaceSlug, projectId: def.id }
             });
           }
-        },
+        }
       });
       if (p) {
         items.push({
@@ -456,8 +502,8 @@ const buildTrail = (
           onClick: () =>
             navigate({
               to: '/$workspaceSlug/projects/$projectId',
-              params: { workspaceSlug, projectId: p.id },
-            }),
+              params: { workspaceSlug, projectId: p.id }
+            })
         });
       }
       items.push({ label: 'Diagram', onClick: () => {} });

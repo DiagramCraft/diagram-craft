@@ -8,19 +8,19 @@ import {
   TbHome,
   TbSearch,
   TbFolders,
-  TbX,
+  TbX
 } from 'react-icons/tb';
 import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { resolveSchemaColor } from '../../api';
+import { resolveSchemaColor } from '../../lib/api';
 import type {
   EntitySchema,
   EntitySearchResult,
   ProjectFileSearchResult,
   ProjectSearchResult,
   SchemaSearchResult,
-  SearchResponse,
-} from '../../api';
+  SearchResponse
+} from '../../lib/api';
 import { TypeBadge } from '../../components/TypeBadge';
 import { Chip } from '../../components/Chip';
 import { StatusChip } from '../../components/StatusChip';
@@ -41,7 +41,7 @@ const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: typeof Tb
   { value: 'entities', label: 'Entities', icon: TbDatabase },
   { value: 'projects', label: 'Projects', icon: TbFolders },
   { value: 'files', label: 'Diagrams', icon: TbFolder },
-  { value: 'schemas', label: 'Schemas', icon: TbCode },
+  { value: 'schemas', label: 'Schemas', icon: TbCode }
 ];
 
 const EMPTY_RESULTS: SearchResponse = {
@@ -49,7 +49,7 @@ const EMPTY_RESULTS: SearchResponse = {
   projects: [],
   files: [],
   entities: [],
-  schemas: [],
+  schemas: []
 };
 
 // ── Match highlighting ───────────────────────────────────────
@@ -105,7 +105,7 @@ export const SearchScreen = () => {
     {
       q: trimmed,
       limitPerType: filter === 'all' ? 8 : 24,
-      types: filter === 'all' ? null : [filter],
+      types: filter === 'all' ? null : [filter]
     },
     { enabled: trimmed !== '' }
   );
@@ -128,33 +128,37 @@ export const SearchScreen = () => {
 
   // Build flat row list for keyboard navigation
   const groups = useMemo(() => {
-    const g: Array<{ id: string; label: string; rows: Array<{ kind: string; id: string; data: unknown }> }> = [];
+    const g: Array<{
+      id: string;
+      label: string;
+      rows: Array<{ kind: string; id: string; data: unknown }>;
+    }> = [];
     if (filter === 'all' || filter === 'entities') {
       g.push({
         id: 'entities',
         label: 'Entities',
-        rows: results.entities.map(e => ({ kind: 'entity', id: e.entityId, data: e })),
+        rows: results.entities.map(e => ({ kind: 'entity', id: e.entityId, data: e }))
       });
     }
     if (filter === 'all' || filter === 'projects') {
       g.push({
         id: 'projects',
         label: 'Projects',
-        rows: results.projects.map(p => ({ kind: 'project', id: p.id, data: p })),
+        rows: results.projects.map(p => ({ kind: 'project', id: p.id, data: p }))
       });
     }
     if (filter === 'all' || filter === 'files') {
       g.push({
         id: 'files',
         label: 'Diagrams',
-        rows: results.files.map(f => ({ kind: 'file', id: f.fileId, data: f })),
+        rows: results.files.map(f => ({ kind: 'file', id: f.fileId, data: f }))
       });
     }
     if (filter === 'all' || filter === 'schemas') {
       g.push({
         id: 'schemas',
         label: 'Schemas',
-        rows: results.schemas.map(s => ({ kind: 'schema', id: s.schemaId, data: s })),
+        rows: results.schemas.map(s => ({ kind: 'schema', id: s.schemaId, data: s }))
       });
     }
     return g.filter(g => g.rows.length > 0);
@@ -165,13 +169,16 @@ export const SearchScreen = () => {
   const categoryCounts = useMemo(
     () => ({
       all:
-        results.entities.length + results.projects.length + results.files.length + results.schemas.length,
+        results.entities.length +
+        results.projects.length +
+        results.files.length +
+        results.schemas.length,
       entities: results.entities.length,
       projects: results.projects.length,
       files: results.files.length,
-      schemas: results.schemas.length,
+      schemas: results.schemas.length
     }),
-    [results],
+    [results]
   );
 
   const totalResults = categoryCounts.all;
@@ -211,35 +218,50 @@ export const SearchScreen = () => {
     (q: string) => {
       routerNavigate({ to: '/$workspaceSlug/search', params: { workspaceSlug }, search: { q } });
     },
-    [routerNavigate, workspaceSlug],
+    [routerNavigate, workspaceSlug]
   );
 
   const navigateToEntity = useCallback(
     (entityId: string) => {
-      routerNavigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId } });
+      routerNavigate({
+        to: '/$workspaceSlug/entities/$entityId',
+        params: { workspaceSlug, entityId }
+      });
     },
-    [routerNavigate, workspaceSlug],
+    [routerNavigate, workspaceSlug]
   );
 
   const navigateToProject = useCallback(
     (projectId: string) => {
-      routerNavigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId }, search: { tab: 'projects' as const } });
+      routerNavigate({
+        to: '/$workspaceSlug/projects/$projectId',
+        params: { workspaceSlug, projectId },
+        search: { tab: 'projects' as const }
+      });
     },
-    [routerNavigate, workspaceSlug],
+    [routerNavigate, workspaceSlug]
   );
 
   const navigateToProjectFolder = useCallback(
     (projectId: string, folder: string | null) => {
-      routerNavigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId }, search: { tab: 'projects' as const, folder: folder ?? undefined } });
+      routerNavigate({
+        to: '/$workspaceSlug/projects/$projectId',
+        params: { workspaceSlug, projectId },
+        search: { tab: 'projects' as const, folder: folder ?? undefined }
+      });
     },
-    [routerNavigate, workspaceSlug],
+    [routerNavigate, workspaceSlug]
   );
 
   const navigateToSchema = useCallback(
     (schemaId: string) => {
-      routerNavigate({ to: '/$workspaceSlug/model', params: { workspaceSlug }, search: { schema: schemaId } });
+      routerNavigate({
+        to: '/$workspaceSlug/model',
+        params: { workspaceSlug },
+        search: { schema: schemaId }
+      });
     },
-    [routerNavigate, workspaceSlug],
+    [routerNavigate, workspaceSlug]
   );
 
   const openRow = useCallback(
@@ -252,13 +274,13 @@ export const SearchScreen = () => {
         const f = row.data as ProjectFileSearchResult;
         navigateToProjectFolder(
           f.projectId,
-          f.path.includes('/') ? f.path.slice(0, f.path.lastIndexOf('/')) : null,
+          f.path.includes('/') ? f.path.slice(0, f.path.lastIndexOf('/')) : null
         );
       } else if (row.kind === 'schema') {
         navigateToSchema(row.id);
       }
     },
-    [navigateToEntity, navigateToProject, navigateToProjectFolder, navigateToSchema],
+    [navigateToEntity, navigateToProject, navigateToProjectFolder, navigateToSchema]
   );
 
   // Keyboard navigation
@@ -274,7 +296,7 @@ export const SearchScreen = () => {
       if (!flatRows.length) return;
       const curIdx = Math.max(
         0,
-        flatRows.findIndex(r => selected && r.id === selected.id && r.kind === selected.kind),
+        flatRows.findIndex(r => selected && r.id === selected.id && r.kind === selected.kind)
       );
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -383,9 +405,15 @@ export const SearchScreen = () => {
       <div className={styles.body}>
         <div className={styles.resultsList}>
           {trimmed === '' ? (
-            <EmptyState title="Start searching" sub="Search across entities, projects, diagrams, and schemas." />
+            <EmptyState
+              title="Start searching"
+              sub="Search across entities, projects, diagrams, and schemas."
+            />
           ) : loading ? (
-            <EmptyState title="Searching…" sub="Looking through projects, files, entities, and schemas." />
+            <EmptyState
+              title="Searching…"
+              sub="Looking through projects, files, entities, and schemas."
+            />
           ) : totalResults === 0 ? (
             <EmptyState
               title={`No results for "${trimmed}"`}
@@ -449,7 +477,7 @@ const ResultRow = ({
   isSelected,
   onSelect,
   onOpen,
-  schemaMap,
+  schemaMap
 }: {
   row: { kind: string; id: string; data: unknown };
   q: string;
@@ -482,7 +510,14 @@ const ResultRow = ({
         )}
         <div className={styles.rowBody}>
           <div className={styles.rowTitle}>
-            <button type="button" className={styles.rowName} onClick={ev => { ev.stopPropagation(); onOpen(); }}>
+            <button
+              type="button"
+              className={styles.rowName}
+              onClick={ev => {
+                ev.stopPropagation();
+                onOpen();
+              }}
+            >
               <Hi s={e._name || e._slug} q={q} />
             </button>
             <Chip tone="ghost">{e.schemaName}</Chip>
@@ -501,11 +536,11 @@ const ResultRow = ({
               <span className={styles.dim}>/</span>
               <Hi s={e._slug} q={q} />
             </span>
-            {e._owner && (
-              <Chip tone="ghost">{e._owner}</Chip>
-            )}
+            {e._owner && <Chip tone="ghost">{e._owner}</Chip>}
             {e.matchedFields.slice(0, 3).map(f => (
-              <Chip key={f} tone="ghost">field:{f}</Chip>
+              <Chip key={f} tone="ghost">
+                field:{f}
+              </Chip>
             ))}
           </div>
         </div>
@@ -528,7 +563,14 @@ const ResultRow = ({
         </span>
         <div className={styles.rowBody}>
           <div className={styles.rowTitle}>
-            <button type="button" className={styles.rowName} onClick={ev => { ev.stopPropagation(); onOpen(); }}>
+            <button
+              type="button"
+              className={styles.rowName}
+              onClick={ev => {
+                ev.stopPropagation();
+                onOpen();
+              }}
+            >
               <Hi s={p.name} q={q} />
             </button>
             <StatusChip value={p.status} />
@@ -563,7 +605,14 @@ const ResultRow = ({
         </span>
         <div className={styles.rowBody}>
           <div className={styles.rowTitle}>
-            <button type="button" className={styles.rowName} onClick={ev => { ev.stopPropagation(); onOpen(); }}>
+            <button
+              type="button"
+              className={styles.rowName}
+              onClick={ev => {
+                ev.stopPropagation();
+                onOpen();
+              }}
+            >
               <Hi s={f.name} q={q} />
             </button>
             <Chip tone="ghost">Diagram</Chip>
@@ -609,7 +658,14 @@ const ResultRow = ({
         )}
         <div className={styles.rowBody}>
           <div className={styles.rowTitle}>
-            <button type="button" className={styles.rowName} onClick={ev => { ev.stopPropagation(); onOpen(); }}>
+            <button
+              type="button"
+              className={styles.rowName}
+              onClick={ev => {
+                ev.stopPropagation();
+                onOpen();
+              }}
+            >
               <Hi s={s.name} q={q} />
             </button>
             <Chip tone="ghost">{s.fieldMatches.length} field matches</Chip>
@@ -660,7 +716,7 @@ const PreviewPane = ({
   onProjectClick,
   onProjectFolderClick,
   onSchemaClick,
-  q,
+  q
 }: {
   preview: SearchPreview | null;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
@@ -673,7 +729,8 @@ const PreviewPane = ({
   if (!preview) {
     return (
       <div className={styles.previewEmpty}>
-        Hover or use <kbd className={styles.kbd}>↑</kbd><kbd className={styles.kbd}>↓</kbd> to preview a result.
+        Hover or use <kbd className={styles.kbd}>↑</kbd>
+        <kbd className={styles.kbd}>↓</kbd> to preview a result.
       </div>
     );
   }
@@ -692,28 +749,44 @@ const PreviewPane = ({
               size={28}
             />
           ) : (
-            <span className={styles.previewIcon}><TbDatabase size={16} /></span>
+            <span className={styles.previewIcon}>
+              <TbDatabase size={16} />
+            </span>
           )}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className={styles.previewEyebrow}>{e.schemaName}</div>
-            <div className={styles.previewTitle}><Hi s={e._name || e._slug} q={q} /></div>
+            <div className={styles.previewTitle}>
+              <Hi s={e._name || e._slug} q={q} />
+            </div>
           </div>
           {e._lifecycle && <StatusChip value={e._lifecycle} />}
         </div>
         {e._description && (
-          <div className={styles.previewDesc}><Hi s={e._description} q={q} /></div>
+          <div className={styles.previewDesc}>
+            <Hi s={e._description} q={q} />
+          </div>
         )}
         <dl className={styles.previewProps}>
           <dt>Name</dt>
-          <dd><Hi s={e._name} q={q} /></dd>
+          <dd>
+            <Hi s={e._name} q={q} />
+          </dd>
           <dt>Slug</dt>
-          <dd className={styles.mono}><Hi s={e._slug} q={q} /></dd>
+          <dd className={styles.mono}>
+            <Hi s={e._slug} q={q} />
+          </dd>
           <dt>Schema</dt>
-          <dd><Hi s={e.schemaName} q={q} /></dd>
+          <dd>
+            <Hi s={e.schemaName} q={q} />
+          </dd>
           <dt>Owner</dt>
-          <dd><Hi s={e._owner ?? '—'} q={q} /></dd>
+          <dd>
+            <Hi s={e._owner ?? '—'} q={q} />
+          </dd>
           <dt>Lifecycle</dt>
-          <dd><Hi s={e._lifecycle ?? '—'} q={q} /></dd>
+          <dd>
+            <Hi s={e._lifecycle ?? '—'} q={q} />
+          </dd>
         </dl>
         <div className={styles.previewActions}>
           <button
@@ -733,34 +806,42 @@ const PreviewPane = ({
     return (
       <div className={styles.previewBody}>
         <div className={styles.previewHead}>
-          <span className={styles.previewIcon}><TbFolders size={16} /></span>
+          <span className={styles.previewIcon}>
+            <TbFolders size={16} />
+          </span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className={styles.previewEyebrow}>Project</div>
-            <div className={styles.previewTitle}><Hi s={p.name} q={q} /></div>
+            <div className={styles.previewTitle}>
+              <Hi s={p.name} q={q} />
+            </div>
           </div>
           <StatusChip value={p.status} />
         </div>
         {p.description && (
-          <div className={styles.previewDesc}><Hi s={p.description} q={q} /></div>
+          <div className={styles.previewDesc}>
+            <Hi s={p.description} q={q} />
+          </div>
         )}
         <dl className={styles.previewProps}>
           <dt>Name</dt>
-          <dd><Hi s={p.name} q={q} /></dd>
+          <dd>
+            <Hi s={p.name} q={q} />
+          </dd>
           <dt>Status</dt>
-          <dd><Hi s={p.status} q={q} /></dd>
+          <dd>
+            <Hi s={p.status} q={q} />
+          </dd>
           {p.description && (
             <>
               <dt>Description</dt>
-              <dd><Hi s={p.description} q={q} /></dd>
+              <dd>
+                <Hi s={p.description} q={q} />
+              </dd>
             </>
           )}
         </dl>
         <div className={styles.previewActions}>
-          <button
-            type="button"
-            className={styles.previewBtn}
-            onClick={() => onProjectClick(p.id)}
-          >
+          <button type="button" className={styles.previewBtn} onClick={() => onProjectClick(p.id)}>
             Open project <TbArrowRight size={11} />
           </button>
         </div>
@@ -774,32 +855,39 @@ const PreviewPane = ({
     return (
       <div className={styles.previewBody}>
         <div className={styles.previewHead}>
-          <span className={styles.previewIcon}><TbFolder size={14} /></span>
+          <span className={styles.previewIcon}>
+            <TbFolder size={14} />
+          </span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className={styles.previewEyebrow}>Diagram</div>
-            <div className={styles.previewTitle}><Hi s={f.name} q={q} /></div>
+            <div className={styles.previewTitle}>
+              <Hi s={f.name} q={q} />
+            </div>
           </div>
         </div>
         <dl className={styles.previewProps}>
           <dt>Name</dt>
-          <dd><Hi s={f.name} q={q} /></dd>
+          <dd>
+            <Hi s={f.name} q={q} />
+          </dd>
           <dt>Project</dt>
-          <dd><Hi s={f.projectName} q={q} /></dd>
+          <dd>
+            <Hi s={f.projectName} q={q} />
+          </dd>
           <dt>Folder</dt>
-          <dd><Hi s={folder} q={q} /></dd>
+          <dd>
+            <Hi s={folder} q={q} />
+          </dd>
           <dt>Path</dt>
-          <dd className={styles.mono}><Hi s={f.path} q={q} /></dd>
+          <dd className={styles.mono}>
+            <Hi s={f.path} q={q} />
+          </dd>
         </dl>
         <div className={styles.previewActions}>
           <button
             type="button"
             className={styles.previewBtn}
-            onClick={() =>
-              onProjectFolderClick(
-                f.projectId,
-                f.path.includes('/') ? folder : null,
-              )
-            }
+            onClick={() => onProjectFolderClick(f.projectId, f.path.includes('/') ? folder : null)}
           >
             Open in project <TbArrowRight size={11} />
           </button>
@@ -823,16 +911,22 @@ const PreviewPane = ({
             size={28}
           />
         ) : (
-          <span className={styles.previewIcon}><TbCode size={14} /></span>
+          <span className={styles.previewIcon}>
+            <TbCode size={14} />
+          </span>
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className={styles.previewEyebrow}>Schema</div>
-          <div className={styles.previewTitle}><Hi s={s.name} q={q} /></div>
+          <div className={styles.previewTitle}>
+            <Hi s={s.name} q={q} />
+          </div>
         </div>
       </div>
       <dl className={styles.previewProps}>
         <dt>Name</dt>
-        <dd><Hi s={s.name} q={q} /></dd>
+        <dd>
+          <Hi s={s.name} q={q} />
+        </dd>
         <dt>Fields</dt>
         <dd>{allFields.length}</dd>
       </dl>
@@ -842,8 +936,12 @@ const PreviewPane = ({
           <div className={styles.fieldList}>
             {allFields.map(f => (
               <div key={f.id} className={styles.fieldRow}>
-                <span className={styles.fieldName}><Hi s={f.name} q={q} /></span>
-                <span className={styles.fieldId}><Hi s={f.id} q={q} /></span>
+                <span className={styles.fieldName}>
+                  <Hi s={f.name} q={q} />
+                </span>
+                <span className={styles.fieldId}>
+                  <Hi s={f.id} q={q} />
+                </span>
                 <span className={styles.fieldType}>{f.type}</span>
               </div>
             ))}

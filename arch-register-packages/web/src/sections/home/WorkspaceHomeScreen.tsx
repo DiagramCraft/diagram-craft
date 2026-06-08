@@ -5,11 +5,16 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../../components/Chip';
 import { TypeBadge } from '../../components/TypeBadge';
 import {
-  TbDatabase, TbFolders, TbFileVector, TbGitBranch,
-  TbPlus, TbChevronRight, TbChartBar,
+  TbDatabase,
+  TbFolders,
+  TbFileVector,
+  TbGitBranch,
+  TbPlus,
+  TbChevronRight,
+  TbChartBar
 } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../api';
-import type { AuditLogEntry, Project } from '../../api';
+import { resolveSchemaColor } from '../../lib/api';
+import type { AuditLogEntry, Project } from '../../lib/api';
 import { useAuditLog } from '../../hooks/useAudit';
 import { useEntityFacets } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -17,7 +22,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 const PROJECT_STATUS_META = {
   pinned: { label: 'Pinned' },
   active: { label: 'Active' },
-  archived: { label: 'Archived' },
+  archived: { label: 'Archived' }
 } as const;
 
 const MAX_RECENT_ACTIVITY_ENTRIES = 15;
@@ -25,13 +30,19 @@ const MAX_RECENT_ACTIVITY_ENTRIES = 15;
 export const WorkspaceHomeScreen = () => {
   const navigate = useNavigate();
   const {
-    workspace, workspaceSlug, schemas, projects, permissions,
-    openAddProjectDialog, openAddEntityDialog,
+    workspace,
+    workspaceSlug,
+    schemas,
+    projects,
+    permissions,
+    openAddProjectDialog,
+    openAddEntityDialog
   } = useWorkspaceContext();
-  const { canViewAudit, canViewSchemas, canEditSchemas, canCreateProjects, canCreateEntities } = permissions;
+  const { canViewAudit, canViewSchemas, canEditSchemas, canCreateProjects, canCreateEntities } =
+    permissions;
   const collapsedProjectCount = 6;
   const [showAllProjects, setShowAllProjects] = useState(false);
-  
+
   const totalEntities = schemas.reduce((sum, s) => sum + s.entity_count, 0);
   const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
   const nonArchivedProjects = projects.filter(p => p.status !== 'archived');
@@ -69,10 +80,17 @@ export const WorkspaceHomeScreen = () => {
   const handleActivityClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        navigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId: entry.entity_id } });
+        navigate({
+          to: '/$workspaceSlug/entities/$entityId',
+          params: { workspaceSlug, entityId: entry.entity_id }
+        });
         break;
       case 'project':
-        navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId: entry.entity_id }, search: { tab: 'projects' as const } });
+        navigate({
+          to: '/$workspaceSlug/projects/$projectId',
+          params: { workspaceSlug, projectId: entry.entity_id },
+          search: { tab: 'projects' as const }
+        });
         break;
       case 'entity_schema':
         navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } });
@@ -83,21 +101,31 @@ export const WorkspaceHomeScreen = () => {
 
   const getOperationLabel = (operation: string): string => {
     switch (operation) {
-      case 'create': return 'created';
-      case 'update': return 'updated';
-      case 'delete': return 'deleted';
-      default: return operation;
+      case 'create':
+        return 'created';
+      case 'update':
+        return 'updated';
+      case 'delete':
+        return 'deleted';
+      default:
+        return operation;
     }
   };
 
   const getEntityTypeLabel = (entityType: string): string => {
     switch (entityType) {
-      case 'entity': return 'entity';
-      case 'project': return 'project';
-      case 'project_file': return 'diagram';
-      case 'entity_schema': return 'schema';
-      case 'workspace': return 'workspace';
-      default: return entityType;
+      case 'entity':
+        return 'entity';
+      case 'project':
+        return 'project';
+      case 'project_file':
+        return 'diagram';
+      case 'entity_schema':
+        return 'schema';
+      case 'workspace':
+        return 'workspace';
+      default:
+        return entityType;
     }
   };
 
@@ -111,10 +139,14 @@ export const WorkspaceHomeScreen = () => {
         </div>
         <div className={styles.actions}>
           {canCreateProjects && (
-            <Button icon={<TbPlus size={12} />} onClick={openAddProjectDialog}>New project</Button>
+            <Button icon={<TbPlus size={12} />} onClick={openAddProjectDialog}>
+              New project
+            </Button>
           )}
           {canCreateEntities && (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>New entity</Button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
+              New entity
+            </Button>
           )}
         </div>
       </div>
@@ -150,7 +182,9 @@ export const WorkspaceHomeScreen = () => {
             value={facets.completeness.above80}
             sub={`${facets.completeness.below50} below 50% complete`}
             icon={<TbChartBar size={14} />}
-            onClick={() => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug }, search: {} })}
+            onClick={() =>
+              navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug }, search: {} })
+            }
           />
         )}
       </div>
@@ -159,15 +193,17 @@ export const WorkspaceHomeScreen = () => {
         <Panel
           title="Projects"
           span2={showAllProjects}
-          actions={hasMoreProjects ? (
-            <button
-              type="button"
-              className={styles.link}
-              onClick={() => setShowAllProjects(current => !current)}
-            >
-              {showAllProjects ? 'Collapse' : 'View all'} &rarr;
-            </button>
-          ) : undefined}
+          actions={
+            hasMoreProjects ? (
+              <button
+                type="button"
+                className={styles.link}
+                onClick={() => setShowAllProjects(current => !current)}
+              >
+                {showAllProjects ? 'Collapse' : 'View all'} &rarr;
+              </button>
+            ) : undefined
+          }
         >
           <div className={styles.projectList}>
             {visibleProjects.length > 0 ? (
@@ -176,13 +212,17 @@ export const WorkspaceHomeScreen = () => {
                   key={p.id}
                   project={p}
                   expanded={showAllProjects}
-                  onClick={() => navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId: p.id }, search: { tab: 'projects' as const } })}
+                  onClick={() =>
+                    navigate({
+                      to: '/$workspaceSlug/projects/$projectId',
+                      params: { workspaceSlug, projectId: p.id },
+                      search: { tab: 'projects' as const }
+                    })
+                  }
                 />
               ))
             ) : (
-              <div className={`${styles.emptyInline} dim`}>
-                No pinned or active projects.
-              </div>
+              <div className={`${styles.emptyInline} dim`}>No pinned or active projects.</div>
             )}
           </div>
         </Panel>
@@ -190,88 +230,110 @@ export const WorkspaceHomeScreen = () => {
         {!showAllProjects && (
           <>
             {canViewSchemas && (
-            <Panel title="Data model">
-              <div className={styles.typecardList}>
-                {schemas.map((s, i) => (
-                  <button
-                    type="button"
-                    key={s.id}
-                    className={styles.typecard}
-                    onClick={() => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug }, search: { type: s.id } })}
-                  >
-                    <span className={styles.typecardBar} style={{ background: resolveSchemaColor(s, i) }} />
-                    <span className={styles.typecardIcon}>
-                      <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={22} />
-                    </span>
-                    <span className={styles.typecardBody}>
-                      <div className={styles.typecardName}>{s.name}</div>
-                      <div className={styles.typecardMeta}>
-                        {s.fields.length} fields &middot; {s.entity_count} records
-                      </div>
-                    </span>
-                    <TbChevronRight size={12} />
-                  </button>
-                ))}
-                {canEditSchemas && (
-                  <button
-                    type="button"
-                    className={`${styles.typecard} ${styles.typecardAdd}`}
-                    onClick={() => navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } })}
-                  >
-                    <span className={styles.typecardIcon}>
-                      <TbPlus size={14} />
-                    </span>
-                    <span className={styles.typecardBody}>
-                      <div className={styles.typecardName}>Add entity type</div>
-                      <div className={styles.typecardMeta}>Define a new schema</div>
-                    </span>
-                  </button>
-                )}
-              </div>
-            </Panel>
+              <Panel title="Data model">
+                <div className={styles.typecardList}>
+                  {schemas.map((s, i) => (
+                    <button
+                      type="button"
+                      key={s.id}
+                      className={styles.typecard}
+                      onClick={() =>
+                        navigate({
+                          to: '/$workspaceSlug/entities',
+                          params: { workspaceSlug },
+                          search: { type: s.id }
+                        })
+                      }
+                    >
+                      <span
+                        className={styles.typecardBar}
+                        style={{ background: resolveSchemaColor(s, i) }}
+                      />
+                      <span className={styles.typecardIcon}>
+                        <TypeBadge
+                          color={resolveSchemaColor(s, i)}
+                          name={s.name}
+                          icon={s.icon}
+                          size={22}
+                        />
+                      </span>
+                      <span className={styles.typecardBody}>
+                        <div className={styles.typecardName}>{s.name}</div>
+                        <div className={styles.typecardMeta}>
+                          {s.fields.length} fields &middot; {s.entity_count} records
+                        </div>
+                      </span>
+                      <TbChevronRight size={12} />
+                    </button>
+                  ))}
+                  {canEditSchemas && (
+                    <button
+                      type="button"
+                      className={`${styles.typecard} ${styles.typecardAdd}`}
+                      onClick={() =>
+                        navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } })
+                      }
+                    >
+                      <span className={styles.typecardIcon}>
+                        <TbPlus size={14} />
+                      </span>
+                      <span className={styles.typecardBody}>
+                        <div className={styles.typecardName}>Add entity type</div>
+                        <div className={styles.typecardMeta}>Define a new schema</div>
+                      </span>
+                    </button>
+                  )}
+                </div>
+              </Panel>
             )}
 
             {canViewAudit && (
-            <Panel
-              title="Recent activity"
-              actions={(
-                <button
-                  type="button"
-                  className={styles.link}
-                  onClick={() => navigate({ to: '/$workspaceSlug/settings', params: { workspaceSlug }, search: { section: 'audit' } })}
-                >
-                  All activity &rarr;
-                </button>
-              )}
-              span2
-            >
-              <div className={styles.activityList}>
-                {activityLoading ? (
-                  <div className={`${styles.emptyInline} dim`}>
-                    Loading activity...
-                  </div>
-                ) : recentActivity.length > 0 ? (
-                  recentActivity.slice(0, MAX_RECENT_ACTIVITY_ENTRIES).map((entry) => (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      className={styles.activityRow}
-                      onClick={() => handleActivityClick(entry)}
-                    >
-                      <span className={styles.activityWho}>{entry.user_id}</span>
-                      <span className="dim"> {getOperationLabel(entry.operation)} </span>
-                      <span className={styles.activityTarget}>{entry.entity_name}</span>
-                      <span className="dim">&middot; {getEntityTypeLabel(entry.entity_type)}</span>
-                      <span className={styles.activityTime}>{formatRelativeTime(entry.timestamp)}</span>
-                    </button>
-                  ))
-                ) : (
-                  <div className={`${styles.emptyInline} dim`}>
-                    No recent activity.
-                  </div>
-                )}
-              </div>
-            </Panel>
+              <Panel
+                title="Recent activity"
+                actions={
+                  <button
+                    type="button"
+                    className={styles.link}
+                    onClick={() =>
+                      navigate({
+                        to: '/$workspaceSlug/settings',
+                        params: { workspaceSlug },
+                        search: { section: 'audit' }
+                      })
+                    }
+                  >
+                    All activity &rarr;
+                  </button>
+                }
+                span2
+              >
+                <div className={styles.activityList}>
+                  {activityLoading ? (
+                    <div className={`${styles.emptyInline} dim`}>Loading activity...</div>
+                  ) : recentActivity.length > 0 ? (
+                    recentActivity.slice(0, MAX_RECENT_ACTIVITY_ENTRIES).map(entry => (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        className={styles.activityRow}
+                        onClick={() => handleActivityClick(entry)}
+                      >
+                        <span className={styles.activityWho}>{entry.user_id}</span>
+                        <span className="dim"> {getOperationLabel(entry.operation)} </span>
+                        <span className={styles.activityTarget}>{entry.entity_name}</span>
+                        <span className="dim">
+                          &middot; {getEntityTypeLabel(entry.entity_type)}
+                        </span>
+                        <span className={styles.activityTime}>
+                          {formatRelativeTime(entry.timestamp)}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className={`${styles.emptyInline} dim`}>No recent activity.</div>
+                  )}
+                </div>
+              </Panel>
             )}
           </>
         )}
@@ -286,7 +348,7 @@ const StatCard = ({
   sub,
   icon,
   accent,
-  onClick,
+  onClick
 }: {
   label: string;
   value: number;
@@ -300,7 +362,13 @@ const StatCard = ({
     onClick={onClick}
     role={onClick ? 'button' : undefined}
     tabIndex={onClick ? 0 : undefined}
-    onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); } : undefined}
+    onKeyDown={
+      onClick
+        ? e => {
+            if (e.key === 'Enter' || e.key === ' ') onClick();
+          }
+        : undefined
+    }
   >
     <div className={styles.statIcon}>{icon}</div>
     <div className={styles.statLabel}>{label}</div>
@@ -313,7 +381,7 @@ const Panel = ({
   title,
   actions,
   children,
-  span2,
+  span2
 }: {
   title: string;
   actions?: React.ReactNode;
@@ -332,7 +400,7 @@ const Panel = ({
 const ProjectRow = ({
   project,
   expanded,
-  onClick,
+  onClick
 }: {
   project: Project;
   expanded: boolean;
@@ -340,8 +408,8 @@ const ProjectRow = ({
 }) => (
   <button type="button" className={styles.projectRow} onClick={onClick}>
     {project.color && (
-      <span 
-        className={styles.projectColorBar} 
+      <span
+        className={styles.projectColorBar}
         style={{ background: project.color }}
         aria-hidden="true"
       />
@@ -351,11 +419,7 @@ const ProjectRow = ({
       <span className={styles.projectName}>{project.name}</span>
     </div>
     <div className={styles.projectRowR}>
-      {expanded && (
-        <Chip tone="ghost">
-          {PROJECT_STATUS_META[project.status].label}
-        </Chip>
-      )}
+      {expanded && <Chip tone="ghost">{PROJECT_STATUS_META[project.status].label}</Chip>}
       <span className="dim">{project.file_count} diagrams</span>
     </div>
   </button>

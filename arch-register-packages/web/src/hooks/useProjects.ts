@@ -6,8 +6,8 @@ import {
   updateProject,
   deleteProject,
   type Project,
-  type ProjectDetail,
-} from '../api';
+  type ProjectDetail
+} from '../lib/api';
 import { invalidateAuditQueries } from './useAudit';
 
 // Query keys factory
@@ -17,7 +17,7 @@ export const projectKeys = {
   list: (workspaceId: string) => [...projectKeys.lists(), workspaceId] as const,
   details: () => [...projectKeys.all, 'detail'] as const,
   detail: (workspaceId: string, projectId: string) =>
-    [...projectKeys.details(), workspaceId, projectId] as const,
+    [...projectKeys.details(), workspaceId, projectId] as const
 };
 
 // Hook for fetching project list
@@ -25,7 +25,7 @@ export const useProjects = (workspaceId: string) => {
   return useQuery({
     queryKey: projectKeys.list(workspaceId),
     queryFn: () => fetchProjects(workspaceId),
-    enabled: !!workspaceId,
+    enabled: !!workspaceId
   });
 };
 
@@ -34,7 +34,7 @@ export const useProject = (workspaceId: string, projectId: string) => {
   return useQuery({
     queryKey: projectKeys.detail(workspaceId, projectId),
     queryFn: () => fetchProject(workspaceId, projectId),
-    enabled: !!workspaceId && !!projectId,
+    enabled: !!workspaceId && !!projectId
   });
 };
 
@@ -50,17 +50,14 @@ export const useCreateProject = (workspaceId: string) => {
       status?: 'pinned' | 'active' | 'archived';
       color?: string | null;
     }) => createProject(workspaceId, body),
-    onSuccess: async (newProject) => {
+    onSuccess: async newProject => {
       // Update project list cache with the new project
-      queryClient.setQueryData(
-        projectKeys.list(workspaceId),
-        (old: Project[] | undefined) => {
-          if (!old) return [newProject];
-          return [...old, newProject];
-        }
-      );
+      queryClient.setQueryData(projectKeys.list(workspaceId), (old: Project[] | undefined) => {
+        if (!old) return [newProject];
+        return [...old, newProject];
+      });
       await invalidateAuditQueries(queryClient, workspaceId);
-    },
+    }
   });
 };
 
@@ -69,7 +66,10 @@ export const useUpdateProject = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ projectId, data }: {
+    mutationFn: ({
+      projectId,
+      data
+    }: {
       projectId: string;
       data: {
         name: string;
@@ -81,13 +81,10 @@ export const useUpdateProject = (workspaceId: string) => {
     }) => updateProject(workspaceId, projectId, data),
     onSuccess: async (updatedProject, variables) => {
       // Update the project list cache
-      queryClient.setQueryData(
-        projectKeys.list(workspaceId),
-        (old: Project[] | undefined) => {
-          if (!old) return old;
-          return old.map(p => p.id === variables.projectId ? updatedProject : p);
-        }
-      );
+      queryClient.setQueryData(projectKeys.list(workspaceId), (old: Project[] | undefined) => {
+        if (!old) return old;
+        return old.map(p => (p.id === variables.projectId ? updatedProject : p));
+      });
       // Update the project detail cache
       queryClient.setQueryData(
         projectKeys.detail(workspaceId, variables.projectId),
@@ -97,7 +94,7 @@ export const useUpdateProject = (workspaceId: string) => {
         }
       );
       await invalidateAuditQueries(queryClient, workspaceId);
-    },
+    }
   });
 };
 
@@ -111,6 +108,6 @@ export const useDeleteProject = (workspaceId: string) => {
       // Invalidate all project queries
       await queryClient.invalidateQueries({ queryKey: projectKeys.all });
       await invalidateAuditQueries(queryClient, workspaceId);
-    },
+    }
   });
 };

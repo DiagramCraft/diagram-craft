@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { ApiError } from '../../api';
+import { ApiError } from '../../lib/api';
 import { useCreateFolder } from '../../hooks/useProjectFiles';
 import styles from '../../dialogs/AddEntityDialog.module.css';
 
@@ -15,7 +15,14 @@ type AddFolderDialogProps = {
   parentFolder?: string;
 };
 
-export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, projectId, parentFolder }: AddFolderDialogProps) => {
+export const AddFolderDialog = ({
+  open,
+  onClose,
+  onCreated,
+  workspaceId,
+  projectId,
+  parentFolder
+}: AddFolderDialogProps) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
@@ -63,10 +70,23 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
       title="New folder"
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
-        { label: isPending ? 'Creating...' : 'Create folder', type: 'default', disabled: isPending, onClick: () => { void handleSubmit(); } }
+        {
+          label: isPending ? 'Creating...' : 'Create folder',
+          type: 'default',
+          disabled: isPending,
+          onClick: () => {
+            void handleSubmit();
+          }
+        }
       ]}
     >
-      <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
+      <form
+        className={styles.form}
+        onSubmit={e => {
+          e.preventDefault();
+          void handleSubmit();
+        }}
+      >
         <button type="submit" hidden />
         <FormElement label="Folder name">
           <TextInput

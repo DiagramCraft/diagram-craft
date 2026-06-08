@@ -4,8 +4,8 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { createProject, ApiError } from '../api';
-import type { Project, WorkspaceTeam } from '../api';
+import { createProject, ApiError } from '../lib/api';
+import type { Project, WorkspaceTeam } from '../lib/api';
 import { usePermissions } from '../auth/PermissionContext';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddEntityDialog.module.css';
@@ -13,7 +13,7 @@ import styles from './AddEntityDialog.module.css';
 const PROJECT_STATUSES = [
   { value: 'pinned', label: 'Pinned' },
   { value: 'active', label: 'Active' },
-  { value: 'archived', label: 'Archived' },
+  { value: 'archived', label: 'Archived' }
 ] as const;
 
 type AddProjectDialogProps = {
@@ -24,7 +24,13 @@ type AddProjectDialogProps = {
   teams: WorkspaceTeam[];
 };
 
-export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams }: AddProjectDialogProps) => {
+export const AddProjectDialog = ({
+  open,
+  onClose,
+  onCreated,
+  workspaceId,
+  teams
+}: AddProjectDialogProps) => {
   const { canCreateProject } = usePermissions();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -66,7 +72,7 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
         description: description.trim(),
         owner: owner || null,
         status,
-        color,
+        color
       });
       onCreated(project);
       onClose();
@@ -88,10 +94,23 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
       title="New project"
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
-        { label: submitting ? 'Creating...' : 'Create project', type: 'default', disabled: submitting, onClick: () => { void handleSubmit(); } }
+        {
+          label: submitting ? 'Creating...' : 'Create project',
+          type: 'default',
+          disabled: submitting,
+          onClick: () => {
+            void handleSubmit();
+          }
+        }
       ]}
     >
-      <form className={styles.form} onSubmit={e => { e.preventDefault(); void handleSubmit(); }}>
+      <form
+        className={styles.form}
+        onSubmit={e => {
+          e.preventDefault();
+          void handleSubmit();
+        }}
+      >
         <button type="submit" hidden />
         <FormElement label="Name">
           <TextInput
@@ -114,7 +133,9 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
         <FormElement label="Status">
           <Select.Root
             value={status}
-            onChange={value => setStatus((value as 'pinned' | 'active' | 'archived' | undefined) ?? 'active')}
+            onChange={value =>
+              setStatus((value as 'pinned' | 'active' | 'archived' | undefined) ?? 'active')
+            }
             style={{ width: '100%' }}
           >
             {PROJECT_STATUSES.map(option => (

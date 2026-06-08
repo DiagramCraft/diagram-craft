@@ -6,7 +6,12 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { FormSection } from '@diagram-craft/app-components/FormSection';
 import { Select } from '@diagram-craft/app-components/Select';
-import type { EntityRecord, EntitySchema, WorkspaceLifecycleState, ApiSelectField } from '../../../api';
+import type {
+  EntityRecord,
+  EntitySchema,
+  WorkspaceLifecycleState,
+  ApiSelectField
+} from '../../../lib/api';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities } from '../../../hooks/useEntities';
 
@@ -60,7 +65,7 @@ const QUADRANT_COLORS = [
   'var(--tag-service)',
   'var(--accent-fg)',
   'var(--warning-fg)',
-  'oklch(0.62 0.14 180)',
+  'oklch(0.62 0.14 180)'
 ];
 
 const RING_COLORS = [
@@ -68,7 +73,7 @@ const RING_COLORS = [
   'var(--accent-fg)',
   'var(--tag-system)',
   'var(--warning-fg)',
-  'var(--tag-service)',
+  'var(--tag-service)'
 ];
 
 // Alternating backgrounds from inner (lighter) to outer (darker)
@@ -77,7 +82,7 @@ const RING_BG = [
   'var(--cmp-bg)',
   'var(--panel-bg)',
   'var(--base-bg)',
-  'oklch(0.12 0.005 260)',
+  'oklch(0.12 0.005 260)'
 ];
 
 const LIFECYCLE_FIELD_ID = '_lifecycle';
@@ -110,7 +115,7 @@ const getSelectableFields = (
   ...schema.fields
     .filter((f): f is Extract<typeof f, { type: 'select' }> => f.type === 'select')
     .map(f => ({ id: f.id, label: f.name })),
-  ...(lifecycleStates.length > 0 ? [{ id: LIFECYCLE_FIELD_ID, label: 'Lifecycle' }] : []),
+  ...(lifecycleStates.length > 0 ? [{ id: LIFECYCLE_FIELD_ID, label: 'Lifecycle' }] : [])
 ];
 
 const getFieldValues = (
@@ -143,7 +148,7 @@ function buildQuadrants(values: Array<{ value: string; label: string }>): Quadra
     label: v.label,
     startAngle: (i / N) * 2 * Math.PI - Math.PI / 2,
     endAngle: ((i + 1) / N) * 2 * Math.PI - Math.PI / 2,
-    color: QUADRANT_COLORS[i % QUADRANT_COLORS.length]!,
+    color: QUADRANT_COLORS[i % QUADRANT_COLORS.length]!
   }));
 }
 
@@ -154,7 +159,7 @@ function buildRings(values: Array<{ value: string; label: string }>): Ring[] {
     label: v.label,
     innerR: (i / M) * MAX_R,
     outerR: ((i + 1) / M) * MAX_R,
-    color: RING_COLORS[i % RING_COLORS.length]!,
+    color: RING_COLORS[i % RING_COLORS.length]!
   }));
 }
 
@@ -172,10 +177,11 @@ function getBlipXY(entityId: string, quad: Quadrant, ring: Ring): { x: number; y
   const h1 = rHash(`${entityId}~a`);
   const h2 = rHash(`${entityId}~b`);
   const aSpread = (quad.endAngle - quad.startAngle) * 0.78;
-  const angle = quad.startAngle + (quad.endAngle - quad.startAngle) * 0.11 + (h1 % 9973) / 9973 * aSpread;
+  const angle =
+    quad.startAngle + (quad.endAngle - quad.startAngle) * 0.11 + ((h1 % 9973) / 9973) * aSpread;
   const rMin = ring.innerR < 10 ? 14 : ring.innerR + 10;
   const rMax = ring.outerR - 10;
-  const r = rMin + (h2 % 9871) / 9871 * (rMax - rMin);
+  const r = rMin + ((h2 % 9871) / 9871) * (rMax - rMin);
   return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) };
 }
 
@@ -220,7 +226,7 @@ function buildBlips(
       quadrantValue: qv,
       ringValue: rv,
       num: i + 1,
-      ...getBlipXY(e._uid, quad, ring),
+      ...getBlipXY(e._uid, quad, ring)
     };
   });
 }
@@ -233,7 +239,7 @@ export const RadarView = ({
   lifecycle,
   q: qProp,
   config: configProp,
-  onConfigChange,
+  onConfigChange
 }: {
   onEntityClick: (entityId: string) => void;
   owner?: string | null;
@@ -243,7 +249,9 @@ export const RadarView = ({
   onConfigChange?: (config: RadarConfig) => void;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
-  const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() => loadConfig(workspaceSlug));
+  const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() =>
+    loadConfig(workspaceSlug)
+  );
   const config = configProp ?? internalConfig;
 
   const [showSettings, setShowSettings] = useState(false);
@@ -259,7 +267,7 @@ export const RadarView = ({
     schemaId: config?.schemaId ?? null,
     owner: owner ?? null,
     lifecycle: lifecycle ?? null,
-    view: 'full',
+    view: 'full'
   });
 
   const schema = config ? (schemas.find(s => s.id === config.schemaId) ?? null) : null;
@@ -294,24 +302,26 @@ export const RadarView = ({
     if (quadFilter) xs = xs.filter(b => b.quadrantValue === quadFilter);
     if (ringFilter) xs = xs.filter(b => b.ringValue === ringFilter);
     const search = [q, qProp].filter(Boolean).join(' ');
-    if (search) xs = xs.filter(b =>
-      b.name.toLowerCase().includes(search.toLowerCase()) ||
-      b.description.toLowerCase().includes(search.toLowerCase())
-    );
+    if (search)
+      xs = xs.filter(
+        b =>
+          b.name.toLowerCase().includes(search.toLowerCase()) ||
+          b.description.toLowerCase().includes(search.toLowerCase())
+      );
     return xs;
   }, [allBlips, quadFilter, ringFilter, q, qProp]);
 
   const activeId = pinned ?? hovered;
   const activeBlip = useMemo(
-    () => activeId ? (allBlips.find(b => b.id === activeId) ?? null) : null,
+    () => (activeId ? (allBlips.find(b => b.id === activeId) ?? null) : null),
     [activeId, allBlips]
   );
   const activeQuad = useMemo(
-    () => activeBlip ? (quadrants.find(q => q.value === activeBlip.quadrantValue) ?? null) : null,
+    () => (activeBlip ? (quadrants.find(q => q.value === activeBlip.quadrantValue) ?? null) : null),
     [activeBlip, quadrants]
   );
   const activeRing = useMemo(
-    () => activeBlip ? (rings.find(r => r.value === activeBlip.ringValue) ?? null) : null,
+    () => (activeBlip ? (rings.find(r => r.value === activeBlip.ringValue) ?? null) : null),
     [activeBlip, rings]
   );
 
@@ -322,11 +332,11 @@ export const RadarView = ({
     const my = e.clientY - rect.top;
     setTipPos({
       x: mx > rect.width - 290 ? mx - 278 : mx + 18,
-      y: my > rect.height - 130 ? my - 120 : my + 4,
+      y: my > rect.height - 130 ? my - 120 : my + 4
     });
   }, []);
 
-  const onBlipClick = (id: string) => setPinned(p => p === id ? null : id);
+  const onBlipClick = (id: string) => setPinned(p => (p === id ? null : id));
 
   const handleSaveConfig = (newConfig: RadarConfig) => {
     if (onConfigChange) {
@@ -373,18 +383,16 @@ export const RadarView = ({
       {!config ? (
         <div className={styles.empty}>
           <div className={styles.emptyTitle}>Radar not configured</div>
-          <div>Click <b>Configure</b> to map a schema and fields to the radar axes.</div>
+          <div>
+            Click <b>Configure</b> to map a schema and fields to the radar axes.
+          </div>
         </div>
       ) : (
         <>
           <div className={styles.toolbar}>
             <div className={styles.searchInline}>
               <TbSearch size={12} />
-              <input
-                placeholder="Find an entry…"
-                value={q}
-                onChange={e => setQ(e.target.value)}
-              />
+              <input placeholder="Find an entry…" value={q} onChange={e => setQ(e.target.value)} />
             </div>
             <div className={styles.pills}>
               {rings.map(ring => (
@@ -392,7 +400,7 @@ export const RadarView = ({
                   key={ring.value}
                   type="button"
                   className={`${styles.pill}${ringFilter === ring.value ? ` ${styles.pillActive}` : ''}`}
-                  onClick={() => setRingFilter(r => r === ring.value ? null : ring.value)}
+                  onClick={() => setRingFilter(r => (r === ring.value ? null : ring.value))}
                 >
                   {ring.label}
                 </button>
@@ -406,7 +414,7 @@ export const RadarView = ({
                   key={quad.value}
                   type="button"
                   className={`${styles.pill}${quadFilter === quad.value ? ` ${styles.pillActive}` : ''}`}
-                  onClick={() => setQuadFilter(p => p === quad.value ? null : quad.value)}
+                  onClick={() => setQuadFilter(p => (p === quad.value ? null : quad.value))}
                 >
                   <span className={styles.pillDot} style={{ background: quad.color }} />
                   {quad.label}
@@ -434,8 +442,12 @@ export const RadarView = ({
                       isHovered={activeId === blip.id}
                       isDimmed={!!activeId && activeId !== blip.id}
                       onClick={() => onBlipClick(blip.id)}
-                      onMouseEnter={() => { if (!pinned) setHovered(blip.id); }}
-                      onMouseLeave={() => { if (!pinned) setHovered(null); }}
+                      onMouseEnter={() => {
+                        if (!pinned) setHovered(blip.id);
+                      }}
+                      onMouseLeave={() => {
+                        if (!pinned) setHovered(null);
+                      }}
                     />
                   );
                 })}
@@ -448,7 +460,10 @@ export const RadarView = ({
                   x={tipPos.x}
                   y={tipPos.y}
                   pinned={pinned === activeBlip.id}
-                  onDismiss={() => { setPinned(null); setHovered(null); }}
+                  onDismiss={() => {
+                    setPinned(null);
+                    setHovered(null);
+                  }}
                   onOpen={() => onEntityClick(activeBlip.id)}
                 />
               )}
@@ -479,8 +494,12 @@ export const RadarView = ({
                             ringLabel={ring?.label ?? blip.ringValue}
                             ringColor={ring?.color ?? 'var(--base-fg-more-dim)'}
                             active={activeId === blip.id}
-                            onMouseEnter={() => { if (!pinned) setHovered(blip.id); }}
-                            onMouseLeave={() => { if (!pinned) setHovered(null); }}
+                            onMouseEnter={() => {
+                              if (!pinned) setHovered(blip.id);
+                            }}
+                            onMouseLeave={() => {
+                              if (!pinned) setHovered(null);
+                            }}
                             onClick={() => onBlipClick(blip.id)}
                           />
                         );
@@ -512,7 +531,7 @@ export const RadarView = ({
 const RadarGrid = ({
   quadrants,
   rings,
-  dimmedQuad,
+  dimmedQuad
 }: {
   quadrants: Quadrant[];
   rings: Ring[];
@@ -526,35 +545,40 @@ const RadarGrid = ({
       {[...rings].reverse().map((ring, i) => (
         <circle
           key={`f${ring.value}`}
-          cx={CX} cy={CY} r={ring.outerR}
+          cx={CX}
+          cy={CY}
+          r={ring.outerR}
           fill={RING_BG[(rings.length - 1 - i) % RING_BG.length]}
         />
       ))}
 
       {/* Dim non-selected quadrants */}
-      {dimmedQuad && quadrants
-        .filter(q => q.value !== dimmedQuad)
-        .map(quad => {
-          const r = MAX_R;
-          const x1 = CX + r * Math.cos(quad.startAngle);
-          const y1 = CY + r * Math.sin(quad.startAngle);
-          const x2 = CX + r * Math.cos(quad.endAngle);
-          const y2 = CY + r * Math.sin(quad.endAngle);
-          const sweep = quad.endAngle - quad.startAngle > Math.PI ? 1 : 0;
-          return (
-            <path
-              key={quad.value}
-              d={`M ${CX} ${CY} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${sweep} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`}
-              style={dimStyle}
-            />
-          );
-        })}
+      {dimmedQuad &&
+        quadrants
+          .filter(q => q.value !== dimmedQuad)
+          .map(quad => {
+            const r = MAX_R;
+            const x1 = CX + r * Math.cos(quad.startAngle);
+            const y1 = CY + r * Math.sin(quad.startAngle);
+            const x2 = CX + r * Math.cos(quad.endAngle);
+            const y2 = CY + r * Math.sin(quad.endAngle);
+            const sweep = quad.endAngle - quad.startAngle > Math.PI ? 1 : 0;
+            return (
+              <path
+                key={quad.value}
+                d={`M ${CX} ${CY} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${sweep} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`}
+                style={dimStyle}
+              />
+            );
+          })}
 
       {/* Ring borders */}
       {rings.map(ring => (
         <circle
           key={`b${ring.value}`}
-          cx={CX} cy={CY} r={ring.outerR}
+          cx={CX}
+          cy={CY}
+          r={ring.outerR}
           fill="none"
           stroke="var(--panel-border)"
           strokeWidth="0.6"
@@ -568,8 +592,10 @@ const RadarGrid = ({
         return (
           <line
             key={`div${quad.value}`}
-            x1={CX} y1={CY}
-            x2={x.toFixed(1)} y2={y.toFixed(1)}
+            x1={CX}
+            y1={CY}
+            x2={x.toFixed(1)}
+            y2={y.toFixed(1)}
             stroke="var(--panel-border)"
             strokeWidth="0.8"
           />
@@ -590,15 +616,17 @@ const RadarGrid = ({
             x={lx.toFixed(1)}
             y={ly.toFixed(1)}
             dominantBaseline="central"
-            style={{
-              fontSize: 9,
-              fill: 'var(--base-fg-more-dim)',
-              letterSpacing: 0.5,
-              textTransform: 'uppercase',
-              fontFamily: 'var(--font-mono)',
-              pointerEvents: 'none',
-              userSelect: 'none',
-            } as React.CSSProperties}
+            style={
+              {
+                fontSize: 9,
+                fill: 'var(--base-fg-more-dim)',
+                letterSpacing: 0.5,
+                textTransform: 'uppercase',
+                fontFamily: 'var(--font-mono)',
+                pointerEvents: 'none',
+                userSelect: 'none'
+              } as React.CSSProperties
+            }
           >
             {ring.label.toUpperCase()}
           </text>
@@ -627,7 +655,7 @@ const RadarGrid = ({
               letterSpacing: 0.8,
               textTransform: 'uppercase',
               pointerEvents: 'none',
-              userSelect: 'none',
+              userSelect: 'none'
             }}
           >
             {quad.label}
@@ -636,7 +664,7 @@ const RadarGrid = ({
       })}
     </g>
   );
-}
+};
 
 // ── RadarBlip ─────────────────────────────────────────────────────────────────
 
@@ -647,7 +675,7 @@ const RadarBlip = ({
   isDimmed,
   onClick,
   onMouseEnter,
-  onMouseLeave,
+  onMouseLeave
 }: {
   blip: Blip;
   color: string;
@@ -665,9 +693,7 @@ const RadarBlip = ({
       onMouseLeave={onMouseLeave}
       style={{ cursor: 'pointer', opacity: isDimmed ? 0.2 : 1, transition: 'opacity 0.15s' }}
     >
-      {isHovered && (
-        <circle r={14} fill="none" stroke={color} strokeWidth="1.5" opacity="0.55" />
-      )}
+      {isHovered && <circle r={14} fill="none" stroke={color} strokeWidth="1.5" opacity="0.55" />}
       <circle r={9} fill={color} />
       <circle r={9} fill="black" opacity="0.22" />
       <text
@@ -680,14 +706,14 @@ const RadarBlip = ({
           fill: 'white',
           pointerEvents: 'none',
           userSelect: 'none',
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--font-mono)'
         }}
       >
         {blip.num}
       </text>
     </g>
   );
-}
+};
 
 // ── BlipTooltip ───────────────────────────────────────────────────────────────
 
@@ -699,7 +725,7 @@ const BlipTooltip = ({
   y,
   pinned,
   onDismiss,
-  onOpen,
+  onOpen
 }: {
   blip: Blip;
   quad: Quadrant;
@@ -716,10 +742,14 @@ const BlipTooltip = ({
       style={{ left: x, top: y }}
     >
       <div className={styles.tooltipHead}>
-        <span className={styles.tooltipNum} style={{ background: quad.color }}>{blip.num}</span>
+        <span className={styles.tooltipNum} style={{ background: quad.color }}>
+          {blip.num}
+        </span>
         <span className={styles.tooltipName}>{blip.name}</span>
         {pinned && (
-          <button type="button" className={styles.tooltipClose} onClick={onDismiss}>✕</button>
+          <button type="button" className={styles.tooltipClose} onClick={onDismiss}>
+            ✕
+          </button>
         )}
       </div>
       <div className={styles.tooltipChips}>
@@ -730,18 +760,14 @@ const BlipTooltip = ({
           {ring.label}
         </span>
       </div>
-      {blip.description && (
-        <div className={styles.tooltipDesc}>{blip.description}</div>
-      )}
+      {blip.description && <div className={styles.tooltipDesc}>{blip.description}</div>}
       <button type="button" className={styles.tooltipOpen} onClick={onOpen}>
         Open entity →
       </button>
-      {pinned && (
-        <div className={styles.tooltipHint}>Click blip again to dismiss</div>
-      )}
+      {pinned && <div className={styles.tooltipHint}>Click blip again to dismiss</div>}
     </div>
   );
-}
+};
 
 // ── LegendRow ─────────────────────────────────────────────────────────────────
 
@@ -753,7 +779,7 @@ const LegendRow = ({
   active,
   onMouseEnter,
   onMouseLeave,
-  onClick,
+  onClick
 }: {
   blip: Blip;
   quadColor: string;
@@ -772,12 +798,16 @@ const LegendRow = ({
       onMouseLeave={onMouseLeave}
       onClick={onClick}
     >
-      <span className={styles.legendRowNum} style={{ background: quadColor }}>{blip.num}</span>
+      <span className={styles.legendRowNum} style={{ background: quadColor }}>
+        {blip.num}
+      </span>
       <span className={styles.legendRowName}>{blip.name}</span>
-      <span className={styles.legendRowRing} style={{ color: ringColor }}>{ringLabel}</span>
+      <span className={styles.legendRowRing} style={{ color: ringColor }}>
+        {ringLabel}
+      </span>
     </button>
   );
-}
+};
 
 // ── RadarSettings ─────────────────────────────────────────────────────────────
 
@@ -786,7 +816,7 @@ const RadarSettings = ({
   lifecycleStates,
   initialConfig,
   onSave,
-  onClose,
+  onClose
 }: {
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
@@ -803,7 +833,7 @@ const RadarSettings = ({
   const selectedSchema = schemas.find(s => s.id === schemaId) ?? null;
 
   const fieldOptions = useMemo(
-    () => selectedSchema ? getSelectableFields(selectedSchema, lifecycleStates) : [],
+    () => (selectedSchema ? getSelectableFields(selectedSchema, lifecycleStates) : []),
     [selectedSchema, lifecycleStates]
   );
 
@@ -873,7 +903,12 @@ const RadarSettings = ({
 
   const handleSave = () => {
     if (!canSave) return;
-    onSave({ schemaId, quadrantFieldId: effectiveQuadrantFieldId, ringFieldId: effectiveRingFieldId, ringOrder: effectiveOrder });
+    onSave({
+      schemaId,
+      quadrantFieldId: effectiveQuadrantFieldId,
+      ringFieldId: effectiveRingFieldId,
+      ringOrder: effectiveOrder
+    });
   };
 
   return (
@@ -886,7 +921,7 @@ const RadarSettings = ({
       width="min(560px, calc(100vw - 48px))"
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
-        { label: 'Save configuration', type: 'default', disabled: !canSave, onClick: handleSave },
+        { label: 'Save configuration', type: 'default', disabled: !canSave, onClick: handleSave }
       ]}
     >
       <div className={styles.settingsBody}>
@@ -900,7 +935,9 @@ const RadarSettings = ({
                 style={{ width: '100%' }}
               >
                 {schemas.map(s => (
-                  <Select.Item key={s.id} value={s.id}>{s.name}</Select.Item>
+                  <Select.Item key={s.id} value={s.id}>
+                    {s.name}
+                  </Select.Item>
                 ))}
               </Select.Root>
             </FormElement>
@@ -908,12 +945,16 @@ const RadarSettings = ({
               <Select.Root
                 value={effectiveQuadrantFieldId || undefined}
                 onChange={value => setQuadrantFieldId(value ?? '')}
-                placeholder={fieldOptions.length === 0 ? 'No select or lifecycle fields' : undefined}
+                placeholder={
+                  fieldOptions.length === 0 ? 'No select or lifecycle fields' : undefined
+                }
                 style={{ width: '100%' }}
                 disabled={fieldOptions.length === 0}
               >
                 {fieldOptions.map(f => (
-                  <Select.Item key={f.id} value={f.id}>{f.label}</Select.Item>
+                  <Select.Item key={f.id} value={f.id}>
+                    {f.label}
+                  </Select.Item>
                 ))}
               </Select.Root>
             </FormElement>
@@ -923,19 +964,24 @@ const RadarSettings = ({
               <Select.Root
                 value={effectiveRingFieldId || undefined}
                 onChange={value => handleRingFieldChange(value ?? '')}
-                placeholder={fieldOptions.length === 0 ? 'No select or lifecycle fields' : undefined}
+                placeholder={
+                  fieldOptions.length === 0 ? 'No select or lifecycle fields' : undefined
+                }
                 style={{ width: '100%' }}
                 disabled={fieldOptions.length === 0}
               >
                 {fieldOptions.map(f => (
-                  <Select.Item key={f.id} value={f.id}>{f.label}</Select.Item>
+                  <Select.Item key={f.id} value={f.id}>
+                    {f.label}
+                  </Select.Item>
                 ))}
               </Select.Root>
             </FormElement>
           </div>
           {fieldOptions.length === 0 && (
             <div className={styles.settingsNote}>
-              The selected schema has no Select fields and there are no lifecycle states. Add a Select field or configure lifecycle states to use the radar.
+              The selected schema has no Select fields and there are no lifecycle states. Add a
+              Select field or configure lifecycle states to use the radar.
             </div>
           )}
         </FormSection>
@@ -947,65 +993,77 @@ const RadarSettings = ({
               Select a ring field above to configure the ring order.
             </div>
           ) : (
-              <div className={styles.ringOrderList}>
-                {displayRings.map(rv => {
-                  const orderIdx = effectiveOrder.indexOf(rv.value);
-                  const checked = orderIdx !== -1;
-                  const disabledCheck = !checked && effectiveOrder.length >= 5;
-                  const color = checked ? RING_COLORS[orderIdx % RING_COLORS.length]! : undefined;
-                  return (
-                    <div key={rv.value} className={`${styles.ringOrderRow}${checked ? ` ${styles.ringOrderRowChecked}` : ''}`}>
-                      <input
-                        type="checkbox"
-                        className={styles.ringOrderCheck}
-                        checked={checked}
-                        disabled={disabledCheck}
-                        onChange={() => toggleRing(rv.value)}
-                      />
-                      <span
-                        className={styles.ringOrderDot}
-                        style={color ? { background: color } : { border: '1px solid var(--base-fg-more-dim)' }}
-                      />
-                      <span className={styles.ringOrderLabel}>{rv.label}</span>
-                      {checked && (
-                        <>
-                          <span className={styles.ringOrderIdx}>
-                            {orderIdx === 0 ? 'innermost' : orderIdx === effectiveOrder.length - 1 ? 'outermost' : ''}
-                          </span>
-                          <div className={styles.ringOrderBtns}>
-                            <button
-                              type="button"
-                              className={styles.ringOrderBtn}
-                              onClick={() => moveRing(orderIdx, -1)}
-                              disabled={orderIdx === 0}
-                              title="Move inward"
-                            >
-                              <TbChevronUp size={12} />
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.ringOrderBtn}
-                              onClick={() => moveRing(orderIdx, 1)}
-                              disabled={orderIdx >= effectiveOrder.length - 1}
-                              title="Move outward"
-                            >
-                              <TbChevronDown size={12} />
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-                {effectiveOrder.length >= 5 && ringFieldValues.some(rv => !effectiveOrder.includes(rv.value)) && (
+            <div className={styles.ringOrderList}>
+              {displayRings.map(rv => {
+                const orderIdx = effectiveOrder.indexOf(rv.value);
+                const checked = orderIdx !== -1;
+                const disabledCheck = !checked && effectiveOrder.length >= 5;
+                const color = checked ? RING_COLORS[orderIdx % RING_COLORS.length]! : undefined;
+                return (
+                  <div
+                    key={rv.value}
+                    className={`${styles.ringOrderRow}${checked ? ` ${styles.ringOrderRowChecked}` : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      className={styles.ringOrderCheck}
+                      checked={checked}
+                      disabled={disabledCheck}
+                      onChange={() => toggleRing(rv.value)}
+                    />
+                    <span
+                      className={styles.ringOrderDot}
+                      style={
+                        color
+                          ? { background: color }
+                          : { border: '1px solid var(--base-fg-more-dim)' }
+                      }
+                    />
+                    <span className={styles.ringOrderLabel}>{rv.label}</span>
+                    {checked && (
+                      <>
+                        <span className={styles.ringOrderIdx}>
+                          {orderIdx === 0
+                            ? 'innermost'
+                            : orderIdx === effectiveOrder.length - 1
+                              ? 'outermost'
+                              : ''}
+                        </span>
+                        <div className={styles.ringOrderBtns}>
+                          <button
+                            type="button"
+                            className={styles.ringOrderBtn}
+                            onClick={() => moveRing(orderIdx, -1)}
+                            disabled={orderIdx === 0}
+                            title="Move inward"
+                          >
+                            <TbChevronUp size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.ringOrderBtn}
+                            onClick={() => moveRing(orderIdx, 1)}
+                            disabled={orderIdx >= effectiveOrder.length - 1}
+                            title="Move outward"
+                          >
+                            <TbChevronDown size={12} />
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+              {effectiveOrder.length >= 5 &&
+                ringFieldValues.some(rv => !effectiveOrder.includes(rv.value)) && (
                   <div className={styles.settingsNote}>
                     Maximum 5 rings reached. Uncheck a value to select a different one.
                   </div>
                 )}
-              </div>
-            )}
+            </div>
+          )}
         </FormSection>
       </div>
     </Dialog>
   );
-}
+};

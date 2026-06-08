@@ -2,10 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@diagram-craft/app-components/Button';
-import {
-  TbSparkles, TbPlus, TbMessageCircle, TbDots,
-  TbPencil, TbTrash,
-} from 'react-icons/tb';
+import { TbSparkles, TbPlus, TbMessageCircle, TbDots, TbPencil, TbTrash } from 'react-icons/tb';
 import styles from './AssistantScreen.module.css';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useAuth } from '../../auth/AuthContext';
@@ -17,56 +14,60 @@ import {
   useRenameConversation,
   useDeleteConversation,
   useConversationMessages,
-  aiKeys,
+  aiKeys
 } from '../../hooks/useAiConversations';
 import type { AiConversation } from '@arch-register/api-types';
-import type { WorkspaceTeam } from '../../api';
+import type { WorkspaceTeam } from '../../lib/api';
 
 // ── Markdown renderer ──
 
-const fmtInline = (
-  s: string,
-  onEntityLink?: (entityId: string) => void
-): React.ReactNode[] =>
-  s.split(/(\[[^\]]+\]\((?:entity:[^)]+|https?:\/\/[^)]+)\)|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g).map((p, i) => {
-    const entityLinkMatch = /^\[([^\]]+)\]\(entity:([^)]+)\)$/.exec(p);
-    if (entityLinkMatch) {
-      return (
-        <button
-          key={i}
-          type="button"
-          className={styles.inlineEntityLink}
-          onClick={() => onEntityLink?.(entityLinkMatch[2]!)}
-        >
-          {entityLinkMatch[1]}
-        </button>
-      );
-    }
+const fmtInline = (s: string, onEntityLink?: (entityId: string) => void): React.ReactNode[] =>
+  s
+    .split(/(\[[^\]]+\]\((?:entity:[^)]+|https?:\/\/[^)]+)\)|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g)
+    .map((p, i) => {
+      const entityLinkMatch = /^\[([^\]]+)\]\(entity:([^)]+)\)$/.exec(p);
+      if (entityLinkMatch) {
+        return (
+          <button
+            key={i}
+            type="button"
+            className={styles.inlineEntityLink}
+            onClick={() => onEntityLink?.(entityLinkMatch[2]!)}
+          >
+            {entityLinkMatch[1]}
+          </button>
+        );
+      }
 
-    const externalLinkMatch = /^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/.exec(p);
-    if (externalLinkMatch) {
-      return (
-        <a
-          key={i}
-          className={styles.inlineEntityLink}
-          href={externalLinkMatch[2]}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {externalLinkMatch[1]}
-        </a>
-      );
-    }
+      const externalLinkMatch = /^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/.exec(p);
+      if (externalLinkMatch) {
+        return (
+          <a
+            key={i}
+            className={styles.inlineEntityLink}
+            href={externalLinkMatch[2]}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {externalLinkMatch[1]}
+          </a>
+        );
+      }
 
-    if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={i}>{p.slice(2, -2)}</strong>;
-    if (/^\*[^*]+\*$/.test(p)) return <em key={i}>{p.slice(1, -1)}</em>;
-    if (/^`[^`]+`$/.test(p)) return <code key={i} className={styles.inlineCode}>{p.slice(1, -1)}</code>;
-    return p;
-  });
+      if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={i}>{p.slice(2, -2)}</strong>;
+      if (/^\*[^*]+\*$/.test(p)) return <em key={i}>{p.slice(1, -1)}</em>;
+      if (/^`[^`]+`$/.test(p))
+        return (
+          <code key={i} className={styles.inlineCode}>
+            {p.slice(1, -1)}
+          </code>
+        );
+      return p;
+    });
 
 const AiMarkdown = ({
   text,
-  onEntityLink,
+  onEntityLink
 }: {
   text: string;
   onEntityLink?: (entityId: string) => void;
@@ -85,7 +86,14 @@ const AiMarkdown = ({
         codeLines.push(lines[i]!);
         i++;
       }
-      nodes.push(<pre key={i} className={styles.codeBlock}><code>{lang ? <span className={styles.codeLang}>{lang}</span> : null}{codeLines.join('\n')}</code></pre>);
+      nodes.push(
+        <pre key={i} className={styles.codeBlock}>
+          <code>
+            {lang ? <span className={styles.codeLang}>{lang}</span> : null}
+            {codeLines.join('\n')}
+          </code>
+        </pre>
+      );
       i++;
       continue;
     }
@@ -94,7 +102,11 @@ const AiMarkdown = ({
     if (headMatch) {
       const level = headMatch[1]!.length;
       const Tag = `h${level}` as 'h1' | 'h2' | 'h3';
-      nodes.push(<Tag key={i} className={styles[`heading${level}` as keyof typeof styles]}>{fmtInline(headMatch[2]!, onEntityLink)}</Tag>);
+      nodes.push(
+        <Tag key={i} className={styles[`heading${level}` as keyof typeof styles]}>
+          {fmtInline(headMatch[2]!, onEntityLink)}
+        </Tag>
+      );
       i++;
       continue;
     }
@@ -105,7 +117,11 @@ const AiMarkdown = ({
         items.push(<li key={i}>{fmtInline(lines[i]!.replace(/^[-*•]\s+/, ''), onEntityLink)}</li>);
         i++;
       }
-      nodes.push(<ul key={`ul-${i}`} className={styles.mdList}>{items}</ul>);
+      nodes.push(
+        <ul key={`ul-${i}`} className={styles.mdList}>
+          {items}
+        </ul>
+      );
       continue;
     }
     // Numbered list item
@@ -115,7 +131,11 @@ const AiMarkdown = ({
         items.push(<li key={i}>{fmtInline(lines[i]!.replace(/^\d+\.\s+/, ''), onEntityLink)}</li>);
         i++;
       }
-      nodes.push(<ol key={`ol-${i}`} className={styles.mdList}>{items}</ol>);
+      nodes.push(
+        <ol key={`ol-${i}`} className={styles.mdList}>
+          {items}
+        </ol>
+      );
       continue;
     }
     // Table: detect a pipe-delimited row
@@ -126,7 +146,10 @@ const AiMarkdown = ({
         i++;
       }
       const parseRow = (row: string) =>
-        row.split('|').slice(1, -1).map(c => c.trim());
+        row
+          .split('|')
+          .slice(1, -1)
+          .map(c => c.trim());
       const isSeparator = (row: string) => /^[\s|:-]+$/.test(row);
       const [headerRow, ...rest] = tableLines;
       const bodyRows = rest.filter(r => !isSeparator(r));
@@ -135,12 +158,18 @@ const AiMarkdown = ({
         <div key={`tbl-${i}`} className={styles.tableWrap}>
           <table className={styles.mdTable}>
             <thead>
-              <tr>{headers.map((h, ci) => <th key={ci}>{fmtInline(h, onEntityLink)}</th>)}</tr>
+              <tr>
+                {headers.map((h, ci) => (
+                  <th key={ci}>{fmtInline(h, onEntityLink)}</th>
+                ))}
+              </tr>
             </thead>
             <tbody>
               {bodyRows.map((row, ri) => (
                 <tr key={ri}>
-                  {parseRow(row).map((cell, ci) => <td key={ci}>{fmtInline(cell, onEntityLink)}</td>)}
+                  {parseRow(row).map((cell, ci) => (
+                    <td key={ci}>{fmtInline(cell, onEntityLink)}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -156,7 +185,11 @@ const AiMarkdown = ({
       continue;
     }
     // Paragraph
-    nodes.push(<p key={i} className={styles.mdPara}>{fmtInline(ln, onEntityLink)}</p>);
+    nodes.push(
+      <p key={i} className={styles.mdPara}>
+        {fmtInline(ln, onEntityLink)}
+      </p>
+    );
     i++;
   }
   return <div className={styles.aiText}>{nodes}</div>;
@@ -166,17 +199,26 @@ const SUGGESTIONS = [
   'What entities are in the model?',
   'Summarize gaps and risks',
   'Who owns which services?',
-  'What dependencies exist?',
+  'What dependencies exist?'
 ];
 
 const isApprovalTool = (name: string) => name === 'create_entity' || name === 'update_entity';
 
 const hasRenderableParts = (
-  parts: Array<{ type: string; content?: string; name?: string; approval?: { needsApproval: boolean } }>
+  parts: Array<{
+    type: string;
+    content?: string;
+    name?: string;
+    approval?: { needsApproval: boolean };
+  }>
 ) =>
-  parts.some(part =>
-    (part.type === 'text' && (part.content?.trim().length ?? 0) > 0) ||
-    (part.type === 'tool-call' && !!part.name && isApprovalTool(part.name) && part.approval?.needsApproval)
+  parts.some(
+    part =>
+      (part.type === 'text' && (part.content?.trim().length ?? 0) > 0) ||
+      (part.type === 'tool-call' &&
+        !!part.name &&
+        isApprovalTool(part.name) &&
+        part.approval?.needsApproval)
   );
 
 const safeJsonParse = (value: string) => {
@@ -188,12 +230,12 @@ const safeJsonParse = (value: string) => {
 };
 
 const ownerLabel = (owner: string | null | undefined, teams: WorkspaceTeam[]) =>
-  owner == null ? 'Unassigned' : teams.find(team => team.id === owner)?.id ?? owner;
+  owner == null ? 'Unassigned' : (teams.find(team => team.id === owner)?.id ?? owner);
 
 const ApprovalCard = ({
   part,
   teams,
-  onApprove,
+  onApprove
 }: {
   part: {
     id: string;
@@ -210,36 +252,59 @@ const ApprovalCard = ({
   const approved = part.approval?.approved;
   const pending = approvalId != null && approved === undefined;
   const title = part.name === 'create_entity' ? 'Create entity' : 'Update entity';
-  const fields = (args['fields'] && typeof args['fields'] === 'object' ? args['fields'] : {}) as Record<string, unknown>;
+  const fields = (
+    args['fields'] && typeof args['fields'] === 'object' ? args['fields'] : {}
+  ) as Record<string, unknown>;
   const fieldEntries = Object.entries(fields);
-  const output = part.output && typeof part.output === 'object' ? part.output as Record<string, unknown> : null;
-  const outputEntity = output?.['entity'] && typeof output['entity'] === 'object'
-    ? output['entity'] as Record<string, unknown>
-    : null;
+  const output =
+    part.output && typeof part.output === 'object'
+      ? (part.output as Record<string, unknown>)
+      : null;
+  const outputEntity =
+    output?.['entity'] && typeof output['entity'] === 'object'
+      ? (output['entity'] as Record<string, unknown>)
+      : null;
 
   return (
     <div className={styles.approvalCard}>
       <div className={styles.approvalHead}>
         <div className={styles.approvalTitle}>{title}</div>
-        <div className={`${styles.approvalState} ${pending ? styles.approvalStatePending : approved ? styles.approvalStateApproved : styles.approvalStateDeclined}`}>
+        <div
+          className={`${styles.approvalState} ${pending ? styles.approvalStatePending : approved ? styles.approvalStateApproved : styles.approvalStateDeclined}`}
+        >
           {pending ? 'Awaiting approval' : approved ? 'Approved' : 'Declined'}
         </div>
       </div>
       <div className={styles.approvalGrid}>
         {'entityId' in args && typeof args['entityId'] === 'string' && (
-          <div><span className={styles.approvalLabel}>Entity</span><span>{String(args['entityId'])}</span></div>
+          <div>
+            <span className={styles.approvalLabel}>Entity</span>
+            <span>{String(args['entityId'])}</span>
+          </div>
         )}
         {'schemaId' in args && typeof args['schemaId'] === 'string' && (
-          <div><span className={styles.approvalLabel}>Schema</span><span>{String(args['schemaId'])}</span></div>
+          <div>
+            <span className={styles.approvalLabel}>Schema</span>
+            <span>{String(args['schemaId'])}</span>
+          </div>
         )}
         {'name' in args && typeof args['name'] === 'string' && (
-          <div><span className={styles.approvalLabel}>Name</span><span>{String(args['name'])}</span></div>
+          <div>
+            <span className={styles.approvalLabel}>Name</span>
+            <span>{String(args['name'])}</span>
+          </div>
         )}
         {'owner' in args && (
-          <div><span className={styles.approvalLabel}>Owner</span><span>{ownerLabel(args['owner'] as string | null | undefined, teams)}</span></div>
+          <div>
+            <span className={styles.approvalLabel}>Owner</span>
+            <span>{ownerLabel(args['owner'] as string | null | undefined, teams)}</span>
+          </div>
         )}
         {'lifecycle' in args && (
-          <div><span className={styles.approvalLabel}>Lifecycle</span><span>{String(args['lifecycle'] ?? 'None')}</span></div>
+          <div>
+            <span className={styles.approvalLabel}>Lifecycle</span>
+            <span>{String(args['lifecycle'] ?? 'None')}</span>
+          </div>
         )}
       </div>
       {fieldEntries.length > 0 && (
@@ -248,7 +313,8 @@ const ApprovalCard = ({
           <ul className={styles.approvalList}>
             {fieldEntries.map(([key, value]) => (
               <li key={key}>
-                <code>{key}</code> = <span>{typeof value === 'string' ? value : JSON.stringify(value)}</span>
+                <code>{key}</code> ={' '}
+                <span>{typeof value === 'string' ? value : JSON.stringify(value)}</span>
               </li>
             ))}
           </ul>
@@ -261,10 +327,18 @@ const ApprovalCard = ({
       )}
       {pending && approvalId && (
         <div className={styles.approvalActions}>
-          <button type="button" className={styles.approvalApprove} onClick={() => onApprove(approvalId, true)}>
+          <button
+            type="button"
+            className={styles.approvalApprove}
+            onClick={() => onApprove(approvalId, true)}
+          >
             Approve
           </button>
-          <button type="button" className={styles.approvalDecline} onClick={() => onApprove(approvalId, false)}>
+          <button
+            type="button"
+            className={styles.approvalDecline}
+            onClick={() => onApprove(approvalId, false)}
+          >
             Decline
           </button>
         </div>
@@ -307,7 +381,7 @@ const ChatHistory = ({
   onSelect,
   onNew,
   onRename,
-  onDelete,
+  onDelete
 }: {
   conversations: AiConversation[];
   activeId: string | undefined;
@@ -326,17 +400,23 @@ const ChatHistory = ({
     return () => window.removeEventListener('mousedown', close);
   }, [menuFor]);
 
-  const sorted = useMemo(() =>
-    [...conversations].sort((a, b) =>
-      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-    ), [conversations]);
+  const sorted = useMemo(
+    () =>
+      [...conversations].sort(
+        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      ),
+    [conversations]
+  );
 
   const groups = useMemo(() => {
     const g: Array<{ label: string; items: AiConversation[] }> = [];
     for (const c of sorted) {
       const lbl = bucketLabel(c.updated_at);
       let group = g.find(x => x.label === lbl);
-      if (!group) { group = { label: lbl, items: [] }; g.push(group); }
+      if (!group) {
+        group = { label: lbl, items: [] };
+        g.push(group);
+      }
       group.items.push(c);
     }
     return g;
@@ -345,7 +425,12 @@ const ChatHistory = ({
   return (
     <div className={styles.history}>
       <div className={styles.historyHead}>
-        <Button variant="primary" className={styles.newChatBtn} onClick={onNew} icon={<TbPlus size={13} />}>
+        <Button
+          variant="primary"
+          className={styles.newChatBtn}
+          onClick={onNew}
+          icon={<TbPlus size={13} />}
+        >
           New chat
         </Button>
       </div>
@@ -359,14 +444,21 @@ const ChatHistory = ({
                 className={`${styles.historyItem} ${c.id === activeId ? styles.historyItemActive : ''}`}
                 onClick={() => onSelect(c.id)}
               >
-                <span className={`${styles.historyIco} ${c.id === activeId ? styles.historyIcoActive : ''}`}><TbMessageCircle size={12} /></span>
+                <span
+                  className={`${styles.historyIco} ${c.id === activeId ? styles.historyIcoActive : ''}`}
+                >
+                  <TbMessageCircle size={12} />
+                </span>
                 {renaming === c.id ? (
                   <input
                     className={styles.historyRename}
                     autoFocus
                     defaultValue={c.title}
                     onClick={e => e.stopPropagation()}
-                    onBlur={e => { onRename(c.id, e.target.value); setRenaming(null); }}
+                    onBlur={e => {
+                      onRename(c.id, e.target.value);
+                      setRenaming(null);
+                    }}
                     onKeyDown={e => {
                       e.stopPropagation();
                       if (e.key === 'Enter') {
@@ -384,16 +476,34 @@ const ChatHistory = ({
                   type="button"
                   className={styles.historyKebab}
                   title="More"
-                  onClick={e => { e.stopPropagation(); setMenuFor(menuFor === c.id ? null : c.id); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setMenuFor(menuFor === c.id ? null : c.id);
+                  }}
                 >
                   <TbDots size={13} />
                 </button>
                 {menuFor === c.id && (
                   <div className={styles.historyMenu} onMouseDown={e => e.stopPropagation()}>
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuFor(null); setRenaming(c.id); }}>
+                    <button
+                      type="button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        setMenuFor(null);
+                        setRenaming(c.id);
+                      }}
+                    >
                       <TbPencil size={12} /> Rename
                     </button>
-                    <button type="button" className={styles.historyMenuDanger} onClick={e => { e.stopPropagation(); setMenuFor(null); onDelete(c.id); }}>
+                    <button
+                      type="button"
+                      className={styles.historyMenuDanger}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setMenuFor(null);
+                        onDelete(c.id);
+                      }}
+                    >
                       <TbTrash size={12} /> Delete
                     </button>
                   </div>
@@ -446,7 +556,9 @@ export const AssistantScreen = () => {
   useEffect(() => {
     if (wasLoadingRef.current && !chat.isLoading && conversationId) {
       void queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
-      void queryClient.invalidateQueries({ queryKey: aiKeys.messages(workspaceSlug, conversationId) });
+      void queryClient.invalidateQueries({
+        queryKey: aiKeys.messages(workspaceSlug, conversationId)
+      });
     }
     wasLoadingRef.current = chat.isLoading;
   });
@@ -457,7 +569,12 @@ export const AssistantScreen = () => {
     if (chat.messages.length > 0) {
       return chat.messages.filter(message =>
         hasRenderableParts(
-          message.parts as Array<{ type: string; content?: string; name?: string; approval?: { needsApproval: boolean } }>
+          message.parts as Array<{
+            type: string;
+            content?: string;
+            name?: string;
+            approval?: { needsApproval: boolean };
+          }>
         )
       );
     }
@@ -465,7 +582,7 @@ export const AssistantScreen = () => {
       id: msg.id,
       role: msg.role as 'user' | 'assistant' | 'system',
       parts: [{ type: 'text' as const, content: msg.content }],
-      createdAt: new Date(msg.created_at),
+      createdAt: new Date(msg.created_at)
     }));
   }, [chat.messages, historicalMessages]);
 
@@ -477,25 +594,34 @@ export const AssistantScreen = () => {
   }, [visibleMessages.length, chat.isLoading]);
 
   // Explicit navigation — reinitializes the chat session for the new conversation.
-  const selectConversation = useCallback((id: string) => {
-    setChatSessionId(id);
-    navigate({
-      to: '/$workspaceSlug/assistant',
-      params: { workspaceSlug },
-      search: { conversation: id },
-    });
-  }, [navigate, workspaceSlug]);
+  const selectConversation = useCallback(
+    (id: string) => {
+      setChatSessionId(id);
+      navigate({
+        to: '/$workspaceSlug/assistant',
+        params: { workspaceSlug },
+        search: { conversation: id }
+      });
+    },
+    [navigate, workspaceSlug]
+  );
 
-  const navigateToEntity = useCallback((entityId: string) => {
-    navigate({
-      to: '/$workspaceSlug/entities/$entityId',
-      params: { workspaceSlug, entityId },
-    });
-  }, [navigate, workspaceSlug]);
+  const navigateToEntity = useCallback(
+    (entityId: string) => {
+      navigate({
+        to: '/$workspaceSlug/entities/$entityId',
+        params: { workspaceSlug, entityId }
+      });
+    },
+    [navigate, workspaceSlug]
+  );
 
-  const respondToApproval = useCallback((approvalId: string, approved: boolean) => {
-    void chat.addToolApprovalResponse({ id: approvalId, approved });
-  }, [chat]);
+  const respondToApproval = useCallback(
+    (approvalId: string, approved: boolean) => {
+      void chat.addToolApprovalResponse({ id: approvalId, approved });
+    },
+    [chat]
+  );
 
   const handleNew = useCallback(async () => {
     const conv = await createConversation.mutateAsync(undefined);
@@ -503,45 +629,56 @@ export const AssistantScreen = () => {
     navigate({
       to: '/$workspaceSlug/assistant',
       params: { workspaceSlug },
-      search: { conversation: conv.id },
+      search: { conversation: conv.id }
     });
     chat.clear();
   }, [createConversation, navigate, workspaceSlug, chat]);
 
-  const handleRename = useCallback((id: string, title: string) => {
-    const trimmed = title.trim();
-    if (trimmed) renameConversation.mutate({ id, title: trimmed });
-  }, [renameConversation]);
+  const handleRename = useCallback(
+    (id: string, title: string) => {
+      const trimmed = title.trim();
+      if (trimmed) renameConversation.mutate({ id, title: trimmed });
+    },
+    [renameConversation]
+  );
 
-  const handleDelete = useCallback((id: string) => {
-    deleteConversation.mutate(id);
-    if (id === conversationId) {
-      setChatSessionId('new');
-      navigate({
-        to: '/$workspaceSlug/assistant',
-        params: { workspaceSlug },
-      });
-      chat.clear();
-    }
-  }, [deleteConversation, conversationId, navigate, workspaceSlug, chat]);
+  const handleDelete = useCallback(
+    (id: string) => {
+      deleteConversation.mutate(id);
+      if (id === conversationId) {
+        setChatSessionId('new');
+        navigate({
+          to: '/$workspaceSlug/assistant',
+          params: { workspaceSlug }
+        });
+        chat.clear();
+      }
+    },
+    [deleteConversation, conversationId, navigate, workspaceSlug, chat]
+  );
 
-  const sendMessage = useCallback((text: string) => {
-    if (!text || chat.isLoading || !conversationId) return;
+  const sendMessage = useCallback(
+    (text: string) => {
+      if (!text || chat.isLoading || !conversationId) return;
 
-    // Optimistically update the sidebar title as soon as the user sends their first message,
-    // without waiting for the server round-trip or stream to complete.
-    const cachedConvs = queryClient.getQueryData<AiConversation[]>(aiKeys.conversations(workspaceSlug));
-    const conv = cachedConvs?.find(c => c.id === conversationId);
-    if (conv?.title === 'New conversation') {
-      const title = text.length > 50 ? `${text.substring(0, 47)}...` : text;
-      queryClient.setQueryData<AiConversation[]>(
-        aiKeys.conversations(workspaceSlug),
-        cachedConvs?.map(c => c.id === conversationId ? { ...c, title } : c)
+      // Optimistically update the sidebar title as soon as the user sends their first message,
+      // without waiting for the server round-trip or stream to complete.
+      const cachedConvs = queryClient.getQueryData<AiConversation[]>(
+        aiKeys.conversations(workspaceSlug)
       );
-    }
+      const conv = cachedConvs?.find(c => c.id === conversationId);
+      if (conv?.title === 'New conversation') {
+        const title = text.length > 50 ? `${text.substring(0, 47)}...` : text;
+        queryClient.setQueryData<AiConversation[]>(
+          aiKeys.conversations(workspaceSlug),
+          cachedConvs?.map(c => (c.id === conversationId ? { ...c, title } : c))
+        );
+      }
 
-    chat.sendMessage(text);
-  }, [chat, conversationId, queryClient, workspaceSlug]);
+      chat.sendMessage(text);
+    },
+    [chat, conversationId, queryClient, workspaceSlug]
+  );
 
   const submit = useCallback(() => {
     const text = draft.trim();
@@ -550,12 +687,15 @@ export const AssistantScreen = () => {
     setDraft('');
   }, [draft, sendMessage]);
 
-  const onKey = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      submit();
-    }
-  }, [submit]);
+  const onKey = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submit();
+      }
+    },
+    [submit]
+  );
 
   const isEmpty = visibleMessages.length === 0;
 
@@ -574,7 +714,9 @@ export const AssistantScreen = () => {
         <div className={styles.chatHeader}>
           <div className={styles.chatHeaderL}>
             <div>
-              <div className={styles.eyebrow}><TbSparkles size={11} /> Assistant</div>
+              <div className={styles.eyebrow}>
+                <TbSparkles size={11} /> Assistant
+              </div>
               <div className={styles.screenTitle}>Ask about your model</div>
             </div>
           </div>
@@ -596,21 +738,37 @@ export const AssistantScreen = () => {
               <div key={m.id} className={styles.msg}>
                 <div
                   className={`${styles.msgAvatar} ${m.role === 'assistant' ? styles.msgAvatarAssistant : styles.msgAvatarUser}`}
-                  style={m.role === 'user' && user ? { background: resolveAvatarBackground(user.id, user.color) } : undefined}
-                >
-                  {m.role === 'assistant'
-                    ? <TbSparkles size={13} />
-                    : user
-                      ? (user.display_name || user.email || '?').split(/[\s@.]+/).slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || '?'
-                      : 'U'
+                  style={
+                    m.role === 'user' && user
+                      ? { background: resolveAvatarBackground(user.id, user.color) }
+                      : undefined
                   }
+                >
+                  {m.role === 'assistant' ? (
+                    <TbSparkles size={13} />
+                  ) : user ? (
+                    (user.display_name || user.email || '?')
+                      .split(/[\s@.]+/)
+                      .slice(0, 2)
+                      .map(w => w[0] ?? '')
+                      .join('')
+                      .toUpperCase() || '?'
+                  ) : (
+                    'U'
+                  )}
                 </div>
                 <div className={styles.msgBody}>
                   {m.parts.map((part, i) => {
                     if (part.type === 'text') {
-                      return <AiMarkdown key={i} text={part.content} onEntityLink={navigateToEntity} />;
+                      return (
+                        <AiMarkdown key={i} text={part.content} onEntityLink={navigateToEntity} />
+                      );
                     }
-                    if (part.type === 'tool-call' && isApprovalTool(part.name) && part.approval?.needsApproval) {
+                    if (
+                      part.type === 'tool-call' &&
+                      isApprovalTool(part.name) &&
+                      part.approval?.needsApproval
+                    ) {
                       return (
                         <ApprovalCard
                           key={i}
@@ -631,7 +789,11 @@ export const AssistantScreen = () => {
                   <TbSparkles size={13} />
                 </div>
                 <div className={styles.msgBody}>
-                  <div className={styles.typing}><span /><span /><span /></div>
+                  <div className={styles.typing}>
+                    <span />
+                    <span />
+                    <span />
+                  </div>
                 </div>
               </div>
             )}

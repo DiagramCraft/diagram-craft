@@ -16,7 +16,7 @@ import { Chip } from '../../components/Chip';
 import { DropdownMenu } from '../../components/DropdownMenu';
 import styles from './ImportScreen.module.css';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { downloadCsvTemplate, parseCsvImport, commitCsvImport } from '../../api';
+import { downloadCsvTemplate, parseCsvImport, commitCsvImport } from '../../lib/api';
 import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
 
 type Phase = 'upload' | 'parsing' | 'review' | 'done';
@@ -81,10 +81,13 @@ const normalizeValue = (val: unknown) => {
 };
 
 // Helper to detect if an update has actual changes
-const hasActualChanges = (newEntity: Record<string, unknown>, oldEntity: Record<string, unknown>): boolean => {
+const hasActualChanges = (
+  newEntity: Record<string, unknown>,
+  oldEntity: Record<string, unknown>
+): boolean => {
   const newEntityKeys = Object.keys(newEntity);
   const fieldsToCompare = newEntityKeys.filter(k => !['_existingId', '_schemaId'].includes(k));
-  
+
   return fieldsToCompare.some(key => {
     const oldVal = normalizeValue(oldEntity[key]);
     const newVal = normalizeValue(newEntity[key]);
@@ -117,16 +120,14 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
   if (row.isUpdate && row.existingEntity) {
     const newEntity = row.entity;
     const oldEntity = row.existingEntity;
-    
+
     // Only compare fields that are present in the new entity (from CSV)
     // This excludes internal fields and fields not in the CSV
     const newEntityKeys = Object.keys(newEntity);
-    
+
     // Filter out internal fields that shouldn't be shown in comparison
-    const fieldsToCompare = newEntityKeys.filter(k => 
-      !['_existingId', '_schemaId'].includes(k)
-    );
-    
+    const fieldsToCompare = newEntityKeys.filter(k => !['_existingId', '_schemaId'].includes(k));
+
     // Separate metadata and custom fields
     const metadataKeys = fieldsToCompare.filter(k => k.startsWith('_')).sort();
     const customKeys = fieldsToCompare.filter(k => !k.startsWith('_')).sort();
@@ -137,17 +138,17 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
       const newVal = normalizeValue(newEntity[key]);
       return JSON.stringify(oldVal) !== JSON.stringify(newVal);
     });
-    
+
     const changedCustom = customKeys.filter(key => {
       const oldVal = normalizeValue(oldEntity[key]);
       const newVal = normalizeValue(newEntity[key]);
       return JSON.stringify(oldVal) !== JSON.stringify(newVal);
     });
-    
+
     if (changedMetadata.length === 0 && changedCustom.length === 0) {
       return <div className={styles.detailContainer}>No changes detected</div>;
     }
-    
+
     return (
       <div className={styles.detailContainer}>
         {changedMetadata.length > 0 && (
@@ -170,7 +171,7 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
             ))}
           </div>
         )}
-        
+
         {changedCustom.length > 0 && (
           <div className={styles.detailSection}>
             <div className={styles.sectionTitle}>Fields</div>
@@ -194,18 +195,22 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
       </div>
     );
   }
-  
+
   // For creates, show all fields including metadata
   const allEntries = Object.entries(row.entity).filter(
     ([_k, v]) => v !== undefined && v !== '' && v !== null
   );
-  
+
   // Separate metadata and custom fields
-  const metadataEntries = allEntries.filter(([k]) => k.startsWith('_')).sort(([a], [b]) => a.localeCompare(b));
-  const customEntries = allEntries.filter(([k]) => !k.startsWith('_')).sort(([a], [b]) => a.localeCompare(b));
-  
+  const metadataEntries = allEntries
+    .filter(([k]) => k.startsWith('_'))
+    .sort(([a], [b]) => a.localeCompare(b));
+  const customEntries = allEntries
+    .filter(([k]) => !k.startsWith('_'))
+    .sort(([a], [b]) => a.localeCompare(b));
+
   if (metadataEntries.length === 0 && customEntries.length === 0) return null;
-  
+
   return (
     <div className={styles.detailContainer}>
       {metadataEntries.length > 0 && (
@@ -221,7 +226,7 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
           </div>
         </div>
       )}
-      
+
       {customEntries.length > 0 && (
         <div className={styles.detailSection}>
           <div className={styles.sectionTitle}>Fields</div>
@@ -282,21 +287,23 @@ export const ImportScreen = () => {
       setRows(
         result.entities.map(e => {
           const matchType = e.matchType || 'none';
-          const hasChanges = e.isUpdate && e.entity && e.existingEntity 
-            ? hasActualChanges(e.entity, e.existingEntity)
-            : true; // Creates always have "changes"
-          
+          const hasChanges =
+            e.isUpdate && e.entity && e.existingEntity
+              ? hasActualChanges(e.entity, e.existingEntity)
+              : true; // Creates always have "changes"
+
           // For name matches, don't auto-accept - require user decision
           const needsUserDecision = matchType === 'name';
-          
+
           // Don't auto-accept if there are constraint violations
           const hasConstraintViolations = (e.constraintViolations?.length ?? 0) > 0;
-          
+
           return {
             rowNumber: e.rowNumber,
             errors: e.errors,
             entity: e.entity,
-            accepted: e.errors.length === 0 && hasChanges && !needsUserDecision && !hasConstraintViolations,
+            accepted:
+              e.errors.length === 0 && hasChanges && !needsUserDecision && !hasConstraintViolations,
             expanded: false,
             isUpdate: e.isUpdate,
             hasChanges,
@@ -327,17 +334,19 @@ export const ImportScreen = () => {
   }, []);
 
   const setUserChoice = useCallback((rowNumber: number, choice: 'update' | 'create') => {
-    setRows(rs => rs.map(r => {
-      if (r.rowNumber === rowNumber) {
-        return { 
-          ...r, 
-          userChoice: choice,
-          accepted: true, // Auto-accept once user makes a choice
-          isUpdate: choice === 'update'
-        };
-      }
-      return r;
-    }));
+    setRows(rs =>
+      rs.map(r => {
+        if (r.rowNumber === rowNumber) {
+          return {
+            ...r,
+            userChoice: choice,
+            accepted: true, // Auto-accept once user makes a choice
+            isUpdate: choice === 'update'
+          };
+        }
+        return r;
+      })
+    );
   }, []);
 
   const commit = useCallback(async () => {
@@ -348,15 +357,19 @@ export const ImportScreen = () => {
           ...r.entity!,
           _schemaId: selectedSchemaId
         };
-        
+
         // Only include _existingId if:
         // 1. It's an ID-based match (matchType === 'id'), OR
         // 2. It's a slug-based match (matchType === 'slug'), OR
         // 3. It's a name-based match AND user chose 'update'
-        if (r.matchType === 'id' || r.matchType === 'slug' || (r.matchType === 'name' && r.userChoice === 'update')) {
+        if (
+          r.matchType === 'id' ||
+          r.matchType === 'slug' ||
+          (r.matchType === 'name' && r.userChoice === 'update')
+        ) {
           entity._existingId = r.existingId ?? r.nameMatches[0]?.id;
         }
-        
+
         return entity;
       });
       const result = await commitCsvImport(workspaceSlug, selectedSchemaId, entities);
@@ -499,9 +512,13 @@ export const ImportScreen = () => {
               </span>
               {(() => {
                 const errorCount = rows.filter(r => r.errors.length > 0).length;
-                const constraintCount = rows.filter(r => (r.constraintViolations?.length ?? 0) > 0).length;
-                const decisionCount = rows.filter(r => r.matchType === 'name' && !r.userChoice).length;
-                
+                const constraintCount = rows.filter(
+                  r => (r.constraintViolations?.length ?? 0) > 0
+                ).length;
+                const decisionCount = rows.filter(
+                  r => r.matchType === 'name' && !r.userChoice
+                ).length;
+
                 return (
                   <>
                     {errorCount > 0 && (
@@ -511,12 +528,17 @@ export const ImportScreen = () => {
                     )}
                     {constraintCount > 0 && (
                       <span className={styles.errorBadge}>
-                        <TbAlertCircle size={12} /> {constraintCount} constraint violation{constraintCount !== 1 ? 's' : ''}
+                        <TbAlertCircle size={12} /> {constraintCount} constraint violation
+                        {constraintCount !== 1 ? 's' : ''}
                       </span>
                     )}
                     {decisionCount > 0 && (
-                      <span className={styles.errorBadge} style={{ background: 'oklch(0.65 0.15 40 / 0.1)' }}>
-                        <TbAlertCircle size={12} /> {decisionCount} decision{decisionCount !== 1 ? 's' : ''} required
+                      <span
+                        className={styles.errorBadge}
+                        style={{ background: 'oklch(0.65 0.15 40 / 0.1)' }}
+                      >
+                        <TbAlertCircle size={12} /> {decisionCount} decision
+                        {decisionCount !== 1 ? 's' : ''} required
                       </span>
                     )}
                   </>
@@ -526,131 +548,132 @@ export const ImportScreen = () => {
           </div>
 
           <div className={styles.tableScroll}>
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.thExp} />
-                  <th className={styles.thCheck} />
-                  <th>Row</th>
-                  <th>Name</th>
-                  <th>Action</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(r => (
-                  <React.Fragment key={r.rowNumber}>
-                    <tr
-                      className={`${r.accepted || (r.matchType === 'name' && !r.userChoice) ? '' : styles.rowRejected} ${r.expanded ? styles.rowExpanded : ''}`}
-                    >
-                      <td className={styles.tdExp}>
-                        {r.entity && (r.hasChanges || r.matchType === 'name' || !r.isUpdate) && (
-                          <Button
-                            variant="icon-only"
-                            size="sm"
-                            className={r.expanded ? styles.expBtnOpen : undefined}
-                            title={r.expanded ? 'Collapse' : 'Expand fields'}
-                            onClick={() => toggleExpand(r.rowNumber)}
-                          >
-                            <TbChevronRight size={12} />
-                          </Button>
-                        )}
-                      </td>
-                      <td className={styles.tdCheck}>
-                        <input
-                          type="checkbox"
-                          checked={r.accepted}
-                          onChange={() => toggleRow(r.rowNumber)}
-                          disabled={r.errors.length > 0}
-                        />
-                      </td>
-                      <td>{r.rowNumber}</td>
-                      <td>{r.entity?._name ? String(r.entity._name) : <em>No name</em>}</td>
-                      <td>
-                        {r.matchType === 'name' && !r.userChoice ? (
-                          <DropdownMenu
-                            trigger={
-                              <button type="button" className={styles.chipButton}>
-                                <Chip tone="ghost" dot="oklch(0.65 0.15 40)">
-                                  <TbAlertCircle size={10} /> Decision Required
-                                </Chip>
-                              </button>
-                            }
-                            items={[
-                              {
-                                label: 'Update existing entity',
-                                icon: <TbCheck size={12} />,
-                                onClick: () => setUserChoice(r.rowNumber, 'update'),
-                                disabled: r.constraintViolations?.some(v => 
-                                  v.type === 'wrong_workspace' || v.type === 'wrong_schema'
-                                )
-                              },
-                              {
-                                label: 'Create new entity',
-                                icon: <TbPlus size={12} />,
-                                onClick: () => setUserChoice(r.rowNumber, 'create'),
-                                disabled: r.constraintViolations?.some(v => 
-                                  v.type === 'duplicate_slug'
-                                )
-                              },
-                            ]}
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.thExp} />
+                    <th className={styles.thCheck} />
+                    <th>Row</th>
+                    <th>Name</th>
+                    <th>Action</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(r => (
+                    <React.Fragment key={r.rowNumber}>
+                      <tr
+                        className={`${r.accepted || (r.matchType === 'name' && !r.userChoice) ? '' : styles.rowRejected} ${r.expanded ? styles.rowExpanded : ''}`}
+                      >
+                        <td className={styles.tdExp}>
+                          {r.entity && (r.hasChanges || r.matchType === 'name' || !r.isUpdate) && (
+                            <Button
+                              variant="icon-only"
+                              size="sm"
+                              className={r.expanded ? styles.expBtnOpen : undefined}
+                              title={r.expanded ? 'Collapse' : 'Expand fields'}
+                              onClick={() => toggleExpand(r.rowNumber)}
+                            >
+                              <TbChevronRight size={12} />
+                            </Button>
+                          )}
+                        </td>
+                        <td className={styles.tdCheck}>
+                          <input
+                            type="checkbox"
+                            checked={r.accepted}
+                            onChange={() => toggleRow(r.rowNumber)}
+                            disabled={r.errors.length > 0}
                           />
-                        ) : r.isUpdate && !r.hasChanges ? (
-                          <Chip tone="ghost" dot="var(--cmp-fg-disabled)">
-                            No Changes
-                          </Chip>
-                        ) : r.matchType === 'id' ? (
-                          <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
-                            Update (ID)
-                          </Chip>
-                        ) : r.matchType === 'slug' ? (
-                          <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
-                            Update (Slug)
-                          </Chip>
-                        ) : r.isUpdate ? (
-                          <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
-                            Update
-                          </Chip>
-                        ) : (
-                          <Chip tone="ghost" dot="var(--green)">
-                            Create
-                          </Chip>
-                        )}
-                      </td>
-                      <td>
-                        {r.errors.length > 0 || (r.constraintViolations && r.constraintViolations.length > 0) ? (
-                          <span className={styles.errorList}>
-                            {r.errors.map((err, i) => (
-                              <span key={i} className={styles.errorItem}>
-                                <TbAlertCircle size={10} /> {err}
-                              </span>
-                            ))}
-                            {r.constraintViolations?.map((violation, i) => (
-                              <span key={`cv-${i}`} className={styles.errorItem}>
-                                <TbAlertCircle size={10} /> {violation.message}
-                              </span>
-                            ))}
-                          </span>
-                        ) : (
-                          <span className={styles.statusOk}>
-                            <TbCheck size={10} /> Valid
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                    {r.expanded && (
-                      <tr className={styles.detailRow}>
-                        <td colSpan={7}>
-                          <ExpandedDetail row={r} />
+                        </td>
+                        <td>{r.rowNumber}</td>
+                        <td>{r.entity?._name ? String(r.entity._name) : <em>No name</em>}</td>
+                        <td>
+                          {r.matchType === 'name' && !r.userChoice ? (
+                            <DropdownMenu
+                              trigger={
+                                <button type="button" className={styles.chipButton}>
+                                  <Chip tone="ghost" dot="oklch(0.65 0.15 40)">
+                                    <TbAlertCircle size={10} /> Decision Required
+                                  </Chip>
+                                </button>
+                              }
+                              items={[
+                                {
+                                  label: 'Update existing entity',
+                                  icon: <TbCheck size={12} />,
+                                  onClick: () => setUserChoice(r.rowNumber, 'update'),
+                                  disabled: r.constraintViolations?.some(
+                                    v => v.type === 'wrong_workspace' || v.type === 'wrong_schema'
+                                  )
+                                },
+                                {
+                                  label: 'Create new entity',
+                                  icon: <TbPlus size={12} />,
+                                  onClick: () => setUserChoice(r.rowNumber, 'create'),
+                                  disabled: r.constraintViolations?.some(
+                                    v => v.type === 'duplicate_slug'
+                                  )
+                                }
+                              ]}
+                            />
+                          ) : r.isUpdate && !r.hasChanges ? (
+                            <Chip tone="ghost" dot="var(--cmp-fg-disabled)">
+                              No Changes
+                            </Chip>
+                          ) : r.matchType === 'id' ? (
+                            <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
+                              Update (ID)
+                            </Chip>
+                          ) : r.matchType === 'slug' ? (
+                            <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
+                              Update (Slug)
+                            </Chip>
+                          ) : r.isUpdate ? (
+                            <Chip tone="ghost" dot="oklch(0.60 0.15 195)">
+                              Update
+                            </Chip>
+                          ) : (
+                            <Chip tone="ghost" dot="var(--green)">
+                              Create
+                            </Chip>
+                          )}
+                        </td>
+                        <td>
+                          {r.errors.length > 0 ||
+                          (r.constraintViolations && r.constraintViolations.length > 0) ? (
+                            <span className={styles.errorList}>
+                              {r.errors.map((err, i) => (
+                                <span key={i} className={styles.errorItem}>
+                                  <TbAlertCircle size={10} /> {err}
+                                </span>
+                              ))}
+                              {r.constraintViolations?.map((violation, i) => (
+                                <span key={`cv-${i}`} className={styles.errorItem}>
+                                  <TbAlertCircle size={10} /> {violation.message}
+                                </span>
+                              ))}
+                            </span>
+                          ) : (
+                            <span className={styles.statusOk}>
+                              <TbCheck size={10} /> Valid
+                            </span>
+                          )}
                         </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      {r.expanded && (
+                        <tr className={styles.detailRow}>
+                          <td colSpan={7}>
+                            <ExpandedDetail row={r} />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className={styles.reviewFoot}>

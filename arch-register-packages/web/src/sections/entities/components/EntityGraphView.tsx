@@ -12,8 +12,8 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { resolveSchemaColor } from '../../../api';
-import type { EntitySchema } from '../../../api';
+import { resolveSchemaColor } from '../../../lib/api';
+import type { EntitySchema } from '../../../lib/api';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { TbEyeOff, TbPlus, TbVectorTriangle } from 'react-icons/tb';
 import styles from './EntityGraphView.module.css';
@@ -34,7 +34,14 @@ type Props = {
   onEntityClick: (id: string) => void;
 };
 
-export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, rootEntitySchemaId, schemas, onEntityClick }: Props) => {
+export const EntityGraphView = ({
+  workspaceId,
+  rootEntityId,
+  rootEntityName,
+  rootEntitySchemaId,
+  schemas,
+  onEntityClick
+}: Props) => {
   const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
   const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>({
     horizontalSpacing: 230,
@@ -143,7 +150,13 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
           const edgeId = `${id}::${rel.entityId}::${rel.fieldName}`;
           if (!edgeSet.has(edgeId)) {
             edgeSet.add(edgeId);
-            visibleEdges.push({ id: edgeId, from: id, to: rel.entityId, label: rel.fieldName, kind: rel.kind });
+            visibleEdges.push({
+              id: edgeId,
+              from: id,
+              to: rel.entityId,
+              label: rel.fieldName,
+              kind: rel.kind
+            });
           }
         } else {
           hiddenCount++;
@@ -160,7 +173,15 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
     );
 
     return { nodes: nodeArray, edges: visibleEdges, hiddenCountMap };
-  }, [rootEntityId, rootEntityName, rootEntitySchemaId, relationsData, maxDepth, excludedIds, manuallyExpanded]);
+  }, [
+    rootEntityId,
+    rootEntityName,
+    rootEntitySchemaId,
+    relationsData,
+    maxDepth,
+    excludedIds,
+    manuallyExpanded
+  ]);
 
   const isAnyLoading = Array.from(relationsData.values()).some(d => d.isLoading);
 
@@ -214,7 +235,9 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
         <span className={styles.eToolbarLabel}>Depth</span>
         <NumberInput
           value={maxDepth}
-          onChange={v => { if (v !== undefined) setMaxDepth(v); }}
+          onChange={v => {
+            if (v !== undefined) setMaxDepth(v);
+          }}
           min={1}
           max={5}
           step={1}
@@ -308,7 +331,7 @@ export const EntityGraphView = ({ workspaceId, rootEntityId, rootEntityName, roo
         <Button
           className={styles.eResetButton}
           disabled={excludedIds.size === 0 && manuallyExpanded.size === 0}
-          size={"sm"}
+          size={'sm'}
           onClick={() => {
             setExcludedIds(new Set());
             setManuallyExpanded(new Set());

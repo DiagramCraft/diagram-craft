@@ -1,8 +1,4 @@
-import {
-  createRootRouteWithContext,
-  createRoute,
-  redirect,
-} from '@tanstack/react-router';
+import { createRootRouteWithContext, createRoute, redirect } from '@tanstack/react-router';
 import type { RouterContext } from '../routerContext';
 import { LoginScreen } from '../auth/LoginScreen';
 import { WorkspaceLayout } from '../layouts/WorkspaceLayout';
@@ -18,8 +14,8 @@ import { GlobalSettingsScreen } from '../sections/global-settings/GlobalSettings
 import { AccountSettingsScreen } from '../sections/account-settings/AccountSettingsScreen';
 import { AssistantScreen } from '../sections/ai-assistant/AssistantScreen';
 import { ExtractScreen } from '../sections/ai-extract/ExtractScreen';
-import { apiFetch } from '../api';
-import type { Workspace } from '../api';
+import { apiFetch } from '../lib/api';
+import type { Workspace } from '../lib/api';
 import { workspaceKeys } from '../hooks/useWorkspaces';
 import { ImportScreen } from '../sections/entities/ImportScreen';
 
@@ -29,7 +25,7 @@ import {
   validateSettingsSearch,
   validateSearchSearch,
   validateModelSearch,
-  validateAssistantSearch,
+  validateAssistantSearch
 } from './searchParams';
 import { RootLayout } from '../layouts/RootLayout';
 import { RouteErrorComponent } from './RouteErrorComponent';
@@ -37,7 +33,7 @@ import { RouteErrorComponent } from './RouteErrorComponent';
 // ─── Root Route ───────────────────────────────────────────────
 const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
-  errorComponent: RouteErrorComponent,
+  errorComponent: RouteErrorComponent
 });
 
 // ─── Login Route ──────────────────────────────────────────────
@@ -50,7 +46,7 @@ const loginRoute = createRoute({
     const reason = search.reason === 'session-expired' ? 'session-expired' : undefined;
     return {
       ...(redirect ? { redirect } : {}),
-      ...(reason ? { reason } : {}),
+      ...(reason ? { reason } : {})
     };
   },
   beforeLoad: ({ context, search }) => {
@@ -61,7 +57,7 @@ const loginRoute = createRoute({
       }
       throw redirect({ to: '/' });
     }
-  },
+  }
 });
 
 // ─── Index Route (redirect to first workspace) ───────────────
@@ -74,15 +70,15 @@ const indexRoute = createRoute({
     }
     const workspaces = await context.queryClient.ensureQueryData({
       queryKey: workspaceKeys.list(),
-      queryFn: () => apiFetch<Workspace[]>('/api/workspaces'),
+      queryFn: () => apiFetch<Workspace[]>('/api/workspaces')
     });
     if (workspaces.length > 0) {
       throw redirect({
         to: '/$workspaceSlug',
-        params: { workspaceSlug: workspaces[0]!.url_slug },
+        params: { workspaceSlug: workspaces[0]!.url_slug }
       });
     }
-  },
+  }
 });
 
 // ─── Authenticated Layout Route ──────────────────────────────
@@ -95,27 +91,27 @@ const authenticatedRoute = createRoute({
       throw redirect({
         to: '/login',
         search: {
-          redirect: location.href,
-        },
+          redirect: location.href
+        }
       });
     }
   },
   component: RootLayout,
-  errorComponent: RouteErrorComponent,
+  errorComponent: RouteErrorComponent
 });
 
 // ─── Workspace Layout Route ──────────────────────────────────
 const workspaceRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '$workspaceSlug',
-  component: WorkspaceLayout,
+  component: WorkspaceLayout
 });
 
 // ─── Workspace Home ──────────────────────────────────────────
 const workspaceHomeRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: '/',
-  component: WorkspaceHomeScreen,
+  component: WorkspaceHomeScreen
 });
 
 // ─── Project Detail ──────────────────────────────────────────
@@ -123,14 +119,14 @@ const projectDetailRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'projects/$projectId',
   validateSearch: validateProjectSearch,
-  component: ProjectDetailScreen,
+  component: ProjectDetailScreen
 });
 
 // ─── Diagram (overlay) ──────────────────────────────────────
 const diagramRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'projects/$projectId/diagrams/$diagramId',
-  component: DiagramScreen,
+  component: DiagramScreen
 });
 
 // ─── Entity Browser ──────────────────────────────────────────
@@ -138,14 +134,14 @@ const entityBrowserRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'entities',
   validateSearch: validateEntitySearch,
-  component: EntityBrowserScreen,
+  component: EntityBrowserScreen
 });
 
 // ─── Entity Detail ───────────────────────────────────────────
 const entityDetailRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'entities/$entityId',
-  component: EntityDetailScreen,
+  component: EntityDetailScreen
 });
 
 // ─── Data Model ──────────────────────────────────────────────
@@ -153,7 +149,7 @@ const dataModelRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'model',
   validateSearch: validateModelSearch,
-  component: DataModelEditorScreen,
+  component: DataModelEditorScreen
 });
 
 // ─── Search ──────────────────────────────────────────────────
@@ -161,7 +157,7 @@ const searchRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'search',
   validateSearch: validateSearchSearch,
-  component: SearchScreen,
+  component: SearchScreen
 });
 
 // ─── Settings ────────────────────────────────────────────────
@@ -169,21 +165,21 @@ const settingsRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'settings',
   validateSearch: validateSettingsSearch,
-  component: WorkspaceSettingsScreen,
+  component: WorkspaceSettingsScreen
 });
 
 // ─── Global Settings ─────────────────────────────────────────
 const globalSettingsRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'settings/global',
-  component: GlobalSettingsScreen,
+  component: GlobalSettingsScreen
 });
 
 // ─── Account Settings ────────────────────────────────────────
 const accountSettingsRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'account',
-  component: AccountSettingsScreen,
+  component: AccountSettingsScreen
 });
 
 // ─── AI Assistant ───────────────────────────────────────────
@@ -191,14 +187,14 @@ const assistantRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'assistant',
   validateSearch: validateAssistantSearch,
-  component: AssistantScreen,
+  component: AssistantScreen
 });
 
 // ─── AI Extract ─────────────────────────────────────────────
 const extractRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'extract',
-  component: ExtractScreen,
+  component: ExtractScreen
 });
 
 // ─── CSV Import ─────────────────────────────────────────────
@@ -206,7 +202,7 @@ const importRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'entities/import',
   component: ImportScreen,
-  validateSearch: validateEntitySearch,
+  validateSearch: validateEntitySearch
 });
 
 // ─── Route Tree ──────────────────────────────────────────────
@@ -227,7 +223,7 @@ export const routeTree = rootRoute.addChildren([
       accountSettingsRoute,
       assistantRoute,
       extractRoute,
-      importRoute,
-    ]),
-  ]),
+      importRoute
+    ])
+  ])
 ]);
