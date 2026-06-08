@@ -3,12 +3,31 @@ export type EntitySearchParams = {
   type?: string;
   status?: string;
   owner?: string;
+  q?: string;
+  viewId?: string;
+  viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline';
+  radarConfig?: string;
+  timelineConfig?: string;
+  sidebarTab?: 'filters' | 'views';
 };
 
 export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearchParams => ({
   type: typeof raw.type === 'string' ? raw.type : undefined,
   status: typeof raw.status === 'string' ? raw.status : undefined,
   owner: typeof raw.owner === 'string' ? raw.owner : undefined,
+  q: typeof raw.q === 'string' ? raw.q : undefined,
+  viewId: typeof raw.viewId === 'string' ? raw.viewId : undefined,
+  viewMode:
+    raw.viewMode === 'table' ||
+    raw.viewMode === 'cards' ||
+    raw.viewMode === 'tree' ||
+    raw.viewMode === 'radar' ||
+    raw.viewMode === 'timeline'
+      ? raw.viewMode
+      : undefined,
+  radarConfig: typeof raw.radarConfig === 'string' ? raw.radarConfig : undefined,
+  timelineConfig: typeof raw.timelineConfig === 'string' ? raw.timelineConfig : undefined,
+  sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' ? raw.sidebarTab : undefined,
 });
 
 // Project detail params

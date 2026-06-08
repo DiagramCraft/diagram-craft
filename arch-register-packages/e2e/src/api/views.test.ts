@@ -1,5 +1,6 @@
 import { createApiTest, expect } from '../helpers/fixtures';
-import { seedCatalogViews } from '../helpers/seedHelper';
+import { makeAuthHeader, seedCatalogViews } from '../helpers/seedHelper';
+import { hashPassword } from '@arch-register/server/utils/password';
 
 const test = createApiTest({
   afterSeed: async server => {
@@ -99,5 +100,55 @@ test.describe('Saved Views API', () => {
       body: JSON.stringify({ ...viewData, name: '' })
     });
     expect(res.status).toBe(400);
+  });
+
+  test('viewer can list views but cannot create or update them', async ({ server }) => {
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    const passwordHash = await hashPassword('ViewerPassword123!');
+
+    await server.db.identityAuth.createUser({
+      id: 'views-viewer',
+      email: 'views-viewer@example.com',
+      display_name: 'Views Viewer',
+      auth_provider: 'local',
+      password_hash: passwordHash,
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      color: null,
+      created_at: now,
+      updated_at: now,
+      last_login_at: null
+    });
+    await server.db.workspaceAdmin.setWorkspaceMemberRole('default', 'views-viewer', 'viewer', now);
+
+    const viewerAuth = await makeAuthHeader(server.db, 'views-viewer');
+
+    const listRes = await fetch(`${server.baseUrl}/api/default/views`, {
+      headers: { Authorization: viewerAuth }
+    });
+    expect(listRes.status).toBe(200);
+    const views = (await listRes.json()) as Array<{ id: string }>;
+    expect(views.length).toBeGreaterThan(0);
+
+    const createRes = await fetch(`${server.baseUrl}/api/default/views`, {
+      method: 'POST',
+      headers: {
+        Authorization: viewerAuth,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(viewData)
+    });
+    expect(createRes.status).toBe(403);
+
+    const updateRes = await fetch(`${server.baseUrl}/api/default/views/${views[0]!.id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: viewerAuth,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: 'Should not be allowed' })
+    });
+    expect(updateRes.status).toBe(403);
   });
 });

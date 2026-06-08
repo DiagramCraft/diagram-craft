@@ -73,8 +73,11 @@ export async function seedCatalogViews(db: DatabaseAdapter): Promise<void> {
 }
 
 // For API tests: generate a JWT directly without argon2 cost
-export async function makeAuthHeader(db: DatabaseAdapter): Promise<string> {
-  const user = await db.identityAuth.getUser(TEST_ADMIN.id);
-  if (!user) throw new Error('Test user not found — call seedMinimal first');
+export async function makeAuthHeader(
+  db: DatabaseAdapter,
+  userId: string = TEST_ADMIN.id
+): Promise<string> {
+  const user = await db.identityAuth.getUser(userId);
+  if (!user) throw new Error(`Test user not found: ${userId}`);
   return `Bearer ${generateTokenPair(user).access_token}`;
 }

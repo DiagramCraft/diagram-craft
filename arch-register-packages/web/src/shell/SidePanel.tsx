@@ -731,6 +731,7 @@ const EntitiesSidebar = ({
     status?: string;
     owner?: string;
     q?: string;
+    viewId?: string;
     viewMode?: string;
     radarConfig?: string;
     timelineConfig?: string;
@@ -775,6 +776,13 @@ const EntitiesSidebar = ({
   }, [facets]);
 
   const totalEntities = facets?.total ?? schemas.reduce((sum, s) => sum + s.entity_count, 0);
+  const activeFilterKind = typeFilter != null
+    ? 'type'
+    : statusFilter != null
+      ? 'status'
+      : ownerFilter != null
+        ? 'owner'
+        : 'all';
 
   const navigateEntities = (params: {
     type?: string;
@@ -802,6 +810,7 @@ const EntitiesSidebar = ({
         status: view.filters.status ?? undefined,
         owner: view.filters.owner ?? undefined,
         q: view.filters.q ?? undefined,
+        viewId: view.id,
         viewMode: view.viewMode,
         radarConfig: view.config?.radar ? JSON.stringify(view.config.radar) : undefined,
         timelineConfig: view.config?.timeline ? JSON.stringify(view.config.timeline) : undefined,
@@ -848,7 +857,7 @@ const EntitiesSidebar = ({
             <TreeRow
               icon={<TbDatabase size={12} />}
               label="All entities"
-              active={!typeFilter && !statusFilter && !ownerFilter}
+              active={activeFilterKind === 'all'}
               onClick={() =>
                 navigateEntities({ type: undefined, status: undefined, owner: undefined })
               }
@@ -867,8 +876,10 @@ const EntitiesSidebar = ({
                   />
                 }
                 label={s.name}
-                active={typeFilter === s.id}
-                onClick={() => navigateEntities({ type: typeFilter === s.id ? undefined : s.id })}
+                active={activeFilterKind === 'type' && typeFilter === s.id}
+                onClick={() =>
+                  navigateEntities({ type: s.id, status: undefined, owner: undefined })
+                }
                 trailing={<span className="dim mono">{s.entity_count}</span>}
                 tagColor={resolveSchemaColor(s, i)}
               />
@@ -892,9 +903,9 @@ const EntitiesSidebar = ({
                     />
                   }
                   label={s.label}
-                  active={statusFilter === s.id}
+                  active={activeFilterKind === 'status' && statusFilter === s.id}
                   onClick={() =>
-                    navigateEntities({ status: statusFilter === s.id ? undefined : s.id })
+                    navigateEntities({ type: undefined, status: s.id, owner: undefined })
                   }
                   trailing={<span className="dim mono">{count}</span>}
                 />
@@ -906,9 +917,9 @@ const EntitiesSidebar = ({
                 key={owner}
                 icon={<TbUsers size={12} />}
                 label={owner}
-                active={ownerFilter === owner}
+                active={activeFilterKind === 'owner' && ownerFilter === owner}
                 onClick={() =>
-                  navigateEntities({ owner: ownerFilter === owner ? undefined : owner })
+                  navigateEntities({ type: undefined, status: undefined, owner })
                 }
                 trailing={<span className="dim mono">{count}</span>}
               />
