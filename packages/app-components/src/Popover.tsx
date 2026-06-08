@@ -18,9 +18,18 @@ type PopoverCollisionAvoidance =
       fallbackAxisSide?: 'start' | 'end' | 'none';
     };
 
+export type PopoverActions = {
+  close: () => void;
+  unmount: () => void;
+};
+
 const Root = (props: RootProps) => {
   return (
-    <BaseUIPopover.Root open={props.open} onOpenChange={props.onOpenChange}>
+    <BaseUIPopover.Root
+      open={props.open}
+      onOpenChange={props.onOpenChange}
+      actionsRef={props.actionsRef}
+    >
       {props.children}
     </BaseUIPopover.Root>
   );
@@ -30,6 +39,7 @@ type RootProps = {
   children: React.ReactNode;
   open?: boolean;
   onOpenChange?: (b: boolean) => void;
+  actionsRef?: React.RefObject<PopoverActions | null>;
 };
 
 const Trigger = (props: TriggerProps) => {
@@ -62,9 +72,11 @@ const Content = React.forwardRef<HTMLDivElement, ContentProps>((props, forwarded
 
             {props.children}
 
-            <BaseUIPopover.Close className={styles.eClose} aria-label="Close">
-              <TbX />
-            </BaseUIPopover.Close>
+            {props.closeButton !== false && (
+              <BaseUIPopover.Close className={styles.eClose} aria-label="Close">
+                <TbX />
+              </BaseUIPopover.Close>
+            )}
           </BaseUIPopover.Popup>
         </BaseUIPopover.Viewport>
       </BaseUIPopover.Positioner>
@@ -83,6 +95,7 @@ type ContentProps = {
   arrow?: boolean;
   arrowPadding?: number;
   collisionAvoidance?: PopoverCollisionAvoidance;
+  closeButton?: boolean;
 };
 
 export const Popover = {

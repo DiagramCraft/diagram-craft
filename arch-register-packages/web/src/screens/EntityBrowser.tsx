@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './EntityBrowser.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -43,7 +43,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { Popover } from '@diagram-craft/app-components/Popover';
+import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { FilterBuilder } from '../components/FilterBuilder';
 import {
   useEntities,
@@ -354,6 +354,7 @@ export const EntityBrowser = () => {
   const [bulkLifecycleValue, setBulkLifecycleValue] = useState('');
   const [bulkOwnerValue, setBulkOwnerValue] = useState('');
   const [isSavingView, setIsSavingView] = useState(false);
+  const filterPopoverRef = useRef<PopoverActions | null>(null);
 
   // Sync view from search params when it changes (e.g. applying a saved view)
   useEffect(() => {
@@ -365,6 +366,8 @@ export const EntityBrowser = () => {
       } catch {
         // ignore
       }
+    } else {
+      setConditions([]);
     }
     if (search.radarConfig) {
       try {
@@ -816,7 +819,7 @@ export const EntityBrowser = () => {
           />
         </div>
 
-        <Popover.Root>
+        <Popover.Root actionsRef={filterPopoverRef}>
           <Popover.Trigger
             element={
               <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
@@ -828,10 +831,11 @@ export const EntityBrowser = () => {
               </Button>
             }
           />
-          <Popover.Content sideOffset={4} align="start">
+          <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false} className={styles.filterPopover}>
             <FilterBuilder
               conditions={conditions}
               onChange={c => navigateEntities({ filters: c })}
+              onClose={() => filterPopoverRef.current?.close()}
               schemas={schemas}
               lifecycleStates={lifecycleStates}
               owners={owners.map(o => ({ id: o, sort_order: 0 }))}

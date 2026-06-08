@@ -1,6 +1,5 @@
 import React from 'react';
-import { TbPlus, TbTrash } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
+import { TbPlus, TbX } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
@@ -15,7 +14,7 @@ import styles from './FilterBuilder.module.css';
 
 const TEXT_OPERATORS = [
   { value: 'equals', label: 'Equals' },
-  { value: 'not_equals', label: 'Not Equals' },
+  { value: 'not_equals', label: 'Not equals' },
   { value: 'contains', label: 'Contains' },
   { value: 'starts_with', label: 'Starts with' },
   { value: 'ends_with', label: 'Ends with' },
@@ -33,7 +32,7 @@ const DATE_OPERATORS = [
 
 const SELECT_OPERATORS = [
   { value: 'equals', label: 'Equals' },
-  { value: 'not_equals', label: 'Not Equals' },
+  { value: 'not_equals', label: 'Not equals' },
   { value: 'empty', label: 'Is empty' },
   { value: 'not_empty', label: 'Is not empty' }
 ];
@@ -48,6 +47,7 @@ type FieldDef = {
 type Props = {
   conditions: FilterCondition[];
   onChange: (conditions: FilterCondition[]) => void;
+  onClose?: () => void;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   owners: WorkspaceOwnerOption[];
@@ -58,6 +58,7 @@ type Props = {
 export const FilterBuilder = ({
   conditions,
   onChange,
+  onClose,
   schemas,
   lifecycleStates,
   owners,
@@ -106,12 +107,25 @@ export const FilterBuilder = ({
     const next = [...conditions];
     next.splice(index, 1);
     onChange(next);
+    if (next.length === 0) onClose?.();
+  };
+
+  const clearAll = () => {
+    onChange([]);
+    onClose?.();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter') return;
+    // Don't close if a Select dropdown is open (it uses Enter to confirm a selection)
+    if ((e.target as HTMLElement).closest('[role="listbox"]')) return;
+    onClose?.();
   };
 
   const updateCondition = (index: number, updates: Partial<FilterCondition>) => {
     const next = [...conditions];
     const updated = { ...next[index]!, ...updates };
-    
+
     // Reset op/value if field changed
     if (updates.fieldId) {
       const field = fields.find(f => f.id === updates.fieldId);
@@ -122,13 +136,22 @@ export const FilterBuilder = ({
         updated.value = '';
       }
     }
-    
+
     next[index] = updated;
     onChange(next);
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} onKeyDown={handleKeyDown}>
+      <div className={styles.header}>
+        <span className={styles.headerTitle}>Filters</span>
+        {conditions.length > 0 && (
+          <button type="button" className={styles.clearAll} onClick={clearAll}>
+            Clear all
+          </button>
+        )}
+      </div>
+
       <div className={styles.rows}>
         {conditions.length === 0 && (
           <div className={styles.emptyState}>No filters applied.</div>
@@ -143,10 +166,13 @@ export const FilterBuilder = ({
           />
         ))}
       </div>
-      <Button variant="ghost" size="sm" onClick={addCondition}>
-        <TbPlus size={14} style={{ marginRight: 4 }} />
-        Add Filter
-      </Button>
+
+      <div className={styles.footer}>
+        <button type="button" className={styles.addFilter} onClick={addCondition}>
+          <TbPlus size={11} />
+          Add filter
+        </button>
+      </div>
     </div>
   );
 };
@@ -163,7 +189,7 @@ const FilterRow = ({
   onRemove: () => void;
 }) => {
   const field = fields.find(f => f.id === condition.fieldId) ?? fields[0]!;
-  
+
   const operators = React.useMemo(() => {
     if (field.type === 'date') return DATE_OPERATORS;
     if (field.type === 'select') return SELECT_OPERATORS;
@@ -174,27 +200,30 @@ const FilterRow = ({
 
   return (
     <div className={styles.row}>
-      <div className={styles.fieldSelect}>
-        <Select.Root value={condition.fieldId} onChange={v => onUpdate({ fieldId: v })}>
-          {fields.map(f => (
-            <Select.Item key={f.id} value={f.id}>
-              {f.name}
-            </Select.Item>
-          ))}
-        </Select.Root>
+      <div className={styles.rowHead}>
+        <div className={styles.tokField}>
+          <Select.Root value={condition.fieldId} onChange={v => onUpdate({ fieldId: v })}>
+            {fields.map(f => (
+              <Select.Item key={f.id} value={f.id}>
+                {f.name}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </div>
+        <div className={styles.tokOp}>
+          <Select.Root value={condition.op} onChange={v => onUpdate({ op: v as FilterCondition['op'] })}>
+            {operators.map(o => (
+              <Select.Item key={o.value} value={o.value}>
+                {o.label}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </div>
       </div>
-      <div className={styles.opSelect}>
-        <Select.Root value={condition.op} onChange={v => onUpdate({ op: v as FilterCondition['op'] })}>
-          {operators.map(o => (
-            <Select.Item key={o.value} value={o.value}>
-              {o.label}
-            </Select.Item>
-          ))}
-        </Select.Root>
-      </div>
-      <div className={styles.valueInput}>
-        {showValueInput && (
-          field.type === 'select' ? (
+
+      {showValueInput && (
+        <div className={styles.rowBody}>
+          {field.type === 'select' ? (
             <Select.Root value={condition.value as string} onChange={v => onUpdate({ value: v })}>
               {field.options?.map(o => (
                 <Select.Item key={o.value} value={o.value}>
@@ -206,11 +235,12 @@ const FilterRow = ({
             <DateInput value={(condition.value as string) || ''} onChange={v => onUpdate({ value: v })} />
           ) : (
             <TextInput value={(condition.value as string) || ''} onChange={v => onUpdate({ value: v })} />
-          )
-        )}
-      </div>
-      <button type="button" className={styles.removeBtn} onClick={onRemove}>
-        <TbTrash size={14} />
+          )}
+        </div>
+      )}
+
+      <button type="button" className={styles.removeBtn} onClick={onRemove} title="Remove filter">
+        <TbX size={11} />
       </button>
     </div>
   );
