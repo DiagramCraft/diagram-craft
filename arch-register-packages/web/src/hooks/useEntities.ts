@@ -16,6 +16,7 @@ import {
 import type { EntityRelation } from '../api';
 import type { CreateSavedViewRequest, UpdateSavedViewRequest } from '@arch-register/api-types/views';
 import { entityKeys, schemaKeys, viewKeys } from './queryKeys';
+import { invalidateAuditQueries } from './useAudit';
 
 // Hook for fetching entity list
 export const useEntities = (
@@ -87,11 +88,12 @@ export const useDeleteEntity = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (entityId: string) => deleteEntity(workspaceId, entityId),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate all entity-related queries to refetch
-      queryClient.invalidateQueries({ queryKey: entityKeys.all });
+      await queryClient.invalidateQueries({ queryKey: entityKeys.all });
       // Invalidate schema queries to update entity counts in sidebar
-      queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
+      await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };
@@ -107,11 +109,16 @@ export const useUpdateEntity = (workspaceId: string) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       }),
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       // Invalidate the specific entity and relations
-      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, variables.entityId) });
-      queryClient.invalidateQueries({ queryKey: entityKeys.relations(workspaceId, variables.entityId) });
-      queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
+      await queryClient.invalidateQueries({
+        queryKey: entityKeys.detail(workspaceId, variables.entityId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: entityKeys.relations(workspaceId, variables.entityId),
+      });
+      await queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };
@@ -122,9 +129,10 @@ export const useCloneEntity = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (entityId: string) => cloneEntity(workspaceId, entityId),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate entity lists to show the new clone
-      queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
+      await queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };

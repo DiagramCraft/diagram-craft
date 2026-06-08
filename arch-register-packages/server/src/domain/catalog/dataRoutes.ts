@@ -16,7 +16,7 @@ import {
   type SchemaField
 } from '../../types';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
-import { computeChanges, extractEntityFields, logAudit } from '../../db/audit';
+import { computeChanges, extractEntityFields, flattenEntityAuditFields, logAudit } from '../../db/audit';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { formatArrayForCsv, generateCsv } from '../../utils/csv';
 import { handleDbError, parsePositiveInt, slugify } from '../../utils/http';
@@ -967,7 +967,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
               entityName: updatedEntity.name,
               entitySlug: updatedEntity.slug,
               schemaId: updatedEntity.schema_id,
-              changes: computeChanges(existingEntity.data, updatedEntity.data)
+              changes: computeChanges(
+                flattenEntityAuditFields(existingEntity),
+                flattenEntityAuditFields(updatedEntity)
+              )
             });
 
             updatedIds.push(existingId);
@@ -1003,7 +1006,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
               entityName: entity.name,
               entitySlug: entity.slug,
               schemaId: entity.schema_id,
-              changes: computeChanges({}, entity.data)
+              changes: {
+                new: flattenEntityAuditFields(entity)
+              }
             });
 
             createdIds.push(entity.id);
@@ -1235,7 +1240,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           entitySlug: row.slug,
           schemaId: row.schema_id,
           changes: {
-            new: extractEntityFields(row)
+            new: flattenEntityAuditFields(row)
           }
         });
 
@@ -1314,7 +1319,6 @@ export function createDataRoutes(db: DatabaseAdapter) {
         });
 
         httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
-        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
         await logAudit(db.audit, {
           workspace,
           operation: 'update',
@@ -1323,7 +1327,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           entityName: row.name,
           entitySlug: row.slug,
           schemaId: row.schema_id,
-          changes
+          changes: computeChanges(flattenEntityAuditFields(oldRow), flattenEntityAuditFields(row))
         });
 
         return toApiEntity(row, authCtx);
@@ -1383,7 +1387,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           entitySlug: row.slug,
           schemaId: row.schema_id,
           changes: {
-            new: extractEntityFields(row)
+            new: flattenEntityAuditFields(row)
           }
         });
 
@@ -1422,7 +1426,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           entitySlug: row.slug,
           schemaId: row.schema_id,
           changes: {
-            old: extractEntityFields(row)
+            old: flattenEntityAuditFields(row)
           }
         });
 

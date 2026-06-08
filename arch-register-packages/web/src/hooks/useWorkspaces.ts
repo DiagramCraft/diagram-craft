@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Workspace } from '../api';
 import { apiFetch } from '../api';
+import { auditKeys, invalidateAuditQueries } from './useAudit';
 
 // Query keys factory
 export const workspaceKeys = {
@@ -44,14 +45,17 @@ export const useUpdateWorkspace = () => {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
-    onSuccess: (updatedWorkspace, variables) => {
+    onSuccess: async (updatedWorkspace, variables) => {
       // Update the workspace detail cache
       queryClient.setQueryData(
         workspaceKeys.detail(variables.workspaceId),
         updatedWorkspace
       );
       // Invalidate workspace list to reflect changes
-      queryClient.invalidateQueries({ queryKey: workspaceKeys.list() });
+      await queryClient.invalidateQueries({ queryKey: workspaceKeys.list() });
+      // Workspace audit keys are slug-based, so slug changes require a broad invalidation.
+      await queryClient.invalidateQueries({ queryKey: auditKeys.all });
+      await invalidateAuditQueries(queryClient, updatedWorkspace.url_slug);
     },
   });
 };
