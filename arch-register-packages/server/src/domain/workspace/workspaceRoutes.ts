@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { Workspace } from '../../types';
-import { logAudit, extractEntityFields, computeChanges } from '../../db/audit';
+import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError, slugify } from '../../utils/http';
 import type { StorageAdapter } from '../../storage/storage';
 import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization';
@@ -137,7 +137,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
     BASE,
     defineHandler(async () => {
       try {
-        const workspaces = await db.workspaceAdmin.listWorkspaces();
+        const workspaces = await db.workspace.listWorkspaces();
         return workspaces.map(toApiWorkspace);
       } catch (e) {
         handleError(e, 'Failed to retrieve workspaces');
@@ -162,7 +162,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       const { template, replicate_from, include } = body as Record<string, unknown>;
       try {
         const timestamp = new Date();
-        const row = await db.workspaceAdmin.createWorkspace(
+        const row = await db.workspace.createWorkspace(
           buildWorkspaceCreateInput(body as Record<string, unknown>, timestamp)
         );
 
@@ -170,9 +170,9 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           const includeSet = normalizeReplicationInclude(include);
 
           const [srcLifecycle, srcTeams, srcRoles, srcSchemas] = await Promise.all([
-            db.workspaceAdmin.listLifecycleStates(replicate_from),
-            db.workspaceAdmin.listTeams(replicate_from),
-            db.workspaceAdmin.listCustomWorkspaceRoles(replicate_from),
+            db.workspace.listLifecycleStates(replicate_from),
+            db.workspace.listTeams(replicate_from),
+            db.workspace.listCustomWorkspaceRoles(replicate_from),
             db.catalog.listSchemas(replicate_from)
           ]);
 
@@ -181,13 +181,13 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
               srcLifecycle.length > 0
                 ? srcLifecycle.map(s => ({ ...s, workspace: row.id, created_at: timestamp }))
                 : buildDefaultLifecycleStates(row.id, timestamp);
-            await db.workspaceAdmin.replaceLifecycleStates(row.id, lifecycleStates);
-            await db.workspaceAdmin.replaceTeams(
+            await db.workspace.replaceLifecycleStates(row.id, lifecycleStates);
+            await db.workspace.replaceTeams(
               row.id,
               srcTeams.map(t => ({ ...t, workspace: row.id, created_at: timestamp }))
             );
             for (const role of srcRoles) {
-              await db.workspaceAdmin.createCustomWorkspaceRole({
+              await db.workspace.createCustomWorkspaceRole({
                 ...role,
                 id: randomUUID(),
                 workspace: row.id,
@@ -196,11 +196,11 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
               });
             }
           } else {
-            await db.workspaceAdmin.replaceLifecycleStates(
+            await db.workspace.replaceLifecycleStates(
               row.id,
               buildDefaultLifecycleStates(row.id, timestamp)
             );
-            await db.workspaceAdmin.replaceTeams(
+            await db.workspace.replaceTeams(
               row.id,
               buildDefaultWorkspaceTeams(row.id, timestamp)
             );
@@ -230,12 +230,12 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
             }
           }
         } else {
-          await db.workspaceAdmin.replaceLifecycleStates(
+          await db.workspace.replaceLifecycleStates(
             row.id,
             buildDefaultLifecycleStates(row.id, timestamp)
           );
 
-          await db.workspaceAdmin.replaceTeams(
+          await db.workspace.replaceTeams(
             row.id,
             buildDefaultWorkspaceTeams(row.id, timestamp)
           );
@@ -276,10 +276,10 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
       try {
-        const oldRow = await db.workspaceAdmin.getWorkspace(id);
+        const oldRow = await db.workspace.getWorkspace(id);
         httpAssert.present(oldRow, { status: 404, message: `Workspace '${id}' not found` });
 
-        const row = await db.workspaceAdmin.updateWorkspace(
+        const row = await db.workspace.updateWorkspace(
           id,
           buildWorkspaceUpdateInput(body as Record<string, unknown>, oldRow, new Date())
         );
@@ -311,7 +311,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       httpAssert.string(id, { message: 'id is required' });
 
       try {
-        const { workspace, projectIds } = await db.workspaceAdmin.deleteWorkspace(id);
+        const { workspace, projectIds } = await db.workspace.deleteWorkspace(id);
         httpAssert.present(workspace, { status: 404, message: `Workspace '${id}' not found` });
 
         if (storage) {

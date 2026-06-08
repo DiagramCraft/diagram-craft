@@ -1,9 +1,9 @@
-import type { CreateSavedViewInput, UpdateSavedViewInput, ViewDatabase } from './database';
+import type { CreateSavedViewInput, UpdateSavedViewInput, ViewDatabase } from './catalogDatabase';
 import {
   normalizePostgresError,
   PostgresDatabaseBase,
   type PostgresRowTypes
-} from './postgresBase';
+} from '../../../db/postgresBase';
 
 export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDatabase {
   async listSavedViews(workspace: string) {

@@ -21,7 +21,7 @@ import { hashPassword } from '../utils/password';
 import { CreateUserInput } from '../db/database';
 
 async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
-  const workspaces = await db.workspaceAdmin.listWorkspaces();
+  const workspaces = await db.workspace.listWorkspaces();
   const workspaceIds = new Set(workspaces.map(w => w.id));
   const schemas = (
     await Promise.all(workspaces.map(workspace => db.catalog.listSchemas(workspace.id)))
@@ -108,7 +108,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   const now = new Date();
 
   for (const user of seedLocalUsers) {
-    await db.identityAuth.createUser({
+    await db.auth.createUser({
       id: user.id,
       email: user.email,
       display_name: user.display_name,
@@ -125,7 +125,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   }
 
   for (const workspace of seedWorkspaces) {
-    await db.workspaceAdmin.replaceTeamAssignments(
+    await db.workspace.replaceTeamAssignments(
       workspace.id,
       seedTeamAssignments.filter(assignment => assignment.workspace === workspace.id)
     );
@@ -139,7 +139,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   }
 
   for (const user of seedLocalUsers) {
-    await db.identityAuth.replaceGlobalRoleAssignments(
+    await db.auth.replaceGlobalRoleAssignments(
       user.id,
       rolesByUser.get(user.id) ?? [],
       now
@@ -147,7 +147,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   }
 
   for (const member of seedWorkspaceMembers) {
-    await db.workspaceAdmin.setWorkspaceMemberRole(
+    await db.workspace.setWorkspaceMemberRole(
       member.workspace,
       member.user_id,
       member.role,
@@ -162,14 +162,14 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
 
 const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
   for (const workspace of seedWorkspaces) {
-    await db.workspaceAdmin.createWorkspace(workspace);
+    await db.workspace.createWorkspace(workspace);
   }
   for (const workspace of seedWorkspaces) {
-    await db.workspaceAdmin.replaceLifecycleStates(
+    await db.workspace.replaceLifecycleStates(
       workspace.id,
       seedLifecycleStates.filter(state => state.workspace === workspace.id)
     );
-    await db.workspaceAdmin.replaceTeams(
+    await db.workspace.replaceTeams(
       workspace.id,
       seedOwners.filter(owner => owner.workspace === workspace.id)
     );
@@ -184,13 +184,13 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
     await db.catalog.createEntity(entity);
   }
   for (const project of seedProjects) {
-    await db.projectsFiles.createProject(project);
+    await db.project.createProject(project);
   }
   for (const view of seedSavedViews) {
     await db.view.createSavedView(view);
   }
   for (const file of seedProjectFiles) {
-    await db.projectsFiles.upsertProjectFile({
+    await db.project.upsertProjectFile({
       workspace: file.workspace,
       project_id: file.project_id,
       path: file.path,

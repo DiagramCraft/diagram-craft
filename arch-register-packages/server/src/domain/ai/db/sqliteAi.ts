@@ -3,8 +3,8 @@ import type {
   CreateConversationInput,
   CreateMessageInput,
   UpsertAiConfigInput
-} from './database';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
+} from './aiDatabase';
+import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
 export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
   async getAiConfig(ws: string) {

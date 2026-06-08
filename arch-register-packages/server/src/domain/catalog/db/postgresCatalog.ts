@@ -7,12 +7,12 @@ import type {
   UpdateEntityInput,
   UpdateEnumInput,
   UpdateSchemaInput
-} from './database';
+} from './catalogDatabase';
 import {
   normalizePostgresError,
   PostgresDatabaseBase,
   type PostgresRowTypes
-} from './postgresBase';
+} from '../../../db/postgresBase';
 
 export class PostgresCatalogDatabase extends PostgresDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {

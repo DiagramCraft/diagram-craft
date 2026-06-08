@@ -1,6 +1,6 @@
-import type { AuditOperation, AuditEntityType, Entity } from '../types';
-import type { AuditDatabase } from './database';
-import { createLogger } from '../utils/logger';
+import type { AuditOperation, AuditEntityType, Entity } from '../../../types';
+import type { AuditDatabase } from './auditDatabase';
+import { createLogger } from '../../../utils/logger';
 
 const logger = createLogger('audit');
 

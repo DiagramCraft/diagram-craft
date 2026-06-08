@@ -80,7 +80,7 @@ export const createApp = (
   app.use(createAuthRoutes(db));
 
   // Apply authentication middleware to all routes below
-  const authMiddleware = requireAuth(db.identityAuth);
+  const authMiddleware = requireAuth(db.auth);
   app.use(authMiddleware);
 
   // Protected routes (require authentication)

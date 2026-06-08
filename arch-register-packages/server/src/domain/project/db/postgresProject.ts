@@ -1,18 +1,18 @@
 import type {
   CreateProjectInput,
-  ProjectsFilesDatabase,
+  ProjectDatabase,
   UpdateProjectInput,
   UpsertProjectFileInput
-} from './database';
+} from './projectDatabase';
 import {
   normalizePostgresError,
   PostgresDatabaseBase,
   type PostgresRowTypes
-} from './postgresBase';
+} from '../../../db/postgresBase';
 
-export class PostgresProjectsFilesDatabase
+export class PostgresProjectDatabase
   extends PostgresDatabaseBase
-  implements ProjectsFilesDatabase
+  implements ProjectDatabase
 {
   async listProjects(workspace: string) {
     return await this.sql<PostgresRowTypes['project'][]>`

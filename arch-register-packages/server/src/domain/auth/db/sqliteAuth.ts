@@ -1,8 +1,8 @@
-import type { CreateUserInput, IdentityAuthDatabase, UpdateUserInput } from './database';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
-import type { GlobalRole } from '../types';
+import type { AuthDatabase, CreateUserInput, UpdateUserInput } from './authDatabase';
+import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import type { GlobalRole } from '../../../types';
 
-export class SqliteIdentityAuthDatabase extends SqliteDatabaseBase implements IdentityAuthDatabase {
+export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDatabase {
   async getUser(id: string) {
     return this.get('SELECT * FROM users WHERE id = ?', [id], sqliteMappers.user);
   }

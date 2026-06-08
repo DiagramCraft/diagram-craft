@@ -5,14 +5,14 @@ import postgres from 'postgres';
 import type { DatabaseAdapter } from './database';
 import { getMigrationTables, runPostgresMigrations } from './migrate';
 import { normalizePostgresError, type PostgresSqlClient } from './postgresBase';
-import { PostgresAuditDatabase } from './postgresAudit';
-import { PostgresCatalogDatabase } from './postgresCatalog';
-import { PostgresIdentityAuthDatabase } from './postgresIdentityAuth';
-import { PostgresProjectsFilesDatabase } from './postgresProjectsFiles';
-import { PostgresWorkspaceAdminDatabase } from './postgresWorkspaceAdmin';
-import { PostgresAiDatabase } from './postgresAi';
+import { PostgresAuditDatabase } from '../domain/audit/db/postgresAudit';
+import { PostgresCatalogDatabase } from '../domain/catalog/db/postgresCatalog';
+import { PostgresAuthDatabase } from '../domain/auth/db/postgresAuth';
+import { PostgresProjectDatabase } from '../domain/project/db/postgresProject';
+import { PostgresWorkspaceDatabase } from '../domain/workspace/db/postgresWorkspace';
+import { PostgresAiDatabase } from '../domain/ai/db/postgresAi';
 import { SERVER_DEFAULTS } from '../constants';
-import { PostgresViewDatabase } from '@arch-register/server/db/postgresView';
+import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
@@ -21,12 +21,12 @@ const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
 export class PostgresDatabase implements DatabaseAdapter {
   private readonly sql: PostgresSqlClient;
 
-  readonly workspaceAdmin: PostgresWorkspaceAdminDatabase;
+  readonly workspace: PostgresWorkspaceDatabase;
   readonly catalog: PostgresCatalogDatabase;
   readonly view: PostgresViewDatabase;
-  readonly projectsFiles: PostgresProjectsFilesDatabase;
+  readonly project: PostgresProjectDatabase;
   readonly audit: PostgresAuditDatabase;
-  readonly identityAuth: PostgresIdentityAuthDatabase;
+  readonly auth: PostgresAuthDatabase;
   readonly ai: PostgresAiDatabase;
   readonly core;
 
@@ -43,12 +43,12 @@ export class PostgresDatabase implements DatabaseAdapter {
       }
     });
 
-    this.workspaceAdmin = new PostgresWorkspaceAdminDatabase(this.sql);
+    this.workspace = new PostgresWorkspaceDatabase(this.sql);
     this.catalog = new PostgresCatalogDatabase(this.sql);
     this.view = new PostgresViewDatabase(this.sql);
-    this.projectsFiles = new PostgresProjectsFilesDatabase(this.sql);
+    this.project = new PostgresProjectDatabase(this.sql);
     this.audit = new PostgresAuditDatabase(this.sql);
-    this.identityAuth = new PostgresIdentityAuthDatabase(this.sql);
+    this.auth = new PostgresAuthDatabase(this.sql);
     this.ai = new PostgresAiDatabase(this.sql);
 
     this.core = {

@@ -16,7 +16,7 @@ import {
   type SchemaField
 } from '../../types';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
-import { computeChanges, extractEntityFields, flattenEntityAuditFields, logAudit } from '../../db/audit';
+import { computeChanges, extractEntityFields, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { formatArrayForCsv, generateCsv } from '../../utils/csv';
 import { handleDbError, parsePositiveInt, slugify } from '../../utils/http';
@@ -42,10 +42,10 @@ const handleError = (error: unknown, fallback: string): never =>
   });
 
 const getLifecycleValues = async (db: DatabaseAdapter, workspace: string): Promise<Set<string>> =>
-  new Set((await db.workspaceAdmin.listLifecycleStates(workspace)).map(r => r.id));
+  new Set((await db.workspace.listLifecycleStates(workspace)).map(r => r.id));
 
 const getTeamIds = async (db: DatabaseAdapter, workspace: string): Promise<Set<string>> =>
-  new Set((await db.workspaceAdmin.listTeams(workspace)).map(r => r.id));
+  new Set((await db.workspace.listTeams(workspace)).map(r => r.id));
 
 const includesQuery = (value: unknown, query: string) =>
   String(value ?? '')
@@ -1184,7 +1184,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         });
         const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
         const parents = getEntityParentsFromPayload(schema, payload.fields, entityLookup);
-        const fallbackOwner = (await db.workspaceAdmin.listTeams(workspace))[0]?.id ?? null;
+        const fallbackOwner = (await db.workspace.listTeams(workspace))[0]?.id ?? null;
         const owner = resolveCreateOwner(
           payload.requestedOwner,
           parents,

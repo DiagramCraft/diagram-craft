@@ -1,8 +1,8 @@
 import type {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
-  WorkspaceAdminDatabase
-} from './database';
+  WorkspaceDatabase
+} from './workspaceDatabase';
 import type {
   TeamMembership,
   WorkspaceMember,
@@ -10,12 +10,12 @@ import type {
   WorkspaceOwner,
   WorkspaceRole,
   WorkspaceRoleDefinition
-} from '../types';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
+} from '../../../types';
+import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
-export class SqliteWorkspaceAdminDatabase
+export class SqliteWorkspaceDatabase
   extends SqliteDatabaseBase
-  implements WorkspaceAdminDatabase
+  implements WorkspaceDatabase
 {
   async listWorkspaces() {
     return this.all('SELECT * FROM workspace ORDER BY name', [], sqliteMappers.workspace);

@@ -1,14 +1,14 @@
-import type { CreateUserInput, IdentityAuthDatabase, UpdateUserInput } from './database';
+import type { AuthDatabase, CreateUserInput, UpdateUserInput } from './authDatabase';
 import {
   normalizePostgresError,
   PostgresDatabaseBase,
   type PostgresRowTypes
-} from './postgresBase';
-import type { GlobalRole } from '../types';
+} from '../../../db/postgresBase';
+import type { GlobalRole } from '../../../types';
 
-export class PostgresIdentityAuthDatabase
+export class PostgresAuthDatabase
   extends PostgresDatabaseBase
-  implements IdentityAuthDatabase
+  implements AuthDatabase
 {
   async getUser(id: string) {
     const [row] = await this.sql<PostgresRowTypes['user'][]>`

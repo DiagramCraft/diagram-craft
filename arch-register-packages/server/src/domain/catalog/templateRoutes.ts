@@ -60,12 +60,12 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
 
       try {
-        const projects = await db.projectsFiles.listProjects(workspace);
+        const projects = await db.project.listProjects(workspace);
         const projectsWithFiles: ProjectWithFiles[] = [];
 
         for (const project of projects) {
           if (!authCtx || !canAccessProject(authCtx, project.owner)) continue;
-          const files = await db.projectsFiles.listProjectFiles(workspace, project.id);
+          const files = await db.project.listProjectFiles(workspace, project.id);
           projectsWithFiles.push({ project, files });
         }
 
@@ -86,16 +86,16 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
 
       try {
-        const project = await db.projectsFiles.getProject(workspace, projectId);
+        const project = await db.project.getProject(workspace, projectId);
         httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
-        const projects = await db.projectsFiles.listProjects(workspace);
+        const projects = await db.project.listProjects(workspace);
         const projectsWithFiles: ProjectWithFiles[] = [];
 
         for (const proj of projects) {
           if (authCtx && !canAccessProject(authCtx, proj.owner)) continue;
-          const files = await db.projectsFiles.listProjectFiles(workspace, proj.id);
+          const files = await db.project.listProjectFiles(workspace, proj.id);
           projectsWithFiles.push({ project: proj, files });
         }
 
@@ -120,7 +120,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, projectId);
+        const project = await db.project.getProject(workspace, projectId);
         httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
 
         // Check permissions
@@ -130,11 +130,11 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
           requireProjectAccess(authCtx, project.owner);
         }
 
-        const file = await db.projectsFiles.getProjectFileByPath(workspace, projectId, filePath);
+        const file = await db.project.getProjectFileByPath(workspace, projectId, filePath);
         httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
         // Update template status in database
-        await db.projectsFiles.updateProjectFileTemplateStatus(
+        await db.project.updateProjectFileTemplateStatus(
           workspace,
           projectId,
           file.id,
@@ -144,7 +144,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
         );
 
         // Return updated file
-        const updatedFile = await db.projectsFiles.getProjectFileByPath(
+        const updatedFile = await db.project.getProjectFileByPath(
           workspace,
           projectId,
           filePath

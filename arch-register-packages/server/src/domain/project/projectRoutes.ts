@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { CreateProjectInput, DatabaseAdapter, UpdateProjectInput } from '../../db/database';
 import type { ProjectFile } from '../../types';
 import type { StorageAdapter } from '../../storage/storage';
-import { logAudit, extractEntityFields, computeChanges } from '../../db/audit';
+import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { handleDbError } from '../../utils/http';
 import {
@@ -156,13 +156,13 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
-        const projects = await db.projectsFiles.listProjects(workspace);
+        const projects = await db.project.listProjects(workspace);
         const visibleProjects = projects.filter(project =>
           canAccessProject(authCtx, project.owner)
         );
         const fileCounts = new Map<string, number>();
         const projectFiles = await Promise.all(
-          visibleProjects.map(project => db.projectsFiles.listProjectFiles(workspace, project.id))
+          visibleProjects.map(project => db.project.listProjectFiles(workspace, project.id))
         );
         for (const files of projectFiles) {
           for (const file of files) {
@@ -188,11 +188,11 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = getParam(event, 'id');
       try {
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
-        const files = await db.projectsFiles.listProjectFiles(workspace, id);
+        const files = await db.project.listProjectFiles(workspace, id);
 
         return toApiProjectDetail(project, buildFileTree(files), authCtx);
       } catch (e) {
@@ -210,7 +210,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const teamIds = new Set((await db.workspaceAdmin.listTeams(workspace)).map(row => row.id));
+        const teamIds = new Set((await db.workspace.listTeams(workspace)).map(row => row.id));
         const timestamp = new Date();
         const input = buildCreateProjectInput(
           workspace,
@@ -224,7 +224,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             input.owner,
             'You do not have permission to create a project for this owner team'
           );
-        const row = await db.projectsFiles.createProject(input);
+        const row = await db.project.createProject(input);
 
         await logAudit(db.audit, {
           workspace,
@@ -254,9 +254,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const oldRow = await db.projectsFiles.getProject(workspace, id);
+        const oldRow = await db.project.getProject(workspace, id);
         httpAssert.present(oldRow, { status: 404, message: `Project '${id}' not found` });
-        const teamIds = new Set((await db.workspaceAdmin.listTeams(workspace)).map(row => row.id));
+        const teamIds = new Set((await db.workspace.listTeams(workspace)).map(row => row.id));
         const update = buildUpdateProjectInput(
           body as Record<string, unknown>,
           oldRow,
@@ -280,7 +280,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           }
         }
 
-        const row = await db.projectsFiles.updateProject(workspace, id, update.input);
+        const row = await db.project.updateProject(workspace, id, update.input);
         httpAssert.present(row, { status: 404, message: `Project '${id}' not found` });
 
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
@@ -294,7 +294,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           changes
         });
 
-        const fileCount = (await db.projectsFiles.listProjectFiles(workspace, id)).length;
+        const fileCount = (await db.project.listProjectFiles(workspace, id)).length;
 
         return toApiProject(row, fileCount, authCtx);
       } catch (e) {
@@ -310,7 +310,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -320,7 +320,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'You do not have permission to delete this project'
           );
 
-        await db.projectsFiles.deleteProject(workspace, id);
+        await db.project.deleteProject(workspace, id);
 
         await logAudit(db.audit, {
           workspace,
@@ -349,11 +349,11 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
-        const files = await db.projectsFiles.listProjectFiles(workspace, id);
+        const files = await db.project.listProjectFiles(workspace, id);
         return buildFileTree(files);
       } catch (e) {
         handleError(e, 'Failed to list files');
@@ -369,11 +369,11 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const filePath = getParam(event, 'path');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
-        const file = await db.projectsFiles.getProjectFileByPath(workspace, id, filePath);
+        const file = await db.project.getProjectFileByPath(workspace, id, filePath);
         httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
         const content = await storage.read(workspace, id, file.id);
@@ -417,7 +417,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -427,12 +427,12 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'You do not have permission to modify this project'
           );
 
-        const existingFile = await db.projectsFiles.getProjectFileByPath(workspace, id, filePath);
+        const existingFile = await db.project.getProjectFileByPath(workspace, id, filePath);
         const isUpdate = !!existingFile;
 
         const timestamp = new Date();
         const commentCounts = getDiagramCommentCounts(body as SerializedDiagramDocument);
-        const row = await db.projectsFiles.upsertProjectFile({
+        const row = await db.project.upsertProjectFile({
           workspace,
           project_id: id,
           path: filePath,
@@ -448,7 +448,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         try {
           const previewSvg = generateSvgPreview(body as SerializedDiagramDocument);
-          await db.projectsFiles.updateProjectFileDerivedData(
+          await db.project.updateProjectFileDerivedData(
             workspace,
             id,
             row.id,
@@ -459,7 +459,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             timestamp
           );
         } catch {
-          await db.projectsFiles.updateProjectFileDerivedData(
+          await db.project.updateProjectFileDerivedData(
             workspace,
             id,
             row.id,
@@ -514,7 +514,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const filePath = getParam(event, 'path');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -524,10 +524,10 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'You do not have permission to modify this project'
           );
 
-        const file = await db.projectsFiles.getProjectFileByPath(workspace, id, filePath);
+        const file = await db.project.getProjectFileByPath(workspace, id, filePath);
         httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-        await db.projectsFiles.deleteProjectFileByPath(workspace, id, filePath);
+        await db.project.deleteProjectFileByPath(workspace, id, filePath);
 
         await logAudit(db.audit, {
           workspace,
@@ -565,7 +565,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
 
         if (authCtx)
@@ -576,7 +576,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'You do not have permission to modify this project'
           );
 
-        const existingFile = await db.projectsFiles.getProjectFileByPath(workspace, id, filePath);
+        const existingFile = await db.project.getProjectFileByPath(workspace, id, filePath);
         httpAssert.present(existingFile, { status: 404, message: `File '${filePath}' not found` });
 
         // Check if source and target are the same
@@ -585,7 +585,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         }
 
         // Check if target path already exists
-        const targetExists = await db.projectsFiles.getProjectFileByPath(workspace, id, newPath);
+        const targetExists = await db.project.getProjectFileByPath(workspace, id, newPath);
         httpAssert.true(!targetExists, {
           status: 409,
           message: `A file already exists at '${newPath}'`
@@ -606,7 +606,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const commentCounts = getDiagramCommentCounts(fileData as SerializedDiagramDocument);
 
         // Create at new path
-        const newFile = await db.projectsFiles.upsertProjectFile({
+        const newFile = await db.project.upsertProjectFile({
           workspace,
           project_id: id,
           path: newPath,
@@ -620,7 +620,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         // Preserve template flags
         if (existingFile.is_template || existingFile.is_workspace_template) {
-          await db.projectsFiles.updateProjectFileTemplateStatus(
+          await db.project.updateProjectFileTemplateStatus(
             workspace,
             id,
             newFile.id,
@@ -636,7 +636,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         } catch {
           previewSvg = null;
         }
-        await db.projectsFiles.updateProjectFileDerivedData(
+        await db.project.updateProjectFileDerivedData(
           workspace,
           id,
           newFile.id,
@@ -651,7 +651,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         await storage.write(workspace, id, newFile.id, updatedContent);
 
         // Delete old file
-        await db.projectsFiles.deleteProjectFileByPath(workspace, id, filePath);
+        await db.project.deleteProjectFileByPath(workspace, id, filePath);
         await storage.delete(workspace, id, existingFile.id).catch(() => {});
 
         await logAudit(db.audit, {
@@ -693,7 +693,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const markerPath = `${folderPath}/.keep`;
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -703,7 +703,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'You do not have permission to modify this project'
           );
         const timestamp = new Date();
-        const row = await db.projectsFiles.createProjectFileIfAbsent({
+        const row = await db.project.createProjectFileIfAbsent({
           workspace,
           project_id: id,
           path: markerPath,
@@ -754,7 +754,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -763,7 +763,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'edit_project',
             'You do not have permission to modify this project'
           );
-        const result = await db.projectsFiles.renameProjectFileFolder(
+        const result = await db.project.renameProjectFileFolder(
           workspace,
           id,
           oldPath,
@@ -791,7 +791,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const folderPath = getParam(event, 'path');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.projectsFiles.getProject(workspace, id);
+        const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -800,7 +800,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'edit_project',
             'You do not have permission to modify this project'
           );
-        const result = await db.projectsFiles.deleteProjectFileFolder(workspace, id, folderPath);
+        const result = await db.project.deleteProjectFileFolder(workspace, id, folderPath);
 
         httpAssert.true(result.length > 0, {
           status: 404,

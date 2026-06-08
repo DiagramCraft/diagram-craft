@@ -93,7 +93,7 @@ const test = createApiTest().extend<{ mockAI: MockAIState }>({
         temperature: 0.2,
         enabled: true
       });
-      await server.db.workspaceAdmin.createWorkspace({
+      await server.db.workspace.createWorkspace({
         id: 'no-ai',
         name: 'No AI Workspace',
         url_slug: 'no-ai',

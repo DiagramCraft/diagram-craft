@@ -132,7 +132,7 @@ const db = {
       return updated;
     })
   },
-  workspaceAdmin: {
+  workspace: {
     listTeams: async () => [
       {
         id: 'team-payments',

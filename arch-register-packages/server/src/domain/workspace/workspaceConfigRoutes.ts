@@ -202,7 +202,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await db.workspaceAdmin.listLifecycleStates(workspace);
+      return await db.workspace.listLifecycleStates(workspace);
     })
   );
 
@@ -215,7 +215,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       requireWorkspaceCapability(authCtx, 'ws.settings');
       const body = await event.req.json().catch(() => undefined);
       const now = new Date();
-      return await db.workspaceAdmin.replaceLifecycleStates(
+      return await db.workspace.replaceLifecycleStates(
         workspace,
         buildLifecycleStateInputs(workspace, body, now)
       );
@@ -229,7 +229,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await db.workspaceAdmin.listTeams(workspace);
+      return await db.workspace.listTeams(workspace);
     })
   );
 
@@ -240,7 +240,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
-      return await db.workspaceAdmin.listTeams(workspace);
+      return await db.workspace.listTeams(workspace);
     })
   );
 
@@ -251,7 +251,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.role');
       return resolveWorkspaceRoleDefinitions(
-        await db.workspaceAdmin.listCustomWorkspaceRoles(workspace)
+        await db.workspace.listCustomWorkspaceRoles(workspace)
       );
     })
   );
@@ -267,7 +267,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       httpAssert.true(input.name.length > 0, { message: 'name is required' });
 
       const now = new Date();
-      return await db.workspaceAdmin.createCustomWorkspaceRole({
+      return await db.workspace.createCustomWorkspaceRole({
         id: randomUUID(),
         workspace,
         name: input.name,
@@ -299,7 +299,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const input = parseWorkspaceRoleInput(body);
       httpAssert.true(input.name.length > 0, { message: 'name is required' });
 
-      const updated = await db.workspaceAdmin.updateCustomWorkspaceRole(workspace, roleId, {
+      const updated = await db.workspace.updateCustomWorkspaceRole(workspace, roleId, {
         name: input.name,
         description: input.description,
         tone: input.tone,
@@ -326,13 +326,13 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         message: 'Built-in roles cannot be deleted'
       });
 
-      const memberCount = await db.workspaceAdmin.countWorkspaceMembersByRole(workspace, roleId);
+      const memberCount = await db.workspace.countWorkspaceMembersByRole(workspace, roleId);
       httpAssert.true(memberCount === 0, {
         status: 409,
         message: 'Role is still assigned to workspace members'
       });
 
-      const deleted = await db.workspaceAdmin.deleteCustomWorkspaceRole(workspace, roleId);
+      const deleted = await db.workspace.deleteCustomWorkspaceRole(workspace, roleId);
       httpAssert.present(deleted, { status: 404, message: 'Role not found' });
       return deleted;
     })
@@ -347,7 +347,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
       const now = new Date();
-      return await db.workspaceAdmin.replaceTeams(
+      return await db.workspace.replaceTeams(
         workspace,
         buildWorkspaceOwnerInputs(workspace, body, now)
       );
@@ -363,7 +363,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
       const now = new Date();
-      return await db.workspaceAdmin.replaceTeams(
+      return await db.workspace.replaceTeams(
         workspace,
         buildWorkspaceOwnerInputs(workspace, body, now)
       );
@@ -376,7 +376,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
-      return await db.workspaceAdmin.listTeamAssignments(workspace);
+      return await db.workspace.listTeamAssignments(workspace);
     })
   );
 
@@ -386,7 +386,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
-      return await db.workspaceAdmin.listTeamAssignments(workspace);
+      return await db.workspace.listTeamAssignments(workspace);
     })
   );
 
@@ -397,10 +397,10 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
-      const owners = new Set((await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id));
-      const users = new Set((await db.identityAuth.listUsers()).map(user => user.id));
+      const owners = new Set((await db.workspace.listTeams(workspace)).map(owner => owner.id));
+      const users = new Set((await db.auth.listUsers()).map(user => user.id));
       const now = new Date();
-      return await db.workspaceAdmin.replaceTeamAssignments(
+      return await db.workspace.replaceTeamAssignments(
         workspace,
         buildTeamMembershipInputs(workspace, body, owners, users, now)
       );
@@ -414,10 +414,10 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
-      const owners = new Set((await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id));
-      const users = new Set((await db.identityAuth.listUsers()).map(user => user.id));
+      const owners = new Set((await db.workspace.listTeams(workspace)).map(owner => owner.id));
+      const users = new Set((await db.auth.listUsers()).map(user => user.id));
       const now = new Date();
-      return await db.workspaceAdmin.replaceTeamAssignments(
+      return await db.workspace.replaceTeamAssignments(
         workspace,
         buildTeamMembershipInputs(workspace, body, owners, users, now)
       );
@@ -431,8 +431,8 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.invite');
-      const members = await db.workspaceAdmin.listWorkspaceMembers(workspace);
-      const users = await db.identityAuth.listUsers();
+      const members = await db.workspace.listWorkspaceMembers(workspace);
+      const users = await db.auth.listUsers();
       const userMap = new Map(users.map(u => [u.id, u]));
       return members.map(m => {
         const user = userMap.get(m.user_id);
@@ -456,7 +456,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.invite');
 
-      const users = await db.identityAuth.listUsers();
+      const users = await db.auth.listUsers();
       return users.map(user => ({
         id: user.id,
         email: user.email,
@@ -486,8 +486,8 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       httpAssert.string(role, { message: 'role is required and must be a string' });
 
       const [user, customRoles] = await Promise.all([
-        db.identityAuth.getUser(userId),
-        db.workspaceAdmin.listCustomWorkspaceRoles(workspace)
+        db.auth.getUser(userId),
+        db.workspace.listCustomWorkspaceRoles(workspace)
       ]);
 
       httpAssert.present(user, { status: 404, message: 'User not found' });
@@ -497,7 +497,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         message: 'role must reference an existing workspace role'
       });
 
-      const member = await db.workspaceAdmin.setWorkspaceMemberRole(
+      const member = await db.workspace.setWorkspaceMemberRole(
         workspace,
         userId,
         role,
@@ -518,7 +518,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const userId = event.context.params?.['userId'];
       httpAssert.string(userId, { message: 'userId is required' });
 
-      const removed = await db.workspaceAdmin.removeWorkspaceMember(workspace, userId);
+      const removed = await db.workspace.removeWorkspaceMember(workspace, userId);
       httpAssert.present(removed, { status: 404, message: 'Member not found' });
       return removed;
     })

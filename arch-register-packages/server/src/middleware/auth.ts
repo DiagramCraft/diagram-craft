@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3';
 import { defineHandler, getCookie, HTTPError } from 'h3';
 import { verifyToken } from '../utils/jwt';
-import type { IdentityAuthDatabase } from '../db/database';
+import type { AuthDatabase } from '../db/database';
 import type { JWTPayload, User } from '../types';
 import { httpAssert } from '../utils/httpAssert';
 
@@ -22,7 +22,7 @@ const extractToken = (event: H3Event): string | null => {
   return getCookie(event, 'ar_access_token') ?? null;
 };
 
-export const createAuthMiddleware = (db: IdentityAuthDatabase) => {
+export const createAuthMiddleware = (db: AuthDatabase) => {
   return defineHandler(async event => {
     const token = extractToken(event);
 
@@ -56,4 +56,4 @@ export const createAuthMiddleware = (db: IdentityAuthDatabase) => {
   });
 };
 
-export const requireAuth = (db: IdentityAuthDatabase) => createAuthMiddleware(db);
+export const requireAuth = (db: AuthDatabase) => createAuthMiddleware(db);

@@ -1,15 +1,15 @@
 import { newid } from '@diagram-craft/utils/id';
 import type {
   CreateProjectInput,
-  ProjectsFilesDatabase,
+  ProjectDatabase,
   UpdateProjectInput,
   UpsertProjectFileInput
-} from './database';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
+} from './projectDatabase';
+import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
-export class SqliteProjectsFilesDatabase
+export class SqliteProjectDatabase
   extends SqliteDatabaseBase
-  implements ProjectsFilesDatabase
+  implements ProjectDatabase
 {
   async listProjects(workspace: string) {
     return this.all(

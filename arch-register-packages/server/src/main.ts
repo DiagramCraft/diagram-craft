@@ -40,7 +40,7 @@ const main = async () => {
       const parsed = JSON.parse(content);
       const commentCounts = getDiagramCommentCounts(parsed);
       const previewSvg = generateSvgPreview(parsed);
-      await db.projectsFiles.updateProjectFileDerivedData(
+      await db.project.updateProjectFileDerivedData(
         workspace,
         projectId,
         fileId,
@@ -51,7 +51,7 @@ const main = async () => {
         updatedAt
       );
     } catch {
-      await db.projectsFiles.updateProjectFileDerivedData(
+      await db.project.updateProjectFileDerivedData(
         workspace,
         projectId,
         fileId,
@@ -73,7 +73,7 @@ const main = async () => {
     try {
       const payload = verifyToken(token);
       if (payload.type !== 'access') return false;
-      const user = await db.identityAuth.getUser(payload.sub);
+      const user = await db.auth.getUser(payload.sub);
       return !!user?.is_active;
     } catch {
       return false;

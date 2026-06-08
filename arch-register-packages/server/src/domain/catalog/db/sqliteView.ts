@@ -1,5 +1,5 @@
-import type { CreateSavedViewInput, UpdateSavedViewInput, ViewDatabase } from './database';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
+import type { CreateSavedViewInput, UpdateSavedViewInput, ViewDatabase } from './catalogDatabase';
+import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
 export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDatabase {
   async listSavedViews(workspace: string) {
