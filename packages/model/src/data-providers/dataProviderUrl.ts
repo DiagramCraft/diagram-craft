@@ -22,7 +22,8 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
       this.schemaUrl = d.schemaUrl;
       this.dataUrl = d.dataUrl;
 
-      if (autoRefresh && typeof window !== 'undefined') {
+      const hasRelativeUrl = this.schemaUrl?.startsWith('/') || this.dataUrl?.startsWith('/');
+      if (autoRefresh && !(hasRelativeUrl && typeof window === 'undefined')) {
         this.scheduleAutoRefresh();
       }
     } else {
