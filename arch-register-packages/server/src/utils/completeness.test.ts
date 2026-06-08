@@ -15,6 +15,8 @@ describe('computeEntityCompleteness', () => {
       description: '  ',
       owner: 'team-a',
       lifecycle: null,
+      target_lifecycle: null,
+      target_lifecycle_date: null,
       tags: [],
       links: [],
       schema_id: 'schema-1',

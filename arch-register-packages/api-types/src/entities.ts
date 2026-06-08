@@ -12,6 +12,8 @@ export type EntitySummary = EntityCapabilities & {
   _description: string;
   _owner: string | null;
   _lifecycle: LifecycleStatus | null;
+  _targetLifecycle: LifecycleStatus | null;
+  _targetLifecycleDate: string | null;
   _tags: string[];
   _links: EntityLink[];
   _visibilityMode: VisibilityMode | null;
@@ -32,6 +34,8 @@ export type CreateEntityRequest = {
   _description?: string;
   _owner?: string | null;
   _lifecycle?: LifecycleStatus | null;
+  _targetLifecycle?: LifecycleStatus | null;
+  _targetLifecycleDate?: string | null;
   _tags?: string[];
   _links?: EntityLink[];
   _visibilityMode?: VisibilityMode | null;
@@ -98,6 +102,7 @@ export type EntitySearchResult = {
   _description: string;
   _owner: string | null;
   _lifecycle: LifecycleStatus | null;
+  _targetLifecycle: LifecycleStatus | null;
   matchedFields: string[];
   matchedMetadata: string[];
 };

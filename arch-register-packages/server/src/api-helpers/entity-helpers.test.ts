@@ -13,6 +13,8 @@ const baseEntity: Entity = {
   description: 'A test entity',
   owner: 'team-a',
   lifecycle: 'prod',
+  target_lifecycle: null,
+  target_lifecycle_date: null,
   tags: ['a', 'b'],
   links: [{ url: 'https://example.com', title: 'Example' }],
   schema_id: 'schema-1',

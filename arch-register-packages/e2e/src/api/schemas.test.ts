@@ -367,6 +367,8 @@ test.describe('schema routes', () => {
       description: '',
       owner: 'Platform Engineering',
       lifecycle: 'production',
+      target_lifecycle: null,
+      target_lifecycle_date: null,
       tags: [],
       links: [],
       schema_id: apiSchemaId,

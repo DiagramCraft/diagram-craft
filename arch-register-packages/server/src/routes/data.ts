@@ -143,6 +143,8 @@ type EntityMutationPayload = {
   description: string;
   requestedOwner: string | null;
   requestedLifecycle: string | null;
+  requestedTargetLifecycle: string | null;
+  requestedTargetLifecycleDate: string | null;
   tags: string[];
   links: EntityLink[];
   visibilityMode: 'public' | 'restricted' | null;
@@ -166,6 +168,8 @@ export const parseEntityMutationPayload = (
     _description = '',
     _owner = null,
     _lifecycle = null,
+    _targetLifecycle = null,
+    _targetLifecycleDate = null,
     _tags = [],
     _links = [],
     _visibilityMode,
@@ -193,6 +197,8 @@ export const parseEntityMutationPayload = (
     description: typeof _description === 'string' ? _description : '',
     requestedOwner: typeof _owner === 'string' ? _owner : null,
     requestedLifecycle: typeof _lifecycle === 'string' ? _lifecycle : null,
+    requestedTargetLifecycle: typeof _targetLifecycle === 'string' ? _targetLifecycle : null,
+    requestedTargetLifecycleDate: typeof _targetLifecycleDate === 'string' ? _targetLifecycleDate : null,
     tags: Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [],
     links: Array.isArray(_links) ? (_links as EntityLink[]) : [],
     visibilityMode:
@@ -507,6 +513,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
             'Description',
             'Owner',
             'Lifecycle',
+            'Target Lifecycle',
+            'Target Date',
             'Tags',
             'Links',
             'Schema Type',
@@ -521,6 +529,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
               'Description': entity.description,
               'Owner': entity.owner ?? '',
               'Lifecycle': entity.lifecycle ?? '',
+              'Target Lifecycle': entity.target_lifecycle ?? '',
+              'Target Date': entity.target_lifecycle_date ?? '',
               'Tags': formatArrayForCsv(entity.tags),
               'Links': entity.links.length.toString(),
               'Schema Type': schema.name
@@ -551,6 +561,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
             'Description',
             'Owner',
             'Lifecycle',
+            'Target Lifecycle',
+            'Target Date',
             'Tags',
             'Links',
             'Schema Type'
@@ -563,6 +575,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
             'Description': entity.description,
             'Owner': entity.owner ?? '',
             'Lifecycle': entity.lifecycle ?? '',
+            'Target Lifecycle': entity.target_lifecycle ?? '',
+            'Target Date': entity.target_lifecycle_date ?? '',
             'Tags': formatArrayForCsv(entity.tags),
             'Links': entity.links.length.toString(),
             'Schema Type': schemaMap.get(entity.schema_id)?.name ?? entity.schema_id
@@ -882,6 +896,11 @@ export function createDataRoutes(db: DatabaseAdapter) {
           if (lifecycle && !lifecycleValues.has(lifecycle)) {
             throw new Error(`Invalid lifecycle value: ${lifecycle}`);
           }
+          const target_lifecycle = (entityData._targetLifecycle as string | null) ?? null;
+          if (target_lifecycle && !lifecycleValues.has(target_lifecycle)) {
+            throw new Error(`Invalid target_lifecycle value: ${target_lifecycle}`);
+          }
+          const target_lifecycle_date = (entityData._targetLifecycleDate as string | null) ?? null;
 
           // Resolve reference fields
           const resolvedData = { ...entityData };
@@ -924,6 +943,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
               description: (resolvedData._description as string) ?? existingEntity.description,
               owner,
               lifecycle,
+              target_lifecycle,
+              target_lifecycle_date,
               tags: Array.isArray(resolvedData._tags)
                 ? (resolvedData._tags as string[])
                 : existingEntity.tags,
@@ -963,6 +984,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
               description: (resolvedData._description as string) ?? '',
               owner,
               lifecycle,
+              target_lifecycle,
+              target_lifecycle_date,
               tags: Array.isArray(resolvedData._tags) ? (resolvedData._tags as string[]) : [],
               links: [],
               data: extractEntityFields(resolvedData),
@@ -1138,6 +1161,11 @@ export function createDataRoutes(db: DatabaseAdapter) {
         payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
           ? payload.requestedLifecycle
           : null;
+      const target_lifecycle =
+        payload.requestedTargetLifecycle && lifecycleValues.has(payload.requestedTargetLifecycle)
+          ? payload.requestedTargetLifecycle
+          : null;
+      const target_lifecycle_date = payload.requestedTargetLifecycleDate ?? null;
       const teamIds = await getTeamIds(db, workspace);
 
       try {
@@ -1187,6 +1215,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
           description: payload.description,
           owner,
           lifecycle,
+          target_lifecycle,
+          target_lifecycle_date,
           tags: payload.tags,
           links: payload.links,
           schema_id: payload.schemaId,
@@ -1233,6 +1263,11 @@ export function createDataRoutes(db: DatabaseAdapter) {
         payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
           ? payload.requestedLifecycle
           : null;
+      const target_lifecycle =
+        payload.requestedTargetLifecycle && lifecycleValues.has(payload.requestedTargetLifecycle)
+          ? payload.requestedTargetLifecycle
+          : null;
+      const target_lifecycle_date = payload.requestedTargetLifecycleDate ?? null;
       const teamIds = await getTeamIds(db, workspace);
       const owner =
         payload.requestedOwner && teamIds.has(payload.requestedOwner)
@@ -1268,6 +1303,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
           description: payload.description,
           owner,
           lifecycle,
+          target_lifecycle,
+          target_lifecycle_date,
           tags: payload.tags,
           links: payload.links,
           schema_id: payload.schemaId,
@@ -1326,6 +1363,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
           description: source.description,
           owner: source.owner,
           lifecycle: source.lifecycle,
+          target_lifecycle: source.target_lifecycle,
+          target_lifecycle_date: source.target_lifecycle_date,
           tags: source.tags,
           links: source.links,
           schema_id: source.schema_id,

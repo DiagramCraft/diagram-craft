@@ -1,0 +1,6 @@
+.eInput {
+  &::-webkit-calendar-picker-indicator {
+    color: var(--cmp-fg);
+    cursor: pointer;
+  }
+}

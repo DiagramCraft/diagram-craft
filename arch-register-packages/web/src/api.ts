@@ -408,6 +408,7 @@ export type EntitySearchResult = {
   _description: string;
   _owner: string | null;
   _lifecycle: string | null;
+  _targetLifecycle: string | null;
   matchedFields: string[];
   matchedMetadata: string[];
 };
