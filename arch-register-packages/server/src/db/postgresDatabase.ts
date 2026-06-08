@@ -13,6 +13,7 @@ import { PostgresWorkspaceDatabase } from '../domain/workspace/db/postgresWorksp
 import { PostgresAiDatabase } from '../domain/ai/db/postgresAi';
 import { SERVER_DEFAULTS } from '../constants';
 import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
+import { PostgresWatchDatabase } from '../domain/watch/db/postgresWatch';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
@@ -26,6 +27,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly view: PostgresViewDatabase;
   readonly project: PostgresProjectDatabase;
   readonly audit: PostgresAuditDatabase;
+  readonly watch: PostgresWatchDatabase;
   readonly auth: PostgresAuthDatabase;
   readonly ai: PostgresAiDatabase;
   readonly core;
@@ -48,6 +50,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.view = new PostgresViewDatabase(this.sql);
     this.project = new PostgresProjectDatabase(this.sql);
     this.audit = new PostgresAuditDatabase(this.sql);
+    this.watch = new PostgresWatchDatabase(this.sql);
     this.auth = new PostgresAuthDatabase(this.sql);
     this.ai = new PostgresAiDatabase(this.sql);
 

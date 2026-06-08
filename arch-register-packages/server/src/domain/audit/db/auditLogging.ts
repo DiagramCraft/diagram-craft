@@ -1,5 +1,5 @@
 import type { AuditOperation, AuditEntityType, Entity } from '../../../types';
-import type { AuditDatabase } from './auditDatabase';
+import type { DatabaseAdapter } from '../../../db/database';
 import { createLogger } from '../../../utils/logger';
 
 const logger = createLogger('audit');
@@ -8,6 +8,9 @@ const STATIC_USER = 'system'; // Until authentication is implemented
 
 type AuditLogParams = {
   workspace: string;
+  userId?: string;
+  userDisplayName?: string | null;
+  watcherUserIds?: string[];
   operation: AuditOperation;
   entityType: AuditEntityType;
   entityId: string;
@@ -24,9 +27,12 @@ type AuditLogParams = {
 /**
  * Records an audit log entry for a mutation operation.
  */
-export const logAudit = async (db: AuditDatabase, params: AuditLogParams): Promise<void> => {
+export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Promise<void> => {
   const {
     workspace,
+    userId = STATIC_USER,
+    userDisplayName,
+    watcherUserIds,
     operation,
     entityType,
     entityId,
@@ -38,10 +44,10 @@ export const logAudit = async (db: AuditDatabase, params: AuditLogParams): Promi
   } = params;
 
   try {
-    await db.createAuditLog({
+    const auditLog = await db.audit.createAuditLog({
       workspace,
       timestamp: new Date(),
-      user_id: STATIC_USER,
+      user_id: userId,
       operation,
       entity_type: entityType,
       entity_id: entityId,
@@ -51,6 +57,14 @@ export const logAudit = async (db: AuditDatabase, params: AuditLogParams): Promi
       changes,
       metadata
     });
+
+    if (entityType === 'entity') {
+      await db.watch.createNotificationsFromAudit({
+        auditLog,
+        changedByDisplayName: userDisplayName ?? userId,
+        watcherUserIds
+      });
+    }
   } catch (error) {
     // Log error but don't fail the main operation
     logger.error(

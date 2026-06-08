@@ -81,6 +81,35 @@
   gap: 6px;
 }
 
+.watchBtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cmp-fg-disabled);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background 80ms, border-color 80ms, color 80ms;
+}
+
+.watchBtn:hover:not(:disabled) {
+  background: var(--cmp-bg);
+  border-color: var(--cmp-border);
+  color: var(--warning-fg);
+}
+
+.watchBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.watchBtnActive {
+  color: var(--warning-fg);
+}
+
 /* Tabs bar */
 .tabBar {
   display: flex;

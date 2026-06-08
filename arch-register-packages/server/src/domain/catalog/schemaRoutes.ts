@@ -163,7 +163,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
           buildCreateSchemaInput(workspace, body as Record<string, unknown>, teamIds, timestamp)
         );
 
-        await logAudit(db.audit, {
+        await logAudit(db, {
           workspace,
           operation: 'create',
           entityType: 'entity_schema',
@@ -218,7 +218,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
         httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 
-        await logAudit(db.audit, {
+        await logAudit(db, {
           workspace,
           operation: 'update',
           entityType: 'entity_schema',
@@ -260,7 +260,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
 
         await db.catalog.deleteSchema(workspace, id);
 
-        await logAudit(db.audit, {
+        await logAudit(db, {
           workspace,
           operation: 'delete',
           entityType: 'entity_schema',

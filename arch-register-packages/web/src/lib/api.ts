@@ -27,7 +27,10 @@ import type {
   CreateWorkspaceRoleRequest,
   UpdateWorkspaceRoleRequest,
   ProjectTemplatesResponse,
-  WorkspaceEnum
+  WorkspaceEnum,
+  WatchedEntity,
+  NotificationItem,
+  NotificationCount
 } from '@arch-register/api-types';
 import type {
   SavedView,
@@ -68,7 +71,10 @@ export type {
   WorkspaceMemberInfo,
   WorkspaceUserInfo,
   WorkspaceEnum,
-  SavedView
+  SavedView,
+  WatchedEntity,
+  NotificationItem,
+  NotificationCount
 };
 
 export type FieldType = SchemaField['type'];
@@ -845,6 +851,44 @@ export const fetchAuditLog = (workspace: string, options: FetchAuditLogOptions =
 
 export const fetchAuditStats = (workspace: string) =>
   apiFetch<AuditStats>(`/api/${workspace}/audit/stats`);
+
+// ── Watches / Notifications API ──────────────────────────────
+
+export const fetchWatchedEntities = (workspace: string) =>
+  apiFetch<WatchedEntity[]>(`/api/${workspace}/watching`);
+
+export const createWatch = (workspace: string, entityId: string) =>
+  apiFetch<WatchedEntity>(`/api/${workspace}/watching`, {
+    method: 'POST',
+    body: JSON.stringify({ entity_id: entityId })
+  });
+
+export const deleteWatch = (workspace: string, entityId: string) =>
+  apiFetch<{ success: boolean; message: string }>(`/api/${workspace}/watching/${entityId}`, {
+    method: 'DELETE'
+  });
+
+export const fetchNotifications = (workspace: string) =>
+  apiFetch<NotificationItem[]>(`/api/${workspace}/notifications`);
+
+export const fetchNotificationCount = (workspace: string) =>
+  apiFetch<NotificationCount>(`/api/${workspace}/notifications/count`);
+
+export const deleteNotification = (workspace: string, notificationId: string) =>
+  apiFetch<{ success: boolean; message: string }>(
+    `/api/${workspace}/notifications/${notificationId}`,
+    {
+      method: 'DELETE'
+    }
+  );
+
+export const clearNotifications = (workspace: string) =>
+  apiFetch<{ success: boolean; count: number; message: string }>(
+    `/api/${workspace}/notifications`,
+    {
+      method: 'DELETE'
+    }
+  );
 
 // ── Workspace Config API ─────────────────────────────────────
 
