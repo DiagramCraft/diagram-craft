@@ -8,7 +8,8 @@ import {
   type EntityAction,
   type ProjectAction,
   type GlobalPermission,
-  type TeamAssignment
+  type TeamAssignment,
+  WorkspaceRole
 } from '@arch-register/permissions';
 import { useAuth } from './AuthContext';
 import { useAuthorizationData } from './AuthorizationDataContext';
@@ -18,11 +19,7 @@ type PermissionContextType = {
    * Check if user has a specific permission on an entity.
    * Returns false if user is not authenticated or authorization data is not loaded.
    */
-  hasEntityPermission: (
-    workspaceId: string,
-    entity: Entity,
-    action: EntityAction
-  ) => boolean;
+  hasEntityPermission: (workspaceId: string, entity: Entity, action: EntityAction) => boolean;
 
   /**
    * Check if user has a specific permission on a project.
@@ -55,7 +52,7 @@ type PermissionContextType = {
   /**
    * Build authorization context for a workspace.
    * Returns null if user is not authenticated or authorization data is not loaded.
-   * 
+   *
    * Note: This requires entity and schema data which is not available in the base auth data.
    * For now, this returns a partial context that can be used for global and project permissions.
    */
@@ -66,11 +63,11 @@ const PermissionContext = createContext<PermissionContextType | null>(null);
 
 /**
  * Permission context provider.
- * 
+ *
  * Provides permission checking capabilities using the shared permission logic.
  * This context focuses solely on permission evaluation, separate from authentication
  * lifecycle and authorization data management.
- * 
+ *
  * Note: Currently provides a simplified context without entity/schema data.
  * For full entity permission checks, components should fetch entity data separately
  * and use the permission checker directly.
@@ -97,13 +94,14 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
           assignment =>
             ({
               teamId: assignment.team_id,
-              role: assignment.role,
+              role: assignment.role
             }) satisfies TeamAssignment
         ) ?? [];
       const teams = authData.teams_by_workspace?.[workspaceId] ?? [];
       const workspaceRoles = authData.workspace_role_definitions_by_workspace?.[workspaceId] ?? [];
 
-      const workspaceRole = (authData.workspace_roles?.[workspaceId] ?? null) as import('@arch-register/permissions').WorkspaceRole | null;
+      const workspaceRole = (authData.workspace_roles?.[workspaceId] ??
+        null) as WorkspaceRole | null;
 
       return buildAuthorizationContext({
         userId: user.id,
@@ -198,7 +196,7 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
 
 /**
  * Hook to access permission checking capabilities.
- * 
+ *
  * @throws Error if used outside of PermissionProvider
  */
 export const usePermissions = () => {

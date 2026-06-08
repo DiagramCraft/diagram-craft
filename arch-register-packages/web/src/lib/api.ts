@@ -1,4 +1,4 @@
-import type { GlobalRole } from '@arch-register/permissions';
+import type { GlobalRole, TeamRole } from '@arch-register/permissions';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import type {
   Workspace,
@@ -909,7 +909,7 @@ export type TeamAssignmentInfo = {
   workspace: string;
   team_id: string;
   user_id: string;
-  role: import('@arch-register/permissions').TeamRole;
+  role: TeamRole;
   created_at: string;
 };
 
