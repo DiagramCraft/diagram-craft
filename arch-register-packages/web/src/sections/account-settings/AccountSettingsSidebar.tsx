@@ -1,0 +1,79 @@
+import { useMemo } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
+import styles from '../../shell/SidePanel.module.css';
+import { TreeRow } from '../../components/TreeRow';
+import { TbPalette, TbUser } from 'react-icons/tb';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+
+type AccountSettingsNavItem = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  group: string;
+};
+
+const ACCOUNT_SETTINGS_SECTIONS: AccountSettingsNavItem[] = [
+  { id: 'profile', label: 'Profile', icon: <TbUser size={12} />, group: 'Account' },
+  { id: 'appearance', label: 'Appearance', icon: <TbPalette size={12} />, group: 'Account' },
+];
+
+const GroupLabel = ({ children }: { children: React.ReactNode }) => (
+  <div className={styles.groupLabel}>{children}</div>
+);
+
+const SectionHeader = ({ title }: { title: string }) => (
+  <div className={`${styles.header} ${styles.tabHeader}`}>
+    <Tabs.Root value="section">
+      <Tabs.List>
+        <Tabs.Trigger value="section">{title}</Tabs.Trigger>
+      </Tabs.List>
+    </Tabs.Root>
+  </div>
+);
+
+export const AccountSettingsSidebar = () => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as { section?: string };
+  const ctx = useWorkspaceContext();
+  const workspaceSlug = ctx.workspaceSlug;
+  const section = ACCOUNT_SETTINGS_SECTIONS.some(item => item.id === search.section)
+    ? search.section ?? 'profile'
+    : 'profile';
+
+  const groups = useMemo(() => {
+    const g: Record<string, AccountSettingsNavItem[]> = {};
+    ACCOUNT_SETTINGS_SECTIONS.forEach(s => {
+      (g[s.group] ??= []).push(s);
+    });
+    return Object.entries(g);
+  }, []);
+
+  return (
+    <div className={styles.panel}>
+      <SectionHeader title="Account Settings" />
+      <div className={styles.scroll}>
+        {groups.map(([group, items]) => (
+          <div key={group}>
+            <GroupLabel>{group}</GroupLabel>
+            {items.map(s => (
+              <TreeRow
+                key={s.id}
+                icon={s.icon}
+                label={s.label}
+                active={section === s.id}
+                onClick={() =>
+                  navigate({
+                    to: '/$workspaceSlug/account',
+                    params: { workspaceSlug },
+                    search: { section: s.id },
+                  })
+                }
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};

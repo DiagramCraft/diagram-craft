@@ -4,24 +4,24 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import type { RouterContext } from '../routerContext';
-import { LoginScreen } from '../screens/LoginScreen';
+import { LoginScreen } from '../auth/LoginScreen';
 import { WorkspaceLayout } from '../layouts/WorkspaceLayout';
-import { WorkspaceHome } from '../screens/WorkspaceHome';
-import { ProjectDetail } from '../screens/ProjectDetail';
-import { DiagramScreen } from '../screens/DiagramScreen';
-import { EntityBrowser } from '../screens/EntityBrowser';
-import { EntityDetail } from '../screens/EntityDetail';
-import { DataModelEditor } from '../screens/DataModelEditor';
-import { SearchScreen } from '../screens/SearchScreen';
-import { WorkspaceSettings } from '../screens/WorkspaceSettings';
-import { GlobalSettings } from '../screens/GlobalSettings';
-import { AccountSettings } from '../screens/AccountSettings';
-import { AssistantScreen } from '../screens/AssistantScreen';
-import { ExtractScreen } from '../screens/ExtractScreen';
+import { WorkspaceHomeScreen } from '../sections/home/WorkspaceHomeScreen';
+import { ProjectDetailScreen } from '../sections/projects/ProjectDetailScreen';
+import { DiagramScreen } from '../sections/projects/DiagramScreen';
+import { EntityBrowserScreen } from '../sections/entities/EntityBrowserScreen';
+import { EntityDetailScreen } from '../sections/entities/EntityDetailScreen';
+import { DataModelEditorScreen } from '../sections/data-model/DataModelEditorScreen';
+import { SearchScreen } from '../sections/search/SearchScreen';
+import { WorkspaceSettingsScreen } from '../sections/workspace-settings/WorkspaceSettingsScreen';
+import { GlobalSettingsScreen } from '../sections/global-settings/GlobalSettingsScreen';
+import { AccountSettingsScreen } from '../sections/account-settings/AccountSettingsScreen';
+import { AssistantScreen } from '../sections/ai-assistant/AssistantScreen';
+import { ExtractScreen } from '../sections/ai-extract/ExtractScreen';
 import { apiFetch } from '../api';
 import type { Workspace } from '../api';
 import { workspaceKeys } from '../hooks/useWorkspaces';
-import { ImportScreen } from '../screens/ImportScreen';
+import { ImportScreen } from '../sections/entities/ImportScreen';
 
 import {
   validateEntitySearch,
@@ -115,7 +115,7 @@ const workspaceRoute = createRoute({
 const workspaceHomeRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: '/',
-  component: WorkspaceHome,
+  component: WorkspaceHomeScreen,
 });
 
 // ─── Project Detail ──────────────────────────────────────────
@@ -123,7 +123,7 @@ const projectDetailRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'projects/$projectId',
   validateSearch: validateProjectSearch,
-  component: ProjectDetail,
+  component: ProjectDetailScreen,
 });
 
 // ─── Diagram (overlay) ──────────────────────────────────────
@@ -138,14 +138,14 @@ const entityBrowserRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'entities',
   validateSearch: validateEntitySearch,
-  component: EntityBrowser,
+  component: EntityBrowserScreen,
 });
 
 // ─── Entity Detail ───────────────────────────────────────────
 const entityDetailRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'entities/$entityId',
-  component: EntityDetail,
+  component: EntityDetailScreen,
 });
 
 // ─── Data Model ──────────────────────────────────────────────
@@ -153,7 +153,7 @@ const dataModelRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'model',
   validateSearch: validateModelSearch,
-  component: DataModelEditor,
+  component: DataModelEditorScreen,
 });
 
 // ─── Search ──────────────────────────────────────────────────
@@ -169,21 +169,21 @@ const settingsRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'settings',
   validateSearch: validateSettingsSearch,
-  component: WorkspaceSettings,
+  component: WorkspaceSettingsScreen,
 });
 
 // ─── Global Settings ─────────────────────────────────────────
 const globalSettingsRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'settings/global',
-  component: GlobalSettings,
+  component: GlobalSettingsScreen,
 });
 
 // ─── Account Settings ────────────────────────────────────────
 const accountSettingsRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'account',
-  component: AccountSettings,
+  component: AccountSettingsScreen,
 });
 
 // ─── AI Assistant ───────────────────────────────────────────
