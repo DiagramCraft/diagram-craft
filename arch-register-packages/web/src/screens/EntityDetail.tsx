@@ -14,6 +14,7 @@ import { resolveSchemaColor } from '../api';
 import type { EntityRecord, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { useEntity, useEntityRelations, useUpdateEntity, useDeleteEntity, useCloneEntity, useEntitiesBySchema } from '../hooks/useEntities';
 import { useAuditLog } from '../hooks/useAudit';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
@@ -132,6 +133,8 @@ export const EntityDetail = () => {
         _description: '',
         _owner: null,
         _lifecycle: null,
+        _targetLifecycle: null,
+        _targetLifecycleDate: null,
         _tags: [],
         _links: [],
         _visibilityMode: null,
@@ -158,6 +161,8 @@ export const EntityDetail = () => {
       _description: entity._description ?? '',
       _owner: entity._owner ?? '',
       _lifecycle: entity._lifecycle ?? '',
+      _targetLifecycle: entity._targetLifecycle ?? '',
+      _targetLifecycleDate: entity._targetLifecycleDate ?? '',
       _namespace: entity._namespace ?? '',
       _tags: (entity._tags ?? []).join(', '),
     };
@@ -209,6 +214,8 @@ export const EntityDetail = () => {
       _description: (editState['_description'] as string) ?? '',
       _owner: (editState['_owner'] as string) || null,
       _lifecycle: (editState['_lifecycle'] as string) || null,
+      _targetLifecycle: (editState['_targetLifecycle'] as string) || null,
+      _targetLifecycleDate: (editState['_targetLifecycleDate'] as string) || null,
       _tags: tags,
       _links: editLinks.filter(l => l.url.trim() !== ''),
       ...dataFields,
@@ -280,6 +287,12 @@ export const EntityDetail = () => {
               <div className={styles.title}>{entityName}</div>
             </div>
             {entity._lifecycle && <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />}
+            {entity._targetLifecycle && entity._targetLifecycle !== entity._lifecycle && (
+              <>
+                <span>→</span>
+                <StatusChip value={entity._targetLifecycle} lifecycleStates={lifecycleStates} />
+              </>
+            )}
           </div>
           {entity._description && <div className={styles.desc}>{entity._description}</div>}
         </div>
@@ -382,6 +395,8 @@ export const EntityDetail = () => {
             )}
             <MetaPropRow label="Owner" value={entity._owner ?? '—'} editing={editing} editValue={editState['_owner'] as string} onChange={v => setEditState(s => ({ ...s, _owner: v }))} selectOptions={['', ...teams.map(team => team.id)]} />
             <MetaPropRow label="Lifecycle" value={entity._lifecycle ?? '—'} editing={editing} editValue={editState['_lifecycle'] as string} onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))} selectOptions={['', ...lifecycleStates.map(s => s.id)]} />
+            <MetaPropRow label="Target Lifecycle" value={entity._targetLifecycle ?? '—'} editing={editing} editValue={editState['_targetLifecycle'] as string} onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))} selectOptions={['', ...lifecycleStates.map(s => s.id)]} />
+            <MetaPropRow label="Target Date" value={entity._targetLifecycleDate ?? '—'} editing={editing} editValue={editState['_targetLifecycleDate'] as string} onChange={v => setEditState(s => ({ ...s, _targetLifecycleDate: v }))} type="date" />
             {(entity._tags.length > 0 || editing) && (
               <div className={styles.metaPropRow}>
                 <span className={styles.metaPropLabel}>Tags</span>
@@ -540,6 +555,7 @@ const MetaPropRow = ({
   editValue,
   onChange,
   selectOptions,
+  type = 'text',
 }: {
   label: string;
   value: string;
@@ -547,6 +563,7 @@ const MetaPropRow = ({
   editValue?: string;
   onChange?: (v: string) => void;
   selectOptions?: string[];
+  type?: 'text' | 'date';
 }) => (
   <div className={styles.metaPropRow}>
     <span className={styles.metaPropLabel}>{label}</span>
@@ -562,6 +579,12 @@ const MetaPropRow = ({
               <option key={o} value={o}>{o || '—'}</option>
             ))}
           </select>
+        ) : type === 'date' ? (
+          <DateInput
+            value={editValue ?? ''}
+            onChange={v => onChange(v ?? '')}
+            style={{ width: '100%' }}
+          />
         ) : (
           <input
             className={styles.inputInline}

@@ -2005,6 +2005,13 @@ components:
           oneOf:
             - $ref: '#/components/schemas/LifecycleStatus'
             - type: 'null'
+        _targetLifecycle:
+          oneOf:
+            - $ref: '#/components/schemas/LifecycleStatus'
+            - type: 'null'
+        _targetLifecycleDate:
+          type: [string, 'null']
+          format: date
         _tags:
           type: array
           items:
@@ -2036,6 +2043,8 @@ components:
         - _description
         - _owner
         - _lifecycle
+        - _targetLifecycle
+        - _targetLifecycleDate
         - _tags
         - _links
         - _visibilityMode
@@ -2072,6 +2081,13 @@ components:
           oneOf:
             - $ref: '#/components/schemas/LifecycleStatus'
             - type: 'null'
+        _targetLifecycle:
+          oneOf:
+            - $ref: '#/components/schemas/LifecycleStatus'
+            - type: 'null'
+        _targetLifecycleDate:
+          type: [string, 'null']
+          format: date
         _tags:
           type: array
           items:
@@ -2210,6 +2226,10 @@ components:
           oneOf:
             - $ref: '#/components/schemas/LifecycleStatus'
             - type: 'null'
+        _targetLifecycle:
+          oneOf:
+            - $ref: '#/components/schemas/LifecycleStatus'
+            - type: 'null'
         matchedFields:
           type: array
           items:
@@ -2219,7 +2239,7 @@ components:
           items:
             type: string
       required:
-        [entityId, schemaId, schemaName, _name, _slug, _description, _owner, _lifecycle, matchedFields, matchedMetadata]
+        [entityId, schemaId, schemaName, _name, _slug, _description, _owner, _lifecycle, _targetLifecycle, matchedFields, matchedMetadata]
 
     SchemaFieldMatch:
       type: object

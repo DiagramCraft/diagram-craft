@@ -75,6 +75,8 @@ export const toDiagramCraftData = (row: Entity): EntityApiResponse => ({
   _description: row.description,
   _owner: row.owner,
   _lifecycle: row.lifecycle,
+  _targetLifecycle: row.target_lifecycle,
+  _targetLifecycleDate: row.target_lifecycle_date,
   _tags: row.tags,
   _links: row.links,
   _visibilityMode: row.visibility_mode,

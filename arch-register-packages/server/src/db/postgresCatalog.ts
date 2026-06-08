@@ -153,7 +153,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEntity(input: CreateEntityInput) {
     try {
       const [row] = await this.sql<PostgresRowTypes['entity'][]>`
-        INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data, visibility_mode, created_at, updated_at)
+        INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at)
         VALUES (
           ${input.id},
           ${input.workspace},
@@ -163,6 +163,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
           ${input.description},
           ${input.owner},
           ${input.lifecycle},
+          ${input.target_lifecycle},
+          ${input.target_lifecycle_date},
           ${this.json(input.tags)},
           ${this.json(input.links)},
           ${input.schema_id},
@@ -189,6 +191,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             description = ${input.description},
             owner = ${input.owner},
             lifecycle = ${input.lifecycle},
+            target_lifecycle = ${input.target_lifecycle},
+            target_lifecycle_date = ${input.target_lifecycle_date},
             tags = ${this.json(input.tags)},
             links = ${this.json(input.links)},
             schema_id = ${input.schema_id},

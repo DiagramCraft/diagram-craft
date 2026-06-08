@@ -19,6 +19,8 @@ const entity: Entity = {
   description: 'React single-page application',
   owner: 'Design Systems',
   lifecycle: 'production',
+  target_lifecycle: null,
+  target_lifecycle_date: null,
   tags: ['react', 'frontend'],
   links: [{ title: 'Docs', url: 'https://example.com/react', type: 'docs' }],
   schema_id: 'schema-component',

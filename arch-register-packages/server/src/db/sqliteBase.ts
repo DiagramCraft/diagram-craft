@@ -106,6 +106,8 @@ export const sqliteMappers = {
     description: String(row['description']),
     owner: row['owner'] == null ? null : String(row['owner']),
     lifecycle: row['lifecycle'] == null ? null : String(row['lifecycle']),
+    target_lifecycle: row['target_lifecycle'] == null ? null : String(row['target_lifecycle']),
+    target_lifecycle_date: row['target_lifecycle_date'] == null ? null : String(row['target_lifecycle_date']),
     tags: parseJson<string[]>(row['tags'], []),
     links: parseJson<EntityLink[]>(row['links'], []),
     schema_id: String(row['schema_id']),

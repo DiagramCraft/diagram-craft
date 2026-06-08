@@ -148,7 +148,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createEntity(input: CreateEntityInput) {
     this.run(
-      'INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data, visibility_mode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -158,6 +158,8 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.description,
         input.owner,
         input.lifecycle,
+        input.target_lifecycle,
+        input.target_lifecycle_date,
         JSON.stringify(input.tags),
         JSON.stringify(input.links),
         input.schema_id,
@@ -172,7 +174,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateEntity(workspace: string, id: string, input: UpdateEntityInput) {
     this.run(
-      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, tags = ?, links = ?, schema_id = ?, data = ?, visibility_mode = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, visibility_mode = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.slug,
         input.namespace,
@@ -180,6 +182,8 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.description,
         input.owner,
         input.lifecycle,
+        input.target_lifecycle,
+        input.target_lifecycle_date,
         JSON.stringify(input.tags),
         JSON.stringify(input.links),
         input.schema_id,

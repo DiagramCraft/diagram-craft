@@ -470,4 +470,82 @@ test.describe('data routes', () => {
 
     expect(res.status).toBe(404);
   });
+
+  test('POST /api/:workspace/data creates entity with target lifecycle and date', async ({
+    server,
+    auth,
+    seeded: _
+  }) => {
+    const created = await createEntity(server.baseUrl, auth, {
+      _schemaId: apiSchemaId,
+      _name: 'Sunset API',
+      _lifecycle: 'production',
+      _targetLifecycle: 'deprecated',
+      _targetLifecycleDate: '2026-12-31',
+      api_type: 'openapi',
+      system: systemId
+    });
+
+    expect(created).toMatchObject({
+      _name: 'Sunset API',
+      _lifecycle: 'production',
+      _targetLifecycle: 'deprecated',
+      _targetLifecycleDate: '2026-12-31'
+    });
+  });
+
+  test('PUT /api/:workspace/data/:id updates target lifecycle', async ({
+    server,
+    auth,
+    seeded: _
+  }) => {
+    const created = await createEntity(server.baseUrl, auth, {
+      _schemaId: apiSchemaId,
+      _name: 'Future API',
+      _lifecycle: 'experimental',
+      api_type: 'openapi',
+      system: systemId
+    });
+
+    expect(created['_targetLifecycle']).toBeNull();
+
+    const res = await fetch(`${server.baseUrl}/api/default/data/${created['_uid']}`, {
+      method: 'PUT',
+      headers: headers(auth),
+      body: JSON.stringify({
+        _schemaId: apiSchemaId,
+        _name: 'Future API',
+        _namespace: 'default',
+        _lifecycle: 'experimental',
+        _targetLifecycle: 'production',
+        _targetLifecycleDate: '2026-09-30',
+        api_type: 'openapi',
+        system: systemId
+      })
+    });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      _lifecycle: 'experimental',
+      _targetLifecycle: 'production',
+      _targetLifecycleDate: '2026-09-30'
+    });
+  });
+
+  test('POST /api/:workspace/data silently nulls invalid target lifecycle', async ({
+    server,
+    auth,
+    seeded: _
+  }) => {
+    const created = await createEntity(server.baseUrl, auth, {
+      _schemaId: apiSchemaId,
+      _name: 'Invalid Target API',
+      _lifecycle: 'production',
+      _targetLifecycle: 'nonexistent-state',
+      api_type: 'openapi',
+      system: systemId
+    });
+
+    expect(created['_targetLifecycle']).toBeNull();
+  });
 });

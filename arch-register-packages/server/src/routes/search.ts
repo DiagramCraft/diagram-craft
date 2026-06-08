@@ -39,6 +39,7 @@ type EntitySearchResult = {
   _description: string;
   _owner: string | null;
   _lifecycle: Entity['lifecycle'];
+  _targetLifecycle: Entity['target_lifecycle'];
   matchedFields: string[];
   matchedMetadata: string[];
 };
@@ -221,6 +222,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
                 _description: entity.description,
                 _owner: entity.owner,
                 _lifecycle: entity.lifecycle,
+                _targetLifecycle: entity.target_lifecycle,
                 matchedFields,
                 matchedMetadata
               } satisfies EntitySearchResult;

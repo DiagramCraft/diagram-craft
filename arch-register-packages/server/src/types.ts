@@ -102,6 +102,8 @@ export type Entity = {
   description: string;
   owner: string | null;
   lifecycle: LifecycleStatus | null;
+  target_lifecycle: LifecycleStatus | null;
+  target_lifecycle_date: string | null;
   tags: string[];
   links: EntityLink[];
   schema_id: string;
@@ -122,6 +124,8 @@ export type EntityApiResponse = {
   _description: string;
   _owner: string | null;
   _lifecycle: LifecycleStatus | null;
+  _targetLifecycle: LifecycleStatus | null;
+  _targetLifecycleDate: string | null;
   _tags: string[];
   _links: EntityLink[];
   _visibilityMode: VisibilityMode | null;
