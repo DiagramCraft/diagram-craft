@@ -1,0 +1,61 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 450px;
+  padding: 4px;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fieldSelect {
+  flex: 1;
+  min-width: 140px;
+}
+
+.opSelect {
+  width: 120px;
+}
+
+.valueInput {
+  flex: 1;
+  min-width: 140px;
+}
+
+.removeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+}
+
+.removeBtn:hover {
+  background: var(--base-bg-hover);
+  color: var(--red-fg);
+}
+
+.emptyState {
+  padding: 20px;
+  text-align: center;
+  color: var(--base-fg-dim);
+  font-size: 13px;
+  border: 1px dashed var(--cmp-border);
+  border-radius: 8px;
+}
