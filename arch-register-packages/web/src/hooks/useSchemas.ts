@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { EntitySchema, SchemaField } from '../api';
 import { apiFetch } from '../api';
 import { entityKeys, schemaKeys } from './queryKeys';
+import { invalidateAuditQueries } from './useAudit';
 
 // Hook for fetching schemas
 export const useSchemas = (workspaceSlug: string, enabled = true) => {
@@ -25,9 +26,10 @@ export const useCreateSchema = (workspaceId: string) => {
         method: 'POST',
         body: JSON.stringify(body),
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate schema list to show the new schema
-      queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
+      await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };
@@ -48,12 +50,15 @@ export const useUpdateSchema = (workspaceId: string) => {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: schemaKeys.detail(workspaceId, variables.schemaId) });
-      queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: schemaKeys.detail(workspaceId, variables.schemaId),
+      });
+      await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
       // Completeness scores are computed server-side from the schema, so entity lists must be refreshed too
-      queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: entityKeys.facets(workspaceId) });
+      await queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
+      await queryClient.invalidateQueries({ queryKey: entityKeys.facets(workspaceId) });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };
@@ -67,9 +72,10 @@ export const useDeleteSchema = (workspaceId: string) => {
       apiFetch<{ success: boolean }>(`/api/${workspaceId}/schemas/${schemaId}`, {
         method: 'DELETE',
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate all schema queries
-      queryClient.invalidateQueries({ queryKey: schemaKeys.all });
+      await queryClient.invalidateQueries({ queryKey: schemaKeys.all });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };

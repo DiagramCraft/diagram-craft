@@ -8,6 +8,7 @@ import {
   type Project,
   type ProjectDetail,
 } from '../api';
+import { invalidateAuditQueries } from './useAudit';
 
 // Query keys factory
 export const projectKeys = {
@@ -49,7 +50,7 @@ export const useCreateProject = (workspaceId: string) => {
       status?: 'pinned' | 'active' | 'archived';
       color?: string | null;
     }) => createProject(workspaceId, body),
-    onSuccess: (newProject) => {
+    onSuccess: async (newProject) => {
       // Update project list cache with the new project
       queryClient.setQueryData(
         projectKeys.list(workspaceId),
@@ -58,6 +59,7 @@ export const useCreateProject = (workspaceId: string) => {
           return [...old, newProject];
         }
       );
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };
@@ -77,7 +79,7 @@ export const useUpdateProject = (workspaceId: string) => {
         color?: string | null;
       };
     }) => updateProject(workspaceId, projectId, data),
-    onSuccess: (updatedProject, variables) => {
+    onSuccess: async (updatedProject, variables) => {
       // Update the project list cache
       queryClient.setQueryData(
         projectKeys.list(workspaceId),
@@ -94,6 +96,7 @@ export const useUpdateProject = (workspaceId: string) => {
           return { ...old, ...updatedProject };
         }
       );
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };
@@ -104,9 +107,10 @@ export const useDeleteProject = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (projectId: string) => deleteProject(workspaceId, projectId),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate all project queries
-      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      await queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };

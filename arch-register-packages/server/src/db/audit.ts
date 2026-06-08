@@ -1,4 +1,4 @@
-import type { AuditOperation, AuditEntityType } from '../types';
+import type { AuditOperation, AuditEntityType, Entity } from '../types';
 import type { AuditDatabase } from './database';
 import { createLogger } from '../utils/logger';
 
@@ -99,3 +99,19 @@ export const extractEntityFields = (entity: Record<string, unknown>): Record<str
   const { id, created_at, updated_at, ...rest } = entity;
   return rest;
 };
+
+export const flattenEntityAuditFields = (entity: Entity): Record<string, unknown> => ({
+  _schemaId: entity.schema_id,
+  _name: entity.name,
+  _slug: entity.slug,
+  _namespace: entity.namespace,
+  _description: entity.description,
+  _owner: entity.owner,
+  _lifecycle: entity.lifecycle,
+  _targetLifecycle: entity.target_lifecycle,
+  _targetLifecycleDate: entity.target_lifecycle_date,
+  _tags: entity.tags,
+  _links: entity.links,
+  _visibilityMode: entity.visibility_mode,
+  ...entity.data,
+});

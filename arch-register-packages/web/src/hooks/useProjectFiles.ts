@@ -15,6 +15,7 @@ import {
 } from '../api';
 import type { ProjectFile } from '../api';
 import { projectKeys } from './useProjects';
+import { invalidateAuditQueries } from './useAudit';
 
 // Query keys factory
 export const projectFileKeys = {
@@ -40,15 +41,16 @@ export const useCreateDiagramFile = (workspaceId: string, projectId: string) => 
   return useMutation({
     mutationFn: ({ name, folder }: { name: string; folder?: string | null }) =>
       createDiagramFile(workspaceId, projectId, name, folder),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate project files to show the new file
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: projectFileKeys.list(workspaceId, projectId),
       });
       // Also invalidate the project detail which includes file count
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: projectKeys.detail(workspaceId, projectId),
       });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };
@@ -59,18 +61,22 @@ export const useCreateFolder = (workspaceId: string, projectId: string) => {
 
   return useMutation({
     mutationFn: (path: string) => createFolder(workspaceId, projectId, path),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate project files to show the new folder
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: projectFileKeys.list(workspaceId, projectId),
       });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };
 
 const invalidateProjectAndFiles = (queryClient: ReturnType<typeof useQueryClient>, workspaceId: string, projectId: string) => {
-  queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) });
-  queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) }),
+    queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) }),
+    invalidateAuditQueries(queryClient, workspaceId),
+  ]);
 };
 
 export const useDeleteProjectFile = (workspaceId: string, projectId: string) => {
@@ -78,7 +84,9 @@ export const useDeleteProjectFile = (workspaceId: string, projectId: string) => 
 
   return useMutation({
     mutationFn: (filePath: string) => deleteProjectFile(workspaceId, projectId, filePath),
-    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+    onSuccess: async () => {
+      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+    },
   });
 };
 
@@ -87,7 +95,9 @@ export const useDeleteProjectFolder = (workspaceId: string, projectId: string) =
 
   return useMutation({
     mutationFn: (folderPath: string) => deleteProjectFolder(workspaceId, projectId, folderPath),
-    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+    onSuccess: async () => {
+      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+    },
   });
 };
 
@@ -97,7 +107,9 @@ export const useRenameProjectFolder = (workspaceId: string, projectId: string) =
   return useMutation({
     mutationFn: ({ oldPath, newPath }: { oldPath: string; newPath: string }) =>
       renameProjectFolder(workspaceId, projectId, oldPath, newPath),
-    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+    onSuccess: async () => {
+      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+    },
   });
 };
 
@@ -106,7 +118,9 @@ export const useCloneProjectFile = (workspaceId: string, projectId: string) => {
 
   return useMutation({
     mutationFn: (file: ProjectFile) => cloneProjectFile(workspaceId, projectId, file),
-    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+    onSuccess: async () => {
+      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+    },
   });
 };
 
@@ -116,7 +130,9 @@ export const useRenameProjectFile = (workspaceId: string, projectId: string) => 
   return useMutation({
     mutationFn: ({ file, newName }: { file: ProjectFile; newName: string }) =>
       renameProjectFile(workspaceId, projectId, file, newName),
-    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+    onSuccess: async () => {
+      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+    },
   });
 };
 
@@ -132,7 +148,9 @@ export const useMoveProjectFile = (workspaceId: string, projectId: string) => {
       file: ProjectFile; 
       targetFolder: string | null;
     }) => moveProjectFile(workspaceId, projectId, file, targetFolder),
-    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+    onSuccess: async () => {
+      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+    },
   });
 };
 
@@ -159,11 +177,12 @@ export const useToggleTemplateStatus = (workspaceId: string, projectId: string) 
       isTemplate: boolean; 
       isWorkspaceTemplate: boolean;
     }) => toggleTemplateStatus(workspaceId, projectId, filePath, isTemplate, isWorkspaceTemplate),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) });
       // Invalidate all project templates in the workspace since workspace templates are shared
-      queryClient.invalidateQueries({ queryKey: ['project-templates', workspaceId] });
-      queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
+      await queryClient.invalidateQueries({ queryKey: ['project-templates', workspaceId] });
+      await queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };
@@ -182,9 +201,10 @@ export const useCreateDiagramFromTemplate = (workspaceId: string, projectId: str
       templateFile: ProjectFile; 
       folder?: string | null;
     }) => createDiagramFromTemplate(workspaceId, projectId, name, templateFile, folder),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) });
-      queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) });
+      await queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
+      await invalidateAuditQueries(queryClient, workspaceId);
     },
   });
 };

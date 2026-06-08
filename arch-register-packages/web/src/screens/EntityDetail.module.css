@@ -92,6 +92,7 @@
 
 .tabBar :global(.cTabs) {
   width: auto;
+  margin-bottom: -1px;
 }
 
 .tabBar :global(.eList) {
@@ -531,9 +532,8 @@
   position: relative;
   padding: 14px 16px;
   margin: 16px 24px 32px;
-  background:
-    radial-gradient(circle at 1px 1px, oklch(0.24 0.005 260) 1px, transparent 1px) 0 0 / 16px 16px,
-    var(--base-bg);
+  background: radial-gradient(circle at 1px 1px, oklch(0.24 0.005 260) 1px, transparent 1px) 0 0 / 16px 16px,
+  var(--base-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   display: flex;
@@ -615,9 +615,8 @@
   border-radius: var(--r-md);
   padding: 0 14px 14px;
   margin: 0 5%;
-  box-shadow:
-    0 0 0 4px color-mix(in oklch, var(--accent-fg) 6%, transparent),
-    0 1px 0 var(--cmp-border) inset;
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--accent-fg) 6%, transparent),
+  0 1px 0 var(--cmp-border) inset;
 }
 
 .topoEntityAccent {
