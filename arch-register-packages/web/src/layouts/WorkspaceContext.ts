@@ -1,5 +1,12 @@
 import { createContext, useContext } from 'react';
-import type { Workspace, EntitySchema, Project, WorkspaceLifecycleState, WorkspaceTeam, WorkspaceEnum } from '../api';
+import type {
+  Workspace,
+  EntitySchema,
+  Project,
+  WorkspaceLifecycleState,
+  WorkspaceTeam,
+  WorkspaceEnum
+} from '../lib/api';
 
 export type WorkspaceContextType = {
   workspace: Workspace | null;

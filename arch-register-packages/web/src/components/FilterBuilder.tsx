@@ -9,7 +9,7 @@ import type {
   WorkspaceLifecycleState,
   WorkspaceOwnerOption,
   WorkspaceEnum
-} from '../api';
+} from '../lib/api';
 import styles from './FilterBuilder.module.css';
 
 const TEXT_OPERATORS = [
@@ -69,11 +69,26 @@ export const FilterBuilder = ({
     const builtIn: FieldDef[] = [
       { id: '_name', name: 'Name', type: 'text' },
       { id: '_slug', name: 'Slug', type: 'text' },
-      { id: '_owner', name: 'Owner', type: 'select', options: owners.map(o => ({ value: o.id, label: o.id })) },
-      { id: '_lifecycle', name: 'Status', type: 'select', options: lifecycleStates.map(s => ({ value: s.id, label: s.label })) },
+      {
+        id: '_owner',
+        name: 'Owner',
+        type: 'select',
+        options: owners.map(o => ({ value: o.id, label: o.id }))
+      },
+      {
+        id: '_lifecycle',
+        name: 'Status',
+        type: 'select',
+        options: lifecycleStates.map(s => ({ value: s.id, label: s.label }))
+      },
       { id: '_description', name: 'Description', type: 'text' },
       { id: '_namespace', name: 'Namespace', type: 'text' },
-      { id: '_schemaId', name: 'Type', type: 'select', options: schemas.map(s => ({ value: s.id, label: s.name })) }
+      {
+        id: '_schemaId',
+        name: 'Type',
+        type: 'select',
+        options: schemas.map(s => ({ value: s.id, label: s.name }))
+      }
     ];
 
     let schemaFields: FieldDef[] = [];
@@ -153,9 +168,7 @@ export const FilterBuilder = ({
       </div>
 
       <div className={styles.rows}>
-        {conditions.length === 0 && (
-          <div className={styles.emptyState}>No filters applied.</div>
-        )}
+        {conditions.length === 0 && <div className={styles.emptyState}>No filters applied.</div>}
         {conditions.map((c, i) => (
           <FilterRow
             key={i}
@@ -211,7 +224,10 @@ const FilterRow = ({
           </Select.Root>
         </div>
         <div className={styles.tokOp}>
-          <Select.Root value={condition.op} onChange={v => onUpdate({ op: v as FilterCondition['op'] })}>
+          <Select.Root
+            value={condition.op}
+            onChange={v => onUpdate({ op: v as FilterCondition['op'] })}
+          >
             {operators.map(o => (
               <Select.Item key={o.value} value={o.value}>
                 {o.label}
@@ -232,9 +248,15 @@ const FilterRow = ({
               ))}
             </Select.Root>
           ) : field.type === 'date' ? (
-            <DateInput value={(condition.value as string) || ''} onChange={v => onUpdate({ value: v })} />
+            <DateInput
+              value={(condition.value as string) || ''}
+              onChange={v => onUpdate({ value: v })}
+            />
           ) : (
-            <TextInput value={(condition.value as string) || ''} onChange={v => onUpdate({ value: v })} />
+            <TextInput
+              value={(condition.value as string) || ''}
+              onChange={v => onUpdate({ value: v })}
+            />
           )}
         </div>
       )}

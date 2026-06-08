@@ -20,7 +20,7 @@ import {
   TbUser
 } from 'react-icons/tb';
 import { useNavigate } from '@tanstack/react-router';
-import type { Workspace } from '../api';
+import type { Workspace } from '../lib/api';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../hooks/useTheme';
@@ -195,8 +195,16 @@ const WorkspaceSwitcher = ({
       <button type="button" className={styles.wsBtn} onClick={() => setOpen(o => !o)}>
         <span
           className={styles.wsBadge}
-          style={ws.color ? { background: `linear-gradient(135deg, ${ws.color}, color-mix(in oklch, ${ws.color} 60%, oklch(0.35 0.12 290)))` } : undefined}
-        >{ws.short_code}</span>
+          style={
+            ws.color
+              ? {
+                  background: `linear-gradient(135deg, ${ws.color}, color-mix(in oklch, ${ws.color} 60%, oklch(0.35 0.12 290)))`
+                }
+              : undefined
+          }
+        >
+          {ws.short_code}
+        </span>
         <span className={styles.wsName}>{ws.name}</span>
         <TbChevronDown size={12} />
       </button>
@@ -217,7 +225,11 @@ const WorkspaceSwitcher = ({
                 className={styles.wsBadge}
                 style={{
                   marginRight: 8,
-                  ...(w.color ? { background: `linear-gradient(135deg, ${w.color}, color-mix(in oklch, ${w.color} 60%, oklch(0.35 0.12 290)))` } : {}),
+                  ...(w.color
+                    ? {
+                        background: `linear-gradient(135deg, ${w.color}, color-mix(in oklch, ${w.color} 60%, oklch(0.35 0.12 290)))`
+                      }
+                    : {})
                 }}
               >
                 {w.short_code}
@@ -266,7 +278,8 @@ const AppMenu = ({
   showDisabledItems?: boolean;
 }) => {
   const hasCreateItems = onNewProject ?? onNewEntity;
-  const hasItems = hasCreateItems ?? onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems;
+  const hasItems =
+    hasCreateItems ?? onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems;
 
   if (!hasItems) return <HamburgerMenu>{null}</HamburgerMenu>;
 
@@ -275,10 +288,18 @@ const AppMenu = ({
       {(hasCreateItems || showDisabledItems) && (
         <>
           <div className={styles.menuLabel}>Create</div>
-          <Menu.Item leftSlot={<TbFolders size={14} />} disabled={!onNewProject} onClick={onNewProject}>
+          <Menu.Item
+            leftSlot={<TbFolders size={14} />}
+            disabled={!onNewProject}
+            onClick={onNewProject}
+          >
             New project
           </Menu.Item>
-          <Menu.Item leftSlot={<TbDatabase size={14} />} disabled={!onNewEntity} onClick={onNewEntity}>
+          <Menu.Item
+            leftSlot={<TbDatabase size={14} />}
+            disabled={!onNewEntity}
+            onClick={onNewEntity}
+          >
             New entity
           </Menu.Item>
         </>
@@ -286,10 +307,18 @@ const AppMenu = ({
       {(onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems) && (
         <>
           {(hasCreateItems || showDisabledItems) && <Menu.Separator />}
-          <Menu.Item leftSlot={<TbBuildingCommunity size={14} />} disabled={!onAddWorkspace} onClick={onAddWorkspace}>
+          <Menu.Item
+            leftSlot={<TbBuildingCommunity size={14} />}
+            disabled={!onAddWorkspace}
+            onClick={onAddWorkspace}
+          >
             New workspace
           </Menu.Item>
-          <Menu.Item leftSlot={<TbSettings size={14} />} disabled={!onOpenSettings} onClick={onOpenSettings}>
+          <Menu.Item
+            leftSlot={<TbSettings size={14} />}
+            disabled={!onOpenSettings}
+            onClick={onOpenSettings}
+          >
             Workspace settings
           </Menu.Item>
           {onOpenGlobalSettings && (
@@ -314,11 +343,18 @@ const AccountMenu = () => {
 
   return (
     <MenuButton.Root>
-      <MenuButton.Trigger element={
-        <button type="button" className={styles.avatar} title={displayName} style={{ background: avatarColor }}>
-          {getInitials(displayName)}
-        </button>
-      } />
+      <MenuButton.Trigger
+        element={
+          <button
+            type="button"
+            className={styles.avatar}
+            title={displayName}
+            style={{ background: avatarColor }}
+          >
+            {getInitials(displayName)}
+          </button>
+        }
+      />
       <MenuButton.Menu align="end">
         <div className={styles.acctHeader}>
           <div className={styles.acctAvatar} style={{ background: avatarColor }}>
@@ -332,7 +368,12 @@ const AccountMenu = () => {
         <Menu.Separator />
         <Menu.Item
           leftSlot={<TbUser size={14} />}
-          onClick={() => navigate({ to: '/$workspaceSlug/account', params: { workspaceSlug: window.location.pathname.split('/')[1] ?? '' } })}
+          onClick={() =>
+            navigate({
+              to: '/$workspaceSlug/account',
+              params: { workspaceSlug: window.location.pathname.split('/')[1] ?? '' }
+            })
+          }
         >
           Account Settings
         </Menu.Item>

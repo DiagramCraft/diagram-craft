@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { searchArchRegister } from '../api';
+import { searchArchRegister } from '../lib/api';
 
 // Query keys factory
 export const searchKeys = {
@@ -12,7 +12,7 @@ export const searchKeys = {
       limitPerType?: number | null;
       types?: Array<'projects' | 'files' | 'entities' | 'schemas'> | null;
     }
-  ) => [...searchKeys.searches(), workspaceId, query, options] as const,
+  ) => [...searchKeys.searches(), workspaceId, query, options] as const
 };
 
 // Hook for searching across the workspace
@@ -30,6 +30,6 @@ export const useSearch = (
     queryFn: () => searchArchRegister(workspaceId, params),
     enabled: queryOptions?.enabled ?? (!!workspaceId && !!params.q.trim()),
     // Search results can be cached for a shorter time
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000 // 2 minutes
   });
 };

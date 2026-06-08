@@ -1,5 +1,5 @@
 import { Chip } from './Chip';
-import type { WorkspaceLifecycleState } from '../api';
+import type { WorkspaceLifecycleState } from '../lib/api';
 
 type StatusChipProps = {
   value: string;

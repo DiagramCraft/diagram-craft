@@ -1,12 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  fetchWithAuthResponse,
+  getAccessTokenExpiresAt,
+  registerSessionExpiredHandler
+} from './authClient';
 
-const setWindowLocation = (pathname = '/workspace/demo', search = '?tab=projects', hash = '#section') => {
+const setWindowLocation = (
+  pathname = '/workspace/demo',
+  search = '?tab=projects',
+  hash = '#section'
+) => {
   vi.stubGlobal('window', {
     location: {
       pathname,
       search,
-      hash,
-    },
+      hash
+    }
   });
 };
 
@@ -21,18 +30,17 @@ describe('authClient', () => {
   });
 
   it('returns a successful authenticated response without refreshing', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ ok: true }), { status: 200 })
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    const authClient = await import('./authClient');
-    const response = await authClient.fetchWithAuthResponse('/api/workspaces');
+    const response = await fetchWithAuthResponse('/api/workspaces');
 
     expect(response.status).toBe(200);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith('/api/workspaces', {
-      credentials: 'include',
+      credentials: 'include'
     });
   });
 
@@ -40,25 +48,22 @@ describe('authClient', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response('Unauthorized', { status: 401 }))
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ expires_in: 3600 }), { status: 200 })
-      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ expires_in: 3600 }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    const authClient = await import('./authClient');
     const onExpired = vi.fn();
-    authClient.registerSessionExpiredHandler(onExpired);
+    registerSessionExpiredHandler(onExpired);
 
-    const response = await authClient.fetchWithAuthResponse('/api/workspaces');
+    const response = await fetchWithAuthResponse('/api/workspaces');
 
     expect(response.status).toBe(200);
     expect(fetchMock.mock.calls.map(call => call[0])).toEqual([
       '/api/workspaces',
       '/api/auth/refresh',
-      '/api/workspaces',
+      '/api/workspaces'
     ]);
-    expect(authClient.getAccessTokenExpiresAt()).not.toBeNull();
+    expect(getAccessTokenExpiresAt()).not.toBeNull();
     expect(onExpired).not.toHaveBeenCalled();
   });
 
@@ -85,9 +90,8 @@ describe('authClient', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const authClient = await import('./authClient');
-    const requestA = authClient.fetchWithAuthResponse('/api/projects');
-    const requestB = authClient.fetchWithAuthResponse('/api/projects');
+    const requestA = fetchWithAuthResponse('/api/projects');
+    const requestB = fetchWithAuthResponse('/api/projects');
 
     await Promise.resolve();
     releaseRefresh();
@@ -106,16 +110,15 @@ describe('authClient', () => {
       .mockResolvedValueOnce(new Response('Unauthorized', { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    const authClient = await import('./authClient');
     const onExpired = vi.fn();
-    authClient.registerSessionExpiredHandler(onExpired);
+    registerSessionExpiredHandler(onExpired);
 
-    const response = await authClient.fetchWithAuthResponse('/api/workspaces');
+    const response = await fetchWithAuthResponse('/api/workspaces');
 
     expect(response.status).toBe(401);
     expect(onExpired).toHaveBeenCalledWith({
       reason: 'session-expired',
-      redirectTo: '/workspace/demo?tab=projects#section',
+      redirectTo: '/workspace/demo?tab=projects#section'
     });
   });
 
@@ -123,8 +126,9 @@ describe('authClient', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response('Unauthorized', { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    const authClient = await import('./authClient');
-    const response = await authClient.fetchWithAuthResponse('/api/auth/refresh', { method: 'POST' });
+    const response = await fetchWithAuthResponse('/api/auth/refresh', {
+      method: 'POST'
+    });
 
     expect(response.status).toBe(401);
     expect(fetchMock).toHaveBeenCalledTimes(1);

@@ -4,13 +4,16 @@ import {
   deleteWorkspaceRole,
   fetchWorkspaceRoles,
   updateWorkspaceRole,
-  type WorkspaceRoleDefinition,
-} from '../api';
-import type { CreateWorkspaceRoleRequest, UpdateWorkspaceRoleRequest } from '@arch-register/api-types';
+  type WorkspaceRoleDefinition
+} from '../lib/api';
+import type {
+  CreateWorkspaceRoleRequest,
+  UpdateWorkspaceRoleRequest
+} from '@arch-register/api-types';
 
 export const workspaceRolesKeys = {
   all: ['workspace-roles'] as const,
-  list: (workspaceSlug: string) => [...workspaceRolesKeys.all, workspaceSlug] as const,
+  list: (workspaceSlug: string) => [...workspaceRolesKeys.all, workspaceSlug] as const
 };
 
 export const useWorkspaceRoles = (workspaceSlug: string) =>
@@ -18,7 +21,7 @@ export const useWorkspaceRoles = (workspaceSlug: string) =>
     queryKey: workspaceRolesKeys.list(workspaceSlug),
     queryFn: () => fetchWorkspaceRoles(workspaceSlug),
     enabled: !!workspaceSlug,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 2 * 60 * 1000
   });
 
 const invalidateWorkspaceRoles = async (
@@ -34,18 +37,19 @@ const toWorkspaceRolePayload = (
   name: role.name,
   description: role.description,
   tone: role.tone,
-  capabilities: role.capabilities,
+  capabilities: role.capabilities
 });
 
 export const useCreateWorkspaceRole = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (role: Pick<WorkspaceRoleDefinition, 'name' | 'description' | 'tone' | 'capabilities'>) =>
-      createWorkspaceRole(workspaceSlug, toWorkspaceRolePayload(role)),
+    mutationFn: (
+      role: Pick<WorkspaceRoleDefinition, 'name' | 'description' | 'tone' | 'capabilities'>
+    ) => createWorkspaceRole(workspaceSlug, toWorkspaceRolePayload(role)),
     onSuccess: async () => {
       await invalidateWorkspaceRoles(queryClient, workspaceSlug);
-    },
+    }
   });
 };
 
@@ -55,14 +59,14 @@ export const useUpdateWorkspaceRole = (workspaceSlug: string) => {
   return useMutation({
     mutationFn: ({
       roleId,
-      role,
+      role
     }: {
       roleId: string;
       role: Pick<WorkspaceRoleDefinition, 'name' | 'description' | 'tone' | 'capabilities'>;
     }) => updateWorkspaceRole(workspaceSlug, roleId, toWorkspaceRolePayload(role)),
     onSuccess: async () => {
       await invalidateWorkspaceRoles(queryClient, workspaceSlug);
-    },
+    }
   });
 };
 
@@ -73,6 +77,6 @@ export const useDeleteWorkspaceRole = (workspaceSlug: string) => {
     mutationFn: (roleId: string) => deleteWorkspaceRole(workspaceSlug, roleId),
     onSuccess: async () => {
       await invalidateWorkspaceRoles(queryClient, workspaceSlug);
-    },
+    }
   });
 };

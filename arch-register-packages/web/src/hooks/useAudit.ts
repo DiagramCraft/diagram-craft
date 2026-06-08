@@ -1,5 +1,5 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
-import { fetchAuditLog, fetchAuditStats } from '../api';
+import { fetchAuditLog, fetchAuditStats } from '../lib/api';
 
 // Query keys factory
 export const auditKeys = {
@@ -8,13 +8,13 @@ export const auditKeys = {
   workspaceLogs: (workspaceId: string) => [...auditKeys.logs(), workspaceId] as const,
   log: (workspaceId: string, options: Record<string, unknown>) =>
     [...auditKeys.workspaceLogs(workspaceId), options] as const,
-  stats: (workspaceId: string) => [...auditKeys.all, 'stats', workspaceId] as const,
+  stats: (workspaceId: string) => [...auditKeys.all, 'stats', workspaceId] as const
 };
 
 export const invalidateAuditQueries = async (queryClient: QueryClient, workspaceId: string) => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
-    queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) })
   ]);
 };
 
@@ -35,7 +35,7 @@ export const useAuditLog = (
   return useQuery({
     queryKey: auditKeys.log(workspaceId, options),
     queryFn: () => fetchAuditLog(workspaceId, options),
-    enabled: queryOptions?.enabled ?? !!workspaceId,
+    enabled: queryOptions?.enabled ?? !!workspaceId
   });
 };
 
@@ -45,6 +45,6 @@ export const useAuditStats = (workspaceId: string) => {
     queryKey: auditKeys.stats(workspaceId),
     queryFn: () => fetchAuditStats(workspaceId),
     enabled: !!workspaceId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
 };

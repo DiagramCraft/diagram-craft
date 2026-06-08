@@ -1,10 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchAuthUsers, fetchUserGlobalRoles, updateUserGlobalRoles, type GlobalRoleAssignment } from '../api';
+import {
+  fetchAuthUsers,
+  fetchUserGlobalRoles,
+  updateUserGlobalRoles,
+  type GlobalRoleAssignment
+} from '../lib/api';
 import type { GlobalRole } from '@arch-register/permissions';
 
 export const globalRolesKeys = {
   users: ['auth-users'] as const,
-  roles: (userId: string) => ['auth-users', userId, 'global-roles'] as const,
+  roles: (userId: string) => ['auth-users', userId, 'global-roles'] as const
 };
 
 export const useAuthUsers = (enabled = true) =>
@@ -12,7 +17,7 @@ export const useAuthUsers = (enabled = true) =>
     queryKey: globalRolesKeys.users,
     queryFn: fetchAuthUsers,
     enabled,
-    staleTime: 60 * 1000,
+    staleTime: 60 * 1000
   });
 
 export const useUserGlobalRoles = (userId: string, enabled = true) =>
@@ -20,7 +25,7 @@ export const useUserGlobalRoles = (userId: string, enabled = true) =>
     queryKey: globalRolesKeys.roles(userId),
     queryFn: () => fetchUserGlobalRoles(userId),
     enabled: enabled && !!userId,
-    staleTime: 60 * 1000,
+    staleTime: 60 * 1000
   });
 
 export const useUpdateUserGlobalRoles = () => {
@@ -31,6 +36,6 @@ export const useUpdateUserGlobalRoles = () => {
       updateUserGlobalRoles(userId, roles),
     onSuccess: (data: GlobalRoleAssignment[], variables) => {
       queryClient.setQueryData(globalRolesKeys.roles(variables.userId), data);
-    },
+    }
   });
 };
