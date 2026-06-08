@@ -147,7 +147,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
 
       const [projects, schemas, entities] = await Promise.all([
         types.includes('projects') || types.includes('files')
-          ? db.projectsFiles.listProjects(workspace)
+          ? db.project.listProjects(workspace)
           : Promise.resolve([]),
         types.includes('schemas') || types.includes('entities')
           ? db.catalog.listSchemas(workspace)
@@ -180,7 +180,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
         const filesByProject = await Promise.all(
           projectIds.map(async projectId => ({
             projectId,
-            files: await db.projectsFiles.listProjectFiles(workspace, projectId)
+            files: await db.project.listProjectFiles(workspace, projectId)
           }))
         );
 

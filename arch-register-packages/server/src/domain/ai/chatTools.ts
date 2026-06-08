@@ -462,7 +462,7 @@ export const createAiChatTools = (
           : '';
     if (requestedName === '') throw new Error('A name is required to create an entity');
 
-    const teamIds = new Set((await db.workspaceAdmin.listTeams(workspaceId)).map(team => team.id));
+    const teamIds = new Set((await db.workspace.listTeams(workspaceId)).map(team => team.id));
     const owner = normalizeOwner(args.owner, teamIds, schema.default_owner);
     if (authCtx !== null) {
       requireCanCreateTopLevelEntity(
@@ -473,7 +473,7 @@ export const createAiChatTools = (
     }
 
     const lifecycleValues = new Set(
-      (await db.workspaceAdmin.listLifecycleStates(workspaceId)).map(state => state.id)
+      (await db.workspace.listLifecycleStates(workspaceId)).map(state => state.id)
     );
     const lifecycle =
       typeof args.lifecycle === 'string' && lifecycleValues.has(args.lifecycle)
@@ -527,7 +527,7 @@ export const createAiChatTools = (
       );
     }
 
-    const teamIds = new Set((await db.workspaceAdmin.listTeams(workspaceId)).map(team => team.id));
+    const teamIds = new Set((await db.workspace.listTeams(workspaceId)).map(team => team.id));
     const nextOwner = normalizeOwner(args.owner, teamIds, current.owner);
     const nextVisibilityMode =
       args.visibilityMode === undefined
@@ -547,7 +547,7 @@ export const createAiChatTools = (
     }
 
     const lifecycleValues = new Set(
-      (await db.workspaceAdmin.listLifecycleStates(workspaceId)).map(state => state.id)
+      (await db.workspace.listLifecycleStates(workspaceId)).map(state => state.id)
     );
     const nextLifecycle =
       args.lifecycle === undefined

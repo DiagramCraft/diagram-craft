@@ -7,8 +7,8 @@ export const buildSystemPrompt = async (
 ): Promise<string> => {
   const schemas = await db.catalog.listSchemas(workspaceId);
   const entities = await db.catalog.listEntities(workspaceId);
-  const lifecycleStates = await db.workspaceAdmin.listLifecycleStates(workspaceId);
-  const teams = await db.workspaceAdmin.listTeams(workspaceId);
+  const lifecycleStates = await db.workspace.listLifecycleStates(workspaceId);
+  const teams = await db.workspace.listTeams(workspaceId);
 
   const entityCountsBySchema = new Map<string, number>();
   for (const entity of entities) {

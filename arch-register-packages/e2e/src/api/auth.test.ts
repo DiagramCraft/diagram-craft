@@ -17,7 +17,7 @@ const createLocalUser = async (
   const password = overrides.password ?? 'TestPassword123!';
   const passwordHash = await hashPassword(password);
 
-  await db.identityAuth.createUser({
+  await db.auth.createUser({
     id: overrides.id,
     email: overrides.email,
     display_name: overrides.display_name ?? overrides.id,
@@ -124,7 +124,7 @@ test.describe('auth public routes', () => {
   });
 
   test('POST /api/auth/refresh accepts refresh token from the request body', async ({ server }) => {
-    const user = await server.db.identityAuth.getUser('test-admin');
+    const user = await server.db.auth.getUser('test-admin');
     expect(user).toBeTruthy();
 
     const tokens = generateTokenPair(user!);
@@ -145,7 +145,7 @@ test.describe('auth public routes', () => {
   });
 
   test('POST /api/auth/refresh returns 401 for an access token', async ({ server }) => {
-    const user = await server.db.identityAuth.getUser('test-admin');
+    const user = await server.db.auth.getUser('test-admin');
     expect(user).toBeTruthy();
 
     const tokens = generateTokenPair(user!);

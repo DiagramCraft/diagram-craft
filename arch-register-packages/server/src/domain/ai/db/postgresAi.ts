@@ -3,9 +3,9 @@ import type {
   CreateConversationInput,
   CreateMessageInput,
   UpsertAiConfigInput
-} from './database';
-import { normalizePostgresError, PostgresDatabaseBase } from './postgresBase';
-import type { AiConversation, AiMessage, WorkspaceAiConfig } from '../types';
+} from './aiDatabase';
+import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import type { AiConversation, AiMessage, WorkspaceAiConfig } from '../../../types';
 
 type AiConfigRow = WorkspaceAiConfig;
 type ConversationRow = AiConversation;

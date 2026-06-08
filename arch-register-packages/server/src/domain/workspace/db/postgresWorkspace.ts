@@ -1,24 +1,24 @@
 import type {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
-  WorkspaceAdminDatabase
-} from './database';
+  WorkspaceDatabase
+} from './workspaceDatabase';
 import {
   normalizePostgresError,
   PostgresDatabaseBase,
   type PostgresRowTypes
-} from './postgresBase';
+} from '../../../db/postgresBase';
 import type {
   WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
   TeamMembership,
   WorkspaceRoleDefinition
-} from '../types';
+} from '../../../types';
 
-export class PostgresWorkspaceAdminDatabase
+export class PostgresWorkspaceDatabase
   extends PostgresDatabaseBase
-  implements WorkspaceAdminDatabase
+  implements WorkspaceDatabase
 {
   async listWorkspaces() {
     return await this.sql<PostgresRowTypes['workspace'][]>`SELECT * FROM workspace ORDER BY name`;

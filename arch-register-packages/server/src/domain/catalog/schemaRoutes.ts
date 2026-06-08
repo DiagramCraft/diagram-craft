@@ -2,7 +2,7 @@ import { H3, defineHandler, HTTPError } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntitySchema } from '../../types';
-import { logAudit, extractEntityFields, computeChanges } from '../../db/audit';
+import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { handleDbError } from '../../utils/http';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
@@ -155,7 +155,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const teamIds = new Set(
-        (await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id)
+        (await db.workspace.listTeams(workspace)).map(owner => owner.id)
       );
       try {
         const timestamp = new Date();
@@ -193,7 +193,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const teamIds = new Set(
-        (await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id)
+        (await db.workspace.listTeams(workspace)).map(owner => owner.id)
       );
       try {
         const oldRow = await db.catalog.getSchema(workspace, id);

@@ -82,7 +82,7 @@ const test = createApiTest({
         enabled: true
       });
 
-      await server.db.workspaceAdmin.createWorkspace({
+      await server.db.workspace.createWorkspace({
         id: 'no-ai',
         name: 'No AI Workspace',
         url_slug: 'no-ai',
@@ -93,7 +93,7 @@ const test = createApiTest({
         updated_at: now
       });
 
-      await server.db.identityAuth.createUser({
+      await server.db.auth.createUser({
         id: 'other-ai-user',
         email: 'other-ai-user@e2e.test',
         display_name: 'Other AI User',

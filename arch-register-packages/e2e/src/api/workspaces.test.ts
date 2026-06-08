@@ -71,7 +71,7 @@ test.describe('workspace routes', () => {
       short_code: 'PS'
     });
 
-    const lifecycleStates = await server.db.workspaceAdmin.listLifecycleStates('platform-strategy');
+    const lifecycleStates = await server.db.workspace.listLifecycleStates('platform-strategy');
     expect(lifecycleStates.map(state => state.id)).toEqual([
       'proposed',
       'experimental',
@@ -79,7 +79,7 @@ test.describe('workspace routes', () => {
       'deprecated'
     ]);
 
-    const teams = await server.db.workspaceAdmin.listTeams('platform-strategy');
+    const teams = await server.db.workspace.listTeams('platform-strategy');
     expect(teams.map(team => team.id)).toEqual(['platform-team', 'ux-team', 'security-team']);
   });
 

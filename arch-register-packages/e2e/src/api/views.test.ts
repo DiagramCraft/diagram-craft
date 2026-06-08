@@ -106,7 +106,7 @@ test.describe('Saved Views API', () => {
     const now = new Date('2026-01-01T00:00:00.000Z');
     const passwordHash = await hashPassword('ViewerPassword123!');
 
-    await server.db.identityAuth.createUser({
+    await server.db.auth.createUser({
       id: 'views-viewer',
       email: 'views-viewer@example.com',
       display_name: 'Views Viewer',
@@ -120,7 +120,7 @@ test.describe('Saved Views API', () => {
       updated_at: now,
       last_login_at: null
     });
-    await server.db.workspaceAdmin.setWorkspaceMemberRole('default', 'views-viewer', 'viewer', now);
+    await server.db.workspace.setWorkspaceMemberRole('default', 'views-viewer', 'viewer', now);
 
     const viewerAuth = await makeAuthHeader(server.db, 'views-viewer');
 

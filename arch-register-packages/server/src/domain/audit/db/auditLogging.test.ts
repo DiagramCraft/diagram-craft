@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Entity } from '../types';
-import { computeChanges, flattenEntityAuditFields } from './audit';
+import type { Entity } from '../../../types';
+import { computeChanges, flattenEntityAuditFields } from './auditLogging';
 
 const now = new Date('2026-06-08T10:00:00.000Z');
 

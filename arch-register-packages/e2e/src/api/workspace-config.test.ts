@@ -5,7 +5,7 @@ const now = new Date('2026-06-06T12:00:00.000Z');
 const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId: string } }>({
   seededUsers: [
     async ({ server }, use) => {
-      await server.db.identityAuth.createUser({
+      await server.db.auth.createUser({
         id: 'config-user',
         email: 'config-user@e2e.test',
         display_name: 'Config User',
@@ -20,7 +20,7 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
         last_login_at: null
       });
 
-      await server.db.identityAuth.createUser({
+      await server.db.auth.createUser({
         id: 'config-remove-user',
         email: 'config-remove-user@e2e.test',
         display_name: 'Config Remove User',

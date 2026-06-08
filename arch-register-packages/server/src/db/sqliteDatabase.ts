@@ -4,25 +4,25 @@ import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
 import type { DatabaseAdapter } from './database';
 import { runSqliteMigrations } from './migrate';
-import { SqliteAuditDatabase } from './sqliteAudit';
-import { SqliteCatalogDatabase } from './sqliteCatalog';
-import { SqliteIdentityAuthDatabase } from './sqliteIdentityAuth';
-import { SqliteProjectsFilesDatabase } from './sqliteProjectsFiles';
-import { SqliteWorkspaceAdminDatabase } from './sqliteWorkspaceAdmin';
-import { SqliteAiDatabase } from './sqliteAi';
-import { SqliteViewDatabase } from '@arch-register/server/db/sqliteView';
+import { SqliteAuditDatabase } from '../domain/audit/db/sqliteAudit';
+import { SqliteCatalogDatabase } from '../domain/catalog/db/sqliteCatalog';
+import { SqliteAuthDatabase } from '../domain/auth/db/sqliteAuth';
+import { SqliteProjectDatabase } from '../domain/project/db/sqliteProject';
+import { SqliteWorkspaceDatabase } from '../domain/workspace/db/sqliteWorkspace';
+import { SqliteAiDatabase } from '../domain/ai/db/sqliteAi';
+import { SqliteViewDatabase } from '../domain/catalog/db/sqliteView';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
   private readonly filePath: string;
 
   readonly core;
-  readonly workspaceAdmin;
+  readonly workspace;
   readonly catalog;
   readonly view;
-  readonly projectsFiles;
+  readonly project;
   readonly audit;
-  readonly identityAuth;
+  readonly auth;
   readonly ai;
 
   constructor(filePath: string) {
@@ -31,12 +31,12 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.configure();
     this.initializeSchema();
 
-    this.workspaceAdmin = new SqliteWorkspaceAdminDatabase(() => this.db);
+    this.workspace = new SqliteWorkspaceDatabase(() => this.db);
     this.catalog = new SqliteCatalogDatabase(() => this.db);
     this.view = new SqliteViewDatabase(() => this.db);
-    this.projectsFiles = new SqliteProjectsFilesDatabase(() => this.db);
+    this.project = new SqliteProjectDatabase(() => this.db);
     this.audit = new SqliteAuditDatabase(() => this.db);
-    this.identityAuth = new SqliteIdentityAuthDatabase(() => this.db);
+    this.auth = new SqliteAuthDatabase(() => this.db);
     this.ai = new SqliteAiDatabase(() => this.db);
 
     runSqliteMigrations(this.db);

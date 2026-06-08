@@ -19,7 +19,7 @@ const cleanupTimer = setInterval(
   async () => {
     // This will be set when createAuthRoutes is called
     if (cleanupDbAdapter) {
-      await cleanupDbAdapter.identityAuth.cleanupExpiredOidcAuthStates();
+      await cleanupDbAdapter.auth.cleanupExpiredOidcAuthStates();
     }
   },
   5 * 60 * 1000
@@ -158,10 +158,10 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       httpAssert.string(password, { message: 'Username and password are required' });
 
       // Try to find user by ID first, then by email
-      let user = await db.identityAuth.getUser(username);
+      let user = await db.auth.getUser(username);
 
       if (!user && username.includes('@')) {
-        user = await db.identityAuth.getUserByEmail(username);
+        user = await db.auth.getUserByEmail(username);
       }
 
       httpAssert.present(user, { status: 401, message: 'Invalid username or password' });
@@ -189,7 +189,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       });
 
       // Update last login
-      await db.identityAuth.updateUserLastLogin(user.id, new Date());
+      await db.auth.updateUserLastLogin(user.id, new Date());
 
       const tokens = generateTokenPair(user);
       setTokenCookies(event, tokens);
@@ -210,7 +210,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 
       // Store state for callback validation (expires in 10 minutes)
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-      await db.identityAuth.storeOidcAuthState(state, nonce, codeVerifier, expiresAt);
+      await db.auth.storeOidcAuthState(state, nonce, codeVerifier, expiresAt);
 
       return { authorization_url: url };
     })
@@ -230,11 +230,11 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 
       httpAssert.string(state, { message: 'Missing state parameter' });
 
-      const storedState = await db.identityAuth.getOidcAuthState(state);
+      const storedState = await db.auth.getOidcAuthState(state);
 
       httpAssert.present(storedState, { message: 'Invalid or expired state' });
 
-      await db.identityAuth.deleteOidcAuthState(state);
+      await db.auth.deleteOidcAuthState(state);
 
       // Construct the full callback URL with query parameters
       const redirectUri = process.env['OIDC_REDIRECT_URI'];
@@ -255,11 +255,11 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       );
 
       // Find or create user — use issuer:sub as ID to avoid collisions across providers
-      let user = await db.identityAuth.getUserByOidc(claims.issuer, claims.sub);
+      let user = await db.auth.getUserByOidc(claims.issuer, claims.sub);
 
       if (!user) {
         const userId = `${claims.issuer}:${claims.sub}`;
-        user = await db.identityAuth.createUser({
+        user = await db.auth.createUser({
           id: userId,
           email: claims.email ?? null,
           display_name: claims.name,
@@ -274,7 +274,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
           last_login_at: new Date()
         });
       } else {
-        await db.identityAuth.updateUserLastLogin(user.id, new Date());
+        await db.auth.updateUserLastLogin(user.id, new Date());
       }
 
       httpAssert.true(user.is_active, {
@@ -319,7 +319,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         message: 'Invalid token type'
       });
 
-      const user = await db.identityAuth.getUser(payload.sub);
+      const user = await db.auth.getUser(payload.sub);
 
       httpAssert.present(user, {
         status: 401,
@@ -363,18 +363,18 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
 
       const user = event.context.user as User;
       const [roleAssignments, workspaces] = await Promise.all([
-        db.identityAuth.listGlobalRoleAssignments(user.id),
-        db.workspaceAdmin.listWorkspaces()
+        db.auth.listGlobalRoleAssignments(user.id),
+        db.workspace.listWorkspaces()
       ]);
       const globalRoles = roleAssignments.map(assignment => assignment.role);
 
       const workspaceData = await Promise.all(
         workspaces.map(async workspace => {
           const [teamAssignments, teams, workspaceRole, customRoles] = await Promise.all([
-            db.workspaceAdmin.listTeamAssignments(workspace.id),
-            db.workspaceAdmin.listTeams(workspace.id),
-            db.workspaceAdmin.getWorkspaceRole(workspace.id, user.id),
-            db.workspaceAdmin.listCustomWorkspaceRoles(workspace.id)
+            db.workspace.listTeamAssignments(workspace.id),
+            db.workspace.listTeams(workspace.id),
+            db.workspace.getWorkspaceRole(workspace.id, user.id),
+            db.workspace.listCustomWorkspaceRoles(workspace.id)
           ]);
           return {
             workspace_id: workspace.id,
@@ -411,7 +411,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
       const body = (await readBody(event).catch(() => undefined)) as UserUpdateBody | undefined;
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
-      const updatedUser = await db.identityAuth.updateUser(
+      const updatedUser = await db.auth.updateUser(
         id,
         buildUserUpdateInput(body, new Date())
       );
@@ -438,7 +438,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
       const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
       requireGlobalPermission(authCtx, 'admin_platform');
 
-      return (await db.identityAuth.listUsers()).map(user => ({
+      return (await db.auth.listUsers()).map(user => ({
         id: user.id,
         email: user.email,
         display_name: user.display_name,
@@ -456,7 +456,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
 
       const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
       requireGlobalPermission(authCtx, 'manage_workspace_roles');
-      return await db.identityAuth.listGlobalRoleAssignments(userId);
+      return await db.auth.listGlobalRoleAssignments(userId);
     })
   );
 
@@ -474,7 +474,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         | undefined;
       httpAssert.array(body?.roles, { message: 'roles must be an array' });
       const roles = parseRequestedGlobalRoles(body.roles);
-      return await db.identityAuth.replaceGlobalRoleAssignments(userId, roles, new Date());
+      return await db.auth.replaceGlobalRoleAssignments(userId, roles, new Date());
     })
   );
 

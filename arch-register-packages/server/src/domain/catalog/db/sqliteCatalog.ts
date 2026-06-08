@@ -7,8 +7,8 @@ import type {
   UpdateEntityInput,
   UpdateEnumInput,
   UpdateSchemaInput
-} from './database';
-import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase';
+} from './catalogDatabase';
+import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
 export class SqliteCatalogDatabase extends SqliteDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
