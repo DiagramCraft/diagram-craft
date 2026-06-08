@@ -113,6 +113,22 @@
   font-size: 11px;
 }
 
+.filterCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--base-bg-hover);
+  color: var(--base-fg);
+  font-size: 9px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 10px;
+  margin-left: 6px;
+  border: 1px solid var(--panel-border);
+}
+
 .filterSelect {
   appearance: none;
   background: transparent;
@@ -584,4 +600,12 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--base-fg-dim);
+}
+
+/* Filter popup override — removes default popover padding and enforces correct width */
+.filterPopover {
+  padding: 0 !important;
+  width: auto !important;
+  border-radius: var(--r-md) !important;
+  overflow: hidden;
 }

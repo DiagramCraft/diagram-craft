@@ -1,6 +1,13 @@
 
 export type BrowserView = 'table' | 'cards' | 'tree' | 'radar' | 'timeline';
 
+export type FilterCondition = {
+  fieldId: string;
+  op: 'equals' | 'not_equals' | 'contains' | 'starts_with' | 'ends_with' | 'empty' | 'not_empty' | 'before' | 'after' | 'on' | 'gt' | 'lt';
+  // biome-ignore lint/suspicious/noExplicitAny: generic filter value
+  value: any;
+};
+
 export type EntityFilters = {
   schemaId?: string | null;
   status?: string | null;
@@ -10,6 +17,7 @@ export type EntityFilters = {
   dateFilterOperator?: 'on' | 'before' | 'after' | 'empty';
   dateFilterValue?: string;
   sort?: string;
+  conditions?: FilterCondition[];
 };
 
 export type RadarViewConfig = {

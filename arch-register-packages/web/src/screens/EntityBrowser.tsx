@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './EntityBrowser.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -23,18 +23,28 @@ import {
   TbChartRadar,
   TbCalendarWeek,
   TbCheck,
-  TbX
+  TbX,
+  TbFilter
 } from 'react-icons/tb';
 import { RadarView, type RadarConfig } from './RadarView';
 import { TimelineView, type TimelineConfig } from './TimelineView';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
-import type { EntityRecord, EntitySchema, TreeNode, TreeEdge, WorkspaceLifecycleState } from '../api';
+import type {
+  EntityRecord,
+  EntitySchema,
+  TreeNode,
+  TreeEdge,
+  WorkspaceLifecycleState
+} from '../api';
+import type { FilterCondition } from '@arch-register/api-types/views';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
+import { FilterBuilder } from '../components/FilterBuilder';
 import {
   useEntities,
   useEntityFacets,
@@ -269,7 +279,7 @@ const toSavedViewConfig = (
 
 export const EntityBrowser = () => {
   const navigate = useNavigate();
-  const { workspaceSlug, schemas, lifecycleStates, teams, permissions, openAddEntityDialog } =
+  const { workspaceSlug, schemas, enums, lifecycleStates, teams, permissions, openAddEntityDialog } =
     useWorkspaceContext();
   const search = useSearch({ strict: false }) as {
     type?: string;
@@ -281,13 +291,40 @@ export const EntityBrowser = () => {
     radarConfig?: string;
     timelineConfig?: string;
     sidebarTab?: 'filters' | 'views';
+    filters?: string;
   };
-  const typeFilter = search.type ?? null;
-  const statusFilter = search.status ?? null;
-  const ownerFilter = search.owner ?? null;
-  const viewId = search.viewId ?? null;
   const workspaceId = workspaceSlug;
   const [q, setQ] = useState(search.q ?? '');
+  const [conditions, setConditions] = useState<FilterCondition[]>(() => {
+    if (search.filters) {
+      try {
+        return JSON.parse(search.filters);
+      } catch {
+        return [];
+      }
+    }
+    // Backward compatibility for old search params
+    const initial: FilterCondition[] = [];
+    if (search.type) initial.push({ fieldId: '_schemaId', op: 'equals', value: search.type });
+    if (search.status) initial.push({ fieldId: '_lifecycle', op: 'equals', value: search.status });
+    if (search.owner) initial.push({ fieldId: '_owner', op: 'equals', value: search.owner });
+    return initial;
+  });
+
+  const typeFilter = useMemo(
+    () => (conditions.find(c => c.fieldId === '_schemaId' && c.op === 'equals')?.value as string) ?? null,
+    [conditions]
+  );
+  const statusFilter = useMemo(
+    () => (conditions.find(c => c.fieldId === '_lifecycle' && c.op === 'equals')?.value as string) ?? null,
+    [conditions]
+  );
+  const ownerFilter = useMemo(
+    () => (conditions.find(c => c.fieldId === '_owner' && c.op === 'equals')?.value as string) ?? null,
+    [conditions]
+  );
+
+  const viewId = search.viewId ?? null;
   const [sort, setSort] = useState('name');
   const [view, setView] = useState<BrowserView>(search.viewMode ?? 'table');
   const [radarConfig, setRadarConfig] = useState<RadarConfig | null>(() => {
@@ -311,20 +348,27 @@ export const EntityBrowser = () => {
     return null;
   });
 
-  const [dateFilterField, setDateFilterField] = useState('');
-  const [dateFilterOperator, setDateFilterOperator] = useState<DateFilterOperator>('on');
-  const [dateFilterValue, setDateFilterValue] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkConfirming, setBulkConfirming] = useState(false);
   const [bulkLifecycleValue, setBulkLifecycleValue] = useState('');
   const [bulkOwnerValue, setBulkOwnerValue] = useState('');
   const [isSavingView, setIsSavingView] = useState(false);
+  const filterPopoverRef = useRef<PopoverActions | null>(null);
 
   // Sync view from search params when it changes (e.g. applying a saved view)
   useEffect(() => {
     if (search.viewMode) setView(search.viewMode);
     if (search.q !== undefined) setQ(search.q);
+    if (search.filters) {
+      try {
+        setConditions(JSON.parse(search.filters));
+      } catch {
+        // ignore
+      }
+    } else {
+      setConditions([]);
+    }
     if (search.radarConfig) {
       try {
         setRadarConfig(JSON.parse(search.radarConfig));
@@ -339,7 +383,7 @@ export const EntityBrowser = () => {
         // ignore
       }
     }
-  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.q]);
+  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.q, search.filters]);
 
   // Use TanStack Query hooks for data fetching
   const { data: entities = [] } = useEntities(workspaceId, {
@@ -390,24 +434,20 @@ export const EntityBrowser = () => {
 
   const navigateEntities = useCallback(
     (params: {
-      type?: string;
-      status?: string;
-      owner?: string;
       q?: string;
       viewId?: string;
       viewMode?: BrowserView;
       radarConfig?: string;
       timelineConfig?: string;
       sidebarTab?: 'filters' | 'views';
+      filters?: FilterCondition[];
     }) => {
       const nextQuery = params.q ?? q;
+      const nextFilters = params.filters ?? conditions;
       navigate({
         to: '/$workspaceSlug/entities',
         params: { workspaceSlug },
         search: {
-          type: params.type,
-          status: params.status,
-          owner: params.owner,
           q: nextQuery === '' ? undefined : nextQuery,
           viewId: params.viewId ?? viewId ?? undefined,
           viewMode: params.viewMode ?? view,
@@ -417,10 +457,21 @@ export const EntityBrowser = () => {
             params.timelineConfig ??
             (timelineConfig ? JSON.stringify(timelineConfig) : undefined),
           sidebarTab: params.sidebarTab ?? search.sidebarTab,
+          filters: nextFilters.length > 0 ? JSON.stringify(nextFilters) : undefined
         }
       });
     },
-    [navigate, workspaceSlug, q, viewId, view, radarConfig, timelineConfig, search.sidebarTab]
+    [
+      navigate,
+      workspaceSlug,
+      q,
+      viewId,
+      view,
+      radarConfig,
+      timelineConfig,
+      search.sidebarTab,
+      conditions
+    ]
   );
 
   const navigateToEntity = useCallback(
@@ -432,19 +483,6 @@ export const EntityBrowser = () => {
     },
     [navigate, workspaceSlug]
   );
-
-  const setStatusFilter = (v: string) =>
-    navigateEntities({
-      type: typeFilter ?? undefined,
-      status: v || undefined,
-      owner: ownerFilter ?? undefined
-    });
-  const setOwnerFilter = (v: string) =>
-    navigateEntities({
-      type: typeFilter ?? undefined,
-      status: statusFilter ?? undefined,
-      owner: v || undefined
-    });
 
   const handleExport = useCallback(async () => {
     try {
@@ -497,7 +535,6 @@ export const EntityBrowser = () => {
     ? (schemaMap.get(typeFilter)?.schema.name ?? 'Entities')
     : 'All entities';
 
-  const lifecycles = lifecycleStates;
   const selectedSchema = typeFilter != null ? (schemaMap.get(typeFilter)?.schema ?? null) : null;
   const dateFields = useMemo(
     () =>
@@ -507,18 +544,6 @@ export const EntityBrowser = () => {
       ) ?? [],
     [selectedSchema]
   );
-
-  useEffect(() => {
-    if (dateFields.length === 0) {
-      setDateFilterField('');
-      setDateFilterOperator('on');
-      setDateFilterValue('');
-      return;
-    }
-    if (!dateFields.some(field => field.id === dateFilterField)) {
-      setDateFilterField(dateFields[0]?.id ?? '');
-    }
-  }, [dateFields, dateFilterField]);
 
   useEffect(() => {
     if (!sort.startsWith('date:')) return;
@@ -542,10 +567,9 @@ export const EntityBrowser = () => {
   );
 
   const activeDateFieldId = useMemo(() => {
-    if (dateFilterField !== '') return dateFilterField;
     if (sort.startsWith('date:')) return sort.slice(5);
     return dateFields[0]?.id ?? null;
-  }, [dateFields, dateFilterField, sort]);
+  }, [dateFields, sort]);
 
   const activeDateField = useMemo(
     () => dateFields.find(field => field.id === activeDateFieldId) ?? null,
@@ -553,37 +577,65 @@ export const EntityBrowser = () => {
   );
   const dateBrowserEnabled = view === 'table' && selectedSchema != null && dateFields.length > 0;
 
-  const filtered = useMemo<EntityRecord[]>(() => {
-    const xs = entities
-      .filter(entity => {
-        if (!dateBrowserEnabled || activeDateField == null || dateFilterField === '') return true;
-        return matchesDateFilter(entity[dateFilterField], dateFilterOperator, dateFilterValue);
-      })
-      .slice();
+  const matchesCondition = useCallback((e: EntityRecord, c: FilterCondition) => {
+    const value = e[c.fieldId];
+    if (c.op === 'empty') return value == null || value === '';
+    if (c.op === 'not_empty') return value != null && value !== '';
 
-    if (sort === 'name') xs.sort((a, b) => (a._name ?? a._slug).localeCompare(b._name ?? b._slug));
-    if (sort === 'type') xs.sort((a, b) => a._schemaId.localeCompare(b._schemaId));
-    if (sort === 'owner') xs.sort((a, b) => (a._owner ?? '').localeCompare(b._owner ?? ''));
-    if (sort === 'completeness')
-      xs.sort((a, b) => (a._completeness ?? -1) - (b._completeness ?? -1));
-    if (dateBrowserEnabled && sort.startsWith('date:')) {
-      const fieldId = sort.slice(5);
-      xs.sort((a, b) => {
+    if (value == null) return false;
+
+    const expected = c.value;
+    switch (c.op) {
+      case 'equals':
+        return String(value) === String(expected);
+      case 'not_equals':
+        return String(value) !== String(expected);
+      case 'contains':
+        return String(value).toLowerCase().includes(String(expected).toLowerCase());
+      case 'starts_with':
+        return String(value).toLowerCase().startsWith(String(expected).toLowerCase());
+      case 'ends_with':
+        return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
+      case 'on':
+        return matchesDateFilter(value, 'on', expected as string);
+      case 'before':
+        return matchesDateFilter(value, 'before', expected as string);
+      case 'after':
+        return matchesDateFilter(value, 'after', expected as string);
+      case 'gt':
+        return Number(value) > Number(expected);
+      case 'lt':
+        return Number(value) < Number(expected);
+      default:
+        return true;
+    }
+  }, []);
+
+  const filtered = useMemo<EntityRecord[]>(() => {
+    const result = entities.filter(e => {
+      for (const c of conditions) {
+        if (!matchesCondition(e, c)) return false;
+      }
+      return true;
+    });
+
+    result.sort((a, b) => {
+      if (sort === 'name')
+        return (a._name ?? a._slug ?? '').localeCompare(b._name ?? b._slug ?? '');
+      if (sort === 'type') return a._schemaId.localeCompare(b._schemaId);
+      if (sort === 'owner') return (a._owner ?? '').localeCompare(b._owner ?? '');
+      if (sort === 'completeness')
+        return (a._completeness ?? -1) - (b._completeness ?? -1);
+      if (dateBrowserEnabled && sort.startsWith('date:')) {
+        const fieldId = sort.slice(5);
         const aValue = parseDateValue(a[fieldId]) ?? '9999-99-99';
         const bValue = parseDateValue(b[fieldId]) ?? '9999-99-99';
         return aValue.localeCompare(bValue);
-      });
-    }
-    return xs;
-  }, [
-    entities,
-    sort,
-    activeDateField,
-    dateBrowserEnabled,
-    dateFilterField,
-    dateFilterOperator,
-    dateFilterValue
-  ]);
+      }
+      return 0;
+    });
+    return result;
+  }, [entities, conditions, sort, dateBrowserEnabled, matchesCondition]);
 
   useEffect(() => {
     setSelectedIds(new Set());
@@ -635,10 +687,8 @@ export const EntityBrowser = () => {
           status: statusFilter,
           owner: ownerFilter,
           q,
-          dateFilterField,
-          dateFilterOperator,
-          dateFilterValue,
-          sort
+          sort,
+          conditions
         },
         config: toSavedViewConfig(view, radarConfig, timelineConfig)
       });
@@ -660,10 +710,8 @@ export const EntityBrowser = () => {
             status: statusFilter,
             owner: ownerFilter,
             q,
-            dateFilterField,
-            dateFilterOperator,
-            dateFilterValue,
             sort,
+            conditions
           },
           config: toSavedViewConfig(view, radarConfig, timelineConfig),
         }
@@ -680,10 +728,8 @@ export const EntityBrowser = () => {
     statusFilter,
     ownerFilter,
     q,
-    dateFilterField,
-    dateFilterOperator,
-    dateFilterValue,
     sort,
+    conditions,
     radarConfig,
     timelineConfig,
   ]);
@@ -773,72 +819,35 @@ export const EntityBrowser = () => {
           />
         </div>
 
-        <FilterDropdown
-          label="Type"
-          value={typeFilter ?? ''}
-          onChange={v =>
-            navigateEntities({
-              type: v || undefined,
-              status: statusFilter ?? undefined,
-              owner: ownerFilter ?? undefined
-            })
-          }
-          options={[
-            { value: '', label: 'All types' },
-            ...schemas.map(s => ({ value: s.id, label: s.name }))
-          ]}
-        />
-        <FilterDropdown
-          label="Status"
-          value={statusFilter ?? ''}
-          onChange={setStatusFilter}
-          options={[
-            { value: '', label: 'Any' },
-            ...lifecycles.map(s => ({ value: s.id, label: s.label }))
-          ]}
-        />
-        <FilterDropdown
-          label="Owner"
-          value={ownerFilter ?? ''}
-          onChange={setOwnerFilter}
-          options={[{ value: '', label: 'Any' }, ...owners.map(o => ({ value: o, label: o }))]}
-        />
-        <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
-
-        {dateBrowserEnabled && (
-          <div className={styles.dateFilters}>
-            <FilterDropdown
-              label="Date field"
-              value={dateFilterField}
-              onChange={setDateFilterField}
-              options={dateFields.map(field => ({ value: field.id, label: field.name }))}
+        <Popover.Root actionsRef={filterPopoverRef}>
+          <Popover.Trigger
+            element={
+              <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
+                <TbFilter size={12} style={{ marginRight: 4 }} />
+                Filter
+                {conditions.length > 0 && (
+                  <span className={styles.filterCount}>{conditions.length}</span>
+                )}
+              </Button>
+            }
+          />
+          <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false} className={styles.filterPopover}>
+            <FilterBuilder
+              conditions={conditions}
+              onChange={c => navigateEntities({ filters: c })}
+              onClose={() => filterPopoverRef.current?.close()}
+              schemas={schemas}
+              lifecycleStates={lifecycleStates}
+              owners={owners.map(o => ({ id: o, sort_order: 0 }))}
+              enums={enums}
+              selectedSchemaId={typeFilter}
             />
-            <FilterDropdown
-              label="When"
-              value={dateFilterOperator}
-              onChange={value => setDateFilterOperator(value as DateFilterOperator)}
-              options={[
-                { value: 'on', label: 'On' },
-                { value: 'before', label: 'Before' },
-                { value: 'after', label: 'After' },
-                { value: 'empty', label: 'Empty' }
-              ]}
-            />
-            {dateFilterOperator !== 'empty' && (
-              <label className={styles.dateInputWrap}>
-                <span className={styles.filterLabel}>Date</span>
-                <input
-                  className={styles.dateInput}
-                  type="date"
-                  value={dateFilterValue}
-                  onChange={e => setDateFilterValue(e.target.value)}
-                />
-              </label>
-            )}
-          </div>
-        )}
+          </Popover.Content>
+        </Popover.Root>
 
         <div style={{ flex: 1 }} />
+
+        <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
 
         <div className={styles.segmented}>
           <button

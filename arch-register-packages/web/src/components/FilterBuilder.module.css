@@ -1,0 +1,134 @@
+/* The container is rendered inside Popover.Content.
+   Padding is zeroed on the popover via the filterPopover class, so we own our layout fully.
+   Font is set explicitly because the portal renders outside .ar-app. */
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 480px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.clearAll {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 80ms;
+}
+
+.clearAll:hover {
+  color: var(--base-fg-dim);
+  text-decoration: underline;
+}
+
+/* ── Filter rows ── */
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.row:last-of-type {
+  border-bottom: none;
+}
+
+.rowHead {
+  display: contents;
+}
+
+/* Width wrappers for the two Select components in the row head */
+.tokField {
+  flex-shrink: 0;
+  width: 110px;
+}
+
+.tokOp {
+  flex-shrink: 0;
+  width: 110px;
+}
+
+.removeBtn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r);
+  border: none;
+  background: transparent;
+  color: var(--cmp-fg-disabled);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 60ms, color 60ms;
+}
+
+.removeBtn:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+.rowBody {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Empty state ── */
+.emptyState {
+  padding: 12px 14px;
+  font-size: 11.5px;
+  color: var(--cmp-fg-disabled);
+}
+
+/* ── Footer ── */
+.footer {
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.addFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--cmp-fg-disabled);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 60ms;
+}
+
+.addFilter:hover {
+  color: var(--base-fg);
+}

@@ -9,6 +9,7 @@ export type EntitySearchParams = {
   radarConfig?: string;
   timelineConfig?: string;
   sidebarTab?: 'filters' | 'views';
+  filters?: string; // JSON string of FilterCondition[]
 };
 
 export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearchParams => ({
@@ -28,6 +29,7 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
   radarConfig: typeof raw.radarConfig === 'string' ? raw.radarConfig : undefined,
   timelineConfig: typeof raw.timelineConfig === 'string' ? raw.timelineConfig : undefined,
   sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' ? raw.sidebarTab : undefined,
+  filters: typeof raw.filters === 'string' ? raw.filters : undefined,
 });
 
 // Project detail params

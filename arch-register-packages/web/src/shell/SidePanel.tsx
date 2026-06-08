@@ -51,6 +51,7 @@ import type {
   WorkspaceLifecycleState,
   SavedView
 } from '../api';
+import type { FilterCondition } from '@arch-register/api-types/views';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { deriveActiveView } from '../layouts/deriveActiveView';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
@@ -790,14 +791,33 @@ const EntitiesSidebar = ({
     owner?: string;
     sidebarTab?: 'filters' | 'views';
   }) => {
+    const nextSearch: Record<string, unknown> = { ...search, ...params };
+
+    if (
+      params.type !== undefined ||
+      params.status !== undefined ||
+      params.owner !== undefined
+    ) {
+      const conditions: FilterCondition[] = [];
+      if (params.type) conditions.push({ fieldId: '_schemaId', op: 'equals', value: params.type });
+      if (params.status)
+        conditions.push({ fieldId: '_lifecycle', op: 'equals', value: params.status });
+      if (params.owner) conditions.push({ fieldId: '_owner', op: 'equals', value: params.owner });
+
+      if (conditions.length > 0) {
+        nextSearch.filters = JSON.stringify(conditions);
+      } else {
+        delete nextSearch.filters;
+      }
+      delete nextSearch.type;
+      delete nextSearch.status;
+      delete nextSearch.owner;
+    }
+
     navigate({
       to: '/$workspaceSlug/entities',
       params: { workspaceSlug },
-      search: {
-        ...search,
-        ...params
-        // biome-ignore lint/suspicious/noExplicitAny: bypass
-      } as any
+      search: nextSearch
     });
   };
 
@@ -814,7 +834,8 @@ const EntitiesSidebar = ({
         viewMode: view.viewMode,
         radarConfig: view.config?.radar ? JSON.stringify(view.config.radar) : undefined,
         timelineConfig: view.config?.timeline ? JSON.stringify(view.config.timeline) : undefined,
-        sidebarTab: 'views'
+        sidebarTab: 'views',
+        filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined
         // biome-ignore lint/suspicious/noExplicitAny: bypass
       } as any
     });
