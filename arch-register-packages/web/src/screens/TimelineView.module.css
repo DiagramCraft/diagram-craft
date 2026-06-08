@@ -1,0 +1,467 @@
+/* Container */
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  min-height: 0;
+}
+
+/* Config bar */
+.configBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.configSep {
+  width: 1px;
+  height: 16px;
+  background: var(--panel-border);
+  flex-shrink: 0;
+}
+
+.configArrow {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}
+
+.configMeta {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  white-space: nowrap;
+}
+
+/* Reuse toolbar filter styles (scoped here) */
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filter:hover {
+  border-color: var(--cmp-border-hover);
+}
+
+.filterLabel {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}
+
+.filterSelect {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  max-width: 160px;
+}
+
+/* Segmented zoom control */
+.segmented {
+  display: inline-flex;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.segmented button {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--panel-border);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.segmented button:last-child {
+  border-right: none;
+}
+
+.segmented button:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+.segmented .segmentedActive {
+  background: var(--cmp-bg-active);
+  color: var(--base-fg);
+}
+
+/* Scroll area */
+.scrollWrap {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  min-height: 0;
+}
+
+/* Inner grid — wide enough to hold all columns */
+.grid {
+  display: table;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+/* Header row (sticky) */
+.headerRow {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+/* Sticky label column — shared by header and all data rows */
+.labelCol {
+  width: 252px;
+  min-width: 252px;
+  flex-shrink: 0;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: inherit;
+  border-right: 1px solid var(--panel-border);
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.labelColHeader {
+  height: 28px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--base-fg-more-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Date column header cells */
+.cols {
+  display: flex;
+  flex: 1;
+}
+
+.colHeader {
+  text-align: center;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--base-fg-more-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-right: 1px solid var(--panel-border);
+  padding: 6px 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.colHeaderNow {
+  color: var(--accent-fg);
+  background: color-mix(in oklch, var(--accent-fg) 6%, var(--base-bg));
+}
+
+/* Group header */
+.groupRow {
+  display: flex;
+  height: 28px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.groupLabelCol {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--base-fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.groupCount {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  color: var(--base-fg-more-dim);
+  margin-left: 4px;
+}
+
+.groupSpacer {
+  flex: 1;
+  background: var(--panel-bg);
+}
+
+/* Entity row */
+.entityRow {
+  display: flex;
+  height: 36px;
+  border-bottom: 1px solid var(--panel-border);
+  cursor: default;
+  background: var(--base-bg);
+}
+
+.entityRow:hover {
+  background: var(--cmp-bg);
+}
+
+.entityRowActive {
+  background: color-mix(in oklch, var(--accent-fg) 7%, var(--base-bg));
+}
+
+.entityRowActive:hover {
+  background: color-mix(in oklch, var(--accent-fg) 10%, var(--base-bg));
+}
+
+.entityName {
+  font-size: 12px;
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Bar track */
+.barCell {
+  flex: 1;
+  position: relative;
+  overflow: visible;
+}
+
+/* Timeline bar */
+.bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.1s, filter 0.1s;
+  min-width: 6px;
+}
+
+.bar:hover {
+  opacity: 1;
+  filter: brightness(1.15);
+}
+
+.barOpen {
+  border-right: 2px dashed rgba(255, 255, 255, 0.4);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.barLabel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Milestone diamond */
+.milestone {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  transform: translateY(-50%) translateX(-5px) rotate(45deg);
+  opacity: 0.85;
+  transition: opacity 0.1s, filter 0.1s;
+}
+
+.milestone:hover {
+  opacity: 1;
+  filter: brightness(1.15);
+}
+
+/* Today line */
+.todayLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent-fg);
+  opacity: 0.6;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.todayPip {
+  position: absolute;
+  top: -1px;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: var(--accent-fg);
+  line-height: 1;
+}
+
+/* Detail panel */
+.detail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.18s ease;
+}
+
+.detailOpen {
+  transform: translateX(0);
+}
+
+.detailHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.detailMeta {
+  flex: 1;
+  min-width: 0;
+}
+
+.detailName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailType {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  margin-top: 1px;
+}
+
+.detailCloseBtn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  background: transparent;
+  border: none;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.detailCloseBtn:hover {
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+}
+
+.detailBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detailField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.detailFieldLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--base-fg-more-dim);
+}
+
+.detailFieldValue {
+  font-size: 12px;
+  color: var(--base-fg);
+  font-family: var(--font-mono);
+}
+
+.detailDesc {
+  font-size: 12px;
+  color: var(--base-fg-dim);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.detailFooter {
+  padding: 10px 12px;
+  border-top: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 64px 24px;
+  gap: 8px;
+  color: var(--base-fg-more-dim);
+  text-align: center;
+}
+
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--base-fg-dim);
+}
+
+.emptyIcon {
+  margin-bottom: 4px;
+  opacity: 0.4;
+}

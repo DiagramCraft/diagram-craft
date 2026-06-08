@@ -21,10 +21,12 @@ import {
   TbCopy,
   TbTrash,
   TbChartRadar,
+  TbCalendarWeek,
   TbCheck,
   TbX
 } from 'react-icons/tb';
 import { RadarView, type RadarConfig } from './RadarView';
+import { TimelineView, type TimelineConfig } from './TimelineView';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
 import type { EntityRecord, EntitySchema, TreeNode, TreeEdge, WorkspaceLifecycleState } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
@@ -44,7 +46,7 @@ import {
 } from '../hooks/useEntities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
-type BrowserView = 'table' | 'cards' | 'tree' | 'radar';
+type BrowserView = 'table' | 'cards' | 'tree' | 'radar' | 'timeline';
 type DateFilterOperator = 'on' | 'before' | 'after' | 'empty';
 
 const parseDateValue = (value: unknown) => {
@@ -264,6 +266,7 @@ export const EntityBrowser = () => {
     q?: string;
     viewMode?: BrowserView;
     radarConfig?: string;
+    timelineConfig?: string;
   };
   const typeFilter = search.type ?? null;
   const statusFilter = search.status ?? null;
@@ -276,6 +279,16 @@ export const EntityBrowser = () => {
     if (search.radarConfig) {
       try {
         return JSON.parse(search.radarConfig);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [timelineConfig, setTimelineConfig] = useState<TimelineConfig | null>(() => {
+    if (search.timelineConfig) {
+      try {
+        return JSON.parse(search.timelineConfig);
       } catch {
         return null;
       }
@@ -304,7 +317,14 @@ export const EntityBrowser = () => {
         // ignore
       }
     }
-  }, [search.viewMode, search.radarConfig, search.q]);
+    if (search.timelineConfig) {
+      try {
+        setTimelineConfig(JSON.parse(search.timelineConfig));
+      } catch {
+        // ignore
+      }
+    }
+  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.q]);
 
   // Use TanStack Query hooks for data fetching
   const { data: entities = [] } = useEntities(workspaceId, {
@@ -574,7 +594,12 @@ export const EntityBrowser = () => {
           dateFilterValue,
           sort
         },
-        config: view === 'radar' && radarConfig ? { radar: radarConfig } : null
+        config:
+          view === 'radar' && radarConfig
+            ? { radar: radarConfig }
+            : view === 'timeline' && timelineConfig
+              ? { timeline: timelineConfig }
+              : null
       });
     } catch {
       // Error handling is done by TanStack Query
@@ -756,10 +781,27 @@ export const EntityBrowser = () => {
           >
             <TbChartRadar size={13} />
           </button>
+          <button
+            type="button"
+            className={view === 'timeline' ? styles.segmentedActive : ''}
+            onClick={() => setView('timeline')}
+            title="Timeline"
+          >
+            <TbCalendarWeek size={13} />
+          </button>
         </div>
       </div>
 
-      {view === 'radar' ? (
+      {view === 'timeline' ? (
+        <TimelineView
+          rows={filtered}
+          schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          onEntityClick={navigateToEntity}
+          config={timelineConfig}
+          onConfigChange={setTimelineConfig}
+        />
+      ) : view === 'radar' ? (
         <RadarView
           onEntityClick={navigateToEntity}
           owner={ownerFilter}
