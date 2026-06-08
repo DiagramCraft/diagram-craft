@@ -42,7 +42,9 @@ import {
   useDeleteEntity,
   useCloneEntity,
   useUpdateEntity,
-  useCreateSavedView
+  useCreateSavedView,
+  useSavedViews,
+  useUpdateSavedView
 } from '../hooks/useEntities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
@@ -227,7 +229,7 @@ const SaveViewDialog = ({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Save current view"
+      title="Save current view as"
       sub="Save your current filters and view configuration to access them quickly later."
       buttons={[
         { label: 'Cancel', type: 'secondary', onClick: onClose },
@@ -255,6 +257,16 @@ const SaveViewDialog = ({
   );
 };
 
+const toSavedViewConfig = (
+  view: BrowserView,
+  radarConfig: RadarConfig | null,
+  timelineConfig: TimelineConfig | null
+) => {
+  if (view === 'radar' && radarConfig) return { radar: radarConfig };
+  if (view === 'timeline' && timelineConfig) return { timeline: timelineConfig };
+  return null;
+};
+
 export const EntityBrowser = () => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions, openAddEntityDialog } =
@@ -264,13 +276,16 @@ export const EntityBrowser = () => {
     status?: string;
     owner?: string;
     q?: string;
+    viewId?: string;
     viewMode?: BrowserView;
     radarConfig?: string;
     timelineConfig?: string;
+    sidebarTab?: 'filters' | 'views';
   };
   const typeFilter = search.type ?? null;
   const statusFilter = search.status ?? null;
   const ownerFilter = search.owner ?? null;
+  const viewId = search.viewId ?? null;
   const workspaceId = workspaceSlug;
   const [q, setQ] = useState(search.q ?? '');
   const [sort, setSort] = useState('name');
@@ -336,6 +351,7 @@ export const EntityBrowser = () => {
   });
 
   const { data: facets } = useEntityFacets(workspaceId);
+  const { data: savedViews = [] } = useSavedViews(workspaceId);
 
   const { data: treeData } = useEntityTree(workspaceId, {
     schemaId: typeFilter,
@@ -352,6 +368,7 @@ export const EntityBrowser = () => {
   const cloneMutation = useCloneEntity(workspaceId);
   const updateEntityMutation = useUpdateEntity(workspaceId);
   const createSavedViewMutation = useCreateSavedView(workspaceId);
+  const updateSavedViewMutation = useUpdateSavedView(workspaceId);
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { schema: EntitySchema; index: number }>();
@@ -366,15 +383,44 @@ export const EntityBrowser = () => {
       .sort();
   }, [facets]);
 
+  const activeSavedView = useMemo(
+    () => savedViews.find(savedView => savedView.id === viewId) ?? null,
+    [savedViews, viewId]
+  );
+
   const navigateEntities = useCallback(
-    (params: { type?: string; status?: string; owner?: string }) => {
+    (params: {
+      type?: string;
+      status?: string;
+      owner?: string;
+      q?: string;
+      viewId?: string;
+      viewMode?: BrowserView;
+      radarConfig?: string;
+      timelineConfig?: string;
+      sidebarTab?: 'filters' | 'views';
+    }) => {
+      const nextQuery = params.q ?? q;
       navigate({
         to: '/$workspaceSlug/entities',
         params: { workspaceSlug },
-        search: params
+        search: {
+          type: params.type,
+          status: params.status,
+          owner: params.owner,
+          q: nextQuery === '' ? undefined : nextQuery,
+          viewId: params.viewId ?? viewId ?? undefined,
+          viewMode: params.viewMode ?? view,
+          radarConfig:
+            params.radarConfig ?? (radarConfig ? JSON.stringify(radarConfig) : undefined),
+          timelineConfig:
+            params.timelineConfig ??
+            (timelineConfig ? JSON.stringify(timelineConfig) : undefined),
+          sidebarTab: params.sidebarTab ?? search.sidebarTab,
+        }
       });
     },
-    [navigate, workspaceSlug]
+    [navigate, workspaceSlug, q, viewId, view, radarConfig, timelineConfig, search.sidebarTab]
   );
 
   const navigateToEntity = useCallback(
@@ -594,24 +640,68 @@ export const EntityBrowser = () => {
           dateFilterValue,
           sort
         },
-        config:
-          view === 'radar' && radarConfig
-            ? { radar: radarConfig }
-            : view === 'timeline' && timelineConfig
-              ? { timeline: timelineConfig }
-              : null
+        config: toSavedViewConfig(view, radarConfig, timelineConfig)
       });
     } catch {
       // Error handling is done by TanStack Query
     }
   };
 
+  const handleUpdateSavedView = useCallback(async () => {
+    if (!permissions.canManageViews || activeSavedView == null) return;
+
+    try {
+      await updateSavedViewMutation.mutateAsync({
+        id: activeSavedView.id,
+        body: {
+          viewMode: view,
+          filters: {
+            schemaId: typeFilter,
+            status: statusFilter,
+            owner: ownerFilter,
+            q,
+            dateFilterField,
+            dateFilterOperator,
+            dateFilterValue,
+            sort,
+          },
+          config: toSavedViewConfig(view, radarConfig, timelineConfig),
+        }
+      });
+    } catch {
+      // Error handling is done by TanStack Query
+    }
+  }, [
+    permissions.canManageViews,
+    activeSavedView,
+    updateSavedViewMutation,
+    view,
+    typeFilter,
+    statusFilter,
+    ownerFilter,
+    q,
+    dateFilterField,
+    dateFilterOperator,
+    dateFilterValue,
+    sort,
+    radarConfig,
+    timelineConfig,
+  ]);
+
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
 
     if (permissions.canManageViews) {
+      if (activeSavedView != null) {
+        items.push({
+          label: `Save View (${activeSavedView.name})`,
+          icon: <TbCheck size={14} />,
+          onClick: handleUpdateSavedView
+        });
+      }
+
       items.push({
-        label: 'Save view',
+        label: 'Save View As...',
         icon: <TbCopy size={14} />,
         onClick: () => setIsSavingView(true)
       });
@@ -639,6 +729,8 @@ export const EntityBrowser = () => {
     return items;
   }, [
     permissions,
+    activeSavedView,
+    handleUpdateSavedView,
     handleExport,
     navigate,
     workspaceSlug,
