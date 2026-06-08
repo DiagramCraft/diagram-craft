@@ -28,7 +28,8 @@ import {
   TbChartRadar,
   TbLayoutGrid,
   TbList,
-  TbBinaryTree2
+  TbBinaryTree2,
+  TbCalendarWeek
 } from 'react-icons/tb';
 import { fetchEntityFacets, resolveSchemaColor } from '../api';
 import type { FileEntry } from '../api';
@@ -732,6 +733,7 @@ const EntitiesSidebar = ({
     q?: string;
     viewMode?: string;
     radarConfig?: string;
+    timelineConfig?: string;
     sidebarTab?: 'filters' | 'views';
   };
   const typeFilter = search.type ?? null;
@@ -802,6 +804,7 @@ const EntitiesSidebar = ({
         q: view.filters.q ?? undefined,
         viewMode: view.viewMode,
         radarConfig: view.config?.radar ? JSON.stringify(view.config.radar) : undefined,
+        timelineConfig: view.config?.timeline ? JSON.stringify(view.config.timeline) : undefined,
         sidebarTab: 'views'
         // biome-ignore lint/suspicious/noExplicitAny: bypass
       } as any
@@ -818,6 +821,8 @@ const EntitiesSidebar = ({
         return <TbBinaryTree2 size={12} />;
       case 'radar':
         return <TbChartRadar size={12} />;
+      case 'timeline':
+        return <TbCalendarWeek size={12} />;
       default:
         return <TbTable size={12} />;
     }

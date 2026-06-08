@@ -1,5 +1,5 @@
 
-export type BrowserView = 'table' | 'cards' | 'tree' | 'radar';
+export type BrowserView = 'table' | 'cards' | 'tree' | 'radar' | 'timeline';
 
 export type EntityFilters = {
   schemaId?: string | null;
@@ -19,6 +19,13 @@ export type RadarViewConfig = {
   ringOrder: string[];
 };
 
+export type TimelineViewConfig = {
+  startFieldId: string | null;
+  endFieldId: string | null;
+  groupBy: 'owner' | 'type';
+  zoom: 'month' | 'quarter' | 'year';
+};
+
 export type SavedView = {
   id: string;
   workspaceId: string;
@@ -28,6 +35,7 @@ export type SavedView = {
   filters: EntityFilters;
   config: {
     radar?: RadarViewConfig;
+    timeline?: TimelineViewConfig;
   } | null;
   createdAt: string;
   updatedAt: string;
@@ -40,6 +48,7 @@ export type CreateSavedViewRequest = {
   filters: EntityFilters;
   config?: {
     radar?: RadarViewConfig;
+    timeline?: TimelineViewConfig;
   } | null;
 };
 
