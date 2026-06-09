@@ -198,6 +198,13 @@ export type UserWatch = {
   created_at: Date;
 };
 
+export type UserPinnedEntity = {
+  user_id: string;
+  workspace: string;
+  entity_id: string;
+  created_at: Date;
+};
+
 export type UserNotification = {
   id: string;
   user_id: string;

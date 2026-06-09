@@ -246,4 +246,44 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     tx();
     return await this.getEntityGrants(workspace, entityId);
   }
+
+  async listPinnedEntities(userId: string, workspace: string) {
+    return this.all(
+      'SELECT * FROM user_pinned_entity WHERE user_id = ? AND workspace = ? ORDER BY created_at DESC',
+      [userId, workspace],
+      sqliteMappers.userPinnedEntity
+    );
+  }
+
+  async getPinnedEntity(userId: string, workspace: string, entityId: string) {
+    return await this.get(
+      'SELECT * FROM user_pinned_entity WHERE user_id = ? AND workspace = ? AND entity_id = ?',
+      [userId, workspace, entityId],
+      sqliteMappers.userPinnedEntity
+    );
+  }
+
+  async createPinnedEntity(input: import('./catalogDatabase').CreateUserPinnedEntityInput) {
+    this.run(
+      'INSERT OR IGNORE INTO user_pinned_entity (user_id, workspace, entity_id, created_at) VALUES (?, ?, ?, ?)',
+      [input.user_id, input.workspace, input.entity_id, input.created_at.toISOString()]
+    );
+    return (
+      await this.get(
+        'SELECT * FROM user_pinned_entity WHERE user_id = ? AND workspace = ? AND entity_id = ?',
+        [input.user_id, input.workspace, input.entity_id],
+        sqliteMappers.userPinnedEntity
+      )
+    )!;
+  }
+
+  async deletePinnedEntity(userId: string, workspace: string, entityId: string) {
+    const existing = await this.getPinnedEntity(userId, workspace, entityId);
+    if (!existing) return null;
+    this.run(
+      'DELETE FROM user_pinned_entity WHERE user_id = ? AND workspace = ? AND entity_id = ?',
+      [userId, workspace, entityId]
+    );
+    return existing;
+  }
 }

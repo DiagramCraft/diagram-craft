@@ -3,6 +3,7 @@ import type {
   EntityGrant,
   EntitySchema,
   SavedView,
+  UserPinnedEntity,
   WorkspaceEnum
 } from '../../../types';
 
@@ -57,6 +58,10 @@ export type UpdateSavedViewInput = Partial<
   updated_at: Date;
 };
 
+export type CreateUserPinnedEntityInput = Omit<UserPinnedEntity, 'created_at'> & {
+  created_at: Date;
+};
+
 export type CatalogDatabase = {
   resolveWorkspaceSlug(slug: string): Promise<string | null>;
 
@@ -84,6 +89,19 @@ export type CatalogDatabase = {
     entityId: string,
     grants: CreateEntityGrantInput[]
   ): Promise<EntityGrant[]>;
+
+  listPinnedEntities(userId: string, workspace: string): Promise<UserPinnedEntity[]>;
+  getPinnedEntity(
+    userId: string,
+    workspace: string,
+    entityId: string
+  ): Promise<UserPinnedEntity | null>;
+  createPinnedEntity(input: CreateUserPinnedEntityInput): Promise<UserPinnedEntity>;
+  deletePinnedEntity(
+    userId: string,
+    workspace: string,
+    entityId: string
+  ): Promise<UserPinnedEntity | null>;
 };
 
 export type ViewDatabase = {

@@ -29,6 +29,7 @@ import type {
   ProjectTemplatesResponse,
   WorkspaceEnum,
   WatchedEntity,
+  PinnedEntity,
   NotificationItem,
   NotificationCount
 } from '@arch-register/api-types';
@@ -73,6 +74,7 @@ export type {
   WorkspaceEnum,
   SavedView,
   WatchedEntity,
+  PinnedEntity,
   NotificationItem,
   NotificationCount
 };
@@ -865,6 +867,20 @@ export const createWatch = (workspace: string, entityId: string) =>
 
 export const deleteWatch = (workspace: string, entityId: string) =>
   apiFetch<{ success: boolean; message: string }>(`/api/${workspace}/watching/${entityId}`, {
+    method: 'DELETE'
+  });
+
+export const fetchPinnedEntities = (workspace: string) =>
+  apiFetch<PinnedEntity[]>(`/api/${workspace}/pinned-entities`);
+
+export const createPinnedEntity = (workspace: string, entityId: string) =>
+  apiFetch<PinnedEntity>(`/api/${workspace}/pinned-entities`, {
+    method: 'POST',
+    body: JSON.stringify({ entity_id: entityId })
+  });
+
+export const deletePinnedEntity = (workspace: string, entityId: string) =>
+  apiFetch<{ success: boolean; message: string }>(`/api/${workspace}/pinned-entities/${entityId}`, {
     method: 'DELETE'
   });
 

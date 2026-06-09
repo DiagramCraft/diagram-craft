@@ -77,14 +77,11 @@ export const createApp = (
     })
   );
 
-  // Auth routes (public, no middleware)
   app.use(createAuthRoutes(db));
 
-  // Apply authentication middleware to all routes below
   const authMiddleware = requireAuth(db.auth);
   app.use(authMiddleware);
 
-  // Protected routes (require authentication)
   app.use(createAuthProtectedRoutes(db));
   app.use(createWorkspaceRoutes(db, storage));
   app.use(createSchemaRoutes(db));

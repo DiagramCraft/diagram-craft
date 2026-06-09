@@ -15,12 +15,14 @@ import {
   TbBinaryTree2,
   TbChartRadar,
   TbCalendarWeek,
-  TbTable
+  TbTable,
+  TbPinned
 } from 'react-icons/tb';
 import { fetchEntityFacets, resolveSchemaColor } from '../../lib/api';
 import type { EntityFacets, EntitySchema, WorkspaceLifecycleState, SavedView } from '../../lib/api';
 import type { FilterCondition } from '@arch-register/api-types/views';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useEntities';
+import { usePinnedEntities } from '../../hooks/useNotifications';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -118,8 +120,9 @@ export const EntitiesSidebar = ({
     viewMode?: string;
     radarConfig?: string;
     timelineConfig?: string;
-    sidebarTab?: 'filters' | 'views';
+    sidebarTab?: 'filters' | 'views' | 'pinned';
     filters?: string;
+    entityId?: string;
   };
   const sidebarTab = search.sidebarTab ?? 'filters';
 
@@ -152,6 +155,8 @@ export const EntitiesSidebar = ({
 
   const [facets, setFacets] = useState<EntityFacets | null>(null);
   const { data: savedViews = [] } = useSavedViews(workspaceSlug);
+  const { data: pinnedEntities = [], isLoading: isPinnedEntitiesLoading } =
+    usePinnedEntities(workspaceSlug);
   const deleteViewMutation = useDeleteSavedView(workspaceSlug);
   const updateViewMutation = useUpdateSavedView(workspaceSlug);
   const [deleteViewTarget, setDeleteViewTarget] = useState<SavedView | null>(null);
@@ -197,7 +202,7 @@ export const EntitiesSidebar = ({
     type?: string;
     status?: string;
     owner?: string;
-    sidebarTab?: 'filters' | 'views';
+    sidebarTab?: 'filters' | 'views' | 'pinned';
   }) => {
     // Start with a clean search object, only preserving sidebarTab if not explicitly set
     const nextSearch: Record<string, unknown> = {
@@ -271,11 +276,18 @@ export const EntitiesSidebar = ({
       <div className={`${styles.header} ${styles.tabHeader}`}>
         <Tabs.Root
           value={sidebarTab}
-          onValueChange={v => navigateEntities({ sidebarTab: v as 'filters' | 'views' })}
+          onValueChange={v => 
+            navigate({
+              to: '/$workspaceSlug/entities',
+              params: { workspaceSlug },
+              search: prev => ({ ...prev, sidebarTab: v as 'filters' | 'views' | 'pinned' })
+            })
+          }
         >
           <Tabs.List>
             <Tabs.Trigger value="filters">Filters</Tabs.Trigger>
             <Tabs.Trigger value="views">Views</Tabs.Trigger>
+            <Tabs.Trigger value="pinned">Pinned</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
       </div>
@@ -352,7 +364,7 @@ export const EntitiesSidebar = ({
               />
             ))}
           </>
-        ) : (
+        ) : sidebarTab === 'views' ? (
           <>
             <GroupLabel>Saved views</GroupLabel>
             {savedViews.length === 0 && (
@@ -373,6 +385,45 @@ export const EntitiesSidebar = ({
                 }}
               />
             ))}
+          </>
+        ) : (
+          <>
+            <GroupLabel>Pinned entities</GroupLabel>
+            {isPinnedEntitiesLoading && (
+              <div className={`${styles.emptyState} dim`}>Loading pinned entities…</div>
+            )}
+            {!isPinnedEntitiesLoading && pinnedEntities.length === 0 && (
+              <div className={`${styles.emptyState} dim`}>No pinned entities yet.</div>
+            )}
+            {pinnedEntities.map(entity => {
+              const schemaIndex = schemas.findIndex(schema => schema.id === entity.schema_id);
+              const schema = schemas.find(item => item.id === entity.schema_id);
+              const color = resolveSchemaColor(schema ?? schemas[0]!, Math.max(schemaIndex, 0));
+              return (
+                <TreeRow
+                  key={entity.entity_id}
+                  icon={
+                    <TypeBadge
+                      color={color}
+                      name={schema?.name ?? entity.schema_id}
+                      icon={schema?.icon ?? null}
+                      size={14}
+                    />
+                  }
+                  label={entity.entity_name}
+                  active={search.entityId === entity.entity_id}
+                  onClick={() =>
+                    navigate({
+                      to: '/$workspaceSlug/entities/$entityId',
+                      params: { workspaceSlug, entityId: entity.entity_id },
+                      search: prev => ({ ...prev, sidebarTab: 'pinned' })
+                    })
+                  }
+                  trailing={<TbPinned size={12} className="dim" />}
+                  tagColor={color}
+                />
+              );
+            })}
           </>
         )}
       </div>

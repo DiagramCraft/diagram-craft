@@ -8,7 +8,7 @@ export type EntitySearchParams = {
   viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline';
   radarConfig?: string;
   timelineConfig?: string;
-  sidebarTab?: 'filters' | 'views';
+  sidebarTab?: 'filters' | 'views' | 'pinned';
   filters?: string; // JSON string of FilterCondition[]
 };
 
@@ -28,7 +28,7 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
       : undefined,
   radarConfig: typeof raw.radarConfig === 'string' ? raw.radarConfig : undefined,
   timelineConfig: typeof raw.timelineConfig === 'string' ? raw.timelineConfig : undefined,
-  sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' ? raw.sidebarTab : undefined,
+  sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'pinned' ? raw.sidebarTab : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
 });
 

@@ -253,4 +253,48 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       return normalizePostgresError(error);
     }
   }
+
+  async listPinnedEntities(userId: string, workspace: string) {
+    return await this.sql<PostgresRowTypes['userPinnedEntity'][]>`
+      SELECT * FROM user_pinned_entity
+      WHERE user_id = ${userId} AND workspace = ${workspace}
+      ORDER BY created_at DESC
+    `;
+  }
+
+  async getPinnedEntity(userId: string, workspace: string, entityId: string) {
+    const [row] = await this.sql<PostgresRowTypes['userPinnedEntity'][]>`
+      SELECT * FROM user_pinned_entity
+      WHERE user_id = ${userId} AND workspace = ${workspace} AND entity_id = ${entityId}
+    `;
+    return row ?? null;
+  }
+
+  async createPinnedEntity(input: import('./catalogDatabase').CreateUserPinnedEntityInput) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['userPinnedEntity'][]>`
+        INSERT INTO user_pinned_entity (user_id, workspace, entity_id, created_at)
+        VALUES (${input.user_id}, ${input.workspace}, ${input.entity_id}, ${input.created_at})
+        ON CONFLICT (user_id, workspace, entity_id) DO UPDATE
+        SET created_at = user_pinned_entity.created_at
+        RETURNING *
+      `;
+      return row!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deletePinnedEntity(userId: string, workspace: string, entityId: string) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['userPinnedEntity'][]>`
+        DELETE FROM user_pinned_entity
+        WHERE user_id = ${userId} AND workspace = ${workspace} AND entity_id = ${entityId}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
 }

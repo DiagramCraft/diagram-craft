@@ -2,7 +2,11 @@ import { H3, defineHandler, readBody } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  requireEntityAction,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
@@ -10,9 +14,13 @@ import type {
   UpdateSavedViewRequest,
   SavedView as ApiSavedView
 } from '@arch-register/api-types/views';
-import type { SavedView } from '../../types';
+import type { PinnedEntity } from '@arch-register/api-types';
+import type { Entity, SavedView } from '../../types';
+import { PermissionChecker } from '@arch-register/permissions';
 
 const BASE = '/api/:workspace/views';
+const PINNED_BASE = '/api/:workspace/pinned-entities';
+const checker = new PermissionChecker();
 
 const toApi = (view: SavedView): ApiSavedView => ({
   id: view.id,
@@ -25,6 +33,30 @@ const toApi = (view: SavedView): ApiSavedView => ({
   createdAt: view.created_at.toISOString(),
   updatedAt: view.updated_at.toISOString()
 });
+
+const toPinnedEntity = (entity: {
+  id: string;
+  name: string;
+  slug: string;
+  schema_id: string;
+  created_at: Date;
+}): PinnedEntity => ({
+  entity_id: entity.id,
+  entity_name: entity.name,
+  entity_slug: entity.slug,
+  schema_id: entity.schema_id,
+  created_at: entity.created_at.toISOString()
+});
+
+const canAccessPinnedEntity = (
+  authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
+  entityMap: Map<string, Entity>,
+  entityId: string
+) => {
+  const entity = entityMap.get(entityId);
+  if (entity == null) return false;
+  return checker.hasEntityPermission(authCtx, entity, 'view_entity');
+};
 
 export function createViewRoutes(db: DatabaseAdapter) {
   const router = new H3();
@@ -109,6 +141,88 @@ export function createViewRoutes(db: DatabaseAdapter) {
       httpAssert.true(deleted, { status: 404, message: 'View not found' });
 
       return { success: true };
+    })
+  );
+
+  router.get(
+    PINNED_BASE,
+    defineHandler(async event => {
+      const authEvent = event as AuthenticatedEvent;
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
+      const authCtx = await buildApiAuthCtx(db, workspace, authEvent);
+      requireWorkspaceCapability(authCtx, 'ws.view');
+
+      const userId = authEvent.context.user.id;
+      const [pins, entities] = await Promise.all([
+        db.catalog.listPinnedEntities(userId, workspace),
+        db.catalog.listEntities(workspace)
+      ]);
+      const entityMap = new Map(entities.map(entity => [entity.id, entity]));
+
+      return pins
+        .map(pin => {
+          const entity = entityMap.get(pin.entity_id);
+          if (!entity) return null;
+          if (!canAccessPinnedEntity(authCtx, entityMap, pin.entity_id)) return null;
+          return {
+            ...toPinnedEntity(entity),
+            created_at: pin.created_at.toISOString()
+          };
+        })
+        .filter((item): item is PinnedEntity => item != null);
+    })
+  );
+
+  router.post(
+    PINNED_BASE,
+    defineHandler(async event => {
+      const authEvent = event as AuthenticatedEvent;
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
+      const authCtx = await buildApiAuthCtx(db, workspace, authEvent);
+      requireWorkspaceCapability(authCtx, 'ws.view');
+
+      const body = await readBody(event).catch(() => undefined);
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
+      const entityId = (body as Record<string, unknown>)['entity_id'];
+      httpAssert.string(entityId, { message: 'entity_id is required' });
+
+      const entity = await db.catalog.getEntity(workspace, entityId);
+      httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to pin this entity'
+      );
+
+      const pin = await db.catalog.createPinnedEntity({
+        user_id: authEvent.context.user.id,
+        workspace,
+        entity_id: entityId,
+        created_at: new Date()
+      });
+
+      return {
+        ...toPinnedEntity(entity),
+        created_at: pin.created_at.toISOString()
+      };
+    })
+  );
+
+  router.delete(
+    `${PINNED_BASE}/:entityId`,
+    defineHandler(async event => {
+      const authEvent = event as AuthenticatedEvent;
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
+      const authCtx = await buildApiAuthCtx(db, workspace, authEvent);
+      requireWorkspaceCapability(authCtx, 'ws.view');
+
+      const entityId = event.context.params?.['entityId'];
+      httpAssert.string(entityId, { message: 'entityId is required' });
+
+      await db.catalog.deletePinnedEntity(authEvent.context.user.id, workspace, entityId);
+
+      return { success: true, message: `Entity '${entityId}' unpinned` };
     })
   );
 

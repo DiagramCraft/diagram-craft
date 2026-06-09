@@ -13,6 +13,7 @@ import type {
   TeamMembership,
   User,
   UserNotification,
+  UserPinnedEntity,
   UserWatch,
   Workspace,
   WorkspaceAiConfig,
@@ -162,6 +163,12 @@ export const sqliteMappers = {
     metadata: parseJson(row['metadata'], {})
   }),
   userWatch: (row: Record<string, unknown>): UserWatch => ({
+    user_id: String(row['user_id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    created_at: toDate(row['created_at'])
+  }),
+  userPinnedEntity: (row: Record<string, unknown>): UserPinnedEntity => ({
     user_id: String(row['user_id']),
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
