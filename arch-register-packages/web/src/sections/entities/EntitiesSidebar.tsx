@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
@@ -110,6 +110,7 @@ export const EntitiesSidebar = ({
   workspaceSlug: string;
 }) => {
   const navigate = useNavigate();
+  const { entityId: routeEntityId } = useParams({ strict: false }) as { entityId?: string };
   const { permissions } = useWorkspaceContext();
   const search = useSearch({ strict: false }) as {
     type?: string;
@@ -398,7 +399,9 @@ export const EntitiesSidebar = ({
             {pinnedEntities.map(entity => {
               const schemaIndex = schemas.findIndex(schema => schema.id === entity.schema_id);
               const schema = schemas.find(item => item.id === entity.schema_id);
-              const color = resolveSchemaColor(schema ?? schemas[0]!, Math.max(schemaIndex, 0));
+              const color = schema
+                ? resolveSchemaColor(schema, Math.max(schemaIndex, 0))
+                : 'var(--accent-fg)';
               return (
                 <TreeRow
                   key={entity.entity_id}
@@ -411,7 +414,7 @@ export const EntitiesSidebar = ({
                     />
                   }
                   label={entity.entity_name}
-                  active={search.entityId === entity.entity_id}
+                  active={routeEntityId === entity.entity_id}
                   onClick={() =>
                     navigate({
                       to: '/$workspaceSlug/entities/$entityId',
