@@ -3,29 +3,23 @@ import type {
   UpdateWorkspaceInput,
   WorkspaceDatabase
 } from './workspaceDatabase';
-import {
-  normalizePostgresError,
-  PostgresDatabaseBase,
-  type PostgresRowTypes
-} from '../../../db/postgresBase';
+import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import type {
+  TeamMembership,
+  Workspace,
   WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
-  TeamMembership,
   WorkspaceRoleDefinition
 } from '../../../types';
 
-export class PostgresWorkspaceDatabase
-  extends PostgresDatabaseBase
-  implements WorkspaceDatabase
-{
+export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements WorkspaceDatabase {
   async listWorkspaces() {
-    return await this.sql<PostgresRowTypes['workspace'][]>`SELECT * FROM workspace ORDER BY name`;
+    return await this.sql<Workspace[]>`SELECT * FROM workspace ORDER BY name`;
   }
 
   async getWorkspace(id: string) {
-    const [row] = await this.sql<PostgresRowTypes['workspace'][]>`
+    const [row] = await this.sql<Workspace[]>`
       SELECT * FROM workspace WHERE id = ${id}
     `;
     return row ?? null;
@@ -33,7 +27,7 @@ export class PostgresWorkspaceDatabase
 
   async createWorkspace(input: CreateWorkspaceInput) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['workspace'][]>`
+      const [row] = await this.sql<Workspace[]>`
         INSERT INTO workspace (id, name, url_slug, short_code, color, description, created_at, updated_at)
         VALUES (${input.id}, ${input.name}, ${input.url_slug}, ${input.short_code}, ${input.color}, ${input.description}, ${input.created_at}, ${input.updated_at})
         RETURNING *
@@ -46,7 +40,7 @@ export class PostgresWorkspaceDatabase
 
   async updateWorkspace(id: string, input: UpdateWorkspaceInput) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['workspace'][]>`
+      const [row] = await this.sql<Workspace[]>`
         UPDATE workspace
         SET name = ${input.name},
             url_slug = ${input.url_slug},
@@ -65,7 +59,7 @@ export class PostgresWorkspaceDatabase
 
   async deleteWorkspace(id: string) {
     try {
-      const [workspace] = await this.sql<PostgresRowTypes['workspace'][]>`
+      const [workspace] = await this.sql<Workspace[]>`
         SELECT * FROM workspace WHERE id = ${id}
       `;
       if (!workspace) return { workspace: null, projectIds: [] };
@@ -239,7 +233,7 @@ export class PostgresWorkspaceDatabase
   }
 
   async listCustomWorkspaceRoles(workspace: string) {
-    return await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+    return await this.sql<WorkspaceRoleDefinition[]>`
       SELECT id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
       FROM workspace_role
       WHERE workspace = ${workspace}
@@ -248,7 +242,7 @@ export class PostgresWorkspaceDatabase
   }
 
   async getCustomWorkspaceRole(workspace: string, roleId: string) {
-    const [row] = await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+    const [row] = await this.sql<WorkspaceRoleDefinition[]>`
       SELECT id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
       FROM workspace_role
       WHERE workspace = ${workspace} AND id = ${roleId}
@@ -258,7 +252,7 @@ export class PostgresWorkspaceDatabase
 
   async createCustomWorkspaceRole(input: WorkspaceRoleDefinition) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+      const [row] = await this.sql<WorkspaceRoleDefinition[]>`
         INSERT INTO workspace_role (id, workspace, name, description, tone, capabilities, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.tone}, ${this.json(input.capabilities)}, ${input.created_at}, ${input.updated_at})
         RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
@@ -275,7 +269,7 @@ export class PostgresWorkspaceDatabase
     input: Omit<WorkspaceRoleDefinition, 'id' | 'workspace' | 'created_at'>
   ) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+      const [row] = await this.sql<WorkspaceRoleDefinition[]>`
         UPDATE workspace_role
         SET name = ${input.name},
             description = ${input.description},
@@ -292,7 +286,7 @@ export class PostgresWorkspaceDatabase
   }
 
   async deleteCustomWorkspaceRole(workspace: string, roleId: string) {
-    const [row] = await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+    const [row] = await this.sql<WorkspaceRoleDefinition[]>`
       DELETE FROM workspace_role
       WHERE workspace = ${workspace} AND id = ${roleId}
       RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
