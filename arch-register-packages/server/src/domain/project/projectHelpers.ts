@@ -1,5 +1,5 @@
 import type { Project, ProjectFile, FileTree, ProjectDetail } from '@arch-register/api-types';
-import type { EnrichedProject } from './db/projectDatabase';
+import type { ProjectRow } from './db/projectDatabase';
 import type { ProjectFileRow as InternalProjectFile } from './db/projectDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 
@@ -25,7 +25,7 @@ const getProjectCapabilities = (
 };
 
 export const toApiProject = (
-  project: EnrichedProject,
+  project: ProjectRow,
   fileCount: number,
   authCtx: AuthorizationContext | null
 ): Project => ({
@@ -58,7 +58,7 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
 });
 
 export const toApiProjectDetail = (
-  project: EnrichedProject,
+  project: ProjectRow,
   files: FileTree,
   authCtx: AuthorizationContext | null
 ): ProjectDetail => ({

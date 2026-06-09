@@ -7,19 +7,19 @@ import {
   parseProjectStatus,
   resolveProjectOwner
 } from './projectRoutes';
-import { Project, ProjectFileRow } from '@arch-register/server/domain/project/db/projectDatabase';
+import {
+  ProjectFileRow,
+  type UpdateProjectInput
+} from '@arch-register/server/domain/project/db/projectDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const baseProject: Project = {
-  id: 'project-1',
-  workspace: 'default',
+const baseProject: UpdateProjectInput = {
   name: 'Project One',
   description: 'Original description',
   owner: 'platform-team',
   status: 'active',
   color: '#123456',
-  created_at: now,
   updated_at: now
 };
 

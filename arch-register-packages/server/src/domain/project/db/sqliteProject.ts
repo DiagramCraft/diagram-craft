@@ -13,10 +13,7 @@ const PROJECT_JOIN_SQL = `
   LEFT JOIN workspace_owner wo ON wo.id = p.owner
 `;
 
-export class SqliteProjectDatabase
-  extends SqliteDatabaseBase
-  implements ProjectDatabase
-{
+export class SqliteProjectDatabase extends SqliteDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
     return this.all(
       `${PROJECT_JOIN_SQL} WHERE p.workspace = ? ORDER BY p.name`,
@@ -70,9 +67,8 @@ export class SqliteProjectDatabase
 
   async deleteProject(workspace: string, id: string) {
     const row = await this.getProject(workspace, id);
-    if (!row) return null;
+    if (!row) return;
     this.run('DELETE FROM project WHERE workspace = ? AND id = ?', [workspace, id]);
-    return row;
   }
 
   async listProjectFiles(workspace: string, projectId: string) {

@@ -30,7 +30,7 @@ export type UpsertProjectFileInput = {
 
 // -- Project
 
-export type Project = {
+type BaseProject = {
   id: string;
   workspace: string;
   name: string;
@@ -42,31 +42,22 @@ export type Project = {
   updated_at: Date;
 };
 
-// Project enriched with resolved names from joined tables (owner).
-export type EnrichedProject = Project & {
+export type ProjectRow = BaseProject & {
   owner_name: string | null;
 };
 
-export type CreateProjectInput = Omit<Project, 'created_at' | 'updated_at'> & {
-  created_at: Date;
-  updated_at: Date;
-};
+export type CreateProjectInput = BaseProject;
 
-export type UpdateProjectInput = {
-  name: string;
-  description: string;
-  owner: string | null;
-  status: Project['status'];
-  color: string | null;
-  updated_at: Date;
-};
+export type UpdateProjectInput = Omit<BaseProject, 'id' | 'workspace' | 'created_at'>;
+
+// --
 
 export type ProjectDatabase = {
-  listProjects(ws: string): Promise<EnrichedProject[]>;
-  getProject(ws: string, id: string): Promise<EnrichedProject | null>;
-  createProject(input: CreateProjectInput): Promise<EnrichedProject>;
-  updateProject(ws: string, id: string, input: UpdateProjectInput): Promise<EnrichedProject | null>;
-  deleteProject(ws: string, id: string): Promise<Project | null>;
+  listProjects(ws: string): Promise<ProjectRow[]>;
+  getProject(ws: string, id: string): Promise<ProjectRow | null>;
+  createProject(input: CreateProjectInput): Promise<ProjectRow>;
+  updateProject(ws: string, id: string, input: UpdateProjectInput): Promise<ProjectRow | null>;
+  deleteProject(ws: string, id: string): Promise<void>;
 
   listProjectFiles(ws: string, projectId: string): Promise<ProjectFileRow[]>;
   getProjectFileByPath(ws: string, projectId: string, path: string): Promise<ProjectFileRow | null>;

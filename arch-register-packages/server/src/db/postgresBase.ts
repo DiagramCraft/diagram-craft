@@ -44,10 +44,10 @@ export type PostgresRowTypes = {
   //userNotification: UserNotification;
   //user: User;
   //globalRoleAssignment: GlobalRoleAssignment;
+  //enrichedProject: EnrichedProject;
+  //project: Project;
 
   //entity: Entity;
   //enrichedEntity: EnrichedEntity;
-  //enrichedProject: EnrichedProject;
-  //project: Project;
 };
 */

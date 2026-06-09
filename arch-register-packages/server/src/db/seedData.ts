@@ -23,7 +23,10 @@ import {
   SavedViewRow,
   WorkspaceEnumRow
 } from '@arch-register/server/domain/catalog/db/catalogDatabase';
-import { Project, ProjectFileRow } from '@arch-register/server/domain/project/db/projectDatabase';
+import {
+  CreateProjectInput,
+  ProjectFileRow
+} from '@arch-register/server/domain/project/db/projectDatabase';
 import { AuditOperation } from '@arch-register/server/domain/audit/db/auditDatabase';
 import { GlobalRoleAssignmentRow } from '@arch-register/server/domain/auth/db/authDatabase';
 
@@ -710,7 +713,7 @@ export const seedEntities: Entity[] = [
   }
 ];
 
-export const seedProjects: Project[] = [
+export const seedProjects: CreateProjectInput[] = [
   {
     id: '00000000-0000-0000-0010-000000000001',
     workspace: WORKSPACE_ID,

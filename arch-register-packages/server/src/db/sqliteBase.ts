@@ -8,11 +8,7 @@ import type {
   UserPinnedEntityRow,
   WorkspaceEnumRow
 } from '../domain/catalog/db/catalogDatabase';
-import type {
-  EnrichedProject,
-  Project,
-  ProjectFileRow
-} from '../domain/project/db/projectDatabase';
+import type { ProjectRow, ProjectFileRow } from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
 import {
@@ -158,24 +154,13 @@ export const sqliteMappers = {
       row['target_lifecycle_label'] == null ? null : String(row['target_lifecycle_label']),
     schema_name: String(row['schema_name'])
   }),
-  project: (row: Record<string, unknown>): Project => ({
+  enrichedProject: (row: Record<string, unknown>): ProjectRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
     description: String(row['description']),
     owner: row['owner'] == null ? null : String(row['owner']),
-    status: String(row['status']) as Project['status'],
-    color: row['color'] == null ? null : String(row['color']),
-    created_at: toDate(row['created_at']),
-    updated_at: toDate(row['updated_at'])
-  }),
-  enrichedProject: (row: Record<string, unknown>): EnrichedProject => ({
-    id: String(row['id']),
-    workspace: String(row['workspace']),
-    name: String(row['name']),
-    description: String(row['description']),
-    owner: row['owner'] == null ? null : String(row['owner']),
-    status: String(row['status']) as Project['status'],
+    status: String(row['status']) as ProjectRow['status'],
     color: row['color'] == null ? null : String(row['color']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at']),

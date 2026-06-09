@@ -1,7 +1,6 @@
 import type {
   CreateProjectInput,
-  EnrichedProject,
-  Project,
+  ProjectRow,
   ProjectDatabase,
   ProjectFileRow,
   UpdateProjectInput,
@@ -11,7 +10,7 @@ import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgr
 
 export class PostgresProjectDatabase extends PostgresDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
-    return await this.sql<EnrichedProject[]>`
+    return await this.sql<ProjectRow[]>`
       SELECT p.*, wo.name AS owner_name
       FROM project p
       LEFT JOIN workspace_owner wo ON wo.id = p.owner
@@ -21,7 +20,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async getProject(workspace: string, id: string) {
-    const [row] = await this.sql<EnrichedProject[]>`
+    const [row] = await this.sql<ProjectRow[]>`
       SELECT p.*, wo.name AS owner_name
       FROM project p
       LEFT JOIN workspace_owner wo ON wo.id = p.owner
@@ -63,12 +62,11 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteProject(workspace: string, id: string) {
     try {
-      const [row] = await this.sql<Project[]>`
+      await this.sql`
         DELETE FROM project
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
       `;
-      return row ?? null;
     } catch (error) {
       return normalizePostgresError(error);
     }
