@@ -62,6 +62,7 @@ export const toApiAuditLogEntry = (entry: InternalAuditLogEntry): AuditLogEntry 
   workspace: entry.workspace,
   timestamp: entry.timestamp.toISOString(),
   user_id: entry.user_id,
+  user_display_name: entry.user_display_name,
   operation: entry.operation,
   entity_type: entry.entity_type,
   entity_id: entry.entity_id,

@@ -652,7 +652,7 @@ const AuditLogSection = ({
                     {getEntityTypeLabel(entry.entity_type)}
                   </span>
                   <span className={styles.activityDate}>{formatRelativeTime(entry.timestamp)}</span>
-                  <span className={styles.activityWho}>{entry.user_id}</span>
+                  <span className={styles.activityWho}>{entry.user_display_name ?? entry.user_id ?? 'Unknown'}</span>
                   <span className={styles.activityVerb}>{getOperationLabel(entry.operation)}</span>
                   <span className={styles.activityTarget}>{entry.entity_name}</span>
                 </button>

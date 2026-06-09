@@ -186,6 +186,7 @@ export const sqliteMappers = {
     workspace: String(row['workspace']),
     timestamp: toDate(row['timestamp']),
     user_id: row['user_id'] == null ? null : String(row['user_id']),
+    user_display_name: row['user_display_name'] == null ? null : String(row['user_display_name']),
     operation: row['operation'] as AuditLogDbResult['operation'],
     entity_type: row['entity_type'] as AuditLogDbResult['entity_type'],
     entity_id: String(row['entity_id']),

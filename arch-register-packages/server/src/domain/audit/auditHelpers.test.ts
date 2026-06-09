@@ -6,6 +6,7 @@ const makeEntry = (overrides: Partial<AuditLogDbResult> & { id: string }): Audit
   workspace: 'ws-1',
   timestamp: new Date('2026-05-27T10:00:00.000Z'), // 10 days before 2026-06-06
   user_id: 'u-1',
+  user_display_name: null,
   operation: 'create',
   entity_type: 'entity',
   entity_id: 'e-1',
@@ -205,6 +206,7 @@ describe('toApiAuditLogEntry', () => {
       workspace: 'ws-1',
       timestamp: new Date('2025-06-01T12:00:00.000Z'),
       user_id: 'u-1',
+      user_display_name: 'Test User',
       operation: 'create',
       entity_type: 'entity',
       entity_id: 'e-1',
