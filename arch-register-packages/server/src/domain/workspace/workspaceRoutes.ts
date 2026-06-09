@@ -253,6 +253,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
         }
 
         await logAudit(db, {
+          userId: authCtx.userId,
           workspace: row.id,
           operation: 'create',
           entityType: 'workspace',
@@ -291,6 +292,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 
         await logAudit(db, {
+          userId: authCtx.userId,
           workspace: id,
           operation: 'update',
           entityType: 'workspace',

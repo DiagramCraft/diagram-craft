@@ -127,6 +127,18 @@ importers:
       '@arch-register/permissions':
         specifier: workspace:*
         version: link:../permissions
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../../packages/canvas
+      '@diagram-craft/canvas-app':
+        specifier: workspace:^
+        version: link:../../packages/canvas-app
+      '@diagram-craft/canvas-edges':
+        specifier: workspace:^
+        version: link:../../packages/canvas-edges
+      '@diagram-craft/canvas-nodes':
+        specifier: workspace:^
+        version: link:../../packages/canvas-nodes
       '@diagram-craft/collaboration':
         specifier: workspace:^
         version: link:../../packages/collaboration
@@ -139,6 +151,9 @@ importers:
       '@diagram-craft/utils':
         specifier: workspace:^
         version: link:../../packages/utils
+      '@diagram-craft/utils-dom':
+        specifier: workspace:^
+        version: link:../../packages/utils-dom
       '@tanstack/ai':
         specifier: ^0.23.1
         version: 0.23.1

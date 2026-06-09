@@ -162,6 +162,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
         );
 
         await logAudit(db, {
+          userId: authCtx.userId,
           workspace,
           operation: 'create',
           entityType: 'entity_schema',
@@ -215,6 +216,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 
         await logAudit(db, {
+          userId: authCtx.userId,
           workspace,
           operation: 'update',
           entityType: 'entity_schema',
@@ -257,6 +259,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
         await db.catalog.deleteSchema(workspace, id);
 
         await logAudit(db, {
+          userId: authCtx.userId,
           workspace,
           operation: 'delete',
           entityType: 'entity_schema',

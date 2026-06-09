@@ -5,8 +5,8 @@
   "type": "module",
   "main": "src/main.ts",
   "scripts": {
-    "dev": "pnpm exec tsx watch ./src/main.ts",
-    "start": "node --import tsx ./src/main.ts",
+    "dev": "node --watch --import tsx --import ./src/serverSetup.mjs ./src/main.ts",
+    "start": "node --import tsx --import ./src/serverSetup.mjs ./src/main.ts",
     "bootstrap": "node --import tsx ./src/scripts/bootstrap.ts"
   },
   "keywords": [],
@@ -14,10 +14,15 @@
   "dependencies": {
     "@arch-register/api-types": "workspace:*",
     "@arch-register/permissions": "workspace:*",
+    "@diagram-craft/canvas": "workspace:^",
+    "@diagram-craft/canvas-app": "workspace:^",
+    "@diagram-craft/canvas-edges": "workspace:^",
+    "@diagram-craft/canvas-nodes": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/model": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
+    "@diagram-craft/utils-dom": "workspace:^",
     "@tanstack/ai": "^0.23.1",
     "@tanstack/ai-openai": "^0.10.4",
     "@tanstack/ai-openrouter": "^0.10.0",

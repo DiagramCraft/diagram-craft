@@ -7,7 +7,7 @@ const logger = createLogger('audit');
 
 type AuditLogParams = {
   workspace: string;
-  userId?: string | null;
+  userId: string;
   userDisplayName?: string | null;
   watcherUserIds?: string[];
   operation: AuditOperation;
