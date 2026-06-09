@@ -8,7 +8,7 @@ import { handleDbError, slugify } from '../../utils/http';
 import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/api-types/colors';
 import type { Workspace } from '@arch-register/api-types';
 import { toApiWorkspace } from './workspaceHelpers';
-import { SCHEMA_TEMPLATES, instantiateTemplate } from '../catalog/schemaTemplates';
+import { instantiateTemplate } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
 
 const handleError = (error: unknown, fallback: string): never =>
@@ -61,7 +61,8 @@ const buildUpdateInput = (
   updatedAt: Date
 ) => ({
   name: input.name,
-  url_slug: input.url_slug != null ? (slugify(input.url_slug) ?? current.url_slug) : current.url_slug,
+  url_slug:
+    input.url_slug != null ? (slugify(input.url_slug) ?? current.url_slug) : current.url_slug,
   short_code: input.short_code ?? current.short_code,
   color: input.color ?? current.color,
   description: input.description ?? current.description,
@@ -69,16 +70,68 @@ const buildUpdateInput = (
 });
 
 const buildDefaultLifecycleStates = (workspace: string, createdAt: Date) => [
-  { id: randomUUID(), workspace, label: 'Proposed', color: AR_COLOR_BLUE, sort_order: 0, created_at: createdAt },
-  { id: randomUUID(), workspace, label: 'Experimental', color: AR_COLOR_BLUE, sort_order: 1, created_at: createdAt },
-  { id: randomUUID(), workspace, label: 'Production', color: AR_COLOR_GREEN, sort_order: 2, created_at: createdAt },
-  { id: randomUUID(), workspace, label: 'Deprecated', color: AR_COLOR_YELLOW, sort_order: 3, created_at: createdAt }
+  {
+    id: randomUUID(),
+    workspace,
+    label: 'Proposed',
+    color: AR_COLOR_BLUE,
+    sort_order: 0,
+    created_at: createdAt
+  },
+  {
+    id: randomUUID(),
+    workspace,
+    label: 'Experimental',
+    color: AR_COLOR_BLUE,
+    sort_order: 1,
+    created_at: createdAt
+  },
+  {
+    id: randomUUID(),
+    workspace,
+    label: 'Production',
+    color: AR_COLOR_GREEN,
+    sort_order: 2,
+    created_at: createdAt
+  },
+  {
+    id: randomUUID(),
+    workspace,
+    label: 'Deprecated',
+    color: AR_COLOR_YELLOW,
+    sort_order: 3,
+    created_at: createdAt
+  }
 ];
 
 const buildDefaultWorkspaceTeams = (workspace: string, createdAt: Date) => [
-  { id: randomUUID(), workspace, name: 'Platform Team', sort_order: 0, color: null, description: '', created_at: createdAt },
-  { id: randomUUID(), workspace, name: 'UX Team', sort_order: 1, color: null, description: '', created_at: createdAt },
-  { id: randomUUID(), workspace, name: 'Security Team', sort_order: 2, color: null, description: '', created_at: createdAt }
+  {
+    id: randomUUID(),
+    workspace,
+    name: 'Platform Team',
+    sort_order: 0,
+    color: null,
+    description: '',
+    created_at: createdAt
+  },
+  {
+    id: randomUUID(),
+    workspace,
+    name: 'UX Team',
+    sort_order: 1,
+    color: null,
+    description: '',
+    created_at: createdAt
+  },
+  {
+    id: randomUUID(),
+    workspace,
+    name: 'Security Team',
+    sort_order: 2,
+    color: null,
+    description: '',
+    created_at: createdAt
+  }
 ];
 
 const normalizeInclude = (include: string[] | undefined): Set<string> =>
@@ -89,7 +142,7 @@ export const listWorkspaces = async (db: DatabaseAdapter): Promise<Workspace[]> 
     const workspaces = await db.workspace.listWorkspaces();
     return workspaces.map(toApiWorkspace);
   } catch (e) {
-    handleError(e, 'Failed to retrieve workspaces');
+    return handleError(e, 'Failed to retrieve workspaces');
   }
 };
 
@@ -146,7 +199,10 @@ export const createWorkspace = async (
           });
         }
       } else {
-        await db.workspace.replaceLifecycleStates(row.id, buildDefaultLifecycleStates(row.id, timestamp));
+        await db.workspace.replaceLifecycleStates(
+          row.id,
+          buildDefaultLifecycleStates(row.id, timestamp)
+        );
         await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
       }
 
@@ -174,7 +230,10 @@ export const createWorkspace = async (
         }
       }
     } else {
-      await db.workspace.replaceLifecycleStates(row.id, buildDefaultLifecycleStates(row.id, timestamp));
+      await db.workspace.replaceLifecycleStates(
+        row.id,
+        buildDefaultLifecycleStates(row.id, timestamp)
+      );
       await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
 
       if (typeof template === 'string' && template && template !== 'blank') {
@@ -197,7 +256,7 @@ export const createWorkspace = async (
 
     return toApiWorkspace(row);
   } catch (e) {
-    handleError(e, 'Failed to create workspace');
+    return handleError(e, 'Failed to create workspace');
   }
 };
 
@@ -218,7 +277,8 @@ export const updateWorkspace = async (
 
   try {
     const oldRow = await db.workspace.getWorkspace(id);
-    if (oldRow == null) throw Object.assign(new Error(`Workspace '${id}' not found`), { status: 404 });
+    if (oldRow == null)
+      throw Object.assign(new Error(`Workspace '${id}' not found`), { status: 404 });
 
     const row = await db.workspace.updateWorkspace(id, buildUpdateInput(input, oldRow, new Date()));
     if (row == null) throw Object.assign(new Error(`Workspace '${id}' not found`), { status: 404 });
@@ -236,7 +296,7 @@ export const updateWorkspace = async (
 
     return toApiWorkspace(row);
   } catch (e) {
-    handleError(e, 'Failed to update workspace');
+    return handleError(e, 'Failed to update workspace');
   }
 };
 
@@ -251,7 +311,8 @@ export const deleteWorkspace = async (
 
   try {
     const { workspace, projectIds } = await db.workspace.deleteWorkspace(id);
-    if (workspace == null) throw Object.assign(new Error(`Workspace '${id}' not found`), { status: 404 });
+    if (workspace == null)
+      throw Object.assign(new Error(`Workspace '${id}' not found`), { status: 404 });
 
     if (storage) {
       await Promise.all(
@@ -261,6 +322,6 @@ export const deleteWorkspace = async (
 
     return { success: true, message: `Workspace '${workspace.name}' deleted` };
   } catch (e) {
-    handleError(e, 'Failed to delete workspace');
+    return handleError(e, 'Failed to delete workspace');
   }
 };

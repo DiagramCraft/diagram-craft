@@ -6,8 +6,8 @@ export type {
   ProjectCapabilities,
   ErrorResponse,
   SuccessMessage,
-  CountSuccessMessage,
-} from './common.js';
+  CountSuccessMessage
+} from './common';
 
 // ── Schema Types ──────────────────────────────────────────────
 export type {
@@ -29,8 +29,8 @@ export type {
   SchemaSearchResult,
   WorkspaceEnum,
   CreateEnumRequest,
-  UpdateEnumRequest,
-} from './schemas.js';
+  UpdateEnumRequest
+} from './schemas';
 
 // ── Entity Types ──────────────────────────────────────────────
 export type {
@@ -46,8 +46,8 @@ export type {
   TreeNode,
   TreeEdge,
   TreeResponse,
-  EntitySearchResult,
-} from './entities.js';
+  EntitySearchResult
+} from './entities';
 
 // ── Project Types ─────────────────────────────────────────────
 export type {
@@ -65,8 +65,8 @@ export type {
   ProjectSearchResult,
   ProjectFileSearchResult,
   ProjectTemplatesResponse,
-  ToggleTemplateStatusRequest,
-} from './projects.js';
+  ToggleTemplateStatusRequest
+} from './projects';
 
 // ── Workspace Types ───────────────────────────────────────────
 export type {
@@ -80,27 +80,22 @@ export type {
   CreateWorkspaceRoleRequest,
   UpdateWorkspaceRoleRequest,
   WorkspaceMemberInfo,
-  WorkspaceUserInfo,
-} from './workspaces.js';
+  WorkspaceUserInfo
+} from './workspaces';
 
 // ── Search Types ──────────────────────────────────────────────
-export type { SearchResponse } from './search.js';
+export type { SearchResponse } from './search';
 
 // ── Audit Types ───────────────────────────────────────────────
-export type {
-  AuditOperation,
-  AuditEntityType,
-  AuditLogEntry,
-  AuditStats,
-} from './audit.js';
+export type { AuditOperation, AuditEntityType, AuditLogEntry, AuditStats } from './audit';
 
 // ── Notifications / Watches ─────────────────────────────────
 export type {
   WatchedEntity,
   PinnedEntity,
   NotificationItem,
-  NotificationCount,
-} from './notifications.js';
+  NotificationCount
+} from './notifications';
 
 // ── AI Types ─────────────────────────────────────────────────
 export type {
@@ -108,9 +103,10 @@ export type {
   WorkspaceAiConfig,
   UpsertAiConfigRequest,
   AiConversation,
-  AiMessageRecord,
-} from './ai.js';
+  AiMessageRecord
+} from './ai';
 
+// biome-ignore lint/performance/noBarrelFile: <explanation>
 export {
   workspaceEnumContract,
   workspaceEnumSchema,
@@ -121,8 +117,8 @@ export {
   getEnumRequestSchema,
   listEnumsRequestSchema,
   deleteEnumRequestSchema,
-  deleteEnumResponseSchema,
-} from './enumContract.js';
+  deleteEnumResponseSchema
+} from './enumContract';
 
 export {
   workspaceEntityContract,
@@ -136,8 +132,8 @@ export {
   facetsRequestSchema,
   createEntityRequestSchema,
   updateEntityRequestSchema,
-  deleteEntityResponseSchema,
-} from './entityContract.js';
+  deleteEntityResponseSchema
+} from './entityContract';
 
 export {
   workspaceSchemaContract,
@@ -149,14 +145,14 @@ export {
   getSchemaRequestSchema,
   listSchemasRequestSchema,
   deleteSchemaRequestSchema,
-  deleteSchemaResponseSchema,
-} from './schemaContract.js';
+  deleteSchemaResponseSchema
+} from './schemaContract';
 
 export {
   workspaceTemplateContract,
   listWorkspaceTemplatesRequestSchema,
-  listProjectTemplatesRequestSchema,
-} from './templateContract.js';
+  listProjectTemplatesRequestSchema
+} from './templateContract';
 
 export {
   workspaceViewContract,
@@ -167,13 +163,25 @@ export {
   deleteViewRequestSchema,
   listPinnedEntitiesRequestSchema,
   createPinnedEntityRequestSchema,
-  deletePinnedEntityRequestSchema,
-} from './viewContract.js';
+  deletePinnedEntityRequestSchema
+} from './viewContract';
 
 export {
   workspaceManagementContract,
   listWorkspacesRequestSchema,
   createWorkspaceRequestSchema,
   updateWorkspaceRequestSchema,
-  deleteWorkspaceRequestSchema,
-} from './workspaceContract.js';
+  deleteWorkspaceRequestSchema
+} from './workspaceContract';
+
+export { workspaceConfigContract } from './workspaceConfigContract';
+
+export {
+  projectContract,
+  listProjectsRequestSchema,
+  getProjectRequestSchema,
+  createProjectRequestSchema,
+  updateProjectRequestSchema,
+  deleteProjectRequestSchema,
+  listProjectFilesRequestSchema
+} from './projectContract';

@@ -42,6 +42,14 @@ import {
   createWorkspaceManagementOpenAPISpecHandler,
   createWorkspaceManagementORPCHandler
 } from './domain/workspace/workspaceOrpc';
+import {
+  createWorkspaceConfigOpenAPISpecHandler,
+  createWorkspaceConfigORPCHandler
+} from './domain/workspace/workspaceConfigOrpc';
+import {
+  createProjectOpenAPISpecHandler,
+  createProjectORPCHandler
+} from './domain/project/projectOrpc';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -107,6 +115,8 @@ export const createApp = (
   app.use('/openapi-orpc-templates.json', createWorkspaceTemplateOpenAPISpecHandler());
   app.use('/openapi-orpc-views.json', createWorkspaceViewOpenAPISpecHandler());
   app.use('/openapi-orpc-workspaces.json', createWorkspaceManagementOpenAPISpecHandler());
+  app.use('/openapi-orpc-workspace-config.json', createWorkspaceConfigOpenAPISpecHandler());
+  app.use('/openapi-orpc-projects.json', createProjectOpenAPISpecHandler());
 
   app.use(createAuthRoutes(db));
 
@@ -120,6 +130,8 @@ export const createApp = (
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
   app.use(createWorkspaceManagementORPCHandler(db, storage));
+  app.use(createWorkspaceConfigORPCHandler(db));
+  app.use(createProjectORPCHandler(db, storage));
   app.use(createWorkspaceRoutes(db, storage));
   app.use(createSchemaRoutes(db));
   app.use(createEnumRoutes(db));

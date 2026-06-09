@@ -2,13 +2,18 @@ import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/a
 import { randomUUID } from 'node:crypto';
 import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
-import { handleDbError, slugify } from '../../utils/http';
+import { slugify } from '../../utils/http';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
 import { WorkspaceDbResult } from './db/workspaceDatabase';
-import { listWorkspaces, createWorkspace, updateWorkspace, deleteWorkspace } from './workspaceOperations';
+import {
+  listWorkspaces,
+  createWorkspace,
+  updateWorkspace,
+  deleteWorkspace
+} from './workspaceOperations';
 
 const BASE = '/api/workspaces';
 
@@ -184,7 +189,10 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const b = body as Record<string, unknown>;
-      httpAssert.string(b['name'], { status: 400, message: 'name is required and must be a string' });
+      httpAssert.string(b['name'], {
+        status: 400,
+        message: 'name is required and must be a string'
+      });
       return await updateWorkspace(
         db,
         id,

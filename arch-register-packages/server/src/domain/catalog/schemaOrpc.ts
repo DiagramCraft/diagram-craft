@@ -83,7 +83,8 @@ export const workspaceSchemaOpenAPIHandler = new OpenAPIHandler(workspaceSchemaO
   clientInterceptors: [
     onError(error => {
       console.error('Output validation failed');
-      console.dir(error.cause, { depth: 10 });
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      console.dir((error as any).cause, { depth: 10 });
     })
   ]
 });

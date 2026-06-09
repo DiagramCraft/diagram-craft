@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  fetchProjects,
   fetchProject,
   createProject,
   updateProject,
@@ -8,6 +7,7 @@ import {
   type Project,
   type ProjectDetail
 } from '../lib/api';
+import { listProjectsORPC } from '../lib/projectORPCClient';
 import { invalidateAuditQueries } from './useAudit';
 
 // Query keys factory
@@ -24,7 +24,7 @@ export const projectKeys = {
 export const useProjects = (workspaceId: string) => {
   return useQuery({
     queryKey: projectKeys.list(workspaceId),
-    queryFn: () => fetchProjects(workspaceId),
+    queryFn: () => listProjectsORPC(workspaceId),
     enabled: !!workspaceId
   });
 };

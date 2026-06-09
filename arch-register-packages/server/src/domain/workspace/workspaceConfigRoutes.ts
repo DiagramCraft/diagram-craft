@@ -2,15 +2,12 @@ import { AR_COLOR_BLUE } from '@arch-register/api-types/colors';
 import { randomUUID } from 'node:crypto';
 import { H3, defineHandler } from 'h3';
 import {
-  BUILTIN_WORKSPACE_ROLES,
   WORKSPACE_CAPABILITY_GROUPS,
-  resolveWorkspaceRoleDefinitions,
   TeamRole,
   WorkspaceCapability
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { resolveWorkspace } from './resolveWorkspace';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import {
@@ -18,7 +15,72 @@ import {
   OwnerDbResult,
   LifecycleStateDbResult
 } from './db/workspaceDatabase';
+import {
+  listLifecycleStates,
+  replaceLifecycleStates,
+  listTeams,
+  replaceTeams,
+  listTeamAssignments,
+  replaceTeamAssignments,
+  listRoles,
+  createRole,
+  updateRole,
+  deleteRole,
+  listMembers,
+  updateMemberRole,
+  removeMember,
+  listUsers
+} from './workspaceConfigOperations';
+
 const BASE = '/api/:workspace/config';
+
+// Raw-body adapters: the REST API accepts array bodies directly, operations expect typed arrays
+const replaceLifecycleStatesFromRawBody = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  body: unknown,
+  event: AuthenticatedEvent
+) => {
+  const states = buildLifecycleStateInputs(workspace, body, new Date());
+  return await replaceLifecycleStates(
+    db,
+    workspace,
+    states.map(s => ({ id: s.id, label: s.label, color: s.color, sort_order: s.sort_order })),
+    event
+  );
+};
+
+const replaceTeamsFromRawBody = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  body: unknown,
+  event: AuthenticatedEvent
+) => {
+  const teams = buildWorkspaceOwnerInputs(workspace, body, new Date());
+  return await replaceTeams(
+    db,
+    workspace,
+    teams.map(t => ({ id: t.id, name: t.name, color: t.color, description: t.description })),
+    event
+  );
+};
+
+const replaceTeamAssignmentsFromRawBody = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  body: unknown,
+  event: AuthenticatedEvent
+) => {
+  const owners = new Set((await db.workspace.listTeams(workspace)).map(o => o.id));
+  const users = new Set((await db.auth.listUsers()).map(u => u.id));
+  const assignments = buildTeamMembershipInputs(workspace, body, owners, users, new Date());
+  return await replaceTeamAssignments(
+    db,
+    workspace,
+    assignments.map(a => ({ team_id: a.team_id, user_id: a.user_id, role: a.role })),
+    event
+  );
+};
 
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
 const VALID_WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group =>
@@ -209,52 +271,59 @@ export const buildTeamMembershipInputs = (
 export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   const router = new H3();
 
-  // GET /api/:workspace/config/lifecycle-states
   router.get(
     `${BASE}/lifecycle-states`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.view');
-      return await db.workspace.listLifecycleStates(workspace);
+      return await listLifecycleStates(db, workspace, event as AuthenticatedEvent);
     })
   );
 
-  // PUT /api/:workspace/config/lifecycle-states
   router.put(
     `${BASE}/lifecycle-states`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.settings');
       const body = await event.req.json().catch(() => undefined);
-      const now = new Date();
-      return await db.workspace.replaceLifecycleStates(
+      return await replaceLifecycleStatesFromRawBody(
+        db,
         workspace,
-        buildLifecycleStateInputs(workspace, body, now)
+        body,
+        event as AuthenticatedEvent
       );
     })
   );
 
-  // GET /api/:workspace/config/teams
   router.get(
     `${BASE}/teams`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.view');
-      return await db.workspace.listTeams(workspace);
+      return await listTeams(db, workspace, event as AuthenticatedEvent);
     })
   );
 
-  // GET /api/:workspace/config/owners
   router.get(
     `${BASE}/owners`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.view');
-      return await db.workspace.listTeams(workspace);
+      return await listTeams(db, workspace, event as AuthenticatedEvent);
+    })
+  );
+
+  router.put(
+    `${BASE}/teams`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
+      const body = await event.req.json().catch(() => undefined);
+      return await replaceTeamsFromRawBody(db, workspace, body, event as AuthenticatedEvent);
+    })
+  );
+
+  router.put(
+    `${BASE}/owners`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
+      const body = await event.req.json().catch(() => undefined);
+      return await replaceTeamsFromRawBody(db, workspace, body, event as AuthenticatedEvent);
     })
   );
 
@@ -262,11 +331,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/roles`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.role');
-      return resolveWorkspaceRoleDefinitions(
-        await db.workspace.listCustomWorkspaceRoles(workspace)
-      );
+      return await listRoles(db, workspace, event as AuthenticatedEvent);
     })
   );
 
@@ -274,24 +339,9 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/roles`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.role');
       const body = await event.req.json().catch(() => undefined);
       const input = parseWorkspaceRoleInput(body);
-      httpAssert.true(input.name.length > 0, { message: 'name is required' });
-
-      const now = new Date();
-      return await db.workspace.createCustomWorkspaceRole({
-        id: randomUUID(),
-        workspace,
-        name: input.name,
-        description: input.description,
-        tone: input.tone,
-        builtin: false,
-        capabilities: input.capabilities,
-        created_at: now,
-        updated_at: now
-      });
+      return await createRole(db, workspace, input, event as AuthenticatedEvent);
     })
   );
 
@@ -299,30 +349,11 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/roles/:roleId`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.role');
-
       const roleId = event.context.params?.['roleId'];
       httpAssert.string(roleId, { message: 'roleId is required' });
-      httpAssert.true(!BUILTIN_WORKSPACE_ROLES.some(role => role.id === roleId), {
-        status: 400,
-        message: 'Built-in roles cannot be edited'
-      });
-
       const body = await event.req.json().catch(() => undefined);
       const input = parseWorkspaceRoleInput(body);
-      httpAssert.true(input.name.length > 0, { message: 'name is required' });
-
-      const updated = await db.workspace.updateCustomWorkspaceRole(workspace, roleId, {
-        name: input.name,
-        description: input.description,
-        tone: input.tone,
-        builtin: false,
-        capabilities: input.capabilities,
-        updated_at: new Date()
-      });
-      httpAssert.present(updated, { status: 404, message: 'Role not found' });
-      return updated;
+      return await updateRole(db, workspace, roleId, input, event as AuthenticatedEvent);
     })
   );
 
@@ -330,57 +361,9 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/roles/:roleId`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.role');
-
       const roleId = event.context.params?.['roleId'];
       httpAssert.string(roleId, { message: 'roleId is required' });
-      httpAssert.true(!BUILTIN_WORKSPACE_ROLES.some(role => role.id === roleId), {
-        status: 400,
-        message: 'Built-in roles cannot be deleted'
-      });
-
-      const memberCount = await db.workspace.countWorkspaceMembersByRole(workspace, roleId);
-      httpAssert.true(memberCount === 0, {
-        status: 409,
-        message: 'Role is still assigned to workspace members'
-      });
-
-      const deleted = await db.workspace.deleteCustomWorkspaceRole(workspace, roleId);
-      httpAssert.present(deleted, { status: 404, message: 'Role not found' });
-      return deleted;
-    })
-  );
-
-  // PUT /api/:workspace/config/teams
-  router.put(
-    `${BASE}/teams`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.teams');
-      const body = await event.req.json().catch(() => undefined);
-      const now = new Date();
-      return await db.workspace.replaceTeams(
-        workspace,
-        buildWorkspaceOwnerInputs(workspace, body, now)
-      );
-    })
-  );
-
-  // PUT /api/:workspace/config/owners
-  router.put(
-    `${BASE}/owners`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.teams');
-      const body = await event.req.json().catch(() => undefined);
-      const now = new Date();
-      return await db.workspace.replaceTeams(
-        workspace,
-        buildWorkspaceOwnerInputs(workspace, body, now)
-      );
+      return await deleteRole(db, workspace, roleId, event as AuthenticatedEvent);
     })
   );
 
@@ -388,9 +371,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/team-assignments`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.teams');
-      return await db.workspace.listTeamAssignments(workspace);
+      return await listTeamAssignments(db, workspace, event as AuthenticatedEvent);
     })
   );
 
@@ -398,9 +379,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/team-memberships`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.teams');
-      return await db.workspace.listTeamAssignments(workspace);
+      return await listTeamAssignments(db, workspace, event as AuthenticatedEvent);
     })
   );
 
@@ -408,15 +387,12 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/team-assignments`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
-      const owners = new Set((await db.workspace.listTeams(workspace)).map(owner => owner.id));
-      const users = new Set((await db.auth.listUsers()).map(user => user.id));
-      const now = new Date();
-      return await db.workspace.replaceTeamAssignments(
+      return await replaceTeamAssignmentsFromRawBody(
+        db,
         workspace,
-        buildTeamMembershipInputs(workspace, body, owners, users, now)
+        body,
+        event as AuthenticatedEvent
       );
     })
   );
@@ -425,111 +401,54 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/team-memberships`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.teams');
       const body = await event.req.json().catch(() => undefined);
-      const owners = new Set((await db.workspace.listTeams(workspace)).map(owner => owner.id));
-      const users = new Set((await db.auth.listUsers()).map(user => user.id));
-      const now = new Date();
-      return await db.workspace.replaceTeamAssignments(
+      return await replaceTeamAssignmentsFromRawBody(
+        db,
         workspace,
-        buildTeamMembershipInputs(workspace, body, owners, users, now)
+        body,
+        event as AuthenticatedEvent
       );
     })
   );
 
-  // GET /api/:workspace/config/members
   router.get(
     `${BASE}/members`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.invite');
-      const members = await db.workspace.listWorkspaceMembers(workspace);
-      const users = await db.auth.listUsers();
-      const userMap = new Map(users.map(u => [u.id, u]));
-      return members.map(m => {
-        const user = userMap.get(m.user_id);
-        return {
-          workspace: m.workspace,
-          user_id: m.user_id,
-          role: m.role,
-          display_name: user?.display_name ?? m.user_id,
-          email: user?.email ?? null,
-          created_at: m.created_at.toISOString()
-        };
-      });
+      return await listMembers(db, workspace, event as AuthenticatedEvent);
     })
   );
 
-  // GET /api/:workspace/config/users
   router.get(
     `${BASE}/users`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.invite');
-
-      const users = await db.auth.listUsers();
-      return users.map(user => ({
-        id: user.id,
-        email: user.email,
-        display_name: user.display_name,
-        auth_provider: user.auth_provider,
-        is_active: user.is_active,
-        color: user.color
-      }));
+      return await listUsers(db, workspace, event as AuthenticatedEvent);
     })
   );
 
-  // PUT /api/:workspace/config/members/:userId/role
   router.put(
     `${BASE}/members/:userId/role`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.role');
-
       const userId = event.context.params?.['userId'];
       httpAssert.string(userId, { message: 'userId is required' });
-
       const body = (await event.req.json().catch(() => undefined)) as
         | { role?: unknown }
         | undefined;
       const role = body?.role;
       httpAssert.string(role, { message: 'role is required and must be a string' });
-
-      const [user, customRoles] = await Promise.all([
-        db.auth.getUser(userId),
-        db.workspace.listCustomWorkspaceRoles(workspace)
-      ]);
-
-      httpAssert.present(user, { status: 404, message: 'User not found' });
-
-      const validRoleIds = new Set(resolveWorkspaceRoleDefinitions(customRoles).map(r => r.id));
-      httpAssert.true(validRoleIds.has(role), {
-        message: 'role must reference an existing workspace role'
-      });
-
-      const member = await db.workspace.setWorkspaceMemberRole(workspace, userId, role, new Date());
-      return member;
+      return await updateMemberRole(db, workspace, userId, role, event as AuthenticatedEvent);
     })
   );
 
-  // DELETE /api/:workspace/config/members/:userId
   router.delete(
     `${BASE}/members/:userId`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'people.remove');
-
       const userId = event.context.params?.['userId'];
       httpAssert.string(userId, { message: 'userId is required' });
-
-      const removed = await db.workspace.removeWorkspaceMember(workspace, userId);
-      httpAssert.present(removed, { status: 404, message: 'Member not found' });
-      return removed;
+      return await removeMember(db, workspace, userId, event as AuthenticatedEvent);
     })
   );
 

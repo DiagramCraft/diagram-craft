@@ -1,8 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  fetchLifecycleStates,
-  fetchTeams,
-  fetchTeamAssignments,
   updateLifecycleStates,
   updateTeams,
   updateTeamAssignments,
@@ -10,6 +7,11 @@ import {
   type WorkspaceTeam,
   type WorkspaceLifecycleState
 } from '../lib/api';
+import {
+  listLifecycleStatesORPC,
+  listTeamsORPC,
+  listTeamAssignmentsORPC
+} from '../lib/workspaceConfigORPCClient';
 
 // Query keys factory
 export const workspaceConfigKeys = {
@@ -25,7 +27,7 @@ export const workspaceConfigKeys = {
 export const useLifecycleStates = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: workspaceConfigKeys.lifecycleStates(workspaceSlug),
-    queryFn: () => fetchLifecycleStates(workspaceSlug),
+    queryFn: () => listLifecycleStatesORPC(workspaceSlug),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
@@ -34,7 +36,7 @@ export const useLifecycleStates = (workspaceSlug: string, enabled = true) => {
 export const useTeams = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: workspaceConfigKeys.teams(workspaceSlug),
-    queryFn: () => fetchTeams(workspaceSlug),
+    queryFn: () => listTeamsORPC(workspaceSlug),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
@@ -43,7 +45,7 @@ export const useTeams = (workspaceSlug: string, enabled = true) => {
 export const useTeamAssignments = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: workspaceConfigKeys.teamAssignments(workspaceSlug),
-    queryFn: () => fetchTeamAssignments(workspaceSlug),
+    queryFn: () => listTeamAssignmentsORPC(workspaceSlug),
     enabled: enabled && !!workspaceSlug,
     staleTime: 2 * 60 * 1000
   });
