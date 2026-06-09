@@ -2,20 +2,15 @@ import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/a
 import { randomUUID } from 'node:crypto';
 import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
-import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError, slugify } from '../../utils/http';
 import type { StorageAdapter } from '../../storage/storage';
-import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
-import { toApiWorkspace } from './workspaceHelpers';
-import { SCHEMA_TEMPLATES, instantiateTemplate } from '../catalog/schemaTemplates';
+import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
 import { WorkspaceDbResult } from './db/workspaceDatabase';
+import { listWorkspaces, createWorkspace, updateWorkspace, deleteWorkspace } from './workspaceOperations';
 
 const BASE = '/api/workspaces';
-
-const handleError = (error: unknown, fallback: string): never =>
-  handleDbError(error, fallback, { unique: 'A workspace with that name already exists' });
 
 export const shortCode = (name: string): string =>
   name
@@ -146,12 +141,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
   router.get(
     BASE,
     defineHandler(async () => {
-      try {
-        const workspaces = await db.workspace.listWorkspaces();
-        return workspaces.map(toApiWorkspace);
-      } catch (e) {
-        handleError(e, 'Failed to retrieve workspaces');
-      }
+      return await listWorkspaces(db);
     })
   );
 
@@ -165,171 +155,57 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
   router.post(
     BASE,
     defineHandler(async event => {
-      const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
-      requireGlobalPermission(authCtx, 'admin_platform');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      const { template, replicate_from, include } = body as Record<string, unknown>;
-      try {
-        const timestamp = new Date();
-        const row = await db.workspace.createWorkspace(
-          buildWorkspaceCreateInput(body as Record<string, unknown>, timestamp)
-        );
-
-        if (typeof replicate_from === 'string' && replicate_from) {
-          const includeSet = normalizeReplicationInclude(include);
-
-          const [srcLifecycle, srcTeams, srcRoles, srcSchemas] = await Promise.all([
-            db.workspace.listLifecycleStates(replicate_from),
-            db.workspace.listTeams(replicate_from),
-            db.workspace.listCustomWorkspaceRoles(replicate_from),
-            db.catalog.listSchemas(replicate_from)
-          ]);
-
-          if (includeSet.has('settings')) {
-            const lifecycleStates =
-              srcLifecycle.length > 0
-                ? srcLifecycle.map(s => ({ ...s, workspace: row.id, created_at: timestamp }))
-                : buildDefaultLifecycleStates(row.id, timestamp);
-            await db.workspace.replaceLifecycleStates(row.id, lifecycleStates);
-            await db.workspace.replaceTeams(
-              row.id,
-              srcTeams.map(t => ({ ...t, workspace: row.id, created_at: timestamp }))
-            );
-            for (const role of srcRoles) {
-              await db.workspace.createCustomWorkspaceRole({
-                ...role,
-                id: randomUUID(),
-                workspace: row.id,
-                created_at: timestamp,
-                updated_at: timestamp
-              });
-            }
-          } else {
-            await db.workspace.replaceLifecycleStates(
-              row.id,
-              buildDefaultLifecycleStates(row.id, timestamp)
-            );
-            await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
-          }
-
-          if (includeSet.has('schemas')) {
-            const idMap = new Map<string, string>(srcSchemas.map(s => [s.id, randomUUID()]));
-            for (const schema of srcSchemas) {
-              const remappedFields = schema.fields.map(field => {
-                if (field.type === 'reference' || field.type === 'containment') {
-                  return { ...field, schemaId: idMap.get(field.schemaId) ?? field.schemaId };
-                }
-                return field;
-              });
-              await db.catalog.createSchema({
-                id: idMap.get(schema.id)!,
-                workspace: row.id,
-                name: schema.name,
-                description: schema.description,
-                color: schema.color,
-                icon: schema.icon,
-                fields: remappedFields,
-                default_owner: null,
-                created_at: timestamp,
-                updated_at: timestamp
-              });
-            }
-          }
-        } else {
-          await db.workspace.replaceLifecycleStates(
-            row.id,
-            buildDefaultLifecycleStates(row.id, timestamp)
-          );
-
-          await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
-
-          if (typeof template === 'string' && template && template !== 'blank') {
-            const schemas = instantiateTemplate(row.id, template);
-            for (const schema of schemas) {
-              await db.catalog.createSchema(schema);
-            }
-          }
-        }
-
-        await logAudit(db, {
-          userId: authCtx.userId,
-          workspace: row.id,
-          operation: 'create',
-          entityType: 'workspace',
-          entityId: row.id,
-          entityName: row.name,
-          changes: {
-            new: extractEntityFields(row)
-          }
-        });
-
-        return toApiWorkspace(row);
-      } catch (e) {
-        handleError(e, 'Failed to create workspace');
-      }
+      const b = body as Record<string, unknown>;
+      httpAssert.string(b['name'], { message: 'name is required and must be a string' });
+      return await createWorkspace(
+        db,
+        {
+          name: b['name'] as string,
+          description: typeof b['description'] === 'string' ? b['description'] : undefined,
+          color: typeof b['color'] === 'string' ? b['color'] : undefined,
+          slug: typeof b['slug'] === 'string' ? b['slug'] : undefined,
+          badge: typeof b['badge'] === 'string' ? b['badge'] : undefined,
+          template: typeof b['template'] === 'string' ? b['template'] : undefined,
+          replicate_from: typeof b['replicate_from'] === 'string' ? b['replicate_from'] : undefined,
+          include: Array.isArray(b['include']) ? (b['include'] as string[]) : undefined
+        },
+        event as AuthenticatedEvent
+      );
     })
   );
 
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
-      requireGlobalPermission(authCtx, 'admin_platform');
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      try {
-        const oldRow = await db.workspace.getWorkspace(id);
-        httpAssert.present(oldRow, { status: 404, message: `Workspace '${id}' not found` });
-
-        const row = await db.workspace.updateWorkspace(
-          id,
-          buildWorkspaceUpdateInput(body as Record<string, unknown>, oldRow, new Date())
-        );
-        httpAssert.present(row, { status: 404, message: `Workspace '${id}' not found` });
-        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
-
-        await logAudit(db, {
-          userId: authCtx.userId,
-          workspace: id,
-          operation: 'update',
-          entityType: 'workspace',
-          entityId: id,
-          entityName: row.name,
-          changes
-        });
-
-        return toApiWorkspace(row);
-      } catch (e) {
-        handleError(e, 'Failed to update workspace');
-      }
+      const b = body as Record<string, unknown>;
+      httpAssert.string(b['name'], { status: 400, message: 'name is required and must be a string' });
+      return await updateWorkspace(
+        db,
+        id,
+        {
+          name: b['name'] as string,
+          description: typeof b['description'] === 'string' ? b['description'] : undefined,
+          url_slug: typeof b['url_slug'] === 'string' ? b['url_slug'] : undefined,
+          short_code: typeof b['short_code'] === 'string' ? b['short_code'] : undefined,
+          color: typeof b['color'] === 'string' ? b['color'] : undefined
+        },
+        event as AuthenticatedEvent
+      );
     })
   );
 
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
-      requireGlobalPermission(authCtx, 'admin_platform');
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
-
-      try {
-        const { workspace, projectIds } = await db.workspace.deleteWorkspace(id);
-        httpAssert.present(workspace, { status: 404, message: `Workspace '${id}' not found` });
-
-        if (storage) {
-          await Promise.all(
-            projectIds.map(projectId => storage.deleteAll(id, projectId).catch(() => {}))
-          );
-        }
-
-        return { success: true, message: `Workspace '${workspace.name}' deleted` };
-      } catch (e) {
-        handleError(e, 'Failed to delete workspace');
-      }
+      return await deleteWorkspace(db, id, event as AuthenticatedEvent, storage);
     })
   );
 

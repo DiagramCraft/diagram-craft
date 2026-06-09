@@ -125,6 +125,21 @@ export {
 } from './enumContract.js';
 
 export {
+  workspaceEntityContract,
+  entityRecordSchema,
+  entityFacetsSchema,
+  treeResponseSchema,
+  entityRelationsSchema,
+  listEntitiesRequestSchema,
+  getEntityRequestSchema,
+  treeRequestSchema,
+  facetsRequestSchema,
+  createEntityRequestSchema,
+  updateEntityRequestSchema,
+  deleteEntityResponseSchema,
+} from './entityContract.js';
+
+export {
   workspaceSchemaContract,
   entitySchemaSchema,
   schemaFieldInputSchema,
@@ -136,3 +151,29 @@ export {
   deleteSchemaRequestSchema,
   deleteSchemaResponseSchema,
 } from './schemaContract.js';
+
+export {
+  workspaceTemplateContract,
+  listWorkspaceTemplatesRequestSchema,
+  listProjectTemplatesRequestSchema,
+} from './templateContract.js';
+
+export {
+  workspaceViewContract,
+  listViewsRequestSchema,
+  createViewRequestSchema,
+  updateViewRequestSchema,
+  getViewRequestSchema,
+  deleteViewRequestSchema,
+  listPinnedEntitiesRequestSchema,
+  createPinnedEntityRequestSchema,
+  deletePinnedEntityRequestSchema,
+} from './viewContract.js';
+
+export {
+  workspaceManagementContract,
+  listWorkspacesRequestSchema,
+  createWorkspaceRequestSchema,
+  updateWorkspaceRequestSchema,
+  deleteWorkspaceRequestSchema,
+} from './workspaceContract.js';

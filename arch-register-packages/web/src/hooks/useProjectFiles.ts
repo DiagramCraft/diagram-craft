@@ -9,10 +9,10 @@ import {
   cloneProjectFile,
   renameProjectFile,
   moveProjectFile,
-  fetchProjectTemplates,
   toggleTemplateStatus,
   createDiagramFromTemplate
 } from '../lib/api';
+import { listProjectTemplatesORPC } from '../lib/templateORPCClient';
 import type { ProjectFile } from '../lib/api';
 import { projectKeys } from './useProjects';
 import { invalidateAuditQueries } from './useAudit';
@@ -157,7 +157,7 @@ export const useMoveProjectFile = (workspaceId: string, projectId: string) => {
 export const useProjectTemplates = (workspaceId: string, projectId: string) => {
   return useQuery({
     queryKey: ['project-templates', workspaceId, projectId],
-    queryFn: () => fetchProjectTemplates(workspaceId, projectId),
+    queryFn: () => listProjectTemplatesORPC(workspaceId, projectId),
     enabled: !!workspaceId && !!projectId
   });
 };

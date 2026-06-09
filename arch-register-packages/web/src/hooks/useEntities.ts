@@ -3,17 +3,17 @@ import {
   apiFetch,
   fetchEntities,
   fetchEntity,
-  fetchEntityFacets,
   fetchEntityRelations,
   fetchEntityTree,
   deleteEntity,
   cloneEntity,
-  fetchSavedViews,
   createSavedView,
   updateSavedView,
   deleteSavedView
 } from '../lib/api';
 import type { EntityRelation } from '../lib/api';
+import { listEntitiesORPC, getEntityFacetsORPC } from '../lib/entityORPCClient';
+import { listSavedViewsORPC } from '../lib/viewORPCClient';
 import type {
   CreateSavedViewRequest,
   UpdateSavedViewRequest
@@ -37,7 +37,7 @@ export const useEntities = (
 ) => {
   return useQuery({
     queryKey: entityKeys.list(workspaceId, options),
-    queryFn: () => fetchEntities(workspaceId, options),
+    queryFn: () => listEntitiesORPC(workspaceId, options),
     enabled: !!workspaceId
   });
 };
@@ -55,7 +55,7 @@ export const useEntity = (workspaceId: string, entityId: string) => {
 export const useEntityFacets = (workspaceId: string) => {
   return useQuery({
     queryKey: entityKeys.facets(workspaceId),
-    queryFn: () => fetchEntityFacets(workspaceId),
+    queryFn: () => getEntityFacetsORPC(workspaceId),
     enabled: !!workspaceId
   });
 };
@@ -191,7 +191,7 @@ export const useEntitiesBySchema = (workspaceId: string, schemaIds: string[]) =>
 export const useSavedViews = (workspaceId: string) => {
   return useQuery({
     queryKey: viewKeys.list(workspaceId),
-    queryFn: () => fetchSavedViews(workspaceId),
+    queryFn: () => listSavedViewsORPC(workspaceId),
     enabled: !!workspaceId
   });
 };

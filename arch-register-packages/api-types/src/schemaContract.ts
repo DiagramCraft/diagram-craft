@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 
-const requirementLevelSchema = z.enum(['required', 'expected', 'optional']).optional();
+const requirementLevelSchema = z.enum(['required', 'expected', 'optional']).nullish();
 
 const baseFieldSchema = z.object({
   id: z.string(),
@@ -21,13 +21,13 @@ const referenceFieldSchema = baseFieldSchema.extend({
   type: z.literal('reference'),
   schemaId: z.string(),
   minCount: z.number().int().min(0),
-  maxCount: z.number().int().min(0)
+  maxCount: z.number().int().min(-1)
 });
 const containmentFieldSchema = baseFieldSchema.extend({
   type: z.literal('containment'),
   schemaId: z.string(),
   minCount: z.number().int().min(0),
-  maxCount: z.number().int().min(0)
+  maxCount: z.number().int().min(-1)
 });
 
 export const schemaFieldInputSchema = z.discriminatedUnion('type', [

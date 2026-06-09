@@ -5,17 +5,12 @@ import { handleDbError } from '../../utils/http';
 import {
   buildApiAuthCtx,
   requireProjectAccess,
-  requireWorkspaceAdmin,
-  canAccessProject
+  requireWorkspaceAdmin
 } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiProjectFile } from '../project/projectHelpers';
-import {
-  buildAllTemplatesResponse,
-  buildProjectTemplatesResponse,
-  type ProjectWithFiles
-} from './templateHelpers';
+import { listAllTemplates, listProjectTemplates } from './templateOperations';
 
 const BASE = '/api/:workspace';
 
@@ -58,21 +53,7 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-
-      try {
-        const projects = await db.project.listProjects(workspace);
-        const projectsWithFiles: ProjectWithFiles[] = [];
-
-        for (const project of projects) {
-          if (!authCtx || !canAccessProject(authCtx, project.owner)) continue;
-          const files = await db.project.listProjectFiles(workspace, project.id);
-          projectsWithFiles.push({ project, files });
-        }
-
-        return buildAllTemplatesResponse(projectsWithFiles);
-      } catch (e) {
-        handleError(e, 'Failed to retrieve templates');
-      }
+      return await listAllTemplates(db, workspace, authCtx);
     })
   );
 
@@ -84,30 +65,12 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const projectId = getParam(event, 'projectId');
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-
-      try {
-        const project = await db.project.getProject(workspace, projectId);
-        httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
-        requireProjectAccess(authCtx, project.owner);
-
-        const projects = await db.project.listProjects(workspace);
-        const projectsWithFiles: ProjectWithFiles[] = [];
-
-        for (const proj of projects) {
-          if (authCtx && !canAccessProject(authCtx, proj.owner)) continue;
-          const files = await db.project.listProjectFiles(workspace, proj.id);
-          projectsWithFiles.push({ project: proj, files });
-        }
-
-        return buildProjectTemplatesResponse(projectsWithFiles, projectId);
-      } catch (e) {
-        handleError(e, 'Failed to retrieve project templates');
-      }
+      return await listProjectTemplates(db, workspace, projectId, authCtx);
     })
   );
 
-  // PUT /api/:workspace/projects/:projectId/template-status/:path
-  // Toggle template status for a diagram
+  // PUT /api/:workspace/projects/:projectId/template-status/**:path
+  // Toggle template status for a diagram (REST-only: wildcard path can't be represented in OpenAPI)
   router.put(
     `${BASE}/projects/:projectId/template-status/**:path`,
     defineHandler(async event => {
@@ -123,7 +86,6 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
         const project = await db.project.getProject(workspace, projectId);
         httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
 
-        // Check permissions
         if (is_workspace_template) {
           requireWorkspaceAdmin(authCtx, 'Only workspace admins can manage workspace templates');
         } else {
@@ -133,7 +95,6 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
         const file = await db.project.getProjectFileByPath(workspace, projectId, filePath);
         httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-        // Update template status in database
         await db.project.updateProjectFileTemplateStatus(
           workspace,
           projectId,
@@ -143,7 +104,6 @@ export const createTemplateRoutes = (db: DatabaseAdapter) => {
           new Date()
         );
 
-        // Return updated file
         const updatedFile = await db.project.getProjectFileByPath(
           workspace,
           projectId,

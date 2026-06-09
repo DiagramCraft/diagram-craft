@@ -1,5 +1,5 @@
 import { defineHandler } from 'h3';
-import { implement } from '@orpc/server';
+import { implement, onError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { OpenAPIGenerator } from '@orpc/openapi';
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
@@ -79,7 +79,14 @@ export const workspaceSchemaORPCRouter = schemaRouter.router({
   }
 });
 
-export const workspaceSchemaOpenAPIHandler = new OpenAPIHandler(workspaceSchemaORPCRouter);
+export const workspaceSchemaOpenAPIHandler = new OpenAPIHandler(workspaceSchemaORPCRouter, {
+  clientInterceptors: [
+    onError(error => {
+      console.error('Output validation failed');
+      console.dir(error.cause, { depth: 10 });
+    })
+  ]
+});
 
 let generatedSchemaOpenAPISpec: Promise<object> | null = null;
 
