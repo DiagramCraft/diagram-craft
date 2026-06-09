@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import { decodeRefs, type Entity, type SchemaField } from '../../types';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
+import { createEntityWithAudit, type EntityMutationActor, updateEntityWithAudit } from '../catalog/entityMutations';
 
 const checker = new PermissionChecker();
 
@@ -302,7 +303,8 @@ const normalizeOwner = (value: unknown, teamIds: Set<string>, fallback: string |
 export const createAiChatTools = (
   db: DatabaseAdapter,
   workspaceId: string,
-  authCtx: AuthorizationContext | null
+  authCtx: AuthorizationContext | null,
+  actor: EntityMutationActor
 ) => {
   const queryEntities = queryEntitiesTool.server(async rawArgs => {
     const args = rawArgs as QueryEntitiesArgs;
@@ -481,30 +483,34 @@ export const createAiChatTools = (
         : null;
 
     const timestamp = new Date();
-    const entity = await db.catalog.createEntity({
-      id: randomUUID(),
+    const entity = await createEntityWithAudit(db, {
       workspace: workspaceId,
-      slug:
-        typeof args.slug === 'string' && args.slug.trim().length > 0
-          ? args.slug.trim()
-          : slugify(requestedName),
-      namespace:
-        typeof args.namespace === 'string' && args.namespace.trim().length > 0
-          ? args.namespace.trim()
-          : 'default',
-      name: requestedName,
-      description: typeof args.description === 'string' ? args.description : '',
-      owner,
-      lifecycle,
-      target_lifecycle: null,
-      target_lifecycle_date: null,
-      tags: filterStringArray(args.tags),
-      links: [],
-      schema_id: schema.id,
-      data: args.fields ?? {},
-      visibility_mode: normalizeVisibilityMode(args.visibilityMode),
-      created_at: timestamp,
-      updated_at: timestamp
+      actor,
+      entity: {
+        id: randomUUID(),
+        workspace: workspaceId,
+        slug:
+          typeof args.slug === 'string' && args.slug.trim().length > 0
+            ? args.slug.trim()
+            : slugify(requestedName),
+        namespace:
+          typeof args.namespace === 'string' && args.namespace.trim().length > 0
+            ? args.namespace.trim()
+            : 'default',
+        name: requestedName,
+        description: typeof args.description === 'string' ? args.description : '',
+        owner,
+        lifecycle,
+        target_lifecycle: null,
+        target_lifecycle_date: null,
+        tags: filterStringArray(args.tags),
+        links: [],
+        schema_id: schema.id,
+        data: args.fields ?? {},
+        visibility_mode: normalizeVisibilityMode(args.visibilityMode),
+        created_at: timestamp,
+        updated_at: timestamp
+      }
     });
 
     return {
@@ -556,33 +562,39 @@ export const createAiChatTools = (
           ? args.lifecycle
           : null;
 
-    const entity = await db.catalog.updateEntity(workspaceId, current.id, {
-      slug:
-        typeof args.slug === 'string' && args.slug.trim().length > 0
-          ? args.slug.trim()
-          : current.slug,
-      namespace:
-        typeof args.namespace === 'string' && args.namespace.trim().length > 0
-          ? args.namespace.trim()
-          : current.namespace,
-      name:
-        typeof args.name === 'string' && args.name.trim().length > 0
-          ? args.name.trim()
-          : current.name,
-      description: typeof args.description === 'string' ? args.description : current.description,
-      owner: nextOwner,
-      lifecycle: nextLifecycle,
-      target_lifecycle: current.target_lifecycle,
-      target_lifecycle_date: current.target_lifecycle_date,
-      tags: args.tags === undefined ? current.tags : filterStringArray(args.tags),
-      links: current.links,
-      schema_id: current.schema_id,
-      data: {
-        ...current.data,
-        ...(args.fields ?? {})
-      },
-      visibility_mode: nextVisibilityMode,
-      updated_at: new Date()
+    const entity = await updateEntityWithAudit(db, {
+      workspace: workspaceId,
+      entityId: current.id,
+      previous: current,
+      actor,
+      next: {
+        slug:
+          typeof args.slug === 'string' && args.slug.trim().length > 0
+            ? args.slug.trim()
+            : current.slug,
+        namespace:
+          typeof args.namespace === 'string' && args.namespace.trim().length > 0
+            ? args.namespace.trim()
+            : current.namespace,
+        name:
+          typeof args.name === 'string' && args.name.trim().length > 0
+            ? args.name.trim()
+            : current.name,
+        description: typeof args.description === 'string' ? args.description : current.description,
+        owner: nextOwner,
+        lifecycle: nextLifecycle,
+        target_lifecycle: current.target_lifecycle,
+        target_lifecycle_date: current.target_lifecycle_date,
+        tags: args.tags === undefined ? current.tags : filterStringArray(args.tags),
+        links: current.links,
+        schema_id: current.schema_id,
+        data: {
+          ...current.data,
+          ...(args.fields ?? {})
+        },
+        visibility_mode: nextVisibilityMode,
+        updated_at: new Date()
+      }
     });
     if (!entity) throw new Error(`Failed to update entity '${current.id}'`);
 

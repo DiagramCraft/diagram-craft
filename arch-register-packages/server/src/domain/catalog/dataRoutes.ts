@@ -17,6 +17,7 @@ import {
 } from '../../types';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
 import { computeChanges, extractEntityFields, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
+import { createEntityWithAudit, updateEntityWithAudit } from './entityMutations';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { formatArrayForCsv, generateCsv } from '../../utils/csv';
 import { handleDbError, parsePositiveInt, slugify } from '../../utils/http';
@@ -1219,7 +1220,13 @@ export function createDataRoutes(db: DatabaseAdapter) {
           }
         }
         const timestamp = new Date();
-        const row = await db.catalog.createEntity({
+        const row = await createEntityWithAudit(db, {
+          workspace,
+          actor: {
+            id: auditUser.id,
+            displayName: auditUser.display_name
+          },
+          entity: {
           id: randomUUID(),
           workspace,
           slug: payload.slug,
@@ -1237,20 +1244,6 @@ export function createDataRoutes(db: DatabaseAdapter) {
           visibility_mode: payload.visibilityMode,
           created_at: timestamp,
           updated_at: timestamp
-        });
-
-        await logAudit(db, {
-          workspace,
-          userId: auditUser.id,
-          userDisplayName: auditUser.display_name,
-          operation: 'create',
-          entityType: 'entity',
-          entityId: row.id,
-          entityName: row.name,
-          entitySlug: row.slug,
-          schemaId: row.schema_id,
-          changes: {
-            new: flattenEntityAuditFields(row)
           }
         });
 
@@ -1313,36 +1306,33 @@ export function createDataRoutes(db: DatabaseAdapter) {
           );
         }
 
-        const row = await db.catalog.updateEntity(workspace, id, {
-          slug: payload.slug,
-          namespace: payload.namespace,
-          name: payload.name,
-          description: payload.description,
-          owner,
-          lifecycle,
-          target_lifecycle,
-          target_lifecycle_date,
-          tags: payload.tags,
-          links: payload.links,
-          schema_id: payload.schemaId,
-          data: payload.fields,
-          visibility_mode: payload.visibilityMode,
-          updated_at: new Date()
+        const row = await updateEntityWithAudit(db, {
+          workspace,
+          entityId: id,
+          previous: oldRow,
+          actor: {
+            id: auditUser.id,
+            displayName: auditUser.display_name
+          },
+          next: {
+            slug: payload.slug,
+            namespace: payload.namespace,
+            name: payload.name,
+            description: payload.description,
+            owner,
+            lifecycle,
+            target_lifecycle,
+            target_lifecycle_date,
+            tags: payload.tags,
+            links: payload.links,
+            schema_id: payload.schemaId,
+            data: payload.fields,
+            visibility_mode: payload.visibilityMode,
+            updated_at: new Date()
+          }
         });
 
         httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
-        await logAudit(db, {
-          workspace,
-          userId: auditUser.id,
-          userDisplayName: auditUser.display_name,
-          operation: 'update',
-          entityType: 'entity',
-          entityId: id,
-          entityName: row.name,
-          entitySlug: row.slug,
-          schemaId: row.schema_id,
-          changes: computeChanges(flattenEntityAuditFields(oldRow), flattenEntityAuditFields(row))
-        });
 
         return toApiEntity(row, authCtx);
       } catch (e) {

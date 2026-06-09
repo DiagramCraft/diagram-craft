@@ -4,8 +4,9 @@ import type {
   WatchedEntity
 } from '@arch-register/api-types';
 import { H3, defineHandler, readBody } from 'h3';
-import { PermissionChecker } from '@arch-register/permissions';
+import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
+import type { Entity } from '../../types';
 import {
   buildApiAuthCtx,
   requireEntityAction,
@@ -17,6 +18,16 @@ import { httpAssert } from '../../utils/httpAssert';
 
 const BASE = '/api/:workspace';
 const checker = new PermissionChecker();
+
+export const canAccessNotification = (
+  authCtx: AuthorizationContext,
+  entityMap: Map<string, Entity>,
+  notification: { entity_id: string }
+) => {
+  const entity = entityMap.get(notification.entity_id);
+  if (entity == null) return false;
+  return checker.hasEntityPermission(authCtx, entity, 'view_entity');
+};
 
 const toWatchedEntity = (entity: {
   id: string;
@@ -154,11 +165,7 @@ export const createWatchRoutes = (db: DatabaseAdapter) => {
       const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 
       return notifications
-        .filter(notification => {
-          const entity = entityMap.get(notification.entity_id);
-          if (entity == null) return notification.operation === 'delete';
-          return checker.hasEntityPermission(authCtx, entity, 'view_entity');
-        })
+        .filter(notification => canAccessNotification(authCtx, entityMap, notification))
         .map(toNotificationItem);
     })
   );
@@ -179,11 +186,8 @@ export const createWatchRoutes = (db: DatabaseAdapter) => {
       const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 
       const response: NotificationCount = {
-        count: notifications.filter(notification => {
-          const entity = entityMap.get(notification.entity_id);
-          if (entity == null) return notification.operation === 'delete';
-          return checker.hasEntityPermission(authCtx, entity, 'view_entity');
-        }).length
+        count: notifications.filter(notification => canAccessNotification(authCtx, entityMap, notification))
+          .length
       };
 
       return response;
