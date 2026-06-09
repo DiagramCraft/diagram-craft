@@ -14,6 +14,7 @@
 
 .right {
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .center {
@@ -97,63 +98,93 @@
 
 .notificationBadge {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  top: 3px;
+  right: 3px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
   border-radius: 999px;
-  background: var(--warning-fg);
+  background: var(--accent-fg);
   color: var(--base-bg);
-  font-size: 10px;
+  font-size: 8.5px;
   font-weight: 700;
-  line-height: 16px;
-  text-align: center;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--base-bg);
+  pointer-events: none;
 }
 
 .notificationDrop {
   position: absolute;
   top: 32px;
   right: 0;
-  width: 360px;
+  width: 376px;
+  max-height: 480px;
   background: var(--cmp-bg);
   border: 1px solid var(--cmp-border);
   border-radius: var(--r-md);
-  padding: 8px;
   z-index: 50;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-.notificationHeader {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 4px 4px 8px;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.notificationTitle {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--base-fg);
+/* Tabs row — tabs + mark-all-read inline */
+.notificationTabsRow {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--cmp-border);
+  flex-shrink: 0;
+  min-height: 36px;
 }
 
-.notificationSub {
-  font-size: 11px;
-  color: var(--cmp-fg-disabled);
+.notificationTabsRow :global(.cTabs) {
+  flex: 1;
+}
+
+.notificationTabsRow :global(.eList) {
+  height: 36px;
+  width: 100%;
+  background: transparent;
+  border: none;
+}
+
+.notificationTabsRow :global(.eTrigger) {
+  flex: 1;
+  height: 36px;
+}
+
+/* Unread count pill inside a tab */
+.notifTabPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  background: var(--accent-fg);
+  color: var(--base-bg);
+  font-size: 8.5px;
+  font-weight: 700;
+  border-radius: 7px;
+  margin-left: 4px;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 .notificationAction {
-  padding: 0 8px;
-  height: 24px;
-  border-radius: var(--r-sm);
+  padding: 0 12px;
+  height: 28px;
+  font-size: 10.5px;
   color: var(--base-fg-more-dim);
-  border: 1px solid transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .notificationAction:hover:not(:disabled) {
-  background: var(--cmp-bg-hover);
-  border-color: var(--cmp-border);
   color: var(--base-fg);
 }
 
@@ -161,46 +192,60 @@
   opacity: 0.6;
 }
 
-.notificationDrop :global(.cTabs) {
-  width: 100%;
-}
-
-.notificationDrop :global(.eList) {
-  height: 28px;
-  width: 100%;
-  background: var(--panel-bg);
-}
-
-.notificationDrop :global(.eTrigger) {
-  flex: 1;
-  height: 28px;
-}
-
 .notificationPanel {
-  margin-top: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .notificationList {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 320px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Unread indicator dot */
+.notifDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-fg);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.notifDotRead {
+  background: transparent;
 }
 
 .notificationRow {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 9px;
   width: 100%;
-  padding: 8px;
-  border-radius: var(--r);
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--cmp-border);
   color: var(--base-fg);
   text-align: left;
+  transition: background 80ms;
+}
+
+.notificationRow:last-child {
+  border-bottom: none;
 }
 
 .notificationRow:hover {
   background: var(--cmp-bg-hover);
+}
+
+.notificationRowUnread {
+  background: color-mix(in oklch, var(--accent-fg) 5%, transparent);
+}
+
+.notificationRowUnread:hover {
+  background: color-mix(in oklch, var(--accent-fg) 8%, var(--cmp-bg-hover));
 }
 
 .notificationRowMain {
@@ -209,33 +254,56 @@
 }
 
 .notificationEntity {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--base-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
 }
 
 .notificationMeta {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
   flex-wrap: wrap;
-  margin-top: 2px;
   font-size: 11px;
   color: var(--cmp-fg-disabled);
 }
 
+.notificationSep {
+  color: var(--cmp-fg-disabled);
+  opacity: 0.5;
+}
+
 .notificationOp {
-  text-transform: capitalize;
+  color: var(--base-fg-dim);
+}
+
+.notificationWhen {
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  flex-shrink: 0;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 
 .notificationClear {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--r-sm);
   color: var(--cmp-fg-disabled);
   flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 80ms;
+}
+
+.notificationRow:hover .notificationClear {
+  opacity: 1;
 }
 
 .notificationClear:hover {
@@ -243,11 +311,39 @@
   color: var(--base-fg);
 }
 
+/* Watching list */
+.watchingUnwatch {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  color: var(--cmp-fg-disabled);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 80ms;
+}
+
+.notificationRow:hover .watchingUnwatch {
+  opacity: 1;
+}
+
+.watchingUnwatch:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
 .notificationEmpty {
-  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
   text-align: center;
   font-size: 12px;
   color: var(--cmp-fg-disabled);
+  gap: 4px;
 }
 
 .srOnly {

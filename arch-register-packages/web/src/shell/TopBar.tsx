@@ -450,19 +450,28 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
         onClick={() => setOpen(value => !value)}
       >
         <TbBell size={15} />
-        {notificationCount > 0 && <span className={styles.notificationBadge}>{notificationCount}</span>}
+        {notificationCount > 0 && (
+          <span className={styles.notificationBadge}>
+            {notificationCount > 9 ? '9+' : notificationCount}
+          </span>
+        )}
       </button>
       {open && (
         <div className={styles.notificationDrop}>
-          <div className={styles.notificationHeader}>
-            <div>
-              <div className={styles.notificationTitle}>Inbox</div>
-              <div className={styles.notificationSub}>
-                {notificationCount > 0
-                  ? `${notificationCount} unread change${notificationCount === 1 ? '' : 's'}`
-                  : 'No unread changes'}
-              </div>
-            </div>
+          <div className={styles.notificationTabsRow}>
+            <Tabs.Root value={tab} onValueChange={value => setTab(value as 'notifications' | 'watching')}>
+              <Tabs.List>
+                <Tabs.Trigger value="notifications">
+                  Notifications
+                  {notificationCount > 0 && (
+                    <span className={styles.notifTabPill}>{notificationCount}</span>
+                  )}
+                </Tabs.Trigger>
+                <Tabs.Trigger value="watching">
+                  Watching
+                </Tabs.Trigger>
+              </Tabs.List>
+            </Tabs.Root>
             {tab === 'notifications' && notifications.length > 0 && (
               <button
                 type="button"
@@ -470,16 +479,10 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
                 disabled={clearNotificationsMutation.isPending}
                 onClick={() => clearNotificationsMutation.mutate()}
               >
-                Clear all
+                Mark all read
               </button>
             )}
           </div>
-          <Tabs.Root value={tab} onValueChange={value => setTab(value as 'notifications' | 'watching')}>
-            <Tabs.List>
-              <Tabs.Trigger value="notifications">Notifications</Tabs.Trigger>
-              <Tabs.Trigger value="watching">Watching</Tabs.Trigger>
-            </Tabs.List>
-          </Tabs.Root>
           <div className={styles.notificationPanel}>
             {tab === 'notifications' ? (
               <NotificationList
@@ -519,7 +522,12 @@ const NotificationList = ({
   isClearing: boolean;
 }) => {
   if (notifications.length === 0) {
-    return <div className={styles.notificationEmpty}>Changes on watched entities will show up here.</div>;
+    return (
+      <div className={styles.notificationEmpty}>
+        <span>No notifications yet</span>
+        <span>Changes on watched entities will show up here.</span>
+      </div>
+    );
   }
 
   return (
@@ -528,19 +536,21 @@ const NotificationList = ({
         <button
           key={item.id}
           type="button"
-          className={styles.notificationRow}
+          className={`${styles.notificationRow} ${styles.notificationRowUnread}`}
           onClick={() => {
             if (item.operation !== 'delete') onOpenEntity(item.entity_id);
           }}
         >
+          <div className={styles.notifDot} />
           <div className={styles.notificationRowMain}>
             <div className={styles.notificationEntity}>{item.entity_name}</div>
             <div className={styles.notificationMeta}>
-              <span className={styles.notificationOp}>{item.operation}</span>
               <span>{item.changed_by_display_name}</span>
-              <span>{formatRelativeTimestamp(item.timestamp)}</span>
+              <span className={styles.notificationSep}>·</span>
+              <span className={styles.notificationOp}>{item.operation}</span>
             </div>
           </div>
+          <div className={styles.notificationWhen}>{formatRelativeTimestamp(item.timestamp)}</div>
           <span
             className={styles.notificationClear}
             onClick={event => {
@@ -548,7 +558,7 @@ const NotificationList = ({
               onClear(item.id);
             }}
           >
-            <TbX size={13} />
+            <TbX size={12} />
             <span className={styles.srOnly}>
               {isClearing && clearingId === item.id ? 'Clearing' : 'Clear notification'}
             </span>
@@ -573,7 +583,12 @@ const WatchingList = ({
   isUnwatching: boolean;
 }) => {
   if (watched.length === 0) {
-    return <div className={styles.notificationEmpty}>Use the bell on an entity to start watching it.</div>;
+    return (
+      <div className={styles.notificationEmpty}>
+        <span>Nothing watched yet</span>
+        <span>Open an entity and click the bell icon to start watching it.</span>
+      </div>
+    );
   }
 
   return (
@@ -592,16 +607,14 @@ const WatchingList = ({
             </div>
           </div>
           <span
-            className={styles.notificationClear}
+            className={styles.watchingUnwatch}
+            title={isUnwatching && unwatchingId === item.entity_id ? 'Removing watch' : 'Unwatch entity'}
             onClick={event => {
               event.stopPropagation();
               onUnwatch(item.entity_id);
             }}
           >
-            <TbX size={13} />
-            <span className={styles.srOnly}>
-              {isUnwatching && unwatchingId === item.entity_id ? 'Removing watch' : 'Unwatch entity'}
-            </span>
+            <TbBell size={12} />
           </span>
         </button>
       ))}
