@@ -8,13 +8,9 @@ export type {
   SelectField,
   ReferenceField,
   ContainmentField,
-  SchemaField,
+  SchemaField
 } from '@arch-register/api-types';
-import type {
-  BrowserView,
-  EntityFilters,
-  RadarViewConfig
-} from '@arch-register/api-types/views';
+import type { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-types/views';
 import type { SchemaField } from '@arch-register/api-types/schemas';
 
 export type Workspace = {
