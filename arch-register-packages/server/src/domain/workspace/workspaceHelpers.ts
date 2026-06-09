@@ -5,13 +5,13 @@ import type {
   WorkspaceMemberInfo,
   WorkspaceUserInfo
 } from '@arch-register/api-types';
-import type { User } from '../../types';
 import {
   WorkspaceOwnerRow,
   WorkspaceMemberRow,
   WorkspaceRow,
   WorkspaceLifecycleStateRow as InternalWorkspaceLifecycleState
 } from './db/workspaceDatabase';
+import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
 
 export const toApiWorkspace = (workspace: WorkspaceRow): Workspace => ({
   id: workspace.id,
@@ -43,7 +43,7 @@ export const toApiOwnerOption = (owner: WorkspaceOwnerRow): WorkspaceOwnerOption
 
 export const toApiWorkspaceMember = (
   member: WorkspaceMemberRow,
-  user: User
+  user: UserRow
 ): WorkspaceMemberInfo => ({
   workspace: member.workspace,
   user_id: member.user_id,
@@ -53,7 +53,7 @@ export const toApiWorkspaceMember = (
   created_at: member.created_at.toISOString()
 });
 
-export const toApiWorkspaceUser = (user: User): WorkspaceUserInfo => ({
+export const toApiWorkspaceUser = (user: UserRow): WorkspaceUserInfo => ({
   id: user.id,
   user_id: user.user_id,
   email: user.email,

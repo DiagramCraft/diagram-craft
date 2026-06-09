@@ -1,3 +1,9 @@
+import {
+  AuditEntityType,
+  AuditOperation
+} from '@arch-register/server/domain/audit/db/auditDatabase';
+import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
+
 export type {
   EntityCapabilities,
   ProjectCapabilities,
@@ -70,22 +76,6 @@ export type Project = {
   updated_at: Date;
 };
 
-export type ProjectFile = {
-  id: string;
-  workspace: string;
-  project_id: string;
-  path: string;
-  name: string;
-  size_bytes: number;
-  comment_count: number;
-  unresolved_comment_count: number;
-  is_template: boolean;
-  is_workspace_template: boolean;
-  preview_svg: string | null;
-  created_at: Date;
-  updated_at: Date;
-};
-
 export const encodeRefs = (refs: string[]): string => refs.join(',');
 export const decodeRefs = (raw: unknown): string[] => {
   if (raw == null || raw === '') return [];
@@ -93,51 +83,6 @@ export const decodeRefs = (raw: unknown): string[] => {
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
-};
-
-export type AuditOperation = 'create' | 'update' | 'delete';
-
-export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'project_file';
-
-export type AuditLogEntry = {
-  id: string;
-  workspace: string;
-  timestamp: Date;
-  user_id: string | null;
-  operation: AuditOperation;
-  entity_type: AuditEntityType;
-  entity_id: string;
-  entity_name: string;
-  entity_slug: string | null;
-  schema_id: string | null;
-  changes: {
-    old?: Record<string, unknown>;
-    new?: Record<string, unknown>;
-  };
-  metadata: Record<string, unknown>;
-};
-
-export type UserWatch = {
-  user_id: string;
-  workspace: string;
-  entity_id: string;
-  created_at: Date;
-};
-
-export type UserNotification = {
-  id: string;
-  user_id: string;
-  workspace: string;
-  entity_id: string;
-  audit_log_id: string;
-  operation: AuditOperation;
-  entity_name: string;
-  entity_slug: string;
-  schema_id: string | null;
-  changed_by_user_id: string;
-  changed_by_display_name: string;
-  timestamp: Date;
-  created_at: Date;
 };
 
 export type AuditLogApiResponse = {
@@ -158,39 +103,17 @@ export type AuditLogApiResponse = {
   metadata: Record<string, unknown>;
 };
 
-export type AuthProvider = 'local' | 'oidc';
-
-export type User = {
-  id: string;
-  user_id: string;
-  email: string | null;
-  display_name: string;
-  auth_provider: AuthProvider;
-  password_hash: string | null;
-  oidc_issuer: string | null;
-  oidc_subject: string | null;
-  is_active: boolean;
-  color: string | null;
-  created_at: Date;
-  updated_at: Date;
-  last_login_at: Date | null;
-};
-
 export type GlobalRole = 'global_admin' | 'workspace_admin';
 
 export type GlobalPermission = 'admin_platform' | 'create_workspaces' | 'manage_workspace_roles';
 
 export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
 
-export type GlobalRoleAssignment = {
-  user_id: string;
-  role: GlobalRole;
-  created_at: Date;
-};
-
 export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 
 export type AiProvider = 'openrouter' | 'openai';
+
+export type AuthProvider = 'local' | 'oidc';
 
 export type WorkspaceAiConfig = {
   workspace: string;
@@ -234,6 +157,6 @@ export type JWTPayload = {
 };
 
 export type AuthContext = {
-  user: User;
+  user: UserRow;
   token: string;
 };

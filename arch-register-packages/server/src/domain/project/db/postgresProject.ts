@@ -2,11 +2,12 @@ import type {
   CreateProjectInput,
   EnrichedProject,
   ProjectDatabase,
+  ProjectFileRow,
   UpdateProjectInput,
   UpsertProjectFileInput
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
-import { Project, ProjectFile } from '../../../types';
+import { Project } from '../../../types';
 
 export class PostgresProjectDatabase extends PostgresDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
@@ -74,7 +75,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async listProjectFiles(workspace: string, projectId: string) {
-    return await this.sql<ProjectFile[]>`
+    return await this.sql<ProjectFileRow[]>`
       SELECT *
       FROM project_file
       WHERE workspace = ${workspace} AND project_id = ${projectId}
@@ -83,7 +84,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async getProjectFileByPath(workspace: string, projectId: string, path: string) {
-    const [row] = await this.sql<ProjectFile[]>`
+    const [row] = await this.sql<ProjectFileRow[]>`
       SELECT * FROM project_file
       WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
     `;
@@ -171,7 +172,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async upsertProjectFile(input: UpsertProjectFileInput) {
     try {
-      const [row] = await this.sql<ProjectFile[]>`
+      const [row] = await this.sql<ProjectFileRow[]>`
         INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
         VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path)
@@ -193,7 +194,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }
   ) {
     try {
-      const [row] = await this.sql<ProjectFile[]>`
+      const [row] = await this.sql<ProjectFileRow[]>`
         INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
         VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path) DO NOTHING
@@ -207,7 +208,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteProjectFileByPath(workspace: string, projectId: string, path: string) {
     try {
-      const [row] = await this.sql<ProjectFile[]>`
+      const [row] = await this.sql<ProjectFileRow[]>`
         DELETE FROM project_file
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
         RETURNING *
@@ -241,7 +242,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteProjectFileFolder(workspace: string, projectId: string, folderPath: string) {
     try {
-      return await this.sql<ProjectFile[]>`
+      return await this.sql<ProjectFileRow[]>`
         DELETE FROM project_file
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${folderPath}/%`}
         RETURNING *

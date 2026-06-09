@@ -5,11 +5,11 @@ import {
   parseRequestedGlobalRoles,
   selectRefreshToken
 } from './authRoutes';
-import type { User } from '../../types';
+import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const user: User = {
+const user: UserRow = {
   id: 'user-1',
   user_id: 'user-1',
   email: 'user@example.com',

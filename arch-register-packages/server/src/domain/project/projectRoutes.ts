@@ -1,7 +1,7 @@
 import { H3, H3Event, HTTPError, defineHandler } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type { CreateProjectInput, DatabaseAdapter, UpdateProjectInput } from '../../db/database';
-import type { ProjectFile } from '../../types';
+import type { ProjectFileRow } from './db/projectDatabase';
 import type { StorageAdapter } from '../../storage/storage';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
@@ -52,10 +52,10 @@ export const parseProjectStatus = (value: unknown): ProjectStatus => {
 export const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
   typeof owner === 'string' && teamIds.has(owner) ? owner : null;
 
-export const buildFileTree = (files: ProjectFile[]): FileTree => {
+export const buildFileTree = (files: ProjectFileRow[]): FileTree => {
   const rootFiles = files.filter(f => f.path.indexOf('/') === -1).map(toApiProjectFile);
 
-  const folderMap = new Map<string, ProjectFile[]>();
+  const folderMap = new Map<string, ProjectFileRow[]>();
 
   for (const f of files) {
     const lastSlash = f.path.lastIndexOf('/');

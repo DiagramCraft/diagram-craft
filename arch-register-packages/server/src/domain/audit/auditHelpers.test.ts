@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { filterAndPaginateAuditLogs, computeAuditStats, toApiAuditLogEntry } from './auditHelpers';
-import type { AuditLogEntry } from '../../types';
+import { AuditLogEntryRow } from '@arch-register/server/domain/audit/db/auditDatabase';
 
-const makeEntry = (overrides: Partial<AuditLogEntry> & { id: string }): AuditLogEntry => ({
+const makeEntry = (overrides: Partial<AuditLogEntryRow> & { id: string }): AuditLogEntryRow => ({
   workspace: 'ws-1',
   timestamp: new Date('2026-05-27T10:00:00.000Z'), // 10 days before 2026-06-06
   user_id: 'u-1',
@@ -200,7 +200,7 @@ describe('computeAuditStats', () => {
 
 describe('toApiAuditLogEntry', () => {
   it('maps all fields and serializes timestamp', () => {
-    const entry: AuditLogEntry = {
+    const entry: AuditLogEntryRow = {
       id: 'audit-1',
       workspace: 'ws-1',
       timestamp: new Date('2025-06-01T12:00:00.000Z'),

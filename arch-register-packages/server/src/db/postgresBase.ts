@@ -28,7 +28,7 @@ export class PostgresDatabaseBase {
 }
 /*
 export type PostgresRowTypes = {
-  //  workspace: Workspace;
+  //workspace: Workspace;
   //lifecycleState: WorkspaceLifecycleState;
   //owner: WorkspaceOwner;
   //teamMembership: TeamMembership;
@@ -38,16 +38,16 @@ export type PostgresRowTypes = {
   //entityGrant: EntityGrant;
   //userPinnedEntity: UserPinnedEntity;
   //savedView: SavedView;
-
-  //entity: Entity;
-  //enrichedEntity: EnrichedEntity;
-  //enrichedProject: EnrichedProject;
-  //project: Project;
   //projectFile: ProjectFile;
   //auditLog: AuditLogEntry;
   //userWatch: UserWatch;
   //userNotification: UserNotification;
   //user: User;
   //globalRoleAssignment: GlobalRoleAssignment;
+
+  //entity: Entity;
+  //enrichedEntity: EnrichedEntity;
+  //enrichedProject: EnrichedProject;
+  //project: Project;
 };
 */

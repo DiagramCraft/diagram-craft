@@ -1,6 +1,7 @@
-import type { AuditOperation, AuditEntityType, Entity } from '../../../types';
+import type { AuditOperation, AuditEntityType } from './auditDatabase';
 import type { DatabaseAdapter } from '../../../db/database';
 import { createLogger } from '../../../utils/logger';
+import { Entity } from '@arch-register/server/types';
 
 const logger = createLogger('audit');
 
@@ -125,5 +126,5 @@ export const flattenEntityAuditFields = (entity: Entity): Record<string, unknown
   _tags: entity.tags,
   _links: entity.links,
   _visibilityMode: entity.visibility_mode,
-  ...entity.data,
+  ...entity.data
 });

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { User } from '../../types';
 import {
   toApiLifecycleState,
   toApiOwnerOption,
@@ -13,6 +12,7 @@ import {
   WorkspaceOwnerRow
 } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
 import { WorkspaceLifecycleStateRow } from './db/workspaceDatabase';
+import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -89,7 +89,7 @@ describe('toApiWorkspaceMember', () => {
       role: 'editor',
       created_at: now
     };
-    const user: User = {
+    const user: UserRow = {
       id: 'u-1',
       user_id: 'alice',
       email: 'a@b.com',
@@ -118,7 +118,7 @@ describe('toApiWorkspaceMember', () => {
 
 describe('toApiWorkspaceUser', () => {
   it('maps user fields', () => {
-    const user: User = {
+    const user: UserRow = {
       id: 'u-2',
       user_id: 'bob',
       email: 'b@c.com',

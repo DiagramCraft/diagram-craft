@@ -1,33 +1,39 @@
-import type { AuthDatabase, CreateUserInput, UpdateUserInput } from './authDatabase';
+import type {
+  AuthDatabase,
+  CreateUserInput,
+  GlobalRoleAssignmentRow,
+  UpdateUserInput,
+  UserRow
+} from './authDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
-import type { GlobalRole, GlobalRoleAssignment, User } from '../../../types';
+import type { GlobalRole } from '../../../types';
 
 export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDatabase {
   async getUser(id: string) {
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!UUID_RE.test(id)) return null;
-    const [row] = await this.sql<User[]>`
+    const [row] = await this.sql<UserRow[]>`
       SELECT * FROM users WHERE id = ${id}
     `;
     return row ?? null;
   }
 
   async getUserByUserId(userId: string) {
-    const [row] = await this.sql<User[]>`
+    const [row] = await this.sql<UserRow[]>`
       SELECT * FROM users WHERE user_id = ${userId}
     `;
     return row ?? null;
   }
 
   async getUserByEmail(email: string) {
-    const [row] = await this.sql<User[]>`
+    const [row] = await this.sql<UserRow[]>`
       SELECT * FROM users WHERE email = ${email}
     `;
     return row ?? null;
   }
 
   async getUserByOidc(issuer: string, subject: string) {
-    const [row] = await this.sql<User[]>`
+    const [row] = await this.sql<UserRow[]>`
       SELECT * FROM users
       WHERE oidc_issuer = ${issuer} AND oidc_subject = ${subject}
     `;
@@ -36,7 +42,7 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
 
   async createUser(input: CreateUserInput) {
     try {
-      const [row] = await this.sql<User[]>`
+      const [row] = await this.sql<UserRow[]>`
         INSERT INTO users (id, user_id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at)
         VALUES (
           ${input.id},
@@ -71,7 +77,7 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
       if (input.is_active !== undefined) sets.is_active = input.is_active;
       if (input.color !== undefined) sets.color = input.color;
 
-      const [row] = await this.sql<User[]>`
+      const [row] = await this.sql<UserRow[]>`
         UPDATE users
         SET ${this.sql(sets)}
         WHERE id = ${id}
@@ -96,14 +102,14 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
   }
 
   async listUsers() {
-    return await this.sql<User[]>`
+    return await this.sql<UserRow[]>`
       SELECT * FROM users ORDER BY display_name
     `;
   }
 
   async listGlobalRoleAssignments(userId?: string) {
     if (userId) {
-      return await this.sql<GlobalRoleAssignment[]>`
+      return await this.sql<GlobalRoleAssignmentRow[]>`
         SELECT user_id, role, created_at
         FROM global_role_assignment
         WHERE user_id = ${userId}
@@ -111,7 +117,7 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
       `;
     }
 
-    return await this.sql<GlobalRoleAssignment[]>`
+    return await this.sql<GlobalRoleAssignmentRow[]>`
       SELECT user_id, role, created_at
       FROM global_role_assignment
       ORDER BY user_id, role

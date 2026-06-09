@@ -1,4 +1,4 @@
-import type { AuditOperation, Entity, GlobalRoleAssignment, Project, ProjectFile } from '../types';
+import type { Entity, Project } from '../types';
 import {
   AR_COLOR_GREEN,
   AR_COLOR_BLUE,
@@ -23,6 +23,9 @@ import {
   SavedViewRow,
   WorkspaceEnumRow
 } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { ProjectFileRow } from '@arch-register/server/domain/project/db/projectDatabase';
+import { AuditOperation } from '@arch-register/server/domain/audit/db/auditDatabase';
+import { GlobalRoleAssignmentRow } from '@arch-register/server/domain/auth/db/authDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -325,7 +328,7 @@ export const seedTeamAssignments: TeamMembershipRow[] = [
   }
 ];
 
-export const seedGlobalRoleAssignments: GlobalRoleAssignment[] = [
+export const seedGlobalRoleAssignments: GlobalRoleAssignmentRow[] = [
   { user_id: USER_IDS.globaladmin, role: 'global_admin', created_at: now },
   { user_id: USER_IDS.globaladmin, role: 'workspace_admin', created_at: now },
   { user_id: USER_IDS.workspaceadmin, role: 'workspace_admin', created_at: now }
@@ -884,4 +887,4 @@ export const seedNotificationEvents: Array<{
   }
 ];
 
-export const seedProjectFiles: ProjectFile[] = [];
+export const seedProjectFiles: ProjectFileRow[] = [];

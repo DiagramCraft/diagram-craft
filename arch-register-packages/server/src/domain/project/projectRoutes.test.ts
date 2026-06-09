@@ -7,7 +7,8 @@ import {
   parseProjectStatus,
   resolveProjectOwner
 } from './projectRoutes';
-import type { Project, ProjectFile } from '../../types';
+import type { Project } from '../../types';
+import { ProjectFileRow } from '@arch-register/server/domain/project/db/projectDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
@@ -116,7 +117,7 @@ describe('project route helpers', () => {
   });
 
   it('builds a file tree with sorted folders and root files', () => {
-    const files: ProjectFile[] = [
+    const files: ProjectFileRow[] = [
       {
         id: 'f-root',
         workspace: 'default',

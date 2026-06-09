@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
-import type { JWTPayload, User } from '../types';
+import type { JWTPayload } from '../types';
+import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
 
 const getSecret = (): string => {
   const secret = process.env['JWT_SECRET'];
@@ -35,7 +36,7 @@ export const parseExpiryToSeconds = (expiry: string): number => {
   }
 };
 
-export const generateAccessToken = (user: User): string => {
+export const generateAccessToken = (user: UserRow): string => {
   const payload: Omit<JWTPayload, 'iat' | 'exp'> = {
     sub: user.id,
     email: user.email ?? undefined,
@@ -49,7 +50,7 @@ export const generateAccessToken = (user: User): string => {
   });
 };
 
-export const generateRefreshToken = (user: User): string => {
+export const generateRefreshToken = (user: UserRow): string => {
   const payload: Omit<JWTPayload, 'iat' | 'exp'> = {
     sub: user.id,
     email: user.email ?? undefined,
@@ -71,7 +72,7 @@ export const verifyToken = (token: string): JWTPayload => {
   }
 };
 
-export const generateTokenPair = (user: User) => {
+export const generateTokenPair = (user: UserRow) => {
   return {
     access_token: generateAccessToken(user),
     refresh_token: generateRefreshToken(user),

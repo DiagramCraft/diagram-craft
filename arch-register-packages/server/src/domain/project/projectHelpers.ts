@@ -1,6 +1,6 @@
 import type { Project, ProjectFile, FileTree, ProjectDetail } from '@arch-register/api-types';
 import type { EnrichedProject } from './db/projectDatabase';
-import type { ProjectFile as InternalProjectFile } from '../../types';
+import type { ProjectFileRow as InternalProjectFile } from './db/projectDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 
 const getProjectCapabilities = (

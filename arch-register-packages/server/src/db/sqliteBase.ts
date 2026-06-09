@@ -2,15 +2,9 @@ import type { Database as DatabaseType } from 'better-sqlite3';
 import type {
   AiConversation,
   AiMessage,
-  AuditLogEntry,
   Entity,
   EntityLink,
-  GlobalRoleAssignment,
   Project,
-  ProjectFile,
-  User,
-  UserNotification,
-  UserWatch,
   WorkspaceAiConfig
 } from '../types';
 import type {
@@ -21,7 +15,7 @@ import type {
   UserPinnedEntityRow,
   WorkspaceEnumRow
 } from '../domain/catalog/db/catalogDatabase';
-import type { EnrichedProject } from '../domain/project/db/projectDatabase';
+import type { EnrichedProject, ProjectFileRow } from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
 import {
@@ -31,6 +25,15 @@ import {
   WorkspaceRoleDefinitionRow,
   WorkspaceRow
 } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
+import { AuditLogEntryRow } from '@arch-register/server/domain/audit/db/auditDatabase';
+import {
+  UserNotificationRow,
+  UserWatchRow
+} from '@arch-register/server/domain/watch/db/watchDatabase';
+import {
+  GlobalRoleAssignmentRow,
+  UserRow
+} from '@arch-register/server/domain/auth/db/authDatabase';
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
   if (typeof value !== 'string' || value === '') return fallback;
@@ -181,7 +184,7 @@ export const sqliteMappers = {
     updated_at: toDate(row['updated_at']),
     owner_name: row['owner_name'] == null ? null : String(row['owner_name'])
   }),
-  projectFile: (row: Record<string, unknown>): ProjectFile => ({
+  projectFile: (row: Record<string, unknown>): ProjectFileRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     project_id: String(row['project_id']),
@@ -196,13 +199,13 @@ export const sqliteMappers = {
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
-  auditLog: (row: Record<string, unknown>): AuditLogEntry => ({
+  auditLog: (row: Record<string, unknown>): AuditLogEntryRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     timestamp: toDate(row['timestamp']),
     user_id: row['user_id'] == null ? null : String(row['user_id']),
-    operation: row['operation'] as AuditLogEntry['operation'],
-    entity_type: row['entity_type'] as AuditLogEntry['entity_type'],
+    operation: row['operation'] as AuditLogEntryRow['operation'],
+    entity_type: row['entity_type'] as AuditLogEntryRow['entity_type'],
     entity_id: String(row['entity_id']),
     entity_name: String(row['entity_name']),
     entity_slug: row['entity_slug'] == null ? null : String(row['entity_slug']),
@@ -210,7 +213,7 @@ export const sqliteMappers = {
     changes: parseJson(row['changes'], {}),
     metadata: parseJson(row['metadata'], {})
   }),
-  userWatch: (row: Record<string, unknown>): UserWatch => ({
+  userWatch: (row: Record<string, unknown>): UserWatchRow => ({
     user_id: String(row['user_id']),
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
@@ -222,13 +225,13 @@ export const sqliteMappers = {
     entity_id: String(row['entity_id']),
     created_at: toDate(row['created_at'])
   }),
-  userNotification: (row: Record<string, unknown>): UserNotification => ({
+  userNotification: (row: Record<string, unknown>): UserNotificationRow => ({
     id: String(row['id']),
     user_id: String(row['user_id']),
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
     audit_log_id: String(row['audit_log_id']),
-    operation: row['operation'] as UserNotification['operation'],
+    operation: row['operation'] as UserNotificationRow['operation'],
     entity_name: String(row['entity_name']),
     entity_slug: String(row['entity_slug']),
     schema_id: row['schema_id'] == null ? null : String(row['schema_id']),
@@ -237,12 +240,12 @@ export const sqliteMappers = {
     timestamp: toDate(row['timestamp']),
     created_at: toDate(row['created_at'])
   }),
-  user: (row: Record<string, unknown>): User => ({
+  user: (row: Record<string, unknown>): UserRow => ({
     id: String(row['id']),
     user_id: String(row['user_id']),
     email: row['email'] == null ? null : String(row['email']),
     display_name: String(row['display_name']),
-    auth_provider: String(row['auth_provider']) as User['auth_provider'],
+    auth_provider: String(row['auth_provider']) as UserRow['auth_provider'],
     password_hash: row['password_hash'] == null ? null : String(row['password_hash']),
     oidc_issuer: row['oidc_issuer'] == null ? null : String(row['oidc_issuer']),
     oidc_subject: row['oidc_subject'] == null ? null : String(row['oidc_subject']),
@@ -259,9 +262,9 @@ export const sqliteMappers = {
     role: String(row['role']) as TeamMembershipRow['role'],
     created_at: toDate(row['created_at'])
   }),
-  globalRoleAssignment: (row: Record<string, unknown>): GlobalRoleAssignment => ({
+  globalRoleAssignment: (row: Record<string, unknown>): GlobalRoleAssignmentRow => ({
     user_id: String(row['user_id']),
-    role: String(row['role']) as GlobalRoleAssignment['role'],
+    role: String(row['role']) as GlobalRoleAssignmentRow['role'],
     created_at: toDate(row['created_at'])
   }),
   workspaceRoleDefinition: (row: Record<string, unknown>): WorkspaceRoleDefinitionRow => ({
