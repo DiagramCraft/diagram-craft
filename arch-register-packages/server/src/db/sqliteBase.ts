@@ -17,16 +17,10 @@ import {
   WorkspaceOwnerRow,
   WorkspaceRoleDefinitionRow,
   WorkspaceRow
-} from '@arch-register/server/domain/workspace/db/workspaceDatabase';
-import { AuditLogEntryRow } from '@arch-register/server/domain/audit/db/auditDatabase';
-import {
-  UserNotificationRow,
-  UserWatchRow
-} from '@arch-register/server/domain/watch/db/watchDatabase';
-import {
-  GlobalRoleAssignmentRow,
-  UserRow
-} from '@arch-register/server/domain/auth/db/authDatabase';
+} from '../domain/workspace/db/workspaceDatabase';
+import { AuditLogEntryRow } from '../domain/audit/db/auditDatabase';
+import { UserNotificationRow, UserWatchRow } from '../domain/watch/db/watchDatabase';
+import { GlobalRoleAssignmentRow, UserRow } from '../domain/auth/db/authDatabase';
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
   if (typeof value !== 'string' || value === '') return fallback;

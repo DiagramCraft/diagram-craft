@@ -10,7 +10,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiWorkspace } from './workspaceHelpers';
 import { SCHEMA_TEMPLATES, instantiateTemplate } from '../catalog/schemaTemplates';
-import { WorkspaceRow } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
+import { WorkspaceRow } from './db/workspaceDatabase';
 
 const BASE = '/api/workspaces';
 

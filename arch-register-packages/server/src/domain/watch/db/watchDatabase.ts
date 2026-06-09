@@ -1,7 +1,4 @@
-import {
-  AuditLogEntryRow,
-  AuditOperation
-} from '@arch-register/server/domain/audit/db/auditDatabase';
+import { AuditLogEntryRow, AuditOperation } from '../../audit/db/auditDatabase';
 
 export type UserWatchRow = {
   user_id: string;

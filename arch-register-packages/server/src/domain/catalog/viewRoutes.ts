@@ -17,7 +17,7 @@ import type {
 import type { PinnedEntity } from '@arch-register/api-types';
 import type { Entity } from '../../types';
 import { PermissionChecker } from '@arch-register/permissions';
-import { SavedViewRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { SavedViewRow } from './db/catalogDatabase';
 
 const BASE = '/api/:workspace/views';
 const PINNED_BASE = '/api/:workspace/pinned-entities';

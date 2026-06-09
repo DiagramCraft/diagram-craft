@@ -8,7 +8,7 @@ import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toDiagramCraftData, toDiagramCraftSchema } from './diagramCraftTransforms';
-import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntitySchemaRow } from '../catalog/db/catalogDatabase';
 
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024;
 const CONTENT_TYPE_JSON = 'application/json';

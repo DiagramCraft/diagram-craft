@@ -1,7 +1,7 @@
 import type { AuditOperation, AuditEntityType } from './auditDatabase';
 import type { DatabaseAdapter } from '../../../db/database';
 import { createLogger } from '../../../utils/logger';
-import { Entity } from '@arch-register/server/types';
+import { Entity } from '../../../types';
 
 const logger = createLogger('audit');
 

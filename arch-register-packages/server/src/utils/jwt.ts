@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import type { JWTPayload } from '../types';
-import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
+import { UserRow } from '../domain/auth/db/authDatabase';
 
 const getSecret = (): string => {
   const secret = process.env['JWT_SECRET'];

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildAllTemplatesResponse, buildProjectTemplatesResponse } from './templateHelpers';
-import { ProjectFileRow } from '@arch-register/server/domain/project/db/projectDatabase';
+import { ProjectFileRow } from '../project/db/projectDatabase';
 
 const now = new Date('2026-06-06T00:00:00.000Z');
 

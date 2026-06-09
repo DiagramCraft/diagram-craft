@@ -1,5 +1,5 @@
 import type { Entity } from '../types';
-import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntitySchemaRow } from '../domain/catalog/db/catalogDatabase';
 
 const isNonEmpty = (value: unknown): boolean => {
   if (value == null) return false;

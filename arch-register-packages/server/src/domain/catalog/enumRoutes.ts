@@ -11,10 +11,7 @@ import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorizati
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiEnum } from './schemaHelpers';
-import {
-  EntitySchemaRow,
-  WorkspaceEnumRow
-} from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntitySchemaRow, WorkspaceEnumRow } from './db/catalogDatabase';
 
 const BASE = '/api/:workspace/enums';
 

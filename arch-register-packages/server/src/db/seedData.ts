@@ -17,18 +17,15 @@ import {
   WorkspaceRow,
   WorkspaceOwnerRow,
   WorkspaceLifecycleStateRow
-} from '@arch-register/server/domain/workspace/db/workspaceDatabase';
+} from '../domain/workspace/db/workspaceDatabase';
 import {
   EntitySchemaRow,
   SavedViewRow,
   WorkspaceEnumRow
-} from '@arch-register/server/domain/catalog/db/catalogDatabase';
-import {
-  CreateProjectInput,
-  ProjectFileRow
-} from '@arch-register/server/domain/project/db/projectDatabase';
-import { AuditOperation } from '@arch-register/server/domain/audit/db/auditDatabase';
-import { GlobalRoleAssignmentRow } from '@arch-register/server/domain/auth/db/authDatabase';
+} from '../domain/catalog/db/catalogDatabase';
+import { CreateProjectInput, ProjectFileRow } from '../domain/project/db/projectDatabase';
+import { AuditOperation } from '../domain/audit/db/auditDatabase';
+import { GlobalRoleAssignmentRow } from '../domain/auth/db/authDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 

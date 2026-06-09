@@ -2,8 +2,8 @@ import { buildAuthorizationContext } from '@arch-register/permissions';
 import { describe, expect, it } from 'vitest';
 import type { Entity } from '../../types';
 import { canAccessNotification } from './watchRoutes';
-import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
-import { UserNotificationRow } from '@arch-register/server/domain/watch/db/watchDatabase';
+import { EntitySchemaRow } from '../catalog/db/catalogDatabase';
+import { UserNotificationRow } from './db/watchDatabase';
 
 const now = new Date('2026-06-09T10:00:00.000Z');
 

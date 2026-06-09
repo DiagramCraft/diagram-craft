@@ -8,7 +8,7 @@ import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorizati
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiSchema } from './schemaHelpers';
-import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntitySchemaRow } from './db/catalogDatabase';
 
 const BASE = '/api/:workspace/schemas';
 

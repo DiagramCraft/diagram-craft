@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiChatTools } from './chatTools';
 import type { DatabaseAdapter } from '../../db/database';
-import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
-import { Entity } from '@arch-register/server/types';
-import { AuditLogEntryRow } from '@arch-register/server/domain/audit/db/auditDatabase';
+import { EntitySchemaRow } from '../catalog/db/catalogDatabase';
+import { Entity } from '../../types';
+import { AuditLogEntryRow } from '../audit/db/auditDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 

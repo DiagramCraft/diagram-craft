@@ -5,7 +5,7 @@ import {
   parseRequestedGlobalRoles,
   selectRefreshToken
 } from './authRoutes';
-import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
+import { UserRow } from './db/authDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

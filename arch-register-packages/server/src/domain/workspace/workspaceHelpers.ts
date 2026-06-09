@@ -11,7 +11,7 @@ import {
   WorkspaceRow,
   WorkspaceLifecycleStateRow as InternalWorkspaceLifecycleState
 } from './db/workspaceDatabase';
-import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
+import { UserRow } from '../auth/db/authDatabase';
 
 export const toApiWorkspace = (workspace: WorkspaceRow): Workspace => ({
   id: workspace.id,

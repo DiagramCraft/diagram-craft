@@ -7,7 +7,7 @@ import {
   normalizeReplicationInclude,
   shortCode
 } from './workspaceRoutes';
-import { WorkspaceRow } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
+import { WorkspaceRow } from './db/workspaceDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

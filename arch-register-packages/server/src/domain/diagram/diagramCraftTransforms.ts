@@ -1,8 +1,5 @@
 import type { Entity, DiagramCraftEntityResponse, ReferenceField, SchemaField } from '../../types';
-import {
-  EntitySchemaRow,
-  WorkspaceEnumRow
-} from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntitySchemaRow, WorkspaceEnumRow } from '../catalog/db/catalogDatabase';
 
 export type DiagramCraftSchemaField =
   | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' }>

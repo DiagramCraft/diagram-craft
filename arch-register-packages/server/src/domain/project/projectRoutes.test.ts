@@ -7,10 +7,7 @@ import {
   parseProjectStatus,
   resolveProjectOwner
 } from './projectRoutes';
-import {
-  ProjectFileRow,
-  type UpdateProjectInput
-} from '@arch-register/server/domain/project/db/projectDatabase';
+import { ProjectFileRow, type UpdateProjectInput } from './db/projectDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

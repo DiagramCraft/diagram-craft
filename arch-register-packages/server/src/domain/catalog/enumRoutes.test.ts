@@ -4,10 +4,7 @@ import {
   buildUpdateEnumInput,
   isEnumReferencedBySchemas
 } from './enumRoutes';
-import {
-  EntitySchemaRow,
-  WorkspaceEnumRow
-} from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntitySchemaRow, WorkspaceEnumRow } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

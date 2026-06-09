@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { toApiEnum, toApiSchema } from './schemaHelpers';
-import {
-  EntitySchemaRow,
-  WorkspaceEnumRow
-} from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntitySchemaRow, WorkspaceEnumRow } from './db/catalogDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';

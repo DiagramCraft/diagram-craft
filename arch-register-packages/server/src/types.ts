@@ -1,8 +1,5 @@
-import {
-  AuditEntityType,
-  AuditOperation
-} from '@arch-register/server/domain/audit/db/auditDatabase';
-import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
+import { AuditEntityType, AuditOperation } from './domain/audit/db/auditDatabase';
+import { UserRow } from './domain/auth/db/authDatabase';
 
 export type {
   EntityCapabilities,

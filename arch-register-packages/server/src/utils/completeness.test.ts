@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Entity } from '../types';
 import { computeEntityCompleteness } from './completeness';
-import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntitySchemaRow } from '../domain/catalog/db/catalogDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 

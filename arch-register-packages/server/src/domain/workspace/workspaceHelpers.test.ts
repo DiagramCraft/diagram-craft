@@ -6,13 +6,9 @@ import {
   toApiWorkspaceMember,
   toApiWorkspaceUser
 } from './workspaceHelpers';
-import {
-  WorkspaceMemberRow,
-  WorkspaceRow,
-  WorkspaceOwnerRow
-} from '@arch-register/server/domain/workspace/db/workspaceDatabase';
+import { WorkspaceMemberRow, WorkspaceRow, WorkspaceOwnerRow } from './db/workspaceDatabase';
 import { WorkspaceLifecycleStateRow } from './db/workspaceDatabase';
-import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
+import { UserRow } from '../auth/db/authDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';

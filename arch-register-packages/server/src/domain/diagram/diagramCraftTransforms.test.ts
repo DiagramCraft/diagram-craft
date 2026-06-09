@@ -5,10 +5,7 @@ import {
   toDiagramCraftSchema
 } from './diagramCraftTransforms';
 import type { Entity } from '../../types';
-import {
-  EntitySchemaRow,
-  WorkspaceEnumRow
-} from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntitySchemaRow, WorkspaceEnumRow } from '../catalog/db/catalogDatabase';
 
 describe('diagram craft transforms', () => {
   it('keeps containment fields in diagram craft schema responses', () => {

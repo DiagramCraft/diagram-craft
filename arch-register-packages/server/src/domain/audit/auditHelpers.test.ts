@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { filterAndPaginateAuditLogs, computeAuditStats, toApiAuditLogEntry } from './auditHelpers';
-import { AuditLogEntryRow } from '@arch-register/server/domain/audit/db/auditDatabase';
+import { AuditLogEntryRow } from './db/auditDatabase';
 
 const makeEntry = (overrides: Partial<AuditLogEntryRow> & { id: string }): AuditLogEntryRow => ({
   workspace: 'ws-1',

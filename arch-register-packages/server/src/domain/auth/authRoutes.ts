@@ -14,7 +14,7 @@ import {
 } from '@arch-register/permissions';
 import { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
-import { UserRow } from '@arch-register/server/domain/auth/db/authDatabase';
+import { UserRow } from './db/authDatabase';
 
 // Clean up expired OIDC states every 5 minutes
 const cleanupTimer = setInterval(
