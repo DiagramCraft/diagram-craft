@@ -1,6 +1,5 @@
-import type { AuthDatabase, CreateUserInput, UpdateUserInput } from './authDatabase';
+import type { AuthDatabase, CreateUserInput, GlobalRole, UpdateUserInput } from './authDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
-import type { GlobalRole } from '../../../types';
 
 export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDatabase {
   async getUser(id: string) {

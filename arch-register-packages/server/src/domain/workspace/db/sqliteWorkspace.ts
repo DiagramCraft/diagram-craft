@@ -9,8 +9,9 @@ import {
   WorkspaceDatabase,
   WorkspaceMemberRow
 } from './workspaceDatabase';
-import type { WorkspaceRole } from '../../../types';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+
+type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
 
 export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements WorkspaceDatabase {
   async listWorkspaces() {

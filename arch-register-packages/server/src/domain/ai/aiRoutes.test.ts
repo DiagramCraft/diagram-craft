@@ -6,7 +6,7 @@ import {
   extractUserTextContent,
   parseExtractResponse
 } from './aiRoutes';
-import type { WorkspaceAiConfig } from '../../types';
+import { WorkspaceAiConfig } from '@arch-register/server/domain/ai/db/aiDatabase';
 
 const now = new Date('2026-06-07T10:00:00.000Z');
 

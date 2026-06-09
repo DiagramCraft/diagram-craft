@@ -6,7 +6,7 @@ import { verifyPassword } from '../../utils/password';
 import { generateTokenPair, verifyToken } from '../../utils/jwt';
 import { generateAuthUrl, handleCallback } from './oidcClient';
 import { clearAuthCookies, setAuthCookies } from '../../utils/cookies';
-import type { GlobalRole, JWTPayload } from '../../types';
+import type { JWTPayload } from '../../types';
 import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from './authorization';
 import {
   getGlobalPermissionsForRoles,
@@ -14,7 +14,7 @@ import {
 } from '@arch-register/permissions';
 import { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
-import { UserRow } from './db/authDatabase';
+import { GlobalRole, UserRow } from './db/authDatabase';
 
 // Clean up expired OIDC states every 5 minutes
 const cleanupTimer = setInterval(
@@ -116,7 +116,7 @@ export const buildUserUpdateInput = (body: UserUpdateBody, updatedAt: Date) => {
 
 export const parseRequestedGlobalRoles = (requestedRoles: unknown[]) => {
   const roles = requestedRoles.filter(
-    (role): role is 'global_admin' | 'workspace_admin' =>
+    (role): role is GlobalRole =>
       typeof role === 'string' && ['global_admin', 'workspace_admin'].includes(role)
   );
   httpAssert.true(roles.length === requestedRoles.length, {

@@ -11,7 +11,7 @@ import { resolveAiConfig, createAiTextAdapter } from './tanstackAiAdapter';
 import { buildSystemPrompt } from './systemPromptBuilder';
 import { createAiChatTools } from './chatTools';
 import type { UpsertAiConfigInput } from '../../db/database';
-import type { WorkspaceAiConfig } from '../../types';
+import { WorkspaceAiConfig } from '@arch-register/server/domain/ai/db/aiDatabase';
 
 const BASE = '/api/:workspace/ai';
 

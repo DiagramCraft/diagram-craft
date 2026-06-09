@@ -1,12 +1,12 @@
 import type {
   AuthDatabase,
   CreateUserInput,
+  GlobalRole,
   GlobalRoleAssignmentRow,
   UpdateUserInput,
   UserRow
 } from './authDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
-import type { GlobalRole } from '../../../types';
 
 export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDatabase {
   async getUser(id: string) {

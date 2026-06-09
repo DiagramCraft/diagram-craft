@@ -1,5 +1,5 @@
 import type { Database as DatabaseType } from 'better-sqlite3';
-import type { AiConversation, AiMessage, EntityLink, WorkspaceAiConfig } from '../types';
+import type { EntityLink } from '../types';
 import type {
   EntityRow,
   BaseEntity,
@@ -22,6 +22,11 @@ import {
 import { AuditLogEntryRow } from '../domain/audit/db/auditDatabase';
 import { UserNotificationRow, UserWatchRow } from '../domain/watch/db/watchDatabase';
 import { GlobalRoleAssignmentRow, UserRow } from '../domain/auth/db/authDatabase';
+import {
+  AiConversation,
+  AiMessage,
+  WorkspaceAiConfig
+} from '@arch-register/server/domain/ai/db/aiDatabase';
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
   if (typeof value !== 'string' || value === '') return fallback;

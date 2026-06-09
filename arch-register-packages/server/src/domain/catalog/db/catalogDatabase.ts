@@ -1,4 +1,4 @@
-import { EntityLink, EntityRole, SchemaField, VisibilityMode } from '../../../types';
+import { EntityLink, SchemaField, VisibilityMode } from '../../../types';
 import { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-types/views';
 
 // -- Entity Schema
@@ -48,6 +48,8 @@ export type EntityGrantRow = {
   applies_to: EntityGrantScope;
   created_at: Date;
 };
+
+type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 
 type EntityGrantScope = 'self' | 'subtree';
 

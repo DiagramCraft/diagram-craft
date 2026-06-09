@@ -1,6 +1,5 @@
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
-import { type GlobalPermission } from '../../types';
 import {
   type AuthorizationContext,
   buildAuthorizationContext,
@@ -20,6 +19,8 @@ export const GLOBAL_WS = '__global__';
 // Singleton instances for performance
 const checker = new PermissionChecker();
 const capabilities = new CapabilityEvaluator();
+
+type GlobalPermission = 'admin_platform' | 'create_workspaces' | 'manage_workspace_roles';
 
 /**
  * Require a specific entity action, throw 403 if not allowed.

@@ -1,4 +1,4 @@
-import type { AuthProvider, GlobalRole } from '../../../types';
+import type { AuthProvider } from '../../../types';
 
 // -- Global Role Assignment
 
@@ -7,6 +7,8 @@ export type GlobalRoleAssignmentRow = {
   role: GlobalRole;
   created_at: Date;
 };
+
+export type GlobalRole = 'global_admin' | 'workspace_admin';
 
 // -- User
 
