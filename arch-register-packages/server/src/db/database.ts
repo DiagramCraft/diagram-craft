@@ -3,6 +3,7 @@ import type { AuditDatabase } from '../domain/audit/db/auditDatabase';
 import type { AuthDatabase } from '../domain/auth/db/authDatabase';
 import type { CatalogDatabase, ViewDatabase } from '../domain/catalog/db/catalogDatabase';
 import type { ProjectDatabase } from '../domain/project/db/projectDatabase';
+import type { WatchDatabase } from '../domain/watch/db/watchDatabase';
 import type { WorkspaceDatabase } from '../domain/workspace/db/workspaceDatabase';
 
 export type DbDriver = 'postgres' | 'sqlite';
@@ -32,6 +33,7 @@ export type DatabaseAdapter = {
   view: ViewDatabase;
   project: ProjectDatabase;
   audit: AuditDatabase;
+  watch: WatchDatabase;
   auth: AuthDatabase;
   ai: AiDatabase;
 };
@@ -45,6 +47,11 @@ export type {
 } from '../domain/ai/db/aiDatabase';
 export type { AuditDatabase, CreateAuditLogInput } from '../domain/audit/db/auditDatabase';
 export type { AuthDatabase, CreateUserInput, UpdateUserInput } from '../domain/auth/db/authDatabase';
+export type {
+  WatchDatabase,
+  CreateUserWatchInput,
+  CreateNotificationsFromAuditInput
+} from '../domain/watch/db/watchDatabase';
 export type {
   CatalogDatabase,
   ViewDatabase,

@@ -274,7 +274,11 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
       const systemPrompt = await buildPrompt(db, workspace, aiConfig.systemPrompt);
       const adapter = createAdapter(aiConfig);
       const abortController = new AbortController();
-      const tools = createTools(db, workspace, authCtx);
+      const user = (event as AuthenticatedEvent).context.user;
+      const tools = createTools(db, workspace, authCtx, {
+        id: user.id,
+        displayName: user.display_name
+      });
 
       const stream = chatImpl({
         adapter,

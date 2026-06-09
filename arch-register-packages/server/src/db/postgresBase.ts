@@ -14,7 +14,9 @@ import type {
   WorkspaceOwner,
   TeamMembership,
   EntityGrant,
-  SavedView
+  SavedView,
+  UserNotification,
+  UserWatch
 } from '../types';
 import { DB_ERROR_CODES } from '../constants';
 import { DatabaseError } from './database';
@@ -57,6 +59,8 @@ export type PostgresRowTypes = {
   project: Project;
   projectFile: ProjectFile;
   auditLog: AuditLogEntry;
+  userWatch: UserWatch;
+  userNotification: UserNotification;
   user: User;
   globalRoleAssignment: GlobalRoleAssignment;
   workspaceRoleDefinition: WorkspaceRoleDefinition;

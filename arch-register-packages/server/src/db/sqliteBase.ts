@@ -12,6 +12,8 @@ import type {
   ProjectFile,
   TeamMembership,
   User,
+  UserNotification,
+  UserWatch,
   Workspace,
   WorkspaceAiConfig,
   WorkspaceEnum,
@@ -158,6 +160,27 @@ export const sqliteMappers = {
     schema_id: row['schema_id'] == null ? null : String(row['schema_id']),
     changes: parseJson(row['changes'], {}),
     metadata: parseJson(row['metadata'], {})
+  }),
+  userWatch: (row: Record<string, unknown>): UserWatch => ({
+    user_id: String(row['user_id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    created_at: toDate(row['created_at'])
+  }),
+  userNotification: (row: Record<string, unknown>): UserNotification => ({
+    id: String(row['id']),
+    user_id: String(row['user_id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    audit_log_id: String(row['audit_log_id']),
+    operation: row['operation'] as UserNotification['operation'],
+    entity_name: String(row['entity_name']),
+    entity_slug: String(row['entity_slug']),
+    schema_id: row['schema_id'] == null ? null : String(row['schema_id']),
+    changed_by_user_id: String(row['changed_by_user_id']),
+    changed_by_display_name: String(row['changed_by_display_name']),
+    timestamp: toDate(row['timestamp']),
+    created_at: toDate(row['created_at'])
   }),
   user: (row: Record<string, unknown>): User => ({
     id: String(row['id']),

@@ -291,6 +291,7 @@ export const WorkspaceLayout = () => {
         <TopBar
           workspaces={workspaces}
           currentWs={ws?.id ?? ''}
+          workspaceSlug={workspaceSlug}
           onPickWs={handlePickWs}
           trail={trail}
           query={query}

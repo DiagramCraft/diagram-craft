@@ -11,6 +11,7 @@ import { SqliteProjectDatabase } from '../domain/project/db/sqliteProject';
 import { SqliteWorkspaceDatabase } from '../domain/workspace/db/sqliteWorkspace';
 import { SqliteAiDatabase } from '../domain/ai/db/sqliteAi';
 import { SqliteViewDatabase } from '../domain/catalog/db/sqliteView';
+import { SqliteWatchDatabase } from '../domain/watch/db/sqliteWatch';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -22,6 +23,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly view;
   readonly project;
   readonly audit;
+  readonly watch;
   readonly auth;
   readonly ai;
 
@@ -36,6 +38,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.view = new SqliteViewDatabase(() => this.db);
     this.project = new SqliteProjectDatabase(() => this.db);
     this.audit = new SqliteAuditDatabase(() => this.db);
+    this.watch = new SqliteWatchDatabase(() => this.db);
     this.auth = new SqliteAuthDatabase(() => this.db);
     this.ai = new SqliteAiDatabase(() => this.db);
 

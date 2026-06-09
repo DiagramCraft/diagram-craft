@@ -191,6 +191,29 @@ export type AuditLogEntry = {
   metadata: Record<string, unknown>;
 };
 
+export type UserWatch = {
+  user_id: string;
+  workspace: string;
+  entity_id: string;
+  created_at: Date;
+};
+
+export type UserNotification = {
+  id: string;
+  user_id: string;
+  workspace: string;
+  entity_id: string;
+  audit_log_id: string;
+  operation: AuditOperation;
+  entity_name: string;
+  entity_slug: string;
+  schema_id: string | null;
+  changed_by_user_id: string;
+  changed_by_display_name: string;
+  timestamp: Date;
+  created_at: Date;
+};
+
 export type AuditLogApiResponse = {
   id: string;
   workspace: string;

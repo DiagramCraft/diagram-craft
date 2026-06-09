@@ -20,6 +20,7 @@ import type {
 } from '@arch-register/api-types/views';
 import { entityKeys, schemaKeys, viewKeys } from './queryKeys';
 import { invalidateAuditQueries } from './useAudit';
+import { invalidateNotificationQueries } from './useNotifications';
 
 // Hook for fetching entity list
 export const useEntities = (
@@ -97,6 +98,7 @@ export const useDeleteEntity = (workspaceId: string) => {
       // Invalidate schema queries to update entity counts in sidebar
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
       await invalidateAuditQueries(queryClient, workspaceId);
+      await invalidateNotificationQueries(queryClient, workspaceId);
     }
   });
 };

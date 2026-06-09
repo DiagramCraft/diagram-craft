@@ -15,7 +15,8 @@ import {
   TbTrash,
   TbPlus,
   TbX,
-  TbCopy
+  TbCopy,
+  TbBell
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
 import type {
@@ -38,6 +39,7 @@ import {
   useEntitiesBySchema
 } from '../../hooks/useEntities';
 import { useAuditLog } from '../../hooks/useAudit';
+import { useCreateWatch, useDeleteWatch, useWatchedEntities } from '../../hooks/useNotifications';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
 
@@ -110,6 +112,9 @@ export const EntityDetailScreen = () => {
   const updateEntity = useUpdateEntity(workspaceId);
   const deleteEntity = useDeleteEntity(workspaceId);
   const cloneEntity = useCloneEntity(workspaceId);
+  const createWatch = useCreateWatch(workspaceId);
+  const deleteWatch = useDeleteWatch(workspaceId);
+  const { data: watchedEntities = [] } = useWatchedEntities(workspaceId);
 
   const schemaEntry = useMemo(() => {
     if (!entity) return null;
@@ -120,6 +125,7 @@ export const EntityDetailScreen = () => {
     }
     return null;
   }, [entity, schemas]);
+  const isWatched = watchedEntities.some(item => item.entity_id === entityId);
 
   const schema = schemaEntry?.schema ?? null;
   const color = schemaEntry
@@ -345,11 +351,25 @@ export const EntityDetailScreen = () => {
         </div>
         <div className={styles.headActions}>
           {!editing ? (
-            entity.canEdit ? (
-              <Button icon={<TbEdit size={12} />} onClick={startEdit}>
-                Edit
-              </Button>
-            ) : null
+            <>
+              <button
+                type="button"
+                className={`${styles.watchBtn} ${isWatched ? styles.watchBtnActive : ''}`}
+                onClick={() =>
+                  isWatched ? deleteWatch.mutate(entityId) : createWatch.mutate(entityId)
+                }
+                disabled={createWatch.isPending || deleteWatch.isPending}
+                title={isWatched ? 'Unwatch entity' : 'Watch entity'}
+                aria-label={isWatched ? 'Unwatch entity' : 'Watch entity'}
+              >
+                <TbBell size={16} />
+              </button>
+              {entity.canEdit ? (
+                <Button icon={<TbEdit size={12} />} onClick={startEdit}>
+                  Edit
+                </Button>
+              ) : null}
+            </>
           ) : (
             <>
               {entity.canDelete && (

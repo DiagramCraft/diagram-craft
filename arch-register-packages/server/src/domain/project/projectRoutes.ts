@@ -226,7 +226,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           );
         const row = await db.project.createProject(input);
 
-        await logAudit(db.audit, {
+        await logAudit(db, {
           workspace,
           operation: 'create',
           entityType: 'project',
@@ -285,7 +285,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 
-        await logAudit(db.audit, {
+        await logAudit(db, {
           workspace,
           operation: 'update',
           entityType: 'project',
@@ -322,7 +322,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         await db.project.deleteProject(workspace, id);
 
-        await logAudit(db.audit, {
+        await logAudit(db, {
           workspace,
           operation: 'delete',
           entityType: 'project',
@@ -476,7 +476,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             extractEntityFields(existingFile),
             extractEntityFields(row)
           );
-          await logAudit(db.audit, {
+          await logAudit(db, {
             workspace,
             operation: 'update',
             entityType: 'project_file',
@@ -486,7 +486,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             metadata: { project_id: id, path: filePath }
           });
         } else {
-          await logAudit(db.audit, {
+          await logAudit(db, {
             workspace,
             operation: 'create',
             entityType: 'project_file',
@@ -529,7 +529,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         await db.project.deleteProjectFileByPath(workspace, id, filePath);
 
-        await logAudit(db.audit, {
+        await logAudit(db, {
           workspace,
           operation: 'delete',
           entityType: 'project_file',
@@ -654,7 +654,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         await db.project.deleteProjectFileByPath(workspace, id, filePath);
         await storage.delete(workspace, id, existingFile.id).catch(() => {});
 
-        await logAudit(db.audit, {
+        await logAudit(db, {
           workspace,
           operation: 'update',
           entityType: 'project_file',
@@ -720,7 +720,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         }
 
         if (row) {
-          await logAudit(db.audit, {
+          await logAudit(db, {
             workspace,
             operation: 'create',
             entityType: 'project_file',

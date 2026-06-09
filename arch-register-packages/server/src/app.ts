@@ -16,6 +16,7 @@ import { createViewRoutes } from './domain/catalog/viewRoutes';
 import { createDiagramCraftRoutes } from './domain/diagram/diagramCraftRoutes';
 import { createAuthRoutes, createAuthProtectedRoutes } from './domain/auth/authRoutes';
 import { createTemplateRoutes } from './domain/catalog/templateRoutes';
+import { createWatchRoutes } from './domain/watch/watchRoutes';
 import { requireAuth } from './middleware/auth';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
@@ -95,6 +96,7 @@ export const createApp = (
   app.use(createTemplateRoutes(db));
   app.use(createProjectRoutes(db, storage));
   app.use(createAuditRoutes(db));
+  app.use(createWatchRoutes(db));
   app.use(createWorkspaceConfigRoutes(db));
   app.use(createAiChatRoutes(db, options.routeOverrides?.aiChat));
 

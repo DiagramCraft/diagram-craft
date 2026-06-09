@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiChatTools } from './chatTools';
 import type { DatabaseAdapter } from '../../db/database';
-import type { Entity, EntitySchema } from '../../types';
+import type { AuditLogEntry, Entity, EntitySchema } from '../../types';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -111,6 +111,8 @@ const entities: Entity[] = [
 
 const createdEntities: Entity[] = [];
 const updatedEntities: Entity[] = [];
+const createdAuditLogs: AuditLogEntry[] = [];
+const createdNotifications: Array<{ changedByDisplayName: string; auditLog: AuditLogEntry }> = [];
 
 const db = {
   catalog: {
@@ -161,12 +163,31 @@ const db = {
         created_at: now
       }
     ]
+  },
+  audit: {
+    createAuditLog: vi.fn(async (input: AuditLogEntry) => {
+      createdAuditLogs.push(input);
+      return input;
+    })
+  },
+  watch: {
+    createNotificationsFromAudit: vi.fn(async (input: {
+      changedByDisplayName: string;
+      auditLog: AuditLogEntry;
+    }) => {
+      createdNotifications.push(input);
+    })
   }
 } as unknown as DatabaseAdapter;
 
+const actor = {
+  id: 'user-1',
+  displayName: 'Test User'
+};
+
 describe('createAiChatTools', () => {
   it('queries actual entity content, not just schema metadata', async () => {
-    const tools = createAiChatTools(db, 'ws-1', null);
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
     const queryEntities = tools.find(tool => tool.name === 'query_entities');
 
     expect(queryEntities).toBeDefined();
@@ -186,7 +207,7 @@ describe('createAiChatTools', () => {
   });
 
   it('returns full entity details with resolved relations', async () => {
-    const tools = createAiChatTools(db, 'ws-1', null);
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
     const getEntityDetails = tools.find(tool => tool.name === 'get_entity_details');
 
     expect(getEntityDetails).toBeDefined();
@@ -214,7 +235,7 @@ describe('createAiChatTools', () => {
   });
 
   it('creates entities through an approval-gated mutation tool', async () => {
-    const tools = createAiChatTools(db, 'ws-1', null);
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
     const createEntity = tools.find(tool => tool.name === 'create_entity');
 
     expect(createEntity).toBeDefined();
@@ -236,10 +257,19 @@ describe('createAiChatTools', () => {
       name: 'Orders API',
       data: { tech: 'Go' }
     });
+    expect(createdAuditLogs.at(-1)).toMatchObject({
+      user_id: actor.id,
+      operation: 'create',
+      entity_type: 'entity',
+      entity_name: 'Orders API'
+    });
+    expect(createdNotifications.at(-1)).toMatchObject({
+      changedByDisplayName: actor.displayName
+    });
   });
 
   it('updates entities through an approval-gated mutation tool', async () => {
-    const tools = createAiChatTools(db, 'ws-1', null);
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
     const updateEntity = tools.find(tool => tool.name === 'update_entity');
 
     expect(updateEntity).toBeDefined();
@@ -260,6 +290,15 @@ describe('createAiChatTools', () => {
     expect(updatedEntities.at(-1)).toMatchObject({
       description: 'Handles card and wallet payments',
       data: { tech: 'PostgreSQL 16' }
+    });
+    expect(createdAuditLogs.at(-1)).toMatchObject({
+      user_id: actor.id,
+      operation: 'update',
+      entity_type: 'entity',
+      entity_id: 'entity-app-1'
+    });
+    expect(createdNotifications.at(-1)).toMatchObject({
+      changedByDisplayName: actor.displayName
     });
   });
 });

@@ -10,8 +10,10 @@ import {
   seedProjects,
   seedSavedViews,
   seedEnums,
+  seedNotificationEvents,
   seedSchemas,
   seedTeamAssignments,
+  seedUserWatches,
   seedWorkspaceMembers,
   seedWorkspaces
 } from '../db/seedData';
@@ -160,6 +162,42 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   );
 };
 
+const seedWatchesAndNotifications = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
+  for (const watch of seedUserWatches) {
+    await db.watch.createWatch({
+      user_id: watch.user_id,
+      workspace: watch.workspace,
+      entity_id: watch.entity_id,
+      created_at: watch.created_at
+    });
+  }
+
+  for (const event of seedNotificationEvents) {
+    const auditLog = await db.audit.createAuditLog({
+      workspace: event.workspace,
+      timestamp: event.timestamp,
+      user_id: event.user_id,
+      operation: event.operation,
+      entity_type: 'entity',
+      entity_id: event.entity_id,
+      entity_name: event.entity_name,
+      entity_slug: event.entity_slug,
+      schema_id: event.schema_id,
+      changes: event.changes,
+      metadata: {}
+    });
+
+    await db.watch.createNotificationsFromAudit({
+      auditLog,
+      changedByDisplayName: event.changed_by_display_name
+    });
+  }
+
+  console.log(
+    `  Seeded ${seedUserWatches.length} watches and ${seedNotificationEvents.length} notifications for demo users`
+  );
+};
+
 const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
   for (const workspace of seedWorkspaces) {
     await db.workspace.createWorkspace(workspace);
@@ -204,6 +242,7 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
   }
 
   await seedTestUsers(db);
+  await seedWatchesAndNotifications(db);
 };
 
 async function main() {

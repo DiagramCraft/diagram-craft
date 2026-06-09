@@ -4,6 +4,7 @@ import { TopBar as SharedTopBar } from '@diagram-craft/app-components/TopBar';
 import { HamburgerMenu } from '@diagram-craft/app-components/HamburgerMenu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import {
   TbChevronDown,
   TbChevronRight,
@@ -17,14 +18,24 @@ import {
   TbBuildingCommunity,
   TbSun,
   TbMoon,
-  TbUser
+  TbUser,
+  TbBell,
+  TbX
 } from 'react-icons/tb';
 import { useNavigate } from '@tanstack/react-router';
-import type { Workspace } from '../lib/api';
+import type { NotificationItem, WatchedEntity, Workspace } from '../lib/api';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../hooks/useTheme';
 import { resolveAvatarBackground } from '../components/MemberAvatar';
+import {
+  useClearNotifications,
+  useDeleteNotification,
+  useDeleteWatch,
+  useNotificationCount,
+  useNotifications,
+  useWatchedEntities
+} from '../hooks/useNotifications';
 
 type BreadcrumbItem = {
   label: string;
@@ -35,6 +46,7 @@ type BreadcrumbItem = {
 type TopBarProps = {
   workspaces: Workspace[];
   currentWs: string;
+  workspaceSlug: string;
   onPickWs: (id: string) => void;
   trail: BreadcrumbItem[];
   query: string;
@@ -57,6 +69,7 @@ type TopBarProps = {
 export const TopBar = ({
   workspaces,
   currentWs,
+  workspaceSlug,
   onPickWs,
   trail,
   query,
@@ -140,6 +153,7 @@ export const TopBar = ({
         )}
       </div>
       <div className={styles.right}>
+        <NotificationMenu workspaceSlug={workspaceSlug} />
         <AccountMenu />
       </div>
     </SharedTopBar>
@@ -387,6 +401,237 @@ const AccountMenu = () => {
       </MenuButton.Menu>
     </MenuButton.Root>
   );
+};
+
+const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<'notifications' | 'watching'>('notifications');
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { data: count } = useNotificationCount(workspaceSlug, !!workspaceSlug);
+  const { data: notifications = [] } = useNotifications(workspaceSlug, open && !!workspaceSlug);
+  const { data: watched = [] } = useWatchedEntities(workspaceSlug, open && !!workspaceSlug);
+  const clearNotificationsMutation = useClearNotifications(workspaceSlug);
+  const deleteNotificationMutation = useDeleteNotification(workspaceSlug);
+  const deleteWatchMutation = useDeleteWatch(workspaceSlug);
+  const notificationCount = count?.count ?? 0;
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open]);
+
+  const openEntity = (entityId: string) => {
+    setOpen(false);
+    navigate({
+      to: '/$workspaceSlug/entities/$entityId',
+      params: { workspaceSlug, entityId }
+    });
+  };
+
+  return (
+    <div className={styles.notificationMenu} ref={ref}>
+      <button
+        type="button"
+        className={styles.notificationTrigger}
+        aria-label="Notifications"
+        title="Notifications"
+        onClick={() => setOpen(value => !value)}
+      >
+        <TbBell size={15} />
+        {notificationCount > 0 && (
+          <span className={styles.notificationBadge}>
+            {notificationCount > 9 ? '9+' : notificationCount}
+          </span>
+        )}
+      </button>
+      {open && (
+        <div className={styles.notificationDrop}>
+          <div className={styles.notificationTabsRow}>
+            <Tabs.Root value={tab} onValueChange={value => setTab(value as 'notifications' | 'watching')}>
+              <Tabs.List>
+                <Tabs.Trigger value="notifications">
+                  Notifications
+                  {notificationCount > 0 && (
+                    <span className={styles.notifTabPill}>{notificationCount}</span>
+                  )}
+                </Tabs.Trigger>
+                <Tabs.Trigger value="watching">
+                  Watching
+                </Tabs.Trigger>
+              </Tabs.List>
+            </Tabs.Root>
+            {tab === 'notifications' && notifications.length > 0 && (
+              <button
+                type="button"
+                className={styles.notificationAction}
+                disabled={clearNotificationsMutation.isPending}
+                onClick={() => clearNotificationsMutation.mutate()}
+              >
+                Mark all read
+              </button>
+            )}
+          </div>
+          <div className={styles.notificationPanel}>
+            {tab === 'notifications' ? (
+              <NotificationList
+                notifications={notifications}
+                onOpenEntity={openEntity}
+                onClear={notificationId => deleteNotificationMutation.mutate(notificationId)}
+                clearingId={deleteNotificationMutation.variables ?? null}
+                isClearing={deleteNotificationMutation.isPending}
+              />
+            ) : (
+              <WatchingList
+                watched={watched}
+                onOpenEntity={openEntity}
+                onUnwatch={entityId => deleteWatchMutation.mutate(entityId)}
+                unwatchingId={deleteWatchMutation.variables ?? null}
+                isUnwatching={deleteWatchMutation.isPending}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const NotificationList = ({
+  notifications,
+  onOpenEntity,
+  onClear,
+  clearingId,
+  isClearing
+}: {
+  notifications: NotificationItem[];
+  onOpenEntity: (entityId: string) => void;
+  onClear: (notificationId: string) => void;
+  clearingId: string | null;
+  isClearing: boolean;
+}) => {
+  if (notifications.length === 0) {
+    return (
+      <div className={styles.notificationEmpty}>
+        <span>No notifications yet</span>
+        <span>Changes on watched entities will show up here.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.notificationList}>
+      {notifications.map(item => (
+        <button
+          key={item.id}
+          type="button"
+          className={`${styles.notificationRow} ${styles.notificationRowUnread}`}
+          onClick={() => {
+            if (item.operation !== 'delete') onOpenEntity(item.entity_id);
+          }}
+        >
+          <div className={styles.notifDot} />
+          <div className={styles.notificationRowMain}>
+            <div className={styles.notificationEntity}>{item.entity_name}</div>
+            <div className={styles.notificationMeta}>
+              <span>{item.changed_by_display_name}</span>
+              <span className={styles.notificationSep}>·</span>
+              <span className={styles.notificationOp}>{item.operation}</span>
+            </div>
+          </div>
+          <div className={styles.notificationWhen}>{formatRelativeTimestamp(item.timestamp)}</div>
+          <span
+            className={styles.notificationClear}
+            onClick={event => {
+              event.stopPropagation();
+              onClear(item.id);
+            }}
+          >
+            <TbX size={12} />
+            <span className={styles.srOnly}>
+              {isClearing && clearingId === item.id ? 'Clearing' : 'Clear notification'}
+            </span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const WatchingList = ({
+  watched,
+  onOpenEntity,
+  onUnwatch,
+  unwatchingId,
+  isUnwatching
+}: {
+  watched: WatchedEntity[];
+  onOpenEntity: (entityId: string) => void;
+  onUnwatch: (entityId: string) => void;
+  unwatchingId: string | null;
+  isUnwatching: boolean;
+}) => {
+  if (watched.length === 0) {
+    return (
+      <div className={styles.notificationEmpty}>
+        <span>Nothing watched yet</span>
+        <span>Open an entity and click the bell icon to start watching it.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.notificationList}>
+      {watched.map(item => (
+        <button
+          key={item.entity_id}
+          type="button"
+          className={styles.notificationRow}
+          onClick={() => onOpenEntity(item.entity_id)}
+        >
+          <div className={styles.notificationRowMain}>
+            <div className={styles.notificationEntity}>{item.entity_name}</div>
+            <div className={styles.notificationMeta}>
+              <span>{item.entity_slug}</span>
+            </div>
+          </div>
+          <span
+            className={styles.watchingUnwatch}
+            title={isUnwatching && unwatchingId === item.entity_id ? 'Removing watch' : 'Unwatch entity'}
+            onClick={event => {
+              event.stopPropagation();
+              onUnwatch(item.entity_id);
+            }}
+          >
+            <TbBell size={12} />
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const formatRelativeTimestamp = (timestamp: string) => {
+  const date = new Date(timestamp);
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.max(1, Math.round(diffMs / 60000));
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.round(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
 };
 
 const ThemeToggle = ({ theme, onSetTheme }: { theme: Theme; onSetTheme: (t: Theme) => void }) => {
