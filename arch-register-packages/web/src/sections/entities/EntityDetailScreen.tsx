@@ -1038,7 +1038,7 @@ const flattenAuditEntries = (entries: AuditLogEntry[]): ChangeRowData[] => {
   const rows: ChangeRowData[] = [];
   for (const entry of entries) {
     const when = formatTimestamp(entry.timestamp);
-    const who = entry.user_id ?? 'Unknown';
+    const who = entry.user_display_name ?? entry.user_id ?? 'Unknown';
 
     if (entry.operation === 'create') {
       rows.push({ when, who, what: 'created entity', from: '—', to: '—' });

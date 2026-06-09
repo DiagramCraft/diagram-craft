@@ -3,6 +3,7 @@ export type AuditLogDbResult = {
   workspace: string;
   timestamp: Date;
   user_id: string | null;
+  user_display_name: string | null;
   operation: AuditOperation;
   entity_type: AuditEntityType;
   entity_id: string;
@@ -16,7 +17,7 @@ export type AuditLogDbResult = {
   metadata: Record<string, unknown>;
 };
 
-export type AuditLogDbCreate = Omit<AuditLogDbResult, 'id'>;
+export type AuditLogDbCreate = Omit<AuditLogDbResult, 'id' | 'user_display_name'>;
 
 export type AuditOperation = 'create' | 'update' | 'delete';
 

@@ -5,7 +5,13 @@ import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 export class SqliteAuditDatabase extends SqliteDatabaseBase implements AuditDatabase {
   async listAuditLogs(workspace: string) {
     return this.all(
-      'SELECT * FROM audit_log WHERE workspace = ? ORDER BY timestamp DESC',
+      `SELECT 
+        audit_log.*,
+        users.display_name as user_display_name
+      FROM audit_log
+      LEFT JOIN users ON audit_log.user_id = users.id
+      WHERE audit_log.workspace = ?
+      ORDER BY audit_log.timestamp DESC`,
       [workspace],
       sqliteMappers.auditLog
     );

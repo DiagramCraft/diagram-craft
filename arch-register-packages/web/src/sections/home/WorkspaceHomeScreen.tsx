@@ -318,7 +318,7 @@ export const WorkspaceHomeScreen = () => {
                         className={styles.activityRow}
                         onClick={() => handleActivityClick(entry)}
                       >
-                        <span className={styles.activityWho}>{entry.user_id}</span>
+                        <span className={styles.activityWho}>{entry.user_display_name ?? entry.user_id ?? 'Unknown'}</span>
                         <span className="dim"> {getOperationLabel(entry.operation)} </span>
                         <span className={styles.activityTarget}>{entry.entity_name}</span>
                         <span className="dim">

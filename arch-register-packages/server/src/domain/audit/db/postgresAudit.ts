@@ -5,10 +5,13 @@ import { AuditLogDbResult } from './auditDatabase';
 export class PostgresAuditDatabase extends PostgresDatabaseBase implements AuditDatabase {
   async listAuditLogs(workspace: string) {
     return await this.sql<AuditLogDbResult[]>`
-      SELECT *
+      SELECT 
+        audit_log.*,
+        users.display_name as user_display_name
       FROM audit_log
-      WHERE workspace = ${workspace}
-      ORDER BY timestamp DESC
+      LEFT JOIN users ON audit_log.user_id = users.id
+      WHERE audit_log.workspace = ${workspace}
+      ORDER BY audit_log.timestamp DESC
     `;
   }
 
