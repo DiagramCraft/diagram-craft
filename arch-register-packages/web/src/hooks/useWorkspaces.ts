@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Workspace } from '../lib/api';
 import { apiFetch } from '../lib/api';
 import { auditKeys, invalidateAuditQueries } from './useAudit';
+import { listWorkspacesORPC } from '../lib/workspaceORPCClient';
 
 // Query keys factory
 export const workspaceKeys = {
@@ -16,9 +17,7 @@ export const workspaceKeys = {
 export const useWorkspaces = () => {
   return useQuery({
     queryKey: workspaceKeys.list(),
-    queryFn: async () => {
-      return await apiFetch<Workspace[]>('/api/workspaces');
-    },
+    queryFn: listWorkspacesORPC,
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
 };
