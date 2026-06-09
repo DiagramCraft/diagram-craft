@@ -122,6 +122,7 @@ export type ComponentVNodeData<P> = VNodeData & {
     instance: Component<P> | undefined;
     props: P;
   };
+  componentFactory?: () => Component<P>;
 };
 
 type ComponentContstructor<T> = {
@@ -148,6 +149,10 @@ export abstract class Component<P = Record<string, never>> {
     } finally {
       this.effectManager._stop();
     }
+  }
+
+  renderForSSR(props: P): VNode {
+    return this.doRender(props);
   }
 
   protected getMemoKey(_props: P): unknown | undefined {
@@ -227,6 +232,7 @@ export abstract class Component<P = Record<string, never>> {
       tag: props.key ?? component.name,
       data: {
         component: { props, instance: undefined },
+        componentFactory: component,
         hooks: {
           onInsert: node => {
             (node.data as ComponentVNodeData<P>).component.instance?.onAttach(

@@ -8,6 +8,7 @@ import { verifyToken } from './utils/jwt';
 import { createApp } from './app';
 import { SERVER_DEFAULTS } from './constants';
 import { generateSvgPreview } from './domain/diagram/svgPreviewGenerator';
+import { generateAccurateSvgPreview } from './domain/diagram/serverDiagramRenderer';
 import { getDiagramCommentCounts } from './domain/diagram/commentCounts';
 import { createLogger } from './utils/logger';
 
@@ -27,10 +28,16 @@ const main = async () => {
       return;
     }
 
-    const workspace = parts[0]!;
+    const workspaceSlug = parts[0]!;
     const projectId = parts[1]!;
     let fileId = parts.slice(2).join('/');
     if (fileId.endsWith('.json')) fileId = fileId.slice(0, -5);
+
+    const workspace = await db.catalog.resolveWorkspaceSlug(workspaceSlug);
+    if (!workspace) {
+      logger.warn(`Unknown workspace slug in room path: ${workspaceSlug}`);
+      return;
+    }
 
     const buf = Buffer.from(content, 'utf8');
     const updatedAt = new Date();
@@ -39,7 +46,8 @@ const main = async () => {
     try {
       const parsed = JSON.parse(content);
       const commentCounts = getDiagramCommentCounts(parsed);
-      const previewSvg = generateSvgPreview(parsed);
+      const previewSvg =
+        (await generateAccurateSvgPreview(parsed)) ?? generateSvgPreview(parsed);
       await db.project.updateProjectFileDerivedData(
         workspace,
         projectId,
