@@ -4,8 +4,7 @@ import {
   toDiagramCraftField,
   toDiagramCraftSchema
 } from './diagramCraftTransforms';
-import type { Entity } from '../../types';
-import { EntitySchemaRow, WorkspaceEnumRow } from '../catalog/db/catalogDatabase';
+import { BaseEntity, EntitySchemaRow, WorkspaceEnumRow } from '../catalog/db/catalogDatabase';
 
 describe('diagram craft transforms', () => {
   it('keeps containment fields in diagram craft schema responses', () => {
@@ -110,7 +109,7 @@ describe('diagram craft transforms', () => {
         technology: 'React',
         system: 'system-1'
       }
-    } as unknown as Entity;
+    } as unknown as BaseEntity;
 
     expect(toDiagramCraftData(row)).toEqual({
       _uid: 'entity-1',

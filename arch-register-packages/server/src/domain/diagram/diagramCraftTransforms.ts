@@ -1,5 +1,5 @@
-import type { Entity, DiagramCraftEntityResponse, ReferenceField, SchemaField } from '../../types';
-import { EntitySchemaRow, WorkspaceEnumRow } from '../catalog/db/catalogDatabase';
+import type { DiagramCraftEntityResponse, ReferenceField, SchemaField } from '../../types';
+import { BaseEntity, EntitySchemaRow, WorkspaceEnumRow } from '../catalog/db/catalogDatabase';
 
 export type DiagramCraftSchemaField =
   | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' }>
@@ -61,7 +61,7 @@ export const toDiagramCraftSchema = (
   ]
 });
 
-export const toDiagramCraftData = (row: Entity): DiagramCraftEntityResponse => ({
+export const toDiagramCraftData = (row: BaseEntity): DiagramCraftEntityResponse => ({
   _uid: row.id,
   _workspace: row.workspace,
   _schemaId: row.schema_id,

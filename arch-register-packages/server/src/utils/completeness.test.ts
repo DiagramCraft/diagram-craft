@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { Entity } from '../types';
 import { computeEntityCompleteness } from './completeness';
-import { EntitySchemaRow } from '../domain/catalog/db/catalogDatabase';
+import { BaseEntity, EntitySchemaRow } from '../domain/catalog/db/catalogDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 
 describe('computeEntityCompleteness', () => {
   it('counts required and expected fields, ignores optional fields, and treats false as filled', () => {
-    const entity: Entity = {
+    const entity: BaseEntity = {
       id: 'e-1',
       workspace: 'ws-1',
       slug: 'my-entity',

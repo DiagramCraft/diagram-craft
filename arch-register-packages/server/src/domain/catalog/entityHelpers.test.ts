@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { EnrichedEntity } from './db/catalogDatabase';
+import type { EntityRow } from './db/catalogDatabase';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 
-const baseEntity: EnrichedEntity = {
+const baseEntity: EntityRow = {
   id: 'e-1',
   workspace: 'ws-1',
   slug: 'my-entity',

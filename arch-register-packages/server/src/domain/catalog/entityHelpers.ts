@@ -1,11 +1,11 @@
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types';
-import type { EnrichedEntity } from './db/catalogDatabase';
+import type { EntityRow } from './db/catalogDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 
 const checker = new PermissionChecker();
 
-const getEntityCapabilities = (context: AuthorizationContext | null, entity: EnrichedEntity) => {
+const getEntityCapabilities = (context: AuthorizationContext | null, entity: EntityRow) => {
   if (!context) {
     return {
       canView: true,
@@ -26,7 +26,7 @@ const getEntityCapabilities = (context: AuthorizationContext | null, entity: Enr
 };
 
 export const toApiEntity = (
-  entity: EnrichedEntity,
+  entity: EntityRow,
   authCtx: AuthorizationContext | null,
   completeness: number | null = null
 ): EntityRecord => ({
@@ -37,8 +37,15 @@ export const toApiEntity = (
   _namespace: entity.namespace,
   _description: entity.description,
   _owner: entity.owner ? { id: entity.owner, name: entity.owner_name ?? entity.owner } : null,
-  _lifecycle: entity.lifecycle ? { id: entity.lifecycle, name: entity.lifecycle_label ?? entity.lifecycle } : null,
-  _targetLifecycle: entity.target_lifecycle ? { id: entity.target_lifecycle, name: entity.target_lifecycle_label ?? entity.target_lifecycle } : null,
+  _lifecycle: entity.lifecycle
+    ? { id: entity.lifecycle, name: entity.lifecycle_label ?? entity.lifecycle }
+    : null,
+  _targetLifecycle: entity.target_lifecycle
+    ? {
+        id: entity.target_lifecycle,
+        name: entity.target_lifecycle_label ?? entity.target_lifecycle
+      }
+    : null,
   _targetLifecycleDate: entity.target_lifecycle_date,
   _tags: entity.tags,
   _links: entity.links,
@@ -49,7 +56,7 @@ export const toApiEntity = (
 });
 
 export const toApiEntitySummary = (
-  entity: EnrichedEntity,
+  entity: EntityRow,
   authCtx: AuthorizationContext | null,
   completeness: number | null = null
 ): EntitySummary => ({
@@ -60,8 +67,15 @@ export const toApiEntitySummary = (
   _namespace: entity.namespace,
   _description: entity.description,
   _owner: entity.owner ? { id: entity.owner, name: entity.owner_name ?? entity.owner } : null,
-  _lifecycle: entity.lifecycle ? { id: entity.lifecycle, name: entity.lifecycle_label ?? entity.lifecycle } : null,
-  _targetLifecycle: entity.target_lifecycle ? { id: entity.target_lifecycle, name: entity.target_lifecycle_label ?? entity.target_lifecycle } : null,
+  _lifecycle: entity.lifecycle
+    ? { id: entity.lifecycle, name: entity.lifecycle_label ?? entity.lifecycle }
+    : null,
+  _targetLifecycle: entity.target_lifecycle
+    ? {
+        id: entity.target_lifecycle,
+        name: entity.target_lifecycle_label ?? entity.target_lifecycle
+      }
+    : null,
   _targetLifecycleDate: entity.target_lifecycle_date,
   _tags: entity.tags,
   _links: entity.links,

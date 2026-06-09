@@ -2,9 +2,14 @@ import { PermissionChecker, type AuthorizationContext } from '@arch-register/per
 import { toolDefinition } from '@tanstack/ai';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
-import { decodeRefs, type Entity, type SchemaField } from '../../types';
+import { decodeRefs, type SchemaField } from '../../types';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
-import { createEntityWithAudit, type EntityMutationActor, updateEntityWithAudit } from '../catalog/entityMutations';
+import {
+  createEntityWithAudit,
+  type EntityMutationActor,
+  updateEntityWithAudit
+} from '../catalog/entityMutations';
+import { BaseEntity } from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 const checker = new PermissionChecker();
 
@@ -206,12 +211,12 @@ const includesQuery = (value: unknown, query: string) =>
     .toLowerCase()
     .includes(query);
 
-const getVisibleEntities = (entities: Entity[], authCtx: AuthorizationContext | null) => {
+const getVisibleEntities = (entities: BaseEntity[], authCtx: AuthorizationContext | null) => {
   if (authCtx === null) return entities;
   return entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'));
 };
 
-const getMatchedMetadata = (entity: Entity, query: string) => {
+const getMatchedMetadata = (entity: BaseEntity, query: string) => {
   const matches: string[] = [];
   if (includesQuery(entity.name, query)) matches.push('name');
   if (includesQuery(entity.slug, query)) matches.push('slug');
@@ -233,13 +238,13 @@ const getMatchedMetadata = (entity: Entity, query: string) => {
   return matches;
 };
 
-const getMatchedFields = (data: Entity['data'], query: string) =>
+const getMatchedFields = (data: BaseEntity['data'], query: string) =>
   Object.entries(data)
     .filter(([, value]) => includesQuery(value, query))
     .map(([key]) => key);
 
 const matchesEntityFilters = (
-  entity: Entity,
+  entity: BaseEntity,
   options: {
     schemaId?: string;
     owner?: string;
@@ -252,7 +257,7 @@ const matchesEntityFilters = (
   return true;
 };
 
-const getDataPreview = (entity: Entity, matchedFields: string[]) => {
+const getDataPreview = (entity: BaseEntity, matchedFields: string[]) => {
   const fieldIds = matchedFields.length > 0 ? matchedFields : Object.keys(entity.data).slice(0, 6);
   return Object.fromEntries(fieldIds.map(fieldId => [fieldId, entity.data[fieldId] ?? null]));
 };
@@ -263,7 +268,7 @@ const relationFields = (fields: SchemaField[]) =>
       field.type === 'reference' || field.type === 'containment'
   );
 
-const summarizeRelationTarget = (entity: Entity, schemaName: string | undefined) => ({
+const summarizeRelationTarget = (entity: BaseEntity, schemaName: string | undefined) => ({
   id: entity.id,
   name: entity.name,
   slug: entity.slug,
@@ -277,7 +282,7 @@ const slugify = (name: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-const summarizeEntity = (entity: Entity, schemaName: string | undefined) => ({
+const summarizeEntity = (entity: BaseEntity, schemaName: string | undefined) => ({
   id: entity.id,
   name: entity.name,
   slug: entity.slug,

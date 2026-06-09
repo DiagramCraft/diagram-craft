@@ -7,16 +7,13 @@ import {
   parseEntityMutationPayload,
   resolveCreateOwner
 } from './dataRoutes';
-import type { EnrichedEntity, EntitySchemaRow } from './db/catalogDatabase';
+import type { EntityRow, EntitySchemaRow } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
 const enriched = (
-  e: Omit<
-    EnrichedEntity,
-    'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'
-  >
-): EnrichedEntity => ({
+  e: Omit<EntityRow, 'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'>
+): EntityRow => ({
   ...e,
   owner_name: null,
   lifecycle_label: null,
@@ -89,7 +86,7 @@ const componentSchema: EntitySchemaRow = {
   updated_at: now
 };
 
-const domain: EnrichedEntity = enriched({
+const domain: EntityRow = enriched({
   id: 'domain-1',
   workspace: 'default',
   slug: 'engineering',
@@ -109,7 +106,7 @@ const domain: EnrichedEntity = enriched({
   updated_at: now
 });
 
-const system: EnrichedEntity = enriched({
+const system: EntityRow = enriched({
   id: 'system-1',
   workspace: 'default',
   slug: 'customer-portal',
@@ -129,7 +126,7 @@ const system: EnrichedEntity = enriched({
   updated_at: now
 });
 
-const component: EnrichedEntity = enriched({
+const component: EntityRow = enriched({
   id: 'component-1',
   workspace: 'default',
   slug: 'frontend-app',
@@ -149,7 +146,7 @@ const component: EnrichedEntity = enriched({
   updated_at: now
 });
 
-const dependency: EnrichedEntity = enriched({
+const dependency: EntityRow = enriched({
   id: 'component-2',
   workspace: 'default',
   slug: 'api-gateway',

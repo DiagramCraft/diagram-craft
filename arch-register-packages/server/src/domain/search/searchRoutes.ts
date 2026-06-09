@@ -1,7 +1,7 @@
 import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { SchemaField } from '../../types';
-import type { EnrichedEntity } from '../catalog/db/catalogDatabase';
+import type { EntityRow } from '../catalog/db/catalogDatabase';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { parsePositiveInt } from '../../utils/http';
 import { SEARCH_DEFAULTS } from '../../constants';
@@ -86,7 +86,7 @@ export const includesQuery = (value: unknown, query: string) =>
     .toLowerCase()
     .includes(query);
 
-export const collectMatchedMetadata = (entity: EnrichedEntity, query: string) => {
+export const collectMatchedMetadata = (entity: EntityRow, query: string) => {
   const matches: string[] = [];
   if (includesQuery(entity.name, query)) matches.push('name');
   if (includesQuery(entity.slug, query)) matches.push('slug');
@@ -108,7 +108,7 @@ export const collectMatchedMetadata = (entity: EnrichedEntity, query: string) =>
   return matches;
 };
 
-export const collectMatchedFields = (data: EnrichedEntity['data'], query: string) =>
+export const collectMatchedFields = (data: EntityRow['data'], query: string) =>
   Object.entries(data)
     .filter(([, value]) => includesQuery(value, query))
     .map(([key]) => key);
@@ -222,9 +222,18 @@ export function createSearchRoutes(db: DatabaseAdapter) {
                 _name: entity.name,
                 _slug: entity.slug,
                 _description: entity.description,
-                _owner: entity.owner ? { id: entity.owner, name: entity.owner_name ?? entity.owner } : null,
-                _lifecycle: entity.lifecycle ? { id: entity.lifecycle, name: entity.lifecycle_label ?? entity.lifecycle } : null,
-                _targetLifecycle: entity.target_lifecycle ? { id: entity.target_lifecycle, name: entity.target_lifecycle_label ?? entity.target_lifecycle } : null,
+                _owner: entity.owner
+                  ? { id: entity.owner, name: entity.owner_name ?? entity.owner }
+                  : null,
+                _lifecycle: entity.lifecycle
+                  ? { id: entity.lifecycle, name: entity.lifecycle_label ?? entity.lifecycle }
+                  : null,
+                _targetLifecycle: entity.target_lifecycle
+                  ? {
+                      id: entity.target_lifecycle,
+                      name: entity.target_lifecycle_label ?? entity.target_lifecycle
+                    }
+                  : null,
                 matchedFields,
                 matchedMetadata
               } satisfies EntitySearchResult;

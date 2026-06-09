@@ -26,28 +26,3 @@ export class PostgresDatabaseBase {
     return this.sql.json(value as Parameters<PostgresSqlClient['json']>[0]);
   }
 }
-/*
-export type PostgresRowTypes = {
-  //workspace: Workspace;
-  //lifecycleState: WorkspaceLifecycleState;
-  //owner: WorkspaceOwner;
-  //teamMembership: TeamMembership;
-  //workspaceRoleDefinition: WorkspaceRoleDefinition;
-  //schema: EntitySchema;
-  //workspaceEnum: WorkspaceEnum;
-  //entityGrant: EntityGrant;
-  //userPinnedEntity: UserPinnedEntity;
-  //savedView: SavedView;
-  //projectFile: ProjectFile;
-  //auditLog: AuditLogEntry;
-  //userWatch: UserWatch;
-  //userNotification: UserNotification;
-  //user: User;
-  //globalRoleAssignment: GlobalRoleAssignment;
-  //enrichedProject: EnrichedProject;
-  //project: Project;
-
-  //entity: Entity;
-  //enrichedEntity: EnrichedEntity;
-};
-*/

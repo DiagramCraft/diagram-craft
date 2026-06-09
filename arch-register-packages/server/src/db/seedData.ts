@@ -1,4 +1,3 @@
-import type { Entity } from '../types';
 import {
   AR_COLOR_GREEN,
   AR_COLOR_BLUE,
@@ -19,6 +18,7 @@ import {
   WorkspaceLifecycleStateRow
 } from '../domain/workspace/db/workspaceDatabase';
 import {
+  BaseEntity,
   EntitySchemaRow,
   SavedViewRow,
   WorkspaceEnumRow
@@ -516,7 +516,7 @@ export const seedSchemas: EntitySchemaRow[] = [
   }
 ];
 
-export const seedEntities: Entity[] = [
+export const seedEntities: BaseEntity[] = [
   {
     id: '00000000-0000-0000-0001-000000000001',
     workspace: WORKSPACE_ID,

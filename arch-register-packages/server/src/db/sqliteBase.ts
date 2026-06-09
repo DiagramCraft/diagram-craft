@@ -1,7 +1,8 @@
 import type { Database as DatabaseType } from 'better-sqlite3';
-import type { AiConversation, AiMessage, Entity, EntityLink, WorkspaceAiConfig } from '../types';
+import type { AiConversation, AiMessage, EntityLink, WorkspaceAiConfig } from '../types';
 import type {
-  EnrichedEntity,
+  EntityRow,
+  BaseEntity,
   EntityGrantRow,
   EntitySchemaRow,
   SavedViewRow,
@@ -97,7 +98,7 @@ export const sqliteMappers = {
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
-  entity: (row: Record<string, unknown>): Entity => ({
+  entity: (row: Record<string, unknown>): BaseEntity => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     slug: String(row['slug']),
@@ -116,11 +117,11 @@ export const sqliteMappers = {
     visibility_mode:
       row['visibility_mode'] == null
         ? null
-        : (String(row['visibility_mode']) as Entity['visibility_mode']),
+        : (String(row['visibility_mode']) as BaseEntity['visibility_mode']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
-  enrichedEntity: (row: Record<string, unknown>): EnrichedEntity => ({
+  enrichedEntity: (row: Record<string, unknown>): EntityRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     slug: String(row['slug']),
@@ -139,7 +140,7 @@ export const sqliteMappers = {
     visibility_mode:
       row['visibility_mode'] == null
         ? null
-        : (String(row['visibility_mode']) as Entity['visibility_mode']),
+        : (String(row['visibility_mode']) as BaseEntity['visibility_mode']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at']),
     owner_name: row['owner_name'] == null ? null : String(row['owner_name']),

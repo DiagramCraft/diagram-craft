@@ -3,12 +3,11 @@ import type { AIGenerateRequest } from '../ai/aiServer';
 import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import type { DatabaseAdapter } from '../../db/database';
-import type { Entity } from '../../types';
 import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toDiagramCraftData, toDiagramCraftSchema } from './diagramCraftTransforms';
-import { EntitySchemaRow } from '../catalog/db/catalogDatabase';
+import { BaseEntity, EntitySchemaRow } from '../catalog/db/catalogDatabase';
 
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024;
 const CONTENT_TYPE_JSON = 'application/json';
@@ -107,7 +106,7 @@ export const createDiagramCraftRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       try {
-        const rows = (await db.catalog.listEntities(workspace)) as Entity[];
+        const rows = (await db.catalog.listEntities(workspace)) as BaseEntity[];
         return rows.map(toDiagramCraftData);
       } catch (error) {
         handleDiagramCraftError(error, 'Failed to retrieve Diagram Craft data');

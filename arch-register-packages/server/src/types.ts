@@ -22,26 +22,6 @@ export type EntityLink = {
 
 export type VisibilityMode = 'public' | 'restricted';
 
-export type Entity = {
-  id: string;
-  workspace: string;
-  slug: string;
-  namespace: string;
-  name: string;
-  description: string;
-  owner: string | null;
-  lifecycle: string | null;
-  target_lifecycle: string | null;
-  target_lifecycle_date: string | null;
-  tags: string[];
-  links: EntityLink[];
-  schema_id: string;
-  data: Record<string, unknown>;
-  visibility_mode: VisibilityMode | null;
-  created_at: Date;
-  updated_at: Date;
-};
-
 // Wire format used by the DiagramCraft integration (flat strings, not ForeignKey shapes).
 export type DiagramCraftEntityResponse = {
   _uid: string;

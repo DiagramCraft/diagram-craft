@@ -7,11 +7,11 @@ import {
   parseTypes
 } from './searchRoutes';
 import type { SchemaField } from '../../types';
-import type { EnrichedEntity } from '../catalog/db/catalogDatabase';
+import type { EntityRow } from '../catalog/db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const entity: EnrichedEntity = {
+const entity: EntityRow = {
   id: 'entity-1',
   workspace: 'default',
   slug: 'frontend-app',

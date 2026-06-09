@@ -8,9 +8,9 @@ import type {
 } from '../../db/database';
 import { createLogger } from '../../utils/logger';
 import { parseCsv, validateCsvData, csvRowToEntity } from '../../utils/csvImport';
-import { decodeRefs, type Entity, type EntityLink, type SchemaField } from '../../types';
-import { type EntitySchemaRow as InternalEntitySchema } from './db/catalogDatabase';
-import type { EnrichedEntity } from './db/catalogDatabase';
+import { decodeRefs, type EntityLink, type SchemaField } from '../../types';
+import { BaseEntity, type EntitySchemaRow as InternalEntitySchema } from './db/catalogDatabase';
+import type { EntityRow } from './db/catalogDatabase';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
 import {
   computeChanges,
@@ -56,7 +56,7 @@ const includesQuery = (value: unknown, query: string) =>
 
 export const resolveCreateOwner = (
   explicitOwner: string | null,
-  parentEntities: Entity[],
+  parentEntities: BaseEntity[],
   schema: InternalEntitySchema,
   teamIds: Set<string>,
   fallbackOwner: string | null
@@ -73,7 +73,7 @@ export const resolveCreateOwner = (
 export const getEntityParentsFromPayload = (
   schema: InternalEntitySchema,
   payload: Record<string, unknown>,
-  entityLookup: Map<string, Entity>
+  entityLookup: Map<string, BaseEntity>
 ) => {
   const parentIds = schema.fields
     .filter(
@@ -90,10 +90,10 @@ export const getEntityParentsFromPayload = (
     });
   return parentIds
     .map(parentId => entityLookup.get(parentId))
-    .filter((entity): entity is Entity => entity != null);
+    .filter((entity): entity is BaseEntity => entity != null);
 };
 
-const entityMatchesPattern = (entity: Entity, pattern: string) => {
+const entityMatchesPattern = (entity: BaseEntity, pattern: string) => {
   const query = pattern.toLowerCase();
   return (
     includesQuery(entity.name, query) ||
@@ -105,7 +105,7 @@ const entityMatchesPattern = (entity: Entity, pattern: string) => {
 };
 
 export const filterEntities = (
-  entities: EnrichedEntity[],
+  entities: EntityRow[],
   options: {
     schemaId: string | null;
     owner: string | null;
@@ -228,9 +228,9 @@ export const parseEntityMutationPayload = (
 };
 
 export const buildEntityRelations = (
-  entity: Entity,
+  entity: BaseEntity,
   schemas: InternalEntitySchema[],
-  entities: Entity[]
+  entities: BaseEntity[]
 ): RelationsResponse => {
   const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
   const entitySchema = schemaMap.get(entity.schema_id);
@@ -466,14 +466,14 @@ export function createDataRoutes(db: DatabaseAdapter) {
         );
         const matchIds = new Set(matchRows.map(r => r.id));
         const entityById = new Map(allEntities.map(entity => [entity.id, entity]));
-        const allIncluded = new Map<string, EnrichedEntity>(
+        const allIncluded = new Map<string, EntityRow>(
           matchRows.map(entity => [entity.id, entity])
         );
         const edges: Array<{ childId: string; parentId: string }> = [];
 
         let currentLevel = [...matchRows];
         while (currentLevel.length > 0) {
-          const nextLevel: EnrichedEntity[] = [];
+          const nextLevel: EntityRow[] = [];
           for (const entity of currentLevel) {
             const cFields = containmentFieldsBySchema.get(entity.schema_id) ?? [];
             for (const fieldId of cFields) {

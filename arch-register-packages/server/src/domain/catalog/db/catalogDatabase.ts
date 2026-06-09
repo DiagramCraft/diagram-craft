@@ -1,4 +1,4 @@
-import { Entity, EntityRole, SchemaField } from '../../../types';
+import { EntityLink, EntityRole, SchemaField, VisibilityMode } from '../../../types';
 import { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-types/views';
 
 // -- Entity Schema
@@ -64,22 +64,40 @@ export type UserPinnedEntityRow = {
 
 export type CreateUserPinnedEntityInput = UserPinnedEntityRow;
 
-// ------------------
+// -- Entity
+
+export type BaseEntity = {
+  id: string;
+  workspace: string;
+  slug: string;
+  namespace: string;
+  name: string;
+  description: string;
+  owner: string | null;
+  lifecycle: string | null;
+  target_lifecycle: string | null;
+  target_lifecycle_date: string | null;
+  tags: string[];
+  links: EntityLink[];
+  schema_id: string;
+  data: Record<string, unknown>;
+  visibility_mode: VisibilityMode | null;
+  created_at: Date;
+  updated_at: Date;
+};
 
 // Entity enriched with resolved names from joined tables (owner, lifecycle, schema).
 // Returned by listEntities / getEntity; used by helpers that build API responses.
-export type EnrichedEntity = Entity & {
+export type EntityRow = BaseEntity & {
   owner_name: string | null;
   lifecycle_label: string | null;
   target_lifecycle_label: string | null;
   schema_name: string;
 };
 
-export type CreateEntityInput = Entity;
+export type CreateEntityInput = BaseEntity;
 
-export type UpdateEntityInput = Omit<Entity, 'id' | 'workspace' | 'created_at' | 'updated_at'> & {
-  updated_at: Date;
-};
+export type UpdateEntityInput = Omit<BaseEntity, 'id' | 'workspace' | 'created_at'>;
 
 export type CatalogDatabase = {
   resolveWorkspaceSlug(slug: string): Promise<string | null>;
@@ -104,11 +122,11 @@ export type CatalogDatabase = {
   ): Promise<WorkspaceEnumRow | null>;
   deleteEnum(ws: string, id: string): Promise<WorkspaceEnumRow | null>;
 
-  listEntities(ws: string): Promise<EnrichedEntity[]>;
-  getEntity(ws: string, id: string): Promise<EnrichedEntity | null>;
-  createEntity(input: CreateEntityInput): Promise<EnrichedEntity>;
-  updateEntity(ws: string, id: string, input: UpdateEntityInput): Promise<EnrichedEntity | null>;
-  deleteEntity(ws: string, id: string): Promise<Entity | null>;
+  listEntities(ws: string): Promise<EntityRow[]>;
+  getEntity(ws: string, id: string): Promise<EntityRow | null>;
+  createEntity(input: CreateEntityInput): Promise<EntityRow>;
+  updateEntity(ws: string, id: string, input: UpdateEntityInput): Promise<EntityRow | null>;
+  deleteEntity(ws: string, id: string): Promise<BaseEntity | null>;
 
   listEntityGrants(ws: string): Promise<EntityGrantRow[]>;
   getEntityGrants(ws: string, entityId: string): Promise<EntityGrantRow[]>;

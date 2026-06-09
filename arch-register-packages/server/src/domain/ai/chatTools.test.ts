@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiChatTools } from './chatTools';
 import type { DatabaseAdapter } from '../../db/database';
-import { EntitySchemaRow } from '../catalog/db/catalogDatabase';
-import { Entity } from '../../types';
+import { BaseEntity, EntitySchemaRow } from '../catalog/db/catalogDatabase';
 import { AuditLogEntryRow } from '../audit/db/auditDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
@@ -44,7 +43,7 @@ const schemas: EntitySchemaRow[] = [
   }
 ];
 
-const entities: Entity[] = [
+const entities: BaseEntity[] = [
   {
     id: 'entity-app-1',
     workspace: 'ws-1',
@@ -111,8 +110,8 @@ const entities: Entity[] = [
   }
 ];
 
-const createdEntities: Entity[] = [];
-const updatedEntities: Entity[] = [];
+const createdEntities: BaseEntity[] = [];
+const updatedEntities: BaseEntity[] = [];
 const createdAuditLogs: AuditLogEntryRow[] = [];
 const createdNotifications: Array<{ changedByDisplayName: string; auditLog: AuditLogEntryRow }> =
   [];
@@ -125,14 +124,14 @@ const db = {
       schemas.find(schema => schema.id === schemaId) ?? null,
     getEntity: async (_ws: string, entityId: string) =>
       entities.find(entity => entity.id === entityId) ?? null,
-    createEntity: vi.fn(async (input: Entity) => {
+    createEntity: vi.fn(async (input: BaseEntity) => {
       createdEntities.push(input);
       return input;
     }),
-    updateEntity: vi.fn(async (_ws: string, entityId: string, input: Partial<Entity>) => {
+    updateEntity: vi.fn(async (_ws: string, entityId: string, input: Partial<BaseEntity>) => {
       const existing = entities.find(entity => entity.id === entityId);
       if (!existing) return null;
-      const updated = { ...existing, ...input } as Entity;
+      const updated = { ...existing, ...input } as BaseEntity;
       updatedEntities.push(updated);
       return updated;
     })

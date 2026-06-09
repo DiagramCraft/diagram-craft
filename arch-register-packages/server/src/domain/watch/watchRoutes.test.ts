@@ -1,8 +1,7 @@
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import { describe, expect, it } from 'vitest';
-import type { Entity } from '../../types';
 import { canAccessNotification } from './watchRoutes';
-import { EntitySchemaRow } from '../catalog/db/catalogDatabase';
+import { BaseEntity, EntitySchemaRow } from '../catalog/db/catalogDatabase';
 import { UserNotificationRow } from './db/watchDatabase';
 
 const now = new Date('2026-06-09T10:00:00.000Z');
@@ -20,7 +19,7 @@ const schema: EntitySchemaRow = {
   updated_at: now
 };
 
-const entity: Entity = {
+const entity: BaseEntity = {
   id: 'entity-1',
   workspace: 'ws-1',
   slug: 'payments-api',

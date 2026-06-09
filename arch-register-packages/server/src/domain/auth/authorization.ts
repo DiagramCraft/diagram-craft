@@ -1,18 +1,19 @@
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
-import { type Entity, type GlobalPermission } from '../../types';
+import { type GlobalPermission } from '../../types';
 import {
-  buildAuthorizationContext,
-  fetchAuthorizationContextData,
   type AuthorizationContext,
-  type EntityAction,
-  type WorkspaceCapability,
-  PermissionChecker,
+  buildAuthorizationContext,
   CapabilityEvaluator,
-  ProjectAction
+  type EntityAction,
+  fetchAuthorizationContextData,
+  PermissionChecker,
+  ProjectAction,
+  type WorkspaceCapability
 } from '@arch-register/permissions';
 import { ServerDataProvider } from './ServerAuthorizationDataProvider';
 import { httpAssert } from '../../utils/httpAssert';
+import { BaseEntity } from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 export const GLOBAL_WS = '__global__';
 
@@ -28,7 +29,7 @@ const capabilities = new CapabilityEvaluator();
  */
 export const requireEntityAction = (
   context: AuthorizationContext,
-  entity: Entity,
+  entity: BaseEntity,
   action: EntityAction,
   message?: string
 ) => {
