@@ -18,6 +18,10 @@ import { createAuthRoutes, createAuthProtectedRoutes } from './domain/auth/authR
 import { createTemplateRoutes } from './domain/catalog/templateRoutes';
 import { createWatchRoutes } from './domain/watch/watchRoutes';
 import { requireAuth } from './middleware/auth';
+import {
+  createWorkspaceEnumOpenAPISpecHandler,
+  createWorkspaceEnumORPCHandler
+} from './domain/catalog/enumOrpc';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -77,12 +81,15 @@ export const createApp = (
     })
   );
 
+  app.use('/openapi-orpc-enums.json', createWorkspaceEnumOpenAPISpecHandler());
+
   app.use(createAuthRoutes(db));
 
   const authMiddleware = requireAuth(db.auth);
   app.use(authMiddleware);
 
   app.use(createAuthProtectedRoutes(db));
+  app.use(createWorkspaceEnumORPCHandler(db));
   app.use(createWorkspaceRoutes(db, storage));
   app.use(createSchemaRoutes(db));
   app.use(createEnumRoutes(db));

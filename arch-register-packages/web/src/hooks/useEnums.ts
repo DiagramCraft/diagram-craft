@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { WorkspaceEnum } from '../lib/api';
 import { apiFetch } from '../lib/api';
+import { createWorkspaceEnumORPC, listWorkspaceEnumsORPC } from '../lib/enumORPCClient';
 
 export const enumKeys = {
   all: ['enums'] as const,
@@ -14,9 +15,7 @@ export const enumKeys = {
 export const useEnums = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: enumKeys.list(workspaceSlug),
-    queryFn: async () => {
-      return await apiFetch<WorkspaceEnum[]>(`/api/${workspaceSlug}/enums`);
-    },
+    queryFn: async () => await listWorkspaceEnumsORPC(workspaceSlug),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000
   });
@@ -27,10 +26,7 @@ export const useCreateEnum = (workspaceSlug: string) => {
 
   return useMutation({
     mutationFn: (body: { name: string; options?: Array<{ value: string; label: string }> }) =>
-      apiFetch<WorkspaceEnum>(`/api/${workspaceSlug}/enums`, {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }),
+      createWorkspaceEnumORPC(workspaceSlug, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enumKeys.list(workspaceSlug) });
     }

@@ -1,3 +1,10 @@
+import type { z } from 'zod';
+import type {
+  createEnumBodySchema,
+  updateEnumBodySchema,
+  workspaceEnumSchema
+} from './enumContract.js';
+
 // ── Schema Field Types ────────────────────────────────────────
 
 export type RequirementLevel = 'required' | 'expected' | 'optional';
@@ -115,20 +122,8 @@ export type SchemaSearchResult = {
 
 // ── Workspace Enum ────────────────────────────────────────────
 
-export type WorkspaceEnum = {
-  id: string;
-  workspace: string;
-  name: string;
-  options: FieldOption[];
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-};
+export type WorkspaceEnum = z.infer<typeof workspaceEnumSchema>;
 
-export type CreateEnumRequest = {
-  name: string;
-  options?: FieldOption[];
-  sort_order?: number;
-};
+export type CreateEnumRequest = z.infer<typeof createEnumBodySchema>;
 
-export type UpdateEnumRequest = CreateEnumRequest;
+export type UpdateEnumRequest = z.infer<typeof updateEnumBodySchema>;

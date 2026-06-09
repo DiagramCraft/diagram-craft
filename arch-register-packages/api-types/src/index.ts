@@ -110,3 +110,16 @@ export type {
   AiConversation,
   AiMessageRecord,
 } from './ai.js';
+
+export {
+  workspaceEnumContract,
+  workspaceEnumSchema,
+  createEnumBodySchema,
+  updateEnumBodySchema,
+  createEnumRequestSchema,
+  updateEnumRequestSchema,
+  getEnumRequestSchema,
+  listEnumsRequestSchema,
+  deleteEnumRequestSchema,
+  deleteEnumResponseSchema,
+} from './enumContract.js';

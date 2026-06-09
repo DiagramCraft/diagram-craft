@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "node --watch --import tsx --import ./src/serverSetup.mjs ./src/main.ts",
     "start": "node --import tsx --import ./src/serverSetup.mjs ./src/main.ts",
-    "bootstrap": "node --import tsx ./src/scripts/bootstrap.ts"
+    "bootstrap": "node --import tsx ./src/scripts/bootstrap.ts",
+    "openapi:generate": "node --import tsx ./src/scripts/generateOpenApi.ts"
   },
   "keywords": [],
   "author": "Magnus Johansson",
@@ -23,6 +24,9 @@
     "@diagram-craft/model": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@diagram-craft/utils-dom": "workspace:^",
+    "@orpc/openapi": "^1.14.5",
+    "@orpc/server": "^1.14.5",
+    "@orpc/zod": "^1.14.5",
     "@tanstack/ai": "^0.23.1",
     "@tanstack/ai-openai": "^0.10.4",
     "@tanstack/ai-openrouter": "^0.10.0",
@@ -36,7 +40,8 @@
     "postgres": "^3.4.5",
     "ws": "^8.21.0",
     "y-protocols": "^1.0.7",
-    "yjs": "^13.6.31"
+    "yjs": "^13.6.31",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

@@ -3,7 +3,7 @@ import {
   buildCreateEnumInput,
   buildUpdateEnumInput,
   isEnumReferencedBySchemas
-} from './enumRoutes';
+} from './enumHelpers';
 import { SchemaDbResult, WorkspaceEnumDbResult } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
