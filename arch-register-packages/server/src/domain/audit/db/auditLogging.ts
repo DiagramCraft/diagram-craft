@@ -1,7 +1,7 @@
 import type { AuditEntityType, AuditOperation } from './auditDatabase';
 import type { DatabaseAdapter } from '../../../db/database';
 import { createLogger } from '../../../utils/logger';
-import { BaseEntity } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { Entity } from '../../catalog/db/catalogDatabase';
 
 const logger = createLogger('audit');
 
@@ -113,7 +113,7 @@ export const extractEntityFields = (entity: Record<string, unknown>): Record<str
   return rest;
 };
 
-export const flattenEntityAuditFields = (entity: BaseEntity): Record<string, unknown> => ({
+export const flattenEntityAuditFields = (entity: Entity): Record<string, unknown> => ({
   _schemaId: entity.schema_id,
   _name: entity.name,
   _slug: entity.slug,

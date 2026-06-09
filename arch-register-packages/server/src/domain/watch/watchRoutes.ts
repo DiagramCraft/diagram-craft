@@ -10,14 +10,14 @@ import {
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
-import { BaseEntity } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { Entity } from '../catalog/db/catalogDatabase';
 
 const BASE = '/api/:workspace';
 const checker = new PermissionChecker();
 
 export const canAccessNotification = (
   authCtx: AuthorizationContext,
-  entityMap: Map<string, BaseEntity>,
+  entityMap: Map<string, Entity>,
   notification: { entity_id: string }
 ) => {
   const entity = entityMap.get(notification.entity_id);

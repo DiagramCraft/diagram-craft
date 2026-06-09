@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { computeChanges, flattenEntityAuditFields } from './auditLogging';
-import { CreateEntityInput } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { EntityDbCreate } from '../../catalog/db/catalogDatabase';
 
 const now = new Date('2026-06-08T10:00:00.000Z');
 
-const makeEntity = (overrides: Partial<CreateEntityInput> = {}): CreateEntityInput => ({
+const makeEntity = (overrides: Partial<EntityDbCreate> = {}): EntityDbCreate => ({
   id: 'e-1',
   workspace: 'ws-1',
   slug: 'entity-1',

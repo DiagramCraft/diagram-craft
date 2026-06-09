@@ -1,17 +1,17 @@
 import type {
-  AiConversation,
+  AiConversationDbResult,
   AiDatabase,
-  AiMessage,
-  CreateConversationInput,
-  CreateMessageInput,
-  UpsertAiConfigInput,
-  WorkspaceAiConfig
+  AiMessageDbResult,
+  AiConversationDbCreate,
+  AiMessageDbCreate,
+  AiConfigInputDbUpsert,
+  AiConfigDbResult
 } from './aiDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
-type AiConfigRow = WorkspaceAiConfig;
-type ConversationRow = AiConversation;
-type MessageRow = AiMessage;
+type AiConfigRow = AiConfigDbResult;
+type ConversationRow = AiConversationDbResult;
+type MessageRow = AiMessageDbResult;
 
 export class PostgresAiDatabase extends PostgresDatabaseBase implements AiDatabase {
   async getAiConfig(ws: string) {
@@ -21,7 +21,7 @@ export class PostgresAiDatabase extends PostgresDatabaseBase implements AiDataba
     return row ?? null;
   }
 
-  async upsertAiConfig(ws: string, input: UpsertAiConfigInput) {
+  async upsertAiConfig(ws: string, input: AiConfigInputDbUpsert) {
     try {
       const now = new Date();
       const existing = await this.getAiConfig(ws);
@@ -80,7 +80,7 @@ export class PostgresAiDatabase extends PostgresDatabaseBase implements AiDataba
     return row ?? null;
   }
 
-  async createConversation(input: CreateConversationInput) {
+  async createConversation(input: AiConversationDbCreate) {
     try {
       const [row] = await this.sql<ConversationRow[]>`
         INSERT INTO ai_conversation (id, workspace, user_id, title, created_at, updated_at)
@@ -125,7 +125,7 @@ export class PostgresAiDatabase extends PostgresDatabaseBase implements AiDataba
     `;
   }
 
-  async createMessage(input: CreateMessageInput) {
+  async createMessage(input: AiMessageDbCreate) {
     try {
       const [row] = await this.sql<MessageRow[]>`
         INSERT INTO ai_message (id, conversation_id, role, content, metadata, created_at)

@@ -11,21 +11,21 @@ import {
   AR_COLOR_AMBER
 } from '@arch-register/api-types/colors';
 import {
-  TeamMembershipRow,
-  WorkspaceMemberRow,
-  WorkspaceRow,
-  WorkspaceOwnerRow,
-  WorkspaceLifecycleStateRow
+  TeamMembershipDbResult,
+  MemberDbResult,
+  WorkspaceDbResult,
+  OwnerDbResult,
+  LifecycleStateDbResult
 } from '../domain/workspace/db/workspaceDatabase';
 import {
-  BaseEntity,
-  EntitySchemaRow,
-  SavedViewRow,
-  WorkspaceEnumRow
+  Entity,
+  SchemaDbResult,
+  SavedViewDbResult,
+  WorkspaceEnumDbResult
 } from '../domain/catalog/db/catalogDatabase';
-import { CreateProjectInput, ProjectFileRow } from '../domain/project/db/projectDatabase';
+import { ProjectDbCreate, ProjectFileDbResult } from '../domain/project/db/projectDatabase';
 import { AuditOperation } from '../domain/audit/db/auditDatabase';
-import { GlobalRoleAssignmentRow } from '../domain/auth/db/authDatabase';
+import { GlobalRoleAssignmentDbResult } from '../domain/auth/db/authDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -67,7 +67,7 @@ export const seedIds = {
   users: USER_IDS
 } as const;
 
-export const seedWorkspaces: WorkspaceRow[] = [
+export const seedWorkspaces: WorkspaceDbResult[] = [
   {
     id: WORKSPACE_ID,
     name: 'Default Workspace',
@@ -80,7 +80,7 @@ export const seedWorkspaces: WorkspaceRow[] = [
   }
 ];
 
-export const seedLifecycleStates: WorkspaceLifecycleStateRow[] = [
+export const seedLifecycleStates: LifecycleStateDbResult[] = [
   {
     id: LIFECYCLE_IDS.proposed,
     workspace: WORKSPACE_ID,
@@ -115,7 +115,7 @@ export const seedLifecycleStates: WorkspaceLifecycleStateRow[] = [
   }
 ];
 
-export const seedOwners: WorkspaceOwnerRow[] = [
+export const seedOwners: OwnerDbResult[] = [
   {
     id: TEAM_IDS.platform,
     workspace: WORKSPACE_ID,
@@ -227,7 +227,7 @@ export const seedLocalUsers = [
   }
 ] as const;
 
-export const seedTeamAssignments: TeamMembershipRow[] = [
+export const seedTeamAssignments: TeamMembershipDbResult[] = [
   // Platform Engineering
   {
     workspace: WORKSPACE_ID,
@@ -328,13 +328,13 @@ export const seedTeamAssignments: TeamMembershipRow[] = [
   }
 ];
 
-export const seedGlobalRoleAssignments: GlobalRoleAssignmentRow[] = [
+export const seedGlobalRoleAssignments: GlobalRoleAssignmentDbResult[] = [
   { user_id: USER_IDS.globaladmin, role: 'global_admin', created_at: now },
   { user_id: USER_IDS.globaladmin, role: 'workspace_admin', created_at: now },
   { user_id: USER_IDS.workspaceadmin, role: 'workspace_admin', created_at: now }
 ];
 
-export const seedWorkspaceMembers: WorkspaceMemberRow[] = [
+export const seedWorkspaceMembers: MemberDbResult[] = [
   { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceowner, role: 'owner', created_at: now },
   { workspace: WORKSPACE_ID, user_id: USER_IDS.globaladmin, role: 'admin', created_at: now },
   { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceadmin, role: 'admin', created_at: now },
@@ -367,7 +367,7 @@ export const seedWorkspaceMembers: WorkspaceMemberRow[] = [
   { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now }
 ];
 
-export const seedEnums: WorkspaceEnumRow[] = [
+export const seedEnums: WorkspaceEnumDbResult[] = [
   {
     id: '00000000-0000-0000-0000-e00000000001',
     workspace: WORKSPACE_ID,
@@ -384,7 +384,7 @@ export const seedEnums: WorkspaceEnumRow[] = [
   }
 ];
 
-export const seedSchemas: EntitySchemaRow[] = [
+export const seedSchemas: SchemaDbResult[] = [
   {
     id: '00000000-0000-0000-0000-000000000001',
     workspace: WORKSPACE_ID,
@@ -516,7 +516,7 @@ export const seedSchemas: EntitySchemaRow[] = [
   }
 ];
 
-export const seedEntities: BaseEntity[] = [
+export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0001-000000000001',
     workspace: WORKSPACE_ID,
@@ -710,7 +710,7 @@ export const seedEntities: BaseEntity[] = [
   }
 ];
 
-export const seedProjects: CreateProjectInput[] = [
+export const seedProjects: ProjectDbCreate[] = [
   {
     id: '00000000-0000-0000-0010-000000000001',
     workspace: WORKSPACE_ID,
@@ -735,7 +735,7 @@ export const seedProjects: CreateProjectInput[] = [
   }
 ];
 
-export const seedSavedViews: SavedViewRow[] = [
+export const seedSavedViews: SavedViewDbResult[] = [
   {
     id: '00000000-0000-0000-0020-000000000001',
     workspace: WORKSPACE_ID,
@@ -887,4 +887,4 @@ export const seedNotificationEvents: Array<{
   }
 ];
 
-export const seedProjectFiles: ProjectFileRow[] = [];
+export const seedProjectFiles: ProjectFileDbResult[] = [];

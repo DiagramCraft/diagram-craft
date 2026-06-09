@@ -1,6 +1,6 @@
-import type { CreateEntityInput, DatabaseAdapter, UpdateEntityInput } from '../../db/database';
+import type { EntityDbCreate, DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import { computeChanges, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
-import { BaseEntity } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { Entity } from './db/catalogDatabase';
 
 export type EntityMutationActor = {
   id: string;
@@ -9,15 +9,15 @@ export type EntityMutationActor = {
 
 type CreateEntityWithAuditParams = {
   workspace: string;
-  entity: CreateEntityInput;
+  entity: EntityDbCreate;
   actor: EntityMutationActor;
 };
 
 type UpdateEntityWithAuditParams = {
   workspace: string;
   entityId: string;
-  previous: BaseEntity;
-  next: UpdateEntityInput;
+  previous: Entity;
+  next: EntityDbUpdate;
   actor: EntityMutationActor;
 };
 

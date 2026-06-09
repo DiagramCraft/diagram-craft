@@ -1,10 +1,10 @@
 import type { ProjectTemplatesResponse } from '@arch-register/api-types';
 import { toApiProjectFile } from '../project/projectHelpers';
-import { ProjectFileRow } from '../project/db/projectDatabase';
+import { ProjectFileDbResult } from '../project/db/projectDatabase';
 
 export type ProjectWithFiles = {
   project: { id: string };
-  files: ProjectFileRow[];
+  files: ProjectFileDbResult[];
 };
 
 export const buildAllTemplatesResponse = (

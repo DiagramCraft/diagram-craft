@@ -1,36 +1,36 @@
 import {
-  CreateWorkspaceInput,
-  UpdateWorkspaceInput,
-  WorkspaceRow,
-  WorkspaceLifecycleStateRow,
+  WorkspaceDbCreate,
+  WorkspaceDbUpdate,
+  WorkspaceDbResult,
+  LifecycleStateDbResult,
   WorkspaceDatabase,
-  WorkspaceOwnerRow,
-  CreateWorkspaceLifecycleState,
-  WorkspaceMemberRow,
-  TeamMembershipRow,
-  CreateWorkspaceOwner,
-  WorkspaceRoleDefinitionRow,
-  CreateTeamMembership,
-  CreateWorkspaceRoleDefinition,
-  UpdateWorkspaceRoleDefinition
+  OwnerDbResult,
+  LifecycleStateDbCreate,
+  MemberDbResult,
+  TeamMembershipDbResult,
+  OwnerDbCreate,
+  RoleDefinitionDbResult,
+  TeamMembershipDbCreate,
+  RoleDefinitionDbCreate,
+  RoleDefinitionDbUpdate
 } from './workspaceDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
 export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements WorkspaceDatabase {
   async listWorkspaces() {
-    return await this.sql<WorkspaceRow[]>`SELECT *FROM workspace ORDER BY name`;
+    return await this.sql<WorkspaceDbResult[]>`SELECT *FROM workspace ORDER BY name`;
   }
 
   async getWorkspace(id: string) {
-    const [row] = await this.sql<WorkspaceRow[]>`
+    const [row] = await this.sql<WorkspaceDbResult[]>`
       SELECT * FROM workspace WHERE id = ${id}
     `;
     return row ?? null;
   }
 
-  async createWorkspace(input: CreateWorkspaceInput) {
+  async createWorkspace(input: WorkspaceDbCreate) {
     try {
-      const [row] = await this.sql<WorkspaceRow[]>`
+      const [row] = await this.sql<WorkspaceDbResult[]>`
         INSERT INTO workspace (id, name, url_slug, short_code, color, description, created_at, updated_at)
         VALUES (${input.id}, ${input.name}, ${input.url_slug}, ${input.short_code}, ${input.color}, ${input.description}, ${input.created_at}, ${input.updated_at})
         RETURNING *
@@ -41,9 +41,9 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     }
   }
 
-  async updateWorkspace(id: string, input: UpdateWorkspaceInput) {
+  async updateWorkspace(id: string, input: WorkspaceDbUpdate) {
     try {
-      const [row] = await this.sql<WorkspaceRow[]>`
+      const [row] = await this.sql<WorkspaceDbResult[]>`
         UPDATE workspace
         SET name = ${input.name},
             url_slug = ${input.url_slug},
@@ -62,7 +62,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async deleteWorkspace(id: string) {
     try {
-      const [workspace] = await this.sql<WorkspaceRow[]>`
+      const [workspace] = await this.sql<WorkspaceDbResult[]>`
         SELECT * FROM workspace WHERE id = ${id}
       `;
       if (!workspace) return { workspace: null, projectIds: [] };
@@ -93,7 +93,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listLifecycleStates(workspace: string) {
-    return await this.sql<WorkspaceLifecycleStateRow[]>`
+    return await this.sql<LifecycleStateDbResult[]>`
       SELECT id, workspace, label, color, sort_order, created_at
       FROM workspace_lifecycle_state
       WHERE workspace = ${workspace}
@@ -101,7 +101,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     `;
   }
 
-  async replaceLifecycleStates(workspace: string, states: CreateWorkspaceLifecycleState[]) {
+  async replaceLifecycleStates(workspace: string, states: LifecycleStateDbCreate[]) {
     try {
       await this.sql.begin(async tx => {
         await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${workspace}`;
@@ -119,7 +119,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listTeams(workspace: string) {
-    return await this.sql<WorkspaceOwnerRow[]>`
+    return await this.sql<OwnerDbResult[]>`
       SELECT id, workspace, name, sort_order, color, description, created_at
       FROM workspace_owner
       WHERE workspace = ${workspace}
@@ -127,7 +127,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     `;
   }
 
-  async replaceTeams(workspace: string, owners: CreateWorkspaceOwner[]) {
+  async replaceTeams(workspace: string, owners: OwnerDbCreate[]) {
     try {
       await this.sql.begin(async tx => {
         const ownerIds = owners.map(owner => owner.id);
@@ -167,7 +167,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listTeamAssignments(workspace: string) {
-    return await this.sql<TeamMembershipRow[]>`
+    return await this.sql<TeamMembershipDbResult[]>`
       SELECT workspace, team_id, user_id, role, created_at
       FROM team_membership
       WHERE workspace = ${workspace}
@@ -175,7 +175,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     `;
   }
 
-  async replaceTeamAssignments(workspace: string, memberships: CreateTeamMembership[]) {
+  async replaceTeamAssignments(workspace: string, memberships: TeamMembershipDbCreate[]) {
     try {
       await this.sql.begin(async tx => {
         await tx`DELETE FROM team_membership WHERE workspace = ${workspace}`;
@@ -193,7 +193,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listWorkspaceMembers(workspace: string) {
-    return await this.sql<WorkspaceMemberRow[]>`
+    return await this.sql<MemberDbResult[]>`
       SELECT workspace, user_id, role, created_at
       FROM workspace_member
       WHERE workspace = ${workspace}
@@ -202,7 +202,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async getWorkspaceMember(workspace: string, userId: string) {
-    const [row] = await this.sql<WorkspaceMemberRow[]>`
+    const [row] = await this.sql<MemberDbResult[]>`
       SELECT workspace, user_id, role, created_at
       FROM workspace_member
       WHERE workspace = ${workspace} AND user_id = ${userId}
@@ -211,7 +211,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async setWorkspaceMemberRole(workspace: string, userId: string, role: string, createdAt: Date) {
-    const [row] = await this.sql<WorkspaceMemberRow[]>`
+    const [row] = await this.sql<MemberDbResult[]>`
       INSERT INTO workspace_member (workspace, user_id, role, created_at)
       VALUES (${workspace}, ${userId}, ${role}, ${createdAt})
       ON CONFLICT (workspace, user_id) DO UPDATE
@@ -222,7 +222,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async removeWorkspaceMember(workspace: string, userId: string) {
-    const [row] = await this.sql<WorkspaceMemberRow[]>`
+    const [row] = await this.sql<MemberDbResult[]>`
       DELETE FROM workspace_member
       WHERE workspace = ${workspace} AND user_id = ${userId}
       RETURNING *
@@ -236,7 +236,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listCustomWorkspaceRoles(workspace: string) {
-    return await this.sql<WorkspaceRoleDefinitionRow[]>`
+    return await this.sql<RoleDefinitionDbResult[]>`
       SELECT id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
       FROM workspace_role
       WHERE workspace = ${workspace}
@@ -245,7 +245,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async getCustomWorkspaceRole(workspace: string, roleId: string) {
-    const [row] = await this.sql<WorkspaceRoleDefinitionRow[]>`
+    const [row] = await this.sql<RoleDefinitionDbResult[]>`
       SELECT id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
       FROM workspace_role
       WHERE workspace = ${workspace} AND id = ${roleId}
@@ -253,9 +253,9 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     return row ?? null;
   }
 
-  async createCustomWorkspaceRole(input: CreateWorkspaceRoleDefinition) {
+  async createCustomWorkspaceRole(input: RoleDefinitionDbCreate) {
     try {
-      const [row] = await this.sql<WorkspaceRoleDefinitionRow[]>`
+      const [row] = await this.sql<RoleDefinitionDbResult[]>`
         INSERT INTO workspace_role (id, workspace, name, description, tone, capabilities, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.tone}, ${this.json(input.capabilities)}, ${input.created_at}, ${input.updated_at})
         RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
@@ -269,10 +269,10 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   async updateCustomWorkspaceRole(
     workspace: string,
     roleId: string,
-    input: UpdateWorkspaceRoleDefinition
+    input: RoleDefinitionDbUpdate
   ) {
     try {
-      const [row] = await this.sql<WorkspaceRoleDefinitionRow[]>`
+      const [row] = await this.sql<RoleDefinitionDbResult[]>`
         UPDATE workspace_role
         SET name = ${input.name},
             description = ${input.description},
@@ -289,7 +289,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async deleteCustomWorkspaceRole(workspace: string, roleId: string) {
-    const [row] = await this.sql<WorkspaceRoleDefinitionRow[]>`
+    const [row] = await this.sql<RoleDefinitionDbResult[]>`
       DELETE FROM workspace_role
       WHERE workspace = ${workspace} AND id = ${roleId}
       RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at

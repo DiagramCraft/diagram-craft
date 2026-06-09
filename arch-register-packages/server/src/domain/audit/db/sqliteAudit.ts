@@ -1,5 +1,5 @@
 import { newid } from '@diagram-craft/utils/id';
-import type { AuditDatabase, CreateAuditLogInput } from './auditDatabase';
+import type { AuditDatabase, AuditLogDbCreate } from './auditDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
 export class SqliteAuditDatabase extends SqliteDatabaseBase implements AuditDatabase {
@@ -11,7 +11,7 @@ export class SqliteAuditDatabase extends SqliteDatabaseBase implements AuditData
     );
   }
 
-  async createAuditLog(input: CreateAuditLogInput) {
+  async createAuditLog(input: AuditLogDbCreate) {
     const id = newid();
     this.run(
       'INSERT INTO audit_log (id, workspace, timestamp, user_id, operation, entity_type, entity_id, entity_name, entity_slug, schema_id, changes, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

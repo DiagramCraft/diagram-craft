@@ -3,7 +3,7 @@ import { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-
 
 // -- Entity Schema
 
-export type EntitySchemaRow = {
+export type SchemaDbResult = {
   id: string;
   workspace: string;
   name: string;
@@ -16,13 +16,13 @@ export type EntitySchemaRow = {
   updated_at: Date;
 };
 
-export type CreateEntitySchemaInput = EntitySchemaRow;
+export type SchemaDbCreate = SchemaDbResult;
 
-export type UpdateEntitySchemaInput = Omit<EntitySchemaRow, 'id' | 'workspace' | 'created_at'>;
+export type SchemaDbUpdate = Omit<SchemaDbResult, 'id' | 'workspace' | 'created_at'>;
 
 // -- Workspace Enum
 
-export type WorkspaceEnumRow = {
+export type WorkspaceEnumDbResult = {
   id: string;
   workspace: string;
   name: string;
@@ -32,13 +32,13 @@ export type WorkspaceEnumRow = {
   updated_at: Date;
 };
 
-export type CreateWorkspaceEnumInput = WorkspaceEnumRow;
+export type WorkspaceEnumDbCreate = WorkspaceEnumDbResult;
 
-export type UpdateWorkspaceEnumInput = Omit<WorkspaceEnumRow, 'id' | 'workspace' | 'created_at'>;
+export type WorkspaceEnumDbUpdate = Omit<WorkspaceEnumDbResult, 'id' | 'workspace' | 'created_at'>;
 
 // -- Entity Grant
 
-export type EntityGrantRow = {
+export type EntityGrantDbResult = {
   id: string;
   workspace: string;
   entity_id: string;
@@ -53,22 +53,22 @@ type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 
 type EntityGrantScope = 'self' | 'subtree';
 
-export type CreateEntityGrantInput = EntityGrantRow;
+export type EntityGrantDbCretae = EntityGrantDbResult;
 
 // -- User Pinned Entity
 
-export type UserPinnedEntityRow = {
+export type PinnedEntityDbResult = {
   user_id: string;
   workspace: string;
   entity_id: string;
   created_at: Date;
 };
 
-export type CreateUserPinnedEntityInput = UserPinnedEntityRow;
+export type PinnedEntityDbCreate = PinnedEntityDbResult;
 
 // -- Entity
 
-export type BaseEntity = {
+export type Entity = {
   id: string;
   workspace: string;
   slug: string;
@@ -90,71 +90,67 @@ export type BaseEntity = {
 
 // Entity enriched with resolved names from joined tables (owner, lifecycle, schema).
 // Returned by listEntities / getEntity; used by helpers that build API responses.
-export type EntityRow = BaseEntity & {
+export type EntityDbResult = Entity & {
   owner_name: string | null;
   lifecycle_label: string | null;
   target_lifecycle_label: string | null;
   schema_name: string;
 };
 
-export type CreateEntityInput = BaseEntity;
+export type EntityDbCreate = Entity;
 
-export type UpdateEntityInput = Omit<BaseEntity, 'id' | 'workspace' | 'created_at'>;
+export type EntityDbUpdate = Omit<Entity, 'id' | 'workspace' | 'created_at'>;
 
 export type CatalogDatabase = {
   resolveWorkspaceSlug(slug: string): Promise<string | null>;
 
-  listSchemas(ws: string): Promise<EntitySchemaRow[]>;
-  getSchema(ws: string, id: string): Promise<EntitySchemaRow | null>;
-  createSchema(input: CreateEntitySchemaInput): Promise<EntitySchemaRow>;
-  updateSchema(
-    ws: string,
-    id: string,
-    input: UpdateEntitySchemaInput
-  ): Promise<EntitySchemaRow | null>;
-  deleteSchema(ws: string, id: string): Promise<EntitySchemaRow | null>;
+  listSchemas(ws: string): Promise<SchemaDbResult[]>;
+  getSchema(ws: string, id: string): Promise<SchemaDbResult | null>;
+  createSchema(input: SchemaDbCreate): Promise<SchemaDbResult>;
+  updateSchema(ws: string, id: string, input: SchemaDbUpdate): Promise<SchemaDbResult | null>;
+  deleteSchema(ws: string, id: string): Promise<SchemaDbResult | null>;
 
-  listEnums(ws: string): Promise<WorkspaceEnumRow[]>;
-  getEnum(ws: string, id: string): Promise<WorkspaceEnumRow | null>;
-  createEnum(input: CreateWorkspaceEnumInput): Promise<WorkspaceEnumRow>;
+  listEnums(ws: string): Promise<WorkspaceEnumDbResult[]>;
+  getEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;
+  createEnum(input: WorkspaceEnumDbCreate): Promise<WorkspaceEnumDbResult>;
   updateEnum(
     ws: string,
     id: string,
-    input: UpdateWorkspaceEnumInput
-  ): Promise<WorkspaceEnumRow | null>;
-  deleteEnum(ws: string, id: string): Promise<WorkspaceEnumRow | null>;
+    input: WorkspaceEnumDbUpdate
+  ): Promise<WorkspaceEnumDbResult | null>;
+  deleteEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;
 
-  listEntities(ws: string): Promise<EntityRow[]>;
-  getEntity(ws: string, id: string): Promise<EntityRow | null>;
-  createEntity(input: CreateEntityInput): Promise<EntityRow>;
-  updateEntity(ws: string, id: string, input: UpdateEntityInput): Promise<EntityRow | null>;
-  deleteEntity(ws: string, id: string): Promise<BaseEntity | null>;
+  listEntities(ws: string): Promise<EntityDbResult[]>;
+  getEntity(ws: string, id: string): Promise<EntityDbResult | null>;
+  createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
+  updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;
+  deleteEntity(ws: string, id: string): Promise<Entity | null>;
 
-  listEntityGrants(ws: string): Promise<EntityGrantRow[]>;
-  getEntityGrants(ws: string, entityId: string): Promise<EntityGrantRow[]>;
+  listEntityGrants(ws: string): Promise<EntityGrantDbResult[]>;
+  getEntityGrants(ws: string, entityId: string): Promise<EntityGrantDbResult[]>;
   replaceEntityGrants(
     ws: string,
     entityId: string,
-    grants: CreateEntityGrantInput[]
-  ): Promise<EntityGrantRow[]>;
+    grants: EntityGrantDbCretae[]
+  ): Promise<EntityGrantDbResult[]>;
 
-  listPinnedEntities(userId: string, workspace: string): Promise<UserPinnedEntityRow[]>;
+  listPinnedEntities(userId: string, workspace: string): Promise<PinnedEntityDbResult[]>;
   getPinnedEntity(
     userId: string,
     workspace: string,
     entityId: string
-  ): Promise<UserPinnedEntityRow | null>;
-  createPinnedEntity(input: CreateUserPinnedEntityInput): Promise<UserPinnedEntityRow>;
+  ): Promise<PinnedEntityDbResult | null>;
+  createPinnedEntity(input: PinnedEntityDbCreate): Promise<PinnedEntityDbResult>;
   deletePinnedEntity(
     userId: string,
     workspace: string,
     entityId: string
-  ): Promise<UserPinnedEntityRow | null>;
+  ): Promise<PinnedEntityDbResult | null>;
 };
 
 // -- Saved View
 
-export type SavedViewRow = {
+export type SavedViewDbResult = {
   id: string;
   workspace: string;
   name: string;
@@ -168,22 +164,22 @@ export type SavedViewRow = {
   updated_at: Date;
 };
 
-export type CreateSavedViewInput = SavedViewRow;
+export type SavedViewDbCreate = SavedViewDbResult;
 
-export type UpdateSavedViewInput = Partial<
-  Omit<SavedViewRow, 'id' | 'workspace' | 'created_at' | 'updated_at'>
+export type SavedViewDbUpdate = Partial<
+  Omit<SavedViewDbResult, 'id' | 'workspace' | 'created_at' | 'updated_at'>
 > & {
   updated_at: Date;
 };
 
 export type ViewDatabase = {
-  listSavedViews(ws: string): Promise<SavedViewRow[]>;
-  getSavedView(ws: string, id: string): Promise<SavedViewRow | null>;
-  createSavedView(input: CreateSavedViewInput): Promise<SavedViewRow>;
+  listSavedViews(ws: string): Promise<SavedViewDbResult[]>;
+  getSavedView(ws: string, id: string): Promise<SavedViewDbResult | null>;
+  createSavedView(input: SavedViewDbCreate): Promise<SavedViewDbResult>;
   updateSavedView(
     ws: string,
     id: string,
-    input: UpdateSavedViewInput
-  ): Promise<SavedViewRow | null>;
-  deleteSavedView(ws: string, id: string): Promise<SavedViewRow | null>;
+    input: SavedViewDbUpdate
+  ): Promise<SavedViewDbResult | null>;
+  deleteSavedView(ws: string, id: string): Promise<SavedViewDbResult | null>;
 };

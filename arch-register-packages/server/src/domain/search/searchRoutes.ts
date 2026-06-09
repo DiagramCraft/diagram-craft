@@ -1,7 +1,7 @@
 import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { SchemaField } from '../../types';
-import type { EntityRow } from '../catalog/db/catalogDatabase';
+import type { EntityDbResult } from '../catalog/db/catalogDatabase';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { parsePositiveInt } from '../../utils/http';
 import { SEARCH_DEFAULTS } from '../../constants';
@@ -86,7 +86,7 @@ export const includesQuery = (value: unknown, query: string) =>
     .toLowerCase()
     .includes(query);
 
-export const collectMatchedMetadata = (entity: EntityRow, query: string) => {
+export const collectMatchedMetadata = (entity: EntityDbResult, query: string) => {
   const matches: string[] = [];
   if (includesQuery(entity.name, query)) matches.push('name');
   if (includesQuery(entity.slug, query)) matches.push('slug');
@@ -108,7 +108,7 @@ export const collectMatchedMetadata = (entity: EntityRow, query: string) => {
   return matches;
 };
 
-export const collectMatchedFields = (data: EntityRow['data'], query: string) =>
+export const collectMatchedFields = (data: EntityDbResult['data'], query: string) =>
   Object.entries(data)
     .filter(([, value]) => includesQuery(value, query))
     .map(([key]) => key);

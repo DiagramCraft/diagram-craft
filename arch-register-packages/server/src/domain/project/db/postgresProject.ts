@@ -1,16 +1,16 @@
 import type {
-  CreateProjectInput,
-  ProjectRow,
+  ProjectDbCreate,
+  ProjectDbResult,
   ProjectDatabase,
-  ProjectFileRow,
-  UpdateProjectInput,
-  UpsertProjectFileInput
+  ProjectFileDbResult,
+  ProjectDbUpdate,
+  ProjectFileDbUpsert
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
 export class PostgresProjectDatabase extends PostgresDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
-    return await this.sql<ProjectRow[]>`
+    return await this.sql<ProjectDbResult[]>`
       SELECT p.*, wo.name AS owner_name
       FROM project p
       LEFT JOIN workspace_owner wo ON wo.id = p.owner
@@ -20,7 +20,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async getProject(workspace: string, id: string) {
-    const [row] = await this.sql<ProjectRow[]>`
+    const [row] = await this.sql<ProjectDbResult[]>`
       SELECT p.*, wo.name AS owner_name
       FROM project p
       LEFT JOIN workspace_owner wo ON wo.id = p.owner
@@ -29,7 +29,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     return row ?? null;
   }
 
-  async createProject(input: CreateProjectInput) {
+  async createProject(input: ProjectDbCreate) {
     try {
       await this.sql`
         INSERT INTO project (id, workspace, name, description, owner, status, color, created_at, updated_at)
@@ -41,7 +41,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async updateProject(workspace: string, id: string, input: UpdateProjectInput) {
+  async updateProject(workspace: string, id: string, input: ProjectDbUpdate) {
     try {
       const result = await this.sql`
         UPDATE project
@@ -73,7 +73,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async listProjectFiles(workspace: string, projectId: string) {
-    return await this.sql<ProjectFileRow[]>`
+    return await this.sql<ProjectFileDbResult[]>`
       SELECT *
       FROM project_file
       WHERE workspace = ${workspace} AND project_id = ${projectId}
@@ -82,7 +82,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async getProjectFileByPath(workspace: string, projectId: string, path: string) {
-    const [row] = await this.sql<ProjectFileRow[]>`
+    const [row] = await this.sql<ProjectFileDbResult[]>`
       SELECT * FROM project_file
       WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
     `;
@@ -168,9 +168,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async upsertProjectFile(input: UpsertProjectFileInput) {
+  async upsertProjectFile(input: ProjectFileDbUpsert) {
     try {
-      const [row] = await this.sql<ProjectFileRow[]>`
+      const [row] = await this.sql<ProjectFileDbResult[]>`
         INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
         VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path)
@@ -189,10 +189,10 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async createProjectFileIfAbsent(
-    input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }
+    input: Omit<ProjectFileDbUpsert, 'updated_at'> & { updated_at: Date }
   ) {
     try {
-      const [row] = await this.sql<ProjectFileRow[]>`
+      const [row] = await this.sql<ProjectFileDbResult[]>`
         INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
         VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path) DO NOTHING
@@ -206,7 +206,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteProjectFileByPath(workspace: string, projectId: string, path: string) {
     try {
-      const [row] = await this.sql<ProjectFileRow[]>`
+      const [row] = await this.sql<ProjectFileDbResult[]>`
         DELETE FROM project_file
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
         RETURNING *
@@ -240,7 +240,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteProjectFileFolder(workspace: string, projectId: string, folderPath: string) {
     try {
-      return await this.sql<ProjectFileRow[]>`
+      return await this.sql<ProjectFileDbResult[]>`
         DELETE FROM project_file
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${folderPath}/%`}
         RETURNING *

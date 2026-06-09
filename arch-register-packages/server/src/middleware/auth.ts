@@ -4,11 +4,11 @@ import { verifyToken } from '../utils/jwt';
 import type { AuthDatabase } from '../db/database';
 import type { JWTPayload } from '../types';
 import { httpAssert } from '../utils/httpAssert';
-import { UserRow } from '../domain/auth/db/authDatabase';
+import { UserDbResult } from '../domain/auth/db/authDatabase';
 
 export type AuthenticatedEvent = H3Event & {
   context: {
-    user: UserRow;
+    user: UserDbResult;
     token: JWTPayload;
   };
 };

@@ -5,11 +5,11 @@ import {
   parseRequestedGlobalRoles,
   selectRefreshToken
 } from './authRoutes';
-import { UserRow } from './db/authDatabase';
+import { UserDbResult } from './db/authDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const user: UserRow = {
+const user: UserDbResult = {
   id: 'user-1',
   user_id: 'user-1',
   email: 'user@example.com',

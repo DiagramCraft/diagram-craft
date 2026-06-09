@@ -1,18 +1,19 @@
 import type {
   CatalogDatabase,
-  CreateEntityGrantInput,
-  CreateEntityInput,
-  CreateWorkspaceEnumInput,
-  CreateEntitySchemaInput,
-  EntityRow,
-  EntitySchemaRow,
-  UpdateEntityInput,
-  UpdateWorkspaceEnumInput,
-  UpdateEntitySchemaInput,
-  WorkspaceEnumRow,
-  EntityGrantRow,
-  UserPinnedEntityRow,
-  BaseEntity
+  EntityGrantDbCretae,
+  EntityDbCreate,
+  WorkspaceEnumDbCreate,
+  SchemaDbCreate,
+  EntityDbResult,
+  SchemaDbResult,
+  EntityDbUpdate,
+  WorkspaceEnumDbUpdate,
+  SchemaDbUpdate,
+  WorkspaceEnumDbResult,
+  EntityGrantDbResult,
+  PinnedEntityDbResult,
+  Entity,
+  PinnedEntityDbCreate
 } from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
@@ -25,21 +26,21 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async listSchemas(workspace: string) {
-    return await this.sql<EntitySchemaRow[]>`
+    return await this.sql<SchemaDbResult[]>`
       SELECT * FROM entity_schema WHERE workspace = ${workspace} ORDER BY name
     `;
   }
 
   async getSchema(workspace: string, id: string) {
-    const [row] = await this.sql<EntitySchemaRow[]>`
+    const [row] = await this.sql<SchemaDbResult[]>`
       SELECT * FROM entity_schema WHERE workspace = ${workspace} AND id = ${id}
     `;
     return row ?? null;
   }
 
-  async createSchema(input: CreateEntitySchemaInput) {
+  async createSchema(input: SchemaDbCreate) {
     try {
-      const [row] = await this.sql<EntitySchemaRow[]>`
+      const [row] = await this.sql<SchemaDbResult[]>`
         INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.created_at}, ${input.updated_at})
         RETURNING *
@@ -50,9 +51,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     }
   }
 
-  async updateSchema(workspace: string, id: string, input: UpdateEntitySchemaInput) {
+  async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     try {
-      const [row] = await this.sql<EntitySchemaRow[]>`
+      const [row] = await this.sql<SchemaDbResult[]>`
         UPDATE entity_schema
         SET name = ${input.name},
             description = ${input.description},
@@ -72,7 +73,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async deleteSchema(workspace: string, id: string) {
     try {
-      const [row] = await this.sql<EntitySchemaRow[]>`
+      const [row] = await this.sql<SchemaDbResult[]>`
         DELETE FROM entity_schema
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
@@ -84,21 +85,21 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async listEnums(workspace: string) {
-    return await this.sql<WorkspaceEnumRow[]>`
+    return await this.sql<WorkspaceEnumDbResult[]>`
       SELECT * FROM workspace_enum WHERE workspace = ${workspace} ORDER BY sort_order, name
     `;
   }
 
   async getEnum(workspace: string, id: string) {
-    const [row] = await this.sql<WorkspaceEnumRow[]>`
+    const [row] = await this.sql<WorkspaceEnumDbResult[]>`
       SELECT * FROM workspace_enum WHERE workspace = ${workspace} AND id = ${id}
     `;
     return row ?? null;
   }
 
-  async createEnum(input: CreateWorkspaceEnumInput) {
+  async createEnum(input: WorkspaceEnumDbCreate) {
     try {
-      const [row] = await this.sql<WorkspaceEnumRow[]>`
+      const [row] = await this.sql<WorkspaceEnumDbResult[]>`
         INSERT INTO workspace_enum (id, workspace, name, options, sort_order, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${this.json(input.options)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
         RETURNING *
@@ -109,9 +110,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     }
   }
 
-  async updateEnum(workspace: string, id: string, input: UpdateWorkspaceEnumInput) {
+  async updateEnum(workspace: string, id: string, input: WorkspaceEnumDbUpdate) {
     try {
-      const [row] = await this.sql<WorkspaceEnumRow[]>`
+      const [row] = await this.sql<WorkspaceEnumDbResult[]>`
         UPDATE workspace_enum
         SET name = ${input.name},
             options = ${this.json(input.options)},
@@ -128,7 +129,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async deleteEnum(workspace: string, id: string) {
     try {
-      const [row] = await this.sql<WorkspaceEnumRow[]>`
+      const [row] = await this.sql<WorkspaceEnumDbResult[]>`
         DELETE FROM workspace_enum
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
@@ -140,7 +141,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async listEntities(workspace: string) {
-    return await this.sql<EntityRow[]>`
+    return await this.sql<EntityDbResult[]>`
       SELECT e.*,
         wo.name   AS owner_name,
         ls.label  AS lifecycle_label,
@@ -157,7 +158,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async getEntity(workspace: string, id: string) {
-    const [row] = await this.sql<EntityRow[]>`
+    const [row] = await this.sql<EntityDbResult[]>`
       SELECT e.*,
         wo.name   AS owner_name,
         ls.label  AS lifecycle_label,
@@ -173,7 +174,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return row ?? null;
   }
 
-  async createEntity(input: CreateEntityInput) {
+  async createEntity(input: EntityDbCreate) {
     try {
       await this.sql`
         INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at)
@@ -203,7 +204,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     }
   }
 
-  async updateEntity(workspace: string, id: string, input: UpdateEntityInput) {
+  async updateEntity(workspace: string, id: string, input: EntityDbUpdate) {
     try {
       const result = await this.sql`
         UPDATE entity
@@ -232,7 +233,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async deleteEntity(workspace: string, id: string) {
     try {
-      const [row] = await this.sql<BaseEntity[]>`
+      const [row] = await this.sql<Entity[]>`
         DELETE FROM entity
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
@@ -244,7 +245,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async listEntityGrants(workspace: string) {
-    return await this.sql<EntityGrantRow[]>`
+    return await this.sql<EntityGrantDbResult[]>`
       SELECT * FROM entity_grant
       WHERE workspace = ${workspace}
       ORDER BY entity_id, principal_type, principal_id
@@ -252,14 +253,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async getEntityGrants(workspace: string, entityId: string) {
-    return await this.sql<EntityGrantRow[]>`
+    return await this.sql<EntityGrantDbResult[]>`
       SELECT * FROM entity_grant
       WHERE workspace = ${workspace} AND entity_id = ${entityId}
       ORDER BY principal_type, principal_id
     `;
   }
 
-  async replaceEntityGrants(workspace: string, entityId: string, grants: CreateEntityGrantInput[]) {
+  async replaceEntityGrants(workspace: string, entityId: string, grants: EntityGrantDbCretae[]) {
     try {
       await this.sql.begin(async tx => {
         await tx`DELETE FROM entity_grant WHERE workspace = ${workspace} AND entity_id = ${entityId}`;
@@ -277,7 +278,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async listPinnedEntities(userId: string, workspace: string) {
-    return await this.sql<UserPinnedEntityRow[]>`
+    return await this.sql<PinnedEntityDbResult[]>`
       SELECT * FROM user_pinned_entity
       WHERE user_id = ${userId} AND workspace = ${workspace}
       ORDER BY created_at DESC
@@ -285,16 +286,16 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async getPinnedEntity(userId: string, workspace: string, entityId: string) {
-    const [row] = await this.sql<UserPinnedEntityRow[]>`
+    const [row] = await this.sql<PinnedEntityDbResult[]>`
       SELECT * FROM user_pinned_entity
       WHERE user_id = ${userId} AND workspace = ${workspace} AND entity_id = ${entityId}
     `;
     return row ?? null;
   }
 
-  async createPinnedEntity(input: import('./catalogDatabase').CreateUserPinnedEntityInput) {
+  async createPinnedEntity(input: PinnedEntityDbCreate) {
     try {
-      const [row] = await this.sql<UserPinnedEntityRow[]>`
+      const [row] = await this.sql<PinnedEntityDbResult[]>`
         INSERT INTO user_pinned_entity (user_id, workspace, entity_id, created_at)
         VALUES (${input.user_id}, ${input.workspace}, ${input.entity_id}, ${input.created_at})
         ON CONFLICT (user_id, workspace, entity_id) DO UPDATE
@@ -309,7 +310,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async deletePinnedEntity(userId: string, workspace: string, entityId: string) {
     try {
-      const [row] = await this.sql<UserPinnedEntityRow[]>`
+      const [row] = await this.sql<PinnedEntityDbResult[]>`
         DELETE FROM user_pinned_entity
         WHERE user_id = ${userId} AND workspace = ${workspace} AND entity_id = ${entityId}
         RETURNING *

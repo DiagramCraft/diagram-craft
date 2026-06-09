@@ -10,8 +10,8 @@ import { encrypt } from '../../utils/encryption';
 import { resolveAiConfig, createAiTextAdapter } from './tanstackAiAdapter';
 import { buildSystemPrompt } from './systemPromptBuilder';
 import { createAiChatTools } from './chatTools';
-import type { UpsertAiConfigInput } from '../../db/database';
-import { WorkspaceAiConfig } from '@arch-register/server/domain/ai/db/aiDatabase';
+import type { AiConfigInputDbUpsert } from '../../db/database';
+import { AiConfigDbResult } from './db/aiDatabase';
 
 const BASE = '/api/:workspace/ai';
 
@@ -80,7 +80,7 @@ export const extractUserTextContent = (message: {
 export const buildConversationAutoTitle = (text: string) =>
   text.length > 50 ? `${text.substring(0, 47)}...` : text;
 
-export const createAiConfigResponse = (workspace: string, config: WorkspaceAiConfig | null) => {
+export const createAiConfigResponse = (workspace: string, config: AiConfigDbResult | null) => {
   if (!config) {
     return {
       workspace,
@@ -112,10 +112,10 @@ export const createAiConfigResponse = (workspace: string, config: WorkspaceAiCon
 
 export const buildAiConfigInput = (
   body: Record<string, unknown> | undefined
-): UpsertAiConfigInput => {
+): AiConfigInputDbUpsert => {
   httpAssert.present(body, { message: 'Request body is required' });
 
-  const input: UpsertAiConfigInput = {};
+  const input: AiConfigInputDbUpsert = {};
 
   if (body['provider'] !== undefined) {
     httpAssert.true(body['provider'] === 'openrouter' || body['provider'] === 'openai', {

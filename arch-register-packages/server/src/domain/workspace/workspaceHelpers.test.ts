@@ -6,9 +6,9 @@ import {
   toApiWorkspaceMember,
   toApiWorkspaceUser
 } from './workspaceHelpers';
-import { WorkspaceMemberRow, WorkspaceRow, WorkspaceOwnerRow } from './db/workspaceDatabase';
-import { WorkspaceLifecycleStateRow } from './db/workspaceDatabase';
-import { UserRow } from '../auth/db/authDatabase';
+import { MemberDbResult, WorkspaceDbResult, OwnerDbResult } from './db/workspaceDatabase';
+import { LifecycleStateDbResult } from './db/workspaceDatabase';
+import { UserDbResult } from '../auth/db/authDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -17,7 +17,7 @@ const nowIso = '2025-06-01T12:00:00.000Z';
 
 describe('toApiWorkspace', () => {
   it('maps all fields and serializes dates', () => {
-    const ws: WorkspaceRow = {
+    const ws: WorkspaceDbResult = {
       id: 'ws-1',
       name: 'Acme',
       url_slug: 'acme',
@@ -38,7 +38,7 @@ describe('toApiWorkspace', () => {
 
 describe('toApiLifecycleState', () => {
   it('maps all fields', () => {
-    const state: WorkspaceLifecycleStateRow = {
+    const state: LifecycleStateDbResult = {
       id: 'prod',
       workspace: 'ws-1',
       label: 'Production',
@@ -55,7 +55,7 @@ describe('toApiLifecycleState', () => {
 
 describe('toApiOwnerOption', () => {
   it('maps id and sort_order', () => {
-    const owner: WorkspaceOwnerRow = {
+    const owner: OwnerDbResult = {
       id: 'team-a',
       workspace: 'ws-1',
       name: 'Team A',
@@ -79,13 +79,13 @@ describe('toApiOwnerOption', () => {
 
 describe('toApiWorkspaceMember', () => {
   it('merges member and user data', () => {
-    const member: WorkspaceMemberRow = {
+    const member: MemberDbResult = {
       workspace: 'ws-1',
       user_id: 'u-1',
       role: 'editor',
       created_at: now
     };
-    const user: UserRow = {
+    const user: UserDbResult = {
       id: 'u-1',
       user_id: 'alice',
       email: 'a@b.com',
@@ -114,7 +114,7 @@ describe('toApiWorkspaceMember', () => {
 
 describe('toApiWorkspaceUser', () => {
   it('maps user fields', () => {
-    const user: UserRow = {
+    const user: UserDbResult = {
       id: 'u-2',
       user_id: 'bob',
       email: 'b@c.com',

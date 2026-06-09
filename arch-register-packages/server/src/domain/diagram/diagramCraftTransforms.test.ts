@@ -4,7 +4,7 @@ import {
   toDiagramCraftField,
   toDiagramCraftSchema
 } from './diagramCraftTransforms';
-import { BaseEntity, EntitySchemaRow, WorkspaceEnumRow } from '../catalog/db/catalogDatabase';
+import { Entity, SchemaDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
 
 describe('diagram craft transforms', () => {
   it('keeps containment fields in diagram craft schema responses', () => {
@@ -15,7 +15,7 @@ describe('diagram craft transforms', () => {
         { id: 'system', name: 'System', type: 'containment', schemaId: 'schema-2' },
         { id: 'depends_on', name: 'Depends on', type: 'reference', schemaId: 'schema-2' }
       ]
-    } as EntitySchemaRow;
+    } as SchemaDbResult;
 
     expect(toDiagramCraftSchema(schema, [])).toEqual({
       id: 'schema-1',
@@ -34,7 +34,7 @@ describe('diagram craft transforms', () => {
       id: 'schema-1',
       name: 'Component',
       fields: [{ id: 'technology', name: 'Technology', type: 'text' }]
-    } as EntitySchemaRow;
+    } as SchemaDbResult;
 
     expect(toDiagramCraftSchema(schema, []).fields).toEqual([
       { id: 'name', name: 'Name', type: 'text' },
@@ -55,7 +55,7 @@ describe('diagram craft transforms', () => {
 
   it('populates select field options from enums', () => {
     const enumId = 'enum-1';
-    const enums: WorkspaceEnumRow[] = [
+    const enums: WorkspaceEnumDbResult[] = [
       {
         id: enumId,
         workspace: 'ws-1',
@@ -109,7 +109,7 @@ describe('diagram craft transforms', () => {
         technology: 'React',
         system: 'system-1'
       }
-    } as unknown as BaseEntity;
+    } as unknown as Entity;
 
     expect(toDiagramCraftData(row)).toEqual({
       _uid: 'entity-1',

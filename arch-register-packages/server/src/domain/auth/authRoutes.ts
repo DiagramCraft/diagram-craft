@@ -14,7 +14,7 @@ import {
 } from '@arch-register/permissions';
 import { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
-import { GlobalRole, UserRow } from './db/authDatabase';
+import { GlobalRole, UserDbResult } from './db/authDatabase';
 
 // Clean up expired OIDC states every 5 minutes
 const cleanupTimer = setInterval(
@@ -62,7 +62,7 @@ export const selectRefreshToken = (cookieToken: string | null | undefined, body?
   cookieToken ?? body?.refresh_token;
 
 export const buildAuthMeResponse = (
-  user: UserRow,
+  user: UserDbResult,
   globalRoles: GlobalRole[],
   workspaceData: WorkspaceMembershipData[]
 ) => {
@@ -364,7 +364,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
-      const user = event.context.user as UserRow;
+      const user = event.context.user as UserDbResult;
       const [roleAssignments, workspaces] = await Promise.all([
         db.auth.listGlobalRoleAssignments(user.id),
         db.workspace.listWorkspaces()
@@ -403,7 +403,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
   app.patch(
     '/api/users/:id',
     defineHandler(async event => {
-      const authenticatedUser = event.context.user as UserRow;
+      const authenticatedUser = event.context.user as UserDbResult;
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       httpAssert.true(id === authenticatedUser.id, {

@@ -1,4 +1,4 @@
-export type WorkspaceAiConfig = {
+export type AiConfigDbResult = {
   workspace: string;
   provider: AiProvider;
   api_key_enc: string | null;
@@ -13,7 +13,7 @@ export type WorkspaceAiConfig = {
 
 type AiProvider = 'openrouter' | 'openai';
 
-export type UpsertAiConfigInput = {
+export type AiConfigInputDbUpsert = {
   provider?: string;
   api_key_enc?: string | null;
   base_url?: string | null;
@@ -23,7 +23,7 @@ export type UpsertAiConfigInput = {
   enabled?: boolean;
 };
 
-export type CreateConversationInput = {
+export type AiConversationDbCreate = {
   id: string;
   workspace: string;
   user_id: string;
@@ -32,7 +32,7 @@ export type CreateConversationInput = {
   updated_at: Date;
 };
 
-export type AiConversation = {
+export type AiConversationDbResult = {
   id: string;
   workspace: string;
   user_id: string;
@@ -41,7 +41,7 @@ export type AiConversation = {
   updated_at: Date;
 };
 
-export type AiMessage = {
+export type AiMessageDbResult = {
   id: string;
   conversation_id: string;
   role: 'system' | 'user' | 'assistant';
@@ -49,7 +49,7 @@ export type AiMessage = {
   metadata: Record<string, unknown>;
   created_at: Date;
 };
-export type CreateMessageInput = {
+export type AiMessageDbCreate = {
   id: string;
   conversation_id: string;
   role: 'system' | 'user' | 'assistant';
@@ -59,16 +59,20 @@ export type CreateMessageInput = {
 };
 
 export type AiDatabase = {
-  getAiConfig(ws: string): Promise<WorkspaceAiConfig | null>;
-  upsertAiConfig(ws: string, input: UpsertAiConfigInput): Promise<WorkspaceAiConfig>;
+  getAiConfig(ws: string): Promise<AiConfigDbResult | null>;
+  upsertAiConfig(ws: string, input: AiConfigInputDbUpsert): Promise<AiConfigDbResult>;
 
-  listConversations(ws: string, userId: string): Promise<AiConversation[]>;
-  getConversation(ws: string, id: string): Promise<AiConversation | null>;
-  createConversation(input: CreateConversationInput): Promise<AiConversation>;
-  updateConversationTitle(ws: string, id: string, title: string): Promise<AiConversation | null>;
+  listConversations(ws: string, userId: string): Promise<AiConversationDbResult[]>;
+  getConversation(ws: string, id: string): Promise<AiConversationDbResult | null>;
+  createConversation(input: AiConversationDbCreate): Promise<AiConversationDbResult>;
+  updateConversationTitle(
+    ws: string,
+    id: string,
+    title: string
+  ): Promise<AiConversationDbResult | null>;
   initConversationTitle(ws: string, id: string, title: string): Promise<void>;
-  deleteConversation(ws: string, id: string): Promise<AiConversation | null>;
+  deleteConversation(ws: string, id: string): Promise<AiConversationDbResult | null>;
 
-  listMessages(conversationId: string): Promise<AiMessage[]>;
-  createMessage(input: CreateMessageInput): Promise<AiMessage>;
+  listMessages(conversationId: string): Promise<AiMessageDbResult[]>;
+  createMessage(input: AiMessageDbCreate): Promise<AiMessageDbResult>;
 };

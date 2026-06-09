@@ -7,11 +7,11 @@ import {
   normalizeReplicationInclude,
   shortCode
 } from './workspaceRoutes';
-import { WorkspaceRow } from './db/workspaceDatabase';
+import { WorkspaceDbResult } from './db/workspaceDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const baseWorkspace: WorkspaceRow = {
+const baseWorkspace: WorkspaceDbResult = {
   id: 'default',
   name: 'Default Workspace',
   url_slug: 'default',

@@ -7,11 +7,11 @@ import {
   parseProjectStatus,
   resolveProjectOwner
 } from './projectRoutes';
-import { ProjectFileRow, type UpdateProjectInput } from './db/projectDatabase';
+import { ProjectFileDbResult, type ProjectDbUpdate } from './db/projectDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const baseProject: UpdateProjectInput = {
+const baseProject: ProjectDbUpdate = {
   name: 'Project One',
   description: 'Original description',
   owner: 'platform-team',
@@ -113,7 +113,7 @@ describe('project route helpers', () => {
   });
 
   it('builds a file tree with sorted folders and root files', () => {
-    const files: ProjectFileRow[] = [
+    const files: ProjectFileDbResult[] = [
       {
         id: 'f-root',
         workspace: 'default',

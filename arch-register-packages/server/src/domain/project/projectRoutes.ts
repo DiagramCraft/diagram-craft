@@ -1,7 +1,7 @@
 import { H3, H3Event, HTTPError, defineHandler } from 'h3';
 import { randomUUID } from 'node:crypto';
-import type { CreateProjectInput, DatabaseAdapter, UpdateProjectInput } from '../../db/database';
-import type { ProjectFileRow } from './db/projectDatabase';
+import type { ProjectDbCreate, DatabaseAdapter, ProjectDbUpdate } from '../../db/database';
+import type { ProjectFileDbResult } from './db/projectDatabase';
 import type { StorageAdapter } from '../../storage/storage';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
@@ -52,10 +52,10 @@ export const parseProjectStatus = (value: unknown): ProjectStatus => {
 export const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
   typeof owner === 'string' && teamIds.has(owner) ? owner : null;
 
-export const buildFileTree = (files: ProjectFileRow[]): FileTree => {
+export const buildFileTree = (files: ProjectFileDbResult[]): FileTree => {
   const rootFiles = files.filter(f => f.path.indexOf('/') === -1).map(toApiProjectFile);
 
-  const folderMap = new Map<string, ProjectFileRow[]>();
+  const folderMap = new Map<string, ProjectFileDbResult[]>();
 
   for (const f of files) {
     const lastSlash = f.path.lastIndexOf('/');
@@ -85,7 +85,7 @@ export const buildCreateProjectInput = (
   body: Record<string, unknown>,
   teamIds: Set<string>,
   timestamp: Date
-): CreateProjectInput => {
+): ProjectDbCreate => {
   const { name, description = '', owner, status, color } = body;
   httpAssert.present(name, { message: 'name is required' });
 
@@ -104,7 +104,7 @@ export const buildCreateProjectInput = (
 
 export const buildUpdateProjectInput = (
   body: Record<string, unknown>,
-  existing: UpdateProjectInput & { owner: string | null },
+  existing: ProjectDbUpdate & { owner: string | null },
   teamIds: Set<string>,
   updatedAt: Date
 ) => {
@@ -126,7 +126,7 @@ export const buildUpdateProjectInput = (
       status: projectStatus ?? existing.status,
       color: color !== undefined ? (typeof color === 'string' ? color : null) : existing.color,
       updated_at: updatedAt
-    } satisfies UpdateProjectInput
+    } satisfies ProjectDbUpdate
   };
 };
 

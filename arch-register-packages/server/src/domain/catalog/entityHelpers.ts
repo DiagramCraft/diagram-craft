@@ -1,11 +1,11 @@
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types';
-import type { EntityRow } from './db/catalogDatabase';
+import type { EntityDbResult } from './db/catalogDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 
 const checker = new PermissionChecker();
 
-const getEntityCapabilities = (context: AuthorizationContext | null, entity: EntityRow) => {
+const getEntityCapabilities = (context: AuthorizationContext | null, entity: EntityDbResult) => {
   if (!context) {
     return {
       canView: true,
@@ -26,7 +26,7 @@ const getEntityCapabilities = (context: AuthorizationContext | null, entity: Ent
 };
 
 export const toApiEntity = (
-  entity: EntityRow,
+  entity: EntityDbResult,
   authCtx: AuthorizationContext | null,
   completeness: number | null = null
 ): EntityRecord => ({
@@ -56,7 +56,7 @@ export const toApiEntity = (
 });
 
 export const toApiEntitySummary = (
-  entity: EntityRow,
+  entity: EntityDbResult,
   authCtx: AuthorizationContext | null,
   completeness: number | null = null
 ): EntitySummary => ({

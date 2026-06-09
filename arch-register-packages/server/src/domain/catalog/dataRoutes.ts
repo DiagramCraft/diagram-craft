@@ -1,16 +1,16 @@
 import { defineHandler, getQuery, H3, readBody } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type {
-  CreateEntityGrantInput,
+  EntityGrantDbCretae,
   DatabaseAdapter,
-  UpdateEntityInput,
-  CreateEntityInput
+  EntityDbUpdate,
+  EntityDbCreate
 } from '../../db/database';
 import { createLogger } from '../../utils/logger';
 import { parseCsv, validateCsvData, csvRowToEntity } from '../../utils/csvImport';
 import { decodeRefs, type EntityLink, type SchemaField } from '../../types';
-import { BaseEntity, type EntitySchemaRow as InternalEntitySchema } from './db/catalogDatabase';
-import type { EntityRow } from './db/catalogDatabase';
+import { Entity, type SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
+import type { EntityDbResult } from './db/catalogDatabase';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
 import {
   computeChanges,
@@ -56,7 +56,7 @@ const includesQuery = (value: unknown, query: string) =>
 
 export const resolveCreateOwner = (
   explicitOwner: string | null,
-  parentEntities: BaseEntity[],
+  parentEntities: Entity[],
   schema: InternalEntitySchema,
   teamIds: Set<string>,
   fallbackOwner: string | null
@@ -73,7 +73,7 @@ export const resolveCreateOwner = (
 export const getEntityParentsFromPayload = (
   schema: InternalEntitySchema,
   payload: Record<string, unknown>,
-  entityLookup: Map<string, BaseEntity>
+  entityLookup: Map<string, Entity>
 ) => {
   const parentIds = schema.fields
     .filter(
@@ -90,10 +90,10 @@ export const getEntityParentsFromPayload = (
     });
   return parentIds
     .map(parentId => entityLookup.get(parentId))
-    .filter((entity): entity is BaseEntity => entity != null);
+    .filter((entity): entity is Entity => entity != null);
 };
 
-const entityMatchesPattern = (entity: BaseEntity, pattern: string) => {
+const entityMatchesPattern = (entity: Entity, pattern: string) => {
   const query = pattern.toLowerCase();
   return (
     includesQuery(entity.name, query) ||
@@ -105,7 +105,7 @@ const entityMatchesPattern = (entity: BaseEntity, pattern: string) => {
 };
 
 export const filterEntities = (
-  entities: EntityRow[],
+  entities: EntityDbResult[],
   options: {
     schemaId: string | null;
     owner: string | null;
@@ -228,9 +228,9 @@ export const parseEntityMutationPayload = (
 };
 
 export const buildEntityRelations = (
-  entity: BaseEntity,
+  entity: Entity,
   schemas: InternalEntitySchema[],
-  entities: BaseEntity[]
+  entities: Entity[]
 ): RelationsResponse => {
   const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
   const entitySchema = schemaMap.get(entity.schema_id);
@@ -279,7 +279,7 @@ export const buildEntityGrantInputs = (
   grants: unknown[],
   createdAt: Date,
   idFactory: () => string = randomUUID
-): CreateEntityGrantInput[] =>
+): EntityGrantDbCretae[] =>
   grants.map(grant => {
     httpAssert.json(grant, { message: 'Each grant must be an object' });
     const typed = grant as Record<string, unknown>;
@@ -466,14 +466,14 @@ export function createDataRoutes(db: DatabaseAdapter) {
         );
         const matchIds = new Set(matchRows.map(r => r.id));
         const entityById = new Map(allEntities.map(entity => [entity.id, entity]));
-        const allIncluded = new Map<string, EntityRow>(
+        const allIncluded = new Map<string, EntityDbResult>(
           matchRows.map(entity => [entity.id, entity])
         );
         const edges: Array<{ childId: string; parentId: string }> = [];
 
         let currentLevel = [...matchRows];
         while (currentLevel.length > 0) {
-          const nextLevel: EntityRow[] = [];
+          const nextLevel: EntityDbResult[] = [];
           for (const entity of currentLevel) {
             const cFields = containmentFieldsBySchema.get(entity.schema_id) ?? [];
             for (const fieldId of cFields) {
@@ -977,7 +977,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
               'You do not have permission to update this entity'
             );
 
-            const updateInput: UpdateEntityInput = {
+            const updateInput: EntityDbUpdate = {
               name: (resolvedData._name as string) ?? existingEntity.name,
               slug: (resolvedData._slug as string) ?? existingEntity.slug,
               namespace: (resolvedData._namespace as string) ?? existingEntity.namespace,
@@ -1020,7 +1020,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             nameToId.set(updatedEntity.name.toLowerCase(), existingId);
           } else {
             // Create new entity
-            const createInput: CreateEntityInput = {
+            const createInput: EntityDbCreate = {
               id: randomUUID(),
               workspace,
               schema_id: body.schemaId,

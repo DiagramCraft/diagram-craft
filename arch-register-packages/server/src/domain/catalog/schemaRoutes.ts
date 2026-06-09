@@ -8,7 +8,7 @@ import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorizati
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiSchema } from './schemaHelpers';
-import { EntitySchemaRow } from './db/catalogDatabase';
+import { SchemaDbResult } from './db/catalogDatabase';
 
 const BASE = '/api/:workspace/schemas';
 
@@ -21,7 +21,7 @@ const handleError = (error: unknown, fallback: string): never =>
 type SchemaMutationPayload = {
   name: string;
   description: string;
-  fields: EntitySchemaRow['fields'];
+  fields: SchemaDbResult['fields'];
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
@@ -51,7 +51,7 @@ export const buildCreateSchemaInput = (
     workspace,
     name,
     description: typeof description === 'string' ? description : '',
-    fields: Array.isArray(fields) ? (fields as EntitySchemaRow['fields']) : [],
+    fields: Array.isArray(fields) ? (fields as SchemaDbResult['fields']) : [],
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
@@ -62,7 +62,7 @@ export const buildCreateSchemaInput = (
 
 export const buildUpdateSchemaInput = (
   body: Record<string, unknown>,
-  current: EntitySchemaRow,
+  current: SchemaDbResult,
   teamIds: Set<string>,
   timestamp: Date
 ): SchemaMutationPayload & { updated_at: Date } => {
@@ -79,7 +79,7 @@ export const buildUpdateSchemaInput = (
         : current.description,
     fields:
       fields !== undefined && Array.isArray(fields)
-        ? (fields as EntitySchemaRow['fields'])
+        ? (fields as SchemaDbResult['fields'])
         : current.fields,
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { computeEntityCompleteness } from './completeness';
-import { BaseEntity, EntitySchemaRow } from '../domain/catalog/db/catalogDatabase';
+import { Entity, SchemaDbResult } from '../domain/catalog/db/catalogDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 
 describe('computeEntityCompleteness', () => {
   it('counts required and expected fields, ignores optional fields, and treats false as filled', () => {
-    const entity: BaseEntity = {
+    const entity: Entity = {
       id: 'e-1',
       workspace: 'ws-1',
       slug: 'my-entity',
@@ -30,7 +30,7 @@ describe('computeEntityCompleteness', () => {
       updated_at: now
     };
 
-    const schema: EntitySchemaRow = {
+    const schema: SchemaDbResult = {
       id: 'schema-1',
       workspace: 'ws-1',
       name: 'Application',

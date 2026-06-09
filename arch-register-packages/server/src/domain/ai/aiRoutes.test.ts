@@ -6,11 +6,11 @@ import {
   extractUserTextContent,
   parseExtractResponse
 } from './aiRoutes';
-import { WorkspaceAiConfig } from '@arch-register/server/domain/ai/db/aiDatabase';
+import { AiConfigDbResult } from './db/aiDatabase';
 
 const now = new Date('2026-06-07T10:00:00.000Z');
 
-const config: WorkspaceAiConfig = {
+const config: AiConfigDbResult = {
   workspace: 'default',
   provider: 'openai',
   api_key_enc: 'encrypted-key',

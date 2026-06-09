@@ -1,4 +1,4 @@
-import type { AuthDatabase, CreateUserInput, GlobalRole, UpdateUserInput } from './authDatabase';
+import type { AuthDatabase, UserDbCreate, GlobalRole, UserDbUpdate } from './authDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
 export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDatabase {
@@ -22,7 +22,7 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     );
   }
 
-  async createUser(input: CreateUserInput) {
+  async createUser(input: UserDbCreate) {
     this.run(
       'INSERT INTO users (id, user_id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -44,7 +44,7 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     return (await this.getUser(input.id))!;
   }
 
-  async updateUser(id: string, input: UpdateUserInput) {
+  async updateUser(id: string, input: UserDbUpdate) {
     const sets: string[] = [];
     const values: unknown[] = [];
 

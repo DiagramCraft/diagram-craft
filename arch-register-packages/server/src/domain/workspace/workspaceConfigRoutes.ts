@@ -14,9 +14,9 @@ import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorizati
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import {
-  TeamMembershipRow,
-  WorkspaceOwnerRow,
-  WorkspaceLifecycleStateRow
+  TeamMembershipDbResult,
+  OwnerDbResult,
+  LifecycleStateDbResult
 } from './db/workspaceDatabase';
 const BASE = '/api/:workspace/config';
 
@@ -84,7 +84,7 @@ export const buildLifecycleStateInputs = (
   workspace: string,
   body: unknown,
   now: Date
-): WorkspaceLifecycleStateRow[] => {
+): LifecycleStateDbResult[] => {
   httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
   const states = body as Array<{
@@ -124,7 +124,7 @@ export const buildWorkspaceOwnerInputs = (
   workspace: string,
   body: unknown,
   now: Date
-): WorkspaceOwnerRow[] => {
+): OwnerDbResult[] => {
   httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
   const owners = body as Array<{
@@ -173,7 +173,7 @@ export const buildTeamMembershipInputs = (
   ownerIds: Set<string>,
   userIds: Set<string>,
   now: Date
-): TeamMembershipRow[] => {
+): TeamMembershipDbResult[] => {
   httpAssert.array(body, { message: 'Request body must be a JSON array' });
   const rows = body as unknown[];
 

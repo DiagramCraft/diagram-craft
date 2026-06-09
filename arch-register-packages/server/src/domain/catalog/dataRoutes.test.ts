@@ -7,13 +7,16 @@ import {
   parseEntityMutationPayload,
   resolveCreateOwner
 } from './dataRoutes';
-import type { EntityRow, EntitySchemaRow } from './db/catalogDatabase';
+import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
 const enriched = (
-  e: Omit<EntityRow, 'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'>
-): EntityRow => ({
+  e: Omit<
+    EntityDbResult,
+    'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'
+  >
+): EntityDbResult => ({
   ...e,
   owner_name: null,
   lifecycle_label: null,
@@ -21,7 +24,7 @@ const enriched = (
   schema_name: ''
 });
 
-const domainSchema: EntitySchemaRow = {
+const domainSchema: SchemaDbResult = {
   id: 'schema-domain',
   workspace: 'default',
   name: 'Domain',
@@ -34,7 +37,7 @@ const domainSchema: EntitySchemaRow = {
   updated_at: now
 };
 
-const systemSchema: EntitySchemaRow = {
+const systemSchema: SchemaDbResult = {
   id: 'schema-system',
   workspace: 'default',
   name: 'System',
@@ -56,7 +59,7 @@ const systemSchema: EntitySchemaRow = {
   updated_at: now
 };
 
-const componentSchema: EntitySchemaRow = {
+const componentSchema: SchemaDbResult = {
   id: 'schema-component',
   workspace: 'default',
   name: 'Component',
@@ -86,7 +89,7 @@ const componentSchema: EntitySchemaRow = {
   updated_at: now
 };
 
-const domain: EntityRow = enriched({
+const domain: EntityDbResult = enriched({
   id: 'domain-1',
   workspace: 'default',
   slug: 'engineering',
@@ -106,7 +109,7 @@ const domain: EntityRow = enriched({
   updated_at: now
 });
 
-const system: EntityRow = enriched({
+const system: EntityDbResult = enriched({
   id: 'system-1',
   workspace: 'default',
   slug: 'customer-portal',
@@ -126,7 +129,7 @@ const system: EntityRow = enriched({
   updated_at: now
 });
 
-const component: EntityRow = enriched({
+const component: EntityDbResult = enriched({
   id: 'component-1',
   workspace: 'default',
   slug: 'frontend-app',
@@ -146,7 +149,7 @@ const component: EntityRow = enriched({
   updated_at: now
 });
 
-const dependency: EntityRow = enriched({
+const dependency: EntityDbResult = enriched({
   id: 'component-2',
   workspace: 'default',
   slug: 'api-gateway',

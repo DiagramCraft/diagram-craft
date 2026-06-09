@@ -1,6 +1,6 @@
 import { TeamRole, WorkspaceCapability } from '@arch-register/permissions';
 
-export type WorkspaceRow = {
+export type WorkspaceDbResult = {
   id: string;
   name: string;
   url_slug: string;
@@ -11,11 +11,11 @@ export type WorkspaceRow = {
   updated_at: Date;
 };
 
-export type CreateWorkspaceInput = WorkspaceRow;
+export type WorkspaceDbCreate = WorkspaceDbResult;
 
-export type UpdateWorkspaceInput = Omit<WorkspaceRow, 'id' | 'created_at'>;
+export type WorkspaceDbUpdate = Omit<WorkspaceDbResult, 'id' | 'created_at'>;
 
-export type WorkspaceLifecycleStateRow = {
+export type LifecycleStateDbResult = {
   id: string;
   workspace: string;
   label: string;
@@ -24,9 +24,9 @@ export type WorkspaceLifecycleStateRow = {
   created_at: Date;
 };
 
-export type CreateWorkspaceLifecycleState = WorkspaceLifecycleStateRow;
+export type LifecycleStateDbCreate = LifecycleStateDbResult;
 
-export type WorkspaceOwnerRow = {
+export type OwnerDbResult = {
   id: string;
   workspace: string;
   name: string;
@@ -36,16 +36,16 @@ export type WorkspaceOwnerRow = {
   created_at: Date;
 };
 
-export type CreateWorkspaceOwner = WorkspaceOwnerRow;
+export type OwnerDbCreate = OwnerDbResult;
 
-export type WorkspaceMemberRow = {
+export type MemberDbResult = {
   workspace: string;
   user_id: string;
   role: string;
   created_at: Date;
 };
 
-export type TeamMembershipRow = {
+export type TeamMembershipDbResult = {
   workspace: string;
   team_id: string;
   user_id: string;
@@ -53,9 +53,9 @@ export type TeamMembershipRow = {
   created_at: Date;
 };
 
-export type CreateTeamMembership = TeamMembershipRow;
+export type TeamMembershipDbCreate = TeamMembershipDbResult;
 
-export type WorkspaceRoleDefinitionRow = {
+export type RoleDefinitionDbResult = {
   id: string;
   workspace: string;
   name: string;
@@ -67,55 +67,55 @@ export type WorkspaceRoleDefinitionRow = {
   updated_at: Date;
 };
 
-export type CreateWorkspaceRoleDefinition = WorkspaceRoleDefinitionRow;
-export type UpdateWorkspaceRoleDefinition = Omit<
-  WorkspaceRoleDefinitionRow,
+export type RoleDefinitionDbCreate = RoleDefinitionDbResult;
+export type RoleDefinitionDbUpdate = Omit<
+  RoleDefinitionDbResult,
   'id' | 'workspace' | 'created_at'
 >;
 
 export type WorkspaceDatabase = {
-  listWorkspaces(): Promise<WorkspaceRow[]>;
-  getWorkspace(id: string): Promise<WorkspaceRow | null>;
-  createWorkspace(input: CreateWorkspaceInput): Promise<WorkspaceRow>;
-  updateWorkspace(id: string, input: UpdateWorkspaceInput): Promise<WorkspaceRow | null>;
-  deleteWorkspace(id: string): Promise<{ workspace: WorkspaceRow | null; projectIds: string[] }>;
+  listWorkspaces(): Promise<WorkspaceDbResult[]>;
+  getWorkspace(id: string): Promise<WorkspaceDbResult | null>;
+  createWorkspace(input: WorkspaceDbCreate): Promise<WorkspaceDbResult>;
+  updateWorkspace(id: string, input: WorkspaceDbUpdate): Promise<WorkspaceDbResult | null>;
+  deleteWorkspace(
+    id: string
+  ): Promise<{ workspace: WorkspaceDbResult | null; projectIds: string[] }>;
 
-  listLifecycleStates(ws: string): Promise<WorkspaceLifecycleStateRow[]>;
+  listLifecycleStates(ws: string): Promise<LifecycleStateDbResult[]>;
   replaceLifecycleStates(
     ws: string,
-    states: CreateWorkspaceLifecycleState[]
-  ): Promise<WorkspaceLifecycleStateRow[]>;
+    states: LifecycleStateDbCreate[]
+  ): Promise<LifecycleStateDbResult[]>;
 
-  listTeams(ws: string): Promise<WorkspaceOwnerRow[]>;
-  replaceTeams(ws: string, teams: CreateWorkspaceOwner[]): Promise<WorkspaceOwnerRow[]>;
+  listTeams(ws: string): Promise<OwnerDbResult[]>;
+  replaceTeams(ws: string, teams: OwnerDbCreate[]): Promise<OwnerDbResult[]>;
 
-  listTeamAssignments(ws: string): Promise<TeamMembershipRow[]>;
+  listTeamAssignments(ws: string): Promise<TeamMembershipDbResult[]>;
   replaceTeamAssignments(
     ws: string,
-    assignments: CreateTeamMembership[]
-  ): Promise<TeamMembershipRow[]>;
+    assignments: TeamMembershipDbCreate[]
+  ): Promise<TeamMembershipDbResult[]>;
 
-  listWorkspaceMembers(ws: string): Promise<WorkspaceMemberRow[]>;
-  getWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMemberRow | null>;
+  listWorkspaceMembers(ws: string): Promise<MemberDbResult[]>;
+  getWorkspaceMember(ws: string, userId: string): Promise<MemberDbResult | null>;
   setWorkspaceMemberRole(
     ws: string,
     userId: string,
     role: string,
     createdAt: Date
-  ): Promise<WorkspaceMemberRow>;
-  removeWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMemberRow | null>;
+  ): Promise<MemberDbResult>;
+  removeWorkspaceMember(ws: string, userId: string): Promise<MemberDbResult | null>;
 
   getWorkspaceRole(ws: string, userId: string): Promise<string | null>;
-  listCustomWorkspaceRoles(ws: string): Promise<WorkspaceRoleDefinitionRow[]>;
-  getCustomWorkspaceRole(ws: string, roleId: string): Promise<WorkspaceRoleDefinitionRow | null>;
-  createCustomWorkspaceRole(
-    input: CreateWorkspaceRoleDefinition
-  ): Promise<WorkspaceRoleDefinitionRow>;
+  listCustomWorkspaceRoles(ws: string): Promise<RoleDefinitionDbResult[]>;
+  getCustomWorkspaceRole(ws: string, roleId: string): Promise<RoleDefinitionDbResult | null>;
+  createCustomWorkspaceRole(input: RoleDefinitionDbCreate): Promise<RoleDefinitionDbResult>;
   updateCustomWorkspaceRole(
     ws: string,
     roleId: string,
-    input: UpdateWorkspaceRoleDefinition
-  ): Promise<WorkspaceRoleDefinitionRow | null>;
-  deleteCustomWorkspaceRole(ws: string, roleId: string): Promise<WorkspaceRoleDefinitionRow | null>;
+    input: RoleDefinitionDbUpdate
+  ): Promise<RoleDefinitionDbResult | null>;
+  deleteCustomWorkspaceRole(ws: string, roleId: string): Promise<RoleDefinitionDbResult | null>;
   countWorkspaceMembersByRole(ws: string, roleId: string): Promise<number>;
 };

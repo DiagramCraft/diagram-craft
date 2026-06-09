@@ -1,12 +1,12 @@
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import { describe, expect, it } from 'vitest';
 import { canAccessNotification } from './watchRoutes';
-import { BaseEntity, EntitySchemaRow } from '../catalog/db/catalogDatabase';
-import { UserNotificationRow } from './db/watchDatabase';
+import { Entity, SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { NotificationDbResult } from './db/watchDatabase';
 
 const now = new Date('2026-06-09T10:00:00.000Z');
 
-const schema: EntitySchemaRow = {
+const schema: SchemaDbResult = {
   id: 'application',
   workspace: 'ws-1',
   name: 'Application',
@@ -19,7 +19,7 @@ const schema: EntitySchemaRow = {
   updated_at: now
 };
 
-const entity: BaseEntity = {
+const entity: Entity = {
   id: 'entity-1',
   workspace: 'ws-1',
   slug: 'payments-api',
@@ -39,7 +39,7 @@ const entity: BaseEntity = {
   updated_at: now
 };
 
-const notification: UserNotificationRow = {
+const notification: NotificationDbResult = {
   id: 'notification-1',
   user_id: 'user-1',
   workspace: 'ws-1',

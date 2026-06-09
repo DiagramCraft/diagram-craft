@@ -1,9 +1,9 @@
 import { newid } from '@diagram-craft/utils/id';
 import type {
-  CreateProjectInput,
+  ProjectDbCreate,
   ProjectDatabase,
-  UpdateProjectInput,
-  UpsertProjectFileInput
+  ProjectDbUpdate,
+  ProjectFileDbUpsert
 } from './projectDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
@@ -30,7 +30,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
-  async createProject(input: CreateProjectInput) {
+  async createProject(input: ProjectDbCreate) {
     this.run(
       'INSERT INTO project (id, workspace, name, description, owner, status, color, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -48,7 +48,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return (await this.getProject(input.workspace, input.id))!;
   }
 
-  async updateProject(workspace: string, id: string, input: UpdateProjectInput) {
+  async updateProject(workspace: string, id: string, input: ProjectDbUpdate) {
     this.run(
       'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, color = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
@@ -164,7 +164,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
-  async upsertProjectFile(input: UpsertProjectFileInput) {
+  async upsertProjectFile(input: ProjectFileDbUpsert) {
     const id = newid();
     const tx = this.db.transaction(() => {
       const existing = this.get<{ id: string; created_at: string }>(
@@ -210,7 +210,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   }
 
   async createProjectFileIfAbsent(
-    input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }
+    input: Omit<ProjectFileDbUpsert, 'updated_at'> & { updated_at: Date }
   ) {
     const existing = await this.getProjectFileByPath(input.workspace, input.project_id, input.path);
     if (existing) return null;

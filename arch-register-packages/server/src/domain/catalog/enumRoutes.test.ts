@@ -4,11 +4,11 @@ import {
   buildUpdateEnumInput,
   isEnumReferencedBySchemas
 } from './enumRoutes';
-import { EntitySchemaRow, WorkspaceEnumRow } from './db/catalogDatabase';
+import { SchemaDbResult, WorkspaceEnumDbResult } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const existingEnum: WorkspaceEnumRow = {
+const existingEnum: WorkspaceEnumDbResult = {
   id: 'enum-1',
   workspace: 'default',
   name: 'Status',
@@ -93,7 +93,7 @@ describe('enum route helpers', () => {
   });
 
   it('detects when an enum is referenced by a select field', () => {
-    const schemas: EntitySchemaRow[] = [
+    const schemas: SchemaDbResult[] = [
       {
         id: 'schema-1',
         workspace: 'default',
@@ -112,7 +112,7 @@ describe('enum route helpers', () => {
   });
 
   it('ignores non-select fields and different enum ids', () => {
-    const schemas: EntitySchemaRow[] = [
+    const schemas: SchemaDbResult[] = [
       {
         id: 'schema-1',
         workspace: 'default',

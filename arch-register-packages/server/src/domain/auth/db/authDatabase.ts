@@ -2,7 +2,7 @@ import type { AuthProvider } from '../../../types';
 
 // -- Global Role Assignment
 
-export type GlobalRoleAssignmentRow = {
+export type GlobalRoleAssignmentDbResult = {
   user_id: string;
   role: GlobalRole;
   created_at: Date;
@@ -12,7 +12,7 @@ export type GlobalRole = 'global_admin' | 'workspace_admin';
 
 // -- User
 
-export type UserRow = {
+export type UserDbResult = {
   id: string;
   user_id: string;
   email: string | null;
@@ -28,8 +28,8 @@ export type UserRow = {
   last_login_at: Date | null;
 };
 
-export type CreateUserInput = Omit<
-  UserRow,
+export type UserDbCreate = Omit<
+  UserDbResult,
   'user_id' | 'created_at' | 'updated_at' | 'last_login_at'
 > & {
   user_id?: string;
@@ -38,7 +38,7 @@ export type CreateUserInput = Omit<
   last_login_at: Date | null;
 };
 
-export type UpdateUserInput = {
+export type UserDbUpdate = {
   email?: string | null;
   display_name?: string;
   password_hash?: string | null;
@@ -48,21 +48,21 @@ export type UpdateUserInput = {
 };
 
 export type AuthDatabase = {
-  getUser(id: string): Promise<UserRow | null>;
-  getUserByUserId(userId: string): Promise<UserRow | null>;
-  getUserByEmail(email: string): Promise<UserRow | null>;
-  getUserByOidc(issuer: string, subject: string): Promise<UserRow | null>;
-  createUser(input: CreateUserInput): Promise<UserRow>;
-  updateUser(id: string, input: UpdateUserInput): Promise<UserRow | null>;
+  getUser(id: string): Promise<UserDbResult | null>;
+  getUserByUserId(userId: string): Promise<UserDbResult | null>;
+  getUserByEmail(email: string): Promise<UserDbResult | null>;
+  getUserByOidc(issuer: string, subject: string): Promise<UserDbResult | null>;
+  createUser(input: UserDbCreate): Promise<UserDbResult>;
+  updateUser(id: string, input: UserDbUpdate): Promise<UserDbResult | null>;
   updateUserLastLogin(id: string, timestamp: Date): Promise<void>;
-  listUsers(): Promise<UserRow[]>;
+  listUsers(): Promise<UserDbResult[]>;
 
-  listGlobalRoleAssignments(userId?: string): Promise<GlobalRoleAssignmentRow[]>;
+  listGlobalRoleAssignments(userId?: string): Promise<GlobalRoleAssignmentDbResult[]>;
   replaceGlobalRoleAssignments(
     userId: string,
     roles: GlobalRole[],
     createdAt: Date
-  ): Promise<GlobalRoleAssignmentRow[]>;
+  ): Promise<GlobalRoleAssignmentDbResult[]>;
 
   storeOidcAuthState(
     state: string,

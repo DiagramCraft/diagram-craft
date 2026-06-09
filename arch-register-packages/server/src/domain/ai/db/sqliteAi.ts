@@ -1,8 +1,8 @@
 import type {
   AiDatabase,
-  CreateConversationInput,
-  CreateMessageInput,
-  UpsertAiConfigInput
+  AiConversationDbCreate,
+  AiMessageDbCreate,
+  AiConfigInputDbUpsert
 } from './aiDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
@@ -15,7 +15,7 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
     );
   }
 
-  async upsertAiConfig(ws: string, input: UpsertAiConfigInput) {
+  async upsertAiConfig(ws: string, input: AiConfigInputDbUpsert) {
     const now = new Date().toISOString();
     const existing = await this.getAiConfig(ws);
 
@@ -81,7 +81,7 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
     );
   }
 
-  async createConversation(input: CreateConversationInput) {
+  async createConversation(input: AiConversationDbCreate) {
     this.run(
       'INSERT INTO ai_conversation (id, workspace, user_id, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
       [
@@ -126,7 +126,7 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
     );
   }
 
-  async createMessage(input: CreateMessageInput) {
+  async createMessage(input: AiMessageDbCreate) {
     this.run(
       'INSERT INTO ai_message (id, conversation_id, role, content, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)',
       [

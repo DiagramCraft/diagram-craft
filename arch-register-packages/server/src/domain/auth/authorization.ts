@@ -12,7 +12,7 @@ import {
 } from '@arch-register/permissions';
 import { ServerDataProvider } from './ServerAuthorizationDataProvider';
 import { httpAssert } from '../../utils/httpAssert';
-import { BaseEntity } from '@arch-register/server/domain/catalog/db/catalogDatabase';
+import { Entity } from '../catalog/db/catalogDatabase';
 
 export const GLOBAL_WS = '__global__';
 
@@ -30,7 +30,7 @@ type GlobalPermission = 'admin_platform' | 'create_workspaces' | 'manage_workspa
  */
 export const requireEntityAction = (
   context: AuthorizationContext,
-  entity: BaseEntity,
+  entity: Entity,
   action: EntityAction,
   message?: string
 ) => {

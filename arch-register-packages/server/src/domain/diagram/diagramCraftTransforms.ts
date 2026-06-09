@@ -1,5 +1,5 @@
 import type { DiagramCraftEntityResponse, ReferenceField, SchemaField } from '../../types';
-import { BaseEntity, EntitySchemaRow, WorkspaceEnumRow } from '../catalog/db/catalogDatabase';
+import { Entity, SchemaDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
 
 export type DiagramCraftSchemaField =
   | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' }>
@@ -21,7 +21,7 @@ const DIAGRAM_CRAFT_METADATA_FIELDS: DiagramCraftSchemaField[] = [
 
 export const toDiagramCraftField = (
   field: SchemaField,
-  enums: WorkspaceEnumRow[]
+  enums: WorkspaceEnumDbResult[]
 ): DiagramCraftSchemaField | undefined => {
   switch (field.type) {
     case 'text':
@@ -45,8 +45,8 @@ export const toDiagramCraftField = (
 };
 
 export const toDiagramCraftSchema = (
-  schema: EntitySchemaRow,
-  enums: WorkspaceEnumRow[]
+  schema: SchemaDbResult,
+  enums: WorkspaceEnumDbResult[]
 ): DiagramCraftSchema => ({
   id: schema.id,
   name: schema.name,
@@ -61,7 +61,7 @@ export const toDiagramCraftSchema = (
   ]
 });
 
-export const toDiagramCraftData = (row: BaseEntity): DiagramCraftEntityResponse => ({
+export const toDiagramCraftData = (row: Entity): DiagramCraftEntityResponse => ({
   _uid: row.id,
   _workspace: row.workspace,
   _schemaId: row.schema_id,

@@ -16,13 +16,13 @@ import type {
 } from '@arch-register/api-types/views';
 import type { PinnedEntity } from '@arch-register/api-types';
 import { PermissionChecker } from '@arch-register/permissions';
-import { BaseEntity, SavedViewRow } from './db/catalogDatabase';
+import { Entity, SavedViewDbResult } from './db/catalogDatabase';
 
 const BASE = '/api/:workspace/views';
 const PINNED_BASE = '/api/:workspace/pinned-entities';
 const checker = new PermissionChecker();
 
-const toApi = (view: SavedViewRow): ApiSavedView => ({
+const toApi = (view: SavedViewDbResult): ApiSavedView => ({
   id: view.id,
   workspaceId: view.workspace,
   name: view.name,
@@ -50,7 +50,7 @@ const toPinnedEntity = (entity: {
 
 const canAccessPinnedEntity = (
   authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
-  entityMap: Map<string, BaseEntity>,
+  entityMap: Map<string, Entity>,
   entityId: string
 ) => {
   const entity = entityMap.get(entityId);

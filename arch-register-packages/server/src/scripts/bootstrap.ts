@@ -20,7 +20,7 @@ import {
 import type { ContainmentField, ReferenceField } from '../types';
 import { decodeRefs } from '../types';
 import { hashPassword } from '../utils/password';
-import { CreateUserInput } from '../db/database';
+import { UserDbCreate } from '../db/database';
 
 async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
   const workspaces = await db.workspace.listWorkspaces();
@@ -124,7 +124,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
       created_at: now,
       updated_at: now,
       last_login_at: null
-    } as CreateUserInput);
+    } as UserDbCreate);
   }
 
   for (const workspace of seedWorkspaces) {

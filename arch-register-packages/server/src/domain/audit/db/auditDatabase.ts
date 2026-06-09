@@ -1,4 +1,4 @@
-export type AuditLogEntryRow = {
+export type AuditLogDbResult = {
   id: string;
   workspace: string;
   timestamp: Date;
@@ -16,13 +16,13 @@ export type AuditLogEntryRow = {
   metadata: Record<string, unknown>;
 };
 
+export type AuditLogDbCreate = Omit<AuditLogDbResult, 'id'>;
+
 export type AuditOperation = 'create' | 'update' | 'delete';
 
 export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'project_file';
 
-export type CreateAuditLogInput = Omit<AuditLogEntryRow, 'id'>;
-
 export type AuditDatabase = {
-  listAuditLogs(ws: string): Promise<AuditLogEntryRow[]>;
-  createAuditLog(input: CreateAuditLogInput): Promise<AuditLogEntryRow>;
+  listAuditLogs(ws: string): Promise<AuditLogDbResult[]>;
+  createAuditLog(input: AuditLogDbCreate): Promise<AuditLogDbResult>;
 };

@@ -1,12 +1,13 @@
 import type {
   CatalogDatabase,
-  CreateEntityGrantInput,
-  CreateEntityInput,
-  CreateWorkspaceEnumInput,
-  CreateEntitySchemaInput,
-  UpdateEntityInput,
-  UpdateWorkspaceEnumInput,
-  UpdateEntitySchemaInput
+  EntityGrantDbCretae,
+  EntityDbCreate,
+  WorkspaceEnumDbCreate,
+  SchemaDbCreate,
+  EntityDbUpdate,
+  WorkspaceEnumDbUpdate,
+  SchemaDbUpdate,
+  PinnedEntityDbCreate
 } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
@@ -45,7 +46,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async createSchema(input: CreateEntitySchemaInput) {
+  async createSchema(input: SchemaDbCreate) {
     this.run(
       'INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -64,7 +65,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return (await this.getSchema(input.workspace, input.id))!;
   }
 
-  async updateSchema(workspace: string, id: string, input: UpdateEntitySchemaInput) {
+  async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     this.run(
       'UPDATE entity_schema SET name = ?, description = ?, fields = ?, color = ?, icon = ?, default_owner = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
@@ -105,7 +106,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async createEnum(input: CreateWorkspaceEnumInput) {
+  async createEnum(input: WorkspaceEnumDbCreate) {
     this.run(
       'INSERT INTO workspace_enum (id, workspace, name, options, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
@@ -121,7 +122,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return (await this.getEnum(input.workspace, input.id))!;
   }
 
-  async updateEnum(workspace: string, id: string, input: UpdateWorkspaceEnumInput) {
+  async updateEnum(workspace: string, id: string, input: WorkspaceEnumDbUpdate) {
     this.run(
       'UPDATE workspace_enum SET name = ?, options = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
@@ -159,7 +160,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async createEntity(input: CreateEntityInput) {
+  async createEntity(input: EntityDbCreate) {
     this.run(
       'INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -185,7 +186,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return (await this.getEntity(input.workspace, input.id))!;
   }
 
-  async updateEntity(workspace: string, id: string, input: UpdateEntityInput) {
+  async updateEntity(workspace: string, id: string, input: EntityDbUpdate) {
     this.run(
       'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, visibility_mode = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
@@ -233,7 +234,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async replaceEntityGrants(workspace: string, entityId: string, grants: CreateEntityGrantInput[]) {
+  async replaceEntityGrants(workspace: string, entityId: string, grants: EntityGrantDbCretae[]) {
     const tx = this.db.transaction(() => {
       this.run('DELETE FROM entity_grant WHERE workspace = ? AND entity_id = ?', [
         workspace,
@@ -276,7 +277,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async createPinnedEntity(input: import('./catalogDatabase').CreateUserPinnedEntityInput) {
+  async createPinnedEntity(input: PinnedEntityDbCreate) {
     this.run(
       'INSERT OR IGNORE INTO user_pinned_entity (user_id, workspace, entity_id, created_at) VALUES (?, ?, ?, ?)',
       [input.user_id, input.workspace, input.entity_id, input.created_at.toISOString()]

@@ -1,4 +1,4 @@
-import type { AuditLogEntryRow as InternalAuditLogEntry } from './db/auditDatabase';
+import type { AuditLogDbResult as InternalAuditLogEntry } from './db/auditDatabase';
 import type { AuditLogEntry, AuditStats } from '@arch-register/api-types';
 
 export type AuditListFilters = {

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiChatTools } from './chatTools';
 import type { DatabaseAdapter } from '../../db/database';
-import { BaseEntity, EntitySchemaRow } from '../catalog/db/catalogDatabase';
-import { AuditLogEntryRow } from '../audit/db/auditDatabase';
+import { Entity, SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { AuditLogDbResult } from '../audit/db/auditDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
-const schemas: EntitySchemaRow[] = [
+const schemas: SchemaDbResult[] = [
   {
     id: 'application',
     workspace: 'ws-1',
@@ -43,7 +43,7 @@ const schemas: EntitySchemaRow[] = [
   }
 ];
 
-const entities: BaseEntity[] = [
+const entities: Entity[] = [
   {
     id: 'entity-app-1',
     workspace: 'ws-1',
@@ -110,10 +110,10 @@ const entities: BaseEntity[] = [
   }
 ];
 
-const createdEntities: BaseEntity[] = [];
-const updatedEntities: BaseEntity[] = [];
-const createdAuditLogs: AuditLogEntryRow[] = [];
-const createdNotifications: Array<{ changedByDisplayName: string; auditLog: AuditLogEntryRow }> =
+const createdEntities: Entity[] = [];
+const updatedEntities: Entity[] = [];
+const createdAuditLogs: AuditLogDbResult[] = [];
+const createdNotifications: Array<{ changedByDisplayName: string; auditLog: AuditLogDbResult }> =
   [];
 
 const db = {
@@ -124,14 +124,14 @@ const db = {
       schemas.find(schema => schema.id === schemaId) ?? null,
     getEntity: async (_ws: string, entityId: string) =>
       entities.find(entity => entity.id === entityId) ?? null,
-    createEntity: vi.fn(async (input: BaseEntity) => {
+    createEntity: vi.fn(async (input: Entity) => {
       createdEntities.push(input);
       return input;
     }),
-    updateEntity: vi.fn(async (_ws: string, entityId: string, input: Partial<BaseEntity>) => {
+    updateEntity: vi.fn(async (_ws: string, entityId: string, input: Partial<Entity>) => {
       const existing = entities.find(entity => entity.id === entityId);
       if (!existing) return null;
-      const updated = { ...existing, ...input } as BaseEntity;
+      const updated = { ...existing, ...input } as Entity;
       updatedEntities.push(updated);
       return updated;
     })
@@ -167,14 +167,14 @@ const db = {
     ]
   },
   audit: {
-    createAuditLog: vi.fn(async (input: AuditLogEntryRow) => {
+    createAuditLog: vi.fn(async (input: AuditLogDbResult) => {
       createdAuditLogs.push(input);
       return input;
     })
   },
   watch: {
     createNotificationsFromAudit: vi.fn(
-      async (input: { changedByDisplayName: string; auditLog: AuditLogEntryRow }) => {
+      async (input: { changedByDisplayName: string; auditLog: AuditLogDbResult }) => {
         createdNotifications.push(input);
       }
     )

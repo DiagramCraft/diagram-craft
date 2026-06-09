@@ -1,9 +1,9 @@
 import type {
-  CreateNotificationsFromAuditInput,
-  CreateUserWatchInput,
-  UserNotificationRow,
-  UserWatchRow,
-  WatchDatabase
+  WatchDbCreate,
+  NotificationDbResult,
+  WatchDbResult,
+  WatchDatabase,
+  CreateNotificationsFromAuditInput
 } from './watchDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
@@ -18,7 +18,7 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
   }
 
   async listWatches(userId: string, workspace: string) {
-    return await this.sql<UserWatchRow[]>`
+    return await this.sql<WatchDbResult[]>`
       SELECT * FROM user_watch
       WHERE user_id = ${userId} AND workspace = ${workspace}
       ORDER BY created_at DESC
@@ -26,16 +26,16 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
   }
 
   async getWatch(userId: string, workspace: string, entityId: string) {
-    const [row] = await this.sql<UserWatchRow[]>`
+    const [row] = await this.sql<WatchDbResult[]>`
       SELECT * FROM user_watch
       WHERE user_id = ${userId} AND workspace = ${workspace} AND entity_id = ${entityId}
     `;
     return row ?? null;
   }
 
-  async createWatch(input: CreateUserWatchInput) {
+  async createWatch(input: WatchDbCreate) {
     try {
-      const [row] = await this.sql<UserWatchRow[]>`
+      const [row] = await this.sql<WatchDbResult[]>`
         INSERT INTO user_watch (user_id, workspace, entity_id, created_at)
         VALUES (${input.user_id}, ${input.workspace}, ${input.entity_id}, ${input.created_at})
         ON CONFLICT (user_id, workspace, entity_id) DO UPDATE
@@ -50,7 +50,7 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
 
   async deleteWatch(userId: string, workspace: string, entityId: string) {
     try {
-      const [row] = await this.sql<UserWatchRow[]>`
+      const [row] = await this.sql<WatchDbResult[]>`
         DELETE FROM user_watch
         WHERE user_id = ${userId} AND workspace = ${workspace} AND entity_id = ${entityId}
         RETURNING *
@@ -62,7 +62,7 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
   }
 
   async listNotifications(userId: string, workspace: string) {
-    return await this.sql<UserNotificationRow[]>`
+    return await this.sql<NotificationDbResult[]>`
       SELECT * FROM user_notification
       WHERE user_id = ${userId} AND workspace = ${workspace}
       ORDER BY timestamp DESC, created_at DESC
@@ -71,7 +71,7 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
 
   async deleteNotification(userId: string, workspace: string, notificationId: string) {
     try {
-      const [row] = await this.sql<UserNotificationRow[]>`
+      const [row] = await this.sql<NotificationDbResult[]>`
         DELETE FROM user_notification
         WHERE id = ${notificationId} AND user_id = ${userId} AND workspace = ${workspace}
         RETURNING *

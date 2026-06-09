@@ -1,15 +1,15 @@
-import { AuditLogEntryRow, AuditOperation } from '../../audit/db/auditDatabase';
+import { AuditLogDbResult, AuditOperation } from '../../audit/db/auditDatabase';
 
-export type UserWatchRow = {
+export type WatchDbResult = {
   user_id: string;
   workspace: string;
   entity_id: string;
   created_at: Date;
 };
 
-export type CreateUserWatchInput = UserWatchRow;
+export type WatchDbCreate = WatchDbResult;
 
-export type UserNotificationRow = {
+export type NotificationDbResult = {
   id: string;
   user_id: string;
   workspace: string;
@@ -26,25 +26,25 @@ export type UserNotificationRow = {
 };
 
 export type CreateNotificationsFromAuditInput = {
-  auditLog: AuditLogEntryRow;
+  auditLog: AuditLogDbResult;
   changedByDisplayName: string;
   watcherUserIds?: string[];
 };
 
 export type WatchDatabase = {
   listWatcherUserIds(workspace: string, entityId: string): Promise<string[]>;
-  listWatches(userId: string, workspace: string): Promise<UserWatchRow[]>;
-  getWatch(userId: string, workspace: string, entityId: string): Promise<UserWatchRow | null>;
-  createWatch(input: CreateUserWatchInput): Promise<UserWatchRow>;
-  deleteWatch(userId: string, workspace: string, entityId: string): Promise<UserWatchRow | null>;
+  listWatches(userId: string, workspace: string): Promise<WatchDbResult[]>;
+  getWatch(userId: string, workspace: string, entityId: string): Promise<WatchDbResult | null>;
+  createWatch(input: WatchDbCreate): Promise<WatchDbResult>;
+  deleteWatch(userId: string, workspace: string, entityId: string): Promise<WatchDbResult | null>;
 
-  listNotifications(userId: string, workspace: string): Promise<UserNotificationRow[]>;
+  listNotifications(userId: string, workspace: string): Promise<NotificationDbResult[]>;
   deleteNotification(
     userId: string,
     workspace: string,
     notificationId: string
-  ): Promise<UserNotificationRow | null>;
+  ): Promise<NotificationDbResult | null>;
 
   clearNotifications(userId: string, workspace: string): Promise<number>;
-  createNotificationsFromAudit(input: CreateNotificationsFromAuditInput): Promise<void>;
+  createNotificationsFromAudit(arg: CreateNotificationsFromAuditInput): Promise<void>;
 };

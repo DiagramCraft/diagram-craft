@@ -1,4 +1,4 @@
-import { BaseEntity, EntitySchemaRow } from '../domain/catalog/db/catalogDatabase';
+import { Entity, SchemaDbResult } from '../domain/catalog/db/catalogDatabase';
 
 const isNonEmpty = (value: unknown): boolean => {
   if (value == null) return false;
@@ -6,7 +6,7 @@ const isNonEmpty = (value: unknown): boolean => {
   return true;
 };
 
-export const computeEntityCompleteness = (entity: BaseEntity, schema: EntitySchemaRow): number => {
+export const computeEntityCompleteness = (entity: Entity, schema: SchemaDbResult): number => {
   const expectedFields = schema.fields.filter(
     f => f.requirementLevel === 'required' || f.requirementLevel === 'expected'
   );

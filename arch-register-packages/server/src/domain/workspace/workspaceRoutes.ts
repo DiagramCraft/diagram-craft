@@ -10,7 +10,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiWorkspace } from './workspaceHelpers';
 import { SCHEMA_TEMPLATES, instantiateTemplate } from '../catalog/schemaTemplates';
-import { WorkspaceRow } from './db/workspaceDatabase';
+import { WorkspaceDbResult } from './db/workspaceDatabase';
 
 const BASE = '/api/workspaces';
 
@@ -111,7 +111,7 @@ export const buildWorkspaceCreateInput = (body: Record<string, unknown>, created
 
 export const buildWorkspaceUpdateInput = (
   body: Record<string, unknown>,
-  current: WorkspaceRow,
+  current: WorkspaceDbResult,
   updatedAt: Date
 ) => {
   const { name, description, url_slug, short_code: sc, color } = body;

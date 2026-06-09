@@ -6,14 +6,14 @@ import type {
   WorkspaceUserInfo
 } from '@arch-register/api-types';
 import {
-  WorkspaceOwnerRow,
-  WorkspaceMemberRow,
-  WorkspaceRow,
-  WorkspaceLifecycleStateRow as InternalWorkspaceLifecycleState
+  OwnerDbResult,
+  MemberDbResult,
+  WorkspaceDbResult,
+  LifecycleStateDbResult as InternalWorkspaceLifecycleState
 } from './db/workspaceDatabase';
-import { UserRow } from '../auth/db/authDatabase';
+import { UserDbResult } from '../auth/db/authDatabase';
 
-export const toApiWorkspace = (workspace: WorkspaceRow): Workspace => ({
+export const toApiWorkspace = (workspace: WorkspaceDbResult): Workspace => ({
   id: workspace.id,
   name: workspace.name,
   url_slug: workspace.url_slug,
@@ -33,7 +33,7 @@ export const toApiLifecycleState = (
   sort_order: state.sort_order
 });
 
-export const toApiOwnerOption = (owner: WorkspaceOwnerRow): WorkspaceOwnerOption => ({
+export const toApiOwnerOption = (owner: OwnerDbResult): WorkspaceOwnerOption => ({
   id: owner.id,
   name: owner.name,
   sort_order: owner.sort_order,
@@ -42,8 +42,8 @@ export const toApiOwnerOption = (owner: WorkspaceOwnerRow): WorkspaceOwnerOption
 });
 
 export const toApiWorkspaceMember = (
-  member: WorkspaceMemberRow,
-  user: UserRow
+  member: MemberDbResult,
+  user: UserDbResult
 ): WorkspaceMemberInfo => ({
   workspace: member.workspace,
   user_id: member.user_id,
@@ -53,7 +53,7 @@ export const toApiWorkspaceMember = (
   created_at: member.created_at.toISOString()
 });
 
-export const toApiWorkspaceUser = (user: UserRow): WorkspaceUserInfo => ({
+export const toApiWorkspaceUser = (user: UserDbResult): WorkspaceUserInfo => ({
   id: user.id,
   user_id: user.user_id,
   email: user.email,

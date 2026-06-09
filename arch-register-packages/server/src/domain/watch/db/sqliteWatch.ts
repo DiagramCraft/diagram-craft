@@ -1,6 +1,6 @@
 import type {
   CreateNotificationsFromAuditInput,
-  CreateUserWatchInput,
+  WatchDbCreate,
   WatchDatabase
 } from './watchDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
@@ -31,18 +31,16 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
     );
   }
 
-  async createWatch(input: CreateUserWatchInput) {
+  async createWatch(input: WatchDbCreate) {
     this.run(
       'INSERT OR IGNORE INTO user_watch (user_id, workspace, entity_id, created_at) VALUES (?, ?, ?, ?)',
       [input.user_id, input.workspace, input.entity_id, input.created_at.toISOString()]
     );
-    return (
-      await this.get(
-        'SELECT * FROM user_watch WHERE user_id = ? AND workspace = ? AND entity_id = ?',
-        [input.user_id, input.workspace, input.entity_id],
-        sqliteMappers.userWatch
-      )
-    )!;
+    return (await this.get(
+      'SELECT * FROM user_watch WHERE user_id = ? AND workspace = ? AND entity_id = ?',
+      [input.user_id, input.workspace, input.entity_id],
+      sqliteMappers.userWatch
+    ))!;
   }
 
   async deleteWatch(userId: string, workspace: string, entityId: string) {
@@ -89,7 +87,10 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
 
   async createNotificationsFromAudit(input: CreateNotificationsFromAuditInput) {
     const { auditLog, changedByDisplayName } = input;
-    const watcherIds = (input.watcherUserIds ?? (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id)))
+    const watcherIds = (
+      input.watcherUserIds ??
+      (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id))
+    )
       .filter(userId => userId !== auditLog.user_id)
       .map(user_id => ({ user_id }));
 
