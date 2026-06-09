@@ -1,9 +1,9 @@
 import { defineConfig } from 'vitest/config';
-import type { Plugin } from 'vite';
+import type { Plugin } from 'vitest/config';
 
 const stubViteOnlyImports: Plugin = {
   name: 'stub-vite-only-imports',
-  load(id) {
+  load(id: string) {
     const clean = id.split('?')[0]!;
     if (clean.endsWith('.yaml') || clean.endsWith('.yml')) {
       return 'export default { stencils: [] }';
