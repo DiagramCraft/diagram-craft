@@ -1,4 +1,5 @@
 import { test, expect } from '../helpers/fixtures';
+import { seedIds } from '../helpers/seedHelper';
 
 const seededEnumId = '00000000-0000-0000-0000-e00000000001';
 
@@ -15,7 +16,7 @@ test.describe('GET /api/:workspace/enums', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: seededEnumId,
-          workspace: 'default',
+          workspace: seedIds.workspace.default,
           name: 'API Type',
           options: expect.arrayContaining([
             { value: 'openapi', label: 'OpenAPI' }
@@ -51,7 +52,7 @@ test.describe('GET /api/:workspace/enums/:id', () => {
     const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
       id: seededEnumId,
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       name: 'API Type'
     });
   });
@@ -83,7 +84,7 @@ test.describe('POST /api/:workspace/enums', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       name: 'Deployment Stage',
       options: [{ value: 'prod', label: 'Production' }],
       sort_order: 9

@@ -1,48 +1,49 @@
 import type {
-  CreateProjectInput,
+  ProjectDbCreate,
+  ProjectDbResult,
   ProjectDatabase,
-  UpdateProjectInput,
-  UpsertProjectFileInput
+  ProjectFileDbResult,
+  ProjectDbUpdate,
+  ProjectFileDbUpsert
 } from './projectDatabase';
-import {
-  normalizePostgresError,
-  PostgresDatabaseBase,
-  type PostgresRowTypes
-} from '../../../db/postgresBase';
+import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
-export class PostgresProjectDatabase
-  extends PostgresDatabaseBase
-  implements ProjectDatabase
-{
+export class PostgresProjectDatabase extends PostgresDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
-    return await this.sql<PostgresRowTypes['project'][]>`
-      SELECT * FROM project WHERE workspace = ${workspace} ORDER BY name
+    return await this.sql<ProjectDbResult[]>`
+      SELECT p.*, wo.name AS owner_name
+      FROM project p
+      LEFT JOIN workspace_owner wo ON wo.id = p.owner
+      WHERE p.workspace = ${workspace}
+      ORDER BY p.name
     `;
   }
 
   async getProject(workspace: string, id: string) {
-    const [row] = await this.sql<PostgresRowTypes['project'][]>`
-      SELECT * FROM project WHERE workspace = ${workspace} AND id = ${id}
+    const [row] = await this.sql<ProjectDbResult[]>`
+      SELECT p.*, wo.name AS owner_name
+      FROM project p
+      LEFT JOIN workspace_owner wo ON wo.id = p.owner
+      WHERE p.workspace = ${workspace} AND p.id = ${id}
     `;
     return row ?? null;
   }
 
-  async createProject(input: CreateProjectInput) {
+  async createProject(input: ProjectDbCreate) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['project'][]>`
+      await this.sql`
         INSERT INTO project (id, workspace, name, description, owner, status, color, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.color}, ${input.created_at}, ${input.updated_at})
-        RETURNING *
       `;
-      return row!;
+      return (await this.getProject(input.workspace, input.id))!;
     } catch (error) {
       return normalizePostgresError(error);
     }
   }
 
-  async updateProject(workspace: string, id: string, input: UpdateProjectInput) {
+  async updateProject(workspace: string, id: string, input: ProjectDbUpdate) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['project'][]>`
+      const result = await this.sql`
         UPDATE project
         SET name = ${input.name},
             description = ${input.description},
@@ -51,9 +52,9 @@ export class PostgresProjectDatabase
             color = ${input.color},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
-        RETURNING *
       `;
-      return row ?? null;
+      if (result.count === 0) return null;
+      return await this.getProject(workspace, id);
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -61,19 +62,18 @@ export class PostgresProjectDatabase
 
   async deleteProject(workspace: string, id: string) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['project'][]>`
+      await this.sql`
         DELETE FROM project
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
       `;
-      return row ?? null;
     } catch (error) {
       return normalizePostgresError(error);
     }
   }
 
   async listProjectFiles(workspace: string, projectId: string) {
-    return await this.sql<PostgresRowTypes['projectFile'][]>`
+    return await this.sql<ProjectFileDbResult[]>`
       SELECT *
       FROM project_file
       WHERE workspace = ${workspace} AND project_id = ${projectId}
@@ -82,7 +82,7 @@ export class PostgresProjectDatabase
   }
 
   async getProjectFileByPath(workspace: string, projectId: string, path: string) {
-    const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
+    const [row] = await this.sql<ProjectFileDbResult[]>`
       SELECT * FROM project_file
       WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
     `;
@@ -168,9 +168,9 @@ export class PostgresProjectDatabase
     }
   }
 
-  async upsertProjectFile(input: UpsertProjectFileInput) {
+  async upsertProjectFile(input: ProjectFileDbUpsert) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
+      const [row] = await this.sql<ProjectFileDbResult[]>`
         INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
         VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path)
@@ -189,10 +189,10 @@ export class PostgresProjectDatabase
   }
 
   async createProjectFileIfAbsent(
-    input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }
+    input: Omit<ProjectFileDbUpsert, 'updated_at'> & { updated_at: Date }
   ) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
+      const [row] = await this.sql<ProjectFileDbResult[]>`
         INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
         VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path) DO NOTHING
@@ -206,7 +206,7 @@ export class PostgresProjectDatabase
 
   async deleteProjectFileByPath(workspace: string, projectId: string, path: string) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
+      const [row] = await this.sql<ProjectFileDbResult[]>`
         DELETE FROM project_file
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
         RETURNING *
@@ -240,7 +240,7 @@ export class PostgresProjectDatabase
 
   async deleteProjectFileFolder(workspace: string, projectId: string, folderPath: string) {
     try {
-      return await this.sql<PostgresRowTypes['projectFile'][]>`
+      return await this.sql<ProjectFileDbResult[]>`
         DELETE FROM project_file
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${folderPath}/%`}
         RETURNING *

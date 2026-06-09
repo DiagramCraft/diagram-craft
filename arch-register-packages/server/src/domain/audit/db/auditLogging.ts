@@ -1,14 +1,13 @@
-import type { AuditOperation, AuditEntityType, Entity } from '../../../types';
+import type { AuditEntityType, AuditOperation } from './auditDatabase';
 import type { DatabaseAdapter } from '../../../db/database';
 import { createLogger } from '../../../utils/logger';
+import { Entity } from '../../catalog/db/catalogDatabase';
 
 const logger = createLogger('audit');
 
-const STATIC_USER = 'system'; // Until authentication is implemented
-
 type AuditLogParams = {
   workspace: string;
-  userId?: string;
+  userId?: string | null;
   userDisplayName?: string | null;
   watcherUserIds?: string[];
   operation: AuditOperation;
@@ -30,7 +29,7 @@ type AuditLogParams = {
 export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Promise<void> => {
   const {
     workspace,
-    userId = STATIC_USER,
+    userId = null,
     userDisplayName,
     watcherUserIds,
     operation,
@@ -61,7 +60,7 @@ export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Pro
     if (entityType === 'entity') {
       await db.watch.createNotificationsFromAudit({
         auditLog,
-        changedByDisplayName: userDisplayName ?? userId,
+        changedByDisplayName: userDisplayName ?? userId ?? 'system',
         watcherUserIds
       });
     }
@@ -127,5 +126,5 @@ export const flattenEntityAuditFields = (entity: Entity): Record<string, unknown
   _tags: entity.tags,
   _links: entity.links,
   _visibilityMode: entity.visibility_mode,
-  ...entity.data,
+  ...entity.data
 });

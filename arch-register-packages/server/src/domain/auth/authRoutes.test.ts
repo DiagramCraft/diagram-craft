@@ -5,12 +5,13 @@ import {
   parseRequestedGlobalRoles,
   selectRefreshToken
 } from './authRoutes';
-import type { User } from '../../types';
+import { UserDbResult } from './db/authDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const user: User = {
+const user: UserDbResult = {
   id: 'user-1',
+  user_id: 'user-1',
   email: 'user@example.com',
   display_name: 'Test User',
   auth_provider: 'local',
@@ -59,6 +60,7 @@ describe('auth route helpers', () => {
 
     expect(result).toMatchObject({
       id: 'user-1',
+      user_id: 'user-1',
       global_roles: ['global_admin'],
       workspace_roles: { default: 'admin' },
       team_assignments_by_workspace: {

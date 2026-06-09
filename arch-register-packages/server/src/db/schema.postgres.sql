@@ -3,7 +3,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE workspace (
-  id          TEXT        PRIMARY KEY,
+  id          UUID        PRIMARY KEY,
   name        TEXT        NOT NULL UNIQUE,
   url_slug    TEXT        NOT NULL UNIQUE,
   short_code  TEXT        NOT NULL DEFAULT '',
@@ -13,61 +13,66 @@ CREATE TABLE workspace (
 );
 
 CREATE TABLE workspace_lifecycle_state (
-  id          TEXT        NOT NULL,
-  workspace   TEXT        NOT NULL,
+  id          UUID        PRIMARY KEY,
+  workspace   UUID        NOT NULL,
   label       TEXT        NOT NULL,
   color       TEXT        NOT NULL DEFAULT 'var(--fg-3)',
   sort_order  INTEGER     NOT NULL DEFAULT 0,
   created_at  TIMESTAMPTZ NOT NULL,
-  PRIMARY KEY (workspace, id),
+  UNIQUE (workspace, id),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
 );
 
 CREATE TABLE workspace_owner (
-  id          TEXT        NOT NULL,
-  workspace   TEXT        NOT NULL,
+  id          UUID        PRIMARY KEY,
+  workspace   UUID        NOT NULL,
+  name        TEXT        NOT NULL,
   sort_order  INTEGER     NOT NULL DEFAULT 0,
   color       TEXT,
   description TEXT        NOT NULL DEFAULT '',
   created_at  TIMESTAMPTZ NOT NULL,
-  PRIMARY KEY (workspace, id),
+  UNIQUE (workspace, id),
+  UNIQUE (workspace, name),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
 );
 
 CREATE TABLE entity_schema (
-  id          UUID        PRIMARY KEY,
-  workspace   TEXT        NOT NULL,
-  name        TEXT        NOT NULL,
-  fields      JSONB       NOT NULL DEFAULT '[]',
-  color       TEXT,
-  icon        TEXT,
-  default_owner TEXT,
-  created_at  TIMESTAMPTZ NOT NULL,
-  updated_at  TIMESTAMPTZ NOT NULL,
+  id            UUID        PRIMARY KEY,
+  workspace     UUID        NOT NULL,
+  name          TEXT        NOT NULL,
+  fields        JSONB       NOT NULL DEFAULT '[]',
+  color         TEXT,
+  icon          TEXT,
+  default_owner UUID,
+  created_at    TIMESTAMPTZ NOT NULL,
+  updated_at    TIMESTAMPTZ NOT NULL,
   UNIQUE (workspace, name),
   UNIQUE (workspace, id),
-  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
+  FOREIGN KEY (workspace, default_owner) REFERENCES workspace_owner(workspace, id) ON DELETE SET NULL
 );
 
 CREATE TABLE entity (
-  id          UUID        PRIMARY KEY,
-  workspace   TEXT        NOT NULL,
-  slug        TEXT        NOT NULL,
-  namespace   TEXT        NOT NULL DEFAULT 'default',
-  name        TEXT        NOT NULL,
-  description TEXT        NOT NULL DEFAULT '',
-  owner       TEXT,
-  lifecycle   TEXT,
-  tags        JSONB       NOT NULL DEFAULT '[]',
-  links       JSONB       NOT NULL DEFAULT '[]',
-  schema_id   UUID        NOT NULL,
-  data        JSONB       NOT NULL DEFAULT '{}',
-  visibility_mode TEXT CHECK (visibility_mode IN ('public', 'restricted')),
-  created_at  TIMESTAMPTZ NOT NULL,
-  updated_at  TIMESTAMPTZ NOT NULL,
+  id                    UUID        PRIMARY KEY,
+  workspace             UUID        NOT NULL,
+  slug                  TEXT        NOT NULL,
+  namespace             TEXT        NOT NULL DEFAULT 'default',
+  name                  TEXT        NOT NULL,
+  description           TEXT        NOT NULL DEFAULT '',
+  owner                 UUID,
+  lifecycle             UUID,
+  tags                  JSONB       NOT NULL DEFAULT '[]',
+  links                 JSONB       NOT NULL DEFAULT '[]',
+  schema_id             UUID        NOT NULL,
+  data                  JSONB       NOT NULL DEFAULT '{}',
+  visibility_mode       TEXT CHECK (visibility_mode IN ('public', 'restricted')),
+  created_at            TIMESTAMPTZ NOT NULL,
+  updated_at            TIMESTAMPTZ NOT NULL,
   UNIQUE (workspace, schema_id, namespace, slug),
   UNIQUE (workspace, id),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
+  FOREIGN KEY (workspace, owner) REFERENCES workspace_owner(workspace, id) ON DELETE SET NULL,
+  FOREIGN KEY (workspace, lifecycle) REFERENCES workspace_lifecycle_state(workspace, id) ON DELETE SET NULL,
   FOREIGN KEY (workspace, schema_id) REFERENCES entity_schema(workspace, id) ON DELETE RESTRICT
 );
 
@@ -79,10 +84,10 @@ CREATE INDEX entity_workspace_visibility_mode_idx ON entity(workspace, visibilit
 
 CREATE TABLE entity_grant (
   id              UUID        PRIMARY KEY,
-  workspace       TEXT        NOT NULL,
+  workspace       UUID        NOT NULL,
   entity_id       UUID        NOT NULL,
   principal_type  TEXT        NOT NULL CHECK (principal_type IN ('user', 'team')),
-  principal_id    TEXT        NOT NULL,
+  principal_id    UUID        NOT NULL,
   role            TEXT        NOT NULL CHECK (role IN ('viewer', 'editor', 'contributor', 'entity_admin')),
   applies_to      TEXT        NOT NULL CHECK (applies_to IN ('self', 'subtree')),
   created_at      TIMESTAMPTZ NOT NULL,
@@ -94,22 +99,23 @@ CREATE INDEX entity_grant_workspace_principal_idx ON entity_grant(workspace, pri
 
 CREATE TABLE project (
   id          UUID        PRIMARY KEY,
-  workspace   TEXT        NOT NULL,
+  workspace   UUID        NOT NULL,
   name        TEXT        NOT NULL,
   description TEXT        NOT NULL DEFAULT '',
-  owner       TEXT,
+  owner       UUID,
   status      TEXT        NOT NULL DEFAULT 'active' CHECK (status IN ('pinned', 'active', 'archived')),
   color       TEXT,
   created_at  TIMESTAMPTZ NOT NULL,
   updated_at  TIMESTAMPTZ NOT NULL,
   UNIQUE (workspace, name),
   UNIQUE (workspace, id),
-  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
+  FOREIGN KEY (workspace, owner) REFERENCES workspace_owner(workspace, id) ON DELETE SET NULL
 );
 
 CREATE TABLE project_file (
   id                    UUID        PRIMARY KEY,
-  workspace             TEXT        NOT NULL,
+  workspace             UUID        NOT NULL,
   project_id            UUID        NOT NULL,
   path                  TEXT        NOT NULL,
   name                  TEXT        NOT NULL,
@@ -126,26 +132,9 @@ CREATE TABLE project_file (
 
 CREATE INDEX project_file_project_idx ON project_file(workspace, project_id);
 
-CREATE TABLE audit_log (
-  id              UUID        PRIMARY KEY,
-  workspace       TEXT        NOT NULL,
-  timestamp       TIMESTAMPTZ NOT NULL,
-  user_id         TEXT        NOT NULL,
-  operation       TEXT        NOT NULL CHECK (operation IN ('create', 'update', 'delete')),
-  entity_type     TEXT        NOT NULL CHECK (entity_type IN ('workspace', 'entity_schema', 'entity', 'project', 'project_file')),
-  entity_id       TEXT        NOT NULL,
-  entity_name     TEXT        NOT NULL,
-  entity_slug     TEXT,
-  schema_id       UUID,
-  changes         JSONB       NOT NULL DEFAULT '{}',
-  metadata        JSONB       NOT NULL DEFAULT '{}',
-  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
-);
-
-CREATE INDEX audit_log_workspace_timestamp_idx ON audit_log(workspace, timestamp DESC);
-
 CREATE TABLE users (
-  id              TEXT        PRIMARY KEY,
+  id              UUID        PRIMARY KEY,
+  user_id         TEXT        NOT NULL UNIQUE,
   email           TEXT        UNIQUE,
   display_name    TEXT        NOT NULL,
   auth_provider   TEXT        NOT NULL CHECK (auth_provider IN ('local', 'oidc')),
@@ -164,10 +153,29 @@ CREATE INDEX users_email_idx ON users(email);
 CREATE INDEX users_auth_provider_idx ON users(auth_provider);
 CREATE INDEX users_oidc_idx ON users(oidc_issuer, oidc_subject) WHERE auth_provider = 'oidc';
 
+CREATE TABLE audit_log (
+  id              UUID        PRIMARY KEY,
+  workspace       UUID        NOT NULL,
+  timestamp       TIMESTAMPTZ NOT NULL,
+  user_id         UUID,
+  operation       TEXT        NOT NULL CHECK (operation IN ('create', 'update', 'delete')),
+  entity_type     TEXT        NOT NULL CHECK (entity_type IN ('workspace', 'entity_schema', 'entity', 'project', 'project_file')),
+  entity_id       UUID        NOT NULL,
+  entity_name     TEXT        NOT NULL,
+  entity_slug     TEXT,
+  schema_id       UUID,
+  changes         JSONB       NOT NULL DEFAULT '{}',
+  metadata        JSONB       NOT NULL DEFAULT '{}',
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX audit_log_workspace_timestamp_idx ON audit_log(workspace, timestamp DESC);
+
 CREATE TABLE team_membership (
-  workspace   TEXT        NOT NULL,
-  team_id     TEXT        NOT NULL,
-  user_id     TEXT        NOT NULL,
+  workspace   UUID        NOT NULL,
+  team_id     UUID        NOT NULL,
+  user_id     UUID        NOT NULL,
   role        TEXT        NOT NULL CHECK (role IN ('team_admin', 'team_editor', 'team_reviewer')),
   created_at  TIMESTAMPTZ NOT NULL,
   PRIMARY KEY (workspace, team_id, user_id),
@@ -176,7 +184,7 @@ CREATE TABLE team_membership (
 );
 
 CREATE TABLE global_role_assignment (
-  user_id      TEXT        NOT NULL,
+  user_id      UUID        NOT NULL,
   role         TEXT        NOT NULL CHECK (role IN ('global_admin', 'workspace_admin')),
   created_at   TIMESTAMPTZ NOT NULL,
   PRIMARY KEY (user_id, role),
@@ -184,8 +192,8 @@ CREATE TABLE global_role_assignment (
 );
 
 CREATE TABLE workspace_member (
-  workspace   TEXT        NOT NULL,
-  user_id     TEXT        NOT NULL,
+  workspace   UUID        NOT NULL,
+  user_id     UUID        NOT NULL,
   role        TEXT        NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL,
   PRIMARY KEY (workspace, user_id),
@@ -198,7 +206,7 @@ CREATE INDEX workspace_member_role_idx ON workspace_member(workspace, role);
 
 CREATE TABLE workspace_role (
   id           UUID        NOT NULL,
-  workspace    TEXT        NOT NULL,
+  workspace    UUID        NOT NULL,
   name         TEXT        NOT NULL,
   description  TEXT        NOT NULL DEFAULT '',
   tone         TEXT        NOT NULL DEFAULT 'var(--accent)',
@@ -211,7 +219,7 @@ CREATE TABLE workspace_role (
 );
 
 CREATE TABLE workspace_ai_config (
-  workspace       TEXT        PRIMARY KEY,
+  workspace       UUID        PRIMARY KEY,
   provider        TEXT        NOT NULL DEFAULT 'openrouter',
   api_key_enc     TEXT,
   base_url        TEXT,
@@ -226,8 +234,8 @@ CREATE TABLE workspace_ai_config (
 
 CREATE TABLE ai_conversation (
   id              UUID        PRIMARY KEY,
-  workspace       TEXT        NOT NULL,
-  user_id         TEXT        NOT NULL,
+  workspace       UUID        NOT NULL,
+  user_id         UUID        NOT NULL,
   title           TEXT        NOT NULL DEFAULT 'New chat',
   created_at      TIMESTAMPTZ NOT NULL,
   updated_at      TIMESTAMPTZ NOT NULL,

@@ -271,7 +271,7 @@ export const AddEntityDialog = ({
                 >
                   {creatableTeams.map(team => (
                     <Select.Item key={team.id} value={team.id}>
-                      {team.id}
+                      {team.name}
                     </Select.Item>
                   ))}
                 </Select.Root>

@@ -2,9 +2,14 @@ import { PermissionChecker, type AuthorizationContext } from '@arch-register/per
 import { toolDefinition } from '@tanstack/ai';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
-import { decodeRefs, type Entity, type SchemaField } from '../../types';
+import { decodeRefs, type SchemaField } from '../../types';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
-import { createEntityWithAudit, type EntityMutationActor, updateEntityWithAudit } from '../catalog/entityMutations';
+import {
+  createEntityWithAudit,
+  type EntityMutationActor,
+  updateEntityWithAudit
+} from '../catalog/entityMutations';
+import { Entity } from '../catalog/db/catalogDatabase';
 
 const checker = new PermissionChecker();
 

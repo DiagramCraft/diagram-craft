@@ -1,5 +1,5 @@
 import { createApiTest, expect } from '../helpers/fixtures';
-import { makeAuthHeader, seedCatalogEntities } from '../helpers/seedHelper';
+import { makeAuthHeader, seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import { hashPassword } from '@arch-register/server/utils/password';
 
 const componentId = '00000000-0000-0000-0003-000000000002';
@@ -11,6 +11,7 @@ const test = createApiTest({
     const now = new Date();
     await server.db.auth.createUser({
       id: editorUserId,
+      user_id: editorUserId,
       email: 'editor@e2e.test',
       display_name: 'E2E Editor',
       auth_provider: 'local',
@@ -23,7 +24,12 @@ const test = createApiTest({
       updated_at: now,
       last_login_at: null
     });
-    await server.db.workspace.setWorkspaceMemberRole('default', editorUserId, 'admin', now);
+    await server.db.workspace.setWorkspaceMemberRole(
+      seedIds.workspace.default,
+      editorUserId,
+      'admin',
+      now
+    );
   }
 }).extend<{ editorAuth: string }>({
   editorAuth: [

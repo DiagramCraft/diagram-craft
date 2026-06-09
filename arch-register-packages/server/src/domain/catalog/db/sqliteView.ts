@@ -1,4 +1,4 @@
-import type { CreateSavedViewInput, UpdateSavedViewInput, ViewDatabase } from './catalogDatabase';
+import type { SavedViewDbCreate, SavedViewDbUpdate, ViewDatabase } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
 export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDatabase {
@@ -18,7 +18,7 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
     );
   }
 
-  async createSavedView(input: CreateSavedViewInput) {
+  async createSavedView(input: SavedViewDbCreate) {
     this.run(
       'INSERT INTO saved_view (id, workspace, name, description, view_mode, filters, config, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -36,7 +36,7 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
     return (await this.getSavedView(input.workspace, input.id))!;
   }
 
-  async updateSavedView(workspace: string, id: string, input: UpdateSavedViewInput) {
+  async updateSavedView(workspace: string, id: string, input: SavedViewDbUpdate) {
     const existing = await this.getSavedView(workspace, id);
     if (!existing) return null;
 

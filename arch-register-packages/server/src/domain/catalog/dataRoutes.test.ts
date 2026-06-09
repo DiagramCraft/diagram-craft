@@ -7,11 +7,24 @@ import {
   parseEntityMutationPayload,
   resolveCreateOwner
 } from './dataRoutes';
-import type { Entity, EntitySchema } from '../../types';
+import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const domainSchema: EntitySchema = {
+const enriched = (
+  e: Omit<
+    EntityDbResult,
+    'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'
+  >
+): EntityDbResult => ({
+  ...e,
+  owner_name: null,
+  lifecycle_label: null,
+  target_lifecycle_label: null,
+  schema_name: ''
+});
+
+const domainSchema: SchemaDbResult = {
   id: 'schema-domain',
   workspace: 'default',
   name: 'Domain',
@@ -24,7 +37,7 @@ const domainSchema: EntitySchema = {
   updated_at: now
 };
 
-const systemSchema: EntitySchema = {
+const systemSchema: SchemaDbResult = {
   id: 'schema-system',
   workspace: 'default',
   name: 'System',
@@ -46,7 +59,7 @@ const systemSchema: EntitySchema = {
   updated_at: now
 };
 
-const componentSchema: EntitySchema = {
+const componentSchema: SchemaDbResult = {
   id: 'schema-component',
   workspace: 'default',
   name: 'Component',
@@ -76,7 +89,7 @@ const componentSchema: EntitySchema = {
   updated_at: now
 };
 
-const domain: Entity = {
+const domain: EntityDbResult = enriched({
   id: 'domain-1',
   workspace: 'default',
   slug: 'engineering',
@@ -94,9 +107,9 @@ const domain: Entity = {
   visibility_mode: null,
   created_at: now,
   updated_at: now
-};
+});
 
-const system: Entity = {
+const system: EntityDbResult = enriched({
   id: 'system-1',
   workspace: 'default',
   slug: 'customer-portal',
@@ -114,9 +127,9 @@ const system: Entity = {
   visibility_mode: null,
   created_at: now,
   updated_at: now
-};
+});
 
-const component: Entity = {
+const component: EntityDbResult = enriched({
   id: 'component-1',
   workspace: 'default',
   slug: 'frontend-app',
@@ -134,9 +147,9 @@ const component: Entity = {
   visibility_mode: null,
   created_at: now,
   updated_at: now
-};
+});
 
-const dependency: Entity = {
+const dependency: EntityDbResult = enriched({
   id: 'component-2',
   workspace: 'default',
   slug: 'api-gateway',
@@ -154,7 +167,7 @@ const dependency: Entity = {
   visibility_mode: null,
   created_at: now,
   updated_at: now
-};
+});
 
 describe('data route helpers', () => {
   it('parses mutation payloads with defaults and derived slug', () => {

@@ -8,7 +8,7 @@ export type AuditLogEntry = {
   id: string;
   workspace: string;
   timestamp: string;
-  user_id: string;
+  user_id: string | null;
   operation: AuditOperation;
   entity_type: AuditEntityType;
   entity_id: string;

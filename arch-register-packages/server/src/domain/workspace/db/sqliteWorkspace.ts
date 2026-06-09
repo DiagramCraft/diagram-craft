@@ -1,22 +1,19 @@
-import type {
-  CreateWorkspaceInput,
-  UpdateWorkspaceInput,
-  WorkspaceDatabase
+import {
+  TeamMembershipDbCreate,
+  WorkspaceDbCreate,
+  LifecycleStateDbCreate,
+  OwnerDbCreate,
+  RoleDefinitionDbCreate,
+  WorkspaceDbUpdate,
+  RoleDefinitionDbUpdate,
+  WorkspaceDatabase,
+  MemberDbResult
 } from './workspaceDatabase';
-import type {
-  TeamMembership,
-  WorkspaceMember,
-  WorkspaceLifecycleState,
-  WorkspaceOwner,
-  WorkspaceRole,
-  WorkspaceRoleDefinition
-} from '../../../types';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
-export class SqliteWorkspaceDatabase
-  extends SqliteDatabaseBase
-  implements WorkspaceDatabase
-{
+type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
+
+export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements WorkspaceDatabase {
   async listWorkspaces() {
     return this.all('SELECT * FROM workspace ORDER BY name', [], sqliteMappers.workspace);
   }
@@ -25,7 +22,7 @@ export class SqliteWorkspaceDatabase
     return this.get('SELECT * FROM workspace WHERE id = ?', [id], sqliteMappers.workspace);
   }
 
-  async createWorkspace(input: CreateWorkspaceInput) {
+  async createWorkspace(input: WorkspaceDbCreate) {
     this.run(
       'INSERT INTO workspace (id, name, url_slug, short_code, color, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -42,7 +39,7 @@ export class SqliteWorkspaceDatabase
     return (await this.getWorkspace(input.id))!;
   }
 
-  async updateWorkspace(id: string, input: UpdateWorkspaceInput) {
+  async updateWorkspace(id: string, input: WorkspaceDbUpdate) {
     this.run(
       'UPDATE workspace SET name = ?, url_slug = ?, short_code = ?, color = ?, description = ?, updated_at = ? WHERE id = ?',
       [
@@ -93,7 +90,7 @@ export class SqliteWorkspaceDatabase
     );
   }
 
-  async replaceLifecycleStates(workspace: string, states: WorkspaceLifecycleState[]) {
+  async replaceLifecycleStates(workspace: string, states: LifecycleStateDbCreate[]) {
     const tx = this.db.transaction(() => {
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspace]);
       for (const state of states) {
@@ -117,13 +114,13 @@ export class SqliteWorkspaceDatabase
 
   async listTeams(workspace: string) {
     return this.all(
-      'SELECT id, workspace, sort_order, color, description, created_at FROM workspace_owner WHERE workspace = ? ORDER BY sort_order, id',
+      'SELECT id, workspace, name, sort_order, color, description, created_at FROM workspace_owner WHERE workspace = ? ORDER BY sort_order, id',
       [workspace],
       sqliteMappers.owner
     );
   }
 
-  async replaceTeams(workspace: string, owners: WorkspaceOwner[]) {
+  async replaceTeams(workspace: string, owners: OwnerDbCreate[]) {
     const tx = this.db.transaction(() => {
       const ownerIds = owners.map(owner => owner.id);
 
@@ -145,9 +142,10 @@ export class SqliteWorkspaceDatabase
 
       for (const owner of owners) {
         this.run(
-          `INSERT INTO workspace_owner (id, workspace, sort_order, color, description, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)
+          `INSERT INTO workspace_owner (id, workspace, name, sort_order, color, description, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(workspace, id) DO UPDATE SET
+             name = excluded.name,
              sort_order = excluded.sort_order,
              color = excluded.color,
              description = excluded.description,
@@ -155,6 +153,7 @@ export class SqliteWorkspaceDatabase
           [
             owner.id,
             workspace,
+            owner.name,
             owner.sort_order,
             owner.color,
             owner.description,
@@ -176,7 +175,7 @@ export class SqliteWorkspaceDatabase
     );
   }
 
-  async replaceTeamAssignments(workspace: string, memberships: TeamMembership[]) {
+  async replaceTeamAssignments(workspace: string, memberships: TeamMembershipDbCreate[]) {
     const tx = this.db.transaction(() => {
       this.run('DELETE FROM team_membership WHERE workspace = ?', [workspace]);
       for (const membership of memberships) {
@@ -198,7 +197,7 @@ export class SqliteWorkspaceDatabase
   }
 
   async listWorkspaceMembers(workspace: string) {
-    return this.all<WorkspaceMember>(
+    return this.all<MemberDbResult>(
       'SELECT workspace, user_id, role, created_at FROM workspace_member WHERE workspace = ? ORDER BY role, user_id',
       [workspace],
       (row: Record<string, unknown>) => ({
@@ -211,7 +210,7 @@ export class SqliteWorkspaceDatabase
   }
 
   async getWorkspaceMember(workspace: string, userId: string) {
-    return this.get<WorkspaceMember>(
+    return this.get<MemberDbResult>(
       'SELECT workspace, user_id, role, created_at FROM workspace_member WHERE workspace = ? AND user_id = ?',
       [workspace, userId],
       (row: Record<string, unknown>) => ({
@@ -264,7 +263,7 @@ export class SqliteWorkspaceDatabase
     );
   }
 
-  async createCustomWorkspaceRole(input: WorkspaceRoleDefinition) {
+  async createCustomWorkspaceRole(input: RoleDefinitionDbCreate) {
     const existing = this.get(
       'SELECT id FROM workspace_role WHERE workspace = ? AND LOWER(name) = LOWER(?)',
       [input.workspace, input.name]
@@ -292,7 +291,7 @@ export class SqliteWorkspaceDatabase
   async updateCustomWorkspaceRole(
     workspace: string,
     roleId: string,
-    input: Omit<WorkspaceRoleDefinition, 'id' | 'workspace' | 'created_at'>
+    input: RoleDefinitionDbUpdate
   ) {
     this.run(
       'UPDATE workspace_role SET name = ?, description = ?, tone = ?, capabilities = ?, updated_at = ? WHERE workspace = ? AND id = ?',

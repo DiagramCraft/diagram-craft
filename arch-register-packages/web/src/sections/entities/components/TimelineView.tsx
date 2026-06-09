@@ -257,7 +257,7 @@ const DetailPanel = ({
   onOpen: () => void;
   onClose: () => void;
 }) => {
-  const s = entity ? schemaMap.get(entity._schemaId) : null;
+  const s = entity ? schemaMap.get(entity._schema.id) : null;
   const startField = dateFields.find(f => f.id === cfg.startFieldId);
   const endField = dateFields.find(f => f.id === cfg.endFieldId);
 
@@ -287,13 +287,15 @@ const DetailPanel = ({
             {entity._lifecycle && (
               <div className={styles.detailField}>
                 <div className={styles.detailFieldLabel}>Status</div>
-                <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />
+                <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
               </div>
             )}
             {entity._owner && (
               <div className={styles.detailField}>
                 <div className={styles.detailFieldLabel}>Owner</div>
-                <div className={styles.detailFieldValue}>{entity._owner}</div>
+                <div className={styles.detailFieldValue}>
+                  {entity._owner.name}
+                </div>
               </div>
             )}
             {startField && cfg.startFieldId && !!getRawDateValue(entity, cfg.startFieldId) && (
@@ -400,8 +402,8 @@ export const TimelineView = ({
     for (const e of datedRows) {
       const key =
         cfg.groupBy === 'type'
-          ? (schemaMap.get(e._schemaId)?.schema.name ?? e._schemaId)
-          : (e._owner ?? 'Unassigned');
+          ? (schemaMap.get(e._schema.id)?.schema.name ?? e._schema.id)
+          : (e._owner?.name ?? 'Unassigned');
       (g[key] ??= []).push(e);
     }
     return Object.entries(g).sort(([a], [b]) => a.localeCompare(b));
@@ -516,10 +518,10 @@ export const TimelineView = ({
                   const endD = getDateValue(e, cfg.endFieldId);
                   const isMilestone = !startD && !!endD;
                   const isActive = activeEntityId === e._uid;
-                  const s = schemaMap.get(e._schemaId);
+                  const s = schemaMap.get(e._schema.id);
 
                   const barColor =
-                    lifecycleStates.find(ls => ls.id === e._lifecycle)?.color ??
+                    lifecycleStates.find(ls => ls.id === e._lifecycle?.id)?.color ??
                     'var(--base-fg-more-dim)';
 
                   let barLeft = 0;
@@ -549,7 +551,7 @@ export const TimelineView = ({
                         )}
                         <span className={styles.entityName}>{e._name ?? e._slug}</span>
                         {e._lifecycle && (
-                          <StatusChip value={e._lifecycle} lifecycleStates={lifecycleStates} />
+                          <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
                         )}
                       </div>
 

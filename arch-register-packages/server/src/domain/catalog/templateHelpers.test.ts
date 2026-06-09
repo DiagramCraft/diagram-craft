@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { buildAllTemplatesResponse, buildProjectTemplatesResponse } from './templateHelpers';
-import type { ProjectFile } from '../../types';
+import { ProjectFileDbResult } from '../project/db/projectDatabase';
 
 const now = new Date('2026-06-06T00:00:00.000Z');
 
-const makeFile = (overrides: Partial<ProjectFile> & { id: string }): ProjectFile => ({
+const makeFile = (
+  overrides: Partial<ProjectFileDbResult> & { id: string }
+): ProjectFileDbResult => ({
   workspace: 'ws-1',
   project_id: 'proj-1',
   path: 'diagrams/diagram.json',

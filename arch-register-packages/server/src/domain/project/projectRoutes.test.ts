@@ -7,19 +7,16 @@ import {
   parseProjectStatus,
   resolveProjectOwner
 } from './projectRoutes';
-import type { Project, ProjectFile } from '../../types';
+import { ProjectFileDbResult, type ProjectDbUpdate } from './db/projectDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const baseProject: Project = {
-  id: 'project-1',
-  workspace: 'default',
+const baseProject: ProjectDbUpdate = {
   name: 'Project One',
   description: 'Original description',
   owner: 'platform-team',
   status: 'active',
   color: '#123456',
-  created_at: now,
   updated_at: now
 };
 
@@ -116,7 +113,7 @@ describe('project route helpers', () => {
   });
 
   it('builds a file tree with sorted folders and root files', () => {
-    const files: ProjectFile[] = [
+    const files: ProjectFileDbResult[] = [
       {
         id: 'f-root',
         workspace: 'default',

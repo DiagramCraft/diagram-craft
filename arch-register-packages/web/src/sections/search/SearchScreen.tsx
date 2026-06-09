@@ -14,8 +14,8 @@ import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-route
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/api';
 import type {
-  EntitySchema,
   EntitySearchResult,
+  EntitySchema,
   ProjectFileSearchResult,
   ProjectSearchResult,
   SchemaSearchResult,
@@ -521,7 +521,7 @@ const ResultRow = ({
               <Hi s={e._name || e._slug} q={q} />
             </button>
             <Chip tone="ghost">{e.schemaName}</Chip>
-            {e._lifecycle && <StatusChip value={e._lifecycle} />}
+            {e._lifecycle && <StatusChip value={e._lifecycle.id} />}
           </div>
           {e._description && (
             <div className={styles.rowSnippet}>
@@ -536,7 +536,7 @@ const ResultRow = ({
               <span className={styles.dim}>/</span>
               <Hi s={e._slug} q={q} />
             </span>
-            {e._owner && <Chip tone="ghost">{e._owner}</Chip>}
+            {e._owner && <Chip tone="ghost">{e._owner.name}</Chip>}
             {e.matchedFields.slice(0, 3).map(f => (
               <Chip key={f} tone="ghost">
                 field:{f}
@@ -759,7 +759,7 @@ const PreviewPane = ({
               <Hi s={e._name || e._slug} q={q} />
             </div>
           </div>
-          {e._lifecycle && <StatusChip value={e._lifecycle} />}
+          {e._lifecycle && <StatusChip value={e._lifecycle.id} />}
         </div>
         {e._description && (
           <div className={styles.previewDesc}>
@@ -781,11 +781,11 @@ const PreviewPane = ({
           </dd>
           <dt>Owner</dt>
           <dd>
-            <Hi s={e._owner ?? '—'} q={q} />
+            <Hi s={e._owner?.name ?? '—'} q={q} />
           </dd>
           <dt>Lifecycle</dt>
           <dd>
-            <Hi s={e._lifecycle ?? '—'} q={q} />
+            <Hi s={e._lifecycle?.name ?? '—'} q={q} />
           </dd>
         </dl>
         <div className={styles.previewActions}>

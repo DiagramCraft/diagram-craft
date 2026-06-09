@@ -1,4 +1,5 @@
 import { test, expect } from '../helpers/fixtures';
+import { seedIds } from '../helpers/seedHelper';
 
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
 const apiTypeEnumId = '00000000-0000-0000-0000-e00000000001';
@@ -19,7 +20,7 @@ test.describe('schema routes', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: apiSchemaId,
-          workspace: 'default',
+          workspace: seedIds.workspace.default,
           name: 'API',
           entity_count: 0,
           created_at: expect.any(String),
@@ -66,7 +67,7 @@ test.describe('schema routes', () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
       id: apiSchemaId,
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       name: 'API'
     });
   });
@@ -104,7 +105,7 @@ test.describe('schema routes', () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       name: 'Capability',
       description: '',
       fields: [],
@@ -128,7 +129,7 @@ test.describe('schema routes', () => {
         description: 'Deployable service',
         color: '#112233',
         icon: 'server',
-        default_owner: 'Platform Engineering',
+        default_owner: seedIds.teams.platform,
         fields: [
           { id: 'runtime', name: 'Runtime', type: 'text' },
           {
@@ -144,7 +145,7 @@ test.describe('schema routes', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       name: 'Service',
       description: 'Deployable service',
       color: '#112233',
@@ -217,7 +218,7 @@ test.describe('schema routes', () => {
         description: 'Original description',
         color: '#abcdef',
         icon: 'layers',
-        default_owner: 'Platform Engineering',
+        default_owner: seedIds.teams.platform,
         fields: [{ id: 'mission', name: 'Mission', type: 'text' }]
       })
     });
@@ -260,7 +261,7 @@ test.describe('schema routes', () => {
         description: 'Original',
         color: '#aabbcc',
         icon: 'plug',
-        default_owner: 'Platform Engineering',
+        default_owner: seedIds.teams.platform,
         fields: [{ id: 'protocol', name: 'Protocol', type: 'text' }]
       })
     });
@@ -277,7 +278,7 @@ test.describe('schema routes', () => {
         description: 7,
         color: 1,
         icon: null,
-        default_owner: 'Design Systems',
+        default_owner: seedIds.teams.design,
         fields: [
           {
             id: 'type',
@@ -360,13 +361,13 @@ test.describe('schema routes', () => {
   }) => {
     await server.db.catalog.createEntity({
       id: 'e2e-schema-ref-entity',
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       slug: 'schema-ref-entity',
       namespace: 'default',
       name: 'Schema Ref Entity',
       description: '',
-      owner: 'Platform Engineering',
-      lifecycle: 'production',
+      owner: seedIds.teams.platform,
+      lifecycle: seedIds.lifecycle.production,
       target_lifecycle: null,
       target_lifecycle_date: null,
       tags: [],

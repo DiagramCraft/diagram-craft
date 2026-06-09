@@ -1,8 +1,28 @@
-import type { AuditLogEntry } from '../../../types';
+export type AuditLogDbResult = {
+  id: string;
+  workspace: string;
+  timestamp: Date;
+  user_id: string | null;
+  operation: AuditOperation;
+  entity_type: AuditEntityType;
+  entity_id: string;
+  entity_name: string;
+  entity_slug: string | null;
+  schema_id: string | null;
+  changes: {
+    old?: Record<string, unknown>;
+    new?: Record<string, unknown>;
+  };
+  metadata: Record<string, unknown>;
+};
 
-export type CreateAuditLogInput = Omit<AuditLogEntry, 'id'>;
+export type AuditLogDbCreate = Omit<AuditLogDbResult, 'id'>;
+
+export type AuditOperation = 'create' | 'update' | 'delete';
+
+export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'project_file';
 
 export type AuditDatabase = {
-  listAuditLogs(ws: string): Promise<AuditLogEntry[]>;
-  createAuditLog(input: CreateAuditLogInput): Promise<AuditLogEntry>;
+  listAuditLogs(ws: string): Promise<AuditLogDbResult[]>;
+  createAuditLog(input: AuditLogDbCreate): Promise<AuditLogDbResult>;
 };

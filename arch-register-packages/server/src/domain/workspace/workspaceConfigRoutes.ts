@@ -4,21 +4,20 @@ import { H3, defineHandler } from 'h3';
 import {
   BUILTIN_WORKSPACE_ROLES,
   WORKSPACE_CAPABILITY_GROUPS,
-  resolveWorkspaceRoleDefinitions
+  resolveWorkspaceRoleDefinitions,
+  TeamRole,
+  WorkspaceCapability
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { resolveWorkspace } from './resolveWorkspace';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import type {
-  TeamMembership,
-  TeamRole,
-  WorkspaceLifecycleState,
-  WorkspaceOwner,
-  WorkspaceRoleCapability
-} from '../../types';
 import { httpAssert } from '../../utils/httpAssert';
-
+import {
+  TeamMembershipDbResult,
+  OwnerDbResult,
+  LifecycleStateDbResult
+} from './db/workspaceDatabase';
 const BASE = '/api/:workspace/config';
 
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
@@ -52,10 +51,10 @@ export const parseWorkspaceRoleInput = (body: unknown) => {
   const capabilities = (data['capabilities'] as unknown[]).map(capability => {
     httpAssert.true(
       typeof capability === 'string' &&
-        VALID_WORKSPACE_CAPABILITIES.includes(capability as WorkspaceRoleCapability),
+        VALID_WORKSPACE_CAPABILITIES.includes(capability as WorkspaceCapability),
       { message: 'capabilities contains invalid values' }
     );
-    return capability as WorkspaceRoleCapability;
+    return capability as WorkspaceCapability;
   });
 
   const name = sanitizeText(data['name'] as string);
@@ -85,7 +84,7 @@ export const buildLifecycleStateInputs = (
   workspace: string,
   body: unknown,
   now: Date
-): WorkspaceLifecycleState[] => {
+): LifecycleStateDbResult[] => {
   httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
   const states = body as Array<{
@@ -95,18 +94,24 @@ export const buildLifecycleStateInputs = (
     sort_order?: unknown;
   }>;
   for (const s of states) {
-    httpAssert.string(s.id, { message: 'Each lifecycle state must have a string id' });
     httpAssert.string(s.label, { message: 'Each lifecycle state must have a string label' });
     httpAssert.string(s.color, { message: 'Each lifecycle state must have a string color' });
+    if (s.id !== undefined) {
+      httpAssert.string(s.id, { message: 'Each lifecycle state id must be a string if provided' });
+    }
   }
 
-  const ids = states.map(s => s.id as string);
+  const normalizedStates = states.map(s => ({
+    ...s,
+    id: typeof s.id === 'string' ? s.id : randomUUID()
+  }));
+  const ids = normalizedStates.map(s => s.id);
   httpAssert.true(new Set(ids).size === ids.length, {
     message: 'Duplicate lifecycle state ids'
   });
 
-  return states.map((s, i) => ({
-    id: s.id as string,
+  return normalizedStates.map((s, i) => ({
+    id: s.id,
     workspace,
     label: s.label as string,
     color: s.color as string,
@@ -119,17 +124,21 @@ export const buildWorkspaceOwnerInputs = (
   workspace: string,
   body: unknown,
   now: Date
-): WorkspaceOwner[] => {
+): OwnerDbResult[] => {
   httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
   const owners = body as Array<{
     id?: unknown;
+    name?: unknown;
     sort_order?: unknown;
     color?: unknown;
     description?: unknown;
   }>;
   for (const o of owners) {
-    httpAssert.string(o.id, { message: 'Each owner must have a string id' });
+    if (o.id !== undefined) {
+      httpAssert.string(o.id, { message: 'Each owner id must be a string if provided' });
+    }
+    httpAssert.string(o.name, { message: 'Each owner must have a string name' });
     if (o.color !== undefined && o.color !== null) {
       httpAssert.string(o.color, { message: 'color must be a string if provided' });
     }
@@ -138,14 +147,19 @@ export const buildWorkspaceOwnerInputs = (
     }
   }
 
-  const ids = owners.map(o => o.id as string);
+  const normalizedOwners = owners.map(o => ({
+    ...o,
+    id: typeof o.id === 'string' ? o.id : randomUUID()
+  }));
+  const ids = normalizedOwners.map(o => o.id);
   httpAssert.true(new Set(ids).size === ids.length, {
     message: 'Duplicate owner ids'
   });
 
-  return owners.map((o, i) => ({
-    id: o.id as string,
+  return normalizedOwners.map((o, i) => ({
+    id: o.id,
     workspace,
+    name: sanitizeText(o.name as string),
     sort_order: i,
     color: (o.color as string | null | undefined) ?? null,
     description: (o.description as string | undefined) ?? '',
@@ -159,7 +173,7 @@ export const buildTeamMembershipInputs = (
   ownerIds: Set<string>,
   userIds: Set<string>,
   now: Date
-): TeamMembership[] => {
+): TeamMembershipDbResult[] => {
   httpAssert.array(body, { message: 'Request body must be a JSON array' });
   const rows = body as unknown[];
 
@@ -497,12 +511,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         message: 'role must reference an existing workspace role'
       });
 
-      const member = await db.workspace.setWorkspaceMemberRole(
-        workspace,
-        userId,
-        role,
-        new Date()
-      );
+      const member = await db.workspace.setWorkspaceMemberRole(workspace, userId, role, new Date());
       return member;
     })
   );

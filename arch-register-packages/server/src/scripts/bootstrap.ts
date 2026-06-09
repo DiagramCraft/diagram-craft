@@ -20,7 +20,7 @@ import {
 import type { ContainmentField, ReferenceField } from '../types';
 import { decodeRefs } from '../types';
 import { hashPassword } from '../utils/password';
-import { CreateUserInput } from '../db/database';
+import { UserDbCreate } from '../db/database';
 
 async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
   const workspaces = await db.workspace.listWorkspaces();
@@ -112,6 +112,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   for (const user of seedLocalUsers) {
     await db.auth.createUser({
       id: user.id,
+      user_id: user.user_id,
       email: user.email,
       display_name: user.display_name,
       auth_provider: 'local',
@@ -123,7 +124,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
       created_at: now,
       updated_at: now,
       last_login_at: null
-    } as CreateUserInput);
+    } as UserDbCreate);
   }
 
   for (const workspace of seedWorkspaces) {
@@ -141,11 +142,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   }
 
   for (const user of seedLocalUsers) {
-    await db.auth.replaceGlobalRoleAssignments(
-      user.id,
-      rolesByUser.get(user.id) ?? [],
-      now
-    );
+    await db.auth.replaceGlobalRoleAssignments(user.id, rolesByUser.get(user.id) ?? [], now);
   }
 
   for (const member of seedWorkspaceMembers) {

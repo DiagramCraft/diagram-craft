@@ -30,7 +30,7 @@ export const buildSystemPrompt = async (
       : 'No lifecycle states configured.';
 
   const teamsDesc =
-    teams.length > 0 ? `Teams: ${teams.map(t => t.id).join(', ')}` : 'No teams configured.';
+    teams.length > 0 ? `Teams: ${teams.map(t => t.name).join(', ')}` : 'No teams configured.';
 
   const parts = [
     `You are an architecture assistant for an Enterprise Architecture tool called Arch Register.`,

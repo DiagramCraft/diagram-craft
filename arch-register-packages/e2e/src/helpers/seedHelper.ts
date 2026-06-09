@@ -1,6 +1,7 @@
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
 import {
   seedEntities,
+  seedIds,
   seedWorkspaces,
   seedLifecycleStates,
   seedOwners,
@@ -17,6 +18,8 @@ export const TEST_ADMIN = {
   password: 'TestPassword123!',
   display_name: 'E2E Admin'
 };
+
+export { seedIds };
 
 export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
   const now = new Date();

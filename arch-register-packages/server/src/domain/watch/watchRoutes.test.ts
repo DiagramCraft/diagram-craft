@@ -1,11 +1,12 @@
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import { describe, expect, it } from 'vitest';
-import type { Entity, EntitySchema, UserNotification } from '../../types';
 import { canAccessNotification } from './watchRoutes';
+import { Entity, SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { NotificationDbResult } from './db/watchDatabase';
 
 const now = new Date('2026-06-09T10:00:00.000Z');
 
-const schema: EntitySchema = {
+const schema: SchemaDbResult = {
   id: 'application',
   workspace: 'ws-1',
   name: 'Application',
@@ -38,7 +39,7 @@ const entity: Entity = {
   updated_at: now
 };
 
-const notification: UserNotification = {
+const notification: NotificationDbResult = {
   id: 'notification-1',
   user_id: 'user-1',
   workspace: 'ws-1',

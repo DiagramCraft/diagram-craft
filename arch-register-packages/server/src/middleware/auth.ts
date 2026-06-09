@@ -2,12 +2,13 @@ import type { H3Event } from 'h3';
 import { defineHandler, getCookie, HTTPError } from 'h3';
 import { verifyToken } from '../utils/jwt';
 import type { AuthDatabase } from '../db/database';
-import type { JWTPayload, User } from '../types';
+import type { JWTPayload } from '../types';
 import { httpAssert } from '../utils/httpAssert';
+import { UserDbResult } from '../domain/auth/db/authDatabase';
 
 export type AuthenticatedEvent = H3Event & {
   context: {
-    user: User;
+    user: UserDbResult;
     token: JWTPayload;
   };
 };

@@ -2,6 +2,7 @@ import { test, expect } from '../helpers/fixtures';
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
 import { hashPassword } from '@arch-register/server/utils/password';
 import { generateTokenPair } from '@arch-register/server/utils/jwt';
+import { seedIds } from '../helpers/seedHelper';
 
 const createLocalUser = async (
   db: DatabaseAdapter,
@@ -187,7 +188,7 @@ test.describe('auth protected routes', () => {
       display_name: 'E2E Admin',
       auth_provider: 'local',
       global_roles: ['global_admin'],
-      workspace_roles: { default: 'admin' }
+      workspace_roles: { [seedIds.workspace.default]: 'admin' }
     });
   });
 

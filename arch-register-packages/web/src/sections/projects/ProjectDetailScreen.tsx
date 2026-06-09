@@ -124,7 +124,7 @@ export const ProjectDetailScreen = () => {
         data: {
           name: project.name,
           description: project.description,
-          owner: project.owner,
+          owner: project.owner?.id ?? null,
           status: nextStatus
         }
       },
@@ -480,7 +480,7 @@ export const ProjectDetailScreen = () => {
           label="Folders"
           value={<span className="mono tabular">{project.files.folders.length}</span>}
         />
-        <MetaItem label="Owner" value={project.owner ?? '—'} />
+        <MetaItem label="Owner" value={project.owner?.name ?? '—'} />
         <MetaItem label="Last edit" value={new Date(project.updated_at).toLocaleDateString()} />
       </div>
 
@@ -1068,7 +1068,7 @@ const ProjectSettings = ({
 }) => {
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description);
-  const [owner, setOwner] = useState(project.owner ?? '');
+  const [owner, setOwner] = useState(project.owner?.id ?? '');
   const [status, setStatus] = useState(project.status);
   const [color, setColor] = useState<string | null>(project.color ?? null);
   const [error, setError] = useState('');
@@ -1080,7 +1080,7 @@ const ProjectSettings = ({
   useEffect(() => {
     setName(project.name);
     setDescription(project.description);
-    setOwner(project.owner ?? '');
+    setOwner(project.owner?.id ?? '');
     setStatus(project.status);
     setColor(project.color ?? null);
     setError('');
@@ -1164,7 +1164,7 @@ const ProjectSettings = ({
           <option value="">No owner</option>
           {teams.map(team => (
             <option key={team.id} value={team.id}>
-              {team.id}
+              {team.name}
             </option>
           ))}
         </select>

@@ -73,7 +73,7 @@ export const FilterBuilder = ({
         id: '_owner',
         name: 'Owner',
         type: 'select',
-        options: owners.map(o => ({ value: o.id, label: o.id }))
+        options: owners.map(o => ({ value: o.id, label: o.name }))
       },
       {
         id: '_lifecycle',

@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { buildCreateEnumInput, buildUpdateEnumInput, isEnumReferencedBySchemas } from './enumRoutes';
-import type { EntitySchema, WorkspaceEnum } from '../../types';
+import {
+  buildCreateEnumInput,
+  buildUpdateEnumInput,
+  isEnumReferencedBySchemas
+} from './enumRoutes';
+import { SchemaDbResult, WorkspaceEnumDbResult } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const existingEnum: WorkspaceEnum = {
+const existingEnum: WorkspaceEnumDbResult = {
   id: 'enum-1',
   workspace: 'default',
   name: 'Status',
@@ -89,7 +93,7 @@ describe('enum route helpers', () => {
   });
 
   it('detects when an enum is referenced by a select field', () => {
-    const schemas: EntitySchema[] = [
+    const schemas: SchemaDbResult[] = [
       {
         id: 'schema-1',
         workspace: 'default',
@@ -108,7 +112,7 @@ describe('enum route helpers', () => {
   });
 
   it('ignores non-select fields and different enum ids', () => {
-    const schemas: EntitySchema[] = [
+    const schemas: SchemaDbResult[] = [
       {
         id: 'schema-1',
         workspace: 'default',

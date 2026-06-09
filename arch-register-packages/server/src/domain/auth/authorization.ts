@@ -1,24 +1,26 @@
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
-import { type Entity, type GlobalPermission } from '../../types';
 import {
-  buildAuthorizationContext,
-  fetchAuthorizationContextData,
   type AuthorizationContext,
-  type EntityAction,
-  type WorkspaceCapability,
-  PermissionChecker,
+  buildAuthorizationContext,
   CapabilityEvaluator,
-  ProjectAction
+  type EntityAction,
+  fetchAuthorizationContextData,
+  PermissionChecker,
+  ProjectAction,
+  type WorkspaceCapability
 } from '@arch-register/permissions';
 import { ServerDataProvider } from './ServerAuthorizationDataProvider';
 import { httpAssert } from '../../utils/httpAssert';
+import { Entity } from '../catalog/db/catalogDatabase';
 
 export const GLOBAL_WS = '__global__';
 
 // Singleton instances for performance
 const checker = new PermissionChecker();
 const capabilities = new CapabilityEvaluator();
+
+type GlobalPermission = 'admin_platform' | 'create_workspaces' | 'manage_workspace_roles';
 
 /**
  * Require a specific entity action, throw 403 if not allowed.

@@ -1,4 +1,5 @@
 import { test as baseTest, expect } from '../helpers/fixtures';
+import { seedIds } from '../helpers/seedHelper';
 
 const now = new Date();
 
@@ -9,7 +10,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
       // Project A — has a project-level template and a workspace template
       const projectA = await server.db.project.createProject({
         id: 'e2e-tmpl-proj-a',
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         name: 'Template Project A',
         description: '',
         owner: null,
@@ -22,7 +23,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
       // Project B — has only a project-level template (no workspace templates)
       const projectB = await server.db.project.createProject({
         id: 'e2e-tmpl-proj-b',
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         name: 'Template Project B',
         description: '',
         owner: null,
@@ -34,7 +35,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
 
       // Workspace template in project A
       const wsTemplateFile = await server.db.project.upsertProjectFile({
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         project_id: projectA.id,
         path: 'diagrams/ws-template.json',
         name: 'Workspace Template',
@@ -45,12 +46,12 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         created_atIfNew: now
       });
       await server.db.project.updateProjectFileTemplateStatus(
-        'default', projectA.id, wsTemplateFile.id, true, true, now
+        seedIds.workspace.default, projectA.id, wsTemplateFile.id, true, true, now
       );
 
       // Project-level template in project A
       const projATemplateFile = await server.db.project.upsertProjectFile({
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         project_id: projectA.id,
         path: 'diagrams/proj-a-template.json',
         name: 'Project A Template',
@@ -61,12 +62,12 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         created_atIfNew: now
       });
       await server.db.project.updateProjectFileTemplateStatus(
-        'default', projectA.id, projATemplateFile.id, true, false, now
+        seedIds.workspace.default, projectA.id, projATemplateFile.id, true, false, now
       );
 
       // Plain (non-template) file in project A
       await server.db.project.upsertProjectFile({
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         project_id: projectA.id,
         path: 'diagrams/plain.json',
         name: 'Plain File',
@@ -79,7 +80,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
 
       // Project-level template in project B
       const projBTemplateFile = await server.db.project.upsertProjectFile({
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         project_id: projectB.id,
         path: 'diagrams/proj-b-template.json',
         name: 'Project B Template',
@@ -90,7 +91,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         created_atIfNew: now
       });
       await server.db.project.updateProjectFileTemplateStatus(
-        'default', projectB.id, projBTemplateFile.id, true, false, now
+        seedIds.workspace.default, projectB.id, projBTemplateFile.id, true, false, now
       );
 
       await use({ projectId: projectA.id, wsProjectId: projectA.id });

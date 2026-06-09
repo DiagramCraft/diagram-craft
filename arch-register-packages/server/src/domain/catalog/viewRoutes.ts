@@ -15,14 +15,14 @@ import type {
   SavedView as ApiSavedView
 } from '@arch-register/api-types/views';
 import type { PinnedEntity } from '@arch-register/api-types';
-import type { Entity, SavedView } from '../../types';
 import { PermissionChecker } from '@arch-register/permissions';
+import { Entity, SavedViewDbResult } from './db/catalogDatabase';
 
 const BASE = '/api/:workspace/views';
 const PINNED_BASE = '/api/:workspace/pinned-entities';
 const checker = new PermissionChecker();
 
-const toApi = (view: SavedView): ApiSavedView => ({
+const toApi = (view: SavedViewDbResult): ApiSavedView => ({
   id: view.id,
   workspaceId: view.workspace,
   name: view.name,

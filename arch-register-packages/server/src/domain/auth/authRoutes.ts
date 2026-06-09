@@ -1,11 +1,12 @@
 import type { H3Event } from 'h3';
 import { defineHandler, getCookie, getQuery, H3, HTTPError, readBody, redirect } from 'h3';
+import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import { verifyPassword } from '../../utils/password';
 import { generateTokenPair, verifyToken } from '../../utils/jwt';
 import { generateAuthUrl, handleCallback } from './oidcClient';
 import { clearAuthCookies, setAuthCookies } from '../../utils/cookies';
-import type { GlobalRole, JWTPayload, User } from '../../types';
+import type { JWTPayload } from '../../types';
 import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from './authorization';
 import {
   getGlobalPermissionsForRoles,
@@ -13,6 +14,7 @@ import {
 } from '@arch-register/permissions';
 import { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
+import { GlobalRole, UserDbResult } from './db/authDatabase';
 
 // Clean up expired OIDC states every 5 minutes
 const cleanupTimer = setInterval(
@@ -60,7 +62,7 @@ export const selectRefreshToken = (cookieToken: string | null | undefined, body?
   cookieToken ?? body?.refresh_token;
 
 export const buildAuthMeResponse = (
-  user: User,
+  user: UserDbResult,
   globalRoles: GlobalRole[],
   workspaceData: WorkspaceMembershipData[]
 ) => {
@@ -81,6 +83,7 @@ export const buildAuthMeResponse = (
 
   return {
     id: user.id,
+    user_id: user.user_id,
     email: user.email,
     display_name: user.display_name,
     auth_provider: user.auth_provider,
@@ -113,7 +116,7 @@ export const buildUserUpdateInput = (body: UserUpdateBody, updatedAt: Date) => {
 
 export const parseRequestedGlobalRoles = (requestedRoles: unknown[]) => {
   const roles = requestedRoles.filter(
-    (role): role is 'global_admin' | 'workspace_admin' =>
+    (role): role is GlobalRole =>
       typeof role === 'string' && ['global_admin', 'workspace_admin'].includes(role)
   );
   httpAssert.true(roles.length === requestedRoles.length, {
@@ -157,8 +160,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       httpAssert.string(username, { message: 'Username and password are required' });
       httpAssert.string(password, { message: 'Username and password are required' });
 
-      // Try to find user by ID first, then by email
-      let user = await db.auth.getUser(username);
+      let user = await db.auth.getUserByUserId(username);
 
       if (!user && username.includes('@')) {
         user = await db.auth.getUserByEmail(username);
@@ -258,9 +260,10 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       let user = await db.auth.getUserByOidc(claims.issuer, claims.sub);
 
       if (!user) {
-        const userId = `${claims.issuer}:${claims.sub}`;
+        const userId = randomUUID();
         user = await db.auth.createUser({
           id: userId,
+          user_id: `${claims.issuer}:${claims.sub}`,
           email: claims.email ?? null,
           display_name: claims.name,
           auth_provider: 'oidc',
@@ -361,7 +364,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
-      const user = event.context.user as User;
+      const user = event.context.user as UserDbResult;
       const [roleAssignments, workspaces] = await Promise.all([
         db.auth.listGlobalRoleAssignments(user.id),
         db.workspace.listWorkspaces()
@@ -383,7 +386,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
               .map(m => ({ team_id: m.team_id, role: m.role })),
             teams: teams.map(team => ({
               id: team.id,
-              name: team.id,
+              name: team.name,
               type: 'team' as const
             })),
             workspace_role: workspaceRole,
@@ -400,7 +403,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
   app.patch(
     '/api/users/:id',
     defineHandler(async event => {
-      const authenticatedUser = event.context.user as User;
+      const authenticatedUser = event.context.user as UserDbResult;
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       httpAssert.true(id === authenticatedUser.id, {
@@ -411,15 +414,13 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
       const body = (await readBody(event).catch(() => undefined)) as UserUpdateBody | undefined;
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
-      const updatedUser = await db.auth.updateUser(
-        id,
-        buildUserUpdateInput(body, new Date())
-      );
+      const updatedUser = await db.auth.updateUser(id, buildUserUpdateInput(body, new Date()));
 
       httpAssert.present(updatedUser, { status: 404, message: 'User not found' });
 
       return {
         id: updatedUser.id,
+        user_id: updatedUser.user_id,
         email: updatedUser.email,
         display_name: updatedUser.display_name,
         auth_provider: updatedUser.auth_provider,
@@ -440,10 +441,12 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
 
       return (await db.auth.listUsers()).map(user => ({
         id: user.id,
+        user_id: user.user_id,
         email: user.email,
         display_name: user.display_name,
         auth_provider: user.auth_provider,
-        is_active: user.is_active
+        is_active: user.is_active,
+        color: user.color
       }));
     })
   );

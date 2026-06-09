@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiChatTools } from './chatTools';
 import type { DatabaseAdapter } from '../../db/database';
-import type { AuditLogEntry, Entity, EntitySchema } from '../../types';
+import { Entity, SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { AuditLogDbResult } from '../audit/db/auditDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
-const schemas: EntitySchema[] = [
+const schemas: SchemaDbResult[] = [
   {
     id: 'application',
     workspace: 'ws-1',
@@ -111,8 +112,9 @@ const entities: Entity[] = [
 
 const createdEntities: Entity[] = [];
 const updatedEntities: Entity[] = [];
-const createdAuditLogs: AuditLogEntry[] = [];
-const createdNotifications: Array<{ changedByDisplayName: string; auditLog: AuditLogEntry }> = [];
+const createdAuditLogs: AuditLogDbResult[] = [];
+const createdNotifications: Array<{ changedByDisplayName: string; auditLog: AuditLogDbResult }> =
+  [];
 
 const db = {
   catalog: {
@@ -165,18 +167,17 @@ const db = {
     ]
   },
   audit: {
-    createAuditLog: vi.fn(async (input: AuditLogEntry) => {
+    createAuditLog: vi.fn(async (input: AuditLogDbResult) => {
       createdAuditLogs.push(input);
       return input;
     })
   },
   watch: {
-    createNotificationsFromAudit: vi.fn(async (input: {
-      changedByDisplayName: string;
-      auditLog: AuditLogEntry;
-    }) => {
-      createdNotifications.push(input);
-    })
+    createNotificationsFromAudit: vi.fn(
+      async (input: { changedByDisplayName: string; auditLog: AuditLogDbResult }) => {
+        createdNotifications.push(input);
+      }
+    )
   }
 } as unknown as DatabaseAdapter;
 

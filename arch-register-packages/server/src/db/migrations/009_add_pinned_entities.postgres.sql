@@ -1,8 +1,8 @@
 -- @creates user_pinned_entity
 CREATE TABLE user_pinned_entity
 (
-    user_id    TEXT        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    workspace  TEXT        NOT NULL REFERENCES workspace (id) ON DELETE CASCADE,
+    user_id    UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    workspace  UUID        NOT NULL REFERENCES workspace (id) ON DELETE CASCADE,
     entity_id  UUID        NOT NULL REFERENCES entity (id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (user_id, workspace, entity_id)

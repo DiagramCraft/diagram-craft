@@ -1,113 +1,185 @@
-import type {
-  Entity,
-  EntityGrant,
-  EntitySchema,
-  SavedView,
-  UserPinnedEntity,
-  WorkspaceEnum
-} from '../../../types';
+import { EntityLink, SchemaField, VisibilityMode } from '../../../types';
+import { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-types/views';
 
-export type CreateSchemaInput = Omit<EntitySchema, 'created_at' | 'updated_at'> & {
-  created_at: Date;
-  updated_at: Date;
-};
+// -- Entity Schema
 
-export type UpdateSchemaInput = {
+export type SchemaDbResult = {
+  id: string;
+  workspace: string;
   name: string;
   description: string;
-  fields: EntitySchema['fields'];
+  fields: SchemaField[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
-  updated_at: Date;
-};
-
-export type CreateEnumInput = Omit<WorkspaceEnum, 'created_at' | 'updated_at'> & {
   created_at: Date;
   updated_at: Date;
 };
 
-export type UpdateEnumInput = {
+export type SchemaDbCreate = SchemaDbResult;
+
+export type SchemaDbUpdate = Omit<SchemaDbResult, 'id' | 'workspace' | 'created_at'>;
+
+// -- Workspace Enum
+
+export type WorkspaceEnumDbResult = {
+  id: string;
+  workspace: string;
   name: string;
   options: Array<{ value: string; label: string }>;
   sort_order: number;
-  updated_at: Date;
-};
-
-export type CreateEntityInput = Omit<Entity, 'created_at' | 'updated_at'> & {
   created_at: Date;
   updated_at: Date;
 };
 
-export type UpdateEntityInput = Omit<Entity, 'id' | 'workspace' | 'created_at' | 'updated_at'> & {
-  updated_at: Date;
-};
+export type WorkspaceEnumDbCreate = WorkspaceEnumDbResult;
 
-export type CreateEntityGrantInput = Omit<EntityGrant, 'id'> & {
+export type WorkspaceEnumDbUpdate = Omit<WorkspaceEnumDbResult, 'id' | 'workspace' | 'created_at'>;
+
+// -- Entity Grant
+
+export type EntityGrantDbResult = {
   id: string;
+  workspace: string;
+  entity_id: string;
+  principal_type: 'user' | 'team';
+  principal_id: string;
+  role: EntityRole;
+  applies_to: EntityGrantScope;
+  created_at: Date;
 };
 
-export type CreateSavedViewInput = Omit<SavedView, 'created_at' | 'updated_at'> & {
+type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
+
+type EntityGrantScope = 'self' | 'subtree';
+
+export type EntityGrantDbCretae = EntityGrantDbResult;
+
+// -- User Pinned Entity
+
+export type PinnedEntityDbResult = {
+  user_id: string;
+  workspace: string;
+  entity_id: string;
+  created_at: Date;
+};
+
+export type PinnedEntityDbCreate = PinnedEntityDbResult;
+
+// -- Entity
+
+export type Entity = {
+  id: string;
+  workspace: string;
+  slug: string;
+  namespace: string;
+  name: string;
+  description: string;
+  owner: string | null;
+  lifecycle: string | null;
+  target_lifecycle: string | null;
+  target_lifecycle_date: string | null;
+  tags: string[];
+  links: EntityLink[];
+  schema_id: string;
+  data: Record<string, unknown>;
+  visibility_mode: VisibilityMode | null;
   created_at: Date;
   updated_at: Date;
 };
 
-export type UpdateSavedViewInput = Partial<
-  Omit<SavedView, 'id' | 'workspace' | 'created_at' | 'updated_at'>
-> & {
-  updated_at: Date;
+// Entity enriched with resolved names from joined tables (owner, lifecycle, schema).
+// Returned by listEntities / getEntity; used by helpers that build API responses.
+export type EntityDbResult = Entity & {
+  owner_name: string | null;
+  lifecycle_label: string | null;
+  target_lifecycle_label: string | null;
+  schema_name: string;
 };
 
-export type CreateUserPinnedEntityInput = Omit<UserPinnedEntity, 'created_at'> & {
-  created_at: Date;
-};
+export type EntityDbCreate = Entity;
+
+export type EntityDbUpdate = Omit<Entity, 'id' | 'workspace' | 'created_at'>;
 
 export type CatalogDatabase = {
   resolveWorkspaceSlug(slug: string): Promise<string | null>;
 
-  listSchemas(ws: string): Promise<EntitySchema[]>;
-  getSchema(ws: string, id: string): Promise<EntitySchema | null>;
-  createSchema(input: CreateSchemaInput): Promise<EntitySchema>;
-  updateSchema(ws: string, id: string, input: UpdateSchemaInput): Promise<EntitySchema | null>;
-  deleteSchema(ws: string, id: string): Promise<EntitySchema | null>;
+  listSchemas(ws: string): Promise<SchemaDbResult[]>;
+  getSchema(ws: string, id: string): Promise<SchemaDbResult | null>;
+  createSchema(input: SchemaDbCreate): Promise<SchemaDbResult>;
+  updateSchema(ws: string, id: string, input: SchemaDbUpdate): Promise<SchemaDbResult | null>;
+  deleteSchema(ws: string, id: string): Promise<SchemaDbResult | null>;
 
-  listEnums(ws: string): Promise<WorkspaceEnum[]>;
-  getEnum(ws: string, id: string): Promise<WorkspaceEnum | null>;
-  createEnum(input: CreateEnumInput): Promise<WorkspaceEnum>;
-  updateEnum(ws: string, id: string, input: UpdateEnumInput): Promise<WorkspaceEnum | null>;
-  deleteEnum(ws: string, id: string): Promise<WorkspaceEnum | null>;
+  listEnums(ws: string): Promise<WorkspaceEnumDbResult[]>;
+  getEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;
+  createEnum(input: WorkspaceEnumDbCreate): Promise<WorkspaceEnumDbResult>;
+  updateEnum(
+    ws: string,
+    id: string,
+    input: WorkspaceEnumDbUpdate
+  ): Promise<WorkspaceEnumDbResult | null>;
+  deleteEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;
 
-  listEntities(ws: string): Promise<Entity[]>;
-  getEntity(ws: string, id: string): Promise<Entity | null>;
-  createEntity(input: CreateEntityInput): Promise<Entity>;
-  updateEntity(ws: string, id: string, input: UpdateEntityInput): Promise<Entity | null>;
+  listEntities(ws: string): Promise<EntityDbResult[]>;
+  getEntity(ws: string, id: string): Promise<EntityDbResult | null>;
+  createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
+  updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;
   deleteEntity(ws: string, id: string): Promise<Entity | null>;
-  listEntityGrants(ws: string): Promise<EntityGrant[]>;
-  getEntityGrants(ws: string, entityId: string): Promise<EntityGrant[]>;
+
+  listEntityGrants(ws: string): Promise<EntityGrantDbResult[]>;
+  getEntityGrants(ws: string, entityId: string): Promise<EntityGrantDbResult[]>;
   replaceEntityGrants(
     ws: string,
     entityId: string,
-    grants: CreateEntityGrantInput[]
-  ): Promise<EntityGrant[]>;
+    grants: EntityGrantDbCretae[]
+  ): Promise<EntityGrantDbResult[]>;
 
-  listPinnedEntities(userId: string, workspace: string): Promise<UserPinnedEntity[]>;
+  listPinnedEntities(userId: string, workspace: string): Promise<PinnedEntityDbResult[]>;
   getPinnedEntity(
     userId: string,
     workspace: string,
     entityId: string
-  ): Promise<UserPinnedEntity | null>;
-  createPinnedEntity(input: CreateUserPinnedEntityInput): Promise<UserPinnedEntity>;
+  ): Promise<PinnedEntityDbResult | null>;
+  createPinnedEntity(input: PinnedEntityDbCreate): Promise<PinnedEntityDbResult>;
   deletePinnedEntity(
     userId: string,
     workspace: string,
     entityId: string
-  ): Promise<UserPinnedEntity | null>;
+  ): Promise<PinnedEntityDbResult | null>;
+};
+
+// -- Saved View
+
+export type SavedViewDbResult = {
+  id: string;
+  workspace: string;
+  name: string;
+  description: string | null;
+  view_mode: BrowserView;
+  filters: EntityFilters;
+  config: {
+    radar?: RadarViewConfig;
+  } | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type SavedViewDbCreate = SavedViewDbResult;
+
+export type SavedViewDbUpdate = Partial<
+  Omit<SavedViewDbResult, 'id' | 'workspace' | 'created_at' | 'updated_at'>
+> & {
+  updated_at: Date;
 };
 
 export type ViewDatabase = {
-  listSavedViews(ws: string): Promise<SavedView[]>;
-  getSavedView(ws: string, id: string): Promise<SavedView | null>;
-  createSavedView(input: CreateSavedViewInput): Promise<SavedView>;
-  updateSavedView(ws: string, id: string, input: UpdateSavedViewInput): Promise<SavedView | null>;
-  deleteSavedView(ws: string, id: string): Promise<SavedView | null>;
+  listSavedViews(ws: string): Promise<SavedViewDbResult[]>;
+  getSavedView(ws: string, id: string): Promise<SavedViewDbResult | null>;
+  createSavedView(input: SavedViewDbCreate): Promise<SavedViewDbResult>;
+  updateSavedView(
+    ws: string,
+    id: string,
+    input: SavedViewDbUpdate
+  ): Promise<SavedViewDbResult | null>;
+  deleteSavedView(ws: string, id: string): Promise<SavedViewDbResult | null>;
 };

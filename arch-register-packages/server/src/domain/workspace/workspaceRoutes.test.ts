@@ -7,11 +7,11 @@ import {
   normalizeReplicationInclude,
   shortCode
 } from './workspaceRoutes';
-import type { Workspace } from '../../types';
+import { WorkspaceDbResult } from './db/workspaceDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const baseWorkspace: Workspace = {
+const baseWorkspace: WorkspaceDbResult = {
   id: 'default',
   name: 'Default Workspace',
   url_slug: 'default',
@@ -30,18 +30,18 @@ describe('workspace route helpers', () => {
 
   it('builds default lifecycle states', () => {
     expect(buildDefaultLifecycleStates('ws-1', now)).toEqual([
-      expect.objectContaining({ id: 'proposed', workspace: 'ws-1', sort_order: 0 }),
-      expect.objectContaining({ id: 'experimental', workspace: 'ws-1', sort_order: 1 }),
-      expect.objectContaining({ id: 'production', workspace: 'ws-1', sort_order: 2 }),
-      expect.objectContaining({ id: 'deprecated', workspace: 'ws-1', sort_order: 3 })
+      expect.objectContaining({ workspace: 'ws-1', label: 'Proposed', sort_order: 0 }),
+      expect.objectContaining({ workspace: 'ws-1', label: 'Experimental', sort_order: 1 }),
+      expect.objectContaining({ workspace: 'ws-1', label: 'Production', sort_order: 2 }),
+      expect.objectContaining({ workspace: 'ws-1', label: 'Deprecated', sort_order: 3 })
     ]);
   });
 
   it('builds default workspace teams', () => {
     expect(buildDefaultWorkspaceTeams('ws-1', now)).toEqual([
-      expect.objectContaining({ id: 'platform-team', workspace: 'ws-1', sort_order: 0 }),
-      expect.objectContaining({ id: 'ux-team', workspace: 'ws-1', sort_order: 1 }),
-      expect.objectContaining({ id: 'security-team', workspace: 'ws-1', sort_order: 2 })
+      expect.objectContaining({ workspace: 'ws-1', name: 'Platform Team', sort_order: 0 }),
+      expect.objectContaining({ workspace: 'ws-1', name: 'UX Team', sort_order: 1 }),
+      expect.objectContaining({ workspace: 'ws-1', name: 'Security Team', sort_order: 2 })
     ]);
   });
 
@@ -58,7 +58,7 @@ describe('workspace route helpers', () => {
         now
       )
     ).toEqual({
-      id: 'new-workspace',
+      id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/),
       name: 'New Workspace',
       url_slug: 'new-workspace',
       short_code: 'NW',

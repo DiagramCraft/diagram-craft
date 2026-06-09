@@ -1,22 +1,23 @@
 import { defineHandler, getQuery, H3, readBody } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type {
-  CreateEntityGrantInput,
+  EntityGrantDbCretae,
   DatabaseAdapter,
-  UpdateEntityInput,
-  CreateEntityInput
+  EntityDbUpdate,
+  EntityDbCreate
 } from '../../db/database';
 import { createLogger } from '../../utils/logger';
 import { parseCsv, validateCsvData, csvRowToEntity } from '../../utils/csvImport';
-import {
-  decodeRefs,
-  type Entity,
-  type EntityLink,
-  type EntitySchema as InternalEntitySchema,
-  type SchemaField
-} from '../../types';
+import { decodeRefs, type EntityLink, type SchemaField } from '../../types';
+import { Entity, type SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
+import type { EntityDbResult } from './db/catalogDatabase';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
-import { computeChanges, extractEntityFields, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
+import {
+  computeChanges,
+  extractEntityFields,
+  flattenEntityAuditFields,
+  logAudit
+} from '../audit/db/auditLogging';
 import { createEntityWithAudit, updateEntityWithAudit } from './entityMutations';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { formatArrayForCsv, generateCsv } from '../../utils/csv';
@@ -104,7 +105,7 @@ const entityMatchesPattern = (entity: Entity, pattern: string) => {
 };
 
 export const filterEntities = (
-  entities: Entity[],
+  entities: EntityDbResult[],
   options: {
     schemaId: string | null;
     owner: string | null;
@@ -158,11 +159,26 @@ const relationFields = (fields: SchemaField[]) =>
       field.type === 'reference' || field.type === 'containment'
   );
 
+// Extracts a string ID from either a plain string or a ForeignKey {id, name} object.
+const extractId = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  if (
+    value != null &&
+    typeof value === 'object' &&
+    'id' in value &&
+    typeof (value as Record<string, unknown>)['id'] === 'string'
+  ) {
+    return (value as Record<string, unknown>)['id'] as string;
+  }
+  return null;
+};
+
 export const parseEntityMutationPayload = (
   body: Record<string, unknown>
 ): EntityMutationPayload => {
   const {
     _schemaId,
+    _schema,
     _name,
     _slug,
     _namespace = 'default',
@@ -177,7 +193,9 @@ export const parseEntityMutationPayload = (
     ...fields
   } = body;
 
-  httpAssert.string(_schemaId, {
+  // Accept either _schemaId (string) or _schema (ForeignKey {id, name}) as the schema identifier.
+  const resolvedSchemaId = extractId(_schemaId) ?? extractId(_schema);
+  httpAssert.string(resolvedSchemaId, {
     message: '_schemaId is required and must be a string (UUID)'
   });
 
@@ -191,15 +209,16 @@ export const parseEntityMutationPayload = (
   });
 
   return {
-    schemaId: _schemaId,
+    schemaId: resolvedSchemaId,
     name,
     slug,
     namespace: typeof _namespace === 'string' ? _namespace : 'default',
     description: typeof _description === 'string' ? _description : '',
-    requestedOwner: typeof _owner === 'string' ? _owner : null,
-    requestedLifecycle: typeof _lifecycle === 'string' ? _lifecycle : null,
-    requestedTargetLifecycle: typeof _targetLifecycle === 'string' ? _targetLifecycle : null,
-    requestedTargetLifecycleDate: typeof _targetLifecycleDate === 'string' ? _targetLifecycleDate : null,
+    requestedOwner: extractId(_owner),
+    requestedLifecycle: extractId(_lifecycle),
+    requestedTargetLifecycle: extractId(_targetLifecycle),
+    requestedTargetLifecycleDate:
+      typeof _targetLifecycleDate === 'string' ? _targetLifecycleDate : null,
     tags: Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [],
     links: Array.isArray(_links) ? (_links as EntityLink[]) : [],
     visibilityMode:
@@ -260,7 +279,7 @@ export const buildEntityGrantInputs = (
   grants: unknown[],
   createdAt: Date,
   idFactory: () => string = randomUUID
-): CreateEntityGrantInput[] =>
+): EntityGrantDbCretae[] =>
   grants.map(grant => {
     httpAssert.json(grant, { message: 'Each grant must be an object' });
     const typed = grant as Record<string, unknown>;
@@ -380,10 +399,27 @@ export function createDataRoutes(db: DatabaseAdapter) {
           above80: scored.filter(s => s >= 80).length
         };
 
+        const ownerLabelMap = new Map(
+          entities.filter(e => e.owner != null).map(e => [e.owner!, e.owner_name ?? e.owner!])
+        );
+        const lifecycleLabelMap = new Map(
+          entities
+            .filter(e => e.lifecycle != null)
+            .map(e => [e.lifecycle!, e.lifecycle_label ?? e.lifecycle!])
+        );
+
         return {
           total: entities.length,
-          lifecycle: countBy(entities.map(entity => entity.lifecycle)),
-          owner: countBy(entities.map(entity => entity.owner)),
+          lifecycle: countBy(entities.map(entity => entity.lifecycle)).map(({ value, count }) => ({
+            value,
+            label: value != null ? (lifecycleLabelMap.get(value) ?? value) : null,
+            count
+          })),
+          owner: countBy(entities.map(entity => entity.owner)).map(({ value, count }) => ({
+            value,
+            label: value != null ? (ownerLabelMap.get(value) ?? value) : null,
+            count
+          })),
           schema: countBy(entities.map(entity => entity.schema_id)).map(({ value, count }) => ({
             schemaId: value!,
             count
@@ -430,12 +466,14 @@ export function createDataRoutes(db: DatabaseAdapter) {
         );
         const matchIds = new Set(matchRows.map(r => r.id));
         const entityById = new Map(allEntities.map(entity => [entity.id, entity]));
-        const allIncluded = new Map<string, Entity>(matchRows.map(entity => [entity.id, entity]));
+        const allIncluded = new Map<string, EntityDbResult>(
+          matchRows.map(entity => [entity.id, entity])
+        );
         const edges: Array<{ childId: string; parentId: string }> = [];
 
         let currentLevel = [...matchRows];
         while (currentLevel.length > 0) {
-          const nextLevel: Entity[] = [];
+          const nextLevel: EntityDbResult[] = [];
           for (const entity of currentLevel) {
             const cFields = containmentFieldsBySchema.get(entity.schema_id) ?? [];
             for (const fieldId of cFields) {
@@ -939,7 +977,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
               'You do not have permission to update this entity'
             );
 
-            const updateInput: UpdateEntityInput = {
+            const updateInput: EntityDbUpdate = {
               name: (resolvedData._name as string) ?? existingEntity.name,
               slug: (resolvedData._slug as string) ?? existingEntity.slug,
               namespace: (resolvedData._namespace as string) ?? existingEntity.namespace,
@@ -982,7 +1020,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             nameToId.set(updatedEntity.name.toLowerCase(), existingId);
           } else {
             // Create new entity
-            const createInput: CreateEntityInput = {
+            const createInput: EntityDbCreate = {
               id: randomUUID(),
               workspace,
               schema_id: body.schemaId,
@@ -1227,23 +1265,23 @@ export function createDataRoutes(db: DatabaseAdapter) {
             displayName: auditUser.display_name
           },
           entity: {
-          id: randomUUID(),
-          workspace,
-          slug: payload.slug,
-          namespace: payload.namespace,
-          name: payload.name,
-          description: payload.description,
-          owner,
-          lifecycle,
-          target_lifecycle,
-          target_lifecycle_date,
-          tags: payload.tags,
-          links: payload.links,
-          schema_id: payload.schemaId,
-          data: payload.fields,
-          visibility_mode: payload.visibilityMode,
-          created_at: timestamp,
-          updated_at: timestamp
+            id: randomUUID(),
+            workspace,
+            slug: payload.slug,
+            namespace: payload.namespace,
+            name: payload.name,
+            description: payload.description,
+            owner,
+            lifecycle,
+            target_lifecycle,
+            target_lifecycle_date,
+            tags: payload.tags,
+            links: payload.links,
+            schema_id: payload.schemaId,
+            data: payload.fields,
+            visibility_mode: payload.visibilityMode,
+            created_at: timestamp,
+            updated_at: timestamp
           }
         });
 

@@ -1,33 +1,36 @@
 import { newid } from '@diagram-craft/utils/id';
 import type {
-  CreateProjectInput,
+  ProjectDbCreate,
   ProjectDatabase,
-  UpdateProjectInput,
-  UpsertProjectFileInput
+  ProjectDbUpdate,
+  ProjectFileDbUpsert
 } from './projectDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
-export class SqliteProjectDatabase
-  extends SqliteDatabaseBase
-  implements ProjectDatabase
-{
+const PROJECT_JOIN_SQL = `
+  SELECT p.*, wo.name AS owner_name
+  FROM project p
+  LEFT JOIN workspace_owner wo ON wo.id = p.owner
+`;
+
+export class SqliteProjectDatabase extends SqliteDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
     return this.all(
-      'SELECT * FROM project WHERE workspace = ? ORDER BY name',
+      `${PROJECT_JOIN_SQL} WHERE p.workspace = ? ORDER BY p.name`,
       [workspace],
-      sqliteMappers.project
+      sqliteMappers.enrichedProject
     );
   }
 
   async getProject(workspace: string, id: string) {
     return this.get(
-      'SELECT * FROM project WHERE workspace = ? AND id = ?',
+      `${PROJECT_JOIN_SQL} WHERE p.workspace = ? AND p.id = ?`,
       [workspace, id],
-      sqliteMappers.project
+      sqliteMappers.enrichedProject
     );
   }
 
-  async createProject(input: CreateProjectInput) {
+  async createProject(input: ProjectDbCreate) {
     this.run(
       'INSERT INTO project (id, workspace, name, description, owner, status, color, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -45,7 +48,7 @@ export class SqliteProjectDatabase
     return (await this.getProject(input.workspace, input.id))!;
   }
 
-  async updateProject(workspace: string, id: string, input: UpdateProjectInput) {
+  async updateProject(workspace: string, id: string, input: ProjectDbUpdate) {
     this.run(
       'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, color = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
@@ -64,9 +67,8 @@ export class SqliteProjectDatabase
 
   async deleteProject(workspace: string, id: string) {
     const row = await this.getProject(workspace, id);
-    if (!row) return null;
+    if (!row) return;
     this.run('DELETE FROM project WHERE workspace = ? AND id = ?', [workspace, id]);
-    return row;
   }
 
   async listProjectFiles(workspace: string, projectId: string) {
@@ -162,7 +164,7 @@ export class SqliteProjectDatabase
     );
   }
 
-  async upsertProjectFile(input: UpsertProjectFileInput) {
+  async upsertProjectFile(input: ProjectFileDbUpsert) {
     const id = newid();
     const tx = this.db.transaction(() => {
       const existing = this.get<{ id: string; created_at: string }>(
@@ -208,7 +210,7 @@ export class SqliteProjectDatabase
   }
 
   async createProjectFileIfAbsent(
-    input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }
+    input: Omit<ProjectFileDbUpsert, 'updated_at'> & { updated_at: Date }
   ) {
     const existing = await this.getProjectFileByPath(input.workspace, input.project_id, input.path);
     if (existing) return null;

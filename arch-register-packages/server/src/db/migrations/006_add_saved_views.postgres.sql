@@ -1,7 +1,7 @@
 -- @creates saved_view
 CREATE TABLE saved_view (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    workspace TEXT NOT NULL REFERENCES workspace(id) ON DELETE CASCADE,
+    workspace UUID NOT NULL REFERENCES workspace(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
     view_mode TEXT NOT NULL,

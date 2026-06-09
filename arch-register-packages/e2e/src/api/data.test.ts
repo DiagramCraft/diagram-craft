@@ -1,6 +1,6 @@
 import { seedEntities } from '@arch-register/server/db/seedData';
 import { test as baseTest, expect } from '../helpers/fixtures';
-import { seedCatalogEntities } from '../helpers/seedHelper';
+import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 
 const test = baseTest.extend<{ seeded: true }>({
   seeded: [
@@ -45,7 +45,7 @@ test.describe('data routes', () => {
     seeded: _
   }) => {
     const res = await fetch(
-      `${server.baseUrl}/api/default/data?view=summary&_schemaId=${componentSchemaId}&owner=Design%20Systems&q=react`,
+      `${server.baseUrl}/api/default/data?view=summary&_schemaId=${componentSchemaId}&owner=${encodeURIComponent(seedIds.teams.design)}&q=react`,
       {
         headers: { Authorization: auth }
       }
@@ -57,8 +57,8 @@ test.describe('data routes', () => {
       expect.objectContaining({
         _uid: componentId,
         _name: 'Frontend App',
-        _owner: 'Design Systems',
-        _schemaId: componentSchemaId
+        _owner: expect.objectContaining({ id: seedIds.teams.design }),
+        _schema: expect.objectContaining({ id: componentSchemaId })
       })
     ]);
     expect(body[0]).not.toHaveProperty('technology');
@@ -195,7 +195,7 @@ test.describe('data routes', () => {
       _schemaId: apiSchemaId,
       _name: 'Billing API',
       _namespace: 'default',
-      _lifecycle: 'production',
+      _lifecycle: seedIds.lifecycle.production,
       _tags: ['rest'],
       api_type: 'openapi',
       system: systemId
@@ -204,8 +204,8 @@ test.describe('data routes', () => {
     expect(created).toMatchObject({
       _name: 'Billing API',
       _slug: 'billing-api',
-      _owner: 'Design Systems',
-      _lifecycle: 'production',
+      _owner: expect.objectContaining({ id: seedIds.teams.design }),
+      _lifecycle: expect.objectContaining({ id: seedIds.lifecycle.production }),
       api_type: 'openapi',
       system: systemId
     });
@@ -270,7 +270,7 @@ test.describe('data routes', () => {
     });
     expect(getRes.status).toBe(200);
     await expect(getRes.json()).resolves.toMatchObject({
-      owner: 'Design Systems',
+      owner: seedIds.teams.design,
       visibility_mode: null,
       grants: []
     });
@@ -282,7 +282,7 @@ test.describe('data routes', () => {
         grants: [
           {
             principal_type: 'team',
-            principal_id: 'Platform Engineering',
+            principal_id: seedIds.teams.platform,
             role: 'viewer',
             applies_to: 'subtree'
           }
@@ -292,11 +292,11 @@ test.describe('data routes', () => {
 
     expect(putRes.status).toBe(200);
     await expect(putRes.json()).resolves.toMatchObject({
-      owner: 'Design Systems',
+      owner: seedIds.teams.design,
       grants: [
         expect.objectContaining({
           principal_type: 'team',
-          principal_id: 'Platform Engineering',
+          principal_id: seedIds.teams.platform,
           role: 'viewer',
           applies_to: 'subtree'
         })
@@ -308,8 +308,8 @@ test.describe('data routes', () => {
     const created = await createEntity(server.baseUrl, auth, {
       _schemaId: componentSchemaId,
       _name: 'Session Worker',
-      _owner: 'Platform Engineering',
-      _lifecycle: 'production',
+      _owner: seedIds.teams.platform,
+      _lifecycle: seedIds.lifecycle.production,
       technology: 'Node.js',
       system: systemId
     });
@@ -323,8 +323,8 @@ test.describe('data routes', () => {
         _slug: 'session-worker-v2',
         _namespace: 'default',
         _description: 'Processes session jobs',
-        _owner: 'Security & Compliance',
-        _lifecycle: 'production',
+        _owner: seedIds.teams.security,
+        _lifecycle: seedIds.lifecycle.production,
         _tags: ['worker'],
         _visibilityMode: 'restricted',
         technology: 'Go',
@@ -337,7 +337,7 @@ test.describe('data routes', () => {
       _uid: created['_uid'],
       _name: 'Session Worker v2',
       _slug: 'session-worker-v2',
-      _owner: 'Security & Compliance',
+      _owner: expect.objectContaining({ id: seedIds.teams.security }),
       _visibilityMode: 'restricted',
       technology: 'Go'
     });
@@ -370,8 +370,8 @@ test.describe('data routes', () => {
     const created = await createEntity(server.baseUrl, auth, {
       _schemaId: componentSchemaId,
       _name: 'CSV Worker',
-      _owner: 'Platform Engineering',
-      _lifecycle: 'production',
+      _owner: seedIds.teams.platform,
+      _lifecycle: seedIds.lifecycle.production,
       technology: 'TypeScript',
       system: systemId
     });
@@ -388,8 +388,8 @@ test.describe('data routes', () => {
             _slug: 'csv-worker',
             _namespace: 'default',
             _description: 'Updated via import',
-            _owner: 'Platform Engineering',
-            _lifecycle: 'production',
+            _owner: seedIds.teams.platform,
+            _lifecycle: seedIds.lifecycle.production,
             technology: 'Rust',
             system: 'Customer Portal'
           },
@@ -398,8 +398,8 @@ test.describe('data routes', () => {
             _slug: 'import-created-component',
             _namespace: 'default',
             _description: 'Created via import',
-            _owner: 'Design Systems',
-            _lifecycle: 'production',
+            _owner: seedIds.teams.design,
+            _lifecycle: seedIds.lifecycle.production,
             technology: 'React',
             system: 'Customer Portal',
             depends_on: 'API Gateway'
@@ -479,8 +479,8 @@ test.describe('data routes', () => {
     const created = await createEntity(server.baseUrl, auth, {
       _schemaId: apiSchemaId,
       _name: 'Sunset API',
-      _lifecycle: 'production',
-      _targetLifecycle: 'deprecated',
+      _lifecycle: seedIds.lifecycle.production,
+      _targetLifecycle: seedIds.lifecycle.deprecated,
       _targetLifecycleDate: '2026-12-31',
       api_type: 'openapi',
       system: systemId
@@ -488,8 +488,8 @@ test.describe('data routes', () => {
 
     expect(created).toMatchObject({
       _name: 'Sunset API',
-      _lifecycle: 'production',
-      _targetLifecycle: 'deprecated',
+      _lifecycle: expect.objectContaining({ id: seedIds.lifecycle.production }),
+      _targetLifecycle: expect.objectContaining({ id: seedIds.lifecycle.deprecated }),
       _targetLifecycleDate: '2026-12-31'
     });
   });
@@ -502,7 +502,7 @@ test.describe('data routes', () => {
     const created = await createEntity(server.baseUrl, auth, {
       _schemaId: apiSchemaId,
       _name: 'Future API',
-      _lifecycle: 'experimental',
+      _lifecycle: seedIds.lifecycle.experimental,
       api_type: 'openapi',
       system: systemId
     });
@@ -516,8 +516,8 @@ test.describe('data routes', () => {
         _schemaId: apiSchemaId,
         _name: 'Future API',
         _namespace: 'default',
-        _lifecycle: 'experimental',
-        _targetLifecycle: 'production',
+        _lifecycle: seedIds.lifecycle.experimental,
+        _targetLifecycle: seedIds.lifecycle.production,
         _targetLifecycleDate: '2026-09-30',
         api_type: 'openapi',
         system: systemId
@@ -526,8 +526,8 @@ test.describe('data routes', () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
-      _lifecycle: 'experimental',
-      _targetLifecycle: 'production',
+      _lifecycle: expect.objectContaining({ id: seedIds.lifecycle.experimental }),
+      _targetLifecycle: expect.objectContaining({ id: seedIds.lifecycle.production }),
       _targetLifecycleDate: '2026-09-30'
     });
   });
@@ -540,7 +540,7 @@ test.describe('data routes', () => {
     const created = await createEntity(server.baseUrl, auth, {
       _schemaId: apiSchemaId,
       _name: 'Invalid Target API',
-      _lifecycle: 'production',
+      _lifecycle: seedIds.lifecycle.production,
       _targetLifecycle: 'nonexistent-state',
       api_type: 'openapi',
       system: systemId

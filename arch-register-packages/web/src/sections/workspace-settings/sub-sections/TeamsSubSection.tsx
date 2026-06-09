@@ -23,6 +23,7 @@ import styles from './TeamsSubSection.module.css';
 
 type TeamDraft = {
   id: string;
+  name: string;
   color?: string | null;
   description?: string;
   assignments: EditAssignment[];
@@ -68,6 +69,7 @@ const sortAssignments = (assignments: EditAssignment[]) =>
 const buildTeamDrafts = (teams: WorkspaceTeam[], assignments: TeamAssignmentInfo[]): TeamDraft[] =>
   teams.map(team => ({
     id: team.id,
+    name: team.name,
     color: team.color,
     description: team.description,
     assignments: sortAssignments(
@@ -79,7 +81,8 @@ const buildTeamDrafts = (teams: WorkspaceTeam[], assignments: TeamAssignmentInfo
 
 const toOwnerPayload = (teams: TeamDraft[]): WorkspaceTeam[] =>
   teams.map((team, index) => ({
-    id: team.id.trim(),
+    id: team.id,
+    name: team.name.trim(),
     sort_order: index,
     color: team.color ?? null,
     description: team.description ?? ''
@@ -88,7 +91,7 @@ const toOwnerPayload = (teams: TeamDraft[]): WorkspaceTeam[] =>
 const toMembershipPayload = (teams: TeamDraft[]) =>
   teams.flatMap(team =>
     team.assignments
-      .filter(assignment => team.id.trim().length > 0 && assignment.user_id.trim().length > 0)
+      .filter(assignment => team.id.length > 0 && assignment.user_id.trim().length > 0)
       .map(assignment => ({
         team_id: team.id.trim(),
         user_id: assignment.user_id,
@@ -233,7 +236,7 @@ export const TeamsSubSection = ({
                     style={{ background: team.color ?? `oklch(0.65 0.15 ${stableHue(team.id)})` }}
                   />
                   <div className={styles.teamNameSection}>
-                    <span className={styles.teamName}>{team.id}</span>
+                    <span className={styles.teamName}>{team.name}</span>
                   </div>
                   {team.description && (
                     <span className={styles.teamDescription}>{team.description}</span>
@@ -352,16 +355,15 @@ export const TeamsSubSection = ({
         key={editTeam?.id ?? 'edit-empty'}
         open={editTeam != null}
         mode="edit"
-        initialTeamId={editTeam?.id ?? ''}
+        initialTeamName={editTeam?.name ?? ''}
         initialColor={editTeam?.color}
         initialDescription={editTeam?.description}
         onClose={() => setEditTeamId(null)}
-        onSave={async (newId, color, description) => {
+        onSave={async (name, color, description) => {
           if (!editTeam) return;
-          const updatedTeam = { ...editTeam, id: newId, color, description };
+          const updatedTeam = { ...editTeam, name, color, description };
           const nextTeams = teamDrafts.map(team => (team.id === editTeam.id ? updatedTeam : team));
           await persistTeams(nextTeams, updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
-          if (openId === editTeam.id) setOpenId(newId);
           setEditTeamId(null);
         }}
         isSaving={isSaving}
@@ -370,13 +372,13 @@ export const TeamsSubSection = ({
       <TeamDialog
         open={addDialogOpen}
         mode="create"
-        initialTeamId=""
+        initialTeamName=""
         initialColor={null}
         initialDescription=""
         onClose={onCloseAddDialog}
-        onSave={async (newId, color, description) => {
+        onSave={async (name, color, description) => {
           await persistTeams(
-            [...teamDrafts, { id: newId, color, description, assignments: [] }],
+            [...teamDrafts, { id: crypto.randomUUID(), name, color, description, assignments: [] }],
             updateTeams.mutateAsync,
             updateTeamAssignments.mutateAsync
           );
@@ -387,7 +389,7 @@ export const TeamsSubSection = ({
 
       <AddMembersDialog
         open={addMembersTeam != null}
-        teamId={addMembersTeam?.id ?? ''}
+        teamName={addMembersTeam?.name ?? ''}
         existingUserIds={addMembersTeam?.assignments.map(a => a.user_id) ?? []}
         users={users}
         loadingUsers={isLoadingUsers}
@@ -416,8 +418,8 @@ const persistTeams = async (
   ) => Promise<unknown>
 ) => {
   const cleanTeams = teams
-    .map(team => ({ ...team, id: team.id.trim() }))
-    .filter(team => team.id.length > 0);
+    .map(team => ({ ...team, name: team.name.trim() }))
+    .filter(team => team.name.length > 0);
   await saveOwners(toOwnerPayload(cleanTeams));
   await saveMemberships(toMembershipPayload(cleanTeams));
 };
@@ -425,7 +427,7 @@ const persistTeams = async (
 const TeamDialog = ({
   open,
   mode,
-  initialTeamId,
+  initialTeamName,
   initialColor,
   initialDescription,
   onClose,
@@ -434,30 +436,30 @@ const TeamDialog = ({
 }: {
   open: boolean;
   mode: 'create' | 'edit';
-  initialTeamId: string;
+  initialTeamName: string;
   initialColor?: string | null;
   initialDescription?: string;
   onClose: () => void;
-  onSave: (teamId: string, color: string | null, description: string) => Promise<void>;
+  onSave: (name: string, color: string | null, description: string) => Promise<void>;
   isSaving: boolean;
 }) => {
-  const [teamId, setTeamId] = useState(initialTeamId);
+  const [teamName, setTeamName] = useState(initialTeamName);
   const [color, setColor] = useState<string | null>(initialColor ?? null);
   const [description, setDescription] = useState(initialDescription ?? '');
   const teamInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    setTeamId(initialTeamId);
+    setTeamName(initialTeamName);
     setColor(initialColor ?? null);
     setDescription(initialDescription ?? '');
     setTimeout(() => teamInputRef.current?.focus(), 0);
-  }, [initialTeamId, initialColor, initialDescription, open]);
+  }, [initialTeamName, initialColor, initialDescription, open]);
 
   if (!open) return null;
 
   const isDirty =
-    teamId.trim() !== initialTeamId || color !== initialColor || description !== initialDescription;
+    teamName.trim() !== initialTeamName || color !== initialColor || description !== initialDescription;
 
   return (
     <Dialog
@@ -469,9 +471,9 @@ const TeamDialog = ({
         {
           label: isSaving ? 'Saving…' : mode === 'create' ? 'Add team' : 'Save team',
           type: 'default',
-          disabled: !teamId.trim() || !isDirty || isSaving,
+          disabled: !teamName.trim() || !isDirty || isSaving,
           onClick: () => {
-            void onSave(teamId.trim(), color, description);
+            void onSave(teamName.trim(), color, description);
           }
         }
       ]}
@@ -487,9 +489,9 @@ const TeamDialog = ({
           <div className={styles.fieldRight}>
             <TextInput
               ref={teamInputRef}
-              value={teamId}
-              onChange={value => setTeamId(value ?? '')}
-              placeholder="platform-team"
+              value={teamName}
+              onChange={value => setTeamName(value ?? '')}
+              placeholder="Platform Engineering"
               style={{ width: '100%' }}
             />
           </div>
@@ -529,7 +531,7 @@ const TeamDialog = ({
 
 const AddMembersDialog = ({
   open,
-  teamId,
+  teamName,
   existingUserIds,
   users,
   loadingUsers,
@@ -538,7 +540,7 @@ const AddMembersDialog = ({
   isSaving
 }: {
   open: boolean;
-  teamId: string;
+  teamName: string;
   existingUserIds: string[];
   users: WorkspaceUserInfo[];
   loadingUsers: boolean;
@@ -573,7 +575,7 @@ const AddMembersDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title={`Add members to ${teamId}`}>
+    <Dialog open={open} onClose={onClose} title={`Add members to ${teamName}`}>
       <div className={styles.dialogBody}>
         {loadingUsers ? (
           <div className={styles.emptyInline}>Loading users…</div>

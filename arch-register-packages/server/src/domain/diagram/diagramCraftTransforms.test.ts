@@ -4,7 +4,7 @@ import {
   toDiagramCraftField,
   toDiagramCraftSchema
 } from './diagramCraftTransforms';
-import type { Entity, EntitySchema, WorkspaceEnum } from '../../types';
+import { Entity, SchemaDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
 
 describe('diagram craft transforms', () => {
   it('keeps containment fields in diagram craft schema responses', () => {
@@ -15,7 +15,7 @@ describe('diagram craft transforms', () => {
         { id: 'system', name: 'System', type: 'containment', schemaId: 'schema-2' },
         { id: 'depends_on', name: 'Depends on', type: 'reference', schemaId: 'schema-2' }
       ]
-    } as EntitySchema;
+    } as SchemaDbResult;
 
     expect(toDiagramCraftSchema(schema, [])).toEqual({
       id: 'schema-1',
@@ -34,7 +34,7 @@ describe('diagram craft transforms', () => {
       id: 'schema-1',
       name: 'Component',
       fields: [{ id: 'technology', name: 'Technology', type: 'text' }]
-    } as EntitySchema;
+    } as SchemaDbResult;
 
     expect(toDiagramCraftSchema(schema, []).fields).toEqual([
       { id: 'name', name: 'Name', type: 'text' },
@@ -44,7 +44,9 @@ describe('diagram craft transforms', () => {
   });
 
   it('keeps date fields in diagram craft schema output', () => {
-    expect(toDiagramCraftField({ id: 'go_live', name: 'Go Live', type: 'date' } as never, [])).toEqual({
+    expect(
+      toDiagramCraftField({ id: 'go_live', name: 'Go Live', type: 'date' } as never, [])
+    ).toEqual({
       id: 'go_live',
       name: 'Go Live',
       type: 'date'
@@ -53,7 +55,7 @@ describe('diagram craft transforms', () => {
 
   it('populates select field options from enums', () => {
     const enumId = 'enum-1';
-    const enums: WorkspaceEnum[] = [
+    const enums: WorkspaceEnumDbResult[] = [
       {
         id: enumId,
         workspace: 'ws-1',

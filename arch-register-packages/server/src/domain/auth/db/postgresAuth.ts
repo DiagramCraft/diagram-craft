@@ -1,43 +1,52 @@
-import type { AuthDatabase, CreateUserInput, UpdateUserInput } from './authDatabase';
-import {
-  normalizePostgresError,
-  PostgresDatabaseBase,
-  type PostgresRowTypes
-} from '../../../db/postgresBase';
-import type { GlobalRole } from '../../../types';
+import type {
+  AuthDatabase,
+  UserDbCreate,
+  GlobalRole,
+  GlobalRoleAssignmentDbResult,
+  UserDbUpdate,
+  UserDbResult
+} from './authDatabase';
+import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
-export class PostgresAuthDatabase
-  extends PostgresDatabaseBase
-  implements AuthDatabase
-{
+export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDatabase {
   async getUser(id: string) {
-    const [row] = await this.sql<PostgresRowTypes['user'][]>`
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(id)) return null;
+    const [row] = await this.sql<UserDbResult[]>`
       SELECT * FROM users WHERE id = ${id}
     `;
     return row ?? null;
   }
 
+  async getUserByUserId(userId: string) {
+    const [row] = await this.sql<UserDbResult[]>`
+      SELECT * FROM users WHERE user_id = ${userId}
+    `;
+    return row ?? null;
+  }
+
   async getUserByEmail(email: string) {
-    const [row] = await this.sql<PostgresRowTypes['user'][]>`
+    const [row] = await this.sql<UserDbResult[]>`
       SELECT * FROM users WHERE email = ${email}
     `;
     return row ?? null;
   }
 
   async getUserByOidc(issuer: string, subject: string) {
-    const [row] = await this.sql<PostgresRowTypes['user'][]>`
+    const [row] = await this.sql<UserDbResult[]>`
       SELECT * FROM users
       WHERE oidc_issuer = ${issuer} AND oidc_subject = ${subject}
     `;
     return row ?? null;
   }
 
-  async createUser(input: CreateUserInput) {
+  async createUser(input: UserDbCreate) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['user'][]>`
-        INSERT INTO users (id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at)
+      const [row] = await this.sql<UserDbResult[]>`
+        INSERT INTO users (id, user_id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at)
         VALUES (
           ${input.id},
+          ${input.user_id ?? input.id},
           ${input.email ?? null},
           ${input.display_name},
           ${input.auth_provider},
@@ -58,7 +67,7 @@ export class PostgresAuthDatabase
     }
   }
 
-  async updateUser(id: string, input: UpdateUserInput) {
+  async updateUser(id: string, input: UserDbUpdate) {
     try {
       const sets: Record<string, unknown> = { updated_at: input.updated_at };
 
@@ -68,7 +77,7 @@ export class PostgresAuthDatabase
       if (input.is_active !== undefined) sets.is_active = input.is_active;
       if (input.color !== undefined) sets.color = input.color;
 
-      const [row] = await this.sql<PostgresRowTypes['user'][]>`
+      const [row] = await this.sql<UserDbResult[]>`
         UPDATE users
         SET ${this.sql(sets)}
         WHERE id = ${id}
@@ -93,14 +102,14 @@ export class PostgresAuthDatabase
   }
 
   async listUsers() {
-    return await this.sql<PostgresRowTypes['user'][]>`
+    return await this.sql<UserDbResult[]>`
       SELECT * FROM users ORDER BY display_name
     `;
   }
 
   async listGlobalRoleAssignments(userId?: string) {
     if (userId) {
-      return await this.sql<PostgresRowTypes['globalRoleAssignment'][]>`
+      return await this.sql<GlobalRoleAssignmentDbResult[]>`
         SELECT user_id, role, created_at
         FROM global_role_assignment
         WHERE user_id = ${userId}
@@ -108,7 +117,7 @@ export class PostgresAuthDatabase
       `;
     }
 
-    return await this.sql<PostgresRowTypes['globalRoleAssignment'][]>`
+    return await this.sql<GlobalRoleAssignmentDbResult[]>`
       SELECT user_id, role, created_at
       FROM global_role_assignment
       ORDER BY user_id, role

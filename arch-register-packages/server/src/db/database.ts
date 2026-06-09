@@ -41,43 +41,39 @@ export type DatabaseAdapter = {
 // Re-export domain types for convenience if needed, or just let consumers import from domain
 export type {
   AiDatabase,
-  UpsertAiConfigInput,
-  CreateConversationInput,
-  CreateMessageInput
+  AiConfigInputDbUpsert,
+  AiConversationDbCreate,
+  AiMessageDbCreate
 } from '../domain/ai/db/aiDatabase';
-export type { AuditDatabase, CreateAuditLogInput } from '../domain/audit/db/auditDatabase';
-export type { AuthDatabase, CreateUserInput, UpdateUserInput } from '../domain/auth/db/authDatabase';
-export type {
-  WatchDatabase,
-  CreateUserWatchInput,
-  CreateNotificationsFromAuditInput
-} from '../domain/watch/db/watchDatabase';
+export type { AuditDatabase, AuditLogDbCreate } from '../domain/audit/db/auditDatabase';
+export type { AuthDatabase, UserDbCreate, UserDbUpdate } from '../domain/auth/db/authDatabase';
+export type { WatchDatabase, WatchDbCreate } from '../domain/watch/db/watchDatabase';
 export type {
   CatalogDatabase,
   ViewDatabase,
-  CreateSchemaInput,
-  UpdateSchemaInput,
-  CreateEnumInput,
-  UpdateEnumInput,
-  CreateEntityInput,
-  UpdateEntityInput,
-  CreateEntityGrantInput,
-  CreateSavedViewInput,
-  UpdateSavedViewInput,
-  CreateUserPinnedEntityInput
+  SchemaDbCreate,
+  SchemaDbUpdate,
+  WorkspaceEnumDbCreate,
+  WorkspaceEnumDbUpdate,
+  EntityDbCreate,
+  EntityDbUpdate,
+  EntityGrantDbCretae,
+  SavedViewDbCreate,
+  SavedViewDbUpdate,
+  PinnedEntityDbCreate
 } from '../domain/catalog/db/catalogDatabase';
 export type {
   ProjectDatabase,
-  CreateProjectInput,
-  UpdateProjectInput,
-  UpsertProjectFileInput
+  ProjectDbCreate,
+  ProjectDbUpdate,
+  ProjectFileDbUpsert
 } from '../domain/project/db/projectDatabase';
 export type {
   WorkspaceDatabase,
-  CreateWorkspaceInput,
-  UpdateWorkspaceInput
+  WorkspaceDbCreate,
+  WorkspaceDbUpdate
 } from '../domain/workspace/db/workspaceDatabase';
 
-// Legacy names for backward compatibility during transition if needed, 
-// but we plan to update all usages. 
+// Legacy names for backward compatibility during transition if needed,
+// but we plan to update all usages.
 // For now, let's not add legacy names to keep it clean.

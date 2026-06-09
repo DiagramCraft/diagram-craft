@@ -1,5 +1,6 @@
 import type { Project, ProjectFile, FileTree, ProjectDetail } from '@arch-register/api-types';
-import type { Project as InternalProject, ProjectFile as InternalProjectFile } from '../../types';
+import type { ProjectDbResult } from './db/projectDatabase';
+import type { ProjectFileDbResult as InternalProjectFile } from './db/projectDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 
 const getProjectCapabilities = (
@@ -24,7 +25,7 @@ const getProjectCapabilities = (
 };
 
 export const toApiProject = (
-  project: InternalProject,
+  project: ProjectDbResult,
   fileCount: number,
   authCtx: AuthorizationContext | null
 ): Project => ({
@@ -32,7 +33,7 @@ export const toApiProject = (
   workspace: project.workspace,
   name: project.name,
   description: project.description,
-  owner: project.owner,
+  owner: project.owner ? { id: project.owner, name: project.owner_name ?? project.owner } : null,
   status: project.status,
   color: project.color,
   file_count: fileCount,
@@ -57,7 +58,7 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
 });
 
 export const toApiProjectDetail = (
-  project: InternalProject,
+  project: ProjectDbResult,
   files: FileTree,
   authCtx: AuthorizationContext | null
 ): ProjectDetail => ({
@@ -65,7 +66,7 @@ export const toApiProjectDetail = (
   workspace: project.workspace,
   name: project.name,
   description: project.description,
-  owner: project.owner,
+  owner: project.owner ? { id: project.owner, name: project.owner_name ?? project.owner } : null,
   status: project.status,
   color: project.color,
   file_count: files.folders.reduce((sum, f) => sum + f.files.length, 0) + files.rootFiles.length,

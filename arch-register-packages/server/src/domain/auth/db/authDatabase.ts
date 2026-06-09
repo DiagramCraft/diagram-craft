@@ -1,16 +1,44 @@
-import type {
-  GlobalRole,
-  GlobalRoleAssignment,
-  User
-} from '../../../types';
+import type { AuthProvider } from '../../../types';
 
-export type CreateUserInput = Omit<User, 'created_at' | 'updated_at' | 'last_login_at'> & {
+// -- Global Role Assignment
+
+export type GlobalRoleAssignmentDbResult = {
+  user_id: string;
+  role: GlobalRole;
+  created_at: Date;
+};
+
+export type GlobalRole = 'global_admin' | 'workspace_admin';
+
+// -- User
+
+export type UserDbResult = {
+  id: string;
+  user_id: string;
+  email: string | null;
+  display_name: string;
+  auth_provider: AuthProvider;
+  password_hash: string | null;
+  oidc_issuer: string | null;
+  oidc_subject: string | null;
+  is_active: boolean;
+  color: string | null;
   created_at: Date;
   updated_at: Date;
   last_login_at: Date | null;
 };
 
-export type UpdateUserInput = {
+export type UserDbCreate = Omit<
+  UserDbResult,
+  'user_id' | 'created_at' | 'updated_at' | 'last_login_at'
+> & {
+  user_id?: string;
+  created_at: Date;
+  updated_at: Date;
+  last_login_at: Date | null;
+};
+
+export type UserDbUpdate = {
   email?: string | null;
   display_name?: string;
   password_hash?: string | null;
@@ -20,19 +48,21 @@ export type UpdateUserInput = {
 };
 
 export type AuthDatabase = {
-  getUser(id: string): Promise<User | null>;
-  getUserByEmail(email: string): Promise<User | null>;
-  getUserByOidc(issuer: string, subject: string): Promise<User | null>;
-  createUser(input: CreateUserInput): Promise<User>;
-  updateUser(id: string, input: UpdateUserInput): Promise<User | null>;
+  getUser(id: string): Promise<UserDbResult | null>;
+  getUserByUserId(userId: string): Promise<UserDbResult | null>;
+  getUserByEmail(email: string): Promise<UserDbResult | null>;
+  getUserByOidc(issuer: string, subject: string): Promise<UserDbResult | null>;
+  createUser(input: UserDbCreate): Promise<UserDbResult>;
+  updateUser(id: string, input: UserDbUpdate): Promise<UserDbResult | null>;
   updateUserLastLogin(id: string, timestamp: Date): Promise<void>;
-  listUsers(): Promise<User[]>;
-  listGlobalRoleAssignments(userId?: string): Promise<GlobalRoleAssignment[]>;
+  listUsers(): Promise<UserDbResult[]>;
+
+  listGlobalRoleAssignments(userId?: string): Promise<GlobalRoleAssignmentDbResult[]>;
   replaceGlobalRoleAssignments(
     userId: string,
     roles: GlobalRole[],
     createdAt: Date
-  ): Promise<GlobalRoleAssignment[]>;
+  ): Promise<GlobalRoleAssignmentDbResult[]>;
 
   storeOidcAuthState(
     state: string,

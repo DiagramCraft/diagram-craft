@@ -1,7 +1,6 @@
 // ── Common Types ──────────────────────────────────────────────
 export type {
   VisibilityMode,
-  LifecycleStatus,
   EntityLink,
   EntityCapabilities,
   ProjectCapabilities,

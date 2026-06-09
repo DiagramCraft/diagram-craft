@@ -1,5 +1,5 @@
 import { test as baseTest, expect } from '../helpers/fixtures';
-import { TEST_ADMIN } from '../helpers/seedHelper';
+import { TEST_ADMIN, seedIds } from '../helpers/seedHelper';
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
 
@@ -8,7 +8,7 @@ const test = baseTest.extend<{ seeded: void }>({
   seeded: [
     async ({ server }, use) => {
       await server.db.audit.createAuditLog({
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         timestamp: daysAgo(10),
         user_id: TEST_ADMIN.id,
         operation: 'create',
@@ -21,7 +21,7 @@ const test = baseTest.extend<{ seeded: void }>({
         metadata: {}
       });
       await server.db.audit.createAuditLog({
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         timestamp: daysAgo(20),
         user_id: TEST_ADMIN.id,
         operation: 'update',
@@ -34,7 +34,7 @@ const test = baseTest.extend<{ seeded: void }>({
         metadata: {}
       });
       await server.db.audit.createAuditLog({
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         timestamp: daysAgo(40),
         user_id: TEST_ADMIN.id,
         operation: 'delete',

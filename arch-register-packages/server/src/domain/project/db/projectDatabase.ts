@@ -1,23 +1,22 @@
-import type {
-  Project,
-  ProjectFile
-} from '../../../types';
+// -- Project File
 
-export type CreateProjectInput = Omit<Project, 'created_at' | 'updated_at'> & {
+export type ProjectFileDbResult = {
+  id: string;
+  workspace: string;
+  project_id: string;
+  path: string;
+  name: string;
+  size_bytes: number;
+  comment_count: number;
+  unresolved_comment_count: number;
+  is_template: boolean;
+  is_workspace_template: boolean;
+  preview_svg: string | null;
   created_at: Date;
   updated_at: Date;
 };
 
-export type UpdateProjectInput = {
-  name: string;
-  description: string;
-  owner: string | null;
-  status: Project['status'];
-  color: string | null;
-  updated_at: Date;
-};
-
-export type UpsertProjectFileInput = {
+export type ProjectFileDbUpsert = {
   workspace: string;
   project_id: string;
   path: string;
@@ -29,15 +28,43 @@ export type UpsertProjectFileInput = {
   created_atIfNew: Date;
 };
 
-export type ProjectDatabase = {
-  listProjects(ws: string): Promise<Project[]>;
-  getProject(ws: string, id: string): Promise<Project | null>;
-  createProject(input: CreateProjectInput): Promise<Project>;
-  updateProject(ws: string, id: string, input: UpdateProjectInput): Promise<Project | null>;
-  deleteProject(ws: string, id: string): Promise<Project | null>;
+// -- Project
 
-  listProjectFiles(ws: string, projectId: string): Promise<ProjectFile[]>;
-  getProjectFileByPath(ws: string, projectId: string, path: string): Promise<ProjectFile | null>;
+type BaseProject = {
+  id: string;
+  workspace: string;
+  name: string;
+  description: string;
+  owner: string | null;
+  status: 'pinned' | 'active' | 'archived';
+  color: string | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type ProjectDbResult = BaseProject & {
+  owner_name: string | null;
+};
+
+export type ProjectDbCreate = BaseProject;
+
+export type ProjectDbUpdate = Omit<BaseProject, 'id' | 'workspace' | 'created_at'>;
+
+// --
+
+export type ProjectDatabase = {
+  listProjects(ws: string): Promise<ProjectDbResult[]>;
+  getProject(ws: string, id: string): Promise<ProjectDbResult | null>;
+  createProject(input: ProjectDbCreate): Promise<ProjectDbResult>;
+  updateProject(ws: string, id: string, input: ProjectDbUpdate): Promise<ProjectDbResult | null>;
+  deleteProject(ws: string, id: string): Promise<void>;
+
+  listProjectFiles(ws: string, projectId: string): Promise<ProjectFileDbResult[]>;
+  getProjectFileByPath(
+    ws: string,
+    projectId: string,
+    path: string
+  ): Promise<ProjectFileDbResult | null>;
   updateProjectFileSizeById(
     ws: string,
     projectId: string,
@@ -69,11 +96,13 @@ export type ProjectDatabase = {
     isWorkspaceTemplate: boolean,
     updated_at: Date
   ): Promise<void>;
-  upsertProjectFile(input: UpsertProjectFileInput): Promise<ProjectFile>;
-  createProjectFileIfAbsent(
-    input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }
-  ): Promise<ProjectFile | null>;
-  deleteProjectFileByPath(ws: string, projectId: string, path: string): Promise<ProjectFile | null>;
+  upsertProjectFile(input: ProjectFileDbUpsert): Promise<ProjectFileDbResult>;
+  createProjectFileIfAbsent(input: ProjectFileDbUpsert): Promise<ProjectFileDbResult | null>;
+  deleteProjectFileByPath(
+    ws: string,
+    projectId: string,
+    path: string
+  ): Promise<ProjectFileDbResult | null>;
   renameProjectFileFolder(
     ws: string,
     projectId: string,
@@ -85,5 +114,5 @@ export type ProjectDatabase = {
     ws: string,
     projectId: string,
     folderPath: string
-  ): Promise<ProjectFile[]>;
+  ): Promise<ProjectFileDbResult[]>;
 };

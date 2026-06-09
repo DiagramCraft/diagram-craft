@@ -1,27 +1,28 @@
-import type { CreateSavedViewInput, UpdateSavedViewInput, ViewDatabase } from './catalogDatabase';
-import {
-  normalizePostgresError,
-  PostgresDatabaseBase,
-  type PostgresRowTypes
-} from '../../../db/postgresBase';
+import type {
+  SavedViewDbCreate,
+  SavedViewDbResult,
+  SavedViewDbUpdate,
+  ViewDatabase
+} from './catalogDatabase';
+import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
 export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDatabase {
   async listSavedViews(workspace: string) {
-    return await this.sql<PostgresRowTypes['savedView'][]>`
+    return await this.sql<SavedViewDbResult[]>`
       SELECT * FROM saved_view WHERE workspace = ${workspace} ORDER BY name
     `;
   }
 
   async getSavedView(workspace: string, id: string) {
-    const [row] = await this.sql<PostgresRowTypes['savedView'][]>`
+    const [row] = await this.sql<SavedViewDbResult[]>`
       SELECT * FROM saved_view WHERE workspace = ${workspace} AND id = ${id}
     `;
     return row ?? null;
   }
 
-  async createSavedView(input: CreateSavedViewInput) {
+  async createSavedView(input: SavedViewDbCreate) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['savedView'][]>`
+      const [row] = await this.sql<SavedViewDbResult[]>`
         INSERT INTO saved_view (id, workspace, name, description, view_mode, filters, config, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.view_mode}, ${this.json(input.filters)}, ${this.json(input.config)}, ${input.created_at}, ${input.updated_at})
         RETURNING *
@@ -32,9 +33,9 @@ export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDa
     }
   }
 
-  async updateSavedView(workspace: string, id: string, input: UpdateSavedViewInput) {
+  async updateSavedView(workspace: string, id: string, input: SavedViewDbUpdate) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['savedView'][]>`
+      const [row] = await this.sql<SavedViewDbResult[]>`
         UPDATE saved_view
         SET name = COALESCE(${input.name ?? null}, name),
             description = COALESCE(${input.description ?? null}, description),
@@ -53,7 +54,7 @@ export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDa
 
   async deleteSavedView(workspace: string, id: string) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['savedView'][]>`
+      const [row] = await this.sql<SavedViewDbResult[]>`
         DELETE FROM saved_view
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *

@@ -185,8 +185,12 @@ export const EntitiesSidebar = ({
 
   const owners = useMemo(() => {
     return (facets?.owner ?? [])
-      .map(bucket => [bucket.value ?? 'Unassigned', bucket.count] as const)
-      .sort((a, b) => b[1] - a[1]);
+      .map(bucket => {
+        const id = bucket.value ?? null;
+        const name = id == null ? 'Unassigned' : (bucket.label ?? id);
+        return [id, name, bucket.count] as const;
+      })
+      .sort((a, b) => b[2] - a[2]);
   }, [facets]);
 
   const totalEntities = facets?.total ?? schemas.reduce((sum, s) => sum + s.entity_count, 0);
@@ -354,13 +358,13 @@ export const EntitiesSidebar = ({
               );
             })}
             <GroupLabel>By owner</GroupLabel>
-            {owners.map(([owner, count]) => (
+            {owners.map(([ownerId, ownerName, count]) => (
               <TreeRow
-                key={owner}
+                key={ownerId ?? 'unassigned'}
                 icon={<TbUsers size={12} />}
-                label={owner}
-                active={activeFilterKind === 'owner' && ownerFilter === owner}
-                onClick={() => navigateEntities({ type: undefined, status: undefined, owner })}
+                label={ownerName}
+                active={activeFilterKind === 'owner' && ownerFilter === ownerId}
+                onClick={() => navigateEntities({ type: undefined, status: undefined, owner: ownerId ?? undefined })}
                 trailing={<span className="dim mono">{count}</span>}
               />
             ))}

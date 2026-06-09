@@ -1,8 +1,6 @@
 import type { EntitySchema, WorkspaceEnum } from '@arch-register/api-types';
-import type {
-  EntitySchema as InternalEntitySchema,
-  WorkspaceEnum as InternalWorkspaceEnum
-} from '../../types';
+import type { WorkspaceEnumDbResult as InternalWorkspaceEnum } from './db/catalogDatabase';
+import { SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
 
 export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
   id: e.id,

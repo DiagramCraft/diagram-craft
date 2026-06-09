@@ -1,7 +1,6 @@
 import { H3, defineHandler, HTTPError } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
-import type { EntitySchema } from '../../types';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { handleDbError } from '../../utils/http';
@@ -9,6 +8,7 @@ import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorizati
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiSchema } from './schemaHelpers';
+import { SchemaDbResult } from './db/catalogDatabase';
 
 const BASE = '/api/:workspace/schemas';
 
@@ -21,7 +21,7 @@ const handleError = (error: unknown, fallback: string): never =>
 type SchemaMutationPayload = {
   name: string;
   description: string;
-  fields: EntitySchema['fields'];
+  fields: SchemaDbResult['fields'];
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
@@ -51,7 +51,7 @@ export const buildCreateSchemaInput = (
     workspace,
     name,
     description: typeof description === 'string' ? description : '',
-    fields: Array.isArray(fields) ? (fields as EntitySchema['fields']) : [],
+    fields: Array.isArray(fields) ? (fields as SchemaDbResult['fields']) : [],
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
@@ -62,7 +62,7 @@ export const buildCreateSchemaInput = (
 
 export const buildUpdateSchemaInput = (
   body: Record<string, unknown>,
-  current: EntitySchema,
+  current: SchemaDbResult,
   teamIds: Set<string>,
   timestamp: Date
 ): SchemaMutationPayload & { updated_at: Date } => {
@@ -79,7 +79,7 @@ export const buildUpdateSchemaInput = (
         : current.description,
     fields:
       fields !== undefined && Array.isArray(fields)
-        ? (fields as EntitySchema['fields'])
+        ? (fields as SchemaDbResult['fields'])
         : current.fields,
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
@@ -154,9 +154,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      const teamIds = new Set(
-        (await db.workspace.listTeams(workspace)).map(owner => owner.id)
-      );
+      const teamIds = new Set((await db.workspace.listTeams(workspace)).map(owner => owner.id));
       try {
         const timestamp = new Date();
         const row = await db.catalog.createSchema(
@@ -192,9 +190,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       httpAssert.string(id, { message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      const teamIds = new Set(
-        (await db.workspace.listTeams(workspace)).map(owner => owner.id)
-      );
+      const teamIds = new Set((await db.workspace.listTeams(workspace)).map(owner => owner.id));
       try {
         const oldRow = await db.catalog.getSchema(workspace, id);
         httpAssert.present(oldRow, { status: 404, message: `Schema '${id}' not found` });

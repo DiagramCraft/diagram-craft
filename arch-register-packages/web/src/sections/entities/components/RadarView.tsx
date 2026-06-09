@@ -134,7 +134,7 @@ const getFieldValues = (
 };
 
 const getEntityFieldValue = (entity: EntityRecord, fieldId: string): string | null => {
-  if (fieldId === LIFECYCLE_FIELD_ID) return entity._lifecycle ?? null;
+  if (fieldId === LIFECYCLE_FIELD_ID) return entity._lifecycle?.id ?? null;
   const val = entity[fieldId];
   return typeof val === 'string' ? val : null;
 };
