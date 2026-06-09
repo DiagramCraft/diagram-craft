@@ -96,7 +96,12 @@ export type {
 } from './audit.js';
 
 // ── Notifications / Watches ─────────────────────────────────
-export type { WatchedEntity, NotificationItem, NotificationCount } from './notifications.js';
+export type {
+  WatchedEntity,
+  PinnedEntity,
+  NotificationItem,
+  NotificationCount,
+} from './notifications.js';
 
 // ── AI Types ─────────────────────────────────────────────────
 export type {

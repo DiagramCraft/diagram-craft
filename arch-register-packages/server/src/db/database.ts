@@ -63,7 +63,8 @@ export type {
   UpdateEntityInput,
   CreateEntityGrantInput,
   CreateSavedViewInput,
-  UpdateSavedViewInput
+  UpdateSavedViewInput,
+  CreateUserPinnedEntityInput
 } from '../domain/catalog/db/catalogDatabase';
 export type {
   ProjectDatabase,

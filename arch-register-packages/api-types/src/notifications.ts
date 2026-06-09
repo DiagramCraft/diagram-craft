@@ -6,6 +6,14 @@ export type WatchedEntity = {
   created_at: string;
 };
 
+export type PinnedEntity = {
+  entity_id: string;
+  entity_name: string;
+  entity_slug: string;
+  schema_id: string;
+  created_at: string;
+};
+
 export type NotificationItem = {
   id: string;
   entity_id: string;

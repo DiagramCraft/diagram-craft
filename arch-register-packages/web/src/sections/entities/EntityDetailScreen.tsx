@@ -16,7 +16,8 @@ import {
   TbPlus,
   TbX,
   TbCopy,
-  TbBell
+  TbBell,
+  TbPinned
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
 import type {
@@ -39,7 +40,14 @@ import {
   useEntitiesBySchema
 } from '../../hooks/useEntities';
 import { useAuditLog } from '../../hooks/useAudit';
-import { useCreateWatch, useDeleteWatch, useWatchedEntities } from '../../hooks/useNotifications';
+import {
+  useCreatePinnedEntity,
+  useCreateWatch,
+  useDeletePinnedEntity,
+  useDeleteWatch,
+  usePinnedEntities,
+  useWatchedEntities
+} from '../../hooks/useNotifications';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
 
@@ -114,7 +122,10 @@ export const EntityDetailScreen = () => {
   const cloneEntity = useCloneEntity(workspaceId);
   const createWatch = useCreateWatch(workspaceId);
   const deleteWatch = useDeleteWatch(workspaceId);
+  const createPinnedEntity = useCreatePinnedEntity(workspaceId);
+  const deletePinnedEntity = useDeletePinnedEntity(workspaceId);
   const { data: watchedEntities = [] } = useWatchedEntities(workspaceId);
+  const { data: pinnedEntities = [] } = usePinnedEntities(workspaceId);
 
   const schemaEntry = useMemo(() => {
     if (!entity) return null;
@@ -126,6 +137,7 @@ export const EntityDetailScreen = () => {
     return null;
   }, [entity, schemas]);
   const isWatched = watchedEntities.some(item => item.entity_id === entityId);
+  const isPinned = pinnedEntities.some(item => item.entity_id === entityId);
 
   const schema = schemaEntry?.schema ?? null;
   const color = schemaEntry
@@ -363,6 +375,25 @@ export const EntityDetailScreen = () => {
                 aria-label={isWatched ? 'Unwatch entity' : 'Watch entity'}
               >
                 <TbBell size={16} />
+              </button>
+              <button
+                type="button"
+                className={`${styles.watchBtn} ${isPinned ? styles.watchBtnActive : ''}`}
+                onClick={() =>
+                  isPinned
+                    ? deletePinnedEntity.mutate(entityId)
+                    : createPinnedEntity.mutate({
+                        entityId,
+                        entityName: entity._name || entity._slug,
+                        entitySlug: entity._slug,
+                        schemaId: entity._schemaId
+                      })
+                }
+                disabled={createPinnedEntity.isPending || deletePinnedEntity.isPending}
+                title={isPinned ? 'Unpin entity' : 'Pin entity'}
+                aria-label={isPinned ? 'Unpin entity' : 'Pin entity'}
+              >
+                <TbPinned size={16} />
               </button>
               {entity.canEdit ? (
                 <Button icon={<TbEdit size={12} />} onClick={startEdit}>

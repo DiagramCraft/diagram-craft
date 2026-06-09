@@ -16,6 +16,7 @@ import type {
   EntityGrant,
   SavedView,
   UserNotification,
+  UserPinnedEntity,
   UserWatch
 } from '../types';
 import { DB_ERROR_CODES } from '../constants';
@@ -60,6 +61,7 @@ export type PostgresRowTypes = {
   projectFile: ProjectFile;
   auditLog: AuditLogEntry;
   userWatch: UserWatch;
+  userPinnedEntity: UserPinnedEntity;
   userNotification: UserNotification;
   user: User;
   globalRoleAssignment: GlobalRoleAssignment;
