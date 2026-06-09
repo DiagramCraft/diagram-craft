@@ -630,7 +630,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           );
         }
 
-        let previewSvg: string | null = null;
+        let previewSvg: string | null;
         try {
           previewSvg = generateSvgPreview(fileData as SerializedDiagramDocument) ?? null;
         } catch {
