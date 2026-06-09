@@ -74,6 +74,7 @@ export const sqliteMappers = {
   owner: (row: Record<string, unknown>): WorkspaceOwner => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
+    name: String(row['name']),
     sort_order: Number(row['sort_order']),
     color: row['color'] == null ? null : String(row['color']),
     description: String(row['description']),
@@ -152,7 +153,7 @@ export const sqliteMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     timestamp: toDate(row['timestamp']),
-    user_id: String(row['user_id']),
+    user_id: row['user_id'] == null ? null : String(row['user_id']),
     operation: row['operation'] as AuditLogEntry['operation'],
     entity_type: row['entity_type'] as AuditLogEntry['entity_type'],
     entity_id: String(row['entity_id']),
@@ -191,6 +192,7 @@ export const sqliteMappers = {
   }),
   user: (row: Record<string, unknown>): User => ({
     id: String(row['id']),
+    user_id: String(row['user_id']),
     email: row['email'] == null ? null : String(row['email']),
     display_name: String(row['display_name']),
     auth_provider: String(row['auth_provider']) as User['auth_provider'],

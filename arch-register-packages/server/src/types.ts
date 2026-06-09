@@ -79,6 +79,7 @@ export type WorkspaceLifecycleState = {
 export type WorkspaceOwner = {
   id: string;
   workspace: string;
+  name: string;
   sort_order: number;
   color: string | null;
   description: string;
@@ -177,7 +178,7 @@ export type AuditLogEntry = {
   id: string;
   workspace: string;
   timestamp: Date;
-  user_id: string;
+  user_id: string | null;
   operation: AuditOperation;
   entity_type: AuditEntityType;
   entity_id: string;
@@ -243,6 +244,7 @@ export type AuthProvider = 'local' | 'oidc';
 
 export type User = {
   id: string;
+  user_id: string;
   email: string | null;
   display_name: string;
   auth_provider: AuthProvider;

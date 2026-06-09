@@ -7,6 +7,10 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     return this.get('SELECT * FROM users WHERE id = ?', [id], sqliteMappers.user);
   }
 
+  async getUserByUserId(userId: string) {
+    return this.get('SELECT * FROM users WHERE user_id = ?', [userId], sqliteMappers.user);
+  }
+
   async getUserByEmail(email: string) {
     return this.get('SELECT * FROM users WHERE email = ?', [email], sqliteMappers.user);
   }
@@ -21,9 +25,10 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
 
   async createUser(input: CreateUserInput) {
     this.run(
-      'INSERT INTO users (id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (id, user_id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
+        input.user_id ?? input.id,
         input.email,
         input.display_name,
         input.auth_provider,

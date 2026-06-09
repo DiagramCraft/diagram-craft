@@ -522,27 +522,37 @@ export const EntityDetailScreen = () => {
             )}
             <MetaPropRow
               label="Owner"
-              value={entity._owner ?? '—'}
+              value={teams.find(team => team.id === entity._owner)?.name ?? entity._owner ?? '—'}
               editing={editing}
               editValue={editState['_owner'] as string}
               onChange={v => setEditState(s => ({ ...s, _owner: v }))}
-              selectOptions={['', ...teams.map(team => team.id)]}
+              selectOptions={[{ value: '', label: '—' }, ...teams.map(team => ({ value: team.id, label: team.name }))]}
             />
             <MetaPropRow
               label="Lifecycle"
-              value={entity._lifecycle ?? '—'}
+              value={lifecycleStates.find(state => state.id === entity._lifecycle)?.label ?? entity._lifecycle ?? '—'}
               editing={editing}
               editValue={editState['_lifecycle'] as string}
               onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))}
-              selectOptions={['', ...lifecycleStates.map(s => s.id)]}
+              selectOptions={[
+                { value: '', label: '—' },
+                ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
+              ]}
             />
             <MetaPropRow
               label="Target Lifecycle"
-              value={entity._targetLifecycle ?? '—'}
+              value={
+                lifecycleStates.find(state => state.id === entity._targetLifecycle)?.label ??
+                entity._targetLifecycle ??
+                '—'
+              }
               editing={editing}
               editValue={editState['_targetLifecycle'] as string}
               onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))}
-              selectOptions={['', ...lifecycleStates.map(s => s.id)]}
+              selectOptions={[
+                { value: '', label: '—' },
+                ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
+              ]}
             />
             <MetaPropRow
               label="Target Date"
@@ -763,7 +773,7 @@ const MetaPropRow = ({
   editing?: boolean;
   editValue?: string;
   onChange?: (v: string) => void;
-  selectOptions?: string[];
+  selectOptions?: Array<{ value: string; label: string }>;
   type?: 'text' | 'date';
 }) => (
   <div className={styles.metaPropRow}>
@@ -776,9 +786,9 @@ const MetaPropRow = ({
             value={editValue ?? ''}
             onChange={e => onChange(e.target.value)}
           >
-            {selectOptions.map(o => (
-              <option key={o} value={o}>
-                {o || '—'}
+            {selectOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
@@ -1034,7 +1044,7 @@ const flattenAuditEntries = (entries: AuditLogEntry[]): ChangeRowData[] => {
   const rows: ChangeRowData[] = [];
   for (const entry of entries) {
     const when = formatTimestamp(entry.timestamp);
-    const who = entry.user_id;
+    const who = entry.user_id ?? 'Unknown';
 
     if (entry.operation === 'create') {
       rows.push({ when, who, what: 'created entity', from: '—', to: '—' });

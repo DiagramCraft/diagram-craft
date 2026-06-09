@@ -62,13 +62,20 @@ describe('toApiOwnerOption', () => {
     const owner: WorkspaceOwner = {
       id: 'team-a',
       workspace: 'ws-1',
+      name: 'Team A',
       sort_order: 3,
       color: null,
       description: '',
       created_at: now
     };
     const result = toApiOwnerOption(owner);
-    expect(result).toEqual({ id: 'team-a', sort_order: 3 });
+    expect(result).toEqual({
+      id: 'team-a',
+      name: 'Team A',
+      sort_order: 3,
+      color: null,
+      description: ''
+    });
   });
 });
 
@@ -84,6 +91,7 @@ describe('toApiWorkspaceMember', () => {
     };
     const user: User = {
       id: 'u-1',
+      user_id: 'alice',
       email: 'a@b.com',
       display_name: 'Alice',
       auth_provider: 'local',
@@ -102,6 +110,7 @@ describe('toApiWorkspaceMember', () => {
     expect(result.email).toBe('a@b.com');
     expect(result.role).toBe('editor');
     expect(result.created_at).toBe(nowIso);
+    expect(result.user_id).toBe('u-1');
   });
 });
 
@@ -111,6 +120,7 @@ describe('toApiWorkspaceUser', () => {
   it('maps user fields', () => {
     const user: User = {
       id: 'u-2',
+      user_id: 'bob',
       email: 'b@c.com',
       display_name: 'Bob',
       auth_provider: 'oidc',
@@ -125,6 +135,7 @@ describe('toApiWorkspaceUser', () => {
     };
     const result = toApiWorkspaceUser(user);
     expect(result.id).toBe('u-2');
+    expect(result.user_id).toBe('bob');
     expect(result.email).toBe('b@c.com');
     expect(result.is_active).toBe(false);
     expect(result.auth_provider).toBe('oidc');

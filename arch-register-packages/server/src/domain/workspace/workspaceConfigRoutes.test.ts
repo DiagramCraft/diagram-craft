@@ -89,23 +89,25 @@ describe('workspace config route helpers', () => {
       buildWorkspaceOwnerInputs(
         'default',
         [
-          { id: 'Platform Engineering', color: '#112233', description: 'Core services' },
-          { id: 'Design Systems', color: null }
+          { id: 'team-1', name: 'Platform Engineering', color: '#112233', description: 'Core services' },
+          { id: 'team-2', name: 'Design Systems', color: null }
         ],
         now
       )
     ).toEqual([
       {
-        id: 'Platform Engineering',
+        id: 'team-1',
         workspace: 'default',
+        name: 'Platform Engineering',
         sort_order: 0,
         color: '#112233',
         description: 'Core services',
         created_at: now
       },
       {
-        id: 'Design Systems',
+        id: 'team-2',
         workspace: 'default',
+        name: 'Design Systems',
         sort_order: 1,
         color: null,
         description: '',
@@ -118,7 +120,10 @@ describe('workspace config route helpers', () => {
     expect(() =>
       buildWorkspaceOwnerInputs(
         'default',
-        [{ id: 'Platform Engineering' }, { id: 'Platform Engineering' }],
+        [
+          { id: 'team-1', name: 'Platform Engineering' },
+          { id: 'team-1', name: 'Design Systems' }
+        ],
         now
       )
     ).toThrowError('Duplicate owner ids');

@@ -1,5 +1,5 @@
 import { test as baseTest, expect } from '../helpers/fixtures';
-import { seedCatalogEntities } from '../helpers/seedHelper';
+import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 
 const now = new Date('2026-06-06T12:00:00.000Z');
 
@@ -10,10 +10,10 @@ const test = baseTest.extend<{ seeded: true }>({
 
       await server.db.project.createProject({
         id: 'search-proj-alpha',
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         name: 'Alpha Search Project',
         description: 'Portal redesign diagrams and architecture notes.',
-        owner: 'Design Systems',
+        owner: seedIds.teams.design,
         status: 'active',
         color: null,
         created_at: now,
@@ -22,10 +22,10 @@ const test = baseTest.extend<{ seeded: true }>({
 
       await server.db.project.createProject({
         id: 'search-proj-beta',
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         name: 'Beta Search Project',
         description: 'Authentication migration workstream.',
-        owner: 'Security & Compliance',
+        owner: seedIds.teams.security,
         status: 'pinned',
         color: null,
         created_at: now,
@@ -33,7 +33,7 @@ const test = baseTest.extend<{ seeded: true }>({
       });
 
       await server.db.project.upsertProjectFile({
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         project_id: 'search-proj-alpha',
         path: 'wireframes/portal-diagram.dgc',
         name: 'Portal Diagram',
@@ -45,7 +45,7 @@ const test = baseTest.extend<{ seeded: true }>({
       });
 
       await server.db.project.upsertProjectFile({
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         project_id: 'search-proj-beta',
         path: 'flows/auth-diagram.dgc',
         name: 'Auth Diagram',

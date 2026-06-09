@@ -5,7 +5,7 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import { Button } from '@diagram-craft/app-components/Button';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { EntityRecord, EntitySchema, WorkspaceLifecycleState } from '../../../lib/api';
+import type { EntityRecord, EntitySchema, WorkspaceLifecycleState, WorkspaceTeam } from '../../../lib/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -246,6 +246,7 @@ const DetailPanel = ({
   dateFields,
   schemaMap,
   lifecycleStates,
+  teams,
   onOpen,
   onClose
 }: {
@@ -254,6 +255,7 @@ const DetailPanel = ({
   dateFields: TimelineDateField[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   lifecycleStates: WorkspaceLifecycleState[];
+  teams: WorkspaceTeam[];
   onOpen: () => void;
   onClose: () => void;
 }) => {
@@ -293,7 +295,9 @@ const DetailPanel = ({
             {entity._owner && (
               <div className={styles.detailField}>
                 <div className={styles.detailFieldLabel}>Owner</div>
-                <div className={styles.detailFieldValue}>{entity._owner}</div>
+                <div className={styles.detailFieldValue}>
+                  {teams.find(t => t.id === entity._owner)?.name ?? entity._owner}
+                </div>
               </div>
             )}
             {startField && cfg.startFieldId && !!getRawDateValue(entity, cfg.startFieldId) && (
@@ -332,6 +336,7 @@ type TimelineViewProps = {
   rows: EntityRecord[];
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
+  teams: WorkspaceTeam[];
   onEntityClick: (entityId: string) => void;
   config: TimelineConfig | null;
   onConfigChange: (cfg: TimelineConfig) => void;
@@ -341,6 +346,7 @@ export const TimelineView = ({
   rows,
   schemas,
   lifecycleStates,
+  teams,
   onEntityClick,
   config,
   onConfigChange
@@ -401,11 +407,13 @@ export const TimelineView = ({
       const key =
         cfg.groupBy === 'type'
           ? (schemaMap.get(e._schemaId)?.schema.name ?? e._schemaId)
-          : (e._owner ?? 'Unassigned');
+          : e._owner == null
+            ? 'Unassigned'
+            : (teams.find(t => t.id === e._owner)?.name ?? e._owner);
       (g[key] ??= []).push(e);
     }
     return Object.entries(g).sort(([a], [b]) => a.localeCompare(b));
-  }, [datedRows, cfg.groupBy, schemaMap]);
+  }, [datedRows, cfg.groupBy, schemaMap, teams]);
 
   // Date range + columns
   const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
@@ -593,6 +601,7 @@ export const TimelineView = ({
         dateFields={dateFields}
         schemaMap={schemaMap}
         lifecycleStates={lifecycleStates}
+        teams={teams}
         onOpen={() => {
           if (activeEntity) onEntityClick(activeEntity._uid);
         }}

@@ -1,4 +1,5 @@
 import { createApiTest, expect } from '../helpers/fixtures';
+import { seedIds } from '../helpers/seedHelper';
 
 type SeededFixtures = {
   conversationId: string;
@@ -73,7 +74,7 @@ const test = createApiTest({
     async ({ server }, use) => {
       const now = new Date('2026-06-07T12:00:00.000Z');
 
-      await server.db.ai.upsertAiConfig('default', {
+      await server.db.ai.upsertAiConfig(seedIds.workspace.default, {
         provider: 'openai',
         api_key_enc: 'mock-api-key',
         model: 'gpt-test',
@@ -95,6 +96,7 @@ const test = createApiTest({
 
       await server.db.auth.createUser({
         id: 'other-ai-user',
+        user_id: 'other-ai-user',
         email: 'other-ai-user@e2e.test',
         display_name: 'Other AI User',
         auth_provider: 'local',
@@ -110,7 +112,7 @@ const test = createApiTest({
 
       const ownConversation = await server.db.ai.createConversation({
         id: 'ai-conv-1',
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         user_id: 'test-admin',
         title: 'New conversation',
         created_at: now,
@@ -128,7 +130,7 @@ const test = createApiTest({
 
       await server.db.ai.createConversation({
         id: 'ai-conv-other',
-        workspace: 'default',
+        workspace: seedIds.workspace.default,
         user_id: 'other-ai-user',
         title: 'Other user conversation',
         created_at: now,
@@ -289,7 +291,7 @@ test.describe('ai chat routes', () => {
     });
     expect(getRes.status).toBe(200);
     await expect(getRes.json()).resolves.toMatchObject({
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       provider: 'openai',
       model: 'gpt-test',
       enabled: true,
@@ -311,7 +313,7 @@ test.describe('ai chat routes', () => {
     });
     expect(putRes.status).toBe(200);
     await expect(putRes.json()).resolves.toMatchObject({
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       provider: 'openrouter',
       model: 'router-model',
       base_url: 'http://mock-router',
@@ -397,7 +399,7 @@ test.describe('ai chat routes', () => {
       ])
     );
 
-    const conversation = await server.db.ai.getConversation('default', conversationId);
+    const conversation = await server.db.ai.getConversation(seedIds.workspace.default, conversationId);
     expect(conversation?.title).toBe('Explain the authentication flow between the fro...');
   });
 

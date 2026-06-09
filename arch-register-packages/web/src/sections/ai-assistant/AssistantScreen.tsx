@@ -230,7 +230,7 @@ const safeJsonParse = (value: string) => {
 };
 
 const ownerLabel = (owner: string | null | undefined, teams: WorkspaceTeam[]) =>
-  owner == null ? 'Unassigned' : (teams.find(team => team.id === owner)?.id ?? owner);
+  owner == null ? 'Unassigned' : (teams.find(team => team.id === owner)?.name ?? owner);
 
 const ApprovalCard = ({
   part,

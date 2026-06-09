@@ -4,11 +4,9 @@ import { createLogger } from '../../../utils/logger';
 
 const logger = createLogger('audit');
 
-const STATIC_USER = 'system'; // Until authentication is implemented
-
 type AuditLogParams = {
   workspace: string;
-  userId?: string;
+  userId?: string | null;
   userDisplayName?: string | null;
   watcherUserIds?: string[];
   operation: AuditOperation;
@@ -30,7 +28,7 @@ type AuditLogParams = {
 export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Promise<void> => {
   const {
     workspace,
-    userId = STATIC_USER,
+    userId = null,
     userDisplayName,
     watcherUserIds,
     operation,
@@ -61,7 +59,7 @@ export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Pro
     if (entityType === 'entity') {
       await db.watch.createNotificationsFromAudit({
         auditLog,
-        changedByDisplayName: userDisplayName ?? userId,
+        changedByDisplayName: userDisplayName ?? userId ?? 'system',
         watcherUserIds
       });
     }

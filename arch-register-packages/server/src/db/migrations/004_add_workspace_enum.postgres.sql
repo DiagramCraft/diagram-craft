@@ -1,7 +1,7 @@
 -- @creates workspace_enum
 CREATE TABLE IF NOT EXISTS workspace_enum (
-  id         TEXT PRIMARY KEY,
-  workspace  TEXT NOT NULL,
+  id         UUID PRIMARY KEY,
+  workspace  UUID NOT NULL,
   name       TEXT NOT NULL,
   options    JSONB NOT NULL DEFAULT '[]',
   sort_order INTEGER NOT NULL DEFAULT 0,

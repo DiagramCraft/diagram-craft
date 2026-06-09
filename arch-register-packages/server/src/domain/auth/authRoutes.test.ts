@@ -11,6 +11,7 @@ const now = new Date('2026-06-01T12:00:00.000Z');
 
 const user: User = {
   id: 'user-1',
+  user_id: 'user-1',
   email: 'user@example.com',
   display_name: 'Test User',
   auth_provider: 'local',
@@ -59,6 +60,7 @@ describe('auth route helpers', () => {
 
     expect(result).toMatchObject({
       id: 'user-1',
+      user_id: 'user-1',
       global_roles: ['global_admin'],
       workspace_roles: { default: 'admin' },
       team_assignments_by_workspace: {

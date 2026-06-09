@@ -19,7 +19,8 @@ import type {
   ProjectFileSearchResult,
   ProjectSearchResult,
   SchemaSearchResult,
-  SearchResponse
+  SearchResponse,
+  WorkspaceTeam
 } from '../../lib/api';
 import { TypeBadge } from '../../components/TypeBadge';
 import { Chip } from '../../components/Chip';
@@ -88,7 +89,7 @@ const snippetAround = (text: string | null | undefined, q: string, max = 140) =>
 export const SearchScreen = () => {
   const routerNavigate = useNavigate();
   const routerSearch = useRouterSearch({ strict: false }) as { q?: string };
-  const { workspaceSlug, schemas } = useWorkspaceContext();
+  const { workspaceSlug, schemas, teams } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const query = routerSearch.q ?? '';
 
@@ -445,6 +446,7 @@ export const SearchScreen = () => {
                       onSelect={() => setSelected({ kind: row.kind, id: row.id })}
                       onOpen={() => openRow(row)}
                       schemaMap={schemaMap}
+                      teams={teams}
                     />
                   ))}
                 </div>
@@ -457,6 +459,7 @@ export const SearchScreen = () => {
           <PreviewPane
             preview={preview}
             schemaMap={schemaMap}
+            teams={teams}
             onEntityClick={navigateToEntity}
             onProjectClick={navigateToProject}
             onProjectFolderClick={navigateToProjectFolder}
@@ -477,7 +480,8 @@ const ResultRow = ({
   isSelected,
   onSelect,
   onOpen,
-  schemaMap
+  schemaMap,
+  teams
 }: {
   row: { kind: string; id: string; data: unknown };
   q: string;
@@ -485,6 +489,7 @@ const ResultRow = ({
   onSelect: () => void;
   onOpen: () => void;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
+  teams: WorkspaceTeam[];
 }) => {
   if (row.kind === 'entity') {
     const e = row.data as EntitySearchResult;
@@ -536,7 +541,7 @@ const ResultRow = ({
               <span className={styles.dim}>/</span>
               <Hi s={e._slug} q={q} />
             </span>
-            {e._owner && <Chip tone="ghost">{e._owner}</Chip>}
+            {e._owner && <Chip tone="ghost">{teams.find(t => t.id === e._owner)?.name ?? e._owner}</Chip>}
             {e.matchedFields.slice(0, 3).map(f => (
               <Chip key={f} tone="ghost">
                 field:{f}
@@ -712,6 +717,7 @@ const RowGo = ({ onOpen }: { onOpen: () => void }) => (
 const PreviewPane = ({
   preview,
   schemaMap,
+  teams,
   onEntityClick,
   onProjectClick,
   onProjectFolderClick,
@@ -720,6 +726,7 @@ const PreviewPane = ({
 }: {
   preview: SearchPreview | null;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
+  teams: WorkspaceTeam[];
   onEntityClick: (entityId: string) => void;
   onProjectClick: (projectId: string) => void;
   onProjectFolderClick: (projectId: string, folder: string | null) => void;
@@ -781,7 +788,7 @@ const PreviewPane = ({
           </dd>
           <dt>Owner</dt>
           <dd>
-            <Hi s={e._owner ?? '—'} q={q} />
+            <Hi s={e._owner ? (teams.find(t => t.id === e._owner)?.name ?? e._owner) : '—'} q={q} />
           </dd>
           <dt>Lifecycle</dt>
           <dd>

@@ -95,18 +95,24 @@ export const buildLifecycleStateInputs = (
     sort_order?: unknown;
   }>;
   for (const s of states) {
-    httpAssert.string(s.id, { message: 'Each lifecycle state must have a string id' });
     httpAssert.string(s.label, { message: 'Each lifecycle state must have a string label' });
     httpAssert.string(s.color, { message: 'Each lifecycle state must have a string color' });
+    if (s.id !== undefined) {
+      httpAssert.string(s.id, { message: 'Each lifecycle state id must be a string if provided' });
+    }
   }
 
-  const ids = states.map(s => s.id as string);
+  const normalizedStates = states.map(s => ({
+    ...s,
+    id: typeof s.id === 'string' ? s.id : randomUUID()
+  }));
+  const ids = normalizedStates.map(s => s.id);
   httpAssert.true(new Set(ids).size === ids.length, {
     message: 'Duplicate lifecycle state ids'
   });
 
-  return states.map((s, i) => ({
-    id: s.id as string,
+  return normalizedStates.map((s, i) => ({
+    id: s.id,
     workspace,
     label: s.label as string,
     color: s.color as string,
@@ -124,12 +130,16 @@ export const buildWorkspaceOwnerInputs = (
 
   const owners = body as Array<{
     id?: unknown;
+    name?: unknown;
     sort_order?: unknown;
     color?: unknown;
     description?: unknown;
   }>;
   for (const o of owners) {
-    httpAssert.string(o.id, { message: 'Each owner must have a string id' });
+    if (o.id !== undefined) {
+      httpAssert.string(o.id, { message: 'Each owner id must be a string if provided' });
+    }
+    httpAssert.string(o.name, { message: 'Each owner must have a string name' });
     if (o.color !== undefined && o.color !== null) {
       httpAssert.string(o.color, { message: 'color must be a string if provided' });
     }
@@ -138,14 +148,19 @@ export const buildWorkspaceOwnerInputs = (
     }
   }
 
-  const ids = owners.map(o => o.id as string);
+  const normalizedOwners = owners.map(o => ({
+    ...o,
+    id: typeof o.id === 'string' ? o.id : randomUUID()
+  }));
+  const ids = normalizedOwners.map(o => o.id);
   httpAssert.true(new Set(ids).size === ids.length, {
     message: 'Duplicate owner ids'
   });
 
-  return owners.map((o, i) => ({
-    id: o.id as string,
+  return normalizedOwners.map((o, i) => ({
+    id: o.id,
     workspace,
+    name: sanitizeText(o.name as string),
     sort_order: i,
     color: (o.color as string | null | undefined) ?? null,
     description: (o.description as string | undefined) ?? '',

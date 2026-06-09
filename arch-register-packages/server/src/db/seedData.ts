@@ -28,9 +28,47 @@ import {
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
+const WORKSPACE_ID = '90000000-0000-0000-0000-000000000001';
+
+const LIFECYCLE_IDS = {
+  proposed: '90000000-0000-0000-0000-000000000011',
+  experimental: '90000000-0000-0000-0000-000000000012',
+  production: '90000000-0000-0000-0000-000000000013',
+  deprecated: '90000000-0000-0000-0000-000000000014'
+} as const;
+
+const TEAM_IDS = {
+  platform: '90000000-0000-0000-0000-000000000021',
+  design: '90000000-0000-0000-0000-000000000022',
+  security: '90000000-0000-0000-0000-000000000023',
+  data: '90000000-0000-0000-0000-000000000024'
+} as const;
+
+const USER_IDS = {
+  globaladmin: '91000000-0000-0000-0000-000000000001',
+  workspaceadmin: '91000000-0000-0000-0000-000000000002',
+  workspaceowner: '91000000-0000-0000-0000-000000000003',
+  platformteamadmin: '91000000-0000-0000-0000-000000000004',
+  platformteameditor: '91000000-0000-0000-0000-000000000005',
+  designteamadmin: '91000000-0000-0000-0000-000000000006',
+  securityteamadmin: '91000000-0000-0000-0000-000000000007',
+  workspaceeditor: '91000000-0000-0000-0000-000000000008',
+  workspacereviewer: '91000000-0000-0000-0000-000000000009',
+  workspaceviewer: '91000000-0000-0000-0000-00000000000a'
+} as const;
+
+export const seedIds = {
+  workspace: {
+    default: WORKSPACE_ID
+  },
+  lifecycle: LIFECYCLE_IDS,
+  teams: TEAM_IDS,
+  users: USER_IDS
+} as const;
+
 export const seedWorkspaces: Workspace[] = [
   {
-    id: 'default',
+    id: WORKSPACE_ID,
     name: 'Default Workspace',
     url_slug: 'default',
     short_code: 'DW',
@@ -43,32 +81,32 @@ export const seedWorkspaces: Workspace[] = [
 
 export const seedLifecycleStates: WorkspaceLifecycleState[] = [
   {
-    id: 'proposed',
-    workspace: 'default',
+    id: LIFECYCLE_IDS.proposed,
+    workspace: WORKSPACE_ID,
     label: 'Proposed',
     color: AR_COLOR_BLUE,
     sort_order: 0,
     created_at: now
   },
   {
-    id: 'experimental',
-    workspace: 'default',
+    id: LIFECYCLE_IDS.experimental,
+    workspace: WORKSPACE_ID,
     label: 'Experimental',
     color: AR_COLOR_BLUE,
     sort_order: 1,
     created_at: now
   },
   {
-    id: 'production',
-    workspace: 'default',
+    id: LIFECYCLE_IDS.production,
+    workspace: WORKSPACE_ID,
     label: 'Production',
     color: AR_COLOR_GREEN,
     sort_order: 2,
     created_at: now
   },
   {
-    id: 'deprecated',
-    workspace: 'default',
+    id: LIFECYCLE_IDS.deprecated,
+    workspace: WORKSPACE_ID,
     label: 'Deprecated',
     color: AR_COLOR_YELLOW,
     sort_order: 3,
@@ -78,32 +116,36 @@ export const seedLifecycleStates: WorkspaceLifecycleState[] = [
 
 export const seedOwners: WorkspaceOwner[] = [
   {
-    id: 'Platform Engineering',
-    workspace: 'default',
+    id: TEAM_IDS.platform,
+    workspace: WORKSPACE_ID,
+    name: 'Platform Engineering',
     sort_order: 0,
     color: AR_COLOR_GREEN,
     description: 'Responsible for platform infrastructure and core services',
     created_at: now
   },
   {
-    id: 'Design Systems',
-    workspace: 'default',
+    id: TEAM_IDS.design,
+    workspace: WORKSPACE_ID,
+    name: 'Design Systems',
     sort_order: 1,
     color: AR_COLOR_BLUE,
     description: 'Maintains design system and UI component libraries',
     created_at: now
   },
   {
-    id: 'Security & Compliance',
-    workspace: 'default',
+    id: TEAM_IDS.security,
+    workspace: WORKSPACE_ID,
+    name: 'Security & Compliance',
     sort_order: 2,
     color: AR_COLOR_RED,
     description: 'Ensures security standards and regulatory compliance',
     created_at: now
   },
   {
-    id: 'Data Platform',
-    workspace: 'default',
+    id: TEAM_IDS.data,
+    workspace: WORKSPACE_ID,
+    name: 'Data Platform',
     sort_order: 3,
     color: AR_COLOR_PURPLE,
     description: 'Manages data infrastructure and analytics pipelines',
@@ -113,61 +155,71 @@ export const seedOwners: WorkspaceOwner[] = [
 
 export const seedLocalUsers = [
   {
-    id: 'globaladmin',
+    id: USER_IDS.globaladmin,
+    user_id: 'globaladmin',
     email: 'emma.lindqvist@example.com',
     display_name: 'Emma Lindqvist',
     color: AR_COLOR_GREEN
   },
   {
-    id: 'workspaceadmin',
+    id: USER_IDS.workspaceadmin,
+    user_id: 'workspaceadmin',
     email: 'james.chen@example.com',
     display_name: 'James Chen',
     color: AR_COLOR_BLUE
   },
   {
-    id: 'workspaceowner',
+    id: USER_IDS.workspaceowner,
+    user_id: 'workspaceowner',
     email: 'sofia.martinez@example.com',
     display_name: 'Sofia Martinez',
     color: AR_COLOR_ORANGE
   },
   {
-    id: 'platformteamadmin',
+    id: USER_IDS.platformteamadmin,
+    user_id: 'platformteamadmin',
     email: 'daniel.okonkwo@example.com',
     display_name: 'Daniel Okonkwo',
     color: AR_COLOR_PURPLE
   },
   {
-    id: 'platformteameditor',
+    id: USER_IDS.platformteameditor,
+    user_id: 'platformteameditor',
     email: 'anna.kowalski@example.com',
     display_name: 'Anna Kowalski',
     color: AR_COLOR_YELLOW
   },
   {
-    id: 'designteamadmin',
+    id: USER_IDS.designteamadmin,
+    user_id: 'designteamadmin',
     email: 'marcus.berg@example.com',
     display_name: 'Marcus Berg',
     color: AR_COLOR_RED
   },
   {
-    id: 'securityteamadmin',
+    id: USER_IDS.securityteamadmin,
+    user_id: 'securityteamadmin',
     email: 'lena.hoffmann@example.com',
     display_name: 'Lena Hoffmann',
     color: AR_COLOR_PINK
   },
   {
-    id: 'workspaceeditor',
+    id: USER_IDS.workspaceeditor,
+    user_id: 'workspaceeditor',
     email: 'raj.patel@example.com',
     display_name: 'Raj Patel',
     color: AR_COLOR_CYAN
   },
   {
-    id: 'workspacereviewer',
+    id: USER_IDS.workspacereviewer,
+    user_id: 'workspacereviewer',
     email: 'clara.dubois@example.com',
     display_name: 'Clara Dubois',
     color: AR_COLOR_TEAL
   },
   {
-    id: 'workspaceviewer',
+    id: USER_IDS.workspaceviewer,
+    user_id: 'workspaceviewer',
     email: 'oscar.nilsson@example.com',
     display_name: 'Oscar Nilsson',
     color: AR_COLOR_AMBER
@@ -177,127 +229,147 @@ export const seedLocalUsers = [
 export const seedTeamAssignments: TeamMembership[] = [
   // Platform Engineering
   {
-    workspace: 'default',
-    team_id: 'Platform Engineering',
-    user_id: 'platformteamadmin',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.platform,
+    user_id: USER_IDS.platformteamadmin,
     role: 'team_admin',
     created_at: now
   },
   {
-    workspace: 'default',
-    team_id: 'Platform Engineering',
-    user_id: 'platformteameditor',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.platform,
+    user_id: USER_IDS.platformteameditor,
     role: 'team_editor',
     created_at: now
   },
   {
-    workspace: 'default',
-    team_id: 'Platform Engineering',
-    user_id: 'workspaceeditor',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.platform,
+    user_id: USER_IDS.workspaceeditor,
     role: 'team_reviewer',
     created_at: now
   },
   {
-    workspace: 'default',
-    team_id: 'Platform Engineering',
-    user_id: 'globaladmin',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.platform,
+    user_id: USER_IDS.globaladmin,
     role: 'team_admin',
     created_at: now
   },
 
   // Design Systems
   {
-    workspace: 'default',
-    team_id: 'Design Systems',
-    user_id: 'designteamadmin',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.design,
+    user_id: USER_IDS.designteamadmin,
     role: 'team_admin',
     created_at: now
   },
   {
-    workspace: 'default',
-    team_id: 'Design Systems',
-    user_id: 'workspacereviewer',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.design,
+    user_id: USER_IDS.workspacereviewer,
     role: 'team_editor',
     created_at: now
   },
   {
-    workspace: 'default',
-    team_id: 'Design Systems',
-    user_id: 'workspaceviewer',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.design,
+    user_id: USER_IDS.workspaceviewer,
     role: 'team_reviewer',
     created_at: now
   },
 
   // Security & Compliance
   {
-    workspace: 'default',
-    team_id: 'Security & Compliance',
-    user_id: 'securityteamadmin',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.security,
+    user_id: USER_IDS.securityteamadmin,
     role: 'team_admin',
     created_at: now
   },
   {
-    workspace: 'default',
-    team_id: 'Security & Compliance',
-    user_id: 'workspaceadmin',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.security,
+    user_id: USER_IDS.workspaceadmin,
     role: 'team_editor',
     created_at: now
   },
   {
-    workspace: 'default',
-    team_id: 'Security & Compliance',
-    user_id: 'globaladmin',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.security,
+    user_id: USER_IDS.globaladmin,
     role: 'team_reviewer',
     created_at: now
   },
 
   // Data Platform
   {
-    workspace: 'default',
-    team_id: 'Data Platform',
-    user_id: 'workspaceowner',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.data,
+    user_id: USER_IDS.workspaceowner,
     role: 'team_admin',
     created_at: now
   },
   {
-    workspace: 'default',
-    team_id: 'Data Platform',
-    user_id: 'workspaceeditor',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.data,
+    user_id: USER_IDS.workspaceeditor,
     role: 'team_editor',
     created_at: now
   },
   {
-    workspace: 'default',
-    team_id: 'Data Platform',
-    user_id: 'workspaceviewer',
+    workspace: WORKSPACE_ID,
+    team_id: TEAM_IDS.data,
+    user_id: USER_IDS.workspaceviewer,
     role: 'team_reviewer',
     created_at: now
   }
 ];
 
 export const seedGlobalRoleAssignments: GlobalRoleAssignment[] = [
-  { user_id: 'globaladmin', role: 'global_admin', created_at: now },
-  { user_id: 'globaladmin', role: 'workspace_admin', created_at: now },
-  { user_id: 'workspaceadmin', role: 'workspace_admin', created_at: now }
+  { user_id: USER_IDS.globaladmin, role: 'global_admin', created_at: now },
+  { user_id: USER_IDS.globaladmin, role: 'workspace_admin', created_at: now },
+  { user_id: USER_IDS.workspaceadmin, role: 'workspace_admin', created_at: now }
 ];
 
 export const seedWorkspaceMembers: WorkspaceMember[] = [
-  { workspace: 'default', user_id: 'workspaceowner', role: 'owner', created_at: now },
-  { workspace: 'default', user_id: 'globaladmin', role: 'admin', created_at: now },
-  { workspace: 'default', user_id: 'workspaceadmin', role: 'admin', created_at: now },
-  { workspace: 'default', user_id: 'platformteamadmin', role: 'editor', created_at: now },
-  { workspace: 'default', user_id: 'platformteameditor', role: 'editor', created_at: now },
-  { workspace: 'default', user_id: 'designteamadmin', role: 'editor', created_at: now },
-  { workspace: 'default', user_id: 'securityteamadmin', role: 'editor', created_at: now },
-  { workspace: 'default', user_id: 'workspaceeditor', role: 'editor', created_at: now },
-  { workspace: 'default', user_id: 'workspacereviewer', role: 'reviewer', created_at: now },
-  { workspace: 'default', user_id: 'workspaceviewer', role: 'viewer', created_at: now }
+  { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceowner, role: 'owner', created_at: now },
+  { workspace: WORKSPACE_ID, user_id: USER_IDS.globaladmin, role: 'admin', created_at: now },
+  { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceadmin, role: 'admin', created_at: now },
+  {
+    workspace: WORKSPACE_ID,
+    user_id: USER_IDS.platformteamadmin,
+    role: 'editor',
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    user_id: USER_IDS.platformteameditor,
+    role: 'editor',
+    created_at: now
+  },
+  { workspace: WORKSPACE_ID, user_id: USER_IDS.designteamadmin, role: 'editor', created_at: now },
+  {
+    workspace: WORKSPACE_ID,
+    user_id: USER_IDS.securityteamadmin,
+    role: 'editor',
+    created_at: now
+  },
+  { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceeditor, role: 'editor', created_at: now },
+  {
+    workspace: WORKSPACE_ID,
+    user_id: USER_IDS.workspacereviewer,
+    role: 'reviewer',
+    created_at: now
+  },
+  { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now }
 ];
 
 export const seedEnums: WorkspaceEnum[] = [
   {
     id: '00000000-0000-0000-0000-e00000000001',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'API Type',
     options: [
       { value: 'openapi', label: 'OpenAPI' },
@@ -314,7 +386,7 @@ export const seedEnums: WorkspaceEnum[] = [
 export const seedSchemas: EntitySchema[] = [
   {
     id: '00000000-0000-0000-0000-000000000001',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'Domain',
     description: 'A high-level grouping that owns one or more Systems.',
     fields: [],
@@ -326,7 +398,7 @@ export const seedSchemas: EntitySchema[] = [
   },
   {
     id: '00000000-0000-0000-0000-000000000002',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'System',
     description:
       'A collection of resources that exposes one or more APIs to users and other Systems.',
@@ -348,7 +420,7 @@ export const seedSchemas: EntitySchema[] = [
   },
   {
     id: '00000000-0000-0000-0000-000000000003',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'Component',
     description: 'A deployable unit of code within a System (service, library, website, etc.).',
     fields: [
@@ -394,7 +466,7 @@ export const seedSchemas: EntitySchema[] = [
   },
   {
     id: '00000000-0000-0000-0000-000000000004',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'API',
     description: 'A machine-readable interface definition (OpenAPI, gRPC, GraphQL, AsyncAPI).',
     fields: [
@@ -421,7 +493,7 @@ export const seedSchemas: EntitySchema[] = [
   },
   {
     id: '00000000-0000-0000-0000-000000000005',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'Resource',
     description: 'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
     fields: [
@@ -446,14 +518,14 @@ export const seedSchemas: EntitySchema[] = [
 export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0001-000000000001',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     slug: 'engineering',
     namespace: 'default',
     name: 'Engineering',
     description:
       'The core engineering domain covering all customer-facing products and infrastructure.',
-    owner: 'Platform Engineering',
-    lifecycle: 'production',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['core', 'customer-facing'],
@@ -466,14 +538,14 @@ export const seedEntities: Entity[] = [
   },
   {
     id: '00000000-0000-0000-0002-000000000001',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     slug: 'customer-portal',
     namespace: 'default',
     name: 'Customer Portal',
     description: 'Public-facing portal for customer self-service.',
-    owner: 'Design Systems',
-    lifecycle: 'production',
-    target_lifecycle: 'deprecated',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: LIFECYCLE_IDS.deprecated,
     target_lifecycle_date: '2026-12-31',
     tags: ['tier-0', 'customer-facing'],
     links: [{ url: 'https://wiki.example.com/customer-portal', title: 'Wiki', type: 'docs' }],
@@ -485,13 +557,13 @@ export const seedEntities: Entity[] = [
   },
   {
     id: '00000000-0000-0000-0002-000000000002',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     slug: 'identity-platform',
     namespace: 'default',
     name: 'Identity Platform',
     description: 'Centralised authentication and authorisation service.',
-    owner: 'Security & Compliance',
-    lifecycle: 'production',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['tier-0', 'security'],
@@ -504,13 +576,13 @@ export const seedEntities: Entity[] = [
   },
   {
     id: '00000000-0000-0000-0004-000000000001',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     slug: 'customer-api',
     namespace: 'default',
     name: 'Customer API',
     description: 'REST API exposing customer data to the portal frontend.',
-    owner: 'Platform Engineering',
-    lifecycle: 'production',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['rest', 'public'],
@@ -523,13 +595,13 @@ export const seedEntities: Entity[] = [
   },
   {
     id: '00000000-0000-0000-0004-000000000002',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     slug: 'auth-api',
     namespace: 'default',
     name: 'Auth API',
     description: 'gRPC API for token issuance and validation.',
-    owner: 'Security & Compliance',
-    lifecycle: 'production',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['grpc', 'internal'],
@@ -542,13 +614,13 @@ export const seedEntities: Entity[] = [
   },
   {
     id: '00000000-0000-0000-0003-000000000001',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     slug: 'api-gateway',
     namespace: 'default',
     name: 'API Gateway',
     description: 'Edge gateway that routes requests and enforces rate limits.',
-    owner: 'Platform Engineering',
-    lifecycle: 'production',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['nodejs', 'tier-0'],
@@ -566,14 +638,14 @@ export const seedEntities: Entity[] = [
   },
   {
     id: '00000000-0000-0000-0003-000000000002',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     slug: 'frontend-app',
     namespace: 'default',
     name: 'Frontend App',
     description: 'React single-page application served to end users.',
-    owner: 'Design Systems',
-    lifecycle: 'production',
-    target_lifecycle: 'deprecated',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: LIFECYCLE_IDS.deprecated,
     target_lifecycle_date: '2026-12-31',
     tags: ['react', 'frontend'],
     links: [],
@@ -590,14 +662,14 @@ export const seedEntities: Entity[] = [
   },
   {
     id: '00000000-0000-0000-0003-000000000003',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     slug: 'auth-service',
     namespace: 'default',
     name: 'Auth Service',
     description: 'Issues and validates JWTs; integrates with the identity platform.',
-    owner: 'Security & Compliance',
-    lifecycle: 'experimental',
-    target_lifecycle: 'production',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.experimental,
+    target_lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle_date: '2026-09-30',
     tags: ['go', 'security'],
     links: [],
@@ -613,13 +685,13 @@ export const seedEntities: Entity[] = [
   },
   {
     id: '00000000-0000-0000-0005-000000000001',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     slug: 'postgres-main',
     namespace: 'default',
     name: 'Postgres Main',
     description: 'Primary PostgreSQL cluster used by the Customer Portal system.',
-    owner: 'Platform Engineering',
-    lifecycle: 'production',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
     target_lifecycle_date: null,
     tags: ['postgres', 'managed'],
@@ -640,10 +712,10 @@ export const seedEntities: Entity[] = [
 export const seedProjects: Project[] = [
   {
     id: '00000000-0000-0000-0010-000000000001',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'Portal Redesign',
     description: 'Redesign of the customer portal frontend and API layer.',
-    owner: 'Design Systems',
+    owner: TEAM_IDS.design,
     status: 'active',
     color: AR_COLOR_BLUE,
     created_at: now,
@@ -651,10 +723,10 @@ export const seedProjects: Project[] = [
   },
   {
     id: '00000000-0000-0000-0010-000000000002',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'Auth Migration',
     description: 'Migration from legacy auth to the new identity platform.',
-    owner: 'Security & Compliance',
+    owner: TEAM_IDS.security,
     status: 'pinned',
     color: AR_COLOR_RED,
     created_at: now,
@@ -665,12 +737,12 @@ export const seedProjects: Project[] = [
 export const seedSavedViews: SavedView[] = [
   {
     id: '00000000-0000-0000-0020-000000000001',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'Production Systems',
     description: 'All systems currently in production',
     view_mode: 'table',
     filters: {
-      status: 'production',
+      status: LIFECYCLE_IDS.production,
       schemaId: '00000000-0000-0000-0000-000000000002'
     },
     config: null,
@@ -679,7 +751,7 @@ export const seedSavedViews: SavedView[] = [
   },
   {
     id: '00000000-0000-0000-0020-000000000002',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'Security Radar',
     description: 'Radar view of security-related components',
     view_mode: 'radar',
@@ -689,7 +761,12 @@ export const seedSavedViews: SavedView[] = [
         schemaId: '00000000-0000-0000-0000-000000000003',
         quadrantFieldId: '_lifecycle',
         ringFieldId: '_lifecycle',
-        ringOrder: ['proposed', 'experimental', 'production', 'deprecated']
+        ringOrder: [
+          LIFECYCLE_IDS.proposed,
+          LIFECYCLE_IDS.experimental,
+          LIFECYCLE_IDS.production,
+          LIFECYCLE_IDS.deprecated
+        ]
       }
     },
     created_at: now,
@@ -697,12 +774,12 @@ export const seedSavedViews: SavedView[] = [
   },
   {
     id: '00000000-0000-0000-0020-000000000003',
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     name: 'Platform Components',
     description: 'Components owned by Platform Engineering',
     view_mode: 'cards',
     filters: {
-      owner: 'Platform Engineering',
+      owner: TEAM_IDS.platform,
       schemaId: '00000000-0000-0000-0000-000000000003'
     },
     config: null,
@@ -713,20 +790,20 @@ export const seedSavedViews: SavedView[] = [
 
 export const seedUserWatches = [
   {
-    user_id: 'globaladmin',
-    workspace: 'default',
+    user_id: USER_IDS.globaladmin,
+    workspace: WORKSPACE_ID,
     entity_id: '00000000-0000-0000-0002-000000000001',
     created_at: new Date('2026-01-02T09:00:00.000Z')
   },
   {
-    user_id: 'globaladmin',
-    workspace: 'default',
+    user_id: USER_IDS.globaladmin,
+    workspace: WORKSPACE_ID,
     entity_id: '00000000-0000-0000-0004-000000000001',
     created_at: new Date('2026-01-02T09:05:00.000Z')
   },
   {
-    user_id: 'globaladmin',
-    workspace: 'default',
+    user_id: USER_IDS.globaladmin,
+    workspace: WORKSPACE_ID,
     entity_id: '00000000-0000-0000-0003-000000000003',
     created_at: new Date('2026-01-02T09:10:00.000Z')
   }
@@ -748,9 +825,9 @@ export const seedNotificationEvents: Array<{
   };
 }> = [
   {
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     timestamp: new Date('2026-01-03T08:15:00.000Z'),
-    user_id: 'workspaceeditor',
+    user_id: USER_IDS.workspaceeditor,
     operation: 'update',
     entity_id: '00000000-0000-0000-0002-000000000001',
     entity_name: 'Customer Portal',
@@ -763,9 +840,9 @@ export const seedNotificationEvents: Array<{
     }
   },
   {
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     timestamp: new Date('2026-01-04T11:40:00.000Z'),
-    user_id: 'platformteamadmin',
+    user_id: USER_IDS.platformteamadmin,
     operation: 'update',
     entity_id: '00000000-0000-0000-0004-000000000001',
     entity_name: 'Customer API',
@@ -778,9 +855,9 @@ export const seedNotificationEvents: Array<{
     }
   },
   {
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     timestamp: new Date('2026-01-05T13:05:00.000Z'),
-    user_id: 'securityteamadmin',
+    user_id: USER_IDS.securityteamadmin,
     operation: 'update',
     entity_id: '00000000-0000-0000-0003-000000000003',
     entity_name: 'Auth Service',
@@ -788,14 +865,14 @@ export const seedNotificationEvents: Array<{
     schema_id: '00000000-0000-0000-0000-000000000003',
     changed_by_display_name: 'Lena Hoffmann',
     changes: {
-      old: { _targetLifecycle: 'production' },
-      new: { _targetLifecycle: 'deprecated' }
+      old: { _targetLifecycle: LIFECYCLE_IDS.production },
+      new: { _targetLifecycle: LIFECYCLE_IDS.deprecated }
     }
   },
   {
-    workspace: 'default',
+    workspace: WORKSPACE_ID,
     timestamp: new Date('2026-01-06T09:20:00.000Z'),
-    user_id: 'workspaceadmin',
+    user_id: USER_IDS.workspaceadmin,
     operation: 'update',
     entity_id: '00000000-0000-0000-0002-000000000001',
     entity_name: 'Customer Portal',

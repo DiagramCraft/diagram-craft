@@ -1,4 +1,5 @@
 import { test, expect } from '../helpers/fixtures';
+import { seedIds } from '../helpers/seedHelper';
 
 test.describe('workspace routes', () => {
   test('GET /api/workspaces returns seeded workspaces', async ({ server, auth }) => {
@@ -11,7 +12,7 @@ test.describe('workspace routes', () => {
     expect(body).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'default',
+          id: seedIds.workspace.default,
           name: 'Default Workspace',
           url_slug: 'default',
           short_code: 'DW',
@@ -65,22 +66,23 @@ test.describe('workspace routes', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body).toMatchObject({
-      id: 'platform-strategy',
+      id: expect.any(String),
       name: 'Platform Strategy',
       url_slug: 'platform-strategy',
       short_code: 'PS'
     });
 
-    const lifecycleStates = await server.db.workspace.listLifecycleStates('platform-strategy');
-    expect(lifecycleStates.map(state => state.id)).toEqual([
-      'proposed',
-      'experimental',
-      'production',
-      'deprecated'
+    const workspaceId = body['id'] as string;
+    const lifecycleStates = await server.db.workspace.listLifecycleStates(workspaceId);
+    expect(lifecycleStates.map(state => state.label)).toEqual([
+      'Proposed',
+      'Experimental',
+      'Production',
+      'Deprecated'
     ]);
 
-    const teams = await server.db.workspace.listTeams('platform-strategy');
-    expect(teams.map(team => team.id)).toEqual(['platform-team', 'ux-team', 'security-team']);
+    const teams = await server.db.workspace.listTeams(workspaceId);
+    expect(teams.map(team => team.name)).toEqual(['Platform Team', 'UX Team', 'Security Team']);
   });
 
   test('POST /api/workspaces applies slug and badge overrides', async ({ server, auth }) => {
@@ -101,7 +103,7 @@ test.describe('workspace routes', () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
-      id: 'arch-gov',
+      id: expect.any(String),
       name: 'Architecture Governance',
       url_slug: 'arch-gov',
       short_code: 'AG',
@@ -151,7 +153,7 @@ test.describe('workspace routes', () => {
     server,
     auth
   }) => {
-    await fetch(`${server.baseUrl}/api/workspaces`, {
+    const createRes = await fetch(`${server.baseUrl}/api/workspaces`, {
       method: 'POST',
       headers: {
         Authorization: auth,
@@ -163,8 +165,9 @@ test.describe('workspace routes', () => {
         description: 'Original description'
       })
     });
+    const created = (await createRes.json()) as Record<string, unknown>;
 
-    const res = await fetch(`${server.baseUrl}/api/workspaces/workspace-to-rename`, {
+    const res = await fetch(`${server.baseUrl}/api/workspaces/${created['id'] as string}`, {
       method: 'PUT',
       headers: {
         Authorization: auth,
@@ -177,7 +180,7 @@ test.describe('workspace routes', () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
-      id: 'workspace-to-rename',
+      id: created['id'],
       name: 'Workspace Renamed',
       url_slug: 'workspace-to-rename',
       color: '#123456',
@@ -186,7 +189,7 @@ test.describe('workspace routes', () => {
   });
 
   test('PUT /api/workspaces/:id replaces explicit mutable fields', async ({ server, auth }) => {
-    await fetch(`${server.baseUrl}/api/workspaces`, {
+    const createRes = await fetch(`${server.baseUrl}/api/workspaces`, {
       method: 'POST',
       headers: {
         Authorization: auth,
@@ -196,8 +199,9 @@ test.describe('workspace routes', () => {
         name: 'Workspace Settings'
       })
     });
+    const created = (await createRes.json()) as Record<string, unknown>;
 
-    const res = await fetch(`${server.baseUrl}/api/workspaces/workspace-settings`, {
+    const res = await fetch(`${server.baseUrl}/api/workspaces/${created['id'] as string}`, {
       method: 'PUT',
       headers: {
         Authorization: auth,
@@ -214,7 +218,7 @@ test.describe('workspace routes', () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
-      id: 'workspace-settings',
+      id: created['id'],
       name: 'Workspace Settings Updated',
       url_slug: 'ws-settings-updated',
       short_code: 'WU',
@@ -242,7 +246,7 @@ test.describe('workspace routes', () => {
   });
 
   test('DELETE /api/workspaces/:id deletes a workspace', async ({ server, auth }) => {
-    await fetch(`${server.baseUrl}/api/workspaces`, {
+    const createRes = await fetch(`${server.baseUrl}/api/workspaces`, {
       method: 'POST',
       headers: {
         Authorization: auth,
@@ -252,8 +256,9 @@ test.describe('workspace routes', () => {
         name: 'Workspace To Delete'
       })
     });
+    const created = (await createRes.json()) as Record<string, unknown>;
 
-    const res = await fetch(`${server.baseUrl}/api/workspaces/workspace-to-delete`, {
+    const res = await fetch(`${server.baseUrl}/api/workspaces/${created['id'] as string}`, {
       method: 'DELETE',
       headers: { Authorization: auth }
     });

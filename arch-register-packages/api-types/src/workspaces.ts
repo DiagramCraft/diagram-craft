@@ -31,6 +31,7 @@ export type WorkspaceLifecycleState = {
 
 export type WorkspaceOwnerOption = {
   id: string;
+  name: string;
   sort_order: number;
   color?: string | null;
   description?: string;
@@ -88,6 +89,7 @@ export type WorkspaceMemberInfo = {
 
 export type WorkspaceUserInfo = {
   id: string;
+  user_id: string;
   email: string | null;
   display_name: string;
   auth_provider: 'local' | 'oidc';

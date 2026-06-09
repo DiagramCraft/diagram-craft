@@ -4,7 +4,8 @@ import type {
   User
 } from '../../../types';
 
-export type CreateUserInput = Omit<User, 'created_at' | 'updated_at' | 'last_login_at'> & {
+export type CreateUserInput = Omit<User, 'user_id' | 'created_at' | 'updated_at' | 'last_login_at'> & {
+  user_id?: string;
   created_at: Date;
   updated_at: Date;
   last_login_at: Date | null;
@@ -21,6 +22,7 @@ export type UpdateUserInput = {
 
 export type AuthDatabase = {
   getUser(id: string): Promise<User | null>;
+  getUserByUserId(userId: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | null>;
   getUserByOidc(issuer: string, subject: string): Promise<User | null>;
   createUser(input: CreateUserInput): Promise<User>;

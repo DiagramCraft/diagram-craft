@@ -480,7 +480,7 @@ export const ProjectDetailScreen = () => {
           label="Folders"
           value={<span className="mono tabular">{project.files.folders.length}</span>}
         />
-        <MetaItem label="Owner" value={project.owner ?? '—'} />
+        <MetaItem label="Owner" value={project.owner ? (teams.find(t => t.id === project.owner)?.name ?? project.owner) : '—'} />
         <MetaItem label="Last edit" value={new Date(project.updated_at).toLocaleDateString()} />
       </div>
 
@@ -1164,7 +1164,7 @@ const ProjectSettings = ({
           <option value="">No owner</option>
           {teams.map(team => (
             <option key={team.id} value={team.id}>
-              {team.id}
+              {team.name}
             </option>
           ))}
         </select>

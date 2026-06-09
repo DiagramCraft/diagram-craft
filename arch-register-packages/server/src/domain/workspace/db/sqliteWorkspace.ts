@@ -117,7 +117,7 @@ export class SqliteWorkspaceDatabase
 
   async listTeams(workspace: string) {
     return this.all(
-      'SELECT id, workspace, sort_order, color, description, created_at FROM workspace_owner WHERE workspace = ? ORDER BY sort_order, id',
+      'SELECT id, workspace, name, sort_order, color, description, created_at FROM workspace_owner WHERE workspace = ? ORDER BY sort_order, id',
       [workspace],
       sqliteMappers.owner
     );
@@ -145,9 +145,10 @@ export class SqliteWorkspaceDatabase
 
       for (const owner of owners) {
         this.run(
-          `INSERT INTO workspace_owner (id, workspace, sort_order, color, description, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)
+          `INSERT INTO workspace_owner (id, workspace, name, sort_order, color, description, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(workspace, id) DO UPDATE SET
+             name = excluded.name,
              sort_order = excluded.sort_order,
              color = excluded.color,
              description = excluded.description,
@@ -155,6 +156,7 @@ export class SqliteWorkspaceDatabase
           [
             owner.id,
             workspace,
+            owner.name,
             owner.sort_order,
             owner.color,
             owner.description,

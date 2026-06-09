@@ -26,7 +26,7 @@ export const shortCode = (name: string): string =>
 
 export const buildDefaultLifecycleStates = (workspace: string, createdAt: Date) => [
   {
-    id: 'proposed',
+    id: randomUUID(),
     workspace,
     label: 'Proposed',
     color: AR_COLOR_BLUE,
@@ -34,7 +34,7 @@ export const buildDefaultLifecycleStates = (workspace: string, createdAt: Date) 
     created_at: createdAt
   },
   {
-    id: 'experimental',
+    id: randomUUID(),
     workspace,
     label: 'Experimental',
     color: AR_COLOR_BLUE,
@@ -42,7 +42,7 @@ export const buildDefaultLifecycleStates = (workspace: string, createdAt: Date) 
     created_at: createdAt
   },
   {
-    id: 'production',
+    id: randomUUID(),
     workspace,
     label: 'Production',
     color: AR_COLOR_GREEN,
@@ -50,7 +50,7 @@ export const buildDefaultLifecycleStates = (workspace: string, createdAt: Date) 
     created_at: createdAt
   },
   {
-    id: 'deprecated',
+    id: randomUUID(),
     workspace,
     label: 'Deprecated',
     color: AR_COLOR_YELLOW,
@@ -61,17 +61,27 @@ export const buildDefaultLifecycleStates = (workspace: string, createdAt: Date) 
 
 export const buildDefaultWorkspaceTeams = (workspace: string, createdAt: Date) => [
   {
-    id: 'platform-team',
+    id: randomUUID(),
     workspace,
+    name: 'Platform Team',
     sort_order: 0,
     color: null,
     description: '',
     created_at: createdAt
   },
-  { id: 'ux-team', workspace, sort_order: 1, color: null, description: '', created_at: createdAt },
   {
-    id: 'security-team',
+    id: randomUUID(),
     workspace,
+    name: 'UX Team',
+    sort_order: 1,
+    color: null,
+    description: '',
+    created_at: createdAt
+  },
+  {
+    id: randomUUID(),
+    workspace,
+    name: 'Security Team',
     sort_order: 2,
     color: null,
     description: '',
@@ -83,13 +93,13 @@ export const buildWorkspaceCreateInput = (body: Record<string, unknown>, created
   const { name, description = '', color = '', slug: slugOverride, badge } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const rawSlug = typeof slugOverride === 'string' && slugOverride ? slugOverride : name;
-  const id = slugify(rawSlug);
-  httpAssert.string(id, { message: 'name must contain at least one alphanumeric character' });
+  const urlSlug = slugify(rawSlug);
+  httpAssert.string(urlSlug, { message: 'name must contain at least one alphanumeric character' });
 
   return {
-    id,
+    id: randomUUID(),
     name,
-    url_slug: id,
+    url_slug: urlSlug,
     short_code:
       typeof badge === 'string' && badge ? badge.slice(0, 2).toUpperCase() : shortCode(name),
     color: typeof color === 'string' ? color : '',

@@ -1,5 +1,5 @@
 import { createApiTest, expect } from '../helpers/fixtures';
-import { makeAuthHeader, seedCatalogViews } from '../helpers/seedHelper';
+import { makeAuthHeader, seedCatalogViews, seedIds } from '../helpers/seedHelper';
 import { hashPassword } from '@arch-register/server/utils/password';
 
 const test = createApiTest({
@@ -14,7 +14,7 @@ test.describe('Saved Views API', () => {
     description: 'A view created by E2E tests',
     viewMode: 'table',
     filters: {
-      status: 'production',
+      status: seedIds.lifecycle.production,
       q: 'test'
     },
     config: null
@@ -108,6 +108,7 @@ test.describe('Saved Views API', () => {
 
     await server.db.auth.createUser({
       id: 'views-viewer',
+      user_id: 'views-viewer',
       email: 'views-viewer@example.com',
       display_name: 'Views Viewer',
       auth_provider: 'local',
@@ -120,7 +121,12 @@ test.describe('Saved Views API', () => {
       updated_at: now,
       last_login_at: null
     });
-    await server.db.workspace.setWorkspaceMemberRole('default', 'views-viewer', 'viewer', now);
+    await server.db.workspace.setWorkspaceMemberRole(
+      seedIds.workspace.default,
+      'views-viewer',
+      'viewer',
+      now
+    );
 
     const viewerAuth = await makeAuthHeader(server.db, 'views-viewer');
 

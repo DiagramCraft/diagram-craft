@@ -36,9 +36,9 @@ const expectedSchemas = {
   // Workspace types
   Workspace: ['id', 'name', 'url_slug', 'short_code', 'description', 'created_at', 'updated_at'],
   WorkspaceLifecycleState: ['id', 'label', 'color', 'sort_order'],
-  WorkspaceOwnerOption: ['id', 'sort_order'],
+  WorkspaceOwnerOption: ['id', 'name', 'sort_order'],
   WorkspaceMemberInfo: ['workspace', 'user_id', 'role', 'display_name', 'email', 'created_at'],
-  WorkspaceUserInfo: ['id', 'email', 'display_name', 'auth_provider', 'is_active'],
+  WorkspaceUserInfo: ['id', 'user_id', 'email', 'display_name', 'auth_provider', 'is_active'],
   
   // Schema types
   EntitySchema: ['id', 'workspace', 'name', 'fields', 'color', 'icon', 'entity_count', 'created_at', 'updated_at'],

@@ -11,8 +11,17 @@ export class PostgresAuthDatabase
   implements AuthDatabase
 {
   async getUser(id: string) {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(id)) return null;
     const [row] = await this.sql<PostgresRowTypes['user'][]>`
       SELECT * FROM users WHERE id = ${id}
+    `;
+    return row ?? null;
+  }
+
+  async getUserByUserId(userId: string) {
+    const [row] = await this.sql<PostgresRowTypes['user'][]>`
+      SELECT * FROM users WHERE user_id = ${userId}
     `;
     return row ?? null;
   }
@@ -35,9 +44,10 @@ export class PostgresAuthDatabase
   async createUser(input: CreateUserInput) {
     try {
       const [row] = await this.sql<PostgresRowTypes['user'][]>`
-        INSERT INTO users (id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at)
+        INSERT INTO users (id, user_id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at)
         VALUES (
           ${input.id},
+          ${input.user_id ?? input.id},
           ${input.email ?? null},
           ${input.display_name},
           ${input.auth_provider},

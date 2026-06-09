@@ -1,4 +1,5 @@
 import { test as baseTest, expect } from '../helpers/fixtures';
+import { seedIds } from '../helpers/seedHelper';
 
 const now = new Date('2026-06-06T12:00:00.000Z');
 
@@ -7,6 +8,7 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
     async ({ server }, use) => {
       await server.db.auth.createUser({
         id: 'config-user',
+        user_id: 'config-user',
         email: 'config-user@e2e.test',
         display_name: 'Config User',
         auth_provider: 'local',
@@ -22,6 +24,7 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
 
       await server.db.auth.createUser({
         id: 'config-remove-user',
+        user_id: 'config-remove-user',
         email: 'config-remove-user@e2e.test',
         display_name: 'Config Remove User',
         auth_provider: 'local',
@@ -77,8 +80,8 @@ test.describe('workspace config routes', () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'proposed', label: 'Proposed' }),
-        expect.objectContaining({ id: 'production', label: 'Production' })
+        expect.objectContaining({ id: seedIds.lifecycle.proposed, label: 'Proposed' }),
+        expect.objectContaining({ id: seedIds.lifecycle.production, label: 'Production' })
       ])
     );
   });
@@ -126,8 +129,8 @@ test.describe('workspace config routes', () => {
 
     expect(teams).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'Platform Engineering' }),
-        expect.objectContaining({ id: 'Design Systems' })
+        expect.objectContaining({ name: 'Platform Engineering' }),
+        expect.objectContaining({ name: 'Design Systems' })
       ])
     );
     expect(owners).toEqual(teams);
@@ -142,21 +145,21 @@ test.describe('workspace config routes', () => {
       method: 'PUT',
       headers: headers(auth),
       body: JSON.stringify([
-        { id: 'Architecture', color: '#123456', description: 'Architecture team' },
-        { id: 'Operations', color: null }
+        { name: 'Architecture', color: '#123456', description: 'Architecture team' },
+        { name: 'Operations', color: null }
       ])
     });
 
     expect(putRes.status).toBe(200);
     await expect(putRes.json()).resolves.toEqual([
       expect.objectContaining({
-        id: 'Architecture',
+        name: 'Architecture',
         sort_order: 0,
         color: '#123456',
         description: 'Architecture team'
       }),
       expect.objectContaining({
-        id: 'Operations',
+        name: 'Operations',
         sort_order: 1,
         color: null,
         description: ''
@@ -168,8 +171,8 @@ test.describe('workspace config routes', () => {
     });
     expect(teamsRes.status).toBe(200);
     await expect(teamsRes.json()).resolves.toEqual([
-      expect.objectContaining({ id: 'Architecture' }),
-      expect.objectContaining({ id: 'Operations' })
+      expect.objectContaining({ name: 'Architecture' }),
+      expect.objectContaining({ name: 'Operations' })
     ]);
   });
 
@@ -305,7 +308,10 @@ test.describe('workspace config routes', () => {
     await fetch(`${server.baseUrl}/api/default/config/owners`, {
       method: 'PUT',
       headers: headers(auth),
-      body: JSON.stringify([{ id: 'Platform Engineering' }, { id: 'Design Systems' }])
+      body: JSON.stringify([
+        { id: 'team-platform', name: 'Platform Engineering' },
+        { id: 'team-design', name: 'Design Systems' }
+      ])
     });
 
     const putRes = await fetch(`${server.baseUrl}/api/default/config/team-memberships`, {
@@ -313,7 +319,7 @@ test.describe('workspace config routes', () => {
       headers: headers(auth),
       body: JSON.stringify([
         {
-          team_id: 'Platform Engineering',
+          team_id: 'team-platform',
           user_id: seededUsers.configUserId,
           role: 'team_editor'
         }
@@ -323,7 +329,7 @@ test.describe('workspace config routes', () => {
     expect(putRes.status).toBe(200);
     await expect(putRes.json()).resolves.toEqual([
       expect.objectContaining({
-        team_id: 'Platform Engineering',
+        team_id: 'team-platform',
         user_id: seededUsers.configUserId,
         role: 'team_editor'
       })
@@ -345,7 +351,7 @@ test.describe('workspace config routes', () => {
     const memberships = (await membershipsRes.json()) as Array<Record<string, unknown>>;
     expect(assignments).toEqual([
       expect.objectContaining({
-        team_id: 'Platform Engineering',
+        team_id: 'team-platform',
         user_id: seededUsers.configUserId,
         role: 'team_editor'
       })
@@ -416,7 +422,7 @@ test.describe('workspace config routes', () => {
 
     expect(assignRes.status).toBe(200);
     await expect(assignRes.json()).resolves.toMatchObject({
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       user_id: seededUsers.removeUserId,
       role: created['id']
     });
@@ -431,7 +437,7 @@ test.describe('workspace config routes', () => {
 
     expect(deleteRes.status).toBe(200);
     await expect(deleteRes.json()).resolves.toMatchObject({
-      workspace: 'default',
+      workspace: seedIds.workspace.default,
       user_id: seededUsers.removeUserId,
       role: created['id']
     });

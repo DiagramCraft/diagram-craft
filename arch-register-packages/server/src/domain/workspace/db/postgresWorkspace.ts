@@ -123,7 +123,7 @@ export class PostgresWorkspaceDatabase
 
   async listTeams(workspace: string) {
     return await this.sql<WorkspaceOwner[]>`
-      SELECT id, workspace, sort_order, color, description, created_at
+      SELECT id, workspace, name, sort_order, color, description, created_at
       FROM workspace_owner
       WHERE workspace = ${workspace}
       ORDER BY sort_order, id
@@ -152,10 +152,11 @@ export class PostgresWorkspaceDatabase
 
         for (const owner of owners) {
           await tx`
-            INSERT INTO workspace_owner (id, workspace, sort_order, color, description, created_at)
-            VALUES (${owner.id}, ${workspace}, ${owner.sort_order}, ${owner.color}, ${owner.description}, ${owner.created_at})
+            INSERT INTO workspace_owner (id, workspace, name, sort_order, color, description, created_at)
+            VALUES (${owner.id}, ${workspace}, ${owner.name}, ${owner.sort_order}, ${owner.color}, ${owner.description}, ${owner.created_at})
             ON CONFLICT (workspace, id) DO UPDATE
-            SET sort_order = EXCLUDED.sort_order,
+            SET name = EXCLUDED.name,
+                sort_order = EXCLUDED.sort_order,
                 color = EXCLUDED.color,
                 description = EXCLUDED.description,
                 created_at = EXCLUDED.created_at

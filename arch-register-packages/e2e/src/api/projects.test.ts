@@ -1,4 +1,5 @@
 import { test, expect } from '../helpers/fixtures';
+import { seedIds } from '../helpers/seedHelper';
 
 const minimalDiagramDocument = (name: string) => ({
   name,
@@ -27,12 +28,12 @@ test.describe('project routes', () => {
   test('GET /api/:workspace/projects lists created projects', async ({ server, auth }) => {
     await createProject(server.baseUrl, auth, {
       name: 'Portal Redesign',
-      owner: 'Design Systems',
+      owner: seedIds.teams.design,
       status: 'active'
     });
     await createProject(server.baseUrl, auth, {
       name: 'Auth Migration',
-      owner: 'Security & Compliance',
+      owner: seedIds.teams.security,
       status: 'pinned'
     });
 
@@ -62,7 +63,7 @@ test.describe('project routes', () => {
     const created = await createProject(server.baseUrl, auth, {
       name: 'Detail Project',
       description: 'Project detail test',
-      owner: 'Design Systems',
+      owner: seedIds.teams.design,
       status: 'pinned'
     });
 
@@ -126,7 +127,7 @@ test.describe('project routes', () => {
     const created = await createProject(server.baseUrl, auth, {
       name: 'Mutable Project',
       description: 'Original',
-      owner: 'Design Systems',
+      owner: seedIds.teams.design,
       status: 'pinned',
       color: '#445566'
     });
@@ -147,7 +148,7 @@ test.describe('project routes', () => {
       id: created['id'],
       name: 'Renamed Project',
       description: 'Original',
-      owner: 'Design Systems',
+      owner: seedIds.teams.design,
       status: 'pinned',
       color: '#445566'
     });

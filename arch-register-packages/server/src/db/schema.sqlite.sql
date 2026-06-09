@@ -13,61 +13,66 @@ CREATE TABLE workspace (
 );
 
 CREATE TABLE workspace_lifecycle_state (
-  id          TEXT NOT NULL,
+  id          TEXT PRIMARY KEY,
   workspace   TEXT NOT NULL,
   label       TEXT NOT NULL,
   color       TEXT NOT NULL DEFAULT 'var(--fg-3)',
   sort_order  INTEGER NOT NULL DEFAULT 0,
   created_at  TEXT NOT NULL,
-  PRIMARY KEY (workspace, id),
+  UNIQUE (workspace, id),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
 );
 
 CREATE TABLE workspace_owner (
-  id          TEXT NOT NULL,
+  id          TEXT PRIMARY KEY,
   workspace   TEXT NOT NULL,
+  name        TEXT NOT NULL,
   sort_order  INTEGER NOT NULL DEFAULT 0,
   color       TEXT,
   description TEXT NOT NULL DEFAULT '',
   created_at  TEXT NOT NULL,
-  PRIMARY KEY (workspace, id),
+  UNIQUE (workspace, id),
+  UNIQUE (workspace, name),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
 );
 
 CREATE TABLE entity_schema (
-  id          TEXT PRIMARY KEY,
-  workspace   TEXT NOT NULL,
-  name        TEXT NOT NULL,
-  fields      TEXT NOT NULL DEFAULT '[]',
-  color       TEXT,
-  icon        TEXT,
+  id            TEXT PRIMARY KEY,
+  workspace     TEXT NOT NULL,
+  name          TEXT NOT NULL,
+  fields        TEXT NOT NULL DEFAULT '[]',
+  color         TEXT,
+  icon          TEXT,
   default_owner TEXT,
-  created_at  TEXT NOT NULL,
-  updated_at  TEXT NOT NULL,
+  created_at    TEXT NOT NULL,
+  updated_at    TEXT NOT NULL,
   UNIQUE (workspace, name),
   UNIQUE (workspace, id),
-  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
+  FOREIGN KEY (workspace, default_owner) REFERENCES workspace_owner(workspace, id) ON DELETE SET NULL
 );
 
 CREATE TABLE entity (
-  id          TEXT PRIMARY KEY,
-  workspace   TEXT NOT NULL,
-  slug        TEXT NOT NULL,
-  namespace   TEXT NOT NULL DEFAULT 'default',
-  name        TEXT NOT NULL,
-  description TEXT NOT NULL DEFAULT '',
-  owner       TEXT,
-  lifecycle   TEXT,
-  tags        TEXT NOT NULL DEFAULT '[]',
-  links       TEXT NOT NULL DEFAULT '[]',
-  schema_id   TEXT NOT NULL,
-  data        TEXT NOT NULL DEFAULT '{}',
-  visibility_mode TEXT CHECK (visibility_mode IN ('public', 'restricted')),
-  created_at  TEXT NOT NULL,
-  updated_at  TEXT NOT NULL,
+  id                    TEXT PRIMARY KEY,
+  workspace             TEXT NOT NULL,
+  slug                  TEXT NOT NULL,
+  namespace             TEXT NOT NULL DEFAULT 'default',
+  name                  TEXT NOT NULL,
+  description           TEXT NOT NULL DEFAULT '',
+  owner                 TEXT,
+  lifecycle             TEXT,
+  tags                  TEXT NOT NULL DEFAULT '[]',
+  links                 TEXT NOT NULL DEFAULT '[]',
+  schema_id             TEXT NOT NULL,
+  data                  TEXT NOT NULL DEFAULT '{}',
+  visibility_mode       TEXT CHECK (visibility_mode IN ('public', 'restricted')),
+  created_at            TEXT NOT NULL,
+  updated_at            TEXT NOT NULL,
   UNIQUE (workspace, schema_id, namespace, slug),
   UNIQUE (workspace, id),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
+  FOREIGN KEY (workspace, owner) REFERENCES workspace_owner(workspace, id) ON DELETE SET NULL,
+  FOREIGN KEY (workspace, lifecycle) REFERENCES workspace_lifecycle_state(workspace, id) ON DELETE SET NULL,
   FOREIGN KEY (workspace, schema_id) REFERENCES entity_schema(workspace, id) ON DELETE RESTRICT
 );
 
@@ -104,7 +109,8 @@ CREATE TABLE project (
   updated_at  TEXT NOT NULL,
   UNIQUE (workspace, name),
   UNIQUE (workspace, id),
-  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
+  FOREIGN KEY (workspace, owner) REFERENCES workspace_owner(workspace, id) ON DELETE SET NULL
 );
 
 CREATE TABLE project_file (
@@ -126,26 +132,9 @@ CREATE TABLE project_file (
 
 CREATE INDEX project_file_project_idx ON project_file(workspace, project_id);
 
-CREATE TABLE audit_log (
-  id              TEXT PRIMARY KEY,
-  workspace       TEXT NOT NULL,
-  timestamp       TEXT NOT NULL,
-  user_id         TEXT NOT NULL,
-  operation       TEXT NOT NULL CHECK (operation IN ('create', 'update', 'delete')),
-  entity_type     TEXT NOT NULL CHECK (entity_type IN ('workspace', 'entity_schema', 'entity', 'project', 'project_file')),
-  entity_id       TEXT NOT NULL,
-  entity_name     TEXT NOT NULL,
-  entity_slug     TEXT,
-  schema_id       TEXT,
-  changes         TEXT NOT NULL DEFAULT '{}',
-  metadata        TEXT NOT NULL DEFAULT '{}',
-  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
-);
-
-CREATE INDEX audit_log_workspace_timestamp_idx ON audit_log(workspace, timestamp DESC);
-
 CREATE TABLE users (
   id              TEXT PRIMARY KEY,
+  user_id         TEXT NOT NULL UNIQUE,
   email           TEXT UNIQUE,
   display_name    TEXT NOT NULL,
   auth_provider   TEXT NOT NULL CHECK (auth_provider IN ('local', 'oidc')),
@@ -163,6 +152,25 @@ CREATE TABLE users (
 CREATE INDEX users_email_idx ON users(email);
 CREATE INDEX users_auth_provider_idx ON users(auth_provider);
 CREATE INDEX users_oidc_idx ON users(oidc_issuer, oidc_subject) WHERE auth_provider = 'oidc';
+
+CREATE TABLE audit_log (
+  id              TEXT PRIMARY KEY,
+  workspace       TEXT NOT NULL,
+  timestamp       TEXT NOT NULL,
+  user_id         TEXT,
+  operation       TEXT NOT NULL CHECK (operation IN ('create', 'update', 'delete')),
+  entity_type     TEXT NOT NULL CHECK (entity_type IN ('workspace', 'entity_schema', 'entity', 'project', 'project_file')),
+  entity_id       TEXT NOT NULL,
+  entity_name     TEXT NOT NULL,
+  entity_slug     TEXT,
+  schema_id       TEXT,
+  changes         TEXT NOT NULL DEFAULT '{}',
+  metadata        TEXT NOT NULL DEFAULT '{}',
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX audit_log_workspace_timestamp_idx ON audit_log(workspace, timestamp DESC);
 
 CREATE TABLE team_membership (
   workspace   TEXT NOT NULL,

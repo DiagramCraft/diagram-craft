@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { createApiTest, expect } from '../helpers/fixtures';
-import { seedCatalogEntities } from '../helpers/seedHelper';
+import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 
 type MockAIState = {
   baseUrl: string;
@@ -85,7 +85,7 @@ const test = createApiTest().extend<{ mockAI: MockAIState }>({
       await seedCatalogEntities(server.db);
 
       const mockAI = await startMockAIProvider();
-      await server.db.ai.upsertAiConfig('default', {
+      await server.db.ai.upsertAiConfig(seedIds.workspace.default, {
         provider: 'openai',
         api_key_enc: 'test-api-key',
         base_url: mockAI.baseUrl,
@@ -161,7 +161,7 @@ test.describe('diagram craft routes', () => {
           _uid: frontendAppId,
           _schemaId: componentSchemaId,
           _name: 'Frontend App',
-          _owner: 'Design Systems',
+          _owner: seedIds.teams.design,
           name: 'Frontend App',
           description: 'React single-page application served to end users.',
           technology: 'React',

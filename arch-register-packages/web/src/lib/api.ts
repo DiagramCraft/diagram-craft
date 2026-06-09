@@ -910,6 +910,7 @@ export const clearNotifications = (workspace: string) =>
 
 export type WorkspaceTeam = {
   id: string;
+  name: string;
   sort_order: number;
   color: string | null;
   description: string;

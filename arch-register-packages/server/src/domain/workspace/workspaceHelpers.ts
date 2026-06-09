@@ -35,7 +35,10 @@ export const toApiLifecycleState = (
 
 export const toApiOwnerOption = (owner: WorkspaceOwner): WorkspaceOwnerOption => ({
   id: owner.id,
-  sort_order: owner.sort_order
+  name: owner.name,
+  sort_order: owner.sort_order,
+  color: owner.color,
+  description: owner.description
 });
 
 export const toApiWorkspaceMember = (member: WorkspaceMember, user: User): WorkspaceMemberInfo => ({
@@ -49,6 +52,7 @@ export const toApiWorkspaceMember = (member: WorkspaceMember, user: User): Works
 
 export const toApiWorkspaceUser = (user: User): WorkspaceUserInfo => ({
   id: user.id,
+  user_id: user.user_id,
   email: user.email,
   display_name: user.display_name,
   auth_provider: user.auth_provider,

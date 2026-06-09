@@ -43,7 +43,7 @@ export class ServerDataProvider implements PermissionDataProvider {
 
   async getTeams(workspaceId: string): Promise<WorkspaceTeam[]> {
     const teams = await this.db.workspace.listTeams(workspaceId);
-    return teams.map(team => ({ id: team.id, name: team.id, type: 'team' as const }));
+    return teams.map(team => ({ id: team.id, name: team.name, type: 'team' as const }));
   }
 
   async getWorkspaceRole(workspaceId: string, userId: string): Promise<WorkspaceRole | null> {
