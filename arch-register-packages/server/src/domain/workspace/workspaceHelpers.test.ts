@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { WorkspaceMember, WorkspaceOwner, User } from '../../types';
+import type { User } from '../../types';
 import {
   toApiLifecycleState,
   toApiOwnerOption,
@@ -7,7 +7,11 @@ import {
   toApiWorkspaceMember,
   toApiWorkspaceUser
 } from './workspaceHelpers';
-import { WorkspaceRow } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
+import {
+  WorkspaceMemberRow,
+  WorkspaceRow,
+  WorkspaceOwnerRow
+} from '@arch-register/server/domain/workspace/db/workspaceDatabase';
 import { WorkspaceLifecycleStateRow } from './db/workspaceDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
@@ -55,7 +59,7 @@ describe('toApiLifecycleState', () => {
 
 describe('toApiOwnerOption', () => {
   it('maps id and sort_order', () => {
-    const owner: WorkspaceOwner = {
+    const owner: WorkspaceOwnerRow = {
       id: 'team-a',
       workspace: 'ws-1',
       name: 'Team A',
@@ -79,7 +83,7 @@ describe('toApiOwnerOption', () => {
 
 describe('toApiWorkspaceMember', () => {
   it('merges member and user data', () => {
-    const member: WorkspaceMember = {
+    const member: WorkspaceMemberRow = {
       workspace: 'ws-1',
       user_id: 'u-1',
       role: 'editor',

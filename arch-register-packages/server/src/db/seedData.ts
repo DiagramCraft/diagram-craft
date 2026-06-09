@@ -5,10 +5,7 @@ import type {
   GlobalRoleAssignment,
   Project,
   ProjectFile,
-  TeamMembership,
   WorkspaceEnum,
-  WorkspaceMember,
-  WorkspaceOwner,
   SavedView
 } from '../types';
 import {
@@ -24,7 +21,10 @@ import {
   AR_COLOR_AMBER
 } from '@arch-register/api-types/colors';
 import {
+  TeamMembershipRow,
+  WorkspaceMemberRow,
   WorkspaceRow,
+  WorkspaceOwnerRow,
   WorkspaceLifecycleStateRow
 } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
 
@@ -116,7 +116,7 @@ export const seedLifecycleStates: WorkspaceLifecycleStateRow[] = [
   }
 ];
 
-export const seedOwners: WorkspaceOwner[] = [
+export const seedOwners: WorkspaceOwnerRow[] = [
   {
     id: TEAM_IDS.platform,
     workspace: WORKSPACE_ID,
@@ -228,7 +228,7 @@ export const seedLocalUsers = [
   }
 ] as const;
 
-export const seedTeamAssignments: TeamMembership[] = [
+export const seedTeamAssignments: TeamMembershipRow[] = [
   // Platform Engineering
   {
     workspace: WORKSPACE_ID,
@@ -335,7 +335,7 @@ export const seedGlobalRoleAssignments: GlobalRoleAssignment[] = [
   { user_id: USER_IDS.workspaceadmin, role: 'workspace_admin', created_at: now }
 ];
 
-export const seedWorkspaceMembers: WorkspaceMember[] = [
+export const seedWorkspaceMembers: WorkspaceMemberRow[] = [
   { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceowner, role: 'owner', created_at: now },
   { workspace: WORKSPACE_ID, user_id: USER_IDS.globaladmin, role: 'admin', created_at: now },
   { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceadmin, role: 'admin', created_at: now },

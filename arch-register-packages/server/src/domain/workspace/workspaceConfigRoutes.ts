@@ -4,20 +4,20 @@ import { H3, defineHandler } from 'h3';
 import {
   BUILTIN_WORKSPACE_ROLES,
   WORKSPACE_CAPABILITY_GROUPS,
-  resolveWorkspaceRoleDefinitions
+  resolveWorkspaceRoleDefinitions,
+  TeamRole,
+  WorkspaceCapability
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { resolveWorkspace } from './resolveWorkspace';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import type {
-  TeamMembership,
-  TeamRole,
-  WorkspaceOwner,
-  WorkspaceRoleCapability
-} from '../../types';
 import { httpAssert } from '../../utils/httpAssert';
-import { WorkspaceLifecycleStateRow } from './db/workspaceDatabase';
+import {
+  TeamMembershipRow,
+  WorkspaceOwnerRow,
+  WorkspaceLifecycleStateRow
+} from './db/workspaceDatabase';
 const BASE = '/api/:workspace/config';
 
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
@@ -51,10 +51,10 @@ export const parseWorkspaceRoleInput = (body: unknown) => {
   const capabilities = (data['capabilities'] as unknown[]).map(capability => {
     httpAssert.true(
       typeof capability === 'string' &&
-        VALID_WORKSPACE_CAPABILITIES.includes(capability as WorkspaceRoleCapability),
+        VALID_WORKSPACE_CAPABILITIES.includes(capability as WorkspaceCapability),
       { message: 'capabilities contains invalid values' }
     );
-    return capability as WorkspaceRoleCapability;
+    return capability as WorkspaceCapability;
   });
 
   const name = sanitizeText(data['name'] as string);
@@ -124,7 +124,7 @@ export const buildWorkspaceOwnerInputs = (
   workspace: string,
   body: unknown,
   now: Date
-): WorkspaceOwner[] => {
+): WorkspaceOwnerRow[] => {
   httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
   const owners = body as Array<{
@@ -173,7 +173,7 @@ export const buildTeamMembershipInputs = (
   ownerIds: Set<string>,
   userIds: Set<string>,
   now: Date
-): TeamMembership[] => {
+): TeamMembershipRow[] => {
   httpAssert.array(body, { message: 'Request body must be a JSON array' });
   const rows = body as unknown[];
 

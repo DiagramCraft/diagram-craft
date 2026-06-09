@@ -10,12 +10,12 @@ import type {
   SchemaField,
   EntityCapabilities,
   ProjectCapabilities,
-  VisibilityMode as ApiVisibilityMode,
+  VisibilityMode as ApiVisibilityMode
 } from '@arch-register/api-types';
 
 // Re-export for convenience
-export type { 
-  EntityLink, 
+export type {
+  EntityLink,
   TextField,
   BooleanField,
   SelectField,
@@ -23,7 +23,7 @@ export type {
   ContainmentField,
   SchemaField,
   EntityCapabilities,
-  ProjectCapabilities,
+  ProjectCapabilities
 };
 
 // Re-export VisibilityMode with local name
@@ -33,10 +33,7 @@ export type VisibilityMode = ApiVisibilityMode;
 
 export type GlobalRole = 'global_admin' | 'workspace_admin';
 
-export type GlobalPermission =
-  | 'admin_platform'
-  | 'create_workspaces'
-  | 'manage_workspace_roles';
+export type GlobalPermission = 'admin_platform' | 'create_workspaces' | 'manage_workspace_roles';
 
 export type BuiltinWorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
 

@@ -1,16 +1,15 @@
 import {
+  CreateTeamMembership,
   CreateWorkspaceInput,
   CreateWorkspaceLifecycleState,
+  CreateWorkspaceOwner,
+  CreateWorkspaceRoleDefinition,
   UpdateWorkspaceInput,
-  WorkspaceDatabase
+  UpdateWorkspaceRoleDefinition,
+  WorkspaceDatabase,
+  WorkspaceMemberRow
 } from './workspaceDatabase';
-import type {
-  TeamMembership,
-  WorkspaceMember,
-  WorkspaceOwner,
-  WorkspaceRole,
-  WorkspaceRoleDefinition
-} from '../../../types';
+import type { WorkspaceRole } from '../../../types';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
 export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements WorkspaceDatabase {
@@ -120,7 +119,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     );
   }
 
-  async replaceTeams(workspace: string, owners: WorkspaceOwner[]) {
+  async replaceTeams(workspace: string, owners: CreateWorkspaceOwner[]) {
     const tx = this.db.transaction(() => {
       const ownerIds = owners.map(owner => owner.id);
 
@@ -175,7 +174,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     );
   }
 
-  async replaceTeamAssignments(workspace: string, memberships: TeamMembership[]) {
+  async replaceTeamAssignments(workspace: string, memberships: CreateTeamMembership[]) {
     const tx = this.db.transaction(() => {
       this.run('DELETE FROM team_membership WHERE workspace = ?', [workspace]);
       for (const membership of memberships) {
@@ -197,7 +196,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
   }
 
   async listWorkspaceMembers(workspace: string) {
-    return this.all<WorkspaceMember>(
+    return this.all<WorkspaceMemberRow>(
       'SELECT workspace, user_id, role, created_at FROM workspace_member WHERE workspace = ? ORDER BY role, user_id',
       [workspace],
       (row: Record<string, unknown>) => ({
@@ -210,7 +209,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
   }
 
   async getWorkspaceMember(workspace: string, userId: string) {
-    return this.get<WorkspaceMember>(
+    return this.get<WorkspaceMemberRow>(
       'SELECT workspace, user_id, role, created_at FROM workspace_member WHERE workspace = ? AND user_id = ?',
       [workspace, userId],
       (row: Record<string, unknown>) => ({
@@ -263,7 +262,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     );
   }
 
-  async createCustomWorkspaceRole(input: WorkspaceRoleDefinition) {
+  async createCustomWorkspaceRole(input: CreateWorkspaceRoleDefinition) {
     const existing = this.get(
       'SELECT id FROM workspace_role WHERE workspace = ? AND LOWER(name) = LOWER(?)',
       [input.workspace, input.name]
@@ -291,7 +290,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
   async updateCustomWorkspaceRole(
     workspace: string,
     roleId: string,
-    input: Omit<WorkspaceRoleDefinition, 'id' | 'workspace' | 'created_at'>
+    input: UpdateWorkspaceRoleDefinition
   ) {
     this.run(
       'UPDATE workspace_role SET name = ?, description = ?, tone = ?, capabilities = ?, updated_at = ? WHERE workspace = ? AND id = ?',

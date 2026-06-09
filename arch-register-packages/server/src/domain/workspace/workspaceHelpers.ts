@@ -5,8 +5,10 @@ import type {
   WorkspaceMemberInfo,
   WorkspaceUserInfo
 } from '@arch-register/api-types';
-import type { WorkspaceOwner, WorkspaceMember, User } from '../../types';
+import type { User } from '../../types';
 import {
+  WorkspaceOwnerRow,
+  WorkspaceMemberRow,
   WorkspaceRow,
   WorkspaceLifecycleStateRow as InternalWorkspaceLifecycleState
 } from './db/workspaceDatabase';
@@ -31,7 +33,7 @@ export const toApiLifecycleState = (
   sort_order: state.sort_order
 });
 
-export const toApiOwnerOption = (owner: WorkspaceOwner): WorkspaceOwnerOption => ({
+export const toApiOwnerOption = (owner: WorkspaceOwnerRow): WorkspaceOwnerOption => ({
   id: owner.id,
   name: owner.name,
   sort_order: owner.sort_order,
@@ -39,7 +41,10 @@ export const toApiOwnerOption = (owner: WorkspaceOwner): WorkspaceOwnerOption =>
   description: owner.description
 });
 
-export const toApiWorkspaceMember = (member: WorkspaceMember, user: User): WorkspaceMemberInfo => ({
+export const toApiWorkspaceMember = (
+  member: WorkspaceMemberRow,
+  user: User
+): WorkspaceMemberInfo => ({
   workspace: member.workspace,
   user_id: member.user_id,
   role: member.role,

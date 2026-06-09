@@ -1,9 +1,4 @@
-import type {
-  TeamMembership,
-  WorkspaceMember,
-  WorkspaceOwner,
-  WorkspaceRoleDefinition
-} from '../../../types';
+import { TeamRole, WorkspaceCapability } from '@arch-register/permissions';
 
 export type WorkspaceRow = {
   id: string;
@@ -31,6 +26,53 @@ export type WorkspaceLifecycleStateRow = {
 
 export type CreateWorkspaceLifecycleState = WorkspaceLifecycleStateRow;
 
+export type WorkspaceOwnerRow = {
+  id: string;
+  workspace: string;
+  name: string;
+  sort_order: number;
+  color: string | null;
+  description: string;
+  created_at: Date;
+};
+
+export type CreateWorkspaceOwner = WorkspaceOwnerRow;
+
+export type WorkspaceMemberRow = {
+  workspace: string;
+  user_id: string;
+  role: string;
+  created_at: Date;
+};
+
+export type TeamMembershipRow = {
+  workspace: string;
+  team_id: string;
+  user_id: string;
+  role: TeamRole;
+  created_at: Date;
+};
+
+export type CreateTeamMembership = TeamMembershipRow;
+
+export type WorkspaceRoleDefinitionRow = {
+  id: string;
+  workspace: string;
+  name: string;
+  description: string;
+  tone: string;
+  builtin: boolean;
+  capabilities: WorkspaceCapability[];
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type CreateWorkspaceRoleDefinition = WorkspaceRoleDefinitionRow;
+export type UpdateWorkspaceRoleDefinition = Omit<
+  WorkspaceRoleDefinitionRow,
+  'id' | 'workspace' | 'created_at'
+>;
+
 export type WorkspaceDatabase = {
   listWorkspaces(): Promise<WorkspaceRow[]>;
   getWorkspace(id: string): Promise<WorkspaceRow | null>;
@@ -44,30 +86,36 @@ export type WorkspaceDatabase = {
     states: CreateWorkspaceLifecycleState[]
   ): Promise<WorkspaceLifecycleStateRow[]>;
 
-  listTeams(ws: string): Promise<WorkspaceOwner[]>;
-  replaceTeams(ws: string, teams: WorkspaceOwner[]): Promise<WorkspaceOwner[]>;
-  listTeamAssignments(ws: string): Promise<TeamMembership[]>;
-  replaceTeamAssignments(ws: string, assignments: TeamMembership[]): Promise<TeamMembership[]>;
+  listTeams(ws: string): Promise<WorkspaceOwnerRow[]>;
+  replaceTeams(ws: string, teams: CreateWorkspaceOwner[]): Promise<WorkspaceOwnerRow[]>;
 
-  listWorkspaceMembers(ws: string): Promise<WorkspaceMember[]>;
-  getWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMember | null>;
+  listTeamAssignments(ws: string): Promise<TeamMembershipRow[]>;
+  replaceTeamAssignments(
+    ws: string,
+    assignments: CreateTeamMembership[]
+  ): Promise<TeamMembershipRow[]>;
+
+  listWorkspaceMembers(ws: string): Promise<WorkspaceMemberRow[]>;
+  getWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMemberRow | null>;
   setWorkspaceMemberRole(
     ws: string,
     userId: string,
     role: string,
     createdAt: Date
-  ): Promise<WorkspaceMember>;
-  removeWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMember | null>;
+  ): Promise<WorkspaceMemberRow>;
+  removeWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMemberRow | null>;
 
   getWorkspaceRole(ws: string, userId: string): Promise<string | null>;
-  listCustomWorkspaceRoles(ws: string): Promise<WorkspaceRoleDefinition[]>;
-  getCustomWorkspaceRole(ws: string, roleId: string): Promise<WorkspaceRoleDefinition | null>;
-  createCustomWorkspaceRole(input: WorkspaceRoleDefinition): Promise<WorkspaceRoleDefinition>;
+  listCustomWorkspaceRoles(ws: string): Promise<WorkspaceRoleDefinitionRow[]>;
+  getCustomWorkspaceRole(ws: string, roleId: string): Promise<WorkspaceRoleDefinitionRow | null>;
+  createCustomWorkspaceRole(
+    input: CreateWorkspaceRoleDefinition
+  ): Promise<WorkspaceRoleDefinitionRow>;
   updateCustomWorkspaceRole(
     ws: string,
     roleId: string,
-    input: Omit<WorkspaceRoleDefinition, 'id' | 'workspace' | 'created_at'>
-  ): Promise<WorkspaceRoleDefinition | null>;
-  deleteCustomWorkspaceRole(ws: string, roleId: string): Promise<WorkspaceRoleDefinition | null>;
+    input: UpdateWorkspaceRoleDefinition
+  ): Promise<WorkspaceRoleDefinitionRow | null>;
+  deleteCustomWorkspaceRole(ws: string, roleId: string): Promise<WorkspaceRoleDefinitionRow | null>;
   countWorkspaceMembersByRole(ws: string, roleId: string): Promise<number>;
 };

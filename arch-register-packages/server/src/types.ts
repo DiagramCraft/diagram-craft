@@ -50,16 +50,6 @@ export type SavedView = {
   updated_at: Date;
 };
 
-export type WorkspaceOwner = {
-  id: string;
-  workspace: string;
-  name: string;
-  sort_order: number;
-  color: string | null;
-  description: string;
-  created_at: Date;
-};
-
 export type EntityLink = {
   url: string;
   title: string;
@@ -237,54 +227,6 @@ export type GlobalRole = 'global_admin' | 'workspace_admin';
 export type GlobalPermission = 'admin_platform' | 'create_workspaces' | 'manage_workspace_roles';
 
 export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
-
-export type WorkspaceRoleCapability =
-  | 'ws.view'
-  | 'ws.settings'
-  | 'ws.delete'
-  | 'ws.audit'
-  | 'ws.manage_views'
-  | 'people.invite'
-  | 'people.role'
-  | 'people.remove'
-  | 'people.teams'
-  | 'proj.create'
-  | 'proj.edit'
-  | 'ent.edit'
-  | 'ent.propose'
-  | 'comments'
-  | 'export'
-  | 'schema.edit'
-  | 'schema.publish';
-
-export type WorkspaceRoleDefinition = {
-  id: string;
-  workspace: string;
-  name: string;
-  description: string;
-  tone: string;
-  builtin: boolean;
-  capabilities: WorkspaceRoleCapability[];
-  created_at: Date;
-  updated_at: Date;
-};
-
-export type TeamRole = 'team_admin' | 'team_editor' | 'team_reviewer';
-
-export type WorkspaceMember = {
-  workspace: string;
-  user_id: string;
-  role: string;
-  created_at: Date;
-};
-
-export type TeamMembership = {
-  workspace: string;
-  team_id: string;
-  user_id: string;
-  role: TeamRole;
-  created_at: Date;
-};
 
 export type GlobalRoleAssignment = {
   user_id: string;

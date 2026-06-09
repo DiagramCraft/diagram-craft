@@ -32,6 +32,8 @@ export type PostgresRowTypes = {
   //lifecycleState: WorkspaceLifecycleState;
   //owner: WorkspaceOwner;
   //teamMembership: TeamMembership;
+  //workspaceRoleDefinition: WorkspaceRoleDefinition;
+
   //schema: EntitySchema;
   //workspaceEnum: WorkspaceEnum;
   //entity: Entity;
@@ -47,6 +49,5 @@ export type PostgresRowTypes = {
   //userNotification: UserNotification;
   //user: User;
   //globalRoleAssignment: GlobalRoleAssignment;
-  //workspaceRoleDefinition: WorkspaceRoleDefinition;
 };
 */

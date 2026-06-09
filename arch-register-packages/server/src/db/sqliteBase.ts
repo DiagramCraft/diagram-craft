@@ -10,15 +10,12 @@ import type {
   GlobalRoleAssignment,
   Project,
   ProjectFile,
-  TeamMembership,
   User,
   UserNotification,
   UserPinnedEntity,
   UserWatch,
   WorkspaceAiConfig,
   WorkspaceEnum,
-  WorkspaceRoleDefinition,
-  WorkspaceOwner,
   SavedView
 } from '../types';
 import type { EnrichedEntity } from '../domain/catalog/db/catalogDatabase';
@@ -26,7 +23,10 @@ import type { EnrichedProject } from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
 import {
+  TeamMembershipRow,
   WorkspaceLifecycleStateRow,
+  WorkspaceOwnerRow,
+  WorkspaceRoleDefinitionRow,
   WorkspaceRow
 } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
 
@@ -75,7 +75,7 @@ export const sqliteMappers = {
     sort_order: Number(row['sort_order']),
     created_at: toDate(row['created_at'])
   }),
-  owner: (row: Record<string, unknown>): WorkspaceOwner => ({
+  owner: (row: Record<string, unknown>): WorkspaceOwnerRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
@@ -250,11 +250,11 @@ export const sqliteMappers = {
     updated_at: toDate(row['updated_at']),
     last_login_at: row['last_login_at'] == null ? null : toDate(row['last_login_at'])
   }),
-  teamMembership: (row: Record<string, unknown>): TeamMembership => ({
+  teamMembership: (row: Record<string, unknown>): TeamMembershipRow => ({
     workspace: String(row['workspace']),
     team_id: String(row['team_id']),
     user_id: String(row['user_id']),
-    role: String(row['role']) as TeamMembership['role'],
+    role: String(row['role']) as TeamMembershipRow['role'],
     created_at: toDate(row['created_at'])
   }),
   globalRoleAssignment: (row: Record<string, unknown>): GlobalRoleAssignment => ({
@@ -262,14 +262,14 @@ export const sqliteMappers = {
     role: String(row['role']) as GlobalRoleAssignment['role'],
     created_at: toDate(row['created_at'])
   }),
-  workspaceRoleDefinition: (row: Record<string, unknown>): WorkspaceRoleDefinition => ({
+  workspaceRoleDefinition: (row: Record<string, unknown>): WorkspaceRoleDefinitionRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
     description: String(row['description']),
     tone: String(row['tone']),
     builtin: Boolean(row['builtin']),
-    capabilities: parseJson<WorkspaceRoleDefinition['capabilities']>(row['capabilities'], []),
+    capabilities: parseJson<WorkspaceRoleDefinitionRow['capabilities']>(row['capabilities'], []),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
