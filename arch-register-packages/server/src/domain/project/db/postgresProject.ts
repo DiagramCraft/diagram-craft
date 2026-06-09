@@ -1,13 +1,13 @@
 import type {
   CreateProjectInput,
   EnrichedProject,
+  Project,
   ProjectDatabase,
   ProjectFileRow,
   UpdateProjectInput,
   UpsertProjectFileInput
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
-import { Project } from '../../../types';
 
 export class PostgresProjectDatabase extends PostgresDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {

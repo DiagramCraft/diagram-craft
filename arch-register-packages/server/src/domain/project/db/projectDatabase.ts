@@ -1,5 +1,3 @@
-import type { Project } from '../../../types';
-
 // -- Project File
 
 export type ProjectFileRow = {
@@ -28,6 +26,20 @@ export type UpsertProjectFileInput = {
   unresolved_comment_count: number;
   updated_at: Date;
   created_atIfNew: Date;
+};
+
+// -- Project
+
+export type Project = {
+  id: string;
+  workspace: string;
+  name: string;
+  description: string;
+  owner: string | null;
+  status: 'pinned' | 'active' | 'archived';
+  color: string | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 // Project enriched with resolved names from joined tables (owner).

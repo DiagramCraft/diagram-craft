@@ -1,12 +1,5 @@
 import type { Database as DatabaseType } from 'better-sqlite3';
-import type {
-  AiConversation,
-  AiMessage,
-  Entity,
-  EntityLink,
-  Project,
-  WorkspaceAiConfig
-} from '../types';
+import type { AiConversation, AiMessage, Entity, EntityLink, WorkspaceAiConfig } from '../types';
 import type {
   EnrichedEntity,
   EntityGrantRow,
@@ -15,7 +8,11 @@ import type {
   UserPinnedEntityRow,
   WorkspaceEnumRow
 } from '../domain/catalog/db/catalogDatabase';
-import type { EnrichedProject, ProjectFileRow } from '../domain/project/db/projectDatabase';
+import type {
+  EnrichedProject,
+  Project,
+  ProjectFileRow
+} from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
 import {

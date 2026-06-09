@@ -64,18 +64,6 @@ export type DiagramCraftEntityResponse = {
   [field: string]: unknown;
 };
 
-export type Project = {
-  id: string;
-  workspace: string;
-  name: string;
-  description: string;
-  owner: string | null;
-  status: 'pinned' | 'active' | 'archived';
-  color: string | null;
-  created_at: Date;
-  updated_at: Date;
-};
-
 export const encodeRefs = (refs: string[]): string => refs.join(',');
 export const decodeRefs = (raw: unknown): string[] => {
   if (raw == null || raw === '') return [];

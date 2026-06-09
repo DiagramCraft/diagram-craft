@@ -1,4 +1,4 @@
-import type { Entity, Project } from '../types';
+import type { Entity } from '../types';
 import {
   AR_COLOR_GREEN,
   AR_COLOR_BLUE,
@@ -23,7 +23,7 @@ import {
   SavedViewRow,
   WorkspaceEnumRow
 } from '@arch-register/server/domain/catalog/db/catalogDatabase';
-import { ProjectFileRow } from '@arch-register/server/domain/project/db/projectDatabase';
+import { Project, ProjectFileRow } from '@arch-register/server/domain/project/db/projectDatabase';
 import { AuditOperation } from '@arch-register/server/domain/audit/db/auditDatabase';
 import { GlobalRoleAssignmentRow } from '@arch-register/server/domain/auth/db/authDatabase';
 
