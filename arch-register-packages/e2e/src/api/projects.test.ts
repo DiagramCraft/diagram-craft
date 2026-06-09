@@ -148,7 +148,7 @@ test.describe('project routes', () => {
       id: created['id'],
       name: 'Renamed Project',
       description: 'Original',
-      owner: seedIds.teams.design,
+      owner: expect.objectContaining({ id: seedIds.teams.design }),
       status: 'pinned',
       color: '#445566'
     });

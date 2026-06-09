@@ -15,26 +15,32 @@ export class PostgresProjectDatabase
   implements ProjectDatabase
 {
   async listProjects(workspace: string) {
-    return await this.sql<PostgresRowTypes['project'][]>`
-      SELECT * FROM project WHERE workspace = ${workspace} ORDER BY name
+    return await this.sql<PostgresRowTypes['enrichedProject'][]>`
+      SELECT p.*, wo.name AS owner_name
+      FROM project p
+      LEFT JOIN workspace_owner wo ON wo.id = p.owner
+      WHERE p.workspace = ${workspace}
+      ORDER BY p.name
     `;
   }
 
   async getProject(workspace: string, id: string) {
-    const [row] = await this.sql<PostgresRowTypes['project'][]>`
-      SELECT * FROM project WHERE workspace = ${workspace} AND id = ${id}
+    const [row] = await this.sql<PostgresRowTypes['enrichedProject'][]>`
+      SELECT p.*, wo.name AS owner_name
+      FROM project p
+      LEFT JOIN workspace_owner wo ON wo.id = p.owner
+      WHERE p.workspace = ${workspace} AND p.id = ${id}
     `;
     return row ?? null;
   }
 
   async createProject(input: CreateProjectInput) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['project'][]>`
+      await this.sql`
         INSERT INTO project (id, workspace, name, description, owner, status, color, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.color}, ${input.created_at}, ${input.updated_at})
-        RETURNING *
       `;
-      return row!;
+      return (await this.getProject(input.workspace, input.id))!;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -42,7 +48,7 @@ export class PostgresProjectDatabase
 
   async updateProject(workspace: string, id: string, input: UpdateProjectInput) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['project'][]>`
+      const result = await this.sql`
         UPDATE project
         SET name = ${input.name},
             description = ${input.description},
@@ -51,9 +57,9 @@ export class PostgresProjectDatabase
             color = ${input.color},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
-        RETURNING *
       `;
-      return row ?? null;
+      if (result.count === 0) return null;
+      return await this.getProject(workspace, id);
     } catch (error) {
       return normalizePostgresError(error);
     }

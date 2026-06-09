@@ -2,7 +2,10 @@
 
 export type VisibilityMode = 'public' | 'restricted';
 
-export type LifecycleStatus = string;
+export type ForeignKey<T = string> = {
+  id: string;
+  name: T;
+};
 
 export type EntityLink = {
   url: string;

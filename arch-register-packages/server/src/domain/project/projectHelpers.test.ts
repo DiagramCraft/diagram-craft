@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { FileTree } from '@arch-register/api-types';
-import type { Project, ProjectFile } from '../../types';
+import type { ProjectFile } from '../../types';
+import type { EnrichedProject } from './db/projectDatabase';
 import { toApiProject, toApiProjectDetail, toApiProjectFile } from './projectHelpers';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
 
-const baseProject: Project = {
+const baseProject: EnrichedProject = {
   id: 'p-1',
   workspace: 'ws-1',
   name: 'My Project',
@@ -15,7 +16,8 @@ const baseProject: Project = {
   status: 'active',
   color: '#ff0000',
   created_at: now,
-  updated_at: now
+  updated_at: now,
+  owner_name: null
 };
 
 const baseProjectFile: ProjectFile = {

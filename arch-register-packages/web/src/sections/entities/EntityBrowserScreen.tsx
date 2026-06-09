@@ -433,9 +433,8 @@ export const EntityBrowserScreen = () => {
 
   const owners = useMemo(() => {
     return (facets?.owner ?? [])
-      .map(bucket => bucket.value)
-      .filter((value): value is string => value != null && value !== '')
-      .sort();
+      .filter((bucket): bucket is typeof bucket & { value: string } => bucket.value != null && bucket.value !== '')
+      .map((bucket, i) => ({ id: bucket.value, name: bucket.label ?? bucket.value, sort_order: i }));
   }, [facets]);
 
   const activeSavedView = useMemo(
@@ -632,8 +631,8 @@ export const EntityBrowserScreen = () => {
     result.sort((a, b) => {
       if (sort === 'name')
         return (a._name ?? a._slug ?? '').localeCompare(b._name ?? b._slug ?? '');
-      if (sort === 'type') return a._schemaId.localeCompare(b._schemaId);
-      if (sort === 'owner') return (a._owner ?? '').localeCompare(b._owner ?? '');
+      if (sort === 'type') return a._schema.id.localeCompare(b._schema.id);
+      if (sort === 'owner') return (a._owner?.name ?? '').localeCompare(b._owner?.name ?? '');
       if (sort === 'completeness') return (a._completeness ?? -1) - (b._completeness ?? -1);
       if (dateBrowserEnabled && sort.startsWith('date:')) {
         const fieldId = sort.slice(5);
@@ -850,7 +849,7 @@ export const EntityBrowserScreen = () => {
               onClose={() => filterPopoverRef.current?.close()}
               schemas={schemas}
               lifecycleStates={lifecycleStates}
-              owners={owners.map(o => ({ id: o, name: teams.find(t => t.id === o)?.name ?? o, sort_order: 0 }))}
+              owners={owners}
               enums={enums}
               selectedSchemaId={typeFilter}
             />
@@ -910,7 +909,6 @@ export const EntityBrowserScreen = () => {
           rows={filtered}
           schemas={schemas}
           lifecycleStates={lifecycleStates}
-          teams={teams}
           onEntityClick={navigateToEntity}
           config={timelineConfig}
           onConfigChange={setTimelineConfig}
@@ -939,7 +937,6 @@ export const EntityBrowserScreen = () => {
             onDelete={handleDeleteEntity}
             onClone={handleCloneEntity}
             lifecycleStates={lifecycleStates}
-            teams={teams}
           />
         )
       ) : filtered.length === 0 ? (
@@ -980,7 +977,6 @@ export const EntityBrowserScreen = () => {
               onSelectAll={handleSelectAll}
               onSelectRow={handleSelectRow}
               lifecycleStates={lifecycleStates}
-              teams={teams}
             />
           )}
           {view === 'cards' && (
@@ -991,7 +987,6 @@ export const EntityBrowserScreen = () => {
               onDelete={handleDeleteEntity}
               onClone={handleCloneEntity}
               lifecycleStates={lifecycleStates}
-              teams={teams}
             />
           )}
         </>
@@ -1057,7 +1052,6 @@ type ViewProps = {
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
 };
 
 const entityName = (e: EntityRecord) => e._name || e._slug;
@@ -1090,7 +1084,6 @@ const TableView = ({
   onDelete,
   onClone,
   lifecycleStates,
-  teams,
   selectedIds,
   onSelectAll,
   onSelectRow
@@ -1129,7 +1122,7 @@ const TableView = ({
         </thead>
         <tbody>
           {rows.map(e => {
-            const s = schemaMap.get(e._schemaId);
+            const s = schemaMap.get(e._schema.id);
             return (
               <tr
                 key={e._uid}
@@ -1164,11 +1157,11 @@ const TableView = ({
                 </td>
                 <td>{s && <Chip tone="ghost">{s.schema.name}</Chip>}</td>
                 <td>
-                  <span className="dim">{e._owner ? (teams.find(t => t.id === e._owner)?.name ?? e._owner) : '—'}</span>
+                  <span className="dim">{e._owner?.name ?? '—'}</span>
                 </td>
                 <td>
                   {e._lifecycle && (
-                    <StatusChip value={e._lifecycle} lifecycleStates={lifecycleStates} />
+                    <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
                   )}
                 </td>
                 {activeDateField && (
@@ -1209,12 +1202,11 @@ const CardsView = ({
   onEntityClick,
   onDelete,
   onClone,
-  lifecycleStates,
-  teams
+  lifecycleStates
 }: ViewProps) => (
   <div className={styles.cardGrid}>
     {rows.map(e => {
-      const s = schemaMap.get(e._schemaId);
+      const s = schemaMap.get(e._schema.id);
       const color = s ? resolveSchemaColor(s.schema, s.index) : 'var(--accent-fg)';
       return (
         <div key={e._uid} className={styles.card} onClick={() => onEntityClick(e._uid)}>
@@ -1223,7 +1215,7 @@ const CardsView = ({
             {s && <TypeBadge color={color} name={s.schema.name} size={22} />}
             <div className={styles.cardHeadRight}>
               {e._lifecycle && (
-                <StatusChip value={e._lifecycle} lifecycleStates={lifecycleStates} />
+                <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
               )}
               {entityMenuItems(e, onClone, onDelete).length > 0 && (
                 <span onClick={ev => ev.stopPropagation()}>
@@ -1243,7 +1235,7 @@ const CardsView = ({
           {e._description && <div className={styles.cardDesc}>{e._description}</div>}
           <div className={styles.cardMeta}>
             <Chip tone="ghost" icon={<TbUsers size={10} />}>
-              {e._owner ? (teams.find(t => t.id === e._owner)?.name ?? e._owner) : '—'}
+              {e._owner?.name ?? '—'}
             </Chip>
             {s && <Chip tone="ghost">{s.schema.name}</Chip>}
           </div>
@@ -1261,7 +1253,6 @@ type TreeViewProps = {
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
 };
 
 type TreeItem = TreeNode & { children: TreeItem[] };
@@ -1273,8 +1264,7 @@ const TreeView = ({
   onEntityClick,
   onDelete,
   onClone,
-  lifecycleStates,
-  teams
+  lifecycleStates
 }: TreeViewProps) => {
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();
@@ -1327,7 +1317,6 @@ const TreeView = ({
               onDelete={onDelete}
               onClone={onClone}
               lifecycleStates={lifecycleStates}
-              teams={teams}
             />
           ))}
         </tbody>
@@ -1343,8 +1332,7 @@ const TreeNodeRow = ({
   onEntityClick,
   onDelete,
   onClone,
-  lifecycleStates,
-  teams
+  lifecycleStates
 }: {
   item: TreeItem;
   depth: number;
@@ -1353,11 +1341,10 @@ const TreeNodeRow = ({
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
 }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = item.children.length > 0;
-  const s = schemaMap.get(item._schemaId);
+  const s = schemaMap.get(item._schema.id);
   const isAncestor = !item._isMatch;
 
   return (
@@ -1398,11 +1385,11 @@ const TreeNodeRow = ({
         </td>
         <td>{s && <Chip tone="ghost">{s.schema.name}</Chip>}</td>
         <td>
-          <span className="dim">{item._owner ? (teams.find(t => t.id === item._owner)?.name ?? item._owner) : '—'}</span>
+          <span className="dim">{item._owner?.name ?? '—'}</span>
         </td>
         <td>
           {item._lifecycle && (
-            <StatusChip value={item._lifecycle} lifecycleStates={lifecycleStates} />
+            <StatusChip value={item._lifecycle.id} lifecycleStates={lifecycleStates} />
           )}
         </td>
         <td>
@@ -1432,7 +1419,6 @@ const TreeNodeRow = ({
             onDelete={onDelete}
             onClone={onClone}
             lifecycleStates={lifecycleStates}
-            teams={teams}
           />
         ))}
     </>

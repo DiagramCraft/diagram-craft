@@ -57,8 +57,8 @@ test.describe('data routes', () => {
       expect.objectContaining({
         _uid: componentId,
         _name: 'Frontend App',
-        _owner: seedIds.teams.design,
-        _schemaId: componentSchemaId
+        _owner: expect.objectContaining({ id: seedIds.teams.design }),
+        _schema: expect.objectContaining({ id: componentSchemaId })
       })
     ]);
     expect(body[0]).not.toHaveProperty('technology');
@@ -204,8 +204,8 @@ test.describe('data routes', () => {
     expect(created).toMatchObject({
       _name: 'Billing API',
       _slug: 'billing-api',
-      _owner: seedIds.teams.design,
-      _lifecycle: seedIds.lifecycle.production,
+      _owner: expect.objectContaining({ id: seedIds.teams.design }),
+      _lifecycle: expect.objectContaining({ id: seedIds.lifecycle.production }),
       api_type: 'openapi',
       system: systemId
     });
@@ -337,7 +337,7 @@ test.describe('data routes', () => {
       _uid: created['_uid'],
       _name: 'Session Worker v2',
       _slug: 'session-worker-v2',
-      _owner: seedIds.teams.security,
+      _owner: expect.objectContaining({ id: seedIds.teams.security }),
       _visibilityMode: 'restricted',
       technology: 'Go'
     });
@@ -488,8 +488,8 @@ test.describe('data routes', () => {
 
     expect(created).toMatchObject({
       _name: 'Sunset API',
-      _lifecycle: seedIds.lifecycle.production,
-      _targetLifecycle: seedIds.lifecycle.deprecated,
+      _lifecycle: expect.objectContaining({ id: seedIds.lifecycle.production }),
+      _targetLifecycle: expect.objectContaining({ id: seedIds.lifecycle.deprecated }),
       _targetLifecycleDate: '2026-12-31'
     });
   });
@@ -526,8 +526,8 @@ test.describe('data routes', () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({
-      _lifecycle: seedIds.lifecycle.experimental,
-      _targetLifecycle: seedIds.lifecycle.production,
+      _lifecycle: expect.objectContaining({ id: seedIds.lifecycle.experimental }),
+      _targetLifecycle: expect.objectContaining({ id: seedIds.lifecycle.production }),
       _targetLifecycleDate: '2026-09-30'
     });
   });

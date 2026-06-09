@@ -7,9 +7,18 @@ import {
   parseEntityMutationPayload,
   resolveCreateOwner
 } from './dataRoutes';
-import type { Entity, EntitySchema } from '../../types';
+import type { EntitySchema } from '../../types';
+import type { EnrichedEntity } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
+
+const enriched = (e: Omit<EnrichedEntity, 'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'>): EnrichedEntity => ({
+  ...e,
+  owner_name: null,
+  lifecycle_label: null,
+  target_lifecycle_label: null,
+  schema_name: ''
+});
 
 const domainSchema: EntitySchema = {
   id: 'schema-domain',
@@ -76,7 +85,7 @@ const componentSchema: EntitySchema = {
   updated_at: now
 };
 
-const domain: Entity = {
+const domain: EnrichedEntity = enriched({
   id: 'domain-1',
   workspace: 'default',
   slug: 'engineering',
@@ -94,9 +103,9 @@ const domain: Entity = {
   visibility_mode: null,
   created_at: now,
   updated_at: now
-};
+});
 
-const system: Entity = {
+const system: EnrichedEntity = enriched({
   id: 'system-1',
   workspace: 'default',
   slug: 'customer-portal',
@@ -114,9 +123,9 @@ const system: Entity = {
   visibility_mode: null,
   created_at: now,
   updated_at: now
-};
+});
 
-const component: Entity = {
+const component: EnrichedEntity = enriched({
   id: 'component-1',
   workspace: 'default',
   slug: 'frontend-app',
@@ -134,9 +143,9 @@ const component: Entity = {
   visibility_mode: null,
   created_at: now,
   updated_at: now
-};
+});
 
-const dependency: Entity = {
+const dependency: EnrichedEntity = enriched({
   id: 'component-2',
   workspace: 'default',
   slug: 'api-gateway',
@@ -154,7 +163,7 @@ const dependency: Entity = {
   visibility_mode: null,
   created_at: now,
   updated_at: now
-};
+});
 
 describe('data route helpers', () => {
   it('parses mutation payloads with defaults and derived slug', () => {

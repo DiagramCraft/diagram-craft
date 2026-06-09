@@ -1,6 +1,6 @@
 import type {
   Entity,
-  EntityApiResponse,
+  DiagramCraftEntityResponse,
   EntitySchema,
   ReferenceField,
   SchemaField,
@@ -65,7 +65,7 @@ export const toDiagramCraftSchema = (
   ]
 });
 
-export const toDiagramCraftData = (row: Entity): EntityApiResponse => ({
+export const toDiagramCraftData = (row: Entity): DiagramCraftEntityResponse => ({
   _uid: row.id,
   _workspace: row.workspace,
   _schemaId: row.schema_id,

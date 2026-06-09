@@ -138,21 +138,42 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async listEntities(workspace: string) {
-    return await this.sql<PostgresRowTypes['entity'][]>`
-      SELECT * FROM entity WHERE workspace = ${workspace} ORDER BY name
+    return await this.sql<PostgresRowTypes['enrichedEntity'][]>`
+      SELECT e.*,
+        wo.name   AS owner_name,
+        ls.label  AS lifecycle_label,
+        tls.label AS target_lifecycle_label,
+        es.name   AS schema_name
+      FROM entity e
+      LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
+      LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
+      LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
+      JOIN entity_schema es ON es.id = e.schema_id
+      WHERE e.workspace = ${workspace}
+      ORDER BY e.name
     `;
   }
 
   async getEntity(workspace: string, id: string) {
-    const [row] = await this.sql<PostgresRowTypes['entity'][]>`
-      SELECT * FROM entity WHERE workspace = ${workspace} AND id = ${id}
+    const [row] = await this.sql<PostgresRowTypes['enrichedEntity'][]>`
+      SELECT e.*,
+        wo.name   AS owner_name,
+        ls.label  AS lifecycle_label,
+        tls.label AS target_lifecycle_label,
+        es.name   AS schema_name
+      FROM entity e
+      LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
+      LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
+      LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
+      JOIN entity_schema es ON es.id = e.schema_id
+      WHERE e.workspace = ${workspace} AND e.id = ${id}
     `;
     return row ?? null;
   }
 
   async createEntity(input: CreateEntityInput) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['entity'][]>`
+      await this.sql`
         INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at)
         VALUES (
           ${input.id},
@@ -173,9 +194,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
           ${input.created_at},
           ${input.updated_at}
         )
-        RETURNING *
       `;
-      return row!;
+      return (await this.getEntity(input.workspace, input.id))!;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -183,7 +203,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async updateEntity(workspace: string, id: string, input: UpdateEntityInput) {
     try {
-      const [row] = await this.sql<PostgresRowTypes['entity'][]>`
+      const result = await this.sql`
         UPDATE entity
         SET slug = ${input.slug},
             namespace = ${input.namespace},
@@ -200,9 +220,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             visibility_mode = ${input.visibility_mode},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
-        RETURNING *
       `;
-      return row ?? null;
+      if (result.count === 0) return null;
+      return await this.getEntity(workspace, id);
     } catch (error) {
       return normalizePostgresError(error);
     }

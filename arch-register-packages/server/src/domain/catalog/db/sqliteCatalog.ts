@@ -10,6 +10,19 @@ import type {
 } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
+const ENTITY_JOIN_SQL = `
+  SELECT e.*,
+    wo.name   AS owner_name,
+    ls.label  AS lifecycle_label,
+    tls.label AS target_lifecycle_label,
+    es.name   AS schema_name
+  FROM entity e
+  LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
+  LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
+  LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
+  JOIN entity_schema es ON es.id = e.schema_id
+`;
+
 export class SqliteCatalogDatabase extends SqliteDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
     const row = this.get<{ id: string }>('SELECT id FROM workspace WHERE url_slug = ?', [slug]);
@@ -132,17 +145,17 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async listEntities(workspace: string) {
     return this.all(
-      'SELECT * FROM entity WHERE workspace = ? ORDER BY name',
+      `${ENTITY_JOIN_SQL} WHERE e.workspace = ? ORDER BY e.name`,
       [workspace],
-      sqliteMappers.entity
+      sqliteMappers.enrichedEntity
     );
   }
 
   async getEntity(workspace: string, id: string) {
     return this.get(
-      'SELECT * FROM entity WHERE workspace = ? AND id = ?',
+      `${ENTITY_JOIN_SQL} WHERE e.workspace = ? AND e.id = ?`,
       [workspace, id],
-      sqliteMappers.entity
+      sqliteMappers.enrichedEntity
     );
   }
 

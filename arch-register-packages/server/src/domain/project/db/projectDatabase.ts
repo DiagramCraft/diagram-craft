@@ -3,6 +3,11 @@ import type {
   ProjectFile
 } from '../../../types';
 
+// Project enriched with resolved names from joined tables (owner).
+export type EnrichedProject = Project & {
+  owner_name: string | null;
+};
+
 export type CreateProjectInput = Omit<Project, 'created_at' | 'updated_at'> & {
   created_at: Date;
   updated_at: Date;
@@ -30,10 +35,10 @@ export type UpsertProjectFileInput = {
 };
 
 export type ProjectDatabase = {
-  listProjects(ws: string): Promise<Project[]>;
-  getProject(ws: string, id: string): Promise<Project | null>;
-  createProject(input: CreateProjectInput): Promise<Project>;
-  updateProject(ws: string, id: string, input: UpdateProjectInput): Promise<Project | null>;
+  listProjects(ws: string): Promise<EnrichedProject[]>;
+  getProject(ws: string, id: string): Promise<EnrichedProject | null>;
+  createProject(input: CreateProjectInput): Promise<EnrichedProject>;
+  updateProject(ws: string, id: string, input: UpdateProjectInput): Promise<EnrichedProject | null>;
   deleteProject(ws: string, id: string): Promise<Project | null>;
 
   listProjectFiles(ws: string, projectId: string): Promise<ProjectFile[]>;

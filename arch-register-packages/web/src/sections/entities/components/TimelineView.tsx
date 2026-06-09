@@ -5,7 +5,7 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import { Button } from '@diagram-craft/app-components/Button';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { EntityRecord, EntitySchema, WorkspaceLifecycleState, WorkspaceTeam } from '../../../lib/api';
+import type { EntityRecord, EntitySchema, WorkspaceLifecycleState } from '../../../lib/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -246,7 +246,6 @@ const DetailPanel = ({
   dateFields,
   schemaMap,
   lifecycleStates,
-  teams,
   onOpen,
   onClose
 }: {
@@ -255,11 +254,10 @@ const DetailPanel = ({
   dateFields: TimelineDateField[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
   onOpen: () => void;
   onClose: () => void;
 }) => {
-  const s = entity ? schemaMap.get(entity._schemaId) : null;
+  const s = entity ? schemaMap.get(entity._schema.id) : null;
   const startField = dateFields.find(f => f.id === cfg.startFieldId);
   const endField = dateFields.find(f => f.id === cfg.endFieldId);
 
@@ -289,14 +287,14 @@ const DetailPanel = ({
             {entity._lifecycle && (
               <div className={styles.detailField}>
                 <div className={styles.detailFieldLabel}>Status</div>
-                <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />
+                <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
               </div>
             )}
             {entity._owner && (
               <div className={styles.detailField}>
                 <div className={styles.detailFieldLabel}>Owner</div>
                 <div className={styles.detailFieldValue}>
-                  {teams.find(t => t.id === entity._owner)?.name ?? entity._owner}
+                  {entity._owner.name}
                 </div>
               </div>
             )}
@@ -336,7 +334,6 @@ type TimelineViewProps = {
   rows: EntityRecord[];
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
   onEntityClick: (entityId: string) => void;
   config: TimelineConfig | null;
   onConfigChange: (cfg: TimelineConfig) => void;
@@ -346,7 +343,6 @@ export const TimelineView = ({
   rows,
   schemas,
   lifecycleStates,
-  teams,
   onEntityClick,
   config,
   onConfigChange
@@ -406,14 +402,12 @@ export const TimelineView = ({
     for (const e of datedRows) {
       const key =
         cfg.groupBy === 'type'
-          ? (schemaMap.get(e._schemaId)?.schema.name ?? e._schemaId)
-          : e._owner == null
-            ? 'Unassigned'
-            : (teams.find(t => t.id === e._owner)?.name ?? e._owner);
+          ? (schemaMap.get(e._schema.id)?.schema.name ?? e._schema.id)
+          : (e._owner?.name ?? 'Unassigned');
       (g[key] ??= []).push(e);
     }
     return Object.entries(g).sort(([a], [b]) => a.localeCompare(b));
-  }, [datedRows, cfg.groupBy, schemaMap, teams]);
+  }, [datedRows, cfg.groupBy, schemaMap]);
 
   // Date range + columns
   const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
@@ -524,10 +518,10 @@ export const TimelineView = ({
                   const endD = getDateValue(e, cfg.endFieldId);
                   const isMilestone = !startD && !!endD;
                   const isActive = activeEntityId === e._uid;
-                  const s = schemaMap.get(e._schemaId);
+                  const s = schemaMap.get(e._schema.id);
 
                   const barColor =
-                    lifecycleStates.find(ls => ls.id === e._lifecycle)?.color ??
+                    lifecycleStates.find(ls => ls.id === e._lifecycle?.id)?.color ??
                     'var(--base-fg-more-dim)';
 
                   let barLeft = 0;
@@ -557,7 +551,7 @@ export const TimelineView = ({
                         )}
                         <span className={styles.entityName}>{e._name ?? e._slug}</span>
                         {e._lifecycle && (
-                          <StatusChip value={e._lifecycle} lifecycleStates={lifecycleStates} />
+                          <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
                         )}
                       </div>
 
@@ -601,7 +595,6 @@ export const TimelineView = ({
         dateFields={dateFields}
         schemaMap={schemaMap}
         lifecycleStates={lifecycleStates}
-        teams={teams}
         onOpen={() => {
           if (activeEntity) onEntityClick(activeEntity._uid);
         }}

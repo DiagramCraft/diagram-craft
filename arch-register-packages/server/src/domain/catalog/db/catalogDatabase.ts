@@ -7,6 +7,15 @@ import type {
   WorkspaceEnum
 } from '../../../types';
 
+// Entity enriched with resolved names from joined tables (owner, lifecycle, schema).
+// Returned by listEntities / getEntity; used by helpers that build API responses.
+export type EnrichedEntity = Entity & {
+  owner_name: string | null;
+  lifecycle_label: string | null;
+  target_lifecycle_label: string | null;
+  schema_name: string;
+};
+
 export type CreateSchemaInput = Omit<EntitySchema, 'created_at' | 'updated_at'> & {
   created_at: Date;
   updated_at: Date;
@@ -77,10 +86,10 @@ export type CatalogDatabase = {
   updateEnum(ws: string, id: string, input: UpdateEnumInput): Promise<WorkspaceEnum | null>;
   deleteEnum(ws: string, id: string): Promise<WorkspaceEnum | null>;
 
-  listEntities(ws: string): Promise<Entity[]>;
-  getEntity(ws: string, id: string): Promise<Entity | null>;
-  createEntity(input: CreateEntityInput): Promise<Entity>;
-  updateEntity(ws: string, id: string, input: UpdateEntityInput): Promise<Entity | null>;
+  listEntities(ws: string): Promise<EnrichedEntity[]>;
+  getEntity(ws: string, id: string): Promise<EnrichedEntity | null>;
+  createEntity(input: CreateEntityInput): Promise<EnrichedEntity>;
+  updateEntity(ws: string, id: string, input: UpdateEntityInput): Promise<EnrichedEntity | null>;
   deleteEntity(ws: string, id: string): Promise<Entity | null>;
   listEntityGrants(ws: string): Promise<EntityGrant[]>;
   getEntityGrants(ws: string, entityId: string): Promise<EntityGrant[]>;

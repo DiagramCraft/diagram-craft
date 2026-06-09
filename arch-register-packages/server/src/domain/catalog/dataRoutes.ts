@@ -15,6 +15,7 @@ import {
   type EntitySchema as InternalEntitySchema,
   type SchemaField
 } from '../../types';
+import type { EnrichedEntity } from './db/catalogDatabase';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
 import { computeChanges, extractEntityFields, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
 import { createEntityWithAudit, updateEntityWithAudit } from './entityMutations';
@@ -104,7 +105,7 @@ const entityMatchesPattern = (entity: Entity, pattern: string) => {
 };
 
 export const filterEntities = (
-  entities: Entity[],
+  entities: EnrichedEntity[],
   options: {
     schemaId: string | null;
     owner: string | null;
@@ -158,11 +159,21 @@ const relationFields = (fields: SchemaField[]) =>
       field.type === 'reference' || field.type === 'containment'
   );
 
+// Extracts a string ID from either a plain string or a ForeignKey {id, name} object.
+const extractId = (value: unknown): string | null => {
+  if (typeof value === 'string') return value;
+  if (value != null && typeof value === 'object' && 'id' in value && typeof (value as Record<string, unknown>)['id'] === 'string') {
+    return (value as Record<string, unknown>)['id'] as string;
+  }
+  return null;
+};
+
 export const parseEntityMutationPayload = (
   body: Record<string, unknown>
 ): EntityMutationPayload => {
   const {
     _schemaId,
+    _schema,
     _name,
     _slug,
     _namespace = 'default',
@@ -177,7 +188,9 @@ export const parseEntityMutationPayload = (
     ...fields
   } = body;
 
-  httpAssert.string(_schemaId, {
+  // Accept either _schemaId (string) or _schema (ForeignKey {id, name}) as the schema identifier.
+  const resolvedSchemaId = extractId(_schemaId) ?? extractId(_schema);
+  httpAssert.string(resolvedSchemaId, {
     message: '_schemaId is required and must be a string (UUID)'
   });
 
@@ -191,14 +204,14 @@ export const parseEntityMutationPayload = (
   });
 
   return {
-    schemaId: _schemaId,
+    schemaId: resolvedSchemaId,
     name,
     slug,
     namespace: typeof _namespace === 'string' ? _namespace : 'default',
     description: typeof _description === 'string' ? _description : '',
-    requestedOwner: typeof _owner === 'string' ? _owner : null,
-    requestedLifecycle: typeof _lifecycle === 'string' ? _lifecycle : null,
-    requestedTargetLifecycle: typeof _targetLifecycle === 'string' ? _targetLifecycle : null,
+    requestedOwner: extractId(_owner),
+    requestedLifecycle: extractId(_lifecycle),
+    requestedTargetLifecycle: extractId(_targetLifecycle),
     requestedTargetLifecycleDate: typeof _targetLifecycleDate === 'string' ? _targetLifecycleDate : null,
     tags: Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [],
     links: Array.isArray(_links) ? (_links as EntityLink[]) : [],
@@ -380,10 +393,29 @@ export function createDataRoutes(db: DatabaseAdapter) {
           above80: scored.filter(s => s >= 80).length
         };
 
+        const ownerLabelMap = new Map(
+          entities
+            .filter(e => e.owner != null)
+            .map(e => [e.owner!, e.owner_name ?? e.owner!])
+        );
+        const lifecycleLabelMap = new Map(
+          entities
+            .filter(e => e.lifecycle != null)
+            .map(e => [e.lifecycle!, e.lifecycle_label ?? e.lifecycle!])
+        );
+
         return {
           total: entities.length,
-          lifecycle: countBy(entities.map(entity => entity.lifecycle)),
-          owner: countBy(entities.map(entity => entity.owner)),
+          lifecycle: countBy(entities.map(entity => entity.lifecycle)).map(({ value, count }) => ({
+            value,
+            label: value != null ? (lifecycleLabelMap.get(value) ?? value) : null,
+            count
+          })),
+          owner: countBy(entities.map(entity => entity.owner)).map(({ value, count }) => ({
+            value,
+            label: value != null ? (ownerLabelMap.get(value) ?? value) : null,
+            count
+          })),
           schema: countBy(entities.map(entity => entity.schema_id)).map(({ value, count }) => ({
             schemaId: value!,
             count
@@ -430,12 +462,12 @@ export function createDataRoutes(db: DatabaseAdapter) {
         );
         const matchIds = new Set(matchRows.map(r => r.id));
         const entityById = new Map(allEntities.map(entity => [entity.id, entity]));
-        const allIncluded = new Map<string, Entity>(matchRows.map(entity => [entity.id, entity]));
+        const allIncluded = new Map<string, EnrichedEntity>(matchRows.map(entity => [entity.id, entity]));
         const edges: Array<{ childId: string; parentId: string }> = [];
 
         let currentLevel = [...matchRows];
         while (currentLevel.length > 0) {
-          const nextLevel: Entity[] = [];
+          const nextLevel: EnrichedEntity[] = [];
           for (const entity of currentLevel) {
             const cFields = containmentFieldsBySchema.get(entity.schema_id) ?? [];
             for (const fieldId of cFields) {

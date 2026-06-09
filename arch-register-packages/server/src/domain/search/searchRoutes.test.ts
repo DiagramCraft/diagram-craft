@@ -6,19 +6,20 @@ import {
   includesQuery,
   parseTypes
 } from './searchRoutes';
-import type { Entity, SchemaField } from '../../types';
+import type { SchemaField } from '../../types';
+import type { EnrichedEntity } from '../catalog/db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const entity: Entity = {
+const entity: EnrichedEntity = {
   id: 'entity-1',
   workspace: 'default',
   slug: 'frontend-app',
   namespace: 'default',
   name: 'Frontend App',
   description: 'React single-page application',
-  owner: 'Design Systems',
-  lifecycle: 'production',
+  owner: 'team-ds',
+  lifecycle: 'lc-prod',
   target_lifecycle: null,
   target_lifecycle_date: null,
   tags: ['react', 'frontend'],
@@ -31,7 +32,11 @@ const entity: Entity = {
   },
   visibility_mode: null,
   created_at: now,
-  updated_at: now
+  updated_at: now,
+  owner_name: 'Design Systems',
+  lifecycle_label: 'Production',
+  target_lifecycle_label: null,
+  schema_name: 'Component'
 };
 
 const fields: SchemaField[] = [

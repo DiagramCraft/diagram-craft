@@ -23,6 +23,8 @@ import type {
   WorkspaceOwner,
   SavedView
 } from '../types';
+import type { EnrichedEntity } from '../domain/catalog/db/catalogDatabase';
+import type { EnrichedProject } from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
 
@@ -123,6 +125,32 @@ export const sqliteMappers = {
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
+  enrichedEntity: (row: Record<string, unknown>): EnrichedEntity => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    slug: String(row['slug']),
+    namespace: String(row['namespace']),
+    name: String(row['name']),
+    description: String(row['description']),
+    owner: row['owner'] == null ? null : String(row['owner']),
+    lifecycle: row['lifecycle'] == null ? null : String(row['lifecycle']),
+    target_lifecycle: row['target_lifecycle'] == null ? null : String(row['target_lifecycle']),
+    target_lifecycle_date: row['target_lifecycle_date'] == null ? null : String(row['target_lifecycle_date']),
+    tags: parseJson<string[]>(row['tags'], []),
+    links: parseJson<EntityLink[]>(row['links'], []),
+    schema_id: String(row['schema_id']),
+    data: parseJson<Record<string, unknown>>(row['data'], {}),
+    visibility_mode:
+      row['visibility_mode'] == null
+        ? null
+        : (String(row['visibility_mode']) as Entity['visibility_mode']),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at']),
+    owner_name: row['owner_name'] == null ? null : String(row['owner_name']),
+    lifecycle_label: row['lifecycle_label'] == null ? null : String(row['lifecycle_label']),
+    target_lifecycle_label: row['target_lifecycle_label'] == null ? null : String(row['target_lifecycle_label']),
+    schema_name: String(row['schema_name'])
+  }),
   project: (row: Record<string, unknown>): Project => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
@@ -133,6 +161,18 @@ export const sqliteMappers = {
     color: row['color'] == null ? null : String(row['color']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
+  }),
+  enrichedProject: (row: Record<string, unknown>): EnrichedProject => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    description: String(row['description']),
+    owner: row['owner'] == null ? null : String(row['owner']),
+    status: String(row['status']) as Project['status'],
+    color: row['color'] == null ? null : String(row['color']),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at']),
+    owner_name: row['owner_name'] == null ? null : String(row['owner_name'])
   }),
   projectFile: (row: Record<string, unknown>): ProjectFile => ({
     id: String(row['id']),

@@ -1,4 +1,4 @@
-import type { ProjectCapabilities } from './common.js';
+import type { ForeignKey, ProjectCapabilities } from './common.js';
 
 // ── Project Types ─────────────────────────────────────────────
 
@@ -7,7 +7,7 @@ export type Project = ProjectCapabilities & {
   workspace: string;
   name: string;
   description: string;
-  owner: string | null;
+  owner: ForeignKey | null;
   status: 'pinned' | 'active' | 'archived';
   color: string | null;
   file_count: number;

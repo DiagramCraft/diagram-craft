@@ -1,11 +1,11 @@
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types';
-import type { Entity } from '../../types';
+import type { EnrichedEntity } from './db/catalogDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 
 const checker = new PermissionChecker();
 
-const getEntityCapabilities = (context: AuthorizationContext | null, entity: Entity) => {
+const getEntityCapabilities = (context: AuthorizationContext | null, entity: EnrichedEntity) => {
   if (!context) {
     return {
       canView: true,
@@ -26,20 +26,19 @@ const getEntityCapabilities = (context: AuthorizationContext | null, entity: Ent
 };
 
 export const toApiEntity = (
-  entity: Entity,
+  entity: EnrichedEntity,
   authCtx: AuthorizationContext | null,
   completeness: number | null = null
 ): EntityRecord => ({
   _uid: entity.id,
-  _workspace: entity.workspace,
-  _schemaId: entity.schema_id,
+  _schema: { id: entity.schema_id, name: entity.schema_name },
   _name: entity.name,
   _slug: entity.slug,
   _namespace: entity.namespace,
   _description: entity.description,
-  _owner: entity.owner,
-  _lifecycle: entity.lifecycle,
-  _targetLifecycle: entity.target_lifecycle,
+  _owner: entity.owner ? { id: entity.owner, name: entity.owner_name ?? entity.owner } : null,
+  _lifecycle: entity.lifecycle ? { id: entity.lifecycle, name: entity.lifecycle_label ?? entity.lifecycle } : null,
+  _targetLifecycle: entity.target_lifecycle ? { id: entity.target_lifecycle, name: entity.target_lifecycle_label ?? entity.target_lifecycle } : null,
   _targetLifecycleDate: entity.target_lifecycle_date,
   _tags: entity.tags,
   _links: entity.links,
@@ -50,20 +49,19 @@ export const toApiEntity = (
 });
 
 export const toApiEntitySummary = (
-  entity: Entity,
+  entity: EnrichedEntity,
   authCtx: AuthorizationContext | null,
   completeness: number | null = null
 ): EntitySummary => ({
   _uid: entity.id,
-  _workspace: entity.workspace,
-  _schemaId: entity.schema_id,
+  _schema: { id: entity.schema_id, name: entity.schema_name },
   _name: entity.name,
   _slug: entity.slug,
   _namespace: entity.namespace,
   _description: entity.description,
-  _owner: entity.owner,
-  _lifecycle: entity.lifecycle,
-  _targetLifecycle: entity.target_lifecycle,
+  _owner: entity.owner ? { id: entity.owner, name: entity.owner_name ?? entity.owner } : null,
+  _lifecycle: entity.lifecycle ? { id: entity.lifecycle, name: entity.lifecycle_label ?? entity.lifecycle } : null,
+  _targetLifecycle: entity.target_lifecycle ? { id: entity.target_lifecycle, name: entity.target_lifecycle_label ?? entity.target_lifecycle } : null,
   _targetLifecycleDate: entity.target_lifecycle_date,
   _tags: entity.tags,
   _links: entity.links,

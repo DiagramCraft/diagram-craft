@@ -7,23 +7,29 @@ import type {
 } from './projectDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
+const PROJECT_JOIN_SQL = `
+  SELECT p.*, wo.name AS owner_name
+  FROM project p
+  LEFT JOIN workspace_owner wo ON wo.id = p.owner
+`;
+
 export class SqliteProjectDatabase
   extends SqliteDatabaseBase
   implements ProjectDatabase
 {
   async listProjects(workspace: string) {
     return this.all(
-      'SELECT * FROM project WHERE workspace = ? ORDER BY name',
+      `${PROJECT_JOIN_SQL} WHERE p.workspace = ? ORDER BY p.name`,
       [workspace],
-      sqliteMappers.project
+      sqliteMappers.enrichedProject
     );
   }
 
   async getProject(workspace: string, id: string) {
     return this.get(
-      'SELECT * FROM project WHERE workspace = ? AND id = ?',
+      `${PROJECT_JOIN_SQL} WHERE p.workspace = ? AND p.id = ?`,
       [workspace, id],
-      sqliteMappers.project
+      sqliteMappers.enrichedProject
     );
   }
 

@@ -192,6 +192,7 @@ export const apiFetch = async <T>(
 // ── Entity types ──────────────────────────────────────────────
 
 export type EntityFacetBucket = {
+  label: string | null;
   value: string | null;
   count: number;
 };
@@ -418,9 +419,9 @@ export type EntitySearchResult = {
   _name: string;
   _slug: string;
   _description: string;
-  _owner: string | null;
-  _lifecycle: string | null;
-  _targetLifecycle: string | null;
+  _owner: { id: string; name: string } | null;
+  _lifecycle: { id: string; name: string } | null;
+  _targetLifecycle: { id: string; name: string } | null;
   matchedFields: string[];
   matchedMetadata: string[];
 };

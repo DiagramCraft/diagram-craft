@@ -131,7 +131,7 @@ export const EntityDetailScreen = () => {
     if (!entity) return null;
     let idx = 0;
     for (const s of schemas) {
-      if (s.id === entity._schemaId) return { schema: s, index: idx };
+      if (s.id === entity._schema.id) return { schema: s, index: idx };
       idx++;
     }
     return null;
@@ -181,8 +181,7 @@ export const EntityDetailScreen = () => {
     relations.outgoing.forEach(relation => {
       lookup.set(relation.entityId, {
         _uid: relation.entityId,
-        _workspace: workspaceId,
-        _schemaId: relation.entitySchemaId,
+        _schema: { id: relation.entitySchemaId, name: '' },
         _name: relation.entityName,
         _slug: relation.entitySlug,
         _namespace: '',
@@ -203,7 +202,7 @@ export const EntityDetailScreen = () => {
       });
     });
     return lookup;
-  }, [relations, workspaceId]);
+  }, [relations]);
 
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
@@ -215,9 +214,9 @@ export const EntityDetailScreen = () => {
       _name: entity._name ?? '',
       _slug: entity._slug ?? '',
       _description: entity._description ?? '',
-      _owner: entity._owner ?? '',
-      _lifecycle: entity._lifecycle ?? '',
-      _targetLifecycle: entity._targetLifecycle ?? '',
+      _owner: entity._owner?.id ?? '',
+      _lifecycle: entity._lifecycle?.id ?? '',
+      _targetLifecycle: entity._targetLifecycle?.id ?? '',
       _targetLifecycleDate: entity._targetLifecycleDate ?? '',
       _namespace: entity._namespace ?? '',
       _tags: (entity._tags ?? []).join(', ')
@@ -266,7 +265,7 @@ export const EntityDetailScreen = () => {
       .filter(Boolean);
 
     const body = {
-      _schemaId: entity._schemaId,
+      _schemaId: entity._schema.id,
       _name: (editState['_name'] as string) ?? '',
       _slug: (editState['_slug'] as string) || entity._slug,
       _namespace: (editState['_namespace'] as string) || entity._namespace,
@@ -350,12 +349,12 @@ export const EntityDetailScreen = () => {
               <div className={styles.title}>{entityName}</div>
             </div>
             {entity._lifecycle && (
-              <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />
+              <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
             )}
-            {entity._targetLifecycle && entity._targetLifecycle !== entity._lifecycle && (
+            {entity._targetLifecycle && entity._targetLifecycle.id !== entity._lifecycle?.id && (
               <>
                 <span>→</span>
-                <StatusChip value={entity._targetLifecycle} lifecycleStates={lifecycleStates} />
+                <StatusChip value={entity._targetLifecycle.id} lifecycleStates={lifecycleStates} />
               </>
             )}
           </div>
@@ -386,7 +385,7 @@ export const EntityDetailScreen = () => {
                         entityId,
                         entityName: entity._name || entity._slug,
                         entitySlug: entity._slug,
-                        schemaId: entity._schemaId
+                        schemaId: entity._schema.id
                       })
                 }
                 disabled={createPinnedEntity.isPending || deletePinnedEntity.isPending}
@@ -485,7 +484,6 @@ export const EntityDetailScreen = () => {
             </div>
             {schema && <MetaPropRow label="Schema" value={schema.name} />}
             <MetaPropRow label="UID" value={entity._uid} />
-            <MetaPropRow label="Workspace" value={entity._workspace} />
             <MetaPropRow label="Namespace" value={entity._namespace} />
 
             <hr className={styles.divider} />
@@ -522,7 +520,7 @@ export const EntityDetailScreen = () => {
             )}
             <MetaPropRow
               label="Owner"
-              value={teams.find(team => team.id === entity._owner)?.name ?? entity._owner ?? '—'}
+              value={entity._owner?.name ?? '—'}
               editing={editing}
               editValue={editState['_owner'] as string}
               onChange={v => setEditState(s => ({ ...s, _owner: v }))}
@@ -530,7 +528,7 @@ export const EntityDetailScreen = () => {
             />
             <MetaPropRow
               label="Lifecycle"
-              value={lifecycleStates.find(state => state.id === entity._lifecycle)?.label ?? entity._lifecycle ?? '—'}
+              value={entity._lifecycle?.name ?? '—'}
               editing={editing}
               editValue={editState['_lifecycle'] as string}
               onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))}
@@ -541,11 +539,7 @@ export const EntityDetailScreen = () => {
             />
             <MetaPropRow
               label="Target Lifecycle"
-              value={
-                lifecycleStates.find(state => state.id === entity._targetLifecycle)?.label ??
-                entity._targetLifecycle ??
-                '—'
-              }
+              value={entity._targetLifecycle?.name ?? '—'}
               editing={editing}
               editValue={editState['_targetLifecycle'] as string}
               onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))}
@@ -683,7 +677,7 @@ export const EntityDetailScreen = () => {
             workspaceId={workspaceId}
             rootEntityId={entityId}
             rootEntityName={entity._name || entity._slug}
-            rootEntitySchemaId={entity._schemaId}
+            rootEntitySchemaId={entity._schema.id}
             schemas={schemas}
             onEntityClick={navigateToEntity}
           />
@@ -1313,7 +1307,7 @@ const TopologyView = ({
             <div className={styles.topoEntityName}>{entity._name || entity._slug}</div>
           </div>
           {entity._lifecycle && (
-            <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />
+            <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
           )}
         </div>
 

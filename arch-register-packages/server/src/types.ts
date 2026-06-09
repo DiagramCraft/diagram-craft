@@ -61,8 +61,6 @@ export type SavedView = {
   updated_at: Date;
 };
 
-export type LifecycleStatus = string;
-
 export type WorkspaceLifecycleState = {
   id: string;
   workspace: string;
@@ -98,8 +96,8 @@ export type Entity = {
   name: string;
   description: string;
   owner: string | null;
-  lifecycle: LifecycleStatus | null;
-  target_lifecycle: LifecycleStatus | null;
+  lifecycle: string | null;
+  target_lifecycle: string | null;
   target_lifecycle_date: string | null;
   tags: string[];
   links: EntityLink[];
@@ -110,8 +108,8 @@ export type Entity = {
   updated_at: Date;
 };
 
-// Wire format returned by the API: first-class metadata prefixed with _ to avoid clashing with data fields.
-export type EntityApiResponse = {
+// Wire format used by the DiagramCraft integration (flat strings, not ForeignKey shapes).
+export type DiagramCraftEntityResponse = {
   _uid: string;
   _workspace: string;
   _schemaId: string;
@@ -120,8 +118,8 @@ export type EntityApiResponse = {
   _namespace: string;
   _description: string;
   _owner: string | null;
-  _lifecycle: LifecycleStatus | null;
-  _targetLifecycle: LifecycleStatus | null;
+  _lifecycle: string | null;
+  _targetLifecycle: string | null;
   _targetLifecycleDate: string | null;
   _tags: string[];
   _links: EntityLink[];

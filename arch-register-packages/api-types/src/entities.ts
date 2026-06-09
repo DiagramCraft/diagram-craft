@@ -1,18 +1,22 @@
-import type { EntityCapabilities, EntityLink, LifecycleStatus, VisibilityMode } from './common.js';
+import type {
+  EntityCapabilities,
+  EntityLink,
+  ForeignKey,
+  VisibilityMode
+} from './common.js';
 
 // ── Entity Types ──────────────────────────────────────────────
 
 export type EntitySummary = EntityCapabilities & {
   _uid: string;
-  _workspace: string;
-  _schemaId: string;
+  _schema: ForeignKey;
   _name: string;
   _slug: string;
   _namespace: string;
   _description: string;
-  _owner: string | null;
-  _lifecycle: LifecycleStatus | null;
-  _targetLifecycle: LifecycleStatus | null;
+  _owner: ForeignKey | null;
+  _lifecycle: ForeignKey | null;
+  _targetLifecycle: ForeignKey | null;
   _targetLifecycleDate: string | null;
   _tags: string[];
   _links: EntityLink[];
@@ -33,8 +37,8 @@ export type CreateEntityRequest = {
   _namespace?: string;
   _description?: string;
   _owner?: string | null;
-  _lifecycle?: LifecycleStatus | null;
-  _targetLifecycle?: LifecycleStatus | null;
+  _lifecycle?: string | null;
+  _targetLifecycle?: string | null;
   _targetLifecycleDate?: string | null;
   _tags?: string[];
   _links?: EntityLink[];
@@ -47,6 +51,7 @@ export type UpdateEntityRequest = CreateEntityRequest;
 // ── Facets ────────────────────────────────────────────────────
 
 export type EntityFacetBucket = {
+  label: string;
   value: string | null;
   count: number;
 };
@@ -100,9 +105,9 @@ export type EntitySearchResult = {
   _name: string;
   _slug: string;
   _description: string;
-  _owner: string | null;
-  _lifecycle: LifecycleStatus | null;
-  _targetLifecycle: LifecycleStatus | null;
+  _owner: ForeignKey | null;
+  _lifecycle: ForeignKey | null;
+  _targetLifecycle: ForeignKey | null;
   matchedFields: string[];
   matchedMetadata: string[];
 };

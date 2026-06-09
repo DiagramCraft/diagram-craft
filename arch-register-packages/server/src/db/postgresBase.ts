@@ -19,6 +19,8 @@ import type {
   UserPinnedEntity,
   UserWatch
 } from '../types';
+import type { EnrichedEntity } from '../domain/catalog/db/catalogDatabase';
+import type { EnrichedProject } from '../domain/project/db/projectDatabase';
 import { DB_ERROR_CODES } from '../constants';
 import { DatabaseError } from './database';
 
@@ -55,6 +57,8 @@ export type PostgresRowTypes = {
   schema: EntitySchema;
   workspaceEnum: WorkspaceEnum;
   entity: Entity;
+  enrichedEntity: EnrichedEntity;
+  enrichedProject: EnrichedProject;
   entityGrant: EntityGrant;
   savedView: SavedView;
   project: Project;

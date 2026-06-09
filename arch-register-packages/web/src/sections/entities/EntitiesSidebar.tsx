@@ -111,7 +111,7 @@ export const EntitiesSidebar = ({
 }) => {
   const navigate = useNavigate();
   const { entityId: routeEntityId } = useParams({ strict: false }) as { entityId?: string };
-  const { permissions, teams } = useWorkspaceContext();
+  const { permissions } = useWorkspaceContext();
   const search = useSearch({ strict: false }) as {
     type?: string;
     status?: string;
@@ -187,11 +187,11 @@ export const EntitiesSidebar = ({
     return (facets?.owner ?? [])
       .map(bucket => {
         const id = bucket.value ?? null;
-        const name = id == null ? 'Unassigned' : (teams.find(t => t.id === id)?.name ?? id);
+        const name = id == null ? 'Unassigned' : (bucket.label ?? id);
         return [id, name, bucket.count] as const;
       })
       .sort((a, b) => b[2] - a[2]);
-  }, [facets, teams]);
+  }, [facets]);
 
   const totalEntities = facets?.total ?? schemas.reduce((sum, s) => sum + s.entity_count, 0);
   const activeFilterKind =
