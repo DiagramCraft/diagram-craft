@@ -4,7 +4,7 @@ import {
   buildUpdateSchemaInput,
   isSchemaReferencedByEntities,
   resolveSchemaDefaultOwner
-} from './schemaRoutes';
+} from './schemaHelpers';
 import { SchemaDbResult } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');

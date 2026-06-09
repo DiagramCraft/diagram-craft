@@ -22,6 +22,10 @@ import {
   createWorkspaceEnumOpenAPISpecHandler,
   createWorkspaceEnumORPCHandler
 } from './domain/catalog/enumOrpc';
+import {
+  createWorkspaceSchemaOpenAPISpecHandler,
+  createWorkspaceSchemaORPCHandler
+} from './domain/catalog/schemaOrpc';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -82,6 +86,7 @@ export const createApp = (
   );
 
   app.use('/openapi-orpc-enums.json', createWorkspaceEnumOpenAPISpecHandler());
+  app.use('/openapi-orpc-schemas.json', createWorkspaceSchemaOpenAPISpecHandler());
 
   app.use(createAuthRoutes(db));
 
@@ -90,6 +95,7 @@ export const createApp = (
 
   app.use(createAuthProtectedRoutes(db));
   app.use(createWorkspaceEnumORPCHandler(db));
+  app.use(createWorkspaceSchemaORPCHandler(db));
   app.use(createWorkspaceRoutes(db, storage));
   app.use(createSchemaRoutes(db));
   app.use(createEnumRoutes(db));

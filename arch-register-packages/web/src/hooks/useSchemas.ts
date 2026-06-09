@@ -3,14 +3,16 @@ import type { EntitySchema, SchemaField } from '../lib/api';
 import { apiFetch } from '../lib/api';
 import { entityKeys, schemaKeys } from './queryKeys';
 import { invalidateAuditQueries } from './useAudit';
+import {
+  listWorkspaceSchemasORPC,
+  createWorkspaceSchemaORPC
+} from '../lib/schemaORPCClient';
 
 // Hook for fetching schemas
 export const useSchemas = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: schemaKeys.list(workspaceSlug),
-    queryFn: async () => {
-      return await apiFetch<EntitySchema[]>(`/api/${workspaceSlug}/schemas`);
-    },
+    queryFn: async () => listWorkspaceSchemasORPC(workspaceSlug),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
@@ -22,10 +24,7 @@ export const useCreateSchema = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (body: { name: string; fields: SchemaField[] }) =>
-      apiFetch<EntitySchema>(`/api/${workspaceId}/schemas`, {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }),
+      createWorkspaceSchemaORPC(workspaceId, body),
     onSuccess: async () => {
       // Invalidate schema list to show the new schema
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });

@@ -3,75 +3,75 @@ import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { OpenAPIGenerator } from '@orpc/openapi';
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
-import { workspaceEnumContract } from '@arch-register/api-types';
+import { workspaceSchemaContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toORPCError } from '../../utils/orpcErrors';
 import {
-  createWorkspaceEnum,
-  deleteWorkspaceEnum,
-  getWorkspaceEnum,
-  listWorkspaceEnums,
-  updateWorkspaceEnum
-} from './enumOperations';
+  listWorkspaceSchemas,
+  getWorkspaceSchema,
+  createWorkspaceSchema,
+  updateWorkspaceSchema,
+  deleteWorkspaceSchema
+} from './schemaOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
   event: AuthenticatedEvent;
 };
 
-const enumRouter = implement(workspaceEnumContract).$context<ORPCContext>();
+const schemaRouter = implement(workspaceSchemaContract).$context<ORPCContext>();
 
-export const workspaceEnumORPCRouter = enumRouter.router({
-  enums: {
-    list: enumRouter.enums.list.handler(async ({ input, context }) => {
+export const workspaceSchemaORPCRouter = schemaRouter.router({
+  schemas: {
+    list: schemaRouter.schemas.list.handler(async ({ input, context }) => {
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.view');
-        return await listWorkspaceEnums(context.db, workspace);
+        return await listWorkspaceSchemas(context.db, workspace);
       } catch (error) {
         return toORPCError(error);
       }
     }),
-    get: enumRouter.enums.get.handler(async ({ input, context }) => {
+    get: schemaRouter.schemas.get.handler(async ({ input, context }) => {
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.view');
-        return await getWorkspaceEnum(context.db, workspace, input.id);
+        return await getWorkspaceSchema(context.db, workspace, input.id);
       } catch (error) {
         return toORPCError(error);
       }
     }),
-    create: enumRouter.enums.create.handler(async ({ input, context }) => {
+    create: schemaRouter.schemas.create.handler(async ({ input, context }) => {
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'schema.edit');
-        return await createWorkspaceEnum(context.db, workspace, input);
+        return await createWorkspaceSchema(context.db, workspace, input, authCtx.userId);
       } catch (error) {
         return toORPCError(error);
       }
     }),
-    update: enumRouter.enums.update.handler(async ({ input, context }) => {
+    update: schemaRouter.schemas.update.handler(async ({ input, context }) => {
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'schema.edit');
-        return await updateWorkspaceEnum(context.db, workspace, input.id, input);
+        return await updateWorkspaceSchema(context.db, workspace, input.id, input, authCtx.userId);
       } catch (error) {
         return toORPCError(error);
       }
     }),
-    remove: enumRouter.enums.remove.handler(async ({ input, context }) => {
+    remove: schemaRouter.schemas.remove.handler(async ({ input, context }) => {
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'schema.edit');
-        return await deleteWorkspaceEnum(context.db, workspace, input.id);
+        return await deleteWorkspaceSchema(context.db, workspace, input.id, authCtx.userId);
       } catch (error) {
         return toORPCError(error);
       }
@@ -79,30 +79,30 @@ export const workspaceEnumORPCRouter = enumRouter.router({
   }
 });
 
-export const workspaceEnumOpenAPIHandler = new OpenAPIHandler(workspaceEnumORPCRouter);
+export const workspaceSchemaOpenAPIHandler = new OpenAPIHandler(workspaceSchemaORPCRouter);
 
-let generatedEnumOpenAPISpec: Promise<object> | null = null;
+let generatedSchemaOpenAPISpec: Promise<object> | null = null;
 
-export const getWorkspaceEnumOpenAPISpec = () => {
-  generatedEnumOpenAPISpec ??= new OpenAPIGenerator({
+export const getWorkspaceSchemaOpenAPISpec = () => {
+  generatedSchemaOpenAPISpec ??= new OpenAPIGenerator({
     schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(workspaceEnumContract, {
+  }).generate(workspaceSchemaContract, {
     info: {
-      title: 'Arch Register Enum POC API',
+      title: 'Arch Register Schema POC API',
       version: '1.0.0'
     },
     servers: [{ url: 'http://localhost:3010/api/poc-orpc' }]
   });
 
-  return generatedEnumOpenAPISpec;
+  return generatedSchemaOpenAPISpec;
 };
 
-export const createWorkspaceEnumOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getWorkspaceEnumOpenAPISpec()));
+export const createWorkspaceSchemaOpenAPISpecHandler = () =>
+  defineHandler(async () => Response.json(await getWorkspaceSchemaOpenAPISpec()));
 
-export const createWorkspaceEnumORPCHandler = (db: DatabaseAdapter) =>
+export const createWorkspaceSchemaORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
-    const result = await workspaceEnumOpenAPIHandler.handle(event.req, {
+    const result = await workspaceSchemaOpenAPIHandler.handle(event.req, {
       prefix: '/api/poc-orpc',
       context: {
         db,

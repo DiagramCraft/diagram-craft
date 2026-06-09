@@ -123,3 +123,16 @@ export {
   deleteEnumRequestSchema,
   deleteEnumResponseSchema,
 } from './enumContract.js';
+
+export {
+  workspaceSchemaContract,
+  entitySchemaSchema,
+  schemaFieldInputSchema,
+  schemaFieldResponseSchema,
+  createSchemaRequestSchema,
+  updateSchemaRequestSchema,
+  getSchemaRequestSchema,
+  listSchemasRequestSchema,
+  deleteSchemaRequestSchema,
+  deleteSchemaResponseSchema,
+} from './schemaContract.js';
