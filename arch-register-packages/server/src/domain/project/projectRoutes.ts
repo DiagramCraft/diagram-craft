@@ -18,6 +18,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { toApiProject, toApiProjectFile, toApiProjectDetail } from './projectHelpers';
 import type { FileTree } from '@arch-register/api-types';
 import { generateSvgPreview } from '../diagram/svgPreviewGenerator';
+import { generateAccurateSvgPreview } from '../diagram/serverDiagramRenderer';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { getDiagramCommentCounts } from '../diagram/commentCounts';
 
@@ -218,15 +219,16 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           teamIds,
           timestamp
         );
-        if (authCtx)
-          requireCanCreateProject(
-            authCtx,
-            input.owner,
-            'You do not have permission to create a project for this owner team'
-          );
+        requireCanCreateProject(
+          authCtx,
+          input.owner,
+          'You do not have permission to create a project for this owner team'
+        );
+
         const row = await db.project.createProject(input);
 
         await logAudit(db, {
+          userId: authCtx?.userId,
           workspace,
           operation: 'create',
           entityType: 'project',
@@ -263,21 +265,20 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           teamIds,
           new Date()
         );
-        if (authCtx) {
+
+        requireProjectAction(
+          authCtx,
+          oldRow.owner,
+          'edit_project',
+          'You do not have permission to edit this project'
+        );
+        if (update.owner !== oldRow.owner) {
           requireProjectAction(
             authCtx,
-            oldRow.owner,
+            update.owner,
             'edit_project',
-            'You do not have permission to edit this project'
+            'You do not have permission to transfer this project to the target owner team'
           );
-          if (update.owner !== oldRow.owner) {
-            requireProjectAction(
-              authCtx,
-              update.owner,
-              'edit_project',
-              'You do not have permission to transfer this project to the target owner team'
-            );
-          }
         }
 
         const row = await db.project.updateProject(workspace, id, update.input);
@@ -286,6 +287,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 
         await logAudit(db, {
+          userId: authCtx.userId,
           workspace,
           operation: 'update',
           entityType: 'project',
@@ -312,17 +314,18 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-        if (authCtx)
-          requireProjectAction(
-            authCtx,
-            project.owner,
-            'delete_project',
-            'You do not have permission to delete this project'
-          );
+
+        requireProjectAction(
+          authCtx,
+          project.owner,
+          'delete_project',
+          'You do not have permission to delete this project'
+        );
 
         await db.project.deleteProject(workspace, id);
 
         await logAudit(db, {
+          userId: authCtx.userId,
           workspace,
           operation: 'delete',
           entityType: 'project',
@@ -419,13 +422,13 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-        if (authCtx)
-          requireProjectAction(
-            authCtx,
-            project.owner,
-            'edit_project',
-            'You do not have permission to modify this project'
-          );
+
+        requireProjectAction(
+          authCtx,
+          project.owner,
+          'edit_project',
+          'You do not have permission to modify this project'
+        );
 
         const existingFile = await db.project.getProjectFileByPath(workspace, id, filePath);
         const isUpdate = !!existingFile;
@@ -447,7 +450,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         await storage.write(workspace, id, row.id, content);
 
         try {
-          const previewSvg = generateSvgPreview(body as SerializedDiagramDocument);
+          const previewSvg =
+            (await generateAccurateSvgPreview(body as SerializedDiagramDocument)) ??
+            generateSvgPreview(body as SerializedDiagramDocument);
           await db.project.updateProjectFileDerivedData(
             workspace,
             id,
@@ -477,6 +482,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             extractEntityFields(row)
           );
           await logAudit(db, {
+            userId: authCtx.userId,
             workspace,
             operation: 'update',
             entityType: 'project_file',
@@ -487,6 +493,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           });
         } else {
           await logAudit(db, {
+            userId: authCtx.userId,
             workspace,
             operation: 'create',
             entityType: 'project_file',
@@ -516,13 +523,13 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-        if (authCtx)
-          requireProjectAction(
-            authCtx,
-            project.owner,
-            'edit_project',
-            'You do not have permission to modify this project'
-          );
+
+        requireProjectAction(
+          authCtx,
+          project.owner,
+          'edit_project',
+          'You do not have permission to modify this project'
+        );
 
         const file = await db.project.getProjectFileByPath(workspace, id, filePath);
         httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
@@ -530,6 +537,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         await db.project.deleteProjectFileByPath(workspace, id, filePath);
 
         await logAudit(db, {
+          userId: authCtx.userId,
           workspace,
           operation: 'delete',
           entityType: 'project_file',
@@ -568,13 +576,12 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
 
-        if (authCtx)
-          requireProjectAction(
-            authCtx,
-            project.owner,
-            'edit_project',
-            'You do not have permission to modify this project'
-          );
+        requireProjectAction(
+          authCtx,
+          project.owner,
+          'edit_project',
+          'You do not have permission to modify this project'
+        );
 
         const existingFile = await db.project.getProjectFileByPath(workspace, id, filePath);
         httpAssert.present(existingFile, { status: 404, message: `File '${filePath}' not found` });
@@ -632,7 +639,10 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         let previewSvg: string | null;
         try {
-          previewSvg = generateSvgPreview(fileData as SerializedDiagramDocument) ?? null;
+          previewSvg =
+            (await generateAccurateSvgPreview(fileData as SerializedDiagramDocument)) ??
+            generateSvgPreview(fileData as SerializedDiagramDocument) ??
+            null;
         } catch {
           previewSvg = null;
         }
@@ -655,6 +665,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         await storage.delete(workspace, id, existingFile.id).catch(() => {});
 
         await logAudit(db, {
+          userId: authCtx.userId,
           workspace,
           operation: 'update',
           entityType: 'project_file',
@@ -695,13 +706,14 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.project.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-        if (authCtx)
-          requireProjectAction(
-            authCtx,
-            project.owner,
-            'edit_project',
-            'You do not have permission to modify this project'
-          );
+
+        requireProjectAction(
+          authCtx,
+          project.owner,
+          'edit_project',
+          'You do not have permission to modify this project'
+        );
+
         const timestamp = new Date();
         const row = await db.project.createProjectFileIfAbsent({
           workspace,
@@ -721,6 +733,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         if (row) {
           await logAudit(db, {
+            userId: authCtx.userId,
             workspace,
             operation: 'create',
             entityType: 'project_file',

@@ -1,6 +1,7 @@
 /** @namespace */
 export const Browser = {
   isChrome: () => {
+    if (typeof navigator === 'undefined') return false;
     return (
       // @ts-expect-error There's no type for userAgentData
       !!navigator.userAgentData &&
@@ -9,9 +10,11 @@ export const Browser = {
     );
   },
   isSafari: () => {
+    if (typeof navigator === 'undefined') return false;
     return navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome');
   },
   isFirefox: () => {
+    if (typeof navigator === 'undefined') return false;
     return navigator.userAgent.includes('Firefox');
   }
 };
