@@ -5,11 +5,11 @@ import {
   isSchemaReferencedByEntities,
   resolveSchemaDefaultOwner
 } from './schemaRoutes';
-import type { EntitySchema } from '../../types';
+import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const baseSchema: EntitySchema = {
+const baseSchema: EntitySchemaRow = {
   id: 'schema-1',
   workspace: 'default',
   name: 'Component',

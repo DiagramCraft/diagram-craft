@@ -46,7 +46,11 @@ export type {
   CreateMessageInput
 } from '../domain/ai/db/aiDatabase';
 export type { AuditDatabase, CreateAuditLogInput } from '../domain/audit/db/auditDatabase';
-export type { AuthDatabase, CreateUserInput, UpdateUserInput } from '../domain/auth/db/authDatabase';
+export type {
+  AuthDatabase,
+  CreateUserInput,
+  UpdateUserInput
+} from '../domain/auth/db/authDatabase';
 export type {
   WatchDatabase,
   CreateUserWatchInput,
@@ -55,10 +59,10 @@ export type {
 export type {
   CatalogDatabase,
   ViewDatabase,
-  CreateSchemaInput,
-  UpdateSchemaInput,
-  CreateEnumInput,
-  UpdateEnumInput,
+  CreateEntitySchemaInput,
+  UpdateEntitySchemaInput,
+  CreateWorkspaceEnumInput,
+  UpdateWorkspaceEnumInput,
   CreateEntityInput,
   UpdateEntityInput,
   CreateEntityGrantInput,
@@ -78,6 +82,6 @@ export type {
   UpdateWorkspaceInput
 } from '../domain/workspace/db/workspaceDatabase';
 
-// Legacy names for backward compatibility during transition if needed, 
-// but we plan to update all usages. 
+// Legacy names for backward compatibility during transition if needed,
+// but we plan to update all usages.
 // For now, let's not add legacy names to keep it clean.

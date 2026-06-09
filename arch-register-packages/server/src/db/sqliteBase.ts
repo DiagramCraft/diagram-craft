@@ -4,21 +4,23 @@ import type {
   AiMessage,
   AuditLogEntry,
   Entity,
-  EntityGrant,
   EntityLink,
-  EntitySchema,
   GlobalRoleAssignment,
   Project,
   ProjectFile,
   User,
   UserNotification,
-  UserPinnedEntity,
   UserWatch,
-  WorkspaceAiConfig,
-  WorkspaceEnum,
-  SavedView
+  WorkspaceAiConfig
 } from '../types';
-import type { EnrichedEntity } from '../domain/catalog/db/catalogDatabase';
+import type {
+  EnrichedEntity,
+  EntityGrantRow,
+  EntitySchemaRow,
+  SavedViewRow,
+  UserPinnedEntityRow,
+  WorkspaceEnumRow
+} from '../domain/catalog/db/catalogDatabase';
 import type { EnrichedProject } from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
@@ -84,7 +86,7 @@ export const sqliteMappers = {
     description: String(row['description']),
     created_at: toDate(row['created_at'])
   }),
-  schema: (row: Record<string, unknown>): EntitySchema => ({
+  schema: (row: Record<string, unknown>): EntitySchemaRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
@@ -96,7 +98,7 @@ export const sqliteMappers = {
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
-  workspaceEnum: (row: Record<string, unknown>): WorkspaceEnum => ({
+  workspaceEnum: (row: Record<string, unknown>): WorkspaceEnumRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
@@ -214,7 +216,7 @@ export const sqliteMappers = {
     entity_id: String(row['entity_id']),
     created_at: toDate(row['created_at'])
   }),
-  userPinnedEntity: (row: Record<string, unknown>): UserPinnedEntity => ({
+  userPinnedEntity: (row: Record<string, unknown>): UserPinnedEntityRow => ({
     user_id: String(row['user_id']),
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
@@ -273,22 +275,22 @@ export const sqliteMappers = {
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
-  entityGrant: (row: Record<string, unknown>): EntityGrant => ({
+  entityGrant: (row: Record<string, unknown>): EntityGrantRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
-    principal_type: String(row['principal_type']) as EntityGrant['principal_type'],
+    principal_type: String(row['principal_type']) as EntityGrantRow['principal_type'],
     principal_id: String(row['principal_id']),
-    role: String(row['role']) as EntityGrant['role'],
-    applies_to: String(row['applies_to']) as EntityGrant['applies_to'],
+    role: String(row['role']) as EntityGrantRow['role'],
+    applies_to: String(row['applies_to']) as EntityGrantRow['applies_to'],
     created_at: toDate(row['created_at'])
   }),
-  savedView: (row: Record<string, unknown>): SavedView => ({
+  savedView: (row: Record<string, unknown>): SavedViewRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
     description: row['description'] == null ? null : String(row['description']),
-    view_mode: String(row['view_mode']) as SavedView['view_mode'],
+    view_mode: String(row['view_mode']) as SavedViewRow['view_mode'],
     filters: parseJson(row['filters'], {}),
     config: parseJson(row['config'], null),
     created_at: toDate(row['created_at']),

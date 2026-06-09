@@ -8,16 +8,16 @@ import type {
 } from '../../db/database';
 import { createLogger } from '../../utils/logger';
 import { parseCsv, validateCsvData, csvRowToEntity } from '../../utils/csvImport';
-import {
-  decodeRefs,
-  type Entity,
-  type EntityLink,
-  type EntitySchema as InternalEntitySchema,
-  type SchemaField
-} from '../../types';
+import { decodeRefs, type Entity, type EntityLink, type SchemaField } from '../../types';
+import { type EntitySchemaRow as InternalEntitySchema } from './db/catalogDatabase';
 import type { EnrichedEntity } from './db/catalogDatabase';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
-import { computeChanges, extractEntityFields, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
+import {
+  computeChanges,
+  extractEntityFields,
+  flattenEntityAuditFields,
+  logAudit
+} from '../audit/db/auditLogging';
 import { createEntityWithAudit, updateEntityWithAudit } from './entityMutations';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { formatArrayForCsv, generateCsv } from '../../utils/csv';
@@ -162,7 +162,12 @@ const relationFields = (fields: SchemaField[]) =>
 // Extracts a string ID from either a plain string or a ForeignKey {id, name} object.
 const extractId = (value: unknown): string | null => {
   if (typeof value === 'string') return value;
-  if (value != null && typeof value === 'object' && 'id' in value && typeof (value as Record<string, unknown>)['id'] === 'string') {
+  if (
+    value != null &&
+    typeof value === 'object' &&
+    'id' in value &&
+    typeof (value as Record<string, unknown>)['id'] === 'string'
+  ) {
     return (value as Record<string, unknown>)['id'] as string;
   }
   return null;
@@ -212,7 +217,8 @@ export const parseEntityMutationPayload = (
     requestedOwner: extractId(_owner),
     requestedLifecycle: extractId(_lifecycle),
     requestedTargetLifecycle: extractId(_targetLifecycle),
-    requestedTargetLifecycleDate: typeof _targetLifecycleDate === 'string' ? _targetLifecycleDate : null,
+    requestedTargetLifecycleDate:
+      typeof _targetLifecycleDate === 'string' ? _targetLifecycleDate : null,
     tags: Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [],
     links: Array.isArray(_links) ? (_links as EntityLink[]) : [],
     visibilityMode:
@@ -394,9 +400,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         };
 
         const ownerLabelMap = new Map(
-          entities
-            .filter(e => e.owner != null)
-            .map(e => [e.owner!, e.owner_name ?? e.owner!])
+          entities.filter(e => e.owner != null).map(e => [e.owner!, e.owner_name ?? e.owner!])
         );
         const lifecycleLabelMap = new Map(
           entities
@@ -462,7 +466,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
         );
         const matchIds = new Set(matchRows.map(r => r.id));
         const entityById = new Map(allEntities.map(entity => [entity.id, entity]));
-        const allIncluded = new Map<string, EnrichedEntity>(matchRows.map(entity => [entity.id, entity]));
+        const allIncluded = new Map<string, EnrichedEntity>(
+          matchRows.map(entity => [entity.id, entity])
+        );
         const edges: Array<{ childId: string; parentId: string }> = [];
 
         let currentLevel = [...matchRows];
@@ -1259,23 +1265,23 @@ export function createDataRoutes(db: DatabaseAdapter) {
             displayName: auditUser.display_name
           },
           entity: {
-          id: randomUUID(),
-          workspace,
-          slug: payload.slug,
-          namespace: payload.namespace,
-          name: payload.name,
-          description: payload.description,
-          owner,
-          lifecycle,
-          target_lifecycle,
-          target_lifecycle_date,
-          tags: payload.tags,
-          links: payload.links,
-          schema_id: payload.schemaId,
-          data: payload.fields,
-          visibility_mode: payload.visibilityMode,
-          created_at: timestamp,
-          updated_at: timestamp
+            id: randomUUID(),
+            workspace,
+            slug: payload.slug,
+            namespace: payload.namespace,
+            name: payload.name,
+            description: payload.description,
+            owner,
+            lifecycle,
+            target_lifecycle,
+            target_lifecycle_date,
+            tags: payload.tags,
+            links: payload.links,
+            schema_id: payload.schemaId,
+            data: payload.fields,
+            visibility_mode: payload.visibilityMode,
+            created_at: timestamp,
+            updated_at: timestamp
           }
         });
 

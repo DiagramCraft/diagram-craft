@@ -1,13 +1,20 @@
 import { H3, defineHandler } from 'h3';
 import { newid } from '@diagram-craft/utils/id';
-import type { DatabaseAdapter, CreateEnumInput, UpdateEnumInput } from '../../db/database';
+import type {
+  DatabaseAdapter,
+  CreateWorkspaceEnumInput,
+  UpdateWorkspaceEnumInput
+} from '../../db/database';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { handleDbError } from '../../utils/http';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiEnum } from './schemaHelpers';
-import type { EntitySchema, WorkspaceEnum } from '../../types';
+import {
+  EntitySchemaRow,
+  WorkspaceEnumRow
+} from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 const BASE = '/api/:workspace/enums';
 
@@ -17,7 +24,7 @@ const handleError = (error: unknown, fallback: string): never =>
     foreign: 'Cannot delete enum: it is still referenced by a schema field'
   });
 
-type EnumOption = WorkspaceEnum['options'][number];
+type EnumOption = WorkspaceEnumRow['options'][number];
 
 const toEnumOptions = (value: unknown, fallback: EnumOption[]) =>
   Array.isArray(value) ? (value as EnumOption[]) : fallback;
@@ -29,7 +36,7 @@ export const buildCreateEnumInput = (
   workspace: string,
   body: Record<string, unknown>,
   timestamp: Date
-): CreateEnumInput => {
+): CreateWorkspaceEnumInput => {
   const { name, options, sort_order } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
@@ -46,9 +53,9 @@ export const buildCreateEnumInput = (
 
 export const buildUpdateEnumInput = (
   body: Record<string, unknown>,
-  existing: WorkspaceEnum,
+  existing: WorkspaceEnumRow,
   updatedAt: Date
-): UpdateEnumInput => {
+): UpdateWorkspaceEnumInput => {
   const { name, options, sort_order } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
@@ -60,7 +67,7 @@ export const buildUpdateEnumInput = (
   };
 };
 
-export const isEnumReferencedBySchemas = (schemas: EntitySchema[], enumId: string) =>
+export const isEnumReferencedBySchemas = (schemas: EntitySchemaRow[], enumId: string) =>
   schemas.some(schema => schema.fields.some(f => f.type === 'select' && f.enumId === enumId));
 
 export function createEnumRoutes(db: DatabaseAdapter) {

@@ -1,15 +1,14 @@
-import type {
-  Entity,
-  DiagramCraftEntityResponse,
-  EntitySchema,
-  ReferenceField,
-  SchemaField,
-  WorkspaceEnum
-} from '../../types';
+import type { Entity, DiagramCraftEntityResponse, ReferenceField, SchemaField } from '../../types';
+import {
+  EntitySchemaRow,
+  WorkspaceEnumRow
+} from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 export type DiagramCraftSchemaField =
   | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' }>
-  | (Extract<SchemaField, { type: 'select' }> & { options: Array<{ value: string; label: string }> })
+  | (Extract<SchemaField, { type: 'select' }> & {
+      options: Array<{ value: string; label: string }>;
+    })
   | (Omit<ReferenceField, 'type'> & { type: 'reference' | 'containment' });
 
 export type DiagramCraftSchema = {
@@ -25,7 +24,7 @@ const DIAGRAM_CRAFT_METADATA_FIELDS: DiagramCraftSchemaField[] = [
 
 export const toDiagramCraftField = (
   field: SchemaField,
-  enums: WorkspaceEnum[]
+  enums: WorkspaceEnumRow[]
 ): DiagramCraftSchemaField | undefined => {
   switch (field.type) {
     case 'text':
@@ -49,8 +48,8 @@ export const toDiagramCraftField = (
 };
 
 export const toDiagramCraftSchema = (
-  schema: EntitySchema,
-  enums: WorkspaceEnum[]
+  schema: EntitySchemaRow,
+  enums: WorkspaceEnumRow[]
 ): DiagramCraftSchema => ({
   id: schema.id,
   name: schema.name,

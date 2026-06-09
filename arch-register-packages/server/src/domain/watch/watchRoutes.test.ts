@@ -1,11 +1,12 @@
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import { describe, expect, it } from 'vitest';
-import type { Entity, EntitySchema, UserNotification } from '../../types';
+import type { Entity, UserNotification } from '../../types';
 import { canAccessNotification } from './watchRoutes';
+import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 const now = new Date('2026-06-09T10:00:00.000Z');
 
-const schema: EntitySchema = {
+const schema: EntitySchemaRow = {
   id: 'application',
   workspace: 'ws-1',
   name: 'Application',

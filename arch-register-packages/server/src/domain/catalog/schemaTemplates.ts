@@ -7,7 +7,7 @@ import {
   AR_COLOR_RED
 } from '@arch-register/api-types/colors';
 import { randomUUID } from 'node:crypto';
-import type { CreateSchemaInput } from '../../db/database';
+import type { CreateEntitySchemaInput } from '../../db/database';
 import type { SchemaField } from '../../types';
 
 type SymbolicField =
@@ -749,7 +749,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
 export const instantiateTemplate = (
   workspaceId: string,
   templateId: string
-): CreateSchemaInput[] => {
+): CreateEntitySchemaInput[] => {
   const template = SCHEMA_TEMPLATES.find(t => t.id === templateId);
   if (!template) return [];
 

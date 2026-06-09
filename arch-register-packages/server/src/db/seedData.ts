@@ -1,13 +1,4 @@
-import type {
-  AuditOperation,
-  Entity,
-  EntitySchema,
-  GlobalRoleAssignment,
-  Project,
-  ProjectFile,
-  WorkspaceEnum,
-  SavedView
-} from '../types';
+import type { AuditOperation, Entity, GlobalRoleAssignment, Project, ProjectFile } from '../types';
 import {
   AR_COLOR_GREEN,
   AR_COLOR_BLUE,
@@ -27,6 +18,11 @@ import {
   WorkspaceOwnerRow,
   WorkspaceLifecycleStateRow
 } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
+import {
+  EntitySchemaRow,
+  SavedViewRow,
+  WorkspaceEnumRow
+} from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -368,7 +364,7 @@ export const seedWorkspaceMembers: WorkspaceMemberRow[] = [
   { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now }
 ];
 
-export const seedEnums: WorkspaceEnum[] = [
+export const seedEnums: WorkspaceEnumRow[] = [
   {
     id: '00000000-0000-0000-0000-e00000000001',
     workspace: WORKSPACE_ID,
@@ -385,7 +381,7 @@ export const seedEnums: WorkspaceEnum[] = [
   }
 ];
 
-export const seedSchemas: EntitySchema[] = [
+export const seedSchemas: EntitySchemaRow[] = [
   {
     id: '00000000-0000-0000-0000-000000000001',
     workspace: WORKSPACE_ID,
@@ -736,7 +732,7 @@ export const seedProjects: Project[] = [
   }
 ];
 
-export const seedSavedViews: SavedView[] = [
+export const seedSavedViews: SavedViewRow[] = [
   {
     id: '00000000-0000-0000-0020-000000000001',
     workspace: WORKSPACE_ID,

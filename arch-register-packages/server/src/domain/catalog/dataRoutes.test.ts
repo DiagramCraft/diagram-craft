@@ -7,12 +7,16 @@ import {
   parseEntityMutationPayload,
   resolveCreateOwner
 } from './dataRoutes';
-import type { EntitySchema } from '../../types';
-import type { EnrichedEntity } from './db/catalogDatabase';
+import type { EnrichedEntity, EntitySchemaRow } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const enriched = (e: Omit<EnrichedEntity, 'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'>): EnrichedEntity => ({
+const enriched = (
+  e: Omit<
+    EnrichedEntity,
+    'owner_name' | 'lifecycle_label' | 'target_lifecycle_label' | 'schema_name'
+  >
+): EnrichedEntity => ({
   ...e,
   owner_name: null,
   lifecycle_label: null,
@@ -20,7 +24,7 @@ const enriched = (e: Omit<EnrichedEntity, 'owner_name' | 'lifecycle_label' | 'ta
   schema_name: ''
 });
 
-const domainSchema: EntitySchema = {
+const domainSchema: EntitySchemaRow = {
   id: 'schema-domain',
   workspace: 'default',
   name: 'Domain',
@@ -33,7 +37,7 @@ const domainSchema: EntitySchema = {
   updated_at: now
 };
 
-const systemSchema: EntitySchema = {
+const systemSchema: EntitySchemaRow = {
   id: 'schema-system',
   workspace: 'default',
   name: 'System',
@@ -55,7 +59,7 @@ const systemSchema: EntitySchema = {
   updated_at: now
 };
 
-const componentSchema: EntitySchema = {
+const componentSchema: EntitySchemaRow = {
   id: 'schema-component',
   workspace: 'default',
   name: 'Component',

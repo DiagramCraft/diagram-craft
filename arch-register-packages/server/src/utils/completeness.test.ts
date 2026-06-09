@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Entity, EntitySchema } from '../types';
+import type { Entity } from '../types';
 import { computeEntityCompleteness } from './completeness';
+import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 
@@ -30,7 +31,7 @@ describe('computeEntityCompleteness', () => {
       updated_at: now
     };
 
-    const schema: EntitySchema = {
+    const schema: EntitySchemaRow = {
       id: 'schema-1',
       workspace: 'ws-1',
       name: 'Application',

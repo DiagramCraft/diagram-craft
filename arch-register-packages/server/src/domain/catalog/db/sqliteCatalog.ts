@@ -2,11 +2,11 @@ import type {
   CatalogDatabase,
   CreateEntityGrantInput,
   CreateEntityInput,
-  CreateEnumInput,
-  CreateSchemaInput,
+  CreateWorkspaceEnumInput,
+  CreateEntitySchemaInput,
   UpdateEntityInput,
-  UpdateEnumInput,
-  UpdateSchemaInput
+  UpdateWorkspaceEnumInput,
+  UpdateEntitySchemaInput
 } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
@@ -45,7 +45,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async createSchema(input: CreateSchemaInput) {
+  async createSchema(input: CreateEntitySchemaInput) {
     this.run(
       'INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -64,7 +64,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return (await this.getSchema(input.workspace, input.id))!;
   }
 
-  async updateSchema(workspace: string, id: string, input: UpdateSchemaInput) {
+  async updateSchema(workspace: string, id: string, input: UpdateEntitySchemaInput) {
     this.run(
       'UPDATE entity_schema SET name = ?, description = ?, fields = ?, color = ?, icon = ?, default_owner = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
@@ -105,7 +105,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async createEnum(input: CreateEnumInput) {
+  async createEnum(input: CreateWorkspaceEnumInput) {
     this.run(
       'INSERT INTO workspace_enum (id, workspace, name, options, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
@@ -121,7 +121,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return (await this.getEnum(input.workspace, input.id))!;
   }
 
-  async updateEnum(workspace: string, id: string, input: UpdateEnumInput) {
+  async updateEnum(workspace: string, id: string, input: UpdateWorkspaceEnumInput) {
     this.run(
       'UPDATE workspace_enum SET name = ?, options = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
@@ -281,13 +281,11 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       'INSERT OR IGNORE INTO user_pinned_entity (user_id, workspace, entity_id, created_at) VALUES (?, ?, ?, ?)',
       [input.user_id, input.workspace, input.entity_id, input.created_at.toISOString()]
     );
-    return (
-      await this.get(
-        'SELECT * FROM user_pinned_entity WHERE user_id = ? AND workspace = ? AND entity_id = ?',
-        [input.user_id, input.workspace, input.entity_id],
-        sqliteMappers.userPinnedEntity
-      )
-    )!;
+    return (await this.get(
+      'SELECT * FROM user_pinned_entity WHERE user_id = ? AND workspace = ? AND entity_id = ?',
+      [input.user_id, input.workspace, input.entity_id],
+      sqliteMappers.userPinnedEntity
+    ))!;
   }
 
   async deletePinnedEntity(userId: string, workspace: string, entityId: string) {

@@ -10,45 +10,6 @@ export type {
   ContainmentField,
   SchemaField
 } from '@arch-register/api-types';
-import type { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-types/views';
-import type { SchemaField } from '@arch-register/api-types/schemas';
-
-export type EntitySchema = {
-  id: string;
-  workspace: string;
-  name: string;
-  description: string;
-  fields: SchemaField[];
-  color: string | null;
-  icon: string | null;
-  default_owner: string | null;
-  created_at: Date;
-  updated_at: Date;
-};
-
-export type WorkspaceEnum = {
-  id: string;
-  workspace: string;
-  name: string;
-  options: Array<{ value: string; label: string }>;
-  sort_order: number;
-  created_at: Date;
-  updated_at: Date;
-};
-
-export type SavedView = {
-  id: string;
-  workspace: string;
-  name: string;
-  description: string | null;
-  view_mode: BrowserView;
-  filters: EntityFilters;
-  config: {
-    radar?: RadarViewConfig;
-  } | null;
-  created_at: Date;
-  updated_at: Date;
-};
 
 export type EntityLink = {
   url: string;
@@ -163,13 +124,6 @@ export type UserWatch = {
   created_at: Date;
 };
 
-export type UserPinnedEntity = {
-  user_id: string;
-  workspace: string;
-  entity_id: string;
-  created_at: Date;
-};
-
 export type UserNotification = {
   id: string;
   user_id: string;
@@ -235,18 +189,6 @@ export type GlobalRoleAssignment = {
 };
 
 export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
-export type EntityGrantScope = 'self' | 'subtree';
-
-export type EntityGrant = {
-  id: string;
-  workspace: string;
-  entity_id: string;
-  principal_type: 'user' | 'team';
-  principal_id: string;
-  role: EntityRole;
-  applies_to: EntityGrantScope;
-  created_at: Date;
-};
 
 export type AiProvider = 'openrouter' | 'openai';
 

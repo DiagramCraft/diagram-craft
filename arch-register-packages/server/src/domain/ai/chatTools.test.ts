@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAiChatTools } from './chatTools';
 import type { DatabaseAdapter } from '../../db/database';
-import type { AuditLogEntry, Entity, EntitySchema } from '../../types';
+import type { AuditLogEntry, Entity } from '../../types';
+import { EntitySchemaRow } from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
-const schemas: EntitySchema[] = [
+const schemas: EntitySchemaRow[] = [
   {
     id: 'application',
     workspace: 'ws-1',
@@ -171,12 +172,11 @@ const db = {
     })
   },
   watch: {
-    createNotificationsFromAudit: vi.fn(async (input: {
-      changedByDisplayName: string;
-      auditLog: AuditLogEntry;
-    }) => {
-      createdNotifications.push(input);
-    })
+    createNotificationsFromAudit: vi.fn(
+      async (input: { changedByDisplayName: string; auditLog: AuditLogEntry }) => {
+        createdNotifications.push(input);
+      }
+    )
   }
 } as unknown as DatabaseAdapter;
 

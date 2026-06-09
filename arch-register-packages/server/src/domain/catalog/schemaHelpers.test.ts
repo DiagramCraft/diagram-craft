@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { EntitySchema, WorkspaceEnum } from '../../types';
 import { toApiEnum, toApiSchema } from './schemaHelpers';
+import {
+  EntitySchemaRow,
+  WorkspaceEnumRow
+} from '@arch-register/server/domain/catalog/db/catalogDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -9,7 +12,7 @@ const nowIso = '2025-06-01T12:00:00.000Z';
 
 describe('toApiEnum', () => {
   it('maps fields and serializes dates to ISO strings', () => {
-    const e: WorkspaceEnum = {
+    const e: WorkspaceEnumRow = {
       id: 'enum-1',
       workspace: 'ws-1',
       name: 'Status',
@@ -29,7 +32,7 @@ describe('toApiEnum', () => {
 // ── toApiSchema ───────────────────────────────────────────────
 
 describe('toApiSchema', () => {
-  const baseEnum: WorkspaceEnum = {
+  const baseEnum: WorkspaceEnumRow = {
     id: 'enum-env',
     workspace: 'ws-1',
     name: 'Env',
@@ -39,7 +42,7 @@ describe('toApiSchema', () => {
     updated_at: now
   };
 
-  const schema: EntitySchema = {
+  const schema: EntitySchemaRow = {
     id: 'schema-1',
     workspace: 'ws-1',
     name: 'Application',

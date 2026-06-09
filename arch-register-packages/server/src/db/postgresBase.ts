@@ -33,19 +33,19 @@ export type PostgresRowTypes = {
   //owner: WorkspaceOwner;
   //teamMembership: TeamMembership;
   //workspaceRoleDefinition: WorkspaceRoleDefinition;
-
   //schema: EntitySchema;
   //workspaceEnum: WorkspaceEnum;
+  //entityGrant: EntityGrant;
+  //userPinnedEntity: UserPinnedEntity;
+  //savedView: SavedView;
+
   //entity: Entity;
   //enrichedEntity: EnrichedEntity;
   //enrichedProject: EnrichedProject;
-  //entityGrant: EntityGrant;
-  //savedView: SavedView;
   //project: Project;
   //projectFile: ProjectFile;
   //auditLog: AuditLogEntry;
   //userWatch: UserWatch;
-  //userPinnedEntity: UserPinnedEntity;
   //userNotification: UserNotification;
   //user: User;
   //globalRoleAssignment: GlobalRoleAssignment;
