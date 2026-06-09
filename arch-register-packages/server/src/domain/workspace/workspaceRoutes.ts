@@ -2,7 +2,6 @@ import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/a
 import { randomUUID } from 'node:crypto';
 import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
-import type { Workspace } from '../../types';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError, slugify } from '../../utils/http';
 import type { StorageAdapter } from '../../storage/storage';
@@ -11,6 +10,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiWorkspace } from './workspaceHelpers';
 import { SCHEMA_TEMPLATES, instantiateTemplate } from '../catalog/schemaTemplates';
+import { WorkspaceRow } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
 
 const BASE = '/api/workspaces';
 
@@ -111,7 +111,7 @@ export const buildWorkspaceCreateInput = (body: Record<string, unknown>, created
 
 export const buildWorkspaceUpdateInput = (
   body: Record<string, unknown>,
-  current: Workspace,
+  current: WorkspaceRow,
   updatedAt: Date
 ) => {
   const { name, description, url_slug, short_code: sc, color } = body;
@@ -210,10 +210,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
               row.id,
               buildDefaultLifecycleStates(row.id, timestamp)
             );
-            await db.workspace.replaceTeams(
-              row.id,
-              buildDefaultWorkspaceTeams(row.id, timestamp)
-            );
+            await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
           }
 
           if (includeSet.has('schemas')) {
@@ -245,10 +242,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
             buildDefaultLifecycleStates(row.id, timestamp)
           );
 
-          await db.workspace.replaceTeams(
-            row.id,
-            buildDefaultWorkspaceTeams(row.id, timestamp)
-          );
+          await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
 
           if (typeof template === 'string' && template && template !== 'blank') {
             const schemas = instantiateTemplate(row.id, template);

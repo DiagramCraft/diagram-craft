@@ -1,22 +1,19 @@
-import type {
+import {
   CreateWorkspaceInput,
+  CreateWorkspaceLifecycleState,
   UpdateWorkspaceInput,
   WorkspaceDatabase
 } from './workspaceDatabase';
 import type {
   TeamMembership,
   WorkspaceMember,
-  WorkspaceLifecycleState,
   WorkspaceOwner,
   WorkspaceRole,
   WorkspaceRoleDefinition
 } from '../../../types';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
-export class SqliteWorkspaceDatabase
-  extends SqliteDatabaseBase
-  implements WorkspaceDatabase
-{
+export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements WorkspaceDatabase {
   async listWorkspaces() {
     return this.all('SELECT * FROM workspace ORDER BY name', [], sqliteMappers.workspace);
   }
@@ -93,7 +90,7 @@ export class SqliteWorkspaceDatabase
     );
   }
 
-  async replaceLifecycleStates(workspace: string, states: WorkspaceLifecycleState[]) {
+  async replaceLifecycleStates(workspace: string, states: CreateWorkspaceLifecycleState[]) {
     const tx = this.db.transaction(() => {
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspace]);
       for (const state of states) {

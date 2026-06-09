@@ -13,17 +13,6 @@ export type {
 import type { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-types/views';
 import type { SchemaField } from '@arch-register/api-types/schemas';
 
-export type Workspace = {
-  id: string;
-  name: string;
-  url_slug: string;
-  short_code: string;
-  color: string;
-  description: string;
-  created_at: Date;
-  updated_at: Date;
-};
-
 export type EntitySchema = {
   id: string;
   workspace: string;
@@ -59,15 +48,6 @@ export type SavedView = {
   } | null;
   created_at: Date;
   updated_at: Date;
-};
-
-export type WorkspaceLifecycleState = {
-  id: string;
-  workspace: string;
-  label: string;
-  color: string;
-  sort_order: number;
-  created_at: Date;
 };
 
 export type WorkspaceOwner = {

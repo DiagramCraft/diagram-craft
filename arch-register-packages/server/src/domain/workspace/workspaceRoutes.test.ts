@@ -7,11 +7,11 @@ import {
   normalizeReplicationInclude,
   shortCode
 } from './workspaceRoutes';
-import type { Workspace } from '../../types';
+import { WorkspaceRow } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
-const baseWorkspace: Workspace = {
+const baseWorkspace: WorkspaceRow = {
   id: 'default',
   name: 'Default Workspace',
   url_slug: 'default',

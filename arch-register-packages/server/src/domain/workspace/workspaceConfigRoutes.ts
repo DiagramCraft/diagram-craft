@@ -13,12 +13,11 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type {
   TeamMembership,
   TeamRole,
-  WorkspaceLifecycleState,
   WorkspaceOwner,
   WorkspaceRoleCapability
 } from '../../types';
 import { httpAssert } from '../../utils/httpAssert';
-
+import { WorkspaceLifecycleStateRow } from './db/workspaceDatabase';
 const BASE = '/api/:workspace/config';
 
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
@@ -85,7 +84,7 @@ export const buildLifecycleStateInputs = (
   workspace: string,
   body: unknown,
   now: Date
-): WorkspaceLifecycleState[] => {
+): WorkspaceLifecycleStateRow[] => {
   httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
   const states = body as Array<{
@@ -512,12 +511,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         message: 'role must reference an existing workspace role'
       });
 
-      const member = await db.workspace.setWorkspaceMemberRole(
-        workspace,
-        userId,
-        role,
-        new Date()
-      );
+      const member = await db.workspace.setWorkspaceMemberRole(workspace, userId, role, new Date());
       return member;
     })
   );

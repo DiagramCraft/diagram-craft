@@ -15,10 +15,8 @@ import type {
   UserNotification,
   UserPinnedEntity,
   UserWatch,
-  Workspace,
   WorkspaceAiConfig,
   WorkspaceEnum,
-  WorkspaceLifecycleState,
   WorkspaceRoleDefinition,
   WorkspaceOwner,
   SavedView
@@ -27,6 +25,10 @@ import type { EnrichedEntity } from '../domain/catalog/db/catalogDatabase';
 import type { EnrichedProject } from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
+import {
+  WorkspaceLifecycleStateRow,
+  WorkspaceRow
+} from '@arch-register/server/domain/workspace/db/workspaceDatabase';
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
   if (typeof value !== 'string' || value === '') return fallback;
@@ -55,7 +57,7 @@ export const normalizeSqliteError = (error: unknown): never => {
 };
 
 export const sqliteMappers = {
-  workspace: (row: Record<string, unknown>): Workspace => ({
+  workspace: (row: Record<string, unknown>): WorkspaceRow => ({
     id: String(row['id']),
     name: String(row['name']),
     url_slug: String(row['url_slug']),
@@ -65,7 +67,7 @@ export const sqliteMappers = {
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
-  lifecycleState: (row: Record<string, unknown>): WorkspaceLifecycleState => ({
+  lifecycleState: (row: Record<string, unknown>): WorkspaceLifecycleStateRow => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     label: String(row['label']),
@@ -113,7 +115,8 @@ export const sqliteMappers = {
     owner: row['owner'] == null ? null : String(row['owner']),
     lifecycle: row['lifecycle'] == null ? null : String(row['lifecycle']),
     target_lifecycle: row['target_lifecycle'] == null ? null : String(row['target_lifecycle']),
-    target_lifecycle_date: row['target_lifecycle_date'] == null ? null : String(row['target_lifecycle_date']),
+    target_lifecycle_date:
+      row['target_lifecycle_date'] == null ? null : String(row['target_lifecycle_date']),
     tags: parseJson<string[]>(row['tags'], []),
     links: parseJson<EntityLink[]>(row['links'], []),
     schema_id: String(row['schema_id']),
@@ -135,7 +138,8 @@ export const sqliteMappers = {
     owner: row['owner'] == null ? null : String(row['owner']),
     lifecycle: row['lifecycle'] == null ? null : String(row['lifecycle']),
     target_lifecycle: row['target_lifecycle'] == null ? null : String(row['target_lifecycle']),
-    target_lifecycle_date: row['target_lifecycle_date'] == null ? null : String(row['target_lifecycle_date']),
+    target_lifecycle_date:
+      row['target_lifecycle_date'] == null ? null : String(row['target_lifecycle_date']),
     tags: parseJson<string[]>(row['tags'], []),
     links: parseJson<EntityLink[]>(row['links'], []),
     schema_id: String(row['schema_id']),
@@ -148,7 +152,8 @@ export const sqliteMappers = {
     updated_at: toDate(row['updated_at']),
     owner_name: row['owner_name'] == null ? null : String(row['owner_name']),
     lifecycle_label: row['lifecycle_label'] == null ? null : String(row['lifecycle_label']),
-    target_lifecycle_label: row['target_lifecycle_label'] == null ? null : String(row['target_lifecycle_label']),
+    target_lifecycle_label:
+      row['target_lifecycle_label'] == null ? null : String(row['target_lifecycle_label']),
     schema_name: String(row['schema_name'])
   }),
   project: (row: Record<string, unknown>): Project => ({

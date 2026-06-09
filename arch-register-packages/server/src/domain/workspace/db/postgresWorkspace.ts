@@ -1,13 +1,14 @@
-import type {
+import {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
-  WorkspaceDatabase
+  WorkspaceRow,
+  WorkspaceLifecycleStateRow,
+  WorkspaceDatabase,
+  CreateWorkspaceLifecycleState
 } from './workspaceDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import type {
   TeamMembership,
-  Workspace,
-  WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
   WorkspaceRoleDefinition
@@ -15,11 +16,11 @@ import type {
 
 export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements WorkspaceDatabase {
   async listWorkspaces() {
-    return await this.sql<Workspace[]>`SELECT * FROM workspace ORDER BY name`;
+    return await this.sql<WorkspaceRow[]>`SELECT *FROM workspace ORDER BY name`;
   }
 
   async getWorkspace(id: string) {
-    const [row] = await this.sql<Workspace[]>`
+    const [row] = await this.sql<WorkspaceRow[]>`
       SELECT * FROM workspace WHERE id = ${id}
     `;
     return row ?? null;
@@ -27,7 +28,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async createWorkspace(input: CreateWorkspaceInput) {
     try {
-      const [row] = await this.sql<Workspace[]>`
+      const [row] = await this.sql<WorkspaceRow[]>`
         INSERT INTO workspace (id, name, url_slug, short_code, color, description, created_at, updated_at)
         VALUES (${input.id}, ${input.name}, ${input.url_slug}, ${input.short_code}, ${input.color}, ${input.description}, ${input.created_at}, ${input.updated_at})
         RETURNING *
@@ -40,7 +41,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async updateWorkspace(id: string, input: UpdateWorkspaceInput) {
     try {
-      const [row] = await this.sql<Workspace[]>`
+      const [row] = await this.sql<WorkspaceRow[]>`
         UPDATE workspace
         SET name = ${input.name},
             url_slug = ${input.url_slug},
@@ -59,7 +60,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async deleteWorkspace(id: string) {
     try {
-      const [workspace] = await this.sql<Workspace[]>`
+      const [workspace] = await this.sql<WorkspaceRow[]>`
         SELECT * FROM workspace WHERE id = ${id}
       `;
       if (!workspace) return { workspace: null, projectIds: [] };
@@ -90,7 +91,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listLifecycleStates(workspace: string) {
-    return await this.sql<WorkspaceLifecycleState[]>`
+    return await this.sql<WorkspaceLifecycleStateRow[]>`
       SELECT id, workspace, label, color, sort_order, created_at
       FROM workspace_lifecycle_state
       WHERE workspace = ${workspace}
@@ -98,7 +99,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     `;
   }
 
-  async replaceLifecycleStates(workspace: string, states: WorkspaceLifecycleState[]) {
+  async replaceLifecycleStates(workspace: string, states: CreateWorkspaceLifecycleState[]) {
     try {
       await this.sql.begin(async tx => {
         await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${workspace}`;

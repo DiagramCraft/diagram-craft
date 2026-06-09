@@ -26,7 +26,7 @@ export class PostgresDatabaseBase {
     return this.sql.json(value as Parameters<PostgresSqlClient['json']>[0]);
   }
 }
-
+/*
 export type PostgresRowTypes = {
   //  workspace: Workspace;
   //lifecycleState: WorkspaceLifecycleState;
@@ -49,3 +49,4 @@ export type PostgresRowTypes = {
   //globalRoleAssignment: GlobalRoleAssignment;
   //workspaceRoleDefinition: WorkspaceRoleDefinition;
 };
+*/

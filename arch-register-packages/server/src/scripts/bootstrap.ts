@@ -142,11 +142,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   }
 
   for (const user of seedLocalUsers) {
-    await db.auth.replaceGlobalRoleAssignments(
-      user.id,
-      rolesByUser.get(user.id) ?? [],
-      now
-    );
+    await db.auth.replaceGlobalRoleAssignments(user.id, rolesByUser.get(user.id) ?? [], now);
   }
 
   for (const member of seedWorkspaceMembers) {

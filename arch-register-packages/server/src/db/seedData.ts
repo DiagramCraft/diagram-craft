@@ -6,9 +6,7 @@ import type {
   Project,
   ProjectFile,
   TeamMembership,
-  Workspace,
   WorkspaceEnum,
-  WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
   SavedView
@@ -25,6 +23,10 @@ import {
   AR_COLOR_TEAL,
   AR_COLOR_AMBER
 } from '@arch-register/api-types/colors';
+import {
+  WorkspaceRow,
+  WorkspaceLifecycleStateRow
+} from '@arch-register/server/domain/workspace/db/workspaceDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -66,7 +68,7 @@ export const seedIds = {
   users: USER_IDS
 } as const;
 
-export const seedWorkspaces: Workspace[] = [
+export const seedWorkspaces: WorkspaceRow[] = [
   {
     id: WORKSPACE_ID,
     name: 'Default Workspace',
@@ -79,7 +81,7 @@ export const seedWorkspaces: Workspace[] = [
   }
 ];
 
-export const seedLifecycleStates: WorkspaceLifecycleState[] = [
+export const seedLifecycleStates: WorkspaceLifecycleStateRow[] = [
   {
     id: LIFECYCLE_IDS.proposed,
     workspace: WORKSPACE_ID,

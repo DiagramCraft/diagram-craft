@@ -5,15 +5,13 @@ import type {
   WorkspaceMemberInfo,
   WorkspaceUserInfo
 } from '@arch-register/api-types';
-import type {
-  Workspace as InternalWorkspace,
-  WorkspaceLifecycleState as InternalWorkspaceLifecycleState,
-  WorkspaceOwner,
-  WorkspaceMember,
-  User
-} from '../../types';
+import type { WorkspaceOwner, WorkspaceMember, User } from '../../types';
+import {
+  WorkspaceRow,
+  WorkspaceLifecycleStateRow as InternalWorkspaceLifecycleState
+} from './db/workspaceDatabase';
 
-export const toApiWorkspace = (workspace: InternalWorkspace): Workspace => ({
+export const toApiWorkspace = (workspace: WorkspaceRow): Workspace => ({
   id: workspace.id,
   name: workspace.name,
   url_slug: workspace.url_slug,

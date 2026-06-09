@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  Workspace,
-  WorkspaceLifecycleState,
-  WorkspaceMember,
-  WorkspaceOwner,
-  User
-} from '../../types';
+import type { WorkspaceMember, WorkspaceOwner, User } from '../../types';
 import {
   toApiLifecycleState,
   toApiOwnerOption,
@@ -13,6 +7,8 @@ import {
   toApiWorkspaceMember,
   toApiWorkspaceUser
 } from './workspaceHelpers';
+import { WorkspaceRow } from '@arch-register/server/domain/workspace/db/workspaceDatabase';
+import { WorkspaceLifecycleStateRow } from './db/workspaceDatabase';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -21,7 +17,7 @@ const nowIso = '2025-06-01T12:00:00.000Z';
 
 describe('toApiWorkspace', () => {
   it('maps all fields and serializes dates', () => {
-    const ws: Workspace = {
+    const ws: WorkspaceRow = {
       id: 'ws-1',
       name: 'Acme',
       url_slug: 'acme',
@@ -42,7 +38,7 @@ describe('toApiWorkspace', () => {
 
 describe('toApiLifecycleState', () => {
   it('maps all fields', () => {
-    const state: WorkspaceLifecycleState = {
+    const state: WorkspaceLifecycleStateRow = {
       id: 'prod',
       workspace: 'ws-1',
       label: 'Production',

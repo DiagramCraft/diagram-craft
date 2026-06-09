@@ -1,38 +1,49 @@
 import type {
   TeamMembership,
-  Workspace,
-  WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
   WorkspaceRoleDefinition
 } from '../../../types';
 
-export type CreateWorkspaceInput = Omit<Workspace, 'created_at' | 'updated_at'> & {
-  created_at: Date;
-  updated_at: Date;
-};
-
-export type UpdateWorkspaceInput = {
+export type WorkspaceRow = {
+  id: string;
   name: string;
   url_slug: string;
   short_code: string;
   color: string;
   description: string;
+  created_at: Date;
   updated_at: Date;
 };
 
-export type WorkspaceDatabase = {
-  listWorkspaces(): Promise<Workspace[]>;
-  getWorkspace(id: string): Promise<Workspace | null>;
-  createWorkspace(input: CreateWorkspaceInput): Promise<Workspace>;
-  updateWorkspace(id: string, input: UpdateWorkspaceInput): Promise<Workspace | null>;
-  deleteWorkspace(id: string): Promise<{ workspace: Workspace | null; projectIds: string[] }>;
+export type CreateWorkspaceInput = WorkspaceRow;
 
-  listLifecycleStates(ws: string): Promise<WorkspaceLifecycleState[]>;
+export type UpdateWorkspaceInput = Omit<WorkspaceRow, 'id' | 'created_at'>;
+
+export type WorkspaceLifecycleStateRow = {
+  id: string;
+  workspace: string;
+  label: string;
+  color: string;
+  sort_order: number;
+  created_at: Date;
+};
+
+export type CreateWorkspaceLifecycleState = WorkspaceLifecycleStateRow;
+
+export type WorkspaceDatabase = {
+  listWorkspaces(): Promise<WorkspaceRow[]>;
+  getWorkspace(id: string): Promise<WorkspaceRow | null>;
+  createWorkspace(input: CreateWorkspaceInput): Promise<WorkspaceRow>;
+  updateWorkspace(id: string, input: UpdateWorkspaceInput): Promise<WorkspaceRow | null>;
+  deleteWorkspace(id: string): Promise<{ workspace: WorkspaceRow | null; projectIds: string[] }>;
+
+  listLifecycleStates(ws: string): Promise<WorkspaceLifecycleStateRow[]>;
   replaceLifecycleStates(
     ws: string,
-    states: WorkspaceLifecycleState[]
-  ): Promise<WorkspaceLifecycleState[]>;
+    states: CreateWorkspaceLifecycleState[]
+  ): Promise<WorkspaceLifecycleStateRow[]>;
+
   listTeams(ws: string): Promise<WorkspaceOwner[]>;
   replaceTeams(ws: string, teams: WorkspaceOwner[]): Promise<WorkspaceOwner[]>;
   listTeamAssignments(ws: string): Promise<TeamMembership[]>;
@@ -47,6 +58,7 @@ export type WorkspaceDatabase = {
     createdAt: Date
   ): Promise<WorkspaceMember>;
   removeWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMember | null>;
+
   getWorkspaceRole(ws: string, userId: string): Promise<string | null>;
   listCustomWorkspaceRoles(ws: string): Promise<WorkspaceRoleDefinition[]>;
   getCustomWorkspaceRole(ws: string, roleId: string): Promise<WorkspaceRoleDefinition | null>;
