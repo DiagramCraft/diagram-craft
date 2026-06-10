@@ -176,7 +176,7 @@ test.describe('diagram craft routes', () => {
     auth,
     mockAI
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const res = await fetch(`${server.baseUrl}/api/sse/default/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({
@@ -205,7 +205,7 @@ test.describe('diagram craft routes', () => {
     auth,
     mockAI: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const res = await fetch(`${server.baseUrl}/api/sse/default/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({
@@ -222,7 +222,7 @@ test.describe('diagram craft routes', () => {
     const publicRes = await fetch(`${server.baseUrl}/api/public/default/schemas`);
     expect(publicRes.status).toBe(401);
 
-    const aiRes = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const aiRes = await fetch(`${server.baseUrl}/api/sse/default/ai/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -242,7 +242,7 @@ test.describe('diagram craft routes', () => {
     });
     expect(publicRes.status).toBe(404);
 
-    const aiRes = await fetch(`${server.baseUrl}/api/missing/ai/generate`, {
+    const aiRes = await fetch(`${server.baseUrl}/api/sse/missing/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({
@@ -257,7 +257,7 @@ test.describe('diagram craft routes', () => {
     auth,
     mockAI: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/no-ai/ai/generate`, {
+    const res = await fetch(`${server.baseUrl}/api/sse/no-ai/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({
@@ -276,7 +276,7 @@ test.describe('diagram craft routes', () => {
     auth,
     mockAI: _
   }) => {
-    const contentTypeRes = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const contentTypeRes = await fetch(`${server.baseUrl}/api/sse/default/ai/generate`, {
       method: 'POST',
       headers: headers(auth, 'text/plain'),
       body: 'hello'
@@ -287,14 +287,14 @@ test.describe('diagram craft routes', () => {
       messages: [{ role: 'user', content: 'x'.repeat(1024 * 1024 + 32) }]
     });
 
-    const oversizeRes = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const oversizeRes = await fetch(`${server.baseUrl}/api/sse/default/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: oversizedBody
     });
     expect(oversizeRes.status).toBe(413);
 
-    const invalidJsonRes = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const invalidJsonRes = await fetch(`${server.baseUrl}/api/sse/default/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({})
@@ -310,7 +310,7 @@ test.describe('diagram craft routes', () => {
     auth,
     mockAI: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
+    const res = await fetch(`${server.baseUrl}/api/sse/default/ai/generate`, {
       method: 'POST',
       headers: headers(auth),
       body: JSON.stringify({

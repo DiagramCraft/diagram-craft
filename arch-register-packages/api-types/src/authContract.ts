@@ -4,6 +4,7 @@ import { z } from 'zod';
 // ── Shared sub-schemas ────────────────────────────────────────
 
 const tokenPairSchema = z.object({
+  token_type: z.string(),
   access_token: z.string(),
   refresh_token: z.string(),
   expires_in: z.number()
@@ -79,11 +80,11 @@ export const authPublicContract = {
       .output(z.object({ authorization_url: z.string() })),
     refresh: oc
       .route({ method: 'POST', path: '/auth/refresh' })
-      .input(z.object({ refresh_token: z.string().optional() }))
+      .input(z.object({ refresh_token: z.string().optional() }).optional())
       .output(tokenPairSchema),
     logout: oc
       .route({ method: 'POST', path: '/auth/logout' })
-      .input(z.object({}))
+      .input(z.object({}).optional())
       .output(z.object({ ok: z.boolean() }))
   }
 };
@@ -116,7 +117,7 @@ export const authProtectedContract = {
       .output(z.array(globalRoleAssignmentSchema)),
     replaceGlobalRoles: oc
       .route({ method: 'PUT', path: '/auth/users/{id}/global-roles' })
-      .input(z.object({ id: z.string(), roles: z.array(globalRoleSchema) }))
+      .input(z.object({ id: z.string(), roles: z.array(z.string()) }))
       .output(z.array(globalRoleAssignmentSchema))
   }
 };

@@ -94,12 +94,14 @@ export const createApp = (
 
   // Protected routes (auth required)
   app.use(createProtectedAuthORPCHandler(db));
+  // workspaceManagement must come before workspace-prefixed handlers to avoid
+  // GET /workspaces/templates being matched as GET /{workspace}/templates
+  app.use(createWorkspaceManagementORPCHandler(db, storage));
   app.use(createWorkspaceEnumORPCHandler(db));
   app.use(createWorkspaceSchemaORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
-  app.use(createWorkspaceManagementORPCHandler(db, storage));
   app.use(createWorkspaceConfigORPCHandler(db));
   app.use(createProjectORPCHandler(db, storage));
   app.use(createAuditORPCHandler(db));

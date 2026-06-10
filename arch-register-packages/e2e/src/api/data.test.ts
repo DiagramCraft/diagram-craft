@@ -123,7 +123,7 @@ test.describe('data routes', () => {
     auth,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/data/export?_schemaId=${apiSchemaId}`, {
+    const res = await fetch(`${server.baseUrl}/api/download/default/data/export?_schemaId=${apiSchemaId}`, {
       headers: { Authorization: auth }
     });
 
@@ -141,7 +141,7 @@ test.describe('data routes', () => {
     seeded: _
   }) => {
     const res = await fetch(
-      `${server.baseUrl}/api/default/data/import/template/${componentSchemaId}`,
+      `${server.baseUrl}/api/download/default/data/import/template/${componentSchemaId}`,
       {
         headers: { Authorization: auth }
       }

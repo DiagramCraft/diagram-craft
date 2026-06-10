@@ -94,10 +94,12 @@ test.describe('workspace config routes', () => {
     const res = await fetch(`${server.baseUrl}/api/default/config/lifecycle-states`, {
       method: 'PUT',
       headers: headers(auth),
-      body: JSON.stringify([
-        { id: 'live', label: 'Live', color: '#22aa55', sort_order: 99 },
-        { id: 'sunset', label: 'Sunset', color: '#bb8800', sort_order: 0 }
-      ])
+      body: JSON.stringify({
+        states: [
+          { id: 'live', label: 'Live', color: '#22aa55', sort_order: 99 },
+          { id: 'sunset', label: 'Sunset', color: '#bb8800', sort_order: 0 }
+        ]
+      })
     });
 
     expect(res.status).toBe(200);
