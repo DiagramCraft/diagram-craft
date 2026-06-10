@@ -1,5 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement, ORPCError } from '@orpc/server';
+import { orpcAssert } from '../../utils/orpcAssert';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
@@ -47,27 +48,31 @@ export const authPublicORPCRouter = publicRouter.router({
     login: publicRouter.auth.login.handler(async ({ input, context }) => {
       try {
         const authMode = getAuthMode();
-        if (authMode !== 'local') {
-          throw new ORPCError('BAD_REQUEST', {
-            message: 'Username/password authentication is not enabled'
-          });
-        }
+        orpcAssert.true(authMode === 'local', {
+          code: 'BAD_REQUEST',
+          message: 'Username/password authentication is not enabled'
+        });
 
         let user = await context.db.auth.getUserByUserId(input.body.username);
         if (!user && input.body.username.includes('@')) {
           user = await context.db.auth.getUserByEmail(input.body.username);
         }
-        if (!user || !user.password_hash || user.auth_provider !== 'local') {
-          throw new ORPCError('UNAUTHORIZED', { message: 'Invalid username or password' });
-        }
-        if (!user.is_active) {
-          throw new ORPCError('FORBIDDEN', { message: 'User account is inactive' });
-        }
+        orpcAssert.present(user, { code: 'UNAUTHORIZED', message: 'Invalid username or password' });
+        orpcAssert.string(user.password_hash, {
+          code: 'UNAUTHORIZED',
+          message: 'Invalid username or password'
+        });
+        orpcAssert.true(user.auth_provider === 'local', {
+          code: 'UNAUTHORIZED',
+          message: 'Invalid username or password'
+        });
+        orpcAssert.true(user.is_active, {
+          code: 'FORBIDDEN',
+          message: 'User account is inactive'
+        });
 
         const isValid = await verifyPassword(user.password_hash, input.body.password);
-        if (!isValid) {
-          throw new ORPCError('UNAUTHORIZED', { message: 'Invalid username or password' });
-        }
+        orpcAssert.true(isValid, { code: 'UNAUTHORIZED', message: 'Invalid username or password' });
 
         await context.db.auth.updateUserLastLogin(user.id, new Date());
         const tokens = generateTokenPair(user);
@@ -81,9 +86,10 @@ export const authPublicORPCRouter = publicRouter.router({
     oidcAuthorize: publicRouter.auth.oidcAuthorize.handler(async ({ context }) => {
       try {
         const authMode = getAuthMode();
-        if (authMode !== 'oidc') {
-          throw new ORPCError('BAD_REQUEST', { message: 'OIDC authentication is not enabled' });
-        }
+        orpcAssert.true(authMode === 'oidc', {
+          code: 'BAD_REQUEST',
+          message: 'OIDC authentication is not enabled'
+        });
 
         const { url, state, nonce, codeVerifier } = await generateAuthUrl();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -101,9 +107,7 @@ export const authPublicORPCRouter = publicRouter.router({
           'ar_refresh_token'
         );
         const refreshToken = selectRefreshToken(cookieToken, input.body);
-        if (!refreshToken) {
-          throw new ORPCError('UNAUTHORIZED', { message: 'Refresh token is required' });
-        }
+        orpcAssert.present(refreshToken, { code: 'UNAUTHORIZED', message: 'Refresh token is required' });
 
         let payload: JWTPayload;
         try {
@@ -112,14 +116,14 @@ export const authPublicORPCRouter = publicRouter.router({
           throw new ORPCError('UNAUTHORIZED', { message: 'Invalid or expired refresh token' });
         }
 
-        if (payload.type !== 'refresh') {
-          throw new ORPCError('UNAUTHORIZED', { message: 'Invalid token type' });
-        }
+        orpcAssert.true(payload.type === 'refresh', {
+          code: 'UNAUTHORIZED',
+          message: 'Invalid token type'
+        });
 
         const user = await context.db.auth.getUser(payload.sub);
-        if (!user) throw new ORPCError('UNAUTHORIZED', { message: 'User not found' });
-        if (!user.is_active)
-          throw new ORPCError('FORBIDDEN', { message: 'User account is inactive' });
+        orpcAssert.present(user, { code: 'UNAUTHORIZED', message: 'User not found' });
+        orpcAssert.true(user.is_active, { code: 'FORBIDDEN', message: 'User account is inactive' });
 
         const tokens = generateTokenPair(user);
         setAuthCookies(context.event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
@@ -211,7 +215,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
           input.params.id,
           buildUserUpdateInput(input.body, new Date())
         );
-        if (!updatedUser) throw new ORPCError('NOT_FOUND', { message: 'User not found' });
+        orpcAssert.present(updatedUser, { code: 'NOT_FOUND', message: 'User not found' });
         return {
           id: updatedUser.id,
           user_id: updatedUser.user_id,

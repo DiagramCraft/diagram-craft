@@ -13,6 +13,7 @@ import { createAiConfigResponse, buildAiConfigInput, parseExtractResponse } from
 import { chat } from '@tanstack/ai';
 import { buildSystemPrompt } from './systemPromptBuilder';
 import { httpAssert } from '@arch-register/server/utils/httpAssert';
+import { orpcAssert } from '@arch-register/server/utils/orpcAssert';
 
 const toConversationResponse = (c: {
   id: string;
@@ -114,20 +115,18 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           const user = context.event.context.user;
 
           const conversation = await context.db.ai.getConversation(workspace, input.params.id);
-          if (!conversation)
-            throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
-          if (conversation.user_id !== user.id) {
-            throw new ORPCError('FORBIDDEN', {
-              message: "Cannot modify another user's conversation"
-            });
-          }
+          orpcAssert.present(conversation, { code: 'NOT_FOUND', message: 'Conversation not found' });
+          orpcAssert.true(conversation.user_id === user.id, {
+            code: 'FORBIDDEN',
+            message: "Cannot modify another user's conversation"
+          });
 
           const updated = await context.db.ai.updateConversationTitle(
             workspace,
             input.params.id,
             input.body.title
           );
-          if (!updated) throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
+          orpcAssert.present(updated, { code: 'NOT_FOUND', message: 'Conversation not found' });
           return toConversationResponse(updated);
         } catch (error) {
           return toORPCError(error);
@@ -142,16 +141,14 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           const user = context.event.context.user;
 
           const conversation = await context.db.ai.getConversation(workspace, input.params.id);
-          if (!conversation)
-            throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
-          if (conversation.user_id !== user.id) {
-            throw new ORPCError('FORBIDDEN', {
-              message: "Cannot delete another user's conversation"
-            });
-          }
+          orpcAssert.present(conversation, { code: 'NOT_FOUND', message: 'Conversation not found' });
+          orpcAssert.true(conversation.user_id === user.id, {
+            code: 'FORBIDDEN',
+            message: "Cannot delete another user's conversation"
+          });
 
           const deleted = await context.db.ai.deleteConversation(workspace, input.params.id);
-          if (!deleted) throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
+          orpcAssert.present(deleted, { code: 'NOT_FOUND', message: 'Conversation not found' });
           return toConversationResponse(deleted);
         } catch (error) {
           return toORPCError(error);
@@ -166,13 +163,11 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           const user = context.event.context.user;
 
           const conversation = await context.db.ai.getConversation(workspace, input.params.id);
-          if (!conversation)
-            throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
-          if (conversation.user_id !== user.id) {
-            throw new ORPCError('FORBIDDEN', {
-              message: "Cannot access another user's conversation"
-            });
-          }
+          orpcAssert.present(conversation, { code: 'NOT_FOUND', message: 'Conversation not found' });
+          orpcAssert.true(conversation.user_id === user.id, {
+            code: 'FORBIDDEN',
+            message: "Cannot access another user's conversation"
+          });
 
           const messages = await context.db.ai.listMessages(input.params.id);
           return messages.map(toMessageResponse);
