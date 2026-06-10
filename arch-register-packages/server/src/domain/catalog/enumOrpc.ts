@@ -6,7 +6,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import {
   createWorkspaceEnum,
   deleteWorkspaceEnum,
@@ -77,7 +77,9 @@ export const workspaceEnumORPCRouter = enumRouter.router({
   }
 });
 
-export const workspaceEnumOpenAPIHandler = new OpenAPIHandler(workspaceEnumORPCRouter);
+export const workspaceEnumOpenAPIHandler = new OpenAPIHandler(workspaceEnumORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createWorkspaceEnumORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

@@ -4,7 +4,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { auditContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { listAuditLog, getAuditStats } from './auditOperations';
 
 type ORPCContext = {
@@ -33,7 +33,9 @@ export const auditORPCRouter = auditRouter.router({
   }
 });
 
-export const auditOpenAPIHandler = new OpenAPIHandler(auditORPCRouter);
+export const auditOpenAPIHandler = new OpenAPIHandler(auditORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createAuditORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

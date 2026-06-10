@@ -6,7 +6,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import {
   createPinnedEntity,
   createSavedView,
@@ -107,7 +107,9 @@ export const workspaceViewORPCRouter = viewRouter.router({
   }
 });
 
-export const workspaceViewOpenAPIHandler = new OpenAPIHandler(workspaceViewORPCRouter);
+export const workspaceViewOpenAPIHandler = new OpenAPIHandler(workspaceViewORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createWorkspaceViewORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

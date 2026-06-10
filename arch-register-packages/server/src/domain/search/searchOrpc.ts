@@ -4,7 +4,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { searchContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { searchWorkspace, SEARCH_TYPES } from './searchOperations';
 
 type ORPCContext = {
@@ -35,7 +35,9 @@ export const searchORPCRouter = searchRouter.router({
   }
 });
 
-export const searchOpenAPIHandler = new OpenAPIHandler(searchORPCRouter);
+export const searchOpenAPIHandler = new OpenAPIHandler(searchORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createSearchORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

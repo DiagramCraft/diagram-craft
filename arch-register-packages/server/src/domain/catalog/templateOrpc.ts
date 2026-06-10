@@ -6,7 +6,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { listAllTemplates, listProjectTemplates } from './templateOperations';
 
 type ORPCContext = {
@@ -40,7 +40,9 @@ export const workspaceTemplateORPCRouter = templateRouter.router({
   }
 });
 
-export const workspaceTemplateOpenAPIHandler = new OpenAPIHandler(workspaceTemplateORPCRouter);
+export const workspaceTemplateOpenAPIHandler = new OpenAPIHandler(workspaceTemplateORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createWorkspaceTemplateORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

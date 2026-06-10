@@ -5,7 +5,7 @@ import { aiContract } from '@arch-register/api-types';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveAiConfig, createAiTextAdapter } from './tanstackAiAdapter';
@@ -261,7 +261,9 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 };
 
 export const createAiORPCHandler = (db: DatabaseAdapter, deps: AiORPCDeps = {}) => {
-  const aiOpenAPIHandler = new OpenAPIHandler(createAiORPCRouter(deps));
+  const aiOpenAPIHandler = new OpenAPIHandler(createAiORPCRouter(deps), {
+    clientInterceptors: orpcErrorInterceptors
+  });
 
   return defineHandler(async event => {
     const result = await aiOpenAPIHandler.handle(event.req, {

@@ -5,7 +5,7 @@ import { authPublicContract, authProtectedContract } from '@arch-register/api-ty
 import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { verifyPassword } from '../../utils/password';
 import { generateTokenPair, verifyToken } from '../../utils/jwt';
 import { generateAuthUrl } from './oidcClient';
@@ -137,7 +137,9 @@ export const authPublicORPCRouter = publicRouter.router({
   }
 });
 
-export const authPublicOpenAPIHandler = new OpenAPIHandler(authPublicORPCRouter);
+export const authPublicOpenAPIHandler = new OpenAPIHandler(authPublicORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createPublicAuthORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
@@ -273,7 +275,9 @@ export const authProtectedORPCRouter = protectedRouter.router({
   }
 });
 
-export const authProtectedOpenAPIHandler = new OpenAPIHandler(authProtectedORPCRouter);
+export const authProtectedOpenAPIHandler = new OpenAPIHandler(authProtectedORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createProtectedAuthORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

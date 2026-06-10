@@ -1,11 +1,11 @@
 import { defineHandler } from 'h3';
-import { implement, onError } from '@orpc/server';
+import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { workspaceConfigContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from './resolveWorkspace';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import {
   listLifecycleStates,
   replaceLifecycleStates,
@@ -171,13 +171,7 @@ export const workspaceConfigORPCRouter = configRouter.router({
 });
 
 export const workspaceConfigOpenAPIHandler = new OpenAPIHandler(workspaceConfigORPCRouter, {
-  clientInterceptors: [
-    onError(error => {
-      console.error('Output validation failed');
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      console.dir((error as any).cause, { depth: 10 });
-    })
-  ]
+  clientInterceptors: orpcErrorInterceptors
 });
 
 export const createWorkspaceConfigORPCHandler = (db: DatabaseAdapter) =>

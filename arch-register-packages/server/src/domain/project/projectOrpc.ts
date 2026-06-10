@@ -5,7 +5,7 @@ import { projectContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import {
   listProjects,
   getProject,
@@ -105,7 +105,9 @@ export const projectORPCRouter = projectRouter.router({
   }
 });
 
-export const projectOpenAPIHandler = new OpenAPIHandler(projectORPCRouter);
+export const projectOpenAPIHandler = new OpenAPIHandler(projectORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createProjectORPCHandler = (db: DatabaseAdapter, storage?: StorageAdapter) =>
   defineHandler(async event => {

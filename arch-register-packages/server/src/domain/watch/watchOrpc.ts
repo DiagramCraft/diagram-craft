@@ -4,7 +4,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { watchContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import {
   listWatching,
   createWatch,
@@ -83,7 +83,9 @@ export const watchORPCRouter = watchRouter.router({
   }
 });
 
-export const watchOpenAPIHandler = new OpenAPIHandler(watchORPCRouter);
+export const watchOpenAPIHandler = new OpenAPIHandler(watchORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createWatchORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

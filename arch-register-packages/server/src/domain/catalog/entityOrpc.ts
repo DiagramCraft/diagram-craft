@@ -1,12 +1,12 @@
 import { defineHandler } from 'h3';
-import { implement, onError } from '@orpc/server';
+import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { workspaceEntityContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireEntityAction } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { httpAssert } from '../../utils/httpAssert';
 import { buildEntityGrantInputs } from './dataHelpers';
 import { importParse, importCommit } from './importOperations';
@@ -237,13 +237,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 });
 
 export const workspaceEntityOpenAPIHandler = new OpenAPIHandler(workspaceEntityORPCRouter, {
-  clientInterceptors: [
-    onError(error => {
-      console.error('Output validation failed =======');
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      console.dir((error as any).cause, { depth: 10 });
-    })
-  ]
+  clientInterceptors: orpcErrorInterceptors
 });
 
 export const createWorkspaceEntityORPCHandler = (db: DatabaseAdapter) =>

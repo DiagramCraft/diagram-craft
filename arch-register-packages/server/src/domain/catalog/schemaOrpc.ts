@@ -1,12 +1,12 @@
 import { defineHandler } from 'h3';
-import { implement, onError } from '@orpc/server';
+import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { workspaceSchemaContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import {
   listWorkspaceSchemas,
   getWorkspaceSchema,
@@ -78,13 +78,7 @@ export const workspaceSchemaORPCRouter = schemaRouter.router({
 });
 
 export const workspaceSchemaOpenAPIHandler = new OpenAPIHandler(workspaceSchemaORPCRouter, {
-  clientInterceptors: [
-    onError(error => {
-      console.error('Output validation failed');
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      console.dir((error as any).cause, { depth: 10 });
-    })
-  ]
+  clientInterceptors: orpcErrorInterceptors
 });
 
 export const createWorkspaceSchemaORPCHandler = (db: DatabaseAdapter) =>

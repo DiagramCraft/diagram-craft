@@ -4,7 +4,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { diagramCraftContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError } from '../../utils/orpcErrors';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toDiagramCraftData, toDiagramCraftSchema } from './diagramCraftTransforms';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
@@ -41,7 +41,9 @@ export const diagramCraftORPCRouter = diagramCraftRouter.router({
   }
 });
 
-export const diagramCraftOpenAPIHandler = new OpenAPIHandler(diagramCraftORPCRouter);
+export const diagramCraftOpenAPIHandler = new OpenAPIHandler(diagramCraftORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
 
 export const createDiagramCraftORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
