@@ -19,6 +19,7 @@ import {
   selectRefreshToken
 } from './authRoutes';
 import { resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
+import type { TeamRole } from '@arch-register/permissions';
 import type { UserDbResult } from './db/authDatabase';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
 
@@ -184,7 +185,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
               workspace_id: workspace.id,
               team_assignments: teamAssignments
                 .filter(m => m.user_id === user.id)
-                .map(m => ({ team_id: m.team_id, role: m.role })),
+                .map(m => ({ team_id: m.team_id, role: m.role as TeamRole })),
               teams: teams.map(team => ({ id: team.id, name: team.name, type: 'team' as const })),
               workspace_role: workspaceRole,
               workspace_roles: resolveWorkspaceRoleDefinitions(customRoles)

@@ -22,13 +22,13 @@ const referenceFieldSchema = baseFieldSchema.extend({
   type: z.literal('reference'),
   schemaId: z.string(),
   minCount: z.number().int().min(0),
-  maxCount: z.number().int().min(-1)
+  maxCount: z.union([z.literal(-1), z.number().int().min(0)])
 });
 const containmentFieldSchema = baseFieldSchema.extend({
   type: z.literal('containment'),
   schemaId: z.string(),
   minCount: z.number().int().min(0),
-  maxCount: z.number().int().min(-1)
+  maxCount: z.union([z.literal(-1), z.number().int().min(0)])
 });
 
 const schemaFieldInputSchema = z.discriminatedUnion('type', [

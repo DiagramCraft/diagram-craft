@@ -147,7 +147,6 @@ export type UpdateWorkspaceRoleRequest = CreateWorkspaceRoleRequest;
 
 export type WorkspaceUserInfo = {
   id: string;
-  user_id: string;
   email: string | null;
   display_name: string;
   auth_provider: 'local' | 'oidc';

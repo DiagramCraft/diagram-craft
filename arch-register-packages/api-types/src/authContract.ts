@@ -3,6 +3,28 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
+const globalRoleSchema = z.enum(['global_admin', 'workspace_admin']);
+const teamRoleSchema = z.enum(['team_admin', 'team_editor', 'team_reviewer']);
+const workspaceCapabilitySchema = z.enum([
+  'ws.view',
+  'ws.settings',
+  'ws.delete',
+  'ws.audit',
+  'ws.manage_views',
+  'people.invite',
+  'people.role',
+  'people.remove',
+  'people.teams',
+  'proj.create',
+  'proj.edit',
+  'ent.edit',
+  'ent.propose',
+  'comments',
+  'export',
+  'schema.edit',
+  'schema.publish'
+]);
+
 const tokenPairSchema = z.object({
   token_type: z.string(),
   access_token: z.string(),
@@ -10,11 +32,18 @@ const tokenPairSchema = z.object({
   expires_in: z.number()
 });
 
-const globalRoleSchema = z.enum(['global_admin', 'workspace_admin']);
-
 const teamAssignmentSchema = z.object({
   team_id: z.string(),
-  role: z.string()
+  role: teamRoleSchema
+});
+
+const workspaceRoleDefinitionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  tone: z.string(),
+  builtin: z.boolean(),
+  capabilities: z.array(workspaceCapabilitySchema)
 });
 
 const teamSchema = z.object({
@@ -36,7 +65,10 @@ const authMeResponseSchema = z.object({
   global_permissions: z.array(z.string()),
   team_assignments_by_workspace: z.record(z.string(), z.array(teamAssignmentSchema)),
   workspace_roles: z.record(z.string(), z.string()),
-  workspace_role_definitions_by_workspace: z.record(z.string(), z.unknown()),
+  workspace_role_definitions_by_workspace: z.record(
+    z.string(),
+    z.array(workspaceRoleDefinitionSchema)
+  ),
   teams_by_workspace: z.record(z.string(), z.array(teamSchema))
 });
 
@@ -111,7 +143,7 @@ export const authProtectedContract = {
       .input(
         z.object({
           params: z.object({ id: z.string() }),
-          body: z.object({ roles: z.array(z.string()) })
+          body: z.object({ roles: z.array(globalRoleSchema) })
         })
       )
       .output(z.array(globalRoleAssignmentSchema))

@@ -171,8 +171,8 @@ test.describe('auth protected routes', () => {
     await expect(
       orpc.authProtected.replaceGlobalRoles({
         params: { id: 'roles-invalid-user' },
-        body: { roles: ['not-a-real-role'] }
+        body: { roles: ['not-a-real-role' as never] }
       })
-    ).rejects.toMatchObject({ code: 'BAD_REQUEST', message: 'roles contains invalid values' });
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 });

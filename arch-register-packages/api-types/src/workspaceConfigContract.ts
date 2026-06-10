@@ -7,6 +7,25 @@ const timestampOutputSchema = z
   .transform(value => (typeof value === 'string' ? value : value.toISOString()));
 
 const teamRoleSchema = z.enum(['team_admin', 'team_editor', 'team_reviewer']);
+const workspaceCapabilitySchema = z.enum([
+  'ws.view',
+  'ws.settings',
+  'ws.delete',
+  'ws.audit',
+  'ws.manage_views',
+  'people.invite',
+  'people.role',
+  'people.remove',
+  'people.teams',
+  'proj.create',
+  'proj.edit',
+  'ent.edit',
+  'ent.propose',
+  'comments',
+  'export',
+  'schema.edit',
+  'schema.publish'
+]);
 
 // ── Sub-schemas ───────────────────────────────────────────────
 
@@ -58,8 +77,6 @@ const teamAssignmentInputSchema = z.object({
   role: teamRoleSchema
 });
 
-const workspaceCapabilitySchema = z.string();
-
 const roleDefinitionSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -87,7 +104,7 @@ const roleInputSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   tone: z.string().optional(),
-  capabilities: z.array(z.string())
+  capabilities: z.array(workspaceCapabilitySchema)
 });
 
 export const memberInfoSchema = z.object({
@@ -250,3 +267,4 @@ export const workspaceConfigContract = {
 };
 
 export type WorkspaceMemberInfo = z.infer<typeof memberInfoSchema>;
+export type WorkspaceRoleCapability = z.infer<typeof workspaceCapabilitySchema>;

@@ -1,6 +1,7 @@
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
+import type { WorkspaceRoleCapability } from '@arch-register/api-types/workspaceConfigContract';
 
 const now = new Date('2026-06-06T12:00:00.000Z');
 
@@ -50,7 +51,7 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
 
 const createCustomRole = async (
   orpc: TestORPCClient,
-  body: { name: string; description?: string; capabilities: string[] }
+  body: { name: string; description?: string; capabilities: WorkspaceRoleCapability[] }
 ) => {
   return await orpc.config.roles.create({ params: { workspace: 'default' }, body });
 };

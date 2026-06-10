@@ -55,7 +55,6 @@ export const toApiWorkspaceMember = (
 
 export const toApiWorkspaceUser = (user: UserDbResult): WorkspaceUserInfo => ({
   id: user.id,
-  user_id: user.user_id,
   email: user.email,
   display_name: user.display_name,
   auth_provider: user.auth_provider,

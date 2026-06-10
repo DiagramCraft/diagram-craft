@@ -8,6 +8,7 @@ import {
   getGlobalPermissionsForRoles,
   resolveWorkspaceRoleDefinitions
 } from '@arch-register/permissions';
+import type { TeamRole } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import { GlobalRole, UserDbResult } from './db/authDatabase';
 
@@ -35,7 +36,7 @@ type UserUpdateBody = {
 
 type WorkspaceMembershipData = {
   workspace_id: string;
-  team_assignments: Array<{ team_id: string; role: string }>;
+  team_assignments: Array<{ team_id: string; role: TeamRole }>;
   teams: Array<{ id: string; name: string; type: 'team' }>;
   workspace_role: string | null;
   workspace_roles: ReturnType<typeof resolveWorkspaceRoleDefinitions>;
