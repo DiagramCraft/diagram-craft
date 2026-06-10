@@ -46,4 +46,4 @@ export const listProjectTemplatesORPC = async (
   workspace: string,
   projectId: string
 ): Promise<ProjectTemplatesResponse> =>
-  await templateClient.templates.listForProject({ workspace, projectId });
+  await templateClient.templates.listForProject({ params: { workspace, projectId } });

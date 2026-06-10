@@ -26,7 +26,7 @@ export const workspaceEnumORPCRouter = enumRouter.router({
   enums: {
     list: enumRouter.enums.list.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.view');
         return await listWorkspaceEnums(context.db, workspace);
@@ -36,40 +36,40 @@ export const workspaceEnumORPCRouter = enumRouter.router({
     }),
     get: enumRouter.enums.get.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.view');
-        return await getWorkspaceEnum(context.db, workspace, input.id);
+        return await getWorkspaceEnum(context.db, workspace, input.params.id);
       } catch (error) {
         return toORPCError(error);
       }
     }),
     create: enumRouter.enums.create.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'schema.edit');
-        return await createWorkspaceEnum(context.db, workspace, input);
+        return await createWorkspaceEnum(context.db, workspace, input.body);
       } catch (error) {
         return toORPCError(error);
       }
     }),
     update: enumRouter.enums.update.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'schema.edit');
-        return await updateWorkspaceEnum(context.db, workspace, input.id, input);
+        return await updateWorkspaceEnum(context.db, workspace, input.params.id, input.body);
       } catch (error) {
         return toORPCError(error);
       }
     }),
     remove: enumRouter.enums.remove.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'schema.edit');
-        return await deleteWorkspaceEnum(context.db, workspace, input.id);
+        return await deleteWorkspaceEnum(context.db, workspace, input.params.id);
       } catch (error) {
         return toORPCError(error);
       }

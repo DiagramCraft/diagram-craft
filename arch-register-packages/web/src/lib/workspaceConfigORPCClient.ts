@@ -42,15 +42,15 @@ const configClient: JsonifiedClient<ContractRouterClient<typeof workspaceConfigC
   createORPCClient(configClientLink);
 
 export const listLifecycleStatesORPC = async (workspace: string) =>
-  await configClient.config.lifecycleStates.list({ workspace });
+  await configClient.config.lifecycleStates.list({ params: { workspace } });
 
 export const updateLifecycleStatesORPC = async (
   workspace: string,
   states: Array<{ id?: string; label: string; color: string; sort_order?: number }>
-) => await configClient.config.lifecycleStates.replace({ workspace, states });
+) => await configClient.config.lifecycleStates.replace({ params: { workspace }, body: { states } });
 
 export const listTeamsORPC = async (workspace: string) =>
-  await configClient.config.teams.list({ workspace });
+  await configClient.config.teams.list({ params: { workspace } });
 
 export const updateTeamsORPC = async (
   workspace: string,
@@ -61,10 +61,10 @@ export const updateTeamsORPC = async (
     color?: string | null;
     description?: string;
   }>
-) => await configClient.config.teams.replace({ workspace, teams });
+) => await configClient.config.teams.replace({ params: { workspace }, body: { teams } });
 
 export const listTeamAssignmentsORPC = async (workspace: string) =>
-  await configClient.config.teamAssignments.list({ workspace });
+  await configClient.config.teamAssignments.list({ params: { workspace } });
 
 export const updateTeamAssignmentsORPC = async (
   workspace: string,
@@ -73,4 +73,8 @@ export const updateTeamAssignmentsORPC = async (
     user_id: string;
     role: 'team_admin' | 'team_editor' | 'team_reviewer';
   }>
-) => await configClient.config.teamAssignments.replace({ workspace, assignments });
+) =>
+  await configClient.config.teamAssignments.replace({
+    params: { workspace },
+    body: { assignments }
+  });

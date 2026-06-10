@@ -43,70 +43,98 @@ const clearResponseSchema = z.object({
 
 // ── Request schemas ───────────────────────────────────────────
 
-const listWatchingRequestSchema = z.object({
-  workspace: z.string()
-});
-
-const createWatchRequestSchema = z.object({
-  workspace: z.string(),
-  entity_id: z.string()
-});
-
-const deleteWatchRequestSchema = z.object({
-  workspace: z.string(),
-  entityId: z.string()
-});
-
-const listNotificationsRequestSchema = z.object({
-  workspace: z.string()
-});
-
-const getNotificationCountRequestSchema = z.object({
-  workspace: z.string()
-});
-
-const deleteNotificationRequestSchema = z.object({
-  workspace: z.string(),
-  notificationId: z.string()
-});
-
-const clearNotificationsRequestSchema = z.object({
-  workspace: z.string()
-});
-
 // ── Contract ──────────────────────────────────────────────────
 
 export const watchContract = {
   watching: {
     list: oc
-      .route({ method: 'GET', path: '/{workspace}/watching' })
-      .input(listWatchingRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/watching', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(z.array(watchedEntitySchema)),
     create: oc
-      .route({ method: 'POST', path: '/{workspace}/watching' })
-      .input(createWatchRequestSchema)
+      .route({ method: 'POST', path: '/{workspace}/watching', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          }),
+          body: z.object({
+            entity_id: z.string()
+          })
+        })
+      )
       .output(watchedEntitySchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/{workspace}/watching/{entityId}' })
-      .input(deleteWatchRequestSchema)
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/watching/{entityId}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            entityId: z.string()
+          })
+        })
+      )
       .output(successResponseSchema)
   },
   notifications: {
     list: oc
-      .route({ method: 'GET', path: '/{workspace}/notifications' })
-      .input(listNotificationsRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/notifications', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(z.array(notificationItemSchema)),
     count: oc
-      .route({ method: 'GET', path: '/{workspace}/notifications/count' })
-      .input(getNotificationCountRequestSchema)
+      .route({
+        method: 'GET',
+        path: '/{workspace}/notifications/count',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(notificationCountSchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/{workspace}/notifications/{notificationId}' })
-      .input(deleteNotificationRequestSchema)
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/notifications/{notificationId}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            notificationId: z.string()
+          })
+        })
+      )
       .output(successResponseSchema),
     clear: oc
-      .route({ method: 'DELETE', path: '/{workspace}/notifications' })
-      .input(clearNotificationsRequestSchema)
+      .route({ method: 'DELETE', path: '/{workspace}/notifications', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(clearResponseSchema)
   }
 };

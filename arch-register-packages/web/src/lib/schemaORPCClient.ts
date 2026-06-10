@@ -43,7 +43,7 @@ const schemaClient: JsonifiedClient<ContractRouterClient<typeof workspaceSchemaC
   createORPCClient(schemaClientLink);
 
 export const listWorkspaceSchemasORPC = async (workspace: string): Promise<EntitySchema[]> =>
-  await schemaClient.schemas.list({ workspace });
+  await schemaClient.schemas.list({ params: { workspace } });
 
 export const createWorkspaceSchemaORPC = async (
   workspace: string,
@@ -55,7 +55,8 @@ export const createWorkspaceSchemaORPC = async (
     icon?: string | null;
     default_owner?: string | null;
   }
-): Promise<EntitySchema> => await schemaClient.schemas.create({ workspace, ...input });
+): Promise<EntitySchema> =>
+  await schemaClient.schemas.create({ params: { workspace }, body: input });
 
 export const updateWorkspaceSchemaORPC = async (
   workspace: string,
@@ -68,10 +69,11 @@ export const updateWorkspaceSchemaORPC = async (
     icon?: string | null;
     default_owner?: string | null;
   }
-): Promise<EntitySchema> => await schemaClient.schemas.update({ workspace, id, ...input });
+): Promise<EntitySchema> =>
+  await schemaClient.schemas.update({ params: { workspace, id }, body: input });
 
 export const deleteWorkspaceSchemaORPC = async (
   workspace: string,
   id: string
 ): Promise<{ success: boolean; message: string }> =>
-  await schemaClient.schemas.remove({ workspace, id });
+  await schemaClient.schemas.remove({ params: { workspace, id } });

@@ -16,32 +16,6 @@ export const workspaceSchema = z.object({
 
 // ── Request schemas ───────────────────────────────────────────
 
-export const listWorkspacesRequestSchema = z.object({});
-
-export const createWorkspaceRequestSchema = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  color: z.string().optional(),
-  slug: z.string().optional(),
-  badge: z.string().optional(),
-  template: z.string().optional(),
-  replicate_from: z.string().optional(),
-  include: z.array(z.string()).optional()
-});
-
-export const updateWorkspaceRequestSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  url_slug: z.string().optional(),
-  short_code: z.string().optional(),
-  color: z.string().optional()
-});
-
-export const deleteWorkspaceRequestSchema = z.object({
-  id: z.string()
-});
-
 const deleteWorkspaceResponseSchema = z.object({
   success: z.boolean(),
   message: z.string()
@@ -58,24 +32,54 @@ const workspaceTemplateSchema = z.object({
 export const workspaceManagementContract = {
   workspaces: {
     list: oc
-      .route({ method: 'GET', path: '/workspaces' })
-      .input(listWorkspacesRequestSchema)
+      .route({ method: 'GET', path: '/workspaces', inputStructure: 'detailed' })
       .output(z.array(workspaceSchema)),
     create: oc
-      .route({ method: 'POST', path: '/workspaces' })
-      .input(createWorkspaceRequestSchema)
+      .route({ method: 'POST', path: '/workspaces', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          body: z.object({
+            name: z.string(),
+            description: z.string().optional(),
+            color: z.string().optional(),
+            slug: z.string().optional(),
+            badge: z.string().optional(),
+            template: z.string().optional(),
+            replicate_from: z.string().optional(),
+            include: z.array(z.string()).optional()
+          })
+        })
+      )
       .output(workspaceSchema),
     update: oc
-      .route({ method: 'PUT', path: '/workspaces/{id}' })
-      .input(updateWorkspaceRequestSchema)
+      .route({ method: 'PUT', path: '/workspaces/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            id: z.string()
+          }),
+          body: z.object({
+            name: z.string(),
+            description: z.string().optional(),
+            url_slug: z.string().optional(),
+            short_code: z.string().optional(),
+            color: z.string().optional()
+          })
+        })
+      )
       .output(workspaceSchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/workspaces/{id}' })
-      .input(deleteWorkspaceRequestSchema)
+      .route({ method: 'DELETE', path: '/workspaces/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            id: z.string()
+          })
+        })
+      )
       .output(deleteWorkspaceResponseSchema),
     templates: oc
-      .route({ method: 'GET', path: '/workspaces/templates' })
-      .input(z.object({}))
+      .route({ method: 'GET', path: '/workspaces/templates', inputStructure: 'detailed' })
       .output(z.array(workspaceTemplateSchema))
   }
 };

@@ -50,8 +50,10 @@ export const searchArchRegisterORPC = async (
   }
 ) =>
   await searchClient.search.query({
-    workspace,
-    q: params.q ?? undefined,
-    limitPerType: params.limitPerType ?? undefined,
-    types: params.types?.join(',') ?? undefined
+    params: { workspace },
+    query: {
+      q: params.q ?? undefined,
+      limitPerType: params.limitPerType ?? undefined,
+      types: params.types?.join(',') ?? undefined
+    }
   });

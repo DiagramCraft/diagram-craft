@@ -58,72 +58,15 @@ const projectDetailSchema = projectSchema.extend({
 
 // ── Request schemas ───────────────────────────────────────────
 
-const listProjectsRequestSchema = z.object({
-  workspace: z.string()
-});
-
-const getProjectRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const createProjectRequestSchema = z.object({
-  workspace: z.string(),
-  name: z.string(),
-  description: z.preprocess(
-    v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
-    z.string().optional()
-  ),
-  owner: z.string().nullable().optional(),
-  status: z.enum(['pinned', 'active', 'archived']).optional(),
-  color: z.preprocess(
-    v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
-    z.string().nullable().optional()
-  )
-});
-
-const updateProjectRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  owner: z.string().nullable().optional(),
-  status: z.enum(['pinned', 'active', 'archived']).optional(),
-  color: z.string().nullable().optional()
-});
-
-const deleteProjectRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
 const deleteProjectResponseSchema = z.object({
   success: z.boolean(),
   message: z.string()
-});
-
-const listProjectFilesRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const createFolderRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string(),
-  path: z.string()
 });
 
 const createFolderResponseSchema = z.object({
   success: z.boolean(),
   path: z.string(),
   marker: projectFileSchema.nullable()
-});
-
-const renameFolderRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string(),
-  oldPath: z.string(),
-  newPath: z.string()
 });
 
 const renameFolderResponseSchema = z.object({
@@ -137,36 +80,129 @@ const renameFolderResponseSchema = z.object({
 export const projectContract = {
   projects: {
     list: oc
-      .route({ method: 'GET', path: '/{workspace}/projects' })
-      .input(listProjectsRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/projects', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(z.array(projectSchema)),
     get: oc
-      .route({ method: 'GET', path: '/{workspace}/projects/{id}' })
-      .input(getProjectRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/projects/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          })
+        })
+      )
       .output(projectDetailSchema),
     create: oc
-      .route({ method: 'POST', path: '/{workspace}/projects' })
-      .input(createProjectRequestSchema)
+      .route({ method: 'POST', path: '/{workspace}/projects', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          }),
+          body: z.object({
+            name: z.string(),
+            description: z.preprocess(
+              v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
+              z.string().optional()
+            ),
+            owner: z.string().nullable().optional(),
+            status: z.enum(['pinned', 'active', 'archived']).optional(),
+            color: z.preprocess(
+              v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
+              z.string().nullable().optional()
+            )
+          })
+        })
+      )
       .output(projectSchema),
     update: oc
-      .route({ method: 'PUT', path: '/{workspace}/projects/{id}' })
-      .input(updateProjectRequestSchema)
+      .route({ method: 'PUT', path: '/{workspace}/projects/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          }),
+          body: z.object({
+            name: z.string(),
+            description: z.string().optional(),
+            owner: z.string().nullable().optional(),
+            status: z.enum(['pinned', 'active', 'archived']).optional(),
+            color: z.string().nullable().optional()
+          })
+        })
+      )
       .output(projectSchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/{workspace}/projects/{id}' })
-      .input(deleteProjectRequestSchema)
+      .route({ method: 'DELETE', path: '/{workspace}/projects/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          })
+        })
+      )
       .output(deleteProjectResponseSchema),
     listFiles: oc
-      .route({ method: 'GET', path: '/{workspace}/projects/{id}/files' })
-      .input(listProjectFilesRequestSchema)
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{id}/files',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          })
+        })
+      )
       .output(fileTreeSchema),
     createFolder: oc
-      .route({ method: 'POST', path: '/{workspace}/projects/{id}/folders' })
-      .input(createFolderRequestSchema)
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/folders',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          }),
+          body: z.object({
+            path: z.string()
+          })
+        })
+      )
       .output(createFolderResponseSchema),
     renameFolder: oc
-      .route({ method: 'PUT', path: '/{workspace}/projects/{id}/folders/rename' })
-      .input(renameFolderRequestSchema)
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/folders/rename',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          }),
+          body: z.object({
+            oldPath: z.string(),
+            newPath: z.string()
+          })
+        })
+      )
       .output(renameFolderResponseSchema)
   }
 };

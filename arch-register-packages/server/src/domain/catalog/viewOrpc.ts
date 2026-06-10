@@ -28,7 +28,7 @@ export const workspaceViewORPCRouter = viewRouter.router({
   views: {
     list: viewRouter.views.list.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.view');
         return await listSavedViews(context.db, workspace);
@@ -38,15 +38,15 @@ export const workspaceViewORPCRouter = viewRouter.router({
     }),
     create: viewRouter.views.create.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.manage_views');
         return await createSavedView(context.db, workspace, {
-          name: input.name,
-          description: input.description,
-          viewMode: input.viewMode,
-          filters: input.filters,
-          config: input.config
+          name: input.body.name,
+          description: input.body.description,
+          viewMode: input.body.viewMode,
+          filters: input.body.filters,
+          config: input.body.config
         });
       } catch (error) {
         return toORPCError(error);
@@ -54,15 +54,15 @@ export const workspaceViewORPCRouter = viewRouter.router({
     }),
     update: viewRouter.views.update.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.manage_views');
-        return await updateSavedView(context.db, workspace, input.id, {
-          name: input.name,
-          description: input.description,
-          viewMode: input.viewMode,
-          filters: input.filters,
-          config: input.config
+        return await updateSavedView(context.db, workspace, input.params.id, {
+          name: input.body.name,
+          description: input.body.description,
+          viewMode: input.body.viewMode,
+          filters: input.body.filters,
+          config: input.body.config
         });
       } catch (error) {
         return toORPCError(error);
@@ -70,10 +70,10 @@ export const workspaceViewORPCRouter = viewRouter.router({
     }),
     remove: viewRouter.views.remove.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.manage_views');
-        return await deleteSavedView(context.db, workspace, input.id);
+        return await deleteSavedView(context.db, workspace, input.params.id);
       } catch (error) {
         return toORPCError(error);
       }
@@ -82,7 +82,7 @@ export const workspaceViewORPCRouter = viewRouter.router({
   pinnedEntities: {
     list: viewRouter.pinnedEntities.list.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         return await listPinnedEntities(context.db, workspace, context.event);
       } catch (error) {
         return toORPCError(error);
@@ -90,16 +90,21 @@ export const workspaceViewORPCRouter = viewRouter.router({
     }),
     create: viewRouter.pinnedEntities.create.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
-        return await createPinnedEntity(context.db, workspace, input.entity_id, context.event);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await createPinnedEntity(context.db, workspace, input.body.entity_id, context.event);
       } catch (error) {
         return toORPCError(error);
       }
     }),
     remove: viewRouter.pinnedEntities.remove.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
-        return await deletePinnedEntity(context.db, workspace, input.entityId, context.event);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await deletePinnedEntity(
+          context.db,
+          workspace,
+          input.params.entityId,
+          context.event
+        );
       } catch (error) {
         return toORPCError(error);
       }

@@ -18,8 +18,8 @@ export const searchORPCRouter = searchRouter.router({
   search: {
     query: searchRouter.search.query.handler(async ({ input, context }) => {
       try {
-        if (input.types != null && input.types !== '') {
-          const parsed = input.types.split(',').map(t => t.trim());
+        if (input.query.types != null && input.query.types !== '') {
+          const parsed = input.query.types.split(',').map(t => t.trim());
           const invalid = parsed.filter(
             t => !SEARCH_TYPES.includes(t as (typeof SEARCH_TYPES)[number])
           );
@@ -29,7 +29,12 @@ export const searchORPCRouter = searchRouter.router({
             });
           }
         }
-        return await searchWorkspace(context.db, input.workspace, input, context.event);
+        return await searchWorkspace(
+          context.db,
+          input.params.workspace,
+          input.query,
+          context.event
+        );
       } catch (error) {
         return toORPCError(error);
       }

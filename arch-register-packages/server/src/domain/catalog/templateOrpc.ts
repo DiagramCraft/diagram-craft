@@ -20,7 +20,7 @@ export const workspaceTemplateORPCRouter = templateRouter.router({
   templates: {
     listAll: templateRouter.templates.listAll.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         return await listAllTemplates(context.db, workspace, authCtx);
       } catch (error) {
@@ -30,9 +30,9 @@ export const workspaceTemplateORPCRouter = templateRouter.router({
 
     listForProject: templateRouter.templates.listForProject.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        return await listProjectTemplates(context.db, workspace, input.projectId, authCtx);
+        return await listProjectTemplates(context.db, workspace, input.params.projectId, authCtx);
       } catch (error) {
         return toORPCError(error);
       }

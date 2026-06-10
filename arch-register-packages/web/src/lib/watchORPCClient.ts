@@ -43,32 +43,33 @@ const watchClient: JsonifiedClient<ContractRouterClient<typeof watchContract>> =
   createORPCClient(watchClientLink);
 
 export const listWatchingORPC = async (workspace: string) =>
-  await watchClient.watching.list({ workspace });
+  await watchClient.watching.list({ params: { workspace } });
 
 export const listNotificationsORPC = async (workspace: string) =>
-  await watchClient.notifications.list({ workspace });
+  await watchClient.notifications.list({ params: { workspace } });
 
 export const getNotificationCountORPC = async (workspace: string) =>
-  await watchClient.notifications.count({ workspace });
+  await watchClient.notifications.count({ params: { workspace } });
 
 export const createWatchORPC = async (
   workspace: string,
   entity_id: string
-): Promise<WatchedEntity> => await watchClient.watching.create({ workspace, entity_id });
+): Promise<WatchedEntity> =>
+  await watchClient.watching.create({ params: { workspace }, body: { entity_id } });
 
 export const deleteWatchORPC = async (
   workspace: string,
   entityId: string
 ): Promise<{ success: boolean; message: string }> =>
-  await watchClient.watching.remove({ workspace, entityId });
+  await watchClient.watching.remove({ params: { workspace, entityId } });
 
 export const deleteNotificationORPC = async (
   workspace: string,
   notificationId: string
 ): Promise<{ success: boolean; message: string }> =>
-  await watchClient.notifications.remove({ workspace, notificationId });
+  await watchClient.notifications.remove({ params: { workspace, notificationId } });
 
 export const clearNotificationsORPC = async (
   workspace: string
 ): Promise<{ success: boolean; count: number }> =>
-  await watchClient.notifications.clear({ workspace });
+  await watchClient.notifications.clear({ params: { workspace } });

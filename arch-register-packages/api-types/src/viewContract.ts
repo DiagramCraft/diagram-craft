@@ -79,20 +79,12 @@ export const pinnedEntitySchema = z.object({
 
 // ── Request schemas ───────────────────────────────────────────
 
-export const listViewsRequestSchema = z.object({
-  workspace: z.string()
-});
-
 export const createViewBodySchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   viewMode: browserViewSchema,
   filters: entityFiltersSchema,
   config: viewConfigSchema.optional()
-});
-
-export const createViewRequestSchema = createViewBodySchema.extend({
-  workspace: z.string()
 });
 
 export const updateViewBodySchema = z.object({
@@ -103,36 +95,12 @@ export const updateViewBodySchema = z.object({
   config: viewConfigSchema.optional()
 });
 
-export const updateViewRequestSchema = updateViewBodySchema.extend({
-  workspace: z.string(),
-  id: z.string()
-});
-
 export const getViewRequestSchema = z.object({
   workspace: z.string(),
   id: z.string()
 });
 
-export const deleteViewRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
 const deleteViewResponseSchema = z.object({ success: z.boolean() });
-
-export const listPinnedEntitiesRequestSchema = z.object({
-  workspace: z.string()
-});
-
-export const createPinnedEntityRequestSchema = z.object({
-  workspace: z.string(),
-  entity_id: z.string()
-});
-
-export const deletePinnedEntityRequestSchema = z.object({
-  workspace: z.string(),
-  entityId: z.string()
-});
 
 const deletePinnedEntityResponseSchema = z.object({
   success: z.boolean(),
@@ -144,34 +112,82 @@ const deletePinnedEntityResponseSchema = z.object({
 export const workspaceViewContract = {
   views: {
     list: oc
-      .route({ method: 'GET', path: '/{workspace}/views' })
-      .input(listViewsRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/views', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(z.array(savedViewSchema)),
     create: oc
-      .route({ method: 'POST', path: '/{workspace}/views' })
-      .input(createViewRequestSchema)
+      .route({ method: 'POST', path: '/{workspace}/views', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({ workspace: z.string() }),
+          body: createViewBodySchema
+        })
+      )
       .output(savedViewSchema),
     update: oc
-      .route({ method: 'PATCH', path: '/{workspace}/views/{id}' })
-      .input(updateViewRequestSchema)
+      .route({ method: 'PATCH', path: '/{workspace}/views/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          }),
+          body: updateViewBodySchema
+        })
+      )
       .output(savedViewSchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/{workspace}/views/{id}' })
-      .input(deleteViewRequestSchema)
+      .route({ method: 'DELETE', path: '/{workspace}/views/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          })
+        })
+      )
       .output(deleteViewResponseSchema)
   },
   pinnedEntities: {
     list: oc
-      .route({ method: 'GET', path: '/{workspace}/pinned-entities' })
-      .input(listPinnedEntitiesRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/pinned-entities', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(z.array(pinnedEntitySchema)),
     create: oc
-      .route({ method: 'POST', path: '/{workspace}/pinned-entities' })
-      .input(createPinnedEntityRequestSchema)
+      .route({ method: 'POST', path: '/{workspace}/pinned-entities', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({ workspace: z.string() }),
+          body: z.object({ entity_id: z.string() })
+        })
+      )
       .output(pinnedEntitySchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/{workspace}/pinned-entities/{entityId}' })
-      .input(deletePinnedEntityRequestSchema)
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/pinned-entities/{entityId}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            entityId: z.string()
+          })
+        })
+      )
       .output(deletePinnedEntityResponseSchema)
   }
 };
@@ -183,8 +199,6 @@ export type FilterCondition = z.infer<typeof filterConditionSchema>;
 export type EntityFilters = z.infer<typeof entityFiltersSchema>;
 
 export type RadarViewConfig = z.infer<typeof radarViewConfigSchema>;
-
-export type TimelineViewConfig = z.infer<typeof timelineViewConfigSchema>;
 
 export type SavedView = z.infer<typeof savedViewSchema>;
 

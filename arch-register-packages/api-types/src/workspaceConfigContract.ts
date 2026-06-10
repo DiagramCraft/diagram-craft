@@ -120,75 +120,131 @@ export const workspaceConfigContract = {
   config: {
     lifecycleStates: {
       list: oc
-        .route({ method: 'GET', path: '/{workspace}/config/lifecycle-states' })
-        .input(z.object({ workspace: z.string() }))
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/lifecycle-states',
+          inputStructure: 'detailed'
+        })
+        .input(z.object({ params: z.object({ workspace: z.string() }) }))
         .output(z.array(lifecycleStateSchema)),
       replace: oc
-        .route({ method: 'PUT', path: '/{workspace}/config/lifecycle-states' })
-        .input(z.object({ workspace: z.string(), states: z.array(lifecycleStateInputSchema) }))
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/lifecycle-states',
+          inputStructure: 'detailed'
+        })
+        .input(
+          z.object({
+            params: z.object({ workspace: z.string() }),
+            body: z.object({ states: z.array(lifecycleStateInputSchema) })
+          })
+        )
         .output(z.array(lifecycleStateSchema))
     },
     teams: {
       list: oc
-        .route({ method: 'GET', path: '/{workspace}/config/teams' })
-        .input(z.object({ workspace: z.string() }))
+        .route({ method: 'GET', path: '/{workspace}/config/teams', inputStructure: 'detailed' })
+        .input(z.object({ params: z.object({ workspace: z.string() }) }))
         .output(z.array(teamSchema)),
       replace: oc
-        .route({ method: 'PUT', path: '/{workspace}/config/teams' })
-        .input(z.object({ workspace: z.string(), teams: z.array(teamInputSchema) }))
+        .route({ method: 'PUT', path: '/{workspace}/config/teams', inputStructure: 'detailed' })
+        .input(
+          z.object({
+            params: z.object({ workspace: z.string() }),
+            body: z.object({ teams: z.array(teamInputSchema) })
+          })
+        )
         .output(z.array(teamSchema))
     },
     teamAssignments: {
       list: oc
-        .route({ method: 'GET', path: '/{workspace}/config/team-assignments' })
-        .input(z.object({ workspace: z.string() }))
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/team-assignments',
+          inputStructure: 'detailed'
+        })
+        .input(z.object({ params: z.object({ workspace: z.string() }) }))
         .output(z.array(teamAssignmentSchema)),
       replace: oc
-        .route({ method: 'PUT', path: '/{workspace}/config/team-assignments' })
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/team-assignments',
+          inputStructure: 'detailed'
+        })
         .input(
           z.object({
-            workspace: z.string(),
-            assignments: z.array(teamAssignmentInputSchema)
+            params: z.object({
+              workspace: z.string()
+            }),
+            body: z.object({
+              assignments: z.array(teamAssignmentInputSchema)
+            })
           })
         )
         .output(z.array(teamAssignmentSchema))
     },
     roles: {
       list: oc
-        .route({ method: 'GET', path: '/{workspace}/config/roles' })
-        .input(z.object({ workspace: z.string() }))
+        .route({ method: 'GET', path: '/{workspace}/config/roles', inputStructure: 'detailed' })
+        .input(z.object({ params: z.object({ workspace: z.string() }) }))
         .output(z.array(roleDefinitionSchema)),
       create: oc
-        .route({ method: 'POST', path: '/{workspace}/config/roles' })
-        .input(z.object({ workspace: z.string() }).merge(roleInputSchema))
+        .route({ method: 'POST', path: '/{workspace}/config/roles', inputStructure: 'detailed' })
+        .input(z.object({ params: z.object({ workspace: z.string() }), body: roleInputSchema }))
         .output(roleDefinitionDbSchema),
       update: oc
-        .route({ method: 'PUT', path: '/{workspace}/config/roles/{roleId}' })
-        .input(z.object({ workspace: z.string(), roleId: z.string() }).merge(roleInputSchema))
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/roles/{roleId}',
+          inputStructure: 'detailed'
+        })
+        .input(
+          z.object({
+            params: z.object({ workspace: z.string(), roleId: z.string() }),
+            body: roleInputSchema
+          })
+        )
         .output(roleDefinitionDbSchema),
       remove: oc
-        .route({ method: 'DELETE', path: '/{workspace}/config/roles/{roleId}' })
-        .input(z.object({ workspace: z.string(), roleId: z.string() }))
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/config/roles/{roleId}',
+          inputStructure: 'detailed'
+        })
+        .input(z.object({ params: z.object({ workspace: z.string(), roleId: z.string() }) }))
         .output(roleDefinitionDbSchema)
     },
     members: {
       list: oc
-        .route({ method: 'GET', path: '/{workspace}/config/members' })
-        .input(z.object({ workspace: z.string() }))
+        .route({ method: 'GET', path: '/{workspace}/config/members', inputStructure: 'detailed' })
+        .input(z.object({ params: z.object({ workspace: z.string() }) }))
         .output(z.array(memberInfoSchema)),
       updateRole: oc
-        .route({ method: 'PUT', path: '/{workspace}/config/members/{userId}/role' })
-        .input(z.object({ workspace: z.string(), userId: z.string(), role: z.string() }))
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/members/{userId}/role',
+          inputStructure: 'detailed'
+        })
+        .input(
+          z.object({
+            params: z.object({ workspace: z.string(), userId: z.string() }),
+            body: z.object({ roleId: z.string() })
+          })
+        )
         .output(memberDbSchema),
       remove: oc
-        .route({ method: 'DELETE', path: '/{workspace}/config/members/{userId}' })
-        .input(z.object({ workspace: z.string(), userId: z.string() }))
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/config/members/{userId}',
+          inputStructure: 'detailed'
+        })
+        .input(z.object({ params: z.object({ workspace: z.string(), userId: z.string() }) }))
         .output(memberDbSchema)
     },
     users: {
       list: oc
-        .route({ method: 'GET', path: '/{workspace}/config/users' })
-        .input(z.object({ workspace: z.string() }))
+        .route({ method: 'GET', path: '/{workspace}/config/users', inputStructure: 'detailed' })
+        .input(z.object({ params: z.object({ workspace: z.string() }) }))
         .output(z.array(userInfoSchema))
     }
   }

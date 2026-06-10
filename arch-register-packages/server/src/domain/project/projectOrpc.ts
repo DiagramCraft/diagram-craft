@@ -29,28 +29,34 @@ export const projectORPCRouter = projectRouter.router({
   projects: {
     list: projectRouter.projects.list.handler(async ({ input, context }) => {
       try {
-        return await listProjects(context.db, input.workspace, context.event);
+        return await listProjects(context.db, input.params.workspace, context.event);
       } catch (error) {
         return toORPCError(error);
       }
     }),
     get: projectRouter.projects.get.handler(async ({ input, context }) => {
       try {
-        return await getProject(context.db, input.workspace, input.id, context.event);
+        return await getProject(context.db, input.params.workspace, input.params.id, context.event);
       } catch (error) {
         return toORPCError(error);
       }
     }),
     create: projectRouter.projects.create.handler(async ({ input, context }) => {
       try {
-        return await createProject(context.db, input.workspace, input, context.event);
+        return await createProject(context.db, input.params.workspace, input.body, context.event);
       } catch (error) {
         return toORPCError(error);
       }
     }),
     update: projectRouter.projects.update.handler(async ({ input, context }) => {
       try {
-        return await updateProject(context.db, input.workspace, input.id, input, context.event);
+        return await updateProject(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.body,
+          context.event
+        );
       } catch (error) {
         return toORPCError(error);
       }
@@ -59,8 +65,8 @@ export const projectORPCRouter = projectRouter.router({
       try {
         return await deleteProject(
           context.db,
-          input.workspace,
-          input.id,
+          input.params.workspace,
+          input.params.id,
           context.event,
           context.storage
         );
@@ -70,14 +76,25 @@ export const projectORPCRouter = projectRouter.router({
     }),
     listFiles: projectRouter.projects.listFiles.handler(async ({ input, context }) => {
       try {
-        return await listProjectFiles(context.db, input.workspace, input.id, context.event);
+        return await listProjectFiles(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          context.event
+        );
       } catch (error) {
         return toORPCError(error);
       }
     }),
     createFolder: projectRouter.projects.createFolder.handler(async ({ input, context }) => {
       try {
-        return await createFolder(context.db, input.workspace, input.id, input.path, context.event);
+        return await createFolder(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.body.path,
+          context.event
+        );
       } catch (error) {
         return toORPCError(error);
       }
@@ -86,10 +103,10 @@ export const projectORPCRouter = projectRouter.router({
       try {
         return await renameFolder(
           context.db,
-          input.workspace,
-          input.id,
-          input.oldPath,
-          input.newPath,
+          input.params.workspace,
+          input.params.id,
+          input.body.oldPath,
+          input.body.newPath,
           context.event
         );
       } catch (error) {

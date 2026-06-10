@@ -58,23 +58,25 @@ const searchResponseSchema = z.object({
 
 // ── Request schemas ───────────────────────────────────────────
 
-const searchRequestSchema = z.object({
-  workspace: z.string(),
-  q: z.string().optional(),
-  limitPerType: z.preprocess(
-    v => (v !== undefined ? Number(v) : undefined),
-    z.number().int().positive().optional()
-  ),
-  types: z.string().optional()
-});
-
 // ── Contract ──────────────────────────────────────────────────
 
 export const searchContract = {
   search: {
     query: oc
-      .route({ method: 'GET', path: '/{workspace}/search' })
-      .input(searchRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/search', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({ workspace: z.string() }),
+          query: z.object({
+            q: z.string().optional(),
+            limitPerType: z.preprocess(
+              v => (v !== undefined ? Number(v) : undefined),
+              z.number().int().positive().optional()
+            ),
+            types: z.string().optional()
+          })
+        })
+      )
       .output(searchResponseSchema)
   }
 };

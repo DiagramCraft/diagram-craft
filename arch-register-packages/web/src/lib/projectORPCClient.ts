@@ -43,10 +43,10 @@ const projectClient: JsonifiedClient<ContractRouterClient<typeof projectContract
   createORPCClient(projectClientLink);
 
 export const listProjectsORPC = async (workspace: string): Promise<Project[]> =>
-  await projectClient.projects.list({ workspace });
+  await projectClient.projects.list({ params: { workspace } });
 
 export const getProjectORPC = async (workspace: string, id: string): Promise<ProjectDetail> =>
-  await projectClient.projects.get({ workspace, id });
+  await projectClient.projects.get({ params: { workspace, id } });
 
 export const createProjectORPC = async (
   workspace: string,
@@ -57,7 +57,7 @@ export const createProjectORPC = async (
     status?: 'pinned' | 'active' | 'archived';
     color?: string | null;
   }
-): Promise<Project> => await projectClient.projects.create({ workspace, ...input });
+): Promise<Project> => await projectClient.projects.create({ params: { workspace }, body: input });
 
 export const updateProjectORPC = async (
   workspace: string,
@@ -69,10 +69,11 @@ export const updateProjectORPC = async (
     status?: 'pinned' | 'active' | 'archived';
     color?: string | null;
   }
-): Promise<Project> => await projectClient.projects.update({ workspace, id, ...input });
+): Promise<Project> =>
+  await projectClient.projects.update({ params: { workspace, id }, body: input });
 
 export const deleteProjectORPC = async (
   workspace: string,
   id: string
 ): Promise<{ success: boolean; message: string }> =>
-  await projectClient.projects.remove({ workspace, id });
+  await projectClient.projects.remove({ params: { workspace, id } });

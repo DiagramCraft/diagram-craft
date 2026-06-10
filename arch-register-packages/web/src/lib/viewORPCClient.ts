@@ -48,34 +48,35 @@ const viewClient: JsonifiedClient<ContractRouterClient<typeof workspaceViewContr
   createORPCClient(viewClientLink);
 
 export const listSavedViewsORPC = async (workspace: string): Promise<SavedView[]> =>
-  await viewClient.views.list({ workspace });
+  await viewClient.views.list({ params: { workspace } });
 
 export const listPinnedEntitiesORPC = async (workspace: string): Promise<PinnedEntity[]> =>
-  await viewClient.pinnedEntities.list({ workspace });
+  await viewClient.pinnedEntities.list({ params: { workspace } });
 
 export const createSavedViewORPC = async (
   workspace: string,
   body: CreateSavedViewRequest
-): Promise<SavedView> => await viewClient.views.create({ workspace, ...body });
+): Promise<SavedView> => await viewClient.views.create({ params: { workspace }, body });
 
 export const updateSavedViewORPC = async (
   workspace: string,
   id: string,
   body: UpdateSavedViewRequest
-): Promise<SavedView> => await viewClient.views.update({ workspace, id, ...body });
+): Promise<SavedView> => await viewClient.views.update({ params: { workspace, id }, body });
 
 export const deleteSavedViewORPC = async (
   workspace: string,
   id: string
-): Promise<{ success: boolean }> => await viewClient.views.remove({ workspace, id });
+): Promise<{ success: boolean }> => await viewClient.views.remove({ params: { workspace, id } });
 
 export const createPinnedEntityORPC = async (
   workspace: string,
   entity_id: string
-): Promise<PinnedEntity> => await viewClient.pinnedEntities.create({ workspace, entity_id });
+): Promise<PinnedEntity> =>
+  await viewClient.pinnedEntities.create({ params: { workspace }, body: { entity_id } });
 
 export const deletePinnedEntityORPC = async (
   workspace: string,
   entityId: string
 ): Promise<{ success: boolean; message: string }> =>
-  await viewClient.pinnedEntities.remove({ workspace, entityId });
+  await viewClient.pinnedEntities.remove({ params: { workspace, entityId } });

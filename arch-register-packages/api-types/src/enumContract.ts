@@ -6,16 +6,6 @@ const enumOptionSchema = z.object({
   label: z.string()
 });
 
-const enumOptionsInputSchema = z.preprocess(
-  value => (Array.isArray(value) ? value : undefined),
-  z.array(enumOptionSchema).optional()
-);
-
-const enumSortOrderInputSchema = z.preprocess(
-  value => (typeof value === 'number' ? value : undefined),
-  z.number().int().min(0).optional()
-);
-
 const workspaceEnumSchema = z.object({
   id: z.string(),
   workspace: z.string(),
@@ -28,62 +18,66 @@ const workspaceEnumSchema = z.object({
 
 const createEnumBodySchema = z.object({
   name: z.string(),
-  options: enumOptionsInputSchema,
-  sort_order: enumSortOrderInputSchema
+  options: z.preprocess(
+    value => (Array.isArray(value) ? value : undefined),
+    z.array(enumOptionSchema).optional()
+  ),
+  sort_order: z.preprocess(
+    value => (typeof value === 'number' ? value : undefined),
+    z.number().int().min(0).optional()
+  )
 });
 
-const updateEnumBodySchema = createEnumBodySchema;
-
-const createEnumRequestSchema = createEnumBodySchema.extend({
-  workspace: z.string()
+const workspaceInputSchema = z.object({
+  params: z.object({
+    workspace: z.string()
+  })
 });
 
-const updateEnumRequestSchema = updateEnumBodySchema.extend({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const getEnumRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const listEnumsRequestSchema = z.object({
-  workspace: z.string()
-});
-
-const deleteEnumRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const deleteEnumResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string()
+const workspaceAndIdInputSchema = z.object({
+  params: z.object({
+    workspace: z.string(),
+    id: z.string()
+  })
 });
 
 export const workspaceEnumContract = {
   enums: {
     list: oc
-      .route({ method: 'GET', path: '/{workspace}/enums' })
-      .input(listEnumsRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/enums', inputStructure: 'detailed' })
+      .input(workspaceInputSchema)
       .output(z.array(workspaceEnumSchema)),
     get: oc
-      .route({ method: 'GET', path: '/{workspace}/enums/{id}' })
-      .input(getEnumRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/enums/{id}', inputStructure: 'detailed' })
+      .input(workspaceAndIdInputSchema)
       .output(workspaceEnumSchema),
     create: oc
-      .route({ method: 'POST', path: '/{workspace}/enums' })
-      .input(createEnumRequestSchema)
+      .route({ method: 'POST', path: '/{workspace}/enums', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({ workspace: z.string() }),
+          body: createEnumBodySchema
+        })
+      )
       .output(workspaceEnumSchema),
     update: oc
-      .route({ method: 'PUT', path: '/{workspace}/enums/{id}' })
-      .input(updateEnumRequestSchema)
+      .route({ method: 'PUT', path: '/{workspace}/enums/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({ workspace: z.string(), id: z.string() }),
+          body: createEnumBodySchema
+        })
+      )
       .output(workspaceEnumSchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/{workspace}/enums/{id}' })
-      .input(deleteEnumRequestSchema)
-      .output(deleteEnumResponseSchema)
+      .route({ method: 'DELETE', path: '/{workspace}/enums/{id}', inputStructure: 'detailed' })
+      .input(workspaceAndIdInputSchema)
+      .output(
+        z.object({
+          success: z.boolean(),
+          message: z.string()
+        })
+      )
   }
 };
 
@@ -91,4 +85,4 @@ export type WorkspaceEnum = z.infer<typeof workspaceEnumSchema>;
 
 export type CreateEnumRequest = z.infer<typeof createEnumBodySchema>;
 
-export type UpdateEnumRequest = z.infer<typeof updateEnumBodySchema>;
+export type UpdateEnumRequest = CreateEnumRequest;

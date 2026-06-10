@@ -33,26 +33,34 @@ const projectTemplatesResponseSchema = z.object({
 
 // ── Request schemas ───────────────────────────────────────────
 
-export const listWorkspaceTemplatesRequestSchema = z.object({
-  workspace: z.string()
-});
-
-export const listProjectTemplatesRequestSchema = z.object({
-  workspace: z.string(),
-  projectId: z.string()
-});
-
 // ── Contract ──────────────────────────────────────────────────
 
 export const workspaceTemplateContract = {
   templates: {
     listAll: oc
-      .route({ method: 'GET', path: '/{workspace}/templates' })
-      .input(listWorkspaceTemplatesRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/templates', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(allTemplatesResponseSchema),
     listForProject: oc
-      .route({ method: 'GET', path: '/{workspace}/projects/{projectId}/templates' })
-      .input(listProjectTemplatesRequestSchema)
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{projectId}/templates',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            projectId: z.string()
+          })
+        })
+      )
       .output(projectTemplatesResponseSchema)
   }
 };

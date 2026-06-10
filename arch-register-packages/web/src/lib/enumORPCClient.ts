@@ -43,7 +43,7 @@ const enumClient: JsonifiedClient<ContractRouterClient<typeof workspaceEnumContr
   createORPCClient(enumClientLink);
 
 export const listWorkspaceEnumsORPC = async (workspace: string): Promise<WorkspaceEnum[]> =>
-  await enumClient.enums.list({ workspace });
+  await enumClient.enums.list({ params: { workspace } });
 
 export const createWorkspaceEnumORPC = async (
   workspace: string,
@@ -52,7 +52,7 @@ export const createWorkspaceEnumORPC = async (
     options?: Array<{ value: string; label: string }>;
     sort_order?: number;
   }
-): Promise<WorkspaceEnum> => await enumClient.enums.create({ workspace, ...input });
+): Promise<WorkspaceEnum> => await enumClient.enums.create({ params: { workspace }, body: input });
 
 export const updateWorkspaceEnumORPC = async (
   workspace: string,
@@ -62,10 +62,11 @@ export const updateWorkspaceEnumORPC = async (
     options?: Array<{ value: string; label: string }>;
     sort_order?: number;
   }
-): Promise<WorkspaceEnum> => await enumClient.enums.update({ workspace, id, ...input });
+): Promise<WorkspaceEnum> =>
+  await enumClient.enums.update({ params: { workspace, id }, body: input });
 
 export const deleteWorkspaceEnumORPC = async (
   workspace: string,
   id: string
 ): Promise<{ success: boolean; message: string }> =>
-  await enumClient.enums.remove({ workspace, id });
+  await enumClient.enums.remove({ params: { workspace, id } });

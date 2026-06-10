@@ -92,29 +92,6 @@ const createSchemaBodySchema = z.object({
 
 const updateSchemaBodySchema = createSchemaBodySchema;
 
-const createSchemaRequestSchema = createSchemaBodySchema.extend({
-  workspace: z.string()
-});
-
-const updateSchemaRequestSchema = updateSchemaBodySchema.extend({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const getSchemaRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const listSchemasRequestSchema = z.object({
-  workspace: z.string()
-});
-
-const deleteSchemaRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
 const deleteSchemaResponseSchema = z.object({
   success: z.boolean(),
   message: z.string()
@@ -123,24 +100,54 @@ const deleteSchemaResponseSchema = z.object({
 export const workspaceSchemaContract = {
   schemas: {
     list: oc
-      .route({ method: 'GET', path: '/{workspace}/schemas' })
-      .input(listSchemasRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/schemas', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(z.array(entitySchemaSchema)),
     get: oc
-      .route({ method: 'GET', path: '/{workspace}/schemas/{id}' })
-      .input(getSchemaRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/schemas/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          })
+        })
+      )
       .output(entitySchemaSchema),
     create: oc
-      .route({ method: 'POST', path: '/{workspace}/schemas' })
-      .input(createSchemaRequestSchema)
+      .route({ method: 'POST', path: '/{workspace}/schemas', inputStructure: 'detailed' })
+      .input(
+        z.object({ params: z.object({ workspace: z.string() }), body: createSchemaBodySchema })
+      )
       .output(entitySchemaSchema),
     update: oc
-      .route({ method: 'PUT', path: '/{workspace}/schemas/{id}' })
-      .input(updateSchemaRequestSchema)
+      .route({ method: 'PUT', path: '/{workspace}/schemas/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          }),
+          body: updateSchemaBodySchema
+        })
+      )
       .output(entitySchemaSchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/{workspace}/schemas/{id}' })
-      .input(deleteSchemaRequestSchema)
+      .route({ method: 'DELETE', path: '/{workspace}/schemas/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string()
+          })
+        })
+      )
       .output(deleteSchemaResponseSchema)
   }
 };

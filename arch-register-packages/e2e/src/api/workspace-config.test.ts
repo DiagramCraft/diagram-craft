@@ -48,15 +48,11 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
 });
 
 const headers = (auth: string) => ({
-  Authorization: auth,
+  'Authorization': auth,
   'Content-Type': 'application/json'
 });
 
-const createCustomRole = async (
-  baseUrl: string,
-  auth: string,
-  body: Record<string, unknown>
-) => {
+const createCustomRole = async (baseUrl: string, auth: string, body: Record<string, unknown>) => {
   const res = await fetch(`${baseUrl}/api/default/config/roles`, {
     method: 'POST',
     headers: headers(auth),
@@ -258,7 +254,7 @@ test.describe('workspace config routes', () => {
       {
         method: 'PUT',
         headers: headers(auth),
-        body: JSON.stringify({ role: created['id'] })
+        body: JSON.stringify({ roleId: created['id'] })
       }
     );
     expect(assignRes.status).toBe(200);
@@ -408,7 +404,7 @@ test.describe('workspace config routes', () => {
       {
         method: 'PUT',
         headers: headers(auth),
-        body: JSON.stringify({ role: created['id'] })
+        body: JSON.stringify({ roleId: created['id'] })
       }
     );
 
