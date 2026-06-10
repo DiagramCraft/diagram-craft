@@ -42,9 +42,9 @@ import {
 } from '../../hooks/useNotifications';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
-import { EntityRecord, EntitySummary } from '@arch-register/api-types/entities';
-import { EntitySchema, SchemaField } from '@arch-register/api-types/schemas';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 
 type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes';

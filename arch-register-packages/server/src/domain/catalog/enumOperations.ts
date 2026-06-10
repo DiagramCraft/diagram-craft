@@ -11,7 +11,7 @@ import {
   CreateEnumRequest,
   UpdateEnumRequest,
   WorkspaceEnum
-} from '@arch-register/api-types/schemas';
+} from '@arch-register/api-types/enumContract';
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {

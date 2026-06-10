@@ -16,7 +16,7 @@ import {
 import { useTeamAssignments, useTeams } from '../../../hooks/useWorkspaceConfig';
 import { useWorkspaceRoles } from '../../../hooks/useWorkspaceRoles';
 import styles from './MembersSubSection.module.css';
-import { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaces';
+import { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaceContract';
 
 const TeamChip = ({ teamId }: { teamId: string }) => {
   const h = stableHue(teamId);

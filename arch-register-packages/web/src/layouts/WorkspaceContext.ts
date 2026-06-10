@@ -1,8 +1,9 @@
 import { createContext, useContext } from 'react';
 import type { WorkspaceTeam } from '../lib/api';
-import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
-import { EntitySchema, WorkspaceEnum } from '@arch-register/api-types/schemas';
-import { Project } from '@arch-register/api-types/projects';
+import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { Project } from '@arch-register/api-types/projectContract';
+import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
 export type WorkspaceContextType = {
   workspace: Workspace | null;

@@ -19,15 +19,15 @@ import {
   TbPinned
 } from 'react-icons/tb';
 import { EntityFacets, fetchEntityFacets, resolveSchemaColor, SavedView } from '../../lib/api';
-import type { FilterCondition } from '@arch-register/api-types/views';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useEntities';
 import { usePinnedEntities } from '../../hooks/useNotifications';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
-import { EntitySchema } from '@arch-register/api-types/schemas';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 
 const GroupLabel = ({ children }: { children: React.ReactNode }) => (
   <div className={styles.groupLabel}>{children}</div>

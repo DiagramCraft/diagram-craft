@@ -1,9 +1,10 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import type { pinnedEntitySchema } from '@arch-register/api-types/viewContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-export const watchedEntitySchema = z.object({
+const watchedEntitySchema = z.object({
   entity_id: z.string(),
   entity_name: z.string(),
   entity_slug: z.string(),
@@ -11,7 +12,7 @@ export const watchedEntitySchema = z.object({
   created_at: z.string()
 });
 
-export const notificationItemSchema = z.object({
+const notificationItemSchema = z.object({
   id: z.string(),
   entity_id: z.string(),
   entity_name: z.string(),
@@ -25,7 +26,7 @@ export const notificationItemSchema = z.object({
   audit_log_id: z.string()
 });
 
-export const notificationCountSchema = z.object({
+const notificationCountSchema = z.object({
   count: z.number()
 });
 
@@ -42,34 +43,34 @@ const clearResponseSchema = z.object({
 
 // ── Request schemas ───────────────────────────────────────────
 
-export const listWatchingRequestSchema = z.object({
+const listWatchingRequestSchema = z.object({
   workspace: z.string()
 });
 
-export const createWatchRequestSchema = z.object({
+const createWatchRequestSchema = z.object({
   workspace: z.string(),
   entity_id: z.string()
 });
 
-export const deleteWatchRequestSchema = z.object({
+const deleteWatchRequestSchema = z.object({
   workspace: z.string(),
   entityId: z.string()
 });
 
-export const listNotificationsRequestSchema = z.object({
+const listNotificationsRequestSchema = z.object({
   workspace: z.string()
 });
 
-export const getNotificationCountRequestSchema = z.object({
+const getNotificationCountRequestSchema = z.object({
   workspace: z.string()
 });
 
-export const deleteNotificationRequestSchema = z.object({
+const deleteNotificationRequestSchema = z.object({
   workspace: z.string(),
   notificationId: z.string()
 });
 
-export const clearNotificationsRequestSchema = z.object({
+const clearNotificationsRequestSchema = z.object({
   workspace: z.string()
 });
 
@@ -109,3 +110,11 @@ export const watchContract = {
       .output(clearResponseSchema)
   }
 };
+
+export type WatchedEntity = z.infer<typeof watchedEntitySchema>;
+
+export type PinnedEntity = z.infer<typeof pinnedEntitySchema>;
+
+export type NotificationItem = z.infer<typeof notificationItemSchema>;
+
+export type NotificationCount = z.infer<typeof notificationCountSchema>;

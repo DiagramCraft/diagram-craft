@@ -4,7 +4,7 @@ import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
-import { EntitySchema, SchemaField } from '@arch-register/api-types/schemas';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 
 const ORPC_BASE_PATH = '/api';
 

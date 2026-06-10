@@ -1,7 +1,12 @@
 import type { ProjectDbResult } from './db/projectDatabase';
 import type { ProjectFileDbResult as InternalProjectFile } from './db/projectDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
-import { FileTree, Project, ProjectDetail, ProjectFile } from '@arch-register/api-types/projects';
+import {
+  FileTree,
+  Project,
+  ProjectDetail,
+  ProjectFile
+} from '@arch-register/api-types/projectContract';
 
 const getProjectCapabilities = (
   context: AuthorizationContext | null,

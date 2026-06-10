@@ -1,6 +1,6 @@
 import { toApiProjectFile } from '../project/projectHelpers';
 import { ProjectFileDbResult } from '../project/db/projectDatabase';
-import { ProjectTemplatesResponse } from '@arch-register/api-types/projects';
+import { ProjectTemplatesResponse } from '@arch-register/api-types/templateContract';
 
 export type ProjectWithFiles = {
   project: { id: string };

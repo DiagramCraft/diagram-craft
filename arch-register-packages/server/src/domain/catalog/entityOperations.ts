@@ -25,7 +25,7 @@ import {
   EntityRecord,
   EntityRelations,
   TreeResponse
-} from '@arch-register/api-types/entities';
+} from '@arch-register/api-types/entityContract';
 
 const checker = new PermissionChecker();
 

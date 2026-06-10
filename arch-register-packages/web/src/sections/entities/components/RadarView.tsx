@@ -8,9 +8,9 @@ import { FormSection } from '@diagram-craft/app-components/FormSection';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities } from '../../../hooks/useEntities';
-import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemas';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
-import { EntityRecord } from '@arch-register/api-types/entities';
+import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import { EntityRecord } from '@arch-register/api-types/entityContract';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

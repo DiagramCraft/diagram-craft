@@ -4,7 +4,7 @@ import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { watchContract } from '@arch-register/api-types/watchContract';
-import { WatchedEntity } from '@arch-register/api-types/notifications';
+import { WatchedEntity } from '@arch-register/api-types/watchContract';
 
 const ORPC_BASE_PATH = '/api';
 

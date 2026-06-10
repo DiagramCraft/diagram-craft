@@ -1,6 +1,6 @@
 import type { DiagramCraftEntityResponse } from '../../types';
 import { Entity, SchemaDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
-import { ReferenceField, SchemaField } from '@arch-register/api-types/schemas';
+import { ReferenceField, SchemaField } from '@arch-register/api-types/schemaContract';
 
 export type DiagramCraftSchemaField =
   | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' }>

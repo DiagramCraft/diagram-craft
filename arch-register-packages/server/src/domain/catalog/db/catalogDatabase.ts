@@ -1,6 +1,6 @@
-import { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-types/views';
-import { SchemaField } from '@arch-register/api-types/schemas';
-import { EntityLink, VisibilityMode } from '@arch-register/api-types/common';
+import { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-types/viewContract';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
 
 // -- Entity Schema
 

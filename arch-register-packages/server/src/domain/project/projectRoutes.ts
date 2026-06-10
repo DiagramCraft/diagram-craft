@@ -15,7 +15,7 @@ import { generateAccurateSvgPreview } from '../diagram/serverDiagramRenderer';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { getDiagramCommentCounts } from '../diagram/commentCounts';
 import type { DatabaseAdapter } from '../../db/database';
-import { FileTree } from '@arch-register/api-types/projects';
+import { FileTree } from '@arch-register/api-types/projectContract';
 
 const BASE = '/api/:workspace/projects';
 

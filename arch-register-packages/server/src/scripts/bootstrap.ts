@@ -20,7 +20,7 @@ import {
 import { decodeRefs } from '../types';
 import { hashPassword } from '../utils/password';
 import { UserDbCreate } from '../db/database';
-import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemas';
+import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
 
 async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
   const workspaces = await db.workspace.listWorkspaces();

@@ -6,10 +6,10 @@ import type {
   SavedView,
   CreateSavedViewRequest,
   UpdateSavedViewRequest
-} from '@arch-register/api-types/views';
+} from '@arch-register/api-types/viewContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
-import { PinnedEntity } from '@arch-register/api-types/notifications';
+import { PinnedEntity } from '@arch-register/api-types/watchContract';
 
 const ORPC_BASE_PATH = '/api';
 

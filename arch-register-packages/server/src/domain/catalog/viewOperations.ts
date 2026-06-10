@@ -11,10 +11,10 @@ import type {
   CreateSavedViewRequest,
   UpdateSavedViewRequest,
   SavedView as ApiSavedView
-} from '@arch-register/api-types/views';
+} from '@arch-register/api-types/viewContract';
 import { PermissionChecker } from '@arch-register/permissions';
 import type { Entity, SavedViewDbResult } from './db/catalogDatabase';
-import { PinnedEntity } from '@arch-register/api-types/notifications';
+import { PinnedEntity } from '@arch-register/api-types/watchContract';
 
 const checker = new PermissionChecker();
 

@@ -4,7 +4,7 @@ import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { projectContract } from '@arch-register/api-types/projectContract';
-import { Project, ProjectDetail } from '@arch-register/api-types/projects';
+import { Project, ProjectDetail } from '@arch-register/api-types/projectContract';
 
 const ORPC_BASE_PATH = '/api';
 

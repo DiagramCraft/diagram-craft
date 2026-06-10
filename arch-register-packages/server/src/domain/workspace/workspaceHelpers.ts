@@ -8,10 +8,10 @@ import { UserDbResult } from '../auth/db/authDatabase';
 import {
   Workspace,
   WorkspaceLifecycleState,
-  WorkspaceMemberInfo,
   WorkspaceOwnerOption,
   WorkspaceUserInfo
-} from '@arch-register/api-types/workspaces';
+} from '@arch-register/api-types/workspaceContract';
+import { WorkspaceMemberInfo } from '@arch-register/api-types/workspaceConfigContract';
 
 export const toApiWorkspace = (workspace: WorkspaceDbResult): Workspace => ({
   id: workspace.id,

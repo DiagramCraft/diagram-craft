@@ -4,7 +4,7 @@ import type {
   SavedView,
   CreateSavedViewRequest,
   UpdateSavedViewRequest
-} from '@arch-register/api-types/views';
+} from '@arch-register/api-types/viewContract';
 import type {
   SerializedDiagram,
   SerializedDiagramDocument,
@@ -12,31 +12,30 @@ import type {
   SerializedStyles
 } from '@diagram-craft/model/serialization/serializedTypes';
 import { fetchWithAuthResponse } from '../auth/authClient';
-import { EntitySchema, SchemaField } from '@arch-register/api-types/schemas';
-import { EntityRecord, EntitySummary } from '@arch-register/api-types/entities';
-import { EntityLink } from '@arch-register/api-types/common';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntityRecord, EntitySummary, EntityLink } from '@arch-register/api-types/entityContract';
 import {
   FileTree,
   Project,
   ProjectDetail,
-  ProjectFile,
-  ProjectTemplatesResponse
-} from '@arch-register/api-types/projects';
+  ProjectFile
+} from '@arch-register/api-types/projectContract';
 import {
   NotificationCount,
   NotificationItem,
   PinnedEntity,
   WatchedEntity
-} from '@arch-register/api-types/notifications';
+} from '@arch-register/api-types/watchContract';
 import {
   CreateWorkspaceRoleRequest,
   UpdateWorkspaceRoleRequest,
   WorkspaceLifecycleState,
-  WorkspaceMemberInfo,
   WorkspaceRoleDefinition,
   WorkspaceUserInfo
-} from '@arch-register/api-types/workspaces';
+} from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
+import { ProjectTemplatesResponse } from '@arch-register/api-types/templateContract';
+import { WorkspaceMemberInfo } from '@arch-register/api-types/workspaceConfigContract';
 
 // Re-export commonly used types for convenience
 export type { SavedView };

@@ -30,7 +30,7 @@ import { RadarView, type RadarConfig } from './components/RadarView';
 import { TimelineView, type TimelineConfig } from './components/TimelineView';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../../lib/api';
 import type { TreeNode, TreeEdge, WorkspaceTeam } from '../../lib/api';
-import type { FilterCondition } from '@arch-register/api-types/views';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -51,9 +51,9 @@ import {
   useUpdateSavedView
 } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { EntityRecord } from '@arch-register/api-types/entities';
-import { EntitySchema } from '@arch-register/api-types/schemas';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { EntityRecord } from '@arch-register/api-types/entityContract';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 
 type BrowserView = 'table' | 'cards' | 'tree' | 'radar' | 'timeline';
 type DateFilterOperator = 'on' | 'before' | 'after' | 'empty';

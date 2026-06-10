@@ -5,9 +5,9 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import { Button } from '@diagram-craft/app-components/Button';
 import { resolveSchemaColor } from '../../../lib/api';
-import { EntityRecord } from '@arch-register/api-types/entities';
-import { EntitySchema } from '@arch-register/api-types/schemas';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { EntityRecord } from '@arch-register/api-types/entityContract';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

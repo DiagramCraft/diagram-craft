@@ -2,8 +2,8 @@
 
 // ── Core Permission Types ─────────────────────────────────────
 
-import { SchemaField } from '@arch-register/api-types/schemas';
-import { EntityLink, VisibilityMode } from '@arch-register/api-types/common';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
 
 export type GlobalRole = 'global_admin' | 'workspace_admin';
 

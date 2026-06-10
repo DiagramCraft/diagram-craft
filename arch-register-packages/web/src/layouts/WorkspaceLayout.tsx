@@ -35,7 +35,7 @@ import {
   TbMessageCircleStar,
   TbFileAi
 } from 'react-icons/tb';
-import { Project } from '@arch-register/api-types/projects';
+import { Project } from '@arch-register/api-types/projectContract';
 
 const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'home', icon: TbHome, tooltip: 'Workspace overview' },

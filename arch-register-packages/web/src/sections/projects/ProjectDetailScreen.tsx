@@ -27,7 +27,7 @@ import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { ApiError, FileEntry, WorkspaceTeam } from '../../lib/api';
 import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
-import { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projects';
+import { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import {
   useDeleteProjectFile,
   useDeleteProjectFolder,

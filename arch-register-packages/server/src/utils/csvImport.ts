@@ -1,7 +1,7 @@
 /**
  * CSV import utility functions for parsing and validating CSV data
  */
-import { SchemaField } from '@arch-register/api-types/schemas';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 

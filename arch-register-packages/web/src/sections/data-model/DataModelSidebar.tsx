@@ -5,7 +5,8 @@ import { resolveSchemaColor } from '../../lib/api';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
-import { EntitySchema, WorkspaceEnum } from '@arch-register/api-types/schemas';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
 const GroupLabel = ({ children }: { children: React.ReactNode }) => (
   <div className={styles.groupLabel}>{children}</div>

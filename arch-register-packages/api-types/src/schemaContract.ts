@@ -30,7 +30,7 @@ const containmentFieldSchema = baseFieldSchema.extend({
   maxCount: z.number().int().min(-1)
 });
 
-export const schemaFieldInputSchema = z.discriminatedUnion('type', [
+const schemaFieldInputSchema = z.discriminatedUnion('type', [
   textFieldSchema,
   longtextFieldSchema,
   booleanFieldSchema,
@@ -40,13 +40,13 @@ export const schemaFieldInputSchema = z.discriminatedUnion('type', [
   containmentFieldSchema
 ]);
 
-export const fieldOptionSchema = z.object({ value: z.string(), label: z.string() });
+const fieldOptionSchema = z.object({ value: z.string(), label: z.string() });
 
-export const selectFieldResponseSchema = selectFieldInputSchema.extend({
+const selectFieldResponseSchema = selectFieldInputSchema.extend({
   options: z.array(fieldOptionSchema)
 });
 
-export const schemaFieldResponseSchema = z.discriminatedUnion('type', [
+const schemaFieldResponseSchema = z.discriminatedUnion('type', [
   textFieldSchema,
   longtextFieldSchema,
   booleanFieldSchema,
@@ -56,7 +56,7 @@ export const schemaFieldResponseSchema = z.discriminatedUnion('type', [
   containmentFieldSchema
 ]);
 
-export const entitySchemaSchema = z.object({
+const entitySchemaSchema = z.object({
   id: z.string(),
   workspace: z.string(),
   name: z.string(),
@@ -92,30 +92,30 @@ const createSchemaBodySchema = z.object({
 
 const updateSchemaBodySchema = createSchemaBodySchema;
 
-export const createSchemaRequestSchema = createSchemaBodySchema.extend({
+const createSchemaRequestSchema = createSchemaBodySchema.extend({
   workspace: z.string()
 });
 
-export const updateSchemaRequestSchema = updateSchemaBodySchema.extend({
+const updateSchemaRequestSchema = updateSchemaBodySchema.extend({
   workspace: z.string(),
   id: z.string()
 });
 
-export const getSchemaRequestSchema = z.object({
+const getSchemaRequestSchema = z.object({
   workspace: z.string(),
   id: z.string()
 });
 
-export const listSchemasRequestSchema = z.object({
+const listSchemasRequestSchema = z.object({
   workspace: z.string()
 });
 
-export const deleteSchemaRequestSchema = z.object({
+const deleteSchemaRequestSchema = z.object({
   workspace: z.string(),
   id: z.string()
 });
 
-export const deleteSchemaResponseSchema = z.object({
+const deleteSchemaResponseSchema = z.object({
   success: z.boolean(),
   message: z.string()
 });
@@ -144,3 +144,79 @@ export const workspaceSchemaContract = {
       .output(deleteSchemaResponseSchema)
   }
 };
+
+// ── Schema Field Types ────────────────────────────────────────
+
+export type RequirementLevel = 'required' | 'expected' | 'optional';
+
+export type TextField = {
+  id: string;
+  name: string;
+  type: 'text' | 'longtext';
+  requirementLevel?: RequirementLevel | null;
+};
+
+export type BooleanField = {
+  id: string;
+  name: string;
+  type: 'boolean';
+  requirementLevel?: RequirementLevel | null;
+};
+
+export type DateField = {
+  id: string;
+  name: string;
+  type: 'date';
+  requirementLevel?: RequirementLevel | null;
+};
+
+export type SelectField = {
+  id: string;
+  name: string;
+  type: 'select';
+  enumId: string;
+  requirementLevel?: RequirementLevel | null;
+};
+
+export type ReferenceField = {
+  id: string;
+  name: string;
+  type: 'reference';
+  schemaId: string;
+  minCount: number;
+  maxCount: number;
+  requirementLevel?: RequirementLevel | null;
+};
+
+export type ContainmentField = {
+  id: string;
+  name: string;
+  type: 'containment';
+  schemaId: string;
+  minCount: number;
+  maxCount: number;
+  requirementLevel?: RequirementLevel | null;
+};
+
+export type SchemaField =
+  | TextField
+  | BooleanField
+  | DateField
+  | SelectField
+  | ReferenceField
+  | ContainmentField;
+
+type FieldOption = {
+  value: string;
+  label: string;
+};
+
+export type ApiSelectField = SelectField & {
+  options: FieldOption[];
+};
+
+// ── Entity Schema ─────────────────────────────────────────────
+
+export type EntitySchema = z.infer<typeof entitySchemaSchema>;
+
+// ── Workspace Enum ────────────────────────────────────────────

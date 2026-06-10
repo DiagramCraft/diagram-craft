@@ -13,7 +13,7 @@ import {
   NotificationCount,
   NotificationItem,
   WatchedEntity
-} from '@arch-register/api-types/notifications';
+} from '@arch-register/api-types/watchContract';
 
 const checker = new PermissionChecker();
 

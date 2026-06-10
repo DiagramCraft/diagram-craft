@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ProjectFile } from '@arch-register/api-types/projectContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -54,4 +55,9 @@ export const workspaceTemplateContract = {
       .input(listProjectTemplatesRequestSchema)
       .output(projectTemplatesResponseSchema)
   }
+};
+
+export type ProjectTemplatesResponse = {
+  workspaceTemplates: ProjectFile[];
+  projectTemplates: ProjectFile[];
 };

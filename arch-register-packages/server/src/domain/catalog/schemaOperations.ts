@@ -8,7 +8,7 @@ import {
   buildUpdateSchemaInput,
   isSchemaReferencedByEntities
 } from './schemaHelpers';
-import { EntitySchema } from '@arch-register/api-types/schemas';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {

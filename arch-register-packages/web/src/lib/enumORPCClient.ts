@@ -4,7 +4,7 @@ import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
-import { WorkspaceEnum } from '@arch-register/api-types/schemas';
+import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
 const ORPC_ENUMS_BASE_PATH = '/api';
 

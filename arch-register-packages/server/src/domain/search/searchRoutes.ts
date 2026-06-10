@@ -5,7 +5,7 @@ import { parsePositiveInt } from '../../utils/http';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { searchWorkspace } from './searchOperations';
-import { SchemaField } from '@arch-register/api-types/schemas';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 
 const BASE = '/api/:workspace/search';
 

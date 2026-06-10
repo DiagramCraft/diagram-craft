@@ -7,7 +7,7 @@ import {
   parseTypes
 } from './searchRoutes';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
-import { SchemaField } from '@arch-register/api-types/schemas';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

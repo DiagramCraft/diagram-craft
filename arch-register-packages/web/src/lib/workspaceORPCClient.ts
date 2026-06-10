@@ -5,7 +5,7 @@ import { OpenAPILink } from '@orpc/openapi-client/fetch';
 
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
-import { Workspace } from '@arch-register/api-types/workspaces';
+import { Workspace } from '@arch-register/api-types/workspaceContract';
 
 const ORPC_BASE_PATH = '/api';
 

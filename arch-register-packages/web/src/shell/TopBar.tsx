@@ -35,8 +35,8 @@ import {
   useNotifications,
   useWatchedEntities
 } from '../hooks/useNotifications';
-import { Workspace } from '@arch-register/api-types/workspaces';
-import { NotificationItem, WatchedEntity } from '@arch-register/api-types/notifications';
+import { Workspace } from '@arch-register/api-types/workspaceContract';
+import { NotificationItem, WatchedEntity } from '@arch-register/api-types/watchContract';
 
 type BreadcrumbItem = {
   label: string;

@@ -11,7 +11,7 @@ import type {
 } from './types.js';
 import { decodeRefs } from './utils.js';
 import { ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS } from './constants.js';
-import { VisibilityMode } from '@arch-register/api-types/common';
+import { VisibilityMode } from '@arch-register/api-types/entityContract';
 
 /**
  * Pure permission checker.

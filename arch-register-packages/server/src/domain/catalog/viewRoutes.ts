@@ -4,7 +4,10 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
-import type { CreateSavedViewRequest, UpdateSavedViewRequest } from '@arch-register/api-types/views';
+import type {
+  CreateSavedViewRequest,
+  UpdateSavedViewRequest
+} from '@arch-register/api-types/viewContract';
 import {
   listSavedViews,
   createSavedView,

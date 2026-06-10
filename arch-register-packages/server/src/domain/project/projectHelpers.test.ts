@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectDbResult, ProjectFileDbResult } from './db/projectDatabase';
 import { toApiProject, toApiProjectDetail, toApiProjectFile } from './projectHelpers';
-import { FileTree, ProjectFile } from '@arch-register/api-types/projects';
+import { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';

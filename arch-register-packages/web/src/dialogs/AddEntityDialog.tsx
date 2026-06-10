@@ -10,9 +10,9 @@ import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
-import { EntitySchema, SchemaField } from '@arch-register/api-types/schemas';
-import { EntitySummary } from '@arch-register/api-types/entities';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntitySummary } from '@arch-register/api-types/entityContract';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 
 type EntityApiResponse = {
   _uid: string;

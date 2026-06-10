@@ -10,7 +10,7 @@ import { apiFetch, ApiError } from '../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';
-import { Workspace } from '@arch-register/api-types/workspaces';
+import { Workspace } from '@arch-register/api-types/workspaceContract';
 
 type ApiWorkspace = {
   id: string;

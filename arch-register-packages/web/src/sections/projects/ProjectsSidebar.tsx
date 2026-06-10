@@ -28,7 +28,7 @@ import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { AddDiagramDialog } from './AddDiagramDialog';
 import { AddFolderDialog } from './AddFolderDialog';
-import { Project } from '@arch-register/api-types/projects';
+import { Project } from '@arch-register/api-types/projectContract';
 
 const PROJECT_GROUPS = [
   { status: 'pinned', title: 'Pinned Projects' },

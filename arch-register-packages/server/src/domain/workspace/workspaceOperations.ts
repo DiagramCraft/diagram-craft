@@ -10,7 +10,7 @@ import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/a
 import { toApiWorkspace } from './workspaceHelpers';
 import { instantiateTemplate } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
-import { Workspace } from '@arch-register/api-types/workspaces';
+import { Workspace } from '@arch-register/api-types/workspaceContract';
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, { unique: 'A workspace with that name already exists' });

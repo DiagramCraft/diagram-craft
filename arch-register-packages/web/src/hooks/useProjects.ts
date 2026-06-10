@@ -7,7 +7,7 @@ import {
   updateProjectORPC
 } from '../lib/projectORPCClient';
 import { invalidateAuditQueries } from './useAudit';
-import { Project, ProjectDetail } from '@arch-register/api-types/projects';
+import { Project, ProjectDetail } from '@arch-register/api-types/projectContract';
 
 // Query keys factory
 export const projectKeys = {

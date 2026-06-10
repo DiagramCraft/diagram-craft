@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import type { WorkspaceEnumDbResult as InternalWorkspaceEnum } from './db/catalogDatabase';
 import { SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
 import { httpAssert } from '../../utils/httpAssert';
-import { EntitySchema, WorkspaceEnum } from '@arch-register/api-types/schemas';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
 type SchemaMutationPayload = {
   name: string;

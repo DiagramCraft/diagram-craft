@@ -14,7 +14,7 @@ const projectCapabilitiesSchema = z.object({
   canManageFiles: z.boolean()
 });
 
-export const projectSchema = projectCapabilitiesSchema.extend({
+const projectSchema = projectCapabilitiesSchema.extend({
   id: z.string(),
   workspace: z.string(),
   name: z.string(),
@@ -27,7 +27,7 @@ export const projectSchema = projectCapabilitiesSchema.extend({
   updated_at: z.string()
 });
 
-export const projectFileSchema = z.object({
+const projectFileSchema = z.object({
   id: z.string(),
   project_id: z.string(),
   path: z.string(),
@@ -42,32 +42,32 @@ export const projectFileSchema = z.object({
   updated_at: z.string()
 });
 
-export const fileFolderSchema = z.object({
+const fileFolderSchema = z.object({
   path: z.string(),
   files: z.array(projectFileSchema)
 });
 
-export const fileTreeSchema = z.object({
+const fileTreeSchema = z.object({
   folders: z.array(fileFolderSchema),
   rootFiles: z.array(projectFileSchema)
 });
 
-export const projectDetailSchema = projectSchema.extend({
+const projectDetailSchema = projectSchema.extend({
   files: fileTreeSchema
 });
 
 // ── Request schemas ───────────────────────────────────────────
 
-export const listProjectsRequestSchema = z.object({
+const listProjectsRequestSchema = z.object({
   workspace: z.string()
 });
 
-export const getProjectRequestSchema = z.object({
+const getProjectRequestSchema = z.object({
   workspace: z.string(),
   id: z.string()
 });
 
-export const createProjectRequestSchema = z.object({
+const createProjectRequestSchema = z.object({
   workspace: z.string(),
   name: z.string(),
   description: z.preprocess(
@@ -82,7 +82,7 @@ export const createProjectRequestSchema = z.object({
   )
 });
 
-export const updateProjectRequestSchema = z.object({
+const updateProjectRequestSchema = z.object({
   workspace: z.string(),
   id: z.string(),
   name: z.string(),
@@ -92,7 +92,7 @@ export const updateProjectRequestSchema = z.object({
   color: z.string().nullable().optional()
 });
 
-export const deleteProjectRequestSchema = z.object({
+const deleteProjectRequestSchema = z.object({
   workspace: z.string(),
   id: z.string()
 });
@@ -102,12 +102,12 @@ const deleteProjectResponseSchema = z.object({
   message: z.string()
 });
 
-export const listProjectFilesRequestSchema = z.object({
+const listProjectFilesRequestSchema = z.object({
   workspace: z.string(),
   id: z.string()
 });
 
-export const createFolderRequestSchema = z.object({
+const createFolderRequestSchema = z.object({
   workspace: z.string(),
   id: z.string(),
   path: z.string()
@@ -119,7 +119,7 @@ const createFolderResponseSchema = z.object({
   marker: projectFileSchema.nullable()
 });
 
-export const renameFolderRequestSchema = z.object({
+const renameFolderRequestSchema = z.object({
   workspace: z.string(),
   id: z.string(),
   oldPath: z.string(),
@@ -170,3 +170,8 @@ export const projectContract = {
       .output(renameFolderResponseSchema)
   }
 };
+
+export type Project = z.infer<typeof projectSchema>;
+export type ProjectFile = z.infer<typeof projectFileSchema>;
+export type FileTree = z.infer<typeof fileTreeSchema>;
+export type ProjectDetail = z.infer<typeof projectDetailSchema>;

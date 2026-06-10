@@ -16,7 +16,7 @@ const enumSortOrderInputSchema = z.preprocess(
   z.number().int().min(0).optional()
 );
 
-export const workspaceEnumSchema = z.object({
+const workspaceEnumSchema = z.object({
   id: z.string(),
   workspace: z.string(),
   name: z.string(),
@@ -26,38 +26,38 @@ export const workspaceEnumSchema = z.object({
   updated_at: z.string()
 });
 
-export const createEnumBodySchema = z.object({
+const createEnumBodySchema = z.object({
   name: z.string(),
   options: enumOptionsInputSchema,
   sort_order: enumSortOrderInputSchema
 });
 
-export const updateEnumBodySchema = createEnumBodySchema;
+const updateEnumBodySchema = createEnumBodySchema;
 
-export const createEnumRequestSchema = createEnumBodySchema.extend({
+const createEnumRequestSchema = createEnumBodySchema.extend({
   workspace: z.string()
 });
 
-export const updateEnumRequestSchema = updateEnumBodySchema.extend({
-  workspace: z.string(),
-  id: z.string(),
-});
-
-export const getEnumRequestSchema = z.object({
+const updateEnumRequestSchema = updateEnumBodySchema.extend({
   workspace: z.string(),
   id: z.string()
 });
 
-export const listEnumsRequestSchema = z.object({
-  workspace: z.string()
-});
-
-export const deleteEnumRequestSchema = z.object({
+const getEnumRequestSchema = z.object({
   workspace: z.string(),
   id: z.string()
 });
 
-export const deleteEnumResponseSchema = z.object({
+const listEnumsRequestSchema = z.object({
+  workspace: z.string()
+});
+
+const deleteEnumRequestSchema = z.object({
+  workspace: z.string(),
+  id: z.string()
+});
+
+const deleteEnumResponseSchema = z.object({
   success: z.boolean(),
   message: z.string()
 });
@@ -86,3 +86,9 @@ export const workspaceEnumContract = {
       .output(deleteEnumResponseSchema)
   }
 };
+
+export type WorkspaceEnum = z.infer<typeof workspaceEnumSchema>;
+
+export type CreateEnumRequest = z.infer<typeof createEnumBodySchema>;
+
+export type UpdateEnumRequest = z.infer<typeof updateEnumBodySchema>;

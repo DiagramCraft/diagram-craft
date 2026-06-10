@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { csvRowToEntity, parseCsv, validateCsvData } from './csvImport';
-import { SchemaField } from '@arch-register/api-types/schemas';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 
 // ── parseCsv ──────────────────────────────────────────────────
 

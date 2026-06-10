@@ -5,8 +5,8 @@ import { Entity, type SchemaDbResult as InternalEntitySchema } from './db/catalo
 import type { EntityDbResult } from './db/catalogDatabase';
 import { handleDbError, slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
-import { SchemaField } from '@arch-register/api-types/schemas';
-import { EntityLink } from '@arch-register/api-types/common';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntityLink } from '@arch-register/api-types/entityContract';
 
 export const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {

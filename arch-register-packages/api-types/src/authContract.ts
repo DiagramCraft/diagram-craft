@@ -68,7 +68,6 @@ export const authPublicContract = {
   auth: {
     config: oc
       .route({ method: 'GET', path: '/auth/config' })
-      .input(z.object({}))
       .output(z.object({ mode: z.string() })),
     login: oc
       .route({ method: 'POST', path: '/auth/login' })
@@ -76,16 +75,12 @@ export const authPublicContract = {
       .output(tokenPairSchema),
     oidcAuthorize: oc
       .route({ method: 'GET', path: '/auth/oidc/authorize' })
-      .input(z.object({}))
       .output(z.object({ authorization_url: z.string() })),
     refresh: oc
       .route({ method: 'POST', path: '/auth/refresh' })
       .input(z.object({ refresh_token: z.string().optional() }).optional())
       .output(tokenPairSchema),
-    logout: oc
-      .route({ method: 'POST', path: '/auth/logout' })
-      .input(z.object({}).optional())
-      .output(z.object({ ok: z.boolean() }))
+    logout: oc.route({ method: 'POST', path: '/auth/logout' }).output(z.object({ ok: z.boolean() }))
   }
 };
 
@@ -93,10 +88,7 @@ export const authPublicContract = {
 
 export const authProtectedContract = {
   authProtected: {
-    me: oc
-      .route({ method: 'GET', path: '/auth/me' })
-      .input(z.object({}))
-      .output(authMeResponseSchema),
+    me: oc.route({ method: 'GET', path: '/auth/me' }).output(authMeResponseSchema),
     updateUser: oc
       .route({ method: 'PATCH', path: '/users/{id}' })
       .input(
@@ -107,10 +99,7 @@ export const authProtectedContract = {
         })
       )
       .output(userDetailSchema),
-    listUsers: oc
-      .route({ method: 'GET', path: '/auth/users' })
-      .input(z.object({}))
-      .output(z.array(userSummarySchema)),
+    listUsers: oc.route({ method: 'GET', path: '/auth/users' }).output(z.array(userSummarySchema)),
     getGlobalRoles: oc
       .route({ method: 'GET', path: '/auth/users/{id}/global-roles' })
       .input(z.object({ id: z.string() }))

@@ -10,7 +10,7 @@ import {
   updateEntityWithAudit
 } from '../catalog/entityMutations';
 import { Entity } from '../catalog/db/catalogDatabase';
-import { SchemaField } from '@arch-register/api-types/schemas';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 
 const checker = new PermissionChecker();
 

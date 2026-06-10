@@ -5,7 +5,7 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { SEARCH_DEFAULTS } from '../../constants';
 import { PermissionChecker } from '@arch-register/permissions';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
-import { SchemaField } from '@arch-register/api-types/schemas';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 
 const checker = new PermissionChecker();
 

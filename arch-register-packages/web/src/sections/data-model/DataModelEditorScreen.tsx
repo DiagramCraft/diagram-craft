@@ -17,7 +17,8 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { newid } from '@diagram-craft/utils/id';
 import { EnumEditorScreen } from './EnumEditorScreen';
 import { SchemaGraphView } from './components/SchemaGraphView';
-import { EntitySchema, SchemaField, WorkspaceEnum } from '@arch-register/api-types/schemas';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
 export const DataModelEditorScreen = () => {
   const navigate = useNavigate();

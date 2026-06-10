@@ -16,7 +16,7 @@ import { RolesPermissionsSubSection } from './sub-sections/RolesPermissionsSubSe
 import { MembersSubSection } from './sub-sections/MembersSubSection';
 import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
-import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {

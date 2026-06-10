@@ -9,7 +9,7 @@ import type { WorkspaceTeam } from '../lib/api';
 import { usePermissions } from '../auth/PermissionContext';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddEntityDialog.module.css';
-import { Project } from '@arch-register/api-types/projects';
+import { Project } from '@arch-register/api-types/projectContract';
 
 const PROJECT_STATUSES = [
   { value: 'pinned', label: 'Pinned' },

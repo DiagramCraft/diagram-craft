@@ -28,7 +28,7 @@ import {
 } from './searchParams';
 import { RootLayout } from '../layouts/RootLayout';
 import { RouteErrorComponent } from './RouteErrorComponent';
-import { Workspace } from '@arch-register/api-types/workspaces';
+import { Workspace } from '@arch-register/api-types/workspaceContract';
 
 // ─── Root Route ───────────────────────────────────────────────
 const rootRoute = createRootRouteWithContext<RouterContext>()({

@@ -17,7 +17,7 @@ import { resolveSchemaColor } from '../../lib/api';
 import { useAuditLog } from '../../hooks/useAudit';
 import { useEntityFacets } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { Project } from '@arch-register/api-types/projects';
+import { Project } from '@arch-register/api-types/projectContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 
 const PROJECT_STATUS_META = {

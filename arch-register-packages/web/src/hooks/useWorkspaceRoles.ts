@@ -9,7 +9,7 @@ import {
   CreateWorkspaceRoleRequest,
   UpdateWorkspaceRoleRequest,
   WorkspaceRoleDefinition
-} from '@arch-register/api-types/workspaces';
+} from '@arch-register/api-types/workspaceContract';
 
 export const workspaceRolesKeys = {
   all: ['workspace-roles'] as const,

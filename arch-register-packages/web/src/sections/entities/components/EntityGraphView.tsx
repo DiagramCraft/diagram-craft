@@ -16,7 +16,7 @@ import { resolveSchemaColor } from '../../../lib/api';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { TbEyeOff, TbPlus, TbVectorTriangle } from 'react-icons/tb';
 import styles from './EntityGraphView.module.css';
-import { EntitySchema } from '@arch-register/api-types/schemas';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
 
 type EntityNodeData = {
   entityId: string;

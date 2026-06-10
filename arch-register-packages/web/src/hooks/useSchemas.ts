@@ -7,7 +7,7 @@ import {
   listWorkspaceSchemasORPC,
   updateWorkspaceSchemaORPC
 } from '../lib/schemaORPCClient';
-import { SchemaField } from '@arch-register/api-types/schemas';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 
 // Hook for fetching schemas
 export const useSchemas = (workspaceSlug: string, enabled = true) => {

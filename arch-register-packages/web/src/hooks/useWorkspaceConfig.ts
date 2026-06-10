@@ -8,7 +8,7 @@ import {
   updateTeamsORPC,
   updateTeamAssignmentsORPC
 } from '../lib/workspaceConfigORPCClient';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 
 // Query keys factory
 export const workspaceConfigKeys = {

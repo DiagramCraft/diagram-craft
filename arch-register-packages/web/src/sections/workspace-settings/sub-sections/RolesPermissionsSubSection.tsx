@@ -27,7 +27,7 @@ import styles from './RolesPermissionsSubSection.module.css';
 import {
   WorkspaceRoleCapability,
   WorkspaceRoleDefinition
-} from '@arch-register/api-types/workspaces';
+} from '@arch-register/api-types/workspaceContract';
 
 type RoleDraft = {
   name: string;

@@ -26,7 +26,7 @@ import {
   AiMessageDbResult,
   AiConfigDbResult
 } from '../domain/ai/db/aiDatabase';
-import { EntityLink } from '@arch-register/api-types/common';
+import { EntityLink } from '@arch-register/api-types/entityContract';
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
   if (typeof value !== 'string' || value === '') return fallback;

@@ -8,7 +8,7 @@ import { decodeRefs } from '../../types';
 import { filterEntities, handleError } from './dataHelpers';
 import { formatArrayForCsv, generateCsv } from '../../utils/csv';
 import { PermissionChecker } from '@arch-register/permissions';
-import { SchemaField } from '@arch-register/api-types/schemas';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 
 const BASE = '/api/download/:workspace/data';
 

@@ -25,7 +25,7 @@ import { Chip } from '../../components/Chip';
 import { StatusChip } from '../../components/StatusChip';
 import { useSearch } from '../../hooks/useSearch';
 import styles from './SearchScreen.module.css';
-import { EntitySchema } from '@arch-register/api-types/schemas';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
 
 type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas';
 type SearchPreview =

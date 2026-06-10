@@ -20,7 +20,7 @@ import {
 import type {
   CreateSavedViewRequest,
   UpdateSavedViewRequest
-} from '@arch-register/api-types/views';
+} from '@arch-register/api-types/viewContract';
 import { entityKeys, schemaKeys, viewKeys } from './queryKeys';
 import { invalidateAuditQueries } from './useAudit';
 import { invalidateNotificationQueries } from './useNotifications';

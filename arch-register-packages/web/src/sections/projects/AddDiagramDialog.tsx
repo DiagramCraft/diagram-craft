@@ -11,7 +11,7 @@ import {
   useCreateDiagramFromTemplate
 } from '../../hooks/useProjectFiles';
 import styles from './AddDiagramDialog.module.css';
-import { ProjectFile } from '@arch-register/api-types/projects';
+import { ProjectFile } from '@arch-register/api-types/projectContract';
 
 type AddDiagramDialogProps = {
   open: boolean;

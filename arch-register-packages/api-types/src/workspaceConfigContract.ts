@@ -193,3 +193,5 @@ export const workspaceConfigContract = {
     }
   }
 };
+
+export type WorkspaceMemberInfo = z.infer<typeof memberInfoSchema>;

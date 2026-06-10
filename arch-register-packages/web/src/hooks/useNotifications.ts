@@ -13,7 +13,7 @@ import {
   deletePinnedEntityORPC,
   listPinnedEntitiesORPC
 } from '../lib/viewORPCClient';
-import { PinnedEntity } from '@arch-register/api-types/notifications';
+import { PinnedEntity } from '@arch-register/api-types/watchContract';
 
 export const notificationKeys = {
   all: ['notifications'] as const,

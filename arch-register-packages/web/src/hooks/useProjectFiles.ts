@@ -15,7 +15,7 @@ import {
 import { listProjectTemplatesORPC } from '../lib/templateORPCClient';
 import { projectKeys } from './useProjects';
 import { invalidateAuditQueries } from './useAudit';
-import { ProjectFile } from '@arch-register/api-types/projects';
+import { ProjectFile } from '@arch-register/api-types/projectContract';
 
 // Query keys factory
 export const projectFileKeys = {

@@ -20,7 +20,7 @@ import {
   useUpdateTeams
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './TeamsSubSection.module.css';
-import { WorkspaceUserInfo } from '@arch-register/api-types/workspaces';
+import { WorkspaceUserInfo } from '@arch-register/api-types/workspaceContract';
 
 type TeamDraft = {
   id: string;

@@ -42,13 +42,13 @@ const schemaFieldMatchSchema = z.object({
   fieldName: z.string()
 });
 
-export const schemaSearchResultSchema = z.object({
+const schemaSearchResultSchema = z.object({
   schemaId: z.string(),
   name: z.string(),
   fieldMatches: z.array(schemaFieldMatchSchema)
 });
 
-export const searchResponseSchema = z.object({
+const searchResponseSchema = z.object({
   query: z.string(),
   projects: z.array(projectSearchResultSchema),
   files: z.array(fileSearchResultSchema),
@@ -58,10 +58,13 @@ export const searchResponseSchema = z.object({
 
 // ── Request schemas ───────────────────────────────────────────
 
-export const searchRequestSchema = z.object({
+const searchRequestSchema = z.object({
   workspace: z.string(),
   q: z.string().optional(),
-  limitPerType: z.preprocess(v => (v !== undefined ? Number(v) : undefined), z.number().int().positive().optional()),
+  limitPerType: z.preprocess(
+    v => (v !== undefined ? Number(v) : undefined),
+    z.number().int().positive().optional()
+  ),
   types: z.string().optional()
 });
 

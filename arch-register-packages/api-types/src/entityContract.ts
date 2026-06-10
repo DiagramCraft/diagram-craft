@@ -19,7 +19,9 @@ const entityCapabilitiesSchema = z.object({
   canCreateChild: z.boolean()
 });
 
-export const entitySummarySchema = entityCapabilitiesSchema.extend({
+const visibilityModeSchema = z.enum(['public', 'restricted']);
+
+const entitySummarySchema = entityCapabilitiesSchema.extend({
   _uid: z.string(),
   _schema: foreignKeySchema,
   _name: z.string(),
@@ -32,16 +34,19 @@ export const entitySummarySchema = entityCapabilitiesSchema.extend({
   _targetLifecycleDate: z.string().nullable(),
   _tags: z.array(z.string()),
   _links: z.array(entityLinkSchema),
-  _visibilityMode: z.enum(['public', 'restricted']).nullable(),
+  _visibilityMode: visibilityModeSchema.nullable(),
   _completeness: z.number().nullable()
 });
 
 // EntityRecord = EntitySummary + dynamic schema fields
-export const entityRecordSchema = entitySummarySchema.catchall(z.unknown());
+const entityRecordSchema = entitySummarySchema.catchall(z.unknown());
 
 // ── Mutation input ────────────────────────────────────────────
 
-const ownerOrIdSchema = z.union([z.string(), z.object({ id: z.string() }).passthrough()]).nullable().optional();
+const ownerOrIdSchema = z
+  .union([z.string(), z.object({ id: z.string() }).passthrough()])
+  .nullable()
+  .optional();
 
 const entityMutationBodySchema = z
   .object({
@@ -81,45 +86,34 @@ const paginationSchema = z.object({
   )
 });
 
-export const listEntitiesRequestSchema = listFiltersSchema
-  .merge(paginationSchema)
-  .extend({
-    workspace: z.string(),
-    view: z.enum(['summary', 'full']).optional()
-  });
-
-export const getEntityRequestSchema = z.object({
+const getEntityRequestSchema = z.object({
   workspace: z.string(),
   id: z.string()
 });
 
-export const treeRequestSchema = listFiltersSchema.extend({ workspace: z.string() });
-
-export const facetsRequestSchema = z.object({ workspace: z.string() });
-
-export const createEntityRequestSchema = entityMutationBodySchema.extend({
+const createEntityRequestSchema = entityMutationBodySchema.extend({
   workspace: z.string()
 });
 
-export const updateEntityRequestSchema = entityMutationBodySchema.extend({
+const updateEntityRequestSchema = entityMutationBodySchema.extend({
   workspace: z.string(),
   id: z.string()
 });
 
-export const deleteEntityResponseSchema = z.object({
+const deleteEntityResponseSchema = z.object({
   success: z.boolean(),
   message: z.string()
 });
 
 // ── Facets ────────────────────────────────────────────────────
 
-export const entityFacetBucketSchema = z.object({
+const entityFacetBucketSchema = z.object({
   label: z.string(),
   value: z.string().nullable(),
   count: z.number().int()
 });
 
-export const entityFacetsSchema = z.object({
+const entityFacetsSchema = z.object({
   total: z.number().int(),
   lifecycle: z.array(entityFacetBucketSchema),
   owner: z.array(entityFacetBucketSchema),
@@ -133,17 +127,17 @@ export const entityFacetsSchema = z.object({
 
 // ── Tree ──────────────────────────────────────────────────────
 
-export const treeNodeSchema = entitySummarySchema.extend({ _isMatch: z.boolean() });
-export const treeEdgeSchema = z.object({ childId: z.string(), parentId: z.string() });
+const treeNodeSchema = entitySummarySchema.extend({ _isMatch: z.boolean() });
+const treeEdgeSchema = z.object({ childId: z.string(), parentId: z.string() });
 
-export const treeResponseSchema = z.object({
+const treeResponseSchema = z.object({
   nodes: z.array(treeNodeSchema),
   edges: z.array(treeEdgeSchema)
 });
 
 // ── Relations ─────────────────────────────────────────────────
 
-export const entityRelationSchema = z.object({
+const entityRelationSchema = z.object({
   entityId: z.string(),
   entitySlug: z.string(),
   entityName: z.string(),
@@ -152,7 +146,7 @@ export const entityRelationSchema = z.object({
   kind: z.enum(['reference', 'containment'])
 });
 
-export const entityRelationsSchema = z.object({
+const entityRelationsSchema = z.object({
   outgoing: z.array(entityRelationSchema),
   incoming: z.array(entityRelationSchema)
 });
@@ -177,18 +171,18 @@ const entityGrantInputSchema = z.object({
   applies_to: z.enum(['self', 'subtree'])
 });
 
-export const entityAccessSchema = z.object({
+const entityAccessSchema = z.object({
   owner: z.string().nullable(),
   visibility_mode: z.enum(['public', 'restricted']).nullable(),
   grants: z.array(entityGrantSchema)
 });
 
-export const getEntityAccessRequestSchema = z.object({
+const getEntityAccessRequestSchema = z.object({
   workspace: z.string(),
   id: z.string()
 });
 
-export const updateEntityAccessRequestSchema = z.object({
+const updateEntityAccessRequestSchema = z.object({
   workspace: z.string(),
   id: z.string(),
   grants: z.array(entityGrantInputSchema)
@@ -220,7 +214,7 @@ const importEntityRowSchema = z.object({
   constraintViolations: z.array(importConstraintViolationSchema).optional()
 });
 
-export const importParseResponseSchema = z.object({
+const importParseResponseSchema = z.object({
   schemaId: z.string(),
   schemaName: z.string(),
   totalRows: z.number(),
@@ -228,19 +222,19 @@ export const importParseResponseSchema = z.object({
   entities: z.array(importEntityRowSchema)
 });
 
-export const importParseRequestSchema = z.object({
+const importParseRequestSchema = z.object({
   workspace: z.string(),
   schemaId: z.string(),
   csvContent: z.string()
 });
 
-export const importCommitRequestSchema = z.object({
+const importCommitRequestSchema = z.object({
   workspace: z.string(),
   schemaId: z.string(),
   entities: z.array(z.record(z.string(), z.unknown()))
 });
 
-export const importCommitResponseSchema = z.object({
+const importCommitResponseSchema = z.object({
   created: z.number(),
   updated: z.number(),
   ids: z.array(z.string())
@@ -252,15 +246,33 @@ export const workspaceEntityContract = {
   entities: {
     list: oc
       .route({ method: 'GET', path: '/{workspace}/data' })
-      .input(listEntitiesRequestSchema)
+      .input(
+        z.object({
+          // Path
+          workspace: z.string(),
+
+          // Query string
+          ...listFiltersSchema.shape,
+          ...paginationSchema.shape,
+          view: z.enum(['summary', 'full']).optional()
+        })
+      )
       .output(z.array(entityRecordSchema)),
     facets: oc
       .route({ method: 'GET', path: '/{workspace}/data/facets' })
-      .input(facetsRequestSchema)
+      .input(z.object({ workspace: z.string() }))
       .output(entityFacetsSchema),
     tree: oc
       .route({ method: 'GET', path: '/{workspace}/data/tree' })
-      .input(treeRequestSchema)
+      .input(
+        z.object({
+          // Path
+          workspace: z.string(),
+
+          // Query string
+          ...listFiltersSchema.shape
+        })
+      )
       .output(treeResponseSchema),
     get: oc
       .route({ method: 'GET', path: '/{workspace}/data/{id}' })
@@ -304,3 +316,11 @@ export const workspaceEntityContract = {
       .output(importCommitResponseSchema)
   }
 };
+
+export type EntityLink = z.infer<typeof entityLinkSchema>;
+export type VisibilityMode = z.infer<typeof visibilityModeSchema>;
+export type EntitySummary = z.infer<typeof entitySummarySchema>;
+export type EntityRecord = z.infer<typeof entityRecordSchema>;
+export type EntityFacets = z.infer<typeof entityFacetsSchema>;
+export type EntityRelations = z.infer<typeof entityRelationsSchema>;
+export type TreeResponse = z.infer<typeof treeResponseSchema>;
