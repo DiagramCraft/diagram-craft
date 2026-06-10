@@ -33,16 +33,16 @@ export const workspaceEntityORPCRouter = entityRouter.router({
   entities: {
     list: entityRouter.entities.list.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         return await listEntities(context.db, workspace, authCtx, {
-          schemaId: input._schemaId ?? null,
-          owner: input.owner ?? null,
-          lifecycle: input.lifecycle ?? null,
-          q: input.q ?? '',
-          view: input.view ?? 'full',
-          limit: input.limit ?? null,
-          offset: input.offset ?? 0
+          schemaId: input.query._schemaId ?? null,
+          owner: input.query.owner ?? null,
+          lifecycle: input.query.lifecycle ?? null,
+          q: input.query.q ?? '',
+          view: input.query.view ?? 'full',
+          limit: input.query.limit ?? null,
+          offset: input.query.offset ?? 0
         });
       } catch (error) {
         return toORPCError(error);
@@ -51,7 +51,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     facets: entityRouter.entities.facets.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         return await getEntityFacets(context.db, workspace, authCtx);
       } catch (error) {
@@ -61,13 +61,13 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     tree: entityRouter.entities.tree.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         return await getEntityTree(context.db, workspace, authCtx, {
-          schemaId: input._schemaId ?? null,
-          owner: input.owner ?? null,
-          lifecycle: input.lifecycle ?? null,
-          q: input.q ?? ''
+          schemaId: input.query._schemaId ?? null,
+          owner: input.query.owner ?? null,
+          lifecycle: input.query.lifecycle ?? null,
+          q: input.query.q ?? ''
         });
       } catch (error) {
         return toORPCError(error);
@@ -76,9 +76,9 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     get: entityRouter.entities.get.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        return await getEntity(context.db, workspace, input.id, authCtx);
+        return await getEntity(context.db, workspace, input.params.id, authCtx);
       } catch (error) {
         return toORPCError(error);
       }
@@ -86,9 +86,9 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     relations: entityRouter.entities.relations.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        return await getEntityRelations(context.db, workspace, input.id, authCtx);
+        return await getEntityRelations(context.db, workspace, input.params.id, authCtx);
       } catch (error) {
         return toORPCError(error);
       }
@@ -96,13 +96,13 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     create: entityRouter.entities.create.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         const auditUser = context.event.context.user;
         return await createEntity(
           context.db,
           workspace,
-          input as Record<string, unknown>,
+          input.body as Record<string, unknown>,
           authCtx,
           { id: auditUser.id, displayName: auditUser.display_name }
         );
@@ -113,14 +113,14 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     update: entityRouter.entities.update.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         const auditUser = context.event.context.user;
         return await updateEntity(
           context.db,
           workspace,
-          input.id,
-          input as Record<string, unknown>,
+          input.params.id,
+          input.body as Record<string, unknown>,
           authCtx,
           { id: auditUser.id, displayName: auditUser.display_name }
         );
@@ -131,10 +131,10 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     clone: entityRouter.entities.clone.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         const auditUser = context.event.context.user;
-        return await cloneEntity(context.db, workspace, input.id, authCtx, {
+        return await cloneEntity(context.db, workspace, input.params.id, authCtx, {
           id: auditUser.id,
           displayName: auditUser.display_name
         });
@@ -145,10 +145,10 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     remove: entityRouter.entities.remove.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         const auditUser = context.event.context.user;
-        return await deleteEntity(context.db, workspace, input.id, authCtx, {
+        return await deleteEntity(context.db, workspace, input.params.id, authCtx, {
           id: auditUser.id,
           displayName: auditUser.display_name
         });
@@ -159,17 +159,20 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     getAccess: entityRouter.entities.getAccess.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        const entity = await context.db.catalog.getEntity(workspace, input.id);
-        httpAssert.present(entity, { status: 404, message: `Data record '${input.id}' not found` });
+        const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+        httpAssert.present(entity, {
+          status: 404,
+          message: `Data record '${input.params.id}' not found`
+        });
         requireEntityAction(
           authCtx,
           entity,
           'view_entity',
           'You do not have access to view this entity'
         );
-        const grants = await context.db.catalog.getEntityGrants(workspace, input.id);
+        const grants = await context.db.catalog.getEntityGrants(workspace, input.params.id);
         return {
           owner: entity.owner,
           visibility_mode: entity.visibility_mode,
@@ -182,18 +185,30 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     updateAccess: entityRouter.entities.updateAccess.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        const entity = await context.db.catalog.getEntity(workspace, input.id);
-        httpAssert.present(entity, { status: 404, message: `Data record '${input.id}' not found` });
+        const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+        httpAssert.present(entity, {
+          status: 404,
+          message: `Data record '${input.params.id}' not found`
+        });
         requireEntityAction(
           authCtx,
           entity,
           'admin_entity',
           'You do not have permission to manage entity access'
         );
-        const rows = buildEntityGrantInputs(workspace, input.id, input.grants, new Date());
-        const grants = await context.db.catalog.replaceEntityGrants(workspace, input.id, rows);
+        const rows = buildEntityGrantInputs(
+          workspace,
+          input.params.id,
+          input.body.grants,
+          new Date()
+        );
+        const grants = await context.db.catalog.replaceEntityGrants(
+          workspace,
+          input.params.id,
+          rows
+        );
         return {
           owner: entity.owner,
           visibility_mode: entity.visibility_mode,
@@ -206,12 +221,12 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     importParse: entityRouter.entities.importParse.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         return await importParse(context.db, authCtx, {
           workspace,
-          schemaId: input.schemaId,
-          csvContent: input.csvContent
+          schemaId: input.body.schemaId,
+          csvContent: input.body.csvContent
         });
       } catch (error) {
         return toORPCError(error);
@@ -220,13 +235,15 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
     importCommit: entityRouter.entities.importCommit.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         const auditUser = context.event.context.user;
         return await importCommit(context.db, authCtx, {
           workspace,
-          schemaId: input.schemaId,
-          entities: input.entities as Array<Record<string, unknown> & { _existingId?: string }>,
+          schemaId: input.body.schemaId,
+          entities: input.body.entities as Array<
+            Record<string, unknown> & { _existingId?: string }
+          >,
           auditUser: { id: auditUser.id, display_name: auditUser.display_name }
         });
       } catch (error) {

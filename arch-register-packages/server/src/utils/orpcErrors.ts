@@ -39,13 +39,13 @@ export const toORPCError = (error: unknown): never => {
 // the per-handler try-catch and would otherwise go unlogged.
 export const orpcErrorInterceptors = [
   onError(async (error: unknown) => {
-    if (
-      error instanceof ORPCError &&
-      error.code === 'INTERNAL_SERVER_ERROR' &&
-      error.cause instanceof ValidationError
-    ) {
+    if (error instanceof ORPCError && error.cause instanceof ValidationError) {
       const zodError = new z.ZodError(error.cause.issues as z.core.$ZodIssue[]);
-      orpcLogger.error(`Output validation failed:\n${z.prettifyError(zodError)}`);
+      if (error.code === 'INTERNAL_SERVER_ERROR') {
+        orpcLogger.error(`Output validation failed:\n${z.prettifyError(zodError)}`);
+      } else if (error.code === 'BAD_REQUEST') {
+        orpcLogger.error(`Input validation failed:\n${z.prettifyError(zodError)}`);
+      }
     } else {
       orpcLogger.error(
         'ORPC framework error',

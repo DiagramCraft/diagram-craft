@@ -54,15 +54,17 @@ export const listAuditLogORPC = async (
   } = {}
 ) =>
   await auditClient.audit.list({
-    workspace,
-    entityType: options.entityType ?? undefined,
-    entityId: options.entityId ?? undefined,
-    operation: options.operation ?? undefined,
-    startDate: options.startDate ?? undefined,
-    endDate: options.endDate ?? undefined,
-    limit: options.limit ?? undefined,
-    offset: options.offset ?? undefined
+    params: { workspace },
+    query: {
+      entityType: options.entityType ?? undefined,
+      entityId: options.entityId ?? undefined,
+      operation: options.operation ?? undefined,
+      startDate: options.startDate ?? undefined,
+      endDate: options.endDate ?? undefined,
+      limit: options.limit ?? undefined,
+      offset: options.offset ?? undefined
+    }
   });
 
 export const getAuditStatsORPC = async (workspace: string) =>
-  await auditClient.audit.stats({ workspace });
+  await auditClient.audit.stats({ params: { workspace } });

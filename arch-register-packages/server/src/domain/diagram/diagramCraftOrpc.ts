@@ -20,7 +20,7 @@ export const diagramCraftORPCRouter = diagramCraftRouter.router({
   diagramCraft: {
     listSchemas: diagramCraftRouter.diagramCraft.listSchemas.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const rows = (await context.db.catalog.listSchemas(workspace)) as SchemaDbResult[];
         const enums = await context.db.catalog.listEnums(workspace);
         return rows.map(row => toDiagramCraftSchema(row, enums));
@@ -31,7 +31,7 @@ export const diagramCraftORPCRouter = diagramCraftRouter.router({
 
     listData: diagramCraftRouter.diagramCraft.listData.handler(async ({ input, context }) => {
       try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const rows = await context.db.catalog.listEntities(workspace);
         return rows.map(toDiagramCraftData);
       } catch (error) {

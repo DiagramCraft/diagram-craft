@@ -3,16 +3,18 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-const diagramCraftSchemaFieldSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.string()
-}).passthrough();
-
 const diagramCraftSchemaSchema = z.object({
   id: z.string(),
   name: z.string(),
-  fields: z.array(diagramCraftSchemaFieldSchema)
+  fields: z.array(
+    z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        type: z.string()
+      })
+      .passthrough()
+  )
 });
 
 const diagramCraftEntitySchema = z.record(z.string(), z.unknown());
@@ -22,12 +24,12 @@ const diagramCraftEntitySchema = z.record(z.string(), z.unknown());
 export const diagramCraftContract = {
   diagramCraft: {
     listSchemas: oc
-      .route({ method: 'GET', path: '/public/{workspace}/schemas' })
-      .input(z.object({ workspace: z.string() }))
+      .route({ method: 'GET', path: '/public/{workspace}/schemas', inputStructure: 'detailed' })
+      .input(z.object({ params: z.object({ workspace: z.string() }) }))
       .output(z.array(diagramCraftSchemaSchema)),
     listData: oc
-      .route({ method: 'GET', path: '/public/{workspace}/data' })
-      .input(z.object({ workspace: z.string() }))
+      .route({ method: 'GET', path: '/public/{workspace}/data', inputStructure: 'detailed' })
+      .input(z.object({ params: z.object({ workspace: z.string() }) }))
       .output(z.array(diagramCraftEntitySchema))
   }
 };

@@ -52,9 +52,9 @@ export const authPublicORPCRouter = publicRouter.router({
           });
         }
 
-        let user = await context.db.auth.getUserByUserId(input.username);
-        if (!user && input.username.includes('@')) {
-          user = await context.db.auth.getUserByEmail(input.username);
+        let user = await context.db.auth.getUserByUserId(input.body.username);
+        if (!user && input.body.username.includes('@')) {
+          user = await context.db.auth.getUserByEmail(input.body.username);
         }
         if (!user || !user.password_hash || user.auth_provider !== 'local') {
           throw new ORPCError('UNAUTHORIZED', { message: 'Invalid username or password' });
@@ -63,7 +63,7 @@ export const authPublicORPCRouter = publicRouter.router({
           throw new ORPCError('FORBIDDEN', { message: 'User account is inactive' });
         }
 
-        const isValid = await verifyPassword(user.password_hash, input.password);
+        const isValid = await verifyPassword(user.password_hash, input.body.password);
         if (!isValid) {
           throw new ORPCError('UNAUTHORIZED', { message: 'Invalid username or password' });
         }
@@ -87,7 +87,7 @@ export const authPublicORPCRouter = publicRouter.router({
         const { url, state, nonce, codeVerifier } = await generateAuthUrl();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
         await context.db.auth.storeOidcAuthState(state, nonce, codeVerifier, expiresAt);
-        return { authorization_url: url };
+        return { query: { authorization_url: url } };
       } catch (error) {
         return toORPCError(error);
       }
@@ -99,7 +99,7 @@ export const authPublicORPCRouter = publicRouter.router({
           context.event as Parameters<typeof getCookie>[0],
           'ar_refresh_token'
         );
-        const refreshToken = selectRefreshToken(cookieToken, input);
+        const refreshToken = selectRefreshToken(cookieToken, input.body);
         if (!refreshToken) {
           throw new ORPCError('UNAUTHORIZED', { message: 'Refresh token is required' });
         }
@@ -201,14 +201,14 @@ export const authProtectedORPCRouter = protectedRouter.router({
     updateUser: protectedRouter.authProtected.updateUser.handler(async ({ input, context }) => {
       try {
         const authenticatedUser = context.event.context.user as UserDbResult;
-        if (input.id !== authenticatedUser.id) {
+        if (input.params.id !== authenticatedUser.id) {
           throw new ORPCError('FORBIDDEN', {
             message: 'You can only update your own account settings'
           });
         }
         const updatedUser = await context.db.auth.updateUser(
-          input.id,
-          buildUserUpdateInput(input, new Date())
+          input.params.id,
+          buildUserUpdateInput(input.body, new Date())
         );
         if (!updatedUser) throw new ORPCError('NOT_FOUND', { message: 'User not found' });
         return {
@@ -251,7 +251,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
         try {
           const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
           requireGlobalPermission(authCtx, 'manage_workspace_roles');
-          const assignments = await context.db.auth.listGlobalRoleAssignments(input.id);
+          const assignments = await context.db.auth.listGlobalRoleAssignments(input.params.id);
           return assignments.map(a => ({
             user_id: a.user_id,
             role: a.role,
@@ -268,9 +268,9 @@ export const authProtectedORPCRouter = protectedRouter.router({
         try {
           const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
           requireGlobalPermission(authCtx, 'manage_workspace_roles');
-          const roles = parseRequestedGlobalRoles(input.roles);
+          const roles = parseRequestedGlobalRoles(input.body.roles);
           const assignments = await context.db.auth.replaceGlobalRoleAssignments(
-            input.id,
+            input.params.id,
             roles,
             new Date()
           );

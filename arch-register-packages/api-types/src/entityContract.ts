@@ -3,6 +3,19 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
+const workspaceParams = z.object({
+  workspace: z.string()
+});
+
+const workspaceAndIdParams = z.object({
+  workspace: z.string(),
+  id: z.string()
+});
+
+const workspaceAndIdPathInput = z.object({
+  params: workspaceAndIdParams
+});
+
 const foreignKeySchema = z.object({ id: z.string(), name: z.string() });
 
 const entityLinkSchema = z.object({
@@ -75,31 +88,6 @@ const listFiltersSchema = z.object({
   q: z.string().optional()
 });
 
-const paginationSchema = z.object({
-  limit: z.preprocess(
-    v => (v !== undefined ? Number(v) : undefined),
-    z.number().int().positive().optional()
-  ),
-  offset: z.preprocess(
-    v => (v !== undefined ? Number(v) : undefined),
-    z.number().int().min(0).optional()
-  )
-});
-
-const getEntityRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const createEntityRequestSchema = entityMutationBodySchema.extend({
-  workspace: z.string()
-});
-
-const updateEntityRequestSchema = entityMutationBodySchema.extend({
-  workspace: z.string(),
-  id: z.string()
-});
-
 const deleteEntityResponseSchema = z.object({
   success: z.boolean(),
   message: z.string()
@@ -127,12 +115,9 @@ const entityFacetsSchema = z.object({
 
 // ── Tree ──────────────────────────────────────────────────────
 
-const treeNodeSchema = entitySummarySchema.extend({ _isMatch: z.boolean() });
-const treeEdgeSchema = z.object({ childId: z.string(), parentId: z.string() });
-
 const treeResponseSchema = z.object({
-  nodes: z.array(treeNodeSchema),
-  edges: z.array(treeEdgeSchema)
+  nodes: z.array(entitySummarySchema.extend({ _isMatch: z.boolean() })),
+  edges: z.array(z.object({ childId: z.string(), parentId: z.string() }))
 });
 
 // ── Relations ─────────────────────────────────────────────────
@@ -177,17 +162,6 @@ const entityAccessSchema = z.object({
   grants: z.array(entityGrantSchema)
 });
 
-const getEntityAccessRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const updateEntityAccessRequestSchema = z.object({
-  workspace: z.string(),
-  id: z.string(),
-  grants: z.array(entityGrantInputSchema)
-});
-
 // ── Import ────────────────────────────────────────────────────
 
 const importNameMatchSchema = z.object({
@@ -222,18 +196,6 @@ const importParseResponseSchema = z.object({
   entities: z.array(importEntityRowSchema)
 });
 
-const importParseRequestSchema = z.object({
-  workspace: z.string(),
-  schemaId: z.string(),
-  csvContent: z.string()
-});
-
-const importCommitRequestSchema = z.object({
-  workspace: z.string(),
-  schemaId: z.string(),
-  entities: z.array(z.record(z.string(), z.unknown()))
-});
-
 const importCommitResponseSchema = z.object({
   created: z.number(),
   updated: z.number(),
@@ -245,74 +207,120 @@ const importCommitResponseSchema = z.object({
 export const workspaceEntityContract = {
   entities: {
     list: oc
-      .route({ method: 'GET', path: '/{workspace}/data' })
+      .route({ method: 'GET', path: '/{workspace}/data', inputStructure: 'detailed' })
       .input(
         z.object({
-          // Path
-          workspace: z.string(),
-
-          // Query string
-          ...listFiltersSchema.shape,
-          ...paginationSchema.shape,
-          view: z.enum(['summary', 'full']).optional()
+          params: workspaceParams,
+          query: z.object({
+            ...listFiltersSchema.shape,
+            ...z.object({
+              limit: z.preprocess(
+                v => (v !== undefined ? Number(v) : undefined),
+                z.number().int().positive().optional()
+              ),
+              offset: z.preprocess(
+                v => (v !== undefined ? Number(v) : undefined),
+                z.number().int().min(0).optional()
+              )
+            }).shape,
+            view: z.enum(['summary', 'full']).optional()
+          })
         })
       )
       .output(z.array(entityRecordSchema)),
     facets: oc
-      .route({ method: 'GET', path: '/{workspace}/data/facets' })
-      .input(z.object({ workspace: z.string() }))
+      .route({ method: 'GET', path: '/{workspace}/data/facets', inputStructure: 'detailed' })
+      .input(z.object({ params: z.object({ workspace: z.string() }) }))
       .output(entityFacetsSchema),
     tree: oc
-      .route({ method: 'GET', path: '/{workspace}/data/tree' })
+      .route({ method: 'GET', path: '/{workspace}/data/tree', inputStructure: 'detailed' })
       .input(
         z.object({
-          // Path
-          workspace: z.string(),
-
-          // Query string
-          ...listFiltersSchema.shape
+          params: workspaceParams,
+          query: listFiltersSchema
         })
       )
       .output(treeResponseSchema),
     get: oc
-      .route({ method: 'GET', path: '/{workspace}/data/{id}' })
-      .input(getEntityRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/data/{id}', inputStructure: 'detailed' })
+      .input(workspaceAndIdPathInput)
       .output(entityRecordSchema),
     relations: oc
-      .route({ method: 'GET', path: '/{workspace}/data/{id}/relations' })
-      .input(getEntityRequestSchema)
+      .route({
+        method: 'GET',
+        path: '/{workspace}/data/{id}/relations',
+        inputStructure: 'detailed'
+      })
+      .input(workspaceAndIdPathInput)
       .output(entityRelationsSchema),
     create: oc
-      .route({ method: 'POST', path: '/{workspace}/data' })
-      .input(createEntityRequestSchema)
+      .route({ method: 'POST', path: '/{workspace}/data', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({ workspace: z.string() }),
+          body: entityMutationBodySchema
+        })
+      )
       .output(entityRecordSchema),
     update: oc
-      .route({ method: 'PUT', path: '/{workspace}/data/{id}' })
-      .input(updateEntityRequestSchema)
+      .route({ method: 'PUT', path: '/{workspace}/data/{id}', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: workspaceAndIdParams,
+          body: entityMutationBodySchema
+        })
+      )
       .output(entityRecordSchema),
     clone: oc
-      .route({ method: 'POST', path: '/{workspace}/data/{id}/clone' })
-      .input(getEntityRequestSchema)
+      .route({ method: 'POST', path: '/{workspace}/data/{id}/clone', inputStructure: 'detailed' })
+      .input(workspaceAndIdPathInput)
       .output(entityRecordSchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/{workspace}/data/{id}' })
-      .input(getEntityRequestSchema)
+      .route({ method: 'DELETE', path: '/{workspace}/data/{id}', inputStructure: 'detailed' })
+      .input(workspaceAndIdPathInput)
       .output(deleteEntityResponseSchema),
     getAccess: oc
-      .route({ method: 'GET', path: '/{workspace}/data/{id}/access' })
-      .input(getEntityAccessRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/data/{id}/access', inputStructure: 'detailed' })
+      .input(workspaceAndIdPathInput)
       .output(entityAccessSchema),
     updateAccess: oc
-      .route({ method: 'PUT', path: '/{workspace}/data/{id}/access' })
-      .input(updateEntityAccessRequestSchema)
+      .route({ method: 'PUT', path: '/{workspace}/data/{id}/access', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: workspaceAndIdParams,
+          body: z.object({
+            grants: z.array(entityGrantInputSchema)
+          })
+        })
+      )
       .output(entityAccessSchema),
     importParse: oc
-      .route({ method: 'POST', path: '/{workspace}/data/import/parse' })
-      .input(importParseRequestSchema)
+      .route({ method: 'POST', path: '/{workspace}/data/import/parse', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: workspaceParams,
+          body: z.object({
+            schemaId: z.string(),
+            csvContent: z.string()
+          })
+        })
+      )
       .output(importParseResponseSchema),
     importCommit: oc
-      .route({ method: 'POST', path: '/{workspace}/data/import/commit' })
-      .input(importCommitRequestSchema)
+      .route({
+        method: 'POST',
+        path: '/{workspace}/data/import/commit',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: workspaceParams,
+          body: z.object({
+            schemaId: z.string(),
+            entities: z.array(z.record(z.string(), z.unknown()))
+          })
+        })
+      )
       .output(importCommitResponseSchema)
   }
 };

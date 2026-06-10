@@ -83,13 +83,13 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
       createConversation: aiRouter.ai.createConversation.handler(async ({ input, context }) => {
         try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
           const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
           requireWorkspaceCapability(authCtx, 'ws.view');
           const user = context.event.context.user;
           const title =
-            typeof input.title === 'string' && input.title.length > 0
-              ? input.title
+            typeof input.body.title === 'string' && input.body.title.length > 0
+              ? input.body.title
               : 'New conversation';
           const now = new Date();
           const conv = await context.db.ai.createConversation({
@@ -108,12 +108,15 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
       updateConversation: aiRouter.ai.updateConversation.handler(async ({ input, context }) => {
         try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
           const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
           requireWorkspaceCapability(authCtx, 'ws.view');
           const user = context.event.context.user;
 
-          const conversation = await context.db.ai.getConversation(workspace, input.conversationId);
+          const conversation = await context.db.ai.getConversation(
+            workspace,
+            input.params.conversationId
+          );
           if (!conversation)
             throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
           if (conversation.user_id !== user.id) {
@@ -124,8 +127,8 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
           const updated = await context.db.ai.updateConversationTitle(
             workspace,
-            input.conversationId,
-            input.title
+            input.params.conversationId,
+            input.body.title
           );
           if (!updated) throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
           return toConversationResponse(updated);
@@ -136,12 +139,15 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
       deleteConversation: aiRouter.ai.deleteConversation.handler(async ({ input, context }) => {
         try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
           const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
           requireWorkspaceCapability(authCtx, 'ws.view');
           const user = context.event.context.user;
 
-          const conversation = await context.db.ai.getConversation(workspace, input.conversationId);
+          const conversation = await context.db.ai.getConversation(
+            workspace,
+            input.params.conversationId
+          );
           if (!conversation)
             throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
           if (conversation.user_id !== user.id) {
@@ -150,7 +156,10 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
             });
           }
 
-          const deleted = await context.db.ai.deleteConversation(workspace, input.conversationId);
+          const deleted = await context.db.ai.deleteConversation(
+            workspace,
+            input.params.conversationId
+          );
           if (!deleted) throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
           return toConversationResponse(deleted);
         } catch (error) {
@@ -160,12 +169,15 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
       listMessages: aiRouter.ai.listMessages.handler(async ({ input, context }) => {
         try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
           const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
           requireWorkspaceCapability(authCtx, 'ws.view');
           const user = context.event.context.user;
 
-          const conversation = await context.db.ai.getConversation(workspace, input.conversationId);
+          const conversation = await context.db.ai.getConversation(
+            workspace,
+            input.params.conversationId
+          );
           if (!conversation)
             throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
           if (conversation.user_id !== user.id) {
@@ -174,7 +186,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
             });
           }
 
-          const messages = await context.db.ai.listMessages(input.conversationId);
+          const messages = await context.db.ai.listMessages(input.params.conversationId);
           return messages.map(toMessageResponse);
         } catch (error) {
           return toORPCError(error);
@@ -183,7 +195,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
       getConfig: aiRouter.ai.getConfig.handler(async ({ input, context }) => {
         try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
           const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
           requireWorkspaceCapability(authCtx, 'ws.settings');
 
@@ -198,11 +210,10 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
       updateConfig: aiRouter.ai.updateConfig.handler(async ({ input, context }) => {
         try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
           const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
           requireWorkspaceCapability(authCtx, 'ws.settings');
-          const { workspace: _ws, ...body } = input;
-          const configInput = buildAiConfigInput(body as Record<string, unknown>);
+          const configInput = buildAiConfigInput(input.body as Record<string, unknown>);
           const config = await context.db.ai.upsertAiConfig(workspace, configInput);
           return createAiConfigResponse(config);
         } catch (error) {
@@ -212,7 +223,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
       extract: aiRouter.ai.extract.handler(async ({ input, context }) => {
         try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
           const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
           requireWorkspaceCapability(authCtx, 'ws.view');
 
@@ -263,7 +274,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           const systemPrompt = await buildPrompt(context.db, workspace, extractPrompt);
           const result = await chatImpl({
             adapter,
-            messages: [{ role: 'user', content: input.text }],
+            messages: [{ role: 'user', content: input.body.text }],
             systemPrompts: [systemPrompt],
             temperature: 0.3,
             stream: false

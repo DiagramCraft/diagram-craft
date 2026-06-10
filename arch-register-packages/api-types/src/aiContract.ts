@@ -1,8 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 
-// ── Shared sub-schemas ────────────────────────────────────────
-
 const aiConversationSchema = z.object({
   id: z.string(),
   workspace: z.string(),
@@ -55,36 +53,64 @@ export const aiContract = {
       .input(z.object({ workspace: z.string() }))
       .output(z.array(aiConversationSchema)),
     createConversation: oc
-      .route({ method: 'POST', path: '/{workspace}/ai/conversations' })
-      .input(z.object({ workspace: z.string(), title: z.string().optional() }))
+      .route({ method: 'POST', path: '/{workspace}/ai/conversations', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({ workspace: z.string() }),
+          body: z.object({ title: z.string().optional() })
+        })
+      )
       .output(aiConversationSchema),
     updateConversation: oc
-      .route({ method: 'PATCH', path: '/{workspace}/ai/conversations/{conversationId}' })
-      .input(z.object({ workspace: z.string(), conversationId: z.string(), title: z.string() }))
+      .route({
+        method: 'PATCH',
+        path: '/{workspace}/ai/conversations/{conversationId}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({ workspace: z.string(), conversationId: z.string() }),
+          body: z.object({ title: z.string() })
+        })
+      )
       .output(aiConversationSchema),
     deleteConversation: oc
-      .route({ method: 'DELETE', path: '/{workspace}/ai/conversations/{conversationId}' })
-      .input(z.object({ workspace: z.string(), conversationId: z.string() }))
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/ai/conversations/{conversationId}',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({ params: z.object({ workspace: z.string(), conversationId: z.string() }) }))
       .output(aiConversationSchema),
     listMessages: oc
-      .route({ method: 'GET', path: '/{workspace}/ai/conversations/{conversationId}/messages' })
-      .input(z.object({ workspace: z.string(), conversationId: z.string() }))
+      .route({
+        method: 'GET',
+        path: '/{workspace}/ai/conversations/{conversationId}/messages',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({ params: z.object({ workspace: z.string(), conversationId: z.string() }) }))
       .output(z.array(aiMessageSchema)),
     getConfig: oc
-      .route({ method: 'GET', path: '/{workspace}/ai/config' })
-      .input(z.object({ workspace: z.string() }))
+      .route({ method: 'GET', path: '/{workspace}/ai/config', inputStructure: 'detailed' })
+      .input(z.object({ params: z.object({ workspace: z.string() }) }))
       .output(aiConfigSchema),
     updateConfig: oc
-      .route({ method: 'PUT', path: '/{workspace}/ai/config' })
+      .route({ method: 'PUT', path: '/{workspace}/ai/config', inputStructure: 'detailed' })
       .input(
-        aiConfigUpdateSchema.extend({
-          workspace: z.string()
+        z.object({
+          params: z.object({ workspace: z.string() }),
+          body: aiConfigUpdateSchema
         })
       )
       .output(aiConfigSchema),
     extract: oc
-      .route({ method: 'POST', path: '/{workspace}/ai/extract' })
-      .input(z.object({ workspace: z.string(), text: z.string() }))
+      .route({ method: 'POST', path: '/{workspace}/ai/extract', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({ workspace: z.string() }),
+          body: z.object({ text: z.string() })
+        })
+      )
       .output(
         z.object({
           entities: z.array(z.unknown()),
@@ -94,10 +120,9 @@ export const aiContract = {
   }
 };
 
+// ── Exported Types ───────────────────────────────────────────
+
 export type AiProvider = z.infer<typeof aiProviderSchema>;
-
 export type WorkspaceAiConfig = z.infer<typeof aiConfigSchema>;
-
 export type UpsertAiConfigRequest = z.infer<typeof aiConfigUpdateSchema>;
-
 export type AiConversation = z.infer<typeof aiConversationSchema>;

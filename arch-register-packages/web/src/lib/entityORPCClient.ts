@@ -59,26 +59,28 @@ export const listEntitiesORPC = async (
   } = {}
 ): Promise<EntityRecord[]> =>
   await entityClient.entities.list({
-    workspace,
-    _schemaId: options._schemaId ?? undefined,
-    owner: options.owner ?? undefined,
-    lifecycle: options.lifecycle ?? undefined,
-    q: options.q ?? undefined,
-    view: options.view,
-    limit: options.limit ?? undefined,
-    offset: options.offset ?? undefined
+    params: { workspace },
+    query: {
+      _schemaId: options._schemaId ?? undefined,
+      owner: options.owner ?? undefined,
+      lifecycle: options.lifecycle ?? undefined,
+      q: options.q ?? undefined,
+      view: options.view,
+      limit: options.limit ?? undefined,
+      offset: options.offset ?? undefined
+    }
   });
 
 export const getEntityFacetsORPC = async (workspace: string): Promise<EntityFacets> =>
-  await entityClient.entities.facets({ workspace });
+  await entityClient.entities.facets({ params: { workspace } });
 
 export const getEntityORPC = async (workspace: string, id: string): Promise<EntityRecord> =>
-  await entityClient.entities.get({ workspace, id });
+  await entityClient.entities.get({ params: { workspace, id } });
 
 export const getEntityRelationsORPC = async (
   workspace: string,
   id: string
-): Promise<EntityRelations> => await entityClient.entities.relations({ workspace, id });
+): Promise<EntityRelations> => await entityClient.entities.relations({ params: { workspace, id } });
 
 export const getEntityTreeORPC = async (
   workspace: string,
@@ -90,24 +92,27 @@ export const getEntityTreeORPC = async (
   } = {}
 ) =>
   await entityClient.entities.tree({
-    workspace,
-    _schemaId: options._schemaId ?? undefined,
-    owner: options.owner ?? undefined,
-    lifecycle: options.lifecycle ?? undefined,
-    q: options.q ?? undefined
+    params: { workspace },
+    query: {
+      _schemaId: options._schemaId ?? undefined,
+      owner: options.owner ?? undefined,
+      lifecycle: options.lifecycle ?? undefined,
+      q: options.q ?? undefined
+    }
   });
 
 export const updateEntityORPC = async (
   workspace: string,
   id: string,
   data: Record<string, unknown>
-): Promise<EntityRecord> => await entityClient.entities.update({ workspace, id, ...data });
+): Promise<EntityRecord> =>
+  await entityClient.entities.update({ params: { workspace, id }, body: data });
 
 export const deleteEntityORPC = async (
   workspace: string,
   id: string
 ): Promise<{ success: boolean; message: string }> =>
-  await entityClient.entities.remove({ workspace, id });
+  await entityClient.entities.remove({ params: { workspace, id } });
 
 export const cloneEntityORPC = async (workspace: string, id: string): Promise<EntityRecord> =>
-  await entityClient.entities.clone({ workspace, id });
+  await entityClient.entities.clone({ params: { workspace, id } });

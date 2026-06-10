@@ -23,7 +23,7 @@ const teamSchema = z.object({
   type: z.literal('team')
 });
 
-export const authMeResponseSchema = z.object({
+const authMeResponseSchema = z.object({
   id: z.string(),
   user_id: z.string(),
   email: z.string().nullable(),
@@ -67,18 +67,18 @@ const globalRoleAssignmentSchema = z.object({
 export const authPublicContract = {
   auth: {
     config: oc
-      .route({ method: 'GET', path: '/auth/config' })
+      .route({ method: 'GET', path: '/auth/config', inputStructure: 'detailed' })
       .output(z.object({ mode: z.string() })),
     login: oc
-      .route({ method: 'POST', path: '/auth/login' })
-      .input(z.object({ username: z.string(), password: z.string() }))
+      .route({ method: 'POST', path: '/auth/login', inputStructure: 'detailed' })
+      .input(z.object({ body: z.object({ username: z.string(), password: z.string() }) }))
       .output(tokenPairSchema),
     oidcAuthorize: oc
-      .route({ method: 'GET', path: '/auth/oidc/authorize' })
-      .output(z.object({ authorization_url: z.string() })),
+      .route({ method: 'GET', path: '/auth/oidc/authorize', inputStructure: 'detailed' })
+      .output(z.object({ query: z.object({ authorization_url: z.string() }) })),
     refresh: oc
-      .route({ method: 'POST', path: '/auth/refresh' })
-      .input(z.object({ refresh_token: z.string().optional() }).optional())
+      .route({ method: 'POST', path: '/auth/refresh', inputStructure: 'detailed' })
+      .input(z.object({ body: z.object({ refresh_token: z.string().optional() }).optional() }))
       .output(tokenPairSchema),
     logout: oc.route({ method: 'POST', path: '/auth/logout' }).output(z.object({ ok: z.boolean() }))
   }
@@ -90,23 +90,30 @@ export const authProtectedContract = {
   authProtected: {
     me: oc.route({ method: 'GET', path: '/auth/me' }).output(authMeResponseSchema),
     updateUser: oc
-      .route({ method: 'PATCH', path: '/users/{id}' })
+      .route({ method: 'PATCH', path: '/users/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          id: z.string(),
-          color: z.string().nullable().optional(),
-          display_name: z.string().optional()
+          params: z.object({ id: z.string() }),
+          body: z.object({
+            color: z.string().nullable().optional(),
+            display_name: z.string().optional()
+          })
         })
       )
       .output(userDetailSchema),
     listUsers: oc.route({ method: 'GET', path: '/auth/users' }).output(z.array(userSummarySchema)),
     getGlobalRoles: oc
-      .route({ method: 'GET', path: '/auth/users/{id}/global-roles' })
-      .input(z.object({ id: z.string() }))
+      .route({ method: 'GET', path: '/auth/users/{id}/global-roles', inputStructure: 'detailed' })
+      .input(z.object({ params: z.object({ id: z.string() }) }))
       .output(z.array(globalRoleAssignmentSchema)),
     replaceGlobalRoles: oc
-      .route({ method: 'PUT', path: '/auth/users/{id}/global-roles' })
-      .input(z.object({ id: z.string(), roles: z.array(z.string()) }))
+      .route({ method: 'PUT', path: '/auth/users/{id}/global-roles', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({ id: z.string() }),
+          body: z.object({ roles: z.array(z.string()) })
+        })
+      )
       .output(z.array(globalRoleAssignmentSchema))
   }
 };

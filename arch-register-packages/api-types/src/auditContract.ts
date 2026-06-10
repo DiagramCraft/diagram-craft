@@ -1,26 +1,14 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 
-// ── Shared sub-schemas ────────────────────────────────────────
-
-const auditOperationSchema = z.enum(['create', 'update', 'delete']);
-
-const auditEntityTypeSchema = z.enum([
-  'workspace',
-  'entity_schema',
-  'entity',
-  'project',
-  'project_file'
-]);
-
 const auditLogEntrySchema = z.object({
   id: z.string(),
   workspace: z.string(),
   timestamp: z.string(),
   user_id: z.string().nullable(),
   user_display_name: z.string().nullable(),
-  operation: auditOperationSchema,
-  entity_type: auditEntityTypeSchema,
+  operation: z.enum(['create', 'update', 'delete']),
+  entity_type: z.enum(['workspace', 'entity_schema', 'entity', 'project', 'project_file']),
   entity_id: z.string(),
   entity_name: z.string(),
   entity_slug: z.string().nullable(),
@@ -39,46 +27,49 @@ const auditStatsSchema = z.object({
   recentActivity: z.array(z.object({ date: z.string(), count: z.number() }))
 });
 
-// ── Request schemas ───────────────────────────────────────────
-
-const listAuditLogRequestSchema = z.object({
-  workspace: z.string(),
-  entityType: z.string().optional(),
-  entityId: z.string().optional(),
-  operation: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  limit: z.preprocess(
-    v => (v !== undefined ? Number(v) : undefined),
-    z.number().int().positive().optional()
-  ),
-  offset: z.preprocess(
-    v => (v !== undefined ? Number(v) : undefined),
-    z.number().int().min(0).optional()
-  )
-});
-
-const getAuditStatsRequestSchema = z.object({
-  workspace: z.string()
-});
-
 // ── Contract ──────────────────────────────────────────────────
 
 export const auditContract = {
   audit: {
     list: oc
-      .route({ method: 'GET', path: '/{workspace}/audit' })
-      .input(listAuditLogRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/audit', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          }),
+          query: z.object({
+            entityType: z.string().optional(),
+            entityId: z.string().optional(),
+            operation: z.string().optional(),
+            startDate: z.string().optional(),
+            endDate: z.string().optional(),
+            limit: z.preprocess(
+              v => (v !== undefined ? Number(v) : undefined),
+              z.number().int().positive().optional()
+            ),
+            offset: z.preprocess(
+              v => (v !== undefined ? Number(v) : undefined),
+              z.number().int().min(0).optional()
+            )
+          })
+        })
+      )
       .output(z.array(auditLogEntrySchema)),
     stats: oc
-      .route({ method: 'GET', path: '/{workspace}/audit/stats' })
-      .input(getAuditStatsRequestSchema)
+      .route({ method: 'GET', path: '/{workspace}/audit/stats', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string()
+          })
+        })
+      )
       .output(auditStatsSchema)
   }
 };
 
-// ── Audit Log Types ───────────────────────────────────────────
+// ── Exported Types ───────────────────────────────────────────
 
 export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
-
 export type AuditStats = z.infer<typeof auditStatsSchema>;

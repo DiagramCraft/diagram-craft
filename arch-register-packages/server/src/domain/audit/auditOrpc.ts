@@ -18,14 +18,14 @@ export const auditORPCRouter = auditRouter.router({
   audit: {
     list: auditRouter.audit.list.handler(async ({ input, context }) => {
       try {
-        return await listAuditLog(context.db, input.workspace, input, context.event);
+        return await listAuditLog(context.db, input.params.workspace, input.query, context.event);
       } catch (error) {
         return toORPCError(error);
       }
     }),
     stats: auditRouter.audit.stats.handler(async ({ input, context }) => {
       try {
-        return await getAuditStats(context.db, input.workspace, context.event);
+        return await getAuditStats(context.db, input.params.workspace, context.event);
       } catch (error) {
         return toORPCError(error);
       }
