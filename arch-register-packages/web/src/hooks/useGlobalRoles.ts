@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  fetchAuthUsers,
-  fetchUserGlobalRoles,
-  updateUserGlobalRoles,
-  type GlobalRoleAssignment
-} from '../lib/api';
+import { orpcClient } from '../lib/orpcClient';
 import type { GlobalRole } from '@arch-register/permissions';
+
+type GlobalRoleAssignment = {
+  user_id: string;
+  role: GlobalRole;
+  created_at?: string;
+};
 
 export const globalRolesKeys = {
   users: ['auth-users'] as const,
@@ -15,7 +16,7 @@ export const globalRolesKeys = {
 export const useAuthUsers = (enabled = true) =>
   useQuery({
     queryKey: globalRolesKeys.users,
-    queryFn: fetchAuthUsers,
+    queryFn: () => orpcClient.authProtected.listUsers(),
     enabled,
     staleTime: 60 * 1000
   });
@@ -23,7 +24,7 @@ export const useAuthUsers = (enabled = true) =>
 export const useUserGlobalRoles = (userId: string, enabled = true) =>
   useQuery({
     queryKey: globalRolesKeys.roles(userId),
-    queryFn: () => fetchUserGlobalRoles(userId),
+    queryFn: () => orpcClient.authProtected.getGlobalRoles({ params: { id: userId } }),
     enabled: enabled && !!userId,
     staleTime: 60 * 1000
   });
@@ -33,7 +34,10 @@ export const useUpdateUserGlobalRoles = () => {
 
   return useMutation({
     mutationFn: ({ userId, roles }: { userId: string; roles: GlobalRole[] }) =>
-      updateUserGlobalRoles(userId, roles),
+      orpcClient.authProtected.replaceGlobalRoles({
+        params: { id: userId },
+        body: { roles }
+      }),
     onSuccess: (data: GlobalRoleAssignment[], variables) => {
       queryClient.setQueryData(globalRolesKeys.roles(variables.userId), data);
     }

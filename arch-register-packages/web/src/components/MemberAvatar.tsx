@@ -33,13 +33,13 @@ export const MemberAvatar = ({
   color,
   size = 28,
 }: {
-  name: string;
+  name: string | null;
   email: string | null;
   userId: string;
   color?: string | null;
   size?: number;
 }) => {
-  const initials = getInitials(name, email);
+  const initials = getInitials(name ?? '', email);
   const background = resolveAvatarBackground(userId, color);
 
   return (

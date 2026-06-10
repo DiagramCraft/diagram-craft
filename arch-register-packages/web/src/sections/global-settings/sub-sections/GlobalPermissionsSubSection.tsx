@@ -4,7 +4,6 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { GLOBAL_ROLES, type GlobalRole } from '@arch-register/permissions';
 import { useAuth } from '../../../auth/AuthContext';
-import { fetchUserGlobalRoles, type AuthUserInfo } from '../../../lib/api';
 import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
@@ -15,7 +14,18 @@ import {
   useUpdateUserGlobalRoles,
   globalRolesKeys
 } from '../../../hooks/useGlobalRoles';
+import { orpcClient } from '../../../lib/orpcClient';
 import styles from './GlobalPermissionsSubSection.module.css';
+
+type AuthUserInfo = {
+  id: string;
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  auth_provider: string;
+  is_active: boolean;
+  color: string | null;
+};
 
 const sameRoles = (left: GlobalRole[], right: GlobalRole[]) => {
   if (left.length !== right.length) return false;
@@ -82,7 +92,7 @@ export const GlobalPermissionsSubSection = ({
   const roleQueries = useQueries({
     queries: sortedUsers.map(sortedUser => ({
       queryKey: globalRolesKeys.roles(sortedUser.id),
-      queryFn: () => fetchUserGlobalRoles(sortedUser.id),
+      queryFn: () => orpcClient.authProtected.getGlobalRoles({ params: { id: sortedUser.id } }),
       enabled: sortedUsers.length > 0,
       staleTime: 60 * 1000
     }))

@@ -46,6 +46,16 @@ export const orpcErrorInterceptors = [
       } else if (error.code === 'BAD_REQUEST') {
         orpcLogger.error(`Input validation failed:\n${z.prettifyError(zodError)}`);
       }
+    } else if (error instanceof ORPCError) {
+      // Expected auth failures during initial page load - log as debug to reduce noise
+      if (error.code === 'UNAUTHORIZED' && error.message === 'Refresh token is required') {
+        orpcLogger.debug('Refresh token is required (expected for unauthenticated requests)');
+      } else {
+        orpcLogger.error(
+          'ORPC framework error',
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
     } else {
       orpcLogger.error(
         'ORPC framework error',

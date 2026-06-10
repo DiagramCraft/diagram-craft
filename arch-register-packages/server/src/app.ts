@@ -50,6 +50,9 @@ export const createApp = (
         httpLogger.error(`${error.status} ${method} ${path}: ${error.message}`, cause);
       } else if (error.status === 404) {
         httpLogger.info(`404 ${method} ${path}`);
+      } else if (error.status === 401 && error.message === 'Missing or invalid authorization header') {
+        // Expected auth failure during initial page load - log as debug to reduce noise
+        httpLogger.debug(`${error.status} ${method} ${path}: ${error.message}`);
       } else {
         httpLogger.warn(`${error.status} ${method} ${path}: ${error.message}`);
       }

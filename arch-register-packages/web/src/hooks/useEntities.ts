@@ -1,5 +1,4 @@
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchEntities } from '../lib/api';
 import type { EntityRelation } from '../lib/api';
 import type {
   CreateSavedViewRequest,
@@ -192,7 +191,11 @@ export const useEntitiesBySchema = (workspaceId: string, schemaIds: string[]) =>
   return useQueries({
     queries: schemaIds.map(schemaId => ({
       queryKey: entityKeys.list(workspaceId, { schemaId, view: 'summary' }),
-      queryFn: () => fetchEntities(workspaceId, { schemaId, view: 'summary' }),
+      queryFn: () =>
+        orpcClient.entities.list({
+          params: { workspace: workspaceId },
+          query: { _schemaId: schemaId, view: 'summary' }
+        }),
       enabled: !!workspaceId && !!schemaId
     }))
   });

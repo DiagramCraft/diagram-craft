@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchWorkspaceMembers, fetchWorkspaceUsers, updateWorkspaceMemberRole } from '../lib/api';
+import { orpcClient } from '../lib/orpcClient';
 
 export const workspaceMembersKeys = {
   all: ['workspace-members'] as const,
@@ -10,7 +10,7 @@ export const workspaceMembersKeys = {
 export const useWorkspaceMembers = (workspaceSlug: string) => {
   return useQuery({
     queryKey: workspaceMembersKeys.list(workspaceSlug),
-    queryFn: () => fetchWorkspaceMembers(workspaceSlug),
+    queryFn: () => orpcClient.config.members.list({ params: { workspace: workspaceSlug } }),
     enabled: !!workspaceSlug,
     staleTime: 2 * 60 * 1000
   });
@@ -19,7 +19,7 @@ export const useWorkspaceMembers = (workspaceSlug: string) => {
 export const useWorkspaceUsers = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: workspaceMembersKeys.users(workspaceSlug),
-    queryFn: () => fetchWorkspaceUsers(workspaceSlug),
+    queryFn: () => orpcClient.config.users.list({ params: { workspace: workspaceSlug } }),
     enabled: enabled && !!workspaceSlug,
     staleTime: 2 * 60 * 1000
   });
@@ -30,7 +30,10 @@ export const useUpdateWorkspaceMemberRole = (workspaceSlug: string) => {
 
   return useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: string }) =>
-      updateWorkspaceMemberRole(workspaceSlug, userId, role),
+      orpcClient.config.members.updateRole({
+        params: { workspace: workspaceSlug, id: userId },
+        body: { roleId: role }
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: workspaceMembersKeys.list(workspaceSlug) });
     }
