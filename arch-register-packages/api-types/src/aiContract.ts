@@ -21,7 +21,7 @@ export const aiMessageSchema = z.object({
   created_at: z.string()
 });
 
-const aiConfigSchema = z.object({
+export const aiConfigSchema = z.object({
   workspace: z.string(),
   provider: z.enum(['openrouter', 'openai']),
   base_url: z.string().nullable(),
@@ -30,8 +30,18 @@ const aiConfigSchema = z.object({
   system_prompt: z.string().nullable(),
   enabled: z.boolean(),
   has_api_key: z.boolean(),
-  created_at: z.string().nullable(),
-  updated_at: z.string().nullable()
+  created_at: z.string(),
+  updated_at: z.string()
+});
+
+export const aiConfigUpdateSchema = z.object({
+  provider: z.enum(['openrouter', 'openai']).optional(),
+  api_key: z.string().nullable().optional(),
+  base_url: z.string().nullable().optional(),
+  model: z.string().nullable().optional(),
+  temperature: z.number().min(0).max(2).nullable().optional(),
+  system_prompt: z.string().nullable().optional(),
+  enabled: z.boolean().optional()
 });
 
 // ── Contract ──────────────────────────────────────────────────
@@ -65,15 +75,8 @@ export const aiContract = {
     updateConfig: oc
       .route({ method: 'PUT', path: '/{workspace}/ai/config' })
       .input(
-        z.object({
-          workspace: z.string(),
-          provider: z.enum(['openrouter', 'openai']).optional(),
-          api_key: z.string().nullable().optional(),
-          base_url: z.string().nullable().optional(),
-          model: z.string().nullable().optional(),
-          temperature: z.number().min(0).max(2).nullable().optional(),
-          system_prompt: z.string().nullable().optional(),
-          enabled: z.boolean().optional()
+        aiConfigUpdateSchema.extend({
+          workspace: z.string()
         })
       )
       .output(aiConfigSchema),

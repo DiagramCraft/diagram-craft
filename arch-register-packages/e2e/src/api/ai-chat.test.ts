@@ -12,8 +12,11 @@ const mockAiChatOverrides = {
     const data = body as Record<string, unknown>;
     return {
       messages:
-        ((data['messages'] as Array<{ role: string; content?: unknown; parts?: Array<{ type?: string; content?: string }> }>) ??
-          []),
+        (data['messages'] as Array<{
+          role: string;
+          content?: unknown;
+          parts?: Array<{ type?: string; content?: string }>;
+        }>) ?? [],
       threadId: String(data['threadId'] ?? 'thread-1'),
       runId: String(data['runId'] ?? 'run-1'),
       parentRunId: undefined,
@@ -148,7 +151,7 @@ const test = createApiTest({
 });
 
 const headers = (auth: string) => ({
-  Authorization: auth,
+  'Authorization': auth,
   'Content-Type': 'application/json'
 });
 
@@ -333,19 +336,7 @@ test.describe('ai chat routes', () => {
       headers: { Authorization: auth }
     });
 
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({
-      workspace: 'no-ai',
-      provider: 'openrouter',
-      base_url: null,
-      model: null,
-      temperature: null,
-      system_prompt: null,
-      enabled: false,
-      has_api_key: false,
-      created_at: null,
-      updated_at: null
-    });
+    expect(res.status).toBe(404);
   });
 
   test('POST /api/:workspace/ai/chat streams a reply and persists conversation messages', async ({
@@ -399,7 +390,10 @@ test.describe('ai chat routes', () => {
       ])
     );
 
-    const conversation = await server.db.ai.getConversation(seedIds.workspace.default, conversationId);
+    const conversation = await server.db.ai.getConversation(
+      seedIds.workspace.default,
+      conversationId
+    );
     expect(conversation?.title).toBe('Explain the authentication flow between the fro...');
   });
 

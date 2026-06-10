@@ -12,6 +12,7 @@ import { createAiChatTools } from './chatTools';
 import { encrypt } from '../../utils/encryption';
 import type { AiConfigInputDbUpsert } from '../../db/database';
 import type { AiConfigDbResult } from './db/aiDatabase';
+import { WorkspaceAiConfig } from '@arch-register/api-types/ai';
 
 // SSE route base — note /api/sse prefix for streaming routes
 const SSE_BASE = '/api/sse/:workspace/ai';
@@ -81,33 +82,7 @@ export const extractUserTextContent = (message: {
 export const buildConversationAutoTitle = (text: string) =>
   text.length > 50 ? `${text.substring(0, 47)}...` : text;
 
-export const createAiConfigResponse = (workspace: string, config: AiConfigDbResult | null): {
-  workspace: string;
-  provider: 'openrouter' | 'openai';
-  base_url: string | null;
-  model: string | null;
-  temperature: number | null;
-  system_prompt: string | null;
-  enabled: boolean;
-  has_api_key: boolean;
-  created_at: string | null;
-  updated_at: string | null;
-} => {
-  if (!config) {
-    return {
-      workspace,
-      provider: 'openrouter',
-      base_url: null,
-      model: null,
-      temperature: null,
-      system_prompt: null,
-      enabled: false,
-      has_api_key: false,
-      created_at: null,
-      updated_at: null
-    };
-  }
-
+export const createAiConfigResponse = (config: AiConfigDbResult): WorkspaceAiConfig => {
   return {
     workspace: config.workspace,
     provider: config.provider,
@@ -117,8 +92,10 @@ export const createAiConfigResponse = (workspace: string, config: AiConfigDbResu
     system_prompt: config.system_prompt,
     enabled: config.enabled,
     has_api_key: !!config.api_key_enc,
-    created_at: config.created_at instanceof Date ? config.created_at.toISOString() : config.created_at,
-    updated_at: config.updated_at instanceof Date ? config.updated_at.toISOString() : config.updated_at
+    created_at:
+      config.created_at instanceof Date ? config.created_at.toISOString() : config.created_at,
+    updated_at:
+      config.updated_at instanceof Date ? config.updated_at.toISOString() : config.updated_at
   };
 };
 

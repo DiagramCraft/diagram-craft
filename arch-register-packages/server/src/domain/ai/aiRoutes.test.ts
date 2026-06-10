@@ -56,20 +56,7 @@ describe('ai chat route helpers', () => {
   });
 
   it('shapes AI config responses and default empty config responses', () => {
-    expect(createAiConfigResponse('default', null)).toEqual({
-      workspace: 'default',
-      provider: 'openrouter',
-      base_url: null,
-      model: null,
-      temperature: null,
-      system_prompt: null,
-      enabled: false,
-      has_api_key: false,
-      created_at: null,
-      updated_at: null
-    });
-
-    expect(createAiConfigResponse('default', config)).toEqual({
+    expect(createAiConfigResponse(config)).toEqual({
       workspace: 'default',
       provider: 'openai',
       base_url: 'http://localhost:1234/v1',
