@@ -23,7 +23,7 @@ describe('projectORPCClient', () => {
     await listProjectsORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/poc-orpc/default/projects',
+      '/api/default/projects',
       expect.objectContaining({ method: 'GET' })
     );
   });

@@ -99,7 +99,7 @@ export const getWorkspaceSchemaOpenAPISpec = () => {
       title: 'Arch Register Schema POC API',
       version: '1.0.0'
     },
-    servers: [{ url: 'http://localhost:3010/api/poc-orpc' }]
+    servers: [{ url: 'http://localhost:3010/api' }]
   });
 
   return generatedSchemaOpenAPISpec;
@@ -111,7 +111,7 @@ export const createWorkspaceSchemaOpenAPISpecHandler = () =>
 export const createWorkspaceSchemaORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceSchemaOpenAPIHandler.handle(event.req, {
-      prefix: '/api/poc-orpc',
+      prefix: '/api',
       context: {
         db,
         event: event as AuthenticatedEvent

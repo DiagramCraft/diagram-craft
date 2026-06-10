@@ -25,7 +25,7 @@ describe('enumORPCClient', () => {
     await listWorkspaceEnumsORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/poc-orpc/default/enums',
+      '/api/default/enums',
       expect.objectContaining({
         method: 'GET'
       })
@@ -53,7 +53,7 @@ describe('enumORPCClient', () => {
     await createWorkspaceEnumORPC('default', { name: 'Status', options: [] });
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/poc-orpc/default/enums',
+      '/api/default/enums',
       expect.objectContaining({
         method: 'POST',
         body: '{"name":"Status","options":[]}'

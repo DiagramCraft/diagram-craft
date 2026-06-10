@@ -1,5 +1,5 @@
 import { defineHandler } from 'h3';
-import { implement } from '@orpc/server';
+import { implement, onError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { OpenAPIGenerator } from '@orpc/openapi';
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
@@ -56,7 +56,15 @@ export const workspaceManagementORPCRouter = wsRouter.router({
   }
 });
 
-export const workspaceManagementOpenAPIHandler = new OpenAPIHandler(workspaceManagementORPCRouter);
+export const workspaceManagementOpenAPIHandler = new OpenAPIHandler(workspaceManagementORPCRouter, {
+  clientInterceptors: [
+    onError(error => {
+      console.error('Output validation failed');
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      console.dir((error as any).cause, { depth: 10 });
+    })
+  ]
+});
 
 let generatedWorkspaceOpenAPISpec: Promise<object> | null = null;
 
@@ -68,7 +76,7 @@ export const getWorkspaceManagementOpenAPISpec = () => {
       title: 'Arch Register Workspace POC API',
       version: '1.0.0'
     },
-    servers: [{ url: 'http://localhost:3010/api/poc-orpc' }]
+    servers: [{ url: 'http://localhost:3010/api' }]
   });
 
   return generatedWorkspaceOpenAPISpec;
@@ -83,7 +91,7 @@ export const createWorkspaceManagementORPCHandler = (
 ) =>
   defineHandler(async event => {
     const result = await workspaceManagementOpenAPIHandler.handle(event.req, {
-      prefix: '/api/poc-orpc',
+      prefix: '/api',
       context: {
         db,
         storage,

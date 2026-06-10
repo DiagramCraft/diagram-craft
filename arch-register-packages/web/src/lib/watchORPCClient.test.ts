@@ -8,52 +8,48 @@ vi.mock('../auth/authClient', () => ({
   fetchWithAuthResponse
 }));
 
-import {
-  listLifecycleStatesORPC,
-  listTeamsORPC,
-  listTeamAssignmentsORPC
-} from './workspaceConfigORPCClient';
+import { listWatchingORPC, listNotificationsORPC, getNotificationCountORPC } from './watchORPCClient';
 
-describe('workspaceConfigORPCClient', () => {
+describe('watchORPCClient', () => {
   beforeEach(() => {
     fetchWithAuthResponse.mockReset();
   });
 
-  it('uses the POC oRPC lifecycle-states route', async () => {
+  it('uses the POC oRPC watching list route', async () => {
     fetchWithAuthResponse.mockResolvedValueOnce(
       new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } })
     );
 
-    await listLifecycleStatesORPC('default');
+    await listWatchingORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/default/config/lifecycle-states',
+      '/api/default/watching',
       expect.objectContaining({ method: 'GET' })
     );
   });
 
-  it('uses the POC oRPC teams route', async () => {
+  it('uses the POC oRPC notifications list route', async () => {
     fetchWithAuthResponse.mockResolvedValueOnce(
       new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } })
     );
 
-    await listTeamsORPC('default');
+    await listNotificationsORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/default/config/teams',
+      '/api/default/notifications',
       expect.objectContaining({ method: 'GET' })
     );
   });
 
-  it('uses the POC oRPC team-assignments route', async () => {
+  it('uses the POC oRPC notification count route', async () => {
     fetchWithAuthResponse.mockResolvedValueOnce(
-      new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } })
+      new Response(JSON.stringify({ count: 0 }), { headers: { 'Content-Type': 'application/json' } })
     );
 
-    await listTeamAssignmentsORPC('default');
+    await getNotificationCountORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/default/config/team-assignments',
+      '/api/default/notifications/count',
       expect.objectContaining({ method: 'GET' })
     );
   });

@@ -5,7 +5,7 @@ import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { workspaceEnumContract, type WorkspaceEnum } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
-const ORPC_ENUMS_BASE_PATH = '/api/poc-orpc';
+const ORPC_ENUMS_BASE_PATH = '/api';
 
 const resolveORPCBaseUrl = () => {
   const configuredBase = import.meta.env.VITE_API_URL ?? '';
@@ -52,3 +52,19 @@ export const createWorkspaceEnumORPC = async (
     sort_order?: number;
   }
 ): Promise<WorkspaceEnum> => await enumClient.enums.create({ workspace, ...input });
+
+export const updateWorkspaceEnumORPC = async (
+  workspace: string,
+  id: string,
+  input: {
+    name: string;
+    options?: Array<{ value: string; label: string }>;
+    sort_order?: number;
+  }
+): Promise<WorkspaceEnum> => await enumClient.enums.update({ workspace, id, ...input });
+
+export const deleteWorkspaceEnumORPC = async (
+  workspace: string,
+  id: string
+): Promise<{ success: boolean; message: string }> =>
+  await enumClient.enums.remove({ workspace, id });

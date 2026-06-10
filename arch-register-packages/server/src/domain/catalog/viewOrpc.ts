@@ -121,7 +121,7 @@ export const getWorkspaceViewOpenAPISpec = () => {
       title: 'Arch Register View POC API',
       version: '1.0.0'
     },
-    servers: [{ url: 'http://localhost:3010/api/poc-orpc' }]
+    servers: [{ url: 'http://localhost:3010/api' }]
   });
 
   return generatedViewOpenAPISpec;
@@ -133,7 +133,7 @@ export const createWorkspaceViewOpenAPISpecHandler = () =>
 export const createWorkspaceViewORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceViewOpenAPIHandler.handle(event.req, {
-      prefix: '/api/poc-orpc',
+      prefix: '/api',
       context: {
         db,
         event: event as AuthenticatedEvent

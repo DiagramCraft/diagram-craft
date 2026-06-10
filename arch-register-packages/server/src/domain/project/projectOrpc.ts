@@ -90,7 +90,7 @@ export const getProjectOpenAPISpec = () => {
       title: 'Arch Register Project POC API',
       version: '1.0.0'
     },
-    servers: [{ url: 'http://localhost:3010/api/poc-orpc' }]
+    servers: [{ url: 'http://localhost:3010/api' }]
   });
 
   return generatedProjectOpenAPISpec;
@@ -102,7 +102,7 @@ export const createProjectOpenAPISpecHandler = () =>
 export const createProjectORPCHandler = (db: DatabaseAdapter, storage?: StorageAdapter) =>
   defineHandler(async event => {
     const result = await projectOpenAPIHandler.handle(event.req, {
-      prefix: '/api/poc-orpc',
+      prefix: '/api',
       context: {
         db,
         storage,

@@ -3,11 +3,11 @@ import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { workspaceViewContract } from '@arch-register/api-types';
-import type { SavedView } from '@arch-register/api-types/views';
+import type { SavedView, CreateSavedViewRequest, UpdateSavedViewRequest } from '@arch-register/api-types/views';
 import type { PinnedEntity } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
-const ORPC_BASE_PATH = '/api/poc-orpc';
+const ORPC_BASE_PATH = '/api';
 
 const resolveORPCBaseUrl = () => {
   const configuredBase = import.meta.env.VITE_API_URL ?? '';
@@ -48,3 +48,30 @@ export const listSavedViewsORPC = async (workspace: string): Promise<SavedView[]
 
 export const listPinnedEntitiesORPC = async (workspace: string): Promise<PinnedEntity[]> =>
   await viewClient.pinnedEntities.list({ workspace });
+
+export const createSavedViewORPC = async (
+  workspace: string,
+  body: CreateSavedViewRequest
+): Promise<SavedView> => await viewClient.views.create({ workspace, ...body });
+
+export const updateSavedViewORPC = async (
+  workspace: string,
+  id: string,
+  body: UpdateSavedViewRequest
+): Promise<SavedView> => await viewClient.views.update({ workspace, id, ...body });
+
+export const deleteSavedViewORPC = async (
+  workspace: string,
+  id: string
+): Promise<{ success: boolean }> => await viewClient.views.remove({ workspace, id });
+
+export const createPinnedEntityORPC = async (
+  workspace: string,
+  entity_id: string
+): Promise<PinnedEntity> => await viewClient.pinnedEntities.create({ workspace, entity_id });
+
+export const deletePinnedEntityORPC = async (
+  workspace: string,
+  entityId: string
+): Promise<{ success: boolean; message: string }> =>
+  await viewClient.pinnedEntities.remove({ workspace, entityId });

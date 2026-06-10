@@ -18,21 +18,21 @@ export type TextField = {
   id: string;
   name: string;
   type: 'text' | 'longtext';
-  requirementLevel?: RequirementLevel;
+  requirementLevel?: RequirementLevel | null;
 };
 
 export type BooleanField = {
   id: string;
   name: string;
   type: 'boolean';
-  requirementLevel?: RequirementLevel;
+  requirementLevel?: RequirementLevel | null;
 };
 
 export type DateField = {
   id: string;
   name: string;
   type: 'date';
-  requirementLevel?: RequirementLevel;
+  requirementLevel?: RequirementLevel | null;
 };
 
 export type SelectField = {
@@ -40,7 +40,7 @@ export type SelectField = {
   name: string;
   type: 'select';
   enumId: string;
-  requirementLevel?: RequirementLevel;
+  requirementLevel?: RequirementLevel | null;
 };
 
 export type ReferenceField = {
@@ -50,7 +50,7 @@ export type ReferenceField = {
   schemaId: string;
   minCount: number;
   maxCount: number;
-  requirementLevel?: RequirementLevel;
+  requirementLevel?: RequirementLevel | null;
 };
 
 export type ContainmentField = {
@@ -60,7 +60,7 @@ export type ContainmentField = {
   schemaId: string;
   minCount: number;
   maxCount: number;
-  requirementLevel?: RequirementLevel;
+  requirementLevel?: RequirementLevel | null;
 };
 
 export type SchemaField =

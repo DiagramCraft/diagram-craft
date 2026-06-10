@@ -23,7 +23,7 @@ describe('workspaceORPCClient', () => {
     await listWorkspacesORPC();
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/poc-orpc/workspaces',
+      '/api/workspaces',
       expect.objectContaining({ method: 'GET' })
     );
   });

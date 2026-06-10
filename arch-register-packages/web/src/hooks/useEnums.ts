@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { WorkspaceEnum } from '../lib/api';
-import { apiFetch } from '../lib/api';
-import { createWorkspaceEnumORPC, listWorkspaceEnumsORPC } from '../lib/enumORPCClient';
+import {
+  createWorkspaceEnumORPC,
+  deleteWorkspaceEnumORPC,
+  listWorkspaceEnumsORPC,
+  updateWorkspaceEnumORPC
+} from '../lib/enumORPCClient';
 
 export const enumKeys = {
   all: ['enums'] as const,
@@ -43,11 +46,7 @@ export const useUpdateEnum = (workspaceSlug: string) => {
     }: {
       enumId: string;
       data: { name: string; options: Array<{ value: string; label: string }> };
-    }) =>
-      apiFetch<WorkspaceEnum>(`/api/${workspaceSlug}/enums/${enumId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      }),
+    }) => updateWorkspaceEnumORPC(workspaceSlug, enumId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: enumKeys.detail(workspaceSlug, variables.enumId) });
       queryClient.invalidateQueries({ queryKey: enumKeys.list(workspaceSlug) });
@@ -59,10 +58,7 @@ export const useDeleteEnum = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (enumId: string) =>
-      apiFetch<{ success: boolean }>(`/api/${workspaceSlug}/enums/${enumId}`, {
-        method: 'DELETE'
-      }),
+    mutationFn: (enumId: string) => deleteWorkspaceEnumORPC(workspaceSlug, enumId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enumKeys.all });
     }

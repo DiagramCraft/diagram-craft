@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { searchArchRegister } from '../lib/api';
+import { searchArchRegisterORPC } from '../lib/searchORPCClient';
 
 // Query keys factory
 export const searchKeys = {
@@ -27,7 +27,7 @@ export const useSearch = (
 ) => {
   return useQuery({
     queryKey: searchKeys.search(workspaceId, params.q, params),
-    queryFn: () => searchArchRegister(workspaceId, params),
+    queryFn: () => searchArchRegisterORPC(workspaceId, params),
     enabled: queryOptions?.enabled ?? (!!workspaceId && !!params.q.trim()),
     // Search results can be cached for a shorter time
     staleTime: 2 * 60 * 1000 // 2 minutes

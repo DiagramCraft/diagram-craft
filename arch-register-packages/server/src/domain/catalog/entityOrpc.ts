@@ -170,7 +170,7 @@ export const getWorkspaceEntityOpenAPISpec = () => {
       title: 'Arch Register Entity POC API',
       version: '1.0.0'
     },
-    servers: [{ url: 'http://localhost:3010/api/poc-orpc' }]
+    servers: [{ url: 'http://localhost:3010/api' }]
   });
 
   return generatedEntityOpenAPISpec;
@@ -182,7 +182,7 @@ export const createWorkspaceEntityOpenAPISpecHandler = () =>
 export const createWorkspaceEntityORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceEntityOpenAPIHandler.handle(event.req, {
-      prefix: '/api/poc-orpc',
+      prefix: '/api',
       context: {
         db,
         event: event as AuthenticatedEvent

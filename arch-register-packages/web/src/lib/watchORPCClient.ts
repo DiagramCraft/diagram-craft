@@ -2,8 +2,8 @@ import type { ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
-import { projectContract } from '@arch-register/api-types';
-import type { Project, ProjectDetail } from '@arch-register/api-types';
+import { watchContract } from '@arch-register/api-types';
+import type { WatchedEntity } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
 const ORPC_BASE_PATH = '/api';
@@ -22,7 +22,7 @@ const resolveORPCBaseUrl = () => {
   return `http://localhost${ORPC_BASE_PATH}`;
 };
 
-const projectClientLink = new OpenAPILink(projectContract, {
+const watchClientLink = new OpenAPILink(watchContract, {
   url: resolveORPCBaseUrl,
   fetch: async (request, init) => {
     const raw = request.url;
@@ -39,40 +39,36 @@ const projectClientLink = new OpenAPILink(projectContract, {
   }
 });
 
-const projectClient: JsonifiedClient<ContractRouterClient<typeof projectContract>> =
-  createORPCClient(projectClientLink);
+const watchClient: JsonifiedClient<ContractRouterClient<typeof watchContract>> =
+  createORPCClient(watchClientLink);
 
-export const listProjectsORPC = async (workspace: string): Promise<Project[]> =>
-  await projectClient.projects.list({ workspace });
+export const listWatchingORPC = async (workspace: string) =>
+  await watchClient.watching.list({ workspace });
 
-export const getProjectORPC = async (workspace: string, id: string): Promise<ProjectDetail> =>
-  await projectClient.projects.get({ workspace, id });
+export const listNotificationsORPC = async (workspace: string) =>
+  await watchClient.notifications.list({ workspace });
 
-export const createProjectORPC = async (
+export const getNotificationCountORPC = async (workspace: string) =>
+  await watchClient.notifications.count({ workspace });
+
+export const createWatchORPC = async (
   workspace: string,
-  input: {
-    name: string;
-    description?: string;
-    owner?: string | null;
-    status?: 'pinned' | 'active' | 'archived';
-    color?: string | null;
-  }
-): Promise<Project> => await projectClient.projects.create({ workspace, ...input });
+  entity_id: string
+): Promise<WatchedEntity> => await watchClient.watching.create({ workspace, entity_id });
 
-export const updateProjectORPC = async (
+export const deleteWatchORPC = async (
   workspace: string,
-  id: string,
-  input: {
-    name: string;
-    description?: string;
-    owner?: string | null;
-    status?: 'pinned' | 'active' | 'archived';
-    color?: string | null;
-  }
-): Promise<Project> => await projectClient.projects.update({ workspace, id, ...input });
-
-export const deleteProjectORPC = async (
-  workspace: string,
-  id: string
+  entityId: string
 ): Promise<{ success: boolean; message: string }> =>
-  await projectClient.projects.remove({ workspace, id });
+  await watchClient.watching.remove({ workspace, entityId });
+
+export const deleteNotificationORPC = async (
+  workspace: string,
+  notificationId: string
+): Promise<{ success: boolean; message: string }> =>
+  await watchClient.notifications.remove({ workspace, notificationId });
+
+export const clearNotificationsORPC = async (
+  workspace: string
+): Promise<{ success: boolean; count: number }> =>
+  await watchClient.notifications.clear({ workspace });

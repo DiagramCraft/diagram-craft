@@ -2,13 +2,10 @@ import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { SchemaField } from '../../types';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { parsePositiveInt } from '../../utils/http';
-import { SEARCH_DEFAULTS } from '../../constants';
-import { buildApiAuthCtx, canAccessProject } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { PermissionChecker } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
+import { searchWorkspace } from './searchOperations';
 
 const BASE = '/api/:workspace/search';
 
@@ -16,55 +13,6 @@ export const SEARCH_TYPES = ['projects', 'files', 'entities', 'schemas'] as cons
 
 export type SearchType = (typeof SEARCH_TYPES)[number];
 
-type ProjectSearchResult = {
-  id: string;
-  name: string;
-  description: string;
-  status: 'pinned' | 'active' | 'archived';
-};
-
-type FileSearchResult = {
-  projectId: string;
-  projectName: string;
-  fileId: string;
-  path: string;
-  name: string;
-};
-
-type ForeignKey = { id: string; name: string };
-
-type EntitySearchResult = {
-  entityId: string;
-  schemaId: string;
-  schemaName: string;
-  _name: string;
-  _slug: string;
-  _description: string;
-  _owner: ForeignKey | null;
-  _lifecycle: ForeignKey | null;
-  _targetLifecycle: ForeignKey | null;
-  matchedFields: string[];
-  matchedMetadata: string[];
-};
-
-type SchemaFieldMatch = {
-  fieldId: string;
-  fieldName: string;
-};
-
-type SchemaSearchResult = {
-  schemaId: string;
-  name: string;
-  fieldMatches: SchemaFieldMatch[];
-};
-
-type SearchResponse = {
-  query: string;
-  projects: ProjectSearchResult[];
-  files: FileSearchResult[];
-  entities: EntitySearchResult[];
-  schemas: SchemaSearchResult[];
-};
 
 export const parseTypes = (value: unknown): SearchType[] => {
   if (value == null || value === '') return [...SEARCH_TYPES];
@@ -113,7 +61,10 @@ export const collectMatchedFields = (data: EntityDbResult['data'], query: string
     .filter(([, value]) => includesQuery(value, query))
     .map(([key]) => key);
 
-export const collectFieldMatches = (fields: SchemaField[], query: string): SchemaFieldMatch[] =>
+export const collectFieldMatches = (
+  fields: SchemaField[],
+  query: string
+): Array<{ fieldId: string; fieldName: string }> =>
   fields
     .filter(field => includesQuery(field.id, query) || includesQuery(field.name, query))
     .map(field => ({
@@ -123,150 +74,16 @@ export const collectFieldMatches = (fields: SchemaField[], query: string): Schem
 
 export function createSearchRoutes(db: DatabaseAdapter) {
   const router = new H3();
-  const checker = new PermissionChecker();
 
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      const workspace = event.context.params?.['workspace'] ?? '';
       const query = getQuery(event);
-      const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
-      const limitPerType =
-        parsePositiveInt(query['limitPerType'], 'limitPerType') ?? SEARCH_DEFAULTS.LIMIT_PER_TYPE;
-      const types = parseTypes(query['types']);
-
-      const empty: SearchResponse = {
-        query: q,
-        projects: [],
-        files: [],
-        entities: [],
-        schemas: []
-      };
-
-      if (q === '') return empty;
-
-      const normalizedQuery = q.toLowerCase();
-
-      const [projects, schemas, entities] = await Promise.all([
-        types.includes('projects') || types.includes('files')
-          ? db.project.listProjects(workspace)
-          : Promise.resolve([]),
-        types.includes('schemas') || types.includes('entities')
-          ? db.catalog.listSchemas(workspace)
-          : Promise.resolve([]),
-        types.includes('entities') ? db.catalog.listEntities(workspace) : Promise.resolve([])
-      ]);
-
-      const visibleEntities = authCtx
-        ? entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'))
-        : entities;
-      const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
-
-      const projectsResults = types.includes('projects')
-        ? visibleProjects
-            .filter(
-              project =>
-                includesQuery(project.name, normalizedQuery) ||
-                includesQuery(project.description, normalizedQuery)
-            )
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .slice(0, limitPerType)
-        : [];
-
-      const filesResults: FileSearchResult[] = [];
-      if (types.includes('files')) {
-        const projectsForFiles = visibleProjects;
-        const projectMap = new Map(projectsForFiles.map(project => [project.id, project.name]));
-        const projectIds = [...projectMap.keys()];
-
-        const filesByProject = await Promise.all(
-          projectIds.map(async projectId => ({
-            projectId,
-            files: await db.project.listProjectFiles(workspace, projectId)
-          }))
-        );
-
-        for (const { projectId, files } of filesByProject) {
-          const projectName = projectMap.get(projectId) ?? projectId;
-          for (const file of files) {
-            if (
-              !includesQuery(file.name, normalizedQuery) &&
-              !includesQuery(file.path, normalizedQuery)
-            )
-              continue;
-            filesResults.push({
-              projectId: file.project_id,
-              projectName,
-              fileId: file.id,
-              path: file.path,
-              name: file.name
-            });
-          }
-        }
-        filesResults.sort(
-          (a, b) => a.projectName.localeCompare(b.projectName) || a.path.localeCompare(b.path)
-        );
-      }
-
-      const entityResults = types.includes('entities')
-        ? visibleEntities
-            .map(entity => {
-              const matchedFields = collectMatchedFields(entity.data, normalizedQuery);
-              const matchedMetadata = collectMatchedMetadata(entity, normalizedQuery);
-              if (matchedFields.length === 0 && matchedMetadata.length === 0) return null;
-              return {
-                entityId: entity.id,
-                schemaId: entity.schema_id,
-                schemaName: entity.schema_name,
-                _name: entity.name,
-                _slug: entity.slug,
-                _description: entity.description,
-                _owner: entity.owner
-                  ? { id: entity.owner, name: entity.owner_name ?? entity.owner }
-                  : null,
-                _lifecycle: entity.lifecycle
-                  ? { id: entity.lifecycle, name: entity.lifecycle_label ?? entity.lifecycle }
-                  : null,
-                _targetLifecycle: entity.target_lifecycle
-                  ? {
-                      id: entity.target_lifecycle,
-                      name: entity.target_lifecycle_label ?? entity.target_lifecycle
-                    }
-                  : null,
-                matchedFields,
-                matchedMetadata
-              } satisfies EntitySearchResult;
-            })
-            .filter((entity): entity is EntitySearchResult => entity !== null)
-            .sort((a, b) => a._name.localeCompare(b._name))
-            .slice(0, limitPerType)
-        : [];
-
-      const schemaResults = types.includes('schemas')
-        ? schemas
-            .map(schema => {
-              const fieldMatches = collectFieldMatches(schema.fields, normalizedQuery);
-              if (!includesQuery(schema.name, normalizedQuery) && fieldMatches.length === 0)
-                return null;
-              return {
-                schemaId: schema.id,
-                name: schema.name,
-                fieldMatches
-              } satisfies SchemaSearchResult;
-            })
-            .filter((schema): schema is SchemaSearchResult => schema !== null)
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .slice(0, limitPerType)
-        : [];
-
-      return {
-        query: q,
-        projects: projectsResults,
-        files: filesResults.slice(0, limitPerType),
-        entities: entityResults,
-        schemas: schemaResults
-      } satisfies SearchResponse;
+      const q = typeof query['q'] === 'string' ? query['q'] : undefined;
+      const limitPerType = parsePositiveInt(query['limitPerType'], 'limitPerType') ?? undefined;
+      const types = typeof query['types'] === 'string' ? query['types'] : undefined;
+      return await searchWorkspace(db, workspace, { q, limitPerType, types }, event as AuthenticatedEvent);
     })
   );
 

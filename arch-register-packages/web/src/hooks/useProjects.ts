@@ -1,13 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Project, ProjectDetail } from '@arch-register/api-types';
 import {
-  fetchProject,
-  createProject,
-  updateProject,
-  deleteProject,
-  type Project,
-  type ProjectDetail
-} from '../lib/api';
-import { listProjectsORPC } from '../lib/projectORPCClient';
+  createProjectORPC,
+  deleteProjectORPC,
+  getProjectORPC,
+  listProjectsORPC,
+  updateProjectORPC
+} from '../lib/projectORPCClient';
 import { invalidateAuditQueries } from './useAudit';
 
 // Query keys factory
@@ -33,7 +32,7 @@ export const useProjects = (workspaceId: string) => {
 export const useProject = (workspaceId: string, projectId: string) => {
   return useQuery({
     queryKey: projectKeys.detail(workspaceId, projectId),
-    queryFn: () => fetchProject(workspaceId, projectId),
+    queryFn: () => getProjectORPC(workspaceId, projectId),
     enabled: !!workspaceId && !!projectId
   });
 };
@@ -49,7 +48,7 @@ export const useCreateProject = (workspaceId: string) => {
       owner?: string | null;
       status?: 'pinned' | 'active' | 'archived';
       color?: string | null;
-    }) => createProject(workspaceId, body),
+    }) => createProjectORPC(workspaceId, body),
     onSuccess: async newProject => {
       // Update project list cache with the new project
       queryClient.setQueryData(projectKeys.list(workspaceId), (old: Project[] | undefined) => {
@@ -78,7 +77,7 @@ export const useUpdateProject = (workspaceId: string) => {
         status?: 'pinned' | 'active' | 'archived';
         color?: string | null;
       };
-    }) => updateProject(workspaceId, projectId, data),
+    }) => updateProjectORPC(workspaceId, projectId, data),
     onSuccess: async (updatedProject, variables) => {
       // Update the project list cache
       queryClient.setQueryData(projectKeys.list(workspaceId), (old: Project[] | undefined) => {
@@ -103,7 +102,7 @@ export const useDeleteProject = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (projectId: string) => deleteProject(workspaceId, projectId),
+    mutationFn: (projectId: string) => deleteProjectORPC(workspaceId, projectId),
     onSuccess: async () => {
       // Invalidate all project queries
       await queryClient.invalidateQueries({ queryKey: projectKeys.all });

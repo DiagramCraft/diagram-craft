@@ -1,6 +1,12 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 
+const timestampOutputSchema = z
+  .union([z.string(), z.date()])
+  .transform(value => (typeof value === 'string' ? value : value.toISOString()));
+
+const teamRoleSchema = z.enum(['team_admin', 'team_editor', 'team_reviewer']);
+
 // ── Sub-schemas ───────────────────────────────────────────────
 
 const lifecycleStateSchema = z.object({
@@ -9,7 +15,7 @@ const lifecycleStateSchema = z.object({
   label: z.string(),
   color: z.string(),
   sort_order: z.number().int(),
-  created_at: z.string()
+  created_at: timestampOutputSchema
 });
 
 const lifecycleStateInputSchema = z.object({
@@ -26,7 +32,7 @@ const teamSchema = z.object({
   sort_order: z.number().int(),
   color: z.string().nullable(),
   description: z.string(),
-  created_at: z.string()
+  created_at: timestampOutputSchema
 });
 
 const teamInputSchema = z.object({
@@ -41,14 +47,14 @@ const teamAssignmentSchema = z.object({
   workspace: z.string(),
   team_id: z.string(),
   user_id: z.string(),
-  role: z.string(),
-  created_at: z.string()
+  role: teamRoleSchema,
+  created_at: timestampOutputSchema
 });
 
 const teamAssignmentInputSchema = z.object({
   team_id: z.string(),
   user_id: z.string(),
-  role: z.string()
+  role: teamRoleSchema
 });
 
 const workspaceCapabilitySchema = z.string();
@@ -60,8 +66,8 @@ const roleDefinitionSchema = z.object({
   tone: z.string(),
   builtin: z.boolean(),
   capabilities: z.array(workspaceCapabilitySchema),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional()
+  created_at: timestampOutputSchema.optional(),
+  updated_at: timestampOutputSchema.optional()
 });
 
 const roleDefinitionDbSchema = z.object({
@@ -72,8 +78,8 @@ const roleDefinitionDbSchema = z.object({
   tone: z.string(),
   builtin: z.boolean(),
   capabilities: z.array(workspaceCapabilitySchema),
-  created_at: z.string(),
-  updated_at: z.string()
+  created_at: timestampOutputSchema,
+  updated_at: timestampOutputSchema
 });
 
 const roleInputSchema = z.object({
@@ -89,14 +95,14 @@ const memberInfoSchema = z.object({
   role: z.string(),
   display_name: z.string(),
   email: z.string().nullable(),
-  created_at: z.string()
+  created_at: timestampOutputSchema
 });
 
 const memberDbSchema = z.object({
   workspace: z.string(),
   user_id: z.string(),
   role: z.string(),
-  created_at: z.string()
+  created_at: timestampOutputSchema
 });
 
 const userInfoSchema = z.object({

@@ -5,7 +5,7 @@ import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { workspaceSchemaContract, type EntitySchema, type SchemaField } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
-const ORPC_BASE_PATH = '/api/poc-orpc';
+const ORPC_BASE_PATH = '/api';
 
 const resolveORPCBaseUrl = () => {
   const configuredBase = import.meta.env.VITE_API_URL ?? '';
@@ -55,3 +55,22 @@ export const createWorkspaceSchemaORPC = async (
     default_owner?: string | null;
   }
 ): Promise<EntitySchema> => await schemaClient.schemas.create({ workspace, ...input });
+
+export const updateWorkspaceSchemaORPC = async (
+  workspace: string,
+  id: string,
+  input: {
+    name: string;
+    description?: string;
+    fields?: SchemaField[];
+    color?: string | null;
+    icon?: string | null;
+    default_owner?: string | null;
+  }
+): Promise<EntitySchema> => await schemaClient.schemas.update({ workspace, id, ...input });
+
+export const deleteWorkspaceSchemaORPC = async (
+  workspace: string,
+  id: string
+): Promise<{ success: boolean; message: string }> =>
+  await schemaClient.schemas.remove({ workspace, id });

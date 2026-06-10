@@ -1,14 +1,8 @@
 import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { parsePositiveInt } from '../../utils/http';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  toApiAuditLogEntry,
-  filterAndPaginateAuditLogs,
-  computeAuditStats
-} from './auditHelpers';
+import { listAuditLog, getAuditStats } from './auditOperations';
 
 const BASE = '/api/:workspace/audit';
 
@@ -28,29 +22,31 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.audit');
-
+      const workspace = event.context.params?.['workspace'] ?? '';
       const query = getQuery(event);
-
       const filters = buildAuditListFilters(query);
-
-      const rows = await db.audit.listAuditLogs(workspace);
-      return filterAndPaginateAuditLogs(rows, filters).map(toApiAuditLogEntry);
+      return await listAuditLog(
+        db,
+        workspace,
+        {
+          entityType: filters.entityType ?? undefined,
+          entityId: filters.entityId ?? undefined,
+          operation: filters.operation ?? undefined,
+          startDate: filters.startDate ?? undefined,
+          endDate: filters.endDate ?? undefined,
+          limit: filters.limit,
+          offset: filters.offset
+        },
+        event as AuthenticatedEvent
+      );
     })
   );
 
   router.get(
     `${BASE}/stats`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.audit');
-
-      const rows = await db.audit.listAuditLogs(workspace);
-      return computeAuditStats(rows);
+      const workspace = event.context.params?.['workspace'] ?? '';
+      return await getAuditStats(db, workspace, event as AuthenticatedEvent);
     })
   );
 

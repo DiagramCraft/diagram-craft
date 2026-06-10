@@ -8,25 +8,25 @@ vi.mock('../auth/authClient', () => ({
   fetchWithAuthResponse
 }));
 
-import { listProjectTemplatesORPC } from './templateORPCClient';
+import { searchArchRegisterORPC } from './searchORPCClient';
 
-describe('templateORPCClient', () => {
+describe('searchORPCClient', () => {
   beforeEach(() => {
     fetchWithAuthResponse.mockReset();
   });
 
-  it('uses the POC oRPC list-for-project route', async () => {
+  it('uses the POC oRPC search route', async () => {
     fetchWithAuthResponse.mockResolvedValueOnce(
       new Response(
-        JSON.stringify({ workspaceTemplates: [], projectTemplates: [] }),
+        JSON.stringify({ query: 'test', projects: [], files: [], entities: [], schemas: [] }),
         { headers: { 'Content-Type': 'application/json' } }
       )
     );
 
-    await listProjectTemplatesORPC('default', 'project-1');
+    await searchArchRegisterORPC('default', { q: 'test' });
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/default/projects/project-1/templates',
+      expect.stringContaining('/api/default/search'),
       expect.objectContaining({ method: 'GET' })
     );
   });

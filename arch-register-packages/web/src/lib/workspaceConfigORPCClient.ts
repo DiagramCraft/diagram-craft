@@ -5,7 +5,7 @@ import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { workspaceConfigContract } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
-const ORPC_BASE_PATH = '/api/poc-orpc';
+const ORPC_BASE_PATH = '/api';
 
 const resolveORPCBaseUrl = () => {
   const configuredBase = import.meta.env.VITE_API_URL ?? '';
@@ -44,8 +44,29 @@ const configClient: JsonifiedClient<ContractRouterClient<typeof workspaceConfigC
 export const listLifecycleStatesORPC = async (workspace: string) =>
   await configClient.config.lifecycleStates.list({ workspace });
 
+export const updateLifecycleStatesORPC = async (
+  workspace: string,
+  states: Array<{ id?: string; label: string; color: string; sort_order?: number }>
+) => await configClient.config.lifecycleStates.replace({ workspace, states });
+
 export const listTeamsORPC = async (workspace: string) =>
   await configClient.config.teams.list({ workspace });
 
+export const updateTeamsORPC = async (
+  workspace: string,
+  teams: Array<{
+    id?: string;
+    name: string;
+    sort_order?: number;
+    color?: string | null;
+    description?: string;
+  }>
+) => await configClient.config.teams.replace({ workspace, teams });
+
 export const listTeamAssignmentsORPC = async (workspace: string) =>
   await configClient.config.teamAssignments.list({ workspace });
+
+export const updateTeamAssignmentsORPC = async (
+  workspace: string,
+  assignments: Array<{ team_id: string; user_id: string; role: 'team_admin' | 'team_editor' | 'team_reviewer' }>
+) => await configClient.config.teamAssignments.replace({ workspace, assignments });

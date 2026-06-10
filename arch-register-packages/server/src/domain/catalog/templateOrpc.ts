@@ -54,7 +54,7 @@ export const getWorkspaceTemplateOpenAPISpec = () => {
       title: 'Arch Register Template POC API',
       version: '1.0.0'
     },
-    servers: [{ url: 'http://localhost:3010/api/poc-orpc' }]
+    servers: [{ url: 'http://localhost:3010/api' }]
   });
 
   return generatedTemplateOpenAPISpec;
@@ -66,7 +66,7 @@ export const createWorkspaceTemplateOpenAPISpecHandler = () =>
 export const createWorkspaceTemplateORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceTemplateOpenAPIHandler.handle(event.req, {
-      prefix: '/api/poc-orpc',
+      prefix: '/api',
       context: {
         db,
         event: event as AuthenticatedEvent

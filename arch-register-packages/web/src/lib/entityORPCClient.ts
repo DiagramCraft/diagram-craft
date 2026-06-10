@@ -5,11 +5,12 @@ import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import {
   workspaceEntityContract,
   type EntityRecord,
-  type EntityFacets
+  type EntityFacets,
+  type EntityRelations
 } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
-const ORPC_BASE_PATH = '/api/poc-orpc';
+const ORPC_BASE_PATH = '/api';
 
 const resolveORPCBaseUrl = () => {
   const configuredBase = import.meta.env.VITE_API_URL ?? '';
@@ -70,3 +71,43 @@ export const listEntitiesORPC = async (
 
 export const getEntityFacetsORPC = async (workspace: string): Promise<EntityFacets> =>
   await entityClient.entities.facets({ workspace });
+
+export const getEntityORPC = async (workspace: string, id: string): Promise<EntityRecord> =>
+  await entityClient.entities.get({ workspace, id });
+
+export const getEntityRelationsORPC = async (
+  workspace: string,
+  id: string
+): Promise<EntityRelations> => await entityClient.entities.relations({ workspace, id });
+
+export const getEntityTreeORPC = async (
+  workspace: string,
+  options: {
+    _schemaId?: string | null;
+    owner?: string | null;
+    lifecycle?: string | null;
+    q?: string | null;
+  } = {}
+) =>
+  await entityClient.entities.tree({
+    workspace,
+    _schemaId: options._schemaId ?? undefined,
+    owner: options.owner ?? undefined,
+    lifecycle: options.lifecycle ?? undefined,
+    q: options.q ?? undefined
+  });
+
+export const updateEntityORPC = async (
+  workspace: string,
+  id: string,
+  data: Record<string, unknown>
+): Promise<EntityRecord> => await entityClient.entities.update({ workspace, id, ...data });
+
+export const deleteEntityORPC = async (
+  workspace: string,
+  id: string
+): Promise<{ success: boolean; message: string }> =>
+  await entityClient.entities.remove({ workspace, id });
+
+export const cloneEntityORPC = async (workspace: string, id: string): Promise<EntityRecord> =>
+  await entityClient.entities.clone({ workspace, id });

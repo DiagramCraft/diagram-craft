@@ -185,3 +185,22 @@ export {
   deleteProjectRequestSchema,
   listProjectFilesRequestSchema
 } from './projectContract';
+
+export {
+  auditContract,
+  listAuditLogRequestSchema,
+  getAuditStatsRequestSchema
+} from './auditContract';
+
+export {
+  watchContract,
+  listWatchingRequestSchema,
+  createWatchRequestSchema,
+  deleteWatchRequestSchema,
+  listNotificationsRequestSchema,
+  getNotificationCountRequestSchema,
+  deleteNotificationRequestSchema,
+  clearNotificationsRequestSchema
+} from './watchContract';
+
+export { searchContract, searchRequestSchema } from './searchContract';

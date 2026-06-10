@@ -1,5 +1,5 @@
 import { defineHandler } from 'h3';
-import { implement } from '@orpc/server';
+import { implement, onError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { OpenAPIGenerator } from '@orpc/openapi';
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
@@ -43,16 +43,14 @@ export const workspaceConfigORPCRouter = configRouter.router({
           return toORPCError(error);
         }
       }),
-      replace: configRouter.config.lifecycleStates.replace.handler(
-        async ({ input, context }) => {
-          try {
-            const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
-            return await replaceLifecycleStates(context.db, workspace, input.states, context.event);
-          } catch (error) {
-            return toORPCError(error);
-          }
+      replace: configRouter.config.lifecycleStates.replace.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          return await replaceLifecycleStates(context.db, workspace, input.states, context.event);
+        } catch (error) {
+          return toORPCError(error);
         }
-      )
+      })
     },
     teams: {
       list: configRouter.config.teams.list.handler(async ({ input, context }) => {
@@ -81,21 +79,19 @@ export const workspaceConfigORPCRouter = configRouter.router({
           return toORPCError(error);
         }
       }),
-      replace: configRouter.config.teamAssignments.replace.handler(
-        async ({ input, context }) => {
-          try {
-            const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
-            return await replaceTeamAssignments(
-              context.db,
-              workspace,
-              input.assignments,
-              context.event
-            );
-          } catch (error) {
-            return toORPCError(error);
-          }
+      replace: configRouter.config.teamAssignments.replace.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          return await replaceTeamAssignments(
+            context.db,
+            workspace,
+            input.assignments,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
         }
-      )
+      })
     },
     roles: {
       list: configRouter.config.roles.list.handler(async ({ input, context }) => {
@@ -176,7 +172,15 @@ export const workspaceConfigORPCRouter = configRouter.router({
   }
 });
 
-export const workspaceConfigOpenAPIHandler = new OpenAPIHandler(workspaceConfigORPCRouter);
+export const workspaceConfigOpenAPIHandler = new OpenAPIHandler(workspaceConfigORPCRouter, {
+  clientInterceptors: [
+    onError(error => {
+      console.error('Output validation failed');
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      console.dir((error as any).cause, { depth: 10 });
+    })
+  ]
+});
 
 let generatedConfigOpenAPISpec: Promise<object> | null = null;
 
@@ -188,7 +192,7 @@ export const getWorkspaceConfigOpenAPISpec = () => {
       title: 'Arch Register Workspace Config POC API',
       version: '1.0.0'
     },
-    servers: [{ url: 'http://localhost:3010/api/poc-orpc' }]
+    servers: [{ url: 'http://localhost:3010/api' }]
   });
 
   return generatedConfigOpenAPISpec;
@@ -200,7 +204,7 @@ export const createWorkspaceConfigOpenAPISpecHandler = () =>
 export const createWorkspaceConfigORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {
     const result = await workspaceConfigOpenAPIHandler.handle(event.req, {
-      prefix: '/api/poc-orpc',
+      prefix: '/api',
       context: {
         db,
         event: event as AuthenticatedEvent

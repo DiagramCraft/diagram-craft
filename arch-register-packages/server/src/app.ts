@@ -3,20 +3,12 @@ import { H3, defineHandler, handleCors, getRequestPath, getMethod } from 'h3';
 import type { DatabaseAdapter } from './db/database';
 import type { StorageAdapter } from './storage/storage';
 import { createLogger } from './utils/logger';
-import { createDataRoutes } from './domain/catalog/dataRoutes';
+import { createUnifiedOpenAPISpecHandler } from './openapi';
 import { createProjectRoutes } from './domain/project/projectRoutes';
-import { createSearchRoutes } from './domain/search/searchRoutes';
-import { createSchemaRoutes } from './domain/catalog/schemaRoutes';
-import { createEnumRoutes } from './domain/catalog/enumRoutes';
-import { createWorkspaceRoutes } from './domain/workspace/workspaceRoutes';
-import { createAuditRoutes } from './domain/audit/auditRoutes';
-import { createWorkspaceConfigRoutes } from './domain/workspace/workspaceConfigRoutes';
 import { createAiChatRoutes } from './domain/ai/aiRoutes';
-import { createViewRoutes } from './domain/catalog/viewRoutes';
 import { createDiagramCraftRoutes } from './domain/diagram/diagramCraftRoutes';
 import { createAuthRoutes, createAuthProtectedRoutes } from './domain/auth/authRoutes';
 import { createTemplateRoutes } from './domain/catalog/templateRoutes';
-import { createWatchRoutes } from './domain/watch/watchRoutes';
 import { requireAuth } from './middleware/auth';
 import {
   createWorkspaceEnumOpenAPISpecHandler,
@@ -50,6 +42,18 @@ import {
   createProjectOpenAPISpecHandler,
   createProjectORPCHandler
 } from './domain/project/projectOrpc';
+import {
+  createAuditOpenAPISpecHandler,
+  createAuditORPCHandler
+} from './domain/audit/auditOrpc';
+import {
+  createWatchOpenAPISpecHandler,
+  createWatchORPCHandler
+} from './domain/watch/watchOrpc';
+import {
+  createSearchOpenAPISpecHandler,
+  createSearchORPCHandler
+} from './domain/search/searchOrpc';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -109,6 +113,7 @@ export const createApp = (
     })
   );
 
+  app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
   app.use('/openapi-orpc-enums.json', createWorkspaceEnumOpenAPISpecHandler());
   app.use('/openapi-orpc-schemas.json', createWorkspaceSchemaOpenAPISpecHandler());
   app.use('/openapi-orpc-entities.json', createWorkspaceEntityOpenAPISpecHandler());
@@ -117,6 +122,9 @@ export const createApp = (
   app.use('/openapi-orpc-workspaces.json', createWorkspaceManagementOpenAPISpecHandler());
   app.use('/openapi-orpc-workspace-config.json', createWorkspaceConfigOpenAPISpecHandler());
   app.use('/openapi-orpc-projects.json', createProjectOpenAPISpecHandler());
+  app.use('/openapi-orpc-audit.json', createAuditOpenAPISpecHandler());
+  app.use('/openapi-orpc-watch.json', createWatchOpenAPISpecHandler());
+  app.use('/openapi-orpc-search.json', createSearchOpenAPISpecHandler());
 
   app.use(createAuthRoutes(db));
 
@@ -132,18 +140,12 @@ export const createApp = (
   app.use(createWorkspaceManagementORPCHandler(db, storage));
   app.use(createWorkspaceConfigORPCHandler(db));
   app.use(createProjectORPCHandler(db, storage));
-  app.use(createWorkspaceRoutes(db, storage));
-  app.use(createSchemaRoutes(db));
-  app.use(createEnumRoutes(db));
-  app.use(createDataRoutes(db));
-  app.use(createViewRoutes(db));
+  app.use(createAuditORPCHandler(db));
+  app.use(createWatchORPCHandler(db));
+  app.use(createSearchORPCHandler(db));
   app.use(createDiagramCraftRoutes(db));
-  app.use(createSearchRoutes(db));
   app.use(createTemplateRoutes(db));
   app.use(createProjectRoutes(db, storage));
-  app.use(createAuditRoutes(db));
-  app.use(createWatchRoutes(db));
-  app.use(createWorkspaceConfigRoutes(db));
   app.use(createAiChatRoutes(db, options.routeOverrides?.aiChat));
 
   return app;

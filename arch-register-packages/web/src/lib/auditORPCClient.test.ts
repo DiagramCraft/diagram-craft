@@ -8,35 +8,43 @@ vi.mock('../auth/authClient', () => ({
   fetchWithAuthResponse
 }));
 
-import { listSavedViewsORPC, listPinnedEntitiesORPC } from './viewORPCClient';
+import { listAuditLogORPC, getAuditStatsORPC } from './auditORPCClient';
 
-describe('viewORPCClient', () => {
+describe('auditORPCClient', () => {
   beforeEach(() => {
     fetchWithAuthResponse.mockReset();
   });
 
-  it('uses the POC oRPC list views route', async () => {
+  it('uses the POC oRPC audit list route', async () => {
     fetchWithAuthResponse.mockResolvedValueOnce(
       new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } })
     );
 
-    await listSavedViewsORPC('default');
+    await listAuditLogORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/default/views',
+      expect.stringContaining('/api/default/audit'),
       expect.objectContaining({ method: 'GET' })
     );
   });
 
-  it('uses the POC oRPC list pinned-entities route', async () => {
+  it('uses the POC oRPC audit stats route', async () => {
     fetchWithAuthResponse.mockResolvedValueOnce(
-      new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } })
+      new Response(
+        JSON.stringify({
+          total: 0,
+          byOperation: [],
+          byEntityType: [],
+          recentActivity: []
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      )
     );
 
-    await listPinnedEntitiesORPC('default');
+    await getAuditStatsORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/default/pinned-entities',
+      '/api/default/audit/stats',
       expect.objectContaining({ method: 'GET' })
     );
   });

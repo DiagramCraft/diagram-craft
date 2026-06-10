@@ -2,10 +2,7 @@ import type { ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
-import {
-  workspaceTemplateContract,
-  type ProjectTemplatesResponse
-} from '@arch-register/api-types';
+import { searchContract } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
 const ORPC_BASE_PATH = '/api';
@@ -24,7 +21,7 @@ const resolveORPCBaseUrl = () => {
   return `http://localhost${ORPC_BASE_PATH}`;
 };
 
-const templateClientLink = new OpenAPILink(workspaceTemplateContract, {
+const searchClientLink = new OpenAPILink(searchContract, {
   url: resolveORPCBaseUrl,
   fetch: async (request, init) => {
     const raw = request.url;
@@ -41,11 +38,20 @@ const templateClientLink = new OpenAPILink(workspaceTemplateContract, {
   }
 });
 
-const templateClient: JsonifiedClient<ContractRouterClient<typeof workspaceTemplateContract>> =
-  createORPCClient(templateClientLink);
+const searchClient: JsonifiedClient<ContractRouterClient<typeof searchContract>> =
+  createORPCClient(searchClientLink);
 
-export const listProjectTemplatesORPC = async (
+export const searchArchRegisterORPC = async (
   workspace: string,
-  projectId: string
-): Promise<ProjectTemplatesResponse> =>
-  await templateClient.templates.listForProject({ workspace, projectId });
+  params: {
+    q?: string;
+    limitPerType?: number | null;
+    types?: Array<'projects' | 'files' | 'entities' | 'schemas'> | null;
+  }
+) =>
+  await searchClient.search.query({
+    workspace,
+    q: params.q ?? undefined,
+    limitPerType: params.limitPerType ?? undefined,
+    types: params.types?.join(',') ?? undefined
+  });

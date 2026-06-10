@@ -1,16 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  updateLifecycleStates,
-  updateTeams,
-  updateTeamAssignments,
-  type TeamAssignmentInfo,
-  type WorkspaceTeam,
-  type WorkspaceLifecycleState
-} from '../lib/api';
+import type { TeamAssignmentInfo, WorkspaceTeam, WorkspaceLifecycleState } from '../lib/api';
 import {
   listLifecycleStatesORPC,
   listTeamsORPC,
-  listTeamAssignmentsORPC
+  listTeamAssignmentsORPC,
+  updateLifecycleStatesORPC,
+  updateTeamsORPC,
+  updateTeamAssignmentsORPC
 } from '../lib/workspaceConfigORPCClient';
 
 // Query keys factory
@@ -56,7 +52,8 @@ export const useUpdateLifecycleStates = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (states: WorkspaceLifecycleState[]) => updateLifecycleStates(workspaceId, states),
+    mutationFn: (states: WorkspaceLifecycleState[]) =>
+      updateLifecycleStatesORPC(workspaceId, states),
     onSuccess: updatedStates => {
       // Update the cache with the new states
       queryClient.setQueryData(workspaceConfigKeys.lifecycleStates(workspaceId), updatedStates);
@@ -68,7 +65,7 @@ export const useUpdateTeams = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (teams: WorkspaceTeam[]) => updateTeams(workspaceId, teams),
+    mutationFn: (teams: WorkspaceTeam[]) => updateTeamsORPC(workspaceId, teams),
     onSuccess: updatedTeams => {
       queryClient.setQueryData(workspaceConfigKeys.teams(workspaceId), updatedTeams);
     }
@@ -80,7 +77,7 @@ export const useUpdateTeamAssignments = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (assignments: Array<Pick<TeamAssignmentInfo, 'team_id' | 'user_id' | 'role'>>) =>
-      updateTeamAssignments(workspaceId, assignments),
+      updateTeamAssignmentsORPC(workspaceId, assignments),
     onSuccess: updatedAssignments => {
       queryClient.setQueryData(
         workspaceConfigKeys.teamAssignments(workspaceId),

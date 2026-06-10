@@ -25,7 +25,7 @@ describe('schemaORPCClient', () => {
     await listWorkspaceSchemasORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/poc-orpc/default/schemas',
+      '/api/default/schemas',
       expect.objectContaining({
         method: 'GET'
       })
@@ -56,7 +56,7 @@ describe('schemaORPCClient', () => {
     await createWorkspaceSchemaORPC('default', { name: 'Product', fields: [] });
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/poc-orpc/default/schemas',
+      '/api/default/schemas',
       expect.objectContaining({
         method: 'POST',
         body: '{"name":"Product","fields":[]}'

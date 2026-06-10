@@ -79,9 +79,7 @@ export const listProjects = async (
   const authCtx = await buildApiAuthCtx(db, ws, event);
   try {
     const projects = await db.project.listProjects(ws);
-    const visibleProjects = projects.filter(project =>
-      canAccessProject(authCtx, project.owner)
-    );
+    const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
     const fileCounts = new Map<string, number>();
     const projectFiles = await Promise.all(
       visibleProjects.map(project => db.project.listProjectFiles(ws, project.id))
@@ -98,7 +96,7 @@ export const listProjects = async (
         return rank[a.status] - rank[b.status] || a.name.localeCompare(b.name);
       });
   } catch (e) {
-    handleError(e, 'Failed to retrieve projects');
+    return handleError(e, 'Failed to retrieve projects');
   }
 };
 
@@ -117,7 +115,7 @@ export const getProject = async (
     const files = await db.project.listProjectFiles(ws, id);
     return toApiProjectDetail(project, buildFileTree(files), authCtx);
   } catch (e) {
-    handleError(e, 'Failed to retrieve project');
+    return handleError(e, 'Failed to retrieve project');
   }
 };
 
@@ -173,7 +171,7 @@ export const createProject = async (
 
     return toApiProject(row, 0, authCtx);
   } catch (e) {
-    handleError(e, 'Failed to create project');
+    return handleError(e, 'Failed to create project');
   }
 };
 
@@ -253,7 +251,7 @@ export const updateProject = async (
     const fileCount = (await db.project.listProjectFiles(ws, id)).length;
     return toApiProject(row, fileCount, authCtx);
   } catch (e) {
-    handleError(e, 'Failed to update project');
+    return handleError(e, 'Failed to update project');
   }
 };
 
@@ -295,7 +293,7 @@ export const deleteProject = async (
 
     return { success: true, message: `Project '${id}' deleted` };
   } catch (e) {
-    handleError(e, 'Failed to delete project');
+    return handleError(e, 'Failed to delete project');
   }
 };
 
@@ -314,6 +312,6 @@ export const listProjectFiles = async (
     const files = await db.project.listProjectFiles(ws, id);
     return buildFileTree(files);
   } catch (e) {
-    handleError(e, 'Failed to list files');
+    return handleError(e, 'Failed to list files');
   }
 };

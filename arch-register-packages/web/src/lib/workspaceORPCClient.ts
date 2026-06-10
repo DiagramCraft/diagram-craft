@@ -4,9 +4,10 @@ import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { workspaceManagementContract } from '@arch-register/api-types';
 import type { Workspace } from '@arch-register/api-types';
+
 import { fetchWithAuthResponse } from '../auth/authClient';
 
-const ORPC_BASE_PATH = '/api/poc-orpc';
+const ORPC_BASE_PATH = '/api';
 
 const resolveORPCBaseUrl = () => {
   const configuredBase = import.meta.env.VITE_API_URL ?? '';
@@ -44,3 +45,19 @@ const workspaceClient: JsonifiedClient<ContractRouterClient<typeof workspaceMana
 
 export const listWorkspacesORPC = async (): Promise<Workspace[]> =>
   await workspaceClient.workspaces.list({});
+
+export const updateWorkspaceORPC = async (
+  id: string,
+  input: {
+    name: string;
+    description?: string;
+    url_slug?: string;
+    short_code?: string;
+    color?: string;
+  }
+): Promise<Workspace> => await workspaceClient.workspaces.update({ id, ...input });
+
+export const deleteWorkspaceORPC = async (
+  id: string
+): Promise<{ success: boolean; message: string }> =>
+  await workspaceClient.workspaces.remove({ id });

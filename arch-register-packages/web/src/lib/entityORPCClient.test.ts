@@ -25,7 +25,7 @@ describe('entityORPCClient', () => {
     await listEntitiesORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/poc-orpc/default/data',
+      '/api/default/data',
       expect.objectContaining({
         method: 'GET'
       })
@@ -51,7 +51,7 @@ describe('entityORPCClient', () => {
     await getEntityFacetsORPC('default');
 
     expect(fetchWithAuthResponse).toHaveBeenCalledWith(
-      '/api/poc-orpc/default/data/facets',
+      '/api/default/data/facets',
       expect.objectContaining({
         method: 'GET'
       })
