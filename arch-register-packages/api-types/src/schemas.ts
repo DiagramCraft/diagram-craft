@@ -4,15 +4,19 @@ import type {
   updateEnumBodySchema,
   workspaceEnumSchema
 } from './enumContract.js';
+import type {
+  entitySchemaSchema,
+  fieldOptionSchema,
+  schemaFieldResponseSchema,
+  selectFieldResponseSchema
+} from './schemaContract.js';
+import type { schemaSearchResultSchema } from './searchContract.js';
 
 // ── Schema Field Types ────────────────────────────────────────
 
 export type RequirementLevel = 'required' | 'expected' | 'optional';
 
-export type FieldOption = {
-  value: string;
-  label: string;
-};
+export type FieldOption = z.infer<typeof fieldOptionSchema>;
 
 export type TextField = {
   id: string;
@@ -71,34 +75,15 @@ export type SchemaField =
   | ReferenceField
   | ContainmentField;
 
-export type ApiSelectField = SelectField & {
-  options: FieldOption[];
-};
+export type ApiSelectField = z.infer<typeof selectFieldResponseSchema>;
 
-export type ApiSchemaField =
-  | TextField
-  | BooleanField
-  | DateField
-  | ApiSelectField
-  | ReferenceField
-  | ContainmentField;
+export type ApiSchemaField = z.infer<typeof schemaFieldResponseSchema>;
 
 export type FieldType = SchemaField['type'];
 
 // ── Entity Schema ─────────────────────────────────────────────
 
-export type EntitySchema = {
-  id: string;
-  workspace: string;
-  name: string;
-  description: string;
-  fields: ApiSchemaField[];
-  color: string | null;
-  icon: string | null;
-  entity_count: number;
-  created_at: string;
-  updated_at: string;
-};
+export type EntitySchema = z.infer<typeof entitySchemaSchema>;
 
 // ── Request Types ─────────────────────────────────────────────
 
@@ -114,11 +99,7 @@ export type UpdateSchemaRequest = CreateSchemaRequest;
 
 // ── Search Result ─────────────────────────────────────────────
 
-export type SchemaSearchResult = {
-  schemaId: string;
-  name: string;
-  fieldMatches: Array<{ fieldId: string; fieldName: string }>;
-};
+export type SchemaSearchResult = z.infer<typeof schemaSearchResultSchema>;
 
 // ── Workspace Enum ────────────────────────────────────────────
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-const workspaceSchema = z.object({
+export const workspaceSchema = z.object({
   id: z.string(),
   name: z.string(),
   url_slug: z.string(),

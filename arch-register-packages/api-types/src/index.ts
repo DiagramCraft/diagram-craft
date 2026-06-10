@@ -122,10 +122,15 @@ export {
 
 export {
   workspaceEntityContract,
+  entitySummarySchema,
   entityRecordSchema,
+  entityFacetBucketSchema,
   entityFacetsSchema,
-  treeResponseSchema,
+  entityRelationSchema,
   entityRelationsSchema,
+  treeNodeSchema,
+  treeEdgeSchema,
+  treeResponseSchema,
   entityAccessSchema,
   importParseResponseSchema,
   importCommitResponseSchema,
@@ -144,6 +149,8 @@ export {
 
 export {
   workspaceSchemaContract,
+  fieldOptionSchema,
+  selectFieldResponseSchema,
   entitySchemaSchema,
   schemaFieldInputSchema,
   schemaFieldResponseSchema,
@@ -163,6 +170,15 @@ export {
 
 export {
   workspaceViewContract,
+  browserViewSchema,
+  filterConditionSchema,
+  entityFiltersSchema,
+  radarViewConfigSchema,
+  timelineViewConfigSchema,
+  savedViewSchema,
+  createViewBodySchema,
+  updateViewBodySchema,
+  pinnedEntitySchema,
   listViewsRequestSchema,
   createViewRequestSchema,
   updateViewRequestSchema,
@@ -175,16 +191,22 @@ export {
 
 export {
   workspaceManagementContract,
+  workspaceSchema,
   listWorkspacesRequestSchema,
   createWorkspaceRequestSchema,
   updateWorkspaceRequestSchema,
   deleteWorkspaceRequestSchema
 } from './workspaceContract';
 
-export { workspaceConfigContract } from './workspaceConfigContract';
+export { workspaceConfigContract, memberInfoSchema } from './workspaceConfigContract';
 
 export {
   projectContract,
+  projectSchema,
+  projectFileSchema,
+  fileFolderSchema,
+  fileTreeSchema,
+  projectDetailSchema,
   listProjectsRequestSchema,
   getProjectRequestSchema,
   createProjectRequestSchema,
@@ -197,12 +219,19 @@ export {
 
 export {
   auditContract,
+  auditOperationSchema,
+  auditEntityTypeSchema,
+  auditLogEntrySchema,
+  auditStatsSchema,
   listAuditLogRequestSchema,
   getAuditStatsRequestSchema
 } from './auditContract';
 
 export {
   watchContract,
+  watchedEntitySchema,
+  notificationItemSchema,
+  notificationCountSchema,
   listWatchingRequestSchema,
   createWatchRequestSchema,
   deleteWatchRequestSchema,
@@ -212,10 +241,15 @@ export {
   clearNotificationsRequestSchema
 } from './watchContract';
 
-export { searchContract, searchRequestSchema } from './searchContract';
+export {
+  searchContract,
+  searchResponseSchema,
+  schemaSearchResultSchema,
+  searchRequestSchema
+} from './searchContract';
 
 export { authPublicContract, authProtectedContract, authMeResponseSchema } from './authContract';
 
-export { aiContract } from './aiContract';
+export { aiContract, aiConversationSchema, aiMessageSchema } from './aiContract';
 
 export { diagramCraftContract } from './diagramCraftContract';

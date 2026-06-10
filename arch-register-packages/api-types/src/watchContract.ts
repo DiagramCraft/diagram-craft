@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-const watchedEntitySchema = z.object({
+export const watchedEntitySchema = z.object({
   entity_id: z.string(),
   entity_name: z.string(),
   entity_slug: z.string(),
@@ -11,7 +11,7 @@ const watchedEntitySchema = z.object({
   created_at: z.string()
 });
 
-const notificationItemSchema = z.object({
+export const notificationItemSchema = z.object({
   id: z.string(),
   entity_id: z.string(),
   entity_name: z.string(),
@@ -25,7 +25,7 @@ const notificationItemSchema = z.object({
   audit_log_id: z.string()
 });
 
-const notificationCountSchema = z.object({
+export const notificationCountSchema = z.object({
   count: z.number()
 });
 

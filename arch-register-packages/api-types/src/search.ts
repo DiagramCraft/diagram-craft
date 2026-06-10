@@ -1,13 +1,6 @@
-import type { EntitySearchResult } from './entities.js';
-import type { ProjectSearchResult, ProjectFileSearchResult } from './projects.js';
-import type { SchemaSearchResult } from './schemas.js';
+import type { z } from 'zod';
+import type { searchResponseSchema } from './searchContract.js';
 
 // ── Search Response ───────────────────────────────────────────
 
-export type SearchResponse = {
-  query: string;
-  projects: ProjectSearchResult[];
-  files: ProjectFileSearchResult[];
-  entities: EntitySearchResult[];
-  schemas: SchemaSearchResult[];
-};
+export type SearchResponse = z.infer<typeof searchResponseSchema>;

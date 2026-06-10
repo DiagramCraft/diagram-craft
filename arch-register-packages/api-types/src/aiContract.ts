@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-const aiConversationSchema = z.object({
+export const aiConversationSchema = z.object({
   id: z.string(),
   workspace: z.string(),
   user_id: z.string(),
@@ -12,7 +12,7 @@ const aiConversationSchema = z.object({
   updated_at: z.string()
 });
 
-const aiMessageSchema = z.object({
+export const aiMessageSchema = z.object({
   id: z.string(),
   conversation_id: z.string(),
   role: z.enum(['system', 'user', 'assistant']),

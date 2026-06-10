@@ -1,32 +1,22 @@
+import type { z } from 'zod';
+import type { EntityLink, ForeignKey, VisibilityMode } from './common.js';
 import type {
-  EntityCapabilities,
-  EntityLink,
-  ForeignKey,
-  VisibilityMode
-} from './common.js';
+  entityFacetBucketSchema,
+  entityFacetsSchema,
+  entityRecordSchema,
+  entityRelationSchema,
+  entityRelationsSchema,
+  entitySummarySchema,
+  treeEdgeSchema,
+  treeNodeSchema,
+  treeResponseSchema
+} from './entityContract.js';
 
 // ── Entity Types ──────────────────────────────────────────────
 
-export type EntitySummary = EntityCapabilities & {
-  _uid: string;
-  _schema: ForeignKey;
-  _name: string;
-  _slug: string;
-  _namespace: string;
-  _description: string;
-  _owner: ForeignKey | null;
-  _lifecycle: ForeignKey | null;
-  _targetLifecycle: ForeignKey | null;
-  _targetLifecycleDate: string | null;
-  _tags: string[];
-  _links: EntityLink[];
-  _visibilityMode: VisibilityMode | null;
-  _completeness: number | null;
-};
+export type EntitySummary = z.infer<typeof entitySummarySchema>;
 
-export type EntityRecord = EntitySummary & {
-  [key: string]: unknown;
-};
+export type EntityRecord = z.infer<typeof entityRecordSchema>;
 
 // ── Request Types ─────────────────────────────────────────────
 
@@ -50,51 +40,25 @@ export type UpdateEntityRequest = CreateEntityRequest;
 
 // ── Facets ────────────────────────────────────────────────────
 
-export type EntityFacetBucket = {
-  label: string;
-  value: string | null;
-  count: number;
-};
+export type EntityFacetBucket = z.infer<typeof entityFacetBucketSchema>;
 
-export type EntitySchemaFacetBucket = {
-  schemaId: string;
-  count: number;
-};
+export type EntityFacets = z.infer<typeof entityFacetsSchema>;
 
-export type EntityFacets = {
-  total: number;
-  lifecycle: EntityFacetBucket[];
-  owner: EntityFacetBucket[];
-  schema: EntitySchemaFacetBucket[];
-  completeness: { below50: number; below80: number; above80: number };
-};
+export type EntitySchemaFacetBucket = EntityFacets['schema'][number];
 
 // ── Relations ─────────────────────────────────────────────────
 
-export type EntityRelation = {
-  entityId: string;
-  entitySlug: string;
-  entityName: string;
-  entitySchemaId: string;
-  fieldName: string;
-  kind: 'reference' | 'containment';
-};
+export type EntityRelation = z.infer<typeof entityRelationSchema>;
 
-export type EntityRelations = {
-  outgoing: EntityRelation[];
-  incoming: EntityRelation[];
-};
+export type EntityRelations = z.infer<typeof entityRelationsSchema>;
 
 // ── Tree Response ─────────────────────────────────────────────
 
-export type TreeNode = EntitySummary & { _isMatch: boolean };
+export type TreeNode = z.infer<typeof treeNodeSchema>;
 
-export type TreeEdge = { childId: string; parentId: string };
+export type TreeEdge = z.infer<typeof treeEdgeSchema>;
 
-export type TreeResponse = {
-  nodes: TreeNode[];
-  edges: TreeEdge[];
-};
+export type TreeResponse = z.infer<typeof treeResponseSchema>;
 
 // ── Search Result ─────────────────────────────────────────────
 

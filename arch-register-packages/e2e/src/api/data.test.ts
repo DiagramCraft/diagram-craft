@@ -13,7 +13,7 @@ const test = baseTest.extend<{ seeded: true }>({
 });
 
 const headers = (auth: string) => ({
-  Authorization: auth,
+  'Authorization': auth,
   'Content-Type': 'application/json'
 });
 
@@ -24,11 +24,7 @@ const componentId = '00000000-0000-0000-0003-000000000002';
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
 
-const createEntity = async (
-  baseUrl: string,
-  auth: string,
-  body: Record<string, unknown>
-) => {
+const createEntity = async (baseUrl: string, auth: string, body: Record<string, unknown>) => {
   const res = await fetch(`${baseUrl}/api/default/data`, {
     method: 'POST',
     headers: headers(auth),
@@ -123,9 +119,12 @@ test.describe('data routes', () => {
     auth,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/download/default/data/export?_schemaId=${apiSchemaId}`, {
-      headers: { Authorization: auth }
-    });
+    const res = await fetch(
+      `${server.baseUrl}/api/download/default/data/export?_schemaId=${apiSchemaId}`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
 
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/csv');
@@ -423,8 +422,12 @@ test.describe('data routes', () => {
         const entityRes = await fetch(`${server.baseUrl}/api/default/data/${id}`, {
           headers: { Authorization: auth }
         });
+        const b = await entityRes.json();
+        console.log('-----');
+        console.dir(b);
+
         expect(entityRes.status).toBe(200);
-        return (await entityRes.json()) as Record<string, unknown>;
+        return b as Record<string, unknown>;
       })
     );
 

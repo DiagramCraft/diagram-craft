@@ -1,50 +1,25 @@
-import type { ForeignKey, ProjectCapabilities } from './common.js';
+import type { z } from 'zod';
+import type {
+  fileFolderSchema,
+  fileTreeSchema,
+  projectDetailSchema,
+  projectFileSchema,
+  projectSchema
+} from './projectContract.js';
 
 // ── Project Types ─────────────────────────────────────────────
 
-export type Project = ProjectCapabilities & {
-  id: string;
-  workspace: string;
-  name: string;
-  description: string;
-  owner: ForeignKey | null;
-  status: 'pinned' | 'active' | 'archived';
-  color: string | null;
-  file_count: number;
-  created_at: string;
-  updated_at: string;
-};
+export type Project = z.infer<typeof projectSchema>;
 
 // ── File Types ────────────────────────────────────────────────
 
-export type ProjectFile = {
-  id: string;
-  project_id: string;
-  path: string;
-  name: string;
-  size_bytes: number;
-  comment_count?: number;
-  unresolved_comment_count?: number;
-  created_at: string;
-  updated_at: string;
-  is_template?: boolean;
-  is_workspace_template?: boolean;
-  preview_svg?: string | null;
-};
+export type ProjectFile = z.infer<typeof projectFileSchema>;
 
-export type FileFolder = {
-  path: string;
-  files: ProjectFile[];
-};
+export type FileFolder = z.infer<typeof fileFolderSchema>;
 
-export type FileTree = {
-  folders: FileFolder[];
-  rootFiles: ProjectFile[];
-};
+export type FileTree = z.infer<typeof fileTreeSchema>;
 
-export type ProjectDetail = Project & {
-  files: FileTree;
-};
+export type ProjectDetail = z.infer<typeof projectDetailSchema>;
 
 // ── Request Types ─────────────────────────────────────────────
 

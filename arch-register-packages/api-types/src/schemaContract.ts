@@ -40,9 +40,9 @@ export const schemaFieldInputSchema = z.discriminatedUnion('type', [
   containmentFieldSchema
 ]);
 
-const fieldOptionSchema = z.object({ value: z.string(), label: z.string() });
+export const fieldOptionSchema = z.object({ value: z.string(), label: z.string() });
 
-const selectFieldResponseSchema = selectFieldInputSchema.extend({
+export const selectFieldResponseSchema = selectFieldInputSchema.extend({
   options: z.array(fieldOptionSchema)
 });
 

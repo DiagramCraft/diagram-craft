@@ -1,5 +1,5 @@
 import { defineHandler } from 'h3';
-import { implement } from '@orpc/server';
+import { implement, onError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { workspaceEntityContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
@@ -163,7 +163,12 @@ export const workspaceEntityORPCRouter = entityRouter.router({
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         const entity = await context.db.catalog.getEntity(workspace, input.id);
         httpAssert.present(entity, { status: 404, message: `Data record '${input.id}' not found` });
-        requireEntityAction(authCtx, entity, 'view_entity', 'You do not have access to view this entity');
+        requireEntityAction(
+          authCtx,
+          entity,
+          'view_entity',
+          'You do not have access to view this entity'
+        );
         const grants = await context.db.catalog.getEntityGrants(workspace, input.id);
         return {
           owner: entity.owner,
@@ -181,7 +186,12 @@ export const workspaceEntityORPCRouter = entityRouter.router({
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         const entity = await context.db.catalog.getEntity(workspace, input.id);
         httpAssert.present(entity, { status: 404, message: `Data record '${input.id}' not found` });
-        requireEntityAction(authCtx, entity, 'admin_entity', 'You do not have permission to manage entity access');
+        requireEntityAction(
+          authCtx,
+          entity,
+          'admin_entity',
+          'You do not have permission to manage entity access'
+        );
         const rows = buildEntityGrantInputs(workspace, input.id, input.grants, new Date());
         const grants = await context.db.catalog.replaceEntityGrants(workspace, input.id, rows);
         return {
@@ -198,7 +208,11 @@ export const workspaceEntityORPCRouter = entityRouter.router({
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        return await importParse(context.db, authCtx, { workspace, schemaId: input.schemaId, csvContent: input.csvContent });
+        return await importParse(context.db, authCtx, {
+          workspace,
+          schemaId: input.schemaId,
+          csvContent: input.csvContent
+        });
       } catch (error) {
         return toORPCError(error);
       }
@@ -222,7 +236,15 @@ export const workspaceEntityORPCRouter = entityRouter.router({
   }
 });
 
-export const workspaceEntityOpenAPIHandler = new OpenAPIHandler(workspaceEntityORPCRouter);
+export const workspaceEntityOpenAPIHandler = new OpenAPIHandler(workspaceEntityORPCRouter, {
+  clientInterceptors: [
+    onError(error => {
+      console.error('Output validation failed =======');
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      console.dir((error as any).cause, { depth: 10 });
+    })
+  ]
+});
 
 export const createWorkspaceEntityORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

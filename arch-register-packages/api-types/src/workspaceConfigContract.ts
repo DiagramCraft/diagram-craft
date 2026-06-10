@@ -89,7 +89,7 @@ const roleInputSchema = z.object({
   capabilities: z.array(z.string())
 });
 
-const memberInfoSchema = z.object({
+export const memberInfoSchema = z.object({
   workspace: z.string(),
   user_id: z.string(),
   role: z.string(),

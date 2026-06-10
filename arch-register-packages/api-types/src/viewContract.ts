@@ -3,9 +3,9 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-const browserViewSchema = z.enum(['table', 'cards', 'tree', 'radar', 'timeline']);
+export const browserViewSchema = z.enum(['table', 'cards', 'tree', 'radar', 'timeline']);
 
-const filterConditionSchema = z.object({
+export const filterConditionSchema = z.object({
   fieldId: z.string(),
   op: z.enum([
     'equals',
@@ -24,7 +24,7 @@ const filterConditionSchema = z.object({
   value: z.unknown()
 });
 
-const entityFiltersSchema = z.object({
+export const entityFiltersSchema = z.object({
   schemaId: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
   owner: z.string().nullable().optional(),
@@ -36,14 +36,14 @@ const entityFiltersSchema = z.object({
   conditions: z.array(filterConditionSchema).optional()
 });
 
-const radarViewConfigSchema = z.object({
+export const radarViewConfigSchema = z.object({
   schemaId: z.string(),
   quadrantFieldId: z.string(),
   ringFieldId: z.string(),
   ringOrder: z.array(z.string())
 });
 
-const timelineViewConfigSchema = z.object({
+export const timelineViewConfigSchema = z.object({
   startFieldId: z.string().nullable(),
   endFieldId: z.string().nullable(),
   groupBy: z.enum(['owner', 'type']),
@@ -57,7 +57,7 @@ const viewConfigSchema = z
   })
   .nullable();
 
-const savedViewSchema = z.object({
+export const savedViewSchema = z.object({
   id: z.string(),
   workspaceId: z.string(),
   name: z.string(),
@@ -69,7 +69,7 @@ const savedViewSchema = z.object({
   updatedAt: z.string()
 });
 
-const pinnedEntitySchema = z.object({
+export const pinnedEntitySchema = z.object({
   entity_id: z.string(),
   entity_name: z.string(),
   entity_slug: z.string(),
@@ -83,7 +83,7 @@ export const listViewsRequestSchema = z.object({
   workspace: z.string()
 });
 
-const createViewBodySchema = z.object({
+export const createViewBodySchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   viewMode: browserViewSchema,
@@ -95,7 +95,7 @@ export const createViewRequestSchema = createViewBodySchema.extend({
   workspace: z.string()
 });
 
-const updateViewBodySchema = z.object({
+export const updateViewBodySchema = z.object({
   name: z.string().optional(),
   description: z.string().nullable().optional(),
   viewMode: browserViewSchema.optional(),

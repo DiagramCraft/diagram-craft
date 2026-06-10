@@ -8,13 +8,13 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toORPCError } from '../../utils/orpcErrors';
 import {
-  listSavedViews,
+  createPinnedEntity,
   createSavedView,
-  updateSavedView,
+  deletePinnedEntity,
   deleteSavedView,
   listPinnedEntities,
-  createPinnedEntity,
-  deletePinnedEntity
+  listSavedViews,
+  updateSavedView
 } from './viewOperations';
 
 type ORPCContext = {

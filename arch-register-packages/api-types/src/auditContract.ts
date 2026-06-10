@@ -3,9 +3,9 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-const auditOperationSchema = z.enum(['create', 'update', 'delete']);
+export const auditOperationSchema = z.enum(['create', 'update', 'delete']);
 
-const auditEntityTypeSchema = z.enum([
+export const auditEntityTypeSchema = z.enum([
   'workspace',
   'entity_schema',
   'entity',
@@ -13,7 +13,7 @@ const auditEntityTypeSchema = z.enum([
   'project_file'
 ]);
 
-const auditLogEntrySchema = z.object({
+export const auditLogEntrySchema = z.object({
   id: z.string(),
   workspace: z.string(),
   timestamp: z.string(),
@@ -32,7 +32,7 @@ const auditLogEntrySchema = z.object({
   metadata: z.record(z.string(), z.unknown())
 });
 
-const auditStatsSchema = z.object({
+export const auditStatsSchema = z.object({
   total: z.number(),
   byOperation: z.array(z.object({ operation: z.string(), count: z.number() })),
   byEntityType: z.array(z.object({ entity_type: z.string(), count: z.number() })),

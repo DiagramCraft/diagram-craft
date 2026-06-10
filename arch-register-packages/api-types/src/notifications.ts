@@ -1,33 +1,15 @@
-export type WatchedEntity = {
-  entity_id: string;
-  entity_name: string;
-  entity_slug: string;
-  schema_id: string;
-  created_at: string;
-};
+import type { z } from 'zod';
+import type { pinnedEntitySchema } from './viewContract.js';
+import type {
+  notificationCountSchema,
+  notificationItemSchema,
+  watchedEntitySchema
+} from './watchContract.js';
 
-export type PinnedEntity = {
-  entity_id: string;
-  entity_name: string;
-  entity_slug: string;
-  schema_id: string;
-  created_at: string;
-};
+export type WatchedEntity = z.infer<typeof watchedEntitySchema>;
 
-export type NotificationItem = {
-  id: string;
-  entity_id: string;
-  entity_name: string;
-  entity_slug: string;
-  schema_id: string | null;
-  operation: 'create' | 'update' | 'delete';
-  changed_by_user_id: string;
-  changed_by_display_name: string;
-  timestamp: string;
-  created_at: string;
-  audit_log_id: string;
-};
+export type PinnedEntity = z.infer<typeof pinnedEntitySchema>;
 
-export type NotificationCount = {
-  count: number;
-};
+export type NotificationItem = z.infer<typeof notificationItemSchema>;
+
+export type NotificationCount = z.infer<typeof notificationCountSchema>;

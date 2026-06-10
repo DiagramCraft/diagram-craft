@@ -14,7 +14,7 @@ const projectCapabilitiesSchema = z.object({
   canManageFiles: z.boolean()
 });
 
-const projectSchema = projectCapabilitiesSchema.extend({
+export const projectSchema = projectCapabilitiesSchema.extend({
   id: z.string(),
   workspace: z.string(),
   name: z.string(),
@@ -27,7 +27,7 @@ const projectSchema = projectCapabilitiesSchema.extend({
   updated_at: z.string()
 });
 
-const projectFileSchema = z.object({
+export const projectFileSchema = z.object({
   id: z.string(),
   project_id: z.string(),
   path: z.string(),
@@ -42,17 +42,17 @@ const projectFileSchema = z.object({
   updated_at: z.string()
 });
 
-const fileFolderSchema = z.object({
+export const fileFolderSchema = z.object({
   path: z.string(),
   files: z.array(projectFileSchema)
 });
 
-const fileTreeSchema = z.object({
+export const fileTreeSchema = z.object({
   folders: z.array(fileFolderSchema),
   rootFiles: z.array(projectFileSchema)
 });
 
-const projectDetailSchema = projectSchema.extend({
+export const projectDetailSchema = projectSchema.extend({
   files: fileTreeSchema
 });
 

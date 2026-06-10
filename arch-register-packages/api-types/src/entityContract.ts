@@ -19,7 +19,7 @@ const entityCapabilitiesSchema = z.object({
   canCreateChild: z.boolean()
 });
 
-const entitySummarySchema = entityCapabilitiesSchema.extend({
+export const entitySummarySchema = entityCapabilitiesSchema.extend({
   _uid: z.string(),
   _schema: foreignKeySchema,
   _name: z.string(),
@@ -113,7 +113,7 @@ export const deleteEntityResponseSchema = z.object({
 
 // ── Facets ────────────────────────────────────────────────────
 
-const entityFacetBucketSchema = z.object({
+export const entityFacetBucketSchema = z.object({
   label: z.string(),
   value: z.string().nullable(),
   count: z.number().int()
@@ -133,8 +133,8 @@ export const entityFacetsSchema = z.object({
 
 // ── Tree ──────────────────────────────────────────────────────
 
-const treeNodeSchema = entitySummarySchema.extend({ _isMatch: z.boolean() });
-const treeEdgeSchema = z.object({ childId: z.string(), parentId: z.string() });
+export const treeNodeSchema = entitySummarySchema.extend({ _isMatch: z.boolean() });
+export const treeEdgeSchema = z.object({ childId: z.string(), parentId: z.string() });
 
 export const treeResponseSchema = z.object({
   nodes: z.array(treeNodeSchema),
@@ -143,7 +143,7 @@ export const treeResponseSchema = z.object({
 
 // ── Relations ─────────────────────────────────────────────────
 
-const entityRelationSchema = z.object({
+export const entityRelationSchema = z.object({
   entityId: z.string(),
   entitySlug: z.string(),
   entityName: z.string(),

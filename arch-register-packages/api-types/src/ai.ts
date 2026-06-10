@@ -1,3 +1,6 @@
+import type { z } from 'zod';
+import type { aiConversationSchema, aiMessageSchema } from './aiContract.js';
+
 export type AiProvider = 'openrouter' | 'openai';
 
 export type WorkspaceAiConfig = {
@@ -23,20 +26,6 @@ export type UpsertAiConfigRequest = {
   enabled?: boolean;
 };
 
-export type AiConversation = {
-  id: string;
-  workspace: string;
-  user_id: string;
-  title: string;
-  created_at: string;
-  updated_at: string;
-};
+export type AiConversation = z.infer<typeof aiConversationSchema>;
 
-export type AiMessageRecord = {
-  id: string;
-  conversation_id: string;
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-  metadata: Record<string, unknown>;
-  created_at: string;
-};
+export type AiMessageRecord = z.infer<typeof aiMessageSchema>;
