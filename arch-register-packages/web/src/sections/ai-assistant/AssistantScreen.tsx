@@ -16,8 +16,8 @@ import {
   useConversationMessages,
   aiKeys
 } from '../../hooks/useAiConversations';
-import type { AiConversation } from '@arch-register/api-types';
 import type { WorkspaceTeam } from '../../lib/api';
+import { AiConversation } from '@arch-register/api-types/ai';
 
 // ── Markdown renderer ──
 

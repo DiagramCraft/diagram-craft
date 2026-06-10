@@ -2,8 +2,8 @@ import type { ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
-import { workspaceConfigContract } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
+import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 
 const ORPC_BASE_PATH = '/api';
 
@@ -68,5 +68,9 @@ export const listTeamAssignmentsORPC = async (workspace: string) =>
 
 export const updateTeamAssignmentsORPC = async (
   workspace: string,
-  assignments: Array<{ team_id: string; user_id: string; role: 'team_admin' | 'team_editor' | 'team_reviewer' }>
+  assignments: Array<{
+    team_id: string;
+    user_id: string;
+    role: 'team_admin' | 'team_editor' | 'team_reviewer';
+  }>
 ) => await configClient.config.teamAssignments.replace({ workspace, assignments });

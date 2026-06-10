@@ -8,7 +8,7 @@ import {
 } from '@arch-register/api-types/colors';
 import { randomUUID } from 'node:crypto';
 import type { SchemaDbCreate } from '../../db/database';
-import type { SchemaField } from '../../types';
+import { SchemaField } from '@arch-register/api-types/schemas';
 
 type SymbolicField =
   | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' }

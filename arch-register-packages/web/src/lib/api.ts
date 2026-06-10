@@ -1,39 +1,6 @@
 import type { GlobalRole, TeamRole } from '@arch-register/permissions';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import type {
-  Workspace,
-  EntitySchema,
-  SchemaField,
-  TextField,
-  BooleanField,
-  DateField,
-  SelectField,
-  ApiSelectField,
-  ReferenceField,
-  ContainmentField,
-  EntityRecord,
-  EntitySummary,
-  EntityLink,
-  Project,
-  ProjectDetail,
-  ProjectFile,
-  FileTree,
-  AuditLogEntry,
-  WorkspaceLifecycleState,
-  WorkspaceOwnerOption,
-  WorkspaceRoleDefinition,
-  WorkspaceMemberInfo,
-  WorkspaceUserInfo,
-  CreateWorkspaceRoleRequest,
-  UpdateWorkspaceRoleRequest,
-  ProjectTemplatesResponse,
-  WorkspaceEnum,
-  WatchedEntity,
-  PinnedEntity,
-  NotificationItem,
-  NotificationCount
-} from '@arch-register/api-types';
-import type {
   SavedView,
   CreateSavedViewRequest,
   UpdateSavedViewRequest
@@ -45,39 +12,34 @@ import type {
   SerializedStyles
 } from '@diagram-craft/model/serialization/serializedTypes';
 import { fetchWithAuthResponse } from '../auth/authClient';
-
-// Re-export commonly used types for convenience
-export type {
-  Workspace,
-  EntitySchema,
-  SchemaField,
-  TextField,
-  BooleanField,
-  DateField,
-  SelectField,
-  ApiSelectField,
-  ReferenceField,
-  ContainmentField,
-  EntityRecord,
-  EntitySummary,
-  EntityLink,
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemas';
+import { EntityRecord, EntitySummary } from '@arch-register/api-types/entities';
+import { EntityLink } from '@arch-register/api-types/common';
+import {
+  FileTree,
   Project,
   ProjectDetail,
   ProjectFile,
-  FileTree,
-  AuditLogEntry,
-  WorkspaceLifecycleState,
-  WorkspaceOwnerOption,
-  WorkspaceRoleDefinition,
-  WorkspaceMemberInfo,
-  WorkspaceUserInfo,
-  WorkspaceEnum,
-  SavedView,
-  WatchedEntity,
-  PinnedEntity,
+  ProjectTemplatesResponse
+} from '@arch-register/api-types/projects';
+import {
+  NotificationCount,
   NotificationItem,
-  NotificationCount
-};
+  PinnedEntity,
+  WatchedEntity
+} from '@arch-register/api-types/notifications';
+import {
+  CreateWorkspaceRoleRequest,
+  UpdateWorkspaceRoleRequest,
+  WorkspaceLifecycleState,
+  WorkspaceMemberInfo,
+  WorkspaceRoleDefinition,
+  WorkspaceUserInfo
+} from '@arch-register/api-types/workspaces';
+import { AuditLogEntry } from '@arch-register/api-types/audit';
+
+// Re-export commonly used types for convenience
+export type { SavedView };
 
 export type FieldType = SchemaField['type'];
 

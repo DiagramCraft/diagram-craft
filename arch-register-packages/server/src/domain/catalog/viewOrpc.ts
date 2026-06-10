@@ -1,7 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { workspaceViewContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -16,6 +15,7 @@ import {
   listSavedViews,
   updateSavedView
 } from './viewOperations';
+import { workspaceViewContract } from '@arch-register/api-types/viewContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;

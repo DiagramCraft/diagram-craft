@@ -3,13 +3,13 @@ import {
   createWorkspaceRole,
   deleteWorkspaceRole,
   fetchWorkspaceRoles,
-  updateWorkspaceRole,
-  type WorkspaceRoleDefinition
+  updateWorkspaceRole
 } from '../lib/api';
-import type {
+import {
   CreateWorkspaceRoleRequest,
-  UpdateWorkspaceRoleRequest
-} from '@arch-register/api-types';
+  UpdateWorkspaceRoleRequest,
+  WorkspaceRoleDefinition
+} from '@arch-register/api-types/workspaces';
 
 export const workspaceRolesKeys = {
   all: ['workspace-roles'] as const,

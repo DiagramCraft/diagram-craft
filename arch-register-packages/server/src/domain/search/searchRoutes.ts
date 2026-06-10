@@ -1,18 +1,17 @@
 import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
-import type { SchemaField } from '../../types';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
 import { parsePositiveInt } from '../../utils/http';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { searchWorkspace } from './searchOperations';
+import { SchemaField } from '@arch-register/api-types/schemas';
 
 const BASE = '/api/:workspace/search';
 
 export const SEARCH_TYPES = ['projects', 'files', 'entities', 'schemas'] as const;
 
 export type SearchType = (typeof SEARCH_TYPES)[number];
-
 
 export const parseTypes = (value: unknown): SearchType[] => {
   if (value == null || value === '') return [...SEARCH_TYPES];
@@ -83,7 +82,12 @@ export function createSearchRoutes(db: DatabaseAdapter) {
       const q = typeof query['q'] === 'string' ? query['q'] : undefined;
       const limitPerType = parsePositiveInt(query['limitPerType'], 'limitPerType') ?? undefined;
       const types = typeof query['types'] === 'string' ? query['types'] : undefined;
-      return await searchWorkspace(db, workspace, { q, limitPerType, types }, event as AuthenticatedEvent);
+      return await searchWorkspace(
+        db,
+        workspace,
+        { q, limitPerType, types },
+        event as AuthenticatedEvent
+      );
     })
   );
 

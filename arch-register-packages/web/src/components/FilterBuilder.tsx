@@ -4,13 +4,9 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import type { FilterCondition } from '@arch-register/api-types/views';
-import type {
-  EntitySchema,
-  WorkspaceLifecycleState,
-  WorkspaceOwnerOption,
-  WorkspaceEnum
-} from '../lib/api';
 import styles from './FilterBuilder.module.css';
+import { EntitySchema, WorkspaceEnum } from '@arch-register/api-types/schemas';
+import { WorkspaceLifecycleState, WorkspaceOwnerOption } from '@arch-register/api-types/workspaces';
 
 const TEXT_OPERATORS = [
   { value: 'equals', label: 'Equals' },

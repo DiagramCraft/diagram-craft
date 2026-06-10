@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
-import type { AiConversation } from '@arch-register/api-types';
+import { AiConversation } from '@arch-register/api-types/ai';
 
 export const aiKeys = {
   all: ['ai'] as const,

@@ -7,10 +7,10 @@ import { logAudit, extractEntityFields, computeChanges } from '../audit/db/audit
 import { HTTPError } from 'h3';
 import { handleDbError, slugify } from '../../utils/http';
 import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/api-types/colors';
-import type { Workspace } from '@arch-register/api-types';
 import { toApiWorkspace } from './workspaceHelpers';
 import { instantiateTemplate } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
+import { Workspace } from '@arch-register/api-types/workspaces';
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, { unique: 'A workspace with that name already exists' });
@@ -279,10 +279,19 @@ export const updateWorkspace = async (
   try {
     const oldRow = await db.workspace.getWorkspace(id);
     if (oldRow == null)
-      throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${id}' not found` });
+      throw new HTTPError({
+        status: 404,
+        statusText: 'Not Found',
+        message: `Workspace '${id}' not found`
+      });
 
     const row = await db.workspace.updateWorkspace(id, buildUpdateInput(input, oldRow, new Date()));
-    if (row == null) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${id}' not found` });
+    if (row == null)
+      throw new HTTPError({
+        status: 404,
+        statusText: 'Not Found',
+        message: `Workspace '${id}' not found`
+      });
 
     const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
     await logAudit(db, {
@@ -313,7 +322,11 @@ export const deleteWorkspace = async (
   try {
     const { workspace, projectIds } = await db.workspace.deleteWorkspace(id);
     if (workspace == null)
-      throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${id}' not found` });
+      throw new HTTPError({
+        status: 404,
+        statusText: 'Not Found',
+        message: `Workspace '${id}' not found`
+      });
 
     if (storage) {
       await Promise.all(

@@ -1,7 +1,7 @@
 import { defineHandler } from 'h3';
 import { implement, ORPCError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { aiContract } from '@arch-register/api-types';
+import { aiContract } from '@arch-register/api-types/aiContract';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';

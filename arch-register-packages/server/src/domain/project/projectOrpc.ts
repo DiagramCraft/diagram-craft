@@ -1,7 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { projectContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -16,6 +15,7 @@ import {
   createFolder,
   renameFolder
 } from './projectOperations';
+import { projectContract } from '@arch-register/api-types/projectContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -77,13 +77,7 @@ export const projectORPCRouter = projectRouter.router({
     }),
     createFolder: projectRouter.projects.createFolder.handler(async ({ input, context }) => {
       try {
-        return await createFolder(
-          context.db,
-          input.workspace,
-          input.id,
-          input.path,
-          context.event
-        );
+        return await createFolder(context.db, input.workspace, input.id, input.path, context.event);
       } catch (error) {
         return toORPCError(error);
       }

@@ -1,16 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  requireEntityAction,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
   CreateSavedViewRequest,
   UpdateSavedViewRequest,
   SavedView as ApiSavedView
 } from '@arch-register/api-types/views';
-import type { PinnedEntity } from '@arch-register/api-types';
 import { PermissionChecker } from '@arch-register/permissions';
 import type { Entity, SavedViewDbResult } from './db/catalogDatabase';
+import { PinnedEntity } from '@arch-register/api-types/notifications';
 
 const checker = new PermissionChecker();
 
@@ -36,7 +40,10 @@ const canAccessPinnedEntity = (
   return checker.hasEntityPermission(authCtx, entity, 'view_entity');
 };
 
-export const listSavedViews = async (db: DatabaseAdapter, workspace: string): Promise<ApiSavedView[]> => {
+export const listSavedViews = async (
+  db: DatabaseAdapter,
+  workspace: string
+): Promise<ApiSavedView[]> => {
   const views = await db.view.listSavedViews(workspace);
   return views.map(toApi);
 };

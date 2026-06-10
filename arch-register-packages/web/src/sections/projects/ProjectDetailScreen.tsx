@@ -25,9 +25,9 @@ import {
 } from 'react-icons/tb';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { ApiError } from '../../lib/api';
-import type { ProjectDetail as ProjectDetailData, FileEntry, WorkspaceTeam } from '../../lib/api';
+import { ApiError, FileEntry, WorkspaceTeam } from '../../lib/api';
 import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
+import { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projects';
 import {
   useDeleteProjectFile,
   useDeleteProjectFolder,

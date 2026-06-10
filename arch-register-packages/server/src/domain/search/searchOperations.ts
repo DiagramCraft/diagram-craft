@@ -4,8 +4,8 @@ import { buildApiAuthCtx, canAccessProject } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { SEARCH_DEFAULTS } from '../../constants';
 import { PermissionChecker } from '@arch-register/permissions';
-import type { SchemaField } from '../../types';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
+import { SchemaField } from '@arch-register/api-types/schemas';
 
 const checker = new PermissionChecker();
 
@@ -51,12 +51,14 @@ const collectFieldMatches = (fields: SchemaField[], query: string) =>
 
 const parseTypesFromString = (value: string | undefined): SearchType[] => {
   if (value == null || value === '') return [...SEARCH_TYPES];
-  return [...new Set(
-    value
-      .split(',')
-      .map(type => type.trim())
-      .filter((type): type is SearchType => SEARCH_TYPES.includes(type as SearchType))
-  )];
+  return [
+    ...new Set(
+      value
+        .split(',')
+        .map(type => type.trim())
+        .filter((type): type is SearchType => SEARCH_TYPES.includes(type as SearchType))
+    )
+  ];
 };
 
 export const searchWorkspace = async (
@@ -175,11 +177,7 @@ export const searchWorkspace = async (
             matchedMetadata
           };
         })
-        .filter(
-          (
-            entity
-          ): entity is NonNullable<typeof entity> => entity !== null
-        )
+        .filter((entity): entity is NonNullable<typeof entity> => entity !== null)
         .sort((a, b) => a._name.localeCompare(b._name))
         .slice(0, limitPerType)
     : [];

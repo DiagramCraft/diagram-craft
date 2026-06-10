@@ -5,10 +5,11 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { createProject, ApiError } from '../lib/api';
-import type { Project, WorkspaceTeam } from '../lib/api';
+import type { WorkspaceTeam } from '../lib/api';
 import { usePermissions } from '../auth/PermissionContext';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddEntityDialog.module.css';
+import { Project } from '@arch-register/api-types/projects';
 
 const PROJECT_STATUSES = [
   { value: 'pinned', label: 'Pinned' },

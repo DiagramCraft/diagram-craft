@@ -13,21 +13,11 @@ export type {
   EntityAction,
   ProjectAction,
   EntityGrantScope,
-  VisibilityMode,
-  EntityCapabilities,
-  ProjectCapabilities,
-  EntityLink,
-  TextField,
-  BooleanField,
-  SelectField,
-  ReferenceField,
-  ContainmentField,
-  SchemaField,
   EntitySchema,
   Entity,
   EntityGrant,
   WorkspaceTeam,
-  AuthorizationContext,
+  AuthorizationContext
 } from './types.js';
 
 // Export utility functions
@@ -47,7 +37,7 @@ export {
   getGlobalPermissionsForRoles,
   getBuiltinWorkspaceRole,
   resolveWorkspaceRoleDefinitions,
-  workspaceRoleHasCapability,
+  workspaceRoleHasCapability
 } from './constants.js';
 
 // Export authorization context builder helpers

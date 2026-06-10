@@ -8,7 +8,7 @@ import { decodeRefs } from '../../types';
 import { filterEntities, handleError } from './dataHelpers';
 import { formatArrayForCsv, generateCsv } from '../../utils/csv';
 import { PermissionChecker } from '@arch-register/permissions';
-import type { SchemaField } from '../../types';
+import { SchemaField } from '@arch-register/api-types/schemas';
 
 const BASE = '/api/download/:workspace/data';
 
@@ -66,15 +66,29 @@ export const createDownloadRoutes = (db: DatabaseAdapter) => {
               .map(entity => [entity.id, entity.name || entity.slug])
           );
           const columns = [
-            'ID', 'Name', 'Slug', 'Namespace', 'Description', 'Owner', 'Lifecycle',
-            'Target Lifecycle', 'Target Date', 'Tags', 'Links', 'Schema Type',
+            'ID',
+            'Name',
+            'Slug',
+            'Namespace',
+            'Description',
+            'Owner',
+            'Lifecycle',
+            'Target Lifecycle',
+            'Target Date',
+            'Tags',
+            'Links',
+            'Schema Type',
             ...schema.fields.map(f => f.name)
           ];
           const rows = entities.map(entity => {
             const row: Record<string, unknown> = {
-              'ID': entity.id, 'Name': entity.name, 'Slug': entity.slug,
-              'Namespace': entity.namespace, 'Description': entity.description,
-              'Owner': entity.owner ?? '', 'Lifecycle': entity.lifecycle ?? '',
+              'ID': entity.id,
+              'Name': entity.name,
+              'Slug': entity.slug,
+              'Namespace': entity.namespace,
+              'Description': entity.description,
+              'Owner': entity.owner ?? '',
+              'Lifecycle': entity.lifecycle ?? '',
               'Target Lifecycle': entity.target_lifecycle ?? '',
               'Target Date': entity.target_lifecycle_date ?? '',
               'Tags': formatArrayForCsv(entity.tags),
@@ -100,13 +114,27 @@ export const createDownloadRoutes = (db: DatabaseAdapter) => {
           csvContent = generateCsv(rows, columns, ';');
         } else {
           const columns = [
-            'ID', 'Name', 'Slug', 'Namespace', 'Description', 'Owner', 'Lifecycle',
-            'Target Lifecycle', 'Target Date', 'Tags', 'Links', 'Schema Type'
+            'ID',
+            'Name',
+            'Slug',
+            'Namespace',
+            'Description',
+            'Owner',
+            'Lifecycle',
+            'Target Lifecycle',
+            'Target Date',
+            'Tags',
+            'Links',
+            'Schema Type'
           ];
           const rows = entities.map(entity => ({
-            'ID': entity.id, 'Name': entity.name, 'Slug': entity.slug,
-            'Namespace': entity.namespace, 'Description': entity.description,
-            'Owner': entity.owner ?? '', 'Lifecycle': entity.lifecycle ?? '',
+            'ID': entity.id,
+            'Name': entity.name,
+            'Slug': entity.slug,
+            'Namespace': entity.namespace,
+            'Description': entity.description,
+            'Owner': entity.owner ?? '',
+            'Lifecycle': entity.lifecycle ?? '',
             'Target Lifecycle': entity.target_lifecycle ?? '',
             'Target Date': entity.target_lifecycle_date ?? '',
             'Tags': formatArrayForCsv(entity.tags),
@@ -143,7 +171,14 @@ export const createDownloadRoutes = (db: DatabaseAdapter) => {
         httpAssert.present(schema, { status: 404, message: 'Schema not found' });
 
         const columns = [
-          'ID', 'Name', 'Slug', 'Namespace', 'Description', 'Owner', 'Lifecycle', 'Tags',
+          'ID',
+          'Name',
+          'Slug',
+          'Namespace',
+          'Description',
+          'Owner',
+          'Lifecycle',
+          'Tags',
           ...schema.fields.map(f => f.name)
         ];
         const csvContent = columns.map(col => `"${col}"`).join(';');

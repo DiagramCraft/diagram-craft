@@ -8,9 +8,9 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { apiFetch, ApiError } from '../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import type { Workspace } from '../lib/api';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';
+import { Workspace } from '@arch-register/api-types/workspaces';
 
 type ApiWorkspace = {
   id: string;

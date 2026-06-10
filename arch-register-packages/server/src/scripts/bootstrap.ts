@@ -17,10 +17,10 @@ import {
   seedWorkspaceMembers,
   seedWorkspaces
 } from '../db/seedData';
-import type { ContainmentField, ReferenceField } from '../types';
 import { decodeRefs } from '../types';
 import { hashPassword } from '../utils/password';
 import { UserDbCreate } from '../db/database';
+import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemas';
 
 async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
   const workspaces = await db.workspace.listWorkspaces();

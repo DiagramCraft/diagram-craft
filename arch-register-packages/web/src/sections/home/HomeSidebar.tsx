@@ -1,10 +1,11 @@
 import { useNavigate } from '@tanstack/react-router';
 import { TbFolders } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
-import type { EntitySchema, Project } from '../../lib/api';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
+import { Project } from '@arch-register/api-types/projects';
+import { EntitySchema } from '@arch-register/api-types/schemas';
 
 const PROJECT_GROUPS = [
   { status: 'pinned', title: 'Pinned Projects' },

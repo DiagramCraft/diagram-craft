@@ -6,14 +6,11 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { FormSection } from '@diagram-craft/app-components/FormSection';
 import { Select } from '@diagram-craft/app-components/Select';
-import type {
-  EntityRecord,
-  EntitySchema,
-  WorkspaceLifecycleState,
-  ApiSelectField
-} from '../../../lib/api';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities } from '../../../hooks/useEntities';
+import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemas';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { EntityRecord } from '@arch-register/api-types/entities';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

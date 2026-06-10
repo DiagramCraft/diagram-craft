@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import type { PinnedEntity } from '../lib/api';
 import {
   clearNotificationsORPC,
   createWatchORPC,
@@ -14,6 +13,7 @@ import {
   deletePinnedEntityORPC,
   listPinnedEntitiesORPC
 } from '../lib/viewORPCClient';
+import { PinnedEntity } from '@arch-register/api-types/notifications';
 
 export const notificationKeys = {
   all: ['notifications'] as const,

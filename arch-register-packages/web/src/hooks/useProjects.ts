@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Project, ProjectDetail } from '@arch-register/api-types';
 import {
   createProjectORPC,
   deleteProjectORPC,
@@ -8,6 +7,7 @@ import {
   updateProjectORPC
 } from '../lib/projectORPCClient';
 import { invalidateAuditQueries } from './useAudit';
+import { Project, ProjectDetail } from '@arch-register/api-types/projects';
 
 // Query keys factory
 export const projectKeys = {

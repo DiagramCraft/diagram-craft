@@ -3,17 +3,11 @@ import styles from './WorkspaceSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import type { Workspace } from '../../lib/api';
 import { LIFECYCLE_COLOR_PRESETS, SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../../components/ColorPicker';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import type {
-  WorkspaceLifecycleState,
-  AuditEntityType,
-  AuditLogEntry,
-  AuditOperation
-} from '../../lib/api';
+import type { AuditEntityType, AuditOperation } from '../../lib/api';
 import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
 import { useAuditLog } from '../../hooks/useAudit';
 import { useUpdateWorkspace, useDeleteWorkspace } from '../../hooks/useWorkspaces';
@@ -22,6 +16,8 @@ import { RolesPermissionsSubSection } from './sub-sections/RolesPermissionsSubSe
 import { MembersSubSection } from './sub-sections/MembersSubSection';
 import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
+import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { AuditLogEntry } from '@arch-register/api-types/audit';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   'general': { title: 'General', sub: 'Name, description, and identity for this workspace.' },
@@ -652,7 +648,9 @@ const AuditLogSection = ({
                     {getEntityTypeLabel(entry.entity_type)}
                   </span>
                   <span className={styles.activityDate}>{formatRelativeTime(entry.timestamp)}</span>
-                  <span className={styles.activityWho}>{entry.user_display_name ?? entry.user_id ?? 'Unknown'}</span>
+                  <span className={styles.activityWho}>
+                    {entry.user_display_name ?? entry.user_id ?? 'Unknown'}
+                  </span>
                   <span className={styles.activityVerb}>{getOperationLabel(entry.operation)}</span>
                   <span className={styles.activityTarget}>{entry.entity_name}</span>
                 </button>

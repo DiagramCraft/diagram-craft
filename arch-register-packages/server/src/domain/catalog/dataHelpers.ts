@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { EntityGrantDbCretae, DatabaseAdapter } from '../../db/database';
-import { decodeRefs, type EntityLink, type SchemaField } from '../../types';
+import { decodeRefs } from '../../types';
 import { Entity, type SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
 import type { EntityDbResult } from './db/catalogDatabase';
 import { handleDbError, slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
+import { SchemaField } from '@arch-register/api-types/schemas';
+import { EntityLink } from '@arch-register/api-types/common';
 
 export const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {

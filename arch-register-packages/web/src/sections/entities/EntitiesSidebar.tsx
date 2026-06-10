@@ -18,8 +18,7 @@ import {
   TbTable,
   TbPinned
 } from 'react-icons/tb';
-import { fetchEntityFacets, resolveSchemaColor } from '../../lib/api';
-import type { EntityFacets, EntitySchema, WorkspaceLifecycleState, SavedView } from '../../lib/api';
+import { EntityFacets, fetchEntityFacets, resolveSchemaColor, SavedView } from '../../lib/api';
 import type { FilterCondition } from '@arch-register/api-types/views';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useEntities';
 import { usePinnedEntities } from '../../hooks/useNotifications';
@@ -27,6 +26,8 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
+import { EntitySchema } from '@arch-register/api-types/schemas';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
 
 const GroupLabel = ({ children }: { children: React.ReactNode }) => (
   <div className={styles.groupLabel}>{children}</div>
@@ -281,7 +282,7 @@ export const EntitiesSidebar = ({
       <div className={`${styles.header} ${styles.tabHeader}`}>
         <Tabs.Root
           value={sidebarTab}
-          onValueChange={v => 
+          onValueChange={v =>
             navigate({
               to: '/$workspaceSlug/entities',
               params: { workspaceSlug },
@@ -364,7 +365,13 @@ export const EntitiesSidebar = ({
                 icon={<TbUsers size={12} />}
                 label={ownerName}
                 active={activeFilterKind === 'owner' && ownerFilter === ownerId}
-                onClick={() => navigateEntities({ type: undefined, status: undefined, owner: ownerId ?? undefined })}
+                onClick={() =>
+                  navigateEntities({
+                    type: undefined,
+                    status: undefined,
+                    owner: ownerId ?? undefined
+                  })
+                }
                 trailing={<span className="dim mono">{count}</span>}
               />
             ))}

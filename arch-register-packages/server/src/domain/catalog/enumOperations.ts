@@ -1,13 +1,17 @@
-import type {
-  CreateEnumRequest,
-  UpdateEnumRequest,
-  WorkspaceEnum
-} from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
-import { buildCreateEnumInput, buildUpdateEnumInput, isEnumReferencedBySchemas } from './enumHelpers';
+import {
+  buildCreateEnumInput,
+  buildUpdateEnumInput,
+  isEnumReferencedBySchemas
+} from './enumHelpers';
 import { toApiEnum } from './schemaHelpers';
+import {
+  CreateEnumRequest,
+  UpdateEnumRequest,
+  WorkspaceEnum
+} from '@arch-register/api-types/schemas';
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {

@@ -1,7 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { workspaceEntityContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireEntityAction } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -21,6 +20,7 @@ import {
   cloneEntity,
   deleteEntity
 } from './entityOperations';
+import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;

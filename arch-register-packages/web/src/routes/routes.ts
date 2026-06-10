@@ -15,7 +15,6 @@ import { AccountSettingsScreen } from '../sections/account-settings/AccountSetti
 import { AssistantScreen } from '../sections/ai-assistant/AssistantScreen';
 import { ExtractScreen } from '../sections/ai-extract/ExtractScreen';
 import { apiFetch } from '../lib/api';
-import type { Workspace } from '../lib/api';
 import { workspaceKeys } from '../hooks/useWorkspaces';
 import { ImportScreen } from '../sections/entities/ImportScreen';
 
@@ -29,6 +28,7 @@ import {
 } from './searchParams';
 import { RootLayout } from '../layouts/RootLayout';
 import { RouteErrorComponent } from './RouteErrorComponent';
+import { Workspace } from '@arch-register/api-types/workspaces';
 
 // ─── Root Route ───────────────────────────────────────────────
 const rootRoute = createRootRouteWithContext<RouterContext>()({

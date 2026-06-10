@@ -13,10 +13,10 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { EntitySchema } from '../../../lib/api';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { TbEyeOff, TbPlus, TbVectorTriangle } from 'react-icons/tb';
 import styles from './EntityGraphView.module.css';
+import { EntitySchema } from '@arch-register/api-types/schemas';
 
 type EntityNodeData = {
   entityId: string;

@@ -6,20 +6,16 @@ import type { ProjectDbCreate, ProjectDbUpdate } from '../../db/database';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { handleDbError } from '../../utils/http';
-import {
-  buildApiAuthCtx,
-  requireProjectAccess,
-  requireProjectAction
-} from '../auth/authorization';
+import { buildApiAuthCtx, requireProjectAccess, requireProjectAction } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiProjectFile } from './projectHelpers';
-import type { FileTree } from '@arch-register/api-types';
 import { generateSvgPreview } from '../diagram/svgPreviewGenerator';
 import { generateAccurateSvgPreview } from '../diagram/serverDiagramRenderer';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { getDiagramCommentCounts } from '../diagram/commentCounts';
 import type { DatabaseAdapter } from '../../db/database';
+import { FileTree } from '@arch-register/api-types/projects';
 
 const BASE = '/api/:workspace/projects';
 

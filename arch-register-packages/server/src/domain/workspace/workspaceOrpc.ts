@@ -1,7 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { workspaceManagementContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -13,6 +12,7 @@ import {
   deleteWorkspace
 } from './workspaceOperations';
 import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
+import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;

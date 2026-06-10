@@ -6,8 +6,8 @@ import {
   includesQuery,
   parseTypes
 } from './searchRoutes';
-import type { SchemaField } from '../../types';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
+import { SchemaField } from '@arch-register/api-types/schemas';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 

@@ -1,7 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement, ORPCError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { authPublicContract, authProtectedContract } from '@arch-register/api-types';
 import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -21,6 +20,7 @@ import {
 } from './authRoutes';
 import { resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
 import type { UserDbResult } from './db/authDatabase';
+import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
 
 const getAuthMode = () => process.env['AUTH_MODE'] ?? 'local';
 

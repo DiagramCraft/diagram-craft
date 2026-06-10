@@ -23,7 +23,6 @@ import {
   TbX
 } from 'react-icons/tb';
 import { useNavigate } from '@tanstack/react-router';
-import type { NotificationItem, WatchedEntity, Workspace } from '../lib/api';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../hooks/useTheme';
@@ -36,6 +35,8 @@ import {
   useNotifications,
   useWatchedEntities
 } from '../hooks/useNotifications';
+import { Workspace } from '@arch-register/api-types/workspaces';
+import { NotificationItem, WatchedEntity } from '@arch-register/api-types/notifications';
 
 type BreadcrumbItem = {
   label: string;
@@ -459,7 +460,10 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
       {open && (
         <div className={styles.notificationDrop}>
           <div className={styles.notificationTabsRow}>
-            <Tabs.Root value={tab} onValueChange={value => setTab(value as 'notifications' | 'watching')}>
+            <Tabs.Root
+              value={tab}
+              onValueChange={value => setTab(value as 'notifications' | 'watching')}
+            >
               <Tabs.List>
                 <Tabs.Trigger value="notifications">
                   Notifications
@@ -467,9 +471,7 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
                     <span className={styles.notifTabPill}>{notificationCount}</span>
                   )}
                 </Tabs.Trigger>
-                <Tabs.Trigger value="watching">
-                  Watching
-                </Tabs.Trigger>
+                <Tabs.Trigger value="watching">Watching</Tabs.Trigger>
               </Tabs.List>
             </Tabs.Root>
             {tab === 'notifications' && notifications.length > 0 && (
@@ -608,7 +610,9 @@ const WatchingList = ({
           </div>
           <span
             className={styles.watchingUnwatch}
-            title={isUnwatching && unwatchingId === item.entity_id ? 'Removing watch' : 'Unwatch entity'}
+            title={
+              isUnwatching && unwatchingId === item.entity_id ? 'Removing watch' : 'Unwatch entity'
+            }
             onClick={event => {
               event.stopPropagation();
               onUnwatch(item.entity_id);

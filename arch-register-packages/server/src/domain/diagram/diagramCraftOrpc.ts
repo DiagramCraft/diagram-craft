@@ -1,13 +1,13 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { diagramCraftContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toDiagramCraftData, toDiagramCraftSchema } from './diagramCraftTransforms';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { TeamAssignmentInfo, WorkspaceTeam, WorkspaceLifecycleState } from '../lib/api';
+import type { TeamAssignmentInfo, WorkspaceTeam } from '../lib/api';
 import {
   listLifecycleStatesORPC,
   listTeamsORPC,
@@ -8,6 +8,7 @@ import {
   updateTeamsORPC,
   updateTeamAssignmentsORPC
 } from '../lib/workspaceConfigORPCClient';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
 
 // Query keys factory
 export const workspaceConfigKeys = {

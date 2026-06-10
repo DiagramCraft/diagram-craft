@@ -1,7 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { workspaceEnumContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -14,6 +13,7 @@ import {
   listWorkspaceEnums,
   updateWorkspaceEnum
 } from './enumOperations';
+import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;

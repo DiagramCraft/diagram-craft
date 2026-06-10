@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import type { EntityRecord, EntityFacets, EntityRelations, TreeResponse } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
@@ -21,6 +20,12 @@ import {
   getLifecycleValues,
   getTeamIds
 } from './dataHelpers';
+import {
+  EntityFacets,
+  EntityRecord,
+  EntityRelations,
+  TreeResponse
+} from '@arch-register/api-types/entities';
 
 const checker = new PermissionChecker();
 
@@ -38,15 +43,23 @@ export const listEntities = async (
     offset?: number | null;
   }
 ): Promise<EntityRecord[]> => {
-  const { schemaId = null, owner = null, lifecycle = null, q = '', view = 'full', limit, offset = 0 } = options;
+  const {
+    schemaId = null,
+    owner = null,
+    lifecycle = null,
+    q = '',
+    view = 'full',
+    limit,
+    offset = 0
+  } = options;
   try {
     const [allEntities, schemas] = await Promise.all([
       db.catalog.listEntities(workspace),
       db.catalog.listSchemas(workspace)
     ]);
     const schemaMap = new Map(schemas.map(s => [s.id, s]));
-    const visibleEntities = allEntities.filter(entity =>
-      !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
+    const visibleEntities = allEntities.filter(
+      entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
     );
     const safeOffset = offset ?? 0;
     const rows = filterEntities(visibleEntities, { schemaId, owner, lifecycle, q: q ?? '' })
@@ -85,17 +98,14 @@ export const getEntityFacets = async (
       db.catalog.listSchemas(workspace)
     ]);
     const schemaMap = new Map(schemas.map(s => [s.id, s]));
-    const entities = allEntities.filter(entity =>
-      !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
+    const entities = allEntities.filter(
+      entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
     );
 
     const countBy = <T extends string | null>(values: T[]) =>
       [
         ...values
-          .reduce(
-            (acc, value) => acc.set(value, (acc.get(value) ?? 0) + 1),
-            new Map<T, number>()
-          )
+          .reduce((acc, value) => acc.set(value, (acc.get(value) ?? 0) + 1), new Map<T, number>())
           .entries()
       ]
         .map(([value, count]) => ({ value, count }))
@@ -161,8 +171,8 @@ export const getEntityTree = async (
       db.catalog.listSchemas(workspace),
       db.catalog.listEntities(workspace)
     ]);
-    const allEntities = allEntitiesRaw.filter(entity =>
-      !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
+    const allEntities = allEntitiesRaw.filter(
+      entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
     );
 
     const containmentFieldsBySchema = new Map<string, string[]>();
@@ -190,12 +200,12 @@ export const getEntityTree = async (
       for (const entity of currentLevel) {
         const cFields = containmentFieldsBySchema.get(entity.schema_id) ?? [];
         for (const fieldId of cFields) {
-          for (const parentId of (entity.data[fieldId]
+          for (const parentId of entity.data[fieldId]
             ? String(entity.data[fieldId])
                 .split(',')
                 .map(s => s.trim())
                 .filter(Boolean)
-            : [])) {
+            : []) {
             edges.push({ childId: entity.id, parentId });
             const parent = entityById.get(parentId);
             if (parent && !allIncluded.has(parent.id)) {
@@ -232,9 +242,19 @@ export const getEntity = async (
       db.catalog.listSchemas(workspace)
     ]);
     httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
-    if (authCtx) requireEntityAction(authCtx, row, 'view_entity', 'You do not have access to view this entity');
+    if (authCtx)
+      requireEntityAction(
+        authCtx,
+        row,
+        'view_entity',
+        'You do not have access to view this entity'
+      );
     const schema = schemas.find(s => s.id === row.schema_id);
-    return toApiEntity(row, authCtx, schema != null ? computeEntityCompleteness(row, schema) : null);
+    return toApiEntity(
+      row,
+      authCtx,
+      schema != null ? computeEntityCompleteness(row, schema) : null
+    );
   } catch (error) {
     return handleError(error, 'Failed to retrieve data record');
   }
@@ -253,7 +273,13 @@ export const getEntityRelations = async (
       db.catalog.listEntities(workspace)
     ]);
     httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
-    if (authCtx) requireEntityAction(authCtx, entity, 'view_entity', 'You do not have access to view this entity');
+    if (authCtx)
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to view this entity'
+      );
     const entities = authCtx
       ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
       : entitiesRaw;
@@ -295,7 +321,13 @@ export const createEntity = async (
     const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
     const parents = getEntityParentsFromPayload(schema, payload.fields, entityLookup);
     const fallbackOwner = (await db.workspace.listTeams(workspace))[0]?.id ?? null;
-    const owner = resolveCreateOwner(payload.requestedOwner, parents, schema, teamIds, fallbackOwner);
+    const owner = resolveCreateOwner(
+      payload.requestedOwner,
+      parents,
+      schema,
+      teamIds,
+      fallbackOwner
+    );
 
     if (authCtx) {
       if (parents.length > 0) {
@@ -367,15 +399,19 @@ export const updateEntity = async (
       : null;
   const target_lifecycle_date = payload.requestedTargetLifecycleDate ?? null;
   const teamIds = await getTeamIds(db, workspace);
-  const owner = payload.requestedOwner && teamIds.has(payload.requestedOwner)
-    ? payload.requestedOwner
-    : null;
+  const owner =
+    payload.requestedOwner && teamIds.has(payload.requestedOwner) ? payload.requestedOwner : null;
 
   try {
     const oldRow = await db.catalog.getEntity(workspace, id);
     httpAssert.present(oldRow, { status: 404, message: `Data record '${id}' not found` });
     if (authCtx)
-      requireEntityAction(authCtx, oldRow, 'edit_entity', 'You do not have permission to edit this entity');
+      requireEntityAction(
+        authCtx,
+        oldRow,
+        'edit_entity',
+        'You do not have permission to edit this entity'
+      );
     if (authCtx && (owner !== oldRow.owner || payload.visibilityMode !== oldRow.visibility_mode)) {
       requireEntityAction(
         authCtx,
@@ -426,7 +462,12 @@ export const cloneEntity = async (
     const source = await db.catalog.getEntity(workspace, id);
     httpAssert.present(source, { status: 404, message: `Data record '${id}' not found` });
     if (authCtx)
-      requireEntityAction(authCtx, source, 'create_child', 'You do not have permission to clone this entity');
+      requireEntityAction(
+        authCtx,
+        source,
+        'create_child',
+        'You do not have permission to clone this entity'
+      );
 
     const baseName = source.name ? `${source.name} (copy)` : source.slug;
     const baseSlug = slugify(baseName);
@@ -481,7 +522,12 @@ export const deleteEntity = async (
     const row = await db.catalog.getEntity(workspace, id);
     httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
     if (authCtx)
-      requireEntityAction(authCtx, row, 'admin_entity', 'You do not have permission to delete this entity');
+      requireEntityAction(
+        authCtx,
+        row,
+        'admin_entity',
+        'You do not have permission to delete this entity'
+      );
 
     const watcherUserIds = await db.watch.listWatcherUserIds(workspace, id);
     await db.catalog.deleteEntity(workspace, id);

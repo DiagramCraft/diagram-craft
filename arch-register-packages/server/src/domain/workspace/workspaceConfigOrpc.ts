@@ -1,7 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { workspaceConfigContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from './resolveWorkspace';
@@ -22,6 +21,7 @@ import {
   removeMember,
   listUsers
 } from './workspaceConfigOperations';
+import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;

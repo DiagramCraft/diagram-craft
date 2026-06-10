@@ -1,7 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { watchContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
@@ -14,6 +13,7 @@ import {
   deleteNotification,
   clearNotifications
 } from './watchOperations';
+import { watchContract } from '@arch-register/api-types/watchContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;

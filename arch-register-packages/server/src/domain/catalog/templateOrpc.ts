@@ -1,13 +1,13 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { workspaceTemplateContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { listAllTemplates, listProjectTemplates } from './templateOperations';
+import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;

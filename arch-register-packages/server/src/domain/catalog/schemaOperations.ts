@@ -1,4 +1,3 @@
-import type { EntitySchema } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError } from '../../utils/http';
@@ -9,6 +8,7 @@ import {
   buildUpdateSchemaInput,
   isSchemaReferencedByEntities
 } from './schemaHelpers';
+import { EntitySchema } from '@arch-register/api-types/schemas';
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
@@ -27,11 +27,7 @@ export const listWorkspaceSchemas = async (
       db.catalog.listEnums(workspace)
     ]);
     return schemas.map(schema =>
-      toApiSchema(
-        schema,
-        entities.filter(entity => entity.schema_id === schema.id).length,
-        enums
-      )
+      toApiSchema(schema, entities.filter(entity => entity.schema_id === schema.id).length, enums)
     );
   } catch (error) {
     return handleError(error, 'Failed to retrieve schemas');

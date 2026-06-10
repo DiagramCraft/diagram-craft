@@ -1,5 +1,5 @@
 import { Chip } from './Chip';
-import type { WorkspaceLifecycleState } from '../lib/api';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
 
 type StatusChipProps = {
   value: string;

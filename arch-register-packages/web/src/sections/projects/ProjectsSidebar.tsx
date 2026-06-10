@@ -14,7 +14,7 @@ import {
   TbFolder,
   TbTrash
 } from 'react-icons/tb';
-import type { FileEntry, Project } from '../../lib/api';
+import type { FileEntry } from '../../lib/api';
 import {
   useProjectFiles,
   useDeleteProjectFile,
@@ -28,6 +28,7 @@ import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { AddDiagramDialog } from './AddDiagramDialog';
 import { AddFolderDialog } from './AddFolderDialog';
+import { Project } from '@arch-register/api-types/projects';
 
 const PROJECT_GROUPS = [
   { status: 'pinned', title: 'Pinned Projects' },

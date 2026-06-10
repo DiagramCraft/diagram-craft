@@ -20,14 +20,6 @@ import {
   TbPinned
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
-import type {
-  EntityRecord,
-  EntitySchema,
-  EntitySummary,
-  SchemaField,
-  AuditLogEntry,
-  WorkspaceLifecycleState
-} from '../../lib/api';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
@@ -50,6 +42,10 @@ import {
 } from '../../hooks/useNotifications';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
+import { EntityRecord, EntitySummary } from '@arch-register/api-types/entities';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemas';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
+import { AuditLogEntry } from '@arch-register/api-types/audit';
 
 type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes';
 
@@ -524,7 +520,10 @@ export const EntityDetailScreen = () => {
               editing={editing}
               editValue={editState['_owner'] as string}
               onChange={v => setEditState(s => ({ ...s, _owner: v }))}
-              selectOptions={[{ value: '', label: '—' }, ...teams.map(team => ({ value: team.id, label: team.name }))]}
+              selectOptions={[
+                { value: '', label: '—' },
+                ...teams.map(team => ({ value: team.id, label: team.name }))
+              ]}
             />
             <MetaPropRow
               label="Lifecycle"

@@ -2,8 +2,7 @@ import { createOpenRouterText, openRouterText } from '@tanstack/ai-openrouter';
 import { createOpenaiChat, openaiText } from '@tanstack/ai-openai';
 import { decrypt } from '../../utils/encryption';
 import type { DatabaseAdapter } from '../../db/database';
-
-import type { AiProvider } from '@arch-register/api-types';
+import { AiProvider } from '@arch-register/api-types/ai';
 
 export type EffectiveAiConfig = {
   provider: AiProvider;

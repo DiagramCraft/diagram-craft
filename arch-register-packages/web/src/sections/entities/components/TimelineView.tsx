@@ -5,7 +5,9 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import { Button } from '@diagram-craft/app-components/Button';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { EntityRecord, EntitySchema, WorkspaceLifecycleState } from '../../../lib/api';
+import { EntityRecord } from '@arch-register/api-types/entities';
+import { EntitySchema } from '@arch-register/api-types/schemas';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -293,9 +295,7 @@ const DetailPanel = ({
             {entity._owner && (
               <div className={styles.detailField}>
                 <div className={styles.detailFieldLabel}>Owner</div>
-                <div className={styles.detailFieldValue}>
-                  {entity._owner.name}
-                </div>
+                <div className={styles.detailFieldValue}>{entity._owner.name}</div>
               </div>
             )}
             {startField && cfg.startFieldId && !!getRawDateValue(entity, cfg.startFieldId) && (

@@ -5,18 +5,14 @@ import { FormGroup } from '@diagram-craft/app-components/FormGroup';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { apiFetch, ApiError } from '../lib/api';
-import type {
-  EntitySchema,
-  EntitySummary,
-  SchemaField,
-  WorkspaceLifecycleState,
-  WorkspaceTeam
-} from '../lib/api';
+import { apiFetch, ApiError, WorkspaceTeam } from '../lib/api';
 import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemas';
+import { EntitySummary } from '@arch-register/api-types/entities';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
 
 type EntityApiResponse = {
   _uid: string;

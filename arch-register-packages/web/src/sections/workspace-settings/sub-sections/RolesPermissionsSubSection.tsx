@@ -10,8 +10,7 @@ import {
   TbUsers
 } from 'react-icons/tb';
 import type { IconType } from 'react-icons';
-import { ApiError, type WorkspaceRoleDefinition } from '../../../lib/api';
-import type { WorkspaceRoleCapability } from '@arch-register/api-types';
+import { ApiError } from '../../../lib/api';
 import { useAuth } from '../../../auth/AuthContext';
 import { ColorPicker } from '../../../components/ColorPicker';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -25,6 +24,10 @@ import {
   useWorkspaceRoles
 } from '../../../hooks/useWorkspaceRoles';
 import styles from './RolesPermissionsSubSection.module.css';
+import {
+  WorkspaceRoleCapability,
+  WorkspaceRoleDefinition
+} from '@arch-register/api-types/workspaces';
 
 type RoleDraft = {
   name: string;

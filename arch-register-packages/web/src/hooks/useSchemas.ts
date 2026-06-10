@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { SchemaField } from '../lib/api';
 import { entityKeys, schemaKeys } from './queryKeys';
 import { invalidateAuditQueries } from './useAudit';
 import {
@@ -8,6 +7,7 @@ import {
   listWorkspaceSchemasORPC,
   updateWorkspaceSchemaORPC
 } from '../lib/schemaORPCClient';
+import { SchemaField } from '@arch-register/api-types/schemas';
 
 // Hook for fetching schemas
 export const useSchemas = (workspaceSlug: string, enabled = true) => {

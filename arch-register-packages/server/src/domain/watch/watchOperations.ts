@@ -1,11 +1,19 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  requireEntityAction,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
-import type { WatchedEntity, NotificationItem, NotificationCount } from '@arch-register/api-types';
 import type { Entity } from '../catalog/db/catalogDatabase';
+import {
+  NotificationCount,
+  NotificationItem,
+  WatchedEntity
+} from '@arch-register/api-types/notifications';
 
 const checker = new PermissionChecker();
 
@@ -94,7 +102,12 @@ export const createWatch = async (
 
   const entity = await db.catalog.getEntity(ws, entityId);
   httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-  requireEntityAction(authCtx, entity, 'view_entity', 'You do not have access to watch this entity');
+  requireEntityAction(
+    authCtx,
+    entity,
+    'view_entity',
+    'You do not have access to watch this entity'
+  );
 
   const watch = await db.watch.createWatch({
     user_id: event.context.user.id,

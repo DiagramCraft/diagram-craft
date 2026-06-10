@@ -2,8 +2,9 @@ import type { ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
-import { workspaceSchemaContract, type EntitySchema, type SchemaField } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
+import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemas';
 
 const ORPC_BASE_PATH = '/api';
 

@@ -1,11 +1,11 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { auditContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { listAuditLog, getAuditStats } from './auditOperations';
+import { auditContract } from '@arch-register/api-types/auditContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;

@@ -2,12 +2,8 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import type { AuditLogEntry, AuditStats } from '@arch-register/api-types';
-import {
-  toApiAuditLogEntry,
-  filterAndPaginateAuditLogs,
-  computeAuditStats
-} from './auditHelpers';
+import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
+import { AuditLogEntry, AuditStats } from '@arch-register/api-types/audit';
 
 export const listAuditLog = async (
   db: DatabaseAdapter,

@@ -1,11 +1,11 @@
 import { defineHandler } from 'h3';
 import { implement, ORPCError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { searchContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { searchWorkspace, SEARCH_TYPES } from './searchOperations';
+import { searchContract } from '@arch-register/api-types/searchContract';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -20,7 +20,9 @@ export const searchORPCRouter = searchRouter.router({
       try {
         if (input.types != null && input.types !== '') {
           const parsed = input.types.split(',').map(t => t.trim());
-          const invalid = parsed.filter(t => !SEARCH_TYPES.includes(t as (typeof SEARCH_TYPES)[number]));
+          const invalid = parsed.filter(
+            t => !SEARCH_TYPES.includes(t as (typeof SEARCH_TYPES)[number])
+          );
           if (invalid.length > 0) {
             throw new ORPCError('BAD_REQUEST', {
               message: `types must be a comma-separated list of: ${SEARCH_TYPES.join(', ')}`

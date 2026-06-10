@@ -2,8 +2,8 @@ import type { ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
-import { searchContract } from '@arch-register/api-types';
 import { fetchWithAuthResponse } from '../auth/authClient';
+import { searchContract } from '@arch-register/api-types/searchContract';
 
 const ORPC_BASE_PATH = '/api';
 

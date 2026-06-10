@@ -12,11 +12,11 @@ import {
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError } from '../../utils/http';
 import { toApiProject, toApiProjectFile, toApiProjectDetail } from './projectHelpers';
-import type { FileTree, Project, ProjectDetail, ProjectFile } from '@arch-register/api-types';
 import type { ProjectFileDbResult } from './db/projectDatabase';
 import { HTTPError } from 'h3';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
+import { FileTree, Project, ProjectDetail, ProjectFile } from '@arch-register/api-types/projects';
 
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
 type ProjectStatus = (typeof PROJECT_STATUSES)[number];

@@ -13,9 +13,9 @@ import {
   createDiagramFromTemplate
 } from '../lib/api';
 import { listProjectTemplatesORPC } from '../lib/templateORPCClient';
-import type { ProjectFile } from '../lib/api';
 import { projectKeys } from './useProjects';
 import { invalidateAuditQueries } from './useAudit';
+import { ProjectFile } from '@arch-register/api-types/projects';
 
 // Query keys factory
 export const projectFileKeys = {
