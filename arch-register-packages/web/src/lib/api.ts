@@ -10,7 +10,7 @@ import type {
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink, EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
-import { FileTree, Project, ProjectFile } from '@arch-register/api-types/projectContract';
+import { Project, ProjectFile } from '@arch-register/api-types/projectContract';
 
 // Re-export commonly used types for convenience
 export type { SavedView };
@@ -155,11 +155,6 @@ export type EntityRelation = {
   kind: 'reference' | 'containment';
 };
 
-export type EntityRelations = {
-  outgoing: EntityRelation[];
-  incoming: EntityRelation[];
-};
-
 // Note: Entity operations now use ORPC client via hooks (useEntities)
 
 type FetchEntitiesOptions = {
@@ -185,11 +180,6 @@ const buildQuery = (params: Record<string, string | number | null | undefined>) 
 export type TreeNode = EntitySummary & { _isMatch: boolean };
 
 export type TreeEdge = { childId: string; parentId: string };
-
-export type TreeResponse = {
-  nodes: TreeNode[];
-  edges: TreeEdge[];
-};
 
 export const exportEntitiesToCSV = (
   workspace: string,
