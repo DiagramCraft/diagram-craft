@@ -1,13 +1,13 @@
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getWorkspaceEnumOpenAPISpec } from '../domain/catalog/enumOrpc';
+import { getUnifiedOpenAPISpec } from '../openapi';
 
 const scriptDir = fileURLToPath(new URL('.', import.meta.url));
-const outputPath = resolve(scriptDir, '../../openapi.orpc-enums.json');
+const outputPath = resolve(scriptDir, '../../openapi.json');
 
 const main = async () => {
-  const spec = await getWorkspaceEnumOpenAPISpec();
+  const spec = await getUnifiedOpenAPISpec();
 
   await writeFile(outputPath, `${JSON.stringify(spec, null, 2)}\n`, 'utf8');
 
