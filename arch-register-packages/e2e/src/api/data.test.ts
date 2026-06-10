@@ -1,5 +1,5 @@
 import { seedEntities } from '@arch-register/server/db/seedData';
-import { test as baseTest, expect } from '../helpers/fixtures';
+import { expect, test as baseTest } from '../helpers/fixtures';
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 
 const test = baseTest.extend<{ seeded: true }>({
@@ -422,12 +422,9 @@ test.describe('data routes', () => {
         const entityRes = await fetch(`${server.baseUrl}/api/default/data/${id}`, {
           headers: { Authorization: auth }
         });
-        const b = await entityRes.json();
-        console.log('-----');
-        console.dir(b);
 
         expect(entityRes.status).toBe(200);
-        return b as Record<string, unknown>;
+        return (await entityRes.json()) as Record<string, unknown>;
       })
     );
 

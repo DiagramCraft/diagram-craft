@@ -107,7 +107,7 @@ export const createApp = (
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
   app.use(createSearchORPCHandler(db));
-  app.use(createAiORPCHandler(db));
+  app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
   app.use(createDiagramCraftORPCHandler(db));
   app.use(createDownloadRoutes(db));
   app.use(createTemplateRoutes(db));

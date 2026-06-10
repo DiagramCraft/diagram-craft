@@ -15,6 +15,7 @@ import {
   parseExtractResponse
 } from './aiRoutes';
 import { chat } from '@tanstack/ai';
+import { buildSystemPrompt } from './systemPromptBuilder';
 
 const toConversationResponse = (c: {
   id: string;
@@ -53,9 +54,22 @@ type ORPCContext = {
   event: AuthenticatedEvent;
 };
 
+type AiORPCDeps = {
+  chatImpl?: typeof chat;
+  resolveAiConfigImpl?: typeof resolveAiConfig;
+  createAiTextAdapterImpl?: typeof createAiTextAdapter;
+  buildSystemPromptImpl?: typeof buildSystemPrompt;
+};
+
 const aiRouter = implement(aiContract).$context<ORPCContext>();
 
-export const aiORPCRouter = aiRouter.router({
+export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
+  const chatImpl = deps.chatImpl ?? chat;
+  const resolveAi = deps.resolveAiConfigImpl ?? resolveAiConfig;
+  const createAdapter = deps.createAiTextAdapterImpl ?? createAiTextAdapter;
+  const buildPrompt = deps.buildSystemPromptImpl ?? buildSystemPrompt;
+
+  return aiRouter.router({
   ai: {
     listConversations: aiRouter.ai.listConversations.handler(async ({ input, context }) => {
       try {
@@ -186,7 +200,7 @@ export const aiORPCRouter = aiRouter.router({
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         requireWorkspaceCapability(authCtx, 'ws.view');
 
-        const aiConfig = await resolveAiConfig(context.db, workspace);
+        const aiConfig = await resolveAi(context.db, workspace);
         if (!aiConfig) {
           throw new ORPCError('INTERNAL_SERVER_ERROR', { message: 'AI is not configured for this workspace' });
         }
@@ -227,11 +241,12 @@ export const aiORPCRouter = aiRouter.router({
           '```'
         ].join('\n');
 
-        const adapter = createAiTextAdapter(aiConfig);
-        const result = await chat({
+        const adapter = createAdapter(aiConfig);
+        const systemPrompt = await buildPrompt(context.db, workspace, extractPrompt);
+        const result = await chatImpl({
           adapter,
           messages: [{ role: 'user', content: input.text }],
-          systemPrompts: [extractPrompt],
+          systemPrompts: [systemPrompt],
           temperature: 0.3,
           stream: false
         });
@@ -243,14 +258,16 @@ export const aiORPCRouter = aiRouter.router({
     })
   }
 });
+};
 
-export const aiOpenAPIHandler = new OpenAPIHandler(aiORPCRouter);
+export const createAiORPCHandler = (db: DatabaseAdapter, deps: AiORPCDeps = {}) => {
+  const aiOpenAPIHandler = new OpenAPIHandler(createAiORPCRouter(deps));
 
-export const createAiORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
+  return defineHandler(async event => {
     const result = await aiOpenAPIHandler.handle(event.req, {
       prefix: '/api',
       context: { db, event: event as AuthenticatedEvent }
     });
     if (result.matched) return result.response;
   });
+};

@@ -302,7 +302,7 @@ export const importCommit = async (
           : existingEntity.tags,
         links: existingEntity.links,
         schema_id: existingEntity.schema_id,
-        data: extractEntityFields(resolvedData),
+        data: extractEntityFields(Object.fromEntries(Object.entries(resolvedData).filter(([k]) => !k.startsWith('_')))),
         visibility_mode: existingEntity.visibility_mode,
         updated_at: new Date()
       };
@@ -343,7 +343,7 @@ export const importCommit = async (
         target_lifecycle_date,
         tags: Array.isArray(resolvedData._tags) ? (resolvedData._tags as string[]) : [],
         links: [],
-        data: extractEntityFields(resolvedData),
+        data: extractEntityFields(Object.fromEntries(Object.entries(resolvedData).filter(([k]) => !k.startsWith('_')))),
         visibility_mode: null,
         created_at: new Date(),
         updated_at: new Date()
