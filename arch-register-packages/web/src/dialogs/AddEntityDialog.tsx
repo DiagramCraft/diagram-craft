@@ -5,7 +5,8 @@ import { FormGroup } from '@diagram-craft/app-components/FormGroup';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { apiFetch, ApiError, WorkspaceTeam } from '../lib/api';
+import { orpcClient } from '../lib/orpcClient';
+import { ApiError, WorkspaceTeam } from '../lib/api';
 import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
@@ -156,9 +157,9 @@ export const AddEntityDialog = ({
     };
 
     try {
-      const entity = await apiFetch<EntityApiResponse>(`/api/${workspaceId}/data`, {
-        method: 'POST',
-        body: JSON.stringify(body)
+      const entity = await orpcClient.entities.create({
+        params: { workspace: workspaceId },
+        body
       });
       onCreated(entity);
       onClose();

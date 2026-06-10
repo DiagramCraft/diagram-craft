@@ -13,7 +13,8 @@ import {
 } from 'react-icons/tb';
 import styles from './ExtractScreen.module.css';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { apiFetch, createEntity } from '../../lib/api';
+import { orpcClient } from '../../lib/orpcClient';
+import { createEntity } from '../../lib/api';
 import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
 
 type Phase = 'input' | 'scanning' | 'review' | 'done';
@@ -107,22 +108,18 @@ export const ExtractScreen = () => {
   const runExtract = useCallback(async () => {
     setPhase('scanning');
     try {
-      const result = await apiFetch<{
-        entities: Array<{
-          name: string;
-          schema_id: string;
-          fields: Record<string, string>;
-          confidence: number;
-          source: string;
-        }>;
-      }>(`/api/${workspaceSlug}/ai/extract`, {
-        method: 'POST',
-        body: JSON.stringify({ text })
+      const result = await orpcClient.ai.extract({
+        params: { workspace: workspaceSlug },
+        body: { text }
       });
 
-      const extracted: ExtractedEntity[] = (result.entities ?? []).map((e, i) => ({
+      const extracted: ExtractedEntity[] = (result.entities ?? []).map((e: any, i) => ({
         id: `extract-${i}`,
-        ...e,
+        name: e.name ?? '',
+        schema_id: e.schema_id ?? '',
+        fields: e.fields ?? {},
+        confidence: e.confidence ?? 0,
+        source: e.source ?? '',
         accepted: true,
         expanded: false
       }));

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
+import { getDiagramCommentCounts } from '../diagram/commentCounts';
 import {
   buildApiAuthCtx,
   canAccessProject,
@@ -397,5 +398,474 @@ export const renameFolder = async (
     return { success: true, message: `Renamed ${result.length} file(s)`, count: result.length };
   } catch (e) {
     return handleError(e, 'Failed to rename folder');
+  }
+};
+
+
+
+export const getFileContent = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  id: string,
+  filePath: string,
+  event: AuthenticatedEvent
+): Promise<Record<string, unknown>> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    requireProjectAccess(authCtx, project.owner);
+
+    const file = await db.project.getProjectFileByPath(ws, id, filePath);
+    httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+
+    const content = await storage.read(ws, id, file.id);
+    return JSON.parse(content.toString('utf8'));
+  } catch (e) {
+    if (
+      e != null &&
+      typeof e === 'object' &&
+      'code' in e &&
+      (e as { code: string }).code === 'ENOENT'
+    ) {
+      throw new HTTPError({
+        status: 404,
+        statusText: 'Not Found',
+        message: `File '${filePath}' not found`
+      });
+    }
+    return handleError(e, 'Failed to read file');
+  }
+};
+
+export const saveFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  id: string,
+  filePath: string,
+  body: Record<string, unknown>,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const content = Buffer.from(JSON.stringify(body), 'utf8');
+  const fileName = filePath.includes('/')
+    ? filePath.substring(filePath.lastIndexOf('/') + 1)
+    : filePath;
+
+  const displayName =
+    body['name'] ?? (fileName.endsWith('.json') ? fileName.slice(0, -5) : fileName);
+
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to modify this project'
+    );
+
+    const existingFile = await db.project.getProjectFileByPath(ws, id, filePath);
+    const isUpdate = !!existingFile;
+
+    const timestamp = new Date();
+    const commentCounts = getDiagramCommentCounts(body as any);
+    const row = await db.project.upsertProjectFile({
+      workspace: ws,
+      project_id: id,
+      path: filePath,
+      name: String(displayName),
+      size_bytes: content.length,
+      comment_count: commentCounts.commentCount,
+      unresolved_comment_count: commentCounts.unresolvedCommentCount,
+      created_atIfNew: existingFile?.created_at ?? timestamp,
+      updated_at: timestamp
+    });
+
+    await storage.write(ws, id, row.id, content);
+
+    try {
+      const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+      const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+      const previewSvg =
+        (await generateAccurateSvgPreview(body as any)) ?? generateSvgPreview(body as any);
+      await db.project.updateProjectFileDerivedData(
+        ws,
+        id,
+        row.id,
+        content.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        previewSvg ?? null,
+        timestamp
+      );
+    } catch {
+      await db.project.updateProjectFileDerivedData(
+        ws,
+        id,
+        row.id,
+        content.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        null,
+        timestamp
+      );
+    }
+
+    if (isUpdate) {
+      const changes = computeChanges(extractEntityFields(existingFile), extractEntityFields(row));
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: ws,
+        operation: 'update',
+        entityType: 'project_file',
+        entityId: row.id,
+        entityName: row.name,
+        changes,
+        metadata: { project_id: id, path: filePath }
+      });
+    } else {
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: ws,
+        operation: 'create',
+        entityType: 'project_file',
+        entityId: row.id,
+        entityName: row.name,
+        changes: {
+          new: extractEntityFields(row)
+        },
+        metadata: { project_id: id, path: filePath }
+      });
+    }
+
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to write file');
+  }
+};
+
+export const deleteFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  id: string,
+  filePath: string,
+  event: AuthenticatedEvent
+): Promise<{ success: boolean }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to modify this project'
+    );
+
+    const file = await db.project.getProjectFileByPath(ws, id, filePath);
+    httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+
+    await db.project.deleteProjectFileByPath(ws, id, filePath);
+
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'delete',
+      entityType: 'project_file',
+      entityId: file.id,
+      entityName: file.name,
+      changes: {
+        old: extractEntityFields(file)
+      },
+      metadata: { project_id: id, path: filePath }
+    });
+
+    await storage.delete(ws, id, file.id).catch(() => {});
+
+    return { success: true };
+  } catch (e) {
+    return handleError(e, 'Failed to delete file');
+  }
+};
+
+export const cloneFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  id: string,
+  filePath: string,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to modify this project'
+    );
+
+    const sourceFile = await db.project.getProjectFileByPath(ws, id, filePath);
+    httpAssert.present(sourceFile, { status: 404, message: `File '${filePath}' not found` });
+
+    const content = await storage.read(ws, id, sourceFile.id);
+    const fileData = JSON.parse(content.toString('utf8'));
+
+    const baseName = filePath.includes('/')
+      ? filePath.substring(filePath.lastIndexOf('/') + 1)
+      : filePath;
+    const baseNameWithoutExt = baseName.endsWith('.json') ? baseName.slice(0, -5) : baseName;
+    const folder = filePath.includes('/') ? filePath.substring(0, filePath.lastIndexOf('/')) : '';
+
+    let cloneNumber = 1;
+    let clonePath: string;
+    let cloneName: string;
+    do {
+      cloneName = `${baseNameWithoutExt} (${cloneNumber})`;
+      clonePath = folder ? `${folder}/${cloneName}.json` : `${cloneName}.json`;
+      const existing = await db.project.getProjectFileByPath(ws, id, clonePath);
+      if (!existing) break;
+      cloneNumber++;
+    } while (cloneNumber < 1000);
+
+    if (fileData && typeof fileData === 'object' && 'name' in fileData) {
+      fileData.name = cloneName;
+    }
+
+    const timestamp = new Date();
+    const clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
+    const commentCounts = getDiagramCommentCounts(fileData as any);
+
+    const row = await db.project.upsertProjectFile({
+      workspace: ws,
+      project_id: id,
+      path: clonePath,
+      name: cloneName,
+      size_bytes: clonedContent.length,
+      comment_count: commentCounts.commentCount,
+      unresolved_comment_count: commentCounts.unresolvedCommentCount,
+      created_atIfNew: timestamp,
+      updated_at: timestamp
+    });
+
+    await storage.write(ws, id, row.id, clonedContent);
+
+    try {
+      const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+      const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+      const previewSvg =
+        (await generateAccurateSvgPreview(fileData as any)) ?? generateSvgPreview(fileData as any);
+      await db.project.updateProjectFileDerivedData(
+        ws,
+        id,
+        row.id,
+        clonedContent.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        previewSvg ?? null,
+        timestamp
+      );
+    } catch {
+      await db.project.updateProjectFileDerivedData(
+        ws,
+        id,
+        row.id,
+        clonedContent.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        null,
+        timestamp
+      );
+    }
+
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'create',
+      entityType: 'project_file',
+      entityId: row.id,
+      entityName: row.name,
+      changes: {
+        new: extractEntityFields(row)
+      },
+      metadata: { project_id: id, path: clonePath, cloned_from: filePath }
+    });
+
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to clone file');
+  }
+};
+
+export const relocateFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  id: string,
+  filePath: string,
+  newPath: string,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to modify this project'
+    );
+
+    const existingFile = await db.project.getProjectFileByPath(ws, id, filePath);
+    httpAssert.present(existingFile, { status: 404, message: `File '${filePath}' not found` });
+
+    if (filePath === newPath) {
+      return toApiProjectFile(existingFile);
+    }
+
+    const targetExists = await db.project.getProjectFileByPath(ws, id, newPath);
+    httpAssert.true(!targetExists, {
+      status: 409,
+      message: `A file already exists at '${newPath}'`
+    });
+
+    const content = await storage.read(ws, id, existingFile.id);
+    const fileData = JSON.parse(content.toString('utf8'));
+
+    const newName = newPath.includes('/')
+      ? newPath.substring(newPath.lastIndexOf('/') + 1)
+      : newPath;
+    const displayName = newName.endsWith('.json') ? newName.slice(0, -5) : newName;
+
+    if (fileData && typeof fileData === 'object' && 'name' in fileData) {
+      fileData.name = displayName;
+    }
+
+    const timestamp = new Date();
+    const updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
+    const commentCounts = getDiagramCommentCounts(fileData as any);
+
+    const newFile = await db.project.upsertProjectFile({
+      workspace: ws,
+      project_id: id,
+      path: newPath,
+      name: displayName,
+      size_bytes: updatedContent.length,
+      comment_count: commentCounts.commentCount,
+      unresolved_comment_count: commentCounts.unresolvedCommentCount,
+      created_atIfNew: existingFile.created_at,
+      updated_at: timestamp
+    });
+
+    if (existingFile.is_template || existingFile.is_workspace_template) {
+      await db.project.updateProjectFileTemplateStatus(
+        ws,
+        id,
+        newFile.id,
+        existingFile.is_template ?? false,
+        existingFile.is_workspace_template ?? false,
+        timestamp
+      );
+    }
+
+    let previewSvg: string | null;
+    try {
+      const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+      const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+      previewSvg =
+        (await generateAccurateSvgPreview(fileData as any)) ??
+        generateSvgPreview(fileData as any) ??
+        null;
+    } catch {
+      previewSvg = null;
+    }
+    await db.project.updateProjectFileDerivedData(
+      ws,
+      id,
+      newFile.id,
+      updatedContent.length,
+      commentCounts.commentCount,
+      commentCounts.unresolvedCommentCount,
+      previewSvg,
+      timestamp
+    );
+
+    await storage.write(ws, id, newFile.id, updatedContent);
+
+    await db.project.deleteProjectFileByPath(ws, id, filePath);
+    await storage.delete(ws, id, existingFile.id).catch(() => {});
+
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'update',
+      entityType: 'project_file',
+      entityId: newFile.id,
+      entityName: displayName,
+      changes: {
+        old: { path: filePath, name: existingFile.name },
+        new: { path: newPath, name: displayName }
+      },
+      metadata: {
+        project_id: id,
+        operation: 'relocate'
+      }
+    });
+
+    return toApiProjectFile(newFile);
+  } catch (e) {
+    return handleError(e, 'Failed to relocate file');
+  }
+};
+
+export const deleteFolder = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  id: string,
+  folderPath: string,
+  event: AuthenticatedEvent
+): Promise<{ success: boolean; count: number }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to modify this project'
+    );
+
+    const result = await db.project.deleteProjectFileFolder(ws, id, folderPath);
+
+    httpAssert.true(result.length > 0, {
+      status: 404,
+      message: `No files found under folder '${folderPath}'`
+    });
+
+    await Promise.all(result.map(file => storage.delete(ws, id, file.id).catch(() => {})));
+
+    return { success: true, count: result.length };
+  } catch (e) {
+    return handleError(e, 'Failed to delete folder');
   }
 };

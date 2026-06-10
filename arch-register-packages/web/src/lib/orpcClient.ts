@@ -2,7 +2,9 @@ import type { ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
+import { aiContract } from '@arch-register/api-types/aiContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
+import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
@@ -32,6 +34,9 @@ const resolveORPCBaseUrl = () => {
 };
 
 const webContracts = {
+  ...aiContract,
+  ...authPublicContract,
+  ...authProtectedContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceEntityContract,

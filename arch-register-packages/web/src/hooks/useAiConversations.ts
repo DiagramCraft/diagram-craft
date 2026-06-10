@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '../lib/api';
-import { AiConversation } from '@arch-register/api-types/aiContract';
+import { orpcClient } from '../lib/orpcClient';
 
 export const aiKeys = {
   all: ['ai'] as const,
@@ -12,7 +11,7 @@ export const aiKeys = {
 export const useAiConversations = (workspaceSlug: string) => {
   return useQuery({
     queryKey: aiKeys.conversations(workspaceSlug),
-    queryFn: () => apiFetch<AiConversation[]>(`/api/${workspaceSlug}/ai/conversations`),
+    queryFn: () => orpcClient.ai.listConversations({ params: { workspace: workspaceSlug } }),
     enabled: !!workspaceSlug,
     staleTime: 30_000
   });
@@ -22,9 +21,9 @@ export const useCreateConversation = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (title?: string) =>
-      apiFetch<AiConversation>(`/api/${workspaceSlug}/ai/conversations`, {
-        method: 'POST',
-        body: JSON.stringify({ title })
+      orpcClient.ai.createConversation({
+        params: { workspace: workspaceSlug },
+        body: { title }
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
@@ -36,9 +35,9 @@ export const useRenameConversation = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) =>
-      apiFetch<AiConversation>(`/api/${workspaceSlug}/ai/conversations/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ title })
+      orpcClient.ai.updateConversation({
+        params: { workspace: workspaceSlug, id },
+        body: { title }
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
@@ -50,8 +49,8 @@ export const useDeleteConversation = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiFetch<AiConversation>(`/api/${workspaceSlug}/ai/conversations/${id}`, {
-        method: 'DELETE'
+      orpcClient.ai.deleteConversation({
+        params: { workspace: workspaceSlug, id }
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
@@ -66,9 +65,9 @@ export const useConversationMessages = (
   return useQuery({
     queryKey: aiKeys.messages(workspaceSlug, conversationId ?? ''),
     queryFn: () =>
-      apiFetch<Array<{ id: string; role: string; content: string; created_at: string }>>(
-        `/api/${workspaceSlug}/ai/conversations/${conversationId}/messages`
-      ),
+      orpcClient.ai.listMessages({
+        params: { workspace: workspaceSlug, id: conversationId! }
+      }),
     enabled: !!workspaceSlug && !!conversationId
   });
 };

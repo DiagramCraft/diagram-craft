@@ -76,6 +76,15 @@ const renameFolderResponseSchema = z.object({
   count: z.number()
 });
 
+const deleteFileResponseSchema = z.object({
+  success: z.boolean()
+});
+
+const deleteFolderResponseSchema = z.object({
+  success: z.boolean(),
+  count: z.number()
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const projectContract = {
@@ -182,7 +191,107 @@ export const projectContract = {
           })
         })
       )
-      .output(renameFolderResponseSchema)
+      .output(renameFolderResponseSchema),
+    deleteFolder: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/projects/{id}/folders/{path}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string(),
+            path: z.string()
+          })
+        })
+      )
+      .output(deleteFolderResponseSchema),
+    getFileContent: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{id}/files/{path}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string(),
+            path: z.string()
+          })
+        })
+      )
+      .output(z.record(z.string(), z.unknown())),
+    saveFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/files/{path}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string(),
+            path: z.string()
+          }),
+          body: z.record(z.string(), z.unknown())
+        })
+      )
+      .output(projectFileSchema),
+    deleteFile: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/projects/{id}/files/{path}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string(),
+            path: z.string()
+          })
+        })
+      )
+      .output(deleteFileResponseSchema),
+    cloneFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/files/{path}/clone',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string(),
+            path: z.string()
+          })
+        })
+      )
+      .output(projectFileSchema),
+    relocateFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/files/relocate/{path}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string(),
+            path: z.string()
+          }),
+          body: z.object({
+            newPath: z.string()
+          })
+        })
+      )
+      .output(projectFileSchema)
   }
 };
 

@@ -6,7 +6,8 @@ import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { apiFetch, ApiError } from '../lib/api';
+import { orpcClient } from '../lib/orpcClient';
+import { ApiError } from '../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';
@@ -152,7 +153,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
 
   useEffect(() => {
     if (mode === 'copy' && workspaces.length === 0) {
-      apiFetch<Workspace[]>('/api/workspaces')
+      orpcClient.workspaces.list()
         .then(ws => {
           setWorkspaces(ws);
           if (ws.length > 0) setCopyFrom(ws[0]!.id);
@@ -168,22 +169,28 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
     setSubmitting(true);
     setError('');
     try {
-      const body: Record<string, unknown> = {
+      const body: {
+        name: string;
+        slug?: string;
+        badge?: string;
+        color?: string;
+        description?: string;
+        template?: string;
+        replicate_from?: string;
+        include?: string[];
+      } = {
         name: name.trim(),
         slug,
         badge: badge || initialsOf(name),
         color,
         description: description.trim()
       };
-      if (mode === 'template') body['template'] = templateId;
+      if (mode === 'template') body.template = templateId;
       if (mode === 'copy') {
-        body['replicate_from'] = copyFrom;
-        body['include'] = Object.keys(copyParts).filter(k => copyParts[k]);
+        body.replicate_from = copyFrom;
+        body.include = Object.keys(copyParts).filter(k => copyParts[k]);
       }
-      const ws = await apiFetch<ApiWorkspace>('/api/workspaces', {
-        method: 'POST',
-        body: JSON.stringify(body)
-      });
+      const ws = await orpcClient.workspaces.create({ body });
       onCreated(ws);
       onClose();
     } catch (err) {

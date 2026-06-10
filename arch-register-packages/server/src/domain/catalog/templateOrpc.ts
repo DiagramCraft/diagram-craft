@@ -6,11 +6,13 @@ import { buildApiAuthCtx } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
-import { listAllTemplates, listProjectTemplates } from './templateOperations';
+import { listAllTemplates, listProjectTemplates, toggleTemplateStatus, createFromTemplate } from './templateOperations';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
+import type { StorageAdapter } from '../../storage/storage';
 
 type ORPCContext = {
   db: DatabaseAdapter;
+  storage: StorageAdapter | undefined;
   event: AuthenticatedEvent;
 };
 
@@ -36,6 +38,45 @@ export const workspaceTemplateORPCRouter = templateRouter.router({
       } catch (error) {
         return toORPCError(error);
       }
+    }),
+    toggleStatus: templateRouter.templates.toggleStatus.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        return await toggleTemplateStatus(
+          context.db,
+          workspace,
+          input.params.id,
+          input.params.path,
+          input.body.is_template,
+          input.body.is_workspace_template,
+          authCtx
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    createFromTemplate: templateRouter.templates.createFromTemplate.handler(async ({ input, context }) => {
+      try {
+        if (!context.storage) {
+          throw new Error('Storage adapter not available');
+        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        return await createFromTemplate(
+          context.db,
+          context.storage,
+          workspace,
+          input.params.id,
+          input.body.name,
+          input.body.templateProjectId,
+          input.body.templatePath,
+          input.body.folder,
+          authCtx
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
     })
   }
 });
@@ -44,12 +85,13 @@ export const workspaceTemplateOpenAPIHandler = new OpenAPIHandler(workspaceTempl
   clientInterceptors: orpcErrorInterceptors
 });
 
-export const createWorkspaceTemplateORPCHandler = (db: DatabaseAdapter) =>
+export const createWorkspaceTemplateORPCHandler = (db: DatabaseAdapter, storage?: StorageAdapter) =>
   defineHandler(async event => {
     const result = await workspaceTemplateOpenAPIHandler.handle(event.req, {
       prefix: '/api',
       context: {
         db,
+        storage,
         event: event as AuthenticatedEvent
       }
     });

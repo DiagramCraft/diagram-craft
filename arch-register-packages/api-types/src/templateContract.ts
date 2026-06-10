@@ -49,7 +49,45 @@ export const workspaceTemplateContract = {
         inputStructure: 'detailed'
       })
       .input(z.object({ params: wsAndId }))
-      .output(projectTemplatesResponseSchema)
+      .output(projectTemplatesResponseSchema),
+    toggleStatus: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/template-status/{path}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            id: z.string(),
+            path: z.string()
+          }),
+          body: z.object({
+            is_template: z.boolean(),
+            is_workspace_template: z.boolean()
+          })
+        })
+      )
+      .output(projectFileSchema),
+    createFromTemplate: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/from-template',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          body: z.object({
+            name: z.string(),
+            templateProjectId: z.string(),
+            templatePath: z.string(),
+            folder: z.string().nullable().optional()
+          })
+        })
+      )
+      .output(projectFileSchema)
   }
 };
 

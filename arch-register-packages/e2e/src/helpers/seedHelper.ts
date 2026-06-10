@@ -7,7 +7,8 @@ import {
   seedOwners,
   seedSchemas,
   seedEnums,
-  seedSavedViews
+  seedSavedViews,
+  seedAiConfig
 } from '@arch-register/server/db/seedData';
 import { generateTokenPair } from '@arch-register/server/utils/jwt';
 import { hashPassword } from '@arch-register/server/utils/password';
@@ -36,6 +37,7 @@ export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
     for (const schema of seedSchemas.filter(s => s.workspace === ws.id)) {
       await db.catalog.createSchema(schema);
     }
+    await db.ai.upsertAiConfig(ws.id, seedAiConfig);
   }
 
   const passwordHash = await hashPassword(TEST_ADMIN.password);

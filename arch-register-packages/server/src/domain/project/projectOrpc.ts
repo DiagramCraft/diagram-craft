@@ -13,7 +13,13 @@ import {
   deleteProject,
   listProjectFiles,
   createFolder,
-  renameFolder
+  renameFolder,
+  getFileContent,
+  saveFile,
+  deleteFile,
+  cloneFile,
+  relocateFile,
+  deleteFolder
 } from './projectOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -106,6 +112,110 @@ export const projectORPCRouter = projectRouter.router({
           input.params.workspace,
           input.params.id,
           input.body.oldPath,
+          input.body.newPath,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    deleteFolder: projectRouter.projects.deleteFolder.handler(async ({ input, context }) => {
+      try {
+        if (!context.storage) {
+          throw new Error('Storage adapter not available');
+        }
+        return await deleteFolder(
+          context.db,
+          context.storage,
+          input.params.workspace,
+          input.params.id,
+          input.params.path,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    getFileContent: projectRouter.projects.getFileContent.handler(async ({ input, context }) => {
+      try {
+        if (!context.storage) {
+          throw new Error('Storage adapter not available');
+        }
+        return await getFileContent(
+          context.db,
+          context.storage,
+          input.params.workspace,
+          input.params.id,
+          input.params.path,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    saveFile: projectRouter.projects.saveFile.handler(async ({ input, context }) => {
+      try {
+        if (!context.storage) {
+          throw new Error('Storage adapter not available');
+        }
+        return await saveFile(
+          context.db,
+          context.storage,
+          input.params.workspace,
+          input.params.id,
+          input.params.path,
+          input.body,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    deleteFile: projectRouter.projects.deleteFile.handler(async ({ input, context }) => {
+      try {
+        if (!context.storage) {
+          throw new Error('Storage adapter not available');
+        }
+        return await deleteFile(
+          context.db,
+          context.storage,
+          input.params.workspace,
+          input.params.id,
+          input.params.path,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    cloneFile: projectRouter.projects.cloneFile.handler(async ({ input, context }) => {
+      try {
+        if (!context.storage) {
+          throw new Error('Storage adapter not available');
+        }
+        return await cloneFile(
+          context.db,
+          context.storage,
+          input.params.workspace,
+          input.params.id,
+          input.params.path,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    relocateFile: projectRouter.projects.relocateFile.handler(async ({ input, context }) => {
+      try {
+        if (!context.storage) {
+          throw new Error('Storage adapter not available');
+        }
+        return await relocateFile(
+          context.db,
+          context.storage,
+          input.params.workspace,
+          input.params.id,
+          input.params.path,
           input.body.newPath,
           context.event
         );
