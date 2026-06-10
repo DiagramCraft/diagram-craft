@@ -40,14 +40,19 @@ export const workspaceManagementORPCRouter = wsRouter.router({
     }),
     update: wsRouter.workspaces.update.handler(async ({ input, context }) => {
       try {
-        return await updateWorkspace(context.db, input.params.id, input.body, context.event);
+        return await updateWorkspace(context.db, input.params.workspace, input.body, context.event);
       } catch (error) {
         return toORPCError(error);
       }
     }),
     remove: wsRouter.workspaces.remove.handler(async ({ input, context }) => {
       try {
-        return await deleteWorkspace(context.db, input.params.id, context.event, context.storage);
+        return await deleteWorkspace(
+          context.db,
+          input.params.workspace,
+          context.event,
+          context.storage
+        );
       } catch (error) {
         return toORPCError(error);
       }

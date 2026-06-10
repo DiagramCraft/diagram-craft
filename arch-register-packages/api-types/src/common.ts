@@ -1,6 +1,12 @@
+import { z } from 'zod';
+
 // ── Common Types ──────────────────────────────────────────────
 
-export type ForeignKey<T = string> = {
-  id: string;
-  name: T;
-};
+export const ws = z.object({
+  workspace: z.string()
+});
+
+export const wsAndId = z.object({
+  workspace: z.string(),
+  id: z.string()
+});

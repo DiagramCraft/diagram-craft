@@ -59,15 +59,15 @@ export const createWatchORPC = async (
 
 export const deleteWatchORPC = async (
   workspace: string,
-  entityId: string
+  id: string
 ): Promise<{ success: boolean; message: string }> =>
-  await watchClient.watching.remove({ params: { workspace, entityId } });
+  await watchClient.watching.remove({ params: { workspace, id } });
 
 export const deleteNotificationORPC = async (
   workspace: string,
-  notificationId: string
+  id: string
 ): Promise<{ success: boolean; message: string }> =>
-  await watchClient.notifications.remove({ params: { workspace, notificationId } });
+  await watchClient.notifications.remove({ params: { workspace, id } });
 
 export const clearNotificationsORPC = async (
   workspace: string

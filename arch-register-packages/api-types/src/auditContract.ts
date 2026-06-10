@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws } from '@arch-register/api-types/common';
 
 const auditLogEntrySchema = z.object({
   id: z.string(),
@@ -35,9 +36,7 @@ export const auditContract = {
       .route({ method: 'GET', path: '/{workspace}/audit', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          }),
+          params: ws,
           query: z.object({
             entityType: z.string().optional(),
             entityId: z.string().optional(),
@@ -58,13 +57,7 @@ export const auditContract = {
       .output(z.array(auditLogEntrySchema)),
     stats: oc
       .route({ method: 'GET', path: '/{workspace}/audit/stats', inputStructure: 'detailed' })
-      .input(
-        z.object({
-          params: z.object({
-            workspace: z.string()
-          })
-        })
-      )
+      .input(z.object({ params: ws }))
       .output(auditStatsSchema)
   }
 };

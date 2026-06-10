@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws, wsAndId } from '@arch-register/api-types/common';
 
 const requirementLevelSchema = z.enum(['required', 'expected', 'optional']).nullish();
 
@@ -103,9 +104,7 @@ export const workspaceSchemaContract = {
       .route({ method: 'GET', path: '/{workspace}/schemas', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          })
+          params: ws
         })
       )
       .output(z.array(entitySchemaSchema)),
@@ -113,27 +112,19 @@ export const workspaceSchemaContract = {
       .route({ method: 'GET', path: '/{workspace}/schemas/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          })
+          params: wsAndId
         })
       )
       .output(entitySchemaSchema),
     create: oc
       .route({ method: 'POST', path: '/{workspace}/schemas', inputStructure: 'detailed' })
-      .input(
-        z.object({ params: z.object({ workspace: z.string() }), body: createSchemaBodySchema })
-      )
+      .input(z.object({ params: ws, body: createSchemaBodySchema }))
       .output(entitySchemaSchema),
     update: oc
       .route({ method: 'PUT', path: '/{workspace}/schemas/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          }),
+          params: wsAndId,
           body: updateSchemaBodySchema
         })
       )
@@ -142,10 +133,7 @@ export const workspaceSchemaContract = {
       .route({ method: 'DELETE', path: '/{workspace}/schemas/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          })
+          params: wsAndId
         })
       )
       .output(deleteSchemaResponseSchema)

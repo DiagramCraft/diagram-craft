@@ -48,7 +48,7 @@ export const watchORPCRouter = watchRouter.router({
         return await deleteWatch(
           context.db,
           input.params.workspace,
-          input.params.entityId,
+          input.params.id,
           context.event
         );
       } catch (error) {
@@ -83,7 +83,7 @@ export const watchORPCRouter = watchRouter.router({
         return await deleteNotification(
           context.db,
           input.params.workspace,
-          input.params.notificationId,
+          input.params.id,
           context.event
         );
       } catch (error) {

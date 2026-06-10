@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
+import { ws, wsAndId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -39,28 +40,15 @@ export const workspaceTemplateContract = {
   templates: {
     listAll: oc
       .route({ method: 'GET', path: '/{workspace}/templates', inputStructure: 'detailed' })
-      .input(
-        z.object({
-          params: z.object({
-            workspace: z.string()
-          })
-        })
-      )
+      .input(z.object({ params: ws }))
       .output(allTemplatesResponseSchema),
     listForProject: oc
       .route({
         method: 'GET',
-        path: '/{workspace}/projects/{projectId}/templates',
+        path: '/{workspace}/projects/{id}/templates',
         inputStructure: 'detailed'
       })
-      .input(
-        z.object({
-          params: z.object({
-            workspace: z.string(),
-            projectId: z.string()
-          })
-        })
-      )
+      .input(z.object({ params: wsAndId }))
       .output(projectTemplatesResponseSchema)
   }
 };

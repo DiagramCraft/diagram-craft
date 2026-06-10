@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws, wsAndId } from '@arch-register/api-types/common';
 
 const aiConversationSchema = z.object({
   id: z.string(),
@@ -49,14 +50,14 @@ const aiConfigUpdateSchema = z.object({
 export const aiContract = {
   ai: {
     listConversations: oc
-      .route({ method: 'GET', path: '/{workspace}/ai/conversations' })
-      .input(z.object({ workspace: z.string() }))
+      .route({ method: 'GET', path: '/{workspace}/ai/conversations', inputStructure: 'detailed' })
+      .input(z.object({ params: ws }))
       .output(z.array(aiConversationSchema)),
     createConversation: oc
       .route({ method: 'POST', path: '/{workspace}/ai/conversations', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ workspace: z.string() }),
+          params: ws,
           body: z.object({ title: z.string().optional() })
         })
       )
@@ -64,12 +65,12 @@ export const aiContract = {
     updateConversation: oc
       .route({
         method: 'PATCH',
-        path: '/{workspace}/ai/conversations/{conversationId}',
+        path: '/{workspace}/ai/conversations/{id}',
         inputStructure: 'detailed'
       })
       .input(
         z.object({
-          params: z.object({ workspace: z.string(), conversationId: z.string() }),
+          params: wsAndId,
           body: z.object({ title: z.string() })
         })
       )
@@ -77,28 +78,28 @@ export const aiContract = {
     deleteConversation: oc
       .route({
         method: 'DELETE',
-        path: '/{workspace}/ai/conversations/{conversationId}',
+        path: '/{workspace}/ai/conversations/{id}',
         inputStructure: 'detailed'
       })
-      .input(z.object({ params: z.object({ workspace: z.string(), conversationId: z.string() }) }))
+      .input(z.object({ params: wsAndId }))
       .output(aiConversationSchema),
     listMessages: oc
       .route({
         method: 'GET',
-        path: '/{workspace}/ai/conversations/{conversationId}/messages',
+        path: '/{workspace}/ai/conversations/{id}/messages',
         inputStructure: 'detailed'
       })
-      .input(z.object({ params: z.object({ workspace: z.string(), conversationId: z.string() }) }))
+      .input(z.object({ params: wsAndId }))
       .output(z.array(aiMessageSchema)),
     getConfig: oc
       .route({ method: 'GET', path: '/{workspace}/ai/config', inputStructure: 'detailed' })
-      .input(z.object({ params: z.object({ workspace: z.string() }) }))
+      .input(z.object({ params: ws }))
       .output(aiConfigSchema),
     updateConfig: oc
       .route({ method: 'PUT', path: '/{workspace}/ai/config', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ workspace: z.string() }),
+          params: ws,
           body: aiConfigUpdateSchema
         })
       )
@@ -107,7 +108,7 @@ export const aiContract = {
       .route({ method: 'POST', path: '/{workspace}/ai/extract', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ workspace: z.string() }),
+          params: ws,
           body: z.object({ text: z.string() })
         })
       )

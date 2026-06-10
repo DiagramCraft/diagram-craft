@@ -32,7 +32,7 @@ export const workspaceTemplateORPCRouter = templateRouter.router({
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        return await listProjectTemplates(context.db, workspace, input.params.projectId, authCtx);
+        return await listProjectTemplates(context.db, workspace, input.params.id, authCtx);
       } catch (error) {
         return toORPCError(error);
       }

@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws } from './common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -25,11 +26,11 @@ export const diagramCraftContract = {
   diagramCraft: {
     listSchemas: oc
       .route({ method: 'GET', path: '/public/{workspace}/schemas', inputStructure: 'detailed' })
-      .input(z.object({ params: z.object({ workspace: z.string() }) }))
+      .input(z.object({ params: ws }))
       .output(z.array(diagramCraftSchemaSchema)),
     listData: oc
       .route({ method: 'GET', path: '/public/{workspace}/data', inputStructure: 'detailed' })
-      .input(z.object({ params: z.object({ workspace: z.string() }) }))
+      .input(z.object({ params: ws }))
       .output(z.array(diagramCraftEntitySchema))
   }
 };

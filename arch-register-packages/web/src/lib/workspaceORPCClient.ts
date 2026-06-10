@@ -47,7 +47,7 @@ export const listWorkspacesORPC = async (): Promise<Workspace[]> =>
   await workspaceClient.workspaces.list({});
 
 export const updateWorkspaceORPC = async (
-  id: string,
+  workspace: string,
   input: {
     name: string;
     description?: string;
@@ -55,9 +55,10 @@ export const updateWorkspaceORPC = async (
     short_code?: string;
     color?: string;
   }
-): Promise<Workspace> => await workspaceClient.workspaces.update({ params: { id }, body: input });
+): Promise<Workspace> =>
+  await workspaceClient.workspaces.update({ params: { workspace }, body: input });
 
 export const deleteWorkspaceORPC = async (
-  id: string
+  workspace: string
 ): Promise<{ success: boolean; message: string }> =>
-  await workspaceClient.workspaces.remove({ params: { id } });
+  await workspaceClient.workspaces.remove({ params: { workspace } });

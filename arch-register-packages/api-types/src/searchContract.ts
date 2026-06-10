@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -66,7 +67,7 @@ export const searchContract = {
       .route({ method: 'GET', path: '/{workspace}/search', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ workspace: z.string() }),
+          params: ws,
           query: z.object({
             q: z.string().optional(),
             limitPerType: z.preprocess(

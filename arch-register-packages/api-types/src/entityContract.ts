@@ -1,20 +1,8 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws, wsAndId } from './common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
-
-const workspaceParams = z.object({
-  workspace: z.string()
-});
-
-const workspaceAndIdParams = z.object({
-  workspace: z.string(),
-  id: z.string()
-});
-
-const workspaceAndIdPathInput = z.object({
-  params: workspaceAndIdParams
-});
 
 const foreignKeySchema = z.object({ id: z.string(), name: z.string() });
 
@@ -210,7 +198,7 @@ export const workspaceEntityContract = {
       .route({ method: 'GET', path: '/{workspace}/data', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: workspaceParams,
+          params: ws,
           query: z.object({
             ...listFiltersSchema.shape,
             ...z.object({
@@ -230,20 +218,20 @@ export const workspaceEntityContract = {
       .output(z.array(entityRecordSchema)),
     facets: oc
       .route({ method: 'GET', path: '/{workspace}/data/facets', inputStructure: 'detailed' })
-      .input(z.object({ params: z.object({ workspace: z.string() }) }))
+      .input(z.object({ params: ws }))
       .output(entityFacetsSchema),
     tree: oc
       .route({ method: 'GET', path: '/{workspace}/data/tree', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: workspaceParams,
+          params: ws,
           query: listFiltersSchema
         })
       )
       .output(treeResponseSchema),
     get: oc
       .route({ method: 'GET', path: '/{workspace}/data/{id}', inputStructure: 'detailed' })
-      .input(workspaceAndIdPathInput)
+      .input(z.object({ params: wsAndId }))
       .output(entityRecordSchema),
     relations: oc
       .route({
@@ -251,13 +239,13 @@ export const workspaceEntityContract = {
         path: '/{workspace}/data/{id}/relations',
         inputStructure: 'detailed'
       })
-      .input(workspaceAndIdPathInput)
+      .input(z.object({ params: wsAndId }))
       .output(entityRelationsSchema),
     create: oc
       .route({ method: 'POST', path: '/{workspace}/data', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ workspace: z.string() }),
+          params: ws,
           body: entityMutationBodySchema
         })
       )
@@ -266,28 +254,28 @@ export const workspaceEntityContract = {
       .route({ method: 'PUT', path: '/{workspace}/data/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: workspaceAndIdParams,
+          params: wsAndId,
           body: entityMutationBodySchema
         })
       )
       .output(entityRecordSchema),
     clone: oc
       .route({ method: 'POST', path: '/{workspace}/data/{id}/clone', inputStructure: 'detailed' })
-      .input(workspaceAndIdPathInput)
+      .input(z.object({ params: wsAndId }))
       .output(entityRecordSchema),
     remove: oc
       .route({ method: 'DELETE', path: '/{workspace}/data/{id}', inputStructure: 'detailed' })
-      .input(workspaceAndIdPathInput)
+      .input(z.object({ params: wsAndId }))
       .output(deleteEntityResponseSchema),
     getAccess: oc
       .route({ method: 'GET', path: '/{workspace}/data/{id}/access', inputStructure: 'detailed' })
-      .input(workspaceAndIdPathInput)
+      .input(z.object({ params: wsAndId }))
       .output(entityAccessSchema),
     updateAccess: oc
       .route({ method: 'PUT', path: '/{workspace}/data/{id}/access', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: workspaceAndIdParams,
+          params: wsAndId,
           body: z.object({
             grants: z.array(entityGrantInputSchema)
           })
@@ -298,7 +286,7 @@ export const workspaceEntityContract = {
       .route({ method: 'POST', path: '/{workspace}/data/import/parse', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: workspaceParams,
+          params: ws,
           body: z.object({
             schemaId: z.string(),
             csvContent: z.string()
@@ -314,7 +302,7 @@ export const workspaceEntityContract = {
       })
       .input(
         z.object({
-          params: workspaceParams,
+          params: ws,
           body: z.object({
             schemaId: z.string(),
             entities: z.array(z.record(z.string(), z.unknown()))

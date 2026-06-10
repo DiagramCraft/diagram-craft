@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws, wsAndId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -83,9 +84,7 @@ export const projectContract = {
       .route({ method: 'GET', path: '/{workspace}/projects', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          })
+          params: ws
         })
       )
       .output(z.array(projectSchema)),
@@ -93,10 +92,7 @@ export const projectContract = {
       .route({ method: 'GET', path: '/{workspace}/projects/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          })
+          params: wsAndId
         })
       )
       .output(projectDetailSchema),
@@ -104,9 +100,7 @@ export const projectContract = {
       .route({ method: 'POST', path: '/{workspace}/projects', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          }),
+          params: ws,
           body: z.object({
             name: z.string(),
             description: z.preprocess(
@@ -127,10 +121,7 @@ export const projectContract = {
       .route({ method: 'PUT', path: '/{workspace}/projects/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          }),
+          params: wsAndId,
           body: z.object({
             name: z.string(),
             description: z.string().optional(),
@@ -145,10 +136,7 @@ export const projectContract = {
       .route({ method: 'DELETE', path: '/{workspace}/projects/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          })
+          params: wsAndId
         })
       )
       .output(deleteProjectResponseSchema),
@@ -160,10 +148,7 @@ export const projectContract = {
       })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          })
+          params: wsAndId
         })
       )
       .output(fileTreeSchema),
@@ -175,10 +160,7 @@ export const projectContract = {
       })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          }),
+          params: wsAndId,
           body: z.object({
             path: z.string()
           })
@@ -193,10 +175,7 @@ export const projectContract = {
       })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          }),
+          params: wsAndId,
           body: z.object({
             oldPath: z.string(),
             newPath: z.string()

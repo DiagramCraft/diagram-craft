@@ -99,12 +99,7 @@ export const workspaceViewORPCRouter = viewRouter.router({
     remove: viewRouter.pinnedEntities.remove.handler(async ({ input, context }) => {
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        return await deletePinnedEntity(
-          context.db,
-          workspace,
-          input.params.entityId,
-          context.event
-        );
+        return await deletePinnedEntity(context.db, workspace, input.params.id, context.event);
       } catch (error) {
         return toORPCError(error);
       }

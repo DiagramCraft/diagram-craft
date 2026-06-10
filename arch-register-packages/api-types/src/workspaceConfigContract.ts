@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws, wsAndId } from '@arch-register/api-types/common';
 
 const timestampOutputSchema = z
   .union([z.string(), z.date()])
@@ -125,7 +126,7 @@ export const workspaceConfigContract = {
           path: '/{workspace}/config/lifecycle-states',
           inputStructure: 'detailed'
         })
-        .input(z.object({ params: z.object({ workspace: z.string() }) }))
+        .input(z.object({ params: ws }))
         .output(z.array(lifecycleStateSchema)),
       replace: oc
         .route({
@@ -135,7 +136,7 @@ export const workspaceConfigContract = {
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string() }),
+            params: ws,
             body: z.object({ states: z.array(lifecycleStateInputSchema) })
           })
         )
@@ -144,13 +145,13 @@ export const workspaceConfigContract = {
     teams: {
       list: oc
         .route({ method: 'GET', path: '/{workspace}/config/teams', inputStructure: 'detailed' })
-        .input(z.object({ params: z.object({ workspace: z.string() }) }))
+        .input(z.object({ params: ws }))
         .output(z.array(teamSchema)),
       replace: oc
         .route({ method: 'PUT', path: '/{workspace}/config/teams', inputStructure: 'detailed' })
         .input(
           z.object({
-            params: z.object({ workspace: z.string() }),
+            params: ws,
             body: z.object({ teams: z.array(teamInputSchema) })
           })
         )
@@ -163,7 +164,7 @@ export const workspaceConfigContract = {
           path: '/{workspace}/config/team-assignments',
           inputStructure: 'detailed'
         })
-        .input(z.object({ params: z.object({ workspace: z.string() }) }))
+        .input(z.object({ params: ws }))
         .output(z.array(teamAssignmentSchema)),
       replace: oc
         .route({
@@ -173,9 +174,7 @@ export const workspaceConfigContract = {
         })
         .input(
           z.object({
-            params: z.object({
-              workspace: z.string()
-            }),
+            params: ws,
             body: z.object({
               assignments: z.array(teamAssignmentInputSchema)
             })
@@ -186,21 +185,21 @@ export const workspaceConfigContract = {
     roles: {
       list: oc
         .route({ method: 'GET', path: '/{workspace}/config/roles', inputStructure: 'detailed' })
-        .input(z.object({ params: z.object({ workspace: z.string() }) }))
+        .input(z.object({ params: ws }))
         .output(z.array(roleDefinitionSchema)),
       create: oc
         .route({ method: 'POST', path: '/{workspace}/config/roles', inputStructure: 'detailed' })
-        .input(z.object({ params: z.object({ workspace: z.string() }), body: roleInputSchema }))
+        .input(z.object({ params: ws, body: roleInputSchema }))
         .output(roleDefinitionDbSchema),
       update: oc
         .route({
           method: 'PUT',
-          path: '/{workspace}/config/roles/{roleId}',
+          path: '/{workspace}/config/roles/{id}',
           inputStructure: 'detailed'
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), roleId: z.string() }),
+            params: wsAndId,
             body: roleInputSchema
           })
         )
@@ -208,26 +207,26 @@ export const workspaceConfigContract = {
       remove: oc
         .route({
           method: 'DELETE',
-          path: '/{workspace}/config/roles/{roleId}',
+          path: '/{workspace}/config/roles/{id}',
           inputStructure: 'detailed'
         })
-        .input(z.object({ params: z.object({ workspace: z.string(), roleId: z.string() }) }))
+        .input(z.object({ params: wsAndId }))
         .output(roleDefinitionDbSchema)
     },
     members: {
       list: oc
         .route({ method: 'GET', path: '/{workspace}/config/members', inputStructure: 'detailed' })
-        .input(z.object({ params: z.object({ workspace: z.string() }) }))
+        .input(z.object({ params: ws }))
         .output(z.array(memberInfoSchema)),
       updateRole: oc
         .route({
           method: 'PUT',
-          path: '/{workspace}/config/members/{userId}/role',
+          path: '/{workspace}/config/members/{id}/role',
           inputStructure: 'detailed'
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), userId: z.string() }),
+            params: wsAndId,
             body: z.object({ roleId: z.string() })
           })
         )
@@ -235,16 +234,16 @@ export const workspaceConfigContract = {
       remove: oc
         .route({
           method: 'DELETE',
-          path: '/{workspace}/config/members/{userId}',
+          path: '/{workspace}/config/members/{id}',
           inputStructure: 'detailed'
         })
-        .input(z.object({ params: z.object({ workspace: z.string(), userId: z.string() }) }))
+        .input(z.object({ params: wsAndId }))
         .output(memberDbSchema)
     },
     users: {
       list: oc
         .route({ method: 'GET', path: '/{workspace}/config/users', inputStructure: 'detailed' })
-        .input(z.object({ params: z.object({ workspace: z.string() }) }))
+        .input(z.object({ params: ws }))
         .output(z.array(userInfoSchema))
     }
   }

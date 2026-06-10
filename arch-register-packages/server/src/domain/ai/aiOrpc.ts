@@ -70,7 +70,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
     ai: {
       listConversations: aiRouter.ai.listConversations.handler(async ({ input, context }) => {
         try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.workspace);
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
           const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
           requireWorkspaceCapability(authCtx, 'ws.view');
           const user = context.event.context.user;
@@ -113,10 +113,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           requireWorkspaceCapability(authCtx, 'ws.view');
           const user = context.event.context.user;
 
-          const conversation = await context.db.ai.getConversation(
-            workspace,
-            input.params.conversationId
-          );
+          const conversation = await context.db.ai.getConversation(workspace, input.params.id);
           if (!conversation)
             throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
           if (conversation.user_id !== user.id) {
@@ -127,7 +124,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
           const updated = await context.db.ai.updateConversationTitle(
             workspace,
-            input.params.conversationId,
+            input.params.id,
             input.body.title
           );
           if (!updated) throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
@@ -144,10 +141,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           requireWorkspaceCapability(authCtx, 'ws.view');
           const user = context.event.context.user;
 
-          const conversation = await context.db.ai.getConversation(
-            workspace,
-            input.params.conversationId
-          );
+          const conversation = await context.db.ai.getConversation(workspace, input.params.id);
           if (!conversation)
             throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
           if (conversation.user_id !== user.id) {
@@ -156,10 +150,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
             });
           }
 
-          const deleted = await context.db.ai.deleteConversation(
-            workspace,
-            input.params.conversationId
-          );
+          const deleted = await context.db.ai.deleteConversation(workspace, input.params.id);
           if (!deleted) throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
           return toConversationResponse(deleted);
         } catch (error) {
@@ -174,10 +165,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           requireWorkspaceCapability(authCtx, 'ws.view');
           const user = context.event.context.user;
 
-          const conversation = await context.db.ai.getConversation(
-            workspace,
-            input.params.conversationId
-          );
+          const conversation = await context.db.ai.getConversation(workspace, input.params.id);
           if (!conversation)
             throw new ORPCError('NOT_FOUND', { message: 'Conversation not found' });
           if (conversation.user_id !== user.id) {
@@ -186,7 +174,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
             });
           }
 
-          const messages = await context.db.ai.listMessages(input.params.conversationId);
+          const messages = await context.db.ai.listMessages(input.params.id);
           return messages.map(toMessageResponse);
         } catch (error) {
           return toORPCError(error);

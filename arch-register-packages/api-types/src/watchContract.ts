@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import type { pinnedEntitySchema } from '@arch-register/api-types/viewContract';
+import { ws, wsAndId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -51,9 +52,7 @@ export const watchContract = {
       .route({ method: 'GET', path: '/{workspace}/watching', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          })
+          params: ws
         })
       )
       .output(z.array(watchedEntitySchema)),
@@ -61,9 +60,7 @@ export const watchContract = {
       .route({ method: 'POST', path: '/{workspace}/watching', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          }),
+          params: ws,
           body: z.object({
             entity_id: z.string()
           })
@@ -73,15 +70,12 @@ export const watchContract = {
     remove: oc
       .route({
         method: 'DELETE',
-        path: '/{workspace}/watching/{entityId}',
+        path: '/{workspace}/watching/{id}',
         inputStructure: 'detailed'
       })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            entityId: z.string()
-          })
+          params: wsAndId
         })
       )
       .output(successResponseSchema)
@@ -91,9 +85,7 @@ export const watchContract = {
       .route({ method: 'GET', path: '/{workspace}/notifications', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          })
+          params: ws
         })
       )
       .output(z.array(notificationItemSchema)),
@@ -105,24 +97,19 @@ export const watchContract = {
       })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          })
+          params: ws
         })
       )
       .output(notificationCountSchema),
     remove: oc
       .route({
         method: 'DELETE',
-        path: '/{workspace}/notifications/{notificationId}',
+        path: '/{workspace}/notifications/{id}',
         inputStructure: 'detailed'
       })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            notificationId: z.string()
-          })
+          params: wsAndId
         })
       )
       .output(successResponseSchema),
@@ -130,9 +117,7 @@ export const watchContract = {
       .route({ method: 'DELETE', path: '/{workspace}/notifications', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          })
+          params: ws
         })
       )
       .output(clearResponseSchema)

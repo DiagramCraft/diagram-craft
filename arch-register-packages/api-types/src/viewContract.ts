@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws, wsAndId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -115,9 +116,7 @@ export const workspaceViewContract = {
       .route({ method: 'GET', path: '/{workspace}/views', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          })
+          params: ws
         })
       )
       .output(z.array(savedViewSchema)),
@@ -125,7 +124,7 @@ export const workspaceViewContract = {
       .route({ method: 'POST', path: '/{workspace}/views', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ workspace: z.string() }),
+          params: ws,
           body: createViewBodySchema
         })
       )
@@ -134,10 +133,7 @@ export const workspaceViewContract = {
       .route({ method: 'PATCH', path: '/{workspace}/views/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          }),
+          params: wsAndId,
           body: updateViewBodySchema
         })
       )
@@ -146,10 +142,7 @@ export const workspaceViewContract = {
       .route({ method: 'DELETE', path: '/{workspace}/views/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            id: z.string()
-          })
+          params: wsAndId
         })
       )
       .output(deleteViewResponseSchema)
@@ -159,9 +152,7 @@ export const workspaceViewContract = {
       .route({ method: 'GET', path: '/{workspace}/pinned-entities', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string()
-          })
+          params: ws
         })
       )
       .output(z.array(pinnedEntitySchema)),
@@ -169,7 +160,7 @@ export const workspaceViewContract = {
       .route({ method: 'POST', path: '/{workspace}/pinned-entities', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ workspace: z.string() }),
+          params: ws,
           body: z.object({ entity_id: z.string() })
         })
       )
@@ -177,15 +168,12 @@ export const workspaceViewContract = {
     remove: oc
       .route({
         method: 'DELETE',
-        path: '/{workspace}/pinned-entities/{entityId}',
+        path: '/{workspace}/pinned-entities/{id}',
         inputStructure: 'detailed'
       })
       .input(
         z.object({
-          params: z.object({
-            workspace: z.string(),
-            entityId: z.string()
-          })
+          params: wsAndId
         })
       )
       .output(deletePinnedEntityResponseSchema)

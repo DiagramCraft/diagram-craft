@@ -77,6 +77,6 @@ export const createPinnedEntityORPC = async (
 
 export const deletePinnedEntityORPC = async (
   workspace: string,
-  entityId: string
+  id: string
 ): Promise<{ success: boolean; message: string }> =>
-  await viewClient.pinnedEntities.remove({ params: { workspace, entityId } });
+  await viewClient.pinnedEntities.remove({ params: { workspace, id } });

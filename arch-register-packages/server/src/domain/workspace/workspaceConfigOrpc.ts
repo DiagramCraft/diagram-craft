@@ -119,7 +119,7 @@ export const workspaceConfigORPCRouter = configRouter.router({
           return await updateRole(
             context.db,
             workspace,
-            input.params.roleId,
+            input.params.id,
             input.body,
             context.event
           );
@@ -130,7 +130,7 @@ export const workspaceConfigORPCRouter = configRouter.router({
       remove: configRouter.config.roles.remove.handler(async ({ input, context }) => {
         try {
           const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await deleteRole(context.db, workspace, input.params.roleId, context.event);
+          return await deleteRole(context.db, workspace, input.params.id, context.event);
         } catch (error) {
           return toORPCError(error);
         }
@@ -151,7 +151,7 @@ export const workspaceConfigORPCRouter = configRouter.router({
           return await updateMemberRole(
             context.db,
             workspace,
-            input.params.userId,
+            input.params.id,
             input.body.roleId,
             context.event
           );
@@ -162,7 +162,7 @@ export const workspaceConfigORPCRouter = configRouter.router({
       remove: configRouter.config.members.remove.handler(async ({ input, context }) => {
         try {
           const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await removeMember(context.db, workspace, input.params.userId, context.event);
+          return await removeMember(context.db, workspace, input.params.id, context.event);
         } catch (error) {
           return toORPCError(error);
         }

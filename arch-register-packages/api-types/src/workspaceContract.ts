@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -52,12 +53,10 @@ export const workspaceManagementContract = {
       )
       .output(workspaceSchema),
     update: oc
-      .route({ method: 'PUT', path: '/workspaces/{id}', inputStructure: 'detailed' })
+      .route({ method: 'PUT', path: '/workspaces/{workspace}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            id: z.string()
-          }),
+          params: ws,
           body: z.object({
             name: z.string(),
             description: z.string().optional(),
@@ -69,12 +68,10 @@ export const workspaceManagementContract = {
       )
       .output(workspaceSchema),
     remove: oc
-      .route({ method: 'DELETE', path: '/workspaces/{id}', inputStructure: 'detailed' })
+      .route({ method: 'DELETE', path: '/workspaces/{workspace}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({
-            id: z.string()
-          })
+          params: ws
         })
       )
       .output(deleteWorkspaceResponseSchema),

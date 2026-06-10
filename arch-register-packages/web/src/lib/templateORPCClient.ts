@@ -44,6 +44,6 @@ const templateClient: JsonifiedClient<ContractRouterClient<typeof workspaceTempl
 
 export const listProjectTemplatesORPC = async (
   workspace: string,
-  projectId: string
+  id: string
 ): Promise<ProjectTemplatesResponse> =>
-  await templateClient.templates.listForProject({ params: { workspace, projectId } });
+  await templateClient.templates.listForProject({ params: { workspace, id } });

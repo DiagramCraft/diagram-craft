@@ -1,5 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { ws, wsAndId } from '@arch-register/api-types/common';
 
 const enumOptionSchema = z.object({
   value: z.string(),
@@ -28,34 +29,25 @@ const createEnumBodySchema = z.object({
   )
 });
 
-const workspaceInputSchema = z.object({
-  params: z.object({
-    workspace: z.string()
-  })
-});
-
-const workspaceAndIdInputSchema = z.object({
-  params: z.object({
-    workspace: z.string(),
-    id: z.string()
-  })
-});
-
 export const workspaceEnumContract = {
   enums: {
     list: oc
       .route({ method: 'GET', path: '/{workspace}/enums', inputStructure: 'detailed' })
-      .input(workspaceInputSchema)
+      .input(z.object({ params: ws }))
       .output(z.array(workspaceEnumSchema)),
     get: oc
       .route({ method: 'GET', path: '/{workspace}/enums/{id}', inputStructure: 'detailed' })
-      .input(workspaceAndIdInputSchema)
+      .input(
+        z.object({
+          params: wsAndId
+        })
+      )
       .output(workspaceEnumSchema),
     create: oc
       .route({ method: 'POST', path: '/{workspace}/enums', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ workspace: z.string() }),
+          params: ws,
           body: createEnumBodySchema
         })
       )
@@ -64,14 +56,18 @@ export const workspaceEnumContract = {
       .route({ method: 'PUT', path: '/{workspace}/enums/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ workspace: z.string(), id: z.string() }),
+          params: wsAndId,
           body: createEnumBodySchema
         })
       )
       .output(workspaceEnumSchema),
     remove: oc
       .route({ method: 'DELETE', path: '/{workspace}/enums/{id}', inputStructure: 'detailed' })
-      .input(workspaceAndIdInputSchema)
+      .input(
+        z.object({
+          params: wsAndId
+        })
+      )
       .output(
         z.object({
           success: z.boolean(),
