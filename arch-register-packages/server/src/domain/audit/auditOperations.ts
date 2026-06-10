@@ -3,7 +3,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
-import { AuditLogEntry, AuditStats } from '@arch-register/api-types/audit';
+import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 
 export const listAuditLog = async (
   db: DatabaseAdapter,

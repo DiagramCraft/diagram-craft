@@ -17,7 +17,7 @@ import { MembersSubSection } from './sub-sections/MembersSubSection';
 import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
 import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
-import { AuditLogEntry } from '@arch-register/api-types/audit';
+import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   'general': { title: 'General', sub: 'Name, description, and identity for this workspace.' },

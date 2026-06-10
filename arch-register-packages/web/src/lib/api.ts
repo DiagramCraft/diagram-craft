@@ -36,7 +36,7 @@ import {
   WorkspaceRoleDefinition,
   WorkspaceUserInfo
 } from '@arch-register/api-types/workspaces';
-import { AuditLogEntry } from '@arch-register/api-types/audit';
+import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 
 // Re-export commonly used types for convenience
 export type { SavedView };

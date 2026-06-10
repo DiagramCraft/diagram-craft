@@ -3,9 +3,9 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-export const auditOperationSchema = z.enum(['create', 'update', 'delete']);
+const auditOperationSchema = z.enum(['create', 'update', 'delete']);
 
-export const auditEntityTypeSchema = z.enum([
+const auditEntityTypeSchema = z.enum([
   'workspace',
   'entity_schema',
   'entity',
@@ -13,7 +13,7 @@ export const auditEntityTypeSchema = z.enum([
   'project_file'
 ]);
 
-export const auditLogEntrySchema = z.object({
+const auditLogEntrySchema = z.object({
   id: z.string(),
   workspace: z.string(),
   timestamp: z.string(),
@@ -32,7 +32,7 @@ export const auditLogEntrySchema = z.object({
   metadata: z.record(z.string(), z.unknown())
 });
 
-export const auditStatsSchema = z.object({
+const auditStatsSchema = z.object({
   total: z.number(),
   byOperation: z.array(z.object({ operation: z.string(), count: z.number() })),
   byEntityType: z.array(z.object({ entity_type: z.string(), count: z.number() })),
@@ -41,18 +41,24 @@ export const auditStatsSchema = z.object({
 
 // ── Request schemas ───────────────────────────────────────────
 
-export const listAuditLogRequestSchema = z.object({
+const listAuditLogRequestSchema = z.object({
   workspace: z.string(),
   entityType: z.string().optional(),
   entityId: z.string().optional(),
   operation: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  limit: z.preprocess(v => (v !== undefined ? Number(v) : undefined), z.number().int().positive().optional()),
-  offset: z.preprocess(v => (v !== undefined ? Number(v) : undefined), z.number().int().min(0).optional())
+  limit: z.preprocess(
+    v => (v !== undefined ? Number(v) : undefined),
+    z.number().int().positive().optional()
+  ),
+  offset: z.preprocess(
+    v => (v !== undefined ? Number(v) : undefined),
+    z.number().int().min(0).optional()
+  )
 });
 
-export const getAuditStatsRequestSchema = z.object({
+const getAuditStatsRequestSchema = z.object({
   workspace: z.string()
 });
 
@@ -70,3 +76,9 @@ export const auditContract = {
       .output(auditStatsSchema)
   }
 };
+
+// ── Audit Log Types ───────────────────────────────────────────
+
+export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
+
+export type AuditStats = z.infer<typeof auditStatsSchema>;

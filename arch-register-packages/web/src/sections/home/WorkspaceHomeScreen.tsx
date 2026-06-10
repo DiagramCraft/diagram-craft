@@ -18,7 +18,7 @@ import { useAuditLog } from '../../hooks/useAudit';
 import { useEntityFacets } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Project } from '@arch-register/api-types/projects';
-import { AuditLogEntry } from '@arch-register/api-types/audit';
+import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 
 const PROJECT_STATUS_META = {
   pinned: { label: 'Pinned' },

@@ -1,5 +1,5 @@
 import type { AuditLogDbResult as InternalAuditLogEntry } from './db/auditDatabase';
-import { AuditLogEntry, AuditStats } from '@arch-register/api-types/audit';
+import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 
 export type AuditListFilters = {
   entityType: string | null;

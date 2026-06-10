@@ -45,7 +45,7 @@ import { EntityGraphView } from './components/EntityGraphView';
 import { EntityRecord, EntitySummary } from '@arch-register/api-types/entities';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemas';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaces';
-import { AuditLogEntry } from '@arch-register/api-types/audit';
+import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 
 type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes';
 

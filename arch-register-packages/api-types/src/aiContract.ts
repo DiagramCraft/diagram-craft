@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-export const aiConversationSchema = z.object({
+const aiConversationSchema = z.object({
   id: z.string(),
   workspace: z.string(),
   user_id: z.string(),
@@ -12,7 +12,9 @@ export const aiConversationSchema = z.object({
   updated_at: z.string()
 });
 
-export const aiMessageSchema = z.object({
+const aiProviderSchema = z.enum(['openrouter', 'openai']);
+
+const aiMessageSchema = z.object({
   id: z.string(),
   conversation_id: z.string(),
   role: z.enum(['system', 'user', 'assistant']),
@@ -21,9 +23,9 @@ export const aiMessageSchema = z.object({
   created_at: z.string()
 });
 
-export const aiConfigSchema = z.object({
+const aiConfigSchema = z.object({
   workspace: z.string(),
-  provider: z.enum(['openrouter', 'openai']),
+  provider: aiProviderSchema,
   base_url: z.string().nullable(),
   model: z.string().nullable(),
   temperature: z.number().nullable(),
@@ -34,8 +36,8 @@ export const aiConfigSchema = z.object({
   updated_at: z.string()
 });
 
-export const aiConfigUpdateSchema = z.object({
-  provider: z.enum(['openrouter', 'openai']).optional(),
+const aiConfigUpdateSchema = z.object({
+  provider: aiProviderSchema.optional(),
   api_key: z.string().nullable().optional(),
   base_url: z.string().nullable().optional(),
   model: z.string().nullable().optional(),
@@ -91,3 +93,11 @@ export const aiContract = {
       )
   }
 };
+
+export type AiProvider = z.infer<typeof aiProviderSchema>;
+
+export type WorkspaceAiConfig = z.infer<typeof aiConfigSchema>;
+
+export type UpsertAiConfigRequest = z.infer<typeof aiConfigUpdateSchema>;
+
+export type AiConversation = z.infer<typeof aiConversationSchema>;

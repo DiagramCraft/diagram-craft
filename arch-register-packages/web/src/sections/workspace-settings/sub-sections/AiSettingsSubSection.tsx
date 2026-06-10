@@ -5,7 +5,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import styles from '../WorkspaceSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useAiConfig, useUpdateAiConfig } from '../../../hooks/useAiConfig';
-import { AiProvider, UpsertAiConfigRequest } from '@arch-register/api-types/ai';
+import { AiProvider, UpsertAiConfigRequest } from '@arch-register/api-types/aiContract';
 
 export const AiSettingsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const { data: config } = useAiConfig(workspaceSlug);

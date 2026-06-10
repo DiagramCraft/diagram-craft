@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
-import { UpsertAiConfigRequest, WorkspaceAiConfig } from '@arch-register/api-types/ai';
+import { UpsertAiConfigRequest, WorkspaceAiConfig } from '@arch-register/api-types/aiContract';
 
 export const aiConfigKeys = {
   all: ['ai-config'] as const,

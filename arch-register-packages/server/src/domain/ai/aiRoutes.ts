@@ -12,7 +12,7 @@ import { createAiChatTools } from './chatTools';
 import { encrypt } from '../../utils/encryption';
 import type { AiConfigInputDbUpsert } from '../../db/database';
 import type { AiConfigDbResult } from './db/aiDatabase';
-import { WorkspaceAiConfig } from '@arch-register/api-types/ai';
+import { WorkspaceAiConfig } from '@arch-register/api-types/aiContract';
 
 // SSE route base — note /api/sse prefix for streaming routes
 const SSE_BASE = '/api/sse/:workspace/ai';
