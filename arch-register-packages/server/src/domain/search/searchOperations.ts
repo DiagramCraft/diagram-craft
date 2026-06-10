@@ -9,7 +9,7 @@ import type { EntityDbResult } from '../catalog/db/catalogDatabase';
 
 const checker = new PermissionChecker();
 
-const SEARCH_TYPES = ['projects', 'files', 'entities', 'schemas'] as const;
+export const SEARCH_TYPES = ['projects', 'files', 'entities', 'schemas'] as const;
 type SearchType = (typeof SEARCH_TYPES)[number];
 
 const includesQuery = (value: unknown, query: string) =>

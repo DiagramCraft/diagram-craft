@@ -1,8 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { OpenAPIGenerator } from '@orpc/openapi';
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { workspaceTemplateContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx } from '../auth/authorization';
@@ -43,25 +41,6 @@ export const workspaceTemplateORPCRouter = templateRouter.router({
 });
 
 export const workspaceTemplateOpenAPIHandler = new OpenAPIHandler(workspaceTemplateORPCRouter);
-
-let generatedTemplateOpenAPISpec: Promise<object> | null = null;
-
-export const getWorkspaceTemplateOpenAPISpec = () => {
-  generatedTemplateOpenAPISpec ??= new OpenAPIGenerator({
-    schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(workspaceTemplateContract, {
-    info: {
-      title: 'Arch Register Template POC API',
-      version: '1.0.0'
-    },
-    servers: [{ url: 'http://localhost:3010/api' }]
-  });
-
-  return generatedTemplateOpenAPISpec;
-};
-
-export const createWorkspaceTemplateOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getWorkspaceTemplateOpenAPISpec()));
 
 export const createWorkspaceTemplateORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

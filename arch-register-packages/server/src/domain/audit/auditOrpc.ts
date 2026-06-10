@@ -1,8 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { OpenAPIGenerator } from '@orpc/openapi';
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { auditContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -36,25 +34,6 @@ export const auditORPCRouter = auditRouter.router({
 });
 
 export const auditOpenAPIHandler = new OpenAPIHandler(auditORPCRouter);
-
-let generatedAuditOpenAPISpec: Promise<object> | null = null;
-
-export const getAuditOpenAPISpec = () => {
-  generatedAuditOpenAPISpec ??= new OpenAPIGenerator({
-    schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(auditContract, {
-    info: {
-      title: 'Arch Register Audit POC API',
-      version: '1.0.0'
-    },
-    servers: [{ url: 'http://localhost:3010/api' }]
-  });
-
-  return generatedAuditOpenAPISpec;
-};
-
-export const createAuditOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getAuditOpenAPISpec()));
 
 export const createAuditORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

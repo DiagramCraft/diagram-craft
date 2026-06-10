@@ -107,25 +107,18 @@ test.describe('workspace config routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/config/teams and /owners return the current team list', async ({
+  test('GET /api/:workspace/config/teams returns the current team list', async ({
     server,
     auth,
     seededUsers: _
   }) => {
-    const [teamsRes, ownersRes] = await Promise.all([
-      fetch(`${server.baseUrl}/api/default/config/teams`, {
-        headers: { Authorization: auth }
-      }),
-      fetch(`${server.baseUrl}/api/default/config/owners`, {
-        headers: { Authorization: auth }
-      })
-    ]);
+    const teamsRes = await fetch(`${server.baseUrl}/api/default/config/teams`, {
+      headers: { Authorization: auth }
+    });
 
     expect(teamsRes.status).toBe(200);
-    expect(ownersRes.status).toBe(200);
 
     const teams = (await teamsRes.json()) as Array<Record<string, unknown>>;
-    const owners = (await ownersRes.json()) as Array<Record<string, unknown>>;
 
     expect(teams).toEqual(
       expect.arrayContaining([
@@ -133,21 +126,22 @@ test.describe('workspace config routes', () => {
         expect.objectContaining({ name: 'Design Systems' })
       ])
     );
-    expect(owners).toEqual(teams);
   });
 
-  test('PUT /api/:workspace/config/owners replaces teams and /teams reflects the update', async ({
+  test('PUT /api/:workspace/config/teams replaces teams and GET reflects the update', async ({
     server,
     auth,
     seededUsers: _
   }) => {
-    const putRes = await fetch(`${server.baseUrl}/api/default/config/owners`, {
+    const putRes = await fetch(`${server.baseUrl}/api/default/config/teams`, {
       method: 'PUT',
       headers: headers(auth),
-      body: JSON.stringify([
-        { name: 'Architecture', color: '#123456', description: 'Architecture team' },
-        { name: 'Operations', color: null }
-      ])
+      body: JSON.stringify({
+        teams: [
+          { name: 'Architecture', color: '#123456', description: 'Architecture team' },
+          { name: 'Operations', color: null }
+        ]
+      })
     });
 
     expect(putRes.status).toBe(200);
@@ -300,30 +294,34 @@ test.describe('workspace config routes', () => {
     });
   });
 
-  test('PUT /api/:workspace/config/team-memberships replaces memberships and GET aliases return them', async ({
+  test('PUT /api/:workspace/config/team-assignments replaces memberships and GET returns them', async ({
     server,
     auth,
     seededUsers
   }) => {
-    await fetch(`${server.baseUrl}/api/default/config/owners`, {
+    await fetch(`${server.baseUrl}/api/default/config/teams`, {
       method: 'PUT',
       headers: headers(auth),
-      body: JSON.stringify([
-        { id: 'team-platform', name: 'Platform Engineering' },
-        { id: 'team-design', name: 'Design Systems' }
-      ])
+      body: JSON.stringify({
+        teams: [
+          { id: 'team-platform', name: 'Platform Engineering' },
+          { id: 'team-design', name: 'Design Systems' }
+        ]
+      })
     });
 
-    const putRes = await fetch(`${server.baseUrl}/api/default/config/team-memberships`, {
+    const putRes = await fetch(`${server.baseUrl}/api/default/config/team-assignments`, {
       method: 'PUT',
       headers: headers(auth),
-      body: JSON.stringify([
-        {
-          team_id: 'team-platform',
-          user_id: seededUsers.configUserId,
-          role: 'team_editor'
-        }
-      ])
+      body: JSON.stringify({
+        assignments: [
+          {
+            team_id: 'team-platform',
+            user_id: seededUsers.configUserId,
+            role: 'team_editor'
+          }
+        ]
+      })
     });
 
     expect(putRes.status).toBe(200);
@@ -335,20 +333,13 @@ test.describe('workspace config routes', () => {
       })
     ]);
 
-    const [assignmentsRes, membershipsRes] = await Promise.all([
-      fetch(`${server.baseUrl}/api/default/config/team-assignments`, {
-        headers: { Authorization: auth }
-      }),
-      fetch(`${server.baseUrl}/api/default/config/team-memberships`, {
-        headers: { Authorization: auth }
-      })
-    ]);
+    const assignmentsRes = await fetch(`${server.baseUrl}/api/default/config/team-assignments`, {
+      headers: { Authorization: auth }
+    });
 
     expect(assignmentsRes.status).toBe(200);
-    expect(membershipsRes.status).toBe(200);
 
     const assignments = (await assignmentsRes.json()) as Array<Record<string, unknown>>;
-    const memberships = (await membershipsRes.json()) as Array<Record<string, unknown>>;
     expect(assignments).toEqual([
       expect.objectContaining({
         team_id: 'team-platform',
@@ -356,7 +347,6 @@ test.describe('workspace config routes', () => {
         role: 'team_editor'
       })
     ]);
-    expect(memberships).toEqual(assignments);
   });
 
   test('GET /api/:workspace/config/members and /users include seeded and test users', async ({

@@ -61,7 +61,7 @@ const searchResponseSchema = z.object({
 export const searchRequestSchema = z.object({
   workspace: z.string(),
   q: z.string().optional(),
-  limitPerType: z.number().optional(),
+  limitPerType: z.preprocess(v => (v !== undefined ? Number(v) : undefined), z.number().int().positive().optional()),
   types: z.string().optional()
 });
 

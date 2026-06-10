@@ -71,10 +71,22 @@ export const entitySchemaSchema = z.object({
 
 const createSchemaBodySchema = z.object({
   name: z.string(),
-  description: z.string().optional(),
-  fields: z.array(schemaFieldInputSchema).optional(),
-  color: z.string().nullable().optional(),
-  icon: z.string().nullable().optional(),
+  description: z.preprocess(
+    v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
+    z.string().optional()
+  ),
+  fields: z.preprocess(
+    v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
+    z.array(schemaFieldInputSchema).optional()
+  ),
+  color: z.preprocess(
+    v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
+    z.string().nullable().optional()
+  ),
+  icon: z.preprocess(
+    v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
+    z.string().nullable().optional()
+  ),
   default_owner: z.string().nullable().optional()
 });
 

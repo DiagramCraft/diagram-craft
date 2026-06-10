@@ -70,10 +70,16 @@ export const getProjectRequestSchema = z.object({
 export const createProjectRequestSchema = z.object({
   workspace: z.string(),
   name: z.string(),
-  description: z.string().optional(),
+  description: z.preprocess(
+    v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
+    z.string().optional()
+  ),
   owner: z.string().nullable().optional(),
   status: z.enum(['pinned', 'active', 'archived']).optional(),
-  color: z.string().nullable().optional()
+  color: z.preprocess(
+    v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
+    z.string().nullable().optional()
+  )
 });
 
 export const updateProjectRequestSchema = z.object({

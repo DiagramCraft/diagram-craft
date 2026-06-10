@@ -1,8 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { OpenAPIGenerator } from '@orpc/openapi';
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { workspaceEntityContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx } from '../auth/authorization';
@@ -159,25 +157,6 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 });
 
 export const workspaceEntityOpenAPIHandler = new OpenAPIHandler(workspaceEntityORPCRouter);
-
-let generatedEntityOpenAPISpec: Promise<object> | null = null;
-
-export const getWorkspaceEntityOpenAPISpec = () => {
-  generatedEntityOpenAPISpec ??= new OpenAPIGenerator({
-    schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(workspaceEntityContract, {
-    info: {
-      title: 'Arch Register Entity POC API',
-      version: '1.0.0'
-    },
-    servers: [{ url: 'http://localhost:3010/api' }]
-  });
-
-  return generatedEntityOpenAPISpec;
-};
-
-export const createWorkspaceEntityOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getWorkspaceEntityOpenAPISpec()));
 
 export const createWorkspaceEntityORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

@@ -1,13 +1,11 @@
 import { defineHandler } from 'h3';
-import { implement } from '@orpc/server';
+import { implement, ORPCError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { OpenAPIGenerator } from '@orpc/openapi';
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { searchContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { toORPCError } from '../../utils/orpcErrors';
-import { searchWorkspace } from './searchOperations';
+import { searchWorkspace, SEARCH_TYPES } from './searchOperations';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -20,6 +18,15 @@ export const searchORPCRouter = searchRouter.router({
   search: {
     query: searchRouter.search.query.handler(async ({ input, context }) => {
       try {
+        if (input.types != null && input.types !== '') {
+          const parsed = input.types.split(',').map(t => t.trim());
+          const invalid = parsed.filter(t => !SEARCH_TYPES.includes(t as (typeof SEARCH_TYPES)[number]));
+          if (invalid.length > 0) {
+            throw new ORPCError('BAD_REQUEST', {
+              message: `types must be a comma-separated list of: ${SEARCH_TYPES.join(', ')}`
+            });
+          }
+        }
         return await searchWorkspace(context.db, input.workspace, input, context.event);
       } catch (error) {
         return toORPCError(error);
@@ -29,25 +36,6 @@ export const searchORPCRouter = searchRouter.router({
 });
 
 export const searchOpenAPIHandler = new OpenAPIHandler(searchORPCRouter);
-
-let generatedSearchOpenAPISpec: Promise<object> | null = null;
-
-export const getSearchOpenAPISpec = () => {
-  generatedSearchOpenAPISpec ??= new OpenAPIGenerator({
-    schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(searchContract, {
-    info: {
-      title: 'Arch Register Search POC API',
-      version: '1.0.0'
-    },
-    servers: [{ url: 'http://localhost:3010/api' }]
-  });
-
-  return generatedSearchOpenAPISpec;
-};
-
-export const createSearchOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getSearchOpenAPISpec()));
 
 export const createSearchORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

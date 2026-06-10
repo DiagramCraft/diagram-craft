@@ -1,8 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { OpenAPIGenerator } from '@orpc/openapi';
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { workspaceViewContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
@@ -110,25 +108,6 @@ export const workspaceViewORPCRouter = viewRouter.router({
 });
 
 export const workspaceViewOpenAPIHandler = new OpenAPIHandler(workspaceViewORPCRouter);
-
-let generatedViewOpenAPISpec: Promise<object> | null = null;
-
-export const getWorkspaceViewOpenAPISpec = () => {
-  generatedViewOpenAPISpec ??= new OpenAPIGenerator({
-    schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(workspaceViewContract, {
-    info: {
-      title: 'Arch Register View POC API',
-      version: '1.0.0'
-    },
-    servers: [{ url: 'http://localhost:3010/api' }]
-  });
-
-  return generatedViewOpenAPISpec;
-};
-
-export const createWorkspaceViewOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getWorkspaceViewOpenAPISpec()));
 
 export const createWorkspaceViewORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

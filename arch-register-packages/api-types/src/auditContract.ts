@@ -48,8 +48,8 @@ export const listAuditLogRequestSchema = z.object({
   operation: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  limit: z.number().optional(),
-  offset: z.number().optional()
+  limit: z.preprocess(v => (v !== undefined ? Number(v) : undefined), z.number().int().positive().optional()),
+  offset: z.preprocess(v => (v !== undefined ? Number(v) : undefined), z.number().int().min(0).optional())
 });
 
 export const getAuditStatsRequestSchema = z.object({

@@ -1,8 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { OpenAPIGenerator } from '@orpc/openapi';
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { projectContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
@@ -79,25 +77,6 @@ export const projectORPCRouter = projectRouter.router({
 });
 
 export const projectOpenAPIHandler = new OpenAPIHandler(projectORPCRouter);
-
-let generatedProjectOpenAPISpec: Promise<object> | null = null;
-
-export const getProjectOpenAPISpec = () => {
-  generatedProjectOpenAPISpec ??= new OpenAPIGenerator({
-    schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(projectContract, {
-    info: {
-      title: 'Arch Register Project POC API',
-      version: '1.0.0'
-    },
-    servers: [{ url: 'http://localhost:3010/api' }]
-  });
-
-  return generatedProjectOpenAPISpec;
-};
-
-export const createProjectOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getProjectOpenAPISpec()));
 
 export const createProjectORPCHandler = (db: DatabaseAdapter, storage?: StorageAdapter) =>
   defineHandler(async event => {

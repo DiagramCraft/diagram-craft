@@ -1,8 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { OpenAPIGenerator } from '@orpc/openapi';
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { workspaceEnumContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
@@ -80,25 +78,6 @@ export const workspaceEnumORPCRouter = enumRouter.router({
 });
 
 export const workspaceEnumOpenAPIHandler = new OpenAPIHandler(workspaceEnumORPCRouter);
-
-let generatedEnumOpenAPISpec: Promise<object> | null = null;
-
-export const getWorkspaceEnumOpenAPISpec = () => {
-  generatedEnumOpenAPISpec ??= new OpenAPIGenerator({
-    schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(workspaceEnumContract, {
-    info: {
-      title: 'Arch Register Enum POC API',
-      version: '1.0.0'
-    },
-    servers: [{ url: 'http://localhost:3010/api' }]
-  });
-
-  return generatedEnumOpenAPISpec;
-};
-
-export const createWorkspaceEnumOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getWorkspaceEnumOpenAPISpec()));
 
 export const createWorkspaceEnumORPCHandler = (db: DatabaseAdapter) =>
   defineHandler(async event => {

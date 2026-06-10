@@ -41,6 +41,8 @@ export const entityRecordSchema = entitySummarySchema.catchall(z.unknown());
 
 // ── Mutation input ────────────────────────────────────────────
 
+const ownerOrIdSchema = z.union([z.string(), z.object({ id: z.string() }).passthrough()]).nullable().optional();
+
 const entityMutationBodySchema = z
   .object({
     _schemaId: z.string().optional(),
@@ -49,9 +51,9 @@ const entityMutationBodySchema = z
     _slug: z.string().optional(),
     _namespace: z.string().optional(),
     _description: z.string().optional(),
-    _owner: z.string().nullable().optional(),
-    _lifecycle: z.string().nullable().optional(),
-    _targetLifecycle: z.string().nullable().optional(),
+    _owner: ownerOrIdSchema,
+    _lifecycle: ownerOrIdSchema,
+    _targetLifecycle: ownerOrIdSchema,
     _targetLifecycleDate: z.string().nullable().optional(),
     _tags: z.array(z.string()).optional(),
     _links: z.array(entityLinkSchema).optional(),

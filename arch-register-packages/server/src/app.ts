@@ -5,55 +5,24 @@ import type { StorageAdapter } from './storage/storage';
 import { createLogger } from './utils/logger';
 import { createUnifiedOpenAPISpecHandler } from './openapi';
 import { createProjectRoutes } from './domain/project/projectRoutes';
+import { createDataRoutes } from './domain/catalog/dataRoutes';
+import { createWorkspaceRoutes } from './domain/workspace/workspaceRoutes';
 import { createAiChatRoutes } from './domain/ai/aiRoutes';
 import { createDiagramCraftRoutes } from './domain/diagram/diagramCraftRoutes';
 import { createAuthRoutes, createAuthProtectedRoutes } from './domain/auth/authRoutes';
 import { createTemplateRoutes } from './domain/catalog/templateRoutes';
 import { requireAuth } from './middleware/auth';
-import {
-  createWorkspaceEnumOpenAPISpecHandler,
-  createWorkspaceEnumORPCHandler
-} from './domain/catalog/enumOrpc';
-import {
-  createWorkspaceSchemaOpenAPISpecHandler,
-  createWorkspaceSchemaORPCHandler
-} from './domain/catalog/schemaOrpc';
-import {
-  createWorkspaceEntityOpenAPISpecHandler,
-  createWorkspaceEntityORPCHandler
-} from './domain/catalog/entityOrpc';
-import {
-  createWorkspaceTemplateOpenAPISpecHandler,
-  createWorkspaceTemplateORPCHandler
-} from './domain/catalog/templateOrpc';
-import {
-  createWorkspaceViewOpenAPISpecHandler,
-  createWorkspaceViewORPCHandler
-} from './domain/catalog/viewOrpc';
-import {
-  createWorkspaceManagementOpenAPISpecHandler,
-  createWorkspaceManagementORPCHandler
-} from './domain/workspace/workspaceOrpc';
-import {
-  createWorkspaceConfigOpenAPISpecHandler,
-  createWorkspaceConfigORPCHandler
-} from './domain/workspace/workspaceConfigOrpc';
-import {
-  createProjectOpenAPISpecHandler,
-  createProjectORPCHandler
-} from './domain/project/projectOrpc';
-import {
-  createAuditOpenAPISpecHandler,
-  createAuditORPCHandler
-} from './domain/audit/auditOrpc';
-import {
-  createWatchOpenAPISpecHandler,
-  createWatchORPCHandler
-} from './domain/watch/watchOrpc';
-import {
-  createSearchOpenAPISpecHandler,
-  createSearchORPCHandler
-} from './domain/search/searchOrpc';
+import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
+import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
+import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
+import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
+import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
+import { createWorkspaceManagementORPCHandler } from './domain/workspace/workspaceOrpc';
+import { createWorkspaceConfigORPCHandler } from './domain/workspace/workspaceConfigOrpc';
+import { createProjectORPCHandler } from './domain/project/projectOrpc';
+import { createAuditORPCHandler } from './domain/audit/auditOrpc';
+import { createWatchORPCHandler } from './domain/watch/watchOrpc';
+import { createSearchORPCHandler } from './domain/search/searchOrpc';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -114,17 +83,6 @@ export const createApp = (
   );
 
   app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
-  app.use('/openapi-orpc-enums.json', createWorkspaceEnumOpenAPISpecHandler());
-  app.use('/openapi-orpc-schemas.json', createWorkspaceSchemaOpenAPISpecHandler());
-  app.use('/openapi-orpc-entities.json', createWorkspaceEntityOpenAPISpecHandler());
-  app.use('/openapi-orpc-templates.json', createWorkspaceTemplateOpenAPISpecHandler());
-  app.use('/openapi-orpc-views.json', createWorkspaceViewOpenAPISpecHandler());
-  app.use('/openapi-orpc-workspaces.json', createWorkspaceManagementOpenAPISpecHandler());
-  app.use('/openapi-orpc-workspace-config.json', createWorkspaceConfigOpenAPISpecHandler());
-  app.use('/openapi-orpc-projects.json', createProjectOpenAPISpecHandler());
-  app.use('/openapi-orpc-audit.json', createAuditOpenAPISpecHandler());
-  app.use('/openapi-orpc-watch.json', createWatchOpenAPISpecHandler());
-  app.use('/openapi-orpc-search.json', createSearchOpenAPISpecHandler());
 
   app.use(createAuthRoutes(db));
 
@@ -132,6 +90,8 @@ export const createApp = (
   app.use(authMiddleware);
 
   app.use(createAuthProtectedRoutes(db));
+  app.use(createDataRoutes(db));
+  app.use(createWorkspaceRoutes(db, storage));
   app.use(createWorkspaceEnumORPCHandler(db));
   app.use(createWorkspaceSchemaORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));

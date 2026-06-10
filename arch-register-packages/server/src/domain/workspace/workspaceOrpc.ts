@@ -1,8 +1,6 @@
 import { defineHandler } from 'h3';
 import { implement, onError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import { OpenAPIGenerator } from '@orpc/openapi';
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { workspaceManagementContract } from '@arch-register/api-types';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
@@ -65,25 +63,6 @@ export const workspaceManagementOpenAPIHandler = new OpenAPIHandler(workspaceMan
     })
   ]
 });
-
-let generatedWorkspaceOpenAPISpec: Promise<object> | null = null;
-
-export const getWorkspaceManagementOpenAPISpec = () => {
-  generatedWorkspaceOpenAPISpec ??= new OpenAPIGenerator({
-    schemaConverters: [new ZodToJsonSchemaConverter()]
-  }).generate(workspaceManagementContract, {
-    info: {
-      title: 'Arch Register Workspace POC API',
-      version: '1.0.0'
-    },
-    servers: [{ url: 'http://localhost:3010/api' }]
-  });
-
-  return generatedWorkspaceOpenAPISpec;
-};
-
-export const createWorkspaceManagementOpenAPISpecHandler = () =>
-  defineHandler(async () => Response.json(await getWorkspaceManagementOpenAPISpec()));
 
 export const createWorkspaceManagementORPCHandler = (
   db: DatabaseAdapter,
