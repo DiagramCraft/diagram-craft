@@ -12,11 +12,7 @@ import { generateAuthUrl } from './oidcClient';
 import { clearAuthCookies, setAuthCookies } from '../../utils/cookies';
 import { getCookie } from 'h3';
 import type { JWTPayload } from '../../types';
-import {
-  buildApiAuthCtx,
-  GLOBAL_WS,
-  requireGlobalPermission
-} from './authorization';
+import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from './authorization';
 import {
   buildAuthMeResponse,
   buildUserUpdateInput,
@@ -51,7 +47,9 @@ export const authPublicORPCRouter = publicRouter.router({
       try {
         const authMode = getAuthMode();
         if (authMode !== 'local') {
-          throw new ORPCError('BAD_REQUEST', { message: 'Username/password authentication is not enabled' });
+          throw new ORPCError('BAD_REQUEST', {
+            message: 'Username/password authentication is not enabled'
+          });
         }
 
         let user = await context.db.auth.getUserByUserId(input.username);
@@ -97,7 +95,10 @@ export const authPublicORPCRouter = publicRouter.router({
 
     refresh: publicRouter.auth.refresh.handler(async ({ input, context }) => {
       try {
-        const cookieToken = getCookie(context.event as Parameters<typeof getCookie>[0], 'ar_refresh_token');
+        const cookieToken = getCookie(
+          context.event as Parameters<typeof getCookie>[0],
+          'ar_refresh_token'
+        );
         const refreshToken = selectRefreshToken(cookieToken, input);
         if (!refreshToken) {
           throw new ORPCError('UNAUTHORIZED', { message: 'Refresh token is required' });
@@ -116,7 +117,8 @@ export const authPublicORPCRouter = publicRouter.router({
 
         const user = await context.db.auth.getUser(payload.sub);
         if (!user) throw new ORPCError('UNAUTHORIZED', { message: 'User not found' });
-        if (!user.is_active) throw new ORPCError('FORBIDDEN', { message: 'User account is inactive' });
+        if (!user.is_active)
+          throw new ORPCError('FORBIDDEN', { message: 'User account is inactive' });
 
         const tokens = generateTokenPair(user);
         setAuthCookies(context.event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
@@ -200,7 +202,9 @@ export const authProtectedORPCRouter = protectedRouter.router({
       try {
         const authenticatedUser = context.event.context.user as UserDbResult;
         if (input.id !== authenticatedUser.id) {
-          throw new ORPCError('FORBIDDEN', { message: 'You can only update your own account settings' });
+          throw new ORPCError('FORBIDDEN', {
+            message: 'You can only update your own account settings'
+          });
         }
         const updatedUser = await context.db.auth.updateUser(
           input.id,
@@ -242,36 +246,44 @@ export const authProtectedORPCRouter = protectedRouter.router({
       }
     }),
 
-    getGlobalRoles: protectedRouter.authProtected.getGlobalRoles.handler(async ({ input, context }) => {
-      try {
-        const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
-        requireGlobalPermission(authCtx, 'manage_workspace_roles');
-        const assignments = await context.db.auth.listGlobalRoleAssignments(input.id);
-        return assignments.map(a => ({
-          user_id: a.user_id,
-          role: a.role,
-          created_at: a.created_at instanceof Date ? a.created_at.toISOString() : a.created_at
-        }));
-      } catch (error) {
-        return toORPCError(error);
+    getGlobalRoles: protectedRouter.authProtected.getGlobalRoles.handler(
+      async ({ input, context }) => {
+        try {
+          const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
+          requireGlobalPermission(authCtx, 'manage_workspace_roles');
+          const assignments = await context.db.auth.listGlobalRoleAssignments(input.id);
+          return assignments.map(a => ({
+            user_id: a.user_id,
+            role: a.role,
+            created_at: a.created_at instanceof Date ? a.created_at.toISOString() : a.created_at
+          }));
+        } catch (error) {
+          return toORPCError(error);
+        }
       }
-    }),
+    ),
 
-    replaceGlobalRoles: protectedRouter.authProtected.replaceGlobalRoles.handler(async ({ input, context }) => {
-      try {
-        const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
-        requireGlobalPermission(authCtx, 'manage_workspace_roles');
-        const roles = parseRequestedGlobalRoles(input.roles);
-        const assignments = await context.db.auth.replaceGlobalRoleAssignments(input.id, roles, new Date());
-        return assignments.map(a => ({
-          user_id: a.user_id,
-          role: a.role,
-          created_at: a.created_at instanceof Date ? a.created_at.toISOString() : a.created_at
-        }));
-      } catch (error) {
-        return toORPCError(error);
+    replaceGlobalRoles: protectedRouter.authProtected.replaceGlobalRoles.handler(
+      async ({ input, context }) => {
+        try {
+          const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
+          requireGlobalPermission(authCtx, 'manage_workspace_roles');
+          const roles = parseRequestedGlobalRoles(input.roles);
+          const assignments = await context.db.auth.replaceGlobalRoleAssignments(
+            input.id,
+            roles,
+            new Date()
+          );
+          return assignments.map(a => ({
+            user_id: a.user_id,
+            role: a.role,
+            created_at: a.created_at instanceof Date ? a.created_at.toISOString() : a.created_at
+          }));
+        } catch (error) {
+          return toORPCError(error);
+        }
       }
-    })
+    )
   }
 });
 

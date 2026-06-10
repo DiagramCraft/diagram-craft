@@ -2,6 +2,7 @@ import { HTTPError } from 'h3';
 import { ORPCError, ValidationError, onError } from '@orpc/server';
 import { z } from 'zod';
 import { createLogger } from './logger';
+import { OpenAPIHandlerOptions } from '@orpc/openapi/fetch';
 
 const orpcLogger = createLogger('orpc');
 
@@ -37,7 +38,7 @@ export const toORPCError = (error: unknown): never => {
 // Catches framework-level errors (e.g. output validation failures) that bypass
 // the per-handler try-catch and would otherwise go unlogged.
 export const orpcErrorInterceptors = [
-  onError((error: unknown) => {
+  onError(async (error: unknown) => {
     if (
       error instanceof ORPCError &&
       error.code === 'INTERNAL_SERVER_ERROR' &&
@@ -52,4 +53,5 @@ export const orpcErrorInterceptors = [
       );
     }
   })
-];
+  // biome-ignore lint/suspicious/noExplicitAny: Needed
+] as NoInfer<OpenAPIHandlerOptions<Record<PropertyKey, any>>>['clientInterceptors'];
