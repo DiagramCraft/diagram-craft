@@ -12,6 +12,7 @@ import {
   updateWorkspace,
   deleteWorkspace
 } from './workspaceOperations';
+import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -47,6 +48,13 @@ export const workspaceManagementORPCRouter = wsRouter.router({
     remove: wsRouter.workspaces.remove.handler(async ({ input, context }) => {
       try {
         return await deleteWorkspace(context.db, input.id, context.event, context.storage);
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    templates: wsRouter.workspaces.templates.handler(async () => {
+      try {
+        return SCHEMA_TEMPLATES.map(({ id, name, description }) => ({ id, name, description }));
       } catch (error) {
         return toORPCError(error);
       }

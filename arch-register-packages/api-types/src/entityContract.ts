@@ -157,6 +157,95 @@ export const entityRelationsSchema = z.object({
   incoming: z.array(entityRelationSchema)
 });
 
+// ── Entity Access ─────────────────────────────────────────────
+
+const entityGrantSchema = z.object({
+  id: z.string(),
+  workspace: z.string(),
+  entity_id: z.string(),
+  principal_type: z.enum(['user', 'team']),
+  principal_id: z.string(),
+  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']),
+  applies_to: z.enum(['self', 'subtree']),
+  created_at: z.string()
+});
+
+const entityGrantInputSchema = z.object({
+  principal_type: z.enum(['user', 'team']),
+  principal_id: z.string(),
+  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']),
+  applies_to: z.enum(['self', 'subtree'])
+});
+
+export const entityAccessSchema = z.object({
+  owner: z.string().nullable(),
+  visibility_mode: z.enum(['public', 'restricted']).nullable(),
+  grants: z.array(entityGrantSchema)
+});
+
+export const getEntityAccessRequestSchema = z.object({
+  workspace: z.string(),
+  id: z.string()
+});
+
+export const updateEntityAccessRequestSchema = z.object({
+  workspace: z.string(),
+  id: z.string(),
+  grants: z.array(entityGrantInputSchema)
+});
+
+// ── Import ────────────────────────────────────────────────────
+
+const importNameMatchSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  namespace: z.string()
+});
+
+const importConstraintViolationSchema = z.object({
+  type: z.enum(['duplicate_slug', 'wrong_workspace', 'wrong_schema']),
+  message: z.string()
+});
+
+const importEntityRowSchema = z.object({
+  rowNumber: z.number(),
+  errors: z.array(z.string()),
+  entity: z.record(z.string(), z.unknown()).nullable(),
+  isUpdate: z.boolean(),
+  matchType: z.enum(['id', 'slug', 'name', 'none']),
+  nameMatches: z.array(importNameMatchSchema),
+  existingId: z.string().nullable().optional(),
+  existingEntity: z.record(z.string(), z.unknown()).nullable(),
+  constraintViolations: z.array(importConstraintViolationSchema).optional()
+});
+
+export const importParseResponseSchema = z.object({
+  schemaId: z.string(),
+  schemaName: z.string(),
+  totalRows: z.number(),
+  validRows: z.number(),
+  entities: z.array(importEntityRowSchema)
+});
+
+export const importParseRequestSchema = z.object({
+  workspace: z.string(),
+  schemaId: z.string(),
+  csvContent: z.string()
+});
+
+export const importCommitRequestSchema = z.object({
+  workspace: z.string(),
+  schemaId: z.string(),
+  entities: z.array(z.record(z.string(), z.unknown()))
+});
+
+export const importCommitResponseSchema = z.object({
+  created: z.number(),
+  updated: z.number(),
+  ids: z.array(z.string())
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const workspaceEntityContract = {
@@ -196,6 +285,22 @@ export const workspaceEntityContract = {
     remove: oc
       .route({ method: 'DELETE', path: '/{workspace}/data/{id}' })
       .input(getEntityRequestSchema)
-      .output(deleteEntityResponseSchema)
+      .output(deleteEntityResponseSchema),
+    getAccess: oc
+      .route({ method: 'GET', path: '/{workspace}/data/{id}/access' })
+      .input(getEntityAccessRequestSchema)
+      .output(entityAccessSchema),
+    updateAccess: oc
+      .route({ method: 'PUT', path: '/{workspace}/data/{id}/access' })
+      .input(updateEntityAccessRequestSchema)
+      .output(entityAccessSchema),
+    importParse: oc
+      .route({ method: 'POST', path: '/{workspace}/data/import/parse' })
+      .input(importParseRequestSchema)
+      .output(importParseResponseSchema),
+    importCommit: oc
+      .route({ method: 'POST', path: '/{workspace}/data/import/commit' })
+      .input(importCommitRequestSchema)
+      .output(importCommitResponseSchema)
   }
 };

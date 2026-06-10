@@ -12,7 +12,7 @@ import {
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError } from '../../utils/http';
 import { toApiProject, toApiProjectFile, toApiProjectDetail } from './projectHelpers';
-import type { FileTree, Project, ProjectDetail } from '@arch-register/api-types';
+import type { FileTree, Project, ProjectDetail, ProjectFile } from '@arch-register/api-types';
 import type { ProjectFileDbResult } from './db/projectDatabase';
 import { HTTPError } from 'h3';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
@@ -313,5 +313,84 @@ export const listProjectFiles = async (
     return buildFileTree(files);
   } catch (e) {
     return handleError(e, 'Failed to list files');
+  }
+};
+
+export const createFolder = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  folderPath: string,
+  event: AuthenticatedEvent
+): Promise<{ success: boolean; path: string; marker: ProjectFile | null }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const markerPath = `${folderPath}/.keep`;
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to modify this project'
+    );
+    const timestamp = new Date();
+    const row = await db.project.createProjectFileIfAbsent({
+      workspace: ws,
+      project_id: id,
+      path: markerPath,
+      name: '.keep',
+      size_bytes: 0,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: timestamp,
+      updated_at: timestamp
+    });
+    if (row) {
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: ws,
+        operation: 'create',
+        entityType: 'project_file',
+        entityId: row.id,
+        entityName: folderPath,
+        changes: { new: { path: folderPath, type: 'folder' } },
+        metadata: { project_id: id, path: folderPath, is_folder: true }
+      });
+    }
+    return { success: true, path: folderPath, marker: row ? toApiProjectFile(row) : null };
+  } catch (e) {
+    return handleError(e, 'Failed to create folder');
+  }
+};
+
+export const renameFolder = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  oldPath: string,
+  newPath: string,
+  event: AuthenticatedEvent
+): Promise<{ success: boolean; message: string; count: number }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to modify this project'
+    );
+    const result = await db.project.renameProjectFileFolder(ws, id, oldPath, newPath, new Date());
+    httpAssert.true(result.length > 0, {
+      status: 404,
+      message: `No files found under folder '${oldPath}'`
+    });
+    return { success: true, message: `Renamed ${result.length} file(s)`, count: result.length };
+  } catch (e) {
+    return handleError(e, 'Failed to rename folder');
   }
 };

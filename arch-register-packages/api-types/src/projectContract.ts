@@ -107,6 +107,31 @@ export const listProjectFilesRequestSchema = z.object({
   id: z.string()
 });
 
+export const createFolderRequestSchema = z.object({
+  workspace: z.string(),
+  id: z.string(),
+  path: z.string()
+});
+
+const createFolderResponseSchema = z.object({
+  success: z.boolean(),
+  path: z.string(),
+  marker: projectFileSchema.nullable()
+});
+
+export const renameFolderRequestSchema = z.object({
+  workspace: z.string(),
+  id: z.string(),
+  oldPath: z.string(),
+  newPath: z.string()
+});
+
+const renameFolderResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  count: z.number()
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const projectContract = {
@@ -134,6 +159,14 @@ export const projectContract = {
     listFiles: oc
       .route({ method: 'GET', path: '/{workspace}/projects/{id}/files' })
       .input(listProjectFilesRequestSchema)
-      .output(fileTreeSchema)
+      .output(fileTreeSchema),
+    createFolder: oc
+      .route({ method: 'POST', path: '/{workspace}/projects/{id}/folders' })
+      .input(createFolderRequestSchema)
+      .output(createFolderResponseSchema),
+    renameFolder: oc
+      .route({ method: 'PUT', path: '/{workspace}/projects/{id}/folders/rename' })
+      .input(renameFolderRequestSchema)
+      .output(renameFolderResponseSchema)
   }
 };

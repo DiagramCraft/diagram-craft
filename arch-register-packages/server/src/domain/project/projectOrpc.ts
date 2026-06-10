@@ -12,7 +12,9 @@ import {
   createProject,
   updateProject,
   deleteProject,
-  listProjectFiles
+  listProjectFiles,
+  createFolder,
+  renameFolder
 } from './projectOperations';
 
 type ORPCContext = {
@@ -69,6 +71,33 @@ export const projectORPCRouter = projectRouter.router({
     listFiles: projectRouter.projects.listFiles.handler(async ({ input, context }) => {
       try {
         return await listProjectFiles(context.db, input.workspace, input.id, context.event);
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    createFolder: projectRouter.projects.createFolder.handler(async ({ input, context }) => {
+      try {
+        return await createFolder(
+          context.db,
+          input.workspace,
+          input.id,
+          input.path,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    renameFolder: projectRouter.projects.renameFolder.handler(async ({ input, context }) => {
+      try {
+        return await renameFolder(
+          context.db,
+          input.workspace,
+          input.id,
+          input.oldPath,
+          input.newPath,
+          context.event
+        );
       } catch (error) {
         return toORPCError(error);
       }

@@ -3,22 +3,16 @@ import type { AIGenerateRequest } from '../ai/aiServer';
 import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import type { DatabaseAdapter } from '../../db/database';
-import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { toDiagramCraftData, toDiagramCraftSchema } from './diagramCraftTransforms';
-import { Entity, SchemaDbResult } from '../catalog/db/catalogDatabase';
 
-const MAX_REQUEST_SIZE = 1 * 1024 * 1024;
-const CONTENT_TYPE_JSON = 'application/json';
-const DIAGRAM_CRAFT_AI_BASE = '/api/:workspace/ai';
-const DIAGRAM_CRAFT_SCHEMAS_BASE = '/api/public/:workspace/schemas';
-const DIAGRAM_CRAFT_DATA_BASE = '/api/public/:workspace/data';
-
-const handleDiagramCraftError = (error: unknown, fallback: string): never =>
-  handleDbError(error, fallback);
+// SSE route base — note /api/sse prefix for streaming routes
+const SSE_BASE = '/api/sse/:workspace/ai';
 
 export const validateDiagramCraftAIRequestHeaders = (event: H3Event<EventHandlerRequest>) => {
+  const CONTENT_TYPE_JSON = 'application/json';
+  const MAX_REQUEST_SIZE = 1 * 1024 * 1024;
+
   const contentTypeStr = event.req.headers.get('content-type');
   httpAssert.true(contentTypeStr?.startsWith(CONTENT_TYPE_JSON), {
     status: 415,
@@ -87,35 +81,9 @@ export const toDiagramCraftAIHttpError = (error: unknown, fallbackMessage: strin
 export const createDiagramCraftRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
 
-  router.get(
-    DIAGRAM_CRAFT_SCHEMAS_BASE,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      try {
-        const rows = (await db.catalog.listSchemas(workspace)) as SchemaDbResult[];
-        const enums = await db.catalog.listEnums(workspace);
-        return rows.map(row => toDiagramCraftSchema(row, enums));
-      } catch (error) {
-        handleDiagramCraftError(error, 'Failed to retrieve Diagram Craft schemas');
-      }
-    })
-  );
-
-  router.get(
-    DIAGRAM_CRAFT_DATA_BASE,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      try {
-        const rows = (await db.catalog.listEntities(workspace)) as Entity[];
-        return rows.map(toDiagramCraftData);
-      } catch (error) {
-        handleDiagramCraftError(error, 'Failed to retrieve Diagram Craft data');
-      }
-    })
-  );
-
+  // POST /api/sse/:workspace/ai/generate -- SSE-capable AI generate (permanent REST route)
   router.post(
-    `${DIAGRAM_CRAFT_AI_BASE}/generate`,
+    `${SSE_BASE}/generate`,
     defineHandler(async event => {
       validateDiagramCraftAIRequestHeaders(event);
 

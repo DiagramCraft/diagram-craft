@@ -6,14 +6,15 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
-import { encrypt } from '../../utils/encryption';
 import { resolveAiConfig, createAiTextAdapter } from './tanstackAiAdapter';
 import { buildSystemPrompt } from './systemPromptBuilder';
 import { createAiChatTools } from './chatTools';
+import { encrypt } from '../../utils/encryption';
 import type { AiConfigInputDbUpsert } from '../../db/database';
-import { AiConfigDbResult } from './db/aiDatabase';
+import type { AiConfigDbResult } from './db/aiDatabase';
 
-const BASE = '/api/:workspace/ai';
+// SSE route base — note /api/sse prefix for streaming routes
+const SSE_BASE = '/api/sse/:workspace/ai';
 
 type ChatChunk = {
   type: string;
@@ -80,7 +81,18 @@ export const extractUserTextContent = (message: {
 export const buildConversationAutoTitle = (text: string) =>
   text.length > 50 ? `${text.substring(0, 47)}...` : text;
 
-export const createAiConfigResponse = (workspace: string, config: AiConfigDbResult | null) => {
+export const createAiConfigResponse = (workspace: string, config: AiConfigDbResult | null): {
+  workspace: string;
+  provider: 'openrouter' | 'openai';
+  base_url: string | null;
+  model: string | null;
+  temperature: number | null;
+  system_prompt: string | null;
+  enabled: boolean;
+  has_api_key: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+} => {
   if (!config) {
     return {
       workspace,
@@ -105,8 +117,8 @@ export const createAiConfigResponse = (workspace: string, config: AiConfigDbResu
     system_prompt: config.system_prompt,
     enabled: config.enabled,
     has_api_key: !!config.api_key_enc,
-    created_at: config.created_at,
-    updated_at: config.updated_at
+    created_at: config.created_at instanceof Date ? config.created_at.toISOString() : config.created_at,
+    updated_at: config.updated_at instanceof Date ? config.updated_at.toISOString() : config.updated_at
   };
 };
 
@@ -249,9 +261,9 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   const createTools = deps.createAiChatToolsImpl ?? createAiChatTools;
   const makeId = deps.randomId ?? randomUUID;
 
-  // POST /api/:workspace/ai/chat -- streaming chat via TanStack AI SSE
+  // POST /api/sse/:workspace/ai/chat -- streaming chat via TanStack AI SSE
   router.post(
-    `${BASE}/chat`,
+    `${SSE_BASE}/chat`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
@@ -318,7 +330,6 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
         }
       }
 
-      // Wrap stream to capture and persist the assistant message after it completes
       let wrappedStream = stream as AsyncIterable<unknown>;
 
       if (conversationId) {
@@ -341,228 +352,6 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
 
       // biome-ignore lint/suspicious/noExplicitAny: false positive
       return toSseResponse(wrappedStream as any, { abortController });
-    })
-  );
-
-  // GET /api/:workspace/ai/conversations
-  router.get(
-    `${BASE}/conversations`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.view');
-      const user = (event as AuthenticatedEvent).context.user;
-      return await db.ai.listConversations(workspace, user.id);
-    })
-  );
-
-  // POST /api/:workspace/ai/conversations
-  router.post(
-    `${BASE}/conversations`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.view');
-      const user = (event as AuthenticatedEvent).context.user;
-
-      const body = (await event.req.json().catch(() => undefined)) as
-        | { title?: unknown }
-        | undefined;
-      const title =
-        typeof body?.title === 'string' && body.title.length > 0 ? body.title : 'New conversation';
-
-      const now = new Date();
-      return await db.ai.createConversation({
-        id: makeId(),
-        workspace,
-        user_id: user.id,
-        title,
-        created_at: now,
-        updated_at: now
-      });
-    })
-  );
-
-  // PATCH /api/:workspace/ai/conversations/:conversationId
-  router.patch(
-    `${BASE}/conversations/:conversationId`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.view');
-
-      const conversationId = event.context.params?.['conversationId'];
-      httpAssert.string(conversationId, { message: 'conversationId is required' });
-
-      const conversation = await db.ai.getConversation(workspace, conversationId);
-      httpAssert.present(conversation, { status: 404, message: 'Conversation not found' });
-
-      const user = (event as AuthenticatedEvent).context.user;
-      httpAssert.true(conversation.user_id === user.id, {
-        status: 403,
-        message: "Cannot modify another user's conversation"
-      });
-
-      const body = (await event.req.json().catch(() => undefined)) as
-        | { title?: unknown }
-        | undefined;
-      httpAssert.present(body, { message: 'Request body is required' });
-
-      const title = body.title;
-      httpAssert.string(title, { message: 'title is required' });
-
-      const updated = await db.ai.updateConversationTitle(workspace, conversationId, title);
-      httpAssert.present(updated, { status: 404, message: 'Conversation not found' });
-      return updated;
-    })
-  );
-
-  // DELETE /api/:workspace/ai/conversations/:conversationId
-  router.delete(
-    `${BASE}/conversations/:conversationId`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.view');
-
-      const conversationId = event.context.params?.['conversationId'];
-      httpAssert.string(conversationId, { message: 'conversationId is required' });
-
-      const conversation = await db.ai.getConversation(workspace, conversationId);
-      httpAssert.present(conversation, { status: 404, message: 'Conversation not found' });
-
-      const user = (event as AuthenticatedEvent).context.user;
-      httpAssert.true(conversation.user_id === user.id, {
-        status: 403,
-        message: "Cannot delete another user's conversation"
-      });
-
-      const deleted = await db.ai.deleteConversation(workspace, conversationId);
-      httpAssert.present(deleted, { status: 404, message: 'Conversation not found' });
-      return deleted;
-    })
-  );
-
-  // GET /api/:workspace/ai/conversations/:conversationId/messages
-  router.get(
-    `${BASE}/conversations/:conversationId/messages`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.view');
-
-      const conversationId = event.context.params?.['conversationId'];
-      httpAssert.string(conversationId, { message: 'conversationId is required' });
-
-      const conversation = await db.ai.getConversation(workspace, conversationId);
-      httpAssert.present(conversation, { status: 404, message: 'Conversation not found' });
-
-      const user = (event as AuthenticatedEvent).context.user;
-      httpAssert.true(conversation.user_id === user.id, {
-        status: 403,
-        message: "Cannot access another user's conversation"
-      });
-
-      return await db.ai.listMessages(conversationId);
-    })
-  );
-
-  // GET /api/:workspace/ai/config
-  router.get(
-    `${BASE}/config`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.settings');
-
-      const config = await db.ai.getAiConfig(workspace);
-      return createAiConfigResponse(workspace, config);
-    })
-  );
-
-  // PUT /api/:workspace/ai/config
-  router.put(
-    `${BASE}/config`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.settings');
-
-      const body = (await event.req.json().catch(() => undefined)) as
-        | Record<string, unknown>
-        | undefined;
-      const input = buildAiConfigInput(body);
-
-      const config = await db.ai.upsertAiConfig(workspace, input);
-      return createAiConfigResponse(workspace, config);
-    })
-  );
-
-  // POST /api/:workspace/ai/extract -- entity extraction from text
-  router.post(
-    `${BASE}/extract`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireWorkspaceCapability(authCtx, 'ws.view');
-
-      const aiConfig = await resolveAi(db, workspace);
-      if (!aiConfig) {
-        throw new HTTPError({ status: 503, message: 'AI is not configured for this workspace' });
-      }
-
-      const body = (await event.req.json().catch(() => undefined)) as
-        | { text?: unknown }
-        | undefined;
-      httpAssert.present(body, { message: 'Request body is required' });
-      httpAssert.string(body.text, { message: 'text is required' });
-
-      const schemas = await db.catalog.listSchemas(workspace);
-      const schemaDescriptions = schemas
-        .map(s => {
-          const fields = s.fields.map(f => `${f.name} (${f.type})`).join(', ');
-          return `- ${s.name} (id: ${s.id}): fields: ${fields}`;
-        })
-        .join('\n');
-
-      const extractPrompt = [
-        'You are an entity extraction assistant. Extract architecture entities from the provided text.',
-        '',
-        '## Available schemas',
-        schemaDescriptions,
-        '',
-        '## Instructions',
-        '- Extract entities that match the available schemas.',
-        '- For each entity, provide: name, schema_id, and field values.',
-        '- For reference and containment fields, provide the NAMES of related entities (not IDs).',
-        '- If multiple related entities, separate names with commas.',
-        '- Include a confidence score (0-1) for each extracted entity.',
-        '- Include the source text snippet that supports each extraction.',
-        '- Return a JSON array of extracted entities.',
-        '',
-        '## Output format',
-        'Return ONLY valid JSON in this format:',
-        '```json',
-        '[{',
-        '  "name": "Entity Name",',
-        '  "schema_id": "schema-uuid",',
-        '  "fields": { "fieldName": "value", "relationField": "RelatedEntity1, RelatedEntity2" },',
-        '  "confidence": 0.85,',
-        '  "source": "relevant text snippet"',
-        '}]',
-        '```'
-      ].join('\n');
-
-      const adapter = createAdapter(aiConfig);
-      const result = await chatImpl({
-        adapter,
-        messages: [{ role: 'user', content: body.text }],
-        systemPrompts: [extractPrompt],
-        temperature: 0.3,
-        stream: false
-      });
-
-      return parseExtractResponse(result as string);
     })
   );
 

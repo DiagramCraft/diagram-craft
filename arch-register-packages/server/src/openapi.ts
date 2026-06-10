@@ -12,7 +12,11 @@ import {
   auditContract,
   watchContract,
   searchContract,
-  workspaceTemplateContract
+  workspaceTemplateContract,
+  authPublicContract,
+  authProtectedContract,
+  aiContract,
+  diagramCraftContract
 } from '@arch-register/api-types';
 
 export const allContracts = {
@@ -26,7 +30,11 @@ export const allContracts = {
   ...auditContract,
   ...watchContract,
   ...searchContract,
-  ...workspaceTemplateContract
+  ...workspaceTemplateContract,
+  ...authPublicContract,
+  ...authProtectedContract,
+  ...aiContract,
+  ...diagramCraftContract
 };
 
 let generatedUnifiedSpec: Promise<object> | null = null;

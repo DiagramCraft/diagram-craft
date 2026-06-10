@@ -78,8 +78,8 @@ describe('ai chat route helpers', () => {
       system_prompt: 'Be concise',
       enabled: true,
       has_api_key: true,
-      created_at: now,
-      updated_at: now
+      created_at: now.toISOString(),
+      updated_at: now.toISOString()
     });
   });
 

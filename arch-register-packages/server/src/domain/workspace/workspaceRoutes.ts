@@ -1,21 +1,8 @@
 import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/api-types/colors';
 import { randomUUID } from 'node:crypto';
-import { H3, defineHandler } from 'h3';
-import type { DatabaseAdapter } from '../../db/database';
 import { slugify } from '../../utils/http';
-import type { StorageAdapter } from '../../storage/storage';
-import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
-import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
 import { WorkspaceDbResult } from './db/workspaceDatabase';
-import {
-  listWorkspaces,
-  createWorkspace,
-  updateWorkspace,
-  deleteWorkspace
-} from './workspaceOperations';
-
-const BASE = '/api/workspaces';
 
 export const shortCode = (name: string): string =>
   name
@@ -140,82 +127,3 @@ export const normalizeReplicationInclude = (include: unknown) =>
       : ['schemas', 'settings']
   );
 
-export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdapter) {
-  const router = new H3();
-
-  router.get(
-    BASE,
-    defineHandler(async () => {
-      return await listWorkspaces(db);
-    })
-  );
-
-  router.get(
-    `${BASE}/templates`,
-    defineHandler(async () => {
-      return SCHEMA_TEMPLATES.map(({ id, name, description }) => ({ id, name, description }));
-    })
-  );
-
-  router.post(
-    BASE,
-    defineHandler(async event => {
-      const body = await event.req.json().catch(() => undefined);
-      httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      const b = body as Record<string, unknown>;
-      httpAssert.string(b['name'], { message: 'name is required and must be a string' });
-      return await createWorkspace(
-        db,
-        {
-          name: b['name'] as string,
-          description: typeof b['description'] === 'string' ? b['description'] : undefined,
-          color: typeof b['color'] === 'string' ? b['color'] : undefined,
-          slug: typeof b['slug'] === 'string' ? b['slug'] : undefined,
-          badge: typeof b['badge'] === 'string' ? b['badge'] : undefined,
-          template: typeof b['template'] === 'string' ? b['template'] : undefined,
-          replicate_from: typeof b['replicate_from'] === 'string' ? b['replicate_from'] : undefined,
-          include: Array.isArray(b['include']) ? (b['include'] as string[]) : undefined
-        },
-        event as AuthenticatedEvent
-      );
-    })
-  );
-
-  router.put(
-    `${BASE}/:id`,
-    defineHandler(async event => {
-      const id = event.context.params?.['id'];
-      httpAssert.string(id, { message: 'id is required' });
-      const body = await event.req.json().catch(() => undefined);
-      httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      const b = body as Record<string, unknown>;
-      httpAssert.string(b['name'], {
-        status: 400,
-        message: 'name is required and must be a string'
-      });
-      return await updateWorkspace(
-        db,
-        id,
-        {
-          name: b['name'] as string,
-          description: typeof b['description'] === 'string' ? b['description'] : undefined,
-          url_slug: typeof b['url_slug'] === 'string' ? b['url_slug'] : undefined,
-          short_code: typeof b['short_code'] === 'string' ? b['short_code'] : undefined,
-          color: typeof b['color'] === 'string' ? b['color'] : undefined
-        },
-        event as AuthenticatedEvent
-      );
-    })
-  );
-
-  router.delete(
-    `${BASE}/:id`,
-    defineHandler(async event => {
-      const id = event.context.params?.['id'];
-      httpAssert.string(id, { message: 'id is required' });
-      return await deleteWorkspace(db, id, event as AuthenticatedEvent, storage);
-    })
-  );
-
-  return router;
-}

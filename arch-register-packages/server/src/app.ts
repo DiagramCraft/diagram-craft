@@ -1,15 +1,13 @@
 import { readFile } from 'node:fs/promises';
-import { H3, defineHandler, handleCors, getRequestPath, getMethod } from 'h3';
+import { defineHandler, getMethod, getRequestPath, H3, handleCors } from 'h3';
 import type { DatabaseAdapter } from './db/database';
 import type { StorageAdapter } from './storage/storage';
 import { createLogger } from './utils/logger';
 import { createUnifiedOpenAPISpecHandler } from './openapi';
 import { createProjectRoutes } from './domain/project/projectRoutes';
-import { createDataRoutes } from './domain/catalog/dataRoutes';
-import { createWorkspaceRoutes } from './domain/workspace/workspaceRoutes';
 import { createAiChatRoutes } from './domain/ai/aiRoutes';
 import { createDiagramCraftRoutes } from './domain/diagram/diagramCraftRoutes';
-import { createAuthRoutes, createAuthProtectedRoutes } from './domain/auth/authRoutes';
+import { createOidcCallbackRoute } from './domain/auth/authRoutes';
 import { createTemplateRoutes } from './domain/catalog/templateRoutes';
 import { requireAuth } from './middleware/auth';
 import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
@@ -23,6 +21,10 @@ import { createProjectORPCHandler } from './domain/project/projectOrpc';
 import { createAuditORPCHandler } from './domain/audit/auditOrpc';
 import { createWatchORPCHandler } from './domain/watch/watchOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
+import { createPublicAuthORPCHandler, createProtectedAuthORPCHandler } from './domain/auth/authOrpc';
+import { createAiORPCHandler } from './domain/ai/aiOrpc';
+import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
+import { createDownloadRoutes } from './domain/catalog/downloadRoutes';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -84,14 +86,14 @@ export const createApp = (
 
   app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
 
-  app.use(createAuthRoutes(db));
+  // Public routes (no auth required)
+  app.use(createPublicAuthORPCHandler(db));
+  app.use(createOidcCallbackRoute(db));
 
-  const authMiddleware = requireAuth(db.auth);
-  app.use(authMiddleware);
+  app.use(requireAuth(db.auth));
 
-  app.use(createAuthProtectedRoutes(db));
-  app.use(createDataRoutes(db));
-  app.use(createWorkspaceRoutes(db, storage));
+  // Protected routes (auth required)
+  app.use(createProtectedAuthORPCHandler(db));
   app.use(createWorkspaceEnumORPCHandler(db));
   app.use(createWorkspaceSchemaORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));
@@ -103,10 +105,13 @@ export const createApp = (
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
   app.use(createSearchORPCHandler(db));
-  app.use(createDiagramCraftRoutes(db));
+  app.use(createAiORPCHandler(db));
+  app.use(createDiagramCraftORPCHandler(db));
+  app.use(createDownloadRoutes(db));
   app.use(createTemplateRoutes(db));
   app.use(createProjectRoutes(db, storage));
   app.use(createAiChatRoutes(db, options.routeOverrides?.aiChat));
+  app.use(createDiagramCraftRoutes(db));
 
   return app;
 };

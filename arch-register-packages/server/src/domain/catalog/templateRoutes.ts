@@ -10,7 +10,6 @@ import {
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
 import { toApiProjectFile } from '../project/projectHelpers';
-import { listAllTemplates, listProjectTemplates } from './templateOperations';
 
 const BASE = '/api/:workspace';
 
@@ -45,29 +44,6 @@ const getParam = (event: H3Event, name: string) =>
 
 export const createTemplateRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
-
-  // GET /api/:workspace/templates
-  // Returns all templates in the workspace (workspace-level and all project-level)
-  router.get(
-    `${BASE}/templates`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      return await listAllTemplates(db, workspace, authCtx);
-    })
-  );
-
-  // GET /api/:workspace/projects/:projectId/templates
-  // Returns templates available for a specific project (workspace + project templates)
-  router.get(
-    `${BASE}/projects/:projectId/templates`,
-    defineHandler(async event => {
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const projectId = getParam(event, 'projectId');
-      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      return await listProjectTemplates(db, workspace, projectId, authCtx);
-    })
-  );
 
   // PUT /api/:workspace/projects/:projectId/template-status/**:path
   // Toggle template status for a diagram (REST-only: wildcard path can't be represented in OpenAPI)

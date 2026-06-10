@@ -47,6 +47,12 @@ const deleteWorkspaceResponseSchema = z.object({
   message: z.string()
 });
 
+const workspaceTemplateSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string()
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const workspaceManagementContract = {
@@ -66,6 +72,10 @@ export const workspaceManagementContract = {
     remove: oc
       .route({ method: 'DELETE', path: '/workspaces/{id}' })
       .input(deleteWorkspaceRequestSchema)
-      .output(deleteWorkspaceResponseSchema)
+      .output(deleteWorkspaceResponseSchema),
+    templates: oc
+      .route({ method: 'GET', path: '/workspaces/templates' })
+      .input(z.object({}))
+      .output(z.array(workspaceTemplateSchema))
   }
 };

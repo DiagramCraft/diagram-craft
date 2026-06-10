@@ -126,13 +126,20 @@ export {
   entityFacetsSchema,
   treeResponseSchema,
   entityRelationsSchema,
+  entityAccessSchema,
+  importParseResponseSchema,
+  importCommitResponseSchema,
   listEntitiesRequestSchema,
   getEntityRequestSchema,
   treeRequestSchema,
   facetsRequestSchema,
   createEntityRequestSchema,
   updateEntityRequestSchema,
-  deleteEntityResponseSchema
+  deleteEntityResponseSchema,
+  getEntityAccessRequestSchema,
+  updateEntityAccessRequestSchema,
+  importParseRequestSchema,
+  importCommitRequestSchema
 } from './entityContract';
 
 export {
@@ -183,7 +190,9 @@ export {
   createProjectRequestSchema,
   updateProjectRequestSchema,
   deleteProjectRequestSchema,
-  listProjectFilesRequestSchema
+  listProjectFilesRequestSchema,
+  createFolderRequestSchema,
+  renameFolderRequestSchema
 } from './projectContract';
 
 export {
@@ -204,3 +213,9 @@ export {
 } from './watchContract';
 
 export { searchContract, searchRequestSchema } from './searchContract';
+
+export { authPublicContract, authProtectedContract, authMeResponseSchema } from './authContract';
+
+export { aiContract } from './aiContract';
+
+export { diagramCraftContract } from './diagramCraftContract';
