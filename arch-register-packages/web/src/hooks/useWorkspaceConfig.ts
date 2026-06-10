@@ -1,14 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TeamAssignmentInfo, WorkspaceTeam } from '../lib/api';
-import {
-  listLifecycleStatesORPC,
-  listTeamsORPC,
-  listTeamAssignmentsORPC,
-  updateLifecycleStatesORPC,
-  updateTeamsORPC,
-  updateTeamAssignmentsORPC
-} from '../lib/workspaceConfigORPCClient';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import { orpcClient } from '../lib/orpcClient';
 
 // Query keys factory
 export const workspaceConfigKeys = {
@@ -24,7 +17,7 @@ export const workspaceConfigKeys = {
 export const useLifecycleStates = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: workspaceConfigKeys.lifecycleStates(workspaceSlug),
-    queryFn: () => listLifecycleStatesORPC(workspaceSlug),
+    queryFn: () => orpcClient.config.lifecycleStates.list({ params: { workspace: workspaceSlug } }),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
@@ -33,7 +26,7 @@ export const useLifecycleStates = (workspaceSlug: string, enabled = true) => {
 export const useTeams = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: workspaceConfigKeys.teams(workspaceSlug),
-    queryFn: () => listTeamsORPC(workspaceSlug),
+    queryFn: () => orpcClient.config.teams.list({ params: { workspace: workspaceSlug } }),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
@@ -42,7 +35,7 @@ export const useTeams = (workspaceSlug: string, enabled = true) => {
 export const useTeamAssignments = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: workspaceConfigKeys.teamAssignments(workspaceSlug),
-    queryFn: () => listTeamAssignmentsORPC(workspaceSlug),
+    queryFn: () => orpcClient.config.teamAssignments.list({ params: { workspace: workspaceSlug } }),
     enabled: enabled && !!workspaceSlug,
     staleTime: 2 * 60 * 1000
   });
@@ -54,7 +47,10 @@ export const useUpdateLifecycleStates = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (states: WorkspaceLifecycleState[]) =>
-      updateLifecycleStatesORPC(workspaceId, states),
+      orpcClient.config.lifecycleStates.replace({
+        params: { workspace: workspaceId },
+        body: { states }
+      }),
     onSuccess: updatedStates => {
       // Update the cache with the new states
       queryClient.setQueryData(workspaceConfigKeys.lifecycleStates(workspaceId), updatedStates);
@@ -66,7 +62,11 @@ export const useUpdateTeams = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (teams: WorkspaceTeam[]) => updateTeamsORPC(workspaceId, teams),
+    mutationFn: (teams: WorkspaceTeam[]) =>
+      orpcClient.config.teams.replace({
+        params: { workspace: workspaceId },
+        body: { teams }
+      }),
     onSuccess: updatedTeams => {
       queryClient.setQueryData(workspaceConfigKeys.teams(workspaceId), updatedTeams);
     }
@@ -78,7 +78,10 @@ export const useUpdateTeamAssignments = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (assignments: Array<Pick<TeamAssignmentInfo, 'team_id' | 'user_id' | 'role'>>) =>
-      updateTeamAssignmentsORPC(workspaceId, assignments),
+      orpcClient.config.teamAssignments.replace({
+        params: { workspace: workspaceId },
+        body: { assignments }
+      }),
     onSuccess: updatedAssignments => {
       queryClient.setQueryData(
         workspaceConfigKeys.teamAssignments(workspaceId),

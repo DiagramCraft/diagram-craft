@@ -99,9 +99,21 @@ importers:
 
   arch-register-packages/e2e:
     dependencies:
+      '@arch-register/api-types':
+        specifier: workspace:*
+        version: link:../api-types
       '@arch-register/server':
         specifier: workspace:*
         version: link:../server
+      '@orpc/client':
+        specifier: ^1.14.5
+        version: 1.14.5
+      '@orpc/contract':
+        specifier: ^1.14.5
+        version: 1.14.5
+      '@orpc/openapi-client':
+        specifier: ^1.14.5
+        version: 1.14.5
       h3:
         specifier: ^2.0.1-rc.22
         version: 2.0.1-rc.22

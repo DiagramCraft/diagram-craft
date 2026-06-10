@@ -1,5 +1,5 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
-import { listAuditLogORPC, getAuditStatsORPC } from '../lib/auditORPCClient';
+import { orpcClient } from '../lib/orpcClient';
 
 // Query keys factory
 export const auditKeys = {
@@ -34,7 +34,19 @@ export const useAuditLog = (
 ) => {
   return useQuery({
     queryKey: auditKeys.log(workspaceId, options),
-    queryFn: () => listAuditLogORPC(workspaceId, options),
+    queryFn: () =>
+      orpcClient.audit.list({
+        params: { workspace: workspaceId },
+        query: {
+          entityType: options.entityType ?? undefined,
+          entityId: options.entityId ?? undefined,
+          operation: options.operation ?? undefined,
+          startDate: options.startDate ?? undefined,
+          endDate: options.endDate ?? undefined,
+          limit: options.limit ?? undefined,
+          offset: options.offset ?? undefined
+        }
+      }),
     enabled: queryOptions?.enabled ?? !!workspaceId
   });
 };
@@ -43,7 +55,7 @@ export const useAuditLog = (
 export const useAuditStats = (workspaceId: string) => {
   return useQuery({
     queryKey: auditKeys.stats(workspaceId),
-    queryFn: () => getAuditStatsORPC(workspaceId),
+    queryFn: () => orpcClient.audit.stats({ params: { workspace: workspaceId } }),
     enabled: !!workspaceId,
     staleTime: 5 * 60 * 1000 // 5 minutes
   });

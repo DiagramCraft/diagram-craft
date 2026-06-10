@@ -12,10 +12,10 @@ import {
   toggleTemplateStatus,
   createDiagramFromTemplate
 } from '../lib/api';
-import { listProjectTemplatesORPC } from '../lib/templateORPCClient';
 import { projectKeys } from './useProjects';
 import { invalidateAuditQueries } from './useAudit';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
+import { orpcClient } from '../lib/orpcClient';
 
 // Query keys factory
 export const projectFileKeys = {
@@ -157,7 +157,10 @@ export const useMoveProjectFile = (workspaceId: string, projectId: string) => {
 export const useProjectTemplates = (workspaceId: string, projectId: string) => {
   return useQuery({
     queryKey: ['project-templates', workspaceId, projectId],
-    queryFn: () => listProjectTemplatesORPC(workspaceId, projectId),
+    queryFn: () =>
+      orpcClient.templates.listForProject({
+        params: { workspace: workspaceId, id: projectId }
+      }),
     enabled: !!workspaceId && !!projectId
   });
 };

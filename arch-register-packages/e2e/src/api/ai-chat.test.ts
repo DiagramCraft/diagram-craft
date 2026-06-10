@@ -150,23 +150,12 @@ const test = createApiTest({
   ]
 });
 
-const headers = (auth: string) => ({
-  'Authorization': auth,
-  'Content-Type': 'application/json'
-});
-
 test.describe('ai chat routes', () => {
   test('GET /api/:workspace/ai/conversations lists only the current user conversations', async ({
-    server,
-    auth,
+    orpc,
     seeded
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/ai/conversations`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Array<Record<string, unknown>>;
+    const body = await orpc.ai.listConversations({ params: { workspace: 'default' } });
     expect(body).toEqual([
       expect.objectContaining({
         id: seeded.conversationId,
@@ -176,60 +165,45 @@ test.describe('ai chat routes', () => {
   });
 
   test('POST /api/:workspace/ai/conversations creates a conversation with default and explicit titles', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const defaultRes = await fetch(`${server.baseUrl}/api/default/ai/conversations`, {
-      method: 'POST',
-      headers: headers(auth),
-      body: JSON.stringify({})
+    const defaultResult = await orpc.ai.createConversation({
+      params: { workspace: 'default' },
+      body: {}
     });
-    expect(defaultRes.status).toBe(200);
-    await expect(defaultRes.json()).resolves.toMatchObject({
+    expect(defaultResult).toMatchObject({
       title: 'New conversation',
       user_id: 'test-admin'
     });
 
-    const customRes = await fetch(`${server.baseUrl}/api/default/ai/conversations`, {
-      method: 'POST',
-      headers: headers(auth),
-      body: JSON.stringify({ title: 'Architecture Q&A' })
+    const customResult = await orpc.ai.createConversation({
+      params: { workspace: 'default' },
+      body: { title: 'Architecture Q&A' }
     });
-    expect(customRes.status).toBe(200);
-    await expect(customRes.json()).resolves.toMatchObject({
+    expect(customResult).toMatchObject({
       title: 'Architecture Q&A',
       user_id: 'test-admin'
     });
   });
 
   test('PATCH, GET messages, and DELETE enforce conversation ownership', async ({
-    server,
-    auth,
+    orpc,
     seeded
   }) => {
-    const patchOwnRes = await fetch(
-      `${server.baseUrl}/api/default/ai/conversations/${seeded.conversationId}`,
-      {
-        method: 'PATCH',
-        headers: headers(auth),
-        body: JSON.stringify({ title: 'Renamed conversation' })
-      }
-    );
-    expect(patchOwnRes.status).toBe(200);
-    await expect(patchOwnRes.json()).resolves.toMatchObject({
+    const patched = await orpc.ai.updateConversation({
+      params: { workspace: 'default', id: seeded.conversationId },
+      body: { title: 'Renamed conversation' }
+    });
+    expect(patched).toMatchObject({
       id: seeded.conversationId,
       title: 'Renamed conversation'
     });
 
-    const ownMessagesRes = await fetch(
-      `${server.baseUrl}/api/default/ai/conversations/${seeded.conversationId}/messages`,
-      {
-        headers: { Authorization: auth }
-      }
-    );
-    expect(ownMessagesRes.status).toBe(200);
-    await expect(ownMessagesRes.json()).resolves.toEqual(
+    const messages = await orpc.ai.listMessages({
+      params: { workspace: 'default', id: seeded.conversationId }
+    });
+    expect(messages).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           conversation_id: seeded.conversationId,
@@ -238,62 +212,44 @@ test.describe('ai chat routes', () => {
       ])
     );
 
-    const forbiddenPatchRes = await fetch(
-      `${server.baseUrl}/api/default/ai/conversations/${seeded.otherConversationId}`,
-      {
-        method: 'PATCH',
-        headers: headers(auth),
-        body: JSON.stringify({ title: 'Nope' })
-      }
-    );
-    expect(forbiddenPatchRes.status).toBe(403);
+    await expect(
+      orpc.ai.updateConversation({
+        params: { workspace: 'default', id: seeded.otherConversationId },
+        body: { title: 'Nope' }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
 
-    const forbiddenMessagesRes = await fetch(
-      `${server.baseUrl}/api/default/ai/conversations/${seeded.otherConversationId}/messages`,
-      {
-        headers: { Authorization: auth }
-      }
-    );
-    expect(forbiddenMessagesRes.status).toBe(403);
+    await expect(
+      orpc.ai.listMessages({
+        params: { workspace: 'default', id: seeded.otherConversationId }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   test('DELETE /api/:workspace/ai/conversations/:conversationId deletes an owned conversation', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const createRes = await fetch(`${server.baseUrl}/api/default/ai/conversations`, {
-      method: 'POST',
-      headers: headers(auth),
-      body: JSON.stringify({ title: 'Disposable conversation' })
+    const created = await orpc.ai.createConversation({
+      params: { workspace: 'default' },
+      body: { title: 'Disposable conversation' }
     });
-    expect(createRes.status).toBe(200);
-    const created = (await createRes.json()) as Record<string, unknown>;
 
-    const deleteRes = await fetch(
-      `${server.baseUrl}/api/default/ai/conversations/${created['id']}`,
-      {
-        method: 'DELETE',
-        headers: { Authorization: auth }
-      }
-    );
-    expect(deleteRes.status).toBe(200);
-    await expect(deleteRes.json()).resolves.toMatchObject({
-      id: created['id'],
+    const deleted = await orpc.ai.deleteConversation({
+      params: { workspace: 'default', id: created.id }
+    });
+    expect(deleted).toMatchObject({
+      id: created.id,
       title: 'Disposable conversation'
     });
   });
 
   test('GET and PUT /api/:workspace/ai/config shape and update AI config', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const getRes = await fetch(`${server.baseUrl}/api/default/ai/config`, {
-      headers: { Authorization: auth }
-    });
-    expect(getRes.status).toBe(200);
-    await expect(getRes.json()).resolves.toMatchObject({
+    const config = await orpc.ai.getConfig({ params: { workspace: 'default' } });
+    expect(config).toMatchObject({
       workspace: seedIds.workspace.default,
       provider: 'openai',
       model: 'gpt-test',
@@ -301,10 +257,9 @@ test.describe('ai chat routes', () => {
       has_api_key: true
     });
 
-    const putRes = await fetch(`${server.baseUrl}/api/default/ai/config`, {
-      method: 'PUT',
-      headers: headers(auth),
-      body: JSON.stringify({
+    const updated = await orpc.ai.updateConfig({
+      params: { workspace: 'default' },
+      body: {
         provider: 'openrouter',
         api_key: null,
         model: 'router-model',
@@ -312,10 +267,9 @@ test.describe('ai chat routes', () => {
         temperature: 0.8,
         system_prompt: 'Use bullets',
         enabled: false
-      })
+      }
     });
-    expect(putRes.status).toBe(200);
-    await expect(putRes.json()).resolves.toMatchObject({
+    expect(updated).toMatchObject({
       workspace: seedIds.workspace.default,
       provider: 'openrouter',
       model: 'router-model',
@@ -327,38 +281,33 @@ test.describe('ai chat routes', () => {
     });
   });
 
-  test('GET /api/:workspace/ai/config returns the default empty config when unset', async ({
-    server,
-    auth,
+  test('GET /api/:workspace/ai/config returns 404 when unset', async ({
+    orpc,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/no-ai/ai/config`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(404);
+    await expect(
+      orpc.ai.getConfig({ params: { workspace: 'no-ai' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   test('POST /api/:workspace/ai/chat streams a reply and persists conversation messages', async ({
     server,
     auth,
+    orpc,
     seeded: _
   }) => {
-    const createConversationRes = await fetch(`${server.baseUrl}/api/default/ai/conversations`, {
-      method: 'POST',
-      headers: headers(auth),
-      body: JSON.stringify({ title: 'New conversation' })
+    const createdConversation = await orpc.ai.createConversation({
+      params: { workspace: 'default' },
+      body: { title: 'New conversation' }
     });
-    expect(createConversationRes.status).toBe(200);
-    const createdConversation = (await createConversationRes.json()) as Record<string, unknown>;
-    const conversationId = String(createdConversation['id']);
+    const conversationId = createdConversation.id;
 
     const prompt =
       'Explain the authentication flow between the frontend, API gateway, and auth service clearly.';
 
     const res = await fetch(`${server.baseUrl}/api/sse/default/ai/chat`, {
       method: 'POST',
-      headers: headers(auth),
+      headers: { Authorization: auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         threadId: 'thread-1',
         runId: 'run-1',
@@ -411,7 +360,7 @@ test.describe('ai chat routes', () => {
 
     const invalidJsonRes = await fetch(`${server.baseUrl}/api/sse/default/ai/chat`, {
       method: 'POST',
-      headers: headers(auth),
+      headers: { Authorization: auth, 'Content-Type': 'application/json' },
       body: 'not-json'
     });
     expect(invalidJsonRes.status).toBe(400);
@@ -421,14 +370,14 @@ test.describe('ai chat routes', () => {
 
     const missingWsRes = await fetch(`${server.baseUrl}/api/sse/missing/ai/chat`, {
       method: 'POST',
-      headers: headers(auth),
+      headers: { Authorization: auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
     expect(missingWsRes.status).toBe(404);
 
     const noConfigRes = await fetch(`${server.baseUrl}/api/sse/no-ai/ai/chat`, {
       method: 'POST',
-      headers: headers(auth),
+      headers: { Authorization: auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         threadId: 'thread-1',
         runId: 'run-1',
@@ -443,20 +392,15 @@ test.describe('ai chat routes', () => {
   });
 
   test('POST /api/:workspace/ai/extract returns parsed entities from the mocked chat result', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/ai/extract`, {
-      method: 'POST',
-      headers: headers(auth),
-      body: JSON.stringify({
-        text: 'Customer Portal exposes a Billing API for account management.'
-      })
+    const result = await orpc.ai.extract({
+      params: { workspace: 'default' },
+      body: { text: 'Customer Portal exposes a Billing API for account management.' }
     });
 
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({
+    expect(result).toEqual({
       entities: [
         {
           name: 'Billing API',

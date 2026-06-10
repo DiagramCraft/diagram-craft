@@ -45,6 +45,8 @@ export async function startTestServer(options: StartTestServerOptions = {}): Pro
 
   const port = (server.address() as { port: number }).port;
 
+  setLogLevel('fatal');
+
   return {
     baseUrl: `http://127.0.0.1:${port}`,
     db,

@@ -1,10 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { auditKeys, invalidateAuditQueries } from './useAudit';
-import {
-  deleteWorkspaceORPC,
-  listWorkspacesORPC,
-  updateWorkspaceORPC
-} from '../lib/workspaceORPCClient';
+import { orpcClient } from '../lib/orpcClient';
 
 // Query keys factory
 export const workspaceKeys = {
@@ -19,7 +15,7 @@ export const workspaceKeys = {
 export const useWorkspaces = () => {
   return useQuery({
     queryKey: workspaceKeys.list(),
-    queryFn: listWorkspacesORPC,
+    queryFn: () => orpcClient.workspaces.list({}),
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
 };
@@ -41,7 +37,7 @@ export const useUpdateWorkspace = () => {
         color?: string;
         description?: string;
       };
-    }) => updateWorkspaceORPC(workspaceId, data),
+    }) => orpcClient.workspaces.update({ params: { workspace: workspaceId }, body: data }),
     onSuccess: async (updatedWorkspace, variables) => {
       // Update the workspace detail cache
       queryClient.setQueryData(workspaceKeys.detail(variables.workspaceId), updatedWorkspace);
@@ -59,7 +55,8 @@ export const useDeleteWorkspace = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (workspaceId: string) => deleteWorkspaceORPC(workspaceId),
+    mutationFn: (workspaceId: string) =>
+      orpcClient.workspaces.remove({ params: { workspace: workspaceId } }),
     onSuccess: () => {
       // Invalidate all workspace queries
       queryClient.invalidateQueries({ queryKey: workspaceKeys.all });
