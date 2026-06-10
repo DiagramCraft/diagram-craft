@@ -55,7 +55,7 @@ type ORPCContext = {
 };
 
 type AiORPCDeps = {
-  chatImpl?: typeof chat;
+  chatImpl?: (options: Record<string, unknown>) => unknown;
   resolveAiConfigImpl?: typeof resolveAiConfig;
   createAiTextAdapterImpl?: typeof createAiTextAdapter;
   buildSystemPromptImpl?: typeof buildSystemPrompt;
