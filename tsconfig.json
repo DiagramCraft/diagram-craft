@@ -8,6 +8,7 @@
     "strictNullChecks": true,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
+    "incremental": true,
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -47,5 +48,6 @@
       "@arch-register/api-types/*": ["./arch-register-packages/api-types/src/*"]
     }
   },
-  "exclude": ["node_modules", "dist", "**/vite.config.ts", "**/playground"]
+  "exclude": ["**/node_modules", "dist", "**/vite.config.ts", "**/playground", "**/.*/"],
+  "include": ["packages", "arch-register-packages"]
 }
