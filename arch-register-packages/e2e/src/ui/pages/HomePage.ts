@@ -22,4 +22,18 @@ export class HomePage extends WorkspacePage {
   expectProjectVisible = async (name: string) => {
     await expect(this.page.getByRole('main').getByText(name, { exact: true })).toBeVisible();
   };
+
+  openNewProjectDialog = async () => {
+    await this.page.getByRole('button', { name: 'New project' }).click();
+    await expect(this.page.getByRole('alertdialog', { name: 'New project' })).toBeVisible();
+  };
+
+  openNewEntityDialog = async () => {
+    await this.page.getByRole('button', { name: 'New entity' }).click();
+    await expect(this.page.getByRole('alertdialog', { name: 'New entity' })).toBeVisible();
+  };
+
+  openProject = async (name: string) => {
+    await this.page.getByRole('button', { name }).click();
+  };
 }

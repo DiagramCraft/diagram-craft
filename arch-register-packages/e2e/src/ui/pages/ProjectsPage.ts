@@ -13,11 +13,16 @@ export class ProjectsPage extends WorkspacePage {
 
   openProject = async (name: string) => {
     await this.workspaceShell.openNav('projects');
-    await expect(this.page.getByRole('main').getByRole('heading', { name })).toBeVisible();
+    await this.expectProjectOpened(name);
   };
 
   expectLoaded = async () => {
     await this.workspaceShell.expectActiveNav('projects');
     await this.workspaceShell.expectMainVisible();
+  };
+
+  expectProjectOpened = async (name: string) => {
+    await this.expectLoaded();
+    await expect(this.page.getByRole('main').getByRole('heading', { name })).toBeVisible();
   };
 }
