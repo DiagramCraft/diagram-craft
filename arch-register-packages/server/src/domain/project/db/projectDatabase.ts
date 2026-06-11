@@ -60,6 +60,7 @@ export type ProjectEntityDbResult = {
   entity_id: string;
   entity_name: string;
   entity_slug: string;
+  entity_description: string;
   entity_schema_id: string | null;
   entity_schema_name: string | null;
   entity_type_id: string | null;

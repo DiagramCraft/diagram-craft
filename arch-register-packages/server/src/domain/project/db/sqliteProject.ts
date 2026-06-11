@@ -13,12 +13,13 @@ const PROJECT_ENTITY_JOIN_SQL = `
     pe.workspace,
     pe.project_id,
     pe.entity_id,
-    e.name       AS entity_name,
-    e.slug       AS entity_slug,
-    e.schema_id  AS entity_schema_id,
-    es.name      AS entity_schema_name,
+    e.name        AS entity_name,
+    e.slug        AS entity_slug,
+    e.description AS entity_description,
+    e.schema_id   AS entity_schema_id,
+    es.name       AS entity_schema_name,
     pe.entity_type AS entity_type_id,
-    pet.label    AS entity_type_label,
+    pet.label     AS entity_type_label,
     pe.is_done
   FROM project_entity pe
   JOIN entity e ON e.id = pe.entity_id

@@ -54,6 +54,7 @@ export const toApiProjectEntity = (row: ProjectEntityDbResult): ProjectEntity =>
   entity_id: row.entity_id,
   entity_name: row.entity_name,
   entity_slug: row.entity_slug,
+  entity_description: row.entity_description,
   entity_schema: row.entity_schema_id
     ? { id: row.entity_schema_id, name: row.entity_schema_name ?? row.entity_schema_id }
     : null,

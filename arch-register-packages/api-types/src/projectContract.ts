@@ -29,6 +29,7 @@ const projectEntitySchema = z.object({
   entity_id: z.string(),
   entity_name: z.string(),
   entity_slug: z.string(),
+  entity_description: z.string(),
   entity_schema: foreignKeySchema.nullable(),
   entity_type: foreignKeySchema.nullable(),
   is_done: z.boolean()

@@ -186,6 +186,7 @@ export const sqliteMappers = {
     entity_id: String(row['entity_id']),
     entity_name: String(row['entity_name']),
     entity_slug: String(row['entity_slug']),
+    entity_description: String(row['entity_description'] ?? ''),
     entity_schema_id: row['entity_schema_id'] == null ? null : String(row['entity_schema_id']),
     entity_schema_name: row['entity_schema_name'] == null ? null : String(row['entity_schema_name']),
     entity_type_id: row['entity_type_id'] == null ? null : String(row['entity_type_id']),

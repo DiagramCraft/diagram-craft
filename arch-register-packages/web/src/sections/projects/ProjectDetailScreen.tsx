@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Select } from '@diagram-craft/app-components/Select';
 import { useEntities } from '../../hooks/useEntities';
 import styles from './ProjectDetailScreen.module.css';
 import { AddFolderDialog } from './AddFolderDialog';
@@ -22,8 +23,13 @@ import {
   TbStar,
   TbCopy,
   TbMessageCircle,
-  TbCheck
+  TbCheck,
+  TbDatabase
 } from 'react-icons/tb';
+import { Chip } from '../../components/Chip';
+import { TypeBadge } from '../../components/TypeBadge';
+import { resolveSchemaColor } from '../../lib/api';
+import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { ApiError, FileEntry, WorkspaceTeam } from '../../lib/api';
@@ -62,7 +68,7 @@ export const ProjectDetailScreen = () => {
   const navigate = useNavigate();
   const { projectId } = useParams({ strict: false }) as { projectId: string };
   const search = useSearch({ strict: false }) as { tab?: string; folder?: string };
-  const { workspaceSlug, teams, projectEntityTypes } = useWorkspaceContext();
+  const { workspaceSlug, teams, projectEntityTypes, schemas } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const folderFilter = search.folder ?? null;
 
@@ -101,8 +107,18 @@ export const ProjectDetailScreen = () => {
   const updateEntityMutation = useUpdateProjectEntity(workspaceId, projectId);
   const removeEntityMutation = useRemoveProjectEntity(workspaceId, projectId);
 
-  const doneCount = projectEntities.filter(e => e.is_done).length;
-  const progressPct = projectEntities.length > 0 ? Math.round((doneCount / projectEntities.length) * 100) : 0;
+  const schemaMap = useMemo(() => {
+    const m = new Map<string, { color: string; icon: string | null }>();
+    schemas.forEach((s, i) => m.set(s.id, { color: resolveSchemaColor(s, i), icon: s.icon ?? null }));
+    return m;
+  }, [schemas]);
+
+  const entityTypeColorMap = useMemo(() => {
+    const m = new Map<string, string>();
+    projectEntityTypes.forEach((t, i) => m.set(t.id, SCHEMA_COLORS[i % SCHEMA_COLORS.length]!));
+    return m;
+  }, [projectEntityTypes]);
+
 
   if (isLoading) {
     return (
@@ -571,65 +587,78 @@ export const ProjectDetailScreen = () => {
 
       {activeTab === 'entities' && (
         <div className={styles.entityTab}>
-          {projectEntities.length > 0 && (
-            <div className={styles.progressRow}>
-              <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: `${progressPct}%` }} />
-              </div>
-              <span className="dim">
-                {doneCount} / {projectEntities.length} done ({progressPct}%)
-              </span>
-            </div>
-          )}
           {projectEntities.length === 0 ? (
-            <div className={styles.empty}>No entities associated with this project.</div>
+            <div className={styles.empty}>
+              <div className={styles.emptyIcon}><TbDatabase size={22} /></div>
+              <div className={styles.emptyTitle}>No entities linked</div>
+              <div className={styles.emptySub}>
+                Link entities this project decommissions, modifies, creates, or depends on.
+              </div>
+              {project.canEdit && (
+                <button
+                  type="button"
+                  className="ar-btn"
+                  onClick={() => setAddEntityOpen(true)}
+                >
+                  <TbPlus size={11} /> Add entity
+                </button>
+              )}
+            </div>
           ) : (
-            <table className={styles.entityTable}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Role</th>
-                  <th>Done</th>
-                  {project.canEdit && <th></th>}
-                </tr>
-              </thead>
-              <tbody>
-                {projectEntities.map(e => (
-                  <tr key={e.entity_id}>
-                    <td>{e.entity_name}</td>
-                    <td className="dim">{e.entity_schema?.name ?? '—'}</td>
-                    <td className="dim">{e.entity_type?.name ?? '—'}</td>
-                    <td>
-                      {project.canEdit ? (
-                        <button
-                          type="button"
-                          className={styles.removeEntityBtn}
-                          onClick={() => updateEntityMutation.mutate({ entityId: e.entity_id, is_done: !e.is_done })}
-                          title={e.is_done ? 'Mark as not done' : 'Mark as done'}
-                        >
-                          <TbCheck size={14} style={{ color: e.is_done ? 'var(--cmp-fg-success, green)' : 'var(--cmp-fg-muted)' }} />
-                        </button>
-                      ) : (
-                        e.is_done ? <TbCheck size={14} style={{ color: 'var(--cmp-fg-success, green)' }} /> : null
+            <div className={styles.pentTable}>
+              <div className={styles.pentHead}>
+                <span>Name</span>
+                <span>Type</span>
+                <span>Role</span>
+                <span>Done</span>
+              </div>
+              {projectEntities.map(e => {
+                const s = e.entity_schema ? schemaMap.get(e.entity_schema.id) : undefined;
+                const roleColor = e.entity_type ? entityTypeColorMap.get(e.entity_type.id) : undefined;
+                return (
+                <div key={e.entity_id} className={styles.pentRow}>
+                  <button type="button" className={styles.pentName}>
+                    {s && <TypeBadge color={s.color} icon={s.icon} size={18} />}
+                    <div>
+                      <div>{e.entity_name}</div>
+                      {e.entity_description && (
+                        <div className={styles.pentNameSub}>{e.entity_description}</div>
                       )}
-                    </td>
+                    </div>
+                  </button>
+                  <span className={styles.pentType}>
+                    {e.entity_schema
+                      ? <Chip tone="ghost">{e.entity_schema.name}</Chip>
+                      : <span className="dim">—</span>}
+                  </span>
+                  <span className={styles.pentRole}>
+                    {e.entity_type?.name
+                      ? <Chip tone="ghost" dot={roleColor}>{e.entity_type.name}</Chip>
+                      : <span className="dim">—</span>}
+                  </span>
+                  <span className={styles.pentActions}>
+                    <button
+                      type="button"
+                      className={`${styles.pentCheck} ${e.is_done ? styles.pentCheckDone : ''}`}
+                      onClick={() => project.canEdit && updateEntityMutation.mutate({ entityId: e.entity_id, is_done: !e.is_done })}
+                      title={e.is_done ? 'Mark as not done' : 'Mark as done'}
+                    >
+                      <TbCheck size={11} />
+                    </button>
                     {project.canEdit && (
-                      <td>
-                        <button
-                          type="button"
-                          className={styles.removeEntityBtn}
-                          onClick={() => removeEntityMutation.mutate(e.entity_id)}
-                          title="Remove from project"
-                        >
-                          <TbTrash size={13} />
-                        </button>
-                      </td>
+                      <button
+                        type="button"
+                        className={styles.removeEntityBtn}
+                        onClick={() => removeEntityMutation.mutate(e.entity_id)}
+                        title="Remove"
+                      >
+                        <TbTrash size={13} />
+                      </button>
                     )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </span>
+                </div>
+              ); })}
+            </div>
           )}
         </div>
       )}
@@ -1342,12 +1371,26 @@ const AddEntityToProjectDialog = ({
   const [selectedId, setSelectedId] = useState('');
   const [entityType, setEntityType] = useState('');
   const [error, setError] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
 
-  const { data: searchResults = [] } = useEntities(workspaceId, {
-    q: q || undefined,
+  const { data: allResults = [] } = useEntities(workspaceId, {
     view: 'summary',
-    limit: 20
+    limit: 200
   });
+
+  const filtered = allResults.filter(e => {
+    if (!q.trim()) return true;
+    const lower = q.toLowerCase();
+    return (e._name + ' ' + e._slug).toLowerCase().includes(lower);
+  });
+
+  // Auto-select first result
+  useEffect(() => {
+    if (filtered.length > 0 && (!selectedId || !filtered.find(e => e._uid === selectedId))) {
+      setSelectedId(filtered[0]!._uid);
+    }
+    if (filtered.length === 0) setSelectedId('');
+  }, [filtered]);
 
   useEffect(() => {
     if (open) {
@@ -1355,8 +1398,28 @@ const AddEntityToProjectDialog = ({
       setSelectedId('');
       setEntityType('');
       setError('');
+      setTimeout(() => searchRef.current?.focus(), 40);
     }
   }, [open]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        if (!filtered.length) return;
+        const idx = filtered.findIndex(e => e._uid === selectedId);
+        const next = ev.key === 'ArrowDown'
+          ? Math.min(idx + 1, filtered.length - 1)
+          : Math.max(idx - 1, 0);
+        setSelectedId(filtered[next]!._uid);
+      }
+      if (ev.key === 'Enter' && selectedId) { ev.preventDefault(); void handleSubmit(); }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [open, filtered, selectedId, entityType]);
 
   const handleSubmit = async () => {
     if (!selectedId) {
@@ -1379,6 +1442,7 @@ const AddEntityToProjectDialog = ({
       open={open}
       onClose={onClose}
       title="Add entity to project"
+      width={500}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
@@ -1389,53 +1453,63 @@ const AddEntityToProjectDialog = ({
         }
       ]}
     >
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Search</label>
-        <input
-          className={styles.formInput}
-          placeholder="Type to search entities…"
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          autoFocus
-        />
+      <div className={styles.aedBody}>
+        {/* SEARCH */}
+        <div className={styles.aedSection}>
+          <div className={styles.aedLabel}>Search</div>
+          <TextInput
+            ref={searchRef}
+            variant="search"
+            value={q}
+            placeholder="Type to search entities…"
+            onChange={v => setQ(v ?? '')}
+            onClear={() => setQ('')}
+            autoComplete="off"
+            style={{ width: '100%' }}
+          />
+        </div>
+
+        {/* ENTITY listbox */}
+        <div className={styles.aedSection}>
+          <div className={styles.aedLabel}>Entity</div>
+          <div className={styles.aedList}>
+            {filtered.length === 0 ? (
+              <div className={styles.aedListEmpty}>
+                {q ? 'No entities match that search.' : 'No entities found.'}
+              </div>
+            ) : (
+              filtered.map(e => (
+                <button
+                  key={e._uid}
+                  type="button"
+                  className={`${styles.aedItem} ${selectedId === e._uid ? styles.aedItemSelected : ''}`}
+                  onClick={() => setSelectedId(e._uid)}
+                >
+                  <span className={styles.aedItemName}>{e._name || e._slug}</span>
+                  <span className={styles.aedItemType}>{e._schema?.name ?? ''}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* ROLE */}
+        <div className={styles.aedSection}>
+          <div className={styles.aedLabel}>Role</div>
+          <Select.Root
+            value={entityType}
+            placeholder="None"
+            onChange={v => setEntityType(v ?? '')}
+          >
+            <Select.Item value="">None</Select.Item>
+            {projectEntityTypes.map(t => (
+              <Select.Item key={t.id} value={t.id}>{t.label}</Select.Item>
+            ))}
+          </Select.Root>
+        </div>
+
+        {error && <div style={{ fontSize: 12, color: 'var(--error-fg)' }}>{error}</div>}
       </div>
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Entity</label>
-        <select
-          className={styles.formInput}
-          value={selectedId}
-          onChange={e => setSelectedId(e.target.value)}
-          size={Math.min(searchResults.length || 1, 6)}
-        >
-          {searchResults.length === 0 ? (
-            <option value="" disabled>
-              {q ? 'No results' : 'Type to search'}
-            </option>
-          ) : (
-            searchResults.map(e => (
-              <option key={e._uid} value={e._uid}>
-                {e._name || e._slug}
-              </option>
-            ))
-          )}
-        </select>
-      </div>
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Role</label>
-        <select
-          className={styles.formInput}
-          value={entityType}
-          onChange={e => setEntityType(e.target.value)}
-        >
-          <option value="">None</option>
-          {projectEntityTypes.map(t => (
-            <option key={t.id} value={t.id}>
-              {t.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      {error && <div style={{ fontSize: 12, color: 'var(--error-fg)', marginTop: 4 }}>{error}</div>}
     </Dialog>
   );
 };
