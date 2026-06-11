@@ -1,31 +1,10 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId } from '@arch-register/api-types/common';
+import { ws, wsAndId, teamRoleSchema, workspaceCapabilitySchema } from '@arch-register/api-types/common';
 
 const timestampOutputSchema = z
   .union([z.string(), z.date()])
   .transform(value => (typeof value === 'string' ? value : value.toISOString()));
-
-const teamRoleSchema = z.enum(['team_admin', 'team_editor', 'team_reviewer']);
-const workspaceCapabilitySchema = z.enum([
-  'ws.view',
-  'ws.settings',
-  'ws.delete',
-  'ws.audit',
-  'ws.manage_views',
-  'people.invite',
-  'people.role',
-  'people.remove',
-  'people.teams',
-  'proj.create',
-  'proj.edit',
-  'ent.edit',
-  'ent.propose',
-  'comments',
-  'export',
-  'schema.edit',
-  'schema.publish'
-]);
 
 // ── Sub-schemas ───────────────────────────────────────────────
 

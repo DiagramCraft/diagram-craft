@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import type { pinnedEntitySchema } from '@arch-register/api-types/viewContract';
+import { pinnedEntitySchema } from '@arch-register/api-types/viewContract';
 import { ws, wsAndId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
@@ -41,8 +41,6 @@ const clearResponseSchema = z.object({
   count: z.number(),
   message: z.string()
 });
-
-// ── Request schemas ───────────────────────────────────────────
 
 // ── Contract ──────────────────────────────────────────────────
 

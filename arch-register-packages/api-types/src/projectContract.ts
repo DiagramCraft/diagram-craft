@@ -1,13 +1,8 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId } from '@arch-register/api-types/common';
+import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
-
-const foreignKeySchema = z.object({
-  id: z.string(),
-  name: z.string()
-});
 
 const projectCapabilitiesSchema = z.object({
   canEdit: z.boolean(),
@@ -28,7 +23,7 @@ const projectSchema = projectCapabilitiesSchema.extend({
   updated_at: z.string()
 });
 
-const projectFileSchema = z.object({
+export const projectFileSchema = z.object({
   id: z.string(),
   project_id: z.string(),
   path: z.string(),

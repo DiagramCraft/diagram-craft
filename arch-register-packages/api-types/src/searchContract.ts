@@ -1,13 +1,8 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws } from '@arch-register/api-types/common';
+import { ws, foreignKeySchema } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
-
-const foreignKeySchema = z.object({
-  id: z.string(),
-  name: z.string()
-});
 
 const projectSearchResultSchema = z.object({
   id: z.string(),
@@ -56,8 +51,6 @@ const searchResponseSchema = z.object({
   entities: z.array(entitySearchResultSchema),
   schemas: z.array(schemaSearchResultSchema)
 });
-
-// ── Request schemas ───────────────────────────────────────────
 
 // ── Contract ──────────────────────────────────────────────────
 

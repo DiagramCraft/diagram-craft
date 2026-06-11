@@ -1,29 +1,10 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
+import { teamRoleSchema, workspaceCapabilitySchema } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
 const globalRoleSchema = z.enum(['global_admin', 'workspace_admin']);
-const teamRoleSchema = z.enum(['team_admin', 'team_editor', 'team_reviewer']);
-const workspaceCapabilitySchema = z.enum([
-  'ws.view',
-  'ws.settings',
-  'ws.delete',
-  'ws.audit',
-  'ws.manage_views',
-  'people.invite',
-  'people.role',
-  'people.remove',
-  'people.teams',
-  'proj.create',
-  'proj.edit',
-  'ent.edit',
-  'ent.propose',
-  'comments',
-  'export',
-  'schema.edit',
-  'schema.publish'
-]);
 
 const tokenPairSchema = z.object({
   token_type: z.string(),

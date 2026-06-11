@@ -1,10 +1,8 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId } from './common';
+import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
-
-const foreignKeySchema = z.object({ id: z.string(), name: z.string() });
 
 const entityLinkSchema = z.object({
   url: z.string(),
