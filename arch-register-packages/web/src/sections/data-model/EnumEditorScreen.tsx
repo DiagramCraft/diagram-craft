@@ -3,6 +3,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './DataModelEditorScreen.module.css';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../../hooks/useEnums';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -120,12 +121,11 @@ export const EnumEditorScreen = () => {
             <div className={styles.formRow}>
               <div>
                 <div className={styles.formLabel}>Name</div>
-                <input
-                  className={styles.input}
+                <TextInput
                   value={name}
                   readOnly={!canEdit}
-                  onChange={e => {
-                    setName(e.target.value);
+                  onChange={value => {
+                    setName(value ?? '');
                     setDirty(true);
                   }}
                 />
@@ -148,19 +148,17 @@ export const EnumEditorScreen = () => {
                 </div>
                 {options.map((opt, i) => (
                   <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 28px', gap: 10, padding: '8px 10px', fontSize: 12, borderBottom: i < options.length - 1 ? '1px solid var(--panel-border)' : 'none' }}>
-                    <input
-                      className={styles.inlineInput}
+                    <TextInput
                       value={opt.value}
                       readOnly={!canEdit}
                       placeholder="value"
-                      onChange={e => updateOption(i, { value: e.target.value })}
+                      onChange={value => updateOption(i, { value: value ?? '' })}
                     />
-                    <input
-                      className={styles.inlineInput}
+                    <TextInput
                       value={opt.label}
                       readOnly={!canEdit}
                       placeholder="label"
-                      onChange={e => updateOption(i, { label: e.target.value })}
+                      onChange={value => updateOption(i, { label: value ?? '' })}
                     />
                     {canEdit && (
                       <button type="button" className={styles.iconBtn} onClick={() => removeOption(i)}>
