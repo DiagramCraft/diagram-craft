@@ -14,6 +14,7 @@ import {
   TbFolder,
   TbTrash
 } from 'react-icons/tb';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { FileEntry } from '../../lib/api';
 import {
   useProjectFiles,
@@ -134,6 +135,7 @@ export const ProjectsSidebar = ({
   projects: Project[];
   workspaceSlug: string;
 }) => {
+  const { openAddProjectDialog, permissions } = useWorkspaceContext();
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { tab?: string; folder?: string };
   const matches = useMatches();
@@ -435,6 +437,11 @@ export const ProjectsSidebar = ({
             <Tabs.Trigger value="archive">Archive</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
+        {permissions.canCreateProjects && (
+          <button type="button" className={styles.action} onClick={openAddProjectDialog} title="New project">
+            <TbPlus size={13} />
+          </button>
+        )}
       </div>
       <div className={styles.scroll}>
         {projectGroups.length > 0 ? (

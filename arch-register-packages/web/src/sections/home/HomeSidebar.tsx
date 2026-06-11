@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { TbFolders } from 'react-icons/tb';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { resolveSchemaColor } from '../../lib/api';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -18,14 +19,7 @@ const getSidebarProjectGroups = (projects: Project[]) =>
     projects: projects.filter(project => project.status === group.status)
   })).filter(group => group.projects.length > 0);
 
-const SectionHeader = ({ title, actions }: { title: string; actions?: React.ReactNode }) => (
-  <div className={`${styles.header} ${styles.tabHeader}`}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 13, fontWeight: 500 }}>{title}</span>
-    </div>
-    {actions && <div className={styles.headerActions}>{actions}</div>}
-  </div>
-);
+
 
 const GroupLabel = ({ children }: { children: React.ReactNode }) => (
   <div className={styles.groupLabel}>{children}</div>
@@ -43,7 +37,13 @@ export const HomeSidebar = ({
   const navigate = useNavigate();
   return (
     <>
-      <SectionHeader title="Overview" />
+      <div className={`${styles.header} ${styles.tabHeader}`}>
+        <Tabs.Root value="overview">
+          <Tabs.List>
+            <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
+      </div>
       <div className={styles.scroll}>
         {getSidebarProjectGroups(projects).map(group => (
           <div key={group.status}>

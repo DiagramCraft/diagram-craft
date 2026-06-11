@@ -26,6 +26,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { useSearch } from '../../hooks/useSearch';
 import styles from './SearchScreen.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 
 type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas';
 type SearchPreview =
@@ -88,7 +89,7 @@ const snippetAround = (text: string | null | undefined, q: string, max = 140) =>
 export const SearchScreen = () => {
   const routerNavigate = useNavigate();
   const routerSearch = useRouterSearch({ strict: false }) as { q?: string };
-  const { workspaceSlug, schemas } = useWorkspaceContext();
+  const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const query = routerSearch.q ?? '';
 
@@ -445,6 +446,7 @@ export const SearchScreen = () => {
                       onSelect={() => setSelected({ kind: row.kind, id: row.id })}
                       onOpen={() => openRow(row)}
                       schemaMap={schemaMap}
+                      lifecycleStates={lifecycleStates}
                     />
                   ))}
                 </div>
@@ -462,6 +464,7 @@ export const SearchScreen = () => {
             onProjectFolderClick={navigateToProjectFolder}
             onSchemaClick={navigateToSchema}
             q={trimmed}
+            lifecycleStates={lifecycleStates}
           />
         </aside>
       </div>
@@ -477,7 +480,8 @@ const ResultRow = ({
   isSelected,
   onSelect,
   onOpen,
-  schemaMap
+  schemaMap,
+  lifecycleStates
 }: {
   row: { kind: string; id: string; data: unknown };
   q: string;
@@ -485,6 +489,7 @@ const ResultRow = ({
   onSelect: () => void;
   onOpen: () => void;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
+  lifecycleStates: WorkspaceLifecycleState[];
 }) => {
   if (row.kind === 'entity') {
     const e = row.data as EntitySearchResult;
@@ -521,7 +526,7 @@ const ResultRow = ({
               <Hi s={e._name || e._slug} q={q} />
             </button>
             <Chip tone="ghost">{e.schemaName}</Chip>
-            {e._lifecycle && <StatusChip value={e._lifecycle.id} />}
+            {e._lifecycle && <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />}
           </div>
           {e._description && (
             <div className={styles.rowSnippet}>
@@ -716,7 +721,8 @@ const PreviewPane = ({
   onProjectClick,
   onProjectFolderClick,
   onSchemaClick,
-  q
+  q,
+  lifecycleStates
 }: {
   preview: SearchPreview | null;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
@@ -725,6 +731,7 @@ const PreviewPane = ({
   onProjectFolderClick: (projectId: string, folder: string | null) => void;
   onSchemaClick: (schemaId: string) => void;
   q: string;
+  lifecycleStates: WorkspaceLifecycleState[];
 }) => {
   if (!preview) {
     return (
@@ -759,7 +766,7 @@ const PreviewPane = ({
               <Hi s={e._name || e._slug} q={q} />
             </div>
           </div>
-          {e._lifecycle && <StatusChip value={e._lifecycle.id} />}
+          {e._lifecycle && <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />}
         </div>
         {e._description && (
           <div className={styles.previewDesc}>

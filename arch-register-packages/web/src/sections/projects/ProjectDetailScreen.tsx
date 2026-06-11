@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import styles from './ProjectDetailScreen.module.css';
 import { AddFolderDialog } from './AddFolderDialog';
 import { AddDiagramDialog } from './AddDiagramDialog';
@@ -13,7 +14,6 @@ import {
   TbPlus,
   TbFolder,
   TbFolderOpen,
-  TbSearch,
   TbLayoutGrid,
   TbList,
   TbTrash,
@@ -492,14 +492,13 @@ export const ProjectDetailScreen = () => {
           </Tabs.List>
         </Tabs.Root>
         <div className={styles.tabBarRight}>
-          <div className={styles.searchInline}>
-            <TbSearch size={11} />
-            <input
-              placeholder="Filter diagrams…"
-              value={filter}
-              onChange={e => setFilter(e.target.value)}
-            />
-          </div>
+          <TextInput
+            variant="search"
+            placeholder="Filter diagrams…"
+            value={filter}
+            onChange={v => setFilter(v ?? '')}
+            onClear={() => setFilter('')}
+          />
           <button
             type="button"
             className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive : ''}`}
