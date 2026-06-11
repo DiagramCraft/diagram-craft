@@ -1,4 +1,4 @@
-import { defineHandler } from 'h3';
+import { defineHandler, HTTPError } from 'h3';
 import { implement, ORPCError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
@@ -73,12 +73,11 @@ export const createDiagramCraftORPCRouter = () => {
               try {
                 while (true) {
                   const chunk = await reader.read();
-                  const string = String.fromCharCode.apply(null, chunk.value);
                   if (chunk.done) {
                     return;
                   }
 
-                  yield string;
+                  yield String.fromCharCode(...chunk.value);
                 }
               } finally {
                 reader.releaseLock();
@@ -97,12 +96,23 @@ export const createDiagramCraftORPCRouter = () => {
   });
 };
 
+const MAX_REQUEST_SIZE = 1 * 1024 * 1024;
+
 export const createDiagramCraftORPCHandler = (db: DatabaseAdapter) => {
   const diagramCraftOpenAPIHandler = new OpenAPIHandler(createDiagramCraftORPCRouter(), {
     clientInterceptors: orpcErrorInterceptors
   });
 
   return defineHandler(async event => {
+    const contentLength = parseInt(event.req.headers.get('content-length') ?? '0', 10);
+    if (contentLength > MAX_REQUEST_SIZE) {
+      throw new HTTPError({
+        status: 413,
+        statusText: 'Payload Too Large',
+        message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
+      });
+    }
+
     const result = await diagramCraftOpenAPIHandler.handle(event.req, {
       prefix: '/api',
       context: { db, event: event as AuthenticatedEvent }

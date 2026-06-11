@@ -285,7 +285,6 @@ test.describe('diagram craft routes', () => {
     });
     expect(contentTypeRes.status).toBe(400);
 
-    /* KEEP THIS
     const oversizedBody = JSON.stringify({
       messages: [{ role: 'user', content: 'x'.repeat(1024 * 1024 + 32) }]
     });
@@ -295,7 +294,7 @@ test.describe('diagram craft routes', () => {
       headers: headers(auth),
       body: oversizedBody
     });
-    expect(oversizeRes.status).toBe(500);*/
+    expect(oversizeRes.status).toBe(413);
 
     const invalidJsonRes = await fetch(`${server.baseUrl}/api/default/ai/generate`, {
       method: 'POST',
