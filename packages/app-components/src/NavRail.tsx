@@ -41,6 +41,7 @@ export const NavRail = ({
                   <button
                     type="button"
                     className={styles.eButton}
+                    aria-label={typeof item.tooltip === 'string' ? item.tooltip : item.id}
                     aria-pressed={isActive}
                     onClick={() => onChange(toggle && isActive ? null : item.id)}
                   >

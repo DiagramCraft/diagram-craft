@@ -430,7 +430,7 @@ export const ProjectDetailScreen = () => {
             )}
           </div>
           <div className={styles.titleRow}>
-            <div className={styles.title}>{folderFilter ?? project.name}</div>
+            <h1 className={styles.title}>{folderFilter ?? project.name}</h1>
             {!folderFilter && project.status !== 'archived' && project.canEdit && (
               <button
                 type="button"
