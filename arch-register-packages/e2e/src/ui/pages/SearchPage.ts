@@ -11,9 +11,23 @@ export class SearchPage extends WorkspacePage {
     await this.page.goto(workspaceSearchRoute(this.workspaceSlug));
   };
 
+  searchInput = () => this.page.getByPlaceholder('Search entities, diagrams, projects, schema…');
+  searchResultCount = () => this.page.getByLabel('Search result count');
+  entitiesCategoryCount = () => this.page.getByLabel('Entities result count');
+
   expectLoaded = async () => {
     await this.workspaceShell.expectActiveNav('search');
-    await expect(this.page.getByPlaceholder('Search entities, diagrams, projects, schema…')).toBeVisible();
+    await expect(this.searchInput()).toBeVisible();
     await expect(this.page.getByText('Start typing to search across the workspace.')).toBeVisible();
+  };
+
+  search = async (query: string) => {
+    await this.searchInput().fill(query);
+    await this.searchInput().press('Enter');
+  };
+
+  expectEntityResultsFound = async () => {
+    await expect(this.searchResultCount()).not.toHaveText('0');
+    await expect(this.entitiesCategoryCount()).not.toHaveText('0');
   };
 }

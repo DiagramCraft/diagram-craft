@@ -9,4 +9,13 @@ test.describe('search section', () => {
     await searchPage.goto();
     await searchPage.expectLoaded();
   });
+
+  test('returns entity results when searching', async ({ page }) => {
+    const searchPage = new SearchPage(page, defaultWorkspace.slug);
+
+    await searchPage.goto();
+    await searchPage.expectLoaded();
+    await searchPage.search('API');
+    await searchPage.expectEntityResultsFound();
+  });
 });
