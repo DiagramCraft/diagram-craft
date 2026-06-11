@@ -4,6 +4,7 @@ import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/wor
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { Project } from '@arch-register/api-types/projectContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+export type ProjectEntityType = { id: string; label: string; sort_order: number };
 
 export type WorkspaceContextType = {
   workspace: Workspace | null;
@@ -13,6 +14,7 @@ export type WorkspaceContextType = {
   projects: Project[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
+  projectEntityTypes: ProjectEntityType[];
   permissions: {
     canManageWorkspaces: boolean;
     canViewSchemas: boolean;

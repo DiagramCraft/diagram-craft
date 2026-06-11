@@ -8,7 +8,7 @@ const projectSearchResultSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  status: z.enum(['pinned', 'active', 'archived'])
+  status: z.enum(['draft', 'active', 'complete', 'cancelled'])
 });
 
 const fileSearchResultSchema = z.object({

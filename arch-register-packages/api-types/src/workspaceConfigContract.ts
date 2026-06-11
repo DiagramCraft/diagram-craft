@@ -8,6 +8,12 @@ const timestampOutputSchema = z
 
 // ── Sub-schemas ───────────────────────────────────────────────
 
+export const projectEntityTypeSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  sort_order: z.number().int()
+});
+
 const lifecycleStateSchema = z.object({
   id: z.string(),
   workspace: z.string(),
@@ -241,6 +247,31 @@ export const workspaceConfigContract = {
         .route({ method: 'GET', path: '/{workspace}/config/users', inputStructure: 'detailed' })
         .input(z.object({ params: ws }))
         .output(z.array(userInfoSchema))
+    },
+    projectEntityTypes: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/project-entity-types',
+          inputStructure: 'detailed'
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(projectEntityTypeSchema)),
+      replace: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/project-entity-types',
+          inputStructure: 'detailed'
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({
+              types: z.array(z.object({ id: z.string().optional(), label: z.string(), sort_order: z.number().int().optional() }))
+            })
+          })
+        )
+        .output(z.array(projectEntityTypeSchema))
     }
   }
 };

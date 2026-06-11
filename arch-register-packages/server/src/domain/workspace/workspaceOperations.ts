@@ -105,6 +105,13 @@ const buildDefaultLifecycleStates = (workspace: string, createdAt: Date) => [
   }
 ];
 
+const buildDefaultProjectEntityTypes = (workspace: string, createdAt: Date) => [
+  { id: randomUUID(), workspace, label: 'Introduced', sort_order: 0, created_at: createdAt },
+  { id: randomUUID(), workspace, label: 'Decommissioned', sort_order: 1, created_at: createdAt },
+  { id: randomUUID(), workspace, label: 'Modified', sort_order: 2, created_at: createdAt },
+  { id: randomUUID(), workspace, label: 'Used', sort_order: 3, created_at: createdAt }
+];
+
 const buildDefaultWorkspaceTeams = (workspace: string, createdAt: Date) => [
   {
     id: randomUUID(),
@@ -186,6 +193,10 @@ export const createWorkspace = async (
             ? srcLifecycle.map(s => ({ ...s, workspace: row.id, created_at: timestamp }))
             : buildDefaultLifecycleStates(row.id, timestamp);
         await db.workspace.replaceLifecycleStates(row.id, lifecycleStates);
+        await db.workspace.replaceProjectEntityTypes(
+          row.id,
+          buildDefaultProjectEntityTypes(row.id, timestamp)
+        );
         await db.workspace.replaceTeams(
           row.id,
           srcTeams.map(t => ({ ...t, workspace: row.id, created_at: timestamp }))
@@ -203,6 +214,10 @@ export const createWorkspace = async (
         await db.workspace.replaceLifecycleStates(
           row.id,
           buildDefaultLifecycleStates(row.id, timestamp)
+        );
+        await db.workspace.replaceProjectEntityTypes(
+          row.id,
+          buildDefaultProjectEntityTypes(row.id, timestamp)
         );
         await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
       }
@@ -234,6 +249,10 @@ export const createWorkspace = async (
       await db.workspace.replaceLifecycleStates(
         row.id,
         buildDefaultLifecycleStates(row.id, timestamp)
+      );
+      await db.workspace.replaceProjectEntityTypes(
+        row.id,
+        buildDefaultProjectEntityTypes(row.id, timestamp)
       );
       await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
 

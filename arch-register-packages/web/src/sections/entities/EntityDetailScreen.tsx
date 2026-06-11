@@ -31,6 +31,9 @@ import {
   useCloneEntity,
   useEntitiesBySchema
 } from '../../hooks/useEntities';
+import {
+  useEntityProjects
+} from '../../hooks/useProjects';
 import { useAuditLog } from '../../hooks/useAudit';
 import {
   useCreatePinnedEntity,
@@ -111,6 +114,9 @@ export const EntityDetailScreen = () => {
     { entityId, limit: 100 },
     { enabled: canViewAudit && tab === 'changes' }
   );
+
+  // Project association hooks
+  const { data: entityProjects = [] } = useEntityProjects(workspaceId, entityId);
 
   // Mutation hooks
   const updateEntity = useUpdateEntity(workspaceId);
@@ -647,6 +653,28 @@ export const EntityDetailScreen = () => {
                     >
                       <TbExternalLink size={11} /> {l.title || l.url}
                     </a>
+                  </span>
+                </div>
+              ))
+            )}
+
+            <hr className={styles.divider} />
+
+            <div className={styles.sectionLabel}>
+              Projects
+            </div>
+            {entityProjects.length === 0 ? (
+              <div className={styles.metaPropRow}>
+                <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
+                  Not in any project
+                </span>
+              </div>
+            ) : (
+              entityProjects.map(({ project, entity_type }) => (
+                <div key={project.id} className={styles.metaPropRow}>
+                  <span className={styles.metaPropLabel}>{project.name}</span>
+                  <span className={styles.metaPropValue}>
+                    {entity_type ? entity_type.name : <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>}
                   </span>
                 </div>
               ))

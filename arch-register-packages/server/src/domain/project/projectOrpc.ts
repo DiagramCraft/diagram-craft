@@ -20,7 +20,11 @@ import {
   cloneFile,
   relocateFile,
   deleteFolder,
-  updateTemplateStatus
+  updateTemplateStatus,
+  listProjectEntities,
+  addProjectEntity,
+  updateProjectEntity,
+  removeProjectEntity
 } from './projectOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -240,7 +244,59 @@ export const projectORPCRouter = projectRouter.router({
           return toORPCError(error);
         }
       }
-    )
+    ),
+    listEntities: projectRouter.projects.listEntities.handler(async ({ input, context }) => {
+      try {
+        return await listProjectEntities(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    addEntity: projectRouter.projects.addEntity.handler(async ({ input, context }) => {
+      try {
+        return await addProjectEntity(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.body,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    updateEntity: projectRouter.projects.updateEntity.handler(async ({ input, context }) => {
+      try {
+        return await updateProjectEntity(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.params.entityId,
+          input.body,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+    removeEntity: projectRouter.projects.removeEntity.handler(async ({ input, context }) => {
+      try {
+        return await removeProjectEntity(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.params.entityId,
+          context.event
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    })
   }
 });
 

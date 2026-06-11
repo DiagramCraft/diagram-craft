@@ -13,9 +13,10 @@ import styles from './AddEntityDialog.module.css';
 import { Project } from '@arch-register/api-types/projectContract';
 
 const PROJECT_STATUSES = [
-  { value: 'pinned', label: 'Pinned' },
+  { value: 'draft', label: 'Draft' },
   { value: 'active', label: 'Active' },
-  { value: 'archived', label: 'Archived' }
+  { value: 'complete', label: 'Complete' },
+  { value: 'cancelled', label: 'Cancelled' }
 ] as const;
 
 type AddProjectDialogProps = {
@@ -38,7 +39,7 @@ export const AddProjectDialog = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [owner, setOwner] = useState('');
-  const [status, setStatus] = useState<'pinned' | 'active' | 'archived'>('active');
+  const [status, setStatus] = useState<'draft' | 'active' | 'complete' | 'cancelled'>('active');
   const [color, setColor] = useState<string | null>(null);
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
@@ -133,7 +134,7 @@ export const AddProjectDialog = ({
           <Select.Root
             value={status}
             onChange={value =>
-              setStatus((value as 'pinned' | 'active' | 'archived' | undefined) ?? 'active')
+              setStatus((value as 'draft' | 'active' | 'complete' | 'cancelled' | undefined) ?? 'active')
             }
             style={{ width: '100%' }}
           >

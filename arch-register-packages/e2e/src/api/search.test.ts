@@ -16,6 +16,8 @@ const test = baseTest.extend<{ seeded: true }>({
         owner: seedIds.teams.design,
         status: 'active',
         color: null,
+        target_date: null,
+        pinned: false,
         created_at: now,
         updated_at: now
       });
@@ -26,8 +28,10 @@ const test = baseTest.extend<{ seeded: true }>({
         name: 'Beta Search Project',
         description: 'Authentication migration workstream.',
         owner: seedIds.teams.security,
-        status: 'pinned',
+        status: 'active',
         color: null,
+        target_date: null,
+        pinned: true,
         created_at: now,
         updated_at: now
       });

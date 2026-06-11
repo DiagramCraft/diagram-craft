@@ -13,7 +13,8 @@ import {
   MemberDbResult,
   WorkspaceDbResult,
   OwnerDbResult,
-  LifecycleStateDbResult
+  LifecycleStateDbResult,
+  ProjectEntityTypeDbResult
 } from '../domain/workspace/db/workspaceDatabase';
 import {
   Entity,
@@ -172,6 +173,17 @@ export const seedLifecycleStates: LifecycleStateDbResult[] = [
     sort_order: 3,
     created_at: now
   }
+];
+
+export const seedProjectEntityTypes: ProjectEntityTypeDbResult[] = [
+  { id: '90000000-0000-0000-0000-000000000201', workspace: WORKSPACE_ID, label: 'Introduced', sort_order: 0, created_at: now },
+  { id: '90000000-0000-0000-0000-000000000202', workspace: WORKSPACE_ID, label: 'Decommissioned', sort_order: 1, created_at: now },
+  { id: '90000000-0000-0000-0000-000000000203', workspace: WORKSPACE_ID, label: 'Modified', sort_order: 2, created_at: now },
+  { id: '90000000-0000-0000-0000-000000000204', workspace: WORKSPACE_ID, label: 'Used', sort_order: 3, created_at: now },
+  { id: '90000000-0000-0000-0000-000000000205', workspace: WORKSPACE2_ID, label: 'Introduced', sort_order: 0, created_at: now },
+  { id: '90000000-0000-0000-0000-000000000206', workspace: WORKSPACE2_ID, label: 'Decommissioned', sort_order: 1, created_at: now },
+  { id: '90000000-0000-0000-0000-000000000207', workspace: WORKSPACE2_ID, label: 'Modified', sort_order: 2, created_at: now },
+  { id: '90000000-0000-0000-0000-000000000208', workspace: WORKSPACE2_ID, label: 'Used', sort_order: 3, created_at: now }
 ];
 
 export const seedOwners: OwnerDbResult[] = [
@@ -910,6 +922,8 @@ export const seedProjects: ProjectDbCreate[] = [
     owner: TEAM_IDS.design,
     status: 'active',
     color: AR_COLOR_BLUE,
+    target_date: null,
+    pinned: false,
     created_at: now,
     updated_at: now
   },
@@ -919,8 +933,10 @@ export const seedProjects: ProjectDbCreate[] = [
     name: seededProjects.authMigration.name,
     description: 'Migration from legacy auth to the new identity platform.',
     owner: TEAM_IDS.security,
-    status: 'pinned',
+    status: 'active',
     color: AR_COLOR_RED,
+    target_date: null,
+    pinned: true,
     created_at: now,
     updated_at: now
   },
@@ -932,6 +948,8 @@ export const seedProjects: ProjectDbCreate[] = [
     owner: TEAM_IDS.platform,
     status: 'active',
     color: AR_COLOR_GREEN,
+    target_date: null,
+    pinned: false,
     created_at: now,
     updated_at: now
   }

@@ -16,6 +16,8 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         owner: null,
         status: 'active',
         color: null,
+        target_date: null,
+        pinned: false,
         created_at: now,
         updated_at: now
       });
@@ -29,6 +31,8 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         owner: null,
         status: 'active',
         color: null,
+        target_date: null,
+        pinned: false,
         created_at: now,
         updated_at: now
       });

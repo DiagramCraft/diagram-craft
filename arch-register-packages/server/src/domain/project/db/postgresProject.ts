@@ -2,6 +2,8 @@ import type {
   ProjectDbCreate,
   ProjectDbResult,
   ProjectDatabase,
+  ProjectEntityDbCreate,
+  ProjectEntityDbResult,
   ProjectFileDbResult,
   ProjectDbUpdate,
   ProjectFileDbUpsert
@@ -32,8 +34,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   async createProject(input: ProjectDbCreate) {
     try {
       await this.sql`
-        INSERT INTO project (id, workspace, name, description, owner, status, color, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.color}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO project (id, workspace, name, description, owner, status, color, target_date, pinned, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.color}, ${input.target_date}, ${input.pinned}, ${input.created_at}, ${input.updated_at})
       `;
       return (await this.getProject(input.workspace, input.id))!;
     } catch (error) {
@@ -50,6 +52,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             owner = ${input.owner},
             status = ${input.status},
             color = ${input.color},
+            target_date = ${input.target_date},
+            pinned = ${input.pinned},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
       `;
@@ -244,6 +248,129 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         DELETE FROM project_file
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${folderPath}/%`}
         RETURNING *
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listProjectEntities(workspace: string, projectId: string) {
+    return await this.sql<ProjectEntityDbResult[]>`
+      SELECT
+        pe.workspace,
+        pe.project_id,
+        pe.entity_id,
+        e.name       AS entity_name,
+        e.slug       AS entity_slug,
+        e.schema_id  AS entity_schema_id,
+        es.name      AS entity_schema_name,
+        pe.entity_type AS entity_type_id,
+        pet.label    AS entity_type_label,
+        pe.is_done
+      FROM project_entity pe
+      JOIN entity e ON e.id = pe.entity_id
+      LEFT JOIN entity_schema es ON es.id = e.schema_id
+      LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
+      WHERE pe.workspace = ${workspace} AND pe.project_id = ${projectId}
+      ORDER BY e.name
+    `;
+  }
+
+  async getEntityProjects(workspace: string, entityId: string) {
+    return await this.sql<ProjectEntityDbResult[]>`
+      SELECT
+        pe.workspace,
+        pe.project_id,
+        pe.entity_id,
+        e.name       AS entity_name,
+        e.slug       AS entity_slug,
+        e.schema_id  AS entity_schema_id,
+        es.name      AS entity_schema_name,
+        pe.entity_type AS entity_type_id,
+        pet.label    AS entity_type_label,
+        pe.is_done
+      FROM project_entity pe
+      JOIN entity e ON e.id = pe.entity_id
+      LEFT JOIN entity_schema es ON es.id = e.schema_id
+      LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
+      WHERE pe.workspace = ${workspace} AND pe.entity_id = ${entityId}
+      ORDER BY e.name
+    `;
+  }
+
+  async addProjectEntity(input: ProjectEntityDbCreate) {
+    try {
+      await this.sql`
+        INSERT INTO project_entity (workspace, project_id, entity_id, entity_type, is_done, created_at)
+        VALUES (${input.workspace}, ${input.project_id}, ${input.entity_id}, ${input.entity_type_id}, ${input.is_done ?? false}, ${input.created_at})
+      `;
+      const [row] = await this.sql<ProjectEntityDbResult[]>`
+        SELECT
+          pe.workspace,
+          pe.project_id,
+          pe.entity_id,
+          e.name       AS entity_name,
+          e.slug       AS entity_slug,
+          e.schema_id  AS entity_schema_id,
+          es.name      AS entity_schema_name,
+          pe.entity_type AS entity_type_id,
+          pet.label    AS entity_type_label,
+          pe.is_done
+        FROM project_entity pe
+        JOIN entity e ON e.id = pe.entity_id
+        LEFT JOIN entity_schema es ON es.id = e.schema_id
+        LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
+        WHERE pe.workspace = ${input.workspace} AND pe.project_id = ${input.project_id} AND pe.entity_id = ${input.entity_id}
+      `;
+      return row!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateProjectEntity(
+    workspace: string,
+    projectId: string,
+    entityId: string,
+    entityTypeId: string | null,
+    isDone: boolean
+  ) {
+    try {
+      const result = await this.sql`
+        UPDATE project_entity
+        SET entity_type = ${entityTypeId}, is_done = ${isDone}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND entity_id = ${entityId}
+      `;
+      if (result.count === 0) return null;
+      const [row] = await this.sql<ProjectEntityDbResult[]>`
+        SELECT
+          pe.workspace,
+          pe.project_id,
+          pe.entity_id,
+          e.name       AS entity_name,
+          e.slug       AS entity_slug,
+          e.schema_id  AS entity_schema_id,
+          es.name      AS entity_schema_name,
+          pe.entity_type AS entity_type_id,
+          pet.label    AS entity_type_label,
+          pe.is_done
+        FROM project_entity pe
+        JOIN entity e ON e.id = pe.entity_id
+        LEFT JOIN entity_schema es ON es.id = e.schema_id
+        LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
+        WHERE pe.workspace = ${workspace} AND pe.project_id = ${projectId} AND pe.entity_id = ${entityId}
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async removeProjectEntity(workspace: string, projectId: string, entityId: string) {
+    try {
+      await this.sql`
+        DELETE FROM project_entity
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND entity_id = ${entityId}
       `;
     } catch (error) {
       return normalizePostgresError(error);

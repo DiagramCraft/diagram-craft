@@ -16,7 +16,8 @@ import type {
   OwnerDbResult,
   TeamMembershipDbResult,
   RoleDefinitionDbResult,
-  MemberDbResult
+  MemberDbResult,
+  ProjectEntityTypeDbResult
 } from './db/workspaceDatabase';
 
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
@@ -68,6 +69,40 @@ export const replaceLifecycleStates = async (
       label: s.label,
       color: s.color,
       sort_order: i,
+      created_at: now
+    }))
+  );
+};
+
+// ── Project Entity Types ──────────────────────────────────────
+
+export const listProjectEntityTypes = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+): Promise<ProjectEntityTypeDbResult[]> => {
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  requireWorkspaceCapability(authCtx, 'ws.view');
+  return await db.workspace.listProjectEntityTypes(workspace);
+};
+
+export const replaceProjectEntityTypes = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  types: Array<{ id?: string; label: string; sort_order?: number }>,
+  event: AuthenticatedEvent
+): Promise<ProjectEntityTypeDbResult[]> => {
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  requireWorkspaceCapability(authCtx, 'ws.settings');
+
+  const now = new Date();
+  return await db.workspace.replaceProjectEntityTypes(
+    workspace,
+    types.map((t, i) => ({
+      id: typeof t.id === 'string' ? t.id : randomUUID(),
+      workspace,
+      label: t.label,
+      sort_order: t.sort_order ?? i,
       created_at: now
     }))
   );

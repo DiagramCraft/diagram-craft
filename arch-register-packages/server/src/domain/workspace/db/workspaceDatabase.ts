@@ -26,6 +26,16 @@ export type LifecycleStateDbResult = {
 
 export type LifecycleStateDbCreate = LifecycleStateDbResult;
 
+export type ProjectEntityTypeDbResult = {
+  id: string;
+  workspace: string;
+  label: string;
+  sort_order: number;
+  created_at: Date;
+};
+
+export type ProjectEntityTypeDbCreate = ProjectEntityTypeDbResult;
+
 export type OwnerDbResult = {
   id: string;
   workspace: string;
@@ -87,6 +97,12 @@ export type WorkspaceDatabase = {
     ws: string,
     states: LifecycleStateDbCreate[]
   ): Promise<LifecycleStateDbResult[]>;
+
+  listProjectEntityTypes(ws: string): Promise<ProjectEntityTypeDbResult[]>;
+  replaceProjectEntityTypes(
+    ws: string,
+    types: ProjectEntityTypeDbCreate[]
+  ): Promise<ProjectEntityTypeDbResult[]>;
 
   listTeams(ws: string): Promise<OwnerDbResult[]>;
   replaceTeams(ws: string, teams: OwnerDbCreate[]): Promise<OwnerDbResult[]>;

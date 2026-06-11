@@ -16,11 +16,22 @@ const projectSchema = projectCapabilitiesSchema.extend({
   name: z.string(),
   description: z.string(),
   owner: foreignKeySchema.nullable(),
-  status: z.enum(['pinned', 'active', 'archived']),
+  status: z.enum(['draft', 'active', 'complete', 'cancelled']),
   color: z.string().nullable(),
+  target_date: z.string().nullable(),
+  pinned: z.boolean(),
   file_count: z.number(),
   created_at: z.string(),
   updated_at: z.string()
+});
+
+const projectEntitySchema = z.object({
+  entity_id: z.string(),
+  entity_name: z.string(),
+  entity_slug: z.string(),
+  entity_schema: foreignKeySchema.nullable(),
+  entity_type: foreignKeySchema.nullable(),
+  is_done: z.boolean()
 });
 
 export const projectFileSchema = z.object({
@@ -112,11 +123,13 @@ export const projectContract = {
               z.string().optional()
             ),
             owner: z.string().nullable().optional(),
-            status: z.enum(['pinned', 'active', 'archived']).optional(),
+            status: z.enum(['draft', 'active', 'complete', 'cancelled']).optional(),
             color: z.preprocess(
               v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
               z.string().nullable().optional()
-            )
+            ),
+            target_date: z.string().nullable().optional(),
+            pinned: z.boolean().optional()
           })
         })
       )
@@ -130,8 +143,10 @@ export const projectContract = {
             name: z.string(),
             description: z.string().optional(),
             owner: z.string().nullable().optional(),
-            status: z.enum(['pinned', 'active', 'archived']).optional(),
-            color: z.string().nullable().optional()
+            status: z.enum(['draft', 'active', 'complete', 'cancelled']).optional(),
+            color: z.string().nullable().optional(),
+            target_date: z.string().nullable().optional(),
+            pinned: z.boolean().optional()
           })
         })
       )
@@ -285,7 +300,56 @@ export const projectContract = {
           })
         })
       )
-      .output(projectFileSchema)
+      .output(projectFileSchema),
+    listEntities: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{id}/entities',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({ params: wsAndId }))
+      .output(z.array(projectEntitySchema)),
+    addEntity: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/entities',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          body: z.object({
+            entity_id: z.string(),
+            entity_type: z.string().nullable().optional(),
+            is_done: z.boolean().optional()
+          })
+        })
+      )
+      .output(projectEntitySchema),
+    updateEntity: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/projects/{id}/entities/{entityId}',
+        inputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: wsAndId.extend({ entityId: z.string() }),
+          body: z.object({
+            entity_type: z.string().nullable().optional(),
+            is_done: z.boolean().optional()
+          })
+        })
+      )
+      .output(projectEntitySchema),
+    removeEntity: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/projects/{id}/entities/{entityId}',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({ params: wsAndId.extend({ entityId: z.string() }) }))
+      .output(z.object({ success: z.boolean() }))
   }
 };
 
@@ -293,3 +357,4 @@ export type Project = z.infer<typeof projectSchema>;
 export type ProjectFile = z.infer<typeof projectFileSchema>;
 export type FileTree = z.infer<typeof fileTreeSchema>;
 export type ProjectDetail = z.infer<typeof projectDetailSchema>;
+export type ProjectEntity = z.infer<typeof projectEntitySchema>;
