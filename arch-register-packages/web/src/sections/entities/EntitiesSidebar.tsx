@@ -304,6 +304,7 @@ export const EntitiesSidebar = ({
             <TreeRow
               icon={<TbDatabase size={12} />}
               label="All entities"
+              ariaLabel="Entity filter: All entities"
               active={activeFilterKind === 'all'}
               onClick={() =>
                 navigateEntities({ type: undefined, status: undefined, owner: undefined })
@@ -314,6 +315,7 @@ export const EntitiesSidebar = ({
             {schemas.map((s, i) => (
               <TreeRow
                 key={s.id}
+                ariaLabel={`Entity type filter: ${s.name}`}
                 icon={
                   <TypeBadge
                     color={resolveSchemaColor(s, i)}
@@ -338,6 +340,7 @@ export const EntitiesSidebar = ({
               return (
                 <TreeRow
                   key={s.id}
+                  ariaLabel={`Entity status filter: ${s.label}`}
                   icon={
                     <span
                       style={{
@@ -362,6 +365,7 @@ export const EntitiesSidebar = ({
             {owners.map(([ownerId, ownerName, count]) => (
               <TreeRow
                 key={ownerId ?? 'unassigned'}
+                ariaLabel={`Entity owner filter: ${ownerName}`}
                 icon={<TbUsers size={12} />}
                 label={ownerName}
                 active={activeFilterKind === 'owner' && ownerFilter === ownerId}

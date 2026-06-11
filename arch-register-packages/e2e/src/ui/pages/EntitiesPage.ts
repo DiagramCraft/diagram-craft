@@ -11,10 +11,37 @@ export class EntitiesPage extends WorkspacePage {
     await this.page.goto(workspaceEntitiesRoute(this.workspaceSlug));
   };
 
+  typeFilter = (name: string) => this.page.getByLabel(`Entity type filter: ${name}`);
+  browserTitle = () => this.page.getByLabel('Entity browser title');
+  browserCount = () => this.page.getByLabel('Entity browser count');
+
   expectLoaded = async () => {
     await this.workspaceShell.expectActiveNav('entities');
     await expect(this.page.getByRole('main').getByText('All entities')).toBeVisible();
     await expect(this.page.getByPlaceholder('Search by name, owner…')).toBeVisible();
     await expect(this.page.getByRole('button', { name: 'New entity' })).toBeVisible();
+  };
+
+  filterByType = async (name: string) => {
+    await this.typeFilter(name).click();
+    await expect(this.browserTitle()).toHaveText(name);
+  };
+
+  expectFilteredResultCount = async (count: number) => {
+    await expect(this.browserCount()).toHaveText(String(count));
+  };
+
+  openExportMenu = async () => {
+    await this.page.getByRole('button', { name: 'Entity browser actions' }).click();
+  };
+
+  exportCsv = async () => {
+    await this.openExportMenu();
+    await this.page.getByRole('menuitem', { name: 'Export CSV' }).click();
+  };
+
+  openNewEntityDialog = async () => {
+    await this.page.getByRole('button', { name: 'New entity' }).click();
+    await expect(this.page.getByRole('alertdialog', { name: 'New entity' })).toBeVisible();
   };
 }

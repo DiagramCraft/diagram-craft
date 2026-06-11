@@ -5,10 +5,8 @@ import {
   AR_COLOR_PURPLE,
   AR_COLOR_YELLOW,
   AR_COLOR_RED,
-  AR_COLOR_PINK,
   AR_COLOR_CYAN,
-  AR_COLOR_TEAL,
-  AR_COLOR_AMBER
+  AR_COLOR_TEAL
 } from '@arch-register/api-types/colors';
 import {
   TeamMembershipDbResult,

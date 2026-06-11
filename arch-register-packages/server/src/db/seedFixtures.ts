@@ -120,3 +120,94 @@ export const seededProjects = {
     name: 'Checkout Revamp'
   }
 } as const;
+
+export const seededSchemas = {
+  default: {
+    domain: {
+      id: '00000000-0000-0000-0000-000000000001',
+      workspaceId: seededWorkspaces.default.id,
+      name: 'Domain'
+    },
+    system: {
+      id: '00000000-0000-0000-0000-000000000002',
+      workspaceId: seededWorkspaces.default.id,
+      name: 'System'
+    },
+    component: {
+      id: '00000000-0000-0000-0000-000000000003',
+      workspaceId: seededWorkspaces.default.id,
+      name: 'Component'
+    },
+    api: {
+      id: '00000000-0000-0000-0000-000000000004',
+      workspaceId: seededWorkspaces.default.id,
+      name: 'API'
+    },
+    resource: {
+      id: '00000000-0000-0000-0000-000000000005',
+      workspaceId: seededWorkspaces.default.id,
+      name: 'Resource'
+    }
+  },
+  second: {
+    application: {
+      id: '00000000-0000-0000-0000-000000000011',
+      workspaceId: seededWorkspaces.second.id,
+      name: 'Application'
+    },
+    service: {
+      id: '00000000-0000-0000-0000-000000000012',
+      workspaceId: seededWorkspaces.second.id,
+      name: 'Service'
+    }
+  }
+} as const;
+
+export const seededEntities = {
+  default: {
+    customerPortal: {
+      id: '00000000-0000-0000-0002-000000000001',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.system.id,
+      name: 'Customer Portal'
+    },
+    customerApi: {
+      id: '00000000-0000-0000-0004-000000000001',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.api.id,
+      name: 'Customer API'
+    },
+    authApi: {
+      id: '00000000-0000-0000-0004-000000000002',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.api.id,
+      name: 'Auth API'
+    },
+    frontendApp: {
+      id: '00000000-0000-0000-0003-000000000002',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.component.id,
+      name: 'Frontend App'
+    },
+    authService: {
+      id: '00000000-0000-0000-0003-000000000003',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.component.id,
+      name: 'Auth Service'
+    }
+  },
+  second: {
+    notificationsService: {
+      id: '00000000-0000-0000-0012-000000000001',
+      workspaceId: seededWorkspaces.second.id,
+      schemaId: seededSchemas.second.service.id,
+      name: 'Notifications Service'
+    },
+    deliveryService: {
+      id: '00000000-0000-0000-0012-000000000002',
+      workspaceId: seededWorkspaces.second.id,
+      schemaId: seededSchemas.second.service.id,
+      name: 'Delivery Service'
+    }
+  }
+} as const;
