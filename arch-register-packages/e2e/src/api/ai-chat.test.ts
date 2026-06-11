@@ -8,24 +8,6 @@ type SeededFixtures = {
 };
 
 const mockAiChatOverrides = {
-  chatParamsFromRequestBodyImpl: async (body: unknown) => {
-    const data = body as Record<string, unknown>;
-    return {
-      messages:
-        (data['messages'] as Array<{
-          role: string;
-          content?: unknown;
-          parts?: Array<{ type?: string; content?: string }>;
-        }>) ?? [],
-      threadId: String(data['threadId'] ?? 'thread-1'),
-      runId: String(data['runId'] ?? 'run-1'),
-      parentRunId: undefined,
-      tools: [],
-      forwardedProps: (data['forwardedProps'] as Record<string, unknown>) ?? {},
-      state: data['state'] ?? null,
-      context: []
-    };
-  },
   buildSystemPromptImpl: async () => 'Mock system prompt',
   createAiTextAdapterImpl: () => ({ provider: 'mock' }) as never,
   createAiChatToolsImpl: () => [],
@@ -41,23 +23,6 @@ const mockAiChatOverrides = {
       yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'reply' };
     })();
   }) as never,
-  toServerSentEventsResponseImpl: (stream: AsyncIterable<Record<string, unknown>>) =>
-    new Response(
-      new ReadableStream({
-        async start(controller) {
-          const encoder = new TextEncoder();
-          for await (const chunk of stream) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
-          }
-          controller.close();
-        }
-      }),
-      {
-        headers: {
-          'Content-Type': 'text/event-stream'
-        }
-      }
-    ),
   randomId: (() => {
     let i = 0;
     return () => `mock-ai-id-${++i}`;

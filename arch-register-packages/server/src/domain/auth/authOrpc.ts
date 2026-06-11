@@ -18,7 +18,7 @@ import {
   buildUserUpdateInput,
   parseRequestedGlobalRoles,
   selectRefreshToken
-} from './authRoutes';
+} from './authHelpers';
 import { resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
 import type { TeamRole } from '@arch-register/permissions';
 import type { UserDbResult } from './db/authDatabase';

@@ -5,7 +5,7 @@ import type { StorageAdapter } from './storage/storage';
 import { createLogger } from './utils/logger';
 import { createUnifiedOpenAPISpecHandler } from './openapi';
 import { createProjectRoutes } from './domain/project/projectRoutes';
-import { createOidcCallbackRoute } from './domain/auth/authRoutes';
+import { createOidcCallbackRoute } from './domain/auth/oidcCallbackRoute';
 import { createTemplateRoutes } from './domain/catalog/templateRoutes';
 import { requireAuth } from './middleware/auth';
 import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
@@ -25,8 +25,6 @@ import {
 } from './domain/auth/authOrpc';
 import { createAiORPCHandler } from './domain/ai/aiOrpc';
 import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
-import { createAiChatRoutes } from './domain/ai/aiRoutes';
-import { createDiagramCraftRoutes } from './domain/diagram/diagramCraftRoutes';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -117,8 +115,6 @@ export const createApp = (
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
   app.use(createSearchORPCHandler(db));
-  app.use('/api', createAiChatRoutes(db, options.routeOverrides?.aiChat));
-  app.use('/api', createDiagramCraftRoutes(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
   app.use(createDiagramCraftORPCHandler(db));
   app.use(createTemplateRoutes(db));

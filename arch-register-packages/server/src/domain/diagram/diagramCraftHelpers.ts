@@ -1,13 +1,6 @@
-import { defineHandler, EventHandlerRequest, H3, H3Event, HTTPError } from 'h3';
+import { H3Event, EventHandlerRequest, HTTPError } from 'h3';
 import type { AIGenerateRequest } from '../ai/aiServer';
-import { ConfiguredAIServer } from '../ai/configuredAiServer';
-import { resolveAiConfig } from '../ai/tanstackAiAdapter';
-import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
-
-// REST route base for Diagram Craft AI endpoints
-const ROUTE_BASE = '/:workspace/ai';
 
 export const validateDiagramCraftAIRequestHeaders = (event: H3Event<EventHandlerRequest>) => {
   const CONTENT_TYPE_JSON = 'application/json';
@@ -76,44 +69,4 @@ export const toDiagramCraftAIHttpError = (error: unknown, fallbackMessage: strin
     statusText: 'Internal Server Error',
     message: fallbackMessage
   });
-};
-
-export const createDiagramCraftRoutes = (db: DatabaseAdapter) => {
-  const router = new H3();
-
-  // POST /api/:workspace/ai/generate -- Diagram Craft AI generate endpoint
-  router.post(
-    `${ROUTE_BASE}/generate`,
-    defineHandler(async event => {
-      validateDiagramCraftAIRequestHeaders(event);
-
-      const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
-      const aiConfig = await resolveAiConfig(db, workspace);
-      if (!aiConfig) {
-        throw new HTTPError({ status: 503, message: 'AI is not configured for this workspace' });
-      }
-
-      try {
-        const body = validateDiagramCraftAIGenerateBody(
-          (await event.req.json().catch(() => undefined)) as AIGenerateRequest | undefined
-        );
-
-        const aiServer = new ConfiguredAIServer(aiConfig);
-        const result = await aiServer.generate(body);
-
-        if (result.type === 'stream') {
-          event.res.headers.set('Content-Type', 'text/event-stream');
-          event.res.headers.set('Cache-Control', 'no-cache');
-          event.res.headers.set('Connection', 'keep-alive');
-          return result.body;
-        }
-
-        return result.body;
-      } catch (error) {
-        throw toDiagramCraftAIHttpError(error, 'Failed to generate AI response');
-      }
-    })
-  );
-
-  return router;
 };

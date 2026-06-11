@@ -15,7 +15,7 @@ import {
   parseExtractResponse,
   extractUserTextContent,
   buildConversationAutoTitle
-} from './aiRoutes';
+} from './aiHelpers';
 import { chat } from '@tanstack/ai';
 import { buildSystemPrompt } from './systemPromptBuilder';
 import { createAiChatTools } from './chatTools';

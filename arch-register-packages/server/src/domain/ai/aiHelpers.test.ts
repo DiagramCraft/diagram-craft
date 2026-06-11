@@ -5,7 +5,7 @@ import {
   createAiConfigResponse,
   extractUserTextContent,
   parseExtractResponse
-} from './aiRoutes';
+} from './aiHelpers';
 import { AiConfigDbResult } from './db/aiDatabase';
 
 const now = new Date('2026-06-07T10:00:00.000Z');
