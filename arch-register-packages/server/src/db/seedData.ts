@@ -31,6 +31,7 @@ import { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
 const now = new Date('2026-01-01T00:00:00.000Z');
 
 const WORKSPACE_ID = '90000000-0000-0000-0000-000000000001';
+const WORKSPACE2_ID = '90000000-0000-0000-0000-000000000002';
 
 const LIFECYCLE_IDS = {
   proposed: '90000000-0000-0000-0000-000000000011',
@@ -39,11 +40,23 @@ const LIFECYCLE_IDS = {
   deprecated: '90000000-0000-0000-0000-000000000014'
 } as const;
 
+const LIFECYCLE2_IDS = {
+  active: '90000000-0000-0000-0000-000000000015',
+  beta: '90000000-0000-0000-0000-000000000016',
+  stable: '90000000-0000-0000-0000-000000000017',
+  retired: '90000000-0000-0000-0000-000000000018'
+} as const;
+
 const TEAM_IDS = {
   platform: '90000000-0000-0000-0000-000000000021',
   design: '90000000-0000-0000-0000-000000000022',
   security: '90000000-0000-0000-0000-000000000023',
   data: '90000000-0000-0000-0000-000000000024'
+} as const;
+
+const TEAM2_IDS = {
+  mobile: '90000000-0000-0000-0000-000000000025',
+  backend: '90000000-0000-0000-0000-000000000026'
 } as const;
 
 const USER_IDS = {
@@ -61,10 +74,13 @@ const USER_IDS = {
 
 export const seedIds = {
   workspace: {
-    default: WORKSPACE_ID
+    default: WORKSPACE_ID,
+    second: WORKSPACE2_ID
   },
   lifecycle: LIFECYCLE_IDS,
+  lifecycle2: LIFECYCLE2_IDS,
   teams: TEAM_IDS,
+  teams2: TEAM2_IDS,
   users: USER_IDS
 } as const;
 
@@ -75,6 +91,16 @@ export const seedWorkspaces: WorkspaceDbResult[] = [
     url_slug: 'default',
     short_code: 'DW',
     description: 'The default workspace',
+    color: '',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: WORKSPACE2_ID,
+    name: 'Second Workspace',
+    url_slug: 'second',
+    short_code: 'SW',
+    description: 'A secondary workspace for testing multi-workspace scenarios',
     color: '',
     created_at: now,
     updated_at: now
@@ -111,6 +137,39 @@ export const seedLifecycleStates: LifecycleStateDbResult[] = [
     workspace: WORKSPACE_ID,
     label: 'Deprecated',
     color: AR_COLOR_YELLOW,
+    sort_order: 3,
+    created_at: now
+  },
+  // Second workspace lifecycle states
+  {
+    id: LIFECYCLE2_IDS.active,
+    workspace: WORKSPACE2_ID,
+    label: 'Active',
+    color: AR_COLOR_BLUE,
+    sort_order: 0,
+    created_at: now
+  },
+  {
+    id: LIFECYCLE2_IDS.beta,
+    workspace: WORKSPACE2_ID,
+    label: 'Beta',
+    color: AR_COLOR_ORANGE,
+    sort_order: 1,
+    created_at: now
+  },
+  {
+    id: LIFECYCLE2_IDS.stable,
+    workspace: WORKSPACE2_ID,
+    label: 'Stable',
+    color: AR_COLOR_GREEN,
+    sort_order: 2,
+    created_at: now
+  },
+  {
+    id: LIFECYCLE2_IDS.retired,
+    workspace: WORKSPACE2_ID,
+    label: 'Retired',
+    color: AR_COLOR_RED,
     sort_order: 3,
     created_at: now
   }
@@ -151,6 +210,25 @@ export const seedOwners: OwnerDbResult[] = [
     sort_order: 3,
     color: AR_COLOR_PURPLE,
     description: 'Manages data infrastructure and analytics pipelines',
+    created_at: now
+  },
+  // Second workspace teams
+  {
+    id: TEAM2_IDS.mobile,
+    workspace: WORKSPACE2_ID,
+    name: 'Mobile Team',
+    sort_order: 0,
+    color: AR_COLOR_TEAL,
+    description: 'Develops and maintains iOS and Android applications',
+    created_at: now
+  },
+  {
+    id: TEAM2_IDS.backend,
+    workspace: WORKSPACE2_ID,
+    name: 'Backend Team',
+    sort_order: 1,
+    color: AR_COLOR_CYAN,
+    description: 'Builds and operates backend services and APIs',
     created_at: now
   }
 ];
@@ -365,7 +443,14 @@ export const seedWorkspaceMembers: MemberDbResult[] = [
     role: 'reviewer',
     created_at: now
   },
-  { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now }
+  { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now },
+  // Second workspace members
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.globaladmin, role: 'admin', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.workspaceadmin, role: 'admin', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.platformteamadmin, role: 'editor', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.designteamadmin, role: 'editor', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.workspaceeditor, role: 'editor', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now }
 ];
 
 export const seedEnums: WorkspaceEnumDbResult[] = [
@@ -378,6 +463,20 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
       { value: 'grpc', label: 'gRPC' },
       { value: 'graphql', label: 'GraphQL' },
       { value: 'asyncapi', label: 'AsyncAPI' }
+    ],
+    sort_order: 0,
+    created_at: now,
+    updated_at: now
+  },
+  // Second workspace enums
+  {
+    id: '00000000-0000-0000-0000-e00000000002',
+    workspace: WORKSPACE2_ID,
+    name: 'Platform',
+    options: [
+      { value: 'ios', label: 'iOS' },
+      { value: 'android', label: 'Android' },
+      { value: 'web', label: 'Web' }
     ],
     sort_order: 0,
     created_at: now,
@@ -511,6 +610,40 @@ export const seedSchemas: SchemaDbResult[] = [
     ],
     color: AR_COLOR_ORANGE,
     icon: 'database',
+    default_owner: null,
+    created_at: now,
+    updated_at: now
+  },
+  // Second workspace schemas
+  {
+    id: '00000000-0000-0000-0000-000000000011',
+    workspace: WORKSPACE2_ID,
+    name: 'Application',
+    description: 'A mobile or web application delivered to end users.',
+    fields: [
+      {
+        id: 'platform',
+        name: 'Platform',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000002'
+      }
+    ],
+    color: AR_COLOR_TEAL,
+    icon: 'box',
+    default_owner: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000012',
+    workspace: WORKSPACE2_ID,
+    name: 'Service',
+    description: 'A backend service or microservice.',
+    fields: [
+      { id: 'technology', name: 'Technology', type: 'text' }
+    ],
+    color: AR_COLOR_CYAN,
+    icon: 'layers',
     default_owner: null,
     created_at: now,
     updated_at: now
@@ -705,6 +838,45 @@ export const seedEntities: Entity[] = [
       resource_type: 'database',
       system: '00000000-0000-0000-0002-000000000001'
     },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  // Second workspace entities
+  {
+    id: '00000000-0000-0000-0011-000000000001',
+    workspace: WORKSPACE2_ID,
+    slug: 'mobile-app',
+    namespace: 'default',
+    name: 'Mobile App',
+    description: 'Cross-platform mobile application for iOS and Android.',
+    owner: TEAM2_IDS.mobile,
+    lifecycle: LIFECYCLE2_IDS.stable,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['mobile', 'customer-facing'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000011',
+    data: { platform: 'ios' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0012-000000000001',
+    workspace: WORKSPACE2_ID,
+    slug: 'notifications-service',
+    namespace: 'default',
+    name: 'Notifications Service',
+    description: 'Handles push notifications and email delivery.',
+    owner: TEAM2_IDS.backend,
+    lifecycle: LIFECYCLE2_IDS.beta,
+    target_lifecycle: LIFECYCLE2_IDS.stable,
+    target_lifecycle_date: '2026-09-01',
+    tags: ['nodejs', 'messaging'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    data: { technology: 'Node' },
     visibility_mode: null,
     created_at: now,
     updated_at: now
