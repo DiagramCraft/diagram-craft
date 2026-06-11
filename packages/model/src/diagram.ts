@@ -5,7 +5,13 @@ import { Selection } from './selection';
 import type { UndoManager } from './undoManager';
 import { createUndoManager } from './undoManager.factory';
 import { getRemoteUnitOfWork, UnitOfWork, UOWRegistry } from './unitOfWork';
-import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
+import {
+  bindElementListeners,
+  DiagramElement,
+  getElementAndAncestors,
+  isEdge,
+  isNode
+} from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
@@ -410,8 +416,14 @@ export class Diagram
     );
     assert.present(topMostLayer);
 
-    // Cannot move an element into itself, so abort if this is the case
-    if (elements.some(e => e === ref?.element)) return;
+    // Prevent cyclic parent/child graphs by refusing drops onto a moved element
+    // or anywhere inside one of its descendants.
+    if (
+      ref?.element &&
+      elements.some(element => getElementAndAncestors(ref.element!).includes(element))
+    ) {
+      return;
+    }
 
     const removeChild = (el: DiagramElement) => {
       if (el.parent) {
