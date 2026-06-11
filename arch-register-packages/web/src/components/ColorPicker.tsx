@@ -24,6 +24,7 @@ export const ColorPicker = ({
             onClick={() => onChange(color)}
             disabled={disabled}
             title={color}
+            aria-label={`Select color ${color}`}
           />
         ))}
       </div>

@@ -5,10 +5,8 @@ import {
   AR_COLOR_PURPLE,
   AR_COLOR_YELLOW,
   AR_COLOR_RED,
-  AR_COLOR_PINK,
   AR_COLOR_CYAN,
-  AR_COLOR_TEAL,
-  AR_COLOR_AMBER
+  AR_COLOR_TEAL
 } from '@arch-register/api-types/colors';
 import {
   TeamMembershipDbResult,
@@ -27,16 +25,25 @@ import { ProjectDbCreate, ProjectFileDbResult } from '../domain/project/db/proje
 import { AuditOperation } from '../domain/audit/db/auditDatabase';
 import { GlobalRoleAssignmentDbResult } from '../domain/auth/db/authDatabase';
 import { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
+import { seededProjects, seededUsers, seededWorkspaces } from './seedFixtures';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
-const WORKSPACE_ID = '90000000-0000-0000-0000-000000000001';
+const WORKSPACE_ID = seededWorkspaces.default.id;
+const WORKSPACE2_ID = seededWorkspaces.second.id;
 
 const LIFECYCLE_IDS = {
   proposed: '90000000-0000-0000-0000-000000000011',
   experimental: '90000000-0000-0000-0000-000000000012',
   production: '90000000-0000-0000-0000-000000000013',
   deprecated: '90000000-0000-0000-0000-000000000014'
+} as const;
+
+const LIFECYCLE2_IDS = {
+  active: '90000000-0000-0000-0000-000000000015',
+  beta: '90000000-0000-0000-0000-000000000016',
+  stable: '90000000-0000-0000-0000-000000000017',
+  retired: '90000000-0000-0000-0000-000000000018'
 } as const;
 
 const TEAM_IDS = {
@@ -46,35 +53,53 @@ const TEAM_IDS = {
   data: '90000000-0000-0000-0000-000000000024'
 } as const;
 
+const TEAM2_IDS = {
+  mobile: '90000000-0000-0000-0000-000000000025',
+  backend: '90000000-0000-0000-0000-000000000026'
+} as const;
+
 const USER_IDS = {
-  globaladmin: '91000000-0000-0000-0000-000000000001',
-  workspaceadmin: '91000000-0000-0000-0000-000000000002',
-  workspaceowner: '91000000-0000-0000-0000-000000000003',
-  platformteamadmin: '91000000-0000-0000-0000-000000000004',
-  platformteameditor: '91000000-0000-0000-0000-000000000005',
-  designteamadmin: '91000000-0000-0000-0000-000000000006',
-  securityteamadmin: '91000000-0000-0000-0000-000000000007',
-  workspaceeditor: '91000000-0000-0000-0000-000000000008',
-  workspacereviewer: '91000000-0000-0000-0000-000000000009',
-  workspaceviewer: '91000000-0000-0000-0000-00000000000a'
+  globaladmin: seededUsers.globalAdmin.id,
+  workspaceadmin: seededUsers.workspaceAdmin.id,
+  workspaceowner: seededUsers.workspaceOwner.id,
+  platformteamadmin: seededUsers.platformTeamAdmin.id,
+  platformteameditor: seededUsers.platformTeamEditor.id,
+  designteamadmin: seededUsers.designTeamAdmin.id,
+  securityteamadmin: seededUsers.securityTeamAdmin.id,
+  workspaceeditor: seededUsers.workspaceEditor.id,
+  workspacereviewer: seededUsers.workspaceReviewer.id,
+  workspaceviewer: seededUsers.workspaceViewer.id
 } as const;
 
 export const seedIds = {
   workspace: {
-    default: WORKSPACE_ID
+    default: WORKSPACE_ID,
+    second: WORKSPACE2_ID
   },
   lifecycle: LIFECYCLE_IDS,
+  lifecycle2: LIFECYCLE2_IDS,
   teams: TEAM_IDS,
+  teams2: TEAM2_IDS,
   users: USER_IDS
 } as const;
 
 export const seedWorkspaces: WorkspaceDbResult[] = [
   {
     id: WORKSPACE_ID,
-    name: 'Default Workspace',
-    url_slug: 'default',
-    short_code: 'DW',
-    description: 'The default workspace',
+    name: seededWorkspaces.default.name,
+    url_slug: seededWorkspaces.default.slug,
+    short_code: seededWorkspaces.default.shortCode,
+    description: seededWorkspaces.default.description,
+    color: '',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: WORKSPACE2_ID,
+    name: seededWorkspaces.second.name,
+    url_slug: seededWorkspaces.second.slug,
+    short_code: seededWorkspaces.second.shortCode,
+    description: seededWorkspaces.second.description,
     color: '',
     created_at: now,
     updated_at: now
@@ -111,6 +136,39 @@ export const seedLifecycleStates: LifecycleStateDbResult[] = [
     workspace: WORKSPACE_ID,
     label: 'Deprecated',
     color: AR_COLOR_YELLOW,
+    sort_order: 3,
+    created_at: now
+  },
+  // Second workspace lifecycle states
+  {
+    id: LIFECYCLE2_IDS.active,
+    workspace: WORKSPACE2_ID,
+    label: 'Active',
+    color: AR_COLOR_BLUE,
+    sort_order: 0,
+    created_at: now
+  },
+  {
+    id: LIFECYCLE2_IDS.beta,
+    workspace: WORKSPACE2_ID,
+    label: 'Beta',
+    color: AR_COLOR_ORANGE,
+    sort_order: 1,
+    created_at: now
+  },
+  {
+    id: LIFECYCLE2_IDS.stable,
+    workspace: WORKSPACE2_ID,
+    label: 'Stable',
+    color: AR_COLOR_GREEN,
+    sort_order: 2,
+    created_at: now
+  },
+  {
+    id: LIFECYCLE2_IDS.retired,
+    workspace: WORKSPACE2_ID,
+    label: 'Retired',
+    color: AR_COLOR_RED,
     sort_order: 3,
     created_at: now
   }
@@ -152,79 +210,98 @@ export const seedOwners: OwnerDbResult[] = [
     color: AR_COLOR_PURPLE,
     description: 'Manages data infrastructure and analytics pipelines',
     created_at: now
+  },
+  // Second workspace teams
+  {
+    id: TEAM2_IDS.mobile,
+    workspace: WORKSPACE2_ID,
+    name: 'Mobile Team',
+    sort_order: 0,
+    color: AR_COLOR_TEAL,
+    description: 'Develops and maintains iOS and Android applications',
+    created_at: now
+  },
+  {
+    id: TEAM2_IDS.backend,
+    workspace: WORKSPACE2_ID,
+    name: 'Backend Team',
+    sort_order: 1,
+    color: AR_COLOR_CYAN,
+    description: 'Builds and operates backend services and APIs',
+    created_at: now
   }
 ];
 
 export const seedLocalUsers = [
   {
     id: USER_IDS.globaladmin,
-    user_id: 'globaladmin',
-    email: 'emma.lindqvist@example.com',
-    display_name: 'Emma Lindqvist',
-    color: AR_COLOR_GREEN
+    user_id: seededUsers.globalAdmin.userId,
+    email: seededUsers.globalAdmin.email,
+    display_name: seededUsers.globalAdmin.displayName,
+    color: seededUsers.globalAdmin.color
   },
   {
     id: USER_IDS.workspaceadmin,
-    user_id: 'workspaceadmin',
-    email: 'james.chen@example.com',
-    display_name: 'James Chen',
-    color: AR_COLOR_BLUE
+    user_id: seededUsers.workspaceAdmin.userId,
+    email: seededUsers.workspaceAdmin.email,
+    display_name: seededUsers.workspaceAdmin.displayName,
+    color: seededUsers.workspaceAdmin.color
   },
   {
     id: USER_IDS.workspaceowner,
-    user_id: 'workspaceowner',
-    email: 'sofia.martinez@example.com',
-    display_name: 'Sofia Martinez',
-    color: AR_COLOR_ORANGE
+    user_id: seededUsers.workspaceOwner.userId,
+    email: seededUsers.workspaceOwner.email,
+    display_name: seededUsers.workspaceOwner.displayName,
+    color: seededUsers.workspaceOwner.color
   },
   {
     id: USER_IDS.platformteamadmin,
-    user_id: 'platformteamadmin',
-    email: 'daniel.okonkwo@example.com',
-    display_name: 'Daniel Okonkwo',
-    color: AR_COLOR_PURPLE
+    user_id: seededUsers.platformTeamAdmin.userId,
+    email: seededUsers.platformTeamAdmin.email,
+    display_name: seededUsers.platformTeamAdmin.displayName,
+    color: seededUsers.platformTeamAdmin.color
   },
   {
     id: USER_IDS.platformteameditor,
-    user_id: 'platformteameditor',
-    email: 'anna.kowalski@example.com',
-    display_name: 'Anna Kowalski',
-    color: AR_COLOR_YELLOW
+    user_id: seededUsers.platformTeamEditor.userId,
+    email: seededUsers.platformTeamEditor.email,
+    display_name: seededUsers.platformTeamEditor.displayName,
+    color: seededUsers.platformTeamEditor.color
   },
   {
     id: USER_IDS.designteamadmin,
-    user_id: 'designteamadmin',
-    email: 'marcus.berg@example.com',
-    display_name: 'Marcus Berg',
-    color: AR_COLOR_RED
+    user_id: seededUsers.designTeamAdmin.userId,
+    email: seededUsers.designTeamAdmin.email,
+    display_name: seededUsers.designTeamAdmin.displayName,
+    color: seededUsers.designTeamAdmin.color
   },
   {
     id: USER_IDS.securityteamadmin,
-    user_id: 'securityteamadmin',
-    email: 'lena.hoffmann@example.com',
-    display_name: 'Lena Hoffmann',
-    color: AR_COLOR_PINK
+    user_id: seededUsers.securityTeamAdmin.userId,
+    email: seededUsers.securityTeamAdmin.email,
+    display_name: seededUsers.securityTeamAdmin.displayName,
+    color: seededUsers.securityTeamAdmin.color
   },
   {
     id: USER_IDS.workspaceeditor,
-    user_id: 'workspaceeditor',
-    email: 'raj.patel@example.com',
-    display_name: 'Raj Patel',
-    color: AR_COLOR_CYAN
+    user_id: seededUsers.workspaceEditor.userId,
+    email: seededUsers.workspaceEditor.email,
+    display_name: seededUsers.workspaceEditor.displayName,
+    color: seededUsers.workspaceEditor.color
   },
   {
     id: USER_IDS.workspacereviewer,
-    user_id: 'workspacereviewer',
-    email: 'clara.dubois@example.com',
-    display_name: 'Clara Dubois',
-    color: AR_COLOR_TEAL
+    user_id: seededUsers.workspaceReviewer.userId,
+    email: seededUsers.workspaceReviewer.email,
+    display_name: seededUsers.workspaceReviewer.displayName,
+    color: seededUsers.workspaceReviewer.color
   },
   {
     id: USER_IDS.workspaceviewer,
-    user_id: 'workspaceviewer',
-    email: 'oscar.nilsson@example.com',
-    display_name: 'Oscar Nilsson',
-    color: AR_COLOR_AMBER
+    user_id: seededUsers.workspaceViewer.userId,
+    email: seededUsers.workspaceViewer.email,
+    display_name: seededUsers.workspaceViewer.displayName,
+    color: seededUsers.workspaceViewer.color
   }
 ] as const;
 
@@ -365,7 +442,14 @@ export const seedWorkspaceMembers: MemberDbResult[] = [
     role: 'reviewer',
     created_at: now
   },
-  { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now }
+  { workspace: WORKSPACE_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now },
+  // Second workspace members
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.globaladmin, role: 'admin', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.workspaceadmin, role: 'admin', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.platformteamadmin, role: 'editor', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.designteamadmin, role: 'editor', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.workspaceeditor, role: 'editor', created_at: now },
+  { workspace: WORKSPACE2_ID, user_id: USER_IDS.workspaceviewer, role: 'viewer', created_at: now }
 ];
 
 export const seedEnums: WorkspaceEnumDbResult[] = [
@@ -378,6 +462,20 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
       { value: 'grpc', label: 'gRPC' },
       { value: 'graphql', label: 'GraphQL' },
       { value: 'asyncapi', label: 'AsyncAPI' }
+    ],
+    sort_order: 0,
+    created_at: now,
+    updated_at: now
+  },
+  // Second workspace enums
+  {
+    id: '00000000-0000-0000-0000-e00000000002',
+    workspace: WORKSPACE2_ID,
+    name: 'Platform',
+    options: [
+      { value: 'ios', label: 'iOS' },
+      { value: 'android', label: 'Android' },
+      { value: 'web', label: 'Web' }
     ],
     sort_order: 0,
     created_at: now,
@@ -511,6 +609,40 @@ export const seedSchemas: SchemaDbResult[] = [
     ],
     color: AR_COLOR_ORANGE,
     icon: 'database',
+    default_owner: null,
+    created_at: now,
+    updated_at: now
+  },
+  // Second workspace schemas
+  {
+    id: '00000000-0000-0000-0000-000000000011',
+    workspace: WORKSPACE2_ID,
+    name: 'Application',
+    description: 'A mobile or web application delivered to end users.',
+    fields: [
+      {
+        id: 'platform',
+        name: 'Platform',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000002'
+      }
+    ],
+    color: AR_COLOR_TEAL,
+    icon: 'box',
+    default_owner: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000012',
+    workspace: WORKSPACE2_ID,
+    name: 'Service',
+    description: 'A backend service or microservice.',
+    fields: [
+      { id: 'technology', name: 'Technology', type: 'text' }
+    ],
+    color: AR_COLOR_CYAN,
+    icon: 'layers',
     default_owner: null,
     created_at: now,
     updated_at: now
@@ -708,14 +840,72 @@ export const seedEntities: Entity[] = [
     visibility_mode: null,
     created_at: now,
     updated_at: now
+  },
+  // Second workspace entities
+  {
+    id: '00000000-0000-0000-0011-000000000001',
+    workspace: WORKSPACE2_ID,
+    slug: 'mobile-app',
+    namespace: 'default',
+    name: 'Mobile App',
+    description: 'Cross-platform mobile application for iOS and Android.',
+    owner: TEAM2_IDS.mobile,
+    lifecycle: LIFECYCLE2_IDS.stable,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['mobile', 'customer-facing'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000011',
+    data: { platform: 'ios' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0012-000000000001',
+    workspace: WORKSPACE2_ID,
+    slug: 'notifications-service',
+    namespace: 'default',
+    name: 'Notifications Service',
+    description: 'Handles push notifications and email delivery.',
+    owner: TEAM2_IDS.backend,
+    lifecycle: LIFECYCLE2_IDS.beta,
+    target_lifecycle: LIFECYCLE2_IDS.stable,
+    target_lifecycle_date: '2026-09-01',
+    tags: ['nodejs', 'messaging'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    data: { technology: 'Node' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0012-000000000002',
+    workspace: WORKSPACE2_ID,
+    slug: 'delivery-service',
+    namespace: 'default',
+    name: 'Delivery Service',
+    description: 'Coordinates outbound delivery jobs for notifications.',
+    owner: TEAM2_IDS.backend,
+    lifecycle: LIFECYCLE2_IDS.active,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['worker', 'messaging'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    data: { technology: 'Rust' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
   }
 ];
 
 export const seedProjects: ProjectDbCreate[] = [
   {
-    id: '00000000-0000-0000-0010-000000000001',
+    id: seededProjects.portalRedesign.id,
     workspace: WORKSPACE_ID,
-    name: 'Portal Redesign',
+    name: seededProjects.portalRedesign.name,
     description: 'Redesign of the customer portal frontend and API layer.',
     owner: TEAM_IDS.design,
     status: 'active',
@@ -724,13 +914,24 @@ export const seedProjects: ProjectDbCreate[] = [
     updated_at: now
   },
   {
-    id: '00000000-0000-0000-0010-000000000002',
+    id: seededProjects.authMigration.id,
     workspace: WORKSPACE_ID,
-    name: 'Auth Migration',
+    name: seededProjects.authMigration.name,
     description: 'Migration from legacy auth to the new identity platform.',
     owner: TEAM_IDS.security,
     status: 'pinned',
     color: AR_COLOR_RED,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: seededProjects.checkoutRevamp.id,
+    workspace: WORKSPACE_ID,
+    name: seededProjects.checkoutRevamp.name,
+    description: 'Modernization of checkout orchestration and payment integrations.',
+    owner: TEAM_IDS.platform,
+    status: 'active',
+    color: AR_COLOR_GREEN,
     created_at: now,
     updated_at: now
   }
@@ -808,6 +1009,24 @@ export const seedUserWatches = [
     workspace: WORKSPACE_ID,
     entity_id: '00000000-0000-0000-0003-000000000003',
     created_at: new Date('2026-01-02T09:10:00.000Z')
+  },
+  {
+    user_id: USER_IDS.globaladmin,
+    workspace: WORKSPACE2_ID,
+    entity_id: '00000000-0000-0000-0011-000000000001',
+    created_at: new Date('2026-01-07T09:00:00.000Z')
+  },
+  {
+    user_id: USER_IDS.globaladmin,
+    workspace: WORKSPACE2_ID,
+    entity_id: '00000000-0000-0000-0012-000000000001',
+    created_at: new Date('2026-01-07T09:05:00.000Z')
+  },
+  {
+    user_id: USER_IDS.globaladmin,
+    workspace: WORKSPACE2_ID,
+    entity_id: '00000000-0000-0000-0012-000000000002',
+    created_at: new Date('2026-01-07T09:10:00.000Z')
   }
 ] as const;
 
@@ -884,6 +1103,66 @@ export const seedNotificationEvents: Array<{
     changes: {
       old: { _targetLifecycleDate: '2026-12-31' },
       new: { _targetLifecycleDate: '2027-03-31' }
+    }
+  },
+  {
+    workspace: WORKSPACE2_ID,
+    timestamp: new Date('2026-01-07T10:15:00.000Z'),
+    user_id: USER_IDS.platformteamadmin,
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0011-000000000001',
+    entity_name: 'Mobile App',
+    entity_slug: 'mobile-app',
+    schema_id: '00000000-0000-0000-0000-000000000011',
+    changed_by_display_name: 'Daniel Okonkwo',
+    changes: {
+      old: { _description: 'Cross-platform mobile application for iOS and Android.' },
+      new: { _description: 'Cross-platform mobile application with refreshed onboarding flows.' }
+    }
+  },
+  {
+    workspace: WORKSPACE2_ID,
+    timestamp: new Date('2026-01-07T11:30:00.000Z'),
+    user_id: USER_IDS.designteamadmin,
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0012-000000000001',
+    entity_name: 'Notifications Service',
+    entity_slug: 'notifications-service',
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    changed_by_display_name: 'Marcus Berg',
+    changes: {
+      old: { technology: 'Node' },
+      new: { technology: 'Node 22' }
+    }
+  },
+  {
+    workspace: WORKSPACE2_ID,
+    timestamp: new Date('2026-01-07T13:45:00.000Z'),
+    user_id: USER_IDS.workspaceeditor,
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0012-000000000002',
+    entity_name: 'Delivery Service',
+    entity_slug: 'delivery-service',
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    changed_by_display_name: 'Raj Patel',
+    changes: {
+      old: { _tags: ['worker'] },
+      new: { _tags: ['worker', 'messaging'] }
+    }
+  },
+  {
+    workspace: WORKSPACE2_ID,
+    timestamp: new Date('2026-01-08T08:20:00.000Z'),
+    user_id: USER_IDS.workspaceadmin,
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0012-000000000001',
+    entity_name: 'Notifications Service',
+    entity_slug: 'notifications-service',
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    changed_by_display_name: 'James Chen',
+    changes: {
+      old: { _targetLifecycleDate: '2026-09-01' },
+      new: { _targetLifecycleDate: '2026-10-15' }
     }
   }
 ];

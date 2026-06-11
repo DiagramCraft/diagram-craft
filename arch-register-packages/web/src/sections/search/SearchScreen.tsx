@@ -372,7 +372,9 @@ export const SearchScreen = () => {
         <div className={styles.summary}>
           {trimmed ? (
             <>
-              <span className={styles.summaryCount}>{totalResults}</span>
+              <span data-testid="search-result-count" className={styles.summaryCount}>
+                {totalResults}
+              </span>
               <span className={styles.dim}>{totalResults === 1 ? 'result' : 'results'} for</span>
               <span className={styles.summaryQ}>"{trimmed}"</span>
             </>
@@ -391,12 +393,15 @@ export const SearchScreen = () => {
             <button
               type="button"
               key={c.value}
+              data-testid={`search-category-${c.label}`}
               className={`${styles.cat} ${filter === c.value ? styles.catActive : ''}`}
               onClick={() => setFilter(c.value)}
             >
               <Ic size={11} />
               <span>{c.label}</span>
-              <span className={styles.catCount}>{n}</span>
+              <span data-testid={`${c.label.toLowerCase()}-result-count`} className={styles.catCount}>
+                {n}
+              </span>
             </button>
           );
         })}
@@ -518,6 +523,7 @@ const ResultRow = ({
             <button
               type="button"
               className={styles.rowName}
+              aria-label={`Search result: ${e._name || e._slug}`}
               onClick={ev => {
                 ev.stopPropagation();
                 onOpen();

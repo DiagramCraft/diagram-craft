@@ -590,7 +590,14 @@ export const EntityBrowserScreen = () => {
   const dateBrowserEnabled = view === 'table' && selectedSchema != null && dateFields.length > 0;
 
   const matchesCondition = useCallback((e: EntityRecord, c: FilterCondition) => {
-    const value = e[c.fieldId];
+    const value =
+      c.fieldId === '_schemaId'
+        ? e._schema.id
+        : c.fieldId === '_lifecycle'
+          ? (e._lifecycle?.id ?? null)
+          : c.fieldId === '_owner'
+            ? (e._owner?.id ?? null)
+            : e[c.fieldId as keyof EntityRecord];
     if (c.op === 'empty') return value == null || value === '';
     if (c.op === 'not_empty') return value != null && value !== '';
 
@@ -800,8 +807,12 @@ export const EntityBrowserScreen = () => {
         <div>
           <div className={styles.eyebrow}>Entities</div>
           <div className={styles.titleRow}>
-            <div className={styles.title}>{typeName}</div>
-            <span className={styles.count}>{filtered.length}</span>
+            <div data-testid="entity-browser-title" className={styles.title}>
+              {typeName}
+            </div>
+            <span data-testid="entity-browser-count" className={styles.count}>
+              {filtered.length}
+            </span>
           </div>
           <div className={styles.sub}>
             Search, filter, and inspect everything in the IT landscape.
@@ -813,7 +824,10 @@ export const EntityBrowserScreen = () => {
               New entity
             </Button>
           )}
-          <DropdownMenu trigger={<Button icon={<TbDots size={14} />} />} items={menuItems} />
+          <DropdownMenu
+            trigger={<Button aria-label="Entity browser actions" icon={<TbDots size={14} />} />}
+            items={menuItems}
+          />
         </div>
       </div>
 
@@ -1129,6 +1143,7 @@ const TableView = ({
             return (
               <tr
                 key={e._uid}
+                aria-label={`Entity row: ${entityName(e)}`}
                 className={selectedIds.has(e._uid) ? styles.tableRowSelected : undefined}
                 onClick={() => onEntityClick(e._uid)}
               >

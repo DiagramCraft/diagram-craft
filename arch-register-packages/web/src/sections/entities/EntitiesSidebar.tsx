@@ -304,6 +304,7 @@ export const EntitiesSidebar = ({
             <TreeRow
               icon={<TbDatabase size={12} />}
               label="All entities"
+              testId="entity-filter-all"
               active={activeFilterKind === 'all'}
               onClick={() =>
                 navigateEntities({ type: undefined, status: undefined, owner: undefined })
@@ -314,6 +315,7 @@ export const EntitiesSidebar = ({
             {schemas.map((s, i) => (
               <TreeRow
                 key={s.id}
+                testId={`entity-type-filter-${s.name}`}
                 icon={
                   <TypeBadge
                     color={resolveSchemaColor(s, i)}
@@ -338,6 +340,7 @@ export const EntitiesSidebar = ({
               return (
                 <TreeRow
                   key={s.id}
+                  testId={`entity-status-filter-${s.label}`}
                   icon={
                     <span
                       style={{
@@ -362,6 +365,7 @@ export const EntitiesSidebar = ({
             {owners.map(([ownerId, ownerName, count]) => (
               <TreeRow
                 key={ownerId ?? 'unassigned'}
+                testId={`entity-owner-filter-${ownerName}`}
                 icon={<TbUsers size={12} />}
                 label={ownerName}
                 active={activeFilterKind === 'owner' && ownerFilter === ownerId}

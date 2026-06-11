@@ -59,6 +59,7 @@ export const DataModelSidebar = ({
           {schemas.map((s, i) => (
             <TreeRow
               key={s.id}
+              testId={`schema-type-${s.name}`}
               icon={
                 <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />
               }

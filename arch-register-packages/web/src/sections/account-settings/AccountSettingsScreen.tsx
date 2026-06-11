@@ -129,6 +129,7 @@ export const AccountSettingsScreen = () => {
                   <div className={styles.fieldRight}>
                     <input
                       type="text"
+                      aria-label="Display name"
                       className={styles.input}
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
@@ -199,13 +200,15 @@ export const AccountSettingsScreen = () => {
                   </div>
                   <div className={styles.fieldRight}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <MemberAvatar
-                        name={user.display_name}
-                        email={user.email}
-                        userId={user.id}
-                        color={selectedColor}
-                        size={48}
-                      />
+                      <div data-testid="account-avatar-preview">
+                        <MemberAvatar
+                          name={user.display_name}
+                          email={user.email}
+                          userId={user.id}
+                          color={selectedColor}
+                          size={48}
+                        />
+                      </div>
                       <div>
                         <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--base-fg)' }}>
                           {user.display_name}

@@ -191,7 +191,7 @@ export const DataModelEditorScreen = () => {
                   size={26}
                 />
                 <div>
-                  <div className={styles.editorTitle}>{name}</div>
+                  <div data-testid="schema-editor-title" className={styles.editorTitle}>{name}</div>
                   <div className="dim">{selected.entity_count} entities</div>
                 </div>
               </div>

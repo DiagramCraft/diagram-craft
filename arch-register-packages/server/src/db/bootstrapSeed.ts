@@ -17,6 +17,7 @@ import {
   seedWorkspaceMembers,
   seedWorkspaces
 } from './seedData';
+import { seededTestPassword } from './seedFixtures';
 import { decodeRefs } from '../types';
 import { hashPassword } from '../utils/password';
 import { UserDbCreate } from './database';
@@ -107,8 +108,7 @@ export const validateBootstrapSeed = async (db: Database) => {
 };
 
 const seedBootstrapUsers = async (db: Database) => {
-  const testPassword = 'test';
-  const passwordHash = await hashPassword(testPassword);
+  const passwordHash = await hashPassword(seededTestPassword);
   const now = new Date();
 
   for (const user of seedLocalUsers) {
@@ -157,7 +157,7 @@ const seedBootstrapUsers = async (db: Database) => {
   }
 
   console.log(
-    `  Created ${seedLocalUsers.length} test users with seeded team assignments, workspace roles and global roles (password: test)`
+    `  Created ${seedLocalUsers.length} test users with seeded team assignments, workspace roles and global roles (password: ${seededTestPassword})`
   );
 };
 

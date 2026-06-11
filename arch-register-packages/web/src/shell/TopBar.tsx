@@ -207,7 +207,12 @@ const WorkspaceSwitcher = ({
 
   return (
     <div className={styles.wsSwitcher} ref={ref}>
-      <button type="button" className={styles.wsBtn} onClick={() => setOpen(o => !o)}>
+      <button
+        type="button"
+        className={styles.wsBtn}
+        aria-label="Workspace selector"
+        onClick={() => setOpen(o => !o)}
+      >
         <span
           className={styles.wsBadge}
           style={
@@ -364,6 +369,7 @@ const AccountMenu = () => {
             type="button"
             className={styles.avatar}
             title={displayName}
+            aria-label="Account menu"
             style={{ background: avatarColor }}
           >
             {getInitials(displayName)}
@@ -371,34 +377,36 @@ const AccountMenu = () => {
         }
       />
       <MenuButton.Menu align="end">
-        <div className={styles.acctHeader}>
-          <div className={styles.acctAvatar} style={{ background: avatarColor }}>
-            {getInitials(displayName)}
+        <div data-testid="account-menu-content">
+          <div className={styles.acctHeader}>
+            <div className={styles.acctAvatar} style={{ background: avatarColor }}>
+              {getInitials(displayName)}
+            </div>
+            <div className={styles.acctInfo}>
+              <div className={styles.acctName}>{displayName}</div>
+              {email && <div className={styles.acctEmail}>{email}</div>}
+            </div>
           </div>
-          <div className={styles.acctInfo}>
-            <div className={styles.acctName}>{displayName}</div>
-            {email && <div className={styles.acctEmail}>{email}</div>}
-          </div>
+          <Menu.Separator />
+          <Menu.Item
+            leftSlot={<TbUser size={14} />}
+            onClick={() =>
+              navigate({
+                to: '/$workspaceSlug/account',
+                params: { workspaceSlug: window.location.pathname.split('/')[1] ?? '' }
+              })
+            }
+          >
+            Account Settings
+          </Menu.Item>
+          <Menu.Separator />
+          <div className={styles.menuLabel}>Theme</div>
+          <ThemeToggle theme={theme} onSetTheme={setTheme} />
+          <Menu.Separator />
+          <Menu.Item leftSlot={<TbLogout size={14} />} onClick={logout}>
+            Sign out
+          </Menu.Item>
         </div>
-        <Menu.Separator />
-        <Menu.Item
-          leftSlot={<TbUser size={14} />}
-          onClick={() =>
-            navigate({
-              to: '/$workspaceSlug/account',
-              params: { workspaceSlug: window.location.pathname.split('/')[1] ?? '' }
-            })
-          }
-        >
-          Account Settings
-        </Menu.Item>
-        <Menu.Separator />
-        <div className={styles.menuLabel}>Theme</div>
-        <ThemeToggle theme={theme} onSetTheme={setTheme} />
-        <Menu.Separator />
-        <Menu.Item leftSlot={<TbLogout size={14} />} onClick={logout}>
-          Sign out
-        </Menu.Item>
       </MenuButton.Menu>
     </MenuButton.Root>
   );
@@ -539,6 +547,7 @@ const NotificationList = ({
           key={item.id}
           type="button"
           className={`${styles.notificationRow} ${styles.notificationRowUnread}`}
+          aria-label={`Notification: ${item.entity_name}`}
           onClick={() => {
             if (item.operation !== 'delete') onOpenEntity(item.entity_id);
           }}
@@ -553,8 +562,11 @@ const NotificationList = ({
             </div>
           </div>
           <div className={styles.notificationWhen}>{formatRelativeTimestamp(item.timestamp)}</div>
-          <span
+          <button
+            type="button"
             className={styles.notificationClear}
+            aria-label={`Clear notification for ${item.entity_name}`}
+            title={`Clear notification for ${item.entity_name}`}
             onClick={event => {
               event.stopPropagation();
               onClear(item.id);
@@ -564,7 +576,7 @@ const NotificationList = ({
             <span className={styles.srOnly}>
               {isClearing && clearingId === item.id ? 'Clearing' : 'Clear notification'}
             </span>
-          </span>
+          </button>
         </button>
       ))}
     </div>
@@ -600,6 +612,7 @@ const WatchingList = ({
           key={item.entity_id}
           type="button"
           className={styles.notificationRow}
+          aria-label={`Watching: ${item.entity_name}`}
           onClick={() => onOpenEntity(item.entity_id)}
         >
           <div className={styles.notificationRowMain}>
@@ -608,8 +621,10 @@ const WatchingList = ({
               <span>{item.entity_slug}</span>
             </div>
           </div>
-          <span
+          <button
+            type="button"
             className={styles.watchingUnwatch}
+            aria-label={`Unwatch ${item.entity_name}`}
             title={
               isUnwatching && unwatchingId === item.entity_id ? 'Removing watch' : 'Unwatch entity'
             }
@@ -619,7 +634,7 @@ const WatchingList = ({
             }}
           >
             <TbBell size={12} />
-          </span>
+          </button>
         </button>
       ))}
     </div>
