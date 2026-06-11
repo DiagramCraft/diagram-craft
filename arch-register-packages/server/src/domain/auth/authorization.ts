@@ -188,6 +188,19 @@ export const buildApiAuthCtx = async (
   });
 
   const dataProvider = new ServerDataProvider(db);
+
+  if (workspace === GLOBAL_WS) {
+    const globalRoles = await dataProvider.getGlobalRoles(userId);
+    return buildAuthorizationContext({
+      userId,
+      globalRoles,
+      workspaceRole: null,
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+  }
+
   const contextData = await fetchAuthorizationContextData(dataProvider, workspace, userId);
   return buildAuthorizationContext(contextData);
 };

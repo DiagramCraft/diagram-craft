@@ -245,6 +245,8 @@ export const createWorkspace = async (
       }
     }
 
+    await db.ai.upsertAiConfig(row.id, { enabled: false });
+
     await logAudit(db, {
       userId: authCtx.userId,
       workspace: row.id,

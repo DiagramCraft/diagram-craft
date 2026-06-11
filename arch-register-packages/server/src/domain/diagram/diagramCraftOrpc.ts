@@ -70,14 +70,27 @@ export const createDiagramCraftORPCRouter = () => {
           if (result.type === 'stream') {
             const reader = result.body.getReader();
             return (async function* () {
+              const decoder = new TextDecoder();
+              let buffer = '';
               try {
                 while (true) {
                   const chunk = await reader.read();
-                  if (chunk.done) {
-                    return;
-                  }
+                  if (chunk.done) return;
 
-                  yield String.fromCharCode(...chunk.value);
+                  buffer += decoder.decode(chunk.value, { stream: true });
+                  const lines = buffer.split('\n');
+                  buffer = lines.pop() ?? '';
+
+                  for (const line of lines) {
+                    if (!line.trim() || !line.startsWith('data: ')) continue;
+                    const data = line.slice(6);
+                    if (data === '[DONE]') return;
+                    try {
+                      yield JSON.parse(data);
+                    } catch {
+                      // skip malformed lines
+                    }
+                  }
                 }
               } finally {
                 reader.releaseLock();
