@@ -18,13 +18,13 @@
 }
 
 .tabHeader {
-  padding: 0;
+  padding: 0 4px 0 0;
   gap: 0;
   height: 35.5px;
 }
 
 .tabHeader :global(.cTabs) {
-  width: auto;
+  flex: 1;
 }
 
 .tabHeader :global(.eList) {
