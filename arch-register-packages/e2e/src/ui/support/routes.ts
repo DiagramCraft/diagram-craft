@@ -9,3 +9,6 @@ export const workspaceModelRoute = (workspaceSlug: string) => `/${workspaceSlug}
 export const workspaceSearchRoute = (workspaceSlug: string) => `/${workspaceSlug}/search`;
 
 export const workspaceSettingsRoute = (workspaceSlug: string) => `/${workspaceSlug}/settings`;
+
+export const accountSettingsRoute = (workspaceSlug: string, section?: 'profile' | 'appearance') =>
+  section == null ? `/${workspaceSlug}/account` : `/${workspaceSlug}/account?section=${section}`;

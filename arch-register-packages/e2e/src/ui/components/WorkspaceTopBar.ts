@@ -21,6 +21,8 @@ export class WorkspaceTopBar {
 
   signOutMenuItem = (): Locator => this.page.getByRole('menuitem', { name: 'Sign out' });
 
+  accountMenu = (): Locator => this.page.getByLabel('Account menu content');
+
   workspaceMenuLabel = (): Locator => this.page.getByText('Workspaces', { exact: true });
 
   notificationsButton = (): Locator => this.page.locator('button[aria-label="Notifications"]');
@@ -48,8 +50,10 @@ export class WorkspaceTopBar {
 
   expectAccountMenuVisible = async (displayName: string, email: string) => {
     await this.openAccountMenu();
-    await expect(this.page.getByText(displayName, { exact: true })).toBeVisible();
-    await expect(this.page.getByText(email, { exact: true })).toBeVisible();
+    await expect(this.accountMenu().getByText(displayName, { exact: true })).toBeVisible();
+    await expect(this.accountMenu().getByText(email, { exact: true })).toBeVisible();
+    await this.page.keyboard.press('Escape');
+    await expect(this.signOutMenuItem()).toBeHidden();
   };
 
   openWorkspaceSwitcher = async () => {

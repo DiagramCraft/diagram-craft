@@ -240,70 +240,70 @@ export const seedLocalUsers = [
     user_id: seededUsers.globalAdmin.userId,
     email: seededUsers.globalAdmin.email,
     display_name: seededUsers.globalAdmin.displayName,
-    color: AR_COLOR_GREEN
+    color: seededUsers.globalAdmin.color
   },
   {
     id: USER_IDS.workspaceadmin,
     user_id: seededUsers.workspaceAdmin.userId,
     email: seededUsers.workspaceAdmin.email,
     display_name: seededUsers.workspaceAdmin.displayName,
-    color: AR_COLOR_BLUE
+    color: seededUsers.workspaceAdmin.color
   },
   {
     id: USER_IDS.workspaceowner,
     user_id: seededUsers.workspaceOwner.userId,
     email: seededUsers.workspaceOwner.email,
     display_name: seededUsers.workspaceOwner.displayName,
-    color: AR_COLOR_ORANGE
+    color: seededUsers.workspaceOwner.color
   },
   {
     id: USER_IDS.platformteamadmin,
     user_id: seededUsers.platformTeamAdmin.userId,
     email: seededUsers.platformTeamAdmin.email,
     display_name: seededUsers.platformTeamAdmin.displayName,
-    color: AR_COLOR_PURPLE
+    color: seededUsers.platformTeamAdmin.color
   },
   {
     id: USER_IDS.platformteameditor,
     user_id: seededUsers.platformTeamEditor.userId,
     email: seededUsers.platformTeamEditor.email,
     display_name: seededUsers.platformTeamEditor.displayName,
-    color: AR_COLOR_YELLOW
+    color: seededUsers.platformTeamEditor.color
   },
   {
     id: USER_IDS.designteamadmin,
     user_id: seededUsers.designTeamAdmin.userId,
     email: seededUsers.designTeamAdmin.email,
     display_name: seededUsers.designTeamAdmin.displayName,
-    color: AR_COLOR_RED
+    color: seededUsers.designTeamAdmin.color
   },
   {
     id: USER_IDS.securityteamadmin,
     user_id: seededUsers.securityTeamAdmin.userId,
     email: seededUsers.securityTeamAdmin.email,
     display_name: seededUsers.securityTeamAdmin.displayName,
-    color: AR_COLOR_PINK
+    color: seededUsers.securityTeamAdmin.color
   },
   {
     id: USER_IDS.workspaceeditor,
     user_id: seededUsers.workspaceEditor.userId,
     email: seededUsers.workspaceEditor.email,
     display_name: seededUsers.workspaceEditor.displayName,
-    color: AR_COLOR_CYAN
+    color: seededUsers.workspaceEditor.color
   },
   {
     id: USER_IDS.workspacereviewer,
     user_id: seededUsers.workspaceReviewer.userId,
     email: seededUsers.workspaceReviewer.email,
     display_name: seededUsers.workspaceReviewer.displayName,
-    color: AR_COLOR_TEAL
+    color: seededUsers.workspaceReviewer.color
   },
   {
     id: USER_IDS.workspaceviewer,
     user_id: seededUsers.workspaceViewer.userId,
     email: seededUsers.workspaceViewer.email,
     display_name: seededUsers.workspaceViewer.displayName,
-    color: AR_COLOR_AMBER
+    color: seededUsers.workspaceViewer.color
   }
 ] as const;
 

@@ -3,5 +3,6 @@ import { seededTestPassword, seededUsers } from '@arch-register/server/db/seedFi
 export const seededUser = {
   email: seededUsers.globalAdmin.email,
   password: seededTestPassword,
-  displayName: seededUsers.globalAdmin.displayName
+  displayName: seededUsers.globalAdmin.displayName,
+  color: seededUsers.globalAdmin.color
 } as const;

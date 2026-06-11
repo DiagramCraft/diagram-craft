@@ -377,34 +377,36 @@ const AccountMenu = () => {
         }
       />
       <MenuButton.Menu align="end">
-        <div className={styles.acctHeader}>
-          <div className={styles.acctAvatar} style={{ background: avatarColor }}>
-            {getInitials(displayName)}
+        <div aria-label="Account menu content">
+          <div className={styles.acctHeader}>
+            <div className={styles.acctAvatar} style={{ background: avatarColor }}>
+              {getInitials(displayName)}
+            </div>
+            <div className={styles.acctInfo}>
+              <div className={styles.acctName}>{displayName}</div>
+              {email && <div className={styles.acctEmail}>{email}</div>}
+            </div>
           </div>
-          <div className={styles.acctInfo}>
-            <div className={styles.acctName}>{displayName}</div>
-            {email && <div className={styles.acctEmail}>{email}</div>}
-          </div>
+          <Menu.Separator />
+          <Menu.Item
+            leftSlot={<TbUser size={14} />}
+            onClick={() =>
+              navigate({
+                to: '/$workspaceSlug/account',
+                params: { workspaceSlug: window.location.pathname.split('/')[1] ?? '' }
+              })
+            }
+          >
+            Account Settings
+          </Menu.Item>
+          <Menu.Separator />
+          <div className={styles.menuLabel}>Theme</div>
+          <ThemeToggle theme={theme} onSetTheme={setTheme} />
+          <Menu.Separator />
+          <Menu.Item leftSlot={<TbLogout size={14} />} onClick={logout}>
+            Sign out
+          </Menu.Item>
         </div>
-        <Menu.Separator />
-        <Menu.Item
-          leftSlot={<TbUser size={14} />}
-          onClick={() =>
-            navigate({
-              to: '/$workspaceSlug/account',
-              params: { workspaceSlug: window.location.pathname.split('/')[1] ?? '' }
-            })
-          }
-        >
-          Account Settings
-        </Menu.Item>
-        <Menu.Separator />
-        <div className={styles.menuLabel}>Theme</div>
-        <ThemeToggle theme={theme} onSetTheme={setTheme} />
-        <Menu.Separator />
-        <Menu.Item leftSlot={<TbLogout size={14} />} onClick={logout}>
-          Sign out
-        </Menu.Item>
       </MenuButton.Menu>
     </MenuButton.Root>
   );
