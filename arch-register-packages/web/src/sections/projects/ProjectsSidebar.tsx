@@ -31,24 +31,22 @@ import { AddDiagramDialog } from './AddDiagramDialog';
 import { AddFolderDialog } from './AddFolderDialog';
 import { Project } from '@arch-register/api-types/projectContract';
 
-const PROJECT_GROUPS = [
-  { status: 'pinned', title: 'Pinned Projects' },
-  { status: 'active', title: 'Active Projects' }
-] as const;
-
-const ARCHIVED_PROJECT_GROUP = { status: 'archived', title: 'Archived Projects' } as const;
-
 type ProjectSidebarTab = 'projects' | 'archive';
 
-const getSidebarProjectGroups = (projects: Project[]) =>
-  PROJECT_GROUPS.map(group => ({
-    ...group,
-    projects: projects.filter(project => project.status === group.status)
-  })).filter(group => group.projects.length > 0);
+const getSidebarProjectGroups = (projects: Project[]) => {
+  const pinned = projects.filter(p => p.pinned);
+  const draft = projects.filter(p => !p.pinned && p.status === 'draft');
+  const active = projects.filter(p => !p.pinned && p.status === 'active');
+  return [
+    ...(pinned.length > 0 ? [{ title: 'Pinned Projects', projects: pinned }] : []),
+    ...(draft.length > 0 ? [{ title: 'Draft Projects', projects: draft }] : []),
+    ...(active.length > 0 ? [{ title: 'Active Projects', projects: active }] : [])
+  ];
+};
 
 const getArchivedProjectGroup = (projects: Project[]) => ({
-  ...ARCHIVED_PROJECT_GROUP,
-  projects: projects.filter(project => project.status === ARCHIVED_PROJECT_GROUP.status)
+  title: 'Archived Projects',
+  projects: projects.filter(p => p.status === 'complete' || p.status === 'cancelled')
 });
 
 const GroupLabel = ({ children }: { children: React.ReactNode }) => (
@@ -380,7 +378,10 @@ export const ProjectsSidebar = ({
 
   useEffect(() => {
     if (!selectedProject) return;
-    const nextTab = selectedProject.status === 'archived' ? 'archive' : 'projects';
+    const nextTab =
+      selectedProject.status === 'complete' || selectedProject.status === 'cancelled'
+        ? 'archive'
+        : 'projects';
     if (nextTab !== projectSidebarTab) {
       navigate({
         to: '/$workspaceSlug/projects/$projectId',
@@ -395,7 +396,7 @@ export const ProjectsSidebar = ({
       to: '/$workspaceSlug/projects/$projectId',
       params: { workspaceSlug, projectId: project.id },
       search: {
-        tab: (project.status === 'archived' ? 'archive' : 'projects') as 'projects' | 'archive',
+        tab: (project.status === 'complete' || project.status === 'cancelled' ? 'archive' : 'projects') as 'projects' | 'archive',
         folder: folder ?? undefined
       }
     });
@@ -404,8 +405,8 @@ export const ProjectsSidebar = ({
   const activateTab = (tab: ProjectSidebarTab) => {
     const targetProjects =
       tab === 'archive'
-        ? projects.filter(project => project.status === 'archived')
-        : projects.filter(project => project.status !== 'archived');
+        ? projects.filter(project => project.status === 'complete' || project.status === 'cancelled')
+        : projects.filter(project => project.status !== 'complete' && project.status !== 'cancelled');
 
     if (!selectedProject || !targetProjects.some(project => project.id === selectedProject.id)) {
       const target = targetProjects[0];
@@ -446,7 +447,7 @@ export const ProjectsSidebar = ({
       <div className={styles.scroll}>
         {projectGroups.length > 0 ? (
           projectGroups.map(group => (
-            <div key={group.status} data-testid={`project-group-${group.title}`}>
+            <div key={group.title} data-testid={`project-group-${group.title}`}>
               <GroupLabel>{group.title}</GroupLabel>
               {group.projects.map(p => {
                 const isSelected = p.id === projectId;

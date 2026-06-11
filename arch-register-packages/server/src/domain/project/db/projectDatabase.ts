@@ -36,8 +36,10 @@ type BaseProject = {
   name: string;
   description: string;
   owner: string | null;
-  status: 'pinned' | 'active' | 'archived';
+  status: 'draft' | 'active' | 'complete' | 'cancelled';
   color: string | null;
+  target_date: string | null;
+  pinned: boolean;
   created_at: Date;
   updated_at: Date;
 };
@@ -49,6 +51,31 @@ export type ProjectDbResult = BaseProject & {
 export type ProjectDbCreate = BaseProject;
 
 export type ProjectDbUpdate = Omit<BaseProject, 'id' | 'workspace' | 'created_at'>;
+
+// -- Project Entity
+
+export type ProjectEntityDbResult = {
+  workspace: string;
+  project_id: string;
+  entity_id: string;
+  entity_name: string;
+  entity_slug: string;
+  entity_description: string;
+  entity_schema_id: string | null;
+  entity_schema_name: string | null;
+  entity_type_id: string | null;
+  entity_type_label: string | null;
+  is_done: boolean;
+};
+
+export type ProjectEntityDbCreate = {
+  workspace: string;
+  project_id: string;
+  entity_id: string;
+  entity_type_id: string | null;
+  is_done?: boolean;
+  created_at: Date;
+};
 
 // --
 
@@ -115,4 +142,16 @@ export type ProjectDatabase = {
     projectId: string,
     folderPath: string
   ): Promise<ProjectFileDbResult[]>;
+
+  listProjectEntities(ws: string, projectId: string): Promise<ProjectEntityDbResult[]>;
+  addProjectEntity(input: ProjectEntityDbCreate): Promise<ProjectEntityDbResult>;
+  updateProjectEntity(
+    ws: string,
+    projectId: string,
+    entityId: string,
+    entityTypeId: string | null,
+    isDone: boolean
+  ): Promise<ProjectEntityDbResult | null>;
+  removeProjectEntity(ws: string, projectId: string, entityId: string): Promise<void>;
+  getEntityProjects(ws: string, entityId: string): Promise<ProjectEntityDbResult[]>;
 };

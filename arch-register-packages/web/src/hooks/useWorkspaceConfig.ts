@@ -10,7 +10,9 @@ export const workspaceConfigKeys = {
     [...workspaceConfigKeys.all, 'lifecycle-states', workspaceId] as const,
   teams: (workspaceId: string) => [...workspaceConfigKeys.all, 'teams', workspaceId] as const,
   teamAssignments: (workspaceId: string) =>
-    [...workspaceConfigKeys.all, 'team-assignments', workspaceId] as const
+    [...workspaceConfigKeys.all, 'team-assignments', workspaceId] as const,
+  projectEntityTypes: (workspaceId: string) =>
+    [...workspaceConfigKeys.all, 'project-entity-types', workspaceId] as const
 };
 
 // Hook for fetching lifecycle states
@@ -91,17 +93,37 @@ export const useUpdateTeamAssignments = (workspaceId: string) => {
   });
 };
 
+export const useProjectEntityTypes = (workspaceSlug: string, enabled = true) => {
+  return useQuery({
+    queryKey: workspaceConfigKeys.projectEntityTypes(workspaceSlug),
+    queryFn: () =>
+      orpcClient.config.projectEntityTypes.list({ params: { workspace: workspaceSlug } }),
+    enabled: enabled && !!workspaceSlug,
+    staleTime: 5 * 60 * 1000
+  });
+};
+
 // Combined hook for workspace config
 export const useWorkspaceConfig = (workspaceSlug: string, enabled = true) => {
   const lifecycleStates = useLifecycleStates(workspaceSlug, enabled);
   const teams = useTeams(workspaceSlug, enabled);
   const teamAssignments = useTeamAssignments(workspaceSlug, enabled);
+  const projectEntityTypes = useProjectEntityTypes(workspaceSlug, enabled);
 
   return {
     lifecycleStates: lifecycleStates.data ?? [],
     teams: teams.data ?? [],
     teamAssignments: teamAssignments.data ?? [],
-    isLoading: lifecycleStates.isLoading || teams.isLoading || teamAssignments.isLoading,
-    isError: lifecycleStates.isError || teams.isError || teamAssignments.isError
+    projectEntityTypes: projectEntityTypes.data ?? [],
+    isLoading:
+      lifecycleStates.isLoading ||
+      teams.isLoading ||
+      teamAssignments.isLoading ||
+      projectEntityTypes.isLoading,
+    isError:
+      lifecycleStates.isError ||
+      teams.isError ||
+      teamAssignments.isError ||
+      projectEntityTypes.isError
   };
 };

@@ -71,10 +71,10 @@ const RAIL_TO_PATH: Record<string, string> = {
 };
 
 const getProjectSidebarTab = (project: Project | undefined): 'projects' | 'archive' =>
-  project?.status === 'archived' ? 'archive' : 'projects';
+  project?.status === 'complete' || project?.status === 'cancelled' ? 'archive' : 'projects';
 
 const getDefaultProject = (projects: Project[]): Project | undefined =>
-  projects.find(p => p.status !== 'archived') ?? projects[0];
+  projects.find(p => p.status !== 'complete' && p.status !== 'cancelled') ?? projects[0];
 
 export const WorkspaceLayout = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
@@ -98,7 +98,7 @@ export const WorkspaceLayout = () => {
   const { data: schemas = [], error: schemasError } = useSchemas(workspaceSlug, !!workspaceSlug);
   const { data: enums = [], error: enumsError } = useEnums(workspaceSlug, !!workspaceSlug);
   const { data: projects = [], error: projectsError } = useProjects(workspaceSlug);
-  const { lifecycleStates, teams } = useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
+  const { lifecycleStates, teams, projectEntityTypes } = useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
   const { data: aiConfig } = useAiConfig(workspaceSlug, !!workspaceSlug);
 
   const {
@@ -223,6 +223,7 @@ export const WorkspaceLayout = () => {
       projects,
       lifecycleStates,
       teams,
+      projectEntityTypes,
       permissions: {
         canManageWorkspaces,
         canViewSchemas,
@@ -247,6 +248,7 @@ export const WorkspaceLayout = () => {
       projects,
       lifecycleStates,
       teams,
+      projectEntityTypes,
       canManageWorkspaces,
       canViewSchemas,
       canEditSchemas,

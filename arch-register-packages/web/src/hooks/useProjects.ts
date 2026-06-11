@@ -3,6 +3,13 @@ import { invalidateAuditQueries } from './useAudit';
 import { Project, ProjectDetail } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
 
+export const projectEntityKeys = {
+  all: (workspaceId: string, projectId: string) =>
+    ['project-entities', workspaceId, projectId] as const,
+  entityProjects: (workspaceId: string, entityId: string) =>
+    ['entity-projects', workspaceId, entityId] as const
+};
+
 // Query keys factory
 export const projectKeys = {
   all: ['projects'] as const,
@@ -40,7 +47,7 @@ export const useCreateProject = (workspaceId: string) => {
       name: string;
       description?: string;
       owner?: string | null;
-      status?: 'pinned' | 'active' | 'archived';
+      status?: 'draft' | 'active' | 'complete' | 'cancelled';
       color?: string | null;
     }) => orpcClient.projects.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async newProject => {
@@ -68,8 +75,10 @@ export const useUpdateProject = (workspaceId: string) => {
         name: string;
         description?: string;
         owner?: string | null;
-        status?: 'pinned' | 'active' | 'archived';
+        status?: 'draft' | 'active' | 'complete' | 'cancelled';
         color?: string | null;
+        target_date?: string | null;
+        pinned?: boolean;
       };
     }) => orpcClient.projects.update({ params: { workspace: workspaceId, id: projectId }, body: data }),
     onSuccess: async (updatedProject, variables) => {
@@ -105,3 +114,92 @@ export const useDeleteProject = (workspaceId: string) => {
     }
   });
 };
+
+// Hook for fetching entities associated with a project
+export const useProjectEntities = (workspaceId: string, projectId: string) => {
+  return useQuery({
+    queryKey: projectEntityKeys.all(workspaceId, projectId),
+    queryFn: () =>
+      orpcClient.projects.listEntities({ params: { workspace: workspaceId, id: projectId } }),
+    enabled: !!workspaceId && !!projectId
+  });
+};
+
+// Hook for fetching projects associated with an entity
+export const useEntityProjects = (workspaceId: string, entityId: string) => {
+  return useQuery({
+    queryKey: projectEntityKeys.entityProjects(workspaceId, entityId),
+    queryFn: async () => {
+      const all = await orpcClient.projects.list({ params: { workspace: workspaceId } });
+      const entityEntries = await Promise.all(
+        all.map(p =>
+          orpcClient.projects.listEntities({ params: { workspace: workspaceId, id: p.id } })
+            .then(entities => ({ project: p, entity: entities.find(e => e.entity_id === entityId) }))
+        )
+      );
+      return entityEntries
+        .filter(e => e.entity !== undefined)
+        .map(e => ({ project: e.project, entity_type: e.entity!.entity_type }));
+    },
+    enabled: !!workspaceId && !!entityId
+  });
+};
+
+// Hook for adding an entity to a project
+export const useAddProjectEntity = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: { entity_id: string; entity_type?: string | null; is_done?: boolean }) =>
+      orpcClient.projects.addEntity({ params: { workspace: workspaceId, id: projectId }, body }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.all(workspaceId, projectId)
+      });
+    }
+  });
+};
+
+// Hook for updating a project entity
+export const useUpdateProjectEntity = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      entityId,
+      entity_type,
+      is_done
+    }: {
+      entityId: string;
+      entity_type?: string | null;
+      is_done?: boolean;
+    }) =>
+      orpcClient.projects.updateEntity({
+        params: { workspace: workspaceId, id: projectId, entityId },
+        body: { entity_type, is_done }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.all(workspaceId, projectId)
+      });
+    }
+  });
+};
+
+// Hook for removing an entity from a project
+export const useRemoveProjectEntity = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (entityId: string) =>
+      orpcClient.projects.removeEntity({
+        params: { workspace: workspaceId, id: projectId, entityId }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.all(workspaceId, projectId)
+      });
+    }
+  });
+};
+

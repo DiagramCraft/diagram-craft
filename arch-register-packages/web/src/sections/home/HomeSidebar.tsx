@@ -8,16 +8,14 @@ import styles from '../../shell/SidePanel.module.css';
 import { Project } from '@arch-register/api-types/projectContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 
-const PROJECT_GROUPS = [
-  { status: 'pinned', title: 'Pinned Projects' },
-  { status: 'active', title: 'Active Projects' }
-] as const;
-
-const getSidebarProjectGroups = (projects: Project[]) =>
-  PROJECT_GROUPS.map(group => ({
-    ...group,
-    projects: projects.filter(project => project.status === group.status)
-  })).filter(group => group.projects.length > 0);
+const getSidebarProjectGroups = (projects: Project[]) => {
+  const pinned = projects.filter(p => p.pinned);
+  const active = projects.filter(p => !p.pinned && (p.status === 'draft' || p.status === 'active'));
+  return [
+    ...(pinned.length > 0 ? [{ title: 'Pinned Projects', projects: pinned }] : []),
+    ...(active.length > 0 ? [{ title: 'Active Projects', projects: active }] : [])
+  ];
+};
 
 
 
@@ -46,7 +44,7 @@ export const HomeSidebar = ({
       </div>
       <div className={styles.scroll}>
         {getSidebarProjectGroups(projects).map(group => (
-          <div key={group.status}>
+          <div key={group.title}>
             <GroupLabel>{group.title}</GroupLabel>
             {group.projects.map(p => (
               <TreeRow
@@ -57,9 +55,7 @@ export const HomeSidebar = ({
                   navigate({
                     to: '/$workspaceSlug/projects/$projectId',
                     params: { workspaceSlug, projectId: p.id },
-                    search: {
-                      tab: p.status === 'archived' ? ('archive' as const) : ('projects' as const)
-                    }
+                    search: { tab: 'projects' as const }
                   })
                 }
                 trailing={<span className="dim mono">{p.file_count}</span>}

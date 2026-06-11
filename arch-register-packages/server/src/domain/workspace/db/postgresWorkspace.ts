@@ -12,7 +12,9 @@ import {
   RoleDefinitionDbResult,
   TeamMembershipDbCreate,
   RoleDefinitionDbCreate,
-  RoleDefinitionDbUpdate
+  RoleDefinitionDbUpdate,
+  ProjectEntityTypeDbResult,
+  ProjectEntityTypeDbCreate
 } from './workspaceDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
@@ -113,6 +115,32 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         }
       });
       return await this.listLifecycleStates(workspace);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listProjectEntityTypes(workspace: string) {
+    return await this.sql<ProjectEntityTypeDbResult[]>`
+      SELECT id, workspace, label, sort_order, created_at
+      FROM project_entity_type
+      WHERE workspace = ${workspace}
+      ORDER BY sort_order, id
+    `;
+  }
+
+  async replaceProjectEntityTypes(workspace: string, types: ProjectEntityTypeDbCreate[]) {
+    try {
+      await this.sql.begin(async tx => {
+        await tx`DELETE FROM project_entity_type WHERE workspace = ${workspace}`;
+        for (const type of types) {
+          await tx`
+            INSERT INTO project_entity_type (id, workspace, label, sort_order, created_at)
+            VALUES (${type.id}, ${workspace}, ${type.label}, ${type.sort_order}, ${type.created_at})
+          `;
+        }
+      });
+      return await this.listProjectEntityTypes(workspace);
     } catch (error) {
       return normalizePostgresError(error);
     }

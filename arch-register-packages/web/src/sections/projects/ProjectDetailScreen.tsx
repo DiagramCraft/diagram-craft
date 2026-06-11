@@ -1,7 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Select } from '@diagram-craft/app-components/Select';
+import { useEntities } from '../../hooks/useEntities';
 import styles from './ProjectDetailScreen.module.css';
 import { AddFolderDialog } from './AddFolderDialog';
 import { AddDiagramDialog } from './AddDiagramDialog';
@@ -21,13 +23,28 @@ import {
   TbStar,
   TbCopy,
   TbMessageCircle,
-  TbCheck
+  TbCheck,
+  TbDatabase
 } from 'react-icons/tb';
+import { Chip } from '../../components/Chip';
+import { TypeBadge } from '../../components/TypeBadge';
+import { resolveSchemaColor } from '../../lib/api';
+import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { ApiError, FileEntry, WorkspaceTeam } from '../../lib/api';
-import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
-import { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
+import {
+  useProject,
+  useUpdateProject,
+  useDeleteProject,
+  useProjectEntities,
+  useAddProjectEntity,
+  useUpdateProjectEntity,
+  useRemoveProjectEntity
+} from '../../hooks/useProjects';
+import {
+  ProjectDetail as ProjectDetailData
+} from '@arch-register/api-types/projectContract';
 import {
   useDeleteProjectFile,
   useDeleteProjectFolder,
@@ -39,9 +56,10 @@ import {
 } from '../../hooks/useProjectFiles';
 
 const PROJECT_STATUSES = [
-  { value: 'pinned', label: 'Pinned' },
+  { value: 'draft', label: 'Draft' },
   { value: 'active', label: 'Active' },
-  { value: 'archived', label: 'Archived' }
+  { value: 'complete', label: 'Complete' },
+  { value: 'cancelled', label: 'Cancelled' }
 ] as const;
 
 type MenuTarget = { type: 'diagram'; file: FileEntry } | { type: 'folder'; path: string };
@@ -50,7 +68,7 @@ export const ProjectDetailScreen = () => {
   const navigate = useNavigate();
   const { projectId } = useParams({ strict: false }) as { projectId: string };
   const search = useSearch({ strict: false }) as { tab?: string; folder?: string };
-  const { workspaceSlug, teams } = useWorkspaceContext();
+  const { workspaceSlug, teams, projectEntityTypes, schemas } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const folderFilter = search.folder ?? null;
 
@@ -62,6 +80,8 @@ export const ProjectDetailScreen = () => {
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
   const [pinError, setPinError] = useState('');
+  const [activeTab, setActiveTab] = useState<'diagrams' | 'entities'>('diagrams');
+  const [addEntityOpen, setAddEntityOpen] = useState(false);
 
   // Context menu state
   const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
@@ -80,6 +100,25 @@ export const ProjectDetailScreen = () => {
   const renameFileMutation = useRenameProjectFile(workspaceId, projectId);
   const moveFileMutation = useMoveProjectFile(workspaceId, projectId);
   const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
+
+  // Entity hooks
+  const { data: projectEntities = [] } = useProjectEntities(workspaceId, projectId);
+  const addEntityMutation = useAddProjectEntity(workspaceId, projectId);
+  const updateEntityMutation = useUpdateProjectEntity(workspaceId, projectId);
+  const removeEntityMutation = useRemoveProjectEntity(workspaceId, projectId);
+
+  const schemaMap = useMemo(() => {
+    const m = new Map<string, { color: string; icon: string | null }>();
+    schemas.forEach((s, i) => m.set(s.id, { color: resolveSchemaColor(s, i), icon: s.icon ?? null }));
+    return m;
+  }, [schemas]);
+
+  const entityTypeColorMap = useMemo(() => {
+    const m = new Map<string, string>();
+    projectEntityTypes.forEach((t, i) => m.set(t.id, SCHEMA_COLORS[i % SCHEMA_COLORS.length]!));
+    return m;
+  }, [projectEntityTypes]);
+
 
   if (isLoading) {
     return (
@@ -115,8 +154,6 @@ export const ProjectDetailScreen = () => {
     : allFiles;
 
   const handleTogglePinned = async () => {
-    const nextStatus = project.status === 'pinned' ? 'active' : 'pinned';
-
     setPinError('');
     updateProject.mutate(
       {
@@ -125,7 +162,7 @@ export const ProjectDetailScreen = () => {
           name: project.name,
           description: project.description,
           owner: project.owner?.id ?? null,
-          status: nextStatus
+          pinned: !project.pinned
         }
       },
       {
@@ -431,14 +468,14 @@ export const ProjectDetailScreen = () => {
           </div>
           <div className={styles.titleRow}>
             <h1 className={styles.title}>{folderFilter ?? project.name}</h1>
-            {!folderFilter && project.status !== 'archived' && project.canEdit && (
+            {!folderFilter && project.canEdit && (
               <button
                 type="button"
-                className={`${styles.pinBtn} ${project.status === 'pinned' ? styles.pinBtnActive : ''}`}
+                className={`${styles.pinBtn} ${project.pinned ? styles.pinBtnActive : ''}`}
                 onClick={handleTogglePinned}
                 disabled={updateProject.isPending}
-                title={project.status === 'pinned' ? 'Unpin project' : 'Pin project'}
-                aria-label={project.status === 'pinned' ? 'Unpin project' : 'Pin project'}
+                title={project.pinned ? 'Unpin project' : 'Pin project'}
+                aria-label={project.pinned ? 'Unpin project' : 'Pin project'}
               >
                 <TbStar size={16} />
               </button>
@@ -486,55 +523,145 @@ export const ProjectDetailScreen = () => {
 
       {/* Toolbar */}
       <div className={styles.tabBar}>
-        <Tabs.Root value="diagrams">
+        <Tabs.Root value={activeTab} onValueChange={v => setActiveTab(v as 'diagrams' | 'entities')}>
           <Tabs.List>
             <Tabs.Trigger value="diagrams">Diagrams ({visibleFiles.length})</Tabs.Trigger>
+            <Tabs.Trigger value="entities">Entities ({projectEntities.length})</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
-        <div className={styles.tabBarRight}>
-          <TextInput
-            variant="search"
-            placeholder="Filter diagrams…"
-            value={filter}
-            onChange={v => setFilter(v ?? '')}
-            onClear={() => setFilter('')}
-          />
-          <button
-            type="button"
-            className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive : ''}`}
-            title="Grid view"
-            onClick={() => setViewMode('grid')}
-          >
-            <TbLayoutGrid size={13} />
-          </button>
-          <button
-            type="button"
-            className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive : ''}`}
-            title="List view"
-            onClick={() => setViewMode('list')}
-          >
-            <TbList size={13} />
-          </button>
-        </div>
+        {activeTab === 'diagrams' && (
+          <div className={styles.tabBarRight}>
+            <TextInput
+              variant="search"
+              placeholder="Filter diagrams…"
+              value={filter}
+              onChange={v => setFilter(v ?? '')}
+              onClear={() => setFilter('')}
+            />
+            <button
+              type="button"
+              className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive : ''}`}
+              title="Grid view"
+              onClick={() => setViewMode('grid')}
+            >
+              <TbLayoutGrid size={13} />
+            </button>
+            <button
+              type="button"
+              className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive : ''}`}
+              title="List view"
+              onClick={() => setViewMode('list')}
+            >
+              <TbList size={13} />
+            </button>
+          </div>
+        )}
+        {activeTab === 'entities' && project.canEdit && (
+          <div className={styles.tabBarRight}>
+            <Button icon={<TbPlus size={12} />} onClick={() => setAddEntityOpen(true)}>
+              Add entity
+            </Button>
+          </div>
+        )}
       </div>
 
-      <DiagramsView
-        project={project}
-        visibleFiles={visibleFiles}
-        folderFilter={folderFilter}
-        filter={filter}
-        viewMode={viewMode}
-        onOpenDiagram={handleNavigateDiagram}
-        onNewDiagram={
-          project.canManageFiles
-            ? () => {
-                setAddDiagramFolder(folderFilter);
-                setAddDiagramOpen(true);
-              }
-            : undefined
-        }
-        onContextMenu={project.canManageFiles ? openContextMenu : undefined}
-      />
+      {activeTab === 'diagrams' && (
+        <DiagramsView
+          project={project}
+          visibleFiles={visibleFiles}
+          folderFilter={folderFilter}
+          filter={filter}
+          viewMode={viewMode}
+          onOpenDiagram={handleNavigateDiagram}
+          onNewDiagram={
+            project.canManageFiles
+              ? () => {
+                  setAddDiagramFolder(folderFilter);
+                  setAddDiagramOpen(true);
+                }
+              : undefined
+          }
+          onContextMenu={project.canManageFiles ? openContextMenu : undefined}
+        />
+      )}
+
+      {activeTab === 'entities' && (
+        <div className={styles.entityTab}>
+          {projectEntities.length === 0 ? (
+            <div className={styles.empty}>
+              <div className={styles.emptyIcon}><TbDatabase size={22} /></div>
+              <div className={styles.emptyTitle}>No entities linked</div>
+              <div className={styles.emptySub}>
+                Link entities this project decommissions, modifies, creates, or depends on.
+              </div>
+              {project.canEdit && (
+                <button
+                  type="button"
+                  className="ar-btn"
+                  onClick={() => setAddEntityOpen(true)}
+                >
+                  <TbPlus size={11} /> Add entity
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className={styles.pentTable}>
+              <div className={styles.pentHead}>
+                <span>Name</span>
+                <span>Type</span>
+                <span>Role</span>
+                <span>Done</span>
+              </div>
+              {projectEntities.map(e => {
+                const s = e.entity_schema ? schemaMap.get(e.entity_schema.id) : undefined;
+                const roleColor = e.entity_type ? entityTypeColorMap.get(e.entity_type.id) : undefined;
+                return (
+                <div key={e.entity_id} className={styles.pentRow}>
+                  <button type="button" className={styles.pentName}>
+                    {s && <TypeBadge color={s.color} icon={s.icon} size={18} />}
+                    <div>
+                      <div>{e.entity_name}</div>
+                      {e.entity_description && (
+                        <div className={styles.pentNameSub}>{e.entity_description}</div>
+                      )}
+                    </div>
+                  </button>
+                  <span className={styles.pentType}>
+                    {e.entity_schema
+                      ? <Chip tone="ghost">{e.entity_schema.name}</Chip>
+                      : <span className="dim">—</span>}
+                  </span>
+                  <span className={styles.pentRole}>
+                    {e.entity_type?.name
+                      ? <Chip tone="ghost" dot={roleColor}>{e.entity_type.name}</Chip>
+                      : <span className="dim">—</span>}
+                  </span>
+                  <span className={styles.pentActions}>
+                    <button
+                      type="button"
+                      className={`${styles.pentCheck} ${e.is_done ? styles.pentCheckDone : ''}`}
+                      onClick={() => project.canEdit && updateEntityMutation.mutate({ entityId: e.entity_id, is_done: !e.is_done })}
+                      title={e.is_done ? 'Mark as not done' : 'Mark as done'}
+                    >
+                      <TbCheck size={11} />
+                    </button>
+                    {project.canEdit && (
+                      <button
+                        type="button"
+                        className={styles.removeEntityBtn}
+                        onClick={() => removeEntityMutation.mutate(e.entity_id)}
+                        title="Remove"
+                      >
+                        <TbTrash size={13} />
+                      </button>
+                    )}
+                  </span>
+                </div>
+              ); })}
+            </div>
+          )}
+        </div>
+      )}
 
       {editing && project.canEdit && (
         <ProjectSettings
@@ -576,6 +703,17 @@ export const ProjectDetailScreen = () => {
           projectId={projectId}
           projectName={project.name}
           folder={addDiagramFolder}
+        />
+      )}
+
+      {addEntityOpen && (
+        <AddEntityToProjectDialog
+          open={addEntityOpen}
+          onClose={() => setAddEntityOpen(false)}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          projectEntityTypes={projectEntityTypes}
+          addEntityMutation={addEntityMutation}
         />
       )}
 
@@ -1070,6 +1208,7 @@ const ProjectSettings = ({
   const [owner, setOwner] = useState(project.owner?.id ?? '');
   const [status, setStatus] = useState(project.status);
   const [color, setColor] = useState<string | null>(project.color ?? null);
+  const [targetDate, setTargetDate] = useState(project.target_date ?? '');
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -1082,6 +1221,7 @@ const ProjectSettings = ({
     setOwner(project.owner?.id ?? '');
     setStatus(project.status);
     setColor(project.color ?? null);
+    setTargetDate(project.target_date ?? '');
     setError('');
   }, [project]);
 
@@ -1100,7 +1240,8 @@ const ProjectSettings = ({
           description: description.trim(),
           owner: owner || null,
           status,
-          color
+          color,
+          target_date: targetDate || null
         }
       },
       {
@@ -1148,7 +1289,7 @@ const ProjectSettings = ({
         <select
           className={styles.formInput}
           value={status}
-          onChange={e => setStatus(e.target.value as 'pinned' | 'active' | 'archived')}
+          onChange={e => setStatus(e.target.value as 'draft' | 'active' | 'complete' | 'cancelled')}
         >
           {PROJECT_STATUSES.map(option => (
             <option key={option.value} value={option.value}>
@@ -1171,6 +1312,15 @@ const ProjectSettings = ({
       <div className={styles.formRow}>
         <label className={styles.formLabel}>Color</label>
         <ColorPicker value={color} onChange={setColor} size="small" />
+      </div>
+      <div className={styles.formRow}>
+        <label className={styles.formLabel}>Target date</label>
+        <input
+          className={styles.formInput}
+          type="date"
+          value={targetDate}
+          onChange={e => setTargetDate(e.target.value)}
+        />
       </div>
       {error && <div style={{ fontSize: 12, color: 'var(--error-fg)' }}>{error}</div>}
       <div className={styles.formActions}>
@@ -1197,6 +1347,169 @@ const ProjectSettings = ({
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(false)}
       />
+    </Dialog>
+  );
+};
+
+type AddEntityMutation = ReturnType<typeof useAddProjectEntity>;
+
+const AddEntityToProjectDialog = ({
+  open,
+  onClose,
+  workspaceId,
+  projectEntityTypes,
+  addEntityMutation
+}: {
+  open: boolean;
+  onClose: () => void;
+  workspaceId: string;
+  projectId: string;
+  projectEntityTypes: { id: string; label: string }[];
+  addEntityMutation: AddEntityMutation;
+}) => {
+  const [q, setQ] = useState('');
+  const [selectedId, setSelectedId] = useState('');
+  const [entityType, setEntityType] = useState('');
+  const [error, setError] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const { data: allResults = [] } = useEntities(workspaceId, {
+    view: 'summary',
+    limit: 200
+  });
+
+  const filtered = allResults.filter(e => {
+    if (!q.trim()) return true;
+    const lower = q.toLowerCase();
+    return (e._name + ' ' + e._slug).toLowerCase().includes(lower);
+  });
+
+  // Auto-select first result
+  useEffect(() => {
+    if (filtered.length > 0 && (!selectedId || !filtered.find(e => e._uid === selectedId))) {
+      setSelectedId(filtered[0]!._uid);
+    }
+    if (filtered.length === 0) setSelectedId('');
+  }, [filtered]);
+
+  useEffect(() => {
+    if (open) {
+      setQ('');
+      setSelectedId('');
+      setEntityType('');
+      setError('');
+      setTimeout(() => searchRef.current?.focus(), 40);
+    }
+  }, [open]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        if (!filtered.length) return;
+        const idx = filtered.findIndex(e => e._uid === selectedId);
+        const next = ev.key === 'ArrowDown'
+          ? Math.min(idx + 1, filtered.length - 1)
+          : Math.max(idx - 1, 0);
+        setSelectedId(filtered[next]!._uid);
+      }
+      if (ev.key === 'Enter' && selectedId) { ev.preventDefault(); void handleSubmit(); }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [open, filtered, selectedId, entityType]);
+
+  const handleSubmit = async () => {
+    if (!selectedId) {
+      setError('Please select an entity');
+      return;
+    }
+    try {
+      await addEntityMutation.mutateAsync({
+        entity_id: selectedId,
+        entity_type: entityType || null
+      });
+      onClose();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong');
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Add entity to project"
+      width={500}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        {
+          label: addEntityMutation.isPending ? 'Adding...' : 'Add entity',
+          type: 'default',
+          disabled: addEntityMutation.isPending || !selectedId,
+          onClick: () => { void handleSubmit(); }
+        }
+      ]}
+    >
+      <div className={styles.aedBody}>
+        {/* SEARCH */}
+        <div className={styles.aedSection}>
+          <div className={styles.aedLabel}>Search</div>
+          <TextInput
+            ref={searchRef}
+            variant="search"
+            value={q}
+            placeholder="Type to search entities…"
+            onChange={v => setQ(v ?? '')}
+            onClear={() => setQ('')}
+            autoComplete="off"
+            style={{ width: '100%' }}
+          />
+        </div>
+
+        {/* ENTITY listbox */}
+        <div className={styles.aedSection}>
+          <div className={styles.aedLabel}>Entity</div>
+          <div className={styles.aedList}>
+            {filtered.length === 0 ? (
+              <div className={styles.aedListEmpty}>
+                {q ? 'No entities match that search.' : 'No entities found.'}
+              </div>
+            ) : (
+              filtered.map(e => (
+                <button
+                  key={e._uid}
+                  type="button"
+                  className={`${styles.aedItem} ${selectedId === e._uid ? styles.aedItemSelected : ''}`}
+                  onClick={() => setSelectedId(e._uid)}
+                >
+                  <span className={styles.aedItemName}>{e._name || e._slug}</span>
+                  <span className={styles.aedItemType}>{e._schema?.name ?? ''}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* ROLE */}
+        <div className={styles.aedSection}>
+          <div className={styles.aedLabel}>Role</div>
+          <Select.Root
+            value={entityType}
+            placeholder="None"
+            onChange={v => setEntityType(v ?? '')}
+          >
+            <Select.Item value="">None</Select.Item>
+            {projectEntityTypes.map(t => (
+              <Select.Item key={t.id} value={t.id}>{t.label}</Select.Item>
+            ))}
+          </Select.Root>
+        </div>
+
+        {error && <div style={{ fontSize: 12, color: 'var(--error-fg)' }}>{error}</div>}
+      </div>
     </Dialog>
   );
 };

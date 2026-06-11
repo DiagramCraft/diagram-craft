@@ -21,9 +21,10 @@ import { Project } from '@arch-register/api-types/projectContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 
 const PROJECT_STATUS_META = {
-  pinned: { label: 'Pinned' },
+  draft: { label: 'Draft' },
   active: { label: 'Active' },
-  archived: { label: 'Archived' }
+  complete: { label: 'Complete' },
+  cancelled: { label: 'Cancelled' }
 } as const;
 
 const MAX_RECENT_ACTIVITY_ENTRIES = 15;
@@ -46,7 +47,7 @@ export const WorkspaceHomeScreen = () => {
 
   const totalEntities = schemas.reduce((sum, s) => sum + s.entity_count, 0);
   const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
-  const nonArchivedProjects = projects.filter(p => p.status !== 'archived');
+  const nonArchivedProjects = projects.filter(p => p.status !== 'complete' && p.status !== 'cancelled');
   const hasMoreProjects = nonArchivedProjects.length > collapsedProjectCount;
   const visibleProjects = showAllProjects
     ? projects

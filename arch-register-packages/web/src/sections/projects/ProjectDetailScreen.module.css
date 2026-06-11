@@ -514,9 +514,144 @@
 }
 
 /* Entities tab */
-.entityList {
+.entityTab {
   display: flex;
   flex-direction: column;
+}
+
+.pentProgress {
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+  padding: 4px 6px 10px;
+}
+
+.pentTable {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--panel-bg);
+}
+
+.pentHead {
+  display: grid;
+  grid-template-columns: 1fr 90px 120px 72px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--cmp-fg-disabled);
+  border-bottom: 1px solid var(--cmp-border);
+  background: var(--base-bg);
+}
+
+.pentRow {
+  display: grid;
+  grid-template-columns: 1fr 90px 120px 72px;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.pentRow:last-child {
+  border-bottom: none;
+}
+
+.pentRow:hover {
+  background: var(--cmp-bg);
+}
+
+.pentName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--base-fg);
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.pentName:hover {
+  color: var(--accent-fg);
+}
+
+.pentNameSub {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--base-fg-more-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 340px;
+}
+
+.pentType {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--base-fg-dim);
+}
+
+.pentRole {
+  display: flex;
+  align-items: center;
+}
+
+.pentActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pentCheck {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg-more-dim);
+  background: none;
+  cursor: pointer;
+  transition: background 80ms, color 80ms, border-color 80ms;
+  flex-shrink: 0;
+}
+
+.pentCheck:hover {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+}
+
+.pentCheckDone {
+  background: color-mix(in oklch, var(--cmp-fg-success, #22c55e) 20%, transparent);
+  border-color: color-mix(in oklch, var(--cmp-fg-success, #22c55e) 45%, transparent);
+  color: var(--cmp-fg-success, #22c55e);
+}
+
+.removeEntityBtn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  border: none;
+  background: none;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+}
+
+.removeEntityBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
 }
 
 .sectionLabel {
@@ -530,33 +665,111 @@
   gap: 6px;
 }
 
-.entityRow {
-  display: grid;
-  grid-template-columns: 28px 1fr 120px 90px;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border-radius: var(--r);
-  text-align: left;
-  color: var(--base-fg-dim);
-  cursor: pointer;
-  background: none;
-  border: none;
-  width: 100%;
+/* Add entity dialog */
+.aedBody {
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.entityRow:hover {
-  background: var(--cmp-bg);
+.aedSection {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
-.entityRowName {
-  color: var(--base-fg);
+.aedLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--base-fg-more-dim);
   font-weight: 500;
 }
 
-.entityRowMeta {
+.aedSearch {
+  width: 100%;
+}
+
+.aedList {
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  background: var(--cmp-bg);
+  height: 148px;
+  overflow-y: auto;
+}
+
+.aedItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--base-fg-dim);
+  border: none;
+  border-bottom: 1px solid var(--panel-border);
+  background: none;
+  cursor: pointer;
+  transition: background 60ms;
+}
+
+.aedItem:last-child {
+  border-bottom: none;
+}
+
+.aedItem:hover {
+  background: var(--panel-bg);
+  color: var(--base-fg);
+}
+
+.aedItemSelected {
+  background: color-mix(in oklch, var(--accent-fg) 16%, var(--cmp-bg));
+  color: var(--base-fg);
+}
+
+.aedItemSelected:hover {
+  background: color-mix(in oklch, var(--accent-fg) 20%, var(--cmp-bg));
+}
+
+.aedItemName {
+  flex: 1;
+  min-width: 0;
+}
+
+.aedItemType {
   font-size: 11px;
-  color: var(--cmp-fg-disabled);
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+}
+
+.aedListEmpty {
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+}
+
+.aedRoleWrap {
+  position: relative;
+}
+
+.aedRole {
+  width: 100%;
+  appearance: none;
+  padding-right: 28px;
+}
+
+.aedRoleChevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--base-fg-more-dim);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
 }
 
 /* Empty state */

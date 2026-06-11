@@ -8,7 +8,11 @@ import type {
   PinnedEntityDbResult,
   WorkspaceEnumDbResult
 } from '../domain/catalog/db/catalogDatabase';
-import type { ProjectDbResult, ProjectFileDbResult } from '../domain/project/db/projectDatabase';
+import type {
+  ProjectDbResult,
+  ProjectEntityDbResult,
+  ProjectFileDbResult
+} from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
 import {
@@ -16,7 +20,8 @@ import {
   LifecycleStateDbResult,
   OwnerDbResult,
   RoleDefinitionDbResult,
-  WorkspaceDbResult
+  WorkspaceDbResult,
+  ProjectEntityTypeDbResult
 } from '../domain/workspace/db/workspaceDatabase';
 import { AuditLogDbResult } from '../domain/audit/db/auditDatabase';
 import { NotificationDbResult, WatchDbResult } from '../domain/watch/db/watchDatabase';
@@ -70,6 +75,13 @@ export const sqliteMappers = {
     workspace: String(row['workspace']),
     label: String(row['label']),
     color: String(row['color']),
+    sort_order: Number(row['sort_order']),
+    created_at: toDate(row['created_at'])
+  }),
+  projectEntityType: (row: Record<string, unknown>): ProjectEntityTypeDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    label: String(row['label']),
     sort_order: Number(row['sort_order']),
     created_at: toDate(row['created_at'])
   }),
@@ -162,9 +174,24 @@ export const sqliteMappers = {
     owner: row['owner'] == null ? null : String(row['owner']),
     status: String(row['status']) as ProjectDbResult['status'],
     color: row['color'] == null ? null : String(row['color']),
+    target_date: row['target_date'] == null ? null : String(row['target_date']),
+    pinned: Boolean(row['pinned']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at']),
     owner_name: row['owner_name'] == null ? null : String(row['owner_name'])
+  }),
+  projectEntity: (row: Record<string, unknown>): ProjectEntityDbResult => ({
+    workspace: String(row['workspace']),
+    project_id: String(row['project_id']),
+    entity_id: String(row['entity_id']),
+    entity_name: String(row['entity_name']),
+    entity_slug: String(row['entity_slug']),
+    entity_description: String(row['entity_description'] ?? ''),
+    entity_schema_id: row['entity_schema_id'] == null ? null : String(row['entity_schema_id']),
+    entity_schema_name: row['entity_schema_name'] == null ? null : String(row['entity_schema_name']),
+    entity_type_id: row['entity_type_id'] == null ? null : String(row['entity_type_id']),
+    entity_type_label: row['entity_type_label'] == null ? null : String(row['entity_type_label']),
+    is_done: row['is_done'] === 1 || row['is_done'] === true
   }),
   projectFile: (row: Record<string, unknown>): ProjectFileDbResult => ({
     id: String(row['id']),

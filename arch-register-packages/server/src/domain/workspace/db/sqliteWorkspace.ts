@@ -7,7 +7,8 @@ import {
   WorkspaceDbUpdate,
   RoleDefinitionDbUpdate,
   WorkspaceDatabase,
-  MemberDbResult
+  MemberDbResult,
+  ProjectEntityTypeDbCreate
 } from './workspaceDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
@@ -110,6 +111,28 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
     tx();
     return await this.listLifecycleStates(workspace);
+  }
+
+  async listProjectEntityTypes(workspace: string) {
+    return this.all(
+      'SELECT id, workspace, label, sort_order, created_at FROM project_entity_type WHERE workspace = ? ORDER BY sort_order, id',
+      [workspace],
+      sqliteMappers.projectEntityType
+    );
+  }
+
+  async replaceProjectEntityTypes(workspace: string, types: ProjectEntityTypeDbCreate[]) {
+    const tx = this.db.transaction(() => {
+      this.run('DELETE FROM project_entity_type WHERE workspace = ?', [workspace]);
+      for (const type of types) {
+        this.run(
+          'INSERT INTO project_entity_type (id, workspace, label, sort_order, created_at) VALUES (?, ?, ?, ?, ?)',
+          [type.id, workspace, type.label, type.sort_order, type.created_at instanceof Date ? type.created_at.toISOString() : type.created_at]
+        );
+      }
+    });
+    tx();
+    return await this.listProjectEntityTypes(workspace);
   }
 
   async listTeams(workspace: string) {

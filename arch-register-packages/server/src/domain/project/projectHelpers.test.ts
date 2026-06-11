@@ -14,6 +14,8 @@ const baseProject: ProjectDbResult = {
   owner: null,
   status: 'active',
   color: '#ff0000',
+  target_date: null,
+  pinned: false,
   created_at: now,
   updated_at: now,
   owner_name: null

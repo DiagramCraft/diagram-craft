@@ -19,7 +19,9 @@ import {
   listMembers,
   updateMemberRole,
   removeMember,
-  listUsers
+  listUsers,
+  listProjectEntityTypes,
+  replaceProjectEntityTypes
 } from './workspaceConfigOperations';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 
@@ -177,6 +179,31 @@ export const workspaceConfigORPCRouter = configRouter.router({
           return toORPCError(error);
         }
       })
+    },
+    projectEntityTypes: {
+      list: configRouter.config.projectEntityTypes.list.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          return await listProjectEntityTypes(context.db, workspace, context.event);
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }),
+      replace: configRouter.config.projectEntityTypes.replace.handler(
+        async ({ input, context }) => {
+          try {
+            const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+            return await replaceProjectEntityTypes(
+              context.db,
+              workspace,
+              input.body.types,
+              context.event
+            );
+          } catch (error) {
+            return toORPCError(error);
+          }
+        }
+      )
     }
   }
 });

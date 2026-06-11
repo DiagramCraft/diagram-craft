@@ -2,10 +2,30 @@ import { newid } from '@diagram-craft/utils/id';
 import type {
   ProjectDbCreate,
   ProjectDatabase,
+  ProjectEntityDbCreate,
   ProjectDbUpdate,
   ProjectFileDbUpsert
 } from './projectDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+
+const PROJECT_ENTITY_JOIN_SQL = `
+  SELECT
+    pe.workspace,
+    pe.project_id,
+    pe.entity_id,
+    e.name        AS entity_name,
+    e.slug        AS entity_slug,
+    e.description AS entity_description,
+    e.schema_id   AS entity_schema_id,
+    es.name       AS entity_schema_name,
+    pe.entity_type AS entity_type_id,
+    pet.label     AS entity_type_label,
+    pe.is_done
+  FROM project_entity pe
+  JOIN entity e ON e.id = pe.entity_id
+  LEFT JOIN entity_schema es ON es.id = e.schema_id
+  LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
+`;
 
 const PROJECT_JOIN_SQL = `
   SELECT p.*, wo.name AS owner_name
@@ -32,7 +52,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async createProject(input: ProjectDbCreate) {
     this.run(
-      'INSERT INTO project (id, workspace, name, description, owner, status, color, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO project (id, workspace, name, description, owner, status, color, target_date, pinned, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -41,6 +61,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         input.owner,
         input.status,
         input.color,
+        input.target_date,
+        input.pinned ? 1 : 0,
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -50,13 +72,15 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async updateProject(workspace: string, id: string, input: ProjectDbUpdate) {
     this.run(
-      'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, color = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, color = ?, target_date = ?, pinned = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
         input.owner,
         input.status,
         input.color,
+        input.target_date,
+        input.pinned ? 1 : 0,
         input.updated_at.toISOString(),
         workspace,
         id
@@ -285,5 +309,65 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
     tx();
     return matching;
+  }
+
+  async listProjectEntities(workspace: string, projectId: string) {
+    return this.all(
+      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? ORDER BY e.name`,
+      [workspace, projectId],
+      sqliteMappers.projectEntity
+    );
+  }
+
+  async getEntityProjects(workspace: string, entityId: string) {
+    return this.all(
+      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.entity_id = ? ORDER BY e.name`,
+      [workspace, entityId],
+      sqliteMappers.projectEntity
+    );
+  }
+
+  async addProjectEntity(input: ProjectEntityDbCreate) {
+    this.run(
+      'INSERT INTO project_entity (workspace, project_id, entity_id, entity_type, is_done, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [
+        input.workspace,
+        input.project_id,
+        input.entity_id,
+        input.entity_type_id ?? null,
+        input.is_done ? 1 : 0,
+        input.created_at.toISOString()
+      ]
+    );
+    return this.get(
+      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
+      [input.workspace, input.project_id, input.entity_id],
+      sqliteMappers.projectEntity
+    )!;
+  }
+
+  async updateProjectEntity(
+    workspace: string,
+    projectId: string,
+    entityId: string,
+    entityTypeId: string | null,
+    isDone: boolean
+  ) {
+    this.run(
+      'UPDATE project_entity SET entity_type = ?, is_done = ? WHERE workspace = ? AND project_id = ? AND entity_id = ?',
+      [entityTypeId ?? null, isDone ? 1 : 0, workspace, projectId, entityId]
+    );
+    return this.get(
+      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
+      [workspace, projectId, entityId],
+      sqliteMappers.projectEntity
+    );
+  }
+
+  async removeProjectEntity(workspace: string, projectId: string, entityId: string) {
+    this.run(
+      'DELETE FROM project_entity WHERE workspace = ? AND project_id = ? AND entity_id = ?',
+      [workspace, projectId, entityId]
+    );
   }
 }

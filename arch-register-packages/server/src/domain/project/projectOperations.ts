@@ -13,7 +13,7 @@ import {
 } from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError } from '../../utils/http';
-import { toApiProject, toApiProjectFile, toApiProjectDetail } from './projectHelpers';
+import { toApiProject, toApiProjectFile, toApiProjectDetail, toApiProjectEntity } from './projectHelpers';
 import type { ProjectFileDbResult } from './db/projectDatabase';
 import { HTTPError } from 'h3';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
@@ -22,10 +22,11 @@ import {
   FileTree,
   Project,
   ProjectDetail,
+  ProjectEntity,
   ProjectFile
 } from '@arch-register/api-types/projectContract';
 
-const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
+const PROJECT_STATUSES = ['draft', 'active', 'complete', 'cancelled'] as const;
 type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
 const handleError = (error: unknown, fallback: string): never =>
@@ -99,7 +100,9 @@ export const listProjects = async (
     return visibleProjects
       .map(project => toApiProject(project, fileCounts.get(project.id) ?? 0, authCtx))
       .sort((a, b) => {
-        const rank = { pinned: 0, active: 1, archived: 2 } as const;
+        const pinnedRank = (a.pinned ? 0 : 1) - (b.pinned ? 0 : 1);
+        if (pinnedRank !== 0) return pinnedRank;
+        const rank = { draft: 0, active: 1, complete: 2, cancelled: 3 } as const;
         return rank[a.status] - rank[b.status] || a.name.localeCompare(b.name);
       });
   } catch (e) {
@@ -133,8 +136,10 @@ export const createProject = async (
     name: string;
     description?: string;
     owner?: string | null;
-    status?: 'pinned' | 'active' | 'archived';
+    status?: 'draft' | 'active' | 'complete' | 'cancelled';
     color?: string | null;
+    target_date?: string | null;
+    pinned?: boolean;
   },
   event: AuthenticatedEvent
 ): Promise<Project> => {
@@ -154,6 +159,8 @@ export const createProject = async (
       owner: resolveProjectOwner(input.owner, teamIds),
       status: parseProjectStatus(input.status),
       color: typeof input.color === 'string' ? input.color : null,
+      target_date: typeof input.target_date === 'string' ? input.target_date : null,
+      pinned: input.pinned ?? false,
       created_at: timestamp,
       updated_at: timestamp
     };
@@ -190,8 +197,10 @@ export const updateProject = async (
     name: string;
     description?: string;
     owner?: string | null;
-    status?: 'pinned' | 'active' | 'archived';
+    status?: 'draft' | 'active' | 'complete' | 'cancelled';
     color?: string | null;
+    target_date?: string | null;
+    pinned?: boolean;
   },
   event: AuthenticatedEvent
 ): Promise<Project> => {
@@ -223,6 +232,13 @@ export const updateProject = async (
             ? input.color
             : null
           : oldRow.color,
+      target_date:
+        input.target_date !== undefined
+          ? typeof input.target_date === 'string'
+            ? input.target_date
+            : null
+          : oldRow.target_date,
+      pinned: input.pinned !== undefined ? input.pinned : oldRow.pinned,
       updated_at: new Date()
     };
 
@@ -908,5 +924,119 @@ export const updateTemplateStatus = async (
     return toApiProjectFile(updatedFile!);
   } catch (e) {
     return handleError(e, 'Failed to update template status');
+  }
+};
+
+export const listProjectEntities = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  event: AuthenticatedEvent
+): Promise<ProjectEntity[]> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  try {
+    const project = await db.project.getProject(ws, projectId);
+    httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
+    requireProjectAccess(authCtx, project.owner);
+    const rows = await db.project.listProjectEntities(ws, projectId);
+    return rows.map(toApiProjectEntity);
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve project entities');
+  }
+};
+
+export const addProjectEntity = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  input: { entity_id: string; entity_type?: string | null; is_done?: boolean },
+  event: AuthenticatedEvent
+): Promise<ProjectEntity> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  try {
+    const project = await db.project.getProject(ws, projectId);
+    httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
+    requireProjectAction(authCtx, project.owner, 'edit_project', 'You do not have permission to edit this project');
+    const row = await db.project.addProjectEntity({
+      workspace: ws,
+      project_id: projectId,
+      entity_id: input.entity_id,
+      entity_type_id: input.entity_type ?? null,
+      is_done: input.is_done ?? false,
+      created_at: new Date()
+    });
+    return toApiProjectEntity(row);
+  } catch (e) {
+    return handleError(e, 'Failed to add entity to project');
+  }
+};
+
+export const updateProjectEntity = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  entityId: string,
+  input: { entity_type?: string | null; is_done?: boolean },
+  event: AuthenticatedEvent
+): Promise<ProjectEntity> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  try {
+    const project = await db.project.getProject(ws, projectId);
+    httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
+    requireProjectAction(authCtx, project.owner, 'edit_project', 'You do not have permission to edit this project');
+    const existing = (await db.project.listProjectEntities(ws, projectId)).find(
+      e => e.entity_id === entityId
+    );
+    httpAssert.present(existing, { status: 404, message: `Entity '${entityId}' not found in project` });
+    const row = await db.project.updateProjectEntity(
+      ws,
+      projectId,
+      entityId,
+      input.entity_type !== undefined ? (input.entity_type ?? null) : existing.entity_type_id,
+      input.is_done !== undefined ? input.is_done : existing.is_done
+    );
+    httpAssert.present(row, { status: 404, message: `Entity '${entityId}' not found in project` });
+    return toApiProjectEntity(row);
+  } catch (e) {
+    return handleError(e, 'Failed to update project entity');
+  }
+};
+
+export const removeProjectEntity = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  entityId: string,
+  event: AuthenticatedEvent
+): Promise<{ success: boolean }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  try {
+    const project = await db.project.getProject(ws, projectId);
+    httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
+    requireProjectAction(authCtx, project.owner, 'edit_project', 'You do not have permission to edit this project');
+    await db.project.removeProjectEntity(ws, projectId, entityId);
+    return { success: true };
+  } catch (e) {
+    return handleError(e, 'Failed to remove entity from project');
+  }
+};
+
+export const getEntityProjects = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  event: AuthenticatedEvent
+): Promise<ProjectEntity[]> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  await buildApiAuthCtx(db, ws, event);
+  try {
+    const rows = await db.project.getEntityProjects(ws, entityId);
+    return rows.map(toApiProjectEntity);
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve entity projects');
   }
 };

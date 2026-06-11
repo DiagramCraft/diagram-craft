@@ -9,20 +9,20 @@ const minimalDiagramDocument = (name: string) => ({
 
 const createProject = async (
   orpc: TestORPCClient,
-  body: { name: string; description?: unknown; owner?: string | null; status?: 'pinned' | 'active' | 'archived'; color?: string | null | number }
+  body: { name: string; description?: unknown; owner?: string | null; status?: 'draft' | 'active' | 'complete' | 'cancelled'; pinned?: boolean; color?: string | null | number }
 ) => orpc.projects.create({ params: { workspace: 'default' }, body: body as Parameters<typeof orpc.projects.create>[0]['body'] });
 
 test.describe('project routes', () => {
   test('GET /api/:workspace/projects lists created projects', async ({ orpc }) => {
     await createProject(orpc, { name: 'Portal Redesign', owner: seedIds.teams.design, status: 'active' });
-    await createProject(orpc, { name: 'Auth Migration', owner: seedIds.teams.security, status: 'pinned' });
+    await createProject(orpc, { name: 'Auth Migration', owner: seedIds.teams.security, status: 'active', pinned: true });
 
     const projects = await orpc.projects.list({ params: { workspace: 'default' } });
 
     expect(projects.length).toBeGreaterThanOrEqual(2);
     expect(projects).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: 'Auth Migration', status: 'pinned' })
+        expect.objectContaining({ name: 'Auth Migration', pinned: true })
       ])
     );
   });
@@ -39,7 +39,7 @@ test.describe('project routes', () => {
       name: 'Detail Project',
       description: 'Project detail test',
       owner: seedIds.teams.design,
-      status: 'pinned'
+      pinned: true
     });
 
     const project = await orpc.projects.get({ params: { workspace: 'default', id: created.id } });
@@ -47,7 +47,7 @@ test.describe('project routes', () => {
     expect(project).toMatchObject({
       id: created.id,
       name: 'Detail Project',
-      status: 'pinned'
+      pinned: true
     });
     expect(project.files).toEqual({ folders: [], rootFiles: [] });
   });
@@ -83,7 +83,8 @@ test.describe('project routes', () => {
       name: 'Mutable Project',
       description: 'Original',
       owner: seedIds.teams.design,
-      status: 'pinned',
+      status: 'active',
+      pinned: true,
       color: '#445566'
     });
 
@@ -97,7 +98,7 @@ test.describe('project routes', () => {
       name: 'Renamed Project',
       description: 'Original',
       owner: expect.objectContaining({ id: seedIds.teams.design }),
-      status: 'pinned',
+      pinned: true,
       color: '#445566'
     });
   });
