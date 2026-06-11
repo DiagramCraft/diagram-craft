@@ -1,4 +1,4 @@
-import { oc } from '@orpc/contract';
+import { oc, eventIterator } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId } from '@arch-register/api-types/common';
 
@@ -117,7 +117,25 @@ export const aiContract = {
           entities: z.array(z.unknown()),
           raw: z.string().optional()
         })
+      ),
+    chat: oc
+      .route({ method: 'POST', path: '/{workspace}/ai/chat', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: ws,
+          body: z.object({
+            messages: z.array(z.unknown()),
+            threadId: z.string().optional(),
+            runId: z.string().optional(),
+            parentRunId: z.string().optional(),
+            conversationId: z.string().optional(),
+            forwardedProps: z.record(z.string(), z.unknown()).optional(),
+            state: z.unknown().optional(),
+            context: z.array(z.unknown()).optional()
+          })
+        })
       )
+      .output(eventIterator(z.unknown()))
   }
 };
 

@@ -309,7 +309,47 @@ export const workspaceEntityContract = {
           })
         })
       )
-      .output(importCommitResponseSchema)
+      .output(importCommitResponseSchema),
+    exportCsv: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/data/export',
+        inputStructure: 'detailed',
+        outputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: ws,
+          query: listFiltersSchema
+        })
+      )
+      .output(
+        z.object({
+          headers: z.record(z.string(), z.string()),
+          body: z.instanceof(Blob)
+        })
+      ),
+    downloadTemplate: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/data/import/template/{schemaId}',
+        inputStructure: 'detailed',
+        outputStructure: 'detailed'
+      })
+      .input(
+        z.object({
+          params: z.object({
+            workspace: z.string(),
+            schemaId: z.string()
+          })
+        })
+      )
+      .output(
+        z.object({
+          headers: z.record(z.string(), z.string()),
+          body: z.instanceof(Blob)
+        })
+      )
   }
 };
 

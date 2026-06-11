@@ -6,8 +6,8 @@ import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 
-// SSE route base — note /api/sse prefix for streaming routes
-const SSE_BASE = '/api/sse/:workspace/ai';
+// REST route base for Diagram Craft AI endpoints
+const ROUTE_BASE = '/:workspace/ai';
 
 export const validateDiagramCraftAIRequestHeaders = (event: H3Event<EventHandlerRequest>) => {
   const CONTENT_TYPE_JSON = 'application/json';
@@ -81,9 +81,9 @@ export const toDiagramCraftAIHttpError = (error: unknown, fallbackMessage: strin
 export const createDiagramCraftRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
 
-  // POST /api/sse/:workspace/ai/generate -- SSE-capable AI generate (permanent REST route)
+  // POST /api/:workspace/ai/generate -- Diagram Craft AI generate endpoint
   router.post(
-    `${SSE_BASE}/generate`,
+    `${ROUTE_BASE}/generate`,
     defineHandler(async event => {
       validateDiagramCraftAIRequestHeaders(event);
 

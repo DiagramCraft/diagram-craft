@@ -9,9 +9,16 @@ import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveAiConfig, createAiTextAdapter } from './tanstackAiAdapter';
-import { createAiConfigResponse, buildAiConfigInput, parseExtractResponse } from './aiRoutes';
+import {
+  createAiConfigResponse,
+  buildAiConfigInput,
+  parseExtractResponse,
+  extractUserTextContent,
+  buildConversationAutoTitle
+} from './aiRoutes';
 import { chat } from '@tanstack/ai';
 import { buildSystemPrompt } from './systemPromptBuilder';
+import { createAiChatTools } from './chatTools';
 import { httpAssert } from '@arch-register/server/utils/httpAssert';
 import { orpcAssert } from '@arch-register/server/utils/orpcAssert';
 
@@ -57,6 +64,8 @@ type AiORPCDeps = {
   resolveAiConfigImpl?: typeof resolveAiConfig;
   createAiTextAdapterImpl?: typeof createAiTextAdapter;
   buildSystemPromptImpl?: typeof buildSystemPrompt;
+  createAiChatToolsImpl?: typeof createAiChatTools;
+  randomId?: () => string;
 };
 
 const aiRouter = implement(aiContract).$context<ORPCContext>();
@@ -66,6 +75,8 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
   const resolveAi = deps.resolveAiConfigImpl ?? resolveAiConfig;
   const createAdapter = deps.createAiTextAdapterImpl ?? createAiTextAdapter;
   const buildPrompt = deps.buildSystemPromptImpl ?? buildSystemPrompt;
+  const createTools = deps.createAiChatToolsImpl ?? createAiChatTools;
+  const makeId = deps.randomId ?? randomUUID;
 
   return aiRouter.router({
     ai: {
@@ -115,7 +126,10 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           const user = context.event.context.user;
 
           const conversation = await context.db.ai.getConversation(workspace, input.params.id);
-          orpcAssert.present(conversation, { code: 'NOT_FOUND', message: 'Conversation not found' });
+          orpcAssert.present(conversation, {
+            code: 'NOT_FOUND',
+            message: 'Conversation not found'
+          });
           orpcAssert.true(conversation.user_id === user.id, {
             code: 'FORBIDDEN',
             message: "Cannot modify another user's conversation"
@@ -141,7 +155,10 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           const user = context.event.context.user;
 
           const conversation = await context.db.ai.getConversation(workspace, input.params.id);
-          orpcAssert.present(conversation, { code: 'NOT_FOUND', message: 'Conversation not found' });
+          orpcAssert.present(conversation, {
+            code: 'NOT_FOUND',
+            message: 'Conversation not found'
+          });
           orpcAssert.true(conversation.user_id === user.id, {
             code: 'FORBIDDEN',
             message: "Cannot delete another user's conversation"
@@ -163,7 +180,10 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           const user = context.event.context.user;
 
           const conversation = await context.db.ai.getConversation(workspace, input.params.id);
-          orpcAssert.present(conversation, { code: 'NOT_FOUND', message: 'Conversation not found' });
+          orpcAssert.present(conversation, {
+            code: 'NOT_FOUND',
+            message: 'Conversation not found'
+          });
           orpcAssert.true(conversation.user_id === user.id, {
             code: 'FORBIDDEN',
             message: "Cannot access another user's conversation"
@@ -266,6 +286,134 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           return parseExtractResponse(result as string);
         } catch (error) {
           return toORPCError(error);
+        }
+      }),
+
+      chat: aiRouter.ai.chat.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+          requireWorkspaceCapability(authCtx, 'ws.view');
+
+          const aiConfig = await resolveAi(context.db, workspace);
+          if (!aiConfig) {
+            throw new ORPCError('SERVICE_UNAVAILABLE', {
+              message: 'AI is not configured for this workspace'
+            });
+          }
+
+          const systemPrompt = await buildPrompt(context.db, workspace, aiConfig.systemPrompt);
+          const adapter = createAdapter(aiConfig);
+          const user = context.event.context.user;
+          const tools = createTools(context.db, workspace, authCtx, {
+            id: user.id,
+            displayName: user.display_name
+          });
+
+          const stream = chatImpl({
+            adapter,
+            messages: input.body.messages as any,
+            systemPrompts: [systemPrompt],
+            tools,
+            temperature: aiConfig.temperature,
+            threadId: input.body.threadId,
+            runId: input.body.runId,
+            parentRunId: input.body.parentRunId
+          });
+
+          const conversationId =
+            (input.body.forwardedProps as any)?.conversationId ?? input.body.conversationId;
+
+          if (conversationId) {
+            const lastUserMsg = [...(input.body.messages as any[])]
+              .reverse()
+              .find(m => m.role === 'user');
+            if (lastUserMsg) {
+              const textContent = extractUserTextContent(lastUserMsg);
+              if (textContent) {
+                await context.db.ai.createMessage({
+                  id: makeId(),
+                  conversation_id: conversationId,
+                  role: 'user',
+                  content: textContent,
+                  metadata: {},
+                  created_at: new Date()
+                });
+
+                await context.db.ai.initConversationTitle(
+                  workspace,
+                  conversationId,
+                  buildConversationAutoTitle(textContent)
+                );
+              }
+            }
+          }
+
+          return (async function* () {
+            const capturedContent: string[] = [];
+            const capturedToolCalls: Array<{ name: string; args: string; result?: unknown }> = [];
+
+            try {
+              for await (const chunk of stream as AsyncIterable<any>) {
+                if (
+                  (chunk.type === 'TEXT_MESSAGE_CONTENT' ||
+                    chunk.type === 'REASONING_MESSAGE_CONTENT') &&
+                  chunk.delta
+                ) {
+                  capturedContent.push(chunk.delta);
+                }
+                if (chunk.type === 'TOOL_CALL_START' && chunk.toolCallName) {
+                  capturedToolCalls.push({
+                    name: chunk.toolCallName,
+                    args: '',
+                    result: undefined
+                  });
+                }
+                if (chunk.type === 'TOOL_CALL_ARGS' && capturedToolCalls.length > 0) {
+                  capturedToolCalls[capturedToolCalls.length - 1]!.args += chunk.delta ?? '';
+                }
+                if (chunk.type === 'TOOL_CALL_RESULT' && capturedToolCalls.length > 0) {
+                  capturedToolCalls[capturedToolCalls.length - 1]!.result = chunk.content;
+                }
+
+                yield chunk;
+              }
+
+              if (conversationId && capturedContent.length > 0) {
+                const metadata: Record<string, unknown> = {};
+                if (capturedToolCalls.length > 0) metadata.toolCalls = capturedToolCalls;
+                await context.db.ai.createMessage({
+                  id: makeId(),
+                  conversation_id: conversationId,
+                  role: 'assistant',
+                  content: capturedContent.join(''),
+                  metadata,
+                  created_at: new Date()
+                });
+              }
+            } catch (error) {
+              const isAbort =
+                error instanceof Error &&
+                (error.name === 'AbortError' || error.message.includes('aborted'));
+              if (isAbort && conversationId && capturedContent.length > 0) {
+                const metadata: Record<string, unknown> = {};
+                if (capturedToolCalls.length > 0) metadata.toolCalls = capturedToolCalls;
+                await context.db.ai
+                  .createMessage({
+                    id: makeId(),
+                    conversation_id: conversationId,
+                    role: 'assistant',
+                    content: capturedContent.join(''),
+                    metadata,
+                    created_at: new Date()
+                  })
+                  .catch(() => undefined);
+              }
+              throw error;
+            }
+          })();
+        } catch (error) {
+          throw toORPCError(error);
         }
       })
     }

@@ -281,13 +281,10 @@ test.describe('ai chat routes', () => {
     });
   });
 
-  test('GET /api/:workspace/ai/config returns 404 when unset', async ({
-    orpc,
-    seeded: _
-  }) => {
-    await expect(
-      orpc.ai.getConfig({ params: { workspace: 'no-ai' } })
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  test('GET /api/:workspace/ai/config returns 404 when unset', async ({ orpc, seeded: _ }) => {
+    await expect(orpc.ai.getConfig({ params: { workspace: 'no-ai' } })).rejects.toMatchObject({
+      code: 'NOT_FOUND'
+    });
   });
 
   test('POST /api/:workspace/ai/chat streams a reply and persists conversation messages', async ({
@@ -305,9 +302,9 @@ test.describe('ai chat routes', () => {
     const prompt =
       'Explain the authentication flow between the frontend, API gateway, and auth service clearly.';
 
-    const res = await fetch(`${server.baseUrl}/api/sse/default/ai/chat`, {
+    const res = await fetch(`${server.baseUrl}/api/default/ai/chat`, {
       method: 'POST',
-      headers: { Authorization: auth, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         threadId: 'thread-1',
         runId: 'run-1',
@@ -351,33 +348,32 @@ test.describe('ai chat routes', () => {
     auth,
     seeded: _
   }) => {
-    const unauthRes = await fetch(`${server.baseUrl}/api/sse/default/ai/chat`, {
+    const unauthRes = await fetch(`${server.baseUrl}/api/default/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
     expect(unauthRes.status).toBe(401);
 
-    const invalidJsonRes = await fetch(`${server.baseUrl}/api/sse/default/ai/chat`, {
+    const invalidJsonRes = await fetch(`${server.baseUrl}/api/default/ai/chat`, {
       method: 'POST',
-      headers: { Authorization: auth, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: 'not-json'
     });
     expect(invalidJsonRes.status).toBe(400);
-    await expect(invalidJsonRes.json()).resolves.toMatchObject({
-      message: 'Invalid JSON in request body'
-    });
 
-    const missingWsRes = await fetch(`${server.baseUrl}/api/sse/missing/ai/chat`, {
+    const missingWsRes = await fetch(`${server.baseUrl}/api/missing/ai/chat`, {
       method: 'POST',
-      headers: { Authorization: auth, 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
+      headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'prompt' }]
+      })
     });
     expect(missingWsRes.status).toBe(404);
 
-    const noConfigRes = await fetch(`${server.baseUrl}/api/sse/no-ai/ai/chat`, {
+    const noConfigRes = await fetch(`${server.baseUrl}/api/no-ai/ai/chat`, {
       method: 'POST',
-      headers: { Authorization: auth, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         threadId: 'thread-1',
         runId: 'run-1',

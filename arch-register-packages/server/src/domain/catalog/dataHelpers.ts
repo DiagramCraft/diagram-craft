@@ -89,7 +89,7 @@ export type EntityMutationPayload = {
   fields: Record<string, unknown>;
 };
 
-const relationFields = (fields: SchemaField[]) =>
+export const relationFields = (fields: SchemaField[]) =>
   fields.filter(
     (field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
       field.type === 'reference' || field.type === 'containment'

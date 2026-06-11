@@ -5,8 +5,6 @@ import type { StorageAdapter } from './storage/storage';
 import { createLogger } from './utils/logger';
 import { createUnifiedOpenAPISpecHandler } from './openapi';
 import { createProjectRoutes } from './domain/project/projectRoutes';
-import { createAiChatRoutes } from './domain/ai/aiRoutes';
-import { createDiagramCraftRoutes } from './domain/diagram/diagramCraftRoutes';
 import { createOidcCallbackRoute } from './domain/auth/authRoutes';
 import { createTemplateRoutes } from './domain/catalog/templateRoutes';
 import { requireAuth } from './middleware/auth';
@@ -21,10 +19,14 @@ import { createProjectORPCHandler } from './domain/project/projectOrpc';
 import { createAuditORPCHandler } from './domain/audit/auditOrpc';
 import { createWatchORPCHandler } from './domain/watch/watchOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
-import { createPublicAuthORPCHandler, createProtectedAuthORPCHandler } from './domain/auth/authOrpc';
+import {
+  createPublicAuthORPCHandler,
+  createProtectedAuthORPCHandler
+} from './domain/auth/authOrpc';
 import { createAiORPCHandler } from './domain/ai/aiOrpc';
 import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
-import { createDownloadRoutes } from './domain/catalog/downloadRoutes';
+import { createAiChatRoutes } from './domain/ai/aiRoutes';
+import { createDiagramCraftRoutes } from './domain/diagram/diagramCraftRoutes';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -32,7 +34,7 @@ const httpLogger = createLogger('http');
 
 type AppOptions = {
   routeOverrides?: {
-    aiChat?: Parameters<typeof createAiChatRoutes>[1];
+    aiChat?: Parameters<typeof createAiORPCHandler>[1];
   };
 };
 
@@ -50,7 +52,10 @@ export const createApp = (
         httpLogger.error(`${error.status} ${method} ${path}: ${error.message}`, cause);
       } else if (error.status === 404) {
         httpLogger.info(`404 ${method} ${path}`);
-      } else if (error.status === 401 && error.message === 'Missing or invalid authorization header') {
+      } else if (
+        error.status === 401 &&
+        error.message === 'Missing or invalid authorization header'
+      ) {
         // Expected auth failure during initial page load - log as debug to reduce noise
         httpLogger.debug(`${error.status} ${method} ${path}: ${error.message}`);
       } else {
@@ -71,7 +76,9 @@ export const createApp = (
         methods: '*',
         credentials: corsOriginEnv !== '*'
       });
-      if (didHandleCors) return;
+      if (didHandleCors) {
+        return;
+      }
     })
   );
 
@@ -110,13 +117,12 @@ export const createApp = (
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
   app.use(createSearchORPCHandler(db));
+  app.use('/api', createAiChatRoutes(db, options.routeOverrides?.aiChat));
+  app.use('/api', createDiagramCraftRoutes(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
   app.use(createDiagramCraftORPCHandler(db));
-  app.use(createDownloadRoutes(db));
   app.use(createTemplateRoutes(db));
   app.use(createProjectRoutes(db, storage));
-  app.use(createAiChatRoutes(db, options.routeOverrides?.aiChat));
-  app.use(createDiagramCraftRoutes(db));
 
   return app;
 };

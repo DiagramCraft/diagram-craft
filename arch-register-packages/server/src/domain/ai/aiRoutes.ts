@@ -14,8 +14,8 @@ import type { AiConfigInputDbUpsert } from '../../db/database';
 import type { AiConfigDbResult } from './db/aiDatabase';
 import { WorkspaceAiConfig } from '@arch-register/api-types/aiContract';
 
-// SSE route base — note /api/sse prefix for streaming routes
-const SSE_BASE = '/api/sse/:workspace/ai';
+// REST route base for AI chat endpoints
+const ROUTE_BASE = '/:workspace/ai';
 
 type ChatChunk = {
   type: string;
@@ -238,9 +238,9 @@ export const createAiChatRoutes = (db: DatabaseAdapter, deps: AiChatRouteDeps = 
   const createTools = deps.createAiChatToolsImpl ?? createAiChatTools;
   const makeId = deps.randomId ?? randomUUID;
 
-  // POST /api/sse/:workspace/ai/chat -- streaming chat via TanStack AI SSE
+  // POST /api/:workspace/ai/chat -- streaming chat via TanStack AI SSE
   router.post(
-    `${SSE_BASE}/chat`,
+    `${ROUTE_BASE}/chat`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(db.catalog, event.context.params?.['workspace']);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);

@@ -7,8 +7,12 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { httpAssert } from '../../utils/httpAssert';
-import { buildEntityGrantInputs } from './dataHelpers';
+import { orpcAssert } from '../../utils/orpcAssert';
+import { buildEntityGrantInputs, filterEntities, relationFields } from './dataHelpers';
 import { importParse, importCommit } from './importOperations';
+import { generateCsv, formatArrayForCsv } from '../../utils/csv';
+import { decodeRefs } from '../../types';
+import { PermissionChecker } from '@arch-register/permissions';
 import {
   listEntities,
   getEntityFacets,
@@ -246,6 +250,180 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           >,
           auditUser: { id: auditUser.id, display_name: auditUser.display_name }
         });
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    exportCsv: entityRouter.entities.exportCsv.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const checker = new PermissionChecker();
+        const schemaId = input.query._schemaId ?? null;
+        const owner = input.query.owner ?? null;
+        const lifecycle = input.query.lifecycle ?? null;
+        const q = input.query.q ?? '';
+
+        const [schemas, allEntitiesRaw] = await Promise.all([
+          context.db.catalog.listSchemas(workspace),
+          context.db.catalog.listEntities(workspace)
+        ]);
+
+        const allEntities = allEntitiesRaw.filter(entity =>
+          checker.hasEntityPermission(authCtx, entity, 'view_entity')
+        );
+        const schemaMap = new Map(schemas.map(s => [s.id, s]));
+        const entities = filterEntities(allEntities, { schemaId, owner, lifecycle, q }).sort(
+          (a, b) => a.name.localeCompare(b.name)
+        );
+
+        let csvContent: string;
+        if (schemaId) {
+          const schema = schemaMap.get(schemaId);
+          orpcAssert.present(schema, { code: 'NOT_FOUND', message: 'Schema not found' });
+
+          const refFields = relationFields(schema.fields);
+          const allRefIds = new Set<string>();
+          for (const entity of entities) {
+            for (const field of refFields) {
+              decodeRefs(entity.data[field.id]).forEach(id => allRefIds.add(id));
+            }
+          }
+          const refLookup = new Map(
+            allEntities
+              .filter(entity => allRefIds.has(entity.id))
+              .map(entity => [entity.id, entity.name || entity.slug])
+          );
+
+          const columns = [
+            'ID',
+            'Name',
+            'Slug',
+            'Namespace',
+            'Description',
+            'Owner',
+            'Lifecycle',
+            'Target Lifecycle',
+            'Target Date',
+            'Tags',
+            'Links',
+            'Schema Type',
+            ...schema.fields.map(f => f.name)
+          ];
+
+          const rows = entities.map(entity => {
+            const row: Record<string, unknown> = {
+              'ID': entity.id,
+              'Name': entity.name,
+              'Slug': entity.slug,
+              'Namespace': entity.namespace,
+              'Description': entity.description,
+              'Owner': entity.owner ?? '',
+              'Lifecycle': entity.lifecycle ?? '',
+              'Target Lifecycle': entity.target_lifecycle ?? '',
+              'Target Date': entity.target_lifecycle_date ?? '',
+              'Tags': formatArrayForCsv(entity.tags),
+              'Links': entity.links.length.toString(),
+              'Schema Type': schema.name
+            };
+            for (const field of schema.fields) {
+              const value = entity.data[field.id];
+              if (field.type === 'reference' || field.type === 'containment') {
+                row[field.name] = formatArrayForCsv(
+                  decodeRefs(value).map(id => refLookup.get(id) ?? id)
+                );
+              } else if (field.type === 'boolean') {
+                row[field.name] = value === true ? 'true' : value === false ? 'false' : '';
+              } else if (Array.isArray(value)) {
+                row[field.name] = formatArrayForCsv(value);
+              } else {
+                row[field.name] = value ?? '';
+              }
+            }
+            return row;
+          });
+          csvContent = generateCsv(rows, columns, ';');
+        } else {
+          const columns = [
+            'ID',
+            'Name',
+            'Slug',
+            'Namespace',
+            'Description',
+            'Owner',
+            'Lifecycle',
+            'Target Lifecycle',
+            'Target Date',
+            'Tags',
+            'Links',
+            'Schema Type'
+          ];
+          const rows = entities.map(entity => ({
+            'ID': entity.id,
+            'Name': entity.name,
+            'Slug': entity.slug,
+            'Namespace': entity.namespace,
+            'Description': entity.description,
+            'Owner': entity.owner ?? '',
+            'Lifecycle': entity.lifecycle ?? '',
+            'Target Lifecycle': entity.target_lifecycle ?? '',
+            'Target Date': entity.target_lifecycle_date ?? '',
+            'Tags': formatArrayForCsv(entity.tags),
+            'Links': entity.links.length.toString(),
+            'Schema Type': schemaMap.get(entity.schema_id)?.name ?? entity.schema_id
+          }));
+          csvContent = generateCsv(rows, columns, ';');
+        }
+
+        const timestamp = new Date().toISOString().split('T')[0];
+        const schemaName = schemaId
+          ? schemaMap.get(schemaId)?.name.toLowerCase().replace(/\s+/g, '-')
+          : 'entities';
+        const filename = `${schemaName}-${timestamp}.csv`;
+
+        return {
+          headers: {
+            'content-type': 'text/csv; charset=utf-8',
+            'content-disposition': `attachment; filename="${filename}"`
+          },
+          body: new Blob([csvContent], { type: 'text/csv; charset=utf-8' })
+        };
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    downloadTemplate: entityRouter.entities.downloadTemplate.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        await buildApiAuthCtx(context.db, workspace, context.event);
+
+        const schema = await context.db.catalog.getSchema(workspace, input.params.schemaId);
+        orpcAssert.present(schema, { code: 'NOT_FOUND', message: 'Schema not found' });
+
+        const columns = [
+          'ID',
+          'Name',
+          'Slug',
+          'Namespace',
+          'Description',
+          'Owner',
+          'Lifecycle',
+          'Tags',
+          ...schema.fields.map(f => f.name)
+        ];
+        const csvContent = columns.map(col => `"${col}"`).join(';');
+
+        const filename = `${schema.name.toLowerCase().replace(/\s+/g, '-')}-import-template.csv`;
+
+        return {
+          headers: {
+            'content-type': 'text/csv; charset=utf-8',
+            'content-disposition': `attachment; filename="${filename}"`
+          },
+          body: new Blob([csvContent], { type: 'text/csv; charset=utf-8' })
+        };
       } catch (error) {
         return toORPCError(error);
       }

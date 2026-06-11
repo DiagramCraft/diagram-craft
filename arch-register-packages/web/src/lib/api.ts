@@ -167,38 +167,36 @@ type FetchEntitiesOptions = {
   offset?: number | null;
 };
 
-const buildQuery = (params: Record<string, string | number | null | undefined>) => {
-  const search = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value == null || value === '') return;
-    search.set(key, String(value));
-  });
-  const qs = search.toString();
-  return qs ? `?${qs}` : '';
-};
-
 export type TreeNode = EntitySummary & { _isMatch: boolean };
 
 export type TreeEdge = { childId: string; parentId: string };
 
-export const exportEntitiesToCSV = (
+export const exportEntitiesToCSV = async (
   workspace: string,
   options: FetchEntitiesOptions = {}
 ): Promise<Blob> => {
-  return apiFetchResponse(
-    `/api/${workspace}/data/export${buildQuery({
-      _schemaId: options.schemaId ?? null,
-      owner: options.owner ?? null,
-      lifecycle: options.lifecycle ?? null,
-      q: options.q ?? null
-    })}`
-  ).then(res => res.blob());
+  const { orpcClient } = await import('./orpcClient');
+  const result = await orpcClient.entities.exportCsv({
+    params: { workspace },
+    query: {
+      _schemaId: options.schemaId ?? undefined,
+      owner: options.owner ?? undefined,
+      lifecycle: options.lifecycle ?? undefined,
+      q: options.q ?? undefined
+    }
+  });
+  return result.body;
 };
 
-export const downloadCsvTemplate = (workspace: string, schemaId: string): Promise<Blob> => {
-  return apiFetchResponse(`/api/${workspace}/data/import/template/${schemaId}`).then(res =>
-    res.blob()
-  );
+export const downloadCsvTemplate = async (
+  workspace: string,
+  schemaId: string
+): Promise<Blob> => {
+  const { orpcClient } = await import('./orpcClient');
+  const result = await orpcClient.entities.downloadTemplate({
+    params: { workspace, schemaId }
+  });
+  return result.body;
 };
 
 export const parseCsvImport = (

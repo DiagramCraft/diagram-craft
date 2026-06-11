@@ -21,6 +21,16 @@ export const toORPCError = (error: unknown): never => {
         throw new ORPCError('NOT_FOUND', { message: error.message });
       case 409:
         throw new ORPCError('CONFLICT', { message: error.message });
+      case 413:
+        throw new ORPCError('PAYLOAD_TOO_LARGE', { message: error.message });
+      case 415:
+        throw new ORPCError('UNSUPPORTED_MEDIA_TYPE', { message: error.message });
+      case 429:
+        throw new ORPCError('TOO_MANY_REQUESTS', { message: error.message });
+      case 503:
+        throw new ORPCError('SERVICE_UNAVAILABLE', { message: error.message });
+      case 504:
+        throw new ORPCError('GATEWAY_TIMEOUT', { message: error.message });
       default:
         orpcLogger.error(`Unexpected HTTP error (${error.status}): ${error.message}`, error);
         throw new ORPCError('INTERNAL_SERVER_ERROR', { message: error.message });
