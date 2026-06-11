@@ -697,6 +697,60 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(node.parent).toBeUndefined();
     });
 
+    it('should not move a container into one of its descendants', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const container = layer.addNode({ type: 'container' });
+      const child = layer.addNode();
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([child], uow, layer, {
+          relation: 'on',
+          element: container
+        });
+      });
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([container], uow, layer, {
+          relation: 'on',
+          element: child
+        });
+      });
+
+      expect(container.parent).toBeUndefined();
+      expect(child.parent).toBe(container);
+      expect(container.children).toContain(child);
+      expect(layer.elements).toContain(container);
+    });
+
+    it('should not move a container relative to one of its descendants', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const container = layer.addNode({ type: 'container' });
+      const child = layer.addNode();
+      const sibling = layer.addNode();
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([child], uow, layer, {
+          relation: 'on',
+          element: container
+        });
+      });
+
+      const initialLayerOrder = layer.elements.map(e => e.id);
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([container], uow, layer, {
+          relation: 'above',
+          element: child
+        });
+      });
+
+      expect(container.parent).toBeUndefined();
+      expect(child.parent).toBe(container);
+      expect(container.children).toContain(child);
+      expect(sibling.parent).toBeUndefined();
+      expect(layer.elements.map(e => e.id)).toEqual(initialLayerOrder);
+    });
+
     it('should handle moving elements between different layers', () => {
       // Setup
       const { diagram, layer } = TestModel.newDiagramWithLayer();
