@@ -207,7 +207,12 @@ const WorkspaceSwitcher = ({
 
   return (
     <div className={styles.wsSwitcher} ref={ref}>
-      <button type="button" className={styles.wsBtn} onClick={() => setOpen(o => !o)}>
+      <button
+        type="button"
+        className={styles.wsBtn}
+        aria-label="Workspace selector"
+        onClick={() => setOpen(o => !o)}
+      >
         <span
           className={styles.wsBadge}
           style={
@@ -364,6 +369,7 @@ const AccountMenu = () => {
             type="button"
             className={styles.avatar}
             title={displayName}
+            aria-label="Account menu"
             style={{ background: avatarColor }}
           >
             {getInitials(displayName)}

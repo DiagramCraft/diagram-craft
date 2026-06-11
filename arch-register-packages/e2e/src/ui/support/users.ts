@@ -1,4 +1,5 @@
 export const seededUser = {
-  email: 'james.chen@example.com',
-  password: 'test'
+  email: 'emma.lindqvist@example.com',
+  password: 'test',
+  displayName: 'Emma Lindqvist'
 } as const;

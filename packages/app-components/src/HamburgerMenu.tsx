@@ -19,6 +19,7 @@ export const HamburgerMenu = ({ children, align = 'start', className }: Hamburge
           type="button"
           className={[styles.button, className].filter(Boolean).join(' ')}
           data-hamburger-menu
+          aria-label="Open application menu"
         >
           <TbMenu2 size={16} />
         </button>
