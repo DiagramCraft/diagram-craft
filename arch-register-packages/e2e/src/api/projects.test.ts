@@ -112,7 +112,7 @@ test.describe('project routes', () => {
     expect(result).toEqual({ success: true, message: `Project '${created.id}' deleted` });
   });
 
-  test('GET /api/:workspace/projects/:id/files returns a file tree', async ({ server, orpc, auth }) => {
+  test('GET /api/:workspace/projects/:id/files returns a file tree', async ({ orpc }) => {
     const created = await createProject(orpc, { name: 'Tree Project' });
     const projectId = created.id;
 
@@ -120,10 +120,10 @@ test.describe('project routes', () => {
       params: { workspace: 'default', id: projectId },
       body: { path: 'current-state' }
     });
-    await fetch(`${server.baseUrl}/api/default/projects/${projectId}/files/overview.dgc`, {
-      method: 'PUT',
-      headers: { Authorization: auth, 'Content-Type': 'application/json' },
-      body: JSON.stringify(minimalDiagramDocument('Overview'))
+    await orpc.projects.saveFile({
+      params: { workspace: 'default', id: projectId },
+      query: { path: 'overview.dgc' },
+      body: minimalDiagramDocument('Overview')
     });
 
     const files = await orpc.projects.listFiles({ params: { workspace: 'default', id: projectId } });
@@ -136,71 +136,57 @@ test.describe('project routes', () => {
     );
   });
 
-  test('project file routes create, read, relocate, and delete files', async ({ server, orpc, auth }) => {
+  test('project file routes create, read, relocate, and delete files', async ({ orpc }) => {
     const created = await createProject(orpc, { name: 'File Project' });
     const projectId = created.id;
 
-    const writeRes = await fetch(
-      `${server.baseUrl}/api/default/projects/${projectId}/files/flows/login-sequence.dgc`,
-      {
-        method: 'PUT',
-        headers: { Authorization: auth, 'Content-Type': 'application/json' },
-        body: JSON.stringify(minimalDiagramDocument('Login Sequence'))
-      }
-    );
+    const writeResult = await orpc.projects.saveFile({
+      params: { workspace: 'default', id: projectId },
+      query: { path: 'flows/login-sequence.dgc' },
+      body: minimalDiagramDocument('Login Sequence')
+    });
 
-    expect(writeRes.status).toBe(200);
-    await expect(writeRes.json()).resolves.toMatchObject({
+    expect(writeResult).toMatchObject({
       project_id: projectId,
       path: 'flows/login-sequence.dgc',
       name: 'Login Sequence'
     });
 
-    const readRes = await fetch(
-      `${server.baseUrl}/api/default/projects/${projectId}/files/flows/login-sequence.dgc`,
-      { headers: { Authorization: auth } }
-    );
+    const readResult = await orpc.projects.getFileContent({
+      params: { workspace: 'default', id: projectId },
+      query: { path: 'flows/login-sequence.dgc' }
+    });
 
-    expect(readRes.status).toBe(200);
-    await expect(readRes.json()).resolves.toEqual(minimalDiagramDocument('Login Sequence'));
+    expect(readResult).toEqual(minimalDiagramDocument('Login Sequence'));
 
-    const relocateRes = await fetch(
-      `${server.baseUrl}/api/default/projects/${projectId}/files/relocate/flows/login-sequence.dgc`,
-      {
-        method: 'PUT',
-        headers: { Authorization: auth, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPath: 'archive/auth-sequence.json' })
-      }
-    );
+    const relocateResult = await orpc.projects.relocateFile({
+      params: { workspace: 'default', id: projectId },
+      query: { path: 'flows/login-sequence.dgc' },
+      body: { newPath: 'archive/auth-sequence.json' }
+    });
 
-    expect(relocateRes.status).toBe(200);
-    await expect(relocateRes.json()).resolves.toMatchObject({
+    expect(relocateResult).toMatchObject({
       project_id: projectId,
       path: 'archive/auth-sequence.json',
       name: 'auth-sequence'
     });
 
-    const relocatedReadRes = await fetch(
-      `${server.baseUrl}/api/default/projects/${projectId}/files/archive/auth-sequence.json`,
-      { headers: { Authorization: auth } }
-    );
-
-    expect(relocatedReadRes.status).toBe(200);
-    await expect(relocatedReadRes.json()).resolves.toEqual({ name: 'auth-sequence', diagrams: [] });
-
-    const deleteRes = await fetch(
-      `${server.baseUrl}/api/default/projects/${projectId}/files/archive/auth-sequence.json`,
-      { method: 'DELETE', headers: { Authorization: auth } }
-    );
-
-    expect(deleteRes.status).toBe(200);
-    await expect(deleteRes.json()).resolves.toEqual({
-      success: true,
-      message: "File 'archive/auth-sequence.json' deleted"
+    const relocatedReadResult = await orpc.projects.getFileContent({
+      params: { workspace: 'default', id: projectId },
+      query: { path: 'archive/auth-sequence.json' }
     });
+
+    expect(relocatedReadResult).toEqual({ name: 'auth-sequence', diagrams: [] });
+
+    const deleteResult = await orpc.projects.deleteFile({
+      params: { workspace: 'default', id: projectId },
+      query: { path: 'archive/auth-sequence.json' }
+    });
+
+    expect(deleteResult).toEqual({ success: true });
   });
 
-  test('project folder routes create, rename, and delete folders', async ({ server, orpc, auth }) => {
+  test('project folder routes create, rename, and delete folders', async ({ orpc }) => {
     const created = await createProject(orpc, { name: 'Folder Project' });
     const projectId = created.id;
 
@@ -218,12 +204,11 @@ test.describe('project routes', () => {
 
     expect(renameResult).toMatchObject({ success: true, count: 1 });
 
-    const deleteFolderRes = await fetch(
-      `${server.baseUrl}/api/default/projects/${projectId}/folders/review`,
-      { method: 'DELETE', headers: { Authorization: auth } }
-    );
+    const deleteFolderResult = await orpc.projects.deleteFolder({
+      params: { workspace: 'default', id: projectId },
+      query: { path: 'review' }
+    });
 
-    expect(deleteFolderRes.status).toBe(200);
-    await expect(deleteFolderRes.json()).resolves.toMatchObject({ success: true, count: 1 });
+    expect(deleteFolderResult).toMatchObject({ success: true, count: 1 });
   });
 });
