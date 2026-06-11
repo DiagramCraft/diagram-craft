@@ -880,6 +880,25 @@ export const seedEntities: Entity[] = [
     visibility_mode: null,
     created_at: now,
     updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0012-000000000002',
+    workspace: WORKSPACE2_ID,
+    slug: 'delivery-service',
+    namespace: 'default',
+    name: 'Delivery Service',
+    description: 'Coordinates outbound delivery jobs for notifications.',
+    owner: TEAM2_IDS.backend,
+    lifecycle: LIFECYCLE2_IDS.active,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['worker', 'messaging'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    data: { technology: 'Rust' },
+    visibility_mode: null,
+    created_at: now,
+    updated_at: now
   }
 ];
 
@@ -980,6 +999,24 @@ export const seedUserWatches = [
     workspace: WORKSPACE_ID,
     entity_id: '00000000-0000-0000-0003-000000000003',
     created_at: new Date('2026-01-02T09:10:00.000Z')
+  },
+  {
+    user_id: USER_IDS.globaladmin,
+    workspace: WORKSPACE2_ID,
+    entity_id: '00000000-0000-0000-0011-000000000001',
+    created_at: new Date('2026-01-07T09:00:00.000Z')
+  },
+  {
+    user_id: USER_IDS.globaladmin,
+    workspace: WORKSPACE2_ID,
+    entity_id: '00000000-0000-0000-0012-000000000001',
+    created_at: new Date('2026-01-07T09:05:00.000Z')
+  },
+  {
+    user_id: USER_IDS.globaladmin,
+    workspace: WORKSPACE2_ID,
+    entity_id: '00000000-0000-0000-0012-000000000002',
+    created_at: new Date('2026-01-07T09:10:00.000Z')
   }
 ] as const;
 
@@ -1056,6 +1093,66 @@ export const seedNotificationEvents: Array<{
     changes: {
       old: { _targetLifecycleDate: '2026-12-31' },
       new: { _targetLifecycleDate: '2027-03-31' }
+    }
+  },
+  {
+    workspace: WORKSPACE2_ID,
+    timestamp: new Date('2026-01-07T10:15:00.000Z'),
+    user_id: USER_IDS.platformteamadmin,
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0011-000000000001',
+    entity_name: 'Mobile App',
+    entity_slug: 'mobile-app',
+    schema_id: '00000000-0000-0000-0000-000000000011',
+    changed_by_display_name: 'Daniel Okonkwo',
+    changes: {
+      old: { _description: 'Cross-platform mobile application for iOS and Android.' },
+      new: { _description: 'Cross-platform mobile application with refreshed onboarding flows.' }
+    }
+  },
+  {
+    workspace: WORKSPACE2_ID,
+    timestamp: new Date('2026-01-07T11:30:00.000Z'),
+    user_id: USER_IDS.designteamadmin,
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0012-000000000001',
+    entity_name: 'Notifications Service',
+    entity_slug: 'notifications-service',
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    changed_by_display_name: 'Marcus Berg',
+    changes: {
+      old: { technology: 'Node' },
+      new: { technology: 'Node 22' }
+    }
+  },
+  {
+    workspace: WORKSPACE2_ID,
+    timestamp: new Date('2026-01-07T13:45:00.000Z'),
+    user_id: USER_IDS.workspaceeditor,
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0012-000000000002',
+    entity_name: 'Delivery Service',
+    entity_slug: 'delivery-service',
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    changed_by_display_name: 'Raj Patel',
+    changes: {
+      old: { _tags: ['worker'] },
+      new: { _tags: ['worker', 'messaging'] }
+    }
+  },
+  {
+    workspace: WORKSPACE2_ID,
+    timestamp: new Date('2026-01-08T08:20:00.000Z'),
+    user_id: USER_IDS.workspaceadmin,
+    operation: 'update',
+    entity_id: '00000000-0000-0000-0012-000000000001',
+    entity_name: 'Notifications Service',
+    entity_slug: 'notifications-service',
+    schema_id: '00000000-0000-0000-0000-000000000012',
+    changed_by_display_name: 'James Chen',
+    changes: {
+      old: { _targetLifecycleDate: '2026-09-01' },
+      new: { _targetLifecycleDate: '2026-10-15' }
     }
   }
 ];

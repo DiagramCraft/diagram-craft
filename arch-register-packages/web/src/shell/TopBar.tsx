@@ -545,6 +545,7 @@ const NotificationList = ({
           key={item.id}
           type="button"
           className={`${styles.notificationRow} ${styles.notificationRowUnread}`}
+          aria-label={`Notification: ${item.entity_name}`}
           onClick={() => {
             if (item.operation !== 'delete') onOpenEntity(item.entity_id);
           }}
@@ -561,6 +562,8 @@ const NotificationList = ({
           <div className={styles.notificationWhen}>{formatRelativeTimestamp(item.timestamp)}</div>
           <span
             className={styles.notificationClear}
+            aria-label={`Clear notification for ${item.entity_name}`}
+            title={`Clear notification for ${item.entity_name}`}
             onClick={event => {
               event.stopPropagation();
               onClear(item.id);
@@ -606,6 +609,7 @@ const WatchingList = ({
           key={item.entity_id}
           type="button"
           className={styles.notificationRow}
+          aria-label={`Watching: ${item.entity_name}`}
           onClick={() => onOpenEntity(item.entity_id)}
         >
           <div className={styles.notificationRowMain}>
@@ -616,6 +620,7 @@ const WatchingList = ({
           </div>
           <span
             className={styles.watchingUnwatch}
+            aria-label={`Unwatch ${item.entity_name}`}
             title={
               isUnwatching && unwatchingId === item.entity_id ? 'Removing watch' : 'Unwatch entity'
             }

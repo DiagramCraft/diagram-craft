@@ -23,6 +23,18 @@ export class WorkspaceTopBar {
 
   workspaceMenuLabel = (): Locator => this.page.getByText('Workspaces', { exact: true });
 
+  notificationsButton = (): Locator => this.page.locator('button[aria-label="Notifications"]');
+
+  notificationsTab = (): Locator => this.page.getByRole('tab', { name: /^Notifications/ });
+
+  watchingTab = (): Locator => this.page.getByRole('tab', { name: 'Watching' });
+
+  markAllReadButton = (): Locator => this.page.getByRole('button', { name: 'Mark all read' });
+
+  notificationRows = (): Locator => this.page.locator('[aria-label^="Notification: "]');
+
+  watchingRows = (): Locator => this.page.locator('[aria-label^="Watching: "]');
+
   expectHamburgerVisible = async () => {
     await expect(this.hamburgerButton()).toBeVisible();
   };
@@ -68,5 +80,57 @@ export class WorkspaceTopBar {
     await this.openAccountMenu();
     await this.signOutMenuItem().click();
     await expect(this.page).toHaveURL(/\/login/);
+  };
+
+  openNotificationsMenu = async () => {
+    if (!(await this.notificationsTab().isVisible())) {
+      await this.notificationsButton().click();
+    }
+    await expect(this.notificationsTab()).toBeVisible();
+  };
+
+  expectUnreadNotificationCount = async (count: number) => {
+    await expect(this.notificationsButton()).toContainText(String(count));
+  };
+
+  expectNotificationItemCount = async (count: number) => {
+    await this.openNotificationsMenu();
+    await expect(this.notificationRows()).toHaveCount(count);
+  };
+
+  clearNotification = async (entityName: string, remainingCount: number) => {
+    await this.openNotificationsMenu();
+    await this.page.locator(`[aria-label="Clear notification for ${entityName}"]`).click();
+    await expect(this.notificationRows()).toHaveCount(remainingCount);
+    if (remainingCount > 0) {
+      await expect(this.notificationsButton()).toContainText(String(remainingCount));
+    } else {
+      await expect(this.notificationsButton()).not.toContainText(/[1-9]/);
+    }
+  };
+
+  clearAllNotifications = async () => {
+    await this.openNotificationsMenu();
+    await this.markAllReadButton().click();
+    await expect(this.notificationRows()).toHaveCount(0);
+    await expect(this.page.getByText('No notifications yet', { exact: true })).toBeVisible();
+    await expect(this.notificationsButton()).not.toContainText(/[1-9]/);
+  };
+
+  openWatchingTab = async () => {
+    await this.openNotificationsMenu();
+    await this.watchingTab().click();
+    await expect(this.watchingTab()).toHaveAttribute('aria-selected', 'true');
+  };
+
+  expectWatchingItemCount = async (count: number) => {
+    await this.openWatchingTab();
+    await expect(this.watchingRows()).toHaveCount(count);
+  };
+
+  unwatchEntity = async (entityName: string, remainingCount: number) => {
+    await this.openWatchingTab();
+    await this.page.locator(`[aria-label="Unwatch ${entityName}"]`).click();
+    await expect(this.watchingRows()).toHaveCount(remainingCount);
   };
 }
