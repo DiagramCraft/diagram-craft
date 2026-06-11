@@ -205,31 +205,6 @@
   padding-bottom: 3px;
 }
 
-.searchInline {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 8px;
-  height: 26px;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  font-size: 12px;
-  color: var(--base-fg-dim);
-}
-
-.searchInline input {
-  background: transparent;
-  border: 0;
-  outline: 0;
-  color: var(--base-fg);
-  font-size: 12px;
-  width: 120px;
-}
-
-.searchInline input::placeholder {
-  color: var(--cmp-fg-disabled);
-}
 
 .iconBtn {
   width: 28px;
