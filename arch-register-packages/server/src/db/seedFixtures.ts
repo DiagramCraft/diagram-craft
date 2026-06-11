@@ -104,9 +104,19 @@ export const seededUsers = {
 } as const;
 
 export const seededProjects = {
+  portalRedesign: {
+    id: '00000000-0000-0000-0010-000000000001',
+    workspaceId: seededWorkspaces.default.id,
+    name: 'Portal Redesign'
+  },
   authMigration: {
     id: '00000000-0000-0000-0010-000000000002',
     workspaceId: seededWorkspaces.default.id,
     name: 'Auth Migration'
+  },
+  checkoutRevamp: {
+    id: '00000000-0000-0000-0010-000000000003',
+    workspaceId: seededWorkspaces.default.id,
+    name: 'Checkout Revamp'
   }
 } as const;

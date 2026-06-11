@@ -20,7 +20,8 @@ export class WorkspaceShell {
     this.topBar = new WorkspaceTopBar(page);
   }
 
-  navButton = (view: WorkspaceNavView): Locator => this.page.getByLabel(navLabels[view]);
+  navButton = (view: WorkspaceNavView): Locator =>
+    this.page.getByLabel(navLabels[view], { exact: true });
 
   openNav = async (view: WorkspaceNavView) => {
     await this.navButton(view).click();

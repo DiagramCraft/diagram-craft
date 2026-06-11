@@ -446,7 +446,7 @@ export const ProjectsSidebar = ({
       <div className={styles.scroll}>
         {projectGroups.length > 0 ? (
           projectGroups.map(group => (
-            <div key={group.status}>
+            <div key={group.status} aria-label={group.title}>
               <GroupLabel>{group.title}</GroupLabel>
               {group.projects.map(p => {
                 const isSelected = p.id === projectId;
@@ -457,6 +457,7 @@ export const ProjectsSidebar = ({
                   <div key={p.id}>
                     <TreeRow
                       expandable
+                      ariaLabel={`Project row: ${p.name}`}
                       expanded={isOpen}
                       onExpand={() => toggle(p.id)}
                       icon={

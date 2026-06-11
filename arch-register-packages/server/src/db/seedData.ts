@@ -905,9 +905,9 @@ export const seedEntities: Entity[] = [
 
 export const seedProjects: ProjectDbCreate[] = [
   {
-    id: '00000000-0000-0000-0010-000000000001',
+    id: seededProjects.portalRedesign.id,
     workspace: WORKSPACE_ID,
-    name: 'Portal Redesign',
+    name: seededProjects.portalRedesign.name,
     description: 'Redesign of the customer portal frontend and API layer.',
     owner: TEAM_IDS.design,
     status: 'active',
@@ -923,6 +923,17 @@ export const seedProjects: ProjectDbCreate[] = [
     owner: TEAM_IDS.security,
     status: 'pinned',
     color: AR_COLOR_RED,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: seededProjects.checkoutRevamp.id,
+    workspace: WORKSPACE_ID,
+    name: seededProjects.checkoutRevamp.name,
+    description: 'Modernization of checkout orchestration and payment integrations.',
+    owner: TEAM_IDS.platform,
+    status: 'active',
+    color: AR_COLOR_GREEN,
     created_at: now,
     updated_at: now
   }

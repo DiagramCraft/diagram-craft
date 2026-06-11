@@ -60,6 +60,12 @@ export const orpcErrorInterceptors = [
       // Expected auth failures during initial page load - log as debug to reduce noise
       if (error.code === 'UNAUTHORIZED' && error.message === 'Refresh token is required') {
         orpcLogger.debug('Refresh token is required (expected for unauthenticated requests)');
+      } else if (error.code === 'UNAUTHORIZED' || error.code === 'NOT_FOUND') {
+        // Expected auth errors - log at info without stack trace
+        orpcLogger.info(`ORPC client error [${error.code}]: ${error.message}`);
+      } else if (error.code === 'FORBIDDEN' || error.code === 'BAD_REQUEST' || error.code === 'CONFLICT') {
+        // Client errors that may indicate misuse - log at warn without stack trace
+        orpcLogger.warn(`ORPC client error [${error.code}]: ${error.message}`);
       } else {
         orpcLogger.error(
           'ORPC framework error',

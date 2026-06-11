@@ -15,13 +15,15 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  reporter: process.env.CI ? 'github' : 'line',
+  reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:5175',
     trace: 'on-first-retry',
     storageState: seededUserAuthStatePath
   },
-  projects: [{ name: 'chromium', testMatch: /specs\/.*\.spec\.ts/, use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', testMatch: /specs\/.*\.spec\.ts/, use: { ...devices['Desktop Chrome'] } }
+  ],
   webServer: [
     {
       // API server: fresh SQLite DB seeded with test data on every run

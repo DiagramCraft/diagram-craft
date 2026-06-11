@@ -2,6 +2,12 @@ export const workspaceHomeRoute = (workspaceSlug: string) => `/${workspaceSlug}`
 
 export const workspaceProjectsRoute = (workspaceSlug: string) => `/${workspaceSlug}/projects`;
 
+export const projectDetailRoute = (
+  workspaceSlug: string,
+  projectId: string,
+  tab: 'projects' | 'archive' = 'projects'
+) => `/${workspaceSlug}/projects/${projectId}?tab=${tab}`;
+
 export const workspaceEntitiesRoute = (workspaceSlug: string) => `/${workspaceSlug}/entities`;
 
 export const workspaceModelRoute = (workspaceSlug: string) => `/${workspaceSlug}/model`;
