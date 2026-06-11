@@ -438,7 +438,7 @@ export const ProjectsSidebar = ({
           </Tabs.List>
         </Tabs.Root>
         {permissions.canCreateProjects && (
-          <button className={styles.action} onClick={openAddProjectDialog} title="New project">
+          <button type="button" className={styles.action} onClick={openAddProjectDialog} title="New project">
             <TbPlus size={13} />
           </button>
         )}
