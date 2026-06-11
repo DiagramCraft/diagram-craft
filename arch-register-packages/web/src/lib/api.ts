@@ -404,7 +404,7 @@ const makeEmptyDiagramStyles = (): SerializedStyles => ({
   ]
 });
 
-const emptyDiagram = (name: string) => {
+export const emptyDiagram = (name: string) => {
   const diagram = makeEmptyDiagramTab(name);
   return {
     name,
@@ -469,41 +469,7 @@ export const prepareTemplateDiagramDocument = <
 // Local alias for backward compatibility
 export type FileEntry = ProjectFile;
 
-export const createDiagramFile = (
-  workspace: string,
-  projectId: string,
-  name: string,
-  folder?: string | null
-) => {
-  const fileName = `${name}.json`;
-  const filePath = folder ? `${folder}/${fileName}` : fileName;
-  return apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/files/${filePath}`, {
-    method: 'PUT',
-    body: JSON.stringify(emptyDiagram(name))
-  });
-};
-
-// Note: Project file operations (createFolder, deleteFile, deleteFolder, renameFolder, cloneFile, relocateFile) now use ORPC client via hooks
-
-export const fetchProjectFileContent = (workspace: string, projectId: string, filePath: string) =>
-  apiFetch<Record<string, unknown>>(`/api/${workspace}/projects/${projectId}/files/${filePath}`);
-
-// ── Template API ──────────────────────────────────────────────
-
-export const toggleTemplateStatus = (
-  workspace: string,
-  projectId: string,
-  filePath: string,
-  isTemplate: boolean,
-  isWorkspaceTemplate: boolean
-) =>
-  apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/template-status/${filePath}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      is_template: isTemplate,
-      is_workspace_template: isWorkspaceTemplate
-    })
-  });
+// Note: Project file operations (createFolder, deleteFile, deleteFolder, renameFolder, cloneFile, relocateFile, createDiagramFile, toggleTemplateStatus) now use ORPC client via hooks
 
 export const createDiagramFromTemplate = async (
   workspace: string,
@@ -512,12 +478,13 @@ export const createDiagramFromTemplate = async (
   templateFile: ProjectFile,
   folder?: string | null
 ) => {
+  const { orpcClient } = await import('./orpcClient');
+
   // Fetch template content from the template's project (not the current project)
-  const templateContent = await fetchProjectFileContent(
-    workspace,
-    templateFile.project_id,
-    templateFile.path
-  );
+  const templateContent = await orpcClient.projects.getFileContent({
+    params: { workspace, id: templateFile.project_id },
+    query: { path: templateFile.path }
+  });
 
   const newContent = prepareTemplateDiagramDocument(
     templateContent as unknown as SerializedDiagramDocument & { name?: string },
@@ -528,9 +495,10 @@ export const createDiagramFromTemplate = async (
   const fileName = `${name}.json`;
   const filePath = folder ? `${folder}/${fileName}` : fileName;
 
-  return apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/files/${filePath}`, {
-    method: 'PUT',
-    body: JSON.stringify(newContent)
+  return orpcClient.projects.saveFile({
+    params: { workspace, id: projectId },
+    query: { path: filePath },
+    body: newContent as unknown as Record<string, unknown>
   });
 };
 

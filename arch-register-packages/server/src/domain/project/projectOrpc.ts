@@ -19,7 +19,8 @@ import {
   deleteFile,
   cloneFile,
   relocateFile,
-  deleteFolder
+  deleteFolder,
+  updateTemplateStatus
 } from './projectOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -129,7 +130,7 @@ export const projectORPCRouter = projectRouter.router({
           context.storage,
           input.params.workspace,
           input.params.id,
-          input.params.path,
+          input.query.path,
           context.event
         );
       } catch (error) {
@@ -146,7 +147,7 @@ export const projectORPCRouter = projectRouter.router({
           context.storage,
           input.params.workspace,
           input.params.id,
-          input.params.path,
+          input.query.path,
           context.event
         );
       } catch (error) {
@@ -163,7 +164,7 @@ export const projectORPCRouter = projectRouter.router({
           context.storage,
           input.params.workspace,
           input.params.id,
-          input.params.path,
+          input.query.path,
           input.body,
           context.event
         );
@@ -181,7 +182,7 @@ export const projectORPCRouter = projectRouter.router({
           context.storage,
           input.params.workspace,
           input.params.id,
-          input.params.path,
+          input.query.path,
           context.event
         );
       } catch (error) {
@@ -198,7 +199,7 @@ export const projectORPCRouter = projectRouter.router({
           context.storage,
           input.params.workspace,
           input.params.id,
-          input.params.path,
+          input.query.path,
           context.event
         );
       } catch (error) {
@@ -215,14 +216,31 @@ export const projectORPCRouter = projectRouter.router({
           context.storage,
           input.params.workspace,
           input.params.id,
-          input.params.path,
+          input.query.path,
           input.body.newPath,
           context.event
         );
       } catch (error) {
         return toORPCError(error);
       }
-    })
+    }),
+    updateTemplateStatus: projectRouter.projects.updateTemplateStatus.handler(
+      async ({ input, context }) => {
+        try {
+          return await updateTemplateStatus(
+            context.db,
+            input.params.workspace,
+            input.params.id,
+            input.query.path,
+            input.body.is_template,
+            input.body.is_workspace_template,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    )
   }
 });
 

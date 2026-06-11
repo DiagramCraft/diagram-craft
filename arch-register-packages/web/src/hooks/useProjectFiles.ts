@@ -1,9 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  createDiagramFile,
-  toggleTemplateStatus,
-  createDiagramFromTemplate
-} from '../lib/api';
+import { createDiagramFromTemplate, emptyDiagram } from '../lib/api';
 import { projectKeys } from './useProjects';
 import { invalidateAuditQueries } from './useAudit';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
@@ -34,8 +30,15 @@ export const useCreateDiagramFile = (workspaceId: string, projectId: string) => 
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ name, folder }: { name: string; folder?: string | null }) =>
-      createDiagramFile(workspaceId, projectId, name, folder),
+    mutationFn: ({ name, folder }: { name: string; folder?: string | null }) => {
+      const fileName = `${name}.json`;
+      const filePath = folder ? `${folder}/${fileName}` : fileName;
+      return orpcClient.projects.saveFile({
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: filePath },
+        body: emptyDiagram(name) as unknown as Record<string, unknown>
+      });
+    },
     onSuccess: async () => {
       // Invalidate project files to show the new file
       await queryClient.invalidateQueries({
@@ -88,7 +91,8 @@ export const useDeleteProjectFile = (workspaceId: string, projectId: string) => 
   return useMutation({
     mutationFn: (filePath: string) =>
       orpcClient.projects.deleteFile({
-        params: { workspace: workspaceId, id: projectId, path: filePath }
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: filePath }
       }),
     onSuccess: async () => {
       await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
@@ -102,7 +106,8 @@ export const useDeleteProjectFolder = (workspaceId: string, projectId: string) =
   return useMutation({
     mutationFn: (folderPath: string) =>
       orpcClient.projects.deleteFolder({
-        params: { workspace: workspaceId, id: projectId, path: folderPath }
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: folderPath }
       }),
     onSuccess: async () => {
       await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
@@ -131,7 +136,8 @@ export const useCloneProjectFile = (workspaceId: string, projectId: string) => {
   return useMutation({
     mutationFn: (file: ProjectFile) =>
       orpcClient.projects.cloneFile({
-        params: { workspace: workspaceId, id: projectId, path: file.path }
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: file.path }
       }),
     onSuccess: async () => {
       await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
@@ -149,7 +155,8 @@ export const useRenameProjectFile = (workspaceId: string, projectId: string) => 
         : null;
       const newPath = folder ? `${folder}/${newName}.json` : `${newName}.json`;
       return orpcClient.projects.relocateFile({
-        params: { workspace: workspaceId, id: projectId, path: file.path },
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: file.path },
         body: { newPath }
       });
     },
@@ -170,7 +177,8 @@ export const useMoveProjectFile = (workspaceId: string, projectId: string) => {
         : file.path;
       const newPath = targetFolder ? `${targetFolder}/${fileName}` : fileName;
       return orpcClient.projects.relocateFile({
-        params: { workspace: workspaceId, id: projectId, path: file.path },
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: file.path },
         body: { newPath }
       });
     },
@@ -205,7 +213,12 @@ export const useToggleTemplateStatus = (workspaceId: string, projectId: string) 
       filePath: string;
       isTemplate: boolean;
       isWorkspaceTemplate: boolean;
-    }) => toggleTemplateStatus(workspaceId, projectId, filePath, isTemplate, isWorkspaceTemplate),
+    }) =>
+      orpcClient.projects.updateTemplateStatus({
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: filePath },
+        body: { is_template: isTemplate, is_workspace_template: isWorkspaceTemplate }
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: projectFileKeys.list(workspaceId, projectId)

@@ -122,11 +122,8 @@ export const DiagramScreen = () => {
     try {
       const serialized = await serializeDiagramDocument(docRef.current);
       await orpcClient.projects.saveFile({
-        params: {
-          workspace: workspaceId,
-          id: projectId,
-          path: fileInfoRef.current.path
-        },
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: fileInfoRef.current.path },
         body: serialized as unknown as Record<string, unknown>
       });
     } catch (err) {
@@ -263,11 +260,8 @@ export const DiagramScreen = () => {
         // Otherwise, this is the first client — load from REST and deserialize.
         if (document.diagrams.length === 0) {
           const rawDiagramData = await orpcClient.projects.getFileContent({
-            params: {
-              workspace: workspaceId,
-              id: projectId,
-              path: file.path
-            }
+            params: { workspace: workspaceId, id: projectId },
+            query: { path: file.path }
           });
           const serializedDiagramData = rawDiagramData as unknown as SerializedDiagramDocument;
           const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas);

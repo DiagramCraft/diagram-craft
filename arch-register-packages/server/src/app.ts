@@ -4,9 +4,7 @@ import type { DatabaseAdapter } from './db/database';
 import type { StorageAdapter } from './storage/storage';
 import { createLogger } from './utils/logger';
 import { createUnifiedOpenAPISpecHandler } from './openapi';
-import { createProjectRoutes } from './domain/project/projectRoutes';
 import { createOidcCallbackRoute } from './domain/auth/oidcCallbackRoute';
-import { createTemplateRoutes } from './domain/catalog/templateRoutes';
 import { requireAuth } from './middleware/auth';
 import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
 import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
@@ -117,8 +115,6 @@ export const createApp = (
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
   app.use(createDiagramCraftORPCHandler(db));
-  app.use(createTemplateRoutes(db));
-  app.use(createProjectRoutes(db, storage));
 
   return app;
 };

@@ -8,7 +8,8 @@ import {
   canAccessProject,
   requireCanCreateProject,
   requireProjectAccess,
-  requireProjectAction
+  requireProjectAction,
+  requireWorkspaceAdmin
 } from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError } from '../../utils/http';
@@ -867,5 +868,45 @@ export const deleteFolder = async (
     return { success: true, count: result.length };
   } catch (e) {
     return handleError(e, 'Failed to delete folder');
+  }
+};
+
+export const updateTemplateStatus = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  filePath: string,
+  isTemplate: boolean,
+  isWorkspaceTemplate: boolean,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, projectId);
+    httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
+
+    if (isWorkspaceTemplate) {
+      requireWorkspaceAdmin(authCtx, 'Only workspace admins can manage workspace templates');
+    } else {
+      requireProjectAccess(authCtx, project.owner);
+    }
+
+    const file = await db.project.getProjectFileByPath(ws, projectId, filePath);
+    httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+
+    await db.project.updateProjectFileTemplateStatus(
+      ws,
+      projectId,
+      file.id,
+      isTemplate,
+      isWorkspaceTemplate,
+      new Date()
+    );
+
+    const updatedFile = await db.project.getProjectFileByPath(ws, projectId, filePath);
+    return toApiProjectFile(updatedFile!);
+  } catch (e) {
+    return handleError(e, 'Failed to update template status');
   }
 };
