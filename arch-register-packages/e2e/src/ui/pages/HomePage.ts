@@ -18,4 +18,8 @@ export class HomePage extends WorkspacePage {
     await expect(this.page.getByText('Entities').first()).toBeVisible();
     await expect(this.page.getByText('Projects').first()).toBeVisible();
   };
+
+  expectProjectVisible = async (name: string) => {
+    await expect(this.page.getByRole('main').getByText(name, { exact: true })).toBeVisible();
+  };
 }

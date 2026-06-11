@@ -62,6 +62,7 @@ output/
 **/storybook-static
 **/local-tests
 **/playwright-report
+arch-register-packages/e2e/.auth/
 
 packages/server-main/data
 

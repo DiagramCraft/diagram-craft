@@ -1,6 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
+import { seededUserAuthStatePath } from './src/ui/support/authState';
 
 const packageDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(packageDir, '../..');
@@ -9,6 +10,7 @@ const serverSetupPath = resolve(packageDir, '../server/src/serverSetup.mjs');
 
 export default defineConfig({
   testDir: './src/ui',
+  globalSetup: './global.setup.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -16,9 +18,10 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'line',
   use: {
     baseURL: 'http://localhost:5175',
-    trace: 'on-first-retry'
+    trace: 'on-first-retry',
+    storageState: seededUserAuthStatePath
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [{ name: 'chromium', testMatch: /specs\/.*\.spec\.ts/, use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
       // API server: fresh SQLite DB seeded with test data on every run

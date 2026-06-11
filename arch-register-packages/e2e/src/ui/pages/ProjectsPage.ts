@@ -12,8 +12,7 @@ export class ProjectsPage extends WorkspacePage {
   };
 
   openProject = async (name: string) => {
-    await this.page.getByLabel('Projects').click();
-    await this.page.waitForURL(`**/${this.workspaceSlug}/projects/**`);
+    await this.workspaceShell.openNav('projects');
     await expect(this.page.getByRole('main').getByRole('heading', { name })).toBeVisible();
   };
 
