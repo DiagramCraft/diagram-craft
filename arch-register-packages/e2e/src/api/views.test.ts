@@ -1,4 +1,4 @@
-import { createApiTest, expect } from '../helpers/fixtures';
+import { createApiTest, expect, createTestORPCClient } from '../helpers/fixtures';
 import { makeAuthHeader, seedCatalogViews, seedIds } from '../helpers/seedHelper';
 import { hashPassword } from '@arch-register/server/utils/password';
 
@@ -12,7 +12,7 @@ test.describe('Saved Views API', () => {
   const viewData = {
     name: 'E2E Test View',
     description: 'A view created by E2E tests',
-    viewMode: 'table',
+    viewMode: 'table' as const,
     filters: {
       status: seedIds.lifecycle.production,
       q: 'test'
@@ -20,86 +20,53 @@ test.describe('Saved Views API', () => {
     config: null
   };
 
-  test('CRUD operations for saved views', async ({ server, auth }) => {
+  test('CRUD operations for saved views', async ({ orpc }) => {
     // 1. List views (should include seeded views)
-    const listRes = await fetch(`${server.baseUrl}/api/default/views`, {
-      headers: { Authorization: auth }
-    });
-    expect(listRes.status).toBe(200);
-    const views = (await listRes.json()) as any[];
+    const views = await orpc.views.list({ params: { workspace: 'default' } });
     expect(Array.isArray(views)).toBe(true);
     expect(views.length).toBeGreaterThanOrEqual(3); // Seeded views
 
     // 2. Create a new view
-    const createRes = await fetch(`${server.baseUrl}/api/default/views`, {
-      method: 'POST',
-      headers: { 
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(viewData)
-    });
-    expect(createRes.status).toBe(200);
-    const created = await createRes.json();
+    const created = await orpc.views.create({ params: { workspace: 'default' }, body: viewData });
     expect(created.name).toBe(viewData.name);
     expect(created.viewMode).toBe(viewData.viewMode);
     expect(created.filters).toEqual(viewData.filters);
     const viewId = created.id;
 
     // 3. Update the view
-    const updateData = { name: 'Updated E2E View' };
-    const updateRes = await fetch(`${server.baseUrl}/api/default/views/${viewId}`, {
-      method: 'PATCH',
-      headers: { 
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(updateData)
+    const updated = await orpc.views.update({
+      params: { workspace: 'default', id: viewId },
+      body: { name: 'Updated E2E View' }
     });
-    expect(updateRes.status).toBe(200);
-    const updated = await updateRes.json();
-    expect(updated.name).toBe(updateData.name);
+    expect(updated.name).toBe('Updated E2E View');
     expect(updated.id).toBe(viewId);
 
     // 4. Delete the view
-    const deleteRes = await fetch(`${server.baseUrl}/api/default/views/${viewId}`, {
-      method: 'DELETE',
-      headers: { Authorization: auth }
-    });
-    expect(deleteRes.status).toBe(200);
-    const deleted = await deleteRes.json();
+    const deleted = await orpc.views.remove({ params: { workspace: 'default', id: viewId } });
     expect(deleted.success).toBe(true);
 
     // 5. Verify deletion
-    const listResAfter = await fetch(`${server.baseUrl}/api/default/views`, {
-      headers: { Authorization: auth }
-    });
-    const viewsAfter = (await listResAfter.json()) as any[];
+    const viewsAfter = await orpc.views.list({ params: { workspace: 'default' } });
     expect(viewsAfter.find(v => v.id === viewId)).toBeUndefined();
   });
 
   test('returns 401 without auth', async ({ server }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/views`);
-    expect(res.status).toBe(401);
+    const anonOrpc = createTestORPCClient(server.baseUrl);
+    await expect(
+      anonOrpc.views.list({ params: { workspace: 'default' } })
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('returns 404 for unknown workspace', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/nonexistent/views`, {
-      headers: { Authorization: auth }
-    });
-    expect(res.status).toBe(404);
+  test('returns 404 for unknown workspace', async ({ orpc }) => {
+    await expect(
+      orpc.views.list({ params: { workspace: 'nonexistent' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
-  test('validation: name is required', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/views`, {
-      method: 'POST',
-      headers: { 
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ ...viewData, name: '' })
-    });
-    expect(res.status).toBe(400);
+  test('validation: name is required', async ({ orpc }) => {
+    await expect(
+      orpc.views.create({ params: { workspace: 'default' }, body: { ...viewData, name: '' } })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
   test('viewer can list views but cannot create or update them', async ({ server }) => {
@@ -129,32 +96,20 @@ test.describe('Saved Views API', () => {
     );
 
     const viewerAuth = await makeAuthHeader(server.db, 'views-viewer');
+    const viewerOrpc = createTestORPCClient(server.baseUrl, viewerAuth);
 
-    const listRes = await fetch(`${server.baseUrl}/api/default/views`, {
-      headers: { Authorization: viewerAuth }
-    });
-    expect(listRes.status).toBe(200);
-    const views = (await listRes.json()) as Array<{ id: string }>;
+    const views = await viewerOrpc.views.list({ params: { workspace: 'default' } });
     expect(views.length).toBeGreaterThan(0);
 
-    const createRes = await fetch(`${server.baseUrl}/api/default/views`, {
-      method: 'POST',
-      headers: {
-        Authorization: viewerAuth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(viewData)
-    });
-    expect(createRes.status).toBe(403);
+    await expect(
+      viewerOrpc.views.create({ params: { workspace: 'default' }, body: viewData })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
 
-    const updateRes = await fetch(`${server.baseUrl}/api/default/views/${views[0]!.id}`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: viewerAuth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ name: 'Should not be allowed' })
-    });
-    expect(updateRes.status).toBe(403);
+    await expect(
+      viewerOrpc.views.update({
+        params: { workspace: 'default', id: views[0]!.id },
+        body: { name: 'Should not be allowed' }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 });

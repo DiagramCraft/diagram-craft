@@ -1,26 +1,13 @@
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  apiFetch,
-  fetchEntities,
-  fetchEntity,
-  fetchEntityFacets,
-  fetchEntityRelations,
-  fetchEntityTree,
-  deleteEntity,
-  cloneEntity,
-  fetchSavedViews,
-  createSavedView,
-  updateSavedView,
-  deleteSavedView
-} from '../lib/api';
 import type { EntityRelation } from '../lib/api';
 import type {
   CreateSavedViewRequest,
   UpdateSavedViewRequest
-} from '@arch-register/api-types/views';
+} from '@arch-register/api-types/viewContract';
 import { entityKeys, schemaKeys, viewKeys } from './queryKeys';
 import { invalidateAuditQueries } from './useAudit';
 import { invalidateNotificationQueries } from './useNotifications';
+import { orpcClient } from '../lib/orpcClient';
 
 // Hook for fetching entity list
 export const useEntities = (
@@ -37,7 +24,19 @@ export const useEntities = (
 ) => {
   return useQuery({
     queryKey: entityKeys.list(workspaceId, options),
-    queryFn: () => fetchEntities(workspaceId, options),
+    queryFn: () =>
+      orpcClient.entities.list({
+        params: { workspace: workspaceId },
+        query: {
+          _schemaId: options.schemaId ?? undefined,
+          owner: options.owner ?? undefined,
+          lifecycle: options.lifecycle ?? undefined,
+          q: options.q ?? undefined,
+          view: options.view,
+          limit: options.limit ?? undefined,
+          offset: options.offset ?? undefined
+        }
+      }),
     enabled: !!workspaceId
   });
 };
@@ -46,7 +45,7 @@ export const useEntities = (
 export const useEntity = (workspaceId: string, entityId: string) => {
   return useQuery({
     queryKey: entityKeys.detail(workspaceId, entityId),
-    queryFn: () => fetchEntity(workspaceId, entityId),
+    queryFn: () => orpcClient.entities.get({ params: { workspace: workspaceId, id: entityId } }),
     enabled: !!workspaceId && !!entityId
   });
 };
@@ -55,7 +54,7 @@ export const useEntity = (workspaceId: string, entityId: string) => {
 export const useEntityFacets = (workspaceId: string) => {
   return useQuery({
     queryKey: entityKeys.facets(workspaceId),
-    queryFn: () => fetchEntityFacets(workspaceId),
+    queryFn: () => orpcClient.entities.facets({ params: { workspace: workspaceId } }),
     enabled: !!workspaceId
   });
 };
@@ -64,7 +63,8 @@ export const useEntityFacets = (workspaceId: string) => {
 export const useEntityRelations = (workspaceId: string, entityId: string) => {
   return useQuery({
     queryKey: entityKeys.relations(workspaceId, entityId),
-    queryFn: () => fetchEntityRelations(workspaceId, entityId),
+    queryFn: () =>
+      orpcClient.entities.relations({ params: { workspace: workspaceId, id: entityId } }),
     enabled: !!workspaceId && !!entityId
   });
 };
@@ -81,7 +81,16 @@ export const useEntityTree = (
 ) => {
   return useQuery({
     queryKey: entityKeys.tree(workspaceId, options),
-    queryFn: () => fetchEntityTree(workspaceId, options),
+    queryFn: () =>
+      orpcClient.entities.tree({
+        params: { workspace: workspaceId },
+        query: {
+          _schemaId: options.schemaId ?? undefined,
+          owner: options.owner ?? undefined,
+          lifecycle: options.lifecycle ?? undefined,
+          q: options.q ?? undefined
+        }
+      }),
     enabled: !!workspaceId
   });
 };
@@ -91,7 +100,8 @@ export const useDeleteEntity = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entityId: string) => deleteEntity(workspaceId, entityId),
+    mutationFn: (entityId: string) =>
+      orpcClient.entities.remove({ params: { workspace: workspaceId, id: entityId } }),
     onSuccess: async () => {
       // Invalidate all entity-related queries to refetch
       await queryClient.invalidateQueries({ queryKey: entityKeys.all });
@@ -109,10 +119,9 @@ export const useUpdateEntity = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: ({ entityId, data }: { entityId: string; data: Record<string, unknown> }) =>
-      apiFetch(`/api/${workspaceId}/data/${entityId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+      orpcClient.entities.update({
+        params: { workspace: workspaceId, id: entityId },
+        body: data
       }),
     onSuccess: async (_, variables) => {
       // Invalidate the specific entity and relations
@@ -133,7 +142,8 @@ export const useCloneEntity = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entityId: string) => cloneEntity(workspaceId, entityId),
+    mutationFn: (entityId: string) =>
+      orpcClient.entities.clone({ params: { workspace: workspaceId, id: entityId } }),
     onSuccess: async () => {
       // Invalidate entity lists to show the new clone
       await queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
@@ -157,7 +167,8 @@ export const useMultipleEntityRelations = (
   const results = useQueries({
     queries: entityIds.map(entityId => ({
       queryKey: entityKeys.relations(workspaceId, entityId),
-      queryFn: () => fetchEntityRelations(workspaceId, entityId),
+      queryFn: () =>
+        orpcClient.entities.relations({ params: { workspace: workspaceId, id: entityId } }),
       enabled: !!workspaceId && !!entityId
     }))
   });
@@ -180,7 +191,11 @@ export const useEntitiesBySchema = (workspaceId: string, schemaIds: string[]) =>
   return useQueries({
     queries: schemaIds.map(schemaId => ({
       queryKey: entityKeys.list(workspaceId, { schemaId, view: 'summary' }),
-      queryFn: () => fetchEntities(workspaceId, { schemaId, view: 'summary' }),
+      queryFn: () =>
+        orpcClient.entities.list({
+          params: { workspace: workspaceId },
+          query: { _schemaId: schemaId, view: 'summary' }
+        }),
       enabled: !!workspaceId && !!schemaId
     }))
   });
@@ -191,7 +206,7 @@ export const useEntitiesBySchema = (workspaceId: string, schemaIds: string[]) =>
 export const useSavedViews = (workspaceId: string) => {
   return useQuery({
     queryKey: viewKeys.list(workspaceId),
-    queryFn: () => fetchSavedViews(workspaceId),
+    queryFn: () => orpcClient.views.list({ params: { workspace: workspaceId } }),
     enabled: !!workspaceId
   });
 };
@@ -200,7 +215,8 @@ export const useCreateSavedView = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: CreateSavedViewRequest) => createSavedView(workspaceId, body),
+    mutationFn: (body: CreateSavedViewRequest) =>
+      orpcClient.views.create({ params: { workspace: workspaceId }, body }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: viewKeys.list(workspaceId) });
     }
@@ -212,7 +228,7 @@ export const useUpdateSavedView = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdateSavedViewRequest }) =>
-      updateSavedView(workspaceId, id, body),
+      orpcClient.views.update({ params: { workspace: workspaceId, id }, body }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: viewKeys.list(workspaceId) });
     }
@@ -223,7 +239,8 @@ export const useDeleteSavedView = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => deleteSavedView(workspaceId, id),
+    mutationFn: (id: string) =>
+      orpcClient.views.remove({ params: { workspace: workspaceId, id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: viewKeys.list(workspaceId) });
     }

@@ -1,16 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { EntitySchema, SchemaField } from '../lib/api';
-import { apiFetch } from '../lib/api';
 import { entityKeys, schemaKeys } from './queryKeys';
 import { invalidateAuditQueries } from './useAudit';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { orpcClient } from '../lib/orpcClient';
 
 // Hook for fetching schemas
 export const useSchemas = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: schemaKeys.list(workspaceSlug),
-    queryFn: async () => {
-      return await apiFetch<EntitySchema[]>(`/api/${workspaceSlug}/schemas`);
-    },
+    queryFn: async () => orpcClient.schemas.list({ params: { workspace: workspaceSlug } }),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
@@ -22,10 +20,7 @@ export const useCreateSchema = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (body: { name: string; fields: SchemaField[] }) =>
-      apiFetch<EntitySchema>(`/api/${workspaceId}/schemas`, {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }),
+      orpcClient.schemas.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async () => {
       // Invalidate schema list to show the new schema
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
@@ -51,11 +46,7 @@ export const useUpdateSchema = (workspaceId: string) => {
         color?: string | null;
         icon?: string | null;
       };
-    }) =>
-      apiFetch<EntitySchema>(`/api/${workspaceId}/schemas/${schemaId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      }),
+    }) => orpcClient.schemas.update({ params: { workspace: workspaceId, id: schemaId }, body: data }),
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
         queryKey: schemaKeys.detail(workspaceId, variables.schemaId)
@@ -75,9 +66,7 @@ export const useDeleteSchema = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (schemaId: string) =>
-      apiFetch<{ success: boolean }>(`/api/${workspaceId}/schemas/${schemaId}`, {
-        method: 'DELETE'
-      }),
+      orpcClient.schemas.remove({ params: { workspace: workspaceId, id: schemaId } }),
     onSuccess: async () => {
       // Invalidate all schema queries
       await queryClient.invalidateQueries({ queryKey: schemaKeys.all });

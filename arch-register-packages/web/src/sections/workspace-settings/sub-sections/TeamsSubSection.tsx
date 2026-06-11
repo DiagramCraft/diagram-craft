@@ -11,7 +11,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { getUserLabel } from '../../../utils/userLabel';
-import type { TeamAssignmentInfo, WorkspaceTeam, WorkspaceUserInfo } from '../../../lib/api';
+import type { TeamAssignmentInfo, WorkspaceTeam } from '../../../lib/api';
 import { useWorkspaceUsers } from '../../../hooks/useWorkspaceMembers';
 import {
   useTeamAssignments,
@@ -20,6 +20,7 @@ import {
   useUpdateTeams
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './TeamsSubSection.module.css';
+import { WorkspaceUserInfo } from '@arch-register/api-types/workspaceContract';
 
 type TeamDraft = {
   id: string;
@@ -459,7 +460,9 @@ const TeamDialog = ({
   if (!open) return null;
 
   const isDirty =
-    teamName.trim() !== initialTeamName || color !== initialColor || description !== initialDescription;
+    teamName.trim() !== initialTeamName ||
+    color !== initialColor ||
+    description !== initialDescription;
 
   return (
     <Dialog

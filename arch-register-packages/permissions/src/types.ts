@@ -1,35 +1,9 @@
 // ── Imports from @arch-register/api-types ─────────────────────
 
-import type {
-  EntityLink,
-  TextField,
-  BooleanField,
-  SelectField,
-  ReferenceField,
-  ContainmentField,
-  SchemaField,
-  EntityCapabilities,
-  ProjectCapabilities,
-  VisibilityMode as ApiVisibilityMode
-} from '@arch-register/api-types';
-
-// Re-export for convenience
-export type {
-  EntityLink,
-  TextField,
-  BooleanField,
-  SelectField,
-  ReferenceField,
-  ContainmentField,
-  SchemaField,
-  EntityCapabilities,
-  ProjectCapabilities
-};
-
-// Re-export VisibilityMode with local name
-export type VisibilityMode = ApiVisibilityMode;
-
 // ── Core Permission Types ─────────────────────────────────────
+
+import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
 
 export type GlobalRole = 'global_admin' | 'workspace_admin';
 

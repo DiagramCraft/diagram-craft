@@ -1,15 +1,10 @@
-import { test, expect } from '../helpers/fixtures';
+import { test, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
 
 test.describe('workspace routes', () => {
-  test('GET /api/workspaces returns seeded workspaces', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/workspaces`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Array<Record<string, unknown>>;
-    expect(body).toEqual(
+  test('GET /api/workspaces returns seeded workspaces', async ({ orpc }) => {
+    const workspaces = await orpc.workspaces.list(undefined);
+    expect(workspaces).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: seedIds.workspace.default,
@@ -23,18 +18,10 @@ test.describe('workspace routes', () => {
     );
   });
 
-  test('GET /api/workspaces/templates returns available workspace templates', async ({
-    server,
-    auth
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/workspaces/templates`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Array<Record<string, unknown>>;
-    expect(body.length).toBeGreaterThan(0);
-    expect(body[0]).toEqual(
+  test('GET /api/workspaces/templates returns available workspace templates', async ({ orpc }) => {
+    const templates = await orpc.workspaces.templates(undefined);
+    expect(templates.length).toBeGreaterThan(0);
+    expect(templates[0]).toEqual(
       expect.objectContaining({
         id: expect.any(String),
         name: expect.any(String),
@@ -44,36 +31,20 @@ test.describe('workspace routes', () => {
   });
 
   test('GET /api/workspaces returns 401 without token', async ({ server }) => {
-    const res = await fetch(`${server.baseUrl}/api/workspaces`);
-    expect(res.status).toBe(401);
+    const anonOrpc = createTestORPCClient(server.baseUrl);
+    await expect(anonOrpc.workspaces.list(undefined)).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('POST /api/workspaces creates a workspace with default settings', async ({
-    server,
-    auth
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/workspaces`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Platform Strategy'
-      })
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Record<string, unknown>;
-    expect(body).toMatchObject({
+  test('POST /api/workspaces creates a workspace with default settings', async ({ server, orpc }) => {
+    const created = await orpc.workspaces.create({ body: { name: 'Platform Strategy' } });
+    expect(created).toMatchObject({
       id: expect.any(String),
       name: 'Platform Strategy',
       url_slug: 'platform-strategy',
       short_code: 'PS'
     });
 
-    const workspaceId = body['id'] as string;
-    const lifecycleStates = await server.db.workspace.listLifecycleStates(workspaceId);
+    const lifecycleStates = await server.db.workspace.listLifecycleStates(created.id);
     expect(lifecycleStates.map(state => state.label)).toEqual([
       'Proposed',
       'Experimental',
@@ -81,28 +52,21 @@ test.describe('workspace routes', () => {
       'Deprecated'
     ]);
 
-    const teams = await server.db.workspace.listTeams(workspaceId);
+    const teams = await server.db.workspace.listTeams(created.id);
     expect(teams.map(team => team.name)).toEqual(['Platform Team', 'UX Team', 'Security Team']);
   });
 
-  test('POST /api/workspaces applies slug and badge overrides', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/workspaces`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+  test('POST /api/workspaces applies slug and badge overrides', async ({ orpc }) => {
+    const created = await orpc.workspaces.create({
+      body: {
         name: 'Architecture Governance',
         slug: 'arch gov',
         badge: 'agx',
         color: '#112233',
         description: 'Workspace description'
-      })
+      }
     });
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
+    expect(created).toMatchObject({
       id: expect.any(String),
       name: 'Architecture Governance',
       url_slug: 'arch-gov',
@@ -112,75 +76,29 @@ test.describe('workspace routes', () => {
     });
   });
 
-  test('POST /api/workspaces returns 400 for a non-object request body', async ({
-    server,
-    auth
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/workspaces`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify('not-an-object')
-    });
-
-    expect(res.status).toBe(400);
+  test('POST /api/workspaces returns 400 for a non-object request body', async ({ orpc }) => {
+    await expect(
+      orpc.workspaces.create({ body: { name: undefined as unknown as string } })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
-  test('POST /api/workspaces returns 409 for a duplicate workspace name', async ({
-    server,
-    auth
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/workspaces`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Default Workspace'
-      })
-    });
-
-    expect(res.status).toBe(409);
-    await expect(res.json()).resolves.toMatchObject({
-      message: 'A workspace with that name already exists'
-    });
+  test('POST /api/workspaces returns 409 for a duplicate workspace name', async ({ orpc }) => {
+    await expect(
+      orpc.workspaces.create({ body: { name: 'Default Workspace' } })
+    ).rejects.toMatchObject({ code: 'CONFLICT', message: 'A workspace with that name already exists' });
   });
 
-  test('PUT /api/workspaces/:id updates a workspace and preserves omitted fields', async ({
-    server,
-    auth
-  }) => {
-    const createRes = await fetch(`${server.baseUrl}/api/workspaces`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Workspace To Rename',
-        color: '#123456',
-        description: 'Original description'
-      })
-    });
-    const created = (await createRes.json()) as Record<string, unknown>;
-
-    const res = await fetch(`${server.baseUrl}/api/workspaces/${created['id'] as string}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Workspace Renamed'
-      })
+  test('PUT /api/workspaces/:id updates a workspace and preserves omitted fields', async ({ orpc }) => {
+    const created = await orpc.workspaces.create({
+      body: { name: 'Workspace To Rename', color: '#123456', description: 'Original description' }
     });
 
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
-      id: created['id'],
+    const updated = await orpc.workspaces.update({
+      params: { workspace: created.id },
+      body: { name: 'Workspace Renamed' }
+    });
+    expect(updated).toMatchObject({
+      id: created.id,
       name: 'Workspace Renamed',
       url_slug: 'workspace-to-rename',
       color: '#123456',
@@ -188,37 +106,21 @@ test.describe('workspace routes', () => {
     });
   });
 
-  test('PUT /api/workspaces/:id replaces explicit mutable fields', async ({ server, auth }) => {
-    const createRes = await fetch(`${server.baseUrl}/api/workspaces`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Workspace Settings'
-      })
-    });
-    const created = (await createRes.json()) as Record<string, unknown>;
+  test('PUT /api/workspaces/:id replaces explicit mutable fields', async ({ orpc }) => {
+    const created = await orpc.workspaces.create({ body: { name: 'Workspace Settings' } });
 
-    const res = await fetch(`${server.baseUrl}/api/workspaces/${created['id'] as string}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    const updated = await orpc.workspaces.update({
+      params: { workspace: created.id },
+      body: {
         name: 'Workspace Settings Updated',
         url_slug: 'ws settings updated',
         short_code: 'WU',
         color: '#abcdef',
         description: 'Updated description'
-      })
+      }
     });
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
-      id: created['id'],
+    expect(updated).toMatchObject({
+      id: created.id,
       name: 'Workspace Settings Updated',
       url_slug: 'ws-settings-updated',
       short_code: 'WU',
@@ -227,58 +129,22 @@ test.describe('workspace routes', () => {
     });
   });
 
-  test('PUT /api/workspaces/:id returns 404 for an unknown workspace id', async ({
-    server,
-    auth
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/workspaces/does-not-exist`, {
-      method: 'PUT',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Nope'
-      })
-    });
-
-    expect(res.status).toBe(404);
+  test('PUT /api/workspaces/:id returns 404 for an unknown workspace id', async ({ orpc }) => {
+    await expect(
+      orpc.workspaces.update({ params: { workspace: 'does-not-exist' }, body: { name: 'Nope' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
-  test('DELETE /api/workspaces/:id deletes a workspace', async ({ server, auth }) => {
-    const createRes = await fetch(`${server.baseUrl}/api/workspaces`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Workspace To Delete'
-      })
-    });
-    const created = (await createRes.json()) as Record<string, unknown>;
+  test('DELETE /api/workspaces/:id deletes a workspace', async ({ orpc }) => {
+    const created = await orpc.workspaces.create({ body: { name: 'Workspace To Delete' } });
 
-    const res = await fetch(`${server.baseUrl}/api/workspaces/${created['id'] as string}`, {
-      method: 'DELETE',
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
-      success: true,
-      message: "Workspace 'Workspace To Delete' deleted"
-    });
+    const result = await orpc.workspaces.remove({ params: { workspace: created.id } });
+    expect(result).toMatchObject({ success: true, message: "Workspace 'Workspace To Delete' deleted" });
   });
 
-  test('DELETE /api/workspaces/:id returns 404 for an unknown workspace id', async ({
-    server,
-    auth
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/workspaces/does-not-exist`, {
-      method: 'DELETE',
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(404);
+  test('DELETE /api/workspaces/:id returns 404 for an unknown workspace id', async ({ orpc }) => {
+    await expect(
+      orpc.workspaces.remove({ params: { workspace: 'does-not-exist' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '../lib/api';
-import type { WorkspaceAiConfig, UpsertAiConfigRequest } from '@arch-register/api-types';
+import { orpcClient } from '../lib/orpcClient';
+import type { UpsertAiConfigRequest } from '@arch-register/api-types/aiContract';
 
 export const aiConfigKeys = {
   all: ['ai-config'] as const,
@@ -10,7 +10,7 @@ export const aiConfigKeys = {
 export const useAiConfig = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: aiConfigKeys.detail(workspaceSlug),
-    queryFn: () => apiFetch<WorkspaceAiConfig>(`/api/${workspaceSlug}/ai/config`),
+    queryFn: () => orpcClient.ai.getConfig({ params: { workspace: workspaceSlug } }),
     enabled: enabled && !!workspaceSlug,
     staleTime: 60_000
   });
@@ -20,9 +20,9 @@ export const useUpdateAiConfig = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: UpsertAiConfigRequest) =>
-      apiFetch<WorkspaceAiConfig>(`/api/${workspaceSlug}/ai/config`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
+      orpcClient.ai.updateConfig({
+        params: { workspace: workspaceSlug },
+        body: data
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: aiConfigKeys.detail(workspaceSlug) });

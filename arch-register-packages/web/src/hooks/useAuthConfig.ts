@@ -1,18 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '../lib/api';
-
-type AuthConfig = {
-  mode: 'local' | 'oidc';
-};
+import { orpcClient } from '../lib/orpcClient';
 
 export const useAuthConfig = () => {
   return useQuery({
     queryKey: ['auth', 'config'],
     queryFn: async () => {
-      return await apiFetch<AuthConfig>('/api/auth/config', undefined, {
-        requiresAuth: false,
-        retryOnUnauthorized: false
-      });
+      return await orpcClient.auth.config();
     },
     staleTime: Infinity, // Auth config doesn't change during session
     retry: false

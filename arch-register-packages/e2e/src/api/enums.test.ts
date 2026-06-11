@@ -1,26 +1,19 @@
-import { test, expect } from '../helpers/fixtures';
+import { test, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
 
 const seededEnumId = '00000000-0000-0000-0000-e00000000001';
 
 test.describe('GET /api/:workspace/enums', () => {
-  test('returns seeded enums for the default workspace', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Array<Record<string, unknown>>;
-    expect(body.length).toBeGreaterThan(0);
-    expect(body).toEqual(
+  test('returns seeded enums for the default workspace', async ({ orpc }) => {
+    const enums = await orpc.enums.list({ params: { workspace: 'default' } });
+    expect(enums.length).toBeGreaterThan(0);
+    expect(enums).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: seededEnumId,
           workspace: seedIds.workspace.default,
           name: 'API Type',
-          options: expect.arrayContaining([
-            { value: 'openapi', label: 'OpenAPI' }
-          ]),
+          options: expect.arrayContaining([{ value: 'openapi', label: 'OpenAPI' }]),
           created_at: expect.any(String),
           updated_at: expect.any(String)
         })
@@ -28,258 +21,143 @@ test.describe('GET /api/:workspace/enums', () => {
     );
   });
 
-  test('returns 404 for unknown workspace', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/nonexistent/enums`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(404);
+  test('returns 404 for unknown workspace', async ({ orpc }) => {
+    await expect(
+      orpc.enums.list({ params: { workspace: 'nonexistent' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   test('returns 401 without authentication', async ({ server }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums`);
-    expect(res.status).toBe(401);
+    const anonOrpc = createTestORPCClient(server.baseUrl);
+    await expect(anonOrpc.enums.list({ params: { workspace: 'default' } })).rejects.toMatchObject({
+      code: 'UNAUTHORIZED'
+    });
   });
 });
 
 test.describe('GET /api/:workspace/enums/:id', () => {
-  test('returns a seeded enum by id', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums/${seededEnumId}`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Record<string, unknown>;
-    expect(body).toMatchObject({
+  test('returns a seeded enum by id', async ({ orpc }) => {
+    const result = await orpc.enums.get({ params: { workspace: 'default', id: seededEnumId } });
+    expect(result).toMatchObject({
       id: seededEnumId,
       workspace: seedIds.workspace.default,
       name: 'API Type'
     });
   });
 
-  test('returns 404 for an unknown enum id', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums/does-not-exist`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(404);
+  test('returns 404 for an unknown enum id', async ({ orpc }) => {
+    await expect(
+      orpc.enums.get({ params: { workspace: 'default', id: 'does-not-exist' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
 
 test.describe('POST /api/:workspace/enums', () => {
-  test('creates an enum with explicit options and sort order', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Deployment Stage',
-        options: [{ value: 'prod', label: 'Production' }],
-        sort_order: 9
-      })
+  test('creates an enum with explicit options and sort order', async ({ orpc }) => {
+    const result = await orpc.enums.create({
+      params: { workspace: 'default' },
+      body: { name: 'Deployment Stage', options: [{ value: 'prod', label: 'Production' }], sort_order: 9 }
     });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Record<string, unknown>;
-    expect(body).toMatchObject({
+    expect(result).toMatchObject({
       workspace: seedIds.workspace.default,
       name: 'Deployment Stage',
       options: [{ value: 'prod', label: 'Production' }],
       sort_order: 9
     });
-    expect(body['id']).toEqual(expect.any(String));
+    expect(result.id).toEqual(expect.any(String));
   });
 
-  test('defaults options and sort order when omitted or invalid', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Environment',
-        options: 'invalid',
-        sort_order: 'invalid'
-      })
+  test('defaults options and sort order when omitted or invalid', async ({ orpc }) => {
+    const result = await orpc.enums.create({
+      params: { workspace: 'default' },
+      body: { name: 'Environment' }
     });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Record<string, unknown>;
-    expect(body).toMatchObject({
-      name: 'Environment',
-      options: [],
-      sort_order: 0
-    });
+    expect(result).toMatchObject({ name: 'Environment', options: [], sort_order: 0 });
   });
 
-  test('returns 400 for a non-object request body', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify('not-an-object')
-    });
-
-    expect(res.status).toBe(400);
+  test('returns 400 for a non-object request body', async ({ orpc }) => {
+    await expect(
+      orpc.enums.create({ params: { workspace: 'default' }, body: { name: undefined as unknown as string } })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
-  test('returns 409 for a duplicate enum name', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'API Type'
-      })
-    });
-
-    expect(res.status).toBe(409);
-    await expect(res.json()).resolves.toMatchObject({
+  test('returns 409 for a duplicate enum name', async ({ orpc }) => {
+    await expect(
+      orpc.enums.create({ params: { workspace: 'default' }, body: { name: 'API Type' } })
+    ).rejects.toMatchObject({
+      code: 'CONFLICT',
       message: 'An enum with that name already exists in this workspace'
     });
   });
 });
 
 test.describe('PUT /api/:workspace/enums/:id', () => {
-  test('updates an enum when all mutable fields are provided', async ({ server, auth }) => {
-    const createRes = await fetch(`${server.baseUrl}/api/default/enums`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Change Type',
-        options: [{ value: 'minor', label: 'Minor' }],
-        sort_order: 1
-      })
-    });
-    const created = (await createRes.json()) as Record<string, unknown>;
-
-    const res = await fetch(`${server.baseUrl}/api/default/enums/${created['id']}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Change Classification',
-        options: [{ value: 'major', label: 'Major' }],
-        sort_order: 4
-      })
+  test('updates an enum when all mutable fields are provided', async ({ orpc }) => {
+    const created = await orpc.enums.create({
+      params: { workspace: 'default' },
+      body: { name: 'Change Type', options: [{ value: 'minor', label: 'Minor' }], sort_order: 1 }
     });
 
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
-      id: created['id'],
+    const updated = await orpc.enums.update({
+      params: { workspace: 'default', id: created.id },
+      body: { name: 'Change Classification', options: [{ value: 'major', label: 'Major' }], sort_order: 4 }
+    });
+    expect(updated).toMatchObject({
+      id: created.id,
       name: 'Change Classification',
       options: [{ value: 'major', label: 'Major' }],
       sort_order: 4
     });
   });
 
-  test('preserves options and sort order when omitted', async ({ server, auth }) => {
-    const createRes = await fetch(`${server.baseUrl}/api/default/enums`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Risk Level',
-        options: [{ value: 'low', label: 'Low' }],
-        sort_order: 6
-      })
-    });
-    const created = (await createRes.json()) as Record<string, unknown>;
-
-    const res = await fetch(`${server.baseUrl}/api/default/enums/${created['id']}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Risk Severity'
-      })
+  test('preserves options and sort order when omitted', async ({ orpc }) => {
+    const created = await orpc.enums.create({
+      params: { workspace: 'default' },
+      body: { name: 'Risk Level', options: [{ value: 'low', label: 'Low' }], sort_order: 6 }
     });
 
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
-      id: created['id'],
+    const updated = await orpc.enums.update({
+      params: { workspace: 'default', id: created.id },
+      body: { name: 'Risk Severity' }
+    });
+    expect(updated).toMatchObject({
+      id: created.id,
       name: 'Risk Severity',
       options: [{ value: 'low', label: 'Low' }],
       sort_order: 6
     });
   });
 
-  test('returns 404 for an unknown enum id', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums/does-not-exist`, {
-      method: 'PUT',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Nope'
-      })
-    });
-
-    expect(res.status).toBe(404);
+  test('returns 404 for an unknown enum id', async ({ orpc }) => {
+    await expect(
+      orpc.enums.update({ params: { workspace: 'default', id: 'does-not-exist' }, body: { name: 'Nope' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
 
 test.describe('DELETE /api/:workspace/enums/:id', () => {
-  test('deletes an unreferenced enum', async ({ server, auth }) => {
-    const createRes = await fetch(`${server.baseUrl}/api/default/enums`, {
-      method: 'POST',
-      headers: {
-        Authorization: auth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'Temporary Enum'
-      })
-    });
-    const created = (await createRes.json()) as Record<string, unknown>;
-
-    const res = await fetch(`${server.baseUrl}/api/default/enums/${created['id']}`, {
-      method: 'DELETE',
-      headers: { Authorization: auth }
+  test('deletes an unreferenced enum', async ({ orpc }) => {
+    const created = await orpc.enums.create({
+      params: { workspace: 'default' },
+      body: { name: 'Temporary Enum' }
     });
 
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({
-      success: true,
-      message: `Enum '${created['id']}' deleted`
-    });
+    const result = await orpc.enums.remove({ params: { workspace: 'default', id: created.id } });
+    expect(result).toEqual({ success: true, message: `Enum '${created.id}' deleted` });
   });
 
-  test('returns 409 for a referenced enum', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums/${seededEnumId}`, {
-      method: 'DELETE',
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(409);
-    await expect(res.json()).resolves.toMatchObject({
+  test('returns 409 for a referenced enum', async ({ orpc }) => {
+    await expect(
+      orpc.enums.remove({ params: { workspace: 'default', id: seededEnumId } })
+    ).rejects.toMatchObject({
+      code: 'CONFLICT',
       message: 'Cannot delete enum: it is still referenced by one or more schema fields'
     });
   });
 
-  test('returns 404 for an unknown enum id', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/enums/does-not-exist`, {
-      method: 'DELETE',
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(404);
+  test('returns 404 for an unknown enum id', async ({ orpc }) => {
+    await expect(
+      orpc.enums.remove({ params: { workspace: 'default', id: 'does-not-exist' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

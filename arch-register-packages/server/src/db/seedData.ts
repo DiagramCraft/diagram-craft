@@ -26,6 +26,7 @@ import {
 import { ProjectDbCreate, ProjectFileDbResult } from '../domain/project/db/projectDatabase';
 import { AuditOperation } from '../domain/audit/db/auditDatabase';
 import { GlobalRoleAssignmentDbResult } from '../domain/auth/db/authDatabase';
+import { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -888,3 +889,13 @@ export const seedNotificationEvents: Array<{
 ];
 
 export const seedProjectFiles: ProjectFileDbResult[] = [];
+
+export const seedAiConfig: AiConfigInputDbUpsert = {
+  provider: 'openrouter',
+  api_key_enc: null,
+  base_url: null,
+  model: null,
+  temperature: null,
+  system_prompt: null,
+  enabled: false
+};

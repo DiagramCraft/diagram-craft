@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { WorkspaceEnum } from '../lib/api';
-import { apiFetch } from '../lib/api';
+import { orpcClient } from '../lib/orpcClient';
 
 export const enumKeys = {
   all: ['enums'] as const,
@@ -14,9 +13,7 @@ export const enumKeys = {
 export const useEnums = (workspaceSlug: string, enabled = true) => {
   return useQuery({
     queryKey: enumKeys.list(workspaceSlug),
-    queryFn: async () => {
-      return await apiFetch<WorkspaceEnum[]>(`/api/${workspaceSlug}/enums`);
-    },
+    queryFn: async () => await orpcClient.enums.list({ params: { workspace: workspaceSlug } }),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000
   });
@@ -27,10 +24,7 @@ export const useCreateEnum = (workspaceSlug: string) => {
 
   return useMutation({
     mutationFn: (body: { name: string; options?: Array<{ value: string; label: string }> }) =>
-      apiFetch<WorkspaceEnum>(`/api/${workspaceSlug}/enums`, {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }),
+      orpcClient.enums.create({ params: { workspace: workspaceSlug }, body }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enumKeys.list(workspaceSlug) });
     }
@@ -47,11 +41,7 @@ export const useUpdateEnum = (workspaceSlug: string) => {
     }: {
       enumId: string;
       data: { name: string; options: Array<{ value: string; label: string }> };
-    }) =>
-      apiFetch<WorkspaceEnum>(`/api/${workspaceSlug}/enums/${enumId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      }),
+    }) => orpcClient.enums.update({ params: { workspace: workspaceSlug, id: enumId }, body: data }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: enumKeys.detail(workspaceSlug, variables.enumId) });
       queryClient.invalidateQueries({ queryKey: enumKeys.list(workspaceSlug) });
@@ -64,9 +54,7 @@ export const useDeleteEnum = (workspaceSlug: string) => {
 
   return useMutation({
     mutationFn: (enumId: string) =>
-      apiFetch<{ success: boolean }>(`/api/${workspaceSlug}/enums/${enumId}`, {
-        method: 'DELETE'
-      }),
+      orpcClient.enums.remove({ params: { workspace: workspaceSlug, id: enumId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enumKeys.all });
     }

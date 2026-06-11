@@ -1,17 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import {
-  clearNotifications,
-  createPinnedEntity,
-  createWatch,
-  deleteNotification,
-  deletePinnedEntity,
-  deleteWatch,
-  fetchNotificationCount,
-  fetchNotifications,
-  fetchPinnedEntities,
-  fetchWatchedEntities,
-  type PinnedEntity
-} from '../lib/api';
+import { PinnedEntity } from '@arch-register/api-types/watchContract';
+import { orpcClient } from '../lib/orpcClient';
 
 export const notificationKeys = {
   all: ['notifications'] as const,
@@ -36,7 +25,7 @@ export const invalidateNotificationQueries = async (
 export const useWatchedEntities = (workspaceId: string, enabled = true) =>
   useQuery({
     queryKey: notificationKeys.watched(workspaceId),
-    queryFn: () => fetchWatchedEntities(workspaceId),
+    queryFn: () => orpcClient.watching.list({ params: { workspace: workspaceId } }),
     enabled: enabled && !!workspaceId,
     staleTime: 60 * 1000
   });
@@ -44,7 +33,7 @@ export const useWatchedEntities = (workspaceId: string, enabled = true) =>
 export const usePinnedEntities = (workspaceId: string, enabled = true) =>
   useQuery({
     queryKey: notificationKeys.pinned(workspaceId),
-    queryFn: () => fetchPinnedEntities(workspaceId),
+    queryFn: () => orpcClient.pinnedEntities.list({ params: { workspace: workspaceId } }),
     enabled: enabled && !!workspaceId,
     staleTime: 60 * 1000
   });
@@ -52,7 +41,7 @@ export const usePinnedEntities = (workspaceId: string, enabled = true) =>
 export const useNotifications = (workspaceId: string, enabled = true) =>
   useQuery({
     queryKey: notificationKeys.list(workspaceId),
-    queryFn: () => fetchNotifications(workspaceId),
+    queryFn: () => orpcClient.notifications.list({ params: { workspace: workspaceId } }),
     enabled: enabled && !!workspaceId,
     staleTime: 60 * 1000
   });
@@ -60,7 +49,7 @@ export const useNotifications = (workspaceId: string, enabled = true) =>
 export const useNotificationCount = (workspaceId: string, enabled = true) =>
   useQuery({
     queryKey: notificationKeys.count(workspaceId),
-    queryFn: () => fetchNotificationCount(workspaceId),
+    queryFn: () => orpcClient.notifications.count({ params: { workspace: workspaceId } }),
     enabled: enabled && !!workspaceId,
     staleTime: 60 * 1000
   });
@@ -69,7 +58,11 @@ export const useCreateWatch = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entityId: string) => createWatch(workspaceId, entityId),
+    mutationFn: (entityId: string) =>
+      orpcClient.watching.create({
+        params: { workspace: workspaceId },
+        body: { entity_id: entityId }
+      }),
     onSuccess: async () => {
       await invalidateNotificationQueries(queryClient, workspaceId);
     }
@@ -80,7 +73,8 @@ export const useDeleteWatch = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entityId: string) => deleteWatch(workspaceId, entityId),
+    mutationFn: (entityId: string) =>
+      orpcClient.watching.remove({ params: { workspace: workspaceId, id: entityId } }),
     onSuccess: async () => {
       await invalidateNotificationQueries(queryClient, workspaceId);
     }
@@ -96,7 +90,11 @@ export const useCreatePinnedEntity = (workspaceId: string) => {
       entityName: string;
       entitySlug: string;
       schemaId: string;
-    }) => createPinnedEntity(workspaceId, entity.entityId),
+    }) =>
+      orpcClient.pinnedEntities.create({
+        params: { workspace: workspaceId },
+        body: { entity_id: entity.entityId }
+      }),
     onMutate: async entity => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.pinned(workspaceId) });
       const previousPinned =
@@ -131,7 +129,8 @@ export const useDeletePinnedEntity = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entityId: string) => deletePinnedEntity(workspaceId, entityId),
+    mutationFn: (entityId: string) =>
+      orpcClient.pinnedEntities.remove({ params: { workspace: workspaceId, id: entityId } }),
     onMutate: async entityId => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.pinned(workspaceId) });
       const previousPinned =
@@ -157,7 +156,8 @@ export const useDeleteNotification = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (notificationId: string) => deleteNotification(workspaceId, notificationId),
+    mutationFn: (notificationId: string) =>
+      orpcClient.notifications.remove({ params: { workspace: workspaceId, id: notificationId } }),
     onSuccess: async () => {
       await invalidateNotificationQueries(queryClient, workspaceId);
     }
@@ -168,7 +168,7 @@ export const useClearNotifications = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => clearNotifications(workspaceId),
+    mutationFn: () => orpcClient.notifications.clear({ params: { workspace: workspaceId } }),
     onSuccess: async () => {
       await invalidateNotificationQueries(queryClient, workspaceId);
     }

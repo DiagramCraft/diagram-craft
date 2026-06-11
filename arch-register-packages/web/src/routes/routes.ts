@@ -14,8 +14,7 @@ import { GlobalSettingsScreen } from '../sections/global-settings/GlobalSettings
 import { AccountSettingsScreen } from '../sections/account-settings/AccountSettingsScreen';
 import { AssistantScreen } from '../sections/ai-assistant/AssistantScreen';
 import { ExtractScreen } from '../sections/ai-extract/ExtractScreen';
-import { apiFetch } from '../lib/api';
-import type { Workspace } from '../lib/api';
+import { orpcClient } from '../lib/orpcClient';
 import { workspaceKeys } from '../hooks/useWorkspaces';
 import { ImportScreen } from '../sections/entities/ImportScreen';
 
@@ -70,7 +69,7 @@ const indexRoute = createRoute({
     }
     const workspaces = await context.queryClient.ensureQueryData({
       queryKey: workspaceKeys.list(),
-      queryFn: () => apiFetch<Workspace[]>('/api/workspaces')
+      queryFn: () => orpcClient.workspaces.list()
     });
     if (workspaces.length > 0) {
       throw redirect({

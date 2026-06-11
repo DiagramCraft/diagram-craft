@@ -1,5 +1,4 @@
 import type { Database as DatabaseType } from 'better-sqlite3';
-import type { EntityLink } from '../types';
 import type {
   EntityDbResult,
   Entity,
@@ -27,6 +26,7 @@ import {
   AiMessageDbResult,
   AiConfigDbResult
 } from '../domain/ai/db/aiDatabase';
+import { EntityLink } from '@arch-register/api-types/entityContract';
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
   if (typeof value !== 'string' || value === '') return fallback;

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '../lib/api';
+import { orpcClient } from '../lib/orpcClient';
 import { workspaceMembersKeys } from './useWorkspaceMembers';
 
 export const useUpdateUser = () => {
@@ -13,10 +13,9 @@ export const useUpdateUser = () => {
       userId: string;
       updates: { color?: string | null; display_name?: string };
     }) => {
-      return apiFetch(`/api/users/${userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
+      return orpcClient.authProtected.updateUser({
+        params: { id: userId },
+        body: updates
       });
     },
     onSuccess: () => {

@@ -6,7 +6,7 @@ import {
   getEntityParentsFromPayload,
   parseEntityMutationPayload,
   resolveCreateOwner
-} from './dataRoutes';
+} from './dataHelpers';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');

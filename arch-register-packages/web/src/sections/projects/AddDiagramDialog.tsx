@@ -4,13 +4,14 @@ import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../../lib/api';
-import type { FileEntry, ProjectFile } from '../../lib/api';
+import type { FileEntry } from '../../lib/api';
 import {
   useCreateDiagramFile,
   useProjectTemplates,
   useCreateDiagramFromTemplate
 } from '../../hooks/useProjectFiles';
 import styles from './AddDiagramDialog.module.css';
+import { ProjectFile } from '@arch-register/api-types/projectContract';
 
 type AddDiagramDialogProps = {
   open: boolean;

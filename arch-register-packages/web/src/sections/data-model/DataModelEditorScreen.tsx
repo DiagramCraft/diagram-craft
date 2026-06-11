@@ -9,7 +9,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { resolveSchemaColor, FIELD_TYPES, SCHEMA_ICONS } from '../../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import type { EntitySchema, SchemaField, FieldType, WorkspaceEnum } from '../../lib/api';
+import type { FieldType } from '../../lib/api';
 import { ICON_MAP } from '../../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../../hooks/useSchemas';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -17,6 +17,8 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { newid } from '@diagram-craft/utils/id';
 import { EnumEditorScreen } from './EnumEditorScreen';
 import { SchemaGraphView } from './components/SchemaGraphView';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
+import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
 export const DataModelEditorScreen = () => {
   const navigate = useNavigate();

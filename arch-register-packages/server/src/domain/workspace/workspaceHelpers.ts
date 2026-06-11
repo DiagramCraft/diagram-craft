@@ -1,10 +1,3 @@
-import type {
-  Workspace,
-  WorkspaceLifecycleState,
-  WorkspaceOwnerOption,
-  WorkspaceMemberInfo,
-  WorkspaceUserInfo
-} from '@arch-register/api-types';
 import {
   OwnerDbResult,
   MemberDbResult,
@@ -12,6 +5,13 @@ import {
   LifecycleStateDbResult as InternalWorkspaceLifecycleState
 } from './db/workspaceDatabase';
 import { UserDbResult } from '../auth/db/authDatabase';
+import {
+  Workspace,
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption,
+  WorkspaceUserInfo
+} from '@arch-register/api-types/workspaceContract';
+import { WorkspaceMemberInfo } from '@arch-register/api-types/workspaceConfigContract';
 
 export const toApiWorkspace = (workspace: WorkspaceDbResult): Workspace => ({
   id: workspace.id,
@@ -55,7 +55,6 @@ export const toApiWorkspaceMember = (
 
 export const toApiWorkspaceUser = (user: UserDbResult): WorkspaceUserInfo => ({
   id: user.id,
-  user_id: user.user_id,
   email: user.email,
   display_name: user.display_name,
   auth_provider: user.auth_provider,

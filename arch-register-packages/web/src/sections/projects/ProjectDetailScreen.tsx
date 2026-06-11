@@ -25,9 +25,9 @@ import {
 } from 'react-icons/tb';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { ApiError } from '../../lib/api';
-import type { ProjectDetail as ProjectDetailData, FileEntry, WorkspaceTeam } from '../../lib/api';
+import { ApiError, FileEntry, WorkspaceTeam } from '../../lib/api';
 import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
+import { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import {
   useDeleteProjectFile,
   useDeleteProjectFolder,
@@ -430,7 +430,7 @@ export const ProjectDetailScreen = () => {
             )}
           </div>
           <div className={styles.titleRow}>
-            <div className={styles.title}>{folderFilter ?? project.name}</div>
+            <h1 className={styles.title}>{folderFilter ?? project.name}</h1>
             {!folderFilter && project.status !== 'archived' && project.canEdit && (
               <button
                 type="button"

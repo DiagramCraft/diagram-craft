@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { FileTree } from '@arch-register/api-types';
 import type { ProjectDbResult, ProjectFileDbResult } from './db/projectDatabase';
 import { toApiProject, toApiProjectDetail, toApiProjectFile } from './projectHelpers';
+import { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -69,8 +69,8 @@ describe('toApiProjectDetail', () => {
     const files: FileTree = {
       folders: [],
       rootFiles: [
-        baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile,
-        baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile
+        baseProjectFile as unknown as ProjectFile,
+        baseProjectFile as unknown as ProjectFile
       ]
     };
     const result = toApiProjectDetail(baseProject, files, null);
@@ -80,10 +80,7 @@ describe('toApiProjectDetail', () => {
   it('counts files in folders', () => {
     const folder = {
       path: '/diagrams',
-      files: [
-        baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile,
-        baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile
-      ]
+      files: [baseProjectFile as unknown as ProjectFile, baseProjectFile as unknown as ProjectFile]
     };
     const files: FileTree = { folders: [folder], rootFiles: [] };
     const result = toApiProjectDetail(baseProject, files, null);
@@ -93,11 +90,11 @@ describe('toApiProjectDetail', () => {
   it('sums files across folders and root', () => {
     const folder = {
       path: '/diagrams',
-      files: [baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile]
+      files: [baseProjectFile as unknown as ProjectFile]
     };
     const files: FileTree = {
       folders: [folder],
-      rootFiles: [baseProjectFile as unknown as import('@arch-register/api-types').ProjectFile]
+      rootFiles: [baseProjectFile as unknown as ProjectFile]
     };
     const result = toApiProjectDetail(baseProject, files, null);
     expect(result.file_count).toBe(2);

@@ -1,23 +1,28 @@
 import { readFile } from 'node:fs/promises';
-import { H3, defineHandler, handleCors, getRequestPath, getMethod } from 'h3';
+import { defineHandler, getMethod, getRequestPath, H3, handleCors } from 'h3';
 import type { DatabaseAdapter } from './db/database';
 import type { StorageAdapter } from './storage/storage';
 import { createLogger } from './utils/logger';
-import { createDataRoutes } from './domain/catalog/dataRoutes';
-import { createProjectRoutes } from './domain/project/projectRoutes';
-import { createSearchRoutes } from './domain/search/searchRoutes';
-import { createSchemaRoutes } from './domain/catalog/schemaRoutes';
-import { createEnumRoutes } from './domain/catalog/enumRoutes';
-import { createWorkspaceRoutes } from './domain/workspace/workspaceRoutes';
-import { createAuditRoutes } from './domain/audit/auditRoutes';
-import { createWorkspaceConfigRoutes } from './domain/workspace/workspaceConfigRoutes';
-import { createAiChatRoutes } from './domain/ai/aiRoutes';
-import { createViewRoutes } from './domain/catalog/viewRoutes';
-import { createDiagramCraftRoutes } from './domain/diagram/diagramCraftRoutes';
-import { createAuthRoutes, createAuthProtectedRoutes } from './domain/auth/authRoutes';
-import { createTemplateRoutes } from './domain/catalog/templateRoutes';
-import { createWatchRoutes } from './domain/watch/watchRoutes';
+import { createUnifiedOpenAPISpecHandler } from './openapi';
+import { createOidcCallbackRoute } from './domain/auth/oidcCallbackRoute';
 import { requireAuth } from './middleware/auth';
+import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
+import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
+import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
+import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
+import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
+import { createWorkspaceManagementORPCHandler } from './domain/workspace/workspaceOrpc';
+import { createWorkspaceConfigORPCHandler } from './domain/workspace/workspaceConfigOrpc';
+import { createProjectORPCHandler } from './domain/project/projectOrpc';
+import { createAuditORPCHandler } from './domain/audit/auditOrpc';
+import { createWatchORPCHandler } from './domain/watch/watchOrpc';
+import { createSearchORPCHandler } from './domain/search/searchOrpc';
+import {
+  createPublicAuthORPCHandler,
+  createProtectedAuthORPCHandler
+} from './domain/auth/authOrpc';
+import { createAiORPCHandler } from './domain/ai/aiOrpc';
+import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -25,7 +30,7 @@ const httpLogger = createLogger('http');
 
 type AppOptions = {
   routeOverrides?: {
-    aiChat?: Parameters<typeof createAiChatRoutes>[1];
+    aiChat?: Parameters<typeof createAiORPCHandler>[1];
   };
 };
 
@@ -43,6 +48,12 @@ export const createApp = (
         httpLogger.error(`${error.status} ${method} ${path}: ${error.message}`, cause);
       } else if (error.status === 404) {
         httpLogger.info(`404 ${method} ${path}`);
+      } else if (
+        error.status === 401 &&
+        error.message === 'Missing or invalid authorization header'
+      ) {
+        // Expected auth failure during initial page load - log as debug to reduce noise
+        httpLogger.debug(`${error.status} ${method} ${path}: ${error.message}`);
       } else {
         httpLogger.warn(`${error.status} ${method} ${path}: ${error.message}`);
       }
@@ -61,7 +72,9 @@ export const createApp = (
         methods: '*',
         credentials: corsOriginEnv !== '*'
       });
-      if (didHandleCors) return;
+      if (didHandleCors) {
+        return;
+      }
     })
   );
 
@@ -77,25 +90,31 @@ export const createApp = (
     })
   );
 
-  app.use(createAuthRoutes(db));
+  app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
 
-  const authMiddleware = requireAuth(db.auth);
-  app.use(authMiddleware);
+  // Public routes (no auth required)
+  app.use(createPublicAuthORPCHandler(db));
+  app.use(createOidcCallbackRoute(db));
 
-  app.use(createAuthProtectedRoutes(db));
-  app.use(createWorkspaceRoutes(db, storage));
-  app.use(createSchemaRoutes(db));
-  app.use(createEnumRoutes(db));
-  app.use(createDataRoutes(db));
-  app.use(createViewRoutes(db));
-  app.use(createDiagramCraftRoutes(db));
-  app.use(createSearchRoutes(db));
-  app.use(createTemplateRoutes(db));
-  app.use(createProjectRoutes(db, storage));
-  app.use(createAuditRoutes(db));
-  app.use(createWatchRoutes(db));
-  app.use(createWorkspaceConfigRoutes(db));
-  app.use(createAiChatRoutes(db, options.routeOverrides?.aiChat));
+  app.use(requireAuth(db.auth));
+
+  // Protected routes (auth required)
+  app.use(createProtectedAuthORPCHandler(db));
+  // workspaceManagement must come before workspace-prefixed handlers to avoid
+  // GET /workspaces/templates being matched as GET /{workspace}/templates
+  app.use(createWorkspaceManagementORPCHandler(db, storage));
+  app.use(createWorkspaceEnumORPCHandler(db));
+  app.use(createWorkspaceSchemaORPCHandler(db));
+  app.use(createWorkspaceEntityORPCHandler(db));
+  app.use(createWorkspaceTemplateORPCHandler(db));
+  app.use(createWorkspaceViewORPCHandler(db));
+  app.use(createWorkspaceConfigORPCHandler(db));
+  app.use(createProjectORPCHandler(db, storage));
+  app.use(createAuditORPCHandler(db));
+  app.use(createWatchORPCHandler(db));
+  app.use(createSearchORPCHandler(db));
+  app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
+  app.use(createDiagramCraftORPCHandler(db));
 
   return app;
 };

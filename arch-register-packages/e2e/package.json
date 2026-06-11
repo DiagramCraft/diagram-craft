@@ -10,7 +10,11 @@
     "test:ui:headed": "playwright test --headed"
   },
   "dependencies": {
+    "@arch-register/api-types": "workspace:*",
     "@arch-register/server": "workspace:*",
+    "@orpc/client": "^1.14.5",
+    "@orpc/contract": "^1.14.5",
+    "@orpc/openapi-client": "^1.14.5",
     "h3": "^2.0.1-rc.22"
   },
   "devDependencies": {

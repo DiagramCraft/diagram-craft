@@ -1,23 +1,4 @@
-export type {
-  EntityCapabilities,
-  ProjectCapabilities,
-  RequirementLevel,
-  TextField,
-  BooleanField,
-  DateField,
-  SelectField,
-  ReferenceField,
-  ContainmentField,
-  SchemaField
-} from '@arch-register/api-types';
-
-export type EntityLink = {
-  url: string;
-  title: string;
-  type?: string;
-};
-
-export type VisibilityMode = 'public' | 'restricted';
+import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
 
 // Wire format used by the DiagramCraft integration (flat strings, not ForeignKey shapes).
 export type DiagramCraftEntityResponse = {

@@ -1,4 +1,4 @@
-import { test as baseTest, expect } from '../helpers/fixtures';
+import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 
 const now = new Date('2026-06-06T12:00:00.000Z');
@@ -63,48 +63,21 @@ const test = baseTest.extend<{ seeded: true }>({
 });
 
 test.describe('search routes', () => {
-  test('GET /api/:workspace/search returns empty results when q is blank', async ({
-    server,
-    auth,
-    seeded: _
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/search?q=%20%20`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({
-      query: '',
-      projects: [],
-      files: [],
-      entities: [],
-      schemas: []
-    });
+  test('GET /api/:workspace/search returns empty results when q is blank', async ({ orpc, seeded: _ }) => {
+    const result = await orpc.search.query({ params: { workspace: 'default' }, query: { q: '  ' } });
+    expect(result).toEqual({ query: '', projects: [], files: [], entities: [], schemas: [] });
   });
 
-  test('GET /api/:workspace/search finds matching projects and files', async ({
-    server,
-    auth,
-    seeded: _
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/search?q=portal&types=projects,files`, {
-      headers: { Authorization: auth }
+  test('GET /api/:workspace/search finds matching projects and files', async ({ orpc, seeded: _ }) => {
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'portal', types: 'projects,files' }
     });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Record<string, unknown>;
-    expect(body).toMatchObject({
-      query: 'portal',
-      entities: [],
-      schemas: []
-    });
-    expect(body['projects']).toEqual([
-      expect.objectContaining({
-        id: 'search-proj-alpha',
-        name: 'Alpha Search Project'
-      })
+    expect(result).toMatchObject({ query: 'portal', entities: [], schemas: [] });
+    expect(result.projects).toEqual([
+      expect.objectContaining({ id: 'search-proj-alpha', name: 'Alpha Search Project' })
     ]);
-    expect(body['files']).toEqual([
+    expect(result.files).toEqual([
       expect.objectContaining({
         projectId: 'search-proj-alpha',
         projectName: 'Alpha Search Project',
@@ -115,25 +88,17 @@ test.describe('search routes', () => {
   });
 
   test('GET /api/:workspace/search finds matching entities with matched metadata and fields', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/search?q=react&types=entities`, {
-      headers: { Authorization: auth }
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'react', types: 'entities' }
     });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      entities: Array<Record<string, unknown>>;
-      projects: unknown[];
-      files: unknown[];
-      schemas: unknown[];
-    };
-    expect(body.projects).toEqual([]);
-    expect(body.files).toEqual([]);
-    expect(body.schemas).toEqual([]);
-    expect(body.entities).toEqual([
+    expect(result.projects).toEqual([]);
+    expect(result.files).toEqual([]);
+    expect(result.schemas).toEqual([]);
+    expect(result.entities).toEqual([
       expect.objectContaining({
         entityId: '00000000-0000-0000-0003-000000000002',
         schemaName: 'Component',
@@ -144,26 +109,15 @@ test.describe('search routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/search finds matching schemas by field name', async ({
-    server,
-    auth,
-    seeded: _
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/search?q=technology&types=schemas`, {
-      headers: { Authorization: auth }
+  test('GET /api/:workspace/search finds matching schemas by field name', async ({ orpc, seeded: _ }) => {
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'technology', types: 'schemas' }
     });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      schemas: Array<Record<string, unknown>>;
-      projects: unknown[];
-      files: unknown[];
-      entities: unknown[];
-    };
-    expect(body.projects).toEqual([]);
-    expect(body.files).toEqual([]);
-    expect(body.entities).toEqual([]);
-    expect(body.schemas).toEqual([
+    expect(result.projects).toEqual([]);
+    expect(result.files).toEqual([]);
+    expect(result.entities).toEqual([]);
+    expect(result.schemas).toEqual([
       {
         schemaId: '00000000-0000-0000-0000-000000000003',
         name: 'Component',
@@ -172,26 +126,15 @@ test.describe('search routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/search applies limitPerType after sorting', async ({
-    server,
-    auth,
-    seeded: _
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/search?q=diagram&types=files&limitPerType=1`, {
-      headers: { Authorization: auth }
+  test('GET /api/:workspace/search applies limitPerType after sorting', async ({ orpc, seeded: _ }) => {
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'diagram', types: 'files', limitPerType: 1 }
     });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      files: Array<Record<string, unknown>>;
-      projects: unknown[];
-      entities: unknown[];
-      schemas: unknown[];
-    };
-    expect(body.projects).toEqual([]);
-    expect(body.entities).toEqual([]);
-    expect(body.schemas).toEqual([]);
-    expect(body.files).toEqual([
+    expect(result.projects).toEqual([]);
+    expect(result.entities).toEqual([]);
+    expect(result.schemas).toEqual([]);
+    expect(result.files).toEqual([
       expect.objectContaining({
         projectId: 'search-proj-alpha',
         projectName: 'Alpha Search Project',
@@ -200,38 +143,25 @@ test.describe('search routes', () => {
     ]);
   });
 
-  test('GET /api/:workspace/search returns 400 for invalid types', async ({
-    server,
-    auth,
-    seeded: _
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/search?q=portal&types=files,invalid`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(400);
-    await expect(res.json()).resolves.toMatchObject({
+  test('GET /api/:workspace/search returns 400 for invalid types', async ({ orpc, seeded: _ }) => {
+    await expect(
+      orpc.search.query({ params: { workspace: 'default' }, query: { q: 'portal', types: 'files,invalid' } })
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
       message: 'types must be a comma-separated list of: projects, files, entities, schemas'
     });
   });
 
-  test('GET /api/:workspace/search returns 401 without authentication', async ({
-    server,
-    seeded: _
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/search?q=portal`);
-    expect(res.status).toBe(401);
+  test('GET /api/:workspace/search returns 401 without authentication', async ({ server, seeded: _ }) => {
+    const anonOrpc = createTestORPCClient(server.baseUrl);
+    await expect(
+      anonOrpc.search.query({ params: { workspace: 'default' }, query: { q: 'portal' } })
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('GET /api/:workspace/search returns 404 for an unknown workspace', async ({
-    server,
-    auth,
-    seeded: _
-  }) => {
-    const res = await fetch(`${server.baseUrl}/api/nonexistent/search?q=portal`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(404);
+  test('GET /api/:workspace/search returns 404 for an unknown workspace', async ({ orpc, seeded: _ }) => {
+    await expect(
+      orpc.search.query({ params: { workspace: 'nonexistent' }, query: { q: 'portal' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

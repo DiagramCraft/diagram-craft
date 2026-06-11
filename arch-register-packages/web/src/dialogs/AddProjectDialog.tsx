@@ -4,11 +4,13 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { createProject, ApiError } from '../lib/api';
-import type { Project, WorkspaceTeam } from '../lib/api';
+import { ApiError } from '../lib/api';
+import type { WorkspaceTeam } from '../lib/api';
 import { usePermissions } from '../auth/PermissionContext';
 import { ColorPicker } from '../components/ColorPicker';
+import { useCreateProject } from '../hooks/useProjects';
 import styles from './AddEntityDialog.module.css';
+import { Project } from '@arch-register/api-types/projectContract';
 
 const PROJECT_STATUSES = [
   { value: 'pinned', label: 'Pinned' },
@@ -32,13 +34,13 @@ export const AddProjectDialog = ({
   teams
 }: AddProjectDialogProps) => {
   const { canCreateProject } = usePermissions();
+  const createProjectMutation = useCreateProject(workspaceId);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [owner, setOwner] = useState('');
   const [status, setStatus] = useState<'pinned' | 'active' | 'archived'>('active');
   const [color, setColor] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const creatableTeams = useMemo(
     () => teams.filter(team => canCreateProject(workspaceId, team.id)),
@@ -64,10 +66,9 @@ export const AddProjectDialog = ({
       setError('Name is required');
       return;
     }
-    setSubmitting(true);
     setError('');
     try {
-      const project = await createProject(workspaceId, {
+      const project = await createProjectMutation.mutateAsync({
         name: trimmed,
         description: description.trim(),
         owner: owner || null,
@@ -82,8 +83,6 @@ export const AddProjectDialog = ({
       } else {
         setError('Something went wrong');
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -95,9 +94,9 @@ export const AddProjectDialog = ({
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: onClose },
         {
-          label: submitting ? 'Creating...' : 'Create project',
+          label: createProjectMutation.isPending ? 'Creating...' : 'Create project',
           type: 'default',
-          disabled: submitting,
+          disabled: createProjectMutation.isPending,
           onClick: () => {
             void handleSubmit();
           }

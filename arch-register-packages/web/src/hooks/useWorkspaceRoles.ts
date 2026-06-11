@@ -1,15 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  createWorkspaceRole,
-  deleteWorkspaceRole,
-  fetchWorkspaceRoles,
-  updateWorkspaceRole,
-  type WorkspaceRoleDefinition
-} from '../lib/api';
-import type {
-  CreateWorkspaceRoleRequest,
-  UpdateWorkspaceRoleRequest
-} from '@arch-register/api-types';
+import { orpcClient } from '../lib/orpcClient';
+import type { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaceContract';
 
 export const workspaceRolesKeys = {
   all: ['workspace-roles'] as const,
@@ -19,7 +10,7 @@ export const workspaceRolesKeys = {
 export const useWorkspaceRoles = (workspaceSlug: string) =>
   useQuery({
     queryKey: workspaceRolesKeys.list(workspaceSlug),
-    queryFn: () => fetchWorkspaceRoles(workspaceSlug),
+    queryFn: () => orpcClient.config.roles.list({ params: { workspace: workspaceSlug } }),
     enabled: !!workspaceSlug,
     staleTime: 2 * 60 * 1000
   });
@@ -33,10 +24,10 @@ const invalidateWorkspaceRoles = async (
 
 const toWorkspaceRolePayload = (
   role: Pick<WorkspaceRoleDefinition, 'name' | 'description' | 'tone' | 'capabilities'>
-): CreateWorkspaceRoleRequest | UpdateWorkspaceRoleRequest => ({
+) => ({
   name: role.name,
-  description: role.description,
-  tone: role.tone,
+  description: role.description ?? '',
+  tone: role.tone ?? '',
   capabilities: role.capabilities
 });
 
@@ -46,7 +37,11 @@ export const useCreateWorkspaceRole = (workspaceSlug: string) => {
   return useMutation({
     mutationFn: (
       role: Pick<WorkspaceRoleDefinition, 'name' | 'description' | 'tone' | 'capabilities'>
-    ) => createWorkspaceRole(workspaceSlug, toWorkspaceRolePayload(role)),
+    ) =>
+      orpcClient.config.roles.create({
+        params: { workspace: workspaceSlug },
+        body: toWorkspaceRolePayload(role)
+      }),
     onSuccess: async () => {
       await invalidateWorkspaceRoles(queryClient, workspaceSlug);
     }
@@ -63,7 +58,11 @@ export const useUpdateWorkspaceRole = (workspaceSlug: string) => {
     }: {
       roleId: string;
       role: Pick<WorkspaceRoleDefinition, 'name' | 'description' | 'tone' | 'capabilities'>;
-    }) => updateWorkspaceRole(workspaceSlug, roleId, toWorkspaceRolePayload(role)),
+    }) =>
+      orpcClient.config.roles.update({
+        params: { workspace: workspaceSlug, id: roleId },
+        body: toWorkspaceRolePayload(role)
+      }),
     onSuccess: async () => {
       await invalidateWorkspaceRoles(queryClient, workspaceSlug);
     }
@@ -74,7 +73,10 @@ export const useDeleteWorkspaceRole = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (roleId: string) => deleteWorkspaceRole(workspaceSlug, roleId),
+    mutationFn: (roleId: string) =>
+      orpcClient.config.roles.remove({
+        params: { workspace: workspaceSlug, id: roleId }
+      }),
     onSuccess: async () => {
       await invalidateWorkspaceRoles(queryClient, workspaceSlug);
     }

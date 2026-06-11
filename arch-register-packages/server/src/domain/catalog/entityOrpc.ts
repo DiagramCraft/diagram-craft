@@ -1,0 +1,451 @@
+import { defineHandler } from 'h3';
+import { implement } from '@orpc/server';
+import { OpenAPIHandler } from '@orpc/openapi/fetch';
+import type { DatabaseAdapter } from '../../db/database';
+import { buildApiAuthCtx, requireEntityAction } from '../auth/authorization';
+import type { AuthenticatedEvent } from '../../middleware/auth';
+import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
+import { httpAssert } from '../../utils/httpAssert';
+import { orpcAssert } from '../../utils/orpcAssert';
+import { buildEntityGrantInputs, filterEntities, relationFields } from './dataHelpers';
+import { importParse, importCommit } from './importOperations';
+import { generateCsv, formatArrayForCsv } from '../../utils/csv';
+import { decodeRefs } from '../../types';
+import { PermissionChecker } from '@arch-register/permissions';
+import {
+  listEntities,
+  getEntityFacets,
+  getEntityTree,
+  getEntity,
+  getEntityRelations,
+  createEntity,
+  updateEntity,
+  cloneEntity,
+  deleteEntity
+} from './entityOperations';
+import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
+
+type ORPCContext = {
+  db: DatabaseAdapter;
+  event: AuthenticatedEvent;
+};
+
+const entityRouter = implement(workspaceEntityContract).$context<ORPCContext>();
+
+export const workspaceEntityORPCRouter = entityRouter.router({
+  entities: {
+    list: entityRouter.entities.list.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        return await listEntities(context.db, workspace, authCtx, {
+          schemaId: input.query._schemaId ?? null,
+          owner: input.query.owner ?? null,
+          lifecycle: input.query.lifecycle ?? null,
+          q: input.query.q ?? '',
+          view: input.query.view ?? 'full',
+          limit: input.query.limit ?? null,
+          offset: input.query.offset ?? 0
+        });
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    facets: entityRouter.entities.facets.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        return await getEntityFacets(context.db, workspace, authCtx);
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    tree: entityRouter.entities.tree.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        return await getEntityTree(context.db, workspace, authCtx, {
+          schemaId: input.query._schemaId ?? null,
+          owner: input.query.owner ?? null,
+          lifecycle: input.query.lifecycle ?? null,
+          q: input.query.q ?? ''
+        });
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    get: entityRouter.entities.get.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        return await getEntity(context.db, workspace, input.params.id, authCtx);
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    relations: entityRouter.entities.relations.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        return await getEntityRelations(context.db, workspace, input.params.id, authCtx);
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    create: entityRouter.entities.create.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const auditUser = context.event.context.user;
+        return await createEntity(
+          context.db,
+          workspace,
+          input.body as Record<string, unknown>,
+          authCtx,
+          { id: auditUser.id, displayName: auditUser.display_name }
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    update: entityRouter.entities.update.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const auditUser = context.event.context.user;
+        return await updateEntity(
+          context.db,
+          workspace,
+          input.params.id,
+          input.body as Record<string, unknown>,
+          authCtx,
+          { id: auditUser.id, displayName: auditUser.display_name }
+        );
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    clone: entityRouter.entities.clone.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const auditUser = context.event.context.user;
+        return await cloneEntity(context.db, workspace, input.params.id, authCtx, {
+          id: auditUser.id,
+          displayName: auditUser.display_name
+        });
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    remove: entityRouter.entities.remove.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const auditUser = context.event.context.user;
+        return await deleteEntity(context.db, workspace, input.params.id, authCtx, {
+          id: auditUser.id,
+          displayName: auditUser.display_name
+        });
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    getAccess: entityRouter.entities.getAccess.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+        httpAssert.present(entity, {
+          status: 404,
+          message: `Data record '${input.params.id}' not found`
+        });
+        requireEntityAction(
+          authCtx,
+          entity,
+          'view_entity',
+          'You do not have access to view this entity'
+        );
+        const grants = await context.db.catalog.getEntityGrants(workspace, input.params.id);
+        return {
+          owner: entity.owner,
+          visibility_mode: entity.visibility_mode,
+          grants: grants.map(g => ({ ...g, created_at: g.created_at.toISOString() }))
+        };
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    updateAccess: entityRouter.entities.updateAccess.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+        httpAssert.present(entity, {
+          status: 404,
+          message: `Data record '${input.params.id}' not found`
+        });
+        requireEntityAction(
+          authCtx,
+          entity,
+          'admin_entity',
+          'You do not have permission to manage entity access'
+        );
+        const rows = buildEntityGrantInputs(
+          workspace,
+          input.params.id,
+          input.body.grants,
+          new Date()
+        );
+        const grants = await context.db.catalog.replaceEntityGrants(
+          workspace,
+          input.params.id,
+          rows
+        );
+        return {
+          owner: entity.owner,
+          visibility_mode: entity.visibility_mode,
+          grants: grants.map(g => ({ ...g, created_at: g.created_at.toISOString() }))
+        };
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    importParse: entityRouter.entities.importParse.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        return await importParse(context.db, authCtx, {
+          workspace,
+          schemaId: input.body.schemaId,
+          csvContent: input.body.csvContent
+        });
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    importCommit: entityRouter.entities.importCommit.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const auditUser = context.event.context.user;
+        return await importCommit(context.db, authCtx, {
+          workspace,
+          schemaId: input.body.schemaId,
+          entities: input.body.entities as Array<
+            Record<string, unknown> & { _existingId?: string }
+          >,
+          auditUser: { id: auditUser.id, display_name: auditUser.display_name }
+        });
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    exportCsv: entityRouter.entities.exportCsv.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const checker = new PermissionChecker();
+        const schemaId = input.query._schemaId ?? null;
+        const owner = input.query.owner ?? null;
+        const lifecycle = input.query.lifecycle ?? null;
+        const q = input.query.q ?? '';
+
+        const [schemas, allEntitiesRaw] = await Promise.all([
+          context.db.catalog.listSchemas(workspace),
+          context.db.catalog.listEntities(workspace)
+        ]);
+
+        const allEntities = allEntitiesRaw.filter(entity =>
+          checker.hasEntityPermission(authCtx, entity, 'view_entity')
+        );
+        const schemaMap = new Map(schemas.map(s => [s.id, s]));
+        const entities = filterEntities(allEntities, { schemaId, owner, lifecycle, q }).sort(
+          (a, b) => a.name.localeCompare(b.name)
+        );
+
+        let csvContent: string;
+        if (schemaId) {
+          const schema = schemaMap.get(schemaId);
+          orpcAssert.present(schema, { code: 'NOT_FOUND', message: 'Schema not found' });
+
+          const refFields = relationFields(schema.fields);
+          const allRefIds = new Set<string>();
+          for (const entity of entities) {
+            for (const field of refFields) {
+              decodeRefs(entity.data[field.id]).forEach(id => allRefIds.add(id));
+            }
+          }
+          const refLookup = new Map(
+            allEntities
+              .filter(entity => allRefIds.has(entity.id))
+              .map(entity => [entity.id, entity.name || entity.slug])
+          );
+
+          const columns = [
+            'ID',
+            'Name',
+            'Slug',
+            'Namespace',
+            'Description',
+            'Owner',
+            'Lifecycle',
+            'Target Lifecycle',
+            'Target Date',
+            'Tags',
+            'Links',
+            'Schema Type',
+            ...schema.fields.map(f => f.name)
+          ];
+
+          const rows = entities.map(entity => {
+            const row: Record<string, unknown> = {
+              'ID': entity.id,
+              'Name': entity.name,
+              'Slug': entity.slug,
+              'Namespace': entity.namespace,
+              'Description': entity.description,
+              'Owner': entity.owner ?? '',
+              'Lifecycle': entity.lifecycle ?? '',
+              'Target Lifecycle': entity.target_lifecycle ?? '',
+              'Target Date': entity.target_lifecycle_date ?? '',
+              'Tags': formatArrayForCsv(entity.tags),
+              'Links': entity.links.length.toString(),
+              'Schema Type': schema.name
+            };
+            for (const field of schema.fields) {
+              const value = entity.data[field.id];
+              if (field.type === 'reference' || field.type === 'containment') {
+                row[field.name] = formatArrayForCsv(
+                  decodeRefs(value).map(id => refLookup.get(id) ?? id)
+                );
+              } else if (field.type === 'boolean') {
+                row[field.name] = value === true ? 'true' : value === false ? 'false' : '';
+              } else if (Array.isArray(value)) {
+                row[field.name] = formatArrayForCsv(value);
+              } else {
+                row[field.name] = value ?? '';
+              }
+            }
+            return row;
+          });
+          csvContent = generateCsv(rows, columns, ';');
+        } else {
+          const columns = [
+            'ID',
+            'Name',
+            'Slug',
+            'Namespace',
+            'Description',
+            'Owner',
+            'Lifecycle',
+            'Target Lifecycle',
+            'Target Date',
+            'Tags',
+            'Links',
+            'Schema Type'
+          ];
+          const rows = entities.map(entity => ({
+            'ID': entity.id,
+            'Name': entity.name,
+            'Slug': entity.slug,
+            'Namespace': entity.namespace,
+            'Description': entity.description,
+            'Owner': entity.owner ?? '',
+            'Lifecycle': entity.lifecycle ?? '',
+            'Target Lifecycle': entity.target_lifecycle ?? '',
+            'Target Date': entity.target_lifecycle_date ?? '',
+            'Tags': formatArrayForCsv(entity.tags),
+            'Links': entity.links.length.toString(),
+            'Schema Type': schemaMap.get(entity.schema_id)?.name ?? entity.schema_id
+          }));
+          csvContent = generateCsv(rows, columns, ';');
+        }
+
+        const timestamp = new Date().toISOString().split('T')[0];
+        const schemaName = schemaId
+          ? schemaMap.get(schemaId)?.name.toLowerCase().replace(/\s+/g, '-')
+          : 'entities';
+        const filename = `${schemaName}-${timestamp}.csv`;
+
+        return {
+          headers: {
+            'content-type': 'text/csv; charset=utf-8',
+            'content-disposition': `attachment; filename="${filename}"`
+          },
+          body: new Blob([csvContent], { type: 'text/csv; charset=utf-8' })
+        };
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    downloadTemplate: entityRouter.entities.downloadTemplate.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        await buildApiAuthCtx(context.db, workspace, context.event);
+
+        const schema = await context.db.catalog.getSchema(workspace, input.params.schemaId);
+        orpcAssert.present(schema, { code: 'NOT_FOUND', message: 'Schema not found' });
+
+        const columns = [
+          'ID',
+          'Name',
+          'Slug',
+          'Namespace',
+          'Description',
+          'Owner',
+          'Lifecycle',
+          'Tags',
+          ...schema.fields.map(f => f.name)
+        ];
+        const csvContent = columns.map(col => `"${col}"`).join(';');
+
+        const filename = `${schema.name.toLowerCase().replace(/\s+/g, '-')}-import-template.csv`;
+
+        return {
+          headers: {
+            'content-type': 'text/csv; charset=utf-8',
+            'content-disposition': `attachment; filename="${filename}"`
+          },
+          body: new Blob([csvContent], { type: 'text/csv; charset=utf-8' })
+        };
+      } catch (error) {
+        return toORPCError(error);
+      }
+    })
+  }
+});
+
+export const workspaceEntityOpenAPIHandler = new OpenAPIHandler(workspaceEntityORPCRouter, {
+  clientInterceptors: orpcErrorInterceptors
+});
+
+export const createWorkspaceEntityORPCHandler = (db: DatabaseAdapter) =>
+  defineHandler(async event => {
+    const result = await workspaceEntityOpenAPIHandler.handle(event.req, {
+      prefix: '/api',
+      context: {
+        db,
+        event: event as AuthenticatedEvent
+      }
+    });
+
+    if (result.matched) {
+      return result.response;
+    }
+  });

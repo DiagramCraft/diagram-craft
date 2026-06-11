@@ -41,7 +41,7 @@ const test = createApiTest({
 });
 
 const jsonHeaders = (auth: string) => ({
-  Authorization: auth,
+  'Authorization': auth,
   'Content-Type': 'application/json'
 });
 

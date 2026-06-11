@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@arch-register/api-types": "workspace:*",
+    "@orpc/client": "^1.14.5",
+    "@orpc/contract": "^1.14.5",
+    "@orpc/openapi-client": "^1.14.5",
     "@arch-register/permissions": "workspace:*",
     "@diagram-craft/app-components": "workspace:^",
     "@diagram-craft/canvas": "workspace:^",

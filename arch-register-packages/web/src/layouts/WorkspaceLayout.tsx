@@ -21,7 +21,6 @@ import { useAuthorizationData } from '../auth/AuthorizationDataContext';
 import { WorkspaceContext } from './WorkspaceContext';
 import { deriveActiveView } from './deriveActiveView';
 import type { ViewId } from './viewId';
-import type { Project } from '../lib/api';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import {
@@ -36,6 +35,7 @@ import {
   TbMessageCircleStar,
   TbFileAi
 } from 'react-icons/tb';
+import { Project } from '@arch-register/api-types/projectContract';
 
 const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'home', icon: TbHome, tooltip: 'Workspace overview' },

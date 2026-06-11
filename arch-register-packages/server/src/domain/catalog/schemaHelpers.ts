@@ -1,6 +1,87 @@
-import type { EntitySchema, WorkspaceEnum } from '@arch-register/api-types';
+import { randomUUID } from 'node:crypto';
 import type { WorkspaceEnumDbResult as InternalWorkspaceEnum } from './db/catalogDatabase';
 import { SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
+import { httpAssert } from '../../utils/httpAssert';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+
+type SchemaMutationPayload = {
+  name: string;
+  description: string;
+  fields: InternalEntitySchema['fields'];
+  color: string | null;
+  icon: string | null;
+  defaultOwner: string | null;
+};
+
+export const resolveSchemaDefaultOwner = (
+  requestedOwner: unknown,
+  teamIds: Set<string>,
+  fallbackOwner: string | null = null
+) =>
+  typeof requestedOwner === 'string' && teamIds.has(requestedOwner)
+    ? requestedOwner
+    : fallbackOwner;
+
+export const buildCreateSchemaInput = (
+  workspace: string,
+  body: Record<string, unknown>,
+  teamIds: Set<string>,
+  timestamp: Date,
+  idFactory: () => string = randomUUID
+) => {
+  const { name, description = '', fields = [], color, icon, default_owner } = body;
+  httpAssert.string(name, { message: 'name is required and must be a string' });
+
+  return {
+    id: idFactory(),
+    workspace,
+    name,
+    description: typeof description === 'string' ? description : '',
+    fields: Array.isArray(fields) ? (fields as InternalEntitySchema['fields']) : [],
+    color: typeof color === 'string' ? color : null,
+    icon: typeof icon === 'string' ? icon : null,
+    default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
+    created_at: timestamp,
+    updated_at: timestamp
+  };
+};
+
+export const buildUpdateSchemaInput = (
+  body: Record<string, unknown>,
+  current: InternalEntitySchema,
+  teamIds: Set<string>,
+  timestamp: Date
+): SchemaMutationPayload & { updated_at: Date } => {
+  const { name, description, fields, color, icon, default_owner } = body;
+  httpAssert.string(name, { message: 'name is required and must be a string' });
+
+  return {
+    name,
+    description:
+      description !== undefined
+        ? typeof description === 'string'
+          ? description
+          : ''
+        : current.description,
+    fields:
+      fields !== undefined && Array.isArray(fields)
+        ? (fields as InternalEntitySchema['fields'])
+        : current.fields,
+    color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
+    icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
+    defaultOwner:
+      default_owner !== undefined
+        ? resolveSchemaDefaultOwner(default_owner, teamIds, null)
+        : current.default_owner,
+    updated_at: timestamp
+  };
+};
+
+export const isSchemaReferencedByEntities = (
+  schemaId: string,
+  entities: Array<{ schema_id: string }>
+) => entities.some(entity => entity.schema_id === schemaId);
 
 export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
   id: e.id,

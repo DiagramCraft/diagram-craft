@@ -1,6 +1,7 @@
 import { seedEntities } from '@arch-register/server/db/seedData';
-import { test as baseTest, expect } from '../helpers/fixtures';
+import { expect, test as baseTest, createTestORPCClient } from '../helpers/fixtures';
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
+import type { TestORPCClient } from '../helpers/orpcTestClient';
 
 const test = baseTest.extend<{ seeded: true }>({
   seeded: [
@@ -12,11 +13,6 @@ const test = baseTest.extend<{ seeded: true }>({
   ]
 });
 
-const headers = (auth: string) => ({
-  Authorization: auth,
-  'Content-Type': 'application/json'
-});
-
 const domainId = '00000000-0000-0000-0001-000000000001';
 const systemId = '00000000-0000-0000-0002-000000000001';
 const apiId = '00000000-0000-0000-0004-000000000001';
@@ -24,35 +20,19 @@ const componentId = '00000000-0000-0000-0003-000000000002';
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
 
-const createEntity = async (
-  baseUrl: string,
-  auth: string,
-  body: Record<string, unknown>
-) => {
-  const res = await fetch(`${baseUrl}/api/default/data`, {
-    method: 'POST',
-    headers: headers(auth),
-    body: JSON.stringify(body)
-  });
-  expect(res.status).toBe(200);
-  return (await res.json()) as Record<string, unknown>;
+const createEntity = async (orpc: TestORPCClient, body: Record<string, unknown>) => {
+  return await orpc.entities.create({ params: { workspace: 'default' }, body: body as never });
 };
 
 test.describe('data routes', () => {
   test('GET /api/:workspace/data lists seeded entities and supports summary filters', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const res = await fetch(
-      `${server.baseUrl}/api/default/data?view=summary&_schemaId=${componentSchemaId}&owner=${encodeURIComponent(seedIds.teams.design)}&q=react`,
-      {
-        headers: { Authorization: auth }
-      }
-    );
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as Array<Record<string, unknown>>;
+    const body = await orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { view: 'summary', _schemaId: componentSchemaId, owner: seedIds.teams.design, q: 'react' }
+    });
     expect(body).toEqual([
       expect.objectContaining({
         _uid: componentId,
@@ -65,21 +45,18 @@ test.describe('data routes', () => {
   });
 
   test('GET /api/:workspace/data returns 401 without authentication', async ({ server }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/data`);
-    expect(res.status).toBe(401);
+    const anonOrpc = createTestORPCClient(server.baseUrl);
+    await expect(
+      anonOrpc.entities.list({ params: { workspace: 'default' }, query: {} })
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
   test('GET /api/:workspace/data/facets returns counts for seeded entities', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/data/facets`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
+    const body = await orpc.entities.facets({ params: { workspace: 'default' } });
+    expect(body).toMatchObject({
       total: seedEntities.length,
       completeness: {
         below50: expect.any(Number),
@@ -90,19 +67,13 @@ test.describe('data routes', () => {
   });
 
   test('GET /api/:workspace/data/tree returns matches with ancestor edges', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/data/tree?q=frontend`, {
-      headers: { Authorization: auth }
+    const body = await orpc.entities.tree({
+      params: { workspace: 'default' },
+      query: { q: 'frontend' }
     });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      nodes: Array<Record<string, unknown>>;
-      edges: Array<Record<string, string>>;
-    };
     expect(body.nodes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ _uid: componentId, _isMatch: true }),
@@ -123,9 +94,12 @@ test.describe('data routes', () => {
     auth,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/data/export?_schemaId=${apiSchemaId}`, {
-      headers: { Authorization: auth }
-    });
+    const res = await fetch(
+      `${server.baseUrl}/api/default/data/export?_schemaId=${apiSchemaId}`,
+      {
+        headers: { Authorization: auth }
+      }
+    );
 
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/csv');
@@ -155,8 +129,7 @@ test.describe('data routes', () => {
   });
 
   test('POST /api/:workspace/data/import/parse matches existing rows by slug', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
     const csvContent = [
@@ -164,20 +137,11 @@ test.describe('data routes', () => {
       '"Frontend App";"frontend-app";"default";"Updated from CSV";"React";"Customer Portal"'
     ].join('\n');
 
-    const res = await fetch(`${server.baseUrl}/api/default/data/import/parse`, {
-      method: 'POST',
-      headers: headers(auth),
-      body: JSON.stringify({
-        schemaId: componentSchemaId,
-        csvContent
-      })
+    const body = await orpc.entities.importParse({
+      params: { workspace: 'default' },
+      body: { schemaId: componentSchemaId, csvContent }
     });
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      entities: Array<Record<string, unknown>>;
-      validRows: number;
-    };
     expect(body.validRows).toBe(1);
     expect(body.entities[0]).toMatchObject({
       isUpdate: true,
@@ -187,11 +151,10 @@ test.describe('data routes', () => {
   });
 
   test('POST /api/:workspace/data creates an entity and inherits owner from its parent', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const created = await createEntity(server.baseUrl, auth, {
+    const created = await createEntity(orpc, {
       _schemaId: apiSchemaId,
       _name: 'Billing API',
       _namespace: 'default',
@@ -212,16 +175,11 @@ test.describe('data routes', () => {
   });
 
   test('GET /api/:workspace/data/:id returns entity detail', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/data/${componentId}`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
+    const body = await orpc.entities.get({ params: { workspace: 'default', id: componentId } });
+    expect(body).toMatchObject({
       _uid: componentId,
       _name: 'Frontend App',
       technology: 'React',
@@ -230,19 +188,10 @@ test.describe('data routes', () => {
   });
 
   test('GET /api/:workspace/data/:id/relations returns incoming and outgoing relations', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/data/${componentId}/relations`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      outgoing: Array<Record<string, unknown>>;
-      incoming: Array<Record<string, unknown>>;
-    };
+    const body = await orpc.entities.relations({ params: { workspace: 'default', id: componentId } });
     expect(body.outgoing).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -261,24 +210,19 @@ test.describe('data routes', () => {
   });
 
   test('GET and PUT /api/:workspace/data/:id/access round-trip grants', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const getRes = await fetch(`${server.baseUrl}/api/default/data/${componentId}/access`, {
-      headers: { Authorization: auth }
-    });
-    expect(getRes.status).toBe(200);
-    await expect(getRes.json()).resolves.toMatchObject({
+    const getBody = await orpc.entities.getAccess({ params: { workspace: 'default', id: componentId } });
+    expect(getBody).toMatchObject({
       owner: seedIds.teams.design,
       visibility_mode: null,
       grants: []
     });
 
-    const putRes = await fetch(`${server.baseUrl}/api/default/data/${componentId}/access`, {
-      method: 'PUT',
-      headers: headers(auth),
-      body: JSON.stringify({
+    const putBody = await orpc.entities.updateAccess({
+      params: { workspace: 'default', id: componentId },
+      body: {
         grants: [
           {
             principal_type: 'team',
@@ -287,11 +231,10 @@ test.describe('data routes', () => {
             applies_to: 'subtree'
           }
         ]
-      })
+      }
     });
 
-    expect(putRes.status).toBe(200);
-    await expect(putRes.json()).resolves.toMatchObject({
+    expect(putBody).toMatchObject({
       owner: seedIds.teams.design,
       grants: [
         expect.objectContaining({
@@ -304,8 +247,8 @@ test.describe('data routes', () => {
     });
   });
 
-  test('PUT /api/:workspace/data/:id updates an entity', async ({ server, auth, seeded: _ }) => {
-    const created = await createEntity(server.baseUrl, auth, {
+  test('PUT /api/:workspace/data/:id updates an entity', async ({ orpc, seeded: _ }) => {
+    const created = await createEntity(orpc, {
       _schemaId: componentSchemaId,
       _name: 'Session Worker',
       _owner: seedIds.teams.platform,
@@ -314,10 +257,9 @@ test.describe('data routes', () => {
       system: systemId
     });
 
-    const res = await fetch(`${server.baseUrl}/api/default/data/${created['_uid']}`, {
-      method: 'PUT',
-      headers: headers(auth),
-      body: JSON.stringify({
+    const updated = await orpc.entities.update({
+      params: { workspace: 'default', id: created._uid },
+      body: {
         _schemaId: componentSchemaId,
         _name: 'Session Worker v2',
         _slug: 'session-worker-v2',
@@ -329,12 +271,11 @@ test.describe('data routes', () => {
         _visibilityMode: 'restricted',
         technology: 'Go',
         system: systemId
-      })
+      } as never
     });
 
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
-      _uid: created['_uid'],
+    expect(updated).toMatchObject({
+      _uid: created._uid,
       _name: 'Session Worker v2',
       _slug: 'session-worker-v2',
       _owner: expect.objectContaining({ id: seedIds.teams.security }),
@@ -344,17 +285,11 @@ test.describe('data routes', () => {
   });
 
   test('POST /api/:workspace/data/:id/clone clones an entity', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/data/${apiId}/clone`, {
-      method: 'POST',
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
+    const body = await orpc.entities.clone({ params: { workspace: 'default', id: apiId } });
+    expect(body).toMatchObject({
       _name: 'Customer API (copy)',
       _slug: 'customer-api-copy',
       api_type: 'openapi',
@@ -363,11 +298,10 @@ test.describe('data routes', () => {
   });
 
   test('POST /api/:workspace/data/import/commit creates and updates entities', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const created = await createEntity(server.baseUrl, auth, {
+    const created = await createEntity(orpc, {
       _schemaId: componentSchemaId,
       _name: 'CSV Worker',
       _owner: seedIds.teams.platform,
@@ -376,14 +310,13 @@ test.describe('data routes', () => {
       system: systemId
     });
 
-    const res = await fetch(`${server.baseUrl}/api/default/data/import/commit`, {
-      method: 'POST',
-      headers: headers(auth),
-      body: JSON.stringify({
+    const body = await orpc.entities.importCommit({
+      params: { workspace: 'default' },
+      body: {
         schemaId: componentSchemaId,
         entities: [
           {
-            _existingId: created['_uid'],
+            _existingId: created._uid,
             _name: 'CSV Worker Updated',
             _slug: 'csv-worker',
             _namespace: 'default',
@@ -405,27 +338,15 @@ test.describe('data routes', () => {
             depends_on: 'API Gateway'
           }
         ]
-      })
+      }
     });
 
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as {
-      created: number;
-      updated: number;
-      ids: string[];
-    };
     expect(body.created).toBe(1);
     expect(body.updated).toBe(1);
     expect(body.ids).toHaveLength(2);
 
     const importedEntities = await Promise.all(
-      body.ids.map(async id => {
-        const entityRes = await fetch(`${server.baseUrl}/api/default/data/${id}`, {
-          headers: { Authorization: auth }
-        });
-        expect(entityRes.status).toBe(200);
-        return (await entityRes.json()) as Record<string, unknown>;
-      })
+      body.ids.map(id => orpc.entities.get({ params: { workspace: 'default', id } }))
     );
 
     expect(importedEntities).toEqual(
@@ -435,7 +356,7 @@ test.describe('data routes', () => {
           technology: 'React'
         }),
         expect.objectContaining({
-          _uid: created['_uid'],
+          _uid: created._uid,
           _name: 'CSV Worker Updated',
           technology: 'Rust'
         })
@@ -443,40 +364,32 @@ test.describe('data routes', () => {
     );
   });
 
-  test('DELETE /api/:workspace/data/:id deletes an entity', async ({ server, auth, seeded: _ }) => {
-    const created = await createEntity(server.baseUrl, auth, {
+  test('DELETE /api/:workspace/data/:id deletes an entity', async ({ orpc, seeded: _ }) => {
+    const created = await createEntity(orpc, {
       _schemaId: apiSchemaId,
       _name: 'Delete Me API',
       api_type: 'graphql',
       system: systemId
     });
 
-    const res = await fetch(`${server.baseUrl}/api/default/data/${created['_uid']}`, {
-      method: 'DELETE',
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
+    const result = await orpc.entities.remove({ params: { workspace: 'default', id: created._uid } });
+    expect(result).toMatchObject({
       success: true,
-      message: `Data record '${created['_uid']}' deleted`
+      message: `Data record '${created._uid}' deleted`
     });
   });
 
-  test('returns 404 for unknown workspace', async ({ server, auth, seeded: _ }) => {
-    const res = await fetch(`${server.baseUrl}/api/nonexistent/data`, {
-      headers: { Authorization: auth }
-    });
-
-    expect(res.status).toBe(404);
+  test('returns 404 for unknown workspace', async ({ orpc, seeded: _ }) => {
+    await expect(
+      orpc.entities.list({ params: { workspace: 'nonexistent' }, query: {} })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   test('POST /api/:workspace/data creates entity with target lifecycle and date', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const created = await createEntity(server.baseUrl, auth, {
+    const created = await createEntity(orpc, {
       _schemaId: apiSchemaId,
       _name: 'Sunset API',
       _lifecycle: seedIds.lifecycle.production,
@@ -495,11 +408,10 @@ test.describe('data routes', () => {
   });
 
   test('PUT /api/:workspace/data/:id updates target lifecycle', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const created = await createEntity(server.baseUrl, auth, {
+    const created = await createEntity(orpc, {
       _schemaId: apiSchemaId,
       _name: 'Future API',
       _lifecycle: seedIds.lifecycle.experimental,
@@ -507,12 +419,11 @@ test.describe('data routes', () => {
       system: systemId
     });
 
-    expect(created['_targetLifecycle']).toBeNull();
+    expect(created._targetLifecycle).toBeNull();
 
-    const res = await fetch(`${server.baseUrl}/api/default/data/${created['_uid']}`, {
-      method: 'PUT',
-      headers: headers(auth),
-      body: JSON.stringify({
+    const updated = await orpc.entities.update({
+      params: { workspace: 'default', id: created._uid },
+      body: {
         _schemaId: apiSchemaId,
         _name: 'Future API',
         _namespace: 'default',
@@ -521,11 +432,10 @@ test.describe('data routes', () => {
         _targetLifecycleDate: '2026-09-30',
         api_type: 'openapi',
         system: systemId
-      })
+      } as never
     });
 
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toMatchObject({
+    expect(updated).toMatchObject({
       _lifecycle: expect.objectContaining({ id: seedIds.lifecycle.experimental }),
       _targetLifecycle: expect.objectContaining({ id: seedIds.lifecycle.production }),
       _targetLifecycleDate: '2026-09-30'
@@ -533,11 +443,10 @@ test.describe('data routes', () => {
   });
 
   test('POST /api/:workspace/data silently nulls invalid target lifecycle', async ({
-    server,
-    auth,
+    orpc,
     seeded: _
   }) => {
-    const created = await createEntity(server.baseUrl, auth, {
+    const created = await createEntity(orpc, {
       _schemaId: apiSchemaId,
       _name: 'Invalid Target API',
       _lifecycle: seedIds.lifecycle.production,
@@ -546,6 +455,6 @@ test.describe('data routes', () => {
       system: systemId
     });
 
-    expect(created['_targetLifecycle']).toBeNull();
+    expect(created._targetLifecycle).toBeNull();
   });
 });

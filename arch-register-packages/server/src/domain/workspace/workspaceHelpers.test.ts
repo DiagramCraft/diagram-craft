@@ -131,7 +131,6 @@ describe('toApiWorkspaceUser', () => {
     };
     const result = toApiWorkspaceUser(user);
     expect(result.id).toBe('u-2');
-    expect(result.user_id).toBe('bob');
     expect(result.email).toBe('b@c.com');
     expect(result.is_active).toBe(false);
     expect(result.auth_provider).toBe('oidc');

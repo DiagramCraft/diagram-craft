@@ -6,8 +6,11 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist",
-    "validate:openapi": "tsx scripts/validate-openapi.ts"
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@orpc/contract": "^1.14.5",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "tsx": "^4.22.4",

@@ -3,14 +3,14 @@ import { TbPlus, TbX } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
-import type { FilterCondition } from '@arch-register/api-types/views';
-import type {
-  EntitySchema,
-  WorkspaceLifecycleState,
-  WorkspaceOwnerOption,
-  WorkspaceEnum
-} from '../lib/api';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import styles from './FilterBuilder.module.css';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import {
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption
+} from '@arch-register/api-types/workspaceContract';
+import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
 const TEXT_OPERATORS = [
   { value: 'equals', label: 'Equals' },

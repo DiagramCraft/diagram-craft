@@ -11,9 +11,9 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { EntitySchema } from '../../../lib/api';
 import { TbVectorTriangle } from 'react-icons/tb';
 import styles from './SchemaGraphView.module.css';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
 
 export const SchemaGraphView = () => {
   const { schemas, workspaceSlug } = useWorkspaceContext();

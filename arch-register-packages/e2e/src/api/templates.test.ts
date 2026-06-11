@@ -1,4 +1,4 @@
-import { test as baseTest, expect } from '../helpers/fixtures';
+import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
 
 const now = new Date();
@@ -101,95 +101,82 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
 });
 
 test.describe('GET /api/:workspace/templates', () => {
-  test('returns 200 with workspaceTemplates and projectTemplates', async ({ server, auth, seeded: _ }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/templates`, {
-      headers: { Authorization: auth }
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { workspaceTemplates: unknown[]; projectTemplates: Record<string, unknown[]> };
+  test('returns 200 with workspaceTemplates and projectTemplates', async ({ orpc, seeded: _ }) => {
+    const body = await orpc.templates.listAll({ params: { workspace: 'default' } });
     expect(Array.isArray(body.workspaceTemplates)).toBe(true);
     expect(typeof body.projectTemplates).toBe('object');
   });
 
-  test('workspace templates are in workspaceTemplates array', async ({ server, auth, seeded: _ }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/templates`, {
-      headers: { Authorization: auth }
-    });
-    const body = (await res.json()) as { workspaceTemplates: Array<{ is_workspace_template: boolean }> };
+  test('workspace templates are in workspaceTemplates array', async ({ orpc, seeded: _ }) => {
+    const body = await orpc.templates.listAll({ params: { workspace: 'default' } });
     expect(body.workspaceTemplates.length).toBeGreaterThanOrEqual(1);
     expect(body.workspaceTemplates.every(t => t.is_workspace_template === true)).toBe(true);
   });
 
-  test('project-level templates appear under their project id', async ({ server, auth, seeded }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/templates`, {
-      headers: { Authorization: auth }
-    });
-    const body = (await res.json()) as { projectTemplates: Record<string, Array<{ is_template: boolean; is_workspace_template: boolean }>> };
+  test('project-level templates appear under their project id', async ({ orpc, seeded }) => {
+    const body = await orpc.templates.listAll({ params: { workspace: 'default' } });
     const projTemplates = body.projectTemplates[seeded.projectId] ?? [];
     expect(projTemplates.length).toBeGreaterThanOrEqual(1);
     expect(projTemplates.every(t => t.is_template && !t.is_workspace_template)).toBe(true);
   });
 
   test('returns 401 without auth', async ({ server }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/templates`);
-    expect(res.status).toBe(401);
+    const anonOrpc = createTestORPCClient(server.baseUrl);
+    await expect(
+      anonOrpc.templates.listAll({ params: { workspace: 'default' } })
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('returns 404 for unknown workspace', async ({ server, auth }) => {
-    const res = await fetch(`${server.baseUrl}/api/nonexistent/templates`, {
-      headers: { Authorization: auth }
-    });
-    expect(res.status).toBe(404);
+  test('returns 404 for unknown workspace', async ({ orpc }) => {
+    await expect(
+      orpc.templates.listAll({ params: { workspace: 'nonexistent' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
 
 test.describe('GET /api/:workspace/projects/:projectId/templates', () => {
-  test('returns 200 with workspaceTemplates and projectTemplates arrays', async ({ server, auth, seeded }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/projects/${seeded.projectId}/templates`, {
-      headers: { Authorization: auth }
+  test('returns 200 with workspaceTemplates and projectTemplates arrays', async ({ orpc, seeded }) => {
+    const body = await orpc.templates.listForProject({
+      params: { workspace: 'default', id: seeded.projectId }
     });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { workspaceTemplates: unknown[]; projectTemplates: unknown[] };
     expect(Array.isArray(body.workspaceTemplates)).toBe(true);
     expect(Array.isArray(body.projectTemplates)).toBe(true);
   });
 
-  test('workspaceTemplates includes templates from other projects', async ({ server, auth, seeded: _ }) => {
+  test('workspaceTemplates includes templates from other projects', async ({ orpc, seeded: _ }) => {
     // Project A has the workspace template — when viewing project B, we should still see it
-    const res = await fetch(`${server.baseUrl}/api/default/projects/e2e-tmpl-proj-b/templates`, {
-      headers: { Authorization: auth }
+    const body = await orpc.templates.listForProject({
+      params: { workspace: 'default', id: 'e2e-tmpl-proj-b' }
     });
-    const body = (await res.json()) as { workspaceTemplates: Array<{ is_workspace_template: boolean }> };
     expect(body.workspaceTemplates.length).toBeGreaterThanOrEqual(1);
     expect(body.workspaceTemplates.every(t => t.is_workspace_template === true)).toBe(true);
   });
 
-  test('projectTemplates only includes templates belonging to the target project', async ({ server, auth, seeded }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/projects/${seeded.projectId}/templates`, {
-      headers: { Authorization: auth }
+  test('projectTemplates only includes templates belonging to the target project', async ({ orpc, seeded }) => {
+    const body = await orpc.templates.listForProject({
+      params: { workspace: 'default', id: seeded.projectId }
     });
-    const body = (await res.json()) as { projectTemplates: Array<{ is_template: boolean; is_workspace_template: boolean }> };
     expect(body.projectTemplates.length).toBeGreaterThanOrEqual(1);
     expect(body.projectTemplates.every(t => t.is_template && !t.is_workspace_template)).toBe(true);
   });
 
-  test('returns 404 for unknown project', async ({ server, auth, seeded: _ }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/projects/nonexistent/templates`, {
-      headers: { Authorization: auth }
-    });
-    expect(res.status).toBe(404);
+  test('returns 404 for unknown project', async ({ orpc, seeded: _ }) => {
+    await expect(
+      orpc.templates.listForProject({ params: { workspace: 'default', id: 'nonexistent' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   test('returns 401 without auth', async ({ server, seeded: _ }) => {
-    const res = await fetch(`${server.baseUrl}/api/default/projects/e2e-tmpl-proj-a/templates`);
-    expect(res.status).toBe(401);
+    const anonOrpc = createTestORPCClient(server.baseUrl);
+    await expect(
+      anonOrpc.templates.listForProject({ params: { workspace: 'default', id: 'e2e-tmpl-proj-a' } })
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
-  test('returns 404 for unknown workspace', async ({ server, auth, seeded: _ }) => {
-    const res = await fetch(`${server.baseUrl}/api/nonexistent/projects/any/templates`, {
-      headers: { Authorization: auth }
-    });
-    expect(res.status).toBe(404);
+  test('returns 404 for unknown workspace', async ({ orpc, seeded: _ }) => {
+    await expect(
+      orpc.templates.listForProject({ params: { workspace: 'nonexistent', id: 'any' } })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
 

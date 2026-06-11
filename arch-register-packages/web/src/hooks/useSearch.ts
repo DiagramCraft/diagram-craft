@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { searchArchRegister } from '../lib/api';
+import { orpcClient } from '../lib/orpcClient';
 
 // Query keys factory
 export const searchKeys = {
@@ -27,7 +27,15 @@ export const useSearch = (
 ) => {
   return useQuery({
     queryKey: searchKeys.search(workspaceId, params.q, params),
-    queryFn: () => searchArchRegister(workspaceId, params),
+    queryFn: () =>
+      orpcClient.search.query({
+        params: { workspace: workspaceId },
+        query: {
+          q: params.q,
+          limitPerType: params.limitPerType ?? undefined,
+          types: params.types?.join(',') ?? undefined
+        }
+      }),
     enabled: queryOptions?.enabled ?? (!!workspaceId && !!params.q.trim()),
     // Search results can be cached for a shorter time
     staleTime: 2 * 60 * 1000 // 2 minutes

@@ -17,6 +17,9 @@ VALUES ('default',
         'DW',
         'The default workspace');
 
+INSERT INTO workspace_ai_config (workspace, provider, api_key_enc, base_url, model, temperature, system_prompt, enabled, created_at, updated_at)
+VALUES ('default', 'openrouter', NULL, NULL, NULL, NULL, NULL, 0, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');
+
 INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order)
 VALUES ('proposed', 'default', 'Proposed', 'var(--accent)', 0),
        ('experimental', 'default', 'Experimental', 'var(--accent)', 1),

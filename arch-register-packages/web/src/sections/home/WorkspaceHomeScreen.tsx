@@ -14,10 +14,11 @@ import {
   TbChartBar
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
-import type { AuditLogEntry, Project } from '../../lib/api';
 import { useAuditLog } from '../../hooks/useAudit';
 import { useEntityFacets } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { Project } from '@arch-register/api-types/projectContract';
+import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 
 const PROJECT_STATUS_META = {
   pinned: { label: 'Pinned' },
@@ -318,7 +319,9 @@ export const WorkspaceHomeScreen = () => {
                         className={styles.activityRow}
                         onClick={() => handleActivityClick(entry)}
                       >
-                        <span className={styles.activityWho}>{entry.user_display_name ?? entry.user_id ?? 'Unknown'}</span>
+                        <span className={styles.activityWho}>
+                          {entry.user_display_name ?? entry.user_id ?? 'Unknown'}
+                        </span>
                         <span className="dim"> {getOperationLabel(entry.operation)} </span>
                         <span className={styles.activityTarget}>{entry.entity_name}</span>
                         <span className="dim">

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Workspace } from '../lib/api';
-import { apiFetch } from '../lib/api';
 import { auditKeys, invalidateAuditQueries } from './useAudit';
+import { orpcClient } from '../lib/orpcClient';
 
 // Query keys factory
 export const workspaceKeys = {
@@ -16,9 +15,7 @@ export const workspaceKeys = {
 export const useWorkspaces = () => {
   return useQuery({
     queryKey: workspaceKeys.list(),
-    queryFn: async () => {
-      return await apiFetch<Workspace[]>('/api/workspaces');
-    },
+    queryFn: () => orpcClient.workspaces.list({}),
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
 };
@@ -35,16 +32,12 @@ export const useUpdateWorkspace = () => {
       workspaceId: string;
       data: {
         name: string;
-        url_slug: string;
-        short_code: string;
-        color: string;
-        description: string;
+        url_slug?: string;
+        short_code?: string;
+        color?: string;
+        description?: string;
       };
-    }) =>
-      apiFetch<Workspace>(`/api/workspaces/${workspaceId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      }),
+    }) => orpcClient.workspaces.update({ params: { workspace: workspaceId }, body: data }),
     onSuccess: async (updatedWorkspace, variables) => {
       // Update the workspace detail cache
       queryClient.setQueryData(workspaceKeys.detail(variables.workspaceId), updatedWorkspace);
@@ -63,9 +56,7 @@ export const useDeleteWorkspace = () => {
 
   return useMutation({
     mutationFn: (workspaceId: string) =>
-      apiFetch<{ success: boolean }>(`/api/workspaces/${workspaceId}`, {
-        method: 'DELETE'
-      }),
+      orpcClient.workspaces.remove({ params: { workspace: workspaceId } }),
     onSuccess: () => {
       // Invalidate all workspace queries
       queryClient.invalidateQueries({ queryKey: workspaceKeys.all });

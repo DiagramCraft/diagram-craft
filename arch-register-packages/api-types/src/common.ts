@@ -1,50 +1,39 @@
+import { z } from 'zod';
+
 // ── Common Types ──────────────────────────────────────────────
 
-export type VisibilityMode = 'public' | 'restricted';
+export const ws = z.object({
+  workspace: z.string()
+});
 
-export type ForeignKey<T = string> = {
-  id: string;
-  name: T;
-};
+export const wsAndId = z.object({
+  workspace: z.string(),
+  id: z.string()
+});
 
-export type EntityLink = {
-  url: string;
-  title: string;
-  type?: string;
-};
+export const foreignKeySchema = z.object({
+  id: z.string(),
+  name: z.string()
+});
 
-// ── Capability Types ──────────────────────────────────────────
+export const teamRoleSchema = z.enum(['team_admin', 'team_editor', 'team_reviewer']);
 
-export type EntityCapabilities = {
-  canView: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-  canAdmin: boolean;
-  canCreateChild: boolean;
-};
-
-export type ProjectCapabilities = {
-  canEdit: boolean;
-  canDelete: boolean;
-  canManageFiles: boolean;
-};
-
-// ── Error Response ────────────────────────────────────────────
-
-export type ErrorResponse = {
-  statusCode: number;
-  statusText: string;
-  message: string;
-  data?: unknown;
-};
-
-// ── Success Response ──────────────────────────────────────────
-
-export type SuccessMessage = {
-  success: true;
-  message: string;
-};
-
-export type CountSuccessMessage = SuccessMessage & {
-  count: number;
-};
+export const workspaceCapabilitySchema = z.enum([
+  'ws.view',
+  'ws.settings',
+  'ws.delete',
+  'ws.audit',
+  'ws.manage_views',
+  'people.invite',
+  'people.role',
+  'people.remove',
+  'people.teams',
+  'proj.create',
+  'proj.edit',
+  'ent.edit',
+  'ent.propose',
+  'comments',
+  'export',
+  'schema.edit',
+  'schema.publish'
+]);

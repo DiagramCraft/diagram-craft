@@ -9,9 +9,11 @@ import {
   TbHistory,
   TbTrash
 } from 'react-icons/tb';
-import type { EntitySchema, Project, Workspace } from '../../lib/api';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
+import { Workspace } from '@arch-register/api-types/workspaceContract';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { Project } from '@arch-register/api-types/projectContract';
 
 const SectionHeader = ({ title, actions }: { title: string; actions?: React.ReactNode }) => (
   <div className={`${styles.header} ${styles.tabHeader}`}>

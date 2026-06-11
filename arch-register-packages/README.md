@@ -187,7 +187,7 @@ pnpm --filter @arch-register/e2e test:ui
 pnpm --filter @arch-register/e2e test:ui:headed
 ```
 
-The UI test suite seeds a test user (`admin@e2e.test` / `TestPassword123!`) and a default workspace on startup. The server runs on port 3011 to avoid conflicting with a locally running dev server.
+The UI test suite seeds the same bootstrap dataset as the server bootstrap script, including demo users, entities, projects, views, watches, and notifications. Use `james.chen@example.com` / `test` to sign in. The server runs on port 3011 to avoid conflicting with a locally running dev server.
 
 ## 📝 Key Files
 

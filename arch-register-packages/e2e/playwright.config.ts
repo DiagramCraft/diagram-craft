@@ -1,4 +1,11 @@
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
+
+const packageDir = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(packageDir, '../..');
+const webPackageDir = resolve(packageDir, '../web');
+const serverSetupPath = resolve(packageDir, '../server/src/serverSetup.mjs');
 
 export default defineConfig({
   testDir: './src/ui',
@@ -15,7 +22,8 @@ export default defineConfig({
   webServer: [
     {
       // API server: fresh SQLite DB seeded with test data on every run
-      command: 'node --import tsx src/helpers/startServer.ts',
+      command: `node --import tsx --import ${serverSetupPath} src/helpers/startServer.ts`,
+      cwd: packageDir,
       url: 'http://localhost:3011/api/auth/config',
       reuseExistingServer: false,
       env: {
@@ -31,10 +39,15 @@ export default defineConfig({
     {
       // Web dev server: separate port (5175) and dedicated config that proxies to 3011.
       // This avoids any conflict with a locally running dev server on 5174/3010.
-      command: 'pnpm --filter @arch-register/web exec vite --config vite.config.e2e.js',
+      command: 'pnpm exec vite --config vite.config.e2e.js',
+      cwd: webPackageDir,
       url: 'http://localhost:5175',
       reuseExistingServer: false,
-      timeout: 60_000
+      timeout: 60_000,
+      env: {
+        ...process.env,
+        PNPM_WORKSPACE_DIR: repoRoot
+      }
     }
   ]
 });

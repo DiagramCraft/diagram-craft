@@ -21,7 +21,7 @@ import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationC
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../../auth/AuthContext';
-import { apiFetchResponse } from '../../lib/api';
+import { orpcClient } from '../../lib/orpcClient';
 import { projectFileKeys } from '../../hooks/useProjectFiles';
 import { projectKeys } from '../../hooks/useProjects';
 import { stableHue } from '../../components/MemberAvatar';
@@ -121,15 +121,11 @@ export const DiagramScreen = () => {
 
     try {
       const serialized = await serializeDiagramDocument(docRef.current);
-      const response = await apiFetchResponse(
-        `/api/${workspaceId}/projects/${projectId}/files/${fileInfoRef.current.path}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(serialized)
-        }
-      );
-      await response.json().catch(() => undefined);
+      await orpcClient.projects.saveFile({
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: fileInfoRef.current.path },
+        body: serialized as unknown as Record<string, unknown>
+      });
     } catch (err) {
       console.error('Save failed:', err);
     }
@@ -209,8 +205,12 @@ export const DiagramScreen = () => {
         const includedPackages = getIncludedPackages();
 
         // Fetch project to get file info
-        const projectResponse = await apiFetchResponse(`/api/${workspaceId}/projects/${projectId}`);
-        const project = await projectResponse.json();
+        const project = await orpcClient.projects.get({
+          params: {
+            workspace: workspaceId,
+            id: projectId
+          }
+        });
 
         // Find the file in the project
         // biome-ignore lint/suspicious/noExplicitAny: API response
@@ -259,11 +259,11 @@ export const DiagramScreen = () => {
         // If the CRDT already has state (another client is connected), use it directly.
         // Otherwise, this is the first client — load from REST and deserialize.
         if (document.diagrams.length === 0) {
-          const diagramResponse = await apiFetchResponse(
-            `/api/${workspaceId}/projects/${projectId}/files/${file.path}`
-          );
-          const rawDiagramData = await diagramResponse.json();
-          const serializedDiagramData = rawDiagramData as SerializedDiagramDocument;
+          const rawDiagramData = await orpcClient.projects.getFileContent({
+            params: { workspace: workspaceId, id: projectId },
+            query: { path: file.path }
+          });
+          const serializedDiagramData = rawDiagramData as unknown as SerializedDiagramDocument;
           const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas);
 
           await deserializeDiagramDocument(diagramData, document, diagramFactory, {
