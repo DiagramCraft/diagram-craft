@@ -63,7 +63,8 @@ export const generateAccurateSvgPreview = async (
 
     const diagram = diagramDoc.diagrams[0]!;
 
-    const viewBox = diagram.viewBox.svgViewboxString;
+    // Use canvas bounds for stable preview viewBox instead of viewport state
+    const viewBox = `${diagram.bounds.x} ${diagram.bounds.y} ${diagram.bounds.w} ${diagram.bounds.h}`;
 
     const props = {
       id: 'ssr-preview',
