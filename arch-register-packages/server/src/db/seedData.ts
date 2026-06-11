@@ -27,11 +27,12 @@ import { ProjectDbCreate, ProjectFileDbResult } from '../domain/project/db/proje
 import { AuditOperation } from '../domain/audit/db/auditDatabase';
 import { GlobalRoleAssignmentDbResult } from '../domain/auth/db/authDatabase';
 import { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
+import { seededProjects, seededUsers, seededWorkspaces } from './seedFixtures';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
-const WORKSPACE_ID = '90000000-0000-0000-0000-000000000001';
-const WORKSPACE2_ID = '90000000-0000-0000-0000-000000000002';
+const WORKSPACE_ID = seededWorkspaces.default.id;
+const WORKSPACE2_ID = seededWorkspaces.second.id;
 
 const LIFECYCLE_IDS = {
   proposed: '90000000-0000-0000-0000-000000000011',
@@ -60,16 +61,16 @@ const TEAM2_IDS = {
 } as const;
 
 const USER_IDS = {
-  globaladmin: '91000000-0000-0000-0000-000000000001',
-  workspaceadmin: '91000000-0000-0000-0000-000000000002',
-  workspaceowner: '91000000-0000-0000-0000-000000000003',
-  platformteamadmin: '91000000-0000-0000-0000-000000000004',
-  platformteameditor: '91000000-0000-0000-0000-000000000005',
-  designteamadmin: '91000000-0000-0000-0000-000000000006',
-  securityteamadmin: '91000000-0000-0000-0000-000000000007',
-  workspaceeditor: '91000000-0000-0000-0000-000000000008',
-  workspacereviewer: '91000000-0000-0000-0000-000000000009',
-  workspaceviewer: '91000000-0000-0000-0000-00000000000a'
+  globaladmin: seededUsers.globalAdmin.id,
+  workspaceadmin: seededUsers.workspaceAdmin.id,
+  workspaceowner: seededUsers.workspaceOwner.id,
+  platformteamadmin: seededUsers.platformTeamAdmin.id,
+  platformteameditor: seededUsers.platformTeamEditor.id,
+  designteamadmin: seededUsers.designTeamAdmin.id,
+  securityteamadmin: seededUsers.securityTeamAdmin.id,
+  workspaceeditor: seededUsers.workspaceEditor.id,
+  workspacereviewer: seededUsers.workspaceReviewer.id,
+  workspaceviewer: seededUsers.workspaceViewer.id
 } as const;
 
 export const seedIds = {
@@ -87,20 +88,20 @@ export const seedIds = {
 export const seedWorkspaces: WorkspaceDbResult[] = [
   {
     id: WORKSPACE_ID,
-    name: 'Default Workspace',
-    url_slug: 'default',
-    short_code: 'DW',
-    description: 'The default workspace',
+    name: seededWorkspaces.default.name,
+    url_slug: seededWorkspaces.default.slug,
+    short_code: seededWorkspaces.default.shortCode,
+    description: seededWorkspaces.default.description,
     color: '',
     created_at: now,
     updated_at: now
   },
   {
     id: WORKSPACE2_ID,
-    name: 'Second Workspace',
-    url_slug: 'second',
-    short_code: 'SW',
-    description: 'A secondary workspace for testing multi-workspace scenarios',
+    name: seededWorkspaces.second.name,
+    url_slug: seededWorkspaces.second.slug,
+    short_code: seededWorkspaces.second.shortCode,
+    description: seededWorkspaces.second.description,
     color: '',
     created_at: now,
     updated_at: now
@@ -236,72 +237,72 @@ export const seedOwners: OwnerDbResult[] = [
 export const seedLocalUsers = [
   {
     id: USER_IDS.globaladmin,
-    user_id: 'globaladmin',
-    email: 'emma.lindqvist@example.com',
-    display_name: 'Emma Lindqvist',
+    user_id: seededUsers.globalAdmin.userId,
+    email: seededUsers.globalAdmin.email,
+    display_name: seededUsers.globalAdmin.displayName,
     color: AR_COLOR_GREEN
   },
   {
     id: USER_IDS.workspaceadmin,
-    user_id: 'workspaceadmin',
-    email: 'james.chen@example.com',
-    display_name: 'James Chen',
+    user_id: seededUsers.workspaceAdmin.userId,
+    email: seededUsers.workspaceAdmin.email,
+    display_name: seededUsers.workspaceAdmin.displayName,
     color: AR_COLOR_BLUE
   },
   {
     id: USER_IDS.workspaceowner,
-    user_id: 'workspaceowner',
-    email: 'sofia.martinez@example.com',
-    display_name: 'Sofia Martinez',
+    user_id: seededUsers.workspaceOwner.userId,
+    email: seededUsers.workspaceOwner.email,
+    display_name: seededUsers.workspaceOwner.displayName,
     color: AR_COLOR_ORANGE
   },
   {
     id: USER_IDS.platformteamadmin,
-    user_id: 'platformteamadmin',
-    email: 'daniel.okonkwo@example.com',
-    display_name: 'Daniel Okonkwo',
+    user_id: seededUsers.platformTeamAdmin.userId,
+    email: seededUsers.platformTeamAdmin.email,
+    display_name: seededUsers.platformTeamAdmin.displayName,
     color: AR_COLOR_PURPLE
   },
   {
     id: USER_IDS.platformteameditor,
-    user_id: 'platformteameditor',
-    email: 'anna.kowalski@example.com',
-    display_name: 'Anna Kowalski',
+    user_id: seededUsers.platformTeamEditor.userId,
+    email: seededUsers.platformTeamEditor.email,
+    display_name: seededUsers.platformTeamEditor.displayName,
     color: AR_COLOR_YELLOW
   },
   {
     id: USER_IDS.designteamadmin,
-    user_id: 'designteamadmin',
-    email: 'marcus.berg@example.com',
-    display_name: 'Marcus Berg',
+    user_id: seededUsers.designTeamAdmin.userId,
+    email: seededUsers.designTeamAdmin.email,
+    display_name: seededUsers.designTeamAdmin.displayName,
     color: AR_COLOR_RED
   },
   {
     id: USER_IDS.securityteamadmin,
-    user_id: 'securityteamadmin',
-    email: 'lena.hoffmann@example.com',
-    display_name: 'Lena Hoffmann',
+    user_id: seededUsers.securityTeamAdmin.userId,
+    email: seededUsers.securityTeamAdmin.email,
+    display_name: seededUsers.securityTeamAdmin.displayName,
     color: AR_COLOR_PINK
   },
   {
     id: USER_IDS.workspaceeditor,
-    user_id: 'workspaceeditor',
-    email: 'raj.patel@example.com',
-    display_name: 'Raj Patel',
+    user_id: seededUsers.workspaceEditor.userId,
+    email: seededUsers.workspaceEditor.email,
+    display_name: seededUsers.workspaceEditor.displayName,
     color: AR_COLOR_CYAN
   },
   {
     id: USER_IDS.workspacereviewer,
-    user_id: 'workspacereviewer',
-    email: 'clara.dubois@example.com',
-    display_name: 'Clara Dubois',
+    user_id: seededUsers.workspaceReviewer.userId,
+    email: seededUsers.workspaceReviewer.email,
+    display_name: seededUsers.workspaceReviewer.displayName,
     color: AR_COLOR_TEAL
   },
   {
     id: USER_IDS.workspaceviewer,
-    user_id: 'workspaceviewer',
-    email: 'oscar.nilsson@example.com',
-    display_name: 'Oscar Nilsson',
+    user_id: seededUsers.workspaceViewer.userId,
+    email: seededUsers.workspaceViewer.email,
+    display_name: seededUsers.workspaceViewer.displayName,
     color: AR_COLOR_AMBER
   }
 ] as const;
@@ -915,9 +916,9 @@ export const seedProjects: ProjectDbCreate[] = [
     updated_at: now
   },
   {
-    id: '00000000-0000-0000-0010-000000000002',
+    id: seededProjects.authMigration.id,
     workspace: WORKSPACE_ID,
-    name: 'Auth Migration',
+    name: seededProjects.authMigration.name,
     description: 'Migration from legacy auth to the new identity platform.',
     owner: TEAM_IDS.security,
     status: 'pinned',

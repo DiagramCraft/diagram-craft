@@ -1,6 +1,7 @@
 import { test } from '@playwright/test';
 import { HomePage } from '../pages/HomePage';
 import { ProjectsPage } from '../pages/ProjectsPage';
+import { authMigrationProject } from '../support/projects';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('projects section', () => {
@@ -10,7 +11,7 @@ test.describe('projects section', () => {
 
     await homePage.goto();
     await homePage.expectLoaded(defaultWorkspace.name);
-    await homePage.expectProjectVisible('Auth Migration');
-    await projectsPage.openProject('Auth Migration');
+    await homePage.expectProjectVisible(authMigrationProject.name);
+    await projectsPage.openProject(authMigrationProject.name);
   });
 });
