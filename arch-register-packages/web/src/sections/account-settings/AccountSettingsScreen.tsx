@@ -200,7 +200,7 @@ export const AccountSettingsScreen = () => {
                   </div>
                   <div className={styles.fieldRight}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div aria-label="Account avatar preview">
+                      <div data-testid="account-avatar-preview">
                         <MemberAvatar
                           name={user.display_name}
                           email={user.email}

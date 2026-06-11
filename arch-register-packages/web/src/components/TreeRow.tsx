@@ -6,7 +6,7 @@ type TreeRowProps = {
   depth?: number;
   icon?: ReactNode;
   label: ReactNode;
-  ariaLabel?: string;
+  testId?: string;
   active?: boolean;
   onClick?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
@@ -22,7 +22,7 @@ export const TreeRow = ({
   depth = 0,
   icon,
   label,
-  ariaLabel,
+  testId,
   active,
   onClick,
   onContextMenu,
@@ -36,7 +36,7 @@ export const TreeRow = ({
   <div
     className={`${styles.row} ${active ? styles.active : ''} ${className ?? ''}`}
     style={{ paddingLeft: 8 + depth * 12 }}
-    aria-label={ariaLabel}
+    data-testid={testId}
     onClick={onClick}
     onContextMenu={onContextMenu}
   >

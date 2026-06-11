@@ -26,7 +26,7 @@ export class AccountSettingsPage extends WorkspacePage {
   expectAppearanceLoaded = async () => {
     await expect(this.page.getByText('Account settings', { exact: true })).toBeVisible();
     await expect(this.page.getByRole('main').getByText('Avatar Color', { exact: true })).toBeVisible();
-    await expect(this.page.getByLabel('Account avatar preview')).toBeVisible();
+    await expect(this.page.getByTestId('account-avatar-preview')).toBeVisible();
   };
 
   changeDisplayName = async (displayName: string) => {

@@ -21,7 +21,7 @@ export class WorkspaceTopBar {
 
   signOutMenuItem = (): Locator => this.page.getByRole('menuitem', { name: 'Sign out' });
 
-  accountMenu = (): Locator => this.page.getByLabel('Account menu content');
+  accountMenu = (): Locator => this.page.getByTestId('account-menu-content');
 
   workspaceMenuLabel = (): Locator => this.page.getByText('Workspaces', { exact: true });
 

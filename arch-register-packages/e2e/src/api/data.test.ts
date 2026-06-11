@@ -19,6 +19,9 @@ const apiId = '00000000-0000-0000-0004-000000000001';
 const componentId = '00000000-0000-0000-0003-000000000002';
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
+const defaultWorkspaceEntityCount = seedEntities.filter(
+  entity => entity.workspace === seedIds.workspace.default
+).length;
 
 const createEntity = async (orpc: TestORPCClient, body: Record<string, unknown>) => {
   return await orpc.entities.create({ params: { workspace: 'default' }, body: body as never });
@@ -57,7 +60,7 @@ test.describe('data routes', () => {
   }) => {
     const body = await orpc.entities.facets({ params: { workspace: 'default' } });
     expect(body).toMatchObject({
-      total: seedEntities.length,
+      total: defaultWorkspaceEntityCount,
       completeness: {
         below50: expect.any(Number),
         below80: expect.any(Number),

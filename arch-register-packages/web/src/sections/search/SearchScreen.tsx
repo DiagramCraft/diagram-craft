@@ -114,7 +114,7 @@ export const SearchScreen = () => {
   // Sync URL query → local
   useEffect(() => {
     if (query !== localQ) setLocalQ(query);
-  }, [query]);
+  }, [query, localQ]);
 
   // Auto-focus input on mount
   useEffect(() => {
@@ -372,7 +372,7 @@ export const SearchScreen = () => {
         <div className={styles.summary}>
           {trimmed ? (
             <>
-              <span aria-label="Search result count" className={styles.summaryCount}>
+              <span data-testid="search-result-count" className={styles.summaryCount}>
                 {totalResults}
               </span>
               <span className={styles.dim}>{totalResults === 1 ? 'result' : 'results'} for</span>
@@ -393,13 +393,13 @@ export const SearchScreen = () => {
             <button
               type="button"
               key={c.value}
-              aria-label={`Search category ${c.label}`}
+              data-testid={`search-category-${c.label}`}
               className={`${styles.cat} ${filter === c.value ? styles.catActive : ''}`}
               onClick={() => setFilter(c.value)}
             >
               <Ic size={11} />
               <span>{c.label}</span>
-              <span aria-label={`${c.label} result count`} className={styles.catCount}>
+              <span data-testid={`${c.label.toLowerCase()}-result-count`} className={styles.catCount}>
                 {n}
               </span>
             </button>

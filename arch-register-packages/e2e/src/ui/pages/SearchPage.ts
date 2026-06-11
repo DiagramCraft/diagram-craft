@@ -12,8 +12,8 @@ export class SearchPage extends WorkspacePage {
   };
 
   searchInput = () => this.page.getByPlaceholder('Search entities, diagrams, projects, schema…');
-  searchResultCount = () => this.page.getByLabel('Search result count');
-  entitiesCategoryCount = () => this.page.getByLabel('Entities result count');
+  searchResultCount = () => this.page.getByTestId('search-result-count');
+  entitiesCategoryCount = () => this.page.getByTestId('entities-result-count');
 
   expectLoaded = async () => {
     await this.workspaceShell.expectActiveNav('search');

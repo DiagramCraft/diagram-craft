@@ -11,8 +11,8 @@ export class DataModelPage extends WorkspacePage {
     await this.page.goto(workspaceModelRoute(this.workspaceSlug));
   };
 
-  schemaTypeRow = (name: string) => this.page.getByLabel(`Schema type: ${name}`);
-  editorTitle = () => this.page.getByLabel('Schema editor title');
+  schemaTypeRow = (name: string) => this.page.getByTestId(`schema-type-${name}`);
+  editorTitle = () => this.page.getByTestId('schema-editor-title');
 
   expectLoaded = async () => {
     await this.workspaceShell.expectActiveNav('model');

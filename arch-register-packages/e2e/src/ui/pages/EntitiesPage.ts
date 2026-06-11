@@ -11,9 +11,9 @@ export class EntitiesPage extends WorkspacePage {
     await this.page.goto(workspaceEntitiesRoute(this.workspaceSlug));
   };
 
-  typeFilter = (name: string) => this.page.getByLabel(`Entity type filter: ${name}`);
-  browserTitle = () => this.page.getByLabel('Entity browser title');
-  browserCount = () => this.page.getByLabel('Entity browser count');
+  typeFilter = (name: string) => this.page.getByTestId(`entity-type-filter-${name}`);
+  browserTitle = () => this.page.getByTestId('entity-browser-title');
+  browserCount = () => this.page.getByTestId('entity-browser-count');
 
   expectLoaded = async () => {
     await this.workspaceShell.expectActiveNav('entities');

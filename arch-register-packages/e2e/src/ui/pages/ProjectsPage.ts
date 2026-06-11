@@ -21,9 +21,9 @@ export class ProjectsPage extends WorkspacePage {
   editProjectButton = () => this.page.getByRole('button', { name: 'Edit' });
 
   sidebarGroup = (title: 'Pinned Projects' | 'Active Projects' | 'Archived Projects') =>
-    this.page.getByLabel(title);
+    this.page.getByTestId(`project-group-${title}`);
 
-  sidebarProjectRow = (name: string) => this.page.getByLabel(`Project row: ${name}`);
+  sidebarProjectRow = (name: string) => this.page.getByTestId(`project-row-${name}`);
 
   openProject = async (name: string) => {
     await this.workspaceShell.openNav('projects');
@@ -51,14 +51,14 @@ export class ProjectsPage extends WorkspacePage {
     groupTitle: 'Pinned Projects' | 'Active Projects' | 'Archived Projects',
     projectName: string
   ) => {
-    await expect(this.sidebarGroup(groupTitle).getByLabel(`Project row: ${projectName}`)).toBeVisible();
+    await expect(this.sidebarGroup(groupTitle).getByTestId(`project-row-${projectName}`)).toBeVisible();
   };
 
   expectProjectNotInSidebarGroup = async (
     groupTitle: 'Pinned Projects' | 'Active Projects' | 'Archived Projects',
     projectName: string
   ) => {
-    await expect(this.sidebarGroup(groupTitle).getByLabel(`Project row: ${projectName}`)).toHaveCount(0);
+    await expect(this.sidebarGroup(groupTitle).getByTestId(`project-row-${projectName}`)).toHaveCount(0);
   };
 
   openProjectFromSidebar = async (projectName: string) => {

@@ -807,10 +807,10 @@ export const EntityBrowserScreen = () => {
         <div>
           <div className={styles.eyebrow}>Entities</div>
           <div className={styles.titleRow}>
-            <div aria-label="Entity browser title" className={styles.title}>
+            <div data-testid="entity-browser-title" className={styles.title}>
               {typeName}
             </div>
-            <span aria-label="Entity browser count" className={styles.count}>
+            <span data-testid="entity-browser-count" className={styles.count}>
               {filtered.length}
             </span>
           </div>
@@ -1227,12 +1227,7 @@ const CardsView = ({
       const s = schemaMap.get(e._schema.id);
       const color = s ? resolveSchemaColor(s.schema, s.index) : 'var(--accent-fg)';
       return (
-        <div
-          key={e._uid}
-          aria-label={`Entity row: ${entityName(e)}`}
-          className={styles.card}
-          onClick={() => onEntityClick(e._uid)}
-        >
+        <div key={e._uid} className={styles.card} onClick={() => onEntityClick(e._uid)}>
           <span className={styles.cardBar} style={{ background: color }} />
           <div className={styles.cardHead}>
             {s && <TypeBadge color={color} name={s.schema.name} size={22} />}

@@ -377,7 +377,7 @@ const AccountMenu = () => {
         }
       />
       <MenuButton.Menu align="end">
-        <div aria-label="Account menu content">
+        <div data-testid="account-menu-content">
           <div className={styles.acctHeader}>
             <div className={styles.acctAvatar} style={{ background: avatarColor }}>
               {getInitials(displayName)}
@@ -562,7 +562,8 @@ const NotificationList = ({
             </div>
           </div>
           <div className={styles.notificationWhen}>{formatRelativeTimestamp(item.timestamp)}</div>
-          <span
+          <button
+            type="button"
             className={styles.notificationClear}
             aria-label={`Clear notification for ${item.entity_name}`}
             title={`Clear notification for ${item.entity_name}`}
@@ -575,7 +576,7 @@ const NotificationList = ({
             <span className={styles.srOnly}>
               {isClearing && clearingId === item.id ? 'Clearing' : 'Clear notification'}
             </span>
-          </span>
+          </button>
         </button>
       ))}
     </div>
@@ -620,7 +621,8 @@ const WatchingList = ({
               <span>{item.entity_slug}</span>
             </div>
           </div>
-          <span
+          <button
+            type="button"
             className={styles.watchingUnwatch}
             aria-label={`Unwatch ${item.entity_name}`}
             title={
@@ -632,7 +634,7 @@ const WatchingList = ({
             }}
           >
             <TbBell size={12} />
-          </span>
+          </button>
         </button>
       ))}
     </div>
