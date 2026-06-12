@@ -8,6 +8,7 @@ import {
   buildProjectTemplatesResponse,
   type ProjectWithFiles
 } from './templateHelpers';
+import { SerializedDiagramDocument } from "@diagram-craft/model/serialization/serializedTypes";
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
@@ -106,6 +107,7 @@ export const toggleTemplateStatus = async (
 
 export const createFromTemplate = async (
   db: DatabaseAdapter,
+  // biome-ignore lint/suspicious/noExplicitAny: Storage adapter type is complex and varies by implementation
   storage: any,
   workspace: string,
   projectId: string,
@@ -163,7 +165,10 @@ export const createFromTemplate = async (
     const timestamp = new Date();
     const newContent = Buffer.from(JSON.stringify(fileData), 'utf8');
     const { getDiagramCommentCounts } = await import('../diagram/commentCounts');
-    const commentCounts = getDiagramCommentCounts(fileData as any);
+
+    // TODO: Need validation
+    const doc = fileData as unknown as SerializedDiagramDocument;
+    const commentCounts = getDiagramCommentCounts(doc);
 
     const row = await db.project.upsertProjectFile({
       workspace,
@@ -183,7 +188,7 @@ export const createFromTemplate = async (
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
       const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
       const previewSvg =
-        (await generateAccurateSvgPreview(fileData as any)) ?? generateSvgPreview(fileData as any);
+        (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
       await db.project.updateProjectFileDerivedData(
         workspace,
         projectId,

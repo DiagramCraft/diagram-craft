@@ -113,6 +113,7 @@ export const ExtractScreen = () => {
         body: { text }
       });
 
+      // biome-ignore lint/suspicious/noExplicitAny: AI extraction response entity type is dynamic and varies by schema
       const extracted: ExtractedEntity[] = (result.entities ?? []).map((e: any, i) => ({
         id: `extract-${i}`,
         name: e.name ?? '',

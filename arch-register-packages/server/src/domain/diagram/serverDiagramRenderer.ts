@@ -63,7 +63,18 @@ export const generateAccurateSvgPreview = async (
 
     const diagram = diagramDoc.diagrams[0]!;
 
-    const viewBox = diagram.viewBox.svgViewboxString;
+    // Check if there are any elements to render
+    const hasElements = diagram.layers.visible.some(layer => {
+      const resolved = layer.resolve();
+      return resolved && 'elements' in resolved && resolved.elements.length > 0;
+    });
+
+    if (!hasElements) return null;
+
+    // Use canvas bounds directly for stable preview viewBox
+    // Don't use diagram.viewBox.svgViewboxString as it may have padding applied
+    const bounds = diagram.bounds;
+    const viewBox = `${bounds.x} ${bounds.y} ${bounds.w} ${bounds.h}`;
 
     const props = {
       id: 'ssr-preview',

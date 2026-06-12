@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -1398,7 +1398,7 @@ const AddEntityToProjectDialog = ({
   const filtered = allResults.filter(e => {
     if (!q.trim()) return true;
     const lower = q.toLowerCase();
-    return (e._name + ' ' + e._slug).toLowerCase().includes(lower);
+    return (`${e._name} ${e._slug}`).toLowerCase().includes(lower);
   });
 
   // Auto-select first result
@@ -1407,7 +1407,7 @@ const AddEntityToProjectDialog = ({
       setSelectedId(filtered[0]!._uid);
     }
     if (filtered.length === 0) setSelectedId('');
-  }, [filtered]);
+  }, [filtered, selectedId]);
 
   useEffect(() => {
     if (open) {
@@ -1418,6 +1418,22 @@ const AddEntityToProjectDialog = ({
       setTimeout(() => searchRef.current?.focus(), 40);
     }
   }, [open]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!selectedId) {
+      setError('Please select an entity');
+      return;
+    }
+    try {
+      await addEntityMutation.mutateAsync({
+        entity_id: selectedId,
+        entity_type: entityType || null
+      });
+      onClose();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong');
+    }
+  }, [selectedId, addEntityMutation, onClose, entityType]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -1438,23 +1454,7 @@ const AddEntityToProjectDialog = ({
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [open, filtered, selectedId, entityType]);
-
-  const handleSubmit = async () => {
-    if (!selectedId) {
-      setError('Please select an entity');
-      return;
-    }
-    try {
-      await addEntityMutation.mutateAsync({
-        entity_id: selectedId,
-        entity_type: entityType || null
-      });
-      onClose();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong');
-    }
-  };
+  }, [open, filtered, selectedId, handleSubmit]);
 
   return (
     <Dialog

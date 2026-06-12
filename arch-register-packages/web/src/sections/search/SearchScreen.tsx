@@ -114,7 +114,7 @@ export const SearchScreen = () => {
   // Sync URL query → local
   useEffect(() => {
     if (query !== localQ) setLocalQ(query);
-  }, [query]);
+  }, [query, localQ]);
 
   // Auto-focus input on mount
   useEffect(() => {

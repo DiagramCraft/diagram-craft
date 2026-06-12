@@ -312,6 +312,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
           const stream = chatImpl({
             adapter,
+            // biome-ignore lint/suspicious/noExplicitAny: TanStack AI chat message types are complex and vary by provider
             messages: input.body.messages as any,
             systemPrompts: [systemPrompt],
             tools,
@@ -322,9 +323,11 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           });
 
           const conversationId =
+            // biome-ignore lint/suspicious/noExplicitAny: forwardedProps type varies by client implementation
             (input.body.forwardedProps as any)?.conversationId ?? input.body.conversationId;
 
           if (conversationId) {
+            // biome-ignore lint/suspicious/noExplicitAny: Message array type varies by AI provider
             const lastUserMsg = [...(input.body.messages as any[])]
               .reverse()
               .find(m => m.role === 'user');
@@ -354,6 +357,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
             const capturedToolCalls: Array<{ name: string; args: string; result?: unknown }> = [];
 
             try {
+              // biome-ignore lint/suspicious/noExplicitAny: Stream chunk type varies by AI provider implementation
               for await (const chunk of stream as AsyncIterable<any>) {
                 if (
                   (chunk.type === 'TEXT_MESSAGE_CONTENT' ||
