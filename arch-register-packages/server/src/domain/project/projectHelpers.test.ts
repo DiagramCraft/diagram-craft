@@ -85,6 +85,7 @@ describe('toApiProjectDetail', () => {
   it('counts files in folders', () => {
     const folder = {
       path: '/diagrams',
+      name: 'diagrams',
       files: [baseProjectFile as unknown as ProjectFile, baseProjectFile as unknown as ProjectFile]
     };
     const files: FileTree = { folders: [folder], rootFiles: [] };
@@ -95,6 +96,7 @@ describe('toApiProjectDetail', () => {
   it('sums files across folders and root', () => {
     const folder = {
       path: '/diagrams',
+      name: 'diagrams',
       files: [baseProjectFile as unknown as ProjectFile]
     };
     const files: FileTree = {

@@ -52,6 +52,7 @@ export const projectFileSchema = z.object({
 
 const fileFolderSchema = z.object({
   path: z.string(),
+  name: z.string(),
   files: z.array(projectFileSchema)
 });
 

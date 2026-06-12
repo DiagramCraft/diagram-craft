@@ -68,6 +68,7 @@ export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
     .sort((a, b) => a.path.localeCompare(b.path))
     .map(folder => ({
       path: folder.path,
+      name: folder.name,
       files: diagramNodes.filter(f => f.parent_id === folder.id).map(toApiProjectFile)
     }));
 

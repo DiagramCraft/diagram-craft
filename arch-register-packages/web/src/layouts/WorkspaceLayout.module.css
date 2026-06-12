@@ -15,8 +15,14 @@
   min-height: 0;
 }
 
-.bodyWithSecondSidebar {
-  grid-template-columns: var(--rail) 280px 280px 1fr;
+/* entity-detail: fold rail (44px) + content sidebar (240px) */
+.bodyEntityDetail {
+  grid-template-columns: var(--rail) 44px 240px 1fr;
+}
+
+/* entity-detail: expanded nav (280px) + content sidebar (240px) */
+.bodyEntityDetailExpanded {
+  grid-template-columns: var(--rail) 280px 240px 1fr;
 }
 
 .bodyNoSidebar {

@@ -1,12 +1,14 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Outlet, useParams, useNavigate, useMatches } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from './WorkspaceLayout.module.css';
+import sidePanelStyles from '../shell/SidePanel.module.css';
 import { TopBar } from '../shell/TopBar';
 import type { BreadcrumbItem } from '../shell/TopBar';
 import { NavRail, type NavRailItem } from '@diagram-craft/app-components/NavRail';
 import { SidePanel } from '../shell/SidePanel';
 import { EntityContentSidebar } from '../sections/entities/EntityContentSidebar';
+import { EntityFoldedRail, EntityNavSidebar } from '../shell/EntityFoldedRail';
 import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
@@ -88,6 +90,14 @@ export const WorkspaceLayout = () => {
   const [addWsOpen, setAddWsOpen] = useState(false);
   const [addEntityOpen, setAddEntityOpen] = useState(false);
   const [addProjectOpen, setAddProjectOpen] = useState(false);
+  const [navMode, setNavMode] = useState<'auto' | 'expanded' | 'collapsed'>('auto');
+  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
+
+  useEffect(() => {
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const {
     data: workspaces = [],
@@ -140,7 +150,11 @@ export const WorkspaceLayout = () => {
 
   const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
   const entityId = activeView === 'entity-detail' ? (allParams.entityId ?? null) : null;
-  const showSecondSidebar = showSidebar && activeView === 'entity-detail' && entityId !== null;
+  const isEntityDetail = showSidebar && activeView === 'entity-detail' && entityId !== null;
+  // Auto-expand on wide windows (≥1320px); user can also manually pin open/closed
+  const expandedNav = isEntityDetail && (
+    navMode === 'expanded' || (navMode === 'auto' && windowWidth >= 1320)
+  );
 
   const handleRailPick = useCallback(
     (id: string) => {
@@ -316,7 +330,12 @@ export const WorkspaceLayout = () => {
           canNewEntity={canCreateEntities}
         />
         <div
-          className={`${styles.body} ${!showSidebar ? styles.bodyNoSidebar : showSecondSidebar ? styles.bodyWithSecondSidebar : ''}`.trim()}
+          className={[
+            styles.body,
+            !showSidebar ? styles.bodyNoSidebar
+              : isEntityDetail ? (expandedNav ? styles.bodyEntityDetailExpanded : styles.bodyEntityDetail)
+              : ''
+          ].filter(Boolean).join(' ')}
         >
           <NavRail
             items={visibleRailItems}
@@ -325,9 +344,25 @@ export const WorkspaceLayout = () => {
               if (id !== null) handleRailPick(id);
             }}
           />
-          {showSidebar && <SidePanel />}
-          {showSecondSidebar && (
-            <div className="ar-sidepanel" style={{ background: 'var(--panel-bg)', borderRight: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0 }}>
+          {isEntityDetail ? (
+            expandedNav ? (
+              <EntityNavSidebar
+                workspaceSlug={workspaceSlug}
+                entityId={entityId!}
+                onCollapse={() => setNavMode('collapsed')}
+              />
+            ) : (
+              <EntityFoldedRail
+                workspaceSlug={workspaceSlug}
+                entityId={entityId!}
+                onExpand={() => setNavMode('expanded')}
+              />
+            )
+          ) : (
+            showSidebar && <SidePanel />
+          )}
+          {isEntityDetail && (
+            <div className={sidePanelStyles.panel}>
               <EntityContentSidebar workspaceSlug={workspaceSlug} entityId={entityId!} />
             </div>
           )}

@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { TbFile, TbFolder } from 'react-icons/tb';
+import { TbFile, TbFolder, TbHome } from 'react-icons/tb';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
+import localStyles from './EntityContentSidebar.module.css';
 import { useEntityContentNodes } from '../../hooks/useProjects';
 import { useEntity } from '../../hooks/useEntities';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { resolveSchemaColor } from '../../lib/api';
+import { TypeBadge } from '../../components/TypeBadge';
 
 export const EntityContentSidebar = ({
   workspaceSlug,
@@ -15,6 +19,11 @@ export const EntityContentSidebar = ({
   const { data: entity } = useEntity(workspaceSlug, entityId);
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const ctx = useWorkspaceContext();
+
+  const schemaIdx = ctx.schemas.findIndex(s => s.id === entity?._schema?.id);
+  const schema = schemaIdx >= 0 ? ctx.schemas[schemaIdx] : undefined;
+  const accentColor = schema ? resolveSchemaColor(schema, schemaIdx) : 'var(--accent-fg)';
 
   const toggleFolder = (path: string) => {
     setExpandedFolders(prev => {
@@ -32,14 +41,19 @@ export const EntityContentSidebar = ({
 
   return (
     <>
-      <div className={styles.header}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--base-fg-dim)', letterSpacing: '0.4px' }}>
-          {entity?._name ?? '…'}
-        </span>
+      <div className={`${styles.header} ${localStyles.header}`} style={{ '--fold-accent': accentColor } as React.CSSProperties}>
+        <TypeBadge
+          color={accentColor}
+          name={schema?.name}
+          icon={schema?.icon ?? null}
+          size={14}
+        />
+        <span className={localStyles.entityName}>{entity?._name ?? '…'}</span>
       </div>
       <div className={styles.scroll}>
         <TreeRow
           label="Home"
+          icon={<TbHome size={13} />}
           active
         />
         {!hasContent && (
@@ -60,7 +74,7 @@ export const EntityContentSidebar = ({
             <div key={folder.path}>
               <TreeRow
                 icon={<TbFolder size={13} />}
-                label={folder.path}
+                label={folder.name}
                 expandable
                 expanded={isExpanded}
                 onExpand={() => toggleFolder(folder.path)}
