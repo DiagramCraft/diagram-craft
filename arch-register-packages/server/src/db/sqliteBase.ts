@@ -196,7 +196,8 @@ export const sqliteMappers = {
   contentNode: (row: Record<string, unknown>): ContentNodeDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
-    project_id: String(row['project_id']),
+    project_id: row['project_id'] == null ? null : String(row['project_id']),
+    entity_id: row['entity_id'] == null ? null : String(row['entity_id']),
     parent_id: row['parent_id'] == null ? null : String(row['parent_id']),
     path: String(row['path']),
     name: String(row['name']),

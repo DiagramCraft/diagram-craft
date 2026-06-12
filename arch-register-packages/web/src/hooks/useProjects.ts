@@ -12,6 +12,11 @@ export const projectEntityKeys = {
     ['entity-diagram-files', workspaceId, entityId] as const
 };
 
+export const entityContentKeys = {
+  all: (workspaceId: string, entityId: string) =>
+    ['entity-content', workspaceId, entityId] as const
+};
+
 // Query keys factory
 export const projectKeys = {
   all: ['projects'] as const,
@@ -217,3 +222,55 @@ export const useEntityDiagramFiles = (workspaceId: string, entityId: string) => 
   });
 };
 
+// Hook for fetching content nodes owned by an entity
+export const useEntityContentNodes = (workspaceId: string, entityId: string) => {
+  return useQuery({
+    queryKey: entityContentKeys.all(workspaceId, entityId),
+    queryFn: () =>
+      orpcClient.projects.listEntityContent({
+        params: { workspace: workspaceId, entityId }
+      }),
+    enabled: !!workspaceId && !!entityId
+  });
+};
+
+
+
+export const useCreateEntityFolder = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (path: string) =>
+      orpcClient.projects.createEntityFolder({
+        params: { workspace: workspaceId, entityId },
+        body: { path }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: entityContentKeys.all(workspaceId, entityId)
+      });
+    }
+  });
+};
+
+
+
+export const useCreateEntityFile = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ path, body }: { path: string; body: Record<string, unknown> }) =>
+      orpcClient.projects.createEntityFile({
+        params: { workspace: workspaceId, entityId },
+        query: { path },
+        body
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: entityContentKeys.all(workspaceId, entityId)
+      });
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId)
+      });
+    }
+  });
+};

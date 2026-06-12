@@ -68,6 +68,7 @@ export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
     .sort((a, b) => a.path.localeCompare(b.path))
     .map(folder => ({
       path: folder.path,
+      name: folder.name,
       files: diagramNodes.filter(f => f.parent_id === folder.id).map(toApiProjectFile)
     }));
 
@@ -90,7 +91,7 @@ export const listProjects = async (
     );
     for (const files of projectFiles) {
       for (const file of files) {
-        if (file.type === 'diagram') {
+        if (file.type === 'diagram' && file.project_id != null) {
           fileCounts.set(file.project_id, (fileCounts.get(file.project_id) ?? 0) + 1);
         }
       }
@@ -397,6 +398,180 @@ export const createFolder = async (
   }
 };
 
+export const createEntityFolder = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  folderPath: string,
+  event: AuthenticatedEvent
+): Promise<{ success: boolean; path: string; marker: ProjectFile | null }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+
+    const lastSlash = folderPath.lastIndexOf('/');
+    const folderName = lastSlash !== -1 ? folderPath.substring(lastSlash + 1) : folderPath;
+    let parentId: string | null = null;
+    if (lastSlash !== -1) {
+      const parentPath = folderPath.substring(0, lastSlash);
+      // For entity content, find parent by querying entity content nodes
+      const entityNodes = await db.project.listEntityContentNodes(ws, entityId);
+      const parentFolder = entityNodes.find(n => n.path === parentPath && n.type === 'folder');
+      parentId = parentFolder?.id ?? null;
+    }
+
+    const timestamp = new Date();
+    const row = await db.project.createContentNodeIfAbsent({
+      workspace: ws,
+      project_id: null,
+      entity_id: entityId,
+      parent_id: parentId,
+      path: folderPath,
+      name: folderName,
+      type: 'folder',
+      size_bytes: 0,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: timestamp,
+      updated_at: timestamp
+    });
+    if (row) {
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: ws,
+        operation: 'create',
+        entityType: 'content_node',
+        entityId: row.id,
+        entityName: folderPath,
+        changes: { new: { path: folderPath, type: 'folder' } },
+        metadata: { entity_id: entityId, path: folderPath, is_folder: true }
+      });
+    }
+    return { success: true, path: folderPath, marker: row ? toApiProjectFile(row) : null };
+  } catch (e) {
+    return handleError(e, 'Failed to create entity folder');
+  }
+};
+
+export const createEntityFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  entityId: string,
+  filePath: string,
+  body: Record<string, unknown>,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const content = Buffer.from(JSON.stringify(body), 'utf8');
+  const fileName = filePath.includes('/')
+    ? filePath.substring(filePath.lastIndexOf('/') + 1)
+    : filePath;
+
+  const displayName =
+    body['name'] ?? (fileName.endsWith('.json') ? fileName.slice(0, -5) : fileName);
+
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+
+    const existingFile = await db.project.listEntityContentNodes(ws, entityId).then(nodes =>
+      nodes.find(n => n.path === filePath && n.type === 'diagram')
+    );
+    const isUpdate = !!existingFile;
+
+    const fileLastSlash = filePath.lastIndexOf('/');
+    let fileParentId: string | null = null;
+    if (fileLastSlash !== -1) {
+      const folderPath = filePath.substring(0, fileLastSlash);
+      const entityNodes = await db.project.listEntityContentNodes(ws, entityId);
+      const parentFolder = entityNodes.find(n => n.path === folderPath && n.type === 'folder');
+      fileParentId = parentFolder?.id ?? null;
+    }
+
+    const doc = body as unknown as SerializedDiagramDocument;
+
+    const timestamp = new Date();
+    const commentCounts = getDiagramCommentCounts(doc);
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: null,
+      entity_id: entityId,
+      parent_id: fileParentId,
+      path: filePath,
+      name: String(displayName),
+      size_bytes: content.length,
+      comment_count: commentCounts.commentCount,
+      unresolved_comment_count: commentCounts.unresolvedCommentCount,
+      created_atIfNew: existingFile?.created_at ?? timestamp,
+      updated_at: timestamp
+    });
+
+    await storage.write(ws, entityId, row.id, content);
+
+    try {
+      const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+      const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+      const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
+      await db.project.updateContentNodeDerivedData(
+        ws,
+        entityId,
+        row.id,
+        content.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        previewSvg ?? null,
+        timestamp
+      );
+    } catch {
+      await db.project.updateContentNodeDerivedData(
+        ws,
+        entityId,
+        row.id,
+        content.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        null,
+        timestamp
+      );
+    }
+
+    const entityRefs = getDiagramEntityRefs(doc);
+    await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
+
+    if (isUpdate) {
+      const changes = computeChanges(extractEntityFields(existingFile), extractEntityFields(row));
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: ws,
+        operation: 'update',
+        entityType: 'content_node',
+        entityId: row.id,
+        entityName: row.name,
+        changes,
+        metadata: { entity_id: entityId, path: filePath }
+      });
+    } else {
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: ws,
+        operation: 'create',
+        entityType: 'content_node',
+        entityId: row.id,
+        entityName: row.name,
+        changes: {
+          new: extractEntityFields(row)
+        },
+        metadata: { entity_id: entityId, path: filePath }
+      });
+    }
+
+    return toApiProjectFile(row);
+  } catch (e) {
+    console.error('Error in createEntityFile:', e);
+    return handleError(e, 'Failed to create entity diagram');
+  }
+};
+
 export const renameFolder = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -438,14 +613,27 @@ export const getFileContent = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    
+    // Try to get as project first
     const project = await db.project.getProject(ws, id);
-    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-    requireProjectAccess(authCtx, project.owner);
-
-    const file = await db.project.getContentNodeByPath(ws, id, filePath);
+    
+    let file: { id: string; path: string } | null = null;
+    let storageId = id;
+    
+    if (project) {
+      // It's a project - use normal project file lookup
+      requireProjectAccess(authCtx, project.owner);
+      file = await db.project.getContentNodeByPath(ws, id, filePath);
+    } else {
+      // Not a project - try as entity content
+      const entityNodes = await db.project.listEntityContentNodes(ws, id);
+      file = entityNodes.find(n => n.path === filePath && n.type === 'diagram') ?? null;
+      storageId = id; // entityId is used as storage path for entity diagrams
+    }
+    
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-    const content = await storage.read(ws, id, file.id);
+    const content = await storage.read(ws, storageId, file.id);
     return JSON.parse(content.toString('utf8'));
   } catch (e) {
     if (
@@ -485,7 +673,11 @@ export const saveFile = async (
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
     const project = await db.project.getProject(ws, id);
-    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    
+    // If not a project, treat as entity diagram
+    if (!project) {
+      return await createEntityFile(db, storage, workspace, id, filePath, body, event);
+    }
 
     requireProjectAction(
       authCtx,
@@ -1090,6 +1282,22 @@ export const getEntityProjects = async (
     return rows.map(toApiProjectEntity);
   } catch (e) {
     return handleError(e, 'Failed to retrieve entity projects');
+  }
+};
+
+export const listEntityContentNodes = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  event: AuthenticatedEvent
+): Promise<FileTree> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  await buildApiAuthCtx(db, ws, event);
+  try {
+    const files = await db.project.listEntityContentNodes(ws, entityId);
+    return buildFileTree(files);
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve entity content nodes');
   }
 };
 

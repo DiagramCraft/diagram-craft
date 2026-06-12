@@ -10,6 +10,7 @@ import type {
   DiagramEntityFileDbResult
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import { randomUUID } from 'node:crypto';
 
 export class PostgresProjectDatabase extends PostgresDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
@@ -86,6 +87,15 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     `;
   }
 
+  async listEntityContentNodes(workspace: string, entityId: string) {
+    return await this.sql<ContentNodeDbResult[]>`
+      SELECT *
+      FROM content_node
+      WHERE workspace = ${workspace} AND entity_id = ${entityId}
+      ORDER BY path
+    `;
+  }
+
   async getContentNodeByPath(workspace: string, projectId: string, path: string) {
     const [row] = await this.sql<ContentNodeDbResult[]>`
       SELECT * FROM content_node
@@ -139,7 +149,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async updateContentNodeDerivedData(
     workspace: string,
-    projectId: string,
+    projectIdOrEntityId: string,
     fileId: string,
     sizeBytes: number,
     commentCount: number,
@@ -155,7 +165,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             unresolved_comment_count = ${unresolvedCommentCount},
             preview_svg = ${previewSvg},
             updated_at = ${updated_at}
-        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
+        WHERE workspace = ${workspace} 
+          AND (project_id = ${projectIdOrEntityId} OR entity_id = ${projectIdOrEntityId})
+          AND id = ${fileId}
       `;
     } catch (error) {
       return normalizePostgresError(error);
@@ -183,19 +195,35 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async upsertContentNode(input: ContentNodeDbUpsert) {
     try {
-      const [row] = await this.sql<ContentNodeDbResult[]>`
-        INSERT INTO content_node (id, workspace, project_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
-        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
-        ON CONFLICT (workspace, project_id, path)
-        DO UPDATE SET
-          name = EXCLUDED.name,
-          parent_id = COALESCE(EXCLUDED.parent_id, content_node.parent_id),
-          size_bytes = EXCLUDED.size_bytes,
-          comment_count = EXCLUDED.comment_count,
-          unresolved_comment_count = EXCLUDED.unresolved_comment_count,
-          updated_at = EXCLUDED.updated_at
-        RETURNING *
-      `;
+      const id = input.id ?? randomUUID();
+      // Partial unique indexes require ON CONFLICT (cols) WHERE condition, not ON CONSTRAINT
+      const [row] = input.entity_id != null
+        ? await this.sql<ContentNodeDbResult[]>`
+            INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
+            VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+            ON CONFLICT (workspace, entity_id, path) WHERE entity_id IS NOT NULL
+            DO UPDATE SET
+              name = EXCLUDED.name,
+              parent_id = COALESCE(EXCLUDED.parent_id, content_node.parent_id),
+              size_bytes = EXCLUDED.size_bytes,
+              comment_count = EXCLUDED.comment_count,
+              unresolved_comment_count = EXCLUDED.unresolved_comment_count,
+              updated_at = EXCLUDED.updated_at
+            RETURNING *
+          `
+        : await this.sql<ContentNodeDbResult[]>`
+            INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
+            VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+            ON CONFLICT (workspace, project_id, path) WHERE project_id IS NOT NULL
+            DO UPDATE SET
+              name = EXCLUDED.name,
+              parent_id = COALESCE(EXCLUDED.parent_id, content_node.parent_id),
+              size_bytes = EXCLUDED.size_bytes,
+              comment_count = EXCLUDED.comment_count,
+              unresolved_comment_count = EXCLUDED.unresolved_comment_count,
+              updated_at = EXCLUDED.updated_at
+            RETURNING *
+          `;
       return row!;
     } catch (error) {
       return normalizePostgresError(error);
@@ -206,12 +234,21 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     input: Omit<ContentNodeDbUpsert, 'updated_at'> & { updated_at: Date }
   ) {
     try {
-      const [row] = await this.sql<ContentNodeDbResult[]>`
-        INSERT INTO content_node (id, workspace, project_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
-        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
-        ON CONFLICT (workspace, project_id, path) DO NOTHING
-        RETURNING *
-      `;
+      const id = input.id ?? randomUUID();
+      // Partial unique indexes require ON CONFLICT (cols) WHERE condition, not ON CONSTRAINT
+      const [row] = input.entity_id != null
+        ? await this.sql<ContentNodeDbResult[]>`
+            INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
+            VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+            ON CONFLICT (workspace, entity_id, path) WHERE entity_id IS NOT NULL DO NOTHING
+            RETURNING *
+          `
+        : await this.sql<ContentNodeDbResult[]>`
+            INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
+            VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+            ON CONFLICT (workspace, project_id, path) WHERE project_id IS NOT NULL DO NOTHING
+            RETURNING *
+          `;
       return row ?? null;
     } catch (error) {
       return normalizePostgresError(error);
@@ -448,9 +485,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         p.name         AS project_name
       FROM diagram_entity_ref der
       JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
-      JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
+      LEFT JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
       WHERE der.workspace = ${workspace} AND der.entity_id = ${entityId}
-      ORDER BY p.name, pf.name
+      ORDER BY COALESCE(p.name, ''), pf.name
     `;
   }
 }

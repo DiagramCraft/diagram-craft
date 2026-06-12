@@ -482,7 +482,7 @@ export const createDiagramFromTemplate = async (
 
   // Fetch template content from the template's project (not the current project)
   const templateContent = await orpcClient.projects.getFileContent({
-    params: { workspace, id: templateFile.project_id },
+    params: { workspace, id: templateFile.project_id! },
     query: { path: templateFile.path }
   });
 

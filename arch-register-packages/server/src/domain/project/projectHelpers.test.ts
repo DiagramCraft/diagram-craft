@@ -25,6 +25,7 @@ const baseProjectFile: ContentNodeDbResult = {
   id: 'f-1',
   workspace: 'ws-1',
   project_id: 'p-1',
+  entity_id: null,
   parent_id: null,
   path: '/diagrams/main.dc',
   name: 'Main',
@@ -84,6 +85,7 @@ describe('toApiProjectDetail', () => {
   it('counts files in folders', () => {
     const folder = {
       path: '/diagrams',
+      name: 'diagrams',
       files: [baseProjectFile as unknown as ProjectFile, baseProjectFile as unknown as ProjectFile]
     };
     const files: FileTree = { folders: [folder], rootFiles: [] };
@@ -94,6 +96,7 @@ describe('toApiProjectDetail', () => {
   it('sums files across folders and root', () => {
     const folder = {
       path: '/diagrams',
+      name: 'diagrams',
       files: [baseProjectFile as unknown as ProjectFile]
     };
     const files: FileTree = {

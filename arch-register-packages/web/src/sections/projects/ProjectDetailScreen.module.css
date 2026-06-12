@@ -273,7 +273,6 @@
 .diagramThumbNodes {
   position: absolute;
   inset: 0;
-  padding: 12px;
 }
 
 .diagramThumbNodes svg {

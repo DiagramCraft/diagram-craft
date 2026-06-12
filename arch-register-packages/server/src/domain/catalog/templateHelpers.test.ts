@@ -9,6 +9,7 @@ const makeFile = (
 ): ContentNodeDbResult => ({
   workspace: 'ws-1',
   project_id: 'proj-1',
+  entity_id: null,
   parent_id: null,
   path: 'diagrams/diagram.json',
   name: 'Diagram',

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -50,6 +50,7 @@ import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityCont
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
+import { EntityContentView } from './EntityContentView';
 
 type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes';
 
@@ -80,9 +81,11 @@ const formatDateValue = (value: unknown) => {
 export const EntityDetailScreen = () => {
   const navigate = useNavigate();
   const { entityId } = useParams({ strict: false }) as { entityId: string };
+  const search = useSearch({ from: '/authenticated/$workspaceSlug/entities/$entityId' });
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const canViewAudit = permissions.canViewAudit;
+  const contentFolder = search.contentFolder;
 
   const navigateToEntity = useCallback(
     (id: string) => {
@@ -340,8 +343,8 @@ export const EntityDetailScreen = () => {
 
   return (
     <div className={`${styles.screen} ${tab === 'graph' ? styles.graphMode : ''}`}>
-      {/* Header */}
-      <div className={styles.head}>
+      {/* Header - hidden when viewing folder content */}
+      {!contentFolder && <div className={styles.head}>
         <div className={styles.headLeft}>
           <button type="button" className={styles.backLink} onClick={() => navigateToEntities()}>
             <TbChevronLeft size={12} /> Back to entities
@@ -428,25 +431,36 @@ export const EntityDetailScreen = () => {
             />
           )}
         </div>
-      </div>
+      </div>}
 
       {/* Tabs */}
-      <div className={styles.tabBar}>
-        <Tabs.Root value={tab} onValueChange={value => setTab(value as TabId)}>
-          <Tabs.List>
-            <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-            <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
-            <Tabs.Trigger value="graph">Graph</Tabs.Trigger>
-            <Tabs.Trigger value="relations">
-              Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
-            </Tabs.Trigger>
-            {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
-          </Tabs.List>
-        </Tabs.Root>
-      </div>
+      {!contentFolder && (
+        <div className={styles.tabBar}>
+          <Tabs.Root value={tab} onValueChange={value => setTab(value as TabId)}>
+            <Tabs.List>
+              <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+              <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
+              <Tabs.Trigger value="graph">Graph</Tabs.Trigger>
+              <Tabs.Trigger value="relations">
+                Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
+              </Tabs.Trigger>
+              {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
+            </Tabs.List>
+          </Tabs.Root>
+        </div>
+      )}
+
+      {/* Content folder view */}
+      {contentFolder && (
+        <EntityContentView
+          workspaceSlug={workspaceSlug}
+          entityId={entityId}
+          folder={contentFolder}
+        />
+      )}
 
       {/* Overview */}
-      {tab === 'overview' && (
+      {!contentFolder && tab === 'overview' && (
         <div className={styles.overviewGrid}>
           <div className={styles.propsPanel}>
             {schema && schema.fields.length > 0 && (
@@ -731,7 +745,7 @@ export const EntityDetailScreen = () => {
       )}
 
       {/* Topology */}
-      {tab === 'topology' && (
+      {!contentFolder && tab === 'topology' && (
         <TopologyView
           entity={entity}
           schema={schema}
@@ -745,7 +759,7 @@ export const EntityDetailScreen = () => {
       )}
 
       {/* Graph */}
-      {tab === 'graph' && entity && (
+      {!contentFolder && tab === 'graph' && entity && (
         <div className={styles.graphPanel}>
           <EntityGraphView
             workspaceId={workspaceId}
@@ -759,7 +773,7 @@ export const EntityDetailScreen = () => {
       )}
 
       {/* Relationships */}
-      {tab === 'relations' && (
+      {!contentFolder && tab === 'relations' && (
         <div className={styles.relationsPage}>
           {relationCount === 0 ? (
             <div className={styles.empty}>
@@ -808,7 +822,7 @@ export const EntityDetailScreen = () => {
       )}
 
       {/* Change history */}
-      {tab === 'changes' && <ChangeHistory auditLog={auditLog} loading={loadingAudit} />}
+      {!contentFolder && tab === 'changes' && <ChangeHistory auditLog={auditLog} loading={loadingAudit} />}
 
       <DeleteConfirmationDialog
         open={confirmDelete}

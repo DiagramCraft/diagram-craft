@@ -16,7 +16,9 @@ import {
   TbChartRadar,
   TbCalendarWeek,
   TbTable,
-  TbPinned
+  TbPinned,
+  TbLayoutSidebarLeftCollapse,
+  TbLayoutSidebarLeftExpand
 } from 'react-icons/tb';
 import { EntityFacets, fetchEntityFacets, resolveSchemaColor, SavedView } from '../../lib/api';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
@@ -104,11 +106,15 @@ const SidebarRenameDialog = ({
 export const EntitiesSidebar = ({
   schemas,
   lifecycleStates,
-  workspaceSlug
+  workspaceSlug,
+  onCollapse,
+  onExpand
 }: {
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   workspaceSlug: string;
+  onCollapse?: () => void;
+  onExpand?: () => void;
 }) => {
   const navigate = useNavigate();
   const { entityId: routeEntityId } = useParams({ strict: false }) as { entityId?: string };
@@ -296,6 +302,20 @@ export const EntitiesSidebar = ({
             <Tabs.Trigger value="pinned">Pinned</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
+        {(onCollapse || onExpand) && (
+          <div className={styles.headerActions}>
+            {onExpand && (
+              <button type="button" className={styles.action} title="Pin sidebar open" onClick={onExpand}>
+                <TbLayoutSidebarLeftExpand size={14} />
+              </button>
+            )}
+            {onCollapse && (
+              <button type="button" className={styles.action} title="Collapse to rail" onClick={onCollapse}>
+                <TbLayoutSidebarLeftCollapse size={14} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className={styles.scroll}>

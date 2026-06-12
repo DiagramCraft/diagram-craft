@@ -31,11 +31,16 @@ type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
 type SerializedOverrides = Record<string, Record<string, SerializedOverride>>;
 
 export const DiagramScreen = () => {
-  const { workspaceSlug, projectId, diagramId } = useParams({ strict: false }) as {
+  const params = useParams({ strict: false }) as {
     workspaceSlug: string;
-    projectId: string;
+    projectId?: string;
+    entityId?: string;
     diagramId: string;
   };
+  const { workspaceSlug, diagramId } = params;
+  const projectId = params.projectId ?? params.entityId!;
+  const isEntityDiagram = !!params.entityId;
+  
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -133,18 +138,33 @@ export const DiagramScreen = () => {
 
   const handleClose = useCallback(async () => {
     await save();
-    await queryClient.refetchQueries({
-      queryKey: projectFileKeys.list(workspaceId, projectId)
-    });
-    await queryClient.refetchQueries({
-      queryKey: projectKeys.detail(workspaceId, projectId)
-    });
-    navigate({
-      to: '/$workspaceSlug/projects/$projectId',
-      params: { workspaceSlug, projectId },
-      search: { tab: 'projects' as const }
-    });
-  }, [save, queryClient, navigate, workspaceId, workspaceSlug, projectId]);
+    
+    if (isEntityDiagram) {
+      // Navigate back to entity detail page with folder context
+      const folderPath = fileInfoRef.current?.path.includes('/') 
+        ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
+        : undefined;
+      
+      navigate({
+        to: '/$workspaceSlug/entities/$entityId',
+        params: { workspaceSlug, entityId: projectId },
+        search: folderPath ? { contentFolder: folderPath } : {}
+      });
+    } else {
+      // Navigate back to project detail page
+      await queryClient.refetchQueries({
+        queryKey: projectFileKeys.list(workspaceId, projectId)
+      });
+      await queryClient.refetchQueries({
+        queryKey: projectKeys.detail(workspaceId, projectId)
+      });
+      navigate({
+        to: '/$workspaceSlug/projects/$projectId',
+        params: { workspaceSlug, projectId },
+        search: { tab: 'projects' as const }
+      });
+    }
+  }, [save, queryClient, navigate, workspaceId, workspaceSlug, projectId, isEntityDiagram]);
 
   useEffect(() => {
     let releaseDataChange = () => {};
@@ -204,29 +224,52 @@ export const DiagramScreen = () => {
         const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);
         const includedPackages = getIncludedPackages();
 
-        // Fetch project to get file info
-        const project = await orpcClient.projects.get({
-          params: {
-            workspace: workspaceId,
-            id: projectId
-          }
-        });
-
-        // Find the file in the project
-        // biome-ignore lint/suspicious/noExplicitAny: API response
-        const findFile = (folders: any[], rootFiles: any[]) => {
-          for (const file of rootFiles) {
-            if (file.id === diagramId) return file;
-          }
-          for (const folder of folders) {
-            for (const file of folder.files) {
-              if (file.id === diagramId) return file;
+        // Fetch file info based on diagram type
+        let file: { id: string; path: string; name: string } | null = null;
+        
+        if (isEntityDiagram) {
+          // Fetch entity content
+          const entityNodes = await orpcClient.projects.listEntityContent({
+            params: { workspace: workspaceId, entityId: projectId }
+          });
+          
+          // biome-ignore lint/suspicious/noExplicitAny: API response
+          const findFileInFolders = (folders: any[]) => {
+            for (const folder of folders) {
+              // biome-ignore lint/suspicious/noExplicitAny: API response
+              const f = folder.files.find((f: any) => f.id === diagramId);
+              if (f) return f;
             }
-          }
-          return null;
-        };
+            return null;
+          };
+          
+          file = findFileInFolders(entityNodes.folders);
+        } else {
+          // Fetch project
+          const project = await orpcClient.projects.get({
+            params: {
+              workspace: workspaceId,
+              id: projectId
+            }
+          });
 
-        const file = findFile(project.files.folders, project.files.rootFiles);
+          // Find the file in the project
+          // biome-ignore lint/suspicious/noExplicitAny: API response
+          const findFile = (folders: any[], rootFiles: any[]) => {
+            for (const f of rootFiles) {
+              if (f.id === diagramId) return f;
+            }
+            for (const folder of folders) {
+              for (const f of folder.files) {
+                if (f.id === diagramId) return f;
+              }
+            }
+            return null;
+          };
+
+          file = findFile(project.files.folders, project.files.rootFiles);
+        }
+        
         if (!file) throw new Error('Diagram file not found');
         setFileInfo({ path: file.path, name: file.name });
         fileInfoRef.current = { path: file.path, name: file.name };
@@ -311,7 +354,8 @@ export const DiagramScreen = () => {
     makePublicProvider,
     userId,
     userDisplayName,
-    userColor
+    userColor,
+    isEntityDiagram
   ]);
 
   const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);
