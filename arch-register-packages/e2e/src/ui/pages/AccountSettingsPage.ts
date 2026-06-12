@@ -1,11 +1,8 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, } from '@playwright/test';
 import { accountSettingsRoute } from '../support/routes';
 import { WorkspacePage } from './WorkspacePage';
 
 export class AccountSettingsPage extends WorkspacePage {
-  constructor(page: Page, workspaceSlug: string) {
-    super(page, workspaceSlug);
-  }
 
   goto = async (section: 'profile' | 'appearance' = 'profile') => {
     await this.page.goto(accountSettingsRoute(this.workspaceSlug, section));

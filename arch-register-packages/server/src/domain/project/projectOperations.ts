@@ -14,7 +14,12 @@ import {
 } from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError } from '../../utils/http';
-import { toApiProject, toApiProjectFile, toApiProjectDetail, toApiProjectEntity } from './projectHelpers';
+import {
+  toApiProject,
+  toApiProjectFile,
+  toApiProjectDetail,
+  toApiProjectEntity
+} from './projectHelpers';
 import type { ProjectFileDbResult } from './db/projectDatabase';
 import { HTTPError } from 'h3';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
@@ -27,6 +32,7 @@ import {
   ProjectEntity,
   ProjectFile
 } from '@arch-register/api-types/projectContract';
+import { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 
 const PROJECT_STATUSES = ['draft', 'active', 'complete', 'cancelled'] as const;
 type ProjectStatus = (typeof PROJECT_STATUSES)[number];
@@ -420,8 +426,6 @@ export const renameFolder = async (
   }
 };
 
-
-
 export const getFileContent = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
@@ -492,8 +496,11 @@ export const saveFile = async (
     const existingFile = await db.project.getProjectFileByPath(ws, id, filePath);
     const isUpdate = !!existingFile;
 
+    // TODO: We should add validation here
+    const doc = body as unknown as SerializedDiagramDocument;
+
     const timestamp = new Date();
-    const commentCounts = getDiagramCommentCounts(body as any);
+    const commentCounts = getDiagramCommentCounts(doc);
     const row = await db.project.upsertProjectFile({
       workspace: ws,
       project_id: id,
@@ -511,8 +518,7 @@ export const saveFile = async (
     try {
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
       const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-      const previewSvg =
-        (await generateAccurateSvgPreview(body as any)) ?? generateSvgPreview(body as any);
+      const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
       await db.project.updateProjectFileDerivedData(
         ws,
         id,
@@ -536,7 +542,7 @@ export const saveFile = async (
       );
     }
 
-    const entityRefs = getDiagramEntityRefs(body as any);
+    const entityRefs = getDiagramEntityRefs(doc);
     await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
 
     if (isUpdate) {
@@ -667,9 +673,12 @@ export const cloneFile = async (
       fileData.name = cloneName;
     }
 
+    // TODO: We should add validation for this
+    const doc = fileData as unknown as SerializedDiagramDocument;
+
     const timestamp = new Date();
     const clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-    const commentCounts = getDiagramCommentCounts(fileData as any);
+    const commentCounts = getDiagramCommentCounts(doc);
 
     const row = await db.project.upsertProjectFile({
       workspace: ws,
@@ -688,8 +697,7 @@ export const cloneFile = async (
     try {
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
       const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-      const previewSvg =
-        (await generateAccurateSvgPreview(fileData as any)) ?? generateSvgPreview(fileData as any);
+      const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
       await db.project.updateProjectFileDerivedData(
         ws,
         id,
@@ -713,7 +721,7 @@ export const cloneFile = async (
       );
     }
 
-    const entityRefs = getDiagramEntityRefs(fileData as any);
+    const entityRefs = getDiagramEntityRefs(doc);
     await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
 
     await logAudit(db, {
@@ -782,9 +790,11 @@ export const relocateFile = async (
       fileData.name = displayName;
     }
 
+    const doc = fileData as unknown as SerializedDiagramDocument;
+
     const timestamp = new Date();
     const updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-    const commentCounts = getDiagramCommentCounts(fileData as any);
+    const commentCounts = getDiagramCommentCounts(doc);
 
     const newFile = await db.project.upsertProjectFile({
       workspace: ws,
@@ -813,10 +823,7 @@ export const relocateFile = async (
     try {
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
       const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-      previewSvg =
-        (await generateAccurateSvgPreview(fileData as any)) ??
-        generateSvgPreview(fileData as any) ??
-        null;
+      previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
     } catch {
       previewSvg = null;
     }
@@ -966,7 +973,12 @@ export const addProjectEntity = async (
   try {
     const project = await db.project.getProject(ws, projectId);
     httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
-    requireProjectAction(authCtx, project.owner, 'edit_project', 'You do not have permission to edit this project');
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to edit this project'
+    );
     const row = await db.project.addProjectEntity({
       workspace: ws,
       project_id: projectId,
@@ -994,11 +1006,19 @@ export const updateProjectEntity = async (
   try {
     const project = await db.project.getProject(ws, projectId);
     httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
-    requireProjectAction(authCtx, project.owner, 'edit_project', 'You do not have permission to edit this project');
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to edit this project'
+    );
     const existing = (await db.project.listProjectEntities(ws, projectId)).find(
       e => e.entity_id === entityId
     );
-    httpAssert.present(existing, { status: 404, message: `Entity '${entityId}' not found in project` });
+    httpAssert.present(existing, {
+      status: 404,
+      message: `Entity '${entityId}' not found in project`
+    });
     const row = await db.project.updateProjectEntity(
       ws,
       projectId,
@@ -1025,7 +1045,12 @@ export const removeProjectEntity = async (
   try {
     const project = await db.project.getProject(ws, projectId);
     httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
-    requireProjectAction(authCtx, project.owner, 'edit_project', 'You do not have permission to edit this project');
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to edit this project'
+    );
     await db.project.removeProjectEntity(ws, projectId, entityId);
     return { success: true };
   } catch (e) {
