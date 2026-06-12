@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Outlet, useParams, useNavigate, useMatches } from '@tanstack/react-router';
+import { Outlet, useParams, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from './WorkspaceLayout.module.css';
 import sidePanelStyles from '../shell/SidePanel.module.css';
@@ -27,6 +27,7 @@ import {
   resolveWorkspaceShellDescriptor
 } from './workspaceShellDescriptors';
 import type { WorkspaceRailItemId } from '../shell/shellTypes';
+import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
 
 const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'home', icon: TbHome, tooltip: 'Workspace overview' },
@@ -43,6 +44,7 @@ const SCHEMA_RESTRICTED_IDS = new Set(['home', 'projects', 'entities', 'search']
 export const WorkspaceLayout = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const matches = useMatches();
 
@@ -203,7 +205,8 @@ export const WorkspaceLayout = () => {
   const shellDescriptor = resolveWorkspaceShellDescriptor({
     matches: matches.map(match => ({
       routeId: match.routeId,
-      params: match.params as Record<string, string>
+      params: match.params as Record<string, string>,
+      buildShell: getWorkspaceShellBuilder(router.routesById[match.routeId])
     })),
     navigate,
     workspace: ws,
@@ -226,16 +229,11 @@ export const WorkspaceLayout = () => {
     />
   );
 
-  const routeContent =
-    shellDescriptor.variant === 'overlay' ? (
-      <RouteContentBoundary>
-        <Outlet />
-      </RouteContentBoundary>
-    ) : (
-      <RouteContentBoundary>
-        <Outlet />
-      </RouteContentBoundary>
-    );
+  const routeContent = (
+    <RouteContentBoundary>
+      <Outlet />
+    </RouteContentBoundary>
+  );
 
   if (workspacesError || projectsError || schemasError || enumsError) {
     const error = workspacesError ?? projectsError ?? schemasError ?? enumsError;

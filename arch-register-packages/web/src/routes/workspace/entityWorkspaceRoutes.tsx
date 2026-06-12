@@ -6,108 +6,86 @@ import { ImportScreen } from '../../sections/entities/ImportScreen';
 import { EntitiesSidebar } from '../../sections/entities/EntitiesSidebar';
 import { EntityContentSidebar } from '../../sections/entities/EntityContentSidebar';
 import { validateEntityDetailSearch, validateEntitySearch } from '../searchParams';
-import type { WorkspaceShellEntry } from '../workspaceShellRegistry';
 import {
   buildEntityBreadcrumbs,
   getAllParams
 } from '../../layouts/workspaceShellDescriptors';
+import { withWorkspaceShell } from './workspaceShellRoute';
 
 export const createEntityWorkspaceRoutes = (
   // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
   workspaceRoute: any
-): WorkspaceShellEntry[] => {
-  const entityBrowserRoute = createRoute({
+): object[] => {
+  const entityBrowserRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'entities',
     validateSearch: validateEntitySearch,
     component: EntityBrowserScreen
-  });
+  }), ctx => ({
+    variant: 'standard',
+    activeRailItem: 'entities',
+    breadcrumbs: buildEntityBreadcrumbs(ctx, false),
+    primarySidebar: (
+      <EntitiesSidebar
+        schemas={ctx.schemas}
+        lifecycleStates={ctx.lifecycleStates}
+        workspaceSlug={ctx.workspaceSlug}
+      />
+    )
+  }));
 
-  const entityDetailRoute = createRoute({
+  const entityDetailRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'entities/$entityId',
     validateSearch: validateEntityDetailSearch,
     component: EntityDetailScreen
+  }), ctx => {
+    const params = getAllParams(ctx.matches);
+    return {
+      variant: 'detail',
+      activeRailItem: 'entities',
+      breadcrumbs: buildEntityBreadcrumbs(ctx, true),
+      navigationLabel: 'Entities',
+      renderNavigation: controls => (
+        <EntitiesSidebar
+          schemas={ctx.schemas}
+          lifecycleStates={ctx.lifecycleStates}
+          workspaceSlug={ctx.workspaceSlug}
+          onCollapse={controls.collapse}
+          onExpand={controls.expand}
+        />
+      ),
+      secondarySidebar: params.entityId ? (
+        <EntityContentSidebar workspaceSlug={ctx.workspaceSlug} entityId={params.entityId} />
+      ) : undefined
+    };
   });
 
-  const entityDiagramRoute = createRoute({
+  const entityDiagramRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'entities/$entityId/diagrams/$diagramId',
     component: DiagramScreen
-  });
+  }), () => ({
+    variant: 'overlay'
+  }));
 
-  const importRoute = createRoute({
+  const importRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'entities/import',
     component: ImportScreen,
     validateSearch: validateEntitySearch
-  });
+  }), ctx => ({
+    variant: 'standard',
+    activeRailItem: 'entities',
+    breadcrumbs: buildEntityBreadcrumbs(ctx, false),
+    primarySidebar: (
+      <EntitiesSidebar
+        schemas={ctx.schemas}
+        lifecycleStates={ctx.lifecycleStates}
+        workspaceSlug={ctx.workspaceSlug}
+      />
+    )
+  }));
 
-  return [
-    {
-      route: entityBrowserRoute,
-      matchesRouteId: routeId => routeId.endsWith('/entities'),
-      buildShell: ctx => ({
-        variant: 'standard',
-        activeRailItem: 'entities',
-        breadcrumbs: buildEntityBreadcrumbs(ctx, false),
-        primarySidebar: (
-          <EntitiesSidebar
-            schemas={ctx.schemas}
-            lifecycleStates={ctx.lifecycleStates}
-            workspaceSlug={ctx.workspaceSlug}
-          />
-        )
-      })
-    },
-    {
-      route: importRoute,
-      matchesRouteId: routeId => routeId.includes('/entities/import'),
-      buildShell: ctx => ({
-        variant: 'standard',
-        activeRailItem: 'entities',
-        breadcrumbs: buildEntityBreadcrumbs(ctx, false),
-        primarySidebar: (
-          <EntitiesSidebar
-            schemas={ctx.schemas}
-            lifecycleStates={ctx.lifecycleStates}
-            workspaceSlug={ctx.workspaceSlug}
-          />
-        )
-      })
-    },
-    {
-      route: entityDetailRoute,
-      matchesRouteId: routeId =>
-        routeId.includes('/entities/$entityId') && !routeId.includes('/diagrams/$diagramId'),
-      buildShell: ctx => {
-        const params = getAllParams(ctx.matches);
-        return {
-          variant: 'detail',
-          activeRailItem: 'entities',
-          breadcrumbs: buildEntityBreadcrumbs(ctx, true),
-          navigationLabel: 'Entities',
-          renderNavigation: controls => (
-            <EntitiesSidebar
-              schemas={ctx.schemas}
-              lifecycleStates={ctx.lifecycleStates}
-              workspaceSlug={ctx.workspaceSlug}
-              onCollapse={controls.collapse}
-              onExpand={controls.expand}
-            />
-          ),
-          secondarySidebar: params.entityId ? (
-            <EntityContentSidebar workspaceSlug={ctx.workspaceSlug} entityId={params.entityId} />
-          ) : undefined
-        };
-      }
-    },
-    {
-      route: entityDiagramRoute,
-      matchesRouteId: routeId => routeId.includes('/entities/$entityId/diagrams/$diagramId'),
-      buildShell: () => ({
-        variant: 'overlay'
-      })
-    }
-  ];
+  return [entityBrowserRoute, importRoute, entityDetailRoute, entityDiagramRoute];
 };

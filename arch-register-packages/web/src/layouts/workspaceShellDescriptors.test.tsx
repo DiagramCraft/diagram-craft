@@ -4,13 +4,13 @@ import {
   resolveWorkspaceShellDescriptor,
   type WorkspaceShellContext
 } from './workspaceShellDescriptors';
-import { setWorkspaceShellEntries } from '../routes/workspaceShellRegistry';
 
 const createContext = (
   routeId: string,
-  params: Record<string, string> = {}
+  params: Record<string, string> = {},
+  buildShell?: WorkspaceShellContext['matches'][number]['buildShell']
 ): WorkspaceShellContext => ({
-  matches: [{ routeId, params }],
+  matches: [{ routeId, params, buildShell }],
   navigate: vi.fn(),
   workspace: null,
   workspaceSlug: 'ws-1',
@@ -28,57 +28,46 @@ const createContext = (
   availableSettingsSections: ['general']
 });
 
+const detailShell = () => ({
+  variant: 'detail' as const,
+  activeRailItem: 'entities' as const,
+  breadcrumbs: [
+    { label: 'Home', onClick: vi.fn() },
+    { label: 'Entities', onClick: vi.fn() },
+    { label: 'Detail', onClick: vi.fn() }
+  ],
+  navigationLabel: 'Entities',
+  renderNavigation: () => null
+});
+
+const searchShell = () => ({
+  variant: 'full-bleed' as const,
+  activeRailItem: 'search' as const,
+  breadcrumbs: []
+});
+
+const overlayShell = () => ({
+  variant: 'overlay' as const
+});
+
+const projectShell = () => ({
+  variant: 'standard' as const,
+  activeRailItem: 'projects' as const,
+  breadcrumbs: []
+});
+
 beforeEach(() => {
-  setWorkspaceShellEntries([
-    {
-      route: {},
-      matchesRouteId: routeId =>
-        routeId.includes('/entities/$entityId') && !routeId.includes('/diagrams/$diagramId'),
-      buildShell: () => ({
-        variant: 'detail',
-        activeRailItem: 'entities',
-        breadcrumbs: [
-          { label: 'Home', onClick: vi.fn() },
-          { label: 'Entities', onClick: vi.fn() },
-          { label: 'Detail', onClick: vi.fn() }
-        ],
-        navigationLabel: 'Entities',
-        renderNavigation: () => null
-      })
-    },
-    {
-      route: {},
-      matchesRouteId: routeId => routeId.endsWith('/search'),
-      buildShell: () => ({
-        variant: 'full-bleed',
-        activeRailItem: 'search',
-        breadcrumbs: []
-      })
-    },
-    {
-      route: {},
-      matchesRouteId: routeId => routeId.includes('/projects/$projectId/diagrams/$diagramId'),
-      buildShell: () => ({
-        variant: 'overlay'
-      })
-    },
-    {
-      route: {},
-      matchesRouteId: routeId =>
-        routeId.includes('/projects/$projectId') && !routeId.includes('/diagrams/$diagramId'),
-      buildShell: () => ({
-        variant: 'standard',
-        activeRailItem: 'projects',
-        breadcrumbs: []
-      })
-    }
-  ]);
+  vi.clearAllMocks();
 });
 
 describe('resolveWorkspaceShellDescriptor', () => {
   it('resolves a detail shell for entity detail routes', () => {
     const descriptor = resolveWorkspaceShellDescriptor(
-      createContext('/authenticated/$workspaceSlug/entities/$entityId', { entityId: 'e-1' })
+      createContext(
+        '/authenticated/$workspaceSlug/entities/$entityId',
+        { entityId: 'e-1' },
+        detailShell
+      )
     );
 
     expect(descriptor.variant).toBe('detail');
@@ -89,7 +78,7 @@ describe('resolveWorkspaceShellDescriptor', () => {
 
   it('resolves a full-bleed shell for search routes', () => {
     const descriptor = resolveWorkspaceShellDescriptor(
-      createContext('/authenticated/$workspaceSlug/search')
+      createContext('/authenticated/$workspaceSlug/search', {}, searchShell)
     );
 
     expect(descriptor.variant).toBe('full-bleed');
@@ -103,11 +92,13 @@ describe('resolveWorkspaceShellDescriptor', () => {
       matches: [
         {
           routeId: '/authenticated/$workspaceSlug/projects/$projectId',
-          params: { projectId: 'p-1' }
+          params: { projectId: 'p-1' },
+          buildShell: projectShell
         },
         {
           routeId: '/authenticated/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-          params: { projectId: 'p-1', diagramId: 'd-1' }
+          params: { projectId: 'p-1', diagramId: 'd-1' },
+          buildShell: overlayShell
         }
       ]
     });

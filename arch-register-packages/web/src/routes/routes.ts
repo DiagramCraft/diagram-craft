@@ -7,7 +7,6 @@ import { workspaceKeys } from '../hooks/useWorkspaces';
 import { RootLayout } from '../layouts/RootLayout';
 import { RouteErrorComponent } from './RouteErrorComponent';
 import { createWorkspaceRouteEntries } from './workspace/createWorkspaceRouteEntries';
-import { setWorkspaceShellEntries } from './workspaceShellRegistry';
 
 // ─── Root Route ───────────────────────────────────────────────
 const rootRoute = createRootRouteWithContext<RouterContext>()({
@@ -87,15 +86,12 @@ const workspaceRoute = createRoute({
 });
 
 const workspaceRouteEntries = createWorkspaceRouteEntries(workspaceRoute);
-setWorkspaceShellEntries(workspaceRouteEntries);
 
 // ─── Route Tree ──────────────────────────────────────────────
 export const routeTree = rootRoute.addChildren([
   loginRoute,
   indexRoute,
   authenticatedRoute.addChildren([
-    workspaceRoute.addChildren(
-      workspaceRouteEntries.map(entry => entry.route as ReturnType<typeof createRoute>)
-    )
+    workspaceRoute.addChildren(workspaceRouteEntries as ReturnType<typeof createRoute>[])
   ])
 ]);

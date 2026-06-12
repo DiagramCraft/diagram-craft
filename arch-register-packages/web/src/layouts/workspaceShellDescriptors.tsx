@@ -6,11 +6,11 @@ import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '../lib/api';
-import { getWorkspaceShellEntries } from '../routes/workspaceShellRegistry';
 
 type MatchLike = {
   routeId: string;
   params: Record<string, string>;
+  buildShell?: (ctx: WorkspaceShellContext) => WorkspaceShellDescriptor;
 };
 
 type NavigateLike = (args: {
@@ -144,20 +144,18 @@ export const buildSettingsBreadcrumbs = (
 export const resolveWorkspaceShellDescriptor = (
   ctx: WorkspaceShellContext
 ): WorkspaceShellDescriptor => {
-  const entries = getWorkspaceShellEntries();
-  const activeEntry = [...ctx.matches]
+  const activeMatch = [...ctx.matches]
     .reverse()
-    .map(match => entries.find(entry => entry.matchesRouteId(match.routeId)))
-    .find(entry => entry !== undefined);
+    .find(match => match.buildShell !== undefined);
 
-  if (!activeEntry) {
+  if (!activeMatch?.buildShell) {
     return {
       variant: 'standard',
       activeRailItem: 'home',
       breadcrumbs: buildHomeBreadcrumbs(ctx)
     };
   }
-  return activeEntry.buildShell(ctx);
+  return activeMatch.buildShell(ctx);
 };
 
 export const navigateFromRailItem = (
