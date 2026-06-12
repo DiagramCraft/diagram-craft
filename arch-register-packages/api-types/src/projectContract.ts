@@ -64,6 +64,11 @@ const projectDetailSchema = projectSchema.extend({
   files: fileTreeSchema
 });
 
+const diagramEntityFileSchema = z.object({
+  file: projectFileSchema,
+  project: z.object({ id: z.string(), name: z.string() })
+});
+
 // ── Request schemas ───────────────────────────────────────────
 
 const deleteProjectResponseSchema = z.object({
@@ -350,7 +355,15 @@ export const projectContract = {
         inputStructure: 'detailed'
       })
       .input(z.object({ params: wsAndId.extend({ entityId: z.string() }) }))
-      .output(z.object({ success: z.boolean() }))
+      .output(z.object({ success: z.boolean() })),
+    getEntityDiagramFiles: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/entities/{entityId}/diagram-files',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({ params: ws.extend({ entityId: z.string() }) }))
+      .output(z.array(diagramEntityFileSchema))
   }
 };
 
@@ -359,3 +372,4 @@ export type ProjectFile = z.infer<typeof projectFileSchema>;
 export type FileTree = z.infer<typeof fileTreeSchema>;
 export type ProjectDetail = z.infer<typeof projectDetailSchema>;
 export type ProjectEntity = z.infer<typeof projectEntitySchema>;
+export type DiagramEntityFile = z.infer<typeof diagramEntityFileSchema>;

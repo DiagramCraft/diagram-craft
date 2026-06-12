@@ -77,6 +77,20 @@ export type ProjectEntityDbCreate = {
   created_at: Date;
 };
 
+// -- Diagram Entity Ref
+
+export type DiagramEntityFileDbResult = {
+  file_id: string;
+  file_path: string;
+  file_name: string;
+  file_size_bytes: number;
+  file_preview_svg: string | null;
+  file_created_at: Date;
+  file_updated_at: Date;
+  project_id: string;
+  project_name: string;
+};
+
 // --
 
 export type ProjectDatabase = {
@@ -154,4 +168,7 @@ export type ProjectDatabase = {
   ): Promise<ProjectEntityDbResult | null>;
   removeProjectEntity(ws: string, projectId: string, entityId: string): Promise<void>;
   getEntityProjects(ws: string, entityId: string): Promise<ProjectEntityDbResult[]>;
+
+  syncDiagramEntityRefs(ws: string, fileId: string, entityIds: string[]): Promise<void>;
+  getEntityDiagramFiles(ws: string, entityId: string): Promise<DiagramEntityFileDbResult[]>;
 };

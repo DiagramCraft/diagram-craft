@@ -42,9 +42,7 @@ import {
   useUpdateProjectEntity,
   useRemoveProjectEntity
 } from '../../hooks/useProjects';
-import {
-  ProjectDetail as ProjectDetailData
-} from '@arch-register/api-types/projectContract';
+import { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import {
   useDeleteProjectFile,
   useDeleteProjectFolder,
@@ -74,7 +72,7 @@ export const ProjectDetailScreen = () => {
 
   const [editing, setEditing] = useState(false);
   const [filter, setFilter] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
@@ -109,7 +107,9 @@ export const ProjectDetailScreen = () => {
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { color: string; icon: string | null }>();
-    schemas.forEach((s, i) => m.set(s.id, { color: resolveSchemaColor(s, i), icon: s.icon ?? null }));
+    schemas.forEach((s, i) =>
+      m.set(s.id, { color: resolveSchemaColor(s, i), icon: s.icon ?? null })
+    );
     return m;
   }, [schemas]);
 
@@ -118,7 +118,6 @@ export const ProjectDetailScreen = () => {
     projectEntityTypes.forEach((t, i) => m.set(t.id, SCHEMA_COLORS[i % SCHEMA_COLORS.length]!));
     return m;
   }, [projectEntityTypes]);
-
 
   if (isLoading) {
     return (
@@ -523,7 +522,10 @@ export const ProjectDetailScreen = () => {
 
       {/* Toolbar */}
       <div className={styles.tabBar}>
-        <Tabs.Root value={activeTab} onValueChange={v => setActiveTab(v as 'diagrams' | 'entities')}>
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={v => setActiveTab(v as 'diagrams' | 'entities')}
+        >
           <Tabs.List>
             <Tabs.Trigger value="diagrams">Diagrams ({visibleFiles.length})</Tabs.Trigger>
             <Tabs.Trigger value="entities">Entities ({projectEntities.length})</Tabs.Trigger>
@@ -589,17 +591,15 @@ export const ProjectDetailScreen = () => {
         <div className={styles.entityTab}>
           {projectEntities.length === 0 ? (
             <div className={styles.empty}>
-              <div className={styles.emptyIcon}><TbDatabase size={22} /></div>
+              <div className={styles.emptyIcon}>
+                <TbDatabase size={22} />
+              </div>
               <div className={styles.emptyTitle}>No entities linked</div>
               <div className={styles.emptySub}>
                 Link entities this project decommissions, modifies, creates, or depends on.
               </div>
               {project.canEdit && (
-                <button
-                  type="button"
-                  className="ar-btn"
-                  onClick={() => setAddEntityOpen(true)}
-                >
+                <button type="button" className="ar-btn" onClick={() => setAddEntityOpen(true)}>
                   <TbPlus size={11} /> Add entity
                 </button>
               )}
@@ -614,50 +614,65 @@ export const ProjectDetailScreen = () => {
               </div>
               {projectEntities.map(e => {
                 const s = e.entity_schema ? schemaMap.get(e.entity_schema.id) : undefined;
-                const roleColor = e.entity_type ? entityTypeColorMap.get(e.entity_type.id) : undefined;
+                const roleColor = e.entity_type
+                  ? entityTypeColorMap.get(e.entity_type.id)
+                  : undefined;
                 return (
-                <div key={e.entity_id} className={styles.pentRow}>
-                  <button type="button" className={styles.pentName}>
-                    {s && <TypeBadge color={s.color} icon={s.icon} size={18} />}
-                    <div>
-                      <div>{e.entity_name}</div>
-                      {e.entity_description && (
-                        <div className={styles.pentNameSub}>{e.entity_description}</div>
-                      )}
-                    </div>
-                  </button>
-                  <span className={styles.pentType}>
-                    {e.entity_schema
-                      ? <Chip tone="ghost">{e.entity_schema.name}</Chip>
-                      : <span className="dim">—</span>}
-                  </span>
-                  <span className={styles.pentRole}>
-                    {e.entity_type?.name
-                      ? <Chip tone="ghost" dot={roleColor}>{e.entity_type.name}</Chip>
-                      : <span className="dim">—</span>}
-                  </span>
-                  <span className={styles.pentActions}>
-                    <button
-                      type="button"
-                      className={`${styles.pentCheck} ${e.is_done ? styles.pentCheckDone : ''}`}
-                      onClick={() => project.canEdit && updateEntityMutation.mutate({ entityId: e.entity_id, is_done: !e.is_done })}
-                      title={e.is_done ? 'Mark as not done' : 'Mark as done'}
-                    >
-                      <TbCheck size={11} />
+                  <div key={e.entity_id} className={styles.pentRow}>
+                    <button type="button" className={styles.pentName}>
+                      {s && <TypeBadge color={s.color} icon={s.icon} size={18} />}
+                      <div>
+                        <div>{e.entity_name}</div>
+                        {e.entity_description && (
+                          <div className={styles.pentNameSub}>{e.entity_description}</div>
+                        )}
+                      </div>
                     </button>
-                    {project.canEdit && (
+                    <span className={styles.pentType}>
+                      {e.entity_schema ? (
+                        <Chip tone="ghost">{e.entity_schema.name}</Chip>
+                      ) : (
+                        <span className="dim">—</span>
+                      )}
+                    </span>
+                    <span className={styles.pentRole}>
+                      {e.entity_type?.name ? (
+                        <Chip tone="ghost" dot={roleColor}>
+                          {e.entity_type.name}
+                        </Chip>
+                      ) : (
+                        <span className="dim">—</span>
+                      )}
+                    </span>
+                    <span className={styles.pentActions}>
                       <button
                         type="button"
-                        className={styles.removeEntityBtn}
-                        onClick={() => removeEntityMutation.mutate(e.entity_id)}
-                        title="Remove"
+                        className={`${styles.pentCheck} ${e.is_done ? styles.pentCheckDone : ''}`}
+                        onClick={() =>
+                          project.canEdit &&
+                          updateEntityMutation.mutate({
+                            entityId: e.entity_id,
+                            is_done: !e.is_done
+                          })
+                        }
+                        title={e.is_done ? 'Mark as not done' : 'Mark as done'}
                       >
-                        <TbTrash size={13} />
+                        <TbCheck size={11} />
                       </button>
-                    )}
-                  </span>
-                </div>
-              ); })}
+                      {project.canEdit && (
+                        <button
+                          type="button"
+                          className={styles.removeEntityBtn}
+                          onClick={() => removeEntityMutation.mutate(e.entity_id)}
+                          title="Remove"
+                        >
+                          <TbTrash size={13} />
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -808,26 +823,6 @@ const CommentPill = ({ file }: { file: FileEntry }) => {
   );
 };
 
-// Compact inline chip used in the list row.
-const CommentChip = ({ file }: { file: FileEntry }) => {
-  const total = file.comment_count ?? 0;
-  const unresolved = file.unresolved_comment_count ?? 0;
-  if (total === 0) return null;
-  return (
-    <span
-      className={`${styles.cmtChip} ${unresolved > 0 ? styles.cmtChipOpen : ''}`}
-      title={
-        unresolved > 0
-          ? `${unresolved} unresolved of ${total} comment${total === 1 ? '' : 's'}`
-          : `${total} comment${total === 1 ? '' : 's'} · all resolved`
-      }
-    >
-      <TbMessageCircle size={10} />
-      {unresolved > 0 ? unresolved : total}
-    </span>
-  );
-};
-
 const DiagramCard = ({
   file,
   folder,
@@ -970,9 +965,6 @@ const DiagramRow = ({
   >
     <div className={styles.diagramRowName}>
       <span>{file.name}</span>
-      <CommentChip file={file} />
-    </div>
-    <div className={styles.diagramRowTemplate}>
       {file.is_workspace_template && (
         <span className={styles.templateBadge} title="Workspace template">
           <TbStar size={10} /> Workspace
@@ -1106,9 +1098,6 @@ const DiagramsView = ({
     return <EmptyState title="No matches" sub={`No diagrams match "${filter}".`} />;
   }
 
-  const containerClass = viewMode === 'list' ? styles.diagramList : styles.diagramGrid;
-  const FileItem = viewMode === 'list' ? DiagramRow : DiagramCard;
-
   const fileItemProps = (f: FileEntry, folder?: string) => ({
     file: f,
     folder,
@@ -1118,12 +1107,40 @@ const DiagramsView = ({
       : undefined
   });
 
+  if (viewMode === 'list') {
+    const allItems: Array<{ file: FileEntry; folder?: string }> = folderFilter
+      ? filtered.map(f => ({ file: f }))
+      : [
+          ...project.files.rootFiles
+            .filter(f => !f.path.endsWith('/.keep'))
+            .filter(f => !lc || f.name.toLowerCase().includes(lc))
+            .map(f => ({ file: f })),
+          ...project.files.folders.flatMap(folder =>
+            folder.files
+              .filter(f => !f.path.endsWith('/.keep'))
+              .filter(f => !lc || f.name.toLowerCase().includes(lc))
+              .map(f => ({ file: f, folder: folder.path }))
+          )
+        ];
+
+    return (
+      <div className={styles.diagramListPanel}>
+        <div className={styles.diagramListHead}>
+          <span>Name</span>
+          <span>Folder</span>
+          <span>Last edit</span>
+        </div>
+        {allItems.map(({ file: f, folder }) => (
+          <DiagramRow key={f.path} {...fileItemProps(f, folder)} />
+        ))}
+      </div>
+    );
+  }
+
+  // Grid view
+  const containerClass = styles.diagramGrid;
   const addButton =
-    onNewDiagram == null ? null : viewMode === 'list' ? (
-      <button type="button" className={styles.diagramRowAdd} onClick={onNewDiagram}>
-        <TbPlus size={12} /> New diagram
-      </button>
-    ) : (
+    onNewDiagram == null ? null : (
       <button
         type="button"
         className={`${styles.diagramCard} ${styles.diagramCardAdd}`}
@@ -1138,7 +1155,7 @@ const DiagramsView = ({
     return (
       <div className={containerClass}>
         {filtered.map(f => (
-          <FileItem key={f.path} {...fileItemProps(f)} />
+          <DiagramCard key={f.path} {...fileItemProps(f)} />
         ))}
         {addButton}
       </div>
@@ -1163,7 +1180,7 @@ const DiagramsView = ({
       {rootFiles.length > 0 && (
         <div className={containerClass}>
           {rootFiles.map(f => (
-            <FileItem key={f.path} {...fileItemProps(f)} />
+            <DiagramCard key={f.path} {...fileItemProps(f)} />
           ))}
           {folderGroups.length === 0 && addButton}
         </div>
@@ -1175,7 +1192,7 @@ const DiagramsView = ({
           </div>
           <div className={containerClass}>
             {g.files.map(f => (
-              <FileItem key={f.path} {...fileItemProps(f, g.path)} />
+              <DiagramCard key={f.path} {...fileItemProps(f, g.path)} />
             ))}
             {idx === folderGroups.length - 1 && addButton}
           </div>
@@ -1410,12 +1427,14 @@ const AddEntityToProjectDialog = ({
         ev.preventDefault();
         if (!filtered.length) return;
         const idx = filtered.findIndex(e => e._uid === selectedId);
-        const next = ev.key === 'ArrowDown'
-          ? Math.min(idx + 1, filtered.length - 1)
-          : Math.max(idx - 1, 0);
+        const next =
+          ev.key === 'ArrowDown' ? Math.min(idx + 1, filtered.length - 1) : Math.max(idx - 1, 0);
         setSelectedId(filtered[next]!._uid);
       }
-      if (ev.key === 'Enter' && selectedId) { ev.preventDefault(); void handleSubmit(); }
+      if (ev.key === 'Enter' && selectedId) {
+        ev.preventDefault();
+        void handleSubmit();
+      }
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
@@ -1449,7 +1468,9 @@ const AddEntityToProjectDialog = ({
           label: addEntityMutation.isPending ? 'Adding...' : 'Add entity',
           type: 'default',
           disabled: addEntityMutation.isPending || !selectedId,
-          onClick: () => { void handleSubmit(); }
+          onClick: () => {
+            void handleSubmit();
+          }
         }
       ]}
     >
@@ -1496,14 +1517,12 @@ const AddEntityToProjectDialog = ({
         {/* ROLE */}
         <div className={styles.aedSection}>
           <div className={styles.aedLabel}>Role</div>
-          <Select.Root
-            value={entityType}
-            placeholder="None"
-            onChange={v => setEntityType(v ?? '')}
-          >
+          <Select.Root value={entityType} placeholder="None" onChange={v => setEntityType(v ?? '')}>
             <Select.Item value="">None</Select.Item>
             {projectEntityTypes.map(t => (
-              <Select.Item key={t.id} value={t.id}>{t.label}</Select.Item>
+              <Select.Item key={t.id} value={t.id}>
+                {t.label}
+              </Select.Item>
             ))}
           </Select.Root>
         </div>

@@ -66,7 +66,8 @@ export type {
   ProjectDatabase,
   ProjectDbCreate,
   ProjectDbUpdate,
-  ProjectFileDbUpsert
+  ProjectFileDbUpsert,
+  DiagramEntityFileDbResult
 } from '../domain/project/db/projectDatabase';
 export type {
   WorkspaceDatabase,
