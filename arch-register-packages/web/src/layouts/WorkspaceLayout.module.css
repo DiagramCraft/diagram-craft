@@ -15,13 +15,13 @@
   min-height: 0;
 }
 
-/* entity-detail: fold rail (44px) + content sidebar (240px) */
-.bodyEntityDetail {
+/* detail layout: fold rail (44px) + content sidebar (240px) */
+.bodyDetailCollapsed {
   grid-template-columns: var(--rail) 44px 240px 1fr;
 }
 
-/* entity-detail: expanded nav (280px) + content sidebar (240px) */
-.bodyEntityDetailExpanded {
+/* detail layout: expanded nav (280px) + content sidebar (240px) */
+.bodyDetailExpanded {
   grid-template-columns: var(--rail) 280px 240px 1fr;
 }
 

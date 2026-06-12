@@ -1,15 +1,10 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Outlet, useParams, useNavigate, useMatches } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from './WorkspaceLayout.module.css';
 import sidePanelStyles from '../shell/SidePanel.module.css';
 import { TopBar } from '../shell/TopBar';
-import type { BreadcrumbItem } from '../shell/TopBar';
 import { NavRail, type NavRailItem } from '@diagram-craft/app-components/NavRail';
-import { SidePanel } from '../shell/SidePanel';
-import { EntityContentSidebar } from '../sections/entities/EntityContentSidebar';
-import { FoldedRail, NavSidebar } from '../shell/FoldedRail';
-import { EntitiesSidebar } from '../sections/entities/EntitiesSidebar';
 import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
@@ -23,23 +18,15 @@ import { useAiConfig } from '../hooks/useAiConfig';
 import { useWorkspacePermissions } from '../auth/useWorkspacePermissions';
 import { useAuthorizationData } from '../auth/AuthorizationDataContext';
 import { WorkspaceContext } from './WorkspaceContext';
-import { deriveActiveView } from './deriveActiveView';
-import type { ViewId } from './viewId';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
+import { TbCode, TbDatabase, TbFileAi, TbFolders, TbHome, TbMessageCircleStar, TbSearch } from 'react-icons/tb';
+import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import {
-  TbHome,
-  TbFolders,
-  TbDatabase,
-  TbCode,
-  TbSearch,
-  TbSettings,
-  TbSparkles,
-  TbWand,
-  TbMessageCircleStar,
-  TbFileAi
-} from 'react-icons/tb';
-import { Project } from '@arch-register/api-types/projectContract';
+  navigateFromRailItem,
+  resolveWorkspaceShellDescriptor
+} from './workspaceShellDescriptors';
+import type { WorkspaceRailItemId } from '../shell/shellTypes';
 
 const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'home', icon: TbHome, tooltip: 'Workspace overview' },
@@ -51,54 +38,18 @@ const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' }
 ];
 
-const VIEW_TO_RAIL: Record<string, string> = {
-  'home': 'home',
-  'project-detail': 'projects',
-  'entity-browser': 'entities',
-  'entity-detail': 'entities',
-  'data-model': 'model',
-  'search': 'search',
-  'assistant': 'assistant',
-  'extract': 'extract'
-};
-
 const SCHEMA_RESTRICTED_IDS = new Set(['home', 'projects', 'entities', 'search']);
-
-const RAIL_TO_PATH: Record<string, string> = {
-  home: '',
-  projects: 'projects',
-  entities: 'entities',
-  model: 'model',
-  search: 'search',
-  assistant: 'assistant',
-  extract: 'extract'
-};
-
-const getProjectSidebarTab = (project: Project | undefined): 'projects' | 'archive' =>
-  project?.status === 'complete' || project?.status === 'cancelled' ? 'archive' : 'projects';
-
-const getDefaultProject = (projects: Project[]): Project | undefined =>
-  projects.find(p => p.status !== 'complete' && p.status !== 'cancelled') ?? projects[0];
 
 export const WorkspaceLayout = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const matches = useMatches();
-  const activeView = deriveActiveView(matches);
 
   const [query, setQuery] = useState('');
   const [addWsOpen, setAddWsOpen] = useState(false);
   const [addEntityOpen, setAddEntityOpen] = useState(false);
   const [addProjectOpen, setAddProjectOpen] = useState(false);
-  const [navMode, setNavMode] = useState<'auto' | 'expanded' | 'collapsed'>('auto');
-  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
-
-  useEffect(() => {
-    const onResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
 
   const {
     data: workspaces = [],
@@ -143,43 +94,11 @@ export const WorkspaceLayout = () => {
 
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
 
-  const showSidebar =
-    activeView !== 'search' &&
-    activeView !== 'diagram' &&
-    activeView !== 'assistant' &&
-    activeView !== 'extract';
-
-  const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
-  const entityId = activeView === 'entity-detail' ? (allParams.entityId ?? null) : null;
-  const isEntityDetail = showSidebar && activeView === 'entity-detail' && entityId !== null;
-  // Auto-expand on wide windows (≥1320px); user can also manually pin open/closed
-  const expandedNav = isEntityDetail && (
-    navMode === 'expanded' || (navMode === 'auto' && windowWidth >= 1320)
-  );
-
   const handleRailPick = useCallback(
-    (id: string) => {
+    (id: WorkspaceRailItemId) => {
       if (id === 'model' && !canViewSchemas) return;
-      if (id === 'projects') {
-        const defaultProject = getDefaultProject(projects);
-        if (defaultProject) {
-          navigate({
-            to: '/$workspaceSlug/projects/$projectId',
-            params: { workspaceSlug, projectId: defaultProject.id },
-            search: { tab: getProjectSidebarTab(defaultProject) }
-          });
-        } else {
-          setAddProjectOpen(true);
-        }
-        return;
-      }
-      const path = RAIL_TO_PATH[id];
-      if (path !== undefined) {
-        navigate({
-          to: path === '' ? '/$workspaceSlug' : (`/$workspaceSlug/${path}` as string),
-          params: { workspaceSlug }
-        });
-      }
+      const result = navigateFromRailItem(id, { navigate, workspaceSlug, projects });
+      if (result === 'open-project-dialog') setAddProjectOpen(true);
     },
     [canViewSchemas, navigate, projects, workspaceSlug]
   );
@@ -232,8 +151,6 @@ export const WorkspaceLayout = () => {
     ).filter(item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract'));
   }, [canViewSchemas, aiConfig?.enabled]);
 
-  const trail = buildTrail(activeView, workspaceSlug, projects, matches, navigate);
-
   const contextValue = useMemo(
     () => ({
       workspace: ws,
@@ -283,6 +200,43 @@ export const WorkspaceLayout = () => {
     ]
   );
 
+  const shellDescriptor = resolveWorkspaceShellDescriptor({
+    matches: matches.map(match => ({
+      routeId: match.routeId,
+      params: match.params as Record<string, string>
+    })),
+    navigate,
+    workspace: ws,
+    workspaceSlug,
+    schemas,
+    enums,
+    projects,
+    lifecycleStates,
+    teams,
+    availableSettingsSections
+  });
+
+  const navRail = (
+    <NavRail
+      items={visibleRailItems}
+      value={shellDescriptor.variant === 'overlay' ? null : shellDescriptor.activeRailItem}
+      onChange={id => {
+        if (id !== null) handleRailPick(id as WorkspaceRailItemId);
+      }}
+    />
+  );
+
+  const routeContent =
+    shellDescriptor.variant === 'overlay' ? (
+      <RouteContentBoundary>
+        <Outlet />
+      </RouteContentBoundary>
+    ) : (
+      <RouteContentBoundary>
+        <Outlet />
+      </RouteContentBoundary>
+    );
+
   if (workspacesError || projectsError || schemasError || enumsError) {
     const error = workspacesError ?? projectsError ?? schemasError ?? enumsError;
     return (
@@ -309,267 +263,105 @@ export const WorkspaceLayout = () => {
 
   return (
     <WorkspaceContext.Provider value={contextValue}>
-      <div className={`ar-app ${styles.shell}`}>
-        <TopBar
-          workspaces={workspaces}
-          currentWs={ws?.id ?? ''}
-          workspaceSlug={workspaceSlug}
-          onPickWs={handlePickWs}
-          trail={trail}
-          query={query}
-          onQueryChange={setQuery}
-          onQuerySubmit={handleQuerySubmit}
-          onOpenSettings={handleOpenSettings}
-          onOpenGlobalSettings={handleOpenGlobalSettings}
-          onAddWorkspace={() => setAddWsOpen(true)}
-          onNewProject={() => setAddProjectOpen(true)}
-          onNewEntity={() => setAddEntityOpen(true)}
-          canOpenSettings={availableSettingsSections.length > 0}
-          canOpenGlobalSettings={canManageGlobalRoles}
-          canAddWorkspace={canManageWorkspaces}
-          canNewProject={canCreateProjects}
-          canNewEntity={canCreateEntities}
-        />
-        <div
-          className={[
-            styles.body,
-            !showSidebar ? styles.bodyNoSidebar
-              : isEntityDetail ? (expandedNav ? styles.bodyEntityDetailExpanded : styles.bodyEntityDetail)
-              : ''
-          ].filter(Boolean).join(' ')}
-        >
-          <NavRail
-            items={visibleRailItems}
-            value={VIEW_TO_RAIL[activeView] ?? 'home'}
-            onChange={id => {
-              if (id !== null) handleRailPick(id);
-            }}
+      {shellDescriptor.variant === 'overlay' ? (
+        routeContent
+      ) : (
+        <div className={`ar-app ${styles.shell}`}>
+          <TopBar
+            workspaces={workspaces}
+            currentWs={ws?.id ?? ''}
+            workspaceSlug={workspaceSlug}
+            onPickWs={handlePickWs}
+            trail={shellDescriptor.breadcrumbs}
+            query={query}
+            onQueryChange={setQuery}
+            onQuerySubmit={handleQuerySubmit}
+            onOpenSettings={handleOpenSettings}
+            onOpenGlobalSettings={handleOpenGlobalSettings}
+            onAddWorkspace={() => setAddWsOpen(true)}
+            onNewProject={() => setAddProjectOpen(true)}
+            onNewEntity={() => setAddEntityOpen(true)}
+            canOpenSettings={availableSettingsSections.length > 0}
+            canOpenGlobalSettings={canManageGlobalRoles}
+            canAddWorkspace={canManageWorkspaces}
+            canNewProject={canCreateProjects}
+            canNewEntity={canCreateEntities}
+            hideSearch={shellDescriptor.hideSearch}
+            hideWorkspaceSwitcher={shellDescriptor.hideWorkspaceSwitcher}
           />
-          {isEntityDetail ? (
-            expandedNav ? (
-              <NavSidebar>
-                <EntitiesSidebar
-                  schemas={schemas}
-                  lifecycleStates={lifecycleStates}
-                  workspaceSlug={workspaceSlug}
-                  onCollapse={() => setNavMode('collapsed')}
-                />
-              </NavSidebar>
-            ) : (
-              <FoldedRail
-                label="Entities"
-                onExpand={() => setNavMode('expanded')}
-              >
-                <EntitiesSidebar
-                  schemas={schemas}
-                  lifecycleStates={lifecycleStates}
-                  workspaceSlug={workspaceSlug}
-                  onExpand={() => setNavMode('expanded')}
-                />
-              </FoldedRail>
-            )
+          {shellDescriptor.variant === 'detail' ? (
+            <WorkspaceDetailLayout
+              rail={navRail}
+              navigationLabel={shellDescriptor.navigationLabel}
+              renderNavigation={shellDescriptor.renderNavigation}
+              secondarySidebar={shellDescriptor.secondarySidebar}
+            >
+              {routeContent}
+            </WorkspaceDetailLayout>
           ) : (
-            showSidebar && <SidePanel />
-          )}
-          {isEntityDetail && (
-            <div className={sidePanelStyles.panel}>
-              <EntityContentSidebar workspaceSlug={workspaceSlug} entityId={entityId!} />
+            <div
+              className={[
+                styles.body,
+                shellDescriptor.primarySidebar ? '' : styles.bodyNoSidebar
+              ].filter(Boolean).join(' ')}
+            >
+              {navRail}
+              {shellDescriptor.primarySidebar && (
+                <div className={sidePanelStyles.panel}>{shellDescriptor.primarySidebar}</div>
+              )}
+              <main className={styles.main}>{routeContent}</main>
             </div>
           )}
-          <main className={styles.main}>
-            {activeView !== 'diagram' && (
-              <RouteContentBoundary>
-                <Outlet />
-              </RouteContentBoundary>
-            )}
-          </main>
         </div>
-        {canManageWorkspaces && (
-          <AddWorkspaceDialog
-            open={addWsOpen}
-            onClose={() => setAddWsOpen(false)}
-            onCreated={newWs => {
-              void queryClient.invalidateQueries({ queryKey: workspaceKeys.all });
-              navigate({ to: '/$workspaceSlug', params: { workspaceSlug: newWs.url_slug } });
-            }}
-          />
-        )}
-        {workspaceSlug && canCreateProjects && (
-          <AddProjectDialog
-            open={addProjectOpen}
-            onClose={() => setAddProjectOpen(false)}
-            onCreated={project => {
-              void queryClient.invalidateQueries({ queryKey: projectKeys.list(workspaceSlug) });
-              navigate({
-                to: '/$workspaceSlug/projects/$projectId',
-                params: { workspaceSlug, projectId: project.id },
-                search: { tab: getProjectSidebarTab(project) }
-              });
-            }}
-            workspaceId={workspaceSlug}
-            teams={teams}
-          />
-        )}
-        {workspaceSlug && canCreateEntities && (
-          <AddEntityDialog
-            open={addEntityOpen}
-            onClose={() => setAddEntityOpen(false)}
-            onCreated={entity => {
-              navigate({
-                to: '/$workspaceSlug/entities/$entityId',
-                params: { workspaceSlug, entityId: entity._uid }
-              });
-            }}
-            workspaceId={workspaceSlug}
-            schemas={schemas}
-            lifecycleStates={lifecycleStates}
-            teams={teams}
-            preselectedSchemaId={null}
-          />
-        )}
-      </div>
-      {activeView === 'diagram' && (
-        <RouteContentBoundary>
-          <Outlet />
-        </RouteContentBoundary>
+      )}
+      {canManageWorkspaces && (
+        <AddWorkspaceDialog
+          open={addWsOpen}
+          onClose={() => setAddWsOpen(false)}
+          onCreated={newWs => {
+            void queryClient.invalidateQueries({ queryKey: workspaceKeys.all });
+            navigate({ to: '/$workspaceSlug', params: { workspaceSlug: newWs.url_slug } });
+          }}
+        />
+      )}
+      {workspaceSlug && canCreateProjects && (
+        <AddProjectDialog
+          open={addProjectOpen}
+          onClose={() => setAddProjectOpen(false)}
+          onCreated={project => {
+            void queryClient.invalidateQueries({ queryKey: projectKeys.list(workspaceSlug) });
+            navigate({
+              to: '/$workspaceSlug/projects/$projectId',
+              params: { workspaceSlug, projectId: project.id },
+              search: {
+                tab:
+                  project.status === 'complete' || project.status === 'cancelled'
+                    ? 'archive'
+                    : 'projects'
+              }
+            });
+          }}
+          workspaceId={workspaceSlug}
+          teams={teams}
+        />
+      )}
+      {workspaceSlug && canCreateEntities && (
+        <AddEntityDialog
+          open={addEntityOpen}
+          onClose={() => setAddEntityOpen(false)}
+          onCreated={entity => {
+            navigate({
+              to: '/$workspaceSlug/entities/$entityId',
+              params: { workspaceSlug, entityId: entity._uid }
+            });
+          }}
+          workspaceId={workspaceSlug}
+          schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
+          preselectedSchemaId={null}
+        />
       )}
     </WorkspaceContext.Provider>
   );
-};
-
-const buildTrail = (
-  activeView: ViewId,
-  workspaceSlug: string,
-  projects: Project[],
-  matches: Array<{ routeId: string; params: Record<string, string> }>,
-  navigate: ReturnType<typeof useNavigate>
-): BreadcrumbItem[] => {
-  const items: BreadcrumbItem[] = [
-    {
-      label: 'Home',
-      icon: <TbHome size={12} />,
-      onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-    }
-  ];
-
-  // Extract params from route matches
-  const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
-
-  switch (activeView) {
-    case 'project-detail': {
-      const p = projects.find(x => x.id === allParams.projectId);
-      items.push({
-        label: 'Projects',
-        icon: <TbFolders size={12} />,
-        onClick: () => {
-          const def = getDefaultProject(projects);
-          if (def) {
-            navigate({
-              to: '/$workspaceSlug/projects/$projectId',
-              params: { workspaceSlug, projectId: def.id }
-            });
-          }
-        }
-      });
-      if (p) items.push({ label: p.name, onClick: () => {} });
-      break;
-    }
-    case 'entity-browser':
-      items.push({
-        label: 'Entities',
-        icon: <TbDatabase size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } })
-      });
-      break;
-    case 'entity-detail':
-      items.push({
-        label: 'Entities',
-        icon: <TbDatabase size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } })
-      });
-      items.push({ label: 'Detail', onClick: () => {} });
-      break;
-    case 'data-model': {
-      items.push({
-        label: 'Data model',
-        icon: <TbCode size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } })
-      });
-      // Schema name from search params would need to be read separately
-      break;
-    }
-    case 'workspace-settings':
-      items.push({
-        label: 'Settings',
-        icon: <TbSettings size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/settings', params: { workspaceSlug } })
-      });
-      break;
-    case 'global-settings':
-      items.push({
-        label: 'Global Settings',
-        icon: <TbSettings size={12} />,
-        onClick: () =>
-          navigate({ to: '/$workspaceSlug/settings/global', params: { workspaceSlug } })
-      });
-      break;
-    case 'account-settings':
-      items.push({
-        label: 'Account Settings',
-        icon: <TbSettings size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/account', params: { workspaceSlug } })
-      });
-      break;
-    case 'search':
-      items.push({
-        label: 'Search',
-        icon: <TbSearch size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/search', params: { workspaceSlug } })
-      });
-      break;
-    case 'assistant':
-      items.push({
-        label: 'AI Assistant',
-        icon: <TbSparkles size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/assistant', params: { workspaceSlug } })
-      });
-      break;
-    case 'extract':
-      items.push({
-        label: 'AI Extract',
-        icon: <TbWand size={12} />,
-        onClick: () => navigate({ to: '/$workspaceSlug/extract', params: { workspaceSlug } })
-      });
-      break;
-    case 'diagram': {
-      const p = projects.find(x => x.id === allParams.projectId);
-      items.push({
-        label: 'Projects',
-        icon: <TbFolders size={12} />,
-        onClick: () => {
-          const def = getDefaultProject(projects);
-          if (def) {
-            navigate({
-              to: '/$workspaceSlug/projects/$projectId',
-              params: { workspaceSlug, projectId: def.id }
-            });
-          }
-        }
-      });
-      if (p) {
-        items.push({
-          label: p.name,
-          onClick: () =>
-            navigate({
-              to: '/$workspaceSlug/projects/$projectId',
-              params: { workspaceSlug, projectId: p.id }
-            })
-        });
-      }
-      items.push({ label: 'Diagram', onClick: () => {} });
-      break;
-    }
-  }
-
-  return items;
 };
