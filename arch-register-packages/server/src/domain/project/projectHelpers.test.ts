@@ -25,6 +25,7 @@ const baseProjectFile: ContentNodeDbResult = {
   id: 'f-1',
   workspace: 'ws-1',
   project_id: 'p-1',
+  entity_id: null,
   parent_id: null,
   path: '/diagrams/main.dc',
   name: 'Main',

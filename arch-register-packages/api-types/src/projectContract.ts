@@ -37,7 +37,7 @@ const projectEntitySchema = z.object({
 
 export const projectFileSchema = z.object({
   id: z.string(),
-  project_id: z.string(),
+  project_id: z.string().nullable(),
   path: z.string(),
   name: z.string(),
   size_bytes: z.number(),
@@ -363,7 +363,15 @@ export const projectContract = {
         inputStructure: 'detailed'
       })
       .input(z.object({ params: ws.extend({ entityId: z.string() }) }))
-      .output(z.array(diagramEntityFileSchema))
+      .output(z.array(diagramEntityFileSchema)),
+    listEntityContent: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/entities/{entityId}/content',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({ params: ws.extend({ entityId: z.string() }) }))
+      .output(fileTreeSchema)
   }
 };
 

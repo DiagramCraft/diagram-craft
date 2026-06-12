@@ -135,7 +135,7 @@ export const searchWorkspace = async (
         )
           continue;
         filesResults.push({
-          projectId: file.project_id,
+          projectId: file.project_id ?? projectId,
           projectName,
           fileId: file.id,
           path: file.path,

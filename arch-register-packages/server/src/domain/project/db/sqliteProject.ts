@@ -103,6 +103,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async listEntityContentNodes(workspace: string, entityId: string) {
+    return this.all(
+      'SELECT * FROM content_node WHERE workspace = ? AND entity_id = ? ORDER BY path',
+      [workspace, entityId],
+      sqliteMappers.contentNode
+    );
+  }
+
   async getContentNodeByPath(workspace: string, projectId: string, path: string) {
     return this.get(
       'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? AND path = ?',
@@ -197,11 +205,16 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   }
 
   async upsertContentNode(input: ContentNodeDbUpsert) {
-    const id = newid();
+    const id = input.id ?? newid();
+    const ownerClause = input.entity_id != null
+      ? 'entity_id = ?'
+      : 'project_id = ?';
+    const ownerValue = input.entity_id != null ? input.entity_id : input.project_id;
+
     const tx = this.db.transaction(() => {
       const existing = this.get<{ id: string; created_at: string }>(
-        'SELECT id, created_at FROM content_node WHERE workspace = ? AND project_id = ? AND path = ?',
-        [input.workspace, input.project_id, input.path]
+        `SELECT id, created_at FROM content_node WHERE workspace = ? AND ${ownerClause} AND path = ?`,
+        [input.workspace, ownerValue, input.path]
       );
 
       if (existing) {
@@ -219,11 +232,12 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         );
       } else {
         this.run(
-          'INSERT INTO content_node (id, workspace, project_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
-            input.project_id,
+            input.project_id ?? null,
+            input.entity_id ?? null,
             input.parent_id ?? null,
             input.path,
             input.name,
@@ -241,13 +255,23 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     });
 
     tx();
-    return (await this.getContentNodeByPath(input.workspace, input.project_id, input.path))!;
+    const projectId = input.project_id ?? null;
+    if (projectId != null) {
+      return (await this.getContentNodeByPath(input.workspace, projectId, input.path))!;
+    }
+    return (await this.listEntityContentNodes(input.workspace, input.entity_id!)).find(
+      n => n.path === input.path
+    )!;
   }
 
   async createContentNodeIfAbsent(
     input: Omit<ContentNodeDbUpsert, 'updated_at'> & { updated_at: Date }
   ) {
-    const existing = await this.getContentNodeByPath(input.workspace, input.project_id, input.path);
+    const existing = input.project_id != null
+      ? await this.getContentNodeByPath(input.workspace, input.project_id, input.path)
+      : (await this.listEntityContentNodes(input.workspace, input.entity_id!)).find(
+          n => n.path === input.path
+        ) ?? null;
     if (existing) return null;
     return await this.upsertContentNode(input);
   }

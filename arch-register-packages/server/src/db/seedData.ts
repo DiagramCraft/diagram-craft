@@ -1185,7 +1185,108 @@ export const seedNotificationEvents: Array<{
   }
 ];
 
-export const seedProjectFiles: ContentNodeDbResult[] = [];
+const AUTH_API_ENTITY_ID = '00000000-0000-0000-0004-000000000002';
+
+const CONTENT_IDS = {
+  authApiOverviewFolder: '00000000-0000-0000-0030-000000000001',
+  authApiOverviewDiagram: '00000000-0000-0000-0030-000000000002',
+  authApiSequenceDiagram: '00000000-0000-0000-0030-000000000003',
+  authApiSecurityFolder: '00000000-0000-0000-0030-000000000004',
+  authApiThreatModel: '00000000-0000-0000-0030-000000000005'
+} as const;
+
+export const seedProjectFiles: ContentNodeDbResult[] = [
+  {
+    id: CONTENT_IDS.authApiOverviewFolder,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: AUTH_API_ENTITY_ID,
+    parent_id: null,
+    path: 'overview',
+    name: 'overview',
+    type: 'folder',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: CONTENT_IDS.authApiOverviewDiagram,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: AUTH_API_ENTITY_ID,
+    parent_id: CONTENT_IDS.authApiOverviewFolder,
+    path: 'overview/architecture',
+    name: 'architecture',
+    type: 'diagram',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: CONTENT_IDS.authApiSequenceDiagram,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: AUTH_API_ENTITY_ID,
+    parent_id: null,
+    path: 'token-flow',
+    name: 'token-flow',
+    type: 'diagram',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: CONTENT_IDS.authApiSecurityFolder,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: AUTH_API_ENTITY_ID,
+    parent_id: null,
+    path: 'security',
+    name: 'security',
+    type: 'folder',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: CONTENT_IDS.authApiThreatModel,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: AUTH_API_ENTITY_ID,
+    parent_id: CONTENT_IDS.authApiSecurityFolder,
+    path: 'security/threat-model',
+    name: 'threat-model',
+    type: 'diagram',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now
+  }
+];
 
 export const seedAiConfig: AiConfigInputDbUpsert = {
   provider: 'openrouter',

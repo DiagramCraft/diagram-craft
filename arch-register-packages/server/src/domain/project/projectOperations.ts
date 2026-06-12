@@ -90,7 +90,7 @@ export const listProjects = async (
     );
     for (const files of projectFiles) {
       for (const file of files) {
-        if (file.type === 'diagram') {
+        if (file.type === 'diagram' && file.project_id != null) {
           fileCounts.set(file.project_id, (fileCounts.get(file.project_id) ?? 0) + 1);
         }
       }
@@ -1090,6 +1090,22 @@ export const getEntityProjects = async (
     return rows.map(toApiProjectEntity);
   } catch (e) {
     return handleError(e, 'Failed to retrieve entity projects');
+  }
+};
+
+export const listEntityContentNodes = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  event: AuthenticatedEvent
+): Promise<FileTree> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  await buildApiAuthCtx(db, ws, event);
+  try {
+    const files = await db.project.listEntityContentNodes(ws, entityId);
+    return buildFileTree(files);
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve entity content nodes');
   }
 };
 

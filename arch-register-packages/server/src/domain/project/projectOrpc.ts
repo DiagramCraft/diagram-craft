@@ -25,7 +25,8 @@ import {
   addProjectEntity,
   updateProjectEntity,
   removeProjectEntity,
-  getEntityDiagramFiles
+  getEntityDiagramFiles,
+  listEntityContentNodes
 } from './projectOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -302,6 +303,20 @@ export const projectORPCRouter = projectRouter.router({
       async ({ input, context }) => {
         try {
           return await getEntityDiagramFiles(
+            context.db,
+            input.params.workspace,
+            input.params.entityId,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    listEntityContent: projectRouter.projects.listEntityContent.handler(
+      async ({ input, context }) => {
+        try {
+          return await listEntityContentNodes(
             context.db,
             input.params.workspace,
             input.params.entityId,

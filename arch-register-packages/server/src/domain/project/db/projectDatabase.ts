@@ -3,7 +3,8 @@
 export type ContentNodeDbResult = {
   id: string;
   workspace: string;
-  project_id: string;
+  project_id: string | null;
+  entity_id: string | null;
   parent_id: string | null;
   path: string;
   name: string;
@@ -19,8 +20,10 @@ export type ContentNodeDbResult = {
 };
 
 export type ContentNodeDbUpsert = {
+  id?: string;
   workspace: string;
-  project_id: string;
+  project_id?: string | null;
+  entity_id?: string | null;
   parent_id?: string | null;
   path: string;
   name: string;
@@ -105,6 +108,7 @@ export type ProjectDatabase = {
   deleteProject(ws: string, id: string): Promise<void>;
 
   listContentNodes(ws: string, projectId: string): Promise<ContentNodeDbResult[]>;
+  listEntityContentNodes(ws: string, entityId: string): Promise<ContentNodeDbResult[]>;
   getContentNodeByPath(
     ws: string,
     projectId: string,

@@ -6,6 +6,7 @@ import { TopBar } from '../shell/TopBar';
 import type { BreadcrumbItem } from '../shell/TopBar';
 import { NavRail, type NavRailItem } from '@diagram-craft/app-components/NavRail';
 import { SidePanel } from '../shell/SidePanel';
+import { EntityContentSidebar } from '../sections/entities/EntityContentSidebar';
 import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
@@ -136,6 +137,10 @@ export const WorkspaceLayout = () => {
     activeView !== 'diagram' &&
     activeView !== 'assistant' &&
     activeView !== 'extract';
+
+  const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
+  const entityId = activeView === 'entity-detail' ? (allParams.entityId ?? null) : null;
+  const showSecondSidebar = showSidebar && activeView === 'entity-detail' && entityId !== null;
 
   const handleRailPick = useCallback(
     (id: string) => {
@@ -310,7 +315,9 @@ export const WorkspaceLayout = () => {
           canNewProject={canCreateProjects}
           canNewEntity={canCreateEntities}
         />
-        <div className={`${styles.body} ${showSidebar ? '' : styles.bodyNoSidebar}`.trim()}>
+        <div
+          className={`${styles.body} ${!showSidebar ? styles.bodyNoSidebar : showSecondSidebar ? styles.bodyWithSecondSidebar : ''}`.trim()}
+        >
           <NavRail
             items={visibleRailItems}
             value={VIEW_TO_RAIL[activeView] ?? 'home'}
@@ -319,6 +326,11 @@ export const WorkspaceLayout = () => {
             }}
           />
           {showSidebar && <SidePanel />}
+          {showSecondSidebar && (
+            <div className="ar-sidepanel" style={{ background: 'var(--panel-bg)', borderRight: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0 }}>
+              <EntityContentSidebar workspaceSlug={workspaceSlug} entityId={entityId!} />
+            </div>
+          )}
           <main className={styles.main}>
             {activeView !== 'diagram' && (
               <RouteContentBoundary>

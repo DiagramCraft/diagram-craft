@@ -236,10 +236,14 @@ export const seedBootstrapData = async (db: Database) => {
   }
   for (const file of seedProjectFiles) {
     await db.project.upsertContentNode({
+      id: file.id,
       workspace: file.workspace,
       project_id: file.project_id,
+      entity_id: file.entity_id,
+      parent_id: file.parent_id,
       path: file.path,
       name: file.name,
+      type: file.type as 'diagram' | 'folder',
       size_bytes: file.size_bytes,
       comment_count: 0,
       unresolved_comment_count: 0,

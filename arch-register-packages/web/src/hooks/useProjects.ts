@@ -12,6 +12,11 @@ export const projectEntityKeys = {
     ['entity-diagram-files', workspaceId, entityId] as const
 };
 
+export const entityContentKeys = {
+  all: (workspaceId: string, entityId: string) =>
+    ['entity-content', workspaceId, entityId] as const
+};
+
 // Query keys factory
 export const projectKeys = {
   all: ['projects'] as const,
@@ -211,6 +216,18 @@ export const useEntityDiagramFiles = (workspaceId: string, entityId: string) => 
     queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId),
     queryFn: () =>
       orpcClient.projects.getEntityDiagramFiles({
+        params: { workspace: workspaceId, entityId }
+      }),
+    enabled: !!workspaceId && !!entityId
+  });
+};
+
+// Hook for fetching content nodes owned by an entity
+export const useEntityContentNodes = (workspaceId: string, entityId: string) => {
+  return useQuery({
+    queryKey: entityContentKeys.all(workspaceId, entityId),
+    queryFn: () =>
+      orpcClient.projects.listEntityContent({
         params: { workspace: workspaceId, entityId }
       }),
     enabled: !!workspaceId && !!entityId
