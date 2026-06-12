@@ -9,22 +9,14 @@ export const createAssistantWorkspaceRoutes = (
   // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
   workspaceRoute: any
 ): WorkspaceShellEntry[] => {
-  const assistantRoute = createRoute({
-    getParentRoute: () => workspaceRoute,
-    path: 'assistant',
-    validateSearch: validateAssistantSearch,
-    component: AssistantScreen
-  });
-
-  const extractRoute = createRoute({
-    getParentRoute: () => workspaceRoute,
-    path: 'extract',
-    component: ExtractScreen
-  });
-
   return [
     {
-      route: assistantRoute,
+      route: createRoute({
+        getParentRoute: () => workspaceRoute,
+        path: 'assistant',
+        validateSearch: validateAssistantSearch,
+        component: AssistantScreen
+      }),
       matchesRouteId: routeId => routeId.endsWith('/assistant'),
       buildShell: ctx => ({
         variant: 'full-bleed',
@@ -43,7 +35,11 @@ export const createAssistantWorkspaceRoutes = (
       })
     },
     {
-      route: extractRoute,
+      route: createRoute({
+        getParentRoute: () => workspaceRoute,
+        path: 'extract',
+        component: ExtractScreen
+      }),
       matchesRouteId: routeId => routeId.endsWith('/extract'),
       buildShell: ctx => ({
         variant: 'full-bleed',
