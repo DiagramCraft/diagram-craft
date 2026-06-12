@@ -1,0 +1,128 @@
+/* ---- Folded rail ---- */
+/* 44px strip shown when a sidebar is collapsed.
+   A label is shown rotated 90°; hover reveals a flyout. */
+
+.rail {
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 15;
+}
+
+
+/* The always-visible narrow strip */
+.strip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0 8px;
+  cursor: default;
+  transition: background 80ms;
+  overflow: hidden;
+}
+
+.isOpen .strip {
+  cursor: pointer;
+}
+
+.rail:hover .strip,
+.isOpen .strip {
+  .label {
+    color: var(--accent-fg);
+  }
+}
+
+/* Label rotated 90° — reads bottom-to-top */
+.label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 180px;
+  line-height: 1;
+  transition: color 80ms;
+}
+
+.rail:hover .label,
+.isOpen .label {
+  color: var(--base-fg);
+}
+
+/* Chevron hint — fades in on hover */
+.hint {
+  flex-shrink: 0;
+  margin-top: auto;
+  color: var(--base-fg-more-dim);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 120ms, transform 120ms;
+}
+
+.rail:hover .hint,
+.isOpen .hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---- Flyout overlay ---- */
+.flyout {
+  position: absolute;
+  left: 44px;
+  top: 0;
+  bottom: 0;
+  width: 280px;
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.3);
+  clip-path: inset(0 -30px 0 0);
+  animation: foldRailIn 200ms ease-in;
+}
+
+@keyframes foldRailIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---- Expanded nav sidebar ---- */
+/* Full 280px sidebar used when the nav is pinned open or window is wide */
+
+.navSidebar {
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}
+
+/* Shared action button */
+.actionBtn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+}
+
+.actionBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
