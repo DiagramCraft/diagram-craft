@@ -506,7 +506,7 @@ export const createDiagramFromTemplate = async (
 
 export type AuditOperation = 'create' | 'update' | 'delete';
 
-export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'project_file' | 'content_node';
+export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'content_node';
 
 // ── Workspace Config API ─────────────────────────────────────
 // Note: Lifecycle states, teams, team assignments, members, users, and roles now use ORPC client via hooks
