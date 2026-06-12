@@ -72,7 +72,7 @@ export const ProjectDetailScreen = () => {
 
   const [editing, setEditing] = useState(false);
   const [filter, setFilter] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);

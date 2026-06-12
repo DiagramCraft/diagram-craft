@@ -112,9 +112,10 @@ export const SearchScreen = () => {
   );
 
   // Sync URL query → local
+  // biome-ignore lint/correctness/useExhaustiveDependencies: localQ intentionally excluded to prevent circular updates
   useEffect(() => {
     if (query !== localQ) setLocalQ(query);
-  }, [query, localQ]);
+  }, [query]);
 
   // Auto-focus input on mount
   useEffect(() => {
@@ -399,7 +400,10 @@ export const SearchScreen = () => {
             >
               <Ic size={11} />
               <span>{c.label}</span>
-              <span data-testid={`${c.label.toLowerCase()}-result-count`} className={styles.catCount}>
+              <span
+                data-testid={`${c.label.toLowerCase()}-result-count`}
+                className={styles.catCount}
+              >
                 {n}
               </span>
             </button>
@@ -532,7 +536,9 @@ const ResultRow = ({
               <Hi s={e._name || e._slug} q={q} />
             </button>
             <Chip tone="ghost">{e.schemaName}</Chip>
-            {e._lifecycle && <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />}
+            {e._lifecycle && (
+              <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
+            )}
           </div>
           {e._description && (
             <div className={styles.rowSnippet}>

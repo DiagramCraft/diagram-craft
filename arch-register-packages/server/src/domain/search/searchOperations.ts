@@ -123,7 +123,7 @@ export const searchWorkspace = async (
     const filesByProject = await Promise.all(
       projectIds.map(async projectId => ({
         projectId,
-        files: await db.project.listProjectFiles(ws, projectId)
+        files: await db.project.listContentNodes(ws, projectId)
       }))
     );
     for (const { projectId, files } of filesByProject) {

@@ -22,7 +22,7 @@ import {
   SavedViewDbResult,
   WorkspaceEnumDbResult
 } from '../domain/catalog/db/catalogDatabase';
-import { ProjectDbCreate, ProjectFileDbResult } from '../domain/project/db/projectDatabase';
+import { ProjectDbCreate, ContentNodeDbResult } from '../domain/project/db/projectDatabase';
 import { AuditOperation } from '../domain/audit/db/auditDatabase';
 import { GlobalRoleAssignmentDbResult } from '../domain/auth/db/authDatabase';
 import { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
@@ -1185,7 +1185,7 @@ export const seedNotificationEvents: Array<{
   }
 ];
 
-export const seedProjectFiles: ProjectFileDbResult[] = [];
+export const seedProjectFiles: ContentNodeDbResult[] = [];
 
 export const seedAiConfig: AiConfigInputDbUpsert = {
   provider: 'openrouter',

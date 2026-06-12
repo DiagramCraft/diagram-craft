@@ -481,6 +481,7 @@ const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   entity: 'entity',
   project: 'project',
   project_file: 'diagram',
+  content_node: 'diagram',
   entity_schema: 'schema',
   workspace: 'workspace'
 };
@@ -490,7 +491,8 @@ const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   entity_schema: styles.typeSchema ?? '',
   entity: styles.typeEntity ?? '',
   project: styles.typeProject ?? '',
-  project_file: styles.typeFile ?? ''
+  project_file: styles.typeFile ?? '',
+  content_node: styles.typeFile ?? ''
 };
 
 const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABELS[operation];

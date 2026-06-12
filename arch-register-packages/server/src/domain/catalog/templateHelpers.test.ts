@@ -1,16 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { buildAllTemplatesResponse, buildProjectTemplatesResponse } from './templateHelpers';
-import { ProjectFileDbResult } from '../project/db/projectDatabase';
+import { ContentNodeDbResult } from '../project/db/projectDatabase';
 
 const now = new Date('2026-06-06T00:00:00.000Z');
 
 const makeFile = (
-  overrides: Partial<ProjectFileDbResult> & { id: string }
-): ProjectFileDbResult => ({
+  overrides: Partial<ContentNodeDbResult> & { id: string }
+): ContentNodeDbResult => ({
   workspace: 'ws-1',
   project_id: 'proj-1',
+  parent_id: null,
   path: 'diagrams/diagram.json',
   name: 'Diagram',
+  type: 'diagram',
   size_bytes: 100,
   comment_count: 0,
   unresolved_comment_count: 0,

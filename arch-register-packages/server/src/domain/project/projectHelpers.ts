@@ -1,5 +1,5 @@
 import type { ProjectDbResult, ProjectEntityDbResult } from './db/projectDatabase';
-import type { ProjectFileDbResult as InternalProjectFile } from './db/projectDatabase';
+import type { ContentNodeDbResult as InternalProjectFile } from './db/projectDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import {
   FileTree,

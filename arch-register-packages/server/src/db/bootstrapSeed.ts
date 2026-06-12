@@ -235,7 +235,7 @@ export const seedBootstrapData = async (db: Database) => {
     await db.view.createSavedView(view);
   }
   for (const file of seedProjectFiles) {
-    await db.project.upsertProjectFile({
+    await db.project.upsertContentNode({
       workspace: file.workspace,
       project_id: file.project_id,
       path: file.path,

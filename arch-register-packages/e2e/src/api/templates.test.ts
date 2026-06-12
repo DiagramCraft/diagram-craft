@@ -38,7 +38,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
       });
 
       // Workspace template in project A
-      const wsTemplateFile = await server.db.project.upsertProjectFile({
+      const wsTemplateFile = await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: projectA.id,
         path: 'diagrams/ws-template.json',
@@ -49,12 +49,12 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         updated_at: now,
         created_atIfNew: now
       });
-      await server.db.project.updateProjectFileTemplateStatus(
+      await server.db.project.updateContentNodeTemplateStatus(
         seedIds.workspace.default, projectA.id, wsTemplateFile.id, true, true, now
       );
 
       // Project-level template in project A
-      const projATemplateFile = await server.db.project.upsertProjectFile({
+      const projATemplateFile = await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: projectA.id,
         path: 'diagrams/proj-a-template.json',
@@ -65,12 +65,12 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         updated_at: now,
         created_atIfNew: now
       });
-      await server.db.project.updateProjectFileTemplateStatus(
+      await server.db.project.updateContentNodeTemplateStatus(
         seedIds.workspace.default, projectA.id, projATemplateFile.id, true, false, now
       );
 
       // Plain (non-template) file in project A
-      await server.db.project.upsertProjectFile({
+      await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: projectA.id,
         path: 'diagrams/plain.json',
@@ -83,7 +83,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
       });
 
       // Project-level template in project B
-      const projBTemplateFile = await server.db.project.upsertProjectFile({
+      const projBTemplateFile = await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: projectB.id,
         path: 'diagrams/proj-b-template.json',
@@ -94,7 +94,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
         updated_at: now,
         created_atIfNew: now
       });
-      await server.db.project.updateProjectFileTemplateStatus(
+      await server.db.project.updateContentNodeTemplateStatus(
         seedIds.workspace.default, projectB.id, projBTemplateFile.id, true, false, now
       );
 

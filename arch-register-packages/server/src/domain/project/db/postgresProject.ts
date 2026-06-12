@@ -4,9 +4,9 @@ import type {
   ProjectDatabase,
   ProjectEntityDbCreate,
   ProjectEntityDbResult,
-  ProjectFileDbResult,
+  ContentNodeDbResult,
   ProjectDbUpdate,
-  ProjectFileDbUpsert,
+  ContentNodeDbUpsert,
   DiagramEntityFileDbResult
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
@@ -77,24 +77,24 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async listProjectFiles(workspace: string, projectId: string) {
-    return await this.sql<ProjectFileDbResult[]>`
+  async listContentNodes(workspace: string, projectId: string) {
+    return await this.sql<ContentNodeDbResult[]>`
       SELECT *
-      FROM project_file
+      FROM content_node
       WHERE workspace = ${workspace} AND project_id = ${projectId}
       ORDER BY path
     `;
   }
 
-  async getProjectFileByPath(workspace: string, projectId: string, path: string) {
-    const [row] = await this.sql<ProjectFileDbResult[]>`
-      SELECT * FROM project_file
+  async getContentNodeByPath(workspace: string, projectId: string, path: string) {
+    const [row] = await this.sql<ContentNodeDbResult[]>`
+      SELECT * FROM content_node
       WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
     `;
     return row ?? null;
   }
 
-  async updateProjectFileSizeById(
+  async updateContentNodeSizeById(
     workspace: string,
     projectId: string,
     fileId: string,
@@ -103,7 +103,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   ) {
     try {
       await this.sql`
-        UPDATE project_file
+        UPDATE content_node
         SET size_bytes = ${sizeBytes}, updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
       `;
@@ -112,7 +112,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async updateProjectFilePreview(
+  async updateContentNodePreview(
     workspace: string,
     projectId: string,
     fileId: string,
@@ -120,7 +120,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   ) {
     try {
       await this.sql`
-        UPDATE project_file
+        UPDATE content_node
         SET preview_svg = ${previewSvg}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
       `;
@@ -129,7 +129,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async updateProjectFileDerivedData(
+  async updateContentNodeDerivedData(
     workspace: string,
     projectId: string,
     fileId: string,
@@ -141,7 +141,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   ) {
     try {
       await this.sql`
-        UPDATE project_file
+        UPDATE content_node
         SET size_bytes = ${sizeBytes},
             comment_count = ${commentCount},
             unresolved_comment_count = ${unresolvedCommentCount},
@@ -154,7 +154,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async updateProjectFileTemplateStatus(
+  async updateContentNodeTemplateStatus(
     workspace: string,
     projectId: string,
     fileId: string,
@@ -164,7 +164,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   ) {
     try {
       await this.sql`
-        UPDATE project_file
+        UPDATE content_node
         SET is_template = ${isTemplate}, is_workspace_template = ${isWorkspaceTemplate}, updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
       `;
@@ -173,11 +173,11 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async upsertProjectFile(input: ProjectFileDbUpsert) {
+  async upsertContentNode(input: ContentNodeDbUpsert) {
     try {
-      const [row] = await this.sql<ProjectFileDbResult[]>`
-        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
-        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+      const [row] = await this.sql<ContentNodeDbResult[]>`
+        INSERT INTO content_node (id, workspace, project_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
+        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path)
         DO UPDATE SET
           name = EXCLUDED.name,
@@ -193,13 +193,13 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async createProjectFileIfAbsent(
-    input: Omit<ProjectFileDbUpsert, 'updated_at'> & { updated_at: Date }
+  async createContentNodeIfAbsent(
+    input: Omit<ContentNodeDbUpsert, 'updated_at'> & { updated_at: Date }
   ) {
     try {
-      const [row] = await this.sql<ProjectFileDbResult[]>`
-        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
-        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+      const [row] = await this.sql<ContentNodeDbResult[]>`
+        INSERT INTO content_node (id, workspace, project_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
+        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path) DO NOTHING
         RETURNING *
       `;
@@ -209,10 +209,10 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async deleteProjectFileByPath(workspace: string, projectId: string, path: string) {
+  async deleteContentNodeByPath(workspace: string, projectId: string, path: string) {
     try {
-      const [row] = await this.sql<ProjectFileDbResult[]>`
-        DELETE FROM project_file
+      const [row] = await this.sql<ContentNodeDbResult[]>`
+        DELETE FROM content_node
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
         RETURNING *
       `;
@@ -222,7 +222,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async renameProjectFileFolder(
+  async renameContentNodeFolder(
     workspace: string,
     projectId: string,
     oldPath: string,
@@ -231,7 +231,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   ) {
     try {
       const rows = await this.sql<{ id: string }[]>`
-        UPDATE project_file
+        UPDATE content_node
         SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
             updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${oldPath}/%`}
@@ -243,10 +243,10 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
-  async deleteProjectFileFolder(workspace: string, projectId: string, folderPath: string) {
+  async deleteContentNodeFolder(workspace: string, projectId: string, folderPath: string) {
     try {
-      return await this.sql<ProjectFileDbResult[]>`
-        DELETE FROM project_file
+      return await this.sql<ContentNodeDbResult[]>`
+        DELETE FROM content_node
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${folderPath}/%`}
         RETURNING *
       `;
@@ -413,7 +413,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         p.id           AS project_id,
         p.name         AS project_name
       FROM diagram_entity_ref der
-      JOIN project_file pf ON pf.id = der.file_id AND pf.workspace = der.workspace
+      JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
       JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
       WHERE der.workspace = ${workspace} AND der.entity_id = ${entityId}
       ORDER BY p.name, pf.name

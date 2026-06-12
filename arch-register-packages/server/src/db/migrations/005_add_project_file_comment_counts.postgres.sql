@@ -1,5 +1,0 @@
-ALTER TABLE project_file
-  ADD COLUMN IF NOT EXISTS comment_count INTEGER NOT NULL DEFAULT 0;
-
-ALTER TABLE project_file
-  ADD COLUMN IF NOT EXISTS unresolved_comment_count INTEGER NOT NULL DEFAULT 0;

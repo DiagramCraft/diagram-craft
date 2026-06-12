@@ -11,7 +11,7 @@ import type {
 import type {
   ProjectDbResult,
   ProjectEntityDbResult,
-  ProjectFileDbResult
+  ContentNodeDbResult
 } from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
@@ -193,12 +193,14 @@ export const sqliteMappers = {
     entity_type_label: row['entity_type_label'] == null ? null : String(row['entity_type_label']),
     is_done: row['is_done'] === 1 || row['is_done'] === true
   }),
-  projectFile: (row: Record<string, unknown>): ProjectFileDbResult => ({
+  contentNode: (row: Record<string, unknown>): ContentNodeDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
     project_id: String(row['project_id']),
+    parent_id: row['parent_id'] == null ? null : String(row['parent_id']),
     path: String(row['path']),
     name: String(row['name']),
+    type: String(row['type']),
     size_bytes: Number(row['size_bytes']),
     comment_count: Number(row['comment_count'] ?? 0),
     unresolved_comment_count: Number(row['unresolved_comment_count'] ?? 0),

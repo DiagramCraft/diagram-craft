@@ -4,7 +4,7 @@ import type {
   ProjectDatabase,
   ProjectEntityDbCreate,
   ProjectDbUpdate,
-  ProjectFileDbUpsert
+  ContentNodeDbUpsert
 } from './projectDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
@@ -95,23 +95,23 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     this.run('DELETE FROM project WHERE workspace = ? AND id = ?', [workspace, id]);
   }
 
-  async listProjectFiles(workspace: string, projectId: string) {
+  async listContentNodes(workspace: string, projectId: string) {
     return this.all(
-      'SELECT * FROM project_file WHERE workspace = ? AND project_id = ? ORDER BY path',
+      'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? ORDER BY path',
       [workspace, projectId],
-      sqliteMappers.projectFile
+      sqliteMappers.contentNode
     );
   }
 
-  async getProjectFileByPath(workspace: string, projectId: string, path: string) {
+  async getContentNodeByPath(workspace: string, projectId: string, path: string) {
     return this.get(
-      'SELECT * FROM project_file WHERE workspace = ? AND project_id = ? AND path = ?',
+      'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? AND path = ?',
       [workspace, projectId, path],
-      sqliteMappers.projectFile
+      sqliteMappers.contentNode
     );
   }
 
-  async updateProjectFileSizeById(
+  async updateContentNodeSizeById(
     workspace: string,
     projectId: string,
     fileId: string,
@@ -119,24 +119,24 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     updated_at: Date
   ) {
     this.run(
-      'UPDATE project_file SET size_bytes = ?, updated_at = ? WHERE workspace = ? AND project_id = ? AND id = ?',
+      'UPDATE content_node SET size_bytes = ?, updated_at = ? WHERE workspace = ? AND project_id = ? AND id = ?',
       [sizeBytes, updated_at.toISOString(), workspace, projectId, fileId]
     );
   }
 
-  async updateProjectFilePreview(
+  async updateContentNodePreview(
     workspace: string,
     projectId: string,
     fileId: string,
     previewSvg: string | null
   ) {
     this.run(
-      'UPDATE project_file SET preview_svg = ? WHERE workspace = ? AND project_id = ? AND id = ?',
+      'UPDATE content_node SET preview_svg = ? WHERE workspace = ? AND project_id = ? AND id = ?',
       [previewSvg, workspace, projectId, fileId]
     );
   }
 
-  async updateProjectFileDerivedData(
+  async updateContentNodeDerivedData(
     workspace: string,
     projectId: string,
     fileId: string,
@@ -147,7 +147,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     updated_at: Date
   ) {
     this.run(
-      `UPDATE project_file
+      `UPDATE content_node
        SET size_bytes = ?,
            comment_count = ?,
            unresolved_comment_count = ?,
@@ -167,7 +167,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
-  async updateProjectFileTemplateStatus(
+  async updateContentNodeTemplateStatus(
     workspace: string,
     projectId: string,
     fileId: string,
@@ -176,7 +176,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     updated_at: Date
   ) {
     this.run(
-      'UPDATE project_file SET is_template = ?, is_workspace_template = ?, updated_at = ? WHERE workspace = ? AND project_id = ? AND id = ?',
+      'UPDATE content_node SET is_template = ?, is_workspace_template = ?, updated_at = ? WHERE workspace = ? AND project_id = ? AND id = ?',
       [
         isTemplate ? 1 : 0,
         isWorkspaceTemplate ? 1 : 0,
@@ -188,17 +188,17 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
-  async upsertProjectFile(input: ProjectFileDbUpsert) {
+  async upsertContentNode(input: ContentNodeDbUpsert) {
     const id = newid();
     const tx = this.db.transaction(() => {
       const existing = this.get<{ id: string; created_at: string }>(
-        'SELECT id, created_at FROM project_file WHERE workspace = ? AND project_id = ? AND path = ?',
+        'SELECT id, created_at FROM content_node WHERE workspace = ? AND project_id = ? AND path = ?',
         [input.workspace, input.project_id, input.path]
       );
 
       if (existing) {
         this.run(
-          'UPDATE project_file SET name = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ? WHERE id = ?',
+          'UPDATE content_node SET name = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ? WHERE id = ?',
           [
             input.name,
             input.size_bytes,
@@ -210,13 +210,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         );
       } else {
         this.run(
-          'INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO content_node (id, workspace, project_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
             input.project_id,
             input.path,
             input.name,
+            input.type ?? 'diagram',
             input.size_bytes,
             input.comment_count,
             input.unresolved_comment_count,
@@ -230,21 +231,21 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     });
 
     tx();
-    return (await this.getProjectFileByPath(input.workspace, input.project_id, input.path))!;
+    return (await this.getContentNodeByPath(input.workspace, input.project_id, input.path))!;
   }
 
-  async createProjectFileIfAbsent(
-    input: Omit<ProjectFileDbUpsert, 'updated_at'> & { updated_at: Date }
+  async createContentNodeIfAbsent(
+    input: Omit<ContentNodeDbUpsert, 'updated_at'> & { updated_at: Date }
   ) {
-    const existing = await this.getProjectFileByPath(input.workspace, input.project_id, input.path);
+    const existing = await this.getContentNodeByPath(input.workspace, input.project_id, input.path);
     if (existing) return null;
-    return await this.upsertProjectFile(input);
+    return await this.upsertContentNode(input);
   }
 
-  async deleteProjectFileByPath(workspace: string, projectId: string, path: string) {
-    const row = await this.getProjectFileByPath(workspace, projectId, path);
+  async deleteContentNodeByPath(workspace: string, projectId: string, path: string) {
+    const row = await this.getContentNodeByPath(workspace, projectId, path);
     if (!row) return null;
-    this.run('DELETE FROM project_file WHERE workspace = ? AND project_id = ? AND path = ?', [
+    this.run('DELETE FROM content_node WHERE workspace = ? AND project_id = ? AND path = ?', [
       workspace,
       projectId,
       path
@@ -252,7 +253,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return row;
   }
 
-  async renameProjectFileFolder(
+  async renameContentNodeFolder(
     workspace: string,
     projectId: string,
     oldPath: string,
@@ -264,13 +265,13 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     const oldPathLength = oldPath.length;
 
     const matchingIds = this.all<{ id: string }>(
-      'SELECT id FROM project_file WHERE workspace = ? AND project_id = ? AND path LIKE ?',
+      'SELECT id FROM content_node WHERE workspace = ? AND project_id = ? AND path LIKE ?',
       [workspace, projectId, `${oldPathPrefix}%`]
     );
 
     const tx = this.db.transaction(() => {
       this.run(
-        `UPDATE project_file
+        `UPDATE content_node
          SET path = ? || substr(path, ?),
              updated_at = ?
          WHERE workspace = ? AND project_id = ? AND path LIKE ?`,
@@ -289,18 +290,18 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return matchingIds.map(row => row.id);
   }
 
-  async deleteProjectFileFolder(workspace: string, projectId: string, folderPath: string) {
+  async deleteContentNodeFolder(workspace: string, projectId: string, folderPath: string) {
     const folderPathPrefix = `${folderPath}/`;
     const matching = this.all(
-      'SELECT * FROM project_file WHERE workspace = ? AND project_id = ? AND path LIKE ?',
+      'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? AND path LIKE ?',
       [workspace, projectId, `${folderPathPrefix}%`],
-      sqliteMappers.projectFile
+      sqliteMappers.contentNode
     );
 
     if (matching.length === 0) return [];
 
     const tx = this.db.transaction(() => {
-      this.run('DELETE FROM project_file WHERE workspace = ? AND project_id = ? AND path LIKE ?', [
+      this.run('DELETE FROM content_node WHERE workspace = ? AND project_id = ? AND path LIKE ?', [
         workspace,
         projectId,
         `${folderPathPrefix}%`
@@ -399,7 +400,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         p.id           AS project_id,
         p.name         AS project_name
       FROM diagram_entity_ref der
-      JOIN project_file pf ON pf.id = der.file_id AND pf.workspace = der.workspace
+      JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
       JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
       WHERE der.workspace = ? AND der.entity_id = ?
       ORDER BY p.name, pf.name`,

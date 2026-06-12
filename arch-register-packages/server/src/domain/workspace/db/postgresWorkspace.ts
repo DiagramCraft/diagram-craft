@@ -74,7 +74,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
       `;
 
       await this.sql.begin(async tx => {
-        await tx`DELETE FROM project_file WHERE workspace = ${id}`;
+        await tx`DELETE FROM content_node WHERE workspace = ${id}`;
         await tx`DELETE FROM project WHERE workspace = ${id}`;
         await tx`DELETE FROM entity_grant WHERE workspace = ${id}`;
         await tx`DELETE FROM entity WHERE workspace = ${id}`;

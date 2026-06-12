@@ -27,7 +27,7 @@ export const listAllTemplates = async (
 
     for (const project of projects) {
       if (!authCtx || !canAccessProject(authCtx, project.owner)) continue;
-      const files = await db.project.listProjectFiles(workspace, project.id);
+      const files = await db.project.listContentNodes(workspace, project.id);
       projectsWithFiles.push({ project, files });
     }
 
@@ -53,7 +53,7 @@ export const listProjectTemplates = async (
 
     for (const proj of projects) {
       if (authCtx && !canAccessProject(authCtx, proj.owner)) continue;
-      const files = await db.project.listProjectFiles(workspace, proj.id);
+      const files = await db.project.listContentNodes(workspace, proj.id);
       projectsWithFiles.push({ project: proj, files });
     }
 
@@ -85,10 +85,10 @@ export const toggleTemplateStatus = async (
       if (authCtx) requireProjectAccess(authCtx, project.owner);
     }
 
-    const file = await db.project.getProjectFileByPath(workspace, projectId, filePath);
+    const file = await db.project.getContentNodeByPath(workspace, projectId, filePath);
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-    await db.project.updateProjectFileTemplateStatus(
+    await db.project.updateContentNodeTemplateStatus(
       workspace,
       projectId,
       file.id,
@@ -97,7 +97,7 @@ export const toggleTemplateStatus = async (
       new Date()
     );
 
-    const updatedFile = await db.project.getProjectFileByPath(workspace, projectId, filePath);
+    const updatedFile = await db.project.getContentNodeByPath(workspace, projectId, filePath);
     const { toApiProjectFile } = await import('../project/projectHelpers');
     return toApiProjectFile(updatedFile!);
   } catch (error) {
@@ -137,7 +137,7 @@ export const createFromTemplate = async (
       message: `Template project '${templateProjectId}' not found`
     });
 
-    const templateFile = await db.project.getProjectFileByPath(
+    const templateFile = await db.project.getContentNodeByPath(
       workspace,
       templateProjectId,
       templatePath
@@ -156,7 +156,7 @@ export const createFromTemplate = async (
 
     const newPath = folder ? `${folder}/${name}.json` : `${name}.json`;
 
-    const existingFile = await db.project.getProjectFileByPath(workspace, projectId, newPath);
+    const existingFile = await db.project.getContentNodeByPath(workspace, projectId, newPath);
     httpAssert.true(!existingFile, {
       status: 409,
       message: `A file already exists at '${newPath}'`
@@ -170,7 +170,7 @@ export const createFromTemplate = async (
     const doc = fileData as unknown as SerializedDiagramDocument;
     const commentCounts = getDiagramCommentCounts(doc);
 
-    const row = await db.project.upsertProjectFile({
+    const row = await db.project.upsertContentNode({
       workspace,
       project_id: projectId,
       path: newPath,
@@ -189,7 +189,7 @@ export const createFromTemplate = async (
       const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
       const previewSvg =
         (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-      await db.project.updateProjectFileDerivedData(
+      await db.project.updateContentNodeDerivedData(
         workspace,
         projectId,
         row.id,
@@ -200,7 +200,7 @@ export const createFromTemplate = async (
         timestamp
       );
     } catch {
-      await db.project.updateProjectFileDerivedData(
+      await db.project.updateContentNodeDerivedData(
         workspace,
         projectId,
         row.id,
@@ -217,7 +217,7 @@ export const createFromTemplate = async (
       userId: authCtx?.userId ?? 'system',
       workspace,
       operation: 'create',
-      entityType: 'project_file',
+      entityType: 'content_node',
       entityId: row.id,
       entityName: row.name,
       changes: {
