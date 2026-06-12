@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { invalidateAuditQueries } from './useAudit';
-import { Project, ProjectDetail } from '@arch-register/api-types/projectContract';
+import { Project, ProjectDetail, ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
+import { emptyDiagram, createEntityDiagramFromTemplate } from '../lib/api';
 
 export const projectEntityKeys = {
   all: (workspaceId: string, projectId: string) =>
@@ -227,7 +228,7 @@ export const useEntityContentNodes = (workspaceId: string, entityId: string) => 
   return useQuery({
     queryKey: entityContentKeys.all(workspaceId, entityId),
     queryFn: () =>
-      orpcClient.projects.listEntityContent({
+      orpcClient.projects.listEntityFiles({
         params: { workspace: workspaceId, entityId }
       }),
     enabled: !!workspaceId && !!entityId
@@ -264,6 +265,54 @@ export const useCreateEntityFile = (workspaceId: string, entityId: string) => {
         query: { path },
         body
       }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: entityContentKeys.all(workspaceId, entityId)
+      });
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId)
+      });
+    }
+  });
+};
+
+// Higher-level hook for creating a blank diagram in entity content (accepts name/folder, builds path)
+export const useCreateEntityDiagram = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ name, folder }: { name: string; folder?: string | null }) => {
+      const filePath = folder ? `${folder}/${name}.json` : `${name}.json`;
+      return orpcClient.projects.createEntityFile({
+        params: { workspace: workspaceId, entityId },
+        query: { path: filePath },
+        body: emptyDiagram(name)
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: entityContentKeys.all(workspaceId, entityId)
+      });
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId)
+      });
+    }
+  });
+};
+
+export const useCreateEntityDiagramFromTemplate = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      name,
+      templateFile,
+      folder
+    }: {
+      name: string;
+      templateFile: ProjectFile;
+      folder?: string | null;
+    }) => createEntityDiagramFromTemplate(workspaceId, entityId, name, templateFile, folder),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: entityContentKeys.all(workspaceId, entityId)

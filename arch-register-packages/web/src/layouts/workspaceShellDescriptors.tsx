@@ -1,4 +1,4 @@
-import { TbCode, TbDatabase, TbFolders, TbHome, TbSearch, TbSettings } from 'react-icons/tb';
+import { TbCode, TbDatabase, TbFiles, TbFolders, TbHome, TbSearch, TbSettings } from 'react-icons/tb';
 import type { BreadcrumbItem, WorkspaceRailItemId } from '../shell/shellTypes';
 import type { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -110,6 +110,15 @@ export const buildEntityBreadcrumbs = (ctx: WorkspaceShellContext, detail: boole
   ...(detail ? [{ label: 'Detail', onClick: () => {} }] : [])
 ];
 
+export const buildWorkspaceContentBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
+  ...buildHomeBreadcrumbs(ctx),
+  {
+    label: 'Content',
+    icon: <TbFiles size={12} />,
+    onClick: () => ctx.navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug: ctx.workspaceSlug } })
+  }
+];
+
 export const buildModelBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
   ...buildHomeBreadcrumbs(ctx),
   {
@@ -175,6 +184,7 @@ export const navigateFromRailItem = (
 
   const routeByRail: Record<WorkspaceRailItemId, string> = {
     home: '/$workspaceSlug',
+    content: '/$workspaceSlug/content',
     projects: '/$workspaceSlug/projects/$projectId',
     entities: '/$workspaceSlug/entities',
     model: '/$workspaceSlug/model',

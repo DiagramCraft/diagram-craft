@@ -2,53 +2,39 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
-import { useEntityContentNodes } from '../../hooks/useProjects';
+import { useWorkspaceContentNodes } from '../../hooks/useProjectFiles';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
 import { DiagramCard, DiagramRow } from '../../components/DiagramCard';
 
-type EntityContentViewProps = {
+type WorkspaceContentScreenProps = {
   workspaceSlug: string;
-  entityId: string;
   folder: string;
 };
 
-export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
+export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceContentScreenProps) => {
   const navigate = useNavigate();
-  const { data } = useEntityContentNodes(workspaceSlug, entityId);
+  const { data } = useWorkspaceContentNodes(workspaceSlug);
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
 
-  const handleDiagramClick = (fileId: string, projectId: string | null) => {
-    if (projectId) {
-      // Navigate to project diagram route
-      navigate({
-        to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-        params: {
-          workspaceSlug,
-          projectId,
-          diagramId: fileId
-        }
-      });
-    } else {
-      // Navigate to entity diagram route
-      navigate({
-        to: '/$workspaceSlug/entities/$entityId/diagrams/$diagramId',
-        params: {
-          workspaceSlug,
-          entityId,
-          diagramId: fileId
-        }
-      });
-    }
+  const handleDiagramClick = (fileId: string) => {
+    navigate({
+      to: '/$workspaceSlug/content/diagrams/$diagramId',
+      params: { workspaceSlug, diagramId: fileId }
+    });
   };
 
-  // Find the folder and its files
-  const folderData = data?.folders.find(f => f.path === folder);
-  const files = folderData?.files ?? [];
-  const folderName = folderData?.name ?? folder;
+  // If folder is set, show that folder's files; otherwise show root files
+  const folderData = folder ? data?.folders.find(f => f.path === folder) : undefined;
+  const files = folder
+    ? (folderData?.files ?? [])
+    : (data?.rootFiles ?? []);
+  const title = folder
+    ? (folderData?.name ?? folder)
+    : 'Workspace content';
 
   const lc = filter.toLowerCase();
   const filtered = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
@@ -58,13 +44,33 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
       <div className={styles.screen}>
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>{folderName}</h1>
+            <h1 className={styles.title}>{title}</h1>
+          </div>
+          <div className={styles.actions}>
+            <Button
+              variant="primary"
+              icon={<TbPlus size={12} />}
+              onClick={() => setAddDiagramOpen(true)}
+            >
+              New diagram
+            </Button>
           </div>
         </div>
         <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No diagrams in this folder</div>
-          <div className={styles.emptySub}>Diagrams will appear here when added to this folder.</div>
+          <div className={styles.emptyTitle}>No diagrams here</div>
+          <div className={styles.emptySub}>Diagrams will appear here when added.</div>
         </div>
+        <AddDiagramDialog
+          open={addDiagramOpen}
+          onClose={() => setAddDiagramOpen(false)}
+          onCreated={file => {
+            setAddDiagramOpen(false);
+            handleDiagramClick(file.id);
+          }}
+          workspaceId={workspaceSlug}
+          context="workspace"
+          folder={folder || null}
+        />
       </div>
     );
   }
@@ -74,7 +80,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
       <div className={styles.screen}>
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>{folderName}</h1>
+            <h1 className={styles.title}>{title}</h1>
           </div>
         </div>
         <div className={styles.empty}>
@@ -89,7 +95,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
     <div className={styles.screen}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>{folderName}</h1>
+          <h1 className={styles.title}>{title}</h1>
         </div>
         <div className={styles.actions}>
           <Button
@@ -151,7 +157,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
               key={f.path}
               file={f}
               folder={folder}
-              onOpen={() => handleDiagramClick(f.id, f.project_id)}
+              onOpen={() => handleDiagramClick(f.id)}
             />
           ))}
         </div>
@@ -161,7 +167,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
             <DiagramCard
               key={f.path}
               file={f}
-              onOpen={() => handleDiagramClick(f.id, f.project_id)}
+              onOpen={() => handleDiagramClick(f.id)}
             />
           ))}
           <button
@@ -180,14 +186,12 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         onClose={() => setAddDiagramOpen(false)}
         onCreated={file => {
           setAddDiagramOpen(false);
-          handleDiagramClick(file.id, file.project_id);
+          handleDiagramClick(file.id);
         }}
         workspaceId={workspaceSlug}
-        context="entity"
-        entityId={entityId}
-        folder={folder}
+        context="workspace"
+        folder={folder || null}
       />
     </div>
   );
 };
-

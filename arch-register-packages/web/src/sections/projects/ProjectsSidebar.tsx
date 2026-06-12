@@ -555,6 +555,7 @@ export const ProjectsSidebar = ({
           onClose={() => setAddDiagramState(null)}
           onCreated={() => {}}
           workspaceId={workspaceSlug}
+          context="project"
           projectId={addDiagramState.projectId}
           folder={addDiagramState.folder}
         />

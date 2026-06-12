@@ -130,10 +130,7 @@ CREATE TABLE content_node (
   unresolved_comment_count INTEGER NOT NULL DEFAULT 0,
   created_at               TEXT    NOT NULL,
   updated_at               TEXT    NOT NULL,
-  CHECK (
-    (project_id IS NOT NULL AND entity_id IS NULL) OR
-    (project_id IS NULL AND entity_id IS NOT NULL)
-  ),
+  CHECK (NOT (project_id IS NOT NULL AND entity_id IS NOT NULL)),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
   FOREIGN KEY (workspace, project_id) REFERENCES project(workspace, id) ON DELETE CASCADE,
   FOREIGN KEY (workspace, entity_id) REFERENCES entity(workspace, id) ON DELETE CASCADE,
@@ -142,8 +139,10 @@ CREATE TABLE content_node (
 
 CREATE UNIQUE INDEX content_node_project_unique ON content_node(workspace, project_id, path) WHERE project_id IS NOT NULL;
 CREATE UNIQUE INDEX content_node_entity_unique ON content_node(workspace, entity_id, path) WHERE entity_id IS NOT NULL;
+CREATE UNIQUE INDEX content_node_workspace_unique ON content_node(workspace, path) WHERE project_id IS NULL AND entity_id IS NULL;
 CREATE INDEX content_node_project_idx ON content_node(workspace, project_id);
 CREATE INDEX content_node_entity_idx ON content_node(workspace, entity_id);
+CREATE INDEX content_node_workspace_idx ON content_node(workspace) WHERE project_id IS NULL AND entity_id IS NULL;
 
 CREATE TABLE users (
   id              TEXT PRIMARY KEY,

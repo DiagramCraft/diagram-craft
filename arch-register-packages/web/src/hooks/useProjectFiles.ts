@@ -200,6 +200,20 @@ export const useProjectTemplates = (workspaceId: string, projectId: string) => {
   });
 };
 
+// Hook for fetching workspace-level templates only (no project-specific templates)
+export const useWorkspaceOnlyTemplates = (workspaceId: string) => {
+  return useQuery({
+    queryKey: ['workspace-templates', workspaceId],
+    queryFn: async () => {
+      const result = await orpcClient.templates.listAll({
+        params: { workspace: workspaceId }
+      });
+      return result.workspaceTemplates;
+    },
+    enabled: !!workspaceId
+  });
+};
+
 // Hook for toggling template status
 export const useToggleTemplateStatus = (workspaceId: string, projectId: string) => {
   const queryClient = useQueryClient();
@@ -227,6 +241,46 @@ export const useToggleTemplateStatus = (workspaceId: string, projectId: string) 
       await queryClient.invalidateQueries({ queryKey: ['project-templates', workspaceId] });
       await queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
       await invalidateAuditQueries(queryClient, workspaceId);
+    }
+  });
+};
+
+export const workspaceContentKeys = {
+  all: (workspaceId: string) => ['workspace-content', workspaceId] as const
+};
+
+export const useWorkspaceContentNodes = (workspaceId: string) => {
+  return useQuery({
+    queryKey: workspaceContentKeys.all(workspaceId),
+    queryFn: () => orpcClient.projects.listWorkspaceFiles({ params: { workspace: workspaceId } }),
+    enabled: !!workspaceId
+  });
+};
+
+export const useCreateWorkspaceFolder = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (path: string) =>
+      orpcClient.projects.createWorkspaceFolder({ params: { workspace: workspaceId }, body: { path } }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useCreateWorkspaceDiagram = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name, folder }: { name: string; folder?: string | null }) => {
+      const filePath = folder ? `${folder}/${name}.json` : `${name}.json`;
+      return orpcClient.projects.createWorkspaceFile({
+        params: { workspace: workspaceId },
+        query: { path: filePath },
+        body: emptyDiagram(name) as unknown as Record<string, unknown>
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
     }
   });
 };

@@ -28,7 +28,12 @@ import {
   getEntityDiagramFiles,
   listEntityContentNodes,
   createEntityFolder,
-  createEntityFile
+  createEntityFile,
+  listWorkspaceContentNodes,
+  createWorkspaceFolder,
+  createWorkspaceFile,
+  getWorkspaceFileContent,
+  saveWorkspaceFile
 } from './projectOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -315,7 +320,7 @@ export const projectORPCRouter = projectRouter.router({
         }
       }
     ),
-    listEntityContent: projectRouter.projects.listEntityContent.handler(
+    listEntityFiles: projectRouter.projects.listEntityFiles.handler(
       async ({ input, context }) => {
         try {
           return await listEntityContentNodes(
@@ -355,6 +360,79 @@ export const projectORPCRouter = projectRouter.router({
             context.storage,
             input.params.workspace,
             input.params.entityId,
+            input.query.path,
+            input.body,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    listWorkspaceFiles: projectRouter.projects.listWorkspaceFiles.handler(
+      async ({ input, context }) => {
+        try {
+          return await listWorkspaceContentNodes(context.db, input.params.workspace, context.event);
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    createWorkspaceFolder: projectRouter.projects.createWorkspaceFolder.handler(
+      async ({ input, context }) => {
+        try {
+          return await createWorkspaceFolder(
+            context.db,
+            input.params.workspace,
+            input.body.path,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    createWorkspaceFile: projectRouter.projects.createWorkspaceFile.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await createWorkspaceFile(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.query.path,
+            input.body,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    getWorkspaceFileContent: projectRouter.projects.getWorkspaceFileContent.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await getWorkspaceFileContent(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.query.path,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    saveWorkspaceFile: projectRouter.projects.saveWorkspaceFile.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await saveWorkspaceFile(
+            context.db,
+            context.storage,
+            input.params.workspace,
             input.query.path,
             input.body,
             context.event

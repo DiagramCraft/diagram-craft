@@ -502,6 +502,35 @@ export const createDiagramFromTemplate = async (
   });
 };
 
+export const createEntityDiagramFromTemplate = async (
+  workspace: string,
+  entityId: string,
+  name: string,
+  templateFile: ProjectFile,
+  folder?: string | null
+) => {
+  const { orpcClient } = await import('./orpcClient');
+
+  const templateContent = await orpcClient.projects.getFileContent({
+    params: { workspace, id: templateFile.project_id! },
+    query: { path: templateFile.path }
+  });
+
+  const newContent = prepareTemplateDiagramDocument(
+    templateContent as unknown as SerializedDiagramDocument & { name?: string },
+    name
+  );
+
+  const fileName = `${name}.json`;
+  const filePath = folder ? `${folder}/${fileName}` : fileName;
+
+  return orpcClient.projects.createEntityFile({
+    params: { workspace, entityId },
+    query: { path: filePath },
+    body: newContent as unknown as Record<string, unknown>
+  });
+};
+
 // ── Audit Log API ─────────────────────────────────────────────
 
 export type AuditOperation = 'create' | 'update' | 'delete';
