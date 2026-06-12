@@ -55,4 +55,16 @@ test.describe('projects section', () => {
     await projectsPage.expectProjectOpened(authMigrationProject.name);
     await projectsPage.openEditProjectDialog();
   });
+
+  test('creates a new project from the sidebar action', async ({ page }) => {
+    const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
+    const projectName = `Sidebar Project ${Date.now()}`;
+
+    await projectsPage.gotoProject(portalRedesignProject.id);
+    await projectsPage.expectProjectOpened(portalRedesignProject.name);
+    await projectsPage.openAddProjectDialog();
+    await projectsPage.createProject({ name: projectName });
+    await projectsPage.expectProjectOpened(projectName);
+    await projectsPage.expectProjectInSidebarGroup('Active Projects', projectName);
+  });
 });
