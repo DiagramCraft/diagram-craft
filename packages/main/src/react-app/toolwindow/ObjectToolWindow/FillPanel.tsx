@@ -17,20 +17,32 @@ import buttonStyles from '@diagram-craft/app-components/Button.module.css';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 import { TbLine } from 'react-icons/tb';
 import { $t } from '@diagram-craft/utils/localize';
+import bubbles1TextureUrl from '../../../../public/textures/bubbles1.jpeg';
+import grunge1TextureUrl from '../../../../public/textures/grunge1.jpeg';
+import grunge2TextureUrl from '../../../../public/textures/grunge2.jpeg';
+import grunge3TextureUrl from '../../../../public/textures/grunge3.jpeg';
+import marble1TextureUrl from '../../../../public/textures/marble1.jpeg';
+import marble2TextureUrl from '../../../../public/textures/marble2.jpeg';
+import paper1TextureUrl from '../../../../public/textures/paper1.jpeg';
+import paper2TextureUrl from '../../../../public/textures/paper2.jpeg';
+import paper3TextureUrl from '../../../../public/textures/paper3.jpeg';
+import paper4TextureUrl from '../../../../public/textures/paper4.jpeg';
+import paper5TextureUrl from '../../../../public/textures/paper5.jpeg';
+import textile1TextureUrl from '../../../../public/textures/textile1.jpeg';
 
 const TEXTURES = [
-  'bubbles1.jpeg',
-  'grunge1.jpeg',
-  'grunge2.jpeg',
-  'grunge3.jpeg',
-  'marble1.jpeg',
-  'marble2.jpeg',
-  'paper1.jpeg',
-  'paper2.jpeg',
-  'paper3.jpeg',
-  'paper4.jpeg',
-  'paper5.jpeg',
-  'textile1.jpeg'
+  { id: 'bubbles1.jpeg', url: bubbles1TextureUrl },
+  { id: 'grunge1.jpeg', url: grunge1TextureUrl },
+  { id: 'grunge2.jpeg', url: grunge2TextureUrl },
+  { id: 'grunge3.jpeg', url: grunge3TextureUrl },
+  { id: 'marble1.jpeg', url: marble1TextureUrl },
+  { id: 'marble2.jpeg', url: marble2TextureUrl },
+  { id: 'paper1.jpeg', url: paper1TextureUrl },
+  { id: 'paper2.jpeg', url: paper2TextureUrl },
+  { id: 'paper3.jpeg', url: paper3TextureUrl },
+  { id: 'paper4.jpeg', url: paper4TextureUrl },
+  { id: 'paper5.jpeg', url: paper5TextureUrl },
+  { id: 'textile1.jpeg', url: textile1TextureUrl }
 ];
 
 const PATTERNS = [
@@ -336,35 +348,37 @@ export const FillPanelForm = ({
             {$t('panel.fill.texture', 'Texture')}:
           </KeyValueTable.Label>
           <KeyValueTable.Value>
-            {TEXTURES.map(t => (
-              <img
-                key={t}
-                src={`/textures/${t}`}
-                style={{
-                  width: 35,
-                  height: 35,
-                  marginRight: '0.2rem',
-                  border: '1px solid var(--blue-6)',
-                  borderRadius: 2
-                }}
-                onClick={async () => {
-                  const response = await fetch(`/textures/${t}`);
-                  const blob = await response.blob();
-                  const att = await $d.document.attachments.addAttachment(blob);
+            {TEXTURES.map(texture => {
+              return (
+                <img
+                  key={texture.id}
+                  src={texture.url}
+                  style={{
+                    width: 35,
+                    height: 35,
+                    marginRight: '0.2rem',
+                    border: '1px solid var(--blue-6)',
+                    borderRadius: 2
+                  }}
+                  onClick={async () => {
+                    const response = await fetch(texture.url);
+                    const blob = await response.blob();
+                    const att = await $d.document.attachments.addAttachment(blob);
 
-                  const img = await createImageBitmap(att.content);
-                  const { width, height } = img;
-                  img.close();
+                    const img = await createImageBitmap(att.content);
+                    const { width, height } = img;
+                    img.close();
 
-                  $d.undoManager.combine(() => {
-                    image.set(att.hash);
-                    imageFit.set('tile');
-                    imageW.set(width);
-                    imageH.set(height);
-                  });
-                }}
-              />
-            ))}
+                    $d.undoManager.combine(() => {
+                      image.set(att.hash);
+                      imageFit.set('tile');
+                      imageW.set(width);
+                      imageH.set(height);
+                    });
+                  }}
+                />
+              );
+            })}
           </KeyValueTable.Value>
 
           <ImageScale imageScale={imageScale} />

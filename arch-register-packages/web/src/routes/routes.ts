@@ -20,6 +20,7 @@ import { ImportScreen } from '../sections/entities/ImportScreen';
 
 import {
   validateEntitySearch,
+  validateEntityDetailSearch,
   validateProjectSearch,
   validateSettingsSearch,
   validateSearchSearch,
@@ -140,7 +141,15 @@ const entityBrowserRoute = createRoute({
 const entityDetailRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'entities/$entityId',
+  validateSearch: validateEntityDetailSearch,
   component: EntityDetailScreen
+});
+
+// ─── Entity Diagram (overlay) ────────────────────────────────
+const entityDiagramRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'entities/$entityId/diagrams/$diagramId',
+  component: DiagramScreen
 });
 
 // ─── Data Model ──────────────────────────────────────────────
@@ -215,6 +224,7 @@ export const routeTree = rootRoute.addChildren([
       diagramRoute,
       entityBrowserRoute,
       entityDetailRoute,
+      entityDiagramRoute,
       dataModelRoute,
       searchRoute,
       settingsRoute,

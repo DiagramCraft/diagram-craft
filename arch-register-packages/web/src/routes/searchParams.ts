@@ -32,6 +32,15 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
 });
 
+// Entity detail params
+export type EntityDetailSearchParams = {
+  contentFolder?: string;
+};
+
+export const validateEntityDetailSearch = (raw: Record<string, unknown>): EntityDetailSearchParams => ({
+  contentFolder: typeof raw.contentFolder === 'string' ? raw.contentFolder : undefined,
+});
+
 // Project detail params
 export type ProjectSearchParams = {
   tab?: 'projects' | 'archive';
