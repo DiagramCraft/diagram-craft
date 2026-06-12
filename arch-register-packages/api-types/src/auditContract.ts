@@ -9,7 +9,7 @@ const auditLogEntrySchema = z.object({
   user_id: z.string().nullable(),
   user_display_name: z.string().nullable(),
   operation: z.enum(['create', 'update', 'delete']),
-  entity_type: z.enum(['workspace', 'entity_schema', 'entity', 'project', 'project_file']),
+  entity_type: z.enum(['workspace', 'entity_schema', 'entity', 'project', 'content_node']),
   entity_id: z.string(),
   entity_name: z.string(),
   entity_slug: z.string().nullable(),

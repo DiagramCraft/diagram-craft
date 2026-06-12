@@ -65,7 +65,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     ]).map(project => project.id);
 
     const tx = this.db.transaction((workspaceId: string) => {
-      this.run('DELETE FROM project_file WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM content_node WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM project WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_grant WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity WHERE workspace = ?', [workspaceId]);

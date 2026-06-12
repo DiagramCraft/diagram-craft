@@ -113,24 +113,29 @@ CREATE TABLE project (
   FOREIGN KEY (workspace, owner) REFERENCES workspace_owner(workspace, id) ON DELETE SET NULL
 );
 
-CREATE TABLE project_file (
-  id                    TEXT PRIMARY KEY,
-  workspace             TEXT NOT NULL,
-  project_id            TEXT NOT NULL,
-  path                  TEXT NOT NULL,
-  name                  TEXT NOT NULL,
-  size_bytes            INTEGER NOT NULL DEFAULT 0,
-  is_template           INTEGER NOT NULL DEFAULT 0,
-  is_workspace_template INTEGER NOT NULL DEFAULT 0,
-  preview_svg           TEXT,
-  created_at            TEXT NOT NULL,
-  updated_at            TEXT NOT NULL,
+CREATE TABLE content_node (
+  id                       TEXT    PRIMARY KEY,
+  workspace                TEXT    NOT NULL,
+  project_id               TEXT    NOT NULL,
+  parent_id                TEXT,
+  path                     TEXT    NOT NULL,
+  name                     TEXT    NOT NULL,
+  type                     TEXT    NOT NULL DEFAULT 'diagram' CHECK (type IN ('diagram', 'folder')),
+  size_bytes               INTEGER NOT NULL DEFAULT 0,
+  is_template              INTEGER NOT NULL DEFAULT 0,
+  is_workspace_template    INTEGER NOT NULL DEFAULT 0,
+  preview_svg              TEXT,
+  comment_count            INTEGER NOT NULL DEFAULT 0,
+  unresolved_comment_count INTEGER NOT NULL DEFAULT 0,
+  created_at               TEXT    NOT NULL,
+  updated_at               TEXT    NOT NULL,
   UNIQUE (workspace, project_id, path),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
-  FOREIGN KEY (workspace, project_id) REFERENCES project(workspace, id) ON DELETE CASCADE
+  FOREIGN KEY (workspace, project_id) REFERENCES project(workspace, id) ON DELETE CASCADE,
+  FOREIGN KEY (parent_id) REFERENCES content_node(id) ON DELETE CASCADE
 );
 
-CREATE INDEX project_file_project_idx ON project_file(workspace, project_id);
+CREATE INDEX content_node_project_idx ON content_node(workspace, project_id);
 
 CREATE TABLE users (
   id              TEXT PRIMARY KEY,
@@ -159,7 +164,7 @@ CREATE TABLE audit_log (
   timestamp       TEXT NOT NULL,
   user_id         TEXT,
   operation       TEXT NOT NULL CHECK (operation IN ('create', 'update', 'delete')),
-  entity_type     TEXT NOT NULL CHECK (entity_type IN ('workspace', 'entity_schema', 'entity', 'project', 'project_file')),
+  entity_type     TEXT NOT NULL CHECK (entity_type IN ('workspace', 'entity_schema', 'entity', 'project', 'content_node')),
   entity_id       TEXT NOT NULL,
   entity_name     TEXT NOT NULL,
   entity_slug     TEXT,

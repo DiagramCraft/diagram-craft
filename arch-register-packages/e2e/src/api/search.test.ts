@@ -36,7 +36,7 @@ const test = baseTest.extend<{ seeded: true }>({
         updated_at: now
       });
 
-      await server.db.project.upsertProjectFile({
+      await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: 'search-proj-alpha',
         path: 'wireframes/portal-diagram.dgc',
@@ -48,7 +48,7 @@ const test = baseTest.extend<{ seeded: true }>({
         created_atIfNew: now
       });
 
-      await server.db.project.upsertProjectFile({
+      await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: 'search-proj-beta',
         path: 'flows/auth-diagram.dgc',

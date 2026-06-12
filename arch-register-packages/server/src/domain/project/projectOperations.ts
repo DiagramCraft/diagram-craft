@@ -20,7 +20,7 @@ import {
   toApiProjectDetail,
   toApiProjectEntity
 } from './projectHelpers';
-import type { ProjectFileDbResult } from './db/projectDatabase';
+import type { ContentNodeDbResult } from './db/projectDatabase';
 import { HTTPError } from 'h3';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
@@ -58,10 +58,10 @@ const parseProjectStatus = (value: unknown): ProjectStatus => {
 const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
   typeof owner === 'string' && teamIds.has(owner) ? owner : null;
 
-export const buildFileTree = (files: ProjectFileDbResult[]): FileTree => {
+export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
   const rootFiles = files.filter(f => f.path.indexOf('/') === -1).map(toApiProjectFile);
 
-  const folderMap = new Map<string, ProjectFileDbResult[]>();
+  const folderMap = new Map<string, ContentNodeDbResult[]>();
 
   for (const f of files) {
     const lastSlash = f.path.lastIndexOf('/');
@@ -98,7 +98,7 @@ export const listProjects = async (
     const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
     const fileCounts = new Map<string, number>();
     const projectFiles = await Promise.all(
-      visibleProjects.map(project => db.project.listProjectFiles(ws, project.id))
+      visibleProjects.map(project => db.project.listContentNodes(ws, project.id))
     );
     for (const files of projectFiles) {
       for (const file of files) {
@@ -130,7 +130,7 @@ export const getProject = async (
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
     requireProjectAccess(authCtx, project.owner);
-    const files = await db.project.listProjectFiles(ws, id);
+    const files = await db.project.listContentNodes(ws, id);
     return toApiProjectDetail(project, buildFileTree(files), authCtx);
   } catch (e) {
     return handleError(e, 'Failed to retrieve project');
@@ -279,7 +279,7 @@ export const updateProject = async (
       changes
     });
 
-    const fileCount = (await db.project.listProjectFiles(ws, id)).length;
+    const fileCount = (await db.project.listContentNodes(ws, id)).length;
     return toApiProject(row, fileCount, authCtx);
   } catch (e) {
     return handleError(e, 'Failed to update project');
@@ -340,7 +340,7 @@ export const listProjectFiles = async (
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
     requireProjectAccess(authCtx, project.owner);
-    const files = await db.project.listProjectFiles(ws, id);
+    const files = await db.project.listContentNodes(ws, id);
     return buildFileTree(files);
   } catch (e) {
     return handleError(e, 'Failed to list files');
@@ -367,11 +367,12 @@ export const createFolder = async (
       'You do not have permission to modify this project'
     );
     const timestamp = new Date();
-    const row = await db.project.createProjectFileIfAbsent({
+    const row = await db.project.createContentNodeIfAbsent({
       workspace: ws,
       project_id: id,
       path: markerPath,
       name: '.keep',
+      type: 'folder',
       size_bytes: 0,
       comment_count: 0,
       unresolved_comment_count: 0,
@@ -383,7 +384,7 @@ export const createFolder = async (
         userId: authCtx.userId,
         workspace: ws,
         operation: 'create',
-        entityType: 'project_file',
+        entityType: 'content_node',
         entityId: row.id,
         entityName: folderPath,
         changes: { new: { path: folderPath, type: 'folder' } },
@@ -415,7 +416,7 @@ export const renameFolder = async (
       'edit_project',
       'You do not have permission to modify this project'
     );
-    const result = await db.project.renameProjectFileFolder(ws, id, oldPath, newPath, new Date());
+    const result = await db.project.renameContentNodeFolder(ws, id, oldPath, newPath, new Date());
     httpAssert.true(result.length > 0, {
       status: 404,
       message: `No files found under folder '${oldPath}'`
@@ -441,7 +442,7 @@ export const getFileContent = async (
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
     requireProjectAccess(authCtx, project.owner);
 
-    const file = await db.project.getProjectFileByPath(ws, id, filePath);
+    const file = await db.project.getContentNodeByPath(ws, id, filePath);
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
     const content = await storage.read(ws, id, file.id);
@@ -493,7 +494,7 @@ export const saveFile = async (
       'You do not have permission to modify this project'
     );
 
-    const existingFile = await db.project.getProjectFileByPath(ws, id, filePath);
+    const existingFile = await db.project.getContentNodeByPath(ws, id, filePath);
     const isUpdate = !!existingFile;
 
     // TODO: We should add validation here
@@ -501,7 +502,7 @@ export const saveFile = async (
 
     const timestamp = new Date();
     const commentCounts = getDiagramCommentCounts(doc);
-    const row = await db.project.upsertProjectFile({
+    const row = await db.project.upsertContentNode({
       workspace: ws,
       project_id: id,
       path: filePath,
@@ -519,7 +520,7 @@ export const saveFile = async (
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
       const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
       const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-      await db.project.updateProjectFileDerivedData(
+      await db.project.updateContentNodeDerivedData(
         ws,
         id,
         row.id,
@@ -530,7 +531,7 @@ export const saveFile = async (
         timestamp
       );
     } catch {
-      await db.project.updateProjectFileDerivedData(
+      await db.project.updateContentNodeDerivedData(
         ws,
         id,
         row.id,
@@ -551,7 +552,7 @@ export const saveFile = async (
         userId: authCtx.userId,
         workspace: ws,
         operation: 'update',
-        entityType: 'project_file',
+        entityType: 'content_node',
         entityId: row.id,
         entityName: row.name,
         changes,
@@ -562,7 +563,7 @@ export const saveFile = async (
         userId: authCtx.userId,
         workspace: ws,
         operation: 'create',
-        entityType: 'project_file',
+        entityType: 'content_node',
         entityId: row.id,
         entityName: row.name,
         changes: {
@@ -599,16 +600,16 @@ export const deleteFile = async (
       'You do not have permission to modify this project'
     );
 
-    const file = await db.project.getProjectFileByPath(ws, id, filePath);
+    const file = await db.project.getContentNodeByPath(ws, id, filePath);
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-    await db.project.deleteProjectFileByPath(ws, id, filePath);
+    await db.project.deleteContentNodeByPath(ws, id, filePath);
 
     await logAudit(db, {
       userId: authCtx.userId,
       workspace: ws,
       operation: 'delete',
-      entityType: 'project_file',
+      entityType: 'content_node',
       entityId: file.id,
       entityName: file.name,
       changes: {
@@ -646,7 +647,7 @@ export const cloneFile = async (
       'You do not have permission to modify this project'
     );
 
-    const sourceFile = await db.project.getProjectFileByPath(ws, id, filePath);
+    const sourceFile = await db.project.getContentNodeByPath(ws, id, filePath);
     httpAssert.present(sourceFile, { status: 404, message: `File '${filePath}' not found` });
 
     const content = await storage.read(ws, id, sourceFile.id);
@@ -664,7 +665,7 @@ export const cloneFile = async (
     do {
       cloneName = `${baseNameWithoutExt} (${cloneNumber})`;
       clonePath = folder ? `${folder}/${cloneName}.json` : `${cloneName}.json`;
-      const existing = await db.project.getProjectFileByPath(ws, id, clonePath);
+      const existing = await db.project.getContentNodeByPath(ws, id, clonePath);
       if (!existing) break;
       cloneNumber++;
     } while (cloneNumber < 1000);
@@ -680,7 +681,7 @@ export const cloneFile = async (
     const clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
     const commentCounts = getDiagramCommentCounts(doc);
 
-    const row = await db.project.upsertProjectFile({
+    const row = await db.project.upsertContentNode({
       workspace: ws,
       project_id: id,
       path: clonePath,
@@ -698,7 +699,7 @@ export const cloneFile = async (
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
       const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
       const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-      await db.project.updateProjectFileDerivedData(
+      await db.project.updateContentNodeDerivedData(
         ws,
         id,
         row.id,
@@ -709,7 +710,7 @@ export const cloneFile = async (
         timestamp
       );
     } catch {
-      await db.project.updateProjectFileDerivedData(
+      await db.project.updateContentNodeDerivedData(
         ws,
         id,
         row.id,
@@ -728,7 +729,7 @@ export const cloneFile = async (
       userId: authCtx.userId,
       workspace: ws,
       operation: 'create',
-      entityType: 'project_file',
+      entityType: 'content_node',
       entityId: row.id,
       entityName: row.name,
       changes: {
@@ -765,14 +766,14 @@ export const relocateFile = async (
       'You do not have permission to modify this project'
     );
 
-    const existingFile = await db.project.getProjectFileByPath(ws, id, filePath);
+    const existingFile = await db.project.getContentNodeByPath(ws, id, filePath);
     httpAssert.present(existingFile, { status: 404, message: `File '${filePath}' not found` });
 
     if (filePath === newPath) {
       return toApiProjectFile(existingFile);
     }
 
-    const targetExists = await db.project.getProjectFileByPath(ws, id, newPath);
+    const targetExists = await db.project.getContentNodeByPath(ws, id, newPath);
     httpAssert.true(!targetExists, {
       status: 409,
       message: `A file already exists at '${newPath}'`
@@ -796,7 +797,7 @@ export const relocateFile = async (
     const updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
     const commentCounts = getDiagramCommentCounts(doc);
 
-    const newFile = await db.project.upsertProjectFile({
+    const newFile = await db.project.upsertContentNode({
       workspace: ws,
       project_id: id,
       path: newPath,
@@ -809,7 +810,7 @@ export const relocateFile = async (
     });
 
     if (existingFile.is_template || existingFile.is_workspace_template) {
-      await db.project.updateProjectFileTemplateStatus(
+      await db.project.updateContentNodeTemplateStatus(
         ws,
         id,
         newFile.id,
@@ -827,7 +828,7 @@ export const relocateFile = async (
     } catch {
       previewSvg = null;
     }
-    await db.project.updateProjectFileDerivedData(
+    await db.project.updateContentNodeDerivedData(
       ws,
       id,
       newFile.id,
@@ -840,14 +841,14 @@ export const relocateFile = async (
 
     await storage.write(ws, id, newFile.id, updatedContent);
 
-    await db.project.deleteProjectFileByPath(ws, id, filePath);
+    await db.project.deleteContentNodeByPath(ws, id, filePath);
     await storage.delete(ws, id, existingFile.id).catch(() => {});
 
     await logAudit(db, {
       userId: authCtx.userId,
       workspace: ws,
       operation: 'update',
-      entityType: 'project_file',
+      entityType: 'content_node',
       entityId: newFile.id,
       entityName: displayName,
       changes: {
@@ -887,7 +888,7 @@ export const deleteFolder = async (
       'You do not have permission to modify this project'
     );
 
-    const result = await db.project.deleteProjectFileFolder(ws, id, folderPath);
+    const result = await db.project.deleteContentNodeFolder(ws, id, folderPath);
 
     httpAssert.true(result.length > 0, {
       status: 404,
@@ -923,10 +924,10 @@ export const updateTemplateStatus = async (
       requireProjectAccess(authCtx, project.owner);
     }
 
-    const file = await db.project.getProjectFileByPath(ws, projectId, filePath);
+    const file = await db.project.getContentNodeByPath(ws, projectId, filePath);
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-    await db.project.updateProjectFileTemplateStatus(
+    await db.project.updateContentNodeTemplateStatus(
       ws,
       projectId,
       file.id,
@@ -935,7 +936,7 @@ export const updateTemplateStatus = async (
       new Date()
     );
 
-    const updatedFile = await db.project.getProjectFileByPath(ws, projectId, filePath);
+    const updatedFile = await db.project.getContentNodeByPath(ws, projectId, filePath);
     return toApiProjectFile(updatedFile!);
   } catch (e) {
     return handleError(e, 'Failed to update template status');

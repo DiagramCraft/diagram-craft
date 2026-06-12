@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ProjectDbResult, ProjectFileDbResult } from './db/projectDatabase';
+import type { ProjectDbResult, ContentNodeDbResult } from './db/projectDatabase';
 import { toApiProject, toApiProjectDetail, toApiProjectFile } from './projectHelpers';
 import { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 
@@ -21,12 +21,14 @@ const baseProject: ProjectDbResult = {
   owner_name: null
 };
 
-const baseProjectFile: ProjectFileDbResult = {
+const baseProjectFile: ContentNodeDbResult = {
   id: 'f-1',
   workspace: 'ws-1',
   project_id: 'p-1',
+  parent_id: null,
   path: '/diagrams/main.dc',
   name: 'Main',
+  type: 'diagram',
   size_bytes: 1024,
   comment_count: 2,
   unresolved_comment_count: 1,

@@ -461,7 +461,7 @@ const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> 
   { value: 'entity_schema', label: 'Schema' },
   { value: 'entity', label: 'Entity' },
   { value: 'project', label: 'Project' },
-  { value: 'project_file', label: 'Diagram / folder' }
+  { value: 'content_node', label: 'Diagram / folder' }
 ];
 
 const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
@@ -480,7 +480,7 @@ const OPERATION_LABELS: Record<AuditOperation, string> = {
 const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   entity: 'entity',
   project: 'project',
-  project_file: 'diagram',
+  content_node: 'diagram',
   entity_schema: 'schema',
   workspace: 'workspace'
 };
@@ -490,7 +490,7 @@ const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   entity_schema: styles.typeSchema ?? '',
   entity: styles.typeEntity ?? '',
   project: styles.typeProject ?? '',
-  project_file: styles.typeFile ?? ''
+  content_node: styles.typeFile ?? ''
 };
 
 const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABELS[operation];
@@ -557,7 +557,7 @@ const AuditLogSection = ({
       case 'entity_schema':
         navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } });
         return;
-      case 'project_file': {
+      case 'content_node': {
         const projectId =
           typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
         const path = typeof entry.metadata['path'] === 'string' ? entry.metadata['path'] : null;

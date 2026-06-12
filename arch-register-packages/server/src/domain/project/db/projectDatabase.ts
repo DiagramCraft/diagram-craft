@@ -1,11 +1,13 @@
-// -- Project File
+// -- Content Node
 
-export type ProjectFileDbResult = {
+export type ContentNodeDbResult = {
   id: string;
   workspace: string;
   project_id: string;
+  parent_id: string | null;
   path: string;
   name: string;
+  type: string;
   size_bytes: number;
   comment_count: number;
   unresolved_comment_count: number;
@@ -16,11 +18,12 @@ export type ProjectFileDbResult = {
   updated_at: Date;
 };
 
-export type ProjectFileDbUpsert = {
+export type ContentNodeDbUpsert = {
   workspace: string;
   project_id: string;
   path: string;
   name: string;
+  type?: 'diagram' | 'folder';
   size_bytes: number;
   comment_count: number;
   unresolved_comment_count: number;
@@ -100,26 +103,26 @@ export type ProjectDatabase = {
   updateProject(ws: string, id: string, input: ProjectDbUpdate): Promise<ProjectDbResult | null>;
   deleteProject(ws: string, id: string): Promise<void>;
 
-  listProjectFiles(ws: string, projectId: string): Promise<ProjectFileDbResult[]>;
-  getProjectFileByPath(
+  listContentNodes(ws: string, projectId: string): Promise<ContentNodeDbResult[]>;
+  getContentNodeByPath(
     ws: string,
     projectId: string,
     path: string
-  ): Promise<ProjectFileDbResult | null>;
-  updateProjectFileSizeById(
+  ): Promise<ContentNodeDbResult | null>;
+  updateContentNodeSizeById(
     ws: string,
     projectId: string,
     fileId: string,
     sizeBytes: number,
     updated_at: Date
   ): Promise<void>;
-  updateProjectFilePreview(
+  updateContentNodePreview(
     ws: string,
     projectId: string,
     fileId: string,
     previewSvg: string | null
   ): Promise<void>;
-  updateProjectFileDerivedData(
+  updateContentNodeDerivedData(
     ws: string,
     projectId: string,
     fileId: string,
@@ -129,7 +132,7 @@ export type ProjectDatabase = {
     previewSvg: string | null,
     updated_at: Date
   ): Promise<void>;
-  updateProjectFileTemplateStatus(
+  updateContentNodeTemplateStatus(
     ws: string,
     projectId: string,
     fileId: string,
@@ -137,25 +140,25 @@ export type ProjectDatabase = {
     isWorkspaceTemplate: boolean,
     updated_at: Date
   ): Promise<void>;
-  upsertProjectFile(input: ProjectFileDbUpsert): Promise<ProjectFileDbResult>;
-  createProjectFileIfAbsent(input: ProjectFileDbUpsert): Promise<ProjectFileDbResult | null>;
-  deleteProjectFileByPath(
+  upsertContentNode(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult>;
+  createContentNodeIfAbsent(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult | null>;
+  deleteContentNodeByPath(
     ws: string,
     projectId: string,
     path: string
-  ): Promise<ProjectFileDbResult | null>;
-  renameProjectFileFolder(
+  ): Promise<ContentNodeDbResult | null>;
+  renameContentNodeFolder(
     ws: string,
     projectId: string,
     oldPath: string,
     newPath: string,
     updated_at: Date
   ): Promise<string[]>;
-  deleteProjectFileFolder(
+  deleteContentNodeFolder(
     ws: string,
     projectId: string,
     folderPath: string
-  ): Promise<ProjectFileDbResult[]>;
+  ): Promise<ContentNodeDbResult[]>;
 
   listProjectEntities(ws: string, projectId: string): Promise<ProjectEntityDbResult[]>;
   addProjectEntity(input: ProjectEntityDbCreate): Promise<ProjectEntityDbResult>;

@@ -48,7 +48,7 @@ const main = async () => {
       const commentCounts = getDiagramCommentCounts(parsed);
       const previewSvg =
         (await generateAccurateSvgPreview(parsed)) ?? generateSvgPreview(parsed);
-      await db.project.updateProjectFileDerivedData(
+      await db.project.updateContentNodeDerivedData(
         workspace,
         projectId,
         fileId,
@@ -59,7 +59,7 @@ const main = async () => {
         updatedAt
       );
     } catch {
-      await db.project.updateProjectFileDerivedData(
+      await db.project.updateContentNodeDerivedData(
         workspace,
         projectId,
         fileId,

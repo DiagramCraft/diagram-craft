@@ -97,7 +97,7 @@ export const WorkspaceHomeScreen = () => {
       case 'entity_schema':
         navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } });
         break;
-      // workspace and project_file don't have dedicated detail views yet
+      // workspace and content_node don't have dedicated detail views yet
     }
   };
 
@@ -120,7 +120,7 @@ export const WorkspaceHomeScreen = () => {
         return 'entity';
       case 'project':
         return 'project';
-      case 'project_file':
+      case 'content_node':
         return 'diagram';
       case 'entity_schema':
         return 'schema';
