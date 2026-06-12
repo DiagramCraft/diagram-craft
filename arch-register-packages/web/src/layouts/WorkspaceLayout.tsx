@@ -8,7 +8,8 @@ import type { BreadcrumbItem } from '../shell/TopBar';
 import { NavRail, type NavRailItem } from '@diagram-craft/app-components/NavRail';
 import { SidePanel } from '../shell/SidePanel';
 import { EntityContentSidebar } from '../sections/entities/EntityContentSidebar';
-import { EntityFoldedRail, EntityNavSidebar } from '../shell/EntityFoldedRail';
+import { FoldedRail, NavSidebar } from '../shell/FoldedRail';
+import { EntitiesSidebar } from '../sections/entities/EntitiesSidebar';
 import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
@@ -346,17 +347,26 @@ export const WorkspaceLayout = () => {
           />
           {isEntityDetail ? (
             expandedNav ? (
-              <EntityNavSidebar
-                workspaceSlug={workspaceSlug}
-                entityId={entityId!}
-                onCollapse={() => setNavMode('collapsed')}
-              />
+              <NavSidebar>
+                <EntitiesSidebar
+                  schemas={schemas}
+                  lifecycleStates={lifecycleStates}
+                  workspaceSlug={workspaceSlug}
+                  onCollapse={() => setNavMode('collapsed')}
+                />
+              </NavSidebar>
             ) : (
-              <EntityFoldedRail
-                workspaceSlug={workspaceSlug}
-                entityId={entityId!}
+              <FoldedRail
+                label="Entities"
                 onExpand={() => setNavMode('expanded')}
-              />
+              >
+                <EntitiesSidebar
+                  schemas={schemas}
+                  lifecycleStates={lifecycleStates}
+                  workspaceSlug={workspaceSlug}
+                  onExpand={() => setNavMode('expanded')}
+                />
+              </FoldedRail>
             )
           ) : (
             showSidebar && <SidePanel />
