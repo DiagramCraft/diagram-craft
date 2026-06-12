@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   navigateFromRailItem,
   resolveWorkspaceShellDescriptor,
   type WorkspaceShellContext
 } from './workspaceShellDescriptors';
+import { setWorkspaceShellEntries } from '../routes/workspaceShellRegistry';
 
 const createContext = (
   routeId: string,
@@ -16,11 +17,62 @@ const createContext = (
   schemas: [],
   enums: [],
   projects: [
-    { id: 'p-1', name: 'Project One', status: 'active' } as WorkspaceShellContext['projects'][number]
+    {
+      id: 'p-1',
+      name: 'Project One',
+      status: 'active'
+    } as WorkspaceShellContext['projects'][number]
   ],
   lifecycleStates: [],
   teams: [],
   availableSettingsSections: ['general']
+});
+
+beforeEach(() => {
+  setWorkspaceShellEntries([
+    {
+      route: {},
+      matchesRouteId: routeId =>
+        routeId.includes('/entities/$entityId') && !routeId.includes('/diagrams/$diagramId'),
+      buildShell: () => ({
+        variant: 'detail',
+        activeRailItem: 'entities',
+        breadcrumbs: [
+          { label: 'Home', onClick: vi.fn() },
+          { label: 'Entities', onClick: vi.fn() },
+          { label: 'Detail', onClick: vi.fn() }
+        ],
+        navigationLabel: 'Entities',
+        renderNavigation: () => null
+      })
+    },
+    {
+      route: {},
+      matchesRouteId: routeId => routeId.endsWith('/search'),
+      buildShell: () => ({
+        variant: 'full-bleed',
+        activeRailItem: 'search',
+        breadcrumbs: []
+      })
+    },
+    {
+      route: {},
+      matchesRouteId: routeId => routeId.includes('/projects/$projectId/diagrams/$diagramId'),
+      buildShell: () => ({
+        variant: 'overlay'
+      })
+    },
+    {
+      route: {},
+      matchesRouteId: routeId =>
+        routeId.includes('/projects/$projectId') && !routeId.includes('/diagrams/$diagramId'),
+      buildShell: () => ({
+        variant: 'standard',
+        activeRailItem: 'projects',
+        breadcrumbs: []
+      })
+    }
+  ]);
 });
 
 describe('resolveWorkspaceShellDescriptor', () => {
@@ -36,7 +88,9 @@ describe('resolveWorkspaceShellDescriptor', () => {
   });
 
   it('resolves a full-bleed shell for search routes', () => {
-    const descriptor = resolveWorkspaceShellDescriptor(createContext('/authenticated/$workspaceSlug/search'));
+    const descriptor = resolveWorkspaceShellDescriptor(
+      createContext('/authenticated/$workspaceSlug/search')
+    );
 
     expect(descriptor.variant).toBe('full-bleed');
     if (descriptor.variant === 'overlay') throw new Error('expected non-overlay descriptor');
@@ -47,7 +101,10 @@ describe('resolveWorkspaceShellDescriptor', () => {
     const descriptor = resolveWorkspaceShellDescriptor({
       ...createContext('/authenticated/$workspaceSlug/projects/$projectId', { projectId: 'p-1' }),
       matches: [
-        { routeId: '/authenticated/$workspaceSlug/projects/$projectId', params: { projectId: 'p-1' } },
+        {
+          routeId: '/authenticated/$workspaceSlug/projects/$projectId',
+          params: { projectId: 'p-1' }
+        },
         {
           routeId: '/authenticated/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
           params: { projectId: 'p-1', diagramId: 'd-1' }

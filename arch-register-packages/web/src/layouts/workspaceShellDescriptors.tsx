@@ -1,12 +1,4 @@
 import { TbCode, TbDatabase, TbFolders, TbHome, TbSearch, TbSettings } from 'react-icons/tb';
-import { HomeSidebar } from '../sections/home/HomeSidebar';
-import { ProjectsSidebar } from '../sections/projects/ProjectsSidebar';
-import { EntitiesSidebar } from '../sections/entities/EntitiesSidebar';
-import { EntityContentSidebar } from '../sections/entities/EntityContentSidebar';
-import { DataModelSidebar } from '../sections/data-model/DataModelSidebar';
-import { WorkspaceSettingsSidebar } from '../sections/workspace-settings/WorkspaceSettingsSidebar';
-import { GlobalSettingsSidebar } from '../sections/global-settings/GlobalSettingsSidebar';
-import { AccountSettingsSidebar } from '../sections/account-settings/AccountSettingsSidebar';
 import type { BreadcrumbItem, WorkspaceRailItemId } from '../shell/shellTypes';
 import type { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -14,27 +6,12 @@ import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '../lib/api';
+import { getWorkspaceShellEntries } from '../routes/workspaceShellRegistry';
 
 type MatchLike = {
   routeId: string;
   params: Record<string, string>;
 };
-
-type WorkspaceRouteKind =
-  | 'home'
-  | 'project-detail'
-  | 'diagram'
-  | 'entity-browser'
-  | 'entity-detail'
-  | 'entity-diagram'
-  | 'data-model'
-  | 'search'
-  | 'workspace-settings'
-  | 'global-settings'
-  | 'account-settings'
-  | 'assistant'
-  | 'extract'
-  | 'import';
 
 type NavigateLike = (args: {
   to: string;
@@ -82,17 +59,17 @@ export type WorkspaceShellDescriptor =
       hideWorkspaceSwitcher?: boolean;
     };
 
-const getDefaultProject = (projects: Project[]): Project | undefined =>
+export const getDefaultProject = (projects: Project[]): Project | undefined =>
   projects.find(project => project.status !== 'complete' && project.status !== 'cancelled') ??
   projects[0];
 
-const getProjectSidebarTab = (project: Project | undefined): 'projects' | 'archive' =>
+export const getProjectSidebarTab = (project: Project | undefined): 'projects' | 'archive' =>
   project?.status === 'complete' || project?.status === 'cancelled' ? 'archive' : 'projects';
 
-const getAllParams = (matches: MatchLike[]) =>
+export const getAllParams = (matches: MatchLike[]) =>
   Object.assign({}, ...matches.map(match => match.params)) as Record<string, string>;
 
-const buildHomeBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
+export const buildHomeBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
   {
     label: 'Home',
     icon: <TbHome size={12} />,
@@ -100,7 +77,7 @@ const buildHomeBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
   }
 ];
 
-const buildProjectBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => {
+export const buildProjectBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => {
   const params = getAllParams(ctx.matches);
   const project = ctx.projects.find(item => item.id === params.projectId);
 
@@ -123,7 +100,7 @@ const buildProjectBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] =
   ];
 };
 
-const buildEntityBreadcrumbs = (ctx: WorkspaceShellContext, detail: boolean): BreadcrumbItem[] => [
+export const buildEntityBreadcrumbs = (ctx: WorkspaceShellContext, detail: boolean): BreadcrumbItem[] => [
   ...buildHomeBreadcrumbs(ctx),
   {
     label: 'Entities',
@@ -133,7 +110,7 @@ const buildEntityBreadcrumbs = (ctx: WorkspaceShellContext, detail: boolean): Br
   ...(detail ? [{ label: 'Detail', onClick: () => {} }] : [])
 ];
 
-const buildModelBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
+export const buildModelBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
   ...buildHomeBreadcrumbs(ctx),
   {
     label: 'Data model',
@@ -142,7 +119,7 @@ const buildModelBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => 
   }
 ];
 
-const buildSearchBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
+export const buildSearchBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
   ...buildHomeBreadcrumbs(ctx),
   {
     label: 'Search',
@@ -151,7 +128,7 @@ const buildSearchBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] =>
   }
 ];
 
-const buildSettingsBreadcrumbs = (
+export const buildSettingsBreadcrumbs = (
   ctx: WorkspaceShellContext,
   label: string,
   to: string
@@ -164,180 +141,23 @@ const buildSettingsBreadcrumbs = (
   }
 ];
 
-type WorkspaceShellFactory = (ctx: WorkspaceShellContext) => WorkspaceShellDescriptor;
-
-const resolveRouteKind = (routeId: string): WorkspaceRouteKind | null => {
-  if (routeId.includes('/entities/$entityId/diagrams/$diagramId')) return 'entity-diagram';
-  if (routeId.includes('/projects/$projectId/diagrams/$diagramId')) return 'diagram';
-  if (routeId.includes('/entities/import')) return 'import';
-  if (routeId.includes('/entities/$entityId')) return 'entity-detail';
-  if (routeId.endsWith('/entities')) return 'entity-browser';
-  if (routeId.includes('/projects/$projectId')) return 'project-detail';
-  if (routeId.endsWith('/model')) return 'data-model';
-  if (routeId.endsWith('/search')) return 'search';
-  if (routeId.endsWith('/settings/global')) return 'global-settings';
-  if (routeId.endsWith('/settings')) return 'workspace-settings';
-  if (routeId.endsWith('/account')) return 'account-settings';
-  if (routeId.endsWith('/assistant')) return 'assistant';
-  if (routeId.endsWith('/extract')) return 'extract';
-  if (routeId === '/authenticated/$workspaceSlug/' || routeId === '/authenticated/$workspaceSlug')
-    return 'home';
-  return null;
-};
-
-const shellFactories: Record<WorkspaceRouteKind, WorkspaceShellFactory> = {
-  home: ctx => ({
-    variant: 'standard',
-    activeRailItem: 'home',
-    breadcrumbs: buildHomeBreadcrumbs(ctx),
-    primarySidebar: (
-      <HomeSidebar
-        schemas={ctx.schemas}
-        projects={ctx.projects}
-        workspaceSlug={ctx.workspaceSlug}
-      />
-    )
-  }),
-  'project-detail': ctx => ({
-    variant: 'standard',
-    activeRailItem: 'projects',
-    breadcrumbs: buildProjectBreadcrumbs(ctx),
-    primarySidebar: (
-      <ProjectsSidebar projects={ctx.projects} workspaceSlug={ctx.workspaceSlug} />
-    )
-  }),
-  'entity-browser': ctx => ({
-    variant: 'standard',
-    activeRailItem: 'entities',
-    breadcrumbs: buildEntityBreadcrumbs(ctx, false),
-    primarySidebar: (
-      <EntitiesSidebar
-        schemas={ctx.schemas}
-        lifecycleStates={ctx.lifecycleStates}
-        workspaceSlug={ctx.workspaceSlug}
-      />
-    )
-  }),
-  import: ctx => ({
-    variant: 'standard',
-    activeRailItem: 'entities',
-    breadcrumbs: buildEntityBreadcrumbs(ctx, false),
-    primarySidebar: (
-      <EntitiesSidebar
-        schemas={ctx.schemas}
-        lifecycleStates={ctx.lifecycleStates}
-        workspaceSlug={ctx.workspaceSlug}
-      />
-    )
-  }),
-  'entity-detail': ctx => {
-    const params = getAllParams(ctx.matches);
-    return {
-      variant: 'detail',
-      activeRailItem: 'entities',
-      breadcrumbs: buildEntityBreadcrumbs(ctx, true),
-      navigationLabel: 'Entities',
-      renderNavigation: controls => (
-        <EntitiesSidebar
-          schemas={ctx.schemas}
-          lifecycleStates={ctx.lifecycleStates}
-          workspaceSlug={ctx.workspaceSlug}
-          onCollapse={controls.collapse}
-          onExpand={controls.expand}
-        />
-      ),
-      secondarySidebar: params.entityId ? (
-        <EntityContentSidebar workspaceSlug={ctx.workspaceSlug} entityId={params.entityId} />
-      ) : undefined
-    };
-  },
-  'data-model': ctx => ({
-    variant: 'standard',
-    activeRailItem: 'model',
-    breadcrumbs: buildModelBreadcrumbs(ctx),
-    primarySidebar: (
-      <DataModelSidebar
-        schemas={ctx.schemas}
-        enums={ctx.enums}
-        workspaceSlug={ctx.workspaceSlug}
-      />
-    )
-  }),
-  search: ctx => ({
-    variant: 'full-bleed',
-    activeRailItem: 'search',
-    breadcrumbs: buildSearchBreadcrumbs(ctx)
-  }),
-  'workspace-settings': ctx => ({
-    variant: 'standard',
-    activeRailItem: null,
-    breadcrumbs: buildSettingsBreadcrumbs(ctx, 'Settings', '/$workspaceSlug/settings'),
-    primarySidebar: (
-      <WorkspaceSettingsSidebar
-        workspaceSlug={ctx.workspaceSlug}
-        workspace={ctx.workspace}
-        schemas={ctx.schemas}
-        projects={ctx.projects}
-        availableSections={ctx.availableSettingsSections}
-      />
-    )
-  }),
-  'global-settings': ctx => ({
-    variant: 'standard',
-    activeRailItem: null,
-    breadcrumbs: buildSettingsBreadcrumbs(
-      ctx,
-      'Global Settings',
-      '/$workspaceSlug/settings/global'
-    ),
-    primarySidebar: <GlobalSettingsSidebar />
-  }),
-  'account-settings': ctx => ({
-    variant: 'standard',
-    activeRailItem: null,
-    breadcrumbs: buildSettingsBreadcrumbs(ctx, 'Account Settings', '/$workspaceSlug/account'),
-    primarySidebar: <AccountSettingsSidebar />
-  }),
-  assistant: ctx => ({
-    variant: 'full-bleed',
-    activeRailItem: 'assistant',
-    breadcrumbs: [
-      ...buildHomeBreadcrumbs(ctx),
-      { label: 'AI Assistant', onClick: () => ctx.navigate({ to: '/$workspaceSlug/assistant', params: { workspaceSlug: ctx.workspaceSlug } }) }
-    ]
-  }),
-  extract: ctx => ({
-    variant: 'full-bleed',
-    activeRailItem: 'extract',
-    breadcrumbs: [
-      ...buildHomeBreadcrumbs(ctx),
-      { label: 'AI Extract', onClick: () => ctx.navigate({ to: '/$workspaceSlug/extract', params: { workspaceSlug: ctx.workspaceSlug } }) }
-    ]
-  }),
-  diagram: () => ({
-    variant: 'overlay'
-  }),
-  'entity-diagram': () => ({
-    variant: 'overlay'
-  })
-};
-
 export const resolveWorkspaceShellDescriptor = (
   ctx: WorkspaceShellContext
 ): WorkspaceShellDescriptor => {
-  const activeKind = [...ctx.matches]
+  const entries = getWorkspaceShellEntries();
+  const activeEntry = [...ctx.matches]
     .reverse()
-    .map(match => resolveRouteKind(match.routeId))
-    .find(kind => kind !== null);
+    .map(match => entries.find(entry => entry.matchesRouteId(match.routeId)))
+    .find(entry => entry !== undefined);
 
-  if (activeKind === undefined || activeKind === null) {
+  if (!activeEntry) {
     return {
       variant: 'standard',
       activeRailItem: 'home',
       breadcrumbs: buildHomeBreadcrumbs(ctx)
     };
   }
-  return shellFactories[activeKind](ctx);
+  return activeEntry.buildShell(ctx);
 };
 
 export const navigateFromRailItem = (
