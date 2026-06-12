@@ -51,8 +51,8 @@ export const createEntityWorkspaceRoutes = (
           schemas={ctx.schemas}
           lifecycleStates={ctx.lifecycleStates}
           workspaceSlug={ctx.workspaceSlug}
-          onCollapse={controls.collapse}
-          onExpand={controls.expand}
+          onCollapse={controls.expanded ? controls.collapse : undefined}
+          onExpand={controls.expanded ? undefined : controls.expand}
         />
       ),
       secondarySidebar: params.entityId ? (
