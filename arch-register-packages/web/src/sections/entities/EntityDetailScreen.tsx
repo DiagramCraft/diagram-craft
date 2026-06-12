@@ -32,6 +32,7 @@ import {
   useEntitiesBySchema
 } from '../../hooks/useEntities';
 import {
+  useEntityDiagramFiles,
   useEntityProjects
 } from '../../hooks/useProjects';
 import { useAuditLog } from '../../hooks/useAudit';
@@ -117,6 +118,7 @@ export const EntityDetailScreen = () => {
 
   // Project association hooks
   const { data: entityProjects = [] } = useEntityProjects(workspaceId, entityId);
+  const { data: entityDiagramFiles = [] } = useEntityDiagramFiles(workspaceId, entityId);
 
   // Mutation hooks
   const updateEntity = useUpdateEntity(workspaceId);
@@ -678,6 +680,51 @@ export const EntityDetailScreen = () => {
                   </span>
                 </div>
               ))
+            )}
+
+            <hr className={styles.divider} />
+
+            <div className={styles.sectionLabel}>
+              Diagrams
+            </div>
+            {entityDiagramFiles.length === 0 ? (
+              <div className={styles.metaPropRow}>
+                <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
+                  Not in any diagram
+                </span>
+              </div>
+            ) : (
+              <div className={styles.miniDiagramList}>
+                {entityDiagramFiles.map(({ file, project }) => (
+                  <a
+                    key={file.id}
+                    className={styles.miniDiagramRow}
+                    href={`/${workspaceSlug}/projects/${project.id}/diagrams/${file.id}`}
+                  >
+                    <div className={styles.miniDiagramThumb}>
+                      <div className={styles.miniDiagramThumbGrid} />
+                      {file.preview_svg ? (
+                        <div
+                          className={styles.miniDiagramThumbPreview}
+                          dangerouslySetInnerHTML={{ __html: file.preview_svg }}
+                        />
+                      ) : (
+                        <svg className={styles.miniDiagramThumbSvg} viewBox="0 0 60 30" preserveAspectRatio="none">
+                          <rect x="3" y="7" width="12" height="7" rx="1" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="0.7" />
+                          <rect x="23" y="3" width="12" height="7" rx="1" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="0.7" />
+                          <rect x="23" y="20" width="12" height="7" rx="1" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="0.7" />
+                          <rect x="43" y="10" width="12" height="7" rx="1" fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))" stroke="var(--tag-component)" strokeWidth="0.7" />
+                          <path d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14" stroke="var(--cmp-fg-disabled)" fill="none" strokeWidth="0.7" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className={styles.miniDiagramBody}>
+                      <div className={styles.miniDiagramName}>{file.name}</div>
+                      <div className={styles.miniDiagramSub}>{project.name}</div>
+                    </div>
+                  </a>
+                ))}
+              </div>
             )}
           </div>
         </div>

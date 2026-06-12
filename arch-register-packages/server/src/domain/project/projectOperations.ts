@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { getDiagramCommentCounts } from '../diagram/commentCounts';
+import { getDiagramEntityRefs } from '../diagram/diagramEntityRefs';
 import {
   buildApiAuthCtx,
   canAccessProject,
@@ -19,6 +20,7 @@ import { HTTPError } from 'h3';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import {
+  DiagramEntityFile,
   FileTree,
   Project,
   ProjectDetail,
@@ -534,6 +536,9 @@ export const saveFile = async (
       );
     }
 
+    const entityRefs = getDiagramEntityRefs(body as any);
+    await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
+
     if (isUpdate) {
       const changes = computeChanges(extractEntityFields(existingFile), extractEntityFields(row));
       await logAudit(db, {
@@ -707,6 +712,9 @@ export const cloneFile = async (
         timestamp
       );
     }
+
+    const entityRefs = getDiagramEntityRefs(fileData as any);
+    await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
 
     await logAudit(db, {
       userId: authCtx.userId,
@@ -1038,5 +1046,36 @@ export const getEntityProjects = async (
     return rows.map(toApiProjectEntity);
   } catch (e) {
     return handleError(e, 'Failed to retrieve entity projects');
+  }
+};
+
+export const getEntityDiagramFiles = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  event: AuthenticatedEvent
+): Promise<DiagramEntityFile[]> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  await buildApiAuthCtx(db, ws, event);
+  try {
+    const rows = await db.project.getEntityDiagramFiles(ws, entityId);
+    return rows.map(row => ({
+      file: {
+        id: row.file_id,
+        project_id: row.project_id,
+        path: row.file_path,
+        name: row.file_name,
+        size_bytes: row.file_size_bytes,
+        preview_svg: row.file_preview_svg,
+        created_at: row.file_created_at.toISOString(),
+        updated_at: row.file_updated_at.toISOString()
+      },
+      project: {
+        id: row.project_id,
+        name: row.project_name
+      }
+    }));
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve entity diagram files');
   }
 };
