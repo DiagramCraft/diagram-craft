@@ -305,12 +305,12 @@ export const EntitiesSidebar = ({
         {(onCollapse || onExpand) && (
           <div className={styles.headerActions}>
             {onExpand && (
-              <button className={styles.action} title="Pin sidebar open" onClick={onExpand}>
+              <button type="button" className={styles.action} title="Pin sidebar open" onClick={onExpand}>
                 <TbLayoutSidebarLeftExpand size={14} />
               </button>
             )}
             {onCollapse && (
-              <button className={styles.action} title="Collapse to rail" onClick={onCollapse}>
+              <button type="button" className={styles.action} title="Collapse to rail" onClick={onCollapse}>
                 <TbLayoutSidebarLeftCollapse size={14} />
               </button>
             )}
