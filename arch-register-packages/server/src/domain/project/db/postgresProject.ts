@@ -149,7 +149,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async updateContentNodeDerivedData(
     workspace: string,
-    projectId: string,
+    projectIdOrEntityId: string,
     fileId: string,
     sizeBytes: number,
     commentCount: number,
@@ -165,7 +165,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             unresolved_comment_count = ${unresolvedCommentCount},
             preview_svg = ${previewSvg},
             updated_at = ${updated_at}
-        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
+        WHERE workspace = ${workspace} 
+          AND (project_id = ${projectIdOrEntityId} OR entity_id = ${projectIdOrEntityId})
+          AND id = ${fileId}
       `;
     } catch (error) {
       return normalizePostgresError(error);
@@ -483,9 +485,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         p.name         AS project_name
       FROM diagram_entity_ref der
       JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
-      JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
+      LEFT JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
       WHERE der.workspace = ${workspace} AND der.entity_id = ${entityId}
-      ORDER BY p.name, pf.name
+      ORDER BY COALESCE(p.name, ''), pf.name
     `;
   }
 }

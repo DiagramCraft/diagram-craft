@@ -154,7 +154,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async updateContentNodeDerivedData(
     workspace: string,
-    projectId: string,
+    projectIdOrEntityId: string,
     fileId: string,
     sizeBytes: number,
     commentCount: number,
@@ -169,7 +169,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
            unresolved_comment_count = ?,
            preview_svg = ?,
            updated_at = ?
-       WHERE workspace = ? AND project_id = ? AND id = ?`,
+       WHERE workspace = ? AND (project_id = ? OR entity_id = ?) AND id = ?`,
       [
         sizeBytes,
         commentCount,
@@ -177,7 +177,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         previewSvg,
         updated_at.toISOString(),
         workspace,
-        projectId,
+        projectIdOrEntityId,
+        projectIdOrEntityId,
         fileId
       ]
     );
@@ -451,9 +452,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         p.name         AS project_name
       FROM diagram_entity_ref der
       JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
-      JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
+      LEFT JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
       WHERE der.workspace = ? AND der.entity_id = ?
-      ORDER BY p.name, pf.name`,
+      ORDER BY COALESCE(p.name, ''), pf.name`,
       [workspace, entityId],
       row => ({
         file_id: String(row['file_id']),

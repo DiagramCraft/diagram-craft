@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { TbFile, TbFolder, TbHome } from 'react-icons/tb';
+import { TbFile, TbFolder, TbHome, TbPlus } from 'react-icons/tb';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import localStyles from './EntityContentSidebar.module.css';
@@ -8,6 +9,7 @@ import { useEntity } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/api';
 import { TypeBadge } from '../../components/TypeBadge';
+import { AddEntityFolderDialog } from './AddEntityFolderDialog';
 
 export const EntityContentSidebar = ({
   workspaceSlug,
@@ -19,7 +21,11 @@ export const EntityContentSidebar = ({
   const { data: entity } = useEntity(workspaceSlug, entityId);
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [addFolderOpen, setAddFolderOpen] = useState(false);
   const ctx = useWorkspaceContext();
+  const navigate = useNavigate();
+  const search = useSearch({ from: '/authenticated/$workspaceSlug/entities/$entityId' });
+  const contentFolder = search.contentFolder;
 
   const schemaIdx = ctx.schemas.findIndex(s => s.id === entity?._schema?.id);
   const schema = schemaIdx >= 0 ? ctx.schemas[schemaIdx] : undefined;
@@ -39,6 +45,107 @@ export const EntityContentSidebar = ({
 
   const hasContent = data && (data.rootFiles.length > 0 || data.folders.length > 0);
 
+  // Build folder tree for nested rendering
+  type FolderNode = {
+    path: string;
+    name: string;
+    files: Array<{ id: string; name: string; project_id: string | null }>;
+    children: FolderNode[];
+  };
+
+  const buildFolderTree = (folders: Array<{ path: string; name: string; files: Array<{ id: string; name: string; project_id: string | null }> }>): FolderNode[] => {
+    const root: FolderNode[] = [];
+    const map = new Map<string, FolderNode>();
+
+    const sorted = [...folders].sort((a, b) => a.path.localeCompare(b.path));
+
+    for (const folder of sorted) {
+      const parts = folder.path.split('/');
+      const node: FolderNode = { 
+        path: folder.path, 
+        name: folder.name, 
+        files: folder.files,
+        children: [] 
+      };
+      map.set(folder.path, node);
+
+      if (parts.length === 1) {
+        root.push(node);
+      } else {
+        const parentPath = parts.slice(0, -1).join('/');
+        const parent = map.get(parentPath);
+        if (parent) {
+          parent.children.push(node);
+        } else {
+          // Parent not found, add to root (shouldn't happen with proper data)
+          root.push(node);
+        }
+      }
+    }
+
+    return root;
+  };
+
+  const folderTree = data ? buildFolderTree(data.folders) : [];
+
+  const renderFolderNode = (node: FolderNode, depth: number = 0): React.ReactNode => {
+    const isExpanded = expandedFolders.has(node.path);
+    return (
+      <div key={node.path}>
+        <TreeRow
+          icon={<TbFolder size={13} />}
+          label={node.name}
+          expandable
+          expanded={isExpanded}
+          active={contentFolder === node.path}
+          depth={depth}
+          onExpand={() => toggleFolder(node.path)}
+          onClick={() => {
+            navigate({
+              to: '/$workspaceSlug/entities/$entityId',
+              params: { workspaceSlug, entityId },
+              search: { contentFolder: node.path }
+            });
+          }}
+        />
+        {isExpanded && (
+          <>
+            {node.files.map(file => (
+              <TreeRow
+                key={file.id}
+                depth={depth + 1}
+                icon={<TbFile size={13} />}
+                label={file.name}
+                onClick={() => {
+                  if (file.project_id) {
+                    navigate({
+                      to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
+                      params: {
+                        workspaceSlug,
+                        projectId: file.project_id,
+                        diagramId: file.id
+                      }
+                    });
+                  } else {
+                    navigate({
+                      to: '/$workspaceSlug/entities/$entityId/diagrams/$diagramId',
+                      params: {
+                        workspaceSlug,
+                        entityId,
+                        diagramId: file.id
+                      }
+                    });
+                  }
+                }}
+              />
+            ))}
+            {node.children.map(child => renderFolderNode(child, depth + 1))}
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <div className={`${styles.header} ${localStyles.header}`} style={{ '--fold-accent': accentColor } as React.CSSProperties}>
@@ -49,12 +156,28 @@ export const EntityContentSidebar = ({
           size={14}
         />
         <span className={localStyles.entityName}>{entity?._name ?? '…'}</span>
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.action}
+            onClick={() => setAddFolderOpen(true)}
+            title="New folder"
+          >
+            <TbPlus size={13} />
+          </button>
+        </div>
       </div>
       <div className={styles.scroll}>
         <TreeRow
           label="Home"
           icon={<TbHome size={13} />}
-          active
+          active={!contentFolder}
+          onClick={() => {
+            navigate({
+              to: '/$workspaceSlug/entities/$entityId',
+              params: { workspaceSlug, entityId }
+            });
+          }}
         />
         {!hasContent && (
           <div className={styles.emptyState} style={{ color: 'var(--cmp-fg-disabled)', fontSize: 12 }}>
@@ -66,33 +189,32 @@ export const EntityContentSidebar = ({
             key={file.id}
             icon={<TbFile size={13} />}
             label={file.name}
+            onClick={
+              file.project_id
+                ? () => {
+                    navigate({
+                      to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
+                      params: {
+                        workspaceSlug,
+                        projectId: file.project_id!,
+                        diagramId: file.id
+                      }
+                    });
+                  }
+                : undefined
+            }
           />
         ))}
-        {data?.folders.map(folder => {
-          const isExpanded = expandedFolders.has(folder.path);
-          return (
-            <div key={folder.path}>
-              <TreeRow
-                icon={<TbFolder size={13} />}
-                label={folder.name}
-                expandable
-                expanded={isExpanded}
-                onExpand={() => toggleFolder(folder.path)}
-                onClick={() => toggleFolder(folder.path)}
-              />
-              {isExpanded &&
-                folder.files.map(file => (
-                  <TreeRow
-                    key={file.id}
-                    depth={1}
-                    icon={<TbFile size={13} />}
-                    label={file.name}
-                  />
-                ))}
-            </div>
-          );
-        })}
+        {folderTree.map(node => renderFolderNode(node, 0))}
       </div>
+      <AddEntityFolderDialog
+        open={addFolderOpen}
+        onClose={() => setAddFolderOpen(false)}
+        onCreated={() => setAddFolderOpen(false)}
+        workspaceSlug={workspaceSlug}
+        entityId={entityId}
+        parentFolder={contentFolder}
+      />
     </>
   );
 };

@@ -26,7 +26,9 @@ import {
   updateProjectEntity,
   removeProjectEntity,
   getEntityDiagramFiles,
-  listEntityContentNodes
+  listEntityContentNodes,
+  createEntityFolder,
+  createEntityFile
 } from './projectOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -320,6 +322,41 @@ export const projectORPCRouter = projectRouter.router({
             context.db,
             input.params.workspace,
             input.params.entityId,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    createEntityFolder: projectRouter.projects.createEntityFolder.handler(
+      async ({ input, context }) => {
+        try {
+          return await createEntityFolder(
+            context.db,
+            input.params.workspace,
+            input.params.entityId,
+            input.body.path,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    createEntityFile: projectRouter.projects.createEntityFile.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) {
+            throw new Error('Storage adapter not available');
+          }
+          return await createEntityFile(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.entityId,
+            input.query.path,
+            input.body,
             context.event
           );
         } catch (error) {

@@ -234,3 +234,43 @@ export const useEntityContentNodes = (workspaceId: string, entityId: string) => 
   });
 };
 
+
+
+export const useCreateEntityFolder = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (path: string) =>
+      orpcClient.projects.createEntityFolder({
+        params: { workspace: workspaceId, entityId },
+        body: { path }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: entityContentKeys.all(workspaceId, entityId)
+      });
+    }
+  });
+};
+
+
+
+export const useCreateEntityFile = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ path, body }: { path: string; body: Record<string, unknown> }) =>
+      orpcClient.projects.createEntityFile({
+        params: { workspace: workspaceId, entityId },
+        query: { path },
+        body
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: entityContentKeys.all(workspaceId, entityId)
+      });
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId)
+      });
+    }
+  });
+};

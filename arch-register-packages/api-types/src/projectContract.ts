@@ -372,7 +372,30 @@ export const projectContract = {
         inputStructure: 'detailed'
       })
       .input(z.object({ params: ws.extend({ entityId: z.string() }) }))
-      .output(fileTreeSchema)
+      .output(fileTreeSchema),
+    createEntityFolder: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entities/{entityId}/content/folders',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ entityId: z.string() }),
+        body: z.object({ path: z.string() })
+      }))
+      .output(createFolderResponseSchema),
+    createEntityFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entities/{entityId}/content/files',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ entityId: z.string() }),
+        query: z.object({ path: z.string() }),
+        body: z.record(z.string(), z.unknown())
+      }))
+      .output(projectFileSchema)
   }
 };
 
