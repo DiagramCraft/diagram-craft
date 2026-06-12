@@ -38,8 +38,8 @@ export class QueryDiagram {
     return this.diagram.layers.all.map(l => QueryLayer.fromLayer(l));
   }
 
-  get parent() {
-    return this.diagram.parent;
+  get parent(): QueryDiagram | undefined {
+    return this.diagram.parent ? new QueryDiagram(this.diagram.document.byId(this.diagram.parent)!) : undefined;
   }
 
   get selection() {
@@ -115,6 +115,10 @@ export class QueryElement {
     return this.element.name;
   }
 
+  get type() {
+    return this.element.type;
+  }
+
   get bounds() {
     return this.element.bounds;
   }
@@ -152,6 +156,7 @@ export class QueryElement {
   toJSON() {
     return {
       id: this.id,
+      type: this.type,
       name: this.name,
       children: this.children,
       parent: ref(this.parent?.id),
