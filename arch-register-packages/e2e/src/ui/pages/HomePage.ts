@@ -11,7 +11,7 @@ export class HomePage extends WorkspacePage {
   expectLoaded = async (workspaceName: string) => {
     await this.workspaceShell.expectActiveNav('home');
     await this.workspaceShell.expectMainVisible();
-    await expect(this.page.getByRole('main').getByText(workspaceName, { exact: true })).toBeVisible();
+    await expect(this.workspaceShell.topBar.workspaceSelectorButton()).toContainText(workspaceName);
     await expect(this.page.getByText('Entities').first()).toBeVisible();
     await expect(this.page.getByText('Projects').first()).toBeVisible();
   };

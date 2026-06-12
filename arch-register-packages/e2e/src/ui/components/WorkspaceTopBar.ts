@@ -5,6 +5,11 @@ type WorkspaceSummary = {
   slug: string;
 };
 
+type CreateWorkspaceInput = {
+  name: string;
+  description?: string;
+};
+
 export class WorkspaceTopBar {
   readonly page: Page;
 
@@ -19,11 +24,26 @@ export class WorkspaceTopBar {
 
   accountMenuButton = (): Locator => this.page.getByRole('button', { name: 'Account menu' });
 
+  searchInput = (): Locator =>
+    this.page.getByPlaceholder('Search entities, diagrams, projects...');
+
   signOutMenuItem = (): Locator => this.page.getByRole('menuitem', { name: 'Sign out' });
 
   accountMenu = (): Locator => this.page.getByTestId('account-menu-content');
 
   workspaceMenuLabel = (): Locator => this.page.getByText('Workspaces', { exact: true });
+
+  workspaceMenu = (): Locator => this.workspaceMenuLabel().locator('..');
+
+  workspaceMenuItem = (workspaceName: string): Locator =>
+    this.workspaceMenu().getByRole('button').filter({ hasText: workspaceName });
+
+  newWorkspaceMenuItem = (): Locator =>
+    this.workspaceMenu().getByRole('button', { name: 'New workspace...' });
+
+  addWorkspaceDialog = (): Locator => this.page.getByRole('alertdialog', { name: 'Create a workspace' });
+
+  createWorkspaceButton = (): Locator => this.page.getByRole('button', { name: 'Create workspace' });
 
   notificationsButton = (): Locator => this.page.locator('button[aria-label="Notifications"]');
 
@@ -69,21 +89,43 @@ export class WorkspaceTopBar {
   ) => {
     await expect(this.workspaceSelectorButton()).toContainText(currentWorkspace.name);
     await this.openWorkspaceSwitcher();
-    await expect(this.page.getByRole('button', { name: new RegExp(currentWorkspace.name) })).toBeVisible();
-    await expect(this.page.getByRole('button', { name: new RegExp(targetWorkspace.name) })).toBeVisible();
+    await expect(this.workspaceMenuItem(currentWorkspace.name)).toBeVisible();
+    await expect(this.workspaceMenuItem(targetWorkspace.name)).toBeVisible();
   };
 
   switchWorkspace = async (workspace: WorkspaceSummary) => {
     await this.openWorkspaceSwitcher();
-    await this.page.getByRole('button', { name: new RegExp(workspace.name) }).click();
+    await this.workspaceMenuItem(workspace.name).click();
     await expect(this.page).toHaveURL(new RegExp(`/${workspace.slug}$`));
     await expect(this.workspaceSelectorButton()).toContainText(workspace.name);
+  };
+
+  openAddWorkspaceFromSwitcher = async () => {
+    await this.openWorkspaceSwitcher();
+    await this.newWorkspaceMenuItem().click();
+    await expect(this.addWorkspaceDialog()).toBeVisible();
+  };
+
+  createBlankWorkspace = async ({ name, description }: CreateWorkspaceInput) => {
+    const dialog = this.addWorkspaceDialog();
+
+    await expect(dialog).toBeVisible();
+    await dialog.getByPlaceholder('e.g. Acme Payments Platform').fill(name);
+    if (description != null) {
+      await dialog.locator('textarea').fill(description);
+    }
+    await this.createWorkspaceButton().click();
   };
 
   signOut = async () => {
     await this.openAccountMenu();
     await this.signOutMenuItem().click();
     await expect(this.page).toHaveURL(/\/login/);
+  };
+
+  search = async (query: string) => {
+    await this.searchInput().fill(query);
+    await this.searchInput().press('Enter');
   };
 
   openNotificationsMenu = async () => {

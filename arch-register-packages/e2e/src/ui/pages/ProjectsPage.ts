@@ -1,6 +1,10 @@
-import { expect, } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { projectDetailRoute, workspaceProjectsRoute } from '../support/routes';
 import { WorkspacePage } from './WorkspacePage';
+
+type CreateProjectInput = {
+  name: string;
+};
 
 export class ProjectsPage extends WorkspacePage {
 
@@ -16,6 +20,12 @@ export class ProjectsPage extends WorkspacePage {
     this.page.getByRole('button', { name: /Pin project|Unpin project/ });
 
   editProjectButton = () => this.page.getByRole('button', { name: 'Edit' });
+
+  newProjectButton = () => this.page.locator('button[title="New project"]');
+
+  addProjectDialog = () => this.page.getByRole('alertdialog', { name: 'New project' });
+
+  createProjectButton = () => this.page.getByRole('button', { name: 'Create project' });
 
   sidebarGroup = (title: 'Pinned Projects' | 'Active Projects' | 'Archived Projects') =>
     this.page.getByTestId(`project-group-${title}`);
@@ -66,5 +76,18 @@ export class ProjectsPage extends WorkspacePage {
   openEditProjectDialog = async () => {
     await this.editProjectButton().click();
     await expect(this.page.getByRole('alertdialog', { name: 'Edit project' })).toBeVisible();
+  };
+
+  openAddProjectDialog = async () => {
+    await this.newProjectButton().click();
+    await expect(this.addProjectDialog()).toBeVisible();
+  };
+
+  createProject = async ({ name }: CreateProjectInput) => {
+    const dialog = this.addProjectDialog();
+
+    await expect(dialog).toBeVisible();
+    await dialog.getByPlaceholder('e.g. Checkout Modernization').fill(name);
+    await this.createProjectButton().click();
   };
 }

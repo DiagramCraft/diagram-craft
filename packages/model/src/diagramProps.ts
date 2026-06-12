@@ -26,6 +26,8 @@ export function assertVAlign(s: string | undefined): asserts s is VAlign | undef
   if (!(s === 'top' || s === 'middle' || s === 'bottom' || s === undefined)) throw new Error();
 }
 
+export type ReflectionDirection = 'bottom' | 'top' | 'left' | 'right';
+
 export type LineCap = 'butt' | 'round' | 'square';
 
 export function assertLineCap(s: string | undefined): asserts s is LineCap | undefined {
@@ -239,6 +241,7 @@ export interface NodeProps extends ElementProps, DiagramCraft.NodePropsExtension
   effects?: ElementEffectProps & {
     reflection?: boolean;
     reflectionStrength?: number;
+    reflectionDirection?: ReflectionDirection;
     blur?: number;
 
     glass?: boolean;
