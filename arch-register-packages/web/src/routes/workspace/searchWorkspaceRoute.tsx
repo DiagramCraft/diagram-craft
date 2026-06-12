@@ -7,7 +7,7 @@ import { buildSearchBreadcrumbs } from '../../layouts/workspaceShellDescriptors'
 export const createSearchWorkspaceRoute = (
   // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
   workspaceRoute: any
-): WorkspaceShellEntry => {
+): WorkspaceShellEntry[] => {
   const route = createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'search',
@@ -15,13 +15,15 @@ export const createSearchWorkspaceRoute = (
     component: SearchScreen
   });
 
-  return {
-    route,
-    matchesRouteId: routeId => routeId.endsWith('/search'),
-    buildShell: ctx => ({
-      variant: 'full-bleed',
-      activeRailItem: 'search',
-      breadcrumbs: buildSearchBreadcrumbs(ctx)
-    })
-  };
+  return [
+    {
+      route,
+      matchesRouteId: routeId => routeId.endsWith('/search'),
+      buildShell: ctx => ({
+        variant: 'full-bleed',
+        activeRailItem: 'search',
+        breadcrumbs: buildSearchBreadcrumbs(ctx)
+      })
+    }
+  ];
 };

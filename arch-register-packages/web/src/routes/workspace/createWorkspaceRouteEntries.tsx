@@ -11,11 +11,11 @@ export const createWorkspaceRouteEntries = (
   // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
   workspaceRoute: any
 ): WorkspaceShellEntry[] => [
-  createHomeWorkspaceRoute(workspaceRoute),
+  ...createHomeWorkspaceRoute(workspaceRoute),
   ...createProjectWorkspaceRoutes(workspaceRoute),
   ...createEntityWorkspaceRoutes(workspaceRoute),
-  createDataModelWorkspaceRoute(workspaceRoute),
-  createSearchWorkspaceRoute(workspaceRoute),
+  ...createDataModelWorkspaceRoute(workspaceRoute),
+  ...createSearchWorkspaceRoute(workspaceRoute),
   ...createSettingsWorkspaceRoutes(workspaceRoute),
   ...createAssistantWorkspaceRoutes(workspaceRoute)
 ];

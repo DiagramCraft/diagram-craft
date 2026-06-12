@@ -8,7 +8,7 @@ import { buildModelBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 export const createDataModelWorkspaceRoute = (
   // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
   workspaceRoute: any
-): WorkspaceShellEntry => {
+): WorkspaceShellEntry[] => {
   const route = createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'model',
@@ -16,20 +16,22 @@ export const createDataModelWorkspaceRoute = (
     component: DataModelEditorScreen
   });
 
-  return {
-    route,
-    matchesRouteId: routeId => routeId.endsWith('/model'),
-    buildShell: ctx => ({
-      variant: 'standard',
-      activeRailItem: 'model',
-      breadcrumbs: buildModelBreadcrumbs(ctx),
-      primarySidebar: (
-        <DataModelSidebar
-          schemas={ctx.schemas}
-          enums={ctx.enums}
-          workspaceSlug={ctx.workspaceSlug}
-        />
-      )
-    })
-  };
+  return [
+    {
+      route,
+      matchesRouteId: routeId => routeId.endsWith('/model'),
+      buildShell: ctx => ({
+        variant: 'standard',
+        activeRailItem: 'model',
+        breadcrumbs: buildModelBreadcrumbs(ctx),
+        primarySidebar: (
+          <DataModelSidebar
+            schemas={ctx.schemas}
+            enums={ctx.enums}
+            workspaceSlug={ctx.workspaceSlug}
+          />
+        )
+      })
+    }
+  ];
 };
