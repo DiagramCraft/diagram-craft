@@ -292,7 +292,10 @@ export const EntitiesSidebar = ({
             navigate({
               to: '/$workspaceSlug/entities',
               params: { workspaceSlug },
-              search: prev => ({ ...prev, sidebarTab: v as 'filters' | 'views' | 'pinned' })
+              search: (prev: Record<string, unknown>) => ({
+                ...prev,
+                sidebarTab: v as 'filters' | 'views' | 'pinned'
+              })
             })
           }
         >
@@ -454,7 +457,7 @@ export const EntitiesSidebar = ({
                     navigate({
                       to: '/$workspaceSlug/entities/$entityId',
                       params: { workspaceSlug, entityId: entity.entity_id },
-                      search: prev => ({ ...prev, sidebarTab: 'pinned' })
+                      search: (prev: Record<string, unknown>) => ({ ...prev, sidebarTab: 'pinned' })
                     })
                   }
                   trailing={<TbPinned size={12} className="dim" />}

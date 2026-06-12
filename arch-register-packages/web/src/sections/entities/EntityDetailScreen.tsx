@@ -81,7 +81,7 @@ const formatDateValue = (value: unknown) => {
 export const EntityDetailScreen = () => {
   const navigate = useNavigate();
   const { entityId } = useParams({ strict: false }) as { entityId: string };
-  const search = useSearch({ from: '/authenticated/$workspaceSlug/entities/$entityId' });
+  const search = useSearch({ strict: false }) as { contentFolder?: string };
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const canViewAudit = permissions.canViewAudit;

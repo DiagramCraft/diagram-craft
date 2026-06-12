@@ -37,12 +37,7 @@ import {
 } from '../hooks/useNotifications';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { NotificationItem, WatchedEntity } from '@arch-register/api-types/watchContract';
-
-type BreadcrumbItem = {
-  label: string;
-  icon?: React.ReactNode;
-  onClick: () => void;
-};
+import type { BreadcrumbItem } from './shellTypes';
 
 type TopBarProps = {
   workspaces: Workspace[];

@@ -24,7 +24,7 @@ export const EntityContentSidebar = ({
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const ctx = useWorkspaceContext();
   const navigate = useNavigate();
-  const search = useSearch({ from: '/authenticated/$workspaceSlug/entities/$entityId' });
+  const search = useSearch({ strict: false }) as { contentFolder?: string };
   const contentFolder = search.contentFolder;
 
   const schemaIdx = ctx.schemas.findIndex(s => s.id === entity?._schema?.id);

@@ -2,33 +2,11 @@ import { createRootRouteWithContext, createRoute, redirect } from '@tanstack/rea
 import type { RouterContext } from '../routerContext';
 import { LoginScreen } from '../auth/LoginScreen';
 import { WorkspaceLayout } from '../layouts/WorkspaceLayout';
-import { WorkspaceHomeScreen } from '../sections/home/WorkspaceHomeScreen';
-import { ProjectDetailScreen } from '../sections/projects/ProjectDetailScreen';
-import { DiagramScreen } from '../sections/projects/DiagramScreen';
-import { EntityBrowserScreen } from '../sections/entities/EntityBrowserScreen';
-import { EntityDetailScreen } from '../sections/entities/EntityDetailScreen';
-import { DataModelEditorScreen } from '../sections/data-model/DataModelEditorScreen';
-import { SearchScreen } from '../sections/search/SearchScreen';
-import { WorkspaceSettingsScreen } from '../sections/workspace-settings/WorkspaceSettingsScreen';
-import { GlobalSettingsScreen } from '../sections/global-settings/GlobalSettingsScreen';
-import { AccountSettingsScreen } from '../sections/account-settings/AccountSettingsScreen';
-import { AssistantScreen } from '../sections/ai-assistant/AssistantScreen';
-import { ExtractScreen } from '../sections/ai-extract/ExtractScreen';
 import { orpcClient } from '../lib/orpcClient';
 import { workspaceKeys } from '../hooks/useWorkspaces';
-import { ImportScreen } from '../sections/entities/ImportScreen';
-
-import {
-  validateEntitySearch,
-  validateEntityDetailSearch,
-  validateProjectSearch,
-  validateSettingsSearch,
-  validateSearchSearch,
-  validateModelSearch,
-  validateAssistantSearch
-} from './searchParams';
 import { RootLayout } from '../layouts/RootLayout';
 import { RouteErrorComponent } from './RouteErrorComponent';
+import { createWorkspaceRouteEntries } from './workspace/createWorkspaceRouteEntries';
 
 // ─── Root Route ───────────────────────────────────────────────
 const rootRoute = createRootRouteWithContext<RouterContext>()({
@@ -107,132 +85,13 @@ const workspaceRoute = createRoute({
   component: WorkspaceLayout
 });
 
-// ─── Workspace Home ──────────────────────────────────────────
-const workspaceHomeRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: '/',
-  component: WorkspaceHomeScreen
-});
-
-// ─── Project Detail ──────────────────────────────────────────
-const projectDetailRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'projects/$projectId',
-  validateSearch: validateProjectSearch,
-  component: ProjectDetailScreen
-});
-
-// ─── Diagram (overlay) ──────────────────────────────────────
-const diagramRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'projects/$projectId/diagrams/$diagramId',
-  component: DiagramScreen
-});
-
-// ─── Entity Browser ──────────────────────────────────────────
-const entityBrowserRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'entities',
-  validateSearch: validateEntitySearch,
-  component: EntityBrowserScreen
-});
-
-// ─── Entity Detail ───────────────────────────────────────────
-const entityDetailRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'entities/$entityId',
-  validateSearch: validateEntityDetailSearch,
-  component: EntityDetailScreen
-});
-
-// ─── Entity Diagram (overlay) ────────────────────────────────
-const entityDiagramRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'entities/$entityId/diagrams/$diagramId',
-  component: DiagramScreen
-});
-
-// ─── Data Model ──────────────────────────────────────────────
-const dataModelRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'model',
-  validateSearch: validateModelSearch,
-  component: DataModelEditorScreen
-});
-
-// ─── Search ──────────────────────────────────────────────────
-const searchRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'search',
-  validateSearch: validateSearchSearch,
-  component: SearchScreen
-});
-
-// ─── Settings ────────────────────────────────────────────────
-const settingsRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'settings',
-  validateSearch: validateSettingsSearch,
-  component: WorkspaceSettingsScreen
-});
-
-// ─── Global Settings ─────────────────────────────────────────
-const globalSettingsRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'settings/global',
-  component: GlobalSettingsScreen
-});
-
-// ─── Account Settings ────────────────────────────────────────
-const accountSettingsRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'account',
-  component: AccountSettingsScreen
-});
-
-// ─── AI Assistant ───────────────────────────────────────────
-const assistantRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'assistant',
-  validateSearch: validateAssistantSearch,
-  component: AssistantScreen
-});
-
-// ─── AI Extract ─────────────────────────────────────────────
-const extractRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'extract',
-  component: ExtractScreen
-});
-
-// ─── CSV Import ─────────────────────────────────────────────
-const importRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: 'entities/import',
-  component: ImportScreen,
-  validateSearch: validateEntitySearch
-});
+const workspaceRouteEntries = createWorkspaceRouteEntries(workspaceRoute);
 
 // ─── Route Tree ──────────────────────────────────────────────
 export const routeTree = rootRoute.addChildren([
   loginRoute,
   indexRoute,
   authenticatedRoute.addChildren([
-    workspaceRoute.addChildren([
-      workspaceHomeRoute,
-      projectDetailRoute,
-      diagramRoute,
-      entityBrowserRoute,
-      entityDetailRoute,
-      entityDiagramRoute,
-      dataModelRoute,
-      searchRoute,
-      settingsRoute,
-      globalSettingsRoute,
-      accountSettingsRoute,
-      assistantRoute,
-      extractRoute,
-      importRoute
-    ])
+    workspaceRoute.addChildren(workspaceRouteEntries as ReturnType<typeof createRoute>[])
   ])
 ]);
