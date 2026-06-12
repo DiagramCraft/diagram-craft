@@ -265,9 +265,8 @@
 .diagramThumbGrid {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(to right, var(--panel-border) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px);
+  background-image: linear-gradient(to right, var(--panel-border) 1px, transparent 1px),
+  linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px);
   background-size: 12px 12px;
 }
 
@@ -440,6 +439,28 @@
 }
 
 /* Diagram list */
+.diagramListPanel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--panel-bg);
+}
+
+.diagramListHead {
+  display: grid;
+  grid-template-columns: 1fr 120px 90px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--cmp-fg-disabled);
+  border-bottom: 1px solid var(--cmp-border);
+  background: var(--base-bg);
+}
+
 .diagramList {
   display: flex;
   flex-direction: column;
@@ -447,18 +468,22 @@
 
 .diagramRow {
   display: grid;
-  grid-template-columns: 1fr 140px 120px 90px;
+  grid-template-columns: 1fr 120px 90px;
   align-items: center;
   gap: 12px;
   padding: 8px 10px;
-  border-radius: var(--r);
   text-align: left;
   color: var(--base-fg-dim);
   cursor: pointer;
   background: none;
   border: none;
+  border-bottom: 1px solid var(--panel-border);
   width: 100%;
-  font-size: 12.5px;
+  font-size: 12px;
+}
+
+.diagramRow:last-child {
+  border-bottom: none;
 }
 
 .diagramRow:hover {
@@ -470,14 +495,16 @@
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
+  overflow: hidden;
 }
 
-.diagramRowTemplate {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+.diagramRowName > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .diagramRowFolder {
@@ -486,12 +513,14 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .diagramRowDate {
   font-size: 11px;
   color: var(--cmp-fg-disabled);
-  text-align: right;
 }
 
 .diagramRowAdd {
@@ -499,13 +528,14 @@
   align-items: center;
   gap: 6px;
   padding: 8px 10px;
-  border-radius: var(--r);
   color: var(--base-fg-more-dim);
-  border: 1px dashed var(--cmp-border);
+  border: none;
+  border-top: 1px dashed var(--cmp-border);
   background: transparent;
   font-size: 12px;
   cursor: pointer;
-  margin-top: 4px;
+  width: 100%;
+  text-align: left;
 }
 
 .diagramRowAdd:hover {

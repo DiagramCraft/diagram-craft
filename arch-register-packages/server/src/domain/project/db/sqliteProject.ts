@@ -370,4 +370,51 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       [workspace, projectId, entityId]
     );
   }
+
+  async syncDiagramEntityRefs(workspace: string, fileId: string, entityIds: string[]) {
+    const tx = this.db.transaction(() => {
+      this.db
+        .prepare('DELETE FROM diagram_entity_ref WHERE workspace = ? AND file_id = ?')
+        .run(workspace, fileId);
+      const insert = this.db.prepare(
+        'INSERT OR IGNORE INTO diagram_entity_ref (workspace, file_id, entity_id) VALUES (?, ?, ?)'
+      );
+      for (const entityId of entityIds) {
+        insert.run(workspace, fileId, entityId);
+      }
+    });
+    tx();
+  }
+
+  async getEntityDiagramFiles(workspace: string, entityId: string) {
+    return this.all(
+      `SELECT
+        pf.id          AS file_id,
+        pf.path        AS file_path,
+        pf.name        AS file_name,
+        pf.size_bytes  AS file_size_bytes,
+        pf.preview_svg AS file_preview_svg,
+        pf.created_at  AS file_created_at,
+        pf.updated_at  AS file_updated_at,
+        p.id           AS project_id,
+        p.name         AS project_name
+      FROM diagram_entity_ref der
+      JOIN project_file pf ON pf.id = der.file_id AND pf.workspace = der.workspace
+      JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
+      WHERE der.workspace = ? AND der.entity_id = ?
+      ORDER BY p.name, pf.name`,
+      [workspace, entityId],
+      row => ({
+        file_id: String(row['file_id']),
+        file_path: String(row['file_path']),
+        file_name: String(row['file_name']),
+        file_size_bytes: Number(row['file_size_bytes']),
+        file_preview_svg: row['file_preview_svg'] != null ? String(row['file_preview_svg']) : null,
+        file_created_at: new Date(String(row['file_created_at'])),
+        file_updated_at: new Date(String(row['file_updated_at'])),
+        project_id: String(row['project_id']),
+        project_name: String(row['project_name'])
+      })
+    );
+  }
 }

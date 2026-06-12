@@ -6,7 +6,8 @@ import type {
   ProjectEntityDbResult,
   ProjectFileDbResult,
   ProjectDbUpdate,
-  ProjectFileDbUpsert
+  ProjectFileDbUpsert,
+  DiagramEntityFileDbResult
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
@@ -377,5 +378,45 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  async syncDiagramEntityRefs(workspace: string, fileId: string, entityIds: string[]) {
+    try {
+      await this.sql.begin(async tx => {
+        await tx`
+          DELETE FROM diagram_entity_ref
+          WHERE workspace = ${workspace} AND file_id = ${fileId}
+        `;
+        for (const entityId of entityIds) {
+          await tx`
+            INSERT INTO diagram_entity_ref (workspace, file_id, entity_id)
+            VALUES (${workspace}, ${fileId}, ${entityId})
+            ON CONFLICT DO NOTHING
+          `;
+        }
+      });
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async getEntityDiagramFiles(workspace: string, entityId: string) {
+    return await this.sql<DiagramEntityFileDbResult[]>`
+      SELECT
+        pf.id          AS file_id,
+        pf.path        AS file_path,
+        pf.name        AS file_name,
+        pf.size_bytes  AS file_size_bytes,
+        pf.preview_svg AS file_preview_svg,
+        pf.created_at  AS file_created_at,
+        pf.updated_at  AS file_updated_at,
+        p.id           AS project_id,
+        p.name         AS project_name
+      FROM diagram_entity_ref der
+      JOIN project_file pf ON pf.id = der.file_id AND pf.workspace = der.workspace
+      JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
+      WHERE der.workspace = ${workspace} AND der.entity_id = ${entityId}
+      ORDER BY p.name, pf.name
+    `;
   }
 }

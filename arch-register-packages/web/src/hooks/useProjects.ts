@@ -7,7 +7,9 @@ export const projectEntityKeys = {
   all: (workspaceId: string, projectId: string) =>
     ['project-entities', workspaceId, projectId] as const,
   entityProjects: (workspaceId: string, entityId: string) =>
-    ['entity-projects', workspaceId, entityId] as const
+    ['entity-projects', workspaceId, entityId] as const,
+  entityDiagramFiles: (workspaceId: string, entityId: string) =>
+    ['entity-diagram-files', workspaceId, entityId] as const
 };
 
 // Query keys factory
@@ -200,6 +202,18 @@ export const useRemoveProjectEntity = (workspaceId: string, projectId: string) =
         queryKey: projectEntityKeys.all(workspaceId, projectId)
       });
     }
+  });
+};
+
+// Hook for fetching diagram files that reference an entity
+export const useEntityDiagramFiles = (workspaceId: string, entityId: string) => {
+  return useQuery({
+    queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId),
+    queryFn: () =>
+      orpcClient.projects.getEntityDiagramFiles({
+        params: { workspace: workspaceId, entityId }
+      }),
+    enabled: !!workspaceId && !!entityId
   });
 };
 
