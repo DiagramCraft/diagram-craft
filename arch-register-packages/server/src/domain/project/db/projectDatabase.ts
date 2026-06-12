@@ -109,6 +109,7 @@ export type ProjectDatabase = {
 
   listContentNodes(ws: string, projectId: string): Promise<ContentNodeDbResult[]>;
   listEntityContentNodes(ws: string, entityId: string): Promise<ContentNodeDbResult[]>;
+  listWorkspaceContentNodes(ws: string): Promise<ContentNodeDbResult[]>;
   getContentNodeByPath(
     ws: string,
     projectId: string,
@@ -135,6 +136,15 @@ export type ProjectDatabase = {
   updateContentNodeDerivedData(
     ws: string,
     projectId: string,
+    fileId: string,
+    sizeBytes: number,
+    commentCount: number,
+    unresolvedCommentCount: number,
+    previewSvg: string | null,
+    updated_at: Date
+  ): Promise<void>;
+  updateWorkspaceContentNodeDerivedData(
+    ws: string,
     fileId: string,
     sizeBytes: number,
     commentCount: number,

@@ -395,6 +395,60 @@ export const projectContract = {
         query: z.object({ path: z.string() }),
         body: z.record(z.string(), z.unknown())
       }))
+      .output(projectFileSchema),
+    listWorkspaceFiles: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/content',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({ params: ws }))
+      .output(fileTreeSchema),
+    createWorkspaceFolder: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/content/folders',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        body: z.object({ path: z.string() })
+      }))
+      .output(createFolderResponseSchema),
+    createWorkspaceFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/content/files',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        query: z.object({ path: z.string() }),
+        body: z.record(z.string(), z.unknown())
+      }))
+      .output(projectFileSchema),
+    getWorkspaceFileContent: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/content/files/content',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        query: z.object({ path: z.string() })
+      }))
+      .output(z.record(z.string(), z.unknown())),
+    saveWorkspaceFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/content/files',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        query: z.object({ path: z.string() }),
+        body: z.record(z.string(), z.unknown())
+      }))
       .output(projectFileSchema)
   }
 };

@@ -1,4 +1,5 @@
 import { createHomeWorkspaceRoute } from './homeWorkspaceRoute';
+import { createContentWorkspaceRoutes } from './contentWorkspaceRoutes';
 import { createProjectWorkspaceRoutes } from './projectWorkspaceRoutes';
 import { createEntityWorkspaceRoutes } from './entityWorkspaceRoutes';
 import { createDataModelWorkspaceRoute } from './dataModelWorkspaceRoute';
@@ -11,6 +12,7 @@ export const createWorkspaceRouteEntries = (
   workspaceRoute: any
 ): object[] => [
   ...createHomeWorkspaceRoute(workspaceRoute),
+  ...createContentWorkspaceRoutes(workspaceRoute),
   ...createProjectWorkspaceRoutes(workspaceRoute),
   ...createEntityWorkspaceRoutes(workspaceRoute),
   ...createDataModelWorkspaceRoute(workspaceRoute),

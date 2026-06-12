@@ -9,7 +9,8 @@ import {
   useCreateDiagramFile,
   useProjectTemplates,
   useCreateDiagramFromTemplate,
-  useWorkspaceOnlyTemplates
+  useWorkspaceOnlyTemplates,
+  useCreateWorkspaceDiagram
 } from '../../hooks/useProjectFiles';
 import {
   useCreateEntityDiagram,
@@ -27,6 +28,7 @@ type AddDiagramDialogProps = {
 } & (
   | { context: 'project'; projectId: string; projectName?: string }
   | { context: 'entity'; entityId: string }
+  | { context: 'workspace' }
 );
 
 // Dummy SVG preview (matches the one used in project detail grid cards)
@@ -107,6 +109,7 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
   const { open, onClose, onCreated, workspaceId, folder } = props;
   const projectId = props.context === 'project' ? props.projectId : '';
   const entityId = props.context === 'entity' ? props.entityId : '';
+  const isWorkspace = props.context === 'workspace';
 
   const [selected, setSelected] = useState<ProjectFile | 'blank'>('blank');
   const [name, setName] = useState('');
@@ -129,6 +132,9 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
   // Entity creation mutations (unused when entityId is empty)
   const createEntityDiagramMutation = useCreateEntityDiagram(workspaceId, entityId);
   const createEntityFromTemplateMutation = useCreateEntityDiagramFromTemplate(workspaceId, entityId);
+
+  // Workspace creation mutation
+  const createWorkspaceDiagramMutation = useCreateWorkspaceDiagram(workspaceId);
 
   const allTemplates =
     props.context === 'project'
@@ -190,6 +196,8 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
         } else {
           file = await createDiagramMutation.mutateAsync({ name: finalName, folder });
         }
+      } else if (props.context === 'workspace') {
+        file = await createWorkspaceDiagramMutation.mutateAsync({ name: finalName, folder });
       } else {
         if (selected !== 'blank') {
           file = await createEntityFromTemplateMutation.mutateAsync({
@@ -212,8 +220,9 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
     }
   };
 
-  const isPending =
-    props.context === 'project'
+  const isPending = isWorkspace
+    ? createWorkspaceDiagramMutation.isPending
+    : props.context === 'project'
       ? createDiagramMutation.isPending || createFromTemplateMutation.isPending
       : createEntityDiagramMutation.isPending || createEntityFromTemplateMutation.isPending;
 

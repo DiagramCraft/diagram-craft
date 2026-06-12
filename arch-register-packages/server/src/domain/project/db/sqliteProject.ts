@@ -111,6 +111,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async listWorkspaceContentNodes(workspace: string) {
+    return this.all(
+      'SELECT * FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL ORDER BY path',
+      [workspace],
+      sqliteMappers.contentNode
+    );
+  }
+
   async getContentNodeByPath(workspace: string, projectId: string, path: string) {
     return this.get(
       'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? AND path = ?',
@@ -184,6 +192,27 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async updateWorkspaceContentNodeDerivedData(
+    workspace: string,
+    fileId: string,
+    sizeBytes: number,
+    commentCount: number,
+    unresolvedCommentCount: number,
+    previewSvg: string | null,
+    updated_at: Date
+  ) {
+    this.run(
+      `UPDATE content_node
+       SET size_bytes = ?,
+           comment_count = ?,
+           unresolved_comment_count = ?,
+           preview_svg = ?,
+           updated_at = ?
+       WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND id = ?`,
+      [sizeBytes, commentCount, unresolvedCommentCount, previewSvg, updated_at.toISOString(), workspace, fileId]
+    );
+  }
+
   async updateContentNodeTemplateStatus(
     workspace: string,
     projectId: string,
@@ -207,15 +236,20 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async upsertContentNode(input: ContentNodeDbUpsert) {
     const id = input.id ?? newid();
-    const ownerClause = input.entity_id != null
-      ? 'entity_id = ?'
-      : 'project_id = ?';
-    const ownerValue = input.entity_id != null ? input.entity_id : input.project_id;
+    const isWorkspaceOwned = input.project_id == null && input.entity_id == null;
+    const ownerClause = isWorkspaceOwned
+      ? 'project_id IS NULL AND entity_id IS NULL'
+      : input.entity_id != null
+        ? 'entity_id = ?'
+        : 'project_id = ?';
+    const ownerValue = isWorkspaceOwned ? null : (input.entity_id != null ? input.entity_id : input.project_id);
 
     const tx = this.db.transaction(() => {
       const existing = this.get<{ id: string; created_at: string }>(
-        `SELECT id, created_at FROM content_node WHERE workspace = ? AND ${ownerClause} AND path = ?`,
-        [input.workspace, ownerValue, input.path]
+        isWorkspaceOwned
+          ? `SELECT id, created_at FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path = ?`
+          : `SELECT id, created_at FROM content_node WHERE workspace = ? AND ${ownerClause} AND path = ?`,
+        isWorkspaceOwned ? [input.workspace, input.path] : [input.workspace, ownerValue, input.path]
       );
 
       if (existing) {
@@ -256,11 +290,15 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     });
 
     tx();
-    const projectId = input.project_id ?? null;
-    if (projectId != null) {
-      return (await this.getContentNodeByPath(input.workspace, projectId, input.path))!;
+    if (input.project_id != null) {
+      return (await this.getContentNodeByPath(input.workspace, input.project_id, input.path))!;
     }
-    return (await this.listEntityContentNodes(input.workspace, input.entity_id!)).find(
+    if (input.entity_id != null) {
+      return (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
+        n => n.path === input.path
+      )!;
+    }
+    return (await this.listWorkspaceContentNodes(input.workspace)).find(
       n => n.path === input.path
     )!;
   }
@@ -268,11 +306,18 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   async createContentNodeIfAbsent(
     input: Omit<ContentNodeDbUpsert, 'updated_at'> & { updated_at: Date }
   ) {
-    const existing = input.project_id != null
-      ? await this.getContentNodeByPath(input.workspace, input.project_id, input.path)
-      : (await this.listEntityContentNodes(input.workspace, input.entity_id!)).find(
-          n => n.path === input.path
-        ) ?? null;
+    let existing = null;
+    if (input.project_id != null) {
+      existing = await this.getContentNodeByPath(input.workspace, input.project_id, input.path);
+    } else if (input.entity_id != null) {
+      existing = (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
+        n => n.path === input.path
+      ) ?? null;
+    } else {
+      existing = (await this.listWorkspaceContentNodes(input.workspace)).find(
+        n => n.path === input.path
+      ) ?? null;
+    }
     if (existing) return null;
     return await this.upsertContentNode(input);
   }

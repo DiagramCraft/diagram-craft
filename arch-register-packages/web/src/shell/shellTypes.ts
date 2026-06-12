@@ -6,6 +6,7 @@ export type BreadcrumbItem = {
 
 export type WorkspaceRailItemId =
   | 'home'
+  | 'content'
   | 'projects'
   | 'entities'
   | 'model'
