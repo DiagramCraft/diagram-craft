@@ -14,6 +14,7 @@ import {
 } from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError } from '../../utils/http';
+import { fileNameFromPath, displayNameFromBody, folderFromPath, stripJsonExtension } from './contentFileHelpers';
 import {
   toApiProject,
   toApiProjectFile,
@@ -464,12 +465,7 @@ export const createEntityFile = async (
 ): Promise<ProjectFile> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   const content = Buffer.from(JSON.stringify(body), 'utf8');
-  const fileName = filePath.includes('/')
-    ? filePath.substring(filePath.lastIndexOf('/') + 1)
-    : filePath;
-
-  const displayName =
-    body['name'] ?? (fileName.endsWith('.json') ? fileName.slice(0, -5) : fileName);
+  const displayName = displayNameFromBody(body, filePath);
 
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
@@ -479,10 +475,9 @@ export const createEntityFile = async (
     );
     const isUpdate = !!existingFile;
 
-    const fileLastSlash = filePath.lastIndexOf('/');
     let fileParentId: string | null = null;
-    if (fileLastSlash !== -1) {
-      const folderPath = filePath.substring(0, fileLastSlash);
+    const folderPath = folderFromPath(filePath);
+    if (folderPath) {
       const entityNodes = await db.project.listEntityContentNodes(ws, entityId);
       const parentFolder = entityNodes.find(n => n.path === folderPath && n.type === 'folder');
       fileParentId = parentFolder?.id ?? null;
@@ -663,12 +658,7 @@ export const saveFile = async (
 ): Promise<ProjectFile> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   const content = Buffer.from(JSON.stringify(body), 'utf8');
-  const fileName = filePath.includes('/')
-    ? filePath.substring(filePath.lastIndexOf('/') + 1)
-    : filePath;
-
-  const displayName =
-    body['name'] ?? (fileName.endsWith('.json') ? fileName.slice(0, -5) : fileName);
+  const displayName = displayNameFromBody(body, filePath);
 
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
@@ -854,11 +844,9 @@ export const cloneFile = async (
     const content = await storage.read(ws, id, sourceFile.id);
     const fileData = JSON.parse(content.toString('utf8'));
 
-    const baseName = filePath.includes('/')
-      ? filePath.substring(filePath.lastIndexOf('/') + 1)
-      : filePath;
-    const baseNameWithoutExt = baseName.endsWith('.json') ? baseName.slice(0, -5) : baseName;
-    const folder = filePath.includes('/') ? filePath.substring(0, filePath.lastIndexOf('/')) : '';
+    const baseName = fileNameFromPath(filePath);
+    const baseNameWithoutExt = stripJsonExtension(baseName);
+    const folder = folderFromPath(filePath);
 
     let cloneNumber = 1;
     let clonePath: string;

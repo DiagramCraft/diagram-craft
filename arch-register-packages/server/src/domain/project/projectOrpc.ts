@@ -315,7 +315,7 @@ export const projectORPCRouter = projectRouter.router({
         }
       }
     ),
-    listEntityContent: projectRouter.projects.listEntityContent.handler(
+    listEntityFiles: projectRouter.projects.listEntityFiles.handler(
       async ({ input, context }) => {
         try {
           return await listEntityContentNodes(

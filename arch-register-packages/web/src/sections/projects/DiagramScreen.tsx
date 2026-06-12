@@ -229,7 +229,7 @@ export const DiagramScreen = () => {
         
         if (isEntityDiagram) {
           // Fetch entity content
-          const entityNodes = await orpcClient.projects.listEntityContent({
+          const entityNodes = await orpcClient.projects.listEntityFiles({
             params: { workspace: workspaceId, entityId: projectId }
           });
           

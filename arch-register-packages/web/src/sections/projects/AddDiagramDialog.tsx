@@ -8,8 +8,13 @@ import type { FileEntry } from '../../lib/api';
 import {
   useCreateDiagramFile,
   useProjectTemplates,
-  useCreateDiagramFromTemplate
+  useCreateDiagramFromTemplate,
+  useWorkspaceOnlyTemplates
 } from '../../hooks/useProjectFiles';
+import {
+  useCreateEntityDiagram,
+  useCreateEntityDiagramFromTemplate
+} from '../../hooks/useProjects';
 import styles from './AddDiagramDialog.module.css';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
 
@@ -18,10 +23,11 @@ type AddDiagramDialogProps = {
   onClose: () => void;
   onCreated: (file: FileEntry) => void;
   workspaceId: string;
-  projectId: string;
-  projectName?: string;
   folder?: string | null;
-};
+} & (
+  | { context: 'project'; projectId: string; projectName?: string }
+  | { context: 'entity'; entityId: string }
+);
 
 // Dummy SVG preview (matches the one used in project detail grid cards)
 const DummyPreview = () => (
@@ -97,31 +103,43 @@ const BlankPreview = () => (
   </svg>
 );
 
-export const AddDiagramDialog = ({
-  open,
-  onClose,
-  onCreated,
-  workspaceId,
-  projectId,
-  projectName,
-  folder
-}: AddDiagramDialogProps) => {
+export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
+  const { open, onClose, onCreated, workspaceId, folder } = props;
+  const projectId = props.context === 'project' ? props.projectId : '';
+  const entityId = props.context === 'entity' ? props.entityId : '';
+
   const [selected, setSelected] = useState<ProjectFile | 'blank'>('blank');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
 
-  const { data: templates, isLoading: templatesLoading } = useProjectTemplates(
+  // Project context: project + workspace templates
+  const { data: projectTemplateData, isLoading: projectTemplatesLoading } = useProjectTemplates(
     workspaceId,
     projectId
   );
+  // Entity context: workspace-only templates
+  const { data: workspaceOnlyTemplates, isLoading: workspaceTemplatesLoading } =
+    useWorkspaceOnlyTemplates(workspaceId);
+
+  // Project creation mutations (no-ops when projectId is empty due to enabled checks)
   const createDiagramMutation = useCreateDiagramFile(workspaceId, projectId);
   const createFromTemplateMutation = useCreateDiagramFromTemplate(workspaceId, projectId);
 
-  const allTemplates = [
-    ...(templates?.projectTemplates ?? []),
-    ...(templates?.workspaceTemplates ?? [])
-  ];
+  // Entity creation mutations (unused when entityId is empty)
+  const createEntityDiagramMutation = useCreateEntityDiagram(workspaceId, entityId);
+  const createEntityFromTemplateMutation = useCreateEntityDiagramFromTemplate(workspaceId, entityId);
+
+  const allTemplates =
+    props.context === 'project'
+      ? [
+          ...(projectTemplateData?.projectTemplates ?? []),
+          ...(projectTemplateData?.workspaceTemplates ?? [])
+        ]
+      : (workspaceOnlyTemplates ?? []);
+
+  const templatesLoading =
+    props.context === 'project' ? projectTemplatesLoading : workspaceTemplatesLoading;
 
   // Reset on open
   useEffect(() => {
@@ -162,14 +180,26 @@ export const AddDiagramDialog = ({
 
     try {
       let file: FileEntry;
-      if (selected !== 'blank') {
-        file = await createFromTemplateMutation.mutateAsync({
-          name: finalName,
-          templateFile: selected,
-          folder
-        });
+      if (props.context === 'project') {
+        if (selected !== 'blank') {
+          file = await createFromTemplateMutation.mutateAsync({
+            name: finalName,
+            templateFile: selected,
+            folder
+          });
+        } else {
+          file = await createDiagramMutation.mutateAsync({ name: finalName, folder });
+        }
       } else {
-        file = await createDiagramMutation.mutateAsync({ name: finalName, folder });
+        if (selected !== 'blank') {
+          file = await createEntityFromTemplateMutation.mutateAsync({
+            name: finalName,
+            templateFile: selected,
+            folder
+          });
+        } else {
+          file = await createEntityDiagramMutation.mutateAsync({ name: finalName, folder });
+        }
       }
       onCreated(file);
       onClose();
@@ -182,13 +212,17 @@ export const AddDiagramDialog = ({
     }
   };
 
-  const isPending = createDiagramMutation.isPending || createFromTemplateMutation.isPending;
+  const isPending =
+    props.context === 'project'
+      ? createDiagramMutation.isPending || createFromTemplateMutation.isPending
+      : createEntityDiagramMutation.isPending || createEntityFromTemplateMutation.isPending;
 
-  const sub = projectName ? (
-    <span>
-      Adds to <b>{projectName}</b>. Pick a template or start from a blank canvas.
-    </span>
-  ) : undefined;
+  const sub =
+    props.context === 'project' && props.projectName ? (
+      <span>
+        Adds to <b>{props.projectName}</b>. Pick a template or start from a blank canvas.
+      </span>
+    ) : undefined;
 
   return (
     <Dialog

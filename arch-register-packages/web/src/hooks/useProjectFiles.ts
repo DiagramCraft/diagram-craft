@@ -200,6 +200,20 @@ export const useProjectTemplates = (workspaceId: string, projectId: string) => {
   });
 };
 
+// Hook for fetching workspace-level templates only (no project-specific templates)
+export const useWorkspaceOnlyTemplates = (workspaceId: string) => {
+  return useQuery({
+    queryKey: ['workspace-templates', workspaceId],
+    queryFn: async () => {
+      const result = await orpcClient.templates.listAll({
+        params: { workspace: workspaceId }
+      });
+      return result.workspaceTemplates;
+    },
+    enabled: !!workspaceId
+  });
+};
+
 // Hook for toggling template status
 export const useToggleTemplateStatus = (workspaceId: string, projectId: string) => {
   const queryClient = useQueryClient();

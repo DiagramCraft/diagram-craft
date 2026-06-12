@@ -365,7 +365,7 @@ export const projectContract = {
       })
       .input(z.object({ params: ws.extend({ entityId: z.string() }) }))
       .output(z.array(diagramEntityFileSchema)),
-    listEntityContent: oc
+    listEntityFiles: oc
       .route({
         method: 'GET',
         path: '/{workspace}/entities/{entityId}/content',
