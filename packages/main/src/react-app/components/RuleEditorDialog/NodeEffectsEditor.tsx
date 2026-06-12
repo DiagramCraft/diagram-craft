@@ -21,6 +21,7 @@ export const NodeEffectsEditor: Editor = props => {
       roundingAmount={makeProperty($p, 'effects.roundingAmount', nodeDefaults, onChange)}
       reflection={makeProperty($p, 'effects.reflection', nodeDefaults, onChange)}
       reflectionStrength={makeProperty($p, 'effects.reflectionStrength', nodeDefaults, onChange)}
+      reflectionDirection={makeProperty($p, 'effects.reflectionDirection', nodeDefaults, onChange)}
       blur={makeProperty($p, 'effects.blur', nodeDefaults, onChange)}
       opacity={makeProperty($p, 'effects.opacity', nodeDefaults, onChange)}
       glass={makeProperty($p, 'effects.glass', nodeDefaults, onChange)}

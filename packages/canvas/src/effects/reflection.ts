@@ -4,6 +4,57 @@ import { resilientDeepClone } from '@diagram-craft/utils/object';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { VNode } from '../component/vdom';
+import type { ReflectionDirection } from '@diagram-craft/model/diagramProps';
+
+type ReflectionSpec = {
+  gradient: {
+    x2: '0' | '1';
+    y2: '0' | '1';
+    rotation: number;
+  };
+  transform: (bounds: Box) => string;
+};
+
+const getReflectionSpec = (direction: ReflectionDirection): ReflectionSpec => {
+  switch (direction) {
+    case 'top':
+      return {
+        gradient: {
+          x2: '0',
+          y2: '1',
+          rotation: 180
+        },
+        transform: bounds => `scale(1 -1) translate(0 ${-2 * bounds.y})`
+      };
+    case 'left':
+      return {
+        gradient: {
+          x2: '1',
+          y2: '0',
+          rotation: 180
+        },
+        transform: bounds => `scale(-1 1) translate(${-2 * bounds.x} 0)`
+      };
+    case 'right':
+      return {
+        gradient: {
+          x2: '1',
+          y2: '0',
+          rotation: 0
+        },
+        transform: bounds => `scale(-1 1) translate(${-2 * (bounds.x + bounds.w)} 0)`
+      };
+    default:
+      return {
+        gradient: {
+          x2: '0',
+          y2: '1',
+          rotation: 0
+        },
+        transform: bounds => `scale(1 -1) translate(0 ${-2 * (bounds.y + bounds.h)})`
+      };
+  }
+};
 
 export const makeReflection = (node: DiagramNode, children: VNode[]) => {
   const id = node.id;
@@ -20,15 +71,18 @@ export const makeReflection = (node: DiagramNode, children: VNode[]) => {
   }
 
   const strength = node.renderProps.effects?.reflectionStrength?.toString() ?? '1';
+  const direction = node.renderProps.effects?.reflectionDirection ?? 'bottom';
+  const spec = getReflectionSpec(direction);
+  const gradientRotation = -Angle.toDeg(bounds.r) + spec.gradient.rotation;
 
   return [
     svg.linearGradient(
       {
         id: `reflection-grad-${id}`,
-        y2: '1',
-        x2: '0',
+        y2: spec.gradient.y2,
+        x2: spec.gradient.x2,
         gradientUnits: 'objectBoundingBox',
-        gradientTransform: `rotate(${-Angle.toDeg(bounds.r)} 0.5 0.5)`
+        gradientTransform: `rotate(${gradientRotation} 0.5 0.5)`
       },
       svg.stop({ 'offset': '0.65', 'stop-color': 'white', 'stop-opacity': '0' }),
       svg.stop({ 'offset': '1', 'stop-color': 'white', 'stop-opacity': strength })
@@ -48,8 +102,7 @@ export const makeReflection = (node: DiagramNode, children: VNode[]) => {
       {
         transform: `
           rotate(${-Angle.toDeg(bounds.r)} ${center.x} ${center.y})
-          scale(1 -1)
-          translate(0 -${2 * (pathBounds!.y + pathBounds!.h)})
+          ${spec.transform(pathBounds!)}
           rotate(${Angle.toDeg(bounds.r)} ${center.x} ${center.y})
         `,
         mask: `url(#reflection-mask-${id})`,

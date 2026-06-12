@@ -15,11 +15,13 @@ import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import type { Property } from '@diagram-craft/model/property';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
+import type { ReflectionDirection } from '@diagram-craft/model/diagramProps';
 
 type FormProps = {
   diagram: Diagram;
   reflection: Property<boolean>;
   reflectionStrength: Property<number>;
+  reflectionDirection: Property<ReflectionDirection>;
   blur: Property<number>;
   opacity: Property<number>;
   glass: Property<boolean>;
@@ -43,6 +45,7 @@ export const NodeEffectsPanelForm = ({
   diagram: $d,
   reflection,
   reflectionStrength,
+  reflectionDirection,
   blur,
   opacity,
   glass,
@@ -78,6 +81,24 @@ export const NodeEffectsPanelForm = ({
                 formatValue={v => round(v * 100)}
                 storeValue={v => v / 100}
                 render={props => <Slider {...props} />}
+              />
+            </KeyValueTable.Value>
+
+            <KeyValueTable.Label valign="top">Direction:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={reflectionDirection as Property<string>}
+                render={props => (
+                  <Select.Root
+                    {...props}
+                    onChange={value => props.onChange((value ?? 'bottom') as ReflectionDirection)}
+                  >
+                    <Select.Item value={'bottom'}>Bottom</Select.Item>
+                    <Select.Item value={'top'}>Top</Select.Item>
+                    <Select.Item value={'left'}>Left</Select.Item>
+                    <Select.Item value={'right'}>Right</Select.Item>
+                  </Select.Root>
+                )}
               />
             </KeyValueTable.Value>
           </KeyValueTable.Root>
@@ -284,6 +305,7 @@ export const NodeEffectsPanel = (props: Props) => {
 
   const reflection = useNodeProperty($d, 'effects.reflection');
   const reflectionStrength = useNodeProperty($d, 'effects.reflectionStrength');
+  const reflectionDirection = useNodeProperty($d, 'effects.reflectionDirection');
   const blur = useNodeProperty($d, 'effects.blur');
   const opacity = useNodeProperty($d, 'effects.opacity');
 
@@ -316,6 +338,7 @@ export const NodeEffectsPanel = (props: Props) => {
         diagram={$d}
         reflection={reflection}
         reflectionStrength={reflectionStrength}
+        reflectionDirection={reflectionDirection}
         blur={blur}
         opacity={opacity}
         glass={glass}

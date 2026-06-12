@@ -295,6 +295,7 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     glass: false,
     opacity: 1,
     reflection: false,
+    reflectionDirection: 'bottom',
     reflectionStrength: 0.7,
     sketch: false,
     sketchFillType: 'fill',
