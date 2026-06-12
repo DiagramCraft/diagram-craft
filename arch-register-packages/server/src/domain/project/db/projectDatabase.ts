@@ -21,6 +21,7 @@ export type ContentNodeDbResult = {
 export type ContentNodeDbUpsert = {
   workspace: string;
   project_id: string;
+  parent_id?: string | null;
   path: string;
   name: string;
   type?: 'diagram' | 'folder';
@@ -108,6 +109,11 @@ export type ProjectDatabase = {
     ws: string,
     projectId: string,
     path: string
+  ): Promise<ContentNodeDbResult | null>;
+  getContentNodeById(
+    ws: string,
+    projectId: string,
+    id: string
   ): Promise<ContentNodeDbResult | null>;
   updateContentNodeSizeById(
     ws: string,

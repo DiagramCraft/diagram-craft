@@ -6,7 +6,6 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "strictNullChecks": true,
-    "experimentalDecorators": true,
     "moduleResolution": "bundler",
     "incremental": true,
     "allowImportingTsExtensions": false,

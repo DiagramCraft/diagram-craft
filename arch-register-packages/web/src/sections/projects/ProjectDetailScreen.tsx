@@ -142,15 +142,13 @@ export const ProjectDetailScreen = () => {
   const allFiles = [
     ...project.files.rootFiles,
     ...project.files.folders.flatMap(f => f.files)
-  ].filter(f => !f.path.endsWith('/.keep'));
+  ];
 
   const activeFolder = folderFilter
     ? project.files.folders.find(f => f.path === folderFilter)
     : null;
 
-  const visibleFiles = activeFolder
-    ? activeFolder.files.filter(f => !f.path.endsWith('/.keep'))
-    : allFiles;
+  const visibleFiles = activeFolder ? activeFolder.files : allFiles;
 
   const handleTogglePinned = async () => {
     setPinError('');
@@ -1112,12 +1110,10 @@ const DiagramsView = ({
       ? filtered.map(f => ({ file: f }))
       : [
           ...project.files.rootFiles
-            .filter(f => !f.path.endsWith('/.keep'))
             .filter(f => !lc || f.name.toLowerCase().includes(lc))
             .map(f => ({ file: f })),
           ...project.files.folders.flatMap(folder =>
             folder.files
-              .filter(f => !f.path.endsWith('/.keep'))
               .filter(f => !lc || f.name.toLowerCase().includes(lc))
               .map(f => ({ file: f, folder: folder.path }))
           )
@@ -1163,15 +1159,12 @@ const DiagramsView = ({
   }
 
   const rootFiles = project.files.rootFiles
-    .filter(f => !f.path.endsWith('/.keep'))
     .filter(f => !lc || f.name.toLowerCase().includes(lc));
 
   const folderGroups = project.files.folders
     .map(folder => ({
       path: folder.path,
-      files: folder.files
-        .filter(f => !f.path.endsWith('/.keep'))
-        .filter(f => !lc || f.name.toLowerCase().includes(lc))
+      files: folder.files.filter(f => !lc || f.name.toLowerCase().includes(lc))
     }))
     .filter(g => g.files.length > 0);
 

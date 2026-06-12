@@ -94,6 +94,14 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     return row ?? null;
   }
 
+  async getContentNodeById(workspace: string, projectId: string, id: string) {
+    const [row] = await this.sql<ContentNodeDbResult[]>`
+      SELECT * FROM content_node
+      WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+    `;
+    return row ?? null;
+  }
+
   async updateContentNodeSizeById(
     workspace: string,
     projectId: string,
@@ -176,11 +184,12 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   async upsertContentNode(input: ContentNodeDbUpsert) {
     try {
       const [row] = await this.sql<ContentNodeDbResult[]>`
-        INSERT INTO content_node (id, workspace, project_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
-        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+        INSERT INTO content_node (id, workspace, project_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
+        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path)
         DO UPDATE SET
           name = EXCLUDED.name,
+          parent_id = COALESCE(EXCLUDED.parent_id, content_node.parent_id),
           size_bytes = EXCLUDED.size_bytes,
           comment_count = EXCLUDED.comment_count,
           unresolved_comment_count = EXCLUDED.unresolved_comment_count,
@@ -198,8 +207,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   ) {
     try {
       const [row] = await this.sql<ContentNodeDbResult[]>`
-        INSERT INTO content_node (id, workspace, project_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
-        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
+        INSERT INTO content_node (id, workspace, project_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at)
+        VALUES (gen_random_uuid(), ${input.workspace}, ${input.project_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path) DO NOTHING
         RETURNING *
       `;
@@ -230,14 +239,21 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     updated_at: Date
   ) {
     try {
-      const rows = await this.sql<{ id: string }[]>`
+      const folderRows = await this.sql<{ id: string }[]>`
+        UPDATE content_node
+        SET path = ${newPath}, updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND project_id = ${projectId}
+          AND path = ${oldPath} AND type = 'folder'
+        RETURNING id
+      `;
+      const childRows = await this.sql<{ id: string }[]>`
         UPDATE content_node
         SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
             updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${oldPath}/%`}
         RETURNING id
       `;
-      return rows.map(row => row.id);
+      return [...folderRows.map(r => r.id), ...childRows.map(r => r.id)];
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -245,11 +261,29 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteContentNodeFolder(workspace: string, projectId: string, folderPath: string) {
     try {
-      return await this.sql<ContentNodeDbResult[]>`
-        DELETE FROM content_node
-        WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${folderPath}/%`}
-        RETURNING *
+      const [folder] = await this.sql<ContentNodeDbResult[]>`
+        SELECT * FROM content_node
+        WHERE workspace = ${workspace} AND project_id = ${projectId}
+          AND path = ${folderPath} AND type = 'folder'
       `;
+      if (!folder) return [];
+
+      const descendants = await this.sql<ContentNodeDbResult[]>`
+        WITH RECURSIVE desc_tree AS (
+          SELECT * FROM content_node WHERE parent_id = ${folder.id}
+          UNION ALL
+          SELECT cn.* FROM content_node cn
+          JOIN desc_tree dt ON cn.parent_id = dt.id
+        )
+        SELECT * FROM desc_tree
+      `;
+
+      await this.sql`
+        DELETE FROM content_node
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${folder.id}
+      `;
+
+      return [folder, ...descendants];
     } catch (error) {
       return normalizePostgresError(error);
     }
