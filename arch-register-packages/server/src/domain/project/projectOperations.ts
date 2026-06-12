@@ -59,28 +59,16 @@ const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
   typeof owner === 'string' && teamIds.has(owner) ? owner : null;
 
 export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
-  const rootFiles = files.filter(f => f.path.indexOf('/') === -1).map(toApiProjectFile);
+  const folderNodes = files.filter(f => f.type === 'folder');
+  const diagramNodes = files.filter(f => f.type === 'diagram');
 
-  const folderMap = new Map<string, ContentNodeDbResult[]>();
+  const rootFiles = diagramNodes.filter(f => f.parent_id === null).map(toApiProjectFile);
 
-  for (const f of files) {
-    const lastSlash = f.path.lastIndexOf('/');
-    if (lastSlash !== -1) {
-      const folder = f.path.substring(0, lastSlash);
-      const existing = folderMap.get(folder);
-      if (existing) {
-        existing.push(f);
-      } else {
-        folderMap.set(folder, [f]);
-      }
-    }
-  }
-
-  const folders = Array.from(folderMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([path, files]) => ({
-      path,
-      files: files.map(toApiProjectFile)
+  const folders = folderNodes
+    .sort((a, b) => a.path.localeCompare(b.path))
+    .map(folder => ({
+      path: folder.path,
+      files: diagramNodes.filter(f => f.parent_id === folder.id).map(toApiProjectFile)
     }));
 
   return { folders, rootFiles };
@@ -102,7 +90,9 @@ export const listProjects = async (
     );
     for (const files of projectFiles) {
       for (const file of files) {
-        fileCounts.set(file.project_id, (fileCounts.get(file.project_id) ?? 0) + 1);
+        if (file.type === 'diagram') {
+          fileCounts.set(file.project_id, (fileCounts.get(file.project_id) ?? 0) + 1);
+        }
       }
     }
     return visibleProjects
@@ -355,7 +345,6 @@ export const createFolder = async (
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; path: string; marker: ProjectFile | null }> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  const markerPath = `${folderPath}/.keep`;
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
     const project = await db.project.getProject(ws, id);
@@ -366,12 +355,23 @@ export const createFolder = async (
       'edit_project',
       'You do not have permission to modify this project'
     );
+
+    const lastSlash = folderPath.lastIndexOf('/');
+    const folderName = lastSlash !== -1 ? folderPath.substring(lastSlash + 1) : folderPath;
+    let parentId: string | null = null;
+    if (lastSlash !== -1) {
+      const parentPath = folderPath.substring(0, lastSlash);
+      const parentFolder = await db.project.getContentNodeByPath(ws, id, parentPath);
+      parentId = parentFolder?.id ?? null;
+    }
+
     const timestamp = new Date();
     const row = await db.project.createContentNodeIfAbsent({
       workspace: ws,
       project_id: id,
-      path: markerPath,
-      name: '.keep',
+      parent_id: parentId,
+      path: folderPath,
+      name: folderName,
       type: 'folder',
       size_bytes: 0,
       comment_count: 0,
@@ -497,6 +497,14 @@ export const saveFile = async (
     const existingFile = await db.project.getContentNodeByPath(ws, id, filePath);
     const isUpdate = !!existingFile;
 
+    const fileLastSlash = filePath.lastIndexOf('/');
+    let fileParentId: string | null = null;
+    if (fileLastSlash !== -1) {
+      const folderPath = filePath.substring(0, fileLastSlash);
+      const parentFolder = await db.project.getContentNodeByPath(ws, id, folderPath);
+      fileParentId = parentFolder?.id ?? null;
+    }
+
     // TODO: We should add validation here
     const doc = body as unknown as SerializedDiagramDocument;
 
@@ -505,6 +513,7 @@ export const saveFile = async (
     const row = await db.project.upsertContentNode({
       workspace: ws,
       project_id: id,
+      parent_id: fileParentId,
       path: filePath,
       name: String(displayName),
       size_bytes: content.length,
@@ -797,9 +806,18 @@ export const relocateFile = async (
     const updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
     const commentCounts = getDiagramCommentCounts(doc);
 
+    const newLastSlash = newPath.lastIndexOf('/');
+    let newParentId: string | null = null;
+    if (newLastSlash !== -1) {
+      const newFolderPath = newPath.substring(0, newLastSlash);
+      const parentFolder = await db.project.getContentNodeByPath(ws, id, newFolderPath);
+      newParentId = parentFolder?.id ?? null;
+    }
+
     const newFile = await db.project.upsertContentNode({
       workspace: ws,
       project_id: id,
+      parent_id: newParentId,
       path: newPath,
       name: displayName,
       size_bytes: updatedContent.length,

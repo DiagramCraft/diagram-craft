@@ -111,6 +111,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async getContentNodeById(workspace: string, projectId: string, id: string) {
+    return this.get(
+      'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? AND id = ?',
+      [workspace, projectId, id],
+      sqliteMappers.contentNode
+    );
+  }
+
   async updateContentNodeSizeById(
     workspace: string,
     projectId: string,
@@ -198,9 +206,10 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
       if (existing) {
         this.run(
-          'UPDATE content_node SET name = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ? WHERE id = ?',
+          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ? WHERE id = ?',
           [
             input.name,
+            input.parent_id ?? null,
             input.size_bytes,
             input.comment_count,
             input.unresolved_comment_count,
@@ -210,11 +219,12 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         );
       } else {
         this.run(
-          'INSERT INTO content_node (id, workspace, project_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO content_node (id, workspace, project_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
             input.project_id,
+            input.parent_id ?? null,
             input.path,
             input.name,
             input.type ?? 'diagram',
@@ -264,12 +274,23 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     const newPathPrefix = `${newPath}/`;
     const oldPathLength = oldPath.length;
 
-    const matchingIds = this.all<{ id: string }>(
+    const folderRow = this.get<{ id: string }>(
+      'SELECT id FROM content_node WHERE workspace = ? AND project_id = ? AND path = ? AND type = ?',
+      [workspace, projectId, oldPath, 'folder']
+    );
+
+    const childIds = this.all<{ id: string }>(
       'SELECT id FROM content_node WHERE workspace = ? AND project_id = ? AND path LIKE ?',
       [workspace, projectId, `${oldPathPrefix}%`]
     );
 
     const tx = this.db.transaction(() => {
+      if (folderRow) {
+        this.run(
+          'UPDATE content_node SET path = ?, updated_at = ? WHERE workspace = ? AND project_id = ? AND id = ?',
+          [newPath, updated_at.toISOString(), workspace, projectId, folderRow.id]
+        );
+      }
       this.run(
         `UPDATE content_node
          SET path = ? || substr(path, ?),
@@ -287,29 +308,34 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     });
 
     tx();
-    return matchingIds.map(row => row.id);
+    return [...(folderRow ? [folderRow.id] : []), ...childIds.map(row => row.id)];
   }
 
   async deleteContentNodeFolder(workspace: string, projectId: string, folderPath: string) {
-    const folderPathPrefix = `${folderPath}/`;
-    const matching = this.all(
-      'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? AND path LIKE ?',
-      [workspace, projectId, `${folderPathPrefix}%`],
+    const folder = await this.getContentNodeByPath(workspace, projectId, folderPath);
+    if (!folder) return [];
+
+    const descendants = this.all(
+      `WITH RECURSIVE desc_tree(id) AS (
+         SELECT id FROM content_node WHERE parent_id = ?
+         UNION ALL
+         SELECT cn.id FROM content_node cn
+         JOIN desc_tree d ON cn.parent_id = d.id
+       )
+       SELECT * FROM content_node WHERE id IN (SELECT id FROM desc_tree)`,
+      [folder.id],
       sqliteMappers.contentNode
     );
 
-    if (matching.length === 0) return [];
-
     const tx = this.db.transaction(() => {
-      this.run('DELETE FROM content_node WHERE workspace = ? AND project_id = ? AND path LIKE ?', [
-        workspace,
-        projectId,
-        `${folderPathPrefix}%`
-      ]);
+      this.run(
+        'DELETE FROM content_node WHERE workspace = ? AND project_id = ? AND id = ?',
+        [workspace, projectId, folder.id]
+      );
     });
 
     tx();
-    return matching;
+    return [folder, ...descendants];
   }
 
   async listProjectEntities(workspace: string, projectId: string) {
