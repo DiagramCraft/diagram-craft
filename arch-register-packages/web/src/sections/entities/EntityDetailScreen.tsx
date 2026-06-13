@@ -57,8 +57,9 @@ import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContra
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { EntityContentView } from './EntityContentView';
+import { EntityTimelineTab } from './EntityTimelineTab';
 
-type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes';
+type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes' | 'timeline';
 
 type Relation = {
   entityId: string;
@@ -459,6 +460,7 @@ export const EntityDetailScreen = () => {
                 Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
               </Tabs.Trigger>
               {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
+              <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
             </Tabs.List>
           </Tabs.Root>
         </div>
@@ -864,6 +866,15 @@ export const EntityDetailScreen = () => {
 
       {/* Change history */}
       {!contentFolder && tab === 'changes' && <ChangeHistory auditLog={auditLog} loading={loadingAudit} />}
+
+      {/* Timeline */}
+      {!contentFolder && tab === 'timeline' && (
+        <EntityTimelineTab
+          allSnapshots={allSnapshots}
+          entityProjects={entityProjects}
+          schema={schema}
+        />
+      )}
 
       <Dialog
         open={saveVersionOpen}
