@@ -8,7 +8,7 @@ export type ContentNodeDbResult = {
   parent_id: string | null;
   path: string;
   name: string;
-  type: string;
+  type: 'diagram' | 'folder' | 'markdown' | 'file';
   size_bytes: number;
   comment_count: number;
   unresolved_comment_count: number;
@@ -27,7 +27,7 @@ export type ContentNodeDbUpsert = {
   parent_id?: string | null;
   path: string;
   name: string;
-  type?: 'diagram' | 'folder';
+  type?: 'diagram' | 'folder' | 'markdown' | 'file';
   size_bytes: number;
   comment_count: number;
   unresolved_comment_count: number;
@@ -91,6 +91,7 @@ export type DiagramEntityFileDbResult = {
   file_path: string;
   file_name: string;
   file_size_bytes: number;
+  file_type: 'diagram' | 'folder' | 'markdown' | 'file';
   file_preview_svg: string | null;
   file_created_at: Date;
   file_updated_at: Date;

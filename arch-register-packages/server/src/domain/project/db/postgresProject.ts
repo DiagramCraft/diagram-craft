@@ -543,6 +543,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         pf.path        AS file_path,
         pf.name        AS file_name,
         pf.size_bytes  AS file_size_bytes,
+        pf.type        AS file_type,
         pf.preview_svg AS file_preview_svg,
         pf.created_at  AS file_created_at,
         pf.updated_at  AS file_updated_at,

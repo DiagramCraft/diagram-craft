@@ -61,16 +61,16 @@ const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
 
 export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
   const folderNodes = files.filter(f => f.type === 'folder');
-  const diagramNodes = files.filter(f => f.type === 'diagram');
+  const nonFolderNodes = files.filter(f => f.type !== 'folder');
 
-  const rootFiles = diagramNodes.filter(f => f.parent_id === null).map(toApiProjectFile);
+  const rootFiles = nonFolderNodes.filter(f => f.parent_id === null).map(toApiProjectFile);
 
   const folders = folderNodes
     .sort((a, b) => a.path.localeCompare(b.path))
     .map(folder => ({
       path: folder.path,
       name: folder.name,
-      files: diagramNodes.filter(f => f.parent_id === folder.id).map(toApiProjectFile)
+      files: nonFolderNodes.filter(f => f.parent_id === folder.id).map(toApiProjectFile)
     }));
 
   return { folders, rootFiles };
@@ -1306,6 +1306,7 @@ export const getEntityDiagramFiles = async (
         path: row.file_path,
         name: row.file_name,
         size_bytes: row.file_size_bytes,
+        type: row.file_type,
         preview_svg: row.file_preview_svg,
         created_at: row.file_created_at.toISOString(),
         updated_at: row.file_updated_at.toISOString()

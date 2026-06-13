@@ -121,7 +121,7 @@ CREATE TABLE content_node (
   parent_id                TEXT,
   path                     TEXT    NOT NULL,
   name                     TEXT    NOT NULL,
-  type                     TEXT    NOT NULL DEFAULT 'diagram' CHECK (type IN ('diagram', 'folder')),
+  type                     TEXT    NOT NULL DEFAULT 'diagram' CHECK (type IN ('diagram', 'folder', 'markdown', 'file')),
   size_bytes               INTEGER NOT NULL DEFAULT 0,
   is_template              INTEGER NOT NULL DEFAULT 0,
   is_workspace_template    INTEGER NOT NULL DEFAULT 0,
