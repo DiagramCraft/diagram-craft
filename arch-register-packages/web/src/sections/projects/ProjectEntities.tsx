@@ -3,6 +3,9 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck, TbCalendarEvent, TbDatabase, TbDots, TbPlus, TbTrash, TbLayoutList, TbCalendar } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData, ProjectEntity } from '@arch-register/api-types/projectContract';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import type { WorkspaceTeam } from '../../lib/api';
 import { Chip } from '../../components/Chip';
 import { TypeBadge } from '../../components/TypeBadge';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
@@ -19,6 +22,9 @@ export const ProjectEntities = ({
   futureSnapshots,
   schemaMap,
   entityTypeColorMap,
+  schemas,
+  lifecycleStates,
+  teams,
   onNavigateHome,
   onNavigateProject,
   onAddEntity,
@@ -32,6 +38,9 @@ export const ProjectEntities = ({
   futureSnapshots: EntitySnapshot[];
   schemaMap: Map<string, { color: string; icon: string | null }>;
   entityTypeColorMap: Map<string, string>;
+  schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
+  teams: WorkspaceTeam[];
   onNavigateHome: () => void;
   onNavigateProject: () => void;
   onAddEntity: () => void;
@@ -139,10 +148,14 @@ export const ProjectEntities = ({
         />
       ) : (
         <ProjectTimelineTab
+          project={project}
           projectEntities={projectEntities}
           futureSnapshots={futureSnapshots}
           schemaMap={schemaMap}
           entityTypeColorMap={entityTypeColorMap}
+          schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
         />
       )}
     </ProjectScreenLayout>

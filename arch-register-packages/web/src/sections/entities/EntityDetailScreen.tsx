@@ -873,6 +873,8 @@ export const EntityDetailScreen = () => {
           allSnapshots={allSnapshots}
           entityProjects={entityProjects}
           schema={schema}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
         />
       )}
 

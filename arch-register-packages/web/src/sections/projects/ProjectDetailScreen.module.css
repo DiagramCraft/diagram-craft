@@ -1090,142 +1090,463 @@
   color: var(--accent-bg);
 }
 
-/* ── Project timeline tab ──────────────────────────────────── */
-.projectTimeline {
-  padding: 16px 24px 32px;
+/* ── Project Timeline (ptl) ────────────────────────────────── */
+.ptl {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  overflow-x: auto;
-}
-
-.ptGrid {
-  display: grid;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
-  background: var(--panel-bg);
-  min-width: max-content;
 }
 
-.ptHeaderCell {
-  padding: 8px 12px;
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--cmp-fg-disabled);
-  background: var(--base-bg);
+.ptlConfig {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 40px;
   border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  background: var(--panel-bg);
+}
+
+.ptlLegend { display: flex; align-items: center; gap: 12px; }
+
+.ptlLegItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+}
+
+.ptlLegDiamond {
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.ptlSep {
+  width: 1px;
+  height: 18px;
+  background: var(--panel-border);
+  flex-shrink: 0;
+}
+
+.ptlConfigMeta {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+.ptlSegmented {
+  display: flex;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.ptlSegmented button {
+  padding: 0 8px;
+  height: 24px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  background: none;
+  border: 0;
+  border-right: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+
+.ptlSegmented button:last-child { border-right: 0; }
+.ptlSegmented button:hover { color: var(--base-fg); background: var(--cmp-bg); }
+
+.ptlSegActive {
+  color: var(--accent-fg) !important;
+  background: color-mix(in oklch, var(--accent-fg) 12%, transparent) !important;
+}
+
+.ptlBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.ptlScroll { flex: 1; overflow: auto; min-width: 0; }
+.ptlInner  { position: relative; }
+
+.ptlHead {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  height: 34px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.ptlCorner {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  width: 248px;
+  flex-shrink: 0;
+  background: var(--panel-bg);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-right: 1px solid var(--panel-border);
+}
+
+.ptlCornerLabel {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled);
+  font-family: var(--font-mono);
+}
+
+.ptlCols { display: flex; align-items: stretch; flex-shrink: 0; }
+
+.ptlCol {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
   border-right: 1px solid var(--panel-border);
   white-space: nowrap;
 }
 
-.ptHeaderCell:last-child {
-  border-right: 0;
+.ptlColNow {
+  color: var(--accent-fg);
+  background: color-mix(in oklch, var(--accent-fg) 8%, transparent);
+  font-weight: 500;
 }
 
-.ptGroupLabel {
-  grid-column: 1 / -1;
-  padding: 6px 12px;
-  font-size: 10.5px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--role-color, var(--cmp-fg-disabled));
-  background: color-mix(in oklch, var(--role-color, var(--panel-border)) 8%, var(--base-bg));
+.ptlToday {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent-fg);
+  opacity: 0.65;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.ptlTodayPip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--accent-fg);
+  padding-top: 2px;
+}
+
+/* Role group header */
+.ptlGrpRow {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  background: var(--base-bg);
   border-bottom: 1px solid var(--panel-border);
   border-top: 1px solid var(--panel-border);
 }
 
-.ptEntityCell {
+.ptlGrpLabel {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: 248px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--panel-border);
-  border-right: 1px solid var(--panel-border);
-  background: var(--panel-bg);
-  min-width: 0;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  background: var(--base-bg);
+  color: var(--base-fg-dim);
 }
 
-.ptEntityName {
-  font-size: 12.5px;
-  color: var(--base-fg);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.ptlGrpDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.ptMonthCell {
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--panel-border);
-  border-right: 1px solid var(--panel-border);
+.ptlGrpCount {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled);
+  font-family: var(--font-mono);
+}
+
+/* Entity rows */
+.ptlRow {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-height: 36px;
+  align-items: center;
+  height: 32px;
+  border-bottom: 1px solid var(--panel-border);
+  transition: background 45ms;
 }
 
-.ptMonthCell:last-child {
-  border-right: 0;
-}
+.ptlRow:hover     { background: var(--cmp-bg); cursor: pointer; }
+.ptlRowActive     { background: color-mix(in oklch, var(--accent-fg) 6%, transparent); }
 
-.ptMarker {
-  display: inline-flex;
+.ptlLabel {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  width: 248px;
+  flex-shrink: 0;
+  display: flex;
   align-items: center;
   gap: 5px;
-  padding: 2px 7px 2px 5px;
-  background: color-mix(in oklch, var(--accent-fg) 12%, transparent);
-  border: 1px solid color-mix(in oklch, var(--accent-fg) 30%, transparent);
-  border-radius: 10px;
-  color: var(--accent-fg);
-  font-size: 11px;
-  max-width: 100%;
+  padding: 0 10px;
+  background: var(--base-bg);
+  border-right: 1px solid var(--panel-border);
+  height: 100%;
+  overflow: hidden;
 }
 
-.ptMarkerLabel {
+.ptlRow:hover .ptlLabel   { background: var(--cmp-bg); }
+.ptlRowActive .ptlLabel   { background: color-mix(in oklch, var(--accent-fg) 6%, transparent); }
+
+.ptlName {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  min-width: 0;
+  font-size: 12px;
+  color: var(--base-fg);
 }
 
-.ptUndated {
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  background: var(--panel-bg);
+.ptlTrack {
+  position: relative;
+  flex-shrink: 0;
+  height: 32px;
+  overflow: visible;
 }
 
-.ptUndatedLabel {
-  padding: 8px 12px;
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+/* Snapshot marker */
+.ptlMarker {
+  position: absolute;
+  top: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-50%);
+  cursor: pointer;
+  z-index: 2;
+}
+
+.ptlMarkerDiamond {
+  width: 11px;
+  height: 11px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  transition: transform 80ms;
+}
+
+.ptlMarker:hover .ptlMarkerDiamond { transform: rotate(45deg) scale(1.3); }
+
+.ptlMarkerSelected .ptlMarkerDiamond {
+  transform: rotate(45deg) scale(1.3);
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* Undated section */
+.ptlUndated {
+  border-top: 1px solid var(--panel-border);
+}
+
+.ptlUndatedLabel {
+  position: sticky;
+  left: 0;
+  padding: 6px 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
   color: var(--cmp-fg-disabled);
   background: var(--base-bg);
   border-bottom: 1px solid var(--panel-border);
 }
 
-.ptUndatedRow {
+.ptlUndatedRow {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 7px 12px;
   border-bottom: 1px solid var(--panel-border);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
-.ptUndatedRow:last-child {
-  border-bottom: 0;
-}
+.ptlUndatedRow:last-child { border-bottom: 0; }
 
-.ptUndatedNote {
-  font-size: 11.5px;
+.ptlUndatedNote {
+  font-size: 11px;
   color: var(--cmp-fg-disabled);
-  margin-left: 4px;
+}
+
+/* Detail panel */
+.ptlDetail {
+  width: 280px;
+  flex-shrink: 0;
+  align-self: stretch;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ptlDetailHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.ptlDetailEntity {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ptlDetailName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ptlDetailSub {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin-top: 1px;
+}
+
+.ptlDetailCloseBtn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  border-radius: var(--r);
+  cursor: pointer;
+  color: var(--cmp-fg-disabled);
+}
+
+.ptlDetailCloseBtn:hover { background: var(--cmp-bg); color: var(--base-fg); }
+
+.ptlDetailBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ptlDetailStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ptlDetailBadge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.ptlDetailMsg {
+  font-size: 11.5px;
+  color: var(--base-fg-dim);
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.ptlDetailChanges { display: flex; flex-direction: column; gap: 4px; }
+
+.ptlDetailSectionLabel {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--cmp-fg-disabled);
+  padding: 2px 0;
+}
+
+.ptlChgRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  background: var(--cmp-bg);
+}
+
+.ptlChgField { font-weight: 500; color: var(--base-fg-more-dim); }
+.ptlChgFrom  { font-size: 10.5px; color: var(--cmp-fg-disabled); }
+.ptlChgArrow { color: var(--cmp-fg-disabled); }
+.ptlChgTo    { font-weight: 500; color: var(--base-fg); }
+
+.ptlDetailMeta {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  padding-top: 4px;
+}
+
+/* Empty state */
+.ptEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 48px 24px;
+  gap: 8px;
+  text-align: center;
+}
+
+.ptEmptyTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--base-fg-dim);
+}
+
+.ptEmptySub {
+  font-size: 12.5px;
+  color: var(--cmp-fg-disabled);
+  max-width: 320px;
 }
 
 /* Apply snapshot conflict dialog */

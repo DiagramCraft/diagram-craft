@@ -484,6 +484,9 @@ export const ProjectDetailScreen = () => {
           futureSnapshots={futureSnapshots}
           schemaMap={schemaMap}
           entityTypeColorMap={entityTypeColorMap}
+          schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
           onNavigateHome={handleNavigateHome}
           onNavigateProject={handleNavigateProject}
           onAddEntity={() => setAddEntityOpen(true)}
