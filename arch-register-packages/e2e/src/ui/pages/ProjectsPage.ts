@@ -7,12 +7,17 @@ type CreateProjectInput = {
 };
 
 export class ProjectsPage extends WorkspacePage {
+  private readonly primarySidebarStorageKey = 'ar-workspace-primary-sidebar-mode';
 
   goto = async () => {
     await this.page.goto(workspaceProjectsRoute(this.workspaceSlug));
   };
 
   gotoProject = async (projectId: string, tab: 'projects' | 'archive' = 'projects') => {
+    await this.page.addInitScript(
+      ({ key, value }) => window.localStorage.setItem(key, value),
+      { key: this.primarySidebarStorageKey, value: 'expanded' }
+    );
     await this.page.goto(projectDetailRoute(this.workspaceSlug, projectId, tab));
   };
 
@@ -31,15 +36,26 @@ export class ProjectsPage extends WorkspacePage {
     this.page.getByTestId(`project-group-${title}`);
 
   sidebarProjectRow = (name: string) => this.page.getByTestId(`project-row-${name}`);
+  secondaryHomeRow = () => this.page.getByTestId('project-secondary-home');
+  secondaryEntitiesRow = () => this.page.getByTestId('project-secondary-entities');
+  emptySelectionTitle = () => this.page.getByText('Select a project');
+  addEntityButton = () => this.page.getByRole('main').getByRole('button', { name: 'Add entity' }).first();
+  entitiesSectionLabel = () => this.page.getByRole('main').getByText(/^Entities \(/);
 
   openProject = async (name: string) => {
     await this.workspaceShell.openNav('projects');
+    await this.sidebarProjectRow(name).click();
     await this.expectProjectOpened(name);
   };
 
   expectLoaded = async () => {
     await this.workspaceShell.expectActiveNav('projects');
     await this.workspaceShell.expectMainVisible();
+  };
+
+  expectNoProjectSelected = async () => {
+    await this.expectLoaded();
+    await expect(this.emptySelectionTitle()).toBeVisible();
   };
 
   expectProjectOpened = async (name: string) => {
@@ -71,6 +87,14 @@ export class ProjectsPage extends WorkspacePage {
   openProjectFromSidebar = async (projectName: string) => {
     await this.sidebarProjectRow(projectName).click();
     await this.expectProjectOpened(projectName);
+  };
+
+  openEntitiesSection = async () => {
+    await this.secondaryEntitiesRow().click();
+  };
+
+  openHomeSection = async () => {
+    await this.secondaryHomeRow().click();
   };
 
   openEditProjectDialog = async () => {

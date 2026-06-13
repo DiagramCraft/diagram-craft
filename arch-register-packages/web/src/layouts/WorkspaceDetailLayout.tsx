@@ -3,6 +3,19 @@ import styles from './WorkspaceLayout.module.css';
 import sidePanelStyles from '../shell/SidePanel.module.css';
 import { FoldedRail, NavSidebar } from '../shell/FoldedRail';
 
+type NavigationMode = 'auto' | 'expanded' | 'collapsed';
+
+const STORAGE_KEY = 'ar-workspace-primary-sidebar-mode';
+
+const readNavigationMode = (): NavigationMode => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored === 'expanded' || stored === 'collapsed' ? stored : 'auto';
+  } catch {
+    return 'auto';
+  }
+};
+
 type WorkspaceDetailLayoutProps = {
   rail: ReactNode;
   navigationLabel: string;
@@ -22,13 +35,36 @@ export const WorkspaceDetailLayout = ({
   secondarySidebar,
   children
 }: WorkspaceDetailLayoutProps) => {
-  const [navMode, setNavMode] = useState<'auto' | 'expanded' | 'collapsed'>('auto');
+  const [navMode, setNavMode] = useState<NavigationMode>(readNavigationMode);
   const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
 
   useEffect(() => {
     const onResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (navMode === 'auto') {
+        localStorage.removeItem(STORAGE_KEY);
+      } else {
+        localStorage.setItem(STORAGE_KEY, navMode);
+      }
+    } catch {
+      // ignore storage failures
+    }
+  }, [navMode]);
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY) {
+        setNavMode(readNavigationMode());
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   const expanded = navMode === 'expanded' || (navMode === 'auto' && windowWidth >= 1320);

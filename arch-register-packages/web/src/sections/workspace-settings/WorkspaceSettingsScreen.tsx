@@ -551,7 +551,7 @@ const AuditLogSection = ({
         navigate({
           to: '/$workspaceSlug/projects/$projectId',
           params: { workspaceSlug, projectId: entry.entity_id },
-          search: { tab: 'projects' as const }
+          search: { tab: 'projects' as const, section: 'home' as const }
         });
         return;
       case 'entity_schema':
@@ -566,7 +566,11 @@ const AuditLogSection = ({
           navigate({
             to: '/$workspaceSlug/projects/$projectId',
             params: { workspaceSlug, projectId },
-            search: { tab: 'projects' as const, folder: folderFilter ?? undefined }
+            search: {
+              tab: 'projects' as const,
+              section: 'home' as const,
+              folder: folderFilter ?? undefined
+            }
           });
         }
       }

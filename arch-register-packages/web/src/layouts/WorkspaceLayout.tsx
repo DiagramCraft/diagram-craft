@@ -100,8 +100,7 @@ export const WorkspaceLayout = () => {
   const handleRailPick = useCallback(
     (id: WorkspaceRailItemId) => {
       if (id === 'model' && !canViewSchemas) return;
-      const result = navigateFromRailItem(id, { navigate, workspaceSlug, projects });
-      if (result === 'open-project-dialog') setAddProjectOpen(true);
+      navigateFromRailItem(id, { navigate, workspaceSlug, projects });
     },
     [canViewSchemas, navigate, projects, workspaceSlug]
   );
@@ -336,7 +335,8 @@ export const WorkspaceLayout = () => {
                 tab:
                   project.status === 'complete' || project.status === 'cancelled'
                     ? 'archive'
-                    : 'projects'
+                    : 'projects',
+                section: 'home'
               }
             });
           }}

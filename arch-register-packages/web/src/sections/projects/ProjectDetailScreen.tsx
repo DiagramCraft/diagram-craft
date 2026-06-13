@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -12,22 +11,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ColorPicker } from '../../components/ColorPicker';
-import { DiagramCard, DiagramRow } from '../../components/DiagramCard';
-import {
-  TbPlus,
-  TbFolder,
-  TbFolderOpen,
-  TbLayoutGrid,
-  TbList,
-  TbTrash,
-  TbPencil,
-  TbStar,
-  TbCopy,
-  TbCheck,
-  TbDatabase
-} from 'react-icons/tb';
-import { Chip } from '../../components/Chip';
-import { TypeBadge } from '../../components/TypeBadge';
+import { TbPlus, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -52,6 +36,10 @@ import {
   useMoveProjectFile,
   useToggleTemplateStatus
 } from '../../hooks/useProjectFiles';
+import { ProjectContent } from './ProjectContent';
+import { ProjectDetails } from './ProjectDetails';
+import { ProjectEntities } from './ProjectEntities';
+import type { ProjectMenuTarget } from './ProjectDiagramsView';
 
 const PROJECT_STATUSES = [
   { value: 'draft', label: 'Draft' },
@@ -60,15 +48,23 @@ const PROJECT_STATUSES = [
   { value: 'cancelled', label: 'Cancelled' }
 ] as const;
 
-type MenuTarget = { type: 'diagram'; file: FileEntry } | { type: 'folder'; path: string };
+type ProjectSection = 'home' | 'entities';
 
 export const ProjectDetailScreen = () => {
   const navigate = useNavigate();
   const { projectId } = useParams({ strict: false }) as { projectId: string };
-  const search = useSearch({ strict: false }) as { tab?: string; folder?: string };
+  const search = useSearch({ strict: false }) as {
+    tab?: string;
+    folder?: string;
+    section?: ProjectSection;
+    dialog?: 'add-entity';
+  };
   const { workspaceSlug, teams, projectEntityTypes, schemas } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const folderFilter = search.folder ?? null;
+  const section: ProjectSection = search.section === 'entities' ? 'entities' : 'home';
+  const pendingDialog = search.dialog;
+  const contentFolderFilter = section === 'home' ? folderFilter : null;
 
   const [editing, setEditing] = useState(false);
   const [filter, setFilter] = useState('');
@@ -78,13 +74,12 @@ export const ProjectDetailScreen = () => {
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
   const [pinError, setPinError] = useState('');
-  const [activeTab, setActiveTab] = useState<'diagrams' | 'entities'>('diagrams');
   const [addEntityOpen, setAddEntityOpen] = useState(false);
 
   // Context menu state
-  const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
-  const [renameTarget, setRenameTarget] = useState<MenuTarget | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<MenuTarget | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; target: ProjectMenuTarget } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<ProjectMenuTarget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ProjectMenuTarget | null>(null);
 
   // Query hooks
   const { data: project, isLoading } = useProject(workspaceId, projectId);
@@ -119,6 +114,11 @@ export const ProjectDetailScreen = () => {
     return m;
   }, [projectEntityTypes]);
 
+  useEffect(() => {
+    if (pendingDialog !== 'add-entity') return;
+    setAddEntityOpen(true);
+  }, [pendingDialog]);
+
   if (isLoading) {
     return (
       <div className={styles.screen}>
@@ -144,8 +144,8 @@ export const ProjectDetailScreen = () => {
     ...project.files.folders.flatMap(f => f.files)
   ];
 
-  const activeFolder = folderFilter
-    ? project.files.folders.find(f => f.path === folderFilter)
+  const activeFolder = contentFolderFilter
+    ? project.files.folders.find(f => f.path === contentFolderFilter)
     : null;
 
   const visibleFiles = activeFolder ? activeFolder.files : allFiles;
@@ -178,7 +178,11 @@ export const ProjectDetailScreen = () => {
     navigate({
       to: '/$workspaceSlug/projects/$projectId',
       params: { workspaceSlug, projectId },
-      search: { tab: search.tab as 'projects' | 'archive' | undefined }
+      search: {
+        tab: search.tab as 'projects' | 'archive' | undefined,
+        section: 'home',
+        dialog: undefined
+      }
     });
   };
 
@@ -189,7 +193,23 @@ export const ProjectDetailScreen = () => {
     });
   };
 
-  const openContextMenu = (e: React.MouseEvent, target: MenuTarget) => {
+  const closeAddEntityDialog = () => {
+    setAddEntityOpen(false);
+    if (pendingDialog !== 'add-entity') return;
+    navigate({
+      to: '/$workspaceSlug/projects/$projectId',
+      params: { workspaceSlug, projectId },
+      search: {
+        tab: search.tab as 'projects' | 'archive' | undefined,
+        folder: folderFilter ?? undefined,
+        section,
+        dialog: undefined
+      },
+      replace: true
+    });
+  };
+
+  const openContextMenu = (e: React.MouseEvent, target: ProjectMenuTarget) => {
     e.preventDefault();
     e.stopPropagation();
     setMenu({ x: e.clientX, y: e.clientY, target });
@@ -444,236 +464,66 @@ export const ProjectDetailScreen = () => {
   };
 
   return (
-    <div className={styles.screen}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div>
-          <div className={styles.eyebrow}>
-            <button type="button" onClick={handleNavigateHome}>
-              Projects
-            </button>
-            {' / '}
-            <button type="button" onClick={handleNavigateProject}>
-              {project.name}
-            </button>
-            {folderFilter && (
-              <>
-                {' / '}
-                {folderFilter}
-              </>
-            )}
-          </div>
-          <div className={styles.titleRow}>
-            <h1 className={styles.title}>{folderFilter ?? project.name}</h1>
-            {!folderFilter && project.canEdit && (
-              <button
-                type="button"
-                className={`${styles.pinBtn} ${project.pinned ? styles.pinBtnActive : ''}`}
-                onClick={handleTogglePinned}
-                disabled={updateProject.isPending}
-                title={project.pinned ? 'Unpin project' : 'Pin project'}
-                aria-label={project.pinned ? 'Unpin project' : 'Pin project'}
-              >
-                <TbStar size={16} />
-              </button>
-            )}
-          </div>
-          {project.description && <div className={styles.sub}>{project.description}</div>}
-          {pinError && <div className={styles.errorText}>{pinError}</div>}
-        </div>
-        <div className={styles.actions}>
-          {!folderFilter && project.canEdit && (
-            <Button icon={<TbPencil size={12} />} onClick={() => setEditing(true)}>
-              Edit
-            </Button>
-          )}
-          {project.canManageFiles && (
-            <Button icon={<TbFolderOpen size={12} />} onClick={() => setAddFolderOpen(true)}>
-              New folder
-            </Button>
-          )}
-          {project.canManageFiles && (
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={() => setAddDiagramOpen(true)}
-            >
-              New diagram
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Meta bar */}
-      <div className={styles.meta}>
-        <MetaItem
-          label="Diagrams"
-          value={<span className="mono tabular">{allFiles.length}</span>}
-        />
-        <MetaItem
-          label="Folders"
-          value={<span className="mono tabular">{project.files.folders.length}</span>}
-        />
-        <MetaItem label="Owner" value={project.owner?.name ?? '—'} />
-        <MetaItem label="Last edit" value={new Date(project.updated_at).toLocaleDateString()} />
-      </div>
-
-      {/* Toolbar */}
-      <div className={styles.tabBar}>
-        <Tabs.Root
-          value={activeTab}
-          onValueChange={v => setActiveTab(v as 'diagrams' | 'entities')}
-        >
-          <Tabs.List>
-            <Tabs.Trigger value="diagrams">Diagrams ({visibleFiles.length})</Tabs.Trigger>
-            <Tabs.Trigger value="entities">Entities ({projectEntities.length})</Tabs.Trigger>
-          </Tabs.List>
-        </Tabs.Root>
-        {activeTab === 'diagrams' && (
-          <div className={styles.tabBarRight}>
-            <TextInput
-              variant="search"
-              placeholder="Filter diagrams…"
-              value={filter}
-              onChange={v => setFilter(v ?? '')}
-              onClear={() => setFilter('')}
-            />
-            <button
-              type="button"
-              className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive : ''}`}
-              title="Grid view"
-              onClick={() => setViewMode('grid')}
-            >
-              <TbLayoutGrid size={13} />
-            </button>
-            <button
-              type="button"
-              className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive : ''}`}
-              title="List view"
-              onClick={() => setViewMode('list')}
-            >
-              <TbList size={13} />
-            </button>
-          </div>
-        )}
-        {activeTab === 'entities' && project.canEdit && (
-          <div className={styles.tabBarRight}>
-            <Button icon={<TbPlus size={12} />} onClick={() => setAddEntityOpen(true)}>
-              Add entity
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {activeTab === 'diagrams' && (
-        <DiagramsView
+    <>
+      {section === 'entities' ? (
+        <ProjectEntities
           project={project}
+          projectEntities={projectEntities}
+          schemaMap={schemaMap}
+          entityTypeColorMap={entityTypeColorMap}
+          onNavigateHome={handleNavigateHome}
+          onNavigateProject={handleNavigateProject}
+          onAddEntity={() => setAddEntityOpen(true)}
+          onToggleDone={(entityId, isDone) =>
+            updateEntityMutation.mutate({ entityId, is_done: !isDone })
+          }
+          onRemoveEntity={entityId => removeEntityMutation.mutate(entityId)}
+        />
+      ) : contentFolderFilter ? (
+        <ProjectContent
+          project={project}
+          folderPath={contentFolderFilter}
           visibleFiles={visibleFiles}
-          folderFilter={folderFilter}
+          allFilesCount={allFiles.length}
+          folderCount={project.files.folders.length}
           filter={filter}
           viewMode={viewMode}
+          onNavigateHome={handleNavigateHome}
+          onNavigateProject={handleNavigateProject}
+          onSetFilter={setFilter}
+          onSetViewMode={setViewMode}
           onOpenDiagram={handleNavigateDiagram}
-          onNewDiagram={
-            project.canManageFiles
-              ? () => {
-                  setAddDiagramFolder(folderFilter);
-                  setAddDiagramOpen(true);
-                }
-              : undefined
-          }
+          onAddFolder={() => setAddFolderOpen(true)}
+          onAddDiagram={() => {
+            setAddDiagramFolder(contentFolderFilter);
+            setAddDiagramOpen(true);
+          }}
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
-      )}
-
-      {activeTab === 'entities' && (
-        <div className={styles.entityTab}>
-          {projectEntities.length === 0 ? (
-            <div className={styles.empty}>
-              <div className={styles.emptyIcon}>
-                <TbDatabase size={22} />
-              </div>
-              <div className={styles.emptyTitle}>No entities linked</div>
-              <div className={styles.emptySub}>
-                Link entities this project decommissions, modifies, creates, or depends on.
-              </div>
-              {project.canEdit && (
-                <button type="button" className="ar-btn" onClick={() => setAddEntityOpen(true)}>
-                  <TbPlus size={11} /> Add entity
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className={styles.pentTable}>
-              <div className={styles.pentHead}>
-                <span>Name</span>
-                <span>Type</span>
-                <span>Role</span>
-                <span>Done</span>
-              </div>
-              {projectEntities.map(e => {
-                const s = e.entity_schema ? schemaMap.get(e.entity_schema.id) : undefined;
-                const roleColor = e.entity_type
-                  ? entityTypeColorMap.get(e.entity_type.id)
-                  : undefined;
-                return (
-                  <div key={e.entity_id} className={styles.pentRow}>
-                    <button type="button" className={styles.pentName}>
-                      {s && <TypeBadge color={s.color} icon={s.icon} size={18} />}
-                      <div>
-                        <div>{e.entity_name}</div>
-                        {e.entity_description && (
-                          <div className={styles.pentNameSub}>{e.entity_description}</div>
-                        )}
-                      </div>
-                    </button>
-                    <span className={styles.pentType}>
-                      {e.entity_schema ? (
-                        <Chip tone="ghost">{e.entity_schema.name}</Chip>
-                      ) : (
-                        <span className="dim">—</span>
-                      )}
-                    </span>
-                    <span className={styles.pentRole}>
-                      {e.entity_type?.name ? (
-                        <Chip tone="ghost" dot={roleColor}>
-                          {e.entity_type.name}
-                        </Chip>
-                      ) : (
-                        <span className="dim">—</span>
-                      )}
-                    </span>
-                    <span className={styles.pentActions}>
-                      <button
-                        type="button"
-                        className={`${styles.pentCheck} ${e.is_done ? styles.pentCheckDone : ''}`}
-                        onClick={() =>
-                          project.canEdit &&
-                          updateEntityMutation.mutate({
-                            entityId: e.entity_id,
-                            is_done: !e.is_done
-                          })
-                        }
-                        title={e.is_done ? 'Mark as not done' : 'Mark as done'}
-                      >
-                        <TbCheck size={11} />
-                      </button>
-                      {project.canEdit && (
-                        <button
-                          type="button"
-                          className={styles.removeEntityBtn}
-                          onClick={() => removeEntityMutation.mutate(e.entity_id)}
-                          title="Remove"
-                        >
-                          <TbTrash size={13} />
-                        </button>
-                      )}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+      ) : (
+        <ProjectDetails
+          project={project}
+          visibleFiles={visibleFiles}
+          allFilesCount={allFiles.length}
+          folderCount={project.files.folders.length}
+          filter={filter}
+          viewMode={viewMode}
+          pinError={pinError}
+          isUpdatingProject={updateProject.isPending}
+          onNavigateHome={handleNavigateHome}
+          onNavigateProject={handleNavigateProject}
+          onTogglePinned={handleTogglePinned}
+          onEdit={() => setEditing(true)}
+          onSetFilter={setFilter}
+          onSetViewMode={setViewMode}
+          onOpenDiagram={handleNavigateDiagram}
+          onAddFolder={() => setAddFolderOpen(true)}
+          onAddDiagram={() => {
+            setAddDiagramFolder(contentFolderFilter);
+            setAddDiagramOpen(true);
+          }}
+          onContextMenu={project.canManageFiles ? openContextMenu : undefined}
+        />
       )}
 
       {editing && project.canEdit && (
@@ -723,7 +573,7 @@ export const ProjectDetailScreen = () => {
       {addEntityOpen && (
         <AddEntityToProjectDialog
           open={addEntityOpen}
-          onClose={() => setAddEntityOpen(false)}
+          onClose={closeAddEntityDialog}
           workspaceId={workspaceId}
           projectId={projectId}
           projectEntityTypes={projectEntityTypes}
@@ -777,41 +627,9 @@ export const ProjectDetailScreen = () => {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-    </div>
+    </>
   );
 };
-
-const MetaItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div className={styles.metaItem}>
-    <div className={styles.metaLabel}>{label}</div>
-    <div className={styles.metaValue}>{value}</div>
-  </div>
-);
-
-const EmptyState = ({
-  title,
-  sub,
-  actionLabel,
-  onAction
-}: {
-  title: string;
-  sub: string;
-  actionLabel?: string;
-  onAction?: () => void;
-}) => (
-  <div className={styles.empty}>
-    <div className={styles.emptyIcon}>
-      <TbPlus size={18} />
-    </div>
-    <div className={styles.emptyTitle}>{title}</div>
-    <div className={styles.emptySub}>{sub}</div>
-    {actionLabel && (
-      <Button variant="primary" onClick={onAction}>
-        {actionLabel}
-      </Button>
-    )}
-  </div>
-);
 
 const RenameDialog = ({
   open,
@@ -884,145 +702,6 @@ const RenameDialog = ({
         </div>
       </form>
     </Dialog>
-  );
-};
-
-const DiagramsView = ({
-  project,
-  visibleFiles,
-  folderFilter,
-  filter,
-  viewMode,
-  onOpenDiagram,
-  onNewDiagram,
-  onContextMenu
-}: {
-  project: ProjectDetailData;
-  visibleFiles: FileEntry[];
-  folderFilter: string | null;
-  filter: string;
-  viewMode: 'grid' | 'list';
-  onOpenDiagram: (diagramId: string) => void;
-  onNewDiagram?: () => void;
-  onContextMenu?: (e: React.MouseEvent, target: MenuTarget) => void;
-}) => {
-  const lc = filter.toLowerCase();
-  const filtered = lc ? visibleFiles.filter(f => f.name.toLowerCase().includes(lc)) : visibleFiles;
-
-  if (filtered.length === 0 && !filter) {
-    return (
-      <EmptyState
-        title={folderFilter ? 'No diagrams in this folder' : 'No diagrams yet'}
-        sub="Create your first diagram to get started."
-        actionLabel={onNewDiagram ? 'New diagram' : undefined}
-        onAction={onNewDiagram}
-      />
-    );
-  }
-
-  if (filtered.length === 0) {
-    return <EmptyState title="No matches" sub={`No diagrams match "${filter}".`} />;
-  }
-
-  const fileItemProps = (f: FileEntry, folder?: string) => ({
-    file: f,
-    folder,
-    onOpen: () => onOpenDiagram(f.id),
-    onContextMenu: onContextMenu
-      ? (e: React.MouseEvent) => onContextMenu(e, { type: 'diagram' as const, file: f })
-      : undefined
-  });
-
-  if (viewMode === 'list') {
-    const allItems: Array<{ file: FileEntry; folder?: string }> = folderFilter
-      ? filtered.map(f => ({ file: f }))
-      : [
-          ...project.files.rootFiles
-            .filter(f => !lc || f.name.toLowerCase().includes(lc))
-            .map(f => ({ file: f })),
-          ...project.files.folders.flatMap(folder =>
-            folder.files
-              .filter(f => !lc || f.name.toLowerCase().includes(lc))
-              .map(f => ({ file: f, folder: folder.path }))
-          )
-        ];
-
-    return (
-      <div className={styles.diagramListPanel}>
-        <div className={styles.diagramListHead}>
-          <span>Name</span>
-          <span>Folder</span>
-          <span>Last edit</span>
-        </div>
-        {allItems.map(({ file: f, folder }) => (
-          <DiagramRow key={f.path} {...fileItemProps(f, folder)} />
-        ))}
-      </div>
-    );
-  }
-
-  // Grid view
-  const containerClass = styles.diagramGrid;
-  const addButton =
-    onNewDiagram == null ? null : (
-      <button
-        type="button"
-        className={`${styles.diagramCard} ${styles.diagramCardAdd}`}
-        onClick={onNewDiagram}
-      >
-        <TbPlus size={16} />
-        New diagram
-      </button>
-    );
-
-  if (folderFilter) {
-    return (
-      <div className={containerClass}>
-        {filtered.map(f => (
-          <DiagramCard key={f.path} {...fileItemProps(f)} />
-        ))}
-        {addButton}
-      </div>
-    );
-  }
-
-  const rootFiles = project.files.rootFiles
-    .filter(f => !lc || f.name.toLowerCase().includes(lc));
-
-  const folderGroups = project.files.folders
-    .map(folder => ({
-      path: folder.path,
-      files: folder.files.filter(f => !lc || f.name.toLowerCase().includes(lc))
-    }))
-    .filter(g => g.files.length > 0);
-
-  return (
-    <>
-      {rootFiles.length > 0 && (
-        <div className={containerClass}>
-          {rootFiles.map(f => (
-            <DiagramCard key={f.path} {...fileItemProps(f)} />
-          ))}
-          {folderGroups.length === 0 && addButton}
-        </div>
-      )}
-      {folderGroups.map((g, idx) => (
-        <div key={g.path}>
-          <div className={styles.sectionLabel}>
-            <TbFolder size={11} /> {g.path}
-          </div>
-          <div className={containerClass}>
-            {g.files.map(f => (
-              <DiagramCard key={f.path} {...fileItemProps(f, g.path)} />
-            ))}
-            {idx === folderGroups.length - 1 && addButton}
-          </div>
-        </div>
-      ))}
-      {rootFiles.length === 0 && folderGroups.length === 0 && (
-        <div className={containerClass}>{addButton}</div>
-      )}
-    </>
   );
 };
 

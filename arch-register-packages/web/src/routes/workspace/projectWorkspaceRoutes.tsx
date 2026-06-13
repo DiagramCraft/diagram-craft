@@ -1,20 +1,22 @@
 import { createRoute } from '@tanstack/react-router';
+import { ProjectsScreen } from '../../sections/projects/ProjectsScreen';
 import { ProjectDetailScreen } from '../../sections/projects/ProjectDetailScreen';
 import { DiagramScreen } from '../../sections/projects/DiagramScreen';
 import { ProjectsSidebar } from '../../sections/projects/ProjectsSidebar';
+import { ProjectContentSidebar } from '../../sections/projects/ProjectContentSidebar';
 import { validateProjectSearch } from '../searchParams';
-import { buildProjectBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
+import { buildProjectBreadcrumbs, getAllParams } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
 export const createProjectWorkspaceRoutes = (
   // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
   workspaceRoute: any
 ): object[] => {
-  const projectDetailRoute = withWorkspaceShell(createRoute({
+  const projectsRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
-    path: 'projects/$projectId',
+    path: 'projects',
     validateSearch: validateProjectSearch,
-    component: ProjectDetailScreen
+    component: ProjectsScreen
   }), ctx => ({
     variant: 'standard',
     activeRailItem: 'projects',
@@ -24,6 +26,32 @@ export const createProjectWorkspaceRoutes = (
     )
   }));
 
+  const projectDetailRoute = withWorkspaceShell(createRoute({
+    getParentRoute: () => workspaceRoute,
+    path: 'projects/$projectId',
+    validateSearch: validateProjectSearch,
+    component: ProjectDetailScreen
+  }), ctx => {
+    const params = getAllParams(ctx.matches);
+    return {
+      variant: 'detail',
+      activeRailItem: 'projects',
+      breadcrumbs: buildProjectBreadcrumbs(ctx),
+      navigationLabel: 'Projects',
+      renderNavigation: controls => (
+        <ProjectsSidebar
+          projects={ctx.projects}
+          workspaceSlug={ctx.workspaceSlug}
+          onCollapse={controls.expanded ? controls.collapse : undefined}
+          onExpand={controls.expanded ? undefined : controls.expand}
+        />
+      ),
+      secondarySidebar: params.projectId ? (
+        <ProjectContentSidebar workspaceSlug={ctx.workspaceSlug} projectId={params.projectId} />
+      ) : undefined
+    };
+  });
+
   const diagramRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'projects/$projectId/diagrams/$diagramId',
@@ -32,5 +60,5 @@ export const createProjectWorkspaceRoutes = (
     variant: 'overlay'
   }));
 
-  return [projectDetailRoute, diagramRoute];
+  return [projectsRoute, projectDetailRoute, diagramRoute];
 };

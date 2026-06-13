@@ -1,0 +1,599 @@
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
+import {
+  TbBinaryTree2,
+  TbCopy,
+  TbFile,
+  TbFolder,
+  TbFolderOpen,
+  TbHome,
+  TbPencil,
+  TbPlus,
+  TbTrash
+} from 'react-icons/tb';
+import type { FileEntry } from '../../lib/api';
+import {
+  useCloneProjectFile,
+  useDeleteProjectFile,
+  useDeleteProjectFolder,
+  useMoveProjectFile,
+  useRenameProjectFile,
+  useRenameProjectFolder
+} from '../../hooks/useProjectFiles';
+import { useProject, useProjectEntities } from '../../hooks/useProjects';
+import { TreeRow } from '../../components/TreeRow';
+import styles from '../../shell/SidePanel.module.css';
+import { AddDiagramDialog } from './AddDiagramDialog';
+import { AddFolderDialog } from './AddFolderDialog';
+
+type ProjectSection = 'home' | 'entities';
+type MenuTarget = { type: 'diagram'; file: FileEntry } | { type: 'folder'; path: string };
+
+type FolderNode = {
+  path: string;
+  name: string;
+  files: FileEntry[];
+  children: FolderNode[];
+};
+
+const RenameDialog = ({
+  open,
+  currentName,
+  entityType,
+  onRename,
+  onCancel
+}: {
+  open: boolean;
+  currentName: string;
+  entityType: 'diagram' | 'folder';
+  onRename: (newName: string) => void;
+  onCancel: () => void;
+}) => {
+  const [name, setName] = useState(currentName);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setName(currentName);
+    setTimeout(() => {
+      const el = inputRef.current;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }, [open, currentName]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (trimmed) onRename(trimmed);
+  };
+
+  return (
+    <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 12, color: 'var(--base-fg-more-dim)' }}>Name</label>
+          <input
+            ref={inputRef}
+            value={name}
+            onChange={e => setName(e.target.value)}
+            style={{
+              fontSize: 13,
+              padding: '6px 8px',
+              background: 'var(--base-bg)',
+              border: '1px solid var(--cmp-border)',
+              borderRadius: 'var(--r)',
+              color: 'var(--base-fg)',
+              outline: 'none'
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button type="button" className={styles.renameBtn} onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit" className={styles.renameBtnPrimary} disabled={!name.trim()}>
+            Rename
+          </button>
+        </div>
+      </form>
+    </Dialog>
+  );
+};
+
+const buildFolderTree = (
+  folders: Array<{ path: string; name: string; files: FileEntry[] }>
+): FolderNode[] => {
+  const root: FolderNode[] = [];
+  const map = new Map<string, FolderNode>();
+
+  for (const folder of [...folders].sort((a, b) => a.path.localeCompare(b.path))) {
+    const parts = folder.path.split('/');
+    const node: FolderNode = {
+      path: folder.path,
+      name: folder.name,
+      files: folder.files,
+      children: []
+    };
+    map.set(folder.path, node);
+
+    if (parts.length === 1) {
+      root.push(node);
+    } else {
+      const parentPath = parts.slice(0, -1).join('/');
+      const parent = map.get(parentPath);
+      if (parent) {
+        parent.children.push(node);
+      } else {
+        root.push(node);
+      }
+    }
+  }
+
+  return root;
+};
+
+export const ProjectContentSidebar = ({
+  workspaceSlug,
+  projectId
+}: {
+  workspaceSlug: string;
+  projectId: string;
+}) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as {
+    tab?: 'projects' | 'archive';
+    folder?: string;
+    section?: ProjectSection;
+    dialog?: 'add-entity';
+  };
+  const section: ProjectSection = search.section === 'entities' ? 'entities' : 'home';
+  const folderFilter = search.folder ?? null;
+
+  const { data: project } = useProject(workspaceSlug, projectId);
+  const { data: projectEntities = [] } = useProjectEntities(workspaceSlug, projectId);
+  const deleteFileMutation = useDeleteProjectFile(workspaceSlug, projectId);
+  const deleteFolderMutation = useDeleteProjectFolder(workspaceSlug, projectId);
+  const renameFolderMutation = useRenameProjectFolder(workspaceSlug, projectId);
+  const cloneFileMutation = useCloneProjectFile(workspaceSlug, projectId);
+  const renameFileMutation = useRenameProjectFile(workspaceSlug, projectId);
+  const moveFileMutation = useMoveProjectFile(workspaceSlug, projectId);
+
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<MenuTarget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MenuTarget | null>(null);
+  const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
+  const [addDiagramOpen, setAddDiagramOpen] = useState(false);
+  const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
+  const [addMenu, setAddMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const folderTree = buildFolderTree(project?.files.folders ?? []);
+
+  const navigateToProject = (next: { section?: ProjectSection; folder?: string }) => {
+    navigate({
+      to: '/$workspaceSlug/projects/$projectId',
+      params: { workspaceSlug, projectId },
+      search: {
+        tab: search.tab,
+        section: next.section ?? section,
+        folder: next.folder,
+        dialog: search.dialog
+      }
+    });
+  };
+
+  const openAddEntity = () => {
+    navigate({
+      to: '/$workspaceSlug/projects/$projectId',
+      params: { workspaceSlug, projectId },
+      search: {
+        tab: search.tab,
+        section: 'entities',
+        folder: folderFilter ?? undefined,
+        dialog: 'add-entity'
+      }
+    });
+  };
+
+  const toggleFolder = (path: string) => {
+    setExpandedFolders(prev => ({ ...prev, [path]: !(prev[path] ?? true) }));
+  };
+
+  const renderMoveToSubmenu = (file: FileEntry, folders: string[], currentFolder: string | null) => {
+    type MoveFolderNode = {
+      path: string;
+      name: string;
+      children: MoveFolderNode[];
+    };
+
+    const root: MoveFolderNode[] = [];
+    const map = new Map<string, MoveFolderNode>();
+    for (const path of [...folders].sort()) {
+      const name = path.split('/').at(-1) ?? path;
+      const node: MoveFolderNode = { path, name, children: [] };
+      map.set(path, node);
+      const parts = path.split('/');
+      if (parts.length === 1) {
+        root.push(node);
+      } else {
+        map.get(parts.slice(0, -1).join('/'))?.children.push(node);
+      }
+    }
+
+    const renderNodes = (nodes: MoveFolderNode[]): React.ReactNode =>
+      nodes.map(node =>
+        node.children.length > 0 ? (
+          <Menu.SubMenu key={node.path} label={node.name} leftSlot={<TbFolder size={13} />}>
+            <Menu.Item
+              leftSlot={<TbFolder size={13} />}
+              disabled={node.path === currentFolder}
+              onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+            >
+              {node.name}
+            </Menu.Item>
+            {renderNodes(node.children)}
+          </Menu.SubMenu>
+        ) : (
+          <Menu.Item
+            key={node.path}
+            leftSlot={<TbFolder size={13} />}
+            disabled={node.path === currentFolder}
+            onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+          >
+            {node.name}
+          </Menu.Item>
+        )
+      );
+
+    return (
+      <>
+        <Menu.Item
+          leftSlot={<TbFolderOpen size={13} />}
+          disabled={currentFolder === null}
+          onClick={() => moveFileMutation.mutate({ file, targetFolder: null })}
+        >
+          Root
+        </Menu.Item>
+        {renderNodes(root)}
+      </>
+    );
+  };
+
+  const renderMenu = (target: MenuTarget) => {
+    if (target.type === 'folder') {
+      return (
+        <>
+          <Menu.Item
+            leftSlot={<TbPlus size={13} />}
+            onClick={() => {
+              setMenu(null);
+              setAddDiagramFolder(target.path);
+              setAddDiagramOpen(true);
+            }}
+          >
+            New diagram
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbFolderOpen size={13} />}
+            onClick={() => {
+              setMenu(null);
+              setAddFolderParent(target.path);
+              setAddFolderOpen(true);
+            }}
+          >
+            New folder
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteTarget(target)}
+          >
+            Delete
+          </Menu.Item>
+        </>
+      );
+    }
+
+    const currentFolder = target.file.path.includes('/')
+      ? target.file.path.substring(0, target.file.path.lastIndexOf('/'))
+      : null;
+    const allFolders =
+      project?.files.folders.map(folder => folder.path).filter(path => path !== currentFolder) ?? [];
+
+    return (
+      <>
+        <Menu.Item
+          leftSlot={<TbCopy size={13} />}
+          onClick={() => cloneFileMutation.mutate(target.file)}
+        >
+          Clone
+        </Menu.Item>
+        <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
+          {renderMoveToSubmenu(target.file, allFolders, currentFolder)}
+        </Menu.SubMenu>
+        <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
+          Rename
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.Item
+          type="danger"
+          leftSlot={<TbTrash size={13} />}
+          onClick={() => setDeleteTarget(target)}
+        >
+          Delete
+        </Menu.Item>
+      </>
+    );
+  };
+
+  const handleRenameConfirm = (newName: string) => {
+    if (!renameTarget) return;
+    const trimmed = newName.trim();
+    if (!trimmed) {
+      setRenameTarget(null);
+      return;
+    }
+    if (renameTarget.type === 'diagram') {
+      if (trimmed !== renameTarget.file.name) {
+        renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
+      }
+    } else if (trimmed !== renameTarget.path) {
+      renameFolderMutation.mutate({ oldPath: renameTarget.path, newPath: trimmed });
+    }
+    setRenameTarget(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === 'diagram') {
+      deleteFileMutation.mutate(deleteTarget.file.path);
+    } else {
+      deleteFolderMutation.mutate(deleteTarget.path);
+    }
+    setDeleteTarget(null);
+  };
+
+  const renderFolderNode = (node: FolderNode, depth = 0): React.ReactNode => {
+    const isExpanded = expandedFolders[node.path] ?? true;
+    return (
+      <div key={node.path}>
+        <TreeRow
+          icon={<TbFolder size={13} />}
+          label={node.name}
+          expandable
+          expanded={isExpanded}
+          active={section === 'home' && folderFilter === node.path}
+          depth={depth}
+          onExpand={() => toggleFolder(node.path)}
+          onClick={() => navigateToProject({ section: 'home', folder: node.path })}
+          onContextMenu={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenu({ x: e.clientX, y: e.clientY, target: { type: 'folder', path: node.path } });
+          }}
+        />
+        {isExpanded && (
+          <>
+            {node.files.map(file => (
+              <TreeRow
+                key={file.id}
+                depth={depth + 1}
+                icon={<TbFile size={13} />}
+                label={file.name}
+                onClick={() =>
+                  navigate({
+                    to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
+                    params: { workspaceSlug, projectId, diagramId: file.id }
+                  })
+                }
+                onContextMenu={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMenu({ x: e.clientX, y: e.clientY, target: { type: 'diagram', file } });
+                }}
+              />
+            ))}
+            {node.children.map(child => renderFolderNode(child, depth + 1))}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <div className={`${styles.header} ${styles.tabHeader}`} style={{ paddingLeft: 8 }}>
+        <div
+          style={{
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontSize: 12.5,
+            fontWeight: 500
+          }}
+        >
+          {project?.name ?? 'Project'}
+        </div>
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.action}
+            onClick={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setAddMenu({ x: rect.right, y: rect.bottom });
+            }}
+            title="Add"
+          >
+            <TbPlus size={13} />
+          </button>
+        </div>
+      </div>
+      <div className={styles.scroll}>
+        <TreeRow
+          testId="project-secondary-home"
+          label="Home"
+          icon={<TbHome size={13} />}
+          active={section === 'home' && !folderFilter}
+          onClick={() => navigateToProject({ section: 'home', folder: undefined })}
+        />
+        <TreeRow
+          testId="project-secondary-entities"
+          label={`Entities (${projectEntities.length})`}
+          icon={<TbBinaryTree2 size={13} />}
+          active={section === 'entities'}
+          onClick={() => navigateToProject({ section: 'entities', folder: folderFilter ?? undefined })}
+        />
+        {project?.files.rootFiles.length === 0 && project?.files.folders.length === 0 && (
+          <div className={styles.emptyState} style={{ color: 'var(--cmp-fg-disabled)', fontSize: 12 }}>
+            No diagrams yet
+          </div>
+        )}
+        {project?.files.rootFiles.map(file => (
+          <TreeRow
+            key={file.id}
+            icon={<TbFile size={13} />}
+            label={file.name}
+            onClick={() =>
+              navigate({
+                to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
+                params: { workspaceSlug, projectId, diagramId: file.id }
+              })
+            }
+            onContextMenu={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMenu({ x: e.clientX, y: e.clientY, target: { type: 'diagram', file } });
+            }}
+          />
+        ))}
+        {folderTree.map(node => renderFolderNode(node))}
+      </div>
+
+      {menu && (
+        <ContextMenu.Imperative x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
+          {renderMenu(menu.target)}
+        </ContextMenu.Imperative>
+      )}
+
+      {addMenu && (
+        <ContextMenu.Imperative x={addMenu.x} y={addMenu.y} onClose={() => setAddMenu(null)}>
+          <Menu.Item
+            leftSlot={<TbFolderOpen size={13} />}
+            disabled={!project?.canManageFiles}
+            onClick={() => {
+              setAddMenu(null);
+              setAddFolderParent(section === 'home' ? folderFilter : null);
+              setAddFolderOpen(true);
+            }}
+          >
+            New folder
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbPlus size={13} />}
+            disabled={!project?.canManageFiles}
+            onClick={() => {
+              setAddMenu(null);
+              setAddDiagramFolder(section === 'home' ? folderFilter : null);
+              setAddDiagramOpen(true);
+            }}
+          >
+            New diagram
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbBinaryTree2 size={13} />}
+            disabled={!project?.canEdit}
+            onClick={() => {
+              setAddMenu(null);
+              openAddEntity();
+            }}
+          >
+            Add entity
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
+
+      <RenameDialog
+        open={!!renameTarget}
+        currentName={
+          renameTarget
+            ? renameTarget.type === 'diagram'
+              ? renameTarget.file.name
+              : renameTarget.path
+            : ''
+        }
+        entityType={renameTarget?.type === 'folder' ? 'folder' : 'diagram'}
+        onRename={handleRenameConfirm}
+        onCancel={() => setRenameTarget(null)}
+      />
+
+      <DeleteConfirmationDialog
+        open={!!deleteTarget}
+        title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
+        message={
+          deleteTarget ? (
+            deleteTarget.type === 'folder' ? (
+              <>
+                The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently
+                deleted.
+              </>
+            ) : (
+              <>
+                The diagram <b>{deleteTarget.file.name}</b> will be permanently deleted.
+              </>
+            )
+          ) : (
+            ''
+          )
+        }
+        detail="This can't be undone."
+        confirmLabel={deleteTarget?.type === 'folder' ? 'Delete folder' : 'Delete diagram'}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {project?.canManageFiles && (
+        <AddFolderDialog
+          open={addFolderOpen}
+          onClose={() => {
+            setAddFolderOpen(false);
+            setAddFolderParent(null);
+          }}
+          onCreated={() => {}}
+          workspaceId={workspaceSlug}
+          projectId={projectId}
+          parentFolder={addFolderParent ?? undefined}
+        />
+      )}
+
+      {project?.canManageFiles && (
+        <AddDiagramDialog
+          open={addDiagramOpen}
+          onClose={() => {
+            setAddDiagramOpen(false);
+            setAddDiagramFolder(null);
+          }}
+          onCreated={() => {}}
+          workspaceId={workspaceSlug}
+          context="project"
+          projectId={projectId}
+          projectName={project?.name ?? 'Project'}
+          folder={addDiagramFolder}
+        />
+      )}
+    </>
+  );
+};

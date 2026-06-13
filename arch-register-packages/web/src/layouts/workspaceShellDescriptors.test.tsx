@@ -51,9 +51,11 @@ const overlayShell = () => ({
 });
 
 const projectShell = () => ({
-  variant: 'standard' as const,
+  variant: 'detail' as const,
   activeRailItem: 'projects' as const,
-  breadcrumbs: []
+  breadcrumbs: [],
+  navigationLabel: 'Projects',
+  renderNavigation: () => null
 });
 
 beforeEach(() => {
@@ -105,10 +107,24 @@ describe('resolveWorkspaceShellDescriptor', () => {
 
     expect(descriptor.variant).toBe('overlay');
   });
+
+  it('resolves a detail shell for project detail routes', () => {
+    const descriptor = resolveWorkspaceShellDescriptor(
+      createContext(
+        '/authenticated/$workspaceSlug/projects/$projectId',
+        { projectId: 'p-1' },
+        projectShell
+      )
+    );
+
+    expect(descriptor.variant).toBe('detail');
+    if (descriptor.variant === 'overlay') throw new Error('expected non-overlay descriptor');
+    expect(descriptor.activeRailItem).toBe('projects');
+  });
 });
 
 describe('navigateFromRailItem', () => {
-  it('opens the project dialog sentinel when there is no default project', () => {
+  it('navigates to the projects landing route without selecting a project', () => {
     const navigate = vi.fn();
 
     const result = navigateFromRailItem('projects', {
@@ -117,7 +133,10 @@ describe('navigateFromRailItem', () => {
       projects: []
     });
 
-    expect(result).toBe('open-project-dialog');
-    expect(navigate).not.toHaveBeenCalled();
+    expect(result).toBe('navigated');
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/$workspaceSlug/projects',
+      params: { workspaceSlug: 'ws-1' }
+    });
   });
 });
