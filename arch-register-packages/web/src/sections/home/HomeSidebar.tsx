@@ -55,7 +55,7 @@ export const HomeSidebar = ({
                   navigate({
                     to: '/$workspaceSlug/projects/$projectId',
                     params: { workspaceSlug, projectId: p.id },
-                    search: { tab: 'projects' as const }
+                    search: { tab: 'projects' as const, section: 'home' as const }
                   })
                 }
                 trailing={<span className="dim mono">{p.file_count}</span>}

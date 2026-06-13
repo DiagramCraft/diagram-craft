@@ -5,8 +5,9 @@ export const workspaceProjectsRoute = (workspaceSlug: string) => `/${workspaceSl
 export const projectDetailRoute = (
   workspaceSlug: string,
   projectId: string,
-  tab: 'projects' | 'archive' = 'projects'
-) => `/${workspaceSlug}/projects/${projectId}?tab=${tab}`;
+  tab: 'projects' | 'archive' = 'projects',
+  section: 'home' | 'entities' = 'home'
+) => `/${workspaceSlug}/projects/${projectId}?tab=${tab}&section=${section}`;
 
 export const workspaceEntitiesRoute = (workspaceSlug: string) => `/${workspaceSlug}/entities`;
 

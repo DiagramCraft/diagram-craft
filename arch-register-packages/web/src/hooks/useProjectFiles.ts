@@ -68,6 +68,10 @@ export const useCreateFolder = (workspaceId: string, projectId: string) => {
       await queryClient.invalidateQueries({
         queryKey: projectFileKeys.list(workspaceId, projectId)
       });
+      // Also invalidate project detail because the sidebar reads folders from project.files
+      await queryClient.invalidateQueries({
+        queryKey: projectKeys.detail(workspaceId, projectId)
+      });
       await invalidateAuditQueries(queryClient, workspaceId);
     }
   });

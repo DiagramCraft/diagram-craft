@@ -45,11 +45,15 @@ export const validateEntityDetailSearch = (raw: Record<string, unknown>): Entity
 export type ProjectSearchParams = {
   tab?: 'projects' | 'archive';
   folder?: string;
+  section?: 'home' | 'entities';
+  dialog?: 'add-entity';
 };
 
 export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSearchParams => ({
   tab: raw.tab === 'projects' || raw.tab === 'archive' ? raw.tab : undefined,
   folder: typeof raw.folder === 'string' ? raw.folder : undefined,
+  section: raw.section === 'home' || raw.section === 'entities' ? raw.section : undefined,
+  dialog: raw.dialog === 'add-entity' ? raw.dialog : undefined,
 });
 
 // Settings params

@@ -86,15 +86,7 @@ export const buildProjectBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbI
     {
       label: 'Projects',
       icon: <TbFolders size={12} />,
-      onClick: () => {
-        const defaultProject = getDefaultProject(ctx.projects);
-        if (!defaultProject) return;
-        ctx.navigate({
-          to: '/$workspaceSlug/projects/$projectId',
-          params: { workspaceSlug: ctx.workspaceSlug, projectId: defaultProject.id },
-          search: { tab: getProjectSidebarTab(defaultProject) }
-        });
-      }
+      onClick: () => ctx.navigate({ to: '/$workspaceSlug/projects', params: { workspaceSlug: ctx.workspaceSlug } })
     },
     ...(project ? [{ label: project.name, onClick: () => {} }] : [])
   ];
@@ -171,21 +163,10 @@ export const navigateFromRailItem = (
   id: WorkspaceRailItemId,
   ctx: Pick<WorkspaceShellContext, 'navigate' | 'workspaceSlug' | 'projects'>
 ) => {
-  if (id === 'projects') {
-    const defaultProject = getDefaultProject(ctx.projects);
-    if (!defaultProject) return 'open-project-dialog' as const;
-    ctx.navigate({
-      to: '/$workspaceSlug/projects/$projectId',
-      params: { workspaceSlug: ctx.workspaceSlug, projectId: defaultProject.id },
-      search: { tab: getProjectSidebarTab(defaultProject) }
-    });
-    return 'navigated' as const;
-  }
-
   const routeByRail: Record<WorkspaceRailItemId, string> = {
     home: '/$workspaceSlug',
     content: '/$workspaceSlug/content',
-    projects: '/$workspaceSlug/projects/$projectId',
+    projects: '/$workspaceSlug/projects',
     entities: '/$workspaceSlug/entities',
     model: '/$workspaceSlug/model',
     search: '/$workspaceSlug/search',

@@ -238,7 +238,7 @@ export const SearchScreen = () => {
       routerNavigate({
         to: '/$workspaceSlug/projects/$projectId',
         params: { workspaceSlug, projectId },
-        search: { tab: 'projects' as const }
+        search: { tab: 'projects' as const, section: 'home' as const }
       });
     },
     [routerNavigate, workspaceSlug]
@@ -249,7 +249,11 @@ export const SearchScreen = () => {
       routerNavigate({
         to: '/$workspaceSlug/projects/$projectId',
         params: { workspaceSlug, projectId },
-        search: { tab: 'projects' as const, folder: folder ?? undefined }
+        search: {
+          tab: 'projects' as const,
+          section: 'home' as const,
+          folder: folder ?? undefined
+        }
       });
     },
     [routerNavigate, workspaceSlug]

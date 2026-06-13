@@ -91,7 +91,7 @@ export const WorkspaceHomeScreen = () => {
         navigate({
           to: '/$workspaceSlug/projects/$projectId',
           params: { workspaceSlug, projectId: entry.entity_id },
-          search: { tab: 'projects' as const }
+          search: { tab: 'projects' as const, section: 'home' as const }
         });
         break;
       case 'entity_schema':
@@ -218,7 +218,7 @@ export const WorkspaceHomeScreen = () => {
                     navigate({
                       to: '/$workspaceSlug/projects/$projectId',
                       params: { workspaceSlug, projectId: p.id },
-                      search: { tab: 'projects' as const }
+                      search: { tab: 'projects' as const, section: 'home' as const }
                     })
                   }
                 />

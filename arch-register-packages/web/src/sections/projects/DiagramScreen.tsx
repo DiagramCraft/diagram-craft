@@ -179,7 +179,14 @@ export const DiagramScreen = () => {
       navigate({
         to: '/$workspaceSlug/projects/$projectId',
         params: { workspaceSlug, projectId },
-        search: { tab: 'projects' as const }
+        search: {
+          tab: 'projects' as const,
+          section: 'home' as const,
+          folder:
+            fileInfoRef.current?.path.includes('/')
+              ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
+              : undefined
+        }
       });
     }
   }, [save, queryClient, navigate, workspaceId, workspaceSlug, projectId, isEntityDiagram, isWorkspaceContent]);
