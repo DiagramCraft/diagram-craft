@@ -47,7 +47,8 @@ export const projectFileSchema = z.object({
   is_workspace_template: z.boolean().optional(),
   preview_svg: z.string().nullable().optional(),
   created_at: z.string(),
-  updated_at: z.string()
+  updated_at: z.string(),
+  type: z.enum(['diagram', 'folder', 'markdown', 'file'])
 });
 
 const fileFolderSchema = z.object({

@@ -201,7 +201,7 @@ export const sqliteMappers = {
     parent_id: row['parent_id'] == null ? null : String(row['parent_id']),
     path: String(row['path']),
     name: String(row['name']),
-    type: String(row['type']),
+    type: String(row['type']) as 'diagram' | 'folder' | 'markdown' | 'file',
     size_bytes: Number(row['size_bytes']),
     comment_count: Number(row['comment_count'] ?? 0),
     unresolved_comment_count: Number(row['unresolved_comment_count'] ?? 0),

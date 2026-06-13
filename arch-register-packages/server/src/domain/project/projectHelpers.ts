@@ -76,7 +76,8 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   is_workspace_template: file.is_workspace_template,
   preview_svg: file.preview_svg,
   created_at: file.created_at.toISOString(),
-  updated_at: file.updated_at.toISOString()
+  updated_at: file.updated_at.toISOString(),
+  type: file.type
 });
 
 export const toApiProjectDetail = (
