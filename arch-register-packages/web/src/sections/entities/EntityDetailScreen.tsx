@@ -34,6 +34,7 @@ import {
   useDeleteEntity,
   useCloneEntity,
   useEntitiesBySchema,
+  useEntitySnapshots,
   usePromoteSnapshot
 } from '../../hooks/useEntities';
 import {
@@ -135,6 +136,8 @@ export const EntityDetailScreen = () => {
   const deleteEntity = useDeleteEntity(workspaceId);
   const cloneEntity = useCloneEntity(workspaceId);
   const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);
+  const { data: allSnapshots = [] } = useEntitySnapshots(workspaceId, entityId, true);
+  const futureSnapshots = allSnapshots.filter(s => s.status === 'future_update');
   const createWatch = useCreateWatch(workspaceId);
   const deleteWatch = useDeleteWatch(workspaceId);
   const createPinnedEntity = useCreatePinnedEntity(workspaceId);
@@ -707,6 +710,33 @@ export const EntityDetailScreen = () => {
               ))
             )}
 
+            {futureSnapshots.length > 0 && (
+              <>
+                <hr className={styles.divider} />
+                <div className={styles.sectionLabel}>Future plans</div>
+                {futureSnapshots.map(snap => {
+                  const projectName = entityProjects.find(
+                    ep => ep.project.id === snap.project_id
+                  )?.project.name ?? snap.project_id;
+                  return (
+                    <div key={snap.id} className={styles.futurePlan}>
+                      <div className={styles.futurePlanMeta}>
+                        <span className={styles.futurePlanProject}>{projectName}</span>
+                        {snap.target_date && (
+                          <span className={styles.futurePlanDate}>
+                            {new Date(`${snap.target_date}T00:00:00`).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      {snap.commit_message && (
+                        <div className={styles.futurePlanNote}>{snap.commit_message}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
             <hr className={styles.divider} />
 
             <div className={styles.sectionLabel}>
@@ -877,6 +907,7 @@ export const EntityDetailScreen = () => {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(false)}
       />
+
     </div>
   );
 };

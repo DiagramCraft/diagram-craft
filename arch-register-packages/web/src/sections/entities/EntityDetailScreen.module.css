@@ -938,3 +938,83 @@
   z-index: 0;
 }
 
+/* ── Future plans ──────────────────────────────────────────── */
+.futurePlan {
+  padding: 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.futurePlanMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.futurePlanProject {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cmp-fg);
+}
+
+.futurePlanDate {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+.futurePlanNote {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin-bottom: 6px;
+}
+
+.futurePlanApply {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--accent-fg);
+  border-radius: 4px;
+  color: var(--accent-fg);
+  background: none;
+  cursor: pointer;
+}
+
+.futurePlanApply:hover {
+  background: color-mix(in oklch, var(--accent-fg) 10%, transparent);
+}
+
+/* ── Conflict resolution ───────────────────────────────────── */
+.conflictList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conflictRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conflictLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cmp-fg);
+}
+
+.conflictOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.conflictOptionLabel {
+  font-size: 12px;
+  color: var(--cmp-fg);
+}
+

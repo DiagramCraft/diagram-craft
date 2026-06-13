@@ -160,7 +160,8 @@ const entitySnapshotSchema = z.object({
   commit_message: z.string().nullable(),
   created_at: z.string(),
   created_by: z.string(),
-  base_state: z.record(z.string(), z.unknown())
+  base_state: z.record(z.string(), z.unknown()),
+  proposed_state: z.record(z.string(), z.unknown()).nullable()
 });
 
 // ── Import ────────────────────────────────────────────────────
@@ -372,6 +373,49 @@ export const workspaceEntityContract = {
         })
         .input(z.object({ params: wsAndId }))
         .output(z.array(entitySnapshotSchema)),
+      listByProject: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/data/snapshots/by-project/{projectId}',
+          inputStructure: 'detailed'
+        })
+        .input(z.object({ params: z.object({ workspace: z.string(), projectId: z.string() }) }))
+        .output(z.array(entitySnapshotSchema)),
+      create: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/data/{id}/snapshots',
+          inputStructure: 'detailed'
+        })
+        .input(
+          z.object({
+            params: wsAndId,
+            body: z.object({
+              projectId: z.string(),
+              targetDate: z.string().nullable().optional(),
+              commitMessage: z.string().nullable().optional(),
+              proposedState: z.record(z.string(), z.unknown())
+            })
+          })
+        )
+        .output(entitySnapshotSchema),
+      update: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/data/{id}/snapshots/{snapshotId}',
+          inputStructure: 'detailed'
+        })
+        .input(
+          z.object({
+            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string() }),
+            body: z.object({
+              proposedState: z.record(z.string(), z.unknown()).optional(),
+              targetDate: z.string().nullable().optional(),
+              commitMessage: z.string().nullable().optional()
+            })
+          })
+        )
+        .output(entitySnapshotSchema),
       promote: oc
         .route({
           method: 'POST',
@@ -382,6 +426,21 @@ export const workspaceEntityContract = {
           z.object({
             params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string() }),
             body: z.object({ commitMessage: z.string().optional() })
+          })
+        )
+        .output(entitySnapshotSchema),
+      apply: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/data/{id}/snapshots/{snapshotId}/apply',
+          inputStructure: 'detailed'
+        })
+        .input(
+          z.object({
+            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string() }),
+            body: z.object({
+              resolvedEntityData: z.record(z.string(), z.unknown())
+            })
           })
         )
         .output(entitySnapshotSchema)

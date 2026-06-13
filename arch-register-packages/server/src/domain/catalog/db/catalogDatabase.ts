@@ -170,12 +170,23 @@ export type CatalogDatabase = {
 
   createSnapshot(input: EntitySnapshotDbCreate): Promise<EntitySnapshotDbResult>;
   listSnapshots(ws: string, entityId: string): Promise<EntitySnapshotDbResult[]>;
+  listSnapshotsByProject(ws: string, projectId: string): Promise<EntitySnapshotDbResult[]>;
   pruneAutosaveSnapshots(ws: string, entityId: string, keepCount: number): Promise<void>;
   promoteSnapshot(
     ws: string,
     snapshotId: string,
     commitMessage: string | null
   ): Promise<EntitySnapshotDbResult | null>;
+  updateSnapshot(
+    ws: string,
+    snapshotId: string,
+    updates: {
+      proposed_state?: Record<string, unknown>;
+      target_date?: string | null;
+      commit_message?: string | null;
+    }
+  ): Promise<EntitySnapshotDbResult | null>;
+  applySnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
 };
 
 // -- Saved View

@@ -344,6 +344,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     `;
   }
 
+  async listSnapshotsByProject(workspace: string, projectId: string) {
+    return await this.sql<EntitySnapshotDbResult[]>`
+      SELECT * FROM entity_snapshot
+      WHERE workspace = ${workspace} AND project_id = ${projectId} AND status = 'future_update'
+      ORDER BY target_date ASC NULLS LAST, created_at DESC
+    `;
+  }
+
   async pruneAutosaveSnapshots(workspace: string, entityId: string, keepCount: number) {
     await this.sql`
       DELETE FROM entity_snapshot
@@ -362,6 +370,42 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       UPDATE entity_snapshot
       SET status = 'saved_version', commit_message = ${commitMessage}
       WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'autosave'
+      RETURNING *
+    `;
+    return row ?? null;
+  }
+
+  async updateSnapshot(
+    workspace: string,
+    snapshotId: string,
+    updates: {
+      proposed_state?: Record<string, unknown>;
+      target_date?: string | null;
+      commit_message?: string | null;
+    }
+  ) {
+    const existing = await this.sql<EntitySnapshotDbResult[]>`
+      SELECT * FROM entity_snapshot WHERE id = ${snapshotId} AND workspace = ${workspace}
+    `;
+    if (!existing[0] || existing[0].status !== 'future_update') return null;
+
+    const [row] = await this.sql<EntitySnapshotDbResult[]>`
+      UPDATE entity_snapshot
+      SET
+        proposed_state = ${updates.proposed_state !== undefined ? this.json(updates.proposed_state) : this.sql`proposed_state`},
+        target_date = ${updates.target_date !== undefined ? updates.target_date : this.sql`target_date`},
+        commit_message = ${updates.commit_message !== undefined ? updates.commit_message : this.sql`commit_message`}
+      WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'future_update'
+      RETURNING *
+    `;
+    return row ?? null;
+  }
+
+  async applySnapshot(workspace: string, snapshotId: string) {
+    const [row] = await this.sql<EntitySnapshotDbResult[]>`
+      UPDATE entity_snapshot
+      SET status = 'applied'
+      WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'future_update'
       RETURNING *
     `;
     return row ?? null;

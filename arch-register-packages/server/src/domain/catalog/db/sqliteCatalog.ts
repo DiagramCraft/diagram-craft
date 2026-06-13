@@ -332,6 +332,16 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
+  async listSnapshotsByProject(workspace: string, projectId: string) {
+    return this.all(
+      `SELECT * FROM entity_snapshot
+       WHERE workspace = ? AND project_id = ? AND status = 'future_update'
+       ORDER BY CASE WHEN target_date IS NULL THEN 1 ELSE 0 END, target_date ASC, created_at DESC`,
+      [workspace, projectId],
+      sqliteMappers.entitySnapshot
+    );
+  }
+
   async pruneAutosaveSnapshots(workspace: string, entityId: string, keepCount: number) {
     this.run(
       `DELETE FROM entity_snapshot
@@ -357,6 +367,71 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     this.run(
       `UPDATE entity_snapshot SET status = 'saved_version', commit_message = ? WHERE id = ?`,
       [commitMessage, snapshotId]
+    );
+    return await this.get(
+      'SELECT * FROM entity_snapshot WHERE id = ?',
+      [snapshotId],
+      sqliteMappers.entitySnapshot
+    );
+  }
+
+  async updateSnapshot(
+    workspace: string,
+    snapshotId: string,
+    updates: {
+      proposed_state?: Record<string, unknown>;
+      target_date?: string | null;
+      commit_message?: string | null;
+    }
+  ) {
+    const existing = await this.get(
+      'SELECT * FROM entity_snapshot WHERE id = ? AND workspace = ?',
+      [snapshotId, workspace],
+      sqliteMappers.entitySnapshot
+    );
+    if (!existing || existing.status !== 'future_update') return null;
+
+    const setClauses: string[] = [];
+    const params: unknown[] = [];
+
+    if (updates.proposed_state !== undefined) {
+      setClauses.push('proposed_state = ?');
+      params.push(JSON.stringify(updates.proposed_state));
+    }
+    if (updates.target_date !== undefined) {
+      setClauses.push('target_date = ?');
+      params.push(updates.target_date);
+    }
+    if (updates.commit_message !== undefined) {
+      setClauses.push('commit_message = ?');
+      params.push(updates.commit_message);
+    }
+
+    if (setClauses.length === 0) return existing;
+
+    params.push(snapshotId);
+    this.run(
+      `UPDATE entity_snapshot SET ${setClauses.join(', ')} WHERE id = ?`,
+      params
+    );
+    return await this.get(
+      'SELECT * FROM entity_snapshot WHERE id = ?',
+      [snapshotId],
+      sqliteMappers.entitySnapshot
+    );
+  }
+
+  async applySnapshot(workspace: string, snapshotId: string) {
+    const existing = await this.get(
+      'SELECT * FROM entity_snapshot WHERE id = ? AND workspace = ?',
+      [snapshotId, workspace],
+      sqliteMappers.entitySnapshot
+    );
+    if (!existing || existing.status !== 'future_update') return null;
+
+    this.run(
+      `UPDATE entity_snapshot SET status = 'applied' WHERE id = ?`,
+      [snapshotId]
     );
     return await this.get(
       'SELECT * FROM entity_snapshot WHERE id = ?',

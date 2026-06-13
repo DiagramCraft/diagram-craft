@@ -233,6 +233,84 @@ export const usePromoteSnapshot = (workspaceId: string, entityId: string) => {
   });
 };
 
+export const useCreateFutureUpdate = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: {
+      projectId: string;
+      targetDate?: string | null;
+      commitMessage?: string | null;
+      proposedState: Record<string, unknown>;
+    }) =>
+      orpcClient.entities.snapshots.create({
+        params: { workspace: workspaceId, id: entityId },
+        body: params
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) });
+    }
+  });
+};
+
+export const useUpdateSnapshot = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: {
+      snapshotId: string;
+      proposedState?: Record<string, unknown>;
+      targetDate?: string | null;
+      commitMessage?: string | null;
+    }) =>
+      orpcClient.entities.snapshots.update({
+        params: { workspace: workspaceId, id: entityId, snapshotId: params.snapshotId },
+        body: {
+          proposedState: params.proposedState,
+          targetDate: params.targetDate,
+          commitMessage: params.commitMessage
+        }
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) });
+    }
+  });
+};
+
+export const useApplySnapshot = (workspaceId: string, entityId: string, projectId?: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: {
+      snapshotId: string;
+      resolvedEntityData: Record<string, unknown>;
+    }) =>
+      orpcClient.entities.snapshots.apply({
+        params: { workspace: workspaceId, id: entityId, snapshotId: params.snapshotId },
+        body: { resolvedEntityData: params.resolvedEntityData }
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) });
+      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) });
+      if (projectId) {
+        queryClient.invalidateQueries({ queryKey: snapshotKeys.byProject(workspaceId, projectId) });
+      }
+      invalidateAuditQueries(queryClient, workspaceId);
+    }
+  });
+};
+
+export const useProjectFutureSnapshots = (workspaceId: string, projectId: string) => {
+  return useQuery({
+    queryKey: snapshotKeys.byProject(workspaceId, projectId),
+    queryFn: () =>
+      orpcClient.entities.snapshots.listByProject({
+        params: { workspace: workspaceId, projectId }
+      }),
+    enabled: !!workspaceId && !!projectId
+  });
+};
+
 // ── Saved View Hooks ──────────────────────────────────────────
 
 export const useSavedViews = (workspaceId: string) => {

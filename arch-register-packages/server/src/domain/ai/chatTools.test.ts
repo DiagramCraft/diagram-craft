@@ -137,7 +137,10 @@ const db = {
     }),
     createSnapshot: vi.fn(async () => {}),
     pruneAutosaveSnapshots: vi.fn(async () => {}),
-    promoteSnapshot: vi.fn(async () => null)
+    listSnapshotsByProject: vi.fn(async () => []),
+    promoteSnapshot: vi.fn(async () => null),
+    updateSnapshot: vi.fn(async () => null),
+    applySnapshot: vi.fn(async () => null)
   },
   workspace: {
     listTeams: async () => [

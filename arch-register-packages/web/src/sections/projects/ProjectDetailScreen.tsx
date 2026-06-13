@@ -2,7 +2,10 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
-import { useEntities } from '../../hooks/useEntities';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { DateInput } from '@diagram-craft/app-components/DateInput';
+import { useEntities, useEntity, useCreateFutureUpdate, useProjectFutureSnapshots, useApplySnapshot } from '../../hooks/useEntities';
+import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import styles from './ProjectDetailScreen.module.css';
 import { AddFolderDialog } from './AddFolderDialog';
 import { AddDiagramDialog } from './AddDiagramDialog';
@@ -27,6 +30,8 @@ import {
   useRemoveProjectEntity
 } from '../../hooks/useProjects';
 import { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
+import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   useDeleteProjectFile,
   useDeleteProjectFolder,
@@ -59,7 +64,7 @@ export const ProjectDetailScreen = () => {
     section?: ProjectSection;
     dialog?: 'add-entity';
   };
-  const { workspaceSlug, teams, projectEntityTypes, schemas } = useWorkspaceContext();
+  const { workspaceSlug, teams, projectEntityTypes, schemas, lifecycleStates } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const folderFilter = search.folder ?? null;
   const section: ProjectSection = search.section === 'entities' ? 'entities' : 'home';
@@ -75,6 +80,12 @@ export const ProjectDetailScreen = () => {
   const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
   const [pinError, setPinError] = useState('');
   const [addEntityOpen, setAddEntityOpen] = useState(false);
+
+  // Plan future change state
+  const [planEntityId, setPlanEntityId] = useState<string | null>(null);
+
+  // Apply snapshot state
+  const [applySnapshot, setApplySnapshot] = useState<EntitySnapshot | null>(null);
 
   // Context menu state
   const [menu, setMenu] = useState<{ x: number; y: number; target: ProjectMenuTarget } | null>(null);
@@ -99,6 +110,7 @@ export const ProjectDetailScreen = () => {
   const addEntityMutation = useAddProjectEntity(workspaceId, projectId);
   const updateEntityMutation = useUpdateProjectEntity(workspaceId, projectId);
   const removeEntityMutation = useRemoveProjectEntity(workspaceId, projectId);
+  const { data: futureSnapshots = [] } = useProjectFutureSnapshots(workspaceId, projectId);
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { color: string; icon: string | null }>();
@@ -469,6 +481,7 @@ export const ProjectDetailScreen = () => {
         <ProjectEntities
           project={project}
           projectEntities={projectEntities}
+          futureSnapshots={futureSnapshots}
           schemaMap={schemaMap}
           entityTypeColorMap={entityTypeColorMap}
           onNavigateHome={handleNavigateHome}
@@ -478,6 +491,8 @@ export const ProjectDetailScreen = () => {
             updateEntityMutation.mutate({ entityId, is_done: !isDone })
           }
           onRemoveEntity={entityId => removeEntityMutation.mutate(entityId)}
+          onPlanFutureChange={entityId => setPlanEntityId(entityId)}
+          onApplySnapshot={snap => setApplySnapshot(snap)}
         />
       ) : contentFolderFilter ? (
         <ProjectContent
@@ -587,6 +602,30 @@ export const ProjectDetailScreen = () => {
             ? renderDiagramMenu(menu.target.file)
             : renderFolderMenu(menu.target.path)}
         </ContextMenu.Imperative>
+      )}
+
+      {planEntityId && (
+        <PlanFutureChangeDialog
+          open={!!planEntityId}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          entityId={planEntityId}
+          schemas={schemas}
+          teams={teams}
+          lifecycleStates={lifecycleStates}
+          onClose={() => setPlanEntityId(null)}
+        />
+      )}
+
+      {applySnapshot && (
+        <ApplySnapshotDialog
+          open={!!applySnapshot}
+          snapshot={applySnapshot}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          schemas={schemas}
+          onClose={() => setApplySnapshot(null)}
+        />
       )}
 
       <RenameDialog
@@ -1029,6 +1068,385 @@ const AddEntityToProjectDialog = ({
 
         {error && <div style={{ fontSize: 12, color: 'var(--error-fg)' }}>{error}</div>}
       </div>
+    </Dialog>
+  );
+};
+
+const PlanFutureChangeDialog = ({
+  open,
+  workspaceId,
+  projectId,
+  entityId,
+  schemas,
+  teams,
+  lifecycleStates,
+  onClose
+}: {
+  open: boolean;
+  workspaceId: string;
+  projectId: string;
+  entityId: string;
+  schemas: EntitySchema[];
+  teams: WorkspaceTeam[];
+  lifecycleStates: WorkspaceLifecycleState[];
+  onClose: () => void;
+}) => {
+  const { data: entity } = useEntity(workspaceId, entityId);
+  const createFutureUpdate = useCreateFutureUpdate(workspaceId, entityId);
+
+  const schema = entity ? schemas.find(s => s.id === entity._schema.id) : null;
+
+  const [targetDate, setTargetDate] = useState('');
+  const [commitMessage, setCommitMessage] = useState('');
+  const [planState, setPlanState] = useState<Record<string, unknown>>({});
+
+  useEffect(() => {
+    if (!open) return;
+    setTargetDate('');
+    setCommitMessage('');
+    if (!entity || !schema) {
+      setPlanState({});
+      return;
+    }
+    const state: Record<string, unknown> = {
+      _name: entity._name ?? '',
+      _description: entity._description ?? '',
+      _owner: entity._owner?.id ?? '',
+      _lifecycle: entity._lifecycle?.id ?? '',
+      _targetLifecycle: entity._targetLifecycle?.id ?? '',
+      _targetLifecycleDate: entity._targetLifecycleDate ?? ''
+    };
+    for (const f of schema.fields) {
+      state[f.id] = entity[f.id] ?? '';
+    }
+    setPlanState(state);
+  }, [open, entity, schema]);
+
+  const handleSave = () => {
+    if (!entity || !schema) return;
+
+    const customData: Record<string, unknown> = {};
+    for (const f of schema.fields) {
+      customData[f.id] = planState[f.id] ?? '';
+    }
+
+    const proposedState: Record<string, unknown> = {
+      name: (planState['_name'] as string) ?? entity._name,
+      slug: entity._slug,
+      namespace: entity._namespace,
+      description: (planState['_description'] as string) ?? entity._description,
+      owner: (planState['_owner'] as string) || null,
+      lifecycle: (planState['_lifecycle'] as string) || null,
+      target_lifecycle: (planState['_targetLifecycle'] as string) || null,
+      target_lifecycle_date: (planState['_targetLifecycleDate'] as string) || null,
+      tags: entity._tags,
+      links: entity._links,
+      schema_id: entity._schema.id,
+      data: customData,
+      visibility_mode: entity._visibilityMode ?? null
+    };
+
+    createFutureUpdate.mutate(
+      {
+        projectId,
+        targetDate: targetDate || null,
+        commitMessage: commitMessage || null,
+        proposedState
+      },
+      { onSuccess: onClose }
+    );
+  };
+
+  const isReference = (f: EntitySchema['fields'][number]) =>
+    f.type === 'reference' || f.type === 'containment';
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Plan future change"
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        {
+          label: createFutureUpdate.isPending ? 'Saving...' : 'Save plan',
+          type: 'default',
+          disabled: createFutureUpdate.isPending || !entity,
+          onClick: handleSave
+        }
+      ]}
+    >
+      {!entity ? (
+        <div style={{ color: 'var(--cmp-fg-disabled)', fontSize: 13 }}>Loading...</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <FormElement label="Target date">
+            <DateInput
+              value={targetDate}
+              onChange={v => setTargetDate(v ?? '')}
+              style={{ width: '100%' }}
+            />
+          </FormElement>
+          <FormElement label="Note" hint="Describe what is planned to change">
+            <TextInput
+              value={commitMessage}
+              onChange={v => setCommitMessage(v ?? '')}
+              placeholder="e.g. Decommission after migration (optional)"
+              style={{ width: '100%' }}
+            />
+          </FormElement>
+
+          <FormElement label="Name">
+            <TextInput
+              value={(planState['_name'] as string) ?? ''}
+              onChange={v => setPlanState(s => ({ ...s, _name: v ?? '' }))}
+              style={{ width: '100%' }}
+            />
+          </FormElement>
+          <FormElement label="Description">
+            <TextInput
+              value={(planState['_description'] as string) ?? ''}
+              onChange={v => setPlanState(s => ({ ...s, _description: v ?? '' }))}
+              style={{ width: '100%' }}
+            />
+          </FormElement>
+          <FormElement label="Owner">
+            <select
+              className={styles.inlineSelect}
+              value={(planState['_owner'] as string) ?? ''}
+              onChange={e => setPlanState(s => ({ ...s, _owner: e.target.value }))}
+              style={{ width: '100%' }}
+            >
+              <option value="">—</option>
+              {teams.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </FormElement>
+          <FormElement label="Lifecycle">
+            <select
+              className={styles.inlineSelect}
+              value={(planState['_lifecycle'] as string) ?? ''}
+              onChange={e => setPlanState(s => ({ ...s, _lifecycle: e.target.value }))}
+              style={{ width: '100%' }}
+            >
+              <option value="">—</option>
+              {lifecycleStates.map(ls => (
+                <option key={ls.id} value={ls.id}>{ls.label}</option>
+              ))}
+            </select>
+          </FormElement>
+
+          {schema?.fields.filter(f => !isReference(f)).map(f => (
+            <FormElement key={f.id} label={f.name}>
+              {f.type === 'boolean' ? (
+                <input
+                  type="checkbox"
+                  checked={!!(planState[f.id])}
+                  onChange={e => setPlanState(s => ({ ...s, [f.id]: e.target.checked }))}
+                />
+              ) : f.type === 'select' ? (
+                <select
+                  className={styles.inlineSelect}
+                  value={(planState[f.id] as string) ?? ''}
+                  onChange={e => setPlanState(s => ({ ...s, [f.id]: e.target.value }))}
+                  style={{ width: '100%' }}
+                >
+                  <option value="">—</option>
+                  {f.options.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <TextInput
+                  value={(planState[f.id] as string) ?? ''}
+                  onChange={v => setPlanState(s => ({ ...s, [f.id]: v ?? '' }))}
+                  style={{ width: '100%' }}
+                />
+              )}
+            </FormElement>
+          ))}
+        </div>
+      )}
+    </Dialog>
+  );
+};
+
+const ApplySnapshotDialog = ({
+  open,
+  snapshot,
+  workspaceId,
+  projectId,
+  schemas,
+  onClose
+}: {
+  open: boolean;
+  snapshot: EntitySnapshot;
+  workspaceId: string;
+  projectId: string;
+  schemas: EntitySchema[];
+  onClose: () => void;
+}) => {
+  const { data: entity } = useEntity(workspaceId, snapshot.entity_id);
+  const applyMutation = useApplySnapshot(workspaceId, snapshot.entity_id, projectId);
+  const [conflictChoices, setConflictChoices] = useState<Record<string, 'proposed' | 'current'>>({});
+
+  useEffect(() => {
+    if (open) setConflictChoices({});
+  }, [open]);
+
+  const schema = entity ? schemas.find(s => s.id === entity._schema.id) : null;
+
+  const proposed = snapshot.proposed_state as Record<string, unknown> | null;
+  const base = snapshot.base_state as Record<string, unknown>;
+  const proposedData = (proposed?.data as Record<string, unknown>) ?? {};
+  const baseData = (base.data as Record<string, unknown>) ?? {};
+
+  type ConflictItem = { key: string; label: string; proposedVal: unknown; currentVal: unknown };
+  const conflicts: ConflictItem[] = [];
+
+  if (entity && proposed) {
+    const metaFields: Array<[string, string, unknown, unknown]> = [
+      ['name', 'Name', proposed.name, entity._name],
+      ['description', 'Description', proposed.description, entity._description],
+      ['owner', 'Owner', proposed.owner, entity._owner?.id ?? null],
+      ['lifecycle', 'Lifecycle', proposed.lifecycle, entity._lifecycle?.id ?? null],
+      ['target_lifecycle', 'Target Lifecycle', proposed.target_lifecycle, entity._targetLifecycle?.id ?? null],
+      ['target_lifecycle_date', 'Target Date', proposed.target_lifecycle_date, entity._targetLifecycleDate ?? null]
+    ];
+    for (const [key, label, proposedVal, currentVal] of metaFields) {
+      if (
+        JSON.stringify(proposedVal) !== JSON.stringify(base[key]) &&
+        JSON.stringify(currentVal) !== JSON.stringify(base[key])
+      ) {
+        conflicts.push({ key, label, proposedVal, currentVal });
+      }
+    }
+    if (schema) {
+      for (const f of schema.fields) {
+        const proposedVal = proposedData[f.id];
+        const baseVal = baseData[f.id];
+        const currentVal = entity[f.id];
+        if (
+          JSON.stringify(proposedVal) !== JSON.stringify(baseVal) &&
+          JSON.stringify(currentVal) !== JSON.stringify(baseVal)
+        ) {
+          conflicts.push({ key: `data.${f.id}`, label: f.name, proposedVal, currentVal });
+        }
+      }
+    }
+  }
+
+  const formatVal = (v: unknown) => {
+    if (v == null || v === '') return '—';
+    if (Array.isArray(v)) return v.join(', ');
+    return String(v);
+  };
+
+  const doApply = () => {
+    if (!entity || !proposed) return;
+
+    const resolved: Record<string, unknown> = {
+      _schemaId: proposed.schema_id ?? entity._schema.id,
+      _name: conflictChoices['name'] === 'current' ? entity._name : (proposed.name ?? entity._name),
+      _slug: entity._slug,
+      _namespace: entity._namespace,
+      _description: conflictChoices['description'] === 'current'
+        ? entity._description
+        : (proposed.description ?? entity._description),
+      _owner: conflictChoices['owner'] === 'current'
+        ? (entity._owner?.id ?? null)
+        : ((proposed.owner as string) ?? null),
+      _lifecycle: conflictChoices['lifecycle'] === 'current'
+        ? (entity._lifecycle?.id ?? null)
+        : ((proposed.lifecycle as string) ?? null),
+      _targetLifecycle: conflictChoices['target_lifecycle'] === 'current'
+        ? (entity._targetLifecycle?.id ?? null)
+        : ((proposed.target_lifecycle as string) ?? null),
+      _targetLifecycleDate: conflictChoices['target_lifecycle_date'] === 'current'
+        ? (entity._targetLifecycleDate ?? null)
+        : ((proposed.target_lifecycle_date as string) ?? null),
+      _tags: conflictChoices['tags'] === 'current'
+        ? entity._tags
+        : ((proposed.tags as string[]) ?? entity._tags),
+      _links: entity._links,
+      _visibilityMode: entity._visibilityMode ?? null
+    };
+
+    if (schema) {
+      for (const f of schema.fields) {
+        const proposedVal = proposedData[f.id];
+        const baseVal = baseData[f.id];
+        const currentVal = entity[f.id];
+        const hasPlannedChange = JSON.stringify(proposedVal) !== JSON.stringify(baseVal);
+        const hasDrift = JSON.stringify(currentVal) !== JSON.stringify(baseVal);
+        if (hasPlannedChange && hasDrift && conflictChoices[`data.${f.id}`] === 'current') {
+          resolved[f.id] = currentVal;
+        } else {
+          resolved[f.id] = hasPlannedChange ? proposedVal : currentVal;
+        }
+      }
+    }
+
+    applyMutation.mutate(
+      { snapshotId: snapshot.id, resolvedEntityData: resolved },
+      { onSuccess: onClose }
+    );
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Apply planned change"
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        {
+          label: applyMutation.isPending ? 'Applying...' : 'Apply',
+          type: 'default',
+          disabled: applyMutation.isPending || !entity,
+          onClick: doApply
+        }
+      ]}
+    >
+      {!entity ? (
+        <div style={{ color: 'var(--cmp-fg-disabled)', fontSize: 13 }}>Loading entity...</div>
+      ) : conflicts.length === 0 ? (
+        <p style={{ margin: 0 }}>
+          This will apply all planned changes to the entity. No conflicts detected.
+        </p>
+      ) : (
+        <>
+          <p style={{ margin: '0 0 12px 0' }}>
+            The following fields have been changed both in the plan and in the live entity.
+            Choose which value to keep for each.
+          </p>
+          <div className={styles.conflictList}>
+            {conflicts.map(c => (
+              <div key={c.key} className={styles.conflictRow}>
+                <div className={styles.conflictLabel}>{c.label}</div>
+                <label className={styles.conflictOption}>
+                  <input
+                    type="radio"
+                    name={`conflict-${c.key}`}
+                    checked={(conflictChoices[c.key] ?? 'proposed') === 'proposed'}
+                    onChange={() => setConflictChoices(prev => ({ ...prev, [c.key]: 'proposed' }))}
+                  />
+                  <span className={styles.conflictOptionLabel}>Planned: {formatVal(c.proposedVal)}</span>
+                </label>
+                <label className={styles.conflictOption}>
+                  <input
+                    type="radio"
+                    name={`conflict-${c.key}`}
+                    checked={conflictChoices[c.key] === 'current'}
+                    onChange={() => setConflictChoices(prev => ({ ...prev, [c.key]: 'current' }))}
+                  />
+                  <span className={styles.conflictOptionLabel}>Current: {formatVal(c.currentVal)}</span>
+                </label>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </Dialog>
   );
 };

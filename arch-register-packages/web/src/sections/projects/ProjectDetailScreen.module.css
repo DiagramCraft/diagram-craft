@@ -565,7 +565,7 @@
 
 .pentHead {
   display: grid;
-  grid-template-columns: 1fr 90px 120px 72px;
+  grid-template-columns: 1fr 90px 120px 72px 32px;
   padding: 8px 10px;
   font-size: 11px;
   font-weight: 500;
@@ -578,7 +578,7 @@
 
 .pentRow {
   display: grid;
-  grid-template-columns: 1fr 90px 120px 72px;
+  grid-template-columns: 1fr 90px 120px 72px 32px;
   align-items: center;
   padding: 8px 10px;
   border-bottom: 1px solid var(--panel-border);
@@ -679,6 +679,48 @@
 }
 
 .removeEntityBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+.inlineSelect {
+  height: 28px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  color: var(--base-fg);
+  outline: none;
+  font-family: var(--font-sans);
+  appearance: none;
+  cursor: pointer;
+}
+
+.inlineSelect:focus {
+  border-color: var(--accent-fg);
+}
+
+.pentRowMenu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pentMenuBtn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  border: none;
+  background: none;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+}
+
+.pentMenuBtn:hover {
   background: var(--cmp-bg);
   color: var(--base-fg);
 }
@@ -897,4 +939,184 @@
 
 .formSpacer {
   flex: 1;
+}
+
+/* Entity/Future tabs nav */
+.entityTabNav {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.entityTabBtn {
+  height: 28px;
+  padding: 0 12px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-size: 12.5px;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.entityTabBtnActive {
+  color: var(--base-fg);
+  border-bottom-color: var(--accent-fg);
+}
+
+.entityTabBtn:hover:not(.entityTabBtnActive) {
+  color: var(--base-fg);
+}
+
+/* Group by toggle buttons */
+.groupByBtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  border: none;
+  background: none;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+}
+
+.groupByBtnActive {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+.groupByBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+/* Future changes groups */
+.futureChangesGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.futureGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.futureGroupHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 6px;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 4px;
+}
+
+.futureGroupName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+/* Future snapshot row */
+.futureRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+}
+
+.futureRowEntity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--base-fg);
+  margin-bottom: 4px;
+}
+
+.futureRowBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.futureRowMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.futureRowDate {
+  font-size: 11.5px;
+  color: var(--base-fg-dim);
+  flex-shrink: 0;
+}
+
+.futureRowNote {
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.futureRowApply {
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r);
+  border: 1px solid var(--cmp-border);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.futureRowApply:hover {
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
+  color: var(--accent-bg);
+}
+
+/* Apply snapshot conflict dialog */
+.conflictList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.conflictRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.conflictLabel {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.conflictOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.conflictOptionLabel {
+  font-size: 12px;
+  color: var(--base-fg-dim);
 }
