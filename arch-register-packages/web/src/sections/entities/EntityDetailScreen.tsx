@@ -17,11 +17,15 @@ import {
   TbX,
   TbCopy,
   TbBell,
-  TbPinned
+  TbPinned,
+  TbBookmark
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import {
   useEntity,
@@ -29,7 +33,8 @@ import {
   useUpdateEntity,
   useDeleteEntity,
   useCloneEntity,
-  useEntitiesBySchema
+  useEntitiesBySchema,
+  usePromoteSnapshot
 } from '../../hooks/useEntities';
 import {
   useEntityDiagramFiles,
@@ -106,6 +111,8 @@ export const EntityDetailScreen = () => {
   const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
+  const [saveVersionOpen, setSaveVersionOpen] = useState(false);
+  const [saveVersionMessage, setSaveVersionMessage] = useState('');
 
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
@@ -127,6 +134,7 @@ export const EntityDetailScreen = () => {
   const updateEntity = useUpdateEntity(workspaceId);
   const deleteEntity = useDeleteEntity(workspaceId);
   const cloneEntity = useCloneEntity(workspaceId);
+  const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);
   const createWatch = useCreateWatch(workspaceId);
   const deleteWatch = useDeleteWatch(workspaceId);
   const createPinnedEntity = useCreatePinnedEntity(workspaceId);
@@ -333,6 +341,9 @@ export const EntityDetailScreen = () => {
 
   const entityName = entity._name || entity._slug;
   const menuItems: MenuItem[] = [
+    ...(entity.canEdit
+      ? [{ label: 'Save version', icon: <TbBookmark size={14} />, onClick: () => { setSaveVersionMessage(''); setSaveVersionOpen(true); } }]
+      : []),
     ...(entity.canCreateChild
       ? [{ label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone }]
       : []),
@@ -823,6 +834,35 @@ export const EntityDetailScreen = () => {
 
       {/* Change history */}
       {!contentFolder && tab === 'changes' && <ChangeHistory auditLog={auditLog} loading={loadingAudit} />}
+
+      <Dialog
+        open={saveVersionOpen}
+        onClose={() => setSaveVersionOpen(false)}
+        title="Save version"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setSaveVersionOpen(false) },
+          {
+            label: promoteSnapshot.isPending ? 'Saving...' : 'Save version',
+            type: 'default',
+            disabled: promoteSnapshot.isPending,
+            onClick: () => {
+              promoteSnapshot.mutate(
+                { commitMessage: saveVersionMessage || undefined },
+                { onSuccess: () => setSaveVersionOpen(false) }
+              );
+            }
+          }
+        ]}
+      >
+        <FormElement label="Version label" hint="Saves the current state of this entity as a named version">
+          <TextInput
+            value={saveVersionMessage}
+            onChange={v => setSaveVersionMessage(v ?? '')}
+            placeholder="e.g. Q1 baseline (optional)"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+      </Dialog>
 
       <DeleteConfirmationDialog
         open={confirmDelete}

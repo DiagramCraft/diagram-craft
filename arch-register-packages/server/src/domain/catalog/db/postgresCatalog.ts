@@ -356,4 +356,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         )
     `;
   }
+
+  async promoteSnapshot(workspace: string, snapshotId: string, commitMessage: string | null) {
+    const [row] = await this.sql<EntitySnapshotDbResult[]>`
+      UPDATE entity_snapshot
+      SET status = 'saved_version', commit_message = ${commitMessage}
+      WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'autosave'
+      RETURNING *
+    `;
+    return row ?? null;
+  }
 }

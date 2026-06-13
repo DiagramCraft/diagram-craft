@@ -171,6 +171,11 @@ export type CatalogDatabase = {
   createSnapshot(input: EntitySnapshotDbCreate): Promise<EntitySnapshotDbResult>;
   listSnapshots(ws: string, entityId: string): Promise<EntitySnapshotDbResult[]>;
   pruneAutosaveSnapshots(ws: string, entityId: string, keepCount: number): Promise<void>;
+  promoteSnapshot(
+    ws: string,
+    snapshotId: string,
+    commitMessage: string | null
+  ): Promise<EntitySnapshotDbResult | null>;
 };
 
 // -- Saved View

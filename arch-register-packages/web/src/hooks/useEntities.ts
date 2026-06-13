@@ -4,7 +4,7 @@ import type {
   CreateSavedViewRequest,
   UpdateSavedViewRequest
 } from '@arch-register/api-types/viewContract';
-import { entityKeys, schemaKeys, viewKeys } from './queryKeys';
+import { entityKeys, schemaKeys, snapshotKeys, viewKeys } from './queryKeys';
 import { invalidateAuditQueries } from './useAudit';
 import { invalidateNotificationQueries } from './useNotifications';
 import { orpcClient } from '../lib/orpcClient';
@@ -198,6 +198,38 @@ export const useEntitiesBySchema = (workspaceId: string, schemaIds: string[]) =>
         }),
       enabled: !!workspaceId && !!schemaId
     }))
+  });
+};
+
+// ── Snapshot Hooks ────────────────────────────────────────────
+
+export const useEntitySnapshots = (workspaceId: string, entityId: string, enabled = false) => {
+  return useQuery({
+    queryKey: snapshotKeys.list(workspaceId, entityId),
+    queryFn: () =>
+      orpcClient.entities.snapshots.list({ params: { workspace: workspaceId, id: entityId } }),
+    enabled: !!workspaceId && !!entityId && enabled
+  });
+};
+
+export const usePromoteSnapshot = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ commitMessage }: { commitMessage?: string }) => {
+      const snapshots = await orpcClient.entities.snapshots.list({
+        params: { workspace: workspaceId, id: entityId }
+      });
+      const latestAutosave = snapshots.find(s => s.status === 'autosave');
+      if (!latestAutosave) throw new Error('No autosave snapshot found to promote');
+      return orpcClient.entities.snapshots.promote({
+        params: { workspace: workspaceId, id: entityId, snapshotId: latestAutosave.id },
+        body: { commitMessage }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) });
+    }
   });
 };
 

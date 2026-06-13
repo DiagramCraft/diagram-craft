@@ -427,7 +427,61 @@ export const workspaceEntityORPCRouter = entityRouter.router({
       } catch (error) {
         return toORPCError(error);
       }
-    })
+    }),
+
+    snapshots: {
+      list: entityRouter.entities.snapshots.list.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+          const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+          httpAssert.present(entity, {
+            status: 404,
+            message: `Data record '${input.params.id}' not found`
+          });
+          requireEntityAction(
+            authCtx,
+            entity,
+            'view_entity',
+            'You do not have access to view this entity'
+          );
+          const snapshots = await context.db.catalog.listSnapshots(workspace, input.params.id);
+          return snapshots.map(s => ({ ...s, created_at: s.created_at.toISOString() }));
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }),
+
+      promote: entityRouter.entities.snapshots.promote.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+          const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+          httpAssert.present(entity, {
+            status: 404,
+            message: `Data record '${input.params.id}' not found`
+          });
+          requireEntityAction(
+            authCtx,
+            entity,
+            'edit_entity',
+            'You do not have permission to edit this entity'
+          );
+          const snapshot = await context.db.catalog.promoteSnapshot(
+            workspace,
+            input.params.snapshotId,
+            input.body.commitMessage ?? null
+          );
+          orpcAssert.present(snapshot, {
+            code: 'NOT_FOUND',
+            message: 'Snapshot not found or is not an autosave snapshot'
+          });
+          return { ...snapshot, created_at: snapshot.created_at.toISOString() };
+        } catch (error) {
+          return toORPCError(error);
+        }
+      })
+    }
   }
 });
 

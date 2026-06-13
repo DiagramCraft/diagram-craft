@@ -345,4 +345,23 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [workspace, entityId, workspace, entityId, keepCount]
     );
   }
+
+  async promoteSnapshot(workspace: string, snapshotId: string, commitMessage: string | null) {
+    const existing = await this.get(
+      'SELECT * FROM entity_snapshot WHERE id = ? AND workspace = ?',
+      [snapshotId, workspace],
+      sqliteMappers.entitySnapshot
+    );
+    if (!existing || existing.status !== 'autosave') return null;
+
+    this.run(
+      `UPDATE entity_snapshot SET status = 'saved_version', commit_message = ? WHERE id = ?`,
+      [commitMessage, snapshotId]
+    );
+    return await this.get(
+      'SELECT * FROM entity_snapshot WHERE id = ?',
+      [snapshotId],
+      sqliteMappers.entitySnapshot
+    );
+  }
 }

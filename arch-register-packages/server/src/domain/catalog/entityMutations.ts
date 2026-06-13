@@ -1,10 +1,10 @@
 import type { EntityDbCreate, DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import { computeChanges, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
-import { Entity, EntityDbResult } from './db/catalogDatabase';
+import { Entity } from './db/catalogDatabase';
 
 const AUTOSAVE_KEEP_COUNT = 50;
 
-const entityToBaseState = (row: EntityDbResult): Record<string, unknown> => ({
+const entityToBaseState = (row: Entity): Record<string, unknown> => ({
   id: row.id,
   workspace: row.workspace,
   slug: row.slug,
@@ -116,8 +116,8 @@ export const updateEntityWithAudit = async (
     commit_message: null,
     created_at: new Date(),
     created_by: params.actor.id,
-    base_state: entityToBaseState(row),
-    proposed_state: null
+    base_state: entityToBaseState(params.previous),
+    proposed_state: entityToBaseState(row)
   });
   await db.catalog.pruneAutosaveSnapshots(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
 

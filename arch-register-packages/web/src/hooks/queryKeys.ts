@@ -27,3 +27,9 @@ export const viewKeys = {
   lists: () => [...viewKeys.all, 'list'] as const,
   list: (workspaceId: string) => [...viewKeys.lists(), workspaceId] as const,
 };
+
+export const snapshotKeys = {
+  all: ['snapshots'] as const,
+  list: (workspaceId: string, entityId: string) =>
+    [...snapshotKeys.all, workspaceId, entityId] as const,
+};
