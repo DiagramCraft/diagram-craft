@@ -8,8 +8,9 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
+import { ProjectTimelineTab } from './ProjectTimelineTab';
 
-type ViewTab = 'entities' | 'future-changes';
+type ViewTab = 'entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
 
 export const ProjectEntities = ({
@@ -78,6 +79,13 @@ export const ProjectEntities = ({
             >
               Future changes{pendingCount > 0 ? ` (${pendingCount})` : ''}
             </button>
+            <button
+              type="button"
+              className={`${styles.entityTabBtn} ${activeTab === 'timeline' ? styles.entityTabBtnActive : ''}`}
+              onClick={() => setActiveTab('timeline')}
+            >
+              Timeline
+            </button>
           </div>
           {activeTab === 'entities' && project.canEdit && (
             <div className={styles.tabBarRight}>
@@ -120,7 +128,7 @@ export const ProjectEntities = ({
           onRemoveEntity={onRemoveEntity}
           onPlanFutureChange={onPlanFutureChange}
         />
-      ) : (
+      ) : activeTab === 'future-changes' ? (
         <FutureChangesTab
           project={project}
           futureSnapshots={futureSnapshots}
@@ -128,6 +136,13 @@ export const ProjectEntities = ({
           schemaMap={schemaMap}
           groupBy={groupBy}
           onApplySnapshot={onApplySnapshot}
+        />
+      ) : (
+        <ProjectTimelineTab
+          projectEntities={projectEntities}
+          futureSnapshots={futureSnapshots}
+          schemaMap={schemaMap}
+          entityTypeColorMap={entityTypeColorMap}
         />
       )}
     </ProjectScreenLayout>

@@ -1090,6 +1090,144 @@
   color: var(--accent-bg);
 }
 
+/* ── Project timeline tab ──────────────────────────────────── */
+.projectTimeline {
+  padding: 16px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.ptGrid {
+  display: grid;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--panel-bg);
+  min-width: max-content;
+}
+
+.ptHeaderCell {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cmp-fg-disabled);
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+  border-right: 1px solid var(--panel-border);
+  white-space: nowrap;
+}
+
+.ptHeaderCell:last-child {
+  border-right: 0;
+}
+
+.ptGroupLabel {
+  grid-column: 1 / -1;
+  padding: 6px 12px;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--role-color, var(--cmp-fg-disabled));
+  background: color-mix(in oklch, var(--role-color, var(--panel-border)) 8%, var(--base-bg));
+  border-bottom: 1px solid var(--panel-border);
+  border-top: 1px solid var(--panel-border);
+}
+
+.ptEntityCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  border-right: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  min-width: 0;
+}
+
+.ptEntityName {
+  font-size: 12.5px;
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ptMonthCell {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--panel-border);
+  border-right: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 36px;
+}
+
+.ptMonthCell:last-child {
+  border-right: 0;
+}
+
+.ptMarker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px 2px 5px;
+  background: color-mix(in oklch, var(--accent-fg) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--accent-fg) 30%, transparent);
+  border-radius: 10px;
+  color: var(--accent-fg);
+  font-size: 11px;
+  max-width: 100%;
+}
+
+.ptMarkerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.ptUndated {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--panel-bg);
+}
+
+.ptUndatedLabel {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cmp-fg-disabled);
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.ptUndatedRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 12.5px;
+}
+
+.ptUndatedRow:last-child {
+  border-bottom: 0;
+}
+
+.ptUndatedNote {
+  font-size: 11.5px;
+  color: var(--cmp-fg-disabled);
+  margin-left: 4px;
+}
+
 /* Apply snapshot conflict dialog */
 .conflictList {
   display: flex;
