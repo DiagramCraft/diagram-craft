@@ -1,6 +1,28 @@
 import type { EntityDbCreate, DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import { computeChanges, flattenEntityAuditFields, logAudit } from '../audit/db/auditLogging';
-import { Entity } from './db/catalogDatabase';
+import { Entity, EntityDbResult } from './db/catalogDatabase';
+
+const AUTOSAVE_KEEP_COUNT = 50;
+
+const entityToBaseState = (row: EntityDbResult): Record<string, unknown> => ({
+  id: row.id,
+  workspace: row.workspace,
+  slug: row.slug,
+  namespace: row.namespace,
+  name: row.name,
+  description: row.description,
+  owner: row.owner,
+  lifecycle: row.lifecycle,
+  target_lifecycle: row.target_lifecycle,
+  target_lifecycle_date: row.target_lifecycle_date,
+  tags: row.tags,
+  links: row.links,
+  schema_id: row.schema_id,
+  data: row.data,
+  visibility_mode: row.visibility_mode,
+  created_at: row.created_at,
+  updated_at: row.updated_at
+});
 
 export type EntityMutationActor = {
   id: string;
@@ -42,6 +64,21 @@ export const createEntityWithAudit = async (
     }
   });
 
+  await db.catalog.createSnapshot({
+    id: crypto.randomUUID(),
+    workspace: params.workspace,
+    entity_id: row.id,
+    status: 'autosave',
+    project_id: null,
+    target_date: null,
+    commit_message: null,
+    created_at: new Date(),
+    created_by: params.actor.id,
+    base_state: entityToBaseState(row),
+    proposed_state: null
+  });
+  await db.catalog.pruneAutosaveSnapshots(params.workspace, row.id, AUTOSAVE_KEEP_COUNT);
+
   return row;
 };
 
@@ -68,6 +105,21 @@ export const updateEntityWithAudit = async (
       flattenEntityAuditFields(row)
     )
   });
+
+  await db.catalog.createSnapshot({
+    id: crypto.randomUUID(),
+    workspace: params.workspace,
+    entity_id: params.entityId,
+    status: 'autosave',
+    project_id: null,
+    target_date: null,
+    commit_message: null,
+    created_at: new Date(),
+    created_by: params.actor.id,
+    base_state: entityToBaseState(row),
+    proposed_state: null
+  });
+  await db.catalog.pruneAutosaveSnapshots(params.workspace, params.entityId, AUTOSAVE_KEEP_COUNT);
 
   return row;
 };

@@ -134,7 +134,9 @@ const db = {
       const updated = { ...existing, ...input } as Entity;
       updatedEntities.push(updated);
       return updated;
-    })
+    }),
+    createSnapshot: vi.fn(async () => {}),
+    pruneAutosaveSnapshots: vi.fn(async () => {})
   },
   workspace: {
     listTeams: async () => [

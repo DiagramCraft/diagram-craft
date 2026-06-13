@@ -6,7 +6,8 @@ import type {
   SchemaDbResult,
   SavedViewDbResult,
   PinnedEntityDbResult,
-  WorkspaceEnumDbResult
+  WorkspaceEnumDbResult,
+  EntitySnapshotDbResult
 } from '../domain/catalog/db/catalogDatabase';
 import type {
   ProjectDbResult,
@@ -339,6 +340,21 @@ export const sqliteMappers = {
     content: String(row['content']),
     metadata: parseJson(row['metadata'], {}),
     created_at: toDate(row['created_at'])
+  }),
+  entitySnapshot: (row: Record<string, unknown>): EntitySnapshotDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    status: String(row['status']) as EntitySnapshotDbResult['status'],
+    project_id: row['project_id'] == null ? null : String(row['project_id']),
+    target_date: row['target_date'] == null ? null : String(row['target_date']),
+    commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
+    created_at: toDate(row['created_at']),
+    created_by: String(row['created_by']),
+    base_state: parseJson<Record<string, unknown>>(row['base_state'], {}),
+    proposed_state: row['proposed_state'] == null
+      ? null
+      : parseJson<Record<string, unknown>>(row['proposed_state'], {})
   })
 };
 

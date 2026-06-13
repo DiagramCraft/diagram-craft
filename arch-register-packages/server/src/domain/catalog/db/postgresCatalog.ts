@@ -13,7 +13,9 @@ import type {
   EntityGrantDbResult,
   PinnedEntityDbResult,
   Entity,
-  PinnedEntityDbCreate
+  PinnedEntityDbCreate,
+  EntitySnapshotDbCreate,
+  EntitySnapshotDbResult
 } from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
@@ -319,5 +321,39 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  async createSnapshot(input: EntitySnapshotDbCreate) {
+    try {
+      const [row] = await this.sql<EntitySnapshotDbResult[]>`
+        INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, commit_message, created_at, created_by, base_state, proposed_state)
+        VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.status}, ${input.project_id}, ${input.target_date}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${this.json(input.base_state)}, ${input.proposed_state != null ? this.json(input.proposed_state) : null})
+        RETURNING *
+      `;
+      return row!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listSnapshots(workspace: string, entityId: string) {
+    return await this.sql<EntitySnapshotDbResult[]>`
+      SELECT * FROM entity_snapshot
+      WHERE workspace = ${workspace} AND entity_id = ${entityId}
+      ORDER BY created_at DESC
+    `;
+  }
+
+  async pruneAutosaveSnapshots(workspace: string, entityId: string, keepCount: number) {
+    await this.sql`
+      DELETE FROM entity_snapshot
+      WHERE workspace = ${workspace} AND entity_id = ${entityId} AND status = 'autosave'
+        AND id NOT IN (
+          SELECT id FROM entity_snapshot
+          WHERE workspace = ${workspace} AND entity_id = ${entityId} AND status = 'autosave'
+          ORDER BY created_at DESC
+          LIMIT ${keepCount}
+        )
+    `;
   }
 }

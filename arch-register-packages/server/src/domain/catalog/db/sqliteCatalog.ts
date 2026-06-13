@@ -7,7 +7,8 @@ import type {
   EntityDbUpdate,
   WorkspaceEnumDbUpdate,
   SchemaDbUpdate,
-  PinnedEntityDbCreate
+  PinnedEntityDbCreate,
+  EntitySnapshotDbCreate
 } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
@@ -297,5 +298,51 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [userId, workspace, entityId]
     );
     return existing;
+  }
+
+  async createSnapshot(input: EntitySnapshotDbCreate) {
+    this.run(
+      'INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, commit_message, created_at, created_by, base_state, proposed_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.workspace,
+        input.entity_id,
+        input.status,
+        input.project_id,
+        input.target_date,
+        input.commit_message,
+        input.created_at.toISOString(),
+        input.created_by,
+        JSON.stringify(input.base_state),
+        input.proposed_state != null ? JSON.stringify(input.proposed_state) : null
+      ]
+    );
+    return (await this.get(
+      'SELECT * FROM entity_snapshot WHERE id = ?',
+      [input.id],
+      sqliteMappers.entitySnapshot
+    ))!;
+  }
+
+  async listSnapshots(workspace: string, entityId: string) {
+    return this.all(
+      'SELECT * FROM entity_snapshot WHERE workspace = ? AND entity_id = ? ORDER BY created_at DESC',
+      [workspace, entityId],
+      sqliteMappers.entitySnapshot
+    );
+  }
+
+  async pruneAutosaveSnapshots(workspace: string, entityId: string, keepCount: number) {
+    this.run(
+      `DELETE FROM entity_snapshot
+       WHERE workspace = ? AND entity_id = ? AND status = 'autosave'
+         AND id NOT IN (
+           SELECT id FROM entity_snapshot
+           WHERE workspace = ? AND entity_id = ? AND status = 'autosave'
+           ORDER BY created_at DESC
+           LIMIT ?
+         )`,
+      [workspace, entityId, workspace, entityId, keepCount]
+    );
   }
 }
