@@ -40,7 +40,7 @@ export const WorkspaceHomeScreen = () => {
     openAddProjectDialog,
     openAddEntityDialog
   } = useWorkspaceContext();
-  const { canViewAudit, canViewSchemas, canEditSchemas, canCreateProjects, canCreateEntities } =
+  const { canViewAudit, canViewSchemas, canCreateProjects, canCreateEntities } =
     permissions;
   const collapsedProjectCount = 6;
   const [showAllProjects, setShowAllProjects] = useState(false);
@@ -95,7 +95,7 @@ export const WorkspaceHomeScreen = () => {
         });
         break;
       case 'entity_schema':
-        navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } });
+        navigate({ to: '/$workspaceSlug/settings/schemas', params: { workspaceSlug } });
         break;
       // workspace and content_node don't have dedicated detail views yet
     }
@@ -268,23 +268,7 @@ export const WorkspaceHomeScreen = () => {
                       <TbChevronRight size={12} />
                     </button>
                   ))}
-                  {canEditSchemas && (
-                    <button
-                      type="button"
-                      className={`${styles.typecard} ${styles.typecardAdd}`}
-                      onClick={() =>
-                        navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } })
-                      }
-                    >
-                      <span className={styles.typecardIcon}>
-                        <TbPlus size={14} />
-                      </span>
-                      <span className={styles.typecardBody}>
-                        <div className={styles.typecardName}>Add entity type</div>
-                        <div className={styles.typecardMeta}>Define a new schema</div>
-                      </span>
-                    </button>
-                  )}
+
                 </div>
               </Panel>
             )}

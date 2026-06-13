@@ -11,7 +11,7 @@ export const projectDetailRoute = (
 
 export const workspaceEntitiesRoute = (workspaceSlug: string) => `/${workspaceSlug}/entities`;
 
-export const workspaceModelRoute = (workspaceSlug: string) => `/${workspaceSlug}/model`;
+export const workspaceModelRoute = (workspaceSlug: string) => `/${workspaceSlug}/settings/schemas`;
 
 export const workspaceSearchRoute = (workspaceSlug: string) => `/${workspaceSlug}/search`;
 

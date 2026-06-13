@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch, useLocation } from '@tanstack/react-router';
 import {
   TbSettings,
   TbTag,
@@ -7,7 +7,10 @@ import {
   TbShieldLock,
   TbSparkles,
   TbHistory,
-  TbTrash
+  TbTrash,
+  TbCode,
+  TbLayoutSidebarLeftCollapse,
+  TbLayoutSidebarLeftExpand
 } from 'react-icons/tb';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
@@ -39,6 +42,8 @@ type SettingsNavItem = {
 const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
   { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Workspace' },
+  { id: 'model-overview', label: 'Model Overview', icon: <TbCode size={12} />, group: 'Model' },
+  { id: 'schemas', label: 'Schemas', icon: <TbCode size={12} />, group: 'Model' },
   { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },
@@ -64,17 +69,28 @@ export const WorkspaceSettingsSidebar = ({
   workspaceSlug,
   schemas,
   projects,
-  availableSections
+  availableSections,
+  onCollapse,
+  onExpand
 }: {
   workspace: Workspace | null;
   workspaceSlug: string;
   schemas: EntitySchema[];
   projects: Project[];
   availableSections: string[];
+  onCollapse?: () => void;
+  onExpand?: () => void;
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const search = useSearch({ strict: false }) as { section?: string };
-  const section = search.section ?? 'general';
+  const isOnModelOverviewRoute = location.pathname.includes('/settings/model-overview');
+  const isOnSchemasRoute = location.pathname.includes('/settings/schemas');
+  const section = isOnModelOverviewRoute
+    ? 'model-overview'
+    : isOnSchemasRoute
+      ? 'schemas'
+      : (search.section ?? 'general');
 
   const groups = useMemo(() => {
     const g: Record<string, SettingsNavItem[]> = {};
@@ -88,7 +104,30 @@ export const WorkspaceSettingsSidebar = ({
 
   return (
     <>
-      <SectionHeader title="Settings" />
+      <SectionHeader 
+        title="Settings" 
+        actions={
+          onCollapse ? (
+            <button
+              type="button"
+              className={styles.action}
+              title="Collapse to rail"
+              onClick={onCollapse}
+            >
+              <TbLayoutSidebarLeftCollapse size={14} />
+            </button>
+          ) : onExpand ? (
+            <button
+              type="button"
+              className={styles.action}
+              title="Pin sidebar open"
+              onClick={onExpand}
+            >
+              <TbLayoutSidebarLeftExpand size={14} />
+            </button>
+          ) : null
+        }
+      />
       <div className={styles.scroll}>
         {workspace && (
           <div className={styles.settingsWsHead}>
@@ -110,13 +149,29 @@ export const WorkspaceSettingsSidebar = ({
                 icon={s.icon}
                 label={s.label}
                 active={section === s.id}
-                onClick={() =>
+                onClick={() => {
+                  if (s.id === 'model-overview') {
+                    navigate({
+                      to: '/$workspaceSlug/settings/model-overview',
+                      params: { workspaceSlug }
+                    });
+                    return;
+                  }
+
+                  if (s.id === 'schemas') {
+                    navigate({
+                      to: '/$workspaceSlug/settings/schemas',
+                      params: { workspaceSlug }
+                    });
+                    return;
+                  }
+
                   navigate({
                     to: '/$workspaceSlug/settings',
                     params: { workspaceSlug },
                     search: { section: s.id }
-                  })
-                }
+                  });
+                }}
                 className={s.tone === 'danger' ? styles.dangerRow : undefined}
               />
             ))}

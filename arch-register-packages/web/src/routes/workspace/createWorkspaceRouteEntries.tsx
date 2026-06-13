@@ -2,7 +2,6 @@ import { createHomeWorkspaceRoute } from './homeWorkspaceRoute';
 import { createContentWorkspaceRoutes } from './contentWorkspaceRoutes';
 import { createProjectWorkspaceRoutes } from './projectWorkspaceRoutes';
 import { createEntityWorkspaceRoutes } from './entityWorkspaceRoutes';
-import { createDataModelWorkspaceRoute } from './dataModelWorkspaceRoute';
 import { createSearchWorkspaceRoute } from './searchWorkspaceRoute';
 import { createSettingsWorkspaceRoutes } from './settingsWorkspaceRoutes';
 import { createAssistantWorkspaceRoutes } from './assistantWorkspaceRoutes';
@@ -15,7 +14,6 @@ export const createWorkspaceRouteEntries = (
   ...createContentWorkspaceRoutes(workspaceRoute),
   ...createProjectWorkspaceRoutes(workspaceRoute),
   ...createEntityWorkspaceRoutes(workspaceRoute),
-  ...createDataModelWorkspaceRoute(workspaceRoute),
   ...createSearchWorkspaceRoute(workspaceRoute),
   ...createSettingsWorkspaceRoutes(workspaceRoute),
   ...createAssistantWorkspaceRoutes(workspaceRoute)

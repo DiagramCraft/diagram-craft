@@ -262,7 +262,7 @@ export const SearchScreen = () => {
   const navigateToSchema = useCallback(
     (schemaId: string) => {
       routerNavigate({
-        to: '/$workspaceSlug/model',
+        to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
         search: { schema: schemaId }
       });

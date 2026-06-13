@@ -25,6 +25,14 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
     title: 'Lifecycle',
     sub: 'Configure valid lifecycle states for entities in this workspace.'
   },
+  'model-overview': {
+    title: 'Model Overview',
+    sub: 'Visualize relationships between entity types in your data model.'
+  },
+  'schemas': {
+    title: 'Schemas',
+    sub: 'Define entity types, fields, and enums that structure your workspace data.'
+  },
   'roles': {
     title: 'Roles & permissions',
     sub: 'Manage built-in roles and create custom workspace roles.'
@@ -49,6 +57,34 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
     title: 'Danger zone',
     sub: "Operations that can't be undone. Read carefully before clicking."
   }
+};
+
+const SchemasRedirectSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigate({
+      to: '/$workspaceSlug/settings/schemas',
+      params: { workspaceSlug },
+      replace: true
+    });
+  }, [navigate, workspaceSlug]);
+
+  return null;
+};
+
+const ModelOverviewRedirectSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigate({
+      to: '/$workspaceSlug/settings/model-overview',
+      params: { workspaceSlug },
+      replace: true
+    });
+  }, [navigate, workspaceSlug]);
+
+  return null;
 };
 
 export const WorkspaceSettingsScreen = () => {
@@ -153,6 +189,8 @@ export const WorkspaceSettingsScreen = () => {
       {section === 'lifecycle-owners' && (
         <LifecycleOwnersSection workspace={workspace} lifecycleStates={lifecycleStates} />
       )}
+      {section === 'model-overview' && <ModelOverviewRedirectSection workspaceSlug={workspaceSlug} />}
+      {section === 'schemas' && <SchemasRedirectSection workspaceSlug={workspaceSlug} />}
       {section === 'roles' && (
         <RolesPermissionsSubSection
           workspaceSlug={workspaceSlug}
@@ -555,7 +593,7 @@ const AuditLogSection = ({
         });
         return;
       case 'entity_schema':
-        navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } });
+        navigate({ to: '/$workspaceSlug/settings/schemas', params: { workspaceSlug } });
         return;
       case 'content_node': {
         const projectId =

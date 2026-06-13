@@ -1,6 +1,6 @@
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { TbTable, TbVectorTriangle } from 'react-icons/tb';
+import { TbTable } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -12,7 +12,7 @@ const GroupLabel = ({ children }: { children: React.ReactNode }) => (
   <div className={styles.groupLabel}>{children}</div>
 );
 
-export const DataModelSidebar = ({
+export const SchemaSettingsSidebar = ({
   schemas,
   enums,
   workspaceSlug
@@ -23,18 +23,18 @@ export const DataModelSidebar = ({
 }) => {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as {
-    tab?: 'types' | 'enums' | 'graph';
+    tab?: 'types' | 'enums';
     schema?: string;
     enumId?: string;
   };
+
   const activeTab = search.tab === 'enums' ? 'enums' : 'types';
-  const isGraphOverviewActive = search.tab === 'graph';
   const schemaId = search.schema ?? null;
   const enumId = search.enumId ?? null;
 
   const activateTab = (tab: 'types' | 'enums') => {
     navigate({
-      to: '/$workspaceSlug/model',
+      to: '/$workspaceSlug/settings/schemas',
       params: { workspaceSlug },
       search: { tab }
     });
@@ -67,7 +67,7 @@ export const DataModelSidebar = ({
               active={schemaId === s.id}
               onClick={() =>
                 navigate({
-                  to: '/$workspaceSlug/model',
+                  to: '/$workspaceSlug/settings/schemas',
                   params: { workspaceSlug },
                   search: { tab: 'types', schema: s.id }
                 })
@@ -76,19 +76,6 @@ export const DataModelSidebar = ({
               trailing={<span className="dim mono">{s.fields.length}</span>}
             />
           ))}
-          <GroupLabel>Views</GroupLabel>
-          <TreeRow
-            icon={<TbVectorTriangle size={12} />}
-            label="Graph Overview"
-            active={isGraphOverviewActive}
-            onClick={() =>
-              navigate({
-                to: '/$workspaceSlug/model',
-                params: { workspaceSlug },
-                search: { tab: 'graph' }
-              })
-            }
-          />
         </div>
       ) : (
         <div className={styles.scroll}>
@@ -104,7 +91,7 @@ export const DataModelSidebar = ({
               active={enumId === e.id}
               onClick={() =>
                 navigate({
-                  to: '/$workspaceSlug/model',
+                  to: '/$workspaceSlug/settings/schemas',
                   params: { workspaceSlug },
                   search: { tab: 'enums', enumId: e.id }
                 })

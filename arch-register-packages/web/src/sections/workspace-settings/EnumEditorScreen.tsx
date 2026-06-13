@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import styles from './DataModelEditorScreen.module.css';
+import styles from './SchemaSettingsScreen.module.css';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -38,9 +38,9 @@ export const EnumEditorScreen = () => {
     try {
       const created = await createEnumMutation.mutateAsync({ name: 'new_enum', options: [] });
       navigate({
-        to: '/$workspaceSlug/model',
+        to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
-        search: { tab: 'enums', enumId: created.id },
+        search: { tab: 'enums', enumId: created.id }
       });
     } catch {
       // error handled by mutation
@@ -52,7 +52,7 @@ export const EnumEditorScreen = () => {
     try {
       await updateEnumMutation.mutateAsync({
         enumId: selected.id,
-        data: { name, options },
+        data: { name, options }
       });
       setDirty(false);
     } catch {
@@ -65,9 +65,9 @@ export const EnumEditorScreen = () => {
     try {
       await deleteEnumMutation.mutateAsync(selected.id);
       navigate({
-        to: '/$workspaceSlug/model',
+        to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
-        search: { tab: 'enums' },
+        search: { tab: 'enums' }
       });
     } catch {
       // error handled by mutation
@@ -80,7 +80,7 @@ export const EnumEditorScreen = () => {
   };
 
   const updateOption = (index: number, patch: Partial<{ value: string; label: string }>) => {
-    setOptions(prev => prev.map((o, i) => i === index ? { ...o, ...patch } : o));
+    setOptions(prev => prev.map((o, i) => (i === index ? { ...o, ...patch } : o)));
     setDirty(true);
   };
 
@@ -101,7 +101,9 @@ export const EnumEditorScreen = () => {
         </div>
         <div className={styles.actions}>
           {canEdit && (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateEnum}>New enum</Button>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateEnum}>
+              New enum
+            </Button>
           )}
         </div>
       </div>
@@ -135,19 +137,44 @@ export const EnumEditorScreen = () => {
             <div className={styles.fieldsHead}>
               <div className={styles.sectionLabel}>Options</div>
               {canEdit && (
-                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addOption}>Add option</Button>
+                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addOption}>
+                  Add option
+                </Button>
               )}
             </div>
 
             {options.length > 0 ? (
               <div className={styles.fieldsTable}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 28px', gap: 10, padding: '8px 10px', fontSize: 11, color: 'var(--cmp-fg-disabled)', textTransform: 'uppercase', letterSpacing: '0.5px', background: 'var(--panel-bg)', borderBottom: '1px solid var(--panel-border)' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 28px',
+                    gap: 10,
+                    padding: '8px 10px',
+                    fontSize: 11,
+                    color: 'var(--cmp-fg-disabled)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    background: 'var(--panel-bg)',
+                    borderBottom: '1px solid var(--panel-border)'
+                  }}
+                >
                   <span>Value</span>
                   <span>Label</span>
                   <span />
                 </div>
                 {options.map((opt, i) => (
-                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 28px', gap: 10, padding: '8px 10px', fontSize: 12, borderBottom: i < options.length - 1 ? '1px solid var(--panel-border)' : 'none' }}>
+                  <div
+                    key={i}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr 28px',
+                      gap: 10,
+                      padding: '8px 10px',
+                      fontSize: 12,
+                      borderBottom: i < options.length - 1 ? '1px solid var(--panel-border)' : 'none'
+                    }}
+                  >
                     <TextInput
                       value={opt.value}
                       readOnly={!canEdit}
@@ -161,7 +188,11 @@ export const EnumEditorScreen = () => {
                       onChange={value => updateOption(i, { label: value ?? '' })}
                     />
                     {canEdit && (
-                      <button type="button" className={styles.iconBtn} onClick={() => removeOption(i)}>
+                      <button
+                        type="button"
+                        className={styles.iconBtn}
+                        onClick={() => removeOption(i)}
+                      >
                         <TbTrash size={13} />
                       </button>
                     )}
@@ -170,7 +201,14 @@ export const EnumEditorScreen = () => {
               </div>
             ) : (
               <div className={styles.fieldsTable}>
-                <div style={{ padding: '16px', color: 'var(--cmp-fg-disabled)', textAlign: 'center', fontSize: 12 }}>
+                <div
+                  style={{
+                    padding: '16px',
+                    color: 'var(--cmp-fg-disabled)',
+                    textAlign: 'center',
+                    fontSize: 12
+                  }}
+                >
                   No options defined yet. Click "Add option" to get started.
                 </div>
               </div>
@@ -178,7 +216,9 @@ export const EnumEditorScreen = () => {
 
             <div className={styles.formActions}>
               {canEdit && (
-                <Button variant="danger" icon={<TbTrash size={12} />} onClick={() => setConfirmDelete(true)}>Delete enum</Button>
+                <Button variant="danger" icon={<TbTrash size={12} />} onClick={() => setConfirmDelete(true)}>
+                  Delete enum
+                </Button>
               )}
               <div style={{ flex: 1 }} />
               {canEdit && dirty && (

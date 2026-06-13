@@ -9,7 +9,6 @@ export type WorkspaceRailItemId =
   | 'content'
   | 'projects'
   | 'entities'
-  | 'model'
   | 'search'
   | 'assistant'
   | 'extract';

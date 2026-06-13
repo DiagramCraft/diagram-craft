@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import styles from './DataModelEditorScreen.module.css';
+import styles from './SchemaSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
@@ -16,14 +16,13 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { newid } from '@diagram-craft/utils/id';
 import { EnumEditorScreen } from './EnumEditorScreen';
-import { SchemaGraphView } from './components/SchemaGraphView';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
-export const DataModelEditorScreen = () => {
+export const SchemaSettingsScreen = () => {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as {
-    tab?: 'types' | 'enums' | 'graph';
+    tab?: 'types' | 'enums';
     schema?: string;
     enumId?: string;
   };
@@ -31,7 +30,6 @@ export const DataModelEditorScreen = () => {
   const activeTab = search.tab ?? 'types';
   const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
-  const [mode, setMode] = useState<'form' | 'json'>('form');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<SchemaField[]>([]);
@@ -47,7 +45,7 @@ export const DataModelEditorScreen = () => {
   const onSelectSchema = useCallback(
     (id: string) => {
       navigate({
-        to: '/$workspaceSlug/model',
+        to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
         search: { schema: id || undefined }
       });
@@ -156,29 +154,8 @@ export const DataModelEditorScreen = () => {
     return <EnumEditorScreen />;
   }
 
-  if (activeTab === 'graph') {
-    return <SchemaGraphView />;
-  }
-
   return (
     <div className={styles.screen}>
-      <div className={styles.header}>
-        <div>
-          <div className={styles.eyebrow}>Data model</div>
-          <div className={styles.title}>Schema</div>
-          <div className={styles.sub}>
-            Define the entity types that everything in this workspace conforms to.
-          </div>
-        </div>
-        <div className={styles.actions}>
-          {canEdit && (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateType}>
-              New entity type
-            </Button>
-          )}
-        </div>
-      </div>
-
       {selected ? (
         <div>
           <div className={styles.editor}>
@@ -195,188 +172,159 @@ export const DataModelEditorScreen = () => {
                   <div className="dim">{selected.entity_count} entities</div>
                 </div>
               </div>
-              <div className={styles.modeToggle}>
-                <button
-                  type="button"
-                  className={mode === 'form' ? styles.modeActive : ''}
-                  onClick={() => setMode('form')}
-                >
-                  Form
-                </button>
-                <button
-                  type="button"
-                  className={mode === 'json' ? styles.modeActive : ''}
-                  onClick={() => setMode('json')}
-                >
-                  JSON
-                </button>
+            </div>
+
+            <div className={styles.formRow}>
+              <div>
+                <div className={styles.formLabel}>Name</div>
+                <TextInput
+                  value={name}
+                  disabled={!canEdit}
+                  onChange={value => {
+                    setName(value ?? '');
+                    setDirty(true);
+                  }}
+                  style={{ width: '100%' }}
+                />
               </div>
             </div>
 
-            {mode === 'form' ? (
-              <>
-                {/* Name */}
-                <div className={styles.formRow}>
-                  <div>
-                    <div className={styles.formLabel}>Name</div>
-                    <TextInput
-                      value={name}
+            <div className={styles.formRow}>
+              <div>
+                <div className={styles.formLabel}>Description</div>
+                <TextArea
+                  value={description}
+                  disabled={!canEdit}
+                  placeholder="What does this entity type represent?"
+                  onChange={value => {
+                    setDescription(value ?? '');
+                    setDirty(true);
+                  }}
+                  rows={4}
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.appearanceRow}>
+              <div>
+                <div className={styles.formLabel}>Color</div>
+                <div className={styles.colorSwatches}>
+                  {SCHEMA_COLORS.map(c => (
+                    <button
+                      type="button"
+                      key={c}
+                      className={`${styles.swatch} ${color === c ? styles.swatchActive : ''}`}
+                      style={{ background: c }}
                       disabled={!canEdit}
-                      onChange={value => {
-                        setName(value ?? '');
+                      onClick={() => {
+                        setColor(c);
                         setDirty(true);
                       }}
-                      style={{ width: '100%' }}
                     />
-                  </div>
+                  ))}
                 </div>
+              </div>
+              <div>
+                <div className={styles.formLabel}>Icon</div>
+                <div className={styles.iconPicker}>
+                  {SCHEMA_ICONS.map(id => {
+                    const Ic = ICON_MAP[id];
+                    return (
+                      <button
+                        type="button"
+                        key={id}
+                        className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
+                        title={id}
+                        disabled={!canEdit}
+                        onClick={() => {
+                          setIcon(id);
+                          setDirty(true);
+                        }}
+                      >
+                        <Ic size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
 
-                {/* Description */}
-                <div className={styles.formRow}>
-                  <div>
-                    <div className={styles.formLabel}>Description</div>
-                    <TextArea
-                      value={description}
-                      disabled={!canEdit}
-                      placeholder="What does this entity type represent?"
-                      onChange={value => {
-                        setDescription(value ?? '');
-                        setDirty(true);
-                      }}
-                      rows={4}
-                      style={{ width: '100%' }}
+            <div className={styles.fieldsHead}>
+              <div className={styles.sectionLabel}>Fields</div>
+              {canEdit && (
+                <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>
+                  Add field
+                </Button>
+              )}
+            </div>
+
+            {fields.length > 0 ? (
+              <div className={styles.fieldsTable}>
+                <div className={styles.fieldsTh}>
+                  <span />
+                  <span>Name</span>
+                  <span>Label</span>
+                  <span>Type</span>
+                  <span>Options / Ref</span>
+                  <span>Completeness</span>
+                  <span />
+                </div>
+                {fields.map(f => {
+                  const hasOtherContainment = fields.some(
+                    other => other.id !== f.id && other.type === 'containment'
+                  );
+                  return (
+                    <FieldRow
+                      key={f.id}
+                      field={f}
+                      schemas={schemas}
+                      enums={enums}
+                      onUpdate={patch => updateField(f.id, patch)}
+                      onChangeType={t => changeFieldType(f.id, t)}
+                      onRemove={canEdit ? () => removeField(f.id) : undefined}
+                      containmentDisabled={hasOtherContainment}
+                      canEdit={canEdit}
                     />
-                  </div>
-                </div>
-
-                {/* Color + Icon */}
-                <div className={styles.appearanceRow}>
-                  <div>
-                    <div className={styles.formLabel}>Color</div>
-                    <div className={styles.colorSwatches}>
-                      {SCHEMA_COLORS.map(c => (
-                        <button
-                          type="button"
-                          key={c}
-                          className={`${styles.swatch} ${color === c ? styles.swatchActive : ''}`}
-                          style={{ background: c }}
-                          disabled={!canEdit}
-                          onClick={() => {
-                            setColor(c);
-                            setDirty(true);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className={styles.formLabel}>Icon</div>
-                    <div className={styles.iconPicker}>
-                      {SCHEMA_ICONS.map(id => {
-                        const Ic = ICON_MAP[id];
-                        return (
-                          <button
-                            type="button"
-                            key={id}
-                            className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
-                            title={id}
-                            disabled={!canEdit}
-                            onClick={() => {
-                              setIcon(id);
-                              setDirty(true);
-                            }}
-                          >
-                            <Ic size={14} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Fields */}
-                <div className={styles.fieldsHead}>
-                  <div className={styles.sectionLabel}>Fields</div>
-                  {canEdit && (
-                    <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addField}>
-                      Add field
-                    </Button>
-                  )}
-                </div>
-
-                {fields.length > 0 ? (
-                  <div className={styles.fieldsTable}>
-                    <div className={styles.fieldsTh}>
-                      <span />
-                      <span>Name</span>
-                      <span>Label</span>
-                      <span>Type</span>
-                      <span>Options / Ref</span>
-                      <span>Completeness</span>
-                      <span />
-                    </div>
-                    {fields.map(f => {
-                      const hasOtherContainment = fields.some(
-                        other => other.id !== f.id && other.type === 'containment'
-                      );
-                      return (
-                        <FieldRow
-                          key={f.id}
-                          field={f}
-                          schemas={schemas}
-                          enums={enums}
-                          onUpdate={patch => updateField(f.id, patch)}
-                          onChangeType={t => changeFieldType(f.id, t)}
-                          onRemove={canEdit ? () => removeField(f.id) : undefined}
-                          containmentDisabled={hasOtherContainment}
-                          canEdit={canEdit}
-                        />
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className={styles.fieldsTable}>
-                    <div
-                      style={{
-                        padding: '16px',
-                        color: 'var(--cmp-fg-disabled)',
-                        textAlign: 'center',
-                        fontSize: 12
-                      }}
-                    >
-                      No fields defined yet. Click "Add field" to get started.
-                    </div>
-                  </div>
-                )}
-
-                {/* Save / Delete actions */}
-                <div className={styles.formActions}>
-                  {canEdit && (
-                    <Button
-                      variant="danger"
-                      icon={<TbTrash size={12} />}
-                      onClick={handleDeleteType}
-                    >
-                      Delete type
-                    </Button>
-                  )}
-                  <div style={{ flex: 1 }} />
-                  {canEdit && dirty && (
-                    <Button
-                      variant="primary"
-                      onClick={handleSave}
-                      disabled={updateSchemaMutation.isPending}
-                    >
-                      {updateSchemaMutation.isPending ? 'Saving...' : 'Save'}
-                    </Button>
-                  )}
-                </div>
-              </>
+                  );
+                })}
+              </div>
             ) : (
-              <pre className={styles.json}>
-                {JSON.stringify({ id: selected.id, name, fields }, null, 2)}
-              </pre>
+              <div className={styles.fieldsTable}>
+                <div
+                  style={{
+                    padding: '16px',
+                    color: 'var(--cmp-fg-disabled)',
+                    textAlign: 'center',
+                    fontSize: 12
+                  }}
+                >
+                  No fields defined yet. Click "Add field" to get started.
+                </div>
+              </div>
             )}
+
+            <div className={styles.formActions}>
+              {canEdit && (
+                <Button
+                  variant="danger"
+                  icon={<TbTrash size={12} />}
+                  onClick={handleDeleteType}
+                >
+                  Delete type
+                </Button>
+              )}
+              <div style={{ flex: 1 }} />
+              {canEdit && dirty && (
+                <Button
+                  variant="primary"
+                  onClick={handleSave}
+                  disabled={updateSchemaMutation.isPending}
+                >
+                  {updateSchemaMutation.isPending ? 'Saving...' : 'Save'}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       ) : (
@@ -384,6 +332,16 @@ export const DataModelEditorScreen = () => {
           <TbCode size={22} />
           <div className={styles.emptyTitle}>No type selected</div>
           <div>Select an entity type from the sidebar to edit its schema.</div>
+          {canEdit && (
+            <Button 
+              variant="primary" 
+              icon={<TbPlus size={12} />} 
+              onClick={handleCreateType}
+              style={{ marginTop: 16 }}
+            >
+              New entity type
+            </Button>
+          )}
         </div>
       )}
 

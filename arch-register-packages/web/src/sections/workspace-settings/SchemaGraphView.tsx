@@ -1,16 +1,16 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { DependencyGraph } from '../../../components/DependencyGraph';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { DependencyGraph } from '../../components/DependencyGraph';
 import type {
   LayoutAlgorithm,
   DependencyGraphEdge,
   LayoutOptions
-} from '../../../components/DependencyGraph';
-import { TypeBadge } from '../../../components/TypeBadge';
+} from '../../components/DependencyGraph';
+import { TypeBadge } from '../../components/TypeBadge';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { resolveSchemaColor } from '../../../lib/api';
+import { resolveSchemaColor } from '../../lib/api';
 import { TbVectorTriangle } from 'react-icons/tb';
 import styles from './SchemaGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -43,9 +43,7 @@ export const SchemaGraphView = () => {
         const existing = edgeMap.get(pairKey);
 
         if (existing) {
-          // Add field name to existing edge
           existing.fields.push(field.name);
-          // Upgrade to containment if this field is containment
           if (field.type === 'containment' && existing.kind !== 'containment') {
             existing.kind = 'containment';
           }
@@ -73,7 +71,7 @@ export const SchemaGraphView = () => {
   const handleNodeClick = useCallback(
     (schemaId: string) => {
       navigate({
-        to: '/$workspaceSlug/model',
+        to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
         search: { tab: 'types', schema: schemaId }
       });
