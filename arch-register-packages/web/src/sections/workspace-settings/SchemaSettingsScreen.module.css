@@ -1,4 +1,4 @@
-/* Data Model Editor */
+/* Schema settings editor */
 .screen {
   padding: 20px 24px 32px;
   display: flex;
@@ -42,7 +42,6 @@
   align-items: center;
 }
 
-/* Editor panel */
 .editor {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
@@ -69,31 +68,6 @@
   font-weight: 500;
 }
 
-.modeToggle {
-  display: inline-flex;
-  background: var(--base-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-
-.modeToggle button {
-  padding: 0 12px;
-  height: 26px;
-  color: var(--base-fg-more-dim);
-  font-size: 11.5px;
-}
-
-.modeToggle button:hover {
-  color: var(--base-fg);
-}
-
-.modeActive {
-  color: var(--base-fg) !important;
-  background: var(--cmp-bg);
-}
-
-/* Form rows */
 .formRow {
   display: flex;
   flex-direction: row;
@@ -132,7 +106,6 @@
   margin-bottom: 6px;
 }
 
-/* Fields section */
 .fieldsHead {
   display: flex;
   align-items: center;
@@ -151,7 +124,6 @@
   flex: 1;
 }
 
-/* Fields table */
 .fieldsTable {
   background: var(--base-bg);
   border: 1px solid var(--panel-border);
@@ -206,23 +178,6 @@
   font-size: 11px;
 }
 
-/* JSON view */
-.json {
-  background: var(--base-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  padding: 14px;
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  line-height: 1.55;
-  color: var(--base-fg-dim);
-  overflow: auto;
-  max-height: 540px;
-}
-
-
-/* Icon button */
 .iconBtn {
   width: 28px;
   height: 28px;
@@ -238,7 +193,6 @@
   background: var(--cmp-bg);
 }
 
-/* Empty state */
 .empty {
   display: flex;
   flex-direction: column;
@@ -255,16 +209,13 @@
   color: var(--base-fg-dim);
 }
 
-/* Form actions row */
 .formActions {
   display: flex;
-  gap: 6px;
-  padding-top: 8px;
-  border-top: 1px solid var(--panel-border);
-  margin-top: 16px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
 }
 
-/* Color swatches */
 .colorSwatches {
   display: flex;
   gap: 4px;
@@ -284,7 +235,6 @@
   box-shadow: 0 0 0 2px var(--accent-fg);
 }
 
-/* Icon picker */
 .iconPicker {
   display: flex;
   gap: 2px;
@@ -313,7 +263,6 @@
   box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent-fg) 35%, transparent);
 }
 
-/* Checkbox */
 .checkbox {
   appearance: none;
   width: 14px;
@@ -338,6 +287,6 @@
   width: 4px;
   height: 8px;
   border: solid white;
-  border-width: 0 1.5px 1.5px 0;
+  border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }

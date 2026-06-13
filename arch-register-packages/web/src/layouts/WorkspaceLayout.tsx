@@ -20,7 +20,7 @@ import { useAuthorizationData } from '../auth/AuthorizationDataContext';
 import { WorkspaceContext } from './WorkspaceContext';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
-import { TbCode, TbDatabase, TbFileAi, TbFiles, TbFolders, TbHome, TbMessageCircleStar, TbSearch } from 'react-icons/tb';
+import { TbDatabase, TbFileAi, TbFiles, TbFolders, TbHome, TbMessageCircleStar, TbSearch } from 'react-icons/tb';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import {
   navigateFromRailItem,
@@ -34,13 +34,10 @@ const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'content', icon: TbFiles, tooltip: 'Workspace content' },
   { id: 'projects', icon: TbFolders, tooltip: 'Projects' },
   { id: 'entities', icon: TbDatabase, tooltip: 'Entities' },
-  { id: 'model', icon: TbCode, tooltip: 'Data model' },
   { id: 'search', icon: TbSearch, tooltip: 'Search' },
   { id: 'assistant', icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
   { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' }
 ];
-
-const SCHEMA_RESTRICTED_IDS = new Set(['home', 'projects', 'entities', 'search']);
 
 export const WorkspaceLayout = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
@@ -88,21 +85,21 @@ export const WorkspaceLayout = () => {
     () => [
       ...(canManageWorkspaces ? ['general', 'danger'] : []),
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
+      ...(canViewSchemas ? ['model-overview', 'schemas'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
       ...(canManageWorkspaces ? ['ai'] : []),
       ...(canViewAudit ? ['audit'] : [])
     ],
-    [canManageWorkspaces, canManageTeams, canManageMembers, canViewAudit]
+    [canManageWorkspaces, canManageTeams, canViewSchemas, canManageMembers, canViewAudit]
   );
 
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
 
   const handleRailPick = useCallback(
     (id: WorkspaceRailItemId) => {
-      if (id === 'model' && !canViewSchemas) return;
       navigateFromRailItem(id, { navigate, workspaceSlug, projects });
     },
-    [canViewSchemas, navigate, projects, workspaceSlug]
+    [navigate, projects, workspaceSlug]
   );
 
   const handlePickWs = useCallback(
@@ -148,10 +145,8 @@ export const WorkspaceLayout = () => {
 
   const visibleRailItems = useMemo(() => {
     const aiEnabled = aiConfig?.enabled === true;
-    return ALL_RAIL_ITEMS.filter(
-      item => canViewSchemas || SCHEMA_RESTRICTED_IDS.has(item.id)
-    ).filter(item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract'));
-  }, [canViewSchemas, aiConfig?.enabled]);
+    return ALL_RAIL_ITEMS.filter(item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract'));
+  }, [aiConfig?.enabled]);
 
   const contextValue = useMemo(
     () => ({

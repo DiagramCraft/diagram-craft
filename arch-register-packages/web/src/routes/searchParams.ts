@@ -87,6 +87,19 @@ export const validateModelSearch = (raw: Record<string, unknown>): ModelSearchPa
   enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined,
 });
 
+// Schema settings params (for settings/schemas route)
+export type SchemaSettingsSearchParams = {
+  tab?: 'types' | 'enums';
+  schema?: string;
+  enumId?: string;
+};
+
+export const validateSchemaSettingsSearch = (raw: Record<string, unknown>): SchemaSettingsSearchParams => ({
+  tab: raw.tab === 'types' || raw.tab === 'enums' ? raw.tab : undefined,
+  schema: typeof raw.schema === 'string' ? raw.schema : undefined,
+  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined,
+});
+
 // Assistant params
 export type AssistantSearchParams = {
   conversation?: string;

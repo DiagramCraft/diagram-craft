@@ -8,14 +8,22 @@ export class DataModelPage extends WorkspacePage {
     await this.page.goto(workspaceModelRoute(this.workspaceSlug));
   };
 
+  anySchemaTypeRow = () => this.page.locator('[data-testid^="schema-type-"]').first();
   schemaTypeRow = (name: string) => this.page.getByTestId(`schema-type-${name}`);
   editorTitle = () => this.page.getByTestId('schema-editor-title');
 
   expectLoaded = async () => {
-    await this.workspaceShell.expectActiveNav('model');
-    await expect(this.page.getByText('Schema', { exact: true })).toBeVisible();
+    await this.workspaceShell.expectMainVisible();
+    await expect(this.anySchemaTypeRow()).toBeVisible();
     await expect(
-      this.page.getByText('Define the entity types that everything in this workspace conforms to.')
+      this.page
+        .getByRole('main')
+        .getByText('No type selected')
+    ).toBeVisible();
+    await expect(
+      this.page
+        .getByRole('main')
+        .getByText('Select an entity type from the sidebar to edit its schema.')
     ).toBeVisible();
     await expect(this.page.getByRole('button', { name: 'New entity type' })).toBeVisible();
   };
