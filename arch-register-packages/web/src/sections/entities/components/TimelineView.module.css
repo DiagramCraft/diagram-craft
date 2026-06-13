@@ -63,6 +63,7 @@
 }
 
 .filterSelect {
+  appearance: none;
   background: transparent;
   border: none;
   outline: none;
@@ -222,6 +223,16 @@
   border-bottom: 1px solid var(--panel-border);
   cursor: default;
   background: var(--base-bg);
+}
+
+.labelColClickable {
+  cursor: pointer;
+}
+
+.labelColClickable:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--base-fg-more-dim);
+  text-underline-offset: 2px;
 }
 
 .entityRow:hover {
@@ -464,4 +475,182 @@
 .emptyIcon {
   margin-bottom: 4px;
   opacity: 0.4;
+}
+
+/* ── Snapshot block ──────────────────────────────────────────────────────────── */
+
+.snapBlock {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.snapHeader {
+  display: flex;
+  height: 36px;
+  cursor: pointer;
+  background: var(--base-bg);
+}
+
+.snapHeader:hover {
+  background: var(--cmp-bg);
+}
+
+.snapLane {
+  display: flex;
+  height: 26px;
+  border-bottom: 1px solid color-mix(in oklch, var(--panel-border) 50%, transparent);
+}
+
+.snapLaneOwn {
+  /* no special background — own history appears first before project lanes */
+}
+
+.snapLaneConflicted {
+  box-shadow: inset 2px 0 0 var(--warning-fg);
+}
+
+.snapLaneLabel {
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+  gap: 4px;
+}
+
+.snapLaneCount {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+.snapTrack {
+  position: relative;
+  overflow: visible;
+  flex: 1;
+}
+
+.snapBaseline {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--panel-border);
+  pointer-events: none;
+}
+
+.snapDot {
+  position: absolute;
+  top: 50%;
+  cursor: pointer;
+  transition: filter 0.1s;
+}
+
+.snapDotAutosave {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--base-fg-more-dim);
+  transform: translateY(-50%) translateX(-50%);
+}
+
+.snapDotAutosave:hover {
+  filter: brightness(1.4);
+}
+
+.snapDotSavedVersion {
+  width: 10px;
+  height: 10px;
+  background: var(--accent-fg);
+  border-radius: 2px;
+  transform: translateY(-50%) translateX(-50%) rotate(45deg);
+}
+
+.snapDotSavedVersion:hover {
+  filter: brightness(1.2);
+}
+
+.snapDotFutureUpdate {
+  width: 12px;
+  height: 12px;
+  background: var(--snap-color, var(--accent-fg));
+  border-radius: 2px;
+  transform: translateY(-50%) translateX(-50%) rotate(45deg);
+}
+
+.snapDotFutureUpdate:hover {
+  filter: brightness(1.2);
+}
+
+.snapDotApplied {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green, #22c55e);
+  transform: translateY(-50%) translateX(-50%);
+}
+
+.snapDotApplied:hover {
+  filter: brightness(1.1);
+}
+
+.snapDotSelected {
+  z-index: 6;
+  box-shadow: 0 0 0 2px var(--base-bg), 0 0 0 4px rgba(255, 255, 255, 0.7);
+}
+
+.snapDotConflict {
+  box-shadow: 0 0 0 2px var(--base-bg), 0 0 0 3px var(--warning-fg);
+}
+
+.snapProjDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.snapConflictBadge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--warning-fg);
+  background: color-mix(in oklch, var(--warning-fg) 14%, transparent);
+  border: 1px solid color-mix(in oklch, var(--warning-fg) 38%, transparent);
+  border-radius: 3px;
+  padding: 1px 4px;
+  flex-shrink: 0;
+}
+
+/* ── Snap status badge ─────────────────────────────────────────────────────── */
+
+.snapStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.snapStatusAutosave {
+  background: var(--cmp-bg);
+  color: var(--base-fg-more-dim);
+}
+
+.snapStatusSavedVersion {
+  background: color-mix(in oklch, var(--accent-fg) 15%, var(--cmp-bg));
+  color: var(--accent-fg);
+}
+
+.snapStatusFutureUpdate {
+  background: color-mix(in oklch, var(--warning-fg) 15%, var(--cmp-bg));
+  color: var(--warning-fg);
+}
+
+.snapStatusApplied {
+  background: color-mix(in oklch, #22c55e 15%, var(--cmp-bg));
+  color: #22c55e;
 }

@@ -118,7 +118,7 @@ function buildCols(minD: Date, maxD: Date, zoom: Zoom): Col[] {
         d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
       cols.push({
         date: new Date(d),
-        label: d.toLocaleString(undefined, { month: 'short' }) + "'" + String(d.getFullYear()).slice(2),
+        label: `${d.toLocaleString(undefined, { month: 'short' })}'${String(d.getFullYear()).slice(2)}`,
         width: w,
         isCurrent
       });
@@ -273,7 +273,7 @@ export const EntityTimelineTab = ({
     const el = scrollRef.current;
     if (!el || todayPx === null) return;
     el.scrollLeft = Math.max(0, LABEL_W + todayPx - el.clientWidth * 0.5);
-  }, [zoom, todayPx]);
+  }, [todayPx]);
 
   const handleSelect = (snap: EntitySnapshot | null) => {
     setSelectedSnap(prev => (snap?.id === prev?.id ? null : snap));

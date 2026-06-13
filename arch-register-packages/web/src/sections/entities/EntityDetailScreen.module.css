@@ -1165,7 +1165,7 @@
 }
 
 .etlLaneConflicted {
-  border-left: 3px solid color-mix(in oklch, var(--warning-fg) 55%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in oklch, var(--warning-fg) 55%, transparent);
 }
 
 .etlLaneLabel {
