@@ -17,8 +17,7 @@ import {
   TbX,
   TbCopy,
   TbBell,
-  TbPinned,
-  TbBookmark
+  TbPinned
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
@@ -114,8 +113,10 @@ export const EntityDetailScreen = () => {
   const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
-  const [saveVersionOpen, setSaveVersionOpen] = useState(false);
-  const [saveVersionMessage, setSaveVersionMessage] = useState('');
+  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [saveConfirmMessage, setSaveConfirmMessage] = useState('');
+  const [saveConfirmSignificant, setSaveConfirmSignificant] = useState(false);
+  const [pendingSaveBody, setPendingSaveBody] = useState<Record<string, unknown> | null>(null);
 
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
@@ -299,13 +300,26 @@ export const EntityDetailScreen = () => {
       ...dataFields
     };
 
+    setPendingSaveBody(body);
+    setSaveConfirmMessage('');
+    setSaveConfirmSignificant(false);
+    setSaveConfirmOpen(true);
+  };
+
+  const executeSave = () => {
+    if (!pendingSaveBody) return;
+    setSaveConfirmOpen(false);
     updateEntity.mutate(
-      { entityId, data: body },
+      { entityId, data: pendingSaveBody },
       {
         onSuccess: () => {
+          if (saveConfirmSignificant) {
+            promoteSnapshot.mutate({ commitMessage: saveConfirmMessage || undefined });
+          }
           setEditing(false);
           setEditState({});
           setEditLinks([]);
+          setPendingSaveBody(null);
         }
       }
     );
@@ -346,9 +360,6 @@ export const EntityDetailScreen = () => {
 
   const entityName = entity._name || entity._slug;
   const menuItems: MenuItem[] = [
-    ...(entity.canEdit
-      ? [{ label: 'Save version', icon: <TbBookmark size={14} />, onClick: () => { setSaveVersionMessage(''); setSaveVersionOpen(true); } }]
-      : []),
     ...(entity.canCreateChild
       ? [{ label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone }]
       : []),
@@ -436,7 +447,7 @@ export const EntityDetailScreen = () => {
                     </Button>
                   )}
                   <Button onClick={cancelEdit}>Cancel</Button>
-                  <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending}>
+                  <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending || saveConfirmOpen}>
                     {updateEntity.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </>
@@ -889,31 +900,36 @@ export const EntityDetailScreen = () => {
       )}
 
       <Dialog
-        open={saveVersionOpen}
-        onClose={() => setSaveVersionOpen(false)}
-        title="Save version"
+        open={saveConfirmOpen}
+        onClose={() => setSaveConfirmOpen(false)}
+        title="Save changes"
         buttons={[
-          { label: 'Cancel', type: 'cancel', onClick: () => setSaveVersionOpen(false) },
+          { label: 'Cancel', type: 'cancel', onClick: () => setSaveConfirmOpen(false) },
           {
-            label: promoteSnapshot.isPending ? 'Saving...' : 'Save version',
+            label: updateEntity.isPending ? 'Saving...' : 'Save',
             type: 'default',
-            disabled: promoteSnapshot.isPending,
-            onClick: () => {
-              promoteSnapshot.mutate(
-                { commitMessage: saveVersionMessage || undefined },
-                { onSuccess: () => setSaveVersionOpen(false) }
-              );
-            }
+            disabled: updateEntity.isPending,
+            onClick: executeSave
           }
         ]}
       >
-        <FormElement label="Version label" hint="Saves the current state of this entity as a named version">
+        <FormElement label="Note (optional)">
           <TextInput
-            value={saveVersionMessage}
-            onChange={v => setSaveVersionMessage(v ?? '')}
-            placeholder="e.g. Q1 baseline (optional)"
+            value={saveConfirmMessage}
+            onChange={v => setSaveConfirmMessage(v ?? '')}
+            placeholder="Describe what changed (optional)"
             style={{ width: '100%' }}
           />
+        </FormElement>
+        <FormElement label="">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={saveConfirmSignificant}
+              onChange={e => setSaveConfirmSignificant(e.target.checked)}
+            />
+            <span style={{ fontSize: 13 }}>Mark as significant version</span>
+          </label>
         </FormElement>
       </Dialog>
 
