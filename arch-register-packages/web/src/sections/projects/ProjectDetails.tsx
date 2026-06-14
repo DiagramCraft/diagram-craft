@@ -1,10 +1,10 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TbFolderOpen, TbLayoutGrid, TbList, TbPencil, TbPlus, TbStar } from 'react-icons/tb';
+import { TbFolderOpen, TbPencil, TbPlus, TbStar } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type { FileEntry } from '../../lib/api';
 import styles from './ProjectDetailScreen.module.css';
+import { DiagramBrowserToolbar } from '../../components/diagram-browser/DiagramBrowserView';
 import { ProjectDiagramsView, type ProjectMenuTarget } from './ProjectDiagramsView';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -102,36 +102,13 @@ export const ProjectDetails = ({
         </>
       }
       toolbar={
-        <div className={styles.tabBar}>
-          <div className={styles.sectionLabel} style={{ margin: 0 }}>
-            {`Diagrams (${visibleFiles.length})`}
-          </div>
-          <div className={styles.tabBarRight}>
-            <TextInput
-              variant="search"
-              placeholder="Filter diagrams…"
-              value={filter}
-              onChange={value => onSetFilter(value ?? '')}
-              onClear={() => onSetFilter('')}
-            />
-            <button
-              type="button"
-              className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive : ''}`}
-              title="Grid view"
-              onClick={() => onSetViewMode('grid')}
-            >
-              <TbLayoutGrid size={13} />
-            </button>
-            <button
-              type="button"
-              className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive : ''}`}
-              title="List view"
-              onClick={() => onSetViewMode('list')}
-            >
-              <TbList size={13} />
-            </button>
-          </div>
-        </div>
+        <DiagramBrowserToolbar
+          label={<div className={styles.sectionLabel} style={{ margin: 0 }}>{`Diagrams (${visibleFiles.length})`}</div>}
+          filter={filter}
+          onFilterChange={onSetFilter}
+          viewMode={viewMode}
+          onViewModeChange={onSetViewMode}
+        />
       }
     >
       <ProjectDiagramsView

@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
+import { TbPlus } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { Title } from '../../components/Title';
 import { useWorkspaceContentNodes } from '../../hooks/useProjectFiles';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
-import { DiagramCard, DiagramRow } from '../../components/DiagramCard';
+import {
+  DiagramBrowserToolbar,
+  DiagramBrowserView
+} from '../../components/diagram-browser/DiagramBrowserView';
 
 type WorkspaceContentScreenProps = {
   workspaceSlug: string;
@@ -39,56 +41,6 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const lc = filter.toLowerCase();
   const filtered = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
 
-  if (filtered.length === 0 && !filter) {
-    return (
-      <div className={styles.screen}>
-        <div className={styles.header}>
-          <Title
-            breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
-            title={workspace?.name ?? workspaceSlug}
-            buttons={
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDiagramOpen(true)}>
-                New diagram
-              </Button>
-            }
-          />
-        </div>
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No diagrams here</div>
-          <div className={styles.emptySub}>Diagrams will appear here when added.</div>
-        </div>
-        <AddDiagramDialog
-          open={addDiagramOpen}
-          onClose={() => setAddDiagramOpen(false)}
-          onCreated={file => {
-            setAddDiagramOpen(false);
-            handleDiagramClick(file.id);
-          }}
-          workspaceId={workspaceSlug}
-          context="workspace"
-          folder={folder || null}
-        />
-      </div>
-    );
-  }
-
-  if (filtered.length === 0) {
-    return (
-      <div className={styles.screen}>
-        <div className={styles.header}>
-          <Title
-            breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
-            title={workspace?.name ?? workspaceSlug}
-          />
-        </div>
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No matches</div>
-          <div className={styles.emptySub}>No diagrams match "{filter}".</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
@@ -112,69 +64,26 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         </div>
       </div>
 
-      <div className={styles.tabBar}>
-        <div className={styles.tabBarRight}>
-          <TextInput
-            variant="search"
-            placeholder="Filter diagrams…"
-            value={filter}
-            onChange={v => setFilter(v ?? '')}
-            onClear={() => setFilter('')}
-          />
-          <button
-            type="button"
-            className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive : ''}`}
-            title="Grid view"
-            onClick={() => setViewMode('grid')}
-          >
-            <TbLayoutGrid size={13} />
-          </button>
-          <button
-            type="button"
-            className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive : ''}`}
-            title="List view"
-            onClick={() => setViewMode('list')}
-          >
-            <TbList size={13} />
-          </button>
-        </div>
-      </div>
+      <DiagramBrowserToolbar
+        filter={filter}
+        onFilterChange={setFilter}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
 
-      {viewMode === 'list' ? (
-        <div className={styles.diagramListPanel}>
-          <div className={styles.diagramListHead}>
-            <span>Name</span>
-            <span>Folder</span>
-            <span>Last edit</span>
-          </div>
-          {filtered.map(f => (
-            <DiagramRow
-              key={f.path}
-              file={f}
-              folder={folder}
-              onOpen={() => handleDiagramClick(f.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className={styles.diagramGrid}>
-          {filtered.map(f => (
-            <DiagramCard
-              key={f.path}
-              file={f}
-              onOpen={() => handleDiagramClick(f.id)}
-            />
-          ))}
-          <button
-            type="button"
-            className={`${styles.diagramCard} ${styles.diagramCardAdd}`}
-            onClick={() => setAddDiagramOpen(true)}
-          >
-            <TbPlus size={16} />
-            New diagram
-          </button>
-        </div>
-      )}
+      <DiagramBrowserView
+        hasFilter={filter.length > 0}
+        viewMode={viewMode}
+        listItems={filtered.map(file => ({ file, folder }))}
+        gridSections={[{ key: 'workspace-content', items: filtered, showAddButton: true }].map(section => ({
+          ...section,
+          items: section.items.map(file => ({ file }))
+        }))}
+        onOpenDiagram={file => handleDiagramClick(file.id)}
+        onNewDiagram={() => setAddDiagramOpen(true)}
+        emptyState={{ title: 'No diagrams here', sub: 'Diagrams will appear here when added.' }}
+        noMatchState={{ title: 'No matches', sub: `No diagrams match "${filter}".` }}
+      />
 
       <AddDiagramDialog
         open={addDiagramOpen}

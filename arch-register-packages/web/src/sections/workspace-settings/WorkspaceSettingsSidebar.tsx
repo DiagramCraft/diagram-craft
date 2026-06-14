@@ -18,10 +18,7 @@ import styles from '../../shell/SidePanel.module.css';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { Project } from '@arch-register/api-types/projectContract';
-
-const GroupLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.groupLabel}>{children}</div>
-);
+import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 
 type SettingsNavItem = {
   id: string;
@@ -96,35 +93,38 @@ export const WorkspaceSettingsSidebar = ({
 
   return (
     <>
-      <div className={`${styles.header} ${styles.tabHeader}`}>
+      <SidebarHeader
+        actions={
+          <>
+            {onCollapse && (
+              <button
+                type="button"
+                className={styles.action}
+                title="Collapse to rail"
+                onClick={onCollapse}
+              >
+                <TbLayoutSidebarLeftCollapse size={14} />
+              </button>
+            )}
+            {onExpand && (
+              <button
+                type="button"
+                className={styles.action}
+                title="Pin sidebar open"
+                onClick={onExpand}
+              >
+                <TbLayoutSidebarLeftExpand size={14} />
+              </button>
+            )}
+          </>
+        }
+      >
         <Tabs.Root value="settings" onValueChange={() => {}}>
           <Tabs.List>
             <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
-        <div className={styles.headerActions}>
-          {onCollapse && (
-            <button
-              type="button"
-              className={styles.action}
-              title="Collapse to rail"
-              onClick={onCollapse}
-            >
-              <TbLayoutSidebarLeftCollapse size={14} />
-            </button>
-          )}
-          {onExpand && (
-            <button
-              type="button"
-              className={styles.action}
-              title="Pin sidebar open"
-              onClick={onExpand}
-            >
-              <TbLayoutSidebarLeftExpand size={14} />
-            </button>
-          )}
-        </div>
-      </div>
+      </SidebarHeader>
       <div className={styles.scroll}>
         {workspace && (
           <div className={styles.settingsWsHead}>
@@ -139,7 +139,7 @@ export const WorkspaceSettingsSidebar = ({
         )}
         {groups.map(([group, items]) => (
           <div key={group}>
-            <GroupLabel>{group}</GroupLabel>
+            <SidebarGroupLabel>{group}</SidebarGroupLabel>
             {items.map(s => (
               <TreeRow
                 key={s.id}

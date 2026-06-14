@@ -1,12 +1,15 @@
 import { useNavigate } from '@tanstack/react-router';
 import { TbFolders } from 'react-icons/tb';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { resolveSchemaColor } from '../../lib/api';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
 import { Project } from '@arch-register/api-types/projectContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import {
+  SidebarGroupLabel,
+  SidebarTitleHeader
+} from '../../components/sidebar/SidebarPrimitives';
 
 const getSidebarProjectGroups = (projects: Project[]) => {
   const pinned = projects.filter(p => p.pinned);
@@ -16,13 +19,6 @@ const getSidebarProjectGroups = (projects: Project[]) => {
     ...(active.length > 0 ? [{ title: 'Active Projects', projects: active }] : [])
   ];
 };
-
-
-
-const GroupLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.groupLabel}>{children}</div>
-);
-
 export const HomeSidebar = ({
   schemas,
   projects,
@@ -35,17 +31,11 @@ export const HomeSidebar = ({
   const navigate = useNavigate();
   return (
     <>
-      <div className={`${styles.header} ${styles.tabHeader}`}>
-        <Tabs.Root value="overview">
-          <Tabs.List>
-            <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-          </Tabs.List>
-        </Tabs.Root>
-      </div>
+      <SidebarTitleHeader title="Overview" />
       <div className={styles.scroll}>
         {getSidebarProjectGroups(projects).map(group => (
           <div key={group.title}>
-            <GroupLabel>{group.title}</GroupLabel>
+            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             {group.projects.map(p => (
               <TreeRow
                 key={p.id}
@@ -64,7 +54,7 @@ export const HomeSidebar = ({
             ))}
           </div>
         ))}
-        <GroupLabel>Data model</GroupLabel>
+        <SidebarGroupLabel>Data model</SidebarGroupLabel>
         {schemas.map((s, i) => (
           <TreeRow
             key={s.id}
