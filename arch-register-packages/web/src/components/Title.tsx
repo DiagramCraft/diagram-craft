@@ -11,6 +11,7 @@ export type TitleProps = {
   icon?: ReactNode;
   eyebrow?: ReactNode;
   title: string;
+  titleTestId?: string;
   chips?: ReactNode;
   description?: ReactNode;
   toggleButtons?: ReactNode;
@@ -23,6 +24,7 @@ export const Title = ({
   icon,
   eyebrow,
   title,
+  titleTestId,
   chips,
   description,
   toggleButtons,
@@ -57,7 +59,7 @@ export const Title = ({
             <div className={styles.titleCol}>
               {eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
               <div className={styles.titleLine}>
-                <h1 className={styles.title}>{title}</h1>
+                <h1 className={styles.title} data-testid={titleTestId}>{title}</h1>
                 {chips && <div className={styles.chips}>{chips}</div>}
               </div>
             </div>

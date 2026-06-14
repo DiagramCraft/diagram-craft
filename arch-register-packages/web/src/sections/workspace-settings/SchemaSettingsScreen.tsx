@@ -165,6 +165,7 @@ export const SchemaSettingsScreen = () => {
                 { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
                 { label: 'Settings' }
               ]}
+              titleTestId="schema-editor-title"
               icon={
                 <TypeBadge
                   color={color ?? resolveSchemaColor(selected, selectedIndex)}

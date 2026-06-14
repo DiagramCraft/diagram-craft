@@ -808,6 +808,7 @@ export const EntityBrowserScreen = () => {
         <Title
           breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
           title={typeName}
+          titleTestId="entity-browser-title"
           chips={
             <span data-testid="entity-browser-count" className={styles.count}>
               {filtered.length}
