@@ -22,6 +22,9 @@ import {
 import { resolveSchemaColor } from '../../lib/api';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import {
   useEntity,
@@ -29,7 +32,9 @@ import {
   useUpdateEntity,
   useDeleteEntity,
   useCloneEntity,
-  useEntitiesBySchema
+  useEntitiesBySchema,
+  useEntitySnapshots,
+  usePromoteSnapshot
 } from '../../hooks/useEntities';
 import {
   useEntityDiagramFiles,
@@ -51,9 +56,10 @@ import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContra
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { EntityContentView } from './EntityContentView';
+import { EntityTimelineTab } from './EntityTimelineTab';
 import { Title } from '../../components/Title';
 
-type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes';
+type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes' | 'timeline';
 
 type Relation = {
   entityId: string;
@@ -107,6 +113,10 @@ export const EntityDetailScreen = () => {
   const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
+  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [saveConfirmMessage, setSaveConfirmMessage] = useState('');
+  const [saveConfirmSignificant, setSaveConfirmSignificant] = useState(false);
+  const [pendingSaveBody, setPendingSaveBody] = useState<Record<string, unknown> | null>(null);
 
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
@@ -128,6 +138,9 @@ export const EntityDetailScreen = () => {
   const updateEntity = useUpdateEntity(workspaceId);
   const deleteEntity = useDeleteEntity(workspaceId);
   const cloneEntity = useCloneEntity(workspaceId);
+  const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);
+  const { data: allSnapshots = [] } = useEntitySnapshots(workspaceId, entityId, true);
+  const futureSnapshots = allSnapshots.filter(s => s.status === 'future_update');
   const createWatch = useCreateWatch(workspaceId);
   const deleteWatch = useDeleteWatch(workspaceId);
   const createPinnedEntity = useCreatePinnedEntity(workspaceId);
@@ -287,13 +300,26 @@ export const EntityDetailScreen = () => {
       ...dataFields
     };
 
+    setPendingSaveBody(body);
+    setSaveConfirmMessage('');
+    setSaveConfirmSignificant(false);
+    setSaveConfirmOpen(true);
+  };
+
+  const executeSave = () => {
+    if (!pendingSaveBody) return;
+    setSaveConfirmOpen(false);
     updateEntity.mutate(
-      { entityId, data: body },
+      { entityId, data: pendingSaveBody },
       {
         onSuccess: () => {
+          if (saveConfirmSignificant) {
+            promoteSnapshot.mutate({ commitMessage: saveConfirmMessage || undefined });
+          }
           setEditing(false);
           setEditState({});
           setEditLinks([]);
+          setPendingSaveBody(null);
         }
       }
     );
@@ -421,7 +447,7 @@ export const EntityDetailScreen = () => {
                     </Button>
                   )}
                   <Button onClick={cancelEdit}>Cancel</Button>
-                  <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending}>
+                  <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending || saveConfirmOpen}>
                     {updateEntity.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </>
@@ -455,6 +481,7 @@ export const EntityDetailScreen = () => {
                 Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
               </Tabs.Trigger>
               {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
+              <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
             </Tabs.List>
           </Tabs.Root>
         </div>
@@ -706,6 +733,33 @@ export const EntityDetailScreen = () => {
               ))
             )}
 
+            {futureSnapshots.length > 0 && (
+              <>
+                <hr className={styles.divider} />
+                <div className={styles.sectionLabel}>Future plans</div>
+                {futureSnapshots.map(snap => {
+                  const projectName = entityProjects.find(
+                    ep => ep.project.id === snap.project_id
+                  )?.project.name ?? snap.project_id;
+                  return (
+                    <div key={snap.id} className={styles.futurePlan}>
+                      <div className={styles.futurePlanMeta}>
+                        <span className={styles.futurePlanProject}>{projectName}</span>
+                        {snap.target_date && (
+                          <span className={styles.futurePlanDate}>
+                            {new Date(`${snap.target_date}T00:00:00`).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      {snap.commit_message && (
+                        <div className={styles.futurePlanNote}>{snap.commit_message}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
             <hr className={styles.divider} />
 
             <div className={styles.sectionLabel}>
@@ -834,6 +888,51 @@ export const EntityDetailScreen = () => {
       {/* Change history */}
       {!contentFolder && tab === 'changes' && <ChangeHistory auditLog={auditLog} loading={loadingAudit} />}
 
+      {/* Timeline */}
+      {!contentFolder && tab === 'timeline' && (
+        <EntityTimelineTab
+          allSnapshots={allSnapshots}
+          entityProjects={entityProjects}
+          schema={schema}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
+        />
+      )}
+
+      <Dialog
+        open={saveConfirmOpen}
+        onClose={() => setSaveConfirmOpen(false)}
+        title="Save changes"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: () => setSaveConfirmOpen(false) },
+          {
+            label: updateEntity.isPending ? 'Saving...' : 'Save',
+            type: 'default',
+            disabled: updateEntity.isPending,
+            onClick: executeSave
+          }
+        ]}
+      >
+        <FormElement label="Note (optional)">
+          <TextInput
+            value={saveConfirmMessage}
+            onChange={v => setSaveConfirmMessage(v ?? '')}
+            placeholder="Describe what changed (optional)"
+            style={{ width: '100%' }}
+          />
+        </FormElement>
+        <FormElement label="">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={saveConfirmSignificant}
+              onChange={e => setSaveConfirmSignificant(e.target.checked)}
+            />
+            <span style={{ fontSize: 13 }}>Mark as significant version</span>
+          </label>
+        </FormElement>
+      </Dialog>
+
       <DeleteConfirmationDialog
         open={confirmDelete}
         title="Delete entity?"
@@ -847,6 +946,7 @@ export const EntityDetailScreen = () => {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(false)}
       />
+
     </div>
   );
 };

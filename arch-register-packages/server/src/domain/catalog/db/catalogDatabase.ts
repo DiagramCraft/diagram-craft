@@ -102,6 +102,26 @@ export type EntityDbCreate = Entity;
 
 export type EntityDbUpdate = Omit<Entity, 'id' | 'workspace' | 'created_at'>;
 
+// -- Entity Snapshot
+
+export type SnapshotStatus = 'autosave' | 'saved_version' | 'future_update' | 'applied';
+
+export type EntitySnapshotDbResult = {
+  id: string;
+  workspace: string;
+  entity_id: string;
+  status: SnapshotStatus;
+  project_id: string | null;
+  target_date: string | null;
+  commit_message: string | null;
+  created_at: Date;
+  created_by: string;
+  base_state: Record<string, unknown>;
+  proposed_state: Record<string, unknown> | null;
+};
+
+export type EntitySnapshotDbCreate = EntitySnapshotDbResult;
+
 export type CatalogDatabase = {
   resolveWorkspaceSlug(slug: string): Promise<string | null>;
 
@@ -147,6 +167,26 @@ export type CatalogDatabase = {
     workspace: string,
     entityId: string
   ): Promise<PinnedEntityDbResult | null>;
+
+  createSnapshot(input: EntitySnapshotDbCreate): Promise<EntitySnapshotDbResult>;
+  listSnapshots(ws: string, entityId: string): Promise<EntitySnapshotDbResult[]>;
+  listSnapshotsByProject(ws: string, projectId: string): Promise<EntitySnapshotDbResult[]>;
+  pruneAutosaveSnapshots(ws: string, entityId: string, keepCount: number): Promise<void>;
+  promoteSnapshot(
+    ws: string,
+    snapshotId: string,
+    commitMessage: string | null
+  ): Promise<EntitySnapshotDbResult | null>;
+  updateSnapshot(
+    ws: string,
+    snapshotId: string,
+    updates: {
+      proposed_state?: Record<string, unknown>;
+      target_date?: string | null;
+      commit_message?: string | null;
+    }
+  ): Promise<EntitySnapshotDbResult | null>;
+  applySnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
 };
 
 // -- Saved View

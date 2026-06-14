@@ -1,7 +1,12 @@
 /* Project Detail */
 .screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px 24px 32px;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Header */
@@ -471,6 +476,18 @@
   flex-direction: column;
 }
 
+.entityTabFill {
+  flex: 1;
+  min-height: 0;
+}
+
+.screenBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .pentProgress {
   font-size: 12px;
   color: var(--base-fg-more-dim);
@@ -488,7 +505,7 @@
 
 .pentHead {
   display: grid;
-  grid-template-columns: 1fr 90px 120px 72px;
+  grid-template-columns: 1fr 90px 120px 72px 32px;
   padding: 8px 10px;
   font-size: 11px;
   font-weight: 500;
@@ -501,7 +518,7 @@
 
 .pentRow {
   display: grid;
-  grid-template-columns: 1fr 90px 120px 72px;
+  grid-template-columns: 1fr 90px 120px 72px 32px;
   align-items: center;
   padding: 8px 10px;
   border-bottom: 1px solid var(--panel-border);
@@ -602,6 +619,48 @@
 }
 
 .removeEntityBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+.inlineSelect {
+  height: 28px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  color: var(--base-fg);
+  outline: none;
+  font-family: var(--font-sans);
+  appearance: none;
+  cursor: pointer;
+}
+
+.inlineSelect:focus {
+  border-color: var(--accent-fg);
+}
+
+.pentRowMenu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pentMenuBtn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  border: none;
+  background: none;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+}
+
+.pentMenuBtn:hover {
   background: var(--cmp-bg);
   color: var(--base-fg);
 }
@@ -820,4 +879,676 @@
 
 .formSpacer {
   flex: 1;
+}
+
+/* Entity/Future tabs nav */
+.entityTabNav {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.entityTabBtn {
+  height: 28px;
+  padding: 0 12px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-size: 12.5px;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.entityTabBtnActive {
+  color: var(--base-fg);
+  border-bottom-color: var(--accent-fg);
+}
+
+.entityTabBtn:hover:not(.entityTabBtnActive) {
+  color: var(--base-fg);
+}
+
+/* Group by toggle buttons */
+.groupByBtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  border: none;
+  background: none;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+}
+
+.groupByBtnActive {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+.groupByBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+/* Future changes groups */
+.futureChangesGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.futureGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.futureGroupHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 6px;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 4px;
+}
+
+.futureGroupName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+/* Future snapshot row */
+.futureRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+}
+
+.futureRowEntity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--base-fg);
+  margin-bottom: 4px;
+}
+
+.futureRowBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.futureRowMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.futureRowDate {
+  font-size: 11.5px;
+  color: var(--base-fg-dim);
+  flex-shrink: 0;
+}
+
+.futureRowNote {
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.futureRowApply {
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r);
+  border: 1px solid var(--cmp-border);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.futureRowApply:hover {
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
+  color: var(--accent-bg);
+}
+
+/* ── Project Timeline (ptl) ────────────────────────────────── */
+.ptl {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+.ptlConfig {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 40px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  background: var(--panel-bg);
+}
+
+.ptlLegend { display: flex; align-items: center; gap: 12px; }
+
+.ptlLegItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+}
+
+.ptlLegDiamond {
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.ptlLegDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ptlSep {
+  width: 1px;
+  height: 18px;
+  background: var(--panel-border);
+  flex-shrink: 0;
+}
+
+.ptlConfigMeta {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+.ptlSegmented {
+  display: flex;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.ptlSegmented button {
+  padding: 0 8px;
+  height: 24px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  background: none;
+  border: 0;
+  border-right: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+
+.ptlSegmented button:last-child { border-right: 0; }
+.ptlSegmented button:hover { color: var(--base-fg); background: var(--cmp-bg); }
+
+.ptlSegActive {
+  color: var(--accent-fg) !important;
+  background: color-mix(in oklch, var(--accent-fg) 12%, transparent) !important;
+}
+
+.ptlBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.ptlScroll { flex: 1; overflow: auto; min-width: 0; }
+.ptlInner  { position: relative; }
+
+.ptlHead {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  height: 34px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.ptlCorner {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  width: 248px;
+  flex-shrink: 0;
+  background: var(--panel-bg);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-right: 1px solid var(--panel-border);
+}
+
+.ptlCornerLabel {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled);
+  font-family: var(--font-mono);
+}
+
+.ptlCols { display: flex; align-items: stretch; flex-shrink: 0; }
+
+.ptlCol {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  border-right: 1px solid var(--panel-border);
+  white-space: nowrap;
+}
+
+.ptlColNow {
+  color: var(--accent-fg);
+  background: color-mix(in oklch, var(--accent-fg) 8%, transparent);
+  font-weight: 500;
+}
+
+.ptlToday {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent-fg);
+  opacity: 0.65;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.ptlTodayPip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--accent-fg);
+  padding-top: 2px;
+}
+
+/* Role group header */
+.ptlGrpRow {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+  border-top: 1px solid var(--panel-border);
+}
+
+.ptlGrpLabel {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: 248px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  background: var(--base-bg);
+  color: var(--base-fg-dim);
+}
+
+.ptlGrpDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ptlGrpCount {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled);
+  font-family: var(--font-mono);
+}
+
+/* Entity rows */
+.ptlRow {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  border-bottom: 1px solid var(--panel-border);
+  transition: background 45ms;
+}
+
+.ptlRow:hover     { background: var(--cmp-bg); cursor: pointer; }
+.ptlRowActive     { background: color-mix(in oklch, var(--accent-fg) 6%, transparent); }
+
+.ptlLabel {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  width: 248px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  background: var(--base-bg);
+  border-right: 1px solid var(--panel-border);
+  height: 100%;
+  overflow: hidden;
+}
+
+.ptlRow:hover .ptlLabel   { background: var(--cmp-bg); }
+.ptlRowActive .ptlLabel   { background: color-mix(in oklch, var(--accent-fg) 6%, transparent); }
+
+.ptlName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--base-fg);
+}
+
+.ptlTrack {
+  position: relative;
+  flex-shrink: 0;
+  height: 32px;
+  overflow: visible;
+}
+
+/* Snapshot marker */
+.ptlMarker {
+  position: absolute;
+  top: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-50%);
+  cursor: pointer;
+  z-index: 2;
+}
+
+.ptlMarkerDiamond {
+  width: 11px;
+  height: 11px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  transition: transform 80ms;
+}
+
+.ptlMarkerDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  transition: transform 80ms;
+}
+
+.ptlMarker:hover .ptlMarkerDiamond { transform: rotate(45deg) scale(1.3); }
+.ptlMarker:hover .ptlMarkerDot { transform: scale(1.3); }
+
+.ptlMarkerSelected .ptlMarkerDiamond {
+  transform: rotate(45deg) scale(1.3);
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.ptlMarkerSelected .ptlMarkerDot {
+  transform: scale(1.3);
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* Undated section */
+.ptlUndated {
+  border-top: 1px solid var(--panel-border);
+}
+
+.ptlUndatedLabel {
+  position: sticky;
+  left: 0;
+  padding: 6px 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--cmp-fg-disabled);
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.ptlUndatedRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 12px;
+}
+
+.ptlUndatedRow:last-child { border-bottom: 0; }
+
+.ptlUndatedNote {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+/* Detail panel */
+.ptlDetail {
+  width: 280px;
+  flex-shrink: 0;
+  align-self: stretch;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ptlDetailHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.ptlDetailEntity {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ptlDetailName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ptlDetailSub {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin-top: 1px;
+}
+
+.ptlDetailCloseBtn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  border-radius: var(--r);
+  cursor: pointer;
+  color: var(--cmp-fg-disabled);
+}
+
+.ptlDetailCloseBtn:hover { background: var(--cmp-bg); color: var(--base-fg); }
+
+.ptlDetailBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ptlDetailStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ptlDetailBadge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.ptlDetailMsg {
+  font-size: 11.5px;
+  color: var(--base-fg-dim);
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.ptlDetailChanges { display: flex; flex-direction: column; gap: 4px; }
+
+.ptlDetailSectionLabel {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--cmp-fg-disabled);
+  padding: 2px 0;
+}
+
+.ptlChgRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  background: var(--cmp-bg);
+}
+
+.ptlChgField { font-weight: 500; color: var(--base-fg-more-dim); }
+.ptlChgFrom  { font-size: 10.5px; color: var(--cmp-fg-disabled); }
+.ptlChgArrow { color: var(--cmp-fg-disabled); }
+.ptlChgTo    { font-weight: 500; color: var(--base-fg); }
+
+.ptlDetailMeta {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  padding-top: 4px;
+}
+
+.ptlDetailActions {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 6px;
+}
+
+/* Empty state */
+.ptEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 48px 24px;
+  gap: 8px;
+  text-align: center;
+}
+
+.ptEmptyTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--base-fg-dim);
+}
+
+.ptEmptySub {
+  font-size: 12.5px;
+  color: var(--cmp-fg-disabled);
+  max-width: 320px;
+}
+
+/* Apply snapshot conflict dialog */
+.applySnapshotDateField {
+  margin-bottom: 4px;
+}
+
+.conflictList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.conflictRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.conflictLabel {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.conflictOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.conflictOptionLabel {
+  font-size: 12px;
+  color: var(--base-fg-dim);
 }

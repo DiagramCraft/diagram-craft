@@ -9,6 +9,15 @@ import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { httpAssert } from '../../utils/httpAssert';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { buildEntityGrantInputs, filterEntities, relationFields } from './dataHelpers';
+import type { EntitySnapshotDbResult } from './db/catalogDatabase';
+
+const serializeSnapshot = (s: EntitySnapshotDbResult) => ({
+  ...s,
+  created_at: s.created_at.toISOString(),
+  target_date: (s.target_date as unknown) instanceof Date
+    ? (s.target_date as unknown as Date).toISOString().slice(0, 10)
+    : s.target_date
+});
 import { importParse, importCommit } from './importOperations';
 import { generateCsv, formatArrayForCsv } from '../../utils/csv';
 import { decodeRefs } from '../../types';
@@ -427,7 +436,206 @@ export const workspaceEntityORPCRouter = entityRouter.router({
       } catch (error) {
         return toORPCError(error);
       }
-    })
+    }),
+
+    snapshots: {
+      list: entityRouter.entities.snapshots.list.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+          const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+          httpAssert.present(entity, {
+            status: 404,
+            message: `Data record '${input.params.id}' not found`
+          });
+          requireEntityAction(
+            authCtx,
+            entity,
+            'view_entity',
+            'You do not have access to view this entity'
+          );
+          const snapshots = await context.db.catalog.listSnapshots(workspace, input.params.id);
+          return snapshots.map(serializeSnapshot);
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }),
+
+      listByProject: entityRouter.entities.snapshots.listByProject.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          await buildApiAuthCtx(context.db, workspace, context.event);
+          const snapshots = await context.db.catalog.listSnapshotsByProject(workspace, input.params.projectId);
+          return snapshots.map(serializeSnapshot);
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }),
+
+      create: entityRouter.entities.snapshots.create.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+          const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+          httpAssert.present(entity, {
+            status: 404,
+            message: `Data record '${input.params.id}' not found`
+          });
+          requireEntityAction(
+            authCtx,
+            entity,
+            'edit_entity',
+            'You do not have permission to edit this entity'
+          );
+          const project = await context.db.project.getProject(workspace, input.body.projectId);
+          orpcAssert.present(project, { code: 'NOT_FOUND', message: 'Project not found' });
+
+          const snapshot = await context.db.catalog.createSnapshot({
+            id: crypto.randomUUID(),
+            workspace,
+            entity_id: input.params.id,
+            status: 'future_update',
+            project_id: input.body.projectId,
+            target_date: input.body.targetDate ?? null,
+            commit_message: input.body.commitMessage ?? null,
+            created_at: new Date(),
+            created_by: context.event.context.user.id,
+            base_state: {
+              id: entity.id,
+              workspace: entity.workspace,
+              slug: entity.slug,
+              namespace: entity.namespace,
+              name: entity.name,
+              description: entity.description,
+              owner: entity.owner,
+              lifecycle: entity.lifecycle,
+              target_lifecycle: entity.target_lifecycle,
+              target_lifecycle_date: entity.target_lifecycle_date,
+              tags: entity.tags,
+              links: entity.links,
+              schema_id: entity.schema_id,
+              data: entity.data,
+              visibility_mode: entity.visibility_mode
+            },
+            proposed_state: input.body.proposedState
+          });
+          return serializeSnapshot(snapshot);
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }),
+
+      update: entityRouter.entities.snapshots.update.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+          const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+          httpAssert.present(entity, {
+            status: 404,
+            message: `Data record '${input.params.id}' not found`
+          });
+          requireEntityAction(
+            authCtx,
+            entity,
+            'edit_entity',
+            'You do not have permission to edit this entity'
+          );
+          const snapshot = await context.db.catalog.updateSnapshot(
+            workspace,
+            input.params.snapshotId,
+            {
+              proposed_state: input.body.proposedState,
+              target_date: input.body.targetDate,
+              commit_message: input.body.commitMessage
+            }
+          );
+          orpcAssert.present(snapshot, {
+            code: 'NOT_FOUND',
+            message: 'Snapshot not found or is not a future_update snapshot'
+          });
+          return serializeSnapshot(snapshot);
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }),
+
+      promote: entityRouter.entities.snapshots.promote.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+          const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+          httpAssert.present(entity, {
+            status: 404,
+            message: `Data record '${input.params.id}' not found`
+          });
+          requireEntityAction(
+            authCtx,
+            entity,
+            'edit_entity',
+            'You do not have permission to edit this entity'
+          );
+          const snapshot = await context.db.catalog.promoteSnapshot(
+            workspace,
+            input.params.snapshotId,
+            input.body.commitMessage ?? null
+          );
+          orpcAssert.present(snapshot, {
+            code: 'NOT_FOUND',
+            message: 'Snapshot not found or is not an autosave snapshot'
+          });
+          return serializeSnapshot(snapshot);
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }),
+
+      apply: entityRouter.entities.snapshots.apply.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+          const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+          httpAssert.present(entity, {
+            status: 404,
+            message: `Data record '${input.params.id}' not found`
+          });
+          requireEntityAction(
+            authCtx,
+            entity,
+            'edit_entity',
+            'You do not have permission to edit this entity'
+          );
+          const existing = await context.db.catalog.listSnapshots(workspace, input.params.id);
+          const snapshot = existing.find(s => s.id === input.params.snapshotId);
+          orpcAssert.present(snapshot, {
+            code: 'NOT_FOUND',
+            message: 'Snapshot not found'
+          });
+          orpcAssert.true(snapshot.status === 'future_update', {
+            code: 'BAD_REQUEST',
+            message: 'Only future_update snapshots can be applied'
+          });
+
+          const auditUser = context.event.context.user;
+          await updateEntity(
+            context.db,
+            workspace,
+            input.params.id,
+            input.body.resolvedEntityData,
+            authCtx,
+            { id: auditUser.id, displayName: auditUser.display_name }
+          );
+
+          const applied = await context.db.catalog.applySnapshot(workspace, input.params.snapshotId);
+          orpcAssert.present(applied, {
+            code: 'NOT_FOUND',
+            message: 'Failed to apply snapshot'
+          });
+          return serializeSnapshot(applied);
+        } catch (error) {
+          return toORPCError(error);
+        }
+      })
+    }
   }
 });
 

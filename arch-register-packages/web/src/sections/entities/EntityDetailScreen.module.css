@@ -877,3 +877,571 @@
   overflow: visible;
   z-index: 0;
 }
+
+/* ── Future plans ──────────────────────────────────────────── */
+.futurePlan {
+  padding: 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.futurePlanMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.futurePlanProject {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cmp-fg);
+}
+
+.futurePlanDate {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+.futurePlanNote {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin-bottom: 6px;
+}
+
+.futurePlanApply {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--accent-fg);
+  border-radius: 4px;
+  color: var(--accent-fg);
+  background: none;
+  cursor: pointer;
+}
+
+.futurePlanApply:hover {
+  background: color-mix(in oklch, var(--accent-fg) 10%, transparent);
+}
+
+/* ── Entity Timeline (etl) ──────────────────────────────────── */
+.etl {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin: 16px 24px 32px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+.etlConfig {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 40px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  background: var(--panel-bg);
+}
+
+.etlLegend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.etlLegItem {
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.etlLegItem::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.etlLegAutosave::before { background: var(--cmp-fg-disabled); }
+.etlLegSaved::before    { background: var(--accent-fg); border-radius: 1px; transform: rotate(45deg); }
+.etlLegFuture::before   { background: var(--accent-fg); border-radius: 1px; transform: rotate(45deg); width: 8px; height: 8px; }
+.etlLegApplied::before  { background: var(--green); }
+.etlLegConflict::before { background: var(--warning-fg); border-radius: 2px; }
+
+.etlConfigMeta {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+.etlSep {
+  width: 1px;
+  height: 18px;
+  background: var(--panel-border);
+  flex-shrink: 0;
+}
+
+.etlSegmented {
+  display: flex;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.etlSegmented button {
+  padding: 0 8px;
+  height: 24px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  background: none;
+  border: 0;
+  border-right: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+
+.etlSegmented button:last-child { border-right: 0; }
+.etlSegmented button:hover { color: var(--base-fg); background: var(--cmp-bg); }
+
+.etlSegActive {
+  color: var(--accent-fg) !important;
+  background: color-mix(in oklch, var(--accent-fg) 12%, transparent) !important;
+}
+
+.etlBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.etlScroll { flex: 1; overflow: auto; min-width: 0; }
+.etlInner  { position: relative; }
+
+.etlHead {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  height: 34px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.etlCorner {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--panel-bg);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-right: 1px solid var(--panel-border);
+}
+
+.etlCornerLabel {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled);
+  font-family: var(--font-mono);
+}
+
+.etlCols { display: flex; align-items: stretch; flex-shrink: 0; }
+
+.etlCol {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  border-right: 1px solid var(--panel-border);
+  white-space: nowrap;
+}
+
+.etlColNow {
+  color: var(--accent-fg);
+  background: color-mix(in oklch, var(--accent-fg) 8%, transparent);
+  font-weight: 500;
+}
+
+.etlToday {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent-fg);
+  opacity: 0.65;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.etlTodayPip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--accent-fg);
+  padding-top: 2px;
+}
+
+.etlLane {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.etlLaneOwn {
+  background: color-mix(in oklch, var(--accent-fg) 4%, transparent);
+}
+
+.etlLaneConflicted {
+  box-shadow: inset 3px 0 0 color-mix(in oklch, var(--warning-fg) 55%, transparent);
+}
+
+.etlLaneLabel {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  min-height: 36px;
+  background: var(--base-bg);
+  border-right: 1px solid var(--panel-border);
+  border: 0;
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.etlLaneOwnLabel {
+  background: color-mix(in oklch, var(--accent-fg) 5%, var(--base-bg));
+}
+
+.etlLaneLabelClickable {
+  cursor: pointer;
+}
+
+.etlLaneLabelClickable:hover {
+  background: var(--cmp-bg);
+}
+
+.etlLaneName {
+  font-size: 11.5px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--base-fg-dim);
+}
+
+.etlLaneDim {
+  font-size: 10px;
+  color: var(--cmp-fg-disabled);
+  font-family: var(--font-mono);
+}
+
+.etlChevron {
+  font-size: 14px;
+  color: var(--cmp-fg-disabled);
+  flex-shrink: 0;
+  transition: transform 80ms;
+  line-height: 1;
+}
+
+.etlProjDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.etlLaneCounts {
+  display: flex;
+  gap: 5px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+
+.etlCountFuture { color: var(--accent-fg); }
+.etlCountApplied { color: var(--green); }
+
+.etlConflictBadge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--warning-fg);
+  background: color-mix(in oklch, var(--warning-fg) 14%, transparent);
+  border: 1px solid color-mix(in oklch, var(--warning-fg) 38%, transparent);
+  border-radius: 3px;
+  padding: 1px 4px;
+  flex-shrink: 0;
+}
+
+.etlTrack {
+  position: relative;
+  flex-shrink: 0;
+  min-height: 52px;
+  overflow: visible;
+}
+
+.etlTrackOwn { min-height: 64px; }
+
+.etlBaseline {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--panel-border);
+}
+
+/* Dots */
+.etlDot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 80ms;
+}
+
+.etlDot:hover { transform: translate(-50%, -50%) scale(1.3); z-index: 5; }
+
+.etlDotSelected {
+  transform: translate(-50%, -50%) scale(1.3) !important;
+  z-index: 6 !important;
+}
+
+.etlDotSelected .etlDotInner {
+  outline: 2px solid var(--accent-fg);
+  outline-offset: 2px;
+}
+
+.etlDotAutosave .etlDotInner {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cmp-fg-disabled);
+}
+
+.etlDotSavedVersion .etlDotInner {
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: var(--accent-fg);
+}
+
+.etlDotFutureUpdate .etlDotInner {
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: var(--accent-fg);
+}
+
+.etlDotConflict .etlDotInner {
+  outline: 2px solid var(--warning-fg);
+  outline-offset: 2px;
+}
+
+.etlDotApplied .etlDotInner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.etlDotLabel {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 9.5px;
+  color: var(--base-fg);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 2px 5px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 80ms;
+}
+
+.etlDot:hover .etlDotLabel,
+.etlDotSelected .etlDotLabel { opacity: 1; }
+
+/* Detail panel */
+.etlDetail {
+  width: 280px;
+  flex-shrink: 0;
+  align-self: stretch;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.etlDetailHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.etlDetailName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.etlDetailSub {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin-top: 2px;
+}
+
+.etlDetailCloseBtn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  border-radius: var(--r);
+  cursor: pointer;
+  color: var(--cmp-fg-disabled);
+}
+
+.etlDetailCloseBtn:hover { background: var(--cmp-bg); color: var(--base-fg); }
+
+.etlDetailBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.etlDetailStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.etlDetailBadge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.etlDetailMsg {
+  font-size: 11.5px;
+  color: var(--base-fg-dim);
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.etlDetailChanges { display: flex; flex-direction: column; gap: 4px; }
+
+.etlDetailSectionLabel {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--cmp-fg-disabled);
+  padding: 2px 0;
+}
+
+.etlChgRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  background: var(--cmp-bg);
+}
+
+.etlChgField { font-weight: 500; color: var(--base-fg-more-dim); }
+.etlChgFrom  { font-size: 10.5px; color: var(--cmp-fg-disabled); }
+.etlChgArrow { color: var(--cmp-fg-disabled); }
+.etlChgTo    { font-weight: 500; color: var(--base-fg); }
+
+.etlDetailMeta {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  padding-top: 4px;
+}
+
+/* ── Conflict resolution ───────────────────────────────────── */
+.conflictList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conflictRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conflictLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cmp-fg);
+}
+
+.conflictOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.conflictOptionLabel {
+  font-size: 12px;
+  color: var(--cmp-fg);
+}

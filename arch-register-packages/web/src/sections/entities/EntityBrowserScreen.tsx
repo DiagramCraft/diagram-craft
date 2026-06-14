@@ -281,6 +281,7 @@ export const EntityBrowserScreen = () => {
     enums,
     lifecycleStates,
     teams,
+    projects,
     permissions,
     openAddEntityDialog
   } = useWorkspaceContext();
@@ -929,6 +930,8 @@ export const EntityBrowserScreen = () => {
           onEntityClick={navigateToEntity}
           config={timelineConfig}
           onConfigChange={setTimelineConfig}
+          workspaceId={workspaceId}
+          projects={projects}
         />
       ) : view === 'radar' ? (
         <RadarView
