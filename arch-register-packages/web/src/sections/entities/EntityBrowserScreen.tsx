@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './EntityBrowserScreen.module.css';
+import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -804,31 +805,30 @@ export const EntityBrowserScreen = () => {
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div>
-          <div className={styles.eyebrow}>Entities</div>
-          <div className={styles.titleRow}>
-            <div data-testid="entity-browser-title" className={styles.title}>
-              {typeName}
-            </div>
+        <Title
+          breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
+          title={typeName}
+          titleTestId="entity-browser-title"
+          chips={
             <span data-testid="entity-browser-count" className={styles.count}>
               {filtered.length}
             </span>
-          </div>
-          <div className={styles.sub}>
-            Search, filter, and inspect everything in the IT landscape.
-          </div>
-        </div>
-        <div className={styles.actions}>
-          {permissions.canCreateEntities && (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
-              New entity
-            </Button>
-          )}
-          <DropdownMenu
-            trigger={<Button aria-label="Entity browser actions" icon={<TbDots size={14} />} />}
-            items={menuItems}
-          />
-        </div>
+          }
+          description="Search, filter, and inspect everything in the IT landscape."
+          buttons={
+            permissions.canCreateEntities ? (
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
+                New entity
+              </Button>
+            ) : undefined
+          }
+          menu={
+            <DropdownMenu
+              trigger={<Button aria-label="Entity browser actions" icon={<TbDots size={14} />} />}
+              items={menuItems}
+            />
+          }
+        />
       </div>
 
       <div className={styles.toolbar}>

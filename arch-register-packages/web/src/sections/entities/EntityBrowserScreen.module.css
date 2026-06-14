@@ -8,48 +8,13 @@
 }
 
 .header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
   margin-bottom: 16px;
-}
-
-.eyebrow {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--base-fg-more-dim);
-  margin-bottom: 2px;
-}
-
-.titleRow {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--base-fg);
 }
 
 .count {
   color: var(--base-fg-more-dim);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-
-.sub {
-  font-size: 12px;
-  color: var(--base-fg-more-dim);
-  margin-top: 2px;
-}
-
-.actions {
-  display: flex;
-  gap: 6px;
-  align-items: center;
 }
 
 /* Toolbar */

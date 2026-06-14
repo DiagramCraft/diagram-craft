@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck, TbDatabase, TbPlus, TbTrash } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData, ProjectEntity } from '@arch-register/api-types/projectContract';
@@ -5,6 +6,7 @@ import { Chip } from '../../components/Chip';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 
 export const ProjectEntities = ({
   project,
@@ -27,9 +29,12 @@ export const ProjectEntities = ({
   onToggleDone: (entityId: string, isDone: boolean) => void;
   onRemoveEntity: (entityId: string) => void;
 }) => {
+  const navigate = useNavigate();
+  const { workspaceSlug } = useWorkspaceContext();
   return (
     <ProjectScreenLayout
       breadcrumbs={[
+        { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
         { label: 'Projects', onClick: onNavigateHome },
         { label: project.name, onClick: onNavigateProject }
       ]}

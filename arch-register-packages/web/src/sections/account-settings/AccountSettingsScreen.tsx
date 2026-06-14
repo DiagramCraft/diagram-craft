@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import styles from '../workspace-settings/WorkspaceSettingsScreen.module.css';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbCheck, TbChevronLeft } from 'react-icons/tb';
+import { TbCheck } from 'react-icons/tb';
+import { Title } from '../../components/Title';
 import { useAuth } from '../../auth/AuthContext';
 import { ColorPicker } from '../../components/ColorPicker';
 import { MemberAvatar } from '../../components/MemberAvatar';
@@ -74,21 +75,14 @@ export const AccountSettingsScreen = () => {
   return (
     <div className={styles.screen}>
       <div className={styles.head}>
-        <div className={styles.headLeft}>
-          <button
-            type="button"
-            className={styles.backLink}
-            onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}
-          >
-            <TbChevronLeft size={12} /> Back to workspace
-          </button>
-          <span className={styles.breadcrumbSep}>/</span>
-          <span className={styles.breadcrumbCurrent}>Account settings</span>
-          <div className={styles.titleRow}>
-            <div className={styles.title}>{meta.title}</div>
-          </div>
-          <div className={styles.sub}>{meta.sub}</div>
-        </div>
+        <Title
+          breadcrumb={[
+            { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+            { label: 'Account settings' }
+          ]}
+          title={meta.title}
+          description={meta.sub}
+        />
       </div>
 
       <div className={styles.blockList}>

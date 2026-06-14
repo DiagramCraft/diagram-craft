@@ -1,14 +1,10 @@
-import { Fragment, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import styles from './ProjectDetailScreen.module.css';
-
-type Breadcrumb = {
-  label: ReactNode;
-  onClick?: () => void;
-};
+import { Title, type TitleBreadcrumbItem } from '../../components/Title';
 
 type ProjectScreenLayoutProps = {
-  breadcrumbs: Breadcrumb[];
-  title: ReactNode;
+  breadcrumbs: TitleBreadcrumbItem[];
+  title: string;
   titleSuffix?: ReactNode;
   description?: ReactNode;
   error?: ReactNode;
@@ -32,29 +28,14 @@ export const ProjectScreenLayout = ({
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div>
-          <div className={styles.eyebrow}>
-            {breadcrumbs.map((breadcrumb, index) => (
-              <Fragment key={index}>
-                {index > 0 && ' / '}
-                {breadcrumb.onClick ? (
-                  <button type="button" onClick={breadcrumb.onClick}>
-                    {breadcrumb.label}
-                  </button>
-                ) : (
-                  breadcrumb.label
-                )}
-              </Fragment>
-            ))}
-          </div>
-          <div className={styles.titleRow}>
-            <h1 className={styles.title}>{title}</h1>
-            {titleSuffix}
-          </div>
-          {description}
-          {error}
-        </div>
-        {actions ? <div className={styles.actions}>{actions}</div> : null}
+        <Title
+          breadcrumb={breadcrumbs}
+          title={title}
+          description={description}
+          toggleButtons={titleSuffix}
+          buttons={actions}
+        />
+        {error}
       </div>
 
       {meta ? <div className={styles.meta}>{meta}</div> : null}

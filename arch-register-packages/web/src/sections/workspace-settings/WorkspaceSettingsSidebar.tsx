@@ -12,20 +12,12 @@ import {
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand
 } from 'react-icons/tb';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { Project } from '@arch-register/api-types/projectContract';
-
-const SectionHeader = ({ title, actions }: { title: string; actions?: React.ReactNode }) => (
-  <div className={`${styles.header} ${styles.tabHeader}`}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 13, fontWeight: 500 }}>{title}</span>
-    </div>
-    {actions && <div className={styles.headerActions}>{actions}</div>}
-  </div>
-);
 
 const GroupLabel = ({ children }: { children: React.ReactNode }) => (
   <div className={styles.groupLabel}>{children}</div>
@@ -104,10 +96,14 @@ export const WorkspaceSettingsSidebar = ({
 
   return (
     <>
-      <SectionHeader 
-        title="Settings" 
-        actions={
-          onCollapse ? (
+      <div className={`${styles.header} ${styles.tabHeader}`}>
+        <Tabs.Root value="settings" onValueChange={() => {}}>
+          <Tabs.List>
+            <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
+        <div className={styles.headerActions}>
+          {onCollapse && (
             <button
               type="button"
               className={styles.action}
@@ -116,7 +112,8 @@ export const WorkspaceSettingsSidebar = ({
             >
               <TbLayoutSidebarLeftCollapse size={14} />
             </button>
-          ) : onExpand ? (
+          )}
+          {onExpand && (
             <button
               type="button"
               className={styles.action}
@@ -125,9 +122,9 @@ export const WorkspaceSettingsSidebar = ({
             >
               <TbLayoutSidebarLeftExpand size={14} />
             </button>
-          ) : null
-        }
-      />
+          )}
+        </div>
+      </div>
       <div className={styles.scroll}>
         {workspace && (
           <div className={styles.settingsWsHead}>
