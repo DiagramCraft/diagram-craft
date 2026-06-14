@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
+import { TbPlus } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { useEntityContentNodes } from '../../hooks/useProjects';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
-import { DiagramCard, DiagramRow } from '../../components/DiagramCard';
+import {
+  DiagramBrowserToolbar,
+  DiagramBrowserView
+} from '../../components/diagram-browser/DiagramBrowserView';
 
 type EntityContentViewProps = {
   workspaceSlug: string;
@@ -53,38 +55,6 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   const lc = filter.toLowerCase();
   const filtered = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
 
-  if (filtered.length === 0 && !filter) {
-    return (
-      <div className={styles.screen}>
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>{folderName}</h1>
-          </div>
-        </div>
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No diagrams in this folder</div>
-          <div className={styles.emptySub}>Diagrams will appear here when added to this folder.</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (filtered.length === 0) {
-    return (
-      <div className={styles.screen}>
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>{folderName}</h1>
-          </div>
-        </div>
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No matches</div>
-          <div className={styles.emptySub}>No diagrams match "{filter}".</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
@@ -111,69 +81,32 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         </div>
       </div>
 
-      <div className={styles.tabBar}>
-        <div className={styles.tabBarRight}>
-          <TextInput
-            variant="search"
-            placeholder="Filter diagrams…"
-            value={filter}
-            onChange={v => setFilter(v ?? '')}
-            onClear={() => setFilter('')}
-          />
-          <button
-            type="button"
-            className={`${styles.iconBtn} ${viewMode === 'grid' ? styles.iconBtnActive : ''}`}
-            title="Grid view"
-            onClick={() => setViewMode('grid')}
-          >
-            <TbLayoutGrid size={13} />
-          </button>
-          <button
-            type="button"
-            className={`${styles.iconBtn} ${viewMode === 'list' ? styles.iconBtnActive : ''}`}
-            title="List view"
-            onClick={() => setViewMode('list')}
-          >
-            <TbList size={13} />
-          </button>
-        </div>
-      </div>
+      <DiagramBrowserToolbar
+        filter={filter}
+        onFilterChange={setFilter}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
 
-      {viewMode === 'list' ? (
-        <div className={styles.diagramListPanel}>
-          <div className={styles.diagramListHead}>
-            <span>Name</span>
-            <span>Folder</span>
-            <span>Last edit</span>
-          </div>
-          {filtered.map(f => (
-            <DiagramRow
-              key={f.path}
-              file={f}
-              folder={folder}
-              onOpen={() => handleDiagramClick(f.id, f.project_id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className={styles.diagramGrid}>
-          {filtered.map(f => (
-            <DiagramCard
-              key={f.path}
-              file={f}
-              onOpen={() => handleDiagramClick(f.id, f.project_id)}
-            />
-          ))}
-          <button
-            type="button"
-            className={`${styles.diagramCard} ${styles.diagramCardAdd}`}
-            onClick={() => setAddDiagramOpen(true)}
-          >
-            <TbPlus size={16} />
-            New diagram
-          </button>
-        </div>
-      )}
+      <DiagramBrowserView
+        hasFilter={filter.length > 0}
+        viewMode={viewMode}
+        listItems={filtered.map(file => ({ file, folder }))}
+        gridSections={[
+          {
+            key: 'entity-content',
+            items: filtered.map(file => ({ file })),
+            showAddButton: true
+          }
+        ]}
+        onOpenDiagram={file => handleDiagramClick(file.id, file.project_id)}
+        onNewDiagram={() => setAddDiagramOpen(true)}
+        emptyState={{
+          title: 'No diagrams in this folder',
+          sub: 'Diagrams will appear here when added to this folder.'
+        }}
+        noMatchState={{ title: 'No matches', sub: `No diagrams match "${filter}".` }}
+      />
 
       <AddDiagramDialog
         open={addDiagramOpen}
@@ -190,4 +123,3 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
     </div>
   );
 };
-

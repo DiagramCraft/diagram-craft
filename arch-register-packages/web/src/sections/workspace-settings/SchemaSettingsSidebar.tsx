@@ -7,10 +7,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-
-const GroupLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.groupLabel}>{children}</div>
-);
+import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 
 export const SchemaSettingsSidebar = ({
   schemas,
@@ -42,7 +39,7 @@ export const SchemaSettingsSidebar = ({
 
   return (
     <>
-      <div className={`${styles.header} ${styles.tabHeader}`}>
+      <SidebarHeader>
         <Tabs.Root
           value={activeTab}
           onValueChange={value => activateTab(value as 'types' | 'enums')}
@@ -52,10 +49,10 @@ export const SchemaSettingsSidebar = ({
             <Tabs.Trigger value="enums">Enums</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
-      </div>
+      </SidebarHeader>
       {activeTab === 'types' ? (
         <div className={styles.scroll}>
-          <GroupLabel>Entity types</GroupLabel>
+          <SidebarGroupLabel>Entity types</SidebarGroupLabel>
           {schemas.map((s, i) => (
             <TreeRow
               key={s.id}
@@ -79,7 +76,7 @@ export const SchemaSettingsSidebar = ({
         </div>
       ) : (
         <div className={styles.scroll}>
-          <GroupLabel>Enums</GroupLabel>
+          <SidebarGroupLabel>Enums</SidebarGroupLabel>
           {enums.length === 0 && (
             <div className={`${styles.emptyState} dim`}>No enums defined.</div>
           )}

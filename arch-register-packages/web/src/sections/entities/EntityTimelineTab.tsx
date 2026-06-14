@@ -1,10 +1,19 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { TbX } from 'react-icons/tb';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Project, ProjectEntity } from '@arch-register/api-types/projectContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '../../lib/api';
+import { TimelineScaffold } from '../../components/timeline/TimelineScaffold';
+import {
+  buildTimelineRange,
+  formatTimelineDate,
+  getTodayTimelinePx,
+  stringDateToTimelinePx,
+  type TimelineColumnWidths,
+  type TimelineZoom
+} from '../../components/timeline/timelineUtils';
 import styles from './EntityDetailScreen.module.css';
 
 // ── Snapshot diff helpers ─────────────────────────────────────────────────────
@@ -90,83 +99,9 @@ export function diffSnapshotState(
 }
 
 type EntityProject = { project: Project; entity_type: ProjectEntity['entity_type'] };
-type Zoom = 'month' | 'quarter' | 'year';
 
 const LABEL_W = 200;
-const COL_W: Record<Zoom, number> = { month: 72, quarter: 100, year: 136 };
-
-// ── Time helpers ──────────────────────────────────────────────────────────────
-const fmtDate = (s: string | null, opts?: Intl.DateTimeFormatOptions) => {
-  if (!s) return '—';
-  return new Date(s).toLocaleDateString(undefined, opts ?? { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-
-type Col = { date: Date; label: string; width: number; isCurrent: boolean };
-
-function buildCols(minD: Date, maxD: Date, zoom: Zoom): Col[] {
-  const today = new Date();
-  const w = COL_W[zoom];
-  const cols: Col[] = [];
-
-  if (zoom === 'month') {
-    let d = new Date(minD.getFullYear(), minD.getMonth() - 1, 1);
-    const end = new Date(maxD.getFullYear(), maxD.getMonth() + 2, 1);
-    while (d < end) {
-      const isCurrent =
-        d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
-      cols.push({
-        date: new Date(d),
-        label: `${d.toLocaleString(undefined, { month: 'short' })}'${String(d.getFullYear()).slice(2)}`,
-        width: w,
-        isCurrent
-      });
-      d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-    }
-  } else if (zoom === 'quarter') {
-    let d = new Date(minD.getFullYear(), Math.floor(minD.getMonth() / 3) * 3 - 3, 1);
-    const end = new Date(maxD.getFullYear(), Math.ceil((maxD.getMonth() + 1) / 3) * 3 + 3, 1);
-    while (d < end) {
-      const q = Math.floor(d.getMonth() / 3) + 1;
-      const tq = Math.floor(today.getMonth() / 3) + 1;
-      const isCurrent = d.getFullYear() === today.getFullYear() && q === tq;
-      cols.push({
-        date: new Date(d),
-        label: `Q${q} '${String(d.getFullYear()).slice(2)}`,
-        width: w,
-        isCurrent
-      });
-      d = new Date(d.getFullYear(), d.getMonth() + 3, 1);
-    }
-  } else {
-    let yr = minD.getFullYear() - 1;
-    while (yr <= maxD.getFullYear() + 2) {
-      cols.push({
-        date: new Date(yr, 0, 1),
-        label: String(yr),
-        width: w,
-        isCurrent: yr === today.getFullYear()
-      });
-      yr++;
-    }
-  }
-  return cols;
-}
-
-function colEnd(col: Col, zoom: Zoom): Date {
-  const d = new Date(col.date);
-  if (zoom === 'month') d.setMonth(d.getMonth() + 1);
-  else if (zoom === 'quarter') d.setMonth(d.getMonth() + 3);
-  else d.setFullYear(d.getFullYear() + 1);
-  return d;
-}
-
-function toPx(dateStr: string | null | undefined, rs: Date, re: Date, tw: number): number | null {
-  if (!dateStr) return null;
-  const t = new Date(dateStr.length === 10 ? `${dateStr}T00:00:00` : dateStr).getTime();
-  return clamp((t - rs.getTime()) / (re.getTime() - rs.getTime()) * tw, 0, tw);
-}
+const COL_W: TimelineColumnWidths = { month: 72, quarter: 100, year: 136 };
 
 function detectConflicts(snapshots: EntitySnapshot[]): {
   conflictedProjectIds: Set<string>;
@@ -206,9 +141,8 @@ export const EntityTimelineTab = ({
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
 }) => {
-  const [zoom, setZoom] = useState<Zoom>('quarter');
+  const [zoom, setZoom] = useState<TimelineZoom>('quarter');
   const [selectedSnap, setSelectedSnap] = useState<EntitySnapshot | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const TODAY = useMemo(() => new Date(), []);
 
   const ownSnaps = useMemo(
@@ -242,7 +176,7 @@ export const EntityTimelineTab = ({
   );
 
   const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
-    const dates: Date[] = [TODAY];
+    const dates: Date[] = [];
     for (const s of ownSnaps) if (s.created_at) dates.push(new Date(s.created_at));
     for (const { snaps } of projectLanes) {
       for (const s of snaps) {
@@ -250,30 +184,18 @@ export const EntityTimelineTab = ({
         if (s.target_date) dates.push(new Date(`${s.target_date}T00:00:00`));
       }
     }
-    if (dates.length < 2) dates.push(new Date(TODAY.getFullYear() + 1, 0, 1));
-    const minD = new Date(Math.min(...dates.map(d => d.getTime())));
-    const maxD = new Date(Math.max(...dates.map(d => d.getTime())));
-    const cols = buildCols(minD, maxD, zoom);
-    const rs = cols[0]?.date ?? minD;
-    const re = cols.length ? colEnd(cols[cols.length - 1]!, zoom) : maxD;
-    const tw = cols.reduce((s, c) => s + c.width, 0);
-    return { rangeStart: rs, rangeEnd: re, columns: cols, totalWidth: tw };
+    return buildTimelineRange({
+      dates,
+      zoom,
+      columnWidths: COL_W,
+      today: TODAY
+    });
   }, [ownSnaps, projectLanes, zoom, TODAY]);
 
-  const todayPx = useMemo(() => {
-    if (!totalWidth || rangeEnd <= rangeStart) return null;
-    return clamp(
-      (TODAY.getTime() - rangeStart.getTime()) / (rangeEnd.getTime() - rangeStart.getTime()) * totalWidth,
-      0,
-      totalWidth
-    );
-  }, [TODAY, rangeStart, rangeEnd, totalWidth]);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || todayPx === null) return;
-    el.scrollLeft = Math.max(0, LABEL_W + todayPx - el.clientWidth * 0.5);
-  }, [todayPx]);
+  const todayPx = useMemo(
+    () => getTodayTimelinePx(TODAY, rangeStart, rangeEnd, totalWidth),
+    [TODAY, rangeStart, rangeEnd, totalWidth]
+  );
 
   const handleSelect = (snap: EntitySnapshot | null) => {
     setSelectedSnap(prev => (snap?.id === prev?.id ? null : snap));
@@ -323,9 +245,14 @@ export const EntityTimelineTab = ({
       </div>
 
       <div className={styles.etlBody}>
-        <div className={styles.etlScroll} ref={scrollRef}>
-          <div className={styles.etlInner} style={{ minWidth: LABEL_W + totalWidth }}>
-            {/* Column headers */}
+        <TimelineScaffold
+          scrollClassName={styles.etlScroll}
+          innerClassName={styles.etlInner}
+          labelWidth={LABEL_W}
+          totalWidth={totalWidth}
+          todayPx={todayPx}
+          todayScrollAlign={0.5}
+          header={
             <div className={styles.etlHead}>
               <div className={styles.etlCorner}>
                 <span className={styles.etlCornerLabel}>Lanes</span>
@@ -342,43 +269,41 @@ export const EntityTimelineTab = ({
                 ))}
               </div>
             </div>
-
-            {/* Today line */}
-            {todayPx !== null && (
+          }
+          todayLine={
+            todayPx === null ? null : (
               <div className={styles.etlToday} style={{ left: LABEL_W + todayPx }}>
                 <span className={styles.etlTodayPip}>▾</span>
               </div>
-            )}
+            )
+          }
+        >
+          {ownSnaps.length > 0 && (
+            <OwnHistoryLane
+              snaps={ownSnaps}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
+              totalWidth={totalWidth}
+              selectedId={selectedSnap?.id}
+              onSelect={handleSelect}
+            />
+          )}
 
-            {/* Own history lane */}
-            {ownSnaps.length > 0 && (
-              <OwnHistoryLane
-                snaps={ownSnaps}
-                rangeStart={rangeStart}
-                rangeEnd={rangeEnd}
-                totalWidth={totalWidth}
-                selectedId={selectedSnap?.id}
-                onSelect={handleSelect}
-              />
-            )}
-
-            {/* Project lanes */}
-            {projectLanes.map(({ projectId, snaps }) => (
-              <ProjectLane
-                key={projectId}
-                project={projectMap.get(projectId) ?? null}
-                snaps={snaps}
-                isConflicted={conflictedProjectIds.has(projectId)}
-                conflictedSnapIds={conflictedSnapIds}
-                rangeStart={rangeStart}
-                rangeEnd={rangeEnd}
-                totalWidth={totalWidth}
-                selectedId={selectedSnap?.id}
-                onSelect={handleSelect}
-              />
-            ))}
-          </div>
-        </div>
+          {projectLanes.map(({ projectId, snaps }) => (
+            <ProjectLane
+              key={projectId}
+              project={projectMap.get(projectId) ?? null}
+              snaps={snaps}
+              isConflicted={conflictedProjectIds.has(projectId)}
+              conflictedSnapIds={conflictedSnapIds}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
+              totalWidth={totalWidth}
+              selectedId={selectedSnap?.id}
+              onSelect={handleSelect}
+            />
+          ))}
+        </TimelineScaffold>
 
         {selectedSnap && (
           <SnapDetail
@@ -419,7 +344,7 @@ const OwnHistoryLane = ({
     <div className={`${styles.etlTrack} ${styles.etlTrackOwn}`} style={{ width: totalWidth }}>
       <div className={styles.etlBaseline} />
       {snaps.map(snap => {
-        const px = toPx(snap.created_at, rangeStart, rangeEnd, totalWidth);
+        const px = stringDateToTimelinePx(snap.created_at, rangeStart, rangeEnd, totalWidth);
         if (px === null) return null;
         const isSaved = snap.status === 'saved_version';
         const isSelected = selectedId === snap.id;
@@ -430,7 +355,10 @@ const OwnHistoryLane = ({
             className={`${styles.etlDot} ${dotClass} ${isSelected ? styles.etlDotSelected : ''}`}
             style={{ left: px }}
             onClick={() => onSelect(isSelected ? null : snap)}
-            title={snap.commit_message ?? fmtDate(snap.created_at, { month: 'short', year: 'numeric' })}
+            title={
+              snap.commit_message ??
+              formatTimelineDate(snap.created_at, { month: 'short', year: 'numeric' })
+            }
           >
             <div className={styles.etlDotInner} />
             {isSaved && snap.commit_message && (
@@ -497,7 +425,7 @@ const ProjectLane = ({
             const dateStr = snap.status === 'future_update' || snap.status === 'applied'
               ? (snap.target_date ?? snap.created_at)
               : snap.created_at;
-            const px = toPx(dateStr, rangeStart, rangeEnd, totalWidth);
+            const px = stringDateToTimelinePx(dateStr, rangeStart, rangeEnd, totalWidth);
             if (px === null) return null;
             const isSelected = selectedId === snap.id;
             const isSnapConflict = conflictedSnapIds.has(snap.id);
@@ -574,7 +502,11 @@ const SnapDetail = ({
             {isOwn ? 'Own history' : (project?.name ?? 'Project')}
           </div>
           <div className={styles.etlDetailSub}>
-            {fmtDate(snapshot.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
+            {formatTimelineDate(snapshot.created_at, {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            })}
           </div>
         </div>
         <button type="button" className={styles.etlDetailCloseBtn} onClick={onClose}>

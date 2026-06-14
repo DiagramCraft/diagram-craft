@@ -45,6 +45,7 @@ import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
 import { ProjectEntities } from './ProjectEntities';
 import type { ProjectMenuTarget } from './ProjectDiagramsView';
+import { RenameDialog } from '../../components/RenameDialog';
 
 const PROJECT_STATUSES = [
   { value: 'draft', label: 'Draft' },
@@ -675,80 +676,6 @@ export const ProjectDetailScreen = () => {
         onCancel={() => setDeleteTarget(null)}
       />
     </>
-  );
-};
-
-const RenameDialog = ({
-  open,
-  currentName,
-  entityType,
-  onRename,
-  onCancel
-}: {
-  open: boolean;
-  currentName: string;
-  entityType: 'diagram' | 'folder';
-  onRename: (newName: string) => void;
-  onCancel: () => void;
-}) => {
-  const [name, setName] = useState(currentName);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (open) {
-      setName(currentName);
-      setTimeout(() => {
-        const el = inputRef.current;
-        if (el) {
-          el.focus();
-          el.select();
-        }
-      }, 0);
-    }
-  }, [open, currentName]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = name.trim();
-    if (trimmed) onRename(trimmed);
-  };
-
-  return (
-    <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: 'var(--base-fg-more-dim)' }}>Name</label>
-          <input
-            ref={inputRef}
-            value={name}
-            onChange={e => setName(e.target.value)}
-            style={{
-              fontSize: 13,
-              padding: '6px 8px',
-              background: 'var(--base-bg)',
-              border: '1px solid var(--cmp-border)',
-              borderRadius: 'var(--r)',
-              color: 'var(--base-fg)',
-              outline: 'none'
-            }}
-          />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button
-            variant="primary"
-            onClick={e => {
-              e.preventDefault();
-              const trimmed = name.trim();
-              if (trimmed) onRename(trimmed);
-            }}
-            disabled={!name.trim()}
-          >
-            Rename
-          </Button>
-        </div>
-      </form>
-    </Dialog>
   );
 };
 

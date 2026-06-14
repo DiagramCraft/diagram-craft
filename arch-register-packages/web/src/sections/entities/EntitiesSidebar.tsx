@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { Dialog } from '@diagram-craft/app-components/Dialog';
 import {
   TbDatabase,
   TbUsers,
@@ -25,83 +24,13 @@ import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useEntities';
 import { usePinnedEntities } from '../../hooks/useNotifications';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { RenameDialog } from '../../components/RenameDialog';
+import { SidebarGroupLabel } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-
-const GroupLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.groupLabel}>{children}</div>
-);
-
-const SidebarRenameDialog = ({
-  open,
-  currentName,
-  entityType,
-  onRename,
-  onCancel
-}: {
-  open: boolean;
-  currentName: string;
-  entityType: 'diagram' | 'folder' | 'view';
-  onRename: (newName: string) => void;
-  onCancel: () => void;
-}) => {
-  const [name, setName] = useState(currentName);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (open) {
-      setName(currentName);
-      setTimeout(() => {
-        const el = inputRef.current;
-        if (el) {
-          el.focus();
-          el.select();
-        }
-      }, 0);
-    }
-  }, [open, currentName]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = name.trim();
-    if (trimmed) onRename(trimmed);
-  };
-
-  return (
-    <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: 'var(--base-fg-more-dim)' }}>Name</label>
-          <input
-            ref={inputRef}
-            value={name}
-            onChange={e => setName(e.target.value)}
-            style={{
-              fontSize: 13,
-              padding: '6px 8px',
-              background: 'var(--base-bg)',
-              border: '1px solid var(--cmp-border)',
-              borderRadius: 'var(--r)',
-              color: 'var(--base-fg)',
-              outline: 'none'
-            }}
-          />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-          <button type="button" className={styles.renameBtn} onClick={onCancel}>
-            Cancel
-          </button>
-          <button type="submit" className={styles.renameBtnPrimary} disabled={!name.trim()}>
-            Rename
-          </button>
-        </div>
-      </form>
-    </Dialog>
-  );
-};
 
 export const EntitiesSidebar = ({
   schemas,
@@ -334,7 +263,7 @@ export const EntitiesSidebar = ({
               }
               trailing={<span className="dim mono">{totalEntities}</span>}
             />
-            <GroupLabel>By type</GroupLabel>
+            <SidebarGroupLabel>By type</SidebarGroupLabel>
             {schemas.map((s, i) => (
               <TreeRow
                 key={s.id}
@@ -356,7 +285,7 @@ export const EntitiesSidebar = ({
                 tagColor={resolveSchemaColor(s, i)}
               />
             ))}
-            <GroupLabel>By status</GroupLabel>
+            <SidebarGroupLabel>By status</SidebarGroupLabel>
             {lifecycleStates.map(s => {
               const count = statusCounts[s.id] ?? 0;
               if (!count) return null;
@@ -384,7 +313,7 @@ export const EntitiesSidebar = ({
                 />
               );
             })}
-            <GroupLabel>By owner</GroupLabel>
+            <SidebarGroupLabel>By owner</SidebarGroupLabel>
             {owners.map(([ownerId, ownerName, count]) => (
               <TreeRow
                 key={ownerId ?? 'unassigned'}
@@ -405,7 +334,7 @@ export const EntitiesSidebar = ({
           </>
         ) : sidebarTab === 'views' ? (
           <>
-            <GroupLabel>Saved views</GroupLabel>
+            <SidebarGroupLabel>Saved views</SidebarGroupLabel>
             {savedViews.length === 0 && (
               <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
             )}
@@ -427,7 +356,7 @@ export const EntitiesSidebar = ({
           </>
         ) : (
           <>
-            <GroupLabel>Pinned entities</GroupLabel>
+            <SidebarGroupLabel>Pinned entities</SidebarGroupLabel>
             {isPinnedEntitiesLoading && (
               <div className={`${styles.emptyState} dim`}>Loading pinned entities…</div>
             )}
@@ -508,7 +437,7 @@ export const EntitiesSidebar = ({
       )}
 
       {renameViewTarget && (
-        <SidebarRenameDialog
+        <RenameDialog
           open={true}
           currentName={renameViewTarget.name}
           entityType="view"

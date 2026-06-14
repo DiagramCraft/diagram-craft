@@ -6,6 +6,7 @@ import { Project } from '@arch-register/api-types/projectContract';
 import { TreeRow } from '../../components/TreeRow';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import styles from '../../shell/SidePanel.module.css';
+import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 
 type ProjectSidebarTab = 'projects' | 'archive';
 
@@ -24,10 +25,6 @@ const getArchivedProjectGroup = (projects: Project[]) => ({
   title: 'Archived Projects',
   projects: projects.filter(p => p.status === 'complete' || p.status === 'cancelled')
 });
-
-const GroupLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.groupLabel}>{children}</div>
-);
 
 export const ProjectsSidebar = ({
   projects,
@@ -122,7 +119,42 @@ export const ProjectsSidebar = ({
 
   return (
     <>
-      <div className={`${styles.header} ${styles.tabHeader}`}>
+      <SidebarHeader
+        actions={
+          <>
+            {permissions.canCreateProjects && (
+              <button
+                type="button"
+                className={styles.action}
+                onClick={openAddProjectDialog}
+                title="New project"
+              >
+                <TbPlus size={13} />
+              </button>
+            )}
+            {onExpand && (
+              <button
+                type="button"
+                className={styles.action}
+                title="Pin sidebar open"
+                onClick={onExpand}
+              >
+                <TbLayoutSidebarLeftExpand size={14} />
+              </button>
+            )}
+            {onCollapse && (
+              <button
+                type="button"
+                className={styles.action}
+                title="Collapse to rail"
+                onClick={onCollapse}
+              >
+                <TbLayoutSidebarLeftCollapse size={14} />
+              </button>
+            )}
+          </>
+        }
+      >
         <Tabs.Root
           value={projectSidebarTab}
           onValueChange={value => activateTab(value as 'projects' | 'archive')}
@@ -132,44 +164,12 @@ export const ProjectsSidebar = ({
             <Tabs.Trigger value="archive">Archive</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
-        <div className={styles.headerActions}>
-          {permissions.canCreateProjects && (
-            <button
-              type="button"
-              className={styles.action}
-              onClick={openAddProjectDialog}
-              title="New project"
-            >
-              <TbPlus size={13} />
-            </button>
-          )}
-          {onExpand && (
-            <button
-              type="button"
-              className={styles.action}
-              title="Pin sidebar open"
-              onClick={onExpand}
-            >
-              <TbLayoutSidebarLeftExpand size={14} />
-            </button>
-          )}
-          {onCollapse && (
-            <button
-              type="button"
-              className={styles.action}
-              title="Collapse to rail"
-              onClick={onCollapse}
-            >
-              <TbLayoutSidebarLeftCollapse size={14} />
-            </button>
-          )}
-        </div>
-      </div>
+      </SidebarHeader>
       <div className={styles.scroll}>
         {projectGroups.length > 0 ? (
           projectGroups.map(group => (
             <div key={group.title} data-testid={`project-group-${group.title}`}>
-              <GroupLabel>{group.title}</GroupLabel>
+              <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               {group.projects.map(project => {
                 const isSelected = project.id === projectId;
                 const isOpen = expanded[project.id] ?? isSelected;

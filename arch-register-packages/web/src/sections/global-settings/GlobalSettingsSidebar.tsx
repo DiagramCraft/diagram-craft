@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
 import { TbShieldLock } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import {
+  SidebarGroupLabel,
+  SidebarTitleHeader
+} from '../../components/sidebar/SidebarPrimitives';
 
 type GlobalSettingsNavItem = {
   id: string;
@@ -16,20 +19,6 @@ type GlobalSettingsNavItem = {
 const GLOBAL_SETTINGS_SECTIONS: GlobalSettingsNavItem[] = [
   { id: 'global-permissions', label: 'Global permissions', icon: <TbShieldLock size={12} />, group: 'Administration' },
 ];
-
-const GroupLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.groupLabel}>{children}</div>
-);
-
-const SectionHeader = ({ title }: { title: string }) => (
-  <div className={`${styles.header} ${styles.tabHeader}`}>
-    <Tabs.Root value="section">
-      <Tabs.List>
-        <Tabs.Trigger value="section">{title}</Tabs.Trigger>
-      </Tabs.List>
-    </Tabs.Root>
-  </div>
-);
 
 export const GlobalSettingsSidebar = () => {
   const navigate = useNavigate();
@@ -47,11 +36,11 @@ export const GlobalSettingsSidebar = () => {
 
   return (
     <div className={styles.panel}>
-      <SectionHeader title="Global Settings" />
+      <SidebarTitleHeader title="Global Settings" />
       <div className={styles.scroll}>
         {groups.map(([group, items]) => (
           <div key={group}>
-            <GroupLabel>{group}</GroupLabel>
+            <SidebarGroupLabel>{group}</SidebarGroupLabel>
             {items.map(s => (
               <TreeRow
                 key={s.id}

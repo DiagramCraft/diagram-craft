@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { Tabs } from '@diagram-craft/app-components/Tabs';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
 import { TbPalette, TbUser } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import {
+  SidebarGroupLabel,
+  SidebarTitleHeader
+} from '../../components/sidebar/SidebarPrimitives';
 
 type AccountSettingsNavItem = {
   id: string;
@@ -17,20 +20,6 @@ const ACCOUNT_SETTINGS_SECTIONS: AccountSettingsNavItem[] = [
   { id: 'profile', label: 'Profile', icon: <TbUser size={12} />, group: 'Account' },
   { id: 'appearance', label: 'Appearance', icon: <TbPalette size={12} />, group: 'Account' },
 ];
-
-const GroupLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.groupLabel}>{children}</div>
-);
-
-const SectionHeader = ({ title }: { title: string }) => (
-  <div className={`${styles.header} ${styles.tabHeader}`}>
-    <Tabs.Root value="section">
-      <Tabs.List>
-        <Tabs.Trigger value="section">{title}</Tabs.Trigger>
-      </Tabs.List>
-    </Tabs.Root>
-  </div>
-);
 
 export const AccountSettingsSidebar = () => {
   const navigate = useNavigate();
@@ -51,11 +40,11 @@ export const AccountSettingsSidebar = () => {
 
   return (
     <div className={styles.panel}>
-      <SectionHeader title="Account Settings" />
+      <SidebarTitleHeader title="Account Settings" />
       <div className={styles.scroll}>
         {groups.map(([group, items]) => (
           <div key={group}>
-            <GroupLabel>{group}</GroupLabel>
+            <SidebarGroupLabel>{group}</SidebarGroupLabel>
             {items.map(s => (
               <TreeRow
                 key={s.id}
