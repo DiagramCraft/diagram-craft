@@ -54,30 +54,6 @@
   color: var(--cmp-fg-disabled);
 }
 
-/* Filter dropdown */
-.filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 26px;
-  padding: 0 8px 0 10px;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  color: var(--base-fg-dim);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.filter:hover {
-  border-color: var(--base-fg-more-dim);
-}
-
-.filterLabel {
-  color: var(--cmp-fg-disabled);
-  font-size: 11px;
-}
-
 .filterCount {
   display: inline-flex;
   align-items: center;
@@ -92,17 +68,6 @@
   border-radius: 10px;
   margin-left: 6px;
   border: 1px solid var(--panel-border);
-}
-
-.filterSelect {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  outline: 0;
-  color: var(--base-fg);
-  padding-right: 4px;
-  cursor: pointer;
-  font-size: 12px;
 }
 
 .dateFilters {

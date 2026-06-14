@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { TbChevronDown, TbX, TbChevronRight, TbCalendarWeek, TbGitBranch } from 'react-icons/tb';
+import { TbX, TbChevronRight, TbCalendarWeek, TbGitBranch } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
 import { TypeBadge } from '../../../components/TypeBadge';
+import { FilterDropdown } from '../../../components/FilterDropdown';
 import { StatusChip } from '../../../components/StatusChip';
 import { Button } from '@diagram-craft/app-components/Button';
 import { resolveSchemaColor } from '../../../lib/api';
@@ -488,61 +489,42 @@ const ConfigBar = ({
   totalRows: number;
 }) => (
   <div className={styles.configBar}>
-    <span className={styles.filterLabel} style={{ fontSize: 11 }}>
-      Date mapping
-    </span>
+    <span className={styles.configMeta}>Date mapping</span>
 
-    <label className={styles.filter}>
-      <span className={styles.filterLabel}>Start</span>
-      <select
-        className={styles.filterSelect}
-        value={cfg.startFieldId ?? ''}
-        onChange={e => onChange({ startFieldId: e.target.value || null })}
-      >
-        <option value="">— none —</option>
-        {dateFields.map(f => (
-          <option key={f.id} value={f.id}>
-            {f.name}
-          </option>
-        ))}
-      </select>
-      <TbChevronDown size={10} />
-    </label>
+    <FilterDropdown
+      label="Start"
+      value={cfg.startFieldId ?? ''}
+      onChange={v => onChange({ startFieldId: v || null })}
+      options={[
+        { value: '', label: '— none —' },
+        ...dateFields.map(f => ({ value: f.id, label: f.name }))
+      ]}
+    />
 
     <span className={styles.configArrow}>→</span>
 
-    <label className={styles.filter}>
-      <span className={styles.filterLabel}>End</span>
-      <select
-        className={styles.filterSelect}
-        value={cfg.endFieldId ?? ''}
-        onChange={e => onChange({ endFieldId: e.target.value || null })}
-      >
-        <option value="">— none —</option>
-        {dateFields.map(f => (
-          <option key={f.id} value={f.id}>
-            {f.name}
-          </option>
-        ))}
-      </select>
-      <TbChevronDown size={10} />
-    </label>
+    <FilterDropdown
+      label="End"
+      value={cfg.endFieldId ?? ''}
+      onChange={v => onChange({ endFieldId: v || null })}
+      options={[
+        { value: '', label: '— none —' },
+        ...dateFields.map(f => ({ value: f.id, label: f.name }))
+      ]}
+    />
 
     <div className={styles.configSep} />
 
-    <label className={styles.filter}>
-      <span className={styles.filterLabel}>Group</span>
-      <select
-        className={styles.filterSelect}
-        value={cfg.groupBy}
-        onChange={e => onChange({ groupBy: e.target.value as TimelineConfig['groupBy'] })}
-      >
-        <option value="owner">By owner</option>
-        <option value="type">By type</option>
-        <option value="snapshot">Entity + project</option>
-      </select>
-      <TbChevronDown size={10} />
-    </label>
+    <FilterDropdown
+      label="Group"
+      value={cfg.groupBy}
+      onChange={v => onChange({ groupBy: v as TimelineConfig['groupBy'] })}
+      options={[
+        { value: 'owner', label: 'By owner' },
+        { value: 'type', label: 'By type' },
+        { value: 'snapshot', label: 'Entity + project' }
+      ]}
+    />
 
     <div className={styles.configSep} />
 

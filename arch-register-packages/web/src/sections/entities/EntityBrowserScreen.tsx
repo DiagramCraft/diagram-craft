@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './EntityBrowserScreen.module.css';
 import { Title } from '../../components/Title';
+import { FilterDropdown } from '../../components/FilterDropdown';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -1040,29 +1041,6 @@ export const EntityBrowserScreen = () => {
   );
 };
 
-const FilterDropdown = ({
-  label,
-  value,
-  onChange,
-  options
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) => (
-  <label className={styles.filter}>
-    <span className={styles.filterLabel}>{label}</span>
-    <select className={styles.filterSelect} value={value} onChange={e => onChange(e.target.value)}>
-      {options.map(o => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-    <TbChevronDown size={10} />
-  </label>
-);
 
 type ViewProps = {
   rows: EntityRecord[];

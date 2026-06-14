@@ -39,42 +39,6 @@
   white-space: nowrap;
 }
 
-/* Reuse toolbar filter styles (scoped here) */
-.filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 26px;
-  padding: 0 8px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.filter:hover {
-  border-color: var(--cmp-border-hover);
-}
-
-.filterLabel {
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-}
-
-.filterSelect {
-  appearance: none;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 12px;
-  color: var(--base-fg);
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
-  max-width: 160px;
-}
-
 /* Segmented zoom control */
 .segmented {
   display: inline-flex;
