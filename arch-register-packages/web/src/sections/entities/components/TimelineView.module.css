@@ -504,10 +504,6 @@
   /* no special background — own history appears first before project lanes */
 }
 
-.snapLaneConflicted {
-  box-shadow: inset 2px 0 0 var(--warning-fg);
-}
-
 .snapLaneLabel {
   font-size: 10px;
   color: var(--base-fg-more-dim);
@@ -597,27 +593,10 @@
   box-shadow: 0 0 0 2px var(--base-bg), 0 0 0 4px rgba(255, 255, 255, 0.7);
 }
 
-.snapDotConflict {
-  box-shadow: 0 0 0 2px var(--base-bg), 0 0 0 3px var(--warning-fg);
-}
-
 .snapProjDot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.snapConflictBadge {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--warning-fg);
-  background: color-mix(in oklch, var(--warning-fg) 14%, transparent);
-  border: 1px solid color-mix(in oklch, var(--warning-fg) 38%, transparent);
-  border-radius: 3px;
-  padding: 1px 4px;
   flex-shrink: 0;
 }
 

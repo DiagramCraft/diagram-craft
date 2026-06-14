@@ -21,6 +21,7 @@ type GroupBy = 'entity' | 'date';
 export const ProjectEntities = ({
   project,
   projectEntities,
+  projectSnapshots,
   futureSnapshots,
   schemaMap,
   entityTypeColorMap,
@@ -37,6 +38,7 @@ export const ProjectEntities = ({
 }: {
   project: ProjectDetailData;
   projectEntities: ProjectEntity[];
+  projectSnapshots: EntitySnapshot[];
   futureSnapshots: EntitySnapshot[];
   schemaMap: Map<string, { color: string; icon: string | null }>;
   entityTypeColorMap: Map<string, string>;
@@ -152,16 +154,20 @@ export const ProjectEntities = ({
           onApplySnapshot={onApplySnapshot}
         />
       ) : (
-        <ProjectTimelineTab
-          project={project}
-          projectEntities={projectEntities}
-          futureSnapshots={futureSnapshots}
-          schemaMap={schemaMap}
-          entityTypeColorMap={entityTypeColorMap}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
-        />
+        <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
+          <ProjectTimelineTab
+            project={project}
+            projectEntities={projectEntities}
+            projectSnapshots={projectSnapshots}
+            schemaMap={schemaMap}
+            entityTypeColorMap={entityTypeColorMap}
+            schemas={schemas}
+            lifecycleStates={lifecycleStates}
+            teams={teams}
+            canEdit={project.canEdit}
+            onApplySnapshot={onApplySnapshot}
+          />
+        </div>
       )}
     </ProjectScreenLayout>
   );

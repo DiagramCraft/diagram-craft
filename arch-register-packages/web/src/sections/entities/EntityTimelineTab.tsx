@@ -465,8 +465,7 @@ const ProjectLane = ({
   selectedId: string | undefined;
   onSelect: (snap: EntitySnapshot | null) => void;
 }) => {
-  const allApplied = snaps.every(s => s.status === 'applied');
-  const [collapsed, setCollapsed] = useState(allApplied);
+  const [collapsed, setCollapsed] = useState(false);
 
   const futureCt = snaps.filter(s => s.status === 'future_update').length;
   const appliedCt = snaps.filter(s => s.status === 'applied').length;

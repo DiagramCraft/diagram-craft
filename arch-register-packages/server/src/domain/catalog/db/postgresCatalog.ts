@@ -347,7 +347,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async listSnapshotsByProject(workspace: string, projectId: string) {
     return await this.sql<EntitySnapshotDbResult[]>`
       SELECT * FROM entity_snapshot
-      WHERE workspace = ${workspace} AND project_id = ${projectId} AND status = 'future_update'
+      WHERE workspace = ${workspace} AND project_id = ${projectId} AND status IN ('future_update', 'applied')
       ORDER BY target_date ASC NULLS LAST, created_at DESC
     `;
   }

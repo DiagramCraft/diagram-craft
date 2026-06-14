@@ -1,7 +1,12 @@
 /* Project Detail */
 .screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 20px 24px 32px;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Header */
@@ -469,6 +474,18 @@
 .entityTab {
   display: flex;
   flex-direction: column;
+}
+
+.entityTabFill {
+  flex: 1;
+  min-height: 0;
+}
+
+.screenBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .pentProgress {
@@ -1020,6 +1037,8 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
 }
 
 .ptlConfig {
@@ -1048,6 +1067,13 @@
   height: 8px;
   transform: rotate(45deg);
   border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.ptlLegDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
@@ -1278,10 +1304,24 @@
   transition: transform 80ms;
 }
 
+.ptlMarkerDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  transition: transform 80ms;
+}
+
 .ptlMarker:hover .ptlMarkerDiamond { transform: rotate(45deg) scale(1.3); }
+.ptlMarker:hover .ptlMarkerDot { transform: scale(1.3); }
 
 .ptlMarkerSelected .ptlMarkerDiamond {
   transform: rotate(45deg) scale(1.3);
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.ptlMarkerSelected .ptlMarkerDot {
+  transform: scale(1.3);
   outline: 2px solid white;
   outline-offset: 2px;
 }
@@ -1448,6 +1488,12 @@
   padding-top: 4px;
 }
 
+.ptlDetailActions {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 6px;
+}
+
 /* Empty state */
 .ptEmpty {
   display: flex;
@@ -1473,6 +1519,10 @@
 }
 
 /* Apply snapshot conflict dialog */
+.applySnapshotDateField {
+  margin-bottom: 4px;
+}
+
 .conflictList {
   display: flex;
   flex-direction: column;

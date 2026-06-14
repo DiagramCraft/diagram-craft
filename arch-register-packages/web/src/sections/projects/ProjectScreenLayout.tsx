@@ -40,7 +40,7 @@ export const ProjectScreenLayout = ({
 
       {meta ? <div className={styles.meta}>{meta}</div> : null}
       {toolbar}
-      {children}
+      <div className={styles.screenBody}>{children}</div>
     </div>
   );
 };

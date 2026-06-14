@@ -335,7 +335,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   async listSnapshotsByProject(workspace: string, projectId: string) {
     return this.all(
       `SELECT * FROM entity_snapshot
-       WHERE workspace = ? AND project_id = ? AND status = 'future_update'
+       WHERE workspace = ? AND project_id = ? AND status IN ('future_update', 'applied')
        ORDER BY CASE WHEN target_date IS NULL THEN 1 ELSE 0 END, target_date ASC, created_at DESC`,
       [workspace, projectId],
       sqliteMappers.entitySnapshot

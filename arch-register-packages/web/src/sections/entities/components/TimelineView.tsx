@@ -154,32 +154,6 @@ const useDateFieldOptions = (schemas: EntitySchema[]): TimelineDateField[] =>
     return [...schemaFields, ...METADATA_DATE_FIELDS];
   }, [schemas]);
 
-// ── Conflict detection ────────────────────────────────────────────────────────
-
-const detectConflicts = (
-  snaps: EntitySnapshot[]
-): { conflictedProjectIds: Set<string>; conflictedSnapIds: Set<string> } => {
-  const futures = snaps.filter(s => s.status === 'future_update');
-  const conflictedProjectIds = new Set<string>();
-  const conflictedSnapIds = new Set<string>();
-  for (let i = 0; i < futures.length; i++) {
-    for (let j = i + 1; j < futures.length; j++) {
-      const a = futures[i]!;
-      const b = futures[j]!;
-      const aKeys = Object.keys(a.proposed_state ?? {});
-      const bKeys = Object.keys(b.proposed_state ?? {});
-      const hasShared = aKeys.some(k => bKeys.includes(k));
-      if (hasShared) {
-        if (a.project_id) conflictedProjectIds.add(a.project_id);
-        if (b.project_id) conflictedProjectIds.add(b.project_id);
-        conflictedSnapIds.add(a.id);
-        conflictedSnapIds.add(b.id);
-      }
-    }
-  }
-  return { conflictedProjectIds, conflictedSnapIds };
-};
-
 // ── Snap status badge ─────────────────────────────────────────────────────────
 
 const SNAP_STATUS_CLASS: Record<string, string> = {
@@ -256,11 +230,6 @@ const SnapBlock = ({
     }));
   }, [snaps]);
 
-  const { conflictedProjectIds, conflictedSnapIds } = useMemo(
-    () => detectConflicts(snaps),
-    [snaps]
-  );
-
   const toPx = (d: Date | null): number => {
     if (!d) return 0;
     const ms = +rangeEnd - +rangeStart;
@@ -328,7 +297,6 @@ const SnapBlock = ({
           <div className={`${styles.labelCol} ${styles.snapLaneLabel}`}>
             <TbGitBranch size={10} style={{ color: 'var(--base-fg-more-dim)', flexShrink: 0 }} />
             <span>Own history</span>
-            <span className={styles.snapLaneCount}>({ownSnaps.length})</span>
           </div>
           <div className={`${styles.barCell} ${styles.snapTrack}`} style={{ width: totalWidth }}>
             <div className={styles.snapBaseline} />
@@ -360,17 +328,12 @@ const SnapBlock = ({
       {projectLanes.map(({ projectId, snaps: laneSnaps }) => {
         const project = projects.find(p => p.id === projectId);
         if (!project) return null;
-        const isConflicted = conflictedProjectIds.has(projectId);
         const projectColor = project.color ?? 'var(--accent-fg)';
         return (
-          <div
-            key={projectId}
-            className={`${styles.snapLane} ${isConflicted ? styles.snapLaneConflicted : ''}`}
-          >
+          <div key={projectId} className={styles.snapLane}>
             <div className={`${styles.labelCol} ${styles.snapLaneLabel}`}>
               <span className={styles.snapProjDot} style={{ background: projectColor }} />
               <span>{project.name}</span>
-              {isConflicted && <span className={styles.snapConflictBadge}>Conflict</span>}
             </div>
             <div className={`${styles.barCell} ${styles.snapTrack}`} style={{ width: totalWidth }}>
               <div className={styles.snapBaseline} />
@@ -378,13 +341,12 @@ const SnapBlock = ({
                 if (!snap.target_date) return null;
                 const px = toPx(new Date(`${snap.target_date}T00:00:00`));
                 const isSel = selectedSnapId === snap.id;
-                const isConflictSnap = conflictedSnapIds.has(snap.id);
                 const dotClass =
                   snap.status === 'applied' ? styles.snapDotApplied : styles.snapDotFutureUpdate;
                 return (
                   <div
                     key={snap.id}
-                    className={`${styles.snapDot} ${dotClass} ${isSel ? styles.snapDotSelected : ''} ${isConflictSnap ? styles.snapDotConflict : ''}`}
+                    className={`${styles.snapDot} ${dotClass} ${isSel ? styles.snapDotSelected : ''}`}
                     style={
                       { left: px, '--snap-color': projectColor } as React.CSSProperties
                     }

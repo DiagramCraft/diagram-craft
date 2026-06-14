@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { TbX } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
 import type { ProjectDetail as ProjectDetailData, ProjectEntity } from '@arch-register/api-types/projectContract';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -93,41 +94,53 @@ function toPx(dateStr: string | null | undefined, rs: Date, re: Date, tw: number
 export const ProjectTimelineTab = ({
   project,
   projectEntities,
-  futureSnapshots,
+  projectSnapshots,
   schemaMap,
   entityTypeColorMap,
   schemas,
   lifecycleStates,
-  teams
+  teams,
+  canEdit,
+  onApplySnapshot
 }: {
   project: ProjectDetailData;
   projectEntities: ProjectEntity[];
-  futureSnapshots: EntitySnapshot[];
+  projectSnapshots: EntitySnapshot[];
   schemaMap: Map<string, SchemaInfo>;
   entityTypeColorMap: Map<string, string>;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
+  canEdit: boolean;
+  onApplySnapshot: (snapshot: EntitySnapshot) => void;
 }) => {
   const [zoom, setZoom] = useState<Zoom>('quarter');
   const [selectedSnap, setSelectedSnap] = useState<EntitySnapshot | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const TODAY = useMemo(() => new Date(), []);
+  const plannedSnapshots = useMemo(
+    () => projectSnapshots.filter(snapshot => snapshot.status === 'future_update'),
+    [projectSnapshots]
+  );
+  const appliedSnapshots = useMemo(
+    () => projectSnapshots.filter(snapshot => snapshot.status === 'applied'),
+    [projectSnapshots]
+  );
 
   // Only dated snapshots go on the timeline; undated shown below
-  const datedSnapshots = useMemo(() => futureSnapshots.filter(s => s.target_date), [futureSnapshots]);
-  const undatedSnapshots = useMemo(() => futureSnapshots.filter(s => !s.target_date), [futureSnapshots]);
+  const datedSnapshots = useMemo(() => projectSnapshots.filter(s => s.target_date), [projectSnapshots]);
+  const undatedSnapshots = useMemo(() => projectSnapshots.filter(s => !s.target_date), [projectSnapshots]);
 
   // Snapshots per entity
   const snapsByEntity = useMemo(() => {
     const m = new Map<string, EntitySnapshot[]>();
-    for (const s of futureSnapshots) {
+    for (const s of projectSnapshots) {
       const list = m.get(s.entity_id);
       if (list) list.push(s);
       else m.set(s.entity_id, [s]);
     }
     return m;
-  }, [futureSnapshots]);
+  }, [projectSnapshots]);
 
   // Entities that appear on the timeline (have at least one dated snapshot)
   const datedEntityIds = useMemo(
@@ -191,10 +204,10 @@ export const ProjectTimelineTab = ({
   const totalEntities = projectEntities.length;
   const markerColor = project.color ?? 'var(--accent-fg)';
 
-  if (futureSnapshots.length === 0) {
+  if (projectSnapshots.length === 0) {
     return (
       <div className={styles.ptEmpty}>
-        <div className={styles.ptEmptyTitle}>No future changes planned</div>
+        <div className={styles.ptEmptyTitle}>No project updates yet</div>
         <div className={styles.ptEmptySub}>
           Use the entity menu to plan future changes for entities in this project.
         </div>
@@ -211,10 +224,14 @@ export const ProjectTimelineTab = ({
             <span className={styles.ptlLegDiamond} style={{ background: markerColor }} />
             Planned change
           </span>
+          <span className={styles.ptlLegItem}>
+            <span className={styles.ptlLegDot} style={{ background: 'var(--green)' }} />
+            Applied update
+          </span>
         </div>
         <div className={styles.ptlSep} />
         <span className={styles.ptlConfigMeta}>
-          {totalEntities} entities · {futureSnapshots.length} planned
+          {totalEntities} entities · {plannedSnapshots.length} planned · {appliedSnapshots.length} applied
         </span>
         <div style={{ flex: 1 }} />
         <div className={styles.ptlSegmented}>
@@ -301,6 +318,7 @@ export const ProjectTimelineTab = ({
                                 const px = toPx(snap.target_date, rangeStart, rangeEnd, totalWidth);
                                 if (px === null) return null;
                                 const isSelected = selectedSnap?.id === snap.id;
+                                const snapColor = snap.status === 'applied' ? 'var(--green)' : markerColor;
                                 return (
                                   <div
                                     key={snap.id}
@@ -310,8 +328,10 @@ export const ProjectTimelineTab = ({
                                     title={snap.commit_message ?? snap.status}
                                   >
                                     <span
-                                      className={styles.ptlMarkerDiamond}
-                                      style={{ background: markerColor }}
+                                      className={
+                                        snap.status === 'applied' ? styles.ptlMarkerDot : styles.ptlMarkerDiamond
+                                      }
+                                      style={{ background: snapColor }}
                                     />
                                   </div>
                                 );
@@ -362,9 +382,11 @@ export const ProjectTimelineTab = ({
               entityName={pe?.entity_name ?? selectedSnap.entity_id}
               schemaInfo={schemaInfo}
               entitySchema={entitySchema}
-              markerColor={markerColor}
+              markerColor={selectedSnap.status === 'applied' ? 'var(--green)' : markerColor}
               lifecycleStates={lifecycleStates}
               teams={teams}
+              canEdit={canEdit}
+              onApplySnapshot={onApplySnapshot}
               onClose={() => setSelectedSnap(null)}
             />
           );
@@ -383,6 +405,8 @@ const SnapDetail = ({
   markerColor,
   lifecycleStates,
   teams,
+  canEdit,
+  onApplySnapshot,
   onClose
 }: {
   snapshot: EntitySnapshot;
@@ -392,8 +416,13 @@ const SnapDetail = ({
   markerColor: string;
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
+  canEdit: boolean;
+  onApplySnapshot: (snapshot: EntitySnapshot) => void;
   onClose: () => void;
 }) => {
+  const statusLabel = snapshot.status === 'applied' ? 'Applied' : 'Planned';
+  const canApply = canEdit && snapshot.status === 'future_update';
+
   const changes = diffSnapshotState(
     snapshot.base_state as Record<string, unknown> | undefined,
     snapshot.proposed_state as Record<string, unknown> | undefined,
@@ -422,7 +451,7 @@ const SnapDetail = ({
             className={styles.ptlDetailBadge}
             style={{ color: markerColor, borderColor: markerColor }}
           >
-            Planned
+            {statusLabel}
           </span>
           {snapshot.target_date && (
             <span className={styles.ptlDetailSub}>
@@ -452,6 +481,12 @@ const SnapDetail = ({
         <div className={styles.ptlDetailMeta}>
           <span>{fmtDate(snapshot.created_at, { month: 'short', year: 'numeric' })}</span>
         </div>
+
+        {canApply && (
+          <div className={styles.ptlDetailActions}>
+            <Button onClick={() => onApplySnapshot(snapshot)}>Apply</Button>
+          </div>
+        )}
       </div>
     </div>
   );
