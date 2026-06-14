@@ -5,6 +5,15 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { StatusChip } from '../../../components/StatusChip';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TimelineScaffold } from '../../../components/timeline/TimelineScaffold';
+import {
+  buildTimelineRange,
+  dateToTimelinePx,
+  formatTimelineDate,
+  getTodayTimelinePx,
+  parseTimelineDate,
+  type TimelineColumnWidths
+} from '../../../components/timeline/timelineUtils';
 import { resolveSchemaColor } from '../../../lib/api';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
@@ -28,17 +37,10 @@ export type TimelineConfig = {
   zoom: 'month' | 'quarter' | 'year';
 };
 
-type Col = {
-  date: Date;
-  label: string;
-  width: number;
-  isCurrent: boolean;
-};
-
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const TL_LABEL_W = 252;
-const TL_COL_W = { month: 76, quarter: 106, year: 142 } as const;
+const TL_COL_W: TimelineColumnWidths = { month: 76, quarter: 106, year: 142 };
 
 const METADATA_DATE_FIELDS: TimelineDateField[] = [
   { id: '_targetLifecycleDate', name: 'Target Lifecycle Date', isMetadata: true }
@@ -46,96 +48,16 @@ const METADATA_DATE_FIELDS: TimelineDateField[] = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const tlParse = (s: unknown): Date | null => {
-  if (typeof s !== 'string' || s === '') return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
-  const d = new Date(`${s}T00:00:00`);
-  return Number.isNaN(d.getTime()) ? null : d;
-};
-
-const tlFmt = (s: unknown): string => {
-  const d = tlParse(s);
-  if (!d) return '—';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const tlFmtDatetime = (s: string): string => {
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return s;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
-const tlClamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-
 const getDateValue = (entity: EntityRecord, fieldId: string | null): Date | null => {
   if (!fieldId) return null;
-  if (fieldId === '_targetLifecycleDate') return tlParse(entity._targetLifecycleDate);
-  return tlParse(entity[fieldId]);
+  if (fieldId === '_targetLifecycleDate') return parseTimelineDate(entity._targetLifecycleDate);
+  return parseTimelineDate(entity[fieldId]);
 };
 
 const getRawDateValue = (entity: EntityRecord, fieldId: string | null): unknown => {
   if (!fieldId) return null;
   if (fieldId === '_targetLifecycleDate') return entity._targetLifecycleDate;
   return entity[fieldId];
-};
-
-const colEnd = (col: Col, zoom: TimelineConfig['zoom']): Date => {
-  const d = new Date(col.date);
-  if (zoom === 'month') d.setMonth(d.getMonth() + 1);
-  else if (zoom === 'quarter') d.setMonth(d.getMonth() + 3);
-  else d.setFullYear(d.getFullYear() + 1);
-  return d;
-};
-
-const buildCols = (minDate: Date, maxDate: Date, zoom: TimelineConfig['zoom']): Col[] => {
-  const today = new Date();
-  const w = TL_COL_W[zoom];
-  const cols: Col[] = [];
-
-  if (zoom === 'month') {
-    let d = new Date(minDate.getFullYear(), minDate.getMonth() - 1, 1);
-    const end = new Date(maxDate.getFullYear(), maxDate.getMonth() + 2, 1);
-    while (d < end) {
-      const isCurrent =
-        d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
-      const mo = d.toLocaleString('en-US', { month: 'short' });
-      cols.push({
-        date: new Date(d),
-        label: `${mo} '${String(d.getFullYear()).slice(2)}`,
-        width: w,
-        isCurrent
-      });
-      d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-    }
-  } else if (zoom === 'quarter') {
-    let d = new Date(minDate.getFullYear(), Math.floor(minDate.getMonth() / 3) * 3 - 3, 1);
-    const end = new Date(maxDate.getFullYear(), Math.ceil((maxDate.getMonth() + 1) / 3) * 3 + 3, 1);
-    while (d < end) {
-      const q = Math.floor(d.getMonth() / 3) + 1;
-      const todayQ = Math.floor(today.getMonth() / 3) + 1;
-      const isCurrent = d.getFullYear() === today.getFullYear() && q === todayQ;
-      cols.push({
-        date: new Date(d),
-        label: `Q${q} '${String(d.getFullYear()).slice(2)}`,
-        width: w,
-        isCurrent
-      });
-      d = new Date(d.getFullYear(), d.getMonth() + 3, 1);
-    }
-  } else {
-    let yr = minDate.getFullYear() - 1;
-    const endYr = maxDate.getFullYear() + 2;
-    while (yr < endYr) {
-      cols.push({
-        date: new Date(yr, 0, 1),
-        label: String(yr),
-        width: w,
-        isCurrent: yr === today.getFullYear()
-      });
-      yr++;
-    }
-  }
-  return cols;
 };
 
 // ── Date field collection ─────────────────────────────────────────────────────
@@ -232,10 +154,7 @@ const SnapBlock = ({
   }, [snaps]);
 
   const toPx = (d: Date | null): number => {
-    if (!d) return 0;
-    const ms = +rangeEnd - +rangeStart;
-    if (ms <= 0) return 0;
-    return tlClamp(((+d - +rangeStart) / ms) * totalWidth, 0, totalWidth);
+    return dateToTimelinePx(d, rangeStart, rangeEnd, totalWidth);
   };
 
   const s = schemaMap.get(entity._schema.id);
@@ -443,7 +362,7 @@ const SnapDetailPanel = ({
                 {snap.project_id ? 'Target date' : 'Captured'}
               </div>
               <div className={styles.detailFieldValue}>
-                {snap.project_id ? (snap.target_date ?? '—') : tlFmtDatetime(snap.created_at)}
+                {snap.project_id ? (snap.target_date ?? '—') : formatTimelineDate(snap.created_at)}
               </div>
             </div>
 
@@ -600,7 +519,7 @@ const DetailPanel = ({
             {!isMilestone && startField && !!startVal && (
               <div className={styles.detailField}>
                 <div className={styles.detailFieldLabel}>{startField.name}</div>
-                <div className={styles.detailFieldValue}>{tlFmt(startVal)}</div>
+                <div className={styles.detailFieldValue}>{formatTimelineDate(startVal)}</div>
               </div>
             )}
             {endField && !!endVal && (
@@ -608,7 +527,7 @@ const DetailPanel = ({
                 <div className={styles.detailFieldLabel}>
                   {isMilestone ? `Target (${endField.name})` : endField.name}
                 </div>
-                <div className={styles.detailFieldValue}>{tlFmt(endVal)}</div>
+                <div className={styles.detailFieldValue}>{formatTimelineDate(endVal)}</div>
               </div>
             )}
           </div>
@@ -648,7 +567,6 @@ export const TimelineView = ({
   projects
 }: TimelineViewProps) => {
   const dateFields = useDateFieldOptions(schemas);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const TODAY = useMemo(() => new Date(), []);
 
   // Derive effective config: use external config if provided, otherwise defaults
@@ -716,7 +634,7 @@ export const TimelineView = ({
 
   // Date range + columns
   const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
-    const dates: Date[] = [TODAY];
+    const dates: Date[] = [];
     const sourceRows = cfg.groupBy === 'snapshot' ? rows : datedRows;
     for (const e of sourceRows) {
       const s = getDateValue(e, cfg.startFieldId);
@@ -724,39 +642,23 @@ export const TimelineView = ({
       if (s) dates.push(s);
       if (en) dates.push(en);
     }
-    // In snapshot mode, ensure at least a reasonable 2-year span around today
-    if (cfg.groupBy === 'snapshot' && dates.length <= 1) {
-      dates.push(new Date(TODAY.getFullYear() - 1, 0, 1));
-      dates.push(new Date(TODAY.getFullYear() + 1, 11, 31));
-    }
-    const minD = new Date(Math.min(...dates.map(d => +d)));
-    const maxD = new Date(Math.max(...dates.map(d => +d)));
-    const cols = buildCols(minD, maxD, cfg.zoom);
-    const rs = cols[0]?.date ?? minD;
-    const re = cols.length > 0 ? colEnd(cols[cols.length - 1]!, cfg.zoom) : maxD;
-    const tw = cols.reduce((s, c) => s + c.width, 0);
-    return { rangeStart: rs, rangeEnd: re, columns: cols, totalWidth: tw };
+    const fallbackDates =
+      cfg.groupBy === 'snapshot'
+        ? [new Date(TODAY.getFullYear() - 1, 0, 1), new Date(TODAY.getFullYear() + 1, 11, 31)]
+        : [];
+    return buildTimelineRange({
+      dates,
+      zoom: cfg.zoom,
+      columnWidths: TL_COL_W,
+      today: TODAY,
+      fallbackDates
+    });
   }, [datedRows, rows, cfg.startFieldId, cfg.endFieldId, cfg.zoom, cfg.groupBy, TODAY]);
 
-  const spanMs = +rangeEnd - +rangeStart;
-
-  const dateToX = (d: Date | null): number => {
-    if (!d || spanMs <= 0) return 0;
-    return tlClamp(((+d - +rangeStart) / spanMs) * totalWidth, 0, totalWidth);
-  };
-
   const todayPx = useMemo(
-    () =>
-      spanMs <= 0 ? 0 : tlClamp(((+TODAY - +rangeStart) / spanMs) * totalWidth, 0, totalWidth),
-    [TODAY, rangeStart, spanMs, totalWidth]
+    () => getTodayTimelinePx(TODAY, rangeStart, rangeEnd, totalWidth),
+    [TODAY, rangeStart, rangeEnd, totalWidth]
   );
-
-  // Scroll to today on config changes
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || todayPx === null) return;
-    el.scrollLeft = Math.max(0, TL_LABEL_W + todayPx - el.clientWidth * 0.38);
-  }, [todayPx]);
 
   const activeEntity = useMemo(
     () =>
@@ -821,9 +723,13 @@ export const TimelineView = ({
           </span>
         </div>
       ) : (
-        <div className={styles.scrollWrap} ref={scrollRef}>
-          <div style={{ minWidth: TL_LABEL_W + totalWidth, position: 'relative' }}>
-            {/* Header row */}
+        <TimelineScaffold
+          scrollClassName={styles.scrollWrap}
+          labelWidth={TL_LABEL_W}
+          totalWidth={totalWidth}
+          todayPx={todayPx}
+          todayScrollAlign={0.38}
+          header={
             <div className={styles.headerRow}>
               <div className={`${styles.labelCol} ${styles.labelColHeader}`}>
                 <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.6 }}>
@@ -842,11 +748,15 @@ export const TimelineView = ({
                 ))}
               </div>
             </div>
-
-            {/* Today line */}
-            <div className={styles.todayLine} style={{ left: TL_LABEL_W + todayPx }}>
-              <span className={styles.todayPip}>▾</span>
-            </div>
+          }
+          todayLine={
+            todayPx === null ? null : (
+              <div className={styles.todayLine} style={{ left: TL_LABEL_W + todayPx }}>
+                <span className={styles.todayPip}>▾</span>
+              </div>
+            )
+          }
+        >
 
             {/* Standard groups (owner / type) */}
             {!isSnapshotMode &&
@@ -876,11 +786,13 @@ export const TimelineView = ({
                     let barLeft = 0;
                     let barWidth = 0;
                     if (!isMilestone && startD) {
-                      barLeft = dateToX(startD);
-                      const endX = dateToX(endD ?? TODAY);
+                      barLeft = dateToTimelinePx(startD, rangeStart, rangeEnd, totalWidth);
+                      const endX = dateToTimelinePx(endD ?? TODAY, rangeStart, rangeEnd, totalWidth);
                       barWidth = Math.max(6, endX - barLeft);
                     }
-                    const milestoneX = isMilestone ? dateToX(endD) : 0;
+                    const milestoneX = isMilestone
+                      ? dateToTimelinePx(endD, rangeStart, rangeEnd, totalWidth)
+                      : 0;
 
                     const togglePanel = (ev: React.MouseEvent) => {
                       ev.stopPropagation();
@@ -921,7 +833,7 @@ export const TimelineView = ({
                                 width: barWidth,
                                 background: barColor
                               }}
-                              title={`${e._name ?? e._slug} · ${tlFmt(getRawDateValue(e, cfg.startFieldId))} → ${endD ? tlFmt(getRawDateValue(e, cfg.endFieldId)) : 'ongoing'}`}
+                              title={`${e._name ?? e._slug} · ${formatTimelineDate(getRawDateValue(e, cfg.startFieldId))} → ${endD ? formatTimelineDate(getRawDateValue(e, cfg.endFieldId)) : 'ongoing'}`}
                               onClick={togglePanel}
                             >
                               {barWidth > 54 && (
@@ -933,7 +845,7 @@ export const TimelineView = ({
                             <div
                               className={styles.milestone}
                               style={{ left: milestoneX, background: barColor }}
-                              title={`${e._name ?? e._slug} · target: ${tlFmt(getRawDateValue(e, cfg.endFieldId))}`}
+                              title={`${e._name ?? e._slug} · target: ${formatTimelineDate(getRawDateValue(e, cfg.endFieldId))}`}
                               onClick={togglePanel}
                             />
                           )}
@@ -966,8 +878,7 @@ export const TimelineView = ({
                   onBarClick={handleBarClick}
                 />
               ))}
-          </div>
-        </div>
+        </TimelineScaffold>
       )}
 
       {/* Entity detail panel (bar/milestone click in all modes) */}
