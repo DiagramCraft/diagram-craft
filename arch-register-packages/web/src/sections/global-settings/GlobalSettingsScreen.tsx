@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import styles from '../workspace-settings/WorkspaceSettingsScreen.module.css';
 import { useNavigate } from '@tanstack/react-router';
-import { TbChevronLeft, TbPlus } from 'react-icons/tb';
+import { TbPlus } from 'react-icons/tb';
+import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
 import { GlobalPermissionsSubSection } from './sub-sections/GlobalPermissionsSubSection';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -16,7 +17,6 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
 export const GlobalSettingsScreen = () => {
   const navigate = useNavigate();
   const ctx = useWorkspaceContext();
-  const workspace = ctx.workspace!;
   const workspaceSlug = ctx.workspaceSlug;
   const [globalPermissionsAddDialogOpen, setGlobalPermissionsAddDialogOpen] = useState(false);
   
@@ -27,26 +27,19 @@ export const GlobalSettingsScreen = () => {
   return (
     <div className={styles.screen}>
       <div className={styles.head}>
-        <div className={styles.headLeft}>
-          <button 
-            type="button" 
-            className={styles.backLink} 
-            onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}
-          >
-            <TbChevronLeft size={12} /> {workspace.name}
-          </button>
-          <span className={styles.breadcrumbSep}>/</span>
-          <span className={styles.breadcrumbCurrent}>Global settings</span>
-          <div className={styles.titleRow}>
-            <div className={styles.title}>{meta.title}</div>
-          </div>
-          <div className={styles.sub}>{meta.sub}</div>
-        </div>
-        <div className={styles.headActions}>
-          <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setGlobalPermissionsAddDialogOpen(true)}>
-            Add user
-          </Button>
-        </div>
+        <Title
+          breadcrumb={[
+            { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+            { label: 'Settings' }
+          ]}
+          title={meta.title}
+          description={meta.sub}
+          buttons={
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setGlobalPermissionsAddDialogOpen(true)}>
+              Add user
+            </Button>
+          }
+        />
       </div>
 
       <GlobalPermissionsSubSection

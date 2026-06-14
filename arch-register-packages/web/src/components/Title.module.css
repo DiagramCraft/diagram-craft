@@ -1,0 +1,126 @@
+.c {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navigation breadcrumb row */
+.nav {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.navLink {
+  color: var(--accent-fg);
+  background: none;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.navLink:hover {
+  text-decoration: underline;
+}
+
+.sep {
+  color: var(--cmp-fg-disabled);
+  margin: 0 4px;
+  font-size: 12px;
+}
+
+.navCurrent {
+  color: var(--base-fg-more-dim);
+  font-size: 12px;
+}
+
+/* Head: left content + right actions */
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.left {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Icon + eyebrow/title column */
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconSlot {
+  flex-shrink: 0;
+}
+
+.titleCol {
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--cmp-fg-disabled);
+  margin-bottom: 2px;
+}
+
+/* Title + chips inline */
+.titleLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  color: var(--base-fg);
+  line-height: 1.2;
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Description */
+.description {
+  font-size: 12.5px;
+  line-height: 1.5;
+  max-width: 720px;
+  margin-top: 6px;
+  color: var(--cmp-fg-disabled);
+}
+
+/* Right action cluster */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.toggles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

@@ -183,7 +183,7 @@ export const ProjectDetailScreen = () => {
   };
 
   const handleNavigateHome = () => {
-    navigate({ to: '/$workspaceSlug', params: { workspaceSlug } });
+    navigate({ to: '/$workspaceSlug/projects', params: { workspaceSlug } });
   };
 
   const handleNavigateProject = () => {

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck, TbCalendarEvent, TbDatabase, TbDots, TbPlus, TbTrash, TbLayoutList, TbCalendar } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData, ProjectEntity } from '@arch-register/api-types/projectContract';
@@ -12,6 +13,7 @@ import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 
 type ViewTab = 'entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
@@ -53,10 +55,13 @@ export const ProjectEntities = ({
   const [groupBy, setGroupBy] = useState<GroupBy>('entity');
 
   const pendingCount = futureSnapshots.length;
+  const navigate = useNavigate();
+  const { workspaceSlug } = useWorkspaceContext();
 
   return (
     <ProjectScreenLayout
       breadcrumbs={[
+        { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
         { label: 'Projects', onClick: onNavigateHome },
         { label: project.name, onClick: onNavigateProject }
       ]}

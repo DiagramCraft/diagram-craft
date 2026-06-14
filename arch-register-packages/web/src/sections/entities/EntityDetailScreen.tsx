@@ -58,6 +58,7 @@ import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContr
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { EntityContentView } from './EntityContentView';
 import { EntityTimelineTab } from './EntityTimelineTab';
+import { Title } from '../../components/Title';
 
 type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes' | 'timeline';
 
@@ -359,94 +360,103 @@ export const EntityDetailScreen = () => {
   return (
     <div className={`${styles.screen} ${tab === 'graph' ? styles.graphMode : ''}`}>
       {/* Header - hidden when viewing folder content */}
-      {!contentFolder && <div className={styles.head}>
-        <div className={styles.headLeft}>
-          <button type="button" className={styles.backLink} onClick={() => navigateToEntities()}>
-            <TbChevronLeft size={12} /> Back to entities
-          </button>
-          <div className={styles.headRow}>
-            <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={32} />
-            <div>
-              <div className={styles.eyebrow}>{schema?.name ?? 'Entity'}</div>
-              <div className={styles.title}>{entityName}</div>
-            </div>
-            {entity._lifecycle && (
-              <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
-            )}
-            {entity._targetLifecycle && entity._targetLifecycle.id !== entity._lifecycle?.id && (
-              <>
-                <span>→</span>
-                <StatusChip value={entity._targetLifecycle.id} lifecycleStates={lifecycleStates} />
-              </>
-            )}
-          </div>
-          {entity._description && <div className={styles.desc}>{entity._description}</div>}
+      {!contentFolder && (
+        <div className={styles.head}>
+          <Title
+            breadcrumb={[
+              { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+              { label: 'Entities', onClick: () => navigateToEntities() }
+            ]}
+            icon={<TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={32} />}
+            eyebrow={schema?.name ?? 'Entity'}
+            title={entityName}
+            chips={
+              entity._lifecycle ? (
+                <>
+                  <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
+                  {entity._targetLifecycle && entity._targetLifecycle.id !== entity._lifecycle.id && (
+                    <>
+                      <span>→</span>
+                      <StatusChip value={entity._targetLifecycle.id} lifecycleStates={lifecycleStates} />
+                    </>
+                  )}
+                </>
+              ) : undefined
+            }
+            description={entity._description}
+            toggleButtons={
+              !editing ? (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.watchBtn} ${isWatched ? styles.watchBtnActive : ''}`}
+                    onClick={() =>
+                      isWatched ? deleteWatch.mutate(entityId) : createWatch.mutate(entityId)
+                    }
+                    disabled={createWatch.isPending || deleteWatch.isPending}
+                    title={isWatched ? 'Unwatch entity' : 'Watch entity'}
+                    aria-label={isWatched ? 'Unwatch entity' : 'Watch entity'}
+                  >
+                    <TbBell size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.watchBtn} ${isPinned ? styles.watchBtnActive : ''}`}
+                    onClick={() =>
+                      isPinned
+                        ? deletePinnedEntity.mutate(entityId)
+                        : createPinnedEntity.mutate({
+                            entityId,
+                            entityName: entity._name || entity._slug,
+                            entitySlug: entity._slug,
+                            schemaId: entity._schema.id
+                          })
+                    }
+                    disabled={createPinnedEntity.isPending || deletePinnedEntity.isPending}
+                    title={isPinned ? 'Unpin entity' : 'Pin entity'}
+                    aria-label={isPinned ? 'Unpin entity' : 'Pin entity'}
+                  >
+                    <TbPinned size={16} />
+                  </button>
+                </>
+              ) : undefined
+            }
+            buttons={
+              !editing ? (
+                entity.canEdit ? (
+                  <Button icon={<TbEdit size={12} />} onClick={startEdit}>
+                    Edit
+                  </Button>
+                ) : undefined
+              ) : (
+                <>
+                  {entity.canDelete && (
+                    <Button variant="danger" icon={<TbTrash size={12} />} onClick={handleDelete}>
+                      Delete
+                    </Button>
+                  )}
+                  <Button onClick={cancelEdit}>Cancel</Button>
+                  <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending}>
+                    {updateEntity.isPending ? 'Saving...' : 'Save'}
+                  </Button>
+                </>
+              )
+            }
+            menu={
+              menuItems.length > 0 ? (
+                <DropdownMenu
+                  trigger={
+                    <button type="button" className={styles.iconBtn}>
+                      <TbDots size={14} />
+                    </button>
+                  }
+                  items={menuItems}
+                />
+              ) : undefined
+            }
+          />
         </div>
-        <div className={styles.headActions}>
-          {!editing ? (
-            <>
-              <button
-                type="button"
-                className={`${styles.watchBtn} ${isWatched ? styles.watchBtnActive : ''}`}
-                onClick={() =>
-                  isWatched ? deleteWatch.mutate(entityId) : createWatch.mutate(entityId)
-                }
-                disabled={createWatch.isPending || deleteWatch.isPending}
-                title={isWatched ? 'Unwatch entity' : 'Watch entity'}
-                aria-label={isWatched ? 'Unwatch entity' : 'Watch entity'}
-              >
-                <TbBell size={16} />
-              </button>
-              <button
-                type="button"
-                className={`${styles.watchBtn} ${isPinned ? styles.watchBtnActive : ''}`}
-                onClick={() =>
-                  isPinned
-                    ? deletePinnedEntity.mutate(entityId)
-                    : createPinnedEntity.mutate({
-                        entityId,
-                        entityName: entity._name || entity._slug,
-                        entitySlug: entity._slug,
-                        schemaId: entity._schema.id
-                      })
-                }
-                disabled={createPinnedEntity.isPending || deletePinnedEntity.isPending}
-                title={isPinned ? 'Unpin entity' : 'Pin entity'}
-                aria-label={isPinned ? 'Unpin entity' : 'Pin entity'}
-              >
-                <TbPinned size={16} />
-              </button>
-              {entity.canEdit ? (
-                <Button icon={<TbEdit size={12} />} onClick={startEdit}>
-                  Edit
-                </Button>
-              ) : null}
-            </>
-          ) : (
-            <>
-              {entity.canDelete && (
-                <Button variant="danger" icon={<TbTrash size={12} />} onClick={handleDelete}>
-                  Delete
-                </Button>
-              )}
-              <Button onClick={cancelEdit}>Cancel</Button>
-              <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending}>
-                {updateEntity.isPending ? 'Saving...' : 'Save'}
-              </Button>
-            </>
-          )}
-          {menuItems.length > 0 && (
-            <DropdownMenu
-              trigger={
-                <button type="button" className={styles.iconBtn}>
-                  <TbDots size={14} />
-                </button>
-              }
-              items={menuItems}
-            />
-          )}
-        </div>
-      </div>}
+      )}
 
       {/* Tabs */}
       {!contentFolder && (
