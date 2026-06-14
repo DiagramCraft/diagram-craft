@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import styles from './WorkspaceHomeScreen.module.css';
+import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Chip } from '../../components/Chip';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -134,23 +135,25 @@ export const WorkspaceHomeScreen = () => {
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div>
-          <div className={styles.eyebrow}>Workspace</div>
-          <div className={styles.title}>{workspace.name}</div>
-          <div className={styles.sub}>{workspace.description}</div>
-        </div>
-        <div className={styles.actions}>
-          {canCreateProjects && (
-            <Button icon={<TbPlus size={12} />} onClick={openAddProjectDialog}>
-              New project
-            </Button>
-          )}
-          {canCreateEntities && (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
-              New entity
-            </Button>
-          )}
-        </div>
+        <Title
+          eyebrow="Home"
+          title={workspace.name}
+          description={workspace.description}
+          buttons={
+            <>
+              {canCreateProjects && (
+                <Button icon={<TbPlus size={12} />} onClick={openAddProjectDialog}>
+                  New project
+                </Button>
+              )}
+              {canCreateEntities && (
+                <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
+                  New entity
+                </Button>
+              )}
+            </>
+          }
+        />
       </div>
 
       <div className={styles.statGrid}>

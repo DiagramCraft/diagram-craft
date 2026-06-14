@@ -5,38 +5,7 @@
 }
 
 .header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
   margin-bottom: 18px;
-}
-
-.eyebrow {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--cmp-fg-disabled);
-  margin-bottom: 4px;
-}
-
-.title {
-  font-size: 22px;
-  color: var(--base-fg);
-  font-weight: 500;
-  letter-spacing: -0.2px;
-}
-
-.sub {
-  color: var(--base-fg-more-dim);
-  margin-top: 4px;
-  max-width: 640px;
-}
-
-.actions {
-  display: flex;
-  gap: 6px;
-  align-items: center;
 }
 
 .link {

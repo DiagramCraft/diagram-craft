@@ -8,7 +8,8 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { AuditEntityType, AuditOperation } from '../../lib/api';
-import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
+import { TbPlus, TbTrash } from 'react-icons/tb';
+import { Title } from '../../components/Title';
 import { useAuditLog } from '../../hooks/useAudit';
 import { useUpdateWorkspace, useDeleteWorkspace } from '../../hooks/useWorkspaces';
 import { useUpdateLifecycleStates } from '../../hooks/useWorkspaceConfig';
@@ -106,83 +107,49 @@ export const WorkspaceSettingsScreen = () => {
 
   if (!workspace) return null;
 
+  const breadcrumb = [
+    { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+    { label: 'Settings' }
+  ];
+
   if (!availableSections.includes(section)) {
     return (
       <div className={styles.screen}>
         <div className={styles.head}>
-          <div className={styles.headLeft}>
-            <button
-              type="button"
-              className={styles.backLink}
-              onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}
-            >
-              <TbChevronLeft size={12} /> {workspace.name}
-            </button>
-            <span className={styles.breadcrumbSep}>/</span>
-            <span className={styles.breadcrumbCurrent}>Workspace settings</span>
-            <div className={styles.titleRow}>
-              <div className={styles.title}>Workspace settings</div>
-            </div>
-            <div className={styles.sub}>
-              No settings are available for your current permissions.
-            </div>
-          </div>
+          <Title
+            breadcrumb={breadcrumb}
+            title="Workspace settings"
+            description="No settings are available for your current permissions."
+          />
         </div>
       </div>
     );
   }
 
+  const sectionButton =
+    section === 'members' ? (
+      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setMembersAddDialogOpen(true)}>
+        Add user
+      </Button>
+    ) : section === 'teams' ? (
+      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setTeamsAddDialogOpen(true)}>
+        Add team
+      </Button>
+    ) : section === 'roles' ? (
+      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setRolesAddDialogOpen(true)}>
+        New custom role
+      </Button>
+    ) : undefined;
+
   return (
     <div className={styles.screen}>
       <div className={styles.head}>
-        <div className={styles.headLeft}>
-          <button
-            type="button"
-            className={styles.backLink}
-            onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}
-          >
-            <TbChevronLeft size={12} /> {workspace.name}
-          </button>
-          <span className={styles.breadcrumbSep}>/</span>
-          <span className={styles.breadcrumbCurrent}>Workspace settings</span>
-          <div className={styles.titleRow}>
-            <div className={styles.title}>{meta.title}</div>
-          </div>
-          <div className={styles.sub}>{meta.sub}</div>
-        </div>
-        {section === 'members' && (
-          <div className={styles.headActions}>
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={() => setMembersAddDialogOpen(true)}
-            >
-              Add user
-            </Button>
-          </div>
-        )}
-        {section === 'teams' && (
-          <div className={styles.headActions}>
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={() => setTeamsAddDialogOpen(true)}
-            >
-              Add team
-            </Button>
-          </div>
-        )}
-        {section === 'roles' && (
-          <div className={styles.headActions}>
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={() => setRolesAddDialogOpen(true)}
-            >
-              New custom role
-            </Button>
-          </div>
-        )}
+        <Title
+          breadcrumb={breadcrumb}
+          title={meta.title}
+          description={meta.sub}
+          buttons={sectionButton}
+        />
       </div>
 
       {section === 'general' && <GeneralSection workspace={workspace} />}

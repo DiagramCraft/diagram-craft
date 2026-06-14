@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
+import { Title } from '../../components/Title';
 import { useWorkspaceContentNodes } from '../../hooks/useProjectFiles';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
@@ -15,6 +17,7 @@ type WorkspaceContentScreenProps = {
 
 export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceContentScreenProps) => {
   const navigate = useNavigate();
+  const { workspace } = useWorkspaceContext();
   const { data } = useWorkspaceContentNodes(workspaceSlug);
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -32,9 +35,6 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const files = folder
     ? (folderData?.files ?? [])
     : (data?.rootFiles ?? []);
-  const title = folder
-    ? (folderData?.name ?? folder)
-    : 'Workspace content';
 
   const lc = filter.toLowerCase();
   const filtered = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
@@ -43,18 +43,15 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
     return (
       <div className={styles.screen}>
         <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>{title}</h1>
-          </div>
-          <div className={styles.actions}>
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={() => setAddDiagramOpen(true)}
-            >
-              New diagram
-            </Button>
-          </div>
+          <Title
+            breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
+            title={workspace?.name ?? workspaceSlug}
+            buttons={
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDiagramOpen(true)}>
+                New diagram
+              </Button>
+            }
+          />
         </div>
         <div className={styles.empty}>
           <div className={styles.emptyTitle}>No diagrams here</div>
@@ -79,9 +76,10 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
     return (
       <div className={styles.screen}>
         <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>{title}</h1>
-          </div>
+          <Title
+            breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
+            title={workspace?.name ?? workspaceSlug}
+          />
         </div>
         <div className={styles.empty}>
           <div className={styles.emptyTitle}>No matches</div>
@@ -94,18 +92,15 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>{title}</h1>
-        </div>
-        <div className={styles.actions}>
-          <Button
-            variant="primary"
-            icon={<TbPlus size={12} />}
-            onClick={() => setAddDiagramOpen(true)}
-          >
-            New diagram
-          </Button>
-        </div>
+        <Title
+          breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
+          title={workspace?.name ?? workspaceSlug}
+          buttons={
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDiagramOpen(true)}>
+              New diagram
+            </Button>
+          }
+        />
       </div>
 
       <div className={styles.meta}>

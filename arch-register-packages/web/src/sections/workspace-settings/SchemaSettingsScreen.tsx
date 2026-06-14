@@ -7,6 +7,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TypeBadge } from '../../components/TypeBadge';
 import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
+import { Title } from '../../components/Title';
 import { resolveSchemaColor, FIELD_TYPES, SCHEMA_ICONS } from '../../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import type { FieldType } from '../../lib/api';
@@ -158,22 +159,25 @@ export const SchemaSettingsScreen = () => {
     <div className={styles.screen}>
       {selected ? (
         <div>
-          <div className={styles.editor}>
-            <div className={styles.editorHead}>
-              <div className={styles.editorTitleRow}>
+          <div className={styles.editorHead}>
+            <Title
+              breadcrumb={[
+                { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+                { label: 'Settings' }
+              ]}
+              icon={
                 <TypeBadge
                   color={color ?? resolveSchemaColor(selected, selectedIndex)}
                   name={selected.name}
                   icon={icon}
                   size={26}
                 />
-                <div>
-                  <div data-testid="schema-editor-title" className={styles.editorTitle}>{name}</div>
-                  <div className="dim">{selected.entity_count} entities</div>
-                </div>
-              </div>
-            </div>
-
+              }
+              title={name}
+              description={`${selected.entity_count} entities`}
+            />
+          </div>
+          <div className={styles.editor}>
             <div className={styles.formRow}>
               <div>
                 <div className={styles.formLabel}>Name</div>

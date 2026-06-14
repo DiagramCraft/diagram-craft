@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbFolderOpen, TbLayoutGrid, TbList, TbPencil, TbPlus, TbStar } from 'react-icons/tb';
@@ -6,6 +7,7 @@ import type { FileEntry } from '../../lib/api';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectDiagramsView, type ProjectMenuTarget } from './ProjectDiagramsView';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 
 export const ProjectDetails = ({
   project,
@@ -46,9 +48,12 @@ export const ProjectDetails = ({
   onAddDiagram: () => void;
   onContextMenu?: (e: React.MouseEvent, target: ProjectMenuTarget) => void;
 }) => {
+  const navigate = useNavigate();
+  const { workspaceSlug } = useWorkspaceContext();
   return (
     <ProjectScreenLayout
       breadcrumbs={[
+        { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
         { label: 'Projects', onClick: onNavigateHome },
         { label: project.name, onClick: onNavigateProject }
       ]}
@@ -67,7 +72,7 @@ export const ProjectDetails = ({
           </button>
         ) : null
       }
-      description={project.description ? <div className={styles.sub}>{project.description}</div> : undefined}
+      description={project.description}
       error={pinError ? <div className={styles.errorText}>{pinError}</div> : undefined}
       actions={
         <>
