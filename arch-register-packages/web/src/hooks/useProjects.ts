@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { invalidateAuditQueries } from './useAudit';
-import { projectKeys, projectEntityKeys, entityContentKeys } from './queryKeys';
+import {
+  projectKeys,
+  projectEntityKeys,
+  entityContentKeys,
+  invalidateAuditQueries,
+  invalidateAllProjectCaches
+} from './queryKeys';
 import { Project, ProjectDetail, ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
 import { emptyDiagram, createEntityDiagramFromTemplate } from '../lib/api';
@@ -91,9 +96,7 @@ export const useDeleteProject = (workspaceId: string) => {
     mutationFn: (projectId: string) =>
       orpcClient.projects.remove({ params: { workspace: workspaceId, id: projectId } }),
     onSuccess: async () => {
-      // Invalidate all project queries
-      await queryClient.invalidateQueries({ queryKey: projectKeys.all });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      await invalidateAllProjectCaches(queryClient, workspaceId);
     }
   });
 };

@@ -9,10 +9,11 @@ import {
   schemaKeys,
   snapshotKeys,
   viewKeys,
+  invalidateEntityDetails,
   invalidateEntityQueries,
+  invalidateAllEntityCaches,
   invalidateSnapshotQueries
 } from './queryKeys';
-import { invalidateAuditQueries } from './useAudit';
 import { invalidateNotificationQueries } from './useNotifications';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -110,11 +111,9 @@ export const useDeleteEntity = (workspaceId: string) => {
     mutationFn: (entityId: string) =>
       orpcClient.entities.remove({ params: { workspace: workspaceId, id: entityId } }),
     onSuccess: async () => {
-      // Invalidate all entity-related queries to refetch
-      await queryClient.invalidateQueries({ queryKey: entityKeys.all });
-      // Invalidate schema queries to update entity counts in sidebar
+      await invalidateAllEntityCaches(queryClient, workspaceId);
+      // Schema counts change when an entity is removed
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
-      await invalidateAuditQueries(queryClient, workspaceId);
       await invalidateNotificationQueries(queryClient, workspaceId);
     }
   });
@@ -131,14 +130,8 @@ export const useUpdateEntity = (workspaceId: string) => {
         body: data
       }),
     onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: entityKeys.detail(workspaceId, variables.entityId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: entityKeys.relations(workspaceId, variables.entityId)
-      });
+      await invalidateEntityDetails(queryClient, workspaceId, variables.entityId);
       await invalidateEntityQueries(queryClient, workspaceId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -152,7 +145,6 @@ export const useCloneEntity = (workspaceId: string) => {
       orpcClient.entities.clone({ params: { workspace: workspaceId, id: entityId } }),
     onSuccess: async () => {
       await invalidateEntityQueries(queryClient, workspaceId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -298,9 +290,8 @@ export const useApplySnapshot = (workspaceId: string, entityId: string, projectI
       }),
     onSuccess: () => {
       invalidateSnapshotQueries(queryClient, workspaceId, entityId, projectId);
-      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) });
+      invalidateEntityDetails(queryClient, workspaceId, entityId);
       invalidateEntityQueries(queryClient, workspaceId);
-      invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };

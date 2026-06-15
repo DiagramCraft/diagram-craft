@@ -68,18 +68,61 @@ export const projectFileKeys = {
     [...projectFileKeys.lists(), workspaceId, projectId] as const,
 };
 
-// Domain invalidation helpers
+export const auditKeys = {
+  all: ['audit'] as const,
+  logs: () => [...auditKeys.all, 'log'] as const,
+  workspaceLogs: (workspaceId: string) => [...auditKeys.logs(), workspaceId] as const,
+  log: (workspaceId: string, options: Record<string, unknown>) =>
+    [...auditKeys.workspaceLogs(workspaceId), options] as const,
+  stats: (workspaceId: string) => [...auditKeys.all, 'stats', workspaceId] as const,
+};
 
-/** Invalidates all queries that may be affected by any entity state change. */
+// ── Domain invalidation helpers ───────────────────────────────
+//
+// Each helper covers all queries that may be stale after a mutation in that domain.
+// Audit invalidation is bundled into the broad helpers because every mutation that
+// reaches these helpers produces an audit entry.
+
+export const invalidateAuditQueries = async (queryClient: QueryClient, workspaceId: string) => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+  ]);
+};
+
+/** Refreshes the detail and relations for one specific entity. */
+export const invalidateEntityDetails = async (
+  queryClient: QueryClient,
+  workspaceId: string,
+  entityId: string
+) => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.relations(workspaceId, entityId) }),
+  ]);
+};
+
+/** Refreshes all workspace-scoped entity views (lists, tree, facets) and audit. */
 export const invalidateEntityQueries = async (queryClient: QueryClient, workspaceId: string) => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: entityKeys.lists() }),
     queryClient.invalidateQueries({ queryKey: ['entities', 'tree'] as const }),
     queryClient.invalidateQueries({ queryKey: entityKeys.facets(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
   ]);
 };
 
-/** Invalidates all queries that may be affected by any project or project-content change. */
+/** Evicts all entity caches. Use for delete, where the entity no longer exists. */
+export const invalidateAllEntityCaches = async (queryClient: QueryClient, workspaceId: string) => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: entityKeys.all }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+  ]);
+};
+
+/** Refreshes project list and, if projectId is given, the project's files and entities. Includes audit. */
 export const invalidateProjectQueries = async (
   queryClient: QueryClient,
   workspaceId: string,
@@ -87,6 +130,8 @@ export const invalidateProjectQueries = async (
 ) => {
   const tasks: Promise<void>[] = [
     queryClient.invalidateQueries({ queryKey: projectKeys.list(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
   ];
   if (projectId) {
     tasks.push(
@@ -98,7 +143,16 @@ export const invalidateProjectQueries = async (
   await Promise.all(tasks);
 };
 
-/** Invalidates snapshot queries for an entity, and optionally for a project timeline. */
+/** Evicts all project caches. Use for delete, where the project no longer exists. */
+export const invalidateAllProjectCaches = async (queryClient: QueryClient, workspaceId: string) => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: projectKeys.all }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+  ]);
+};
+
+/** Refreshes snapshot queries for an entity and optionally a project timeline. Includes audit. */
 export const invalidateSnapshotQueries = async (
   queryClient: QueryClient,
   workspaceId: string,
@@ -107,6 +161,8 @@ export const invalidateSnapshotQueries = async (
 ) => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
     ...(projectId
       ? [queryClient.invalidateQueries({ queryKey: snapshotKeys.byProject(workspaceId, projectId) })]
       : []),

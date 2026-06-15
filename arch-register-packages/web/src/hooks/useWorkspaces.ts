@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { auditKeys, invalidateAuditQueries } from './useAudit';
+import { auditKeys, invalidateAuditQueries } from './queryKeys';
 import { orpcClient } from '../lib/orpcClient';
 
 // Query keys factory

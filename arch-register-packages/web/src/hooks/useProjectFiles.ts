@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createDiagramFromTemplate, emptyDiagram } from '../lib/api';
 import { projectFileKeys, invalidateProjectQueries } from './queryKeys';
-import { invalidateAuditQueries } from './useAudit';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -33,7 +32,6 @@ export const useCreateDiagramFile = (workspaceId: string, projectId: string) => 
     },
     onSuccess: async () => {
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -50,7 +48,6 @@ export const useCreateFolder = (workspaceId: string, projectId: string) => {
       }),
     onSuccess: async () => {
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -66,7 +63,6 @@ export const useDeleteProjectFile = (workspaceId: string, projectId: string) => 
       }),
     onSuccess: async () => {
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -82,7 +78,6 @@ export const useDeleteProjectFolder = (workspaceId: string, projectId: string) =
       }),
     onSuccess: async () => {
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -98,7 +93,6 @@ export const useRenameProjectFolder = (workspaceId: string, projectId: string) =
       }),
     onSuccess: async () => {
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -114,7 +108,6 @@ export const useCloneProjectFile = (workspaceId: string, projectId: string) => {
       }),
     onSuccess: async () => {
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -136,7 +129,6 @@ export const useRenameProjectFile = (workspaceId: string, projectId: string) => 
     },
     onSuccess: async () => {
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -159,7 +151,6 @@ export const useMoveProjectFile = (workspaceId: string, projectId: string) => {
     },
     onSuccess: async () => {
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -213,7 +204,6 @@ export const useToggleTemplateStatus = (workspaceId: string, projectId: string) 
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
       // Invalidate all project templates in the workspace since workspace templates are shared
       await queryClient.invalidateQueries({ queryKey: ['project-templates', workspaceId] });
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -274,7 +264,6 @@ export const useCreateDiagramFromTemplate = (workspaceId: string, projectId: str
     }) => createDiagramFromTemplate(workspaceId, projectId, name, templateFile, folder),
     onSuccess: async () => {
       await invalidateProjectQueries(queryClient, workspaceId, projectId);
-      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
