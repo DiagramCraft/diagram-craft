@@ -75,6 +75,8 @@ export const EntityContentSidebar = ({
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
+  const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
+  const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
   const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
   const createMarkdownMutation = useCreateEntityMarkdown(workspaceSlug, entityId);
   const uploadFileMutation = useUploadEntityFile(workspaceSlug, entityId);
@@ -254,6 +256,7 @@ export const EntityContentSidebar = ({
             leftSlot={<TbPlus size={13} />}
             onClick={() => {
               setMenu(null);
+              setAddDiagramFolder(target.path);
               setAddDiagramOpen(true);
             }}
           >
@@ -263,6 +266,7 @@ export const EntityContentSidebar = ({
             leftSlot={<TbFolderOpen size={13} />}
             onClick={() => {
               setMenu(null);
+              setAddFolderParent(target.path);
               setAddFolderOpen(true);
             }}
           >
@@ -631,24 +635,34 @@ export const EntityContentSidebar = ({
 
       <AddEntityFolderDialog
         open={addFolderOpen}
-        onClose={() => setAddFolderOpen(false)}
-        onCreated={() => setAddFolderOpen(false)}
+        onClose={() => {
+          setAddFolderOpen(false);
+          setAddFolderParent(null);
+        }}
+        onCreated={() => {
+          setAddFolderOpen(false);
+          setAddFolderParent(null);
+        }}
         workspaceSlug={workspaceSlug}
         entityId={entityId}
-        parentFolder={contentFolder}
+        parentFolder={addFolderParent ?? contentFolder}
       />
 
       <AddDiagramDialog
         open={addDiagramOpen}
-        onClose={() => setAddDiagramOpen(false)}
+        onClose={() => {
+          setAddDiagramOpen(false);
+          setAddDiagramFolder(null);
+        }}
         onCreated={file => {
           setAddDiagramOpen(false);
+          setAddDiagramFolder(null);
           navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), file.id));
         }}
         workspaceId={workspaceSlug}
         context="entity"
         entityId={entityId}
-        folder={contentFolder ?? null}
+        folder={addDiagramFolder ?? contentFolder ?? null}
       />
 
       <AddMarkdownDialog

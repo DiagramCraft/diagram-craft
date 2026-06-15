@@ -1899,9 +1899,10 @@ export const downloadProjectFile = async (
 ): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
-    await buildApiAuthCtx(db, ws, event);
+    const authCtx = await buildApiAuthCtx(db, ws, event);
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    requireProjectAccess(authCtx, project.owner);
     const projectUuid = project.id;
 
     const file = await db.project.getContentNodeByPath(ws, projectUuid, filePath);

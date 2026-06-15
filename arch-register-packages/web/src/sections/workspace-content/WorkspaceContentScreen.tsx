@@ -51,6 +51,15 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
     });
   };
 
+  const handleDownloadClick = (path: string, name: string, originalFilename: string | null) => {
+    const a = document.createElement('a');
+    a.href = `/api/${workspaceSlug}/content/files/download?path=${encodeURIComponent(path)}`;
+    a.download = originalFilename ?? name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
@@ -115,6 +124,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         }))}
         onOpenDiagram={file => handleDiagramClick(file.id)}
         onOpenMarkdown={file => handleMarkdownClick(file.id)}
+        onDownloadFile={file => handleDownloadClick(file.path, file.name, file.original_filename ?? null)}
         emptyState={{ title: 'No content here', sub: 'Diagrams and documents will appear here when added.' }}
         noMatchState={{ title: 'No matches', sub: `No items match "${filter}".` }}
       />

@@ -54,6 +54,15 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
     navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), fileId, { mode }));
   };
 
+  const handleDownloadClick = (path: string, name: string, originalFilename: string | null) => {
+    const a = document.createElement('a');
+    a.href = `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(path)}`;
+    a.download = originalFilename ?? name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
@@ -119,6 +128,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         ]}
         onOpenDiagram={file => handleDiagramClick(file.id, file.project_public_id ?? file.project_id)}
         onOpenMarkdown={file => handleMarkdownClick(file.id)}
+        onDownloadFile={file => handleDownloadClick(file.path, file.name, file.original_filename ?? null)}
         emptyState={{
           title: 'No content in this folder',
           sub: 'Diagrams and documents will appear here when added to this folder.'

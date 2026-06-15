@@ -56,6 +56,8 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
+  const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
+  const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
   const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
   const createFolderMutation = useCreateWorkspaceFolder(workspaceSlug);
   const createMarkdownMutation = useCreateWorkspaceMarkdown(workspaceSlug);
@@ -221,6 +223,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             leftSlot={<TbPlus size={13} />}
             onClick={() => {
               setMenu(null);
+              setAddDiagramFolder(target.path);
               setAddDiagramOpen(true);
             }}
           >
@@ -230,6 +233,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             leftSlot={<TbFolderOpen size={13} />}
             onClick={() => {
               setMenu(null);
+              setAddFolderParent(target.path);
               setAddFolderOpen(true);
             }}
           >
@@ -574,19 +578,29 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
 
       <ContentFolderDialog
         open={addFolderOpen}
-        onClose={() => setAddFolderOpen(false)}
-        onCreated={() => setAddFolderOpen(false)}
+        onClose={() => {
+          setAddFolderOpen(false);
+          setAddFolderParent(null);
+        }}
+        onCreated={() => {
+          setAddFolderOpen(false);
+          setAddFolderParent(null);
+        }}
         onSubmit={path => createFolderMutation.mutateAsync(path)}
         isPending={createFolderMutation.isPending}
-        parentFolder={contentFolder}
+        parentFolder={addFolderParent ?? contentFolder}
         placeholder="e.g. Architecture"
       />
 
       <AddDiagramDialog
         open={addDiagramOpen}
-        onClose={() => setAddDiagramOpen(false)}
+        onClose={() => {
+          setAddDiagramOpen(false);
+          setAddDiagramFolder(null);
+        }}
         onCreated={file => {
           setAddDiagramOpen(false);
+          setAddDiagramFolder(null);
           navigate({
             to: '/$workspaceSlug/content/diagrams/$diagramId',
             params: { workspaceSlug, diagramId: file.id }
@@ -594,7 +608,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
         }}
         workspaceId={workspaceSlug}
         context="workspace"
-        folder={contentFolder ?? null}
+        folder={addDiagramFolder ?? contentFolder ?? null}
       />
 
       <AddMarkdownDialog

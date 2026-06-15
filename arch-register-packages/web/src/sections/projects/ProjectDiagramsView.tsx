@@ -150,6 +150,7 @@ export const ProjectDiagramsView = ({
       gridSections={gridSections}
       onOpenDiagram={file => onOpenDiagram(file.id)}
       onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
+      onDownloadFile={onDownloadFile}
       onContextMenu={
         onContextMenu
           ? (event, file) =>
