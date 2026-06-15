@@ -1,32 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { invalidateAuditQueries } from './useAudit';
+import {
+  projectKeys,
+  projectEntityKeys,
+  entityContentKeys,
+  invalidateAuditQueries,
+  invalidateAllProjectCaches
+} from './queryKeys';
 import { Project, ProjectDetail, ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
 import { emptyDiagram, createEntityDiagramFromTemplate } from '../lib/api';
-
-export const projectEntityKeys = {
-  all: (workspaceId: string, projectId: string) =>
-    ['project-entities', workspaceId, projectId] as const,
-  entityProjects: (workspaceId: string, entityId: string) =>
-    ['entity-projects', workspaceId, entityId] as const,
-  entityDiagramFiles: (workspaceId: string, entityId: string) =>
-    ['entity-diagram-files', workspaceId, entityId] as const
-};
-
-export const entityContentKeys = {
-  all: (workspaceId: string, entityId: string) =>
-    ['entity-content', workspaceId, entityId] as const
-};
-
-// Query keys factory
-export const projectKeys = {
-  all: ['projects'] as const,
-  lists: () => [...projectKeys.all, 'list'] as const,
-  list: (workspaceId: string) => [...projectKeys.lists(), workspaceId] as const,
-  details: () => [...projectKeys.all, 'detail'] as const,
-  detail: (workspaceId: string, projectId: string) =>
-    [...projectKeys.details(), workspaceId, projectId] as const
-};
 
 // Hook for fetching project list
 export const useProjects = (workspaceId: string) => {
@@ -114,9 +96,7 @@ export const useDeleteProject = (workspaceId: string) => {
     mutationFn: (projectId: string) =>
       orpcClient.projects.remove({ params: { workspace: workspaceId, id: projectId } }),
     onSuccess: async () => {
-      // Invalidate all project queries
-      await queryClient.invalidateQueries({ queryKey: projectKeys.all });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      await invalidateAllProjectCaches(queryClient, workspaceId);
     }
   });
 };
@@ -158,9 +138,12 @@ export const useAddProjectEntity = (workspaceId: string, projectId: string) => {
   return useMutation({
     mutationFn: (body: { entity_id: string; entity_type?: string | null; is_done?: boolean }) =>
       orpcClient.projects.addEntity({ params: { workspace: workspaceId, id: projectId }, body }),
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.all(workspaceId, projectId)
+      });
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.entityProjects(workspaceId, variables.entity_id)
       });
     }
   });
@@ -201,9 +184,12 @@ export const useRemoveProjectEntity = (workspaceId: string, projectId: string) =
       orpcClient.projects.removeEntity({
         params: { workspace: workspaceId, id: projectId, entityId }
       }),
-    onSuccess: async () => {
+    onSuccess: async (_, entityId) => {
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.all(workspaceId, projectId)
+      });
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.entityProjects(workspaceId, entityId)
       });
     }
   });

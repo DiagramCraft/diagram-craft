@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { entityKeys, schemaKeys } from './queryKeys';
-import { invalidateAuditQueries } from './useAudit';
+import { schemaKeys, invalidateEntityQueries, invalidateAuditQueries } from './queryKeys';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -53,10 +52,8 @@ export const useUpdateSchema = (workspaceId: string) => {
         queryKey: schemaKeys.detail(workspaceId, variables.schemaId)
       });
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
-      // Completeness scores are computed server-side from the schema, so entity lists must be refreshed too
-      await queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
-      await queryClient.invalidateQueries({ queryKey: entityKeys.facets(workspaceId) });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      // Completeness scores and entity type icons/colours are derived from the schema
+      await invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };
@@ -69,9 +66,8 @@ export const useDeleteSchema = (workspaceId: string) => {
     mutationFn: (schemaId: string) =>
       orpcClient.schemas.remove({ params: { workspace: workspaceId, id: schemaId } }),
     onSuccess: async () => {
-      // Invalidate all schema queries
       await queryClient.invalidateQueries({ queryKey: schemaKeys.all });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      await invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };

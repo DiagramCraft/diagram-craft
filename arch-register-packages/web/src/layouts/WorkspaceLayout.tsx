@@ -9,7 +9,7 @@ import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
 import { useWorkspaces, workspaceKeys } from '../hooks/useWorkspaces';
-import { projectKeys } from '../hooks/useProjects';
+import { projectKeys } from '../hooks/queryKeys';
 import { useSchemas } from '../hooks/useSchemas';
 import { useEnums } from '../hooks/useEnums';
 import { useProjects } from '../hooks/useProjects';

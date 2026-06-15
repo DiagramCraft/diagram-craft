@@ -22,8 +22,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../../auth/AuthContext';
 import { orpcClient } from '../../lib/orpcClient';
-import { projectFileKeys } from '../../hooks/useProjectFiles';
-import { projectKeys } from '../../hooks/useProjects';
+import { projectFileKeys, projectKeys } from '../../hooks/queryKeys';
 import { stableHue } from '../../components/MemberAvatar';
 import {
   asEntityPublicId,
