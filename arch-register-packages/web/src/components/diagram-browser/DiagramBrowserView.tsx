@@ -106,6 +106,7 @@ export const DiagramBrowserView = ({
   gridSections,
   onOpenDiagram,
   onOpenMarkdown,
+  onDownloadFile,
   onContextMenu,
   onNewDiagram,
   emptyState,
@@ -117,6 +118,7 @@ export const DiagramBrowserView = ({
   gridSections: DiagramBrowserGridSection[];
   onOpenDiagram: (file: FileEntry) => void;
   onOpenMarkdown?: (file: FileEntry) => void;
+  onDownloadFile?: (file: FileEntry) => void;
   onContextMenu?: (event: React.MouseEvent, file: FileEntry) => void;
   onNewDiagram?: () => void;
   emptyState: { title: string; sub: string };
@@ -142,7 +144,12 @@ export const DiagramBrowserView = ({
   const renderItem = ({ file, folder }: DiagramBrowserItem) => ({
     file,
     folder,
-    onOpen: () => (file.type === 'markdown' && onOpenMarkdown ? onOpenMarkdown(file) : onOpenDiagram(file)),
+    onOpen: () =>
+      file.type === 'file'
+        ? onDownloadFile?.(file)
+        : file.type === 'markdown' && onOpenMarkdown
+          ? onOpenMarkdown(file)
+          : onOpenDiagram(file),
     onContextMenu: onContextMenu
       ? (event: React.MouseEvent) => onContextMenu(event, file)
       : undefined

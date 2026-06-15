@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbFileText, TbPlus } from 'react-icons/tb';
+import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { useEntityContentNodes } from '../../hooks/useProjects';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../components/Title';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
+import { AddEntityFolderDialog } from './AddEntityFolderDialog';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
   DiagramBrowserToolbar,
   DiagramBrowserView
@@ -18,7 +21,7 @@ import {
   entityMarkdownRoute,
   projectDiagramRoute
 } from '../../routes/publicObjectRoutes';
-import { useCreateEntityMarkdown } from '../../hooks/useProjectFiles';
+import { useUploadEntityFile, useCreateEntityMarkdown } from '../../hooks/useProjectFiles';
 
 type EntityContentViewProps = {
   workspaceSlug: string;
@@ -29,11 +32,15 @@ type EntityContentViewProps = {
 export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
   const navigate = useNavigate();
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
-  const createMarkdown = useCreateEntityMarkdown(workspaceSlug, entityId);
+  const uploadFileMutation = useUploadEntityFile(workspaceSlug, entityId);
+  const createMarkdownMutation = useCreateEntityMarkdown(workspaceSlug, entityId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [newMenu, setNewMenu] = useState<{ x: number; y: number } | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
+  const [addFolderOpen, setAddFolderOpen] = useState(false);
 
   const handleDiagramClick = (fileId: string, projectId: string | null) => {
     if (projectId) {
@@ -45,6 +52,23 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
 
   const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
     navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), fileId, { mode }));
+  };
+
+  const handleDownloadClick = (path: string, name: string, originalFilename: string | null) => {
+    const a = document.createElement('a');
+    a.href = `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(path)}`;
+    a.download = originalFilename ?? name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) {
+      uploadFileMutation.mutate({ file: f, folder });
+    }
+    e.target.value = '';
   };
 
   // Find the folder and its files
@@ -61,22 +85,16 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         <Title
           title={folderName}
           buttons={
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <Button
-                variant="secondary"
-                icon={<TbFileText size={12} />}
-                onClick={() => setAddMarkdownOpen(true)}
-              >
-                New document
-              </Button>
-              <Button
-                variant="primary"
-                icon={<TbPlus size={12} />}
-                onClick={() => setAddDiagramOpen(true)}
-              >
-                New diagram
-              </Button>
-            </div>
+            <Button
+              variant="primary"
+              icon={<TbPlus size={12} />}
+              onClick={e => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setNewMenu({ x: rect.right, y: rect.bottom });
+              }}
+            >
+              New
+            </Button>
           }
         />
       </div>
@@ -105,17 +123,53 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
           {
             key: 'entity-content',
             items: filtered.map(file => ({ file })),
-            showAddButton: true
+            showAddButton: false
           }
         ]}
         onOpenDiagram={file => handleDiagramClick(file.id, file.project_public_id ?? file.project_id)}
         onOpenMarkdown={file => handleMarkdownClick(file.id)}
-        onNewDiagram={() => setAddDiagramOpen(true)}
+        onDownloadFile={file => handleDownloadClick(file.path, file.name, file.original_filename ?? null)}
         emptyState={{
           title: 'No content in this folder',
           sub: 'Diagrams and documents will appear here when added to this folder.'
         }}
         noMatchState={{ title: 'No matches', sub: `No items match "${filter}".` }}
+      />
+
+      {newMenu && (
+        <ContextMenu.Imperative x={newMenu.x} y={newMenu.y} align="right" onClose={() => setNewMenu(null)}>
+          <Menu.Item
+            leftSlot={<TbFolderOpen size={13} />}
+            onClick={() => { setNewMenu(null); setAddFolderOpen(true); }}
+          >
+            New folder
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbUpload size={13} />}
+            onClick={() => { setNewMenu(null); fileInputRef.current?.click(); }}
+          >
+            Upload file
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbPlus size={13} />}
+            onClick={() => { setNewMenu(null); setAddDiagramOpen(true); }}
+          >
+            New diagram
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbFileText size={13} />}
+            onClick={() => { setNewMenu(null); setAddMarkdownOpen(true); }}
+          >
+            New wiki page
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        style={{ display: 'none' }}
+        onChange={handleFileInputChange}
       />
 
       <AddDiagramDialog
@@ -134,9 +188,21 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
       <AddMarkdownDialog
         open={addMarkdownOpen}
         onClose={() => setAddMarkdownOpen(false)}
-        onCreated={file => handleMarkdownClick(file.id, 'edit')}
-        onCreate={name => createMarkdown.mutateAsync({ name, folder })}
-        isPending={createMarkdown.isPending}
+        onCreated={file => {
+          setAddMarkdownOpen(false);
+          handleMarkdownClick(file.id, 'edit');
+        }}
+        onCreate={name => createMarkdownMutation.mutateAsync({ name, folder })}
+        isPending={createMarkdownMutation.isPending}
+      />
+
+      <AddEntityFolderDialog
+        open={addFolderOpen}
+        onClose={() => setAddFolderOpen(false)}
+        onCreated={() => setAddFolderOpen(false)}
+        workspaceSlug={workspaceSlug}
+        entityId={entityId}
+        parentFolder={folder}
       />
     </div>
   );

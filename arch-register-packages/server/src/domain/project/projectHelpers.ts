@@ -81,7 +81,9 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   updated_at: file.updated_at.toISOString(),
   type: file.type,
   created_by: file.created_by ?? null,
-  updated_by: file.updated_by ?? null
+  updated_by: file.updated_by ?? null,
+  mime_type: file.mime_type ?? null,
+  original_filename: file.original_filename ?? null
 });
 
 export const toApiProjectDetail = (

@@ -216,7 +216,9 @@ export const sqliteMappers = {
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at']),
     created_by: row['created_by'] == null ? null : String(row['created_by']),
-    updated_by: row['updated_by'] == null ? null : String(row['updated_by'])
+    updated_by: row['updated_by'] == null ? null : String(row['updated_by']),
+    mime_type: row['mime_type'] == null ? null : String(row['mime_type']),
+    original_filename: row['original_filename'] == null ? null : String(row['original_filename'])
   }),
   auditLog: (row: Record<string, unknown>): AuditLogDbResult => ({
     id: String(row['id']),

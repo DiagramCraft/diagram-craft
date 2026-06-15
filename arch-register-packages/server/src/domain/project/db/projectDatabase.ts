@@ -20,6 +20,8 @@ export type ContentNodeDbResult = {
   updated_at: Date;
   created_by: string | null;
   updated_by: string | null;
+  mime_type: string | null;
+  original_filename: string | null;
 };
 
 export type ContentNodeDbUpsert = {
@@ -38,6 +40,8 @@ export type ContentNodeDbUpsert = {
   created_atIfNew: Date;
   created_byIfNew?: string | null;
   updated_by?: string | null;
+  mime_type?: string | null;
+  original_filename?: string | null;
 };
 
 // -- Project
@@ -186,6 +190,35 @@ export type ProjectDatabase = {
   deleteContentNodeFolder(
     ws: string,
     projectId: string,
+    folderPath: string
+  ): Promise<ContentNodeDbResult[]>;
+
+  deleteEntityContentNodeByPath(
+    ws: string,
+    entityId: string,
+    path: string
+  ): Promise<ContentNodeDbResult | null>;
+  renameEntityContentNodeFolder(
+    ws: string,
+    entityId: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ): Promise<string[]>;
+  deleteEntityContentNodeFolder(
+    ws: string,
+    entityId: string,
+    folderPath: string
+  ): Promise<ContentNodeDbResult[]>;
+  deleteWorkspaceContentNodeByPath(ws: string, path: string): Promise<ContentNodeDbResult | null>;
+  renameWorkspaceContentNodeFolder(
+    ws: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ): Promise<string[]>;
+  deleteWorkspaceContentNodeFolder(
+    ws: string,
     folderPath: string
   ): Promise<ContentNodeDbResult[]>;
 

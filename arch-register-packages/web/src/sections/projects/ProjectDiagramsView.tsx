@@ -5,11 +5,9 @@ import {
 } from '../../components/diagram-browser/DiagramBrowserView';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type { FileEntry } from '../../lib/api';
+import { fileMenuTargetType, type MenuTarget } from '../../lib/contentNode';
 
-export type ProjectMenuTarget =
-  | { type: 'diagram'; file: FileEntry }
-  | { type: 'markdown'; file: FileEntry }
-  | { type: 'folder'; path: string };
+export type { MenuTarget as ProjectMenuTarget };
 
 export const ProjectDiagramsView = ({
   project,
@@ -19,6 +17,7 @@ export const ProjectDiagramsView = ({
   viewMode,
   onOpenDiagram,
   onOpenMarkdown,
+  onDownloadFile,
   onNewDiagram,
   onContextMenu
 }: {
@@ -29,8 +28,9 @@ export const ProjectDiagramsView = ({
   viewMode: 'grid' | 'list';
   onOpenDiagram: (diagramId: string) => void;
   onOpenMarkdown?: (nodeId: string) => void;
+  onDownloadFile?: (file: FileEntry) => void;
   onNewDiagram?: () => void;
-  onContextMenu?: (e: React.MouseEvent, target: ProjectMenuTarget) => void;
+  onContextMenu?: (e: React.MouseEvent, target: MenuTarget) => void;
 }) => {
   const lc = filter.toLowerCase();
   const filtered = lc ? visibleFiles.filter(f => f.name.toLowerCase().includes(lc)) : visibleFiles;
@@ -57,10 +57,14 @@ export const ProjectDiagramsView = ({
         gridSections={[]}
         onOpenDiagram={file => onOpenDiagram(file.id)}
         onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
+        onDownloadFile={onDownloadFile}
         onContextMenu={
           onContextMenu
             ? (event, file) =>
-                onContextMenu(event, { type: file.type === 'markdown' ? 'markdown' : 'diagram', file })
+                onContextMenu(event, {
+                  type: fileMenuTargetType(file.type),
+                  file
+                })
             : undefined
         }
         onNewDiagram={onNewDiagram}
@@ -88,10 +92,14 @@ export const ProjectDiagramsView = ({
         ]}
         onOpenDiagram={file => onOpenDiagram(file.id)}
         onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
+        onDownloadFile={onDownloadFile}
         onContextMenu={
           onContextMenu
             ? (event, file) =>
-                onContextMenu(event, { type: file.type === 'markdown' ? 'markdown' : 'diagram', file })
+                onContextMenu(event, {
+                  type: fileMenuTargetType(file.type),
+                  file
+                })
             : undefined
         }
         onNewDiagram={onNewDiagram}
@@ -142,10 +150,11 @@ export const ProjectDiagramsView = ({
       gridSections={gridSections}
       onOpenDiagram={file => onOpenDiagram(file.id)}
       onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
+      onDownloadFile={onDownloadFile}
       onContextMenu={
         onContextMenu
           ? (event, file) =>
-              onContextMenu(event, { type: file.type === 'markdown' ? 'markdown' : 'diagram', file })
+              onContextMenu(event, { type: fileMenuTargetType(file.type), file })
           : undefined
       }
       onNewDiagram={onNewDiagram}

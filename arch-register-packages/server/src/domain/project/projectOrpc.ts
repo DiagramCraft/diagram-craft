@@ -29,11 +29,21 @@ import {
   listEntityContentNodes,
   createEntityFolder,
   createEntityFile,
+  deleteEntityFile,
+  deleteEntityFolder,
+  renameEntityFolder,
+  cloneEntityFile,
+  relocateEntityFile,
   listWorkspaceContentNodes,
   createWorkspaceFolder,
   createWorkspaceFile,
   getWorkspaceFileContent,
   saveWorkspaceFile,
+  deleteWorkspaceFile,
+  deleteWorkspaceFolder,
+  renameWorkspaceFolder,
+  cloneWorkspaceFile,
+  relocateWorkspaceFile,
   createProjectMarkdownDoc,
   createEntityMarkdownDoc,
   createWorkspaceMarkdownDoc,
@@ -374,6 +384,91 @@ export const projectORPCRouter = projectRouter.router({
         }
       }
     ),
+    deleteEntityFile: projectRouter.projects.deleteEntityFile.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await deleteEntityFile(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.entityId,
+            input.query.path,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    deleteEntityFolder: projectRouter.projects.deleteEntityFolder.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await deleteEntityFolder(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.entityId,
+            input.query.path,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    renameEntityFolder: projectRouter.projects.renameEntityFolder.handler(
+      async ({ input, context }) => {
+        try {
+          return await renameEntityFolder(
+            context.db,
+            input.params.workspace,
+            input.params.entityId,
+            input.body.oldPath,
+            input.body.newPath,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    cloneEntityFile: projectRouter.projects.cloneEntityFile.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await cloneEntityFile(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.entityId,
+            input.query.path,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    relocateEntityFile: projectRouter.projects.relocateEntityFile.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await relocateEntityFile(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.entityId,
+            input.query.path,
+            input.body.newPath,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
     listWorkspaceFiles: projectRouter.projects.listWorkspaceFiles.handler(
       async ({ input, context }) => {
         try {
@@ -440,6 +535,86 @@ export const projectORPCRouter = projectRouter.router({
             input.params.workspace,
             input.query.path,
             input.body,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    deleteWorkspaceFile: projectRouter.projects.deleteWorkspaceFile.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await deleteWorkspaceFile(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.query.path,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    deleteWorkspaceFolder: projectRouter.projects.deleteWorkspaceFolder.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await deleteWorkspaceFolder(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.query.path,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    renameWorkspaceFolder: projectRouter.projects.renameWorkspaceFolder.handler(
+      async ({ input, context }) => {
+        try {
+          return await renameWorkspaceFolder(
+            context.db,
+            input.params.workspace,
+            input.body.oldPath,
+            input.body.newPath,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    cloneWorkspaceFile: projectRouter.projects.cloneWorkspaceFile.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await cloneWorkspaceFile(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.query.path,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    relocateWorkspaceFile: projectRouter.projects.relocateWorkspaceFile.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await relocateWorkspaceFile(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.query.path,
+            input.body.newPath,
             context.event
           );
         } catch (error) {

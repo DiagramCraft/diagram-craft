@@ -52,7 +52,9 @@ export const projectFileSchema = z.object({
   updated_at: z.string(),
   type: z.enum(['diagram', 'folder', 'markdown', 'file']),
   created_by: z.string().nullable().optional(),
-  updated_by: z.string().nullable().optional()
+  updated_by: z.string().nullable().optional(),
+  mime_type: z.string().nullable().optional(),
+  original_filename: z.string().nullable().optional()
 });
 
 const fileFolderSchema = z.object({
@@ -409,6 +411,118 @@ export const projectContract = {
       })
       .input(z.object({ params: ws }))
       .output(fileTreeSchema),
+    deleteEntityFile: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/entities/{entityId}/content/files',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ entityId: z.string() }),
+        query: z.object({ path: z.string() })
+      }))
+      .output(deleteFileResponseSchema),
+    deleteEntityFolder: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/entities/{entityId}/content/folders',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ entityId: z.string() }),
+        query: z.object({ path: z.string() })
+      }))
+      .output(deleteFolderResponseSchema),
+    renameEntityFolder: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/entities/{entityId}/content/folders/rename',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ entityId: z.string() }),
+        body: z.object({ oldPath: z.string(), newPath: z.string() })
+      }))
+      .output(renameFolderResponseSchema),
+    cloneEntityFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entities/{entityId}/content/files/clone',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ entityId: z.string() }),
+        query: z.object({ path: z.string() })
+      }))
+      .output(projectFileSchema),
+    relocateEntityFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/entities/{entityId}/content/files/relocate',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ entityId: z.string() }),
+        query: z.object({ path: z.string() }),
+        body: z.object({ newPath: z.string() })
+      }))
+      .output(projectFileSchema),
+    deleteWorkspaceFile: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/content/files',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        query: z.object({ path: z.string() })
+      }))
+      .output(deleteFileResponseSchema),
+    deleteWorkspaceFolder: oc
+      .route({
+        method: 'DELETE',
+        path: '/{workspace}/content/folders',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        query: z.object({ path: z.string() })
+      }))
+      .output(deleteFolderResponseSchema),
+    renameWorkspaceFolder: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/content/folders/rename',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        body: z.object({ oldPath: z.string(), newPath: z.string() })
+      }))
+      .output(renameFolderResponseSchema),
+    cloneWorkspaceFile: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/content/files/clone',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        query: z.object({ path: z.string() })
+      }))
+      .output(projectFileSchema),
+    relocateWorkspaceFile: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/content/files/relocate',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        query: z.object({ path: z.string() }),
+        body: z.object({ newPath: z.string() })
+      }))
+      .output(projectFileSchema),
     createWorkspaceFolder: oc
       .route({
         method: 'POST',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
@@ -6,23 +6,36 @@ import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
   TbBinaryTree2,
   TbCopy,
-  TbFile,
+  TbDownload,
   TbFileText,
   TbFolder,
   TbFolderOpen,
   TbHome,
   TbPencil,
   TbPlus,
-  TbTrash
+  TbTrash,
+  TbUpload
 } from 'react-icons/tb';
 import type { FileEntry } from '../../lib/api';
 import {
+  deleteConfirmLabel,
+  deleteMessage,
+  deleteTitle,
+  entityTypeLabel,
+  fileMenuTargetType,
+  getFileNodeIcon,
+  type MenuTarget
+} from '../../lib/contentNode';
+import {
   useCloneProjectFile,
+  useCreateProjectMarkdown,
   useDeleteProjectFile,
   useDeleteProjectFolder,
   useMoveProjectFile,
+  useRenameProjectBinaryFile,
   useRenameProjectFile,
-  useRenameProjectFolder
+  useRenameProjectFolder,
+  useUploadProjectFile
 } from '../../hooks/useProjectFiles';
 import { useProject, useProjectEntities } from '../../hooks/useProjects';
 import { RenameDialog } from '../../components/RenameDialog';
@@ -30,6 +43,7 @@ import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { AddDiagramDialog } from './AddDiagramDialog';
 import { AddFolderDialog } from './AddFolderDialog';
+import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import {
   asProjectPublicId,
   projectDetailRoute,
@@ -38,7 +52,6 @@ import {
 } from '../../routes/publicObjectRoutes';
 
 type ProjectSection = 'home' | 'entities';
-type MenuTarget = { type: 'diagram' | 'markdown'; file: FileEntry } | { type: 'folder'; path: string };
 
 type FolderNode = {
   path: string;
@@ -106,7 +119,12 @@ export const ProjectContentSidebar = ({
   const renameFolderMutation = useRenameProjectFolder(workspaceSlug, projectId);
   const cloneFileMutation = useCloneProjectFile(workspaceSlug, projectId);
   const renameFileMutation = useRenameProjectFile(workspaceSlug, projectId);
+  const renameBinaryFileMutation = useRenameProjectBinaryFile(workspaceSlug, projectId);
   const moveFileMutation = useMoveProjectFile(workspaceSlug, projectId);
+  const uploadFileMutation = useUploadProjectFile(workspaceSlug, projectId);
+  const createMarkdownMutation = useCreateProjectMarkdown(workspaceSlug, projectId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadFolder, setUploadFolder] = useState<string | null>(null);
 
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
@@ -116,6 +134,8 @@ export const ProjectContentSidebar = ({
   const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
+  const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
+  const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
   const [addMenu, setAddMenu] = useState<{ x: number; y: number } | null>(null);
 
   const folderTree = buildFolderTree(project?.files.folders ?? []);
@@ -230,6 +250,25 @@ export const ProjectContentSidebar = ({
           >
             New folder
           </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbUpload size={13} />}
+            onClick={() => {
+              setMenu(null);
+              openUploadPicker(target.path);
+            }}
+          >
+            Upload file
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbFileText size={13} />}
+            onClick={() => {
+              setMenu(null);
+              setAddMarkdownFolder(target.path);
+              setAddMarkdownOpen(true);
+            }}
+          >
+            New wiki page
+          </Menu.Item>
           <Menu.Separator />
           <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
             Rename
@@ -251,6 +290,37 @@ export const ProjectContentSidebar = ({
       : null;
     const allFolders =
       project?.files.folders.map(folder => folder.path).filter(path => path !== currentFolder) ?? [];
+
+    if (target.type === 'file') {
+      return (
+        <>
+          <Menu.Item
+            leftSlot={<TbDownload size={13} />}
+            onClick={() => {
+              setMenu(null);
+              triggerDownload(target.file);
+            }}
+          >
+            Download
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
+            {renderMoveToSubmenu(target.file, allFolders, currentFolder)}
+          </Menu.SubMenu>
+          <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteTarget(target)}
+          >
+            Delete
+          </Menu.Item>
+        </>
+      );
+    }
 
     return (
       <>
@@ -288,7 +358,11 @@ export const ProjectContentSidebar = ({
       setRenameTarget(null);
       return;
     }
-    if (renameTarget.type !== 'folder') {
+    if (renameTarget.type === 'file') {
+      if (trimmed !== renameTarget.file.name) {
+        renameBinaryFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
+      }
+    } else if (renameTarget.type !== 'folder') {
       if (trimmed !== renameTarget.file.name) {
         renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
       }
@@ -296,6 +370,28 @@ export const ProjectContentSidebar = ({
       renameFolderMutation.mutate({ oldPath: renameTarget.path, newPath: trimmed });
     }
     setRenameTarget(null);
+  };
+
+  const triggerDownload = (file: FileEntry) => {
+    const a = document.createElement('a');
+    a.href = `/api/${workspaceSlug}/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`;
+    a.download = file.original_filename ?? file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadFileMutation.mutate({ file, folder: uploadFolder });
+    }
+    e.target.value = '';
+  };
+
+  const openUploadPicker = (folder: string | null) => {
+    setUploadFolder(folder);
+    fileInputRef.current?.click();
   };
 
   const handleConfirmDelete = () => {
@@ -333,15 +429,26 @@ export const ProjectContentSidebar = ({
               <TreeRow
                 key={file.id}
                 depth={depth + 1}
-                icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
-                label={file.name}
+                icon={getFileNodeIcon(file.type)}
+                label={file.original_filename ?? file.name}
                 active={file.id === activeFileId}
-                onClick={() =>
-                  navigate(
-                    file.type === 'markdown'
-                      ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-                      : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-                  )
+                onClick={
+                  file.type === 'file'
+                    ? () => triggerDownload(file)
+                    : () =>
+                        navigate(
+                          file.type === 'markdown'
+                            ? projectMarkdownRoute(
+                                workspaceSlug,
+                                asProjectPublicId(projectId),
+                                file.id
+                              )
+                            : projectDiagramRoute(
+                                workspaceSlug,
+                                asProjectPublicId(projectId),
+                                file.id
+                              )
+                        )
                 }
                 onContextMenu={e => {
                   e.preventDefault();
@@ -349,7 +456,10 @@ export const ProjectContentSidebar = ({
                   setMenu({
                     x: e.clientX,
                     y: e.clientY,
-                    target: { type: file.type === 'markdown' ? 'markdown' : 'diagram', file }
+                    target: {
+                      type: fileMenuTargetType(file.type),
+                      file
+                    }
                   });
                 }}
               />
@@ -382,7 +492,7 @@ export const ProjectContentSidebar = ({
             className={styles.action}
             onClick={e => {
               const rect = e.currentTarget.getBoundingClientRect();
-              setAddMenu({ x: rect.right, y: rect.bottom });
+              setAddMenu({ x: rect.left, y: rect.bottom });
             }}
             title="Add"
           >
@@ -408,15 +518,18 @@ export const ProjectContentSidebar = ({
         {project?.files.rootFiles.map(file => (
           <TreeRow
             key={file.id}
-            icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
-            label={file.name}
+            icon={getFileNodeIcon(file.type)}
+            label={file.original_filename ?? file.name}
             active={file.id === activeFileId}
-            onClick={() =>
-              navigate(
-                file.type === 'markdown'
-                  ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-                  : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-              )
+            onClick={
+              file.type === 'file'
+                ? undefined
+                : () =>
+                    navigate(
+                      file.type === 'markdown'
+                        ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+                        : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+                    )
             }
             onContextMenu={e => {
               e.preventDefault();
@@ -424,7 +537,10 @@ export const ProjectContentSidebar = ({
               setMenu({
                 x: e.clientX,
                 y: e.clientY,
-                target: { type: file.type === 'markdown' ? 'markdown' : 'diagram', file }
+                target: {
+                  type: fileMenuTargetType(file.type),
+                  file
+                }
               });
             }}
           />
@@ -463,6 +579,27 @@ export const ProjectContentSidebar = ({
             New diagram
           </Menu.Item>
           <Menu.Item
+            leftSlot={<TbUpload size={13} />}
+            disabled={!project?.canManageFiles}
+            onClick={() => {
+              setAddMenu(null);
+              openUploadPicker(section === 'home' ? folderFilter : null);
+            }}
+          >
+            Upload file
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbFileText size={13} />}
+            disabled={!project?.canManageFiles}
+            onClick={() => {
+              setAddMenu(null);
+              setAddMarkdownFolder(section === 'home' ? folderFilter : null);
+              setAddMarkdownOpen(true);
+            }}
+          >
+            New wiki page
+          </Menu.Item>
+          <Menu.Item
             leftSlot={<TbBinaryTree2 size={13} />}
             disabled={!project?.canEdit}
             onClick={() => {
@@ -484,56 +621,26 @@ export const ProjectContentSidebar = ({
               : renameTarget.path
             : ''
         }
-        entityType={
-          renameTarget?.type === 'folder'
-            ? 'folder'
-            : renameTarget?.type === 'markdown'
-              ? 'document'
-              : 'diagram'
-        }
+        entityType={renameTarget ? entityTypeLabel(renameTarget.type) : 'diagram'}
         onRename={handleRenameConfirm}
         onCancel={() => setRenameTarget(null)}
       />
 
       <DeleteConfirmationDialog
         open={!!deleteTarget}
-        title={
-          deleteTarget?.type === 'folder'
-            ? 'Delete folder?'
-            : deleteTarget?.type === 'markdown'
-              ? 'Delete document?'
-              : 'Delete diagram?'
-        }
-        message={
-          deleteTarget ? (
-            deleteTarget.type === 'folder' ? (
-              <>
-                The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently
-                deleted.
-              </>
-            ) : deleteTarget.type === 'markdown' ? (
-              <>
-                The document <b>{deleteTarget.file.name}</b> will be permanently deleted.
-              </>
-            ) : (
-              <>
-                The diagram <b>{deleteTarget.file.name}</b> will be permanently deleted.
-              </>
-            )
-          ) : (
-            ''
-          )
-        }
+        title={deleteTarget ? deleteTitle(deleteTarget.type) : ''}
+        message={deleteTarget ? deleteMessage(deleteTarget) : ''}
         detail="This can't be undone."
-        confirmLabel={
-          deleteTarget?.type === 'folder'
-            ? 'Delete folder'
-            : deleteTarget?.type === 'markdown'
-              ? 'Delete document'
-              : 'Delete diagram'
-        }
+        confirmLabel={deleteTarget ? deleteConfirmLabel(deleteTarget.type) : ''}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        style={{ display: 'none' }}
+        onChange={handleFileInputChange}
       />
 
       {project?.canManageFiles && (
@@ -563,6 +670,20 @@ export const ProjectContentSidebar = ({
           projectId={projectId}
           projectName={project?.name ?? 'Project'}
           folder={addDiagramFolder}
+        />
+      )}
+
+      {project?.canManageFiles && (
+        <AddMarkdownDialog
+          open={addMarkdownOpen}
+          onClose={() => { setAddMarkdownOpen(false); setAddMarkdownFolder(null); }}
+          onCreated={file => {
+            setAddMarkdownOpen(false);
+            setAddMarkdownFolder(null);
+            navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id));
+          }}
+          onCreate={name => createMarkdownMutation.mutateAsync({ name, folder: addMarkdownFolder ?? undefined })}
+          isPending={createMarkdownMutation.isPending}
         />
       )}
     </>

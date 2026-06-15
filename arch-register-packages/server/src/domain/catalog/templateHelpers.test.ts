@@ -24,6 +24,8 @@ const makeFile = (
   updated_at: now,
   created_by: null,
   updated_by: null,
+  mime_type: null,
+  original_filename: null,
   ...overrides
 });
 

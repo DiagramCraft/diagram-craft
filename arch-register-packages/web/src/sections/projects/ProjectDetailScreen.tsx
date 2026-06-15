@@ -14,7 +14,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ColorPicker } from '../../components/ColorPicker';
-import { TbPlus, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil } from 'react-icons/tb';
+import { TbPlus, TbFileText, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil, TbDownload } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -38,9 +38,11 @@ import {
   useRenameProjectFolder,
   useCloneProjectFile,
   useRenameProjectFile,
+  useRenameProjectBinaryFile,
   useMoveProjectFile,
   useToggleTemplateStatus,
-  useCreateProjectMarkdown
+  useCreateProjectMarkdown,
+  useUploadProjectFile
 } from '../../hooks/useProjectFiles';
 import {
   asProjectPublicId,
@@ -51,7 +53,13 @@ import {
 import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
 import { ProjectEntities } from './ProjectEntities';
-import type { ProjectMenuTarget } from './ProjectDiagramsView';
+import {
+  deleteConfirmLabel,
+  deleteMessage,
+  deleteTitle,
+  entityTypeLabel,
+  type MenuTarget as ProjectMenuTarget
+} from '../../lib/contentNode';
 import { RenameDialog } from '../../components/RenameDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 
@@ -113,9 +121,12 @@ export const ProjectDetailScreen = () => {
   const renameFolderMutation = useRenameProjectFolder(workspaceId, projectId);
   const cloneFileMutation = useCloneProjectFile(workspaceId, projectId);
   const renameFileMutation = useRenameProjectFile(workspaceId, projectId);
+  const renameBinaryFileMutation = useRenameProjectBinaryFile(workspaceId, projectId);
   const moveFileMutation = useMoveProjectFile(workspaceId, projectId);
   const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
   const createMarkdownMutation = useCreateProjectMarkdown(workspaceId, projectId);
+  const uploadFileMutation = useUploadProjectFile(workspaceId, projectId);
+  const mainAreaFileInputRef = useRef<HTMLInputElement>(null);
 
   // Entity hooks
   const { data: projectEntities = [] } = useProjectEntities(workspaceId, projectId);
@@ -454,6 +465,58 @@ export const ProjectDetailScreen = () => {
     );
   };
 
+  const triggerDownload = (file: FileEntry) => {
+    const a = document.createElement('a');
+    a.href = `/api/${workspaceId}/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`;
+    a.download = file.original_filename ?? file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const renderFileMenu = (file: FileEntry) => {
+    const currentFolder = file.path.includes('/')
+      ? file.path.substring(0, file.path.lastIndexOf('/'))
+      : null;
+
+    const allFolders = project.files.folders
+      .map(f => f.path)
+      .filter(path => path !== currentFolder);
+
+    return (
+      <>
+        <Menu.Item
+          leftSlot={<TbDownload size={13} />}
+          onClick={() => {
+            setMenu(null);
+            triggerDownload(file);
+          }}
+        >
+          Download
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.Item
+          leftSlot={<TbPencil size={13} />}
+          onClick={() => setRenameTarget({ type: 'file', file })}
+        >
+          Rename
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
+          {renderMoveToSubmenu(file, allFolders, currentFolder)}
+        </Menu.SubMenu>
+        <Menu.Separator />
+        <Menu.Item
+          type="danger"
+          leftSlot={<TbTrash size={13} />}
+          onClick={() => setDeleteTarget({ type: 'file', file })}
+        >
+          Delete
+        </Menu.Item>
+      </>
+    );
+  };
+
   const renderFolderMenu = (path: string) => (
     <>
       <Menu.Item
@@ -473,6 +536,15 @@ export const ProjectDetailScreen = () => {
         }}
       >
         New folder
+      </Menu.Item>
+      <Menu.Item
+        leftSlot={<TbFileText size={13} />}
+        onClick={() => {
+          setAddMarkdownFolder(path);
+          setAddMarkdownOpen(true);
+        }}
+      >
+        New wiki page
       </Menu.Item>
       <Menu.Separator />
       <Menu.Item
@@ -509,7 +581,11 @@ export const ProjectDetailScreen = () => {
       setRenameTarget(null);
       return;
     }
-    if (renameTarget.type !== 'folder') {
+    if (renameTarget.type === 'file') {
+      if (trimmed !== renameTarget.file.name) {
+        renameBinaryFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
+      }
+    } else if (renameTarget.type !== 'folder') {
       if (trimmed !== renameTarget.file.name) {
         renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
       }
@@ -559,6 +635,7 @@ export const ProjectDetailScreen = () => {
           onSetViewMode={setViewMode}
           onOpenDiagram={handleNavigateDiagram}
           onOpenMarkdown={handleNavigateMarkdown}
+          onDownloadFile={triggerDownload}
           onAddFolder={() => setAddFolderOpen(true)}
           onAddDiagram={() => {
             setAddDiagramFolder(contentFolderFilter);
@@ -567,6 +644,9 @@ export const ProjectDetailScreen = () => {
           onAddMarkdown={project.canManageFiles ? () => {
             setAddMarkdownFolder(contentFolderFilter);
             setAddMarkdownOpen(true);
+          } : undefined}
+          onUploadFile={project.canManageFiles ? () => {
+            mainAreaFileInputRef.current?.click();
           } : undefined}
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
@@ -588,11 +668,19 @@ export const ProjectDetailScreen = () => {
           onSetViewMode={setViewMode}
           onOpenDiagram={handleNavigateDiagram}
           onOpenMarkdown={handleNavigateMarkdown}
+          onDownloadFile={triggerDownload}
           onAddFolder={() => setAddFolderOpen(true)}
           onAddDiagram={() => {
             setAddDiagramFolder(contentFolderFilter);
             setAddDiagramOpen(true);
           }}
+          onAddMarkdown={project.canManageFiles ? () => {
+            setAddMarkdownFolder(contentFolderFilter);
+            setAddMarkdownOpen(true);
+          } : undefined}
+          onUploadFile={project.canManageFiles ? () => {
+            mainAreaFileInputRef.current?.click();
+          } : undefined}
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
       )}
@@ -653,6 +741,21 @@ export const ProjectDetailScreen = () => {
         />
       )}
 
+      {project.canManageFiles && (
+        <input
+          ref={mainAreaFileInputRef}
+          type="file"
+          style={{ display: 'none' }}
+          onChange={e => {
+            const f = e.target.files?.[0];
+            if (f) {
+              uploadFileMutation.mutate({ file: f, folder: contentFolderFilter });
+            }
+            e.target.value = '';
+          }}
+        />
+      )}
+
       {addEntityOpen && (
         <AddEntityToProjectDialog
           open={addEntityOpen}
@@ -670,7 +773,9 @@ export const ProjectDetailScreen = () => {
             ? renderDiagramMenu(menu.target.file)
             : menu.target.type === 'markdown'
               ? renderMarkdownMenu(menu.target.file)
-              : renderFolderMenu(menu.target.path)}
+              : menu.target.type === 'file'
+                ? renderFileMenu(menu.target.file)
+                : renderFolderMenu(menu.target.path)}
         </ContextMenu.Imperative>
       )}
 
@@ -707,54 +812,17 @@ export const ProjectDetailScreen = () => {
               : renameTarget.path
             : ''
         }
-        entityType={
-          renameTarget?.type === 'folder'
-            ? 'folder'
-            : renameTarget?.type === 'markdown'
-              ? 'document'
-              : 'diagram'
-        }
+        entityType={renameTarget ? entityTypeLabel(renameTarget.type) : 'diagram'}
         onRename={handleRenameConfirm}
         onCancel={() => setRenameTarget(null)}
       />
 
       <DeleteConfirmationDialog
         open={!!deleteTarget}
-        title={
-          deleteTarget?.type === 'folder'
-            ? 'Delete folder?'
-            : deleteTarget?.type === 'markdown'
-              ? 'Delete document?'
-              : 'Delete diagram?'
-        }
-        message={
-          deleteTarget ? (
-            deleteTarget.type === 'folder' ? (
-              <>
-                The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently
-                deleted.
-              </>
-            ) : deleteTarget.type === 'markdown' ? (
-              <>
-                The document <b>{deleteTarget.file.name}</b> will be permanently deleted.
-              </>
-            ) : (
-              <>
-                The diagram <b>{deleteTarget.file.name}</b> will be permanently deleted.
-              </>
-            )
-          ) : (
-            ''
-          )
-        }
+        title={deleteTarget ? deleteTitle(deleteTarget.type) : ''}
+        message={deleteTarget ? deleteMessage(deleteTarget) : ''}
         detail="This can't be undone."
-        confirmLabel={
-          deleteTarget?.type === 'folder'
-            ? 'Delete folder'
-            : deleteTarget?.type === 'markdown'
-              ? 'Delete document'
-              : 'Delete diagram'
-        }
+        confirmLabel={deleteTarget ? deleteConfirmLabel(deleteTarget.type) : ''}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />

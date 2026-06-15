@@ -276,7 +276,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
       if (existing) {
         this.run(
-          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ? WHERE id = ?',
+          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = COALESCE(?, original_filename) WHERE id = ?',
           [
             input.name,
             input.parent_id ?? null,
@@ -285,12 +285,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
             input.unresolved_comment_count,
             input.updated_at.toISOString(),
             input.updated_by ?? null,
+            input.mime_type ?? null,
+            input.original_filename ?? null,
             existing.id
           ]
         );
       } else {
         this.run(
-          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
@@ -308,7 +310,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
             input.created_atIfNew.toISOString(),
             input.updated_at.toISOString(),
             input.created_byIfNew ?? null,
-            input.updated_by ?? null
+            input.updated_by ?? null,
+            input.mime_type ?? null,
+            input.original_filename ?? null
           ]
         );
       }
@@ -426,6 +430,177 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       this.run(
         'DELETE FROM content_node WHERE workspace = ? AND project_id = ? AND id = ?',
         [workspace, projectId, folder.id]
+      );
+    });
+
+    tx();
+    return [folder, ...descendants];
+  }
+
+  async deleteEntityContentNodeByPath(workspace: string, entityId: string, path: string) {
+    const row = (await this.listEntityContentNodes(workspace, entityId)).find(n => n.path === path) ?? null;
+    if (!row) return null;
+    this.run('DELETE FROM content_node WHERE workspace = ? AND entity_id = ? AND path = ?', [
+      workspace,
+      entityId,
+      path
+    ]);
+    return row;
+  }
+
+  async renameEntityContentNodeFolder(
+    workspace: string,
+    entityId: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ) {
+    const oldPathPrefix = `${oldPath}/`;
+    const newPathPrefix = `${newPath}/`;
+    const oldPathLength = oldPath.length;
+
+    const folderRow = this.get<{ id: string }>(
+      'SELECT id FROM content_node WHERE workspace = ? AND entity_id = ? AND path = ? AND type = ?',
+      [workspace, entityId, oldPath, 'folder']
+    );
+
+    const childIds = this.all<{ id: string }>(
+      'SELECT id FROM content_node WHERE workspace = ? AND entity_id = ? AND path LIKE ?',
+      [workspace, entityId, `${oldPathPrefix}%`]
+    );
+
+    const tx = this.db.transaction(() => {
+      if (folderRow) {
+        this.run(
+          'UPDATE content_node SET path = ?, updated_at = ? WHERE workspace = ? AND entity_id = ? AND id = ?',
+          [newPath, updated_at.toISOString(), workspace, entityId, folderRow.id]
+        );
+      }
+      this.run(
+        `UPDATE content_node
+         SET path = ? || substr(path, ?),
+             updated_at = ?
+         WHERE workspace = ? AND entity_id = ? AND path LIKE ?`,
+        [
+          newPathPrefix,
+          oldPathLength + 2,
+          updated_at.toISOString(),
+          workspace,
+          entityId,
+          `${oldPathPrefix}%`
+        ]
+      );
+    });
+
+    tx();
+    return [...(folderRow ? [folderRow.id] : []), ...childIds.map(row => row.id)];
+  }
+
+  async deleteEntityContentNodeFolder(workspace: string, entityId: string, folderPath: string) {
+    const entityNodes = await this.listEntityContentNodes(workspace, entityId);
+    const folder = entityNodes.find(n => n.path === folderPath && n.type === 'folder') ?? null;
+    if (!folder) return [];
+
+    const descendants = this.all(
+      `WITH RECURSIVE desc_tree(id) AS (
+         SELECT id FROM content_node WHERE parent_id = ?
+         UNION ALL
+         SELECT cn.id FROM content_node cn
+         JOIN desc_tree d ON cn.parent_id = d.id
+       )
+       SELECT * FROM content_node WHERE id IN (SELECT id FROM desc_tree)`,
+      [folder.id],
+      sqliteMappers.contentNode
+    );
+
+    const tx = this.db.transaction(() => {
+      this.run(
+        'DELETE FROM content_node WHERE workspace = ? AND entity_id = ? AND id = ?',
+        [workspace, entityId, folder.id]
+      );
+    });
+
+    tx();
+    return [folder, ...descendants];
+  }
+
+  async deleteWorkspaceContentNodeByPath(workspace: string, path: string) {
+    const row = (await this.listWorkspaceContentNodes(workspace)).find(n => n.path === path) ?? null;
+    if (!row) return null;
+    this.run(
+      'DELETE FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path = ?',
+      [workspace, path]
+    );
+    return row;
+  }
+
+  async renameWorkspaceContentNodeFolder(
+    workspace: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ) {
+    const oldPathPrefix = `${oldPath}/`;
+    const newPathPrefix = `${newPath}/`;
+    const oldPathLength = oldPath.length;
+
+    const folderRow = this.get<{ id: string }>(
+      'SELECT id FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path = ? AND type = ?',
+      [workspace, oldPath, 'folder']
+    );
+
+    const childIds = this.all<{ id: string }>(
+      'SELECT id FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path LIKE ?',
+      [workspace, `${oldPathPrefix}%`]
+    );
+
+    const tx = this.db.transaction(() => {
+      if (folderRow) {
+        this.run(
+          'UPDATE content_node SET path = ?, updated_at = ? WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND id = ?',
+          [newPath, updated_at.toISOString(), workspace, folderRow.id]
+        );
+      }
+      this.run(
+        `UPDATE content_node
+         SET path = ? || substr(path, ?),
+             updated_at = ?
+         WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND path LIKE ?`,
+        [
+          newPathPrefix,
+          oldPathLength + 2,
+          updated_at.toISOString(),
+          workspace,
+          `${oldPathPrefix}%`
+        ]
+      );
+    });
+
+    tx();
+    return [...(folderRow ? [folderRow.id] : []), ...childIds.map(row => row.id)];
+  }
+
+  async deleteWorkspaceContentNodeFolder(workspace: string, folderPath: string) {
+    const wsNodes = await this.listWorkspaceContentNodes(workspace);
+    const folder = wsNodes.find(n => n.path === folderPath && n.type === 'folder') ?? null;
+    if (!folder) return [];
+
+    const descendants = this.all(
+      `WITH RECURSIVE desc_tree(id) AS (
+         SELECT id FROM content_node WHERE parent_id = ?
+         UNION ALL
+         SELECT cn.id FROM content_node cn
+         JOIN desc_tree d ON cn.parent_id = d.id
+       )
+       SELECT * FROM content_node WHERE id IN (SELECT id FROM desc_tree)`,
+      [folder.id],
+      sqliteMappers.contentNode
+    );
+
+    const tx = this.db.transaction(() => {
+      this.run(
+        'DELETE FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL AND id = ?',
+        [workspace, folder.id]
       );
     });
 

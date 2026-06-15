@@ -260,8 +260,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       let row: ContentNodeDbResult | undefined;
       if (input.entity_id != null) {
         [row] = await this.sql<ContentNodeDbResult[]>`
-          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by)
-          VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null})
+          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
+          VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, entity_id, path) WHERE entity_id IS NOT NULL
           DO UPDATE SET
             name = EXCLUDED.name,
@@ -270,13 +270,15 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             comment_count = EXCLUDED.comment_count,
             unresolved_comment_count = EXCLUDED.unresolved_comment_count,
             updated_at = EXCLUDED.updated_at,
-            updated_by = EXCLUDED.updated_by
+            updated_by = EXCLUDED.updated_by,
+            mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
+            original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename)
           RETURNING *
         `;
       } else if (isWorkspaceOwned) {
         [row] = await this.sql<ContentNodeDbResult[]>`
-          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by)
-          VALUES (${id}, ${input.workspace}, null, null, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null})
+          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
+          VALUES (${id}, ${input.workspace}, null, null, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, path) WHERE project_id IS NULL AND entity_id IS NULL
           DO UPDATE SET
             name = EXCLUDED.name,
@@ -285,13 +287,15 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             comment_count = EXCLUDED.comment_count,
             unresolved_comment_count = EXCLUDED.unresolved_comment_count,
             updated_at = EXCLUDED.updated_at,
-            updated_by = EXCLUDED.updated_by
+            updated_by = EXCLUDED.updated_by,
+            mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
+            original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename)
           RETURNING *
         `;
       } else {
         [row] = await this.sql<ContentNodeDbResult[]>`
-          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by)
-          VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null})
+          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
+          VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, project_id, path) WHERE project_id IS NOT NULL
           DO UPDATE SET
             name = EXCLUDED.name,
@@ -300,7 +304,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             comment_count = EXCLUDED.comment_count,
             unresolved_comment_count = EXCLUDED.unresolved_comment_count,
             updated_at = EXCLUDED.updated_at,
-            updated_by = EXCLUDED.updated_by
+            updated_by = EXCLUDED.updated_by,
+            mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
+            original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename)
           RETURNING *
         `;
       }
@@ -320,22 +326,22 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       let row: ContentNodeDbResult | undefined;
       if (input.entity_id != null) {
         [row] = await this.sql<ContentNodeDbResult[]>`
-          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by)
-          VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null})
+          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
+          VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, entity_id, path) WHERE entity_id IS NOT NULL DO NOTHING
           RETURNING *
         `;
       } else if (isWorkspaceOwned) {
         [row] = await this.sql<ContentNodeDbResult[]>`
-          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by)
-          VALUES (${id}, ${input.workspace}, null, null, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null})
+          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
+          VALUES (${id}, ${input.workspace}, null, null, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, path) WHERE project_id IS NULL AND entity_id IS NULL DO NOTHING
           RETURNING *
         `;
       } else {
         [row] = await this.sql<ContentNodeDbResult[]>`
-          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by)
-          VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null})
+          INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
+          VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, project_id, path) WHERE project_id IS NOT NULL DO NOTHING
           RETURNING *
         `;
@@ -409,6 +415,148 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       await this.sql`
         DELETE FROM content_node
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${folder.id}
+      `;
+
+      return [folder, ...descendants];
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteEntityContentNodeByPath(workspace: string, entityId: string, path: string) {
+    try {
+      const [row] = await this.sql<ContentNodeDbResult[]>`
+        DELETE FROM content_node
+        WHERE workspace = ${workspace} AND entity_id = ${entityId} AND path = ${path}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async renameEntityContentNodeFolder(
+    workspace: string,
+    entityId: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ) {
+    try {
+      const folderRows = await this.sql<{ id: string }[]>`
+        UPDATE content_node
+        SET path = ${newPath}, updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND entity_id = ${entityId}
+          AND path = ${oldPath} AND type = 'folder'
+        RETURNING id
+      `;
+      const childRows = await this.sql<{ id: string }[]>`
+        UPDATE content_node
+        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+            updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND entity_id = ${entityId} AND path LIKE ${`${oldPath}/%`}
+        RETURNING id
+      `;
+      return [...folderRows.map(r => r.id), ...childRows.map(r => r.id)];
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteEntityContentNodeFolder(workspace: string, entityId: string, folderPath: string) {
+    try {
+      const [folder] = await this.sql<ContentNodeDbResult[]>`
+        SELECT * FROM content_node
+        WHERE workspace = ${workspace} AND entity_id = ${entityId}
+          AND path = ${folderPath} AND type = 'folder'
+      `;
+      if (!folder) return [];
+
+      const descendants = await this.sql<ContentNodeDbResult[]>`
+        WITH RECURSIVE desc_tree AS (
+          SELECT * FROM content_node WHERE parent_id = ${folder.id}
+          UNION ALL
+          SELECT cn.* FROM content_node cn
+          JOIN desc_tree dt ON cn.parent_id = dt.id
+        )
+        SELECT * FROM desc_tree
+      `;
+
+      await this.sql`
+        DELETE FROM content_node
+        WHERE workspace = ${workspace} AND entity_id = ${entityId} AND id = ${folder.id}
+      `;
+
+      return [folder, ...descendants];
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteWorkspaceContentNodeByPath(workspace: string, path: string) {
+    try {
+      const [row] = await this.sql<ContentNodeDbResult[]>`
+        DELETE FROM content_node
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL AND path = ${path}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async renameWorkspaceContentNodeFolder(
+    workspace: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ) {
+    try {
+      const folderRows = await this.sql<{ id: string }[]>`
+        UPDATE content_node
+        SET path = ${newPath}, updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
+          AND path = ${oldPath} AND type = 'folder'
+        RETURNING id
+      `;
+      const childRows = await this.sql<{ id: string }[]>`
+        UPDATE content_node
+        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+            updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
+          AND path LIKE ${`${oldPath}/%`}
+        RETURNING id
+      `;
+      return [...folderRows.map(r => r.id), ...childRows.map(r => r.id)];
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteWorkspaceContentNodeFolder(workspace: string, folderPath: string) {
+    try {
+      const [folder] = await this.sql<ContentNodeDbResult[]>`
+        SELECT * FROM content_node
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
+          AND path = ${folderPath} AND type = 'folder'
+      `;
+      if (!folder) return [];
+
+      const descendants = await this.sql<ContentNodeDbResult[]>`
+        WITH RECURSIVE desc_tree AS (
+          SELECT * FROM content_node WHERE parent_id = ${folder.id}
+          UNION ALL
+          SELECT cn.* FROM content_node cn
+          JOIN desc_tree dt ON cn.parent_id = dt.id
+        )
+        SELECT * FROM desc_tree
+      `;
+
+      await this.sql`
+        DELETE FROM content_node
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL AND id = ${folder.id}
       `;
 
       return [folder, ...descendants];
