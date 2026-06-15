@@ -423,6 +423,148 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     }
   }
 
+  async deleteEntityContentNodeByPath(workspace: string, entityId: string, path: string) {
+    try {
+      const [row] = await this.sql<ContentNodeDbResult[]>`
+        DELETE FROM content_node
+        WHERE workspace = ${workspace} AND entity_id = ${entityId} AND path = ${path}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async renameEntityContentNodeFolder(
+    workspace: string,
+    entityId: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ) {
+    try {
+      const folderRows = await this.sql<{ id: string }[]>`
+        UPDATE content_node
+        SET path = ${newPath}, updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND entity_id = ${entityId}
+          AND path = ${oldPath} AND type = 'folder'
+        RETURNING id
+      `;
+      const childRows = await this.sql<{ id: string }[]>`
+        UPDATE content_node
+        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+            updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND entity_id = ${entityId} AND path LIKE ${`${oldPath}/%`}
+        RETURNING id
+      `;
+      return [...folderRows.map(r => r.id), ...childRows.map(r => r.id)];
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteEntityContentNodeFolder(workspace: string, entityId: string, folderPath: string) {
+    try {
+      const [folder] = await this.sql<ContentNodeDbResult[]>`
+        SELECT * FROM content_node
+        WHERE workspace = ${workspace} AND entity_id = ${entityId}
+          AND path = ${folderPath} AND type = 'folder'
+      `;
+      if (!folder) return [];
+
+      const descendants = await this.sql<ContentNodeDbResult[]>`
+        WITH RECURSIVE desc_tree AS (
+          SELECT * FROM content_node WHERE parent_id = ${folder.id}
+          UNION ALL
+          SELECT cn.* FROM content_node cn
+          JOIN desc_tree dt ON cn.parent_id = dt.id
+        )
+        SELECT * FROM desc_tree
+      `;
+
+      await this.sql`
+        DELETE FROM content_node
+        WHERE workspace = ${workspace} AND entity_id = ${entityId} AND id = ${folder.id}
+      `;
+
+      return [folder, ...descendants];
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteWorkspaceContentNodeByPath(workspace: string, path: string) {
+    try {
+      const [row] = await this.sql<ContentNodeDbResult[]>`
+        DELETE FROM content_node
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL AND path = ${path}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async renameWorkspaceContentNodeFolder(
+    workspace: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ) {
+    try {
+      const folderRows = await this.sql<{ id: string }[]>`
+        UPDATE content_node
+        SET path = ${newPath}, updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
+          AND path = ${oldPath} AND type = 'folder'
+        RETURNING id
+      `;
+      const childRows = await this.sql<{ id: string }[]>`
+        UPDATE content_node
+        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+            updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
+          AND path LIKE ${`${oldPath}/%`}
+        RETURNING id
+      `;
+      return [...folderRows.map(r => r.id), ...childRows.map(r => r.id)];
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteWorkspaceContentNodeFolder(workspace: string, folderPath: string) {
+    try {
+      const [folder] = await this.sql<ContentNodeDbResult[]>`
+        SELECT * FROM content_node
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
+          AND path = ${folderPath} AND type = 'folder'
+      `;
+      if (!folder) return [];
+
+      const descendants = await this.sql<ContentNodeDbResult[]>`
+        WITH RECURSIVE desc_tree AS (
+          SELECT * FROM content_node WHERE parent_id = ${folder.id}
+          UNION ALL
+          SELECT cn.* FROM content_node cn
+          JOIN desc_tree dt ON cn.parent_id = dt.id
+        )
+        SELECT * FROM desc_tree
+      `;
+
+      await this.sql`
+        DELETE FROM content_node
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL AND id = ${folder.id}
+      `;
+
+      return [folder, ...descendants];
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
   async listProjectEntities(workspace: string, projectId: string) {
     return await this.sql<ProjectEntityDbResult[]>`
       SELECT

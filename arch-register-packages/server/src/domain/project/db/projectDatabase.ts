@@ -193,6 +193,35 @@ export type ProjectDatabase = {
     folderPath: string
   ): Promise<ContentNodeDbResult[]>;
 
+  deleteEntityContentNodeByPath(
+    ws: string,
+    entityId: string,
+    path: string
+  ): Promise<ContentNodeDbResult | null>;
+  renameEntityContentNodeFolder(
+    ws: string,
+    entityId: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ): Promise<string[]>;
+  deleteEntityContentNodeFolder(
+    ws: string,
+    entityId: string,
+    folderPath: string
+  ): Promise<ContentNodeDbResult[]>;
+  deleteWorkspaceContentNodeByPath(ws: string, path: string): Promise<ContentNodeDbResult | null>;
+  renameWorkspaceContentNodeFolder(
+    ws: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ): Promise<string[]>;
+  deleteWorkspaceContentNodeFolder(
+    ws: string,
+    folderPath: string
+  ): Promise<ContentNodeDbResult[]>;
+
   listProjectEntities(ws: string, projectId: string): Promise<ProjectEntityDbResult[]>;
   addProjectEntity(input: ProjectEntityDbCreate): Promise<ProjectEntityDbResult>;
   updateProjectEntity(

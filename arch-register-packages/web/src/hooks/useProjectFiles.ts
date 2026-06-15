@@ -440,3 +440,241 @@ export const useUploadWorkspaceFile = (workspaceId: string) => {
     }
   });
 };
+
+// ── Entity content mutations ───────────────────────────────────
+
+export const useDeleteEntityFile = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (filePath: string) =>
+      orpcClient.projects.deleteEntityFile({
+        params: { workspace: workspaceId, entityId },
+        query: { path: filePath }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: entityContentKeys.all(workspaceId, entityId) });
+    }
+  });
+};
+
+export const useDeleteEntityFolder = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (folderPath: string) =>
+      orpcClient.projects.deleteEntityFolder({
+        params: { workspace: workspaceId, entityId },
+        query: { path: folderPath }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: entityContentKeys.all(workspaceId, entityId) });
+    }
+  });
+};
+
+export const useRenameEntityFolder = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ oldPath, newPath }: { oldPath: string; newPath: string }) =>
+      orpcClient.projects.renameEntityFolder({
+        params: { workspace: workspaceId, entityId },
+        body: { oldPath, newPath }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: entityContentKeys.all(workspaceId, entityId) });
+    }
+  });
+};
+
+export const useCloneEntityFile = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: ProjectFile) =>
+      orpcClient.projects.cloneEntityFile({
+        params: { workspace: workspaceId, entityId },
+        query: { path: file.path }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: entityContentKeys.all(workspaceId, entityId) });
+    }
+  });
+};
+
+export const useRenameEntityFile = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, newName }: { file: ProjectFile; newName: string }) => {
+      const folder = file.path.includes('/')
+        ? file.path.substring(0, file.path.lastIndexOf('/'))
+        : null;
+      const ext = file.type === 'markdown' ? '.md' : '.json';
+      const newPath = folder ? `${folder}/${newName}${ext}` : `${newName}${ext}`;
+      return orpcClient.projects.relocateEntityFile({
+        params: { workspace: workspaceId, entityId },
+        query: { path: file.path },
+        body: { newPath }
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: entityContentKeys.all(workspaceId, entityId) });
+    }
+  });
+};
+
+export const useRenameEntityBinaryFile = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, newName }: { file: ProjectFile; newName: string }) => {
+      const folder = file.path.includes('/')
+        ? file.path.substring(0, file.path.lastIndexOf('/'))
+        : null;
+      const newPath = folder ? `${folder}/${newName}` : newName;
+      return orpcClient.projects.relocateEntityFile({
+        params: { workspace: workspaceId, entityId },
+        query: { path: file.path },
+        body: { newPath }
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: entityContentKeys.all(workspaceId, entityId) });
+    }
+  });
+};
+
+export const useMoveEntityFile = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, targetFolder }: { file: ProjectFile; targetFolder: string | null }) => {
+      const fileName = file.path.includes('/')
+        ? file.path.substring(file.path.lastIndexOf('/') + 1)
+        : file.path;
+      const newPath = targetFolder ? `${targetFolder}/${fileName}` : fileName;
+      return orpcClient.projects.relocateEntityFile({
+        params: { workspace: workspaceId, entityId },
+        query: { path: file.path },
+        body: { newPath }
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: entityContentKeys.all(workspaceId, entityId) });
+    }
+  });
+};
+
+// ── Workspace content mutations ────────────────────────────────
+
+export const useDeleteWorkspaceFile = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (filePath: string) =>
+      orpcClient.projects.deleteWorkspaceFile({
+        params: { workspace: workspaceId },
+        query: { path: filePath }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useDeleteWorkspaceFolder = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (folderPath: string) =>
+      orpcClient.projects.deleteWorkspaceFolder({
+        params: { workspace: workspaceId },
+        query: { path: folderPath }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useRenameWorkspaceFolder = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ oldPath, newPath }: { oldPath: string; newPath: string }) =>
+      orpcClient.projects.renameWorkspaceFolder({
+        params: { workspace: workspaceId },
+        body: { oldPath, newPath }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useCloneWorkspaceFile = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: ProjectFile) =>
+      orpcClient.projects.cloneWorkspaceFile({
+        params: { workspace: workspaceId },
+        query: { path: file.path }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useRenameWorkspaceFile = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, newName }: { file: ProjectFile; newName: string }) => {
+      const folder = file.path.includes('/')
+        ? file.path.substring(0, file.path.lastIndexOf('/'))
+        : null;
+      const ext = file.type === 'markdown' ? '.md' : '.json';
+      const newPath = folder ? `${folder}/${newName}${ext}` : `${newName}${ext}`;
+      return orpcClient.projects.relocateWorkspaceFile({
+        params: { workspace: workspaceId },
+        query: { path: file.path },
+        body: { newPath }
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useRenameWorkspaceBinaryFile = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, newName }: { file: ProjectFile; newName: string }) => {
+      const folder = file.path.includes('/')
+        ? file.path.substring(0, file.path.lastIndexOf('/'))
+        : null;
+      const newPath = folder ? `${folder}/${newName}` : newName;
+      return orpcClient.projects.relocateWorkspaceFile({
+        params: { workspace: workspaceId },
+        query: { path: file.path },
+        body: { newPath }
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useMoveWorkspaceFile = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, targetFolder }: { file: ProjectFile; targetFolder: string | null }) => {
+      const fileName = file.path.includes('/')
+        ? file.path.substring(file.path.lastIndexOf('/') + 1)
+        : file.path;
+      const newPath = targetFolder ? `${targetFolder}/${fileName}` : fileName;
+      return orpcClient.projects.relocateWorkspaceFile({
+        params: { workspace: workspaceId },
+        query: { path: file.path },
+        body: { newPath }
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};

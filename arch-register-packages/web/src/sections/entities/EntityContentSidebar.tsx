@@ -1,6 +1,26 @@
 import { useRef, useState } from 'react';
-import { TbFolder, TbHome, TbPlus, TbUpload } from 'react-icons/tb';
-import { getFileNodeIcon } from '../../lib/contentNode';
+import {
+  TbCopy,
+  TbDownload,
+  TbFileText,
+  TbFolder,
+  TbFolderOpen,
+  TbHome,
+  TbPencil,
+  TbPlus,
+  TbTrash,
+  TbUpload
+} from 'react-icons/tb';
+import {
+  deleteConfirmLabel,
+  deleteMessage,
+  deleteTitle,
+  entityTypeLabel,
+  fileMenuTargetType,
+  getFileNodeIcon,
+  type MenuTarget
+} from '../../lib/contentNode';
+import type { FileEntry } from '../../lib/api';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
@@ -11,7 +31,23 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/api';
 import { TypeBadge } from '../../components/TypeBadge';
 import { AddEntityFolderDialog } from './AddEntityFolderDialog';
-import { useUploadEntityFile } from '../../hooks/useProjectFiles';
+import {
+  useUploadEntityFile,
+  useCreateEntityMarkdown,
+  useDeleteEntityFile,
+  useDeleteEntityFolder,
+  useRenameEntityFolder,
+  useCloneEntityFile,
+  useRenameEntityFile,
+  useRenameEntityBinaryFile,
+  useMoveEntityFile
+} from '../../hooks/useProjectFiles';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { RenameDialog } from '../../components/RenameDialog';
+import { AddDiagramDialog } from '../projects/AddDiagramDialog';
+import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -32,12 +68,27 @@ export const EntityContentSidebar = ({
   const { data: entity } = useEntity(workspaceSlug, entityId);
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [addMenu, setAddMenu] = useState<{ x: number; y: number } | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<MenuTarget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MenuTarget | null>(null);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const [addDiagramOpen, setAddDiagramOpen] = useState(false);
+  const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
+  const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
+  const createMarkdownMutation = useCreateEntityMarkdown(workspaceSlug, entityId);
   const uploadFileMutation = useUploadEntityFile(workspaceSlug, entityId);
+  const deleteFileMutation = useDeleteEntityFile(workspaceSlug, entityId);
+  const deleteFolderMutation = useDeleteEntityFolder(workspaceSlug, entityId);
+  const renameFolderMutation = useRenameEntityFolder(workspaceSlug, entityId);
+  const cloneFileMutation = useCloneEntityFile(workspaceSlug, entityId);
+  const renameFileMutation = useRenameEntityFile(workspaceSlug, entityId);
+  const renameBinaryFileMutation = useRenameEntityBinaryFile(workspaceSlug, entityId);
+  const moveFileMutation = useMoveEntityFile(workspaceSlug, entityId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadFolder, setUploadFolder] = useState<string | null>(null);
 
-  const triggerDownload = (file: EntityFileEntry) => {
+  const triggerDownload = (file: FileEntry) => {
     const a = document.createElement('a');
     a.href = `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(file.path)}`;
     a.download = file.original_filename ?? file.name;
@@ -83,20 +134,10 @@ export const EntityContentSidebar = ({
   };
 
   // Build folder tree for nested rendering
-  type EntityFileEntry = {
-    id: string;
-    name: string;
-    path: string;
-    project_id: string | null;
-    project_public_id?: string | null;
-    type: 'diagram' | 'folder' | 'markdown' | 'file';
-    original_filename?: string | null;
-  };
-
   type FolderNode = {
     path: string;
     name: string;
-    files: EntityFileEntry[];
+    files: FileEntry[];
     children: FolderNode[];
   };
 
@@ -104,7 +145,7 @@ export const EntityContentSidebar = ({
     folders: Array<{
       path: string;
       name: string;
-      files: EntityFileEntry[];
+      files: FileEntry[];
     }>
   ): FolderNode[] => {
     const root: FolderNode[] = [];
@@ -114,11 +155,11 @@ export const EntityContentSidebar = ({
 
     for (const folder of sorted) {
       const parts = folder.path.split('/');
-      const node: FolderNode = { 
-        path: folder.path, 
-        name: folder.name, 
+      const node: FolderNode = {
+        path: folder.path,
+        name: folder.name,
         files: folder.files,
-        children: [] 
+        children: []
       };
       map.set(folder.path, node);
 
@@ -130,7 +171,6 @@ export const EntityContentSidebar = ({
         if (parent) {
           parent.children.push(node);
         } else {
-          // Parent not found, add to root (shouldn't happen with proper data)
           root.push(node);
         }
       }
@@ -139,10 +179,225 @@ export const EntityContentSidebar = ({
     return root;
   };
 
-  const folderTree = data ? buildFolderTree(data.folders) : [];
+  const folderTree = data ? buildFolderTree(data.folders as unknown as Array<{ path: string; name: string; files: FileEntry[] }>) : [];
   const activeFilePath = data
     ? [...data.rootFiles, ...data.folders.flatMap(folder => folder.files)].find(file => file.id === activeFileId)?.path ?? null
     : null;
+
+  const allFolderPaths = data?.folders.map(f => f.path) ?? [];
+
+  const renderMoveToSubmenu = (file: FileEntry, folders: string[], currentFolder: string | null) => {
+    type MoveFolderNode = {
+      path: string;
+      name: string;
+      children: MoveFolderNode[];
+    };
+
+    const root: MoveFolderNode[] = [];
+    const map = new Map<string, MoveFolderNode>();
+    for (const path of [...folders].sort()) {
+      const name = path.split('/').at(-1) ?? path;
+      const node: MoveFolderNode = { path, name, children: [] };
+      map.set(path, node);
+      const parts = path.split('/');
+      if (parts.length === 1) {
+        root.push(node);
+      } else {
+        map.get(parts.slice(0, -1).join('/'))?.children.push(node);
+      }
+    }
+
+    const renderNodes = (nodes: MoveFolderNode[]): React.ReactNode =>
+      nodes.map(node =>
+        node.children.length > 0 ? (
+          <Menu.SubMenu key={node.path} label={node.name} leftSlot={<TbFolder size={13} />}>
+            <Menu.Item
+              leftSlot={<TbFolder size={13} />}
+              disabled={node.path === currentFolder}
+              onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+            >
+              {node.name}
+            </Menu.Item>
+            {renderNodes(node.children)}
+          </Menu.SubMenu>
+        ) : (
+          <Menu.Item
+            key={node.path}
+            leftSlot={<TbFolder size={13} />}
+            disabled={node.path === currentFolder}
+            onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+          >
+            {node.name}
+          </Menu.Item>
+        )
+      );
+
+    return (
+      <>
+        <Menu.Item
+          leftSlot={<TbFolderOpen size={13} />}
+          disabled={currentFolder === null}
+          onClick={() => moveFileMutation.mutate({ file, targetFolder: null })}
+        >
+          Root
+        </Menu.Item>
+        {renderNodes(root)}
+      </>
+    );
+  };
+
+  const renderMenu = (target: MenuTarget) => {
+    if (target.type === 'folder') {
+      return (
+        <>
+          <Menu.Item
+            leftSlot={<TbPlus size={13} />}
+            onClick={() => {
+              setMenu(null);
+              setAddDiagramOpen(true);
+            }}
+          >
+            New diagram
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbFolderOpen size={13} />}
+            onClick={() => {
+              setMenu(null);
+              setAddFolderOpen(true);
+            }}
+          >
+            New folder
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbUpload size={13} />}
+            onClick={() => {
+              setMenu(null);
+              openUploadPicker(target.path);
+            }}
+          >
+            Upload file
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbFileText size={13} />}
+            onClick={() => {
+              setMenu(null);
+              setAddMarkdownFolder(target.path);
+              setAddMarkdownOpen(true);
+            }}
+          >
+            New wiki page
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteTarget(target)}
+          >
+            Delete
+          </Menu.Item>
+        </>
+      );
+    }
+
+    const currentFolder = target.file.path.includes('/')
+      ? target.file.path.substring(0, target.file.path.lastIndexOf('/'))
+      : null;
+    const folders = allFolderPaths.filter(path => path !== currentFolder);
+
+    if (target.type === 'file') {
+      return (
+        <>
+          <Menu.Item
+            leftSlot={<TbDownload size={13} />}
+            onClick={() => {
+              setMenu(null);
+              triggerDownload(target.file);
+            }}
+          >
+            Download
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
+            {renderMoveToSubmenu(target.file, folders, currentFolder)}
+          </Menu.SubMenu>
+          <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteTarget(target)}
+          >
+            Delete
+          </Menu.Item>
+        </>
+      );
+    }
+
+    return (
+      <>
+        {target.type === 'diagram' && (
+          <Menu.Item
+            leftSlot={<TbCopy size={13} />}
+            onClick={() => cloneFileMutation.mutate(target.file)}
+          >
+            Clone
+          </Menu.Item>
+        )}
+        {target.type === 'diagram' && <Menu.Separator />}
+        <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
+          {renderMoveToSubmenu(target.file, folders, currentFolder)}
+        </Menu.SubMenu>
+        <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
+          Rename
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.Item
+          type="danger"
+          leftSlot={<TbTrash size={13} />}
+          onClick={() => setDeleteTarget(target)}
+        >
+          Delete
+        </Menu.Item>
+      </>
+    );
+  };
+
+  const handleRenameConfirm = (newName: string) => {
+    if (!renameTarget) return;
+    const trimmed = newName.trim();
+    if (!trimmed) {
+      setRenameTarget(null);
+      return;
+    }
+    if (renameTarget.type === 'file') {
+      if (trimmed !== renameTarget.file.name) {
+        renameBinaryFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
+      }
+    } else if (renameTarget.type !== 'folder') {
+      if (trimmed !== renameTarget.file.name) {
+        renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
+      }
+    } else if (trimmed !== renameTarget.path) {
+      renameFolderMutation.mutate({ oldPath: renameTarget.path, newPath: trimmed });
+    }
+    setRenameTarget(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type !== 'folder') {
+      deleteFileMutation.mutate(deleteTarget.file.path);
+    } else {
+      deleteFolderMutation.mutate(deleteTarget.path);
+    }
+    setDeleteTarget(null);
+  };
 
   const renderFolderNode = (node: FolderNode, depth: number = 0): React.ReactNode => {
     const isExpanded =
@@ -164,6 +419,11 @@ export const EntityContentSidebar = ({
                 contentFolder: node.path
               })
             );
+          }}
+          onContextMenu={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenu({ x: e.clientX, y: e.clientY, target: { type: 'folder', path: node.path } });
           }}
         />
         {isExpanded && (
@@ -211,6 +471,15 @@ export const EntityContentSidebar = ({
                         }
                       }
                 }
+                onContextMenu={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMenu({
+                    x: e.clientX,
+                    y: e.clientY,
+                    target: { type: fileMenuTargetType(file.type), file }
+                  });
+                }}
               />
             ))}
             {node.children.map(child => renderFolderNode(child, depth + 1))}
@@ -234,16 +503,11 @@ export const EntityContentSidebar = ({
           <button
             type="button"
             className={styles.action}
-            onClick={() => openUploadPicker(contentFolder ?? null)}
-            title="Upload file"
-          >
-            <TbUpload size={13} />
-          </button>
-          <button
-            type="button"
-            className={styles.action}
-            onClick={() => setAddFolderOpen(true)}
-            title="New folder"
+            onClick={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setAddMenu({ x: rect.left, y: rect.bottom });
+            }}
+            title="New"
           >
             <TbPlus size={13} />
           </button>
@@ -262,11 +526,11 @@ export const EntityContentSidebar = ({
           <TreeRow
             key={file.id}
             icon={getFileNodeIcon(file.type)}
-            label={(file as EntityFileEntry).original_filename ?? file.name}
+            label={(file as FileEntry).original_filename ?? file.name}
             active={file.id === activeFileId}
             onClick={
               file.type === 'file'
-                ? () => triggerDownload(file as EntityFileEntry)
+                ? () => triggerDownload(file as FileEntry)
                 : file.project_public_id ?? file.project_id
                   ? () => {
                       const projectId = asProjectPublicId(
@@ -286,6 +550,15 @@ export const EntityContentSidebar = ({
                       );
                     }
             }
+            onContextMenu={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              setMenu({
+                x: e.clientX,
+                y: e.clientY,
+                target: { type: fileMenuTargetType(file.type), file: file as FileEntry }
+              });
+            }}
           />
         ))}
         {folderTree.map(node => renderFolderNode(node, 0))}
@@ -296,6 +569,66 @@ export const EntityContentSidebar = ({
         style={{ display: 'none' }}
         onChange={handleFileInputChange}
       />
+
+      {menu && (
+        <ContextMenu.Imperative x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
+          {renderMenu(menu.target)}
+        </ContextMenu.Imperative>
+      )}
+
+      {addMenu && (
+        <ContextMenu.Imperative x={addMenu.x} y={addMenu.y} onClose={() => setAddMenu(null)}>
+          <Menu.Item
+            leftSlot={<TbFolderOpen size={13} />}
+            onClick={() => { setAddMenu(null); setAddFolderOpen(true); }}
+          >
+            New folder
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbUpload size={13} />}
+            onClick={() => { setAddMenu(null); openUploadPicker(contentFolder ?? null); }}
+          >
+            Upload file
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbPlus size={13} />}
+            onClick={() => { setAddMenu(null); setAddDiagramOpen(true); }}
+          >
+            New diagram
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbFileText size={13} />}
+            onClick={() => { setAddMenu(null); setAddMarkdownOpen(true); }}
+          >
+            New wiki page
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
+
+      <RenameDialog
+        open={!!renameTarget}
+        currentName={
+          renameTarget
+            ? renameTarget.type !== 'folder'
+              ? renameTarget.file.name
+              : renameTarget.path
+            : ''
+        }
+        entityType={renameTarget ? entityTypeLabel(renameTarget.type) : 'diagram'}
+        onRename={handleRenameConfirm}
+        onCancel={() => setRenameTarget(null)}
+      />
+
+      <DeleteConfirmationDialog
+        open={!!deleteTarget}
+        title={deleteTarget ? deleteTitle(deleteTarget.type) : ''}
+        message={deleteTarget ? deleteMessage(deleteTarget) : ''}
+        detail="This can't be undone."
+        confirmLabel={deleteTarget ? deleteConfirmLabel(deleteTarget.type) : ''}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
       <AddEntityFolderDialog
         open={addFolderOpen}
         onClose={() => setAddFolderOpen(false)}
@@ -303,6 +636,31 @@ export const EntityContentSidebar = ({
         workspaceSlug={workspaceSlug}
         entityId={entityId}
         parentFolder={contentFolder}
+      />
+
+      <AddDiagramDialog
+        open={addDiagramOpen}
+        onClose={() => setAddDiagramOpen(false)}
+        onCreated={file => {
+          setAddDiagramOpen(false);
+          navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), file.id));
+        }}
+        workspaceId={workspaceSlug}
+        context="entity"
+        entityId={entityId}
+        folder={contentFolder ?? null}
+      />
+
+      <AddMarkdownDialog
+        open={addMarkdownOpen}
+        onClose={() => { setAddMarkdownOpen(false); setAddMarkdownFolder(null); }}
+        onCreated={file => {
+          setAddMarkdownOpen(false);
+          setAddMarkdownFolder(null);
+          navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), file.id, { mode: 'edit' }));
+        }}
+        onCreate={name => createMarkdownMutation.mutateAsync({ name, folder: addMarkdownFolder ?? contentFolder ?? null })}
+        isPending={createMarkdownMutation.isPending}
       />
     </>
   );

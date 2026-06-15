@@ -14,7 +14,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ColorPicker } from '../../components/ColorPicker';
-import { TbPlus, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil, TbDownload } from 'react-icons/tb';
+import { TbPlus, TbFileText, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil, TbDownload } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -41,7 +41,8 @@ import {
   useRenameProjectBinaryFile,
   useMoveProjectFile,
   useToggleTemplateStatus,
-  useCreateProjectMarkdown
+  useCreateProjectMarkdown,
+  useUploadProjectFile
 } from '../../hooks/useProjectFiles';
 import {
   asProjectPublicId,
@@ -124,6 +125,8 @@ export const ProjectDetailScreen = () => {
   const moveFileMutation = useMoveProjectFile(workspaceId, projectId);
   const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
   const createMarkdownMutation = useCreateProjectMarkdown(workspaceId, projectId);
+  const uploadFileMutation = useUploadProjectFile(workspaceId, projectId);
+  const mainAreaFileInputRef = useRef<HTMLInputElement>(null);
 
   // Entity hooks
   const { data: projectEntities = [] } = useProjectEntities(workspaceId, projectId);
@@ -534,6 +537,15 @@ export const ProjectDetailScreen = () => {
       >
         New folder
       </Menu.Item>
+      <Menu.Item
+        leftSlot={<TbFileText size={13} />}
+        onClick={() => {
+          setAddMarkdownFolder(path);
+          setAddMarkdownOpen(true);
+        }}
+      >
+        New wiki page
+      </Menu.Item>
       <Menu.Separator />
       <Menu.Item
         leftSlot={<TbPencil size={13} />}
@@ -633,6 +645,9 @@ export const ProjectDetailScreen = () => {
             setAddMarkdownFolder(contentFolderFilter);
             setAddMarkdownOpen(true);
           } : undefined}
+          onUploadFile={project.canManageFiles ? () => {
+            mainAreaFileInputRef.current?.click();
+          } : undefined}
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
       ) : (
@@ -659,6 +674,13 @@ export const ProjectDetailScreen = () => {
             setAddDiagramFolder(contentFolderFilter);
             setAddDiagramOpen(true);
           }}
+          onAddMarkdown={project.canManageFiles ? () => {
+            setAddMarkdownFolder(contentFolderFilter);
+            setAddMarkdownOpen(true);
+          } : undefined}
+          onUploadFile={project.canManageFiles ? () => {
+            mainAreaFileInputRef.current?.click();
+          } : undefined}
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
       )}
@@ -716,6 +738,21 @@ export const ProjectDetailScreen = () => {
           onCreated={file => handleNavigateMarkdown(file.id, 'edit')}
           onCreate={name => createMarkdownMutation.mutateAsync({ name, folder: addMarkdownFolder })}
           isPending={createMarkdownMutation.isPending}
+        />
+      )}
+
+      {project.canManageFiles && (
+        <input
+          ref={mainAreaFileInputRef}
+          type="file"
+          style={{ display: 'none' }}
+          onChange={e => {
+            const f = e.target.files?.[0];
+            if (f) {
+              uploadFileMutation.mutate({ file: f, folder: contentFolderFilter });
+            }
+            e.target.value = '';
+          }}
         />
       )}
 

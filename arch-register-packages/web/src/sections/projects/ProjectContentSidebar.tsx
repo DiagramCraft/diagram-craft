@@ -7,6 +7,7 @@ import {
   TbBinaryTree2,
   TbCopy,
   TbDownload,
+  TbFileText,
   TbFolder,
   TbFolderOpen,
   TbHome,
@@ -27,6 +28,7 @@ import {
 } from '../../lib/contentNode';
 import {
   useCloneProjectFile,
+  useCreateProjectMarkdown,
   useDeleteProjectFile,
   useDeleteProjectFolder,
   useMoveProjectFile,
@@ -41,6 +43,7 @@ import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { AddDiagramDialog } from './AddDiagramDialog';
 import { AddFolderDialog } from './AddFolderDialog';
+import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import {
   asProjectPublicId,
   projectDetailRoute,
@@ -119,6 +122,7 @@ export const ProjectContentSidebar = ({
   const renameBinaryFileMutation = useRenameProjectBinaryFile(workspaceSlug, projectId);
   const moveFileMutation = useMoveProjectFile(workspaceSlug, projectId);
   const uploadFileMutation = useUploadProjectFile(workspaceSlug, projectId);
+  const createMarkdownMutation = useCreateProjectMarkdown(workspaceSlug, projectId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadFolder, setUploadFolder] = useState<string | null>(null);
 
@@ -130,6 +134,8 @@ export const ProjectContentSidebar = ({
   const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
+  const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
+  const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
   const [addMenu, setAddMenu] = useState<{ x: number; y: number } | null>(null);
 
   const folderTree = buildFolderTree(project?.files.folders ?? []);
@@ -252,6 +258,16 @@ export const ProjectContentSidebar = ({
             }}
           >
             Upload file
+          </Menu.Item>
+          <Menu.Item
+            leftSlot={<TbFileText size={13} />}
+            onClick={() => {
+              setMenu(null);
+              setAddMarkdownFolder(target.path);
+              setAddMarkdownOpen(true);
+            }}
+          >
+            New wiki page
           </Menu.Item>
           <Menu.Separator />
           <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
@@ -476,7 +492,7 @@ export const ProjectContentSidebar = ({
             className={styles.action}
             onClick={e => {
               const rect = e.currentTarget.getBoundingClientRect();
-              setAddMenu({ x: rect.right, y: rect.bottom });
+              setAddMenu({ x: rect.left, y: rect.bottom });
             }}
             title="Add"
           >
@@ -573,6 +589,17 @@ export const ProjectContentSidebar = ({
             Upload file
           </Menu.Item>
           <Menu.Item
+            leftSlot={<TbFileText size={13} />}
+            disabled={!project?.canManageFiles}
+            onClick={() => {
+              setAddMenu(null);
+              setAddMarkdownFolder(section === 'home' ? folderFilter : null);
+              setAddMarkdownOpen(true);
+            }}
+          >
+            New wiki page
+          </Menu.Item>
+          <Menu.Item
             leftSlot={<TbBinaryTree2 size={13} />}
             disabled={!project?.canEdit}
             onClick={() => {
@@ -643,6 +670,20 @@ export const ProjectContentSidebar = ({
           projectId={projectId}
           projectName={project?.name ?? 'Project'}
           folder={addDiagramFolder}
+        />
+      )}
+
+      {project?.canManageFiles && (
+        <AddMarkdownDialog
+          open={addMarkdownOpen}
+          onClose={() => { setAddMarkdownOpen(false); setAddMarkdownFolder(null); }}
+          onCreated={file => {
+            setAddMarkdownOpen(false);
+            setAddMarkdownFolder(null);
+            navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id));
+          }}
+          onCreate={name => createMarkdownMutation.mutateAsync({ name, folder: addMarkdownFolder ?? undefined })}
+          isPending={createMarkdownMutation.isPending}
         />
       )}
     </>
