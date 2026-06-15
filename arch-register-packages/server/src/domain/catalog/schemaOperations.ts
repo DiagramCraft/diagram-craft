@@ -108,9 +108,13 @@ export const updateWorkspaceSchema = async (
 
     httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
     if (oldRow.key_prefix !== row.key_prefix) {
-      httpAssert.present(oldRow.key_prefix, { status: 409, message: `Schema '${id}' is missing a key prefix` });
-      httpAssert.present(row.key_prefix, { status: 409, message: `Schema '${id}' is missing a key prefix` });
-      await db.workspace.updatePublicIdPrefix(oldRow.key_prefix, row.key_prefix, 'schema', id, next.updated_at);
+      try {
+        await db.workspace.updatePublicIdPrefix(oldRow.key_prefix, row.key_prefix, 'schema', id, next.updated_at);
+      } catch (error) {
+        handleDbError(error, 'Failed to update key prefix', {
+          unique: 'A schema with that key prefix already exists'
+        });
+      }
     }
     const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 

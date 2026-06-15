@@ -317,6 +317,16 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     }
   }
 
+  async setPublicIdNextNumber(prefix: string, nextNumber: number, updatedAt: Date) {
+    try {
+      await this.sql`
+        UPDATE public_id_prefix SET next_number = ${nextNumber}, updated_at = ${updatedAt} WHERE prefix = ${prefix}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
   async getWorkspaceRole(workspace: string, userId: string) {
     const member = await this.getWorkspaceMember(workspace, userId);
     return member?.role ?? null;

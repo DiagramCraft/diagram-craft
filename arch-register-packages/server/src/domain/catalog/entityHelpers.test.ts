@@ -7,6 +7,7 @@ const now = new Date('2025-06-01T12:00:00.000Z');
 const baseEntity: EntityDbResult = {
   id: 'e-1',
   workspace: 'ws-1',
+  public_id: 'ENT-1',
   slug: 'my-entity',
   namespace: 'ns',
   name: 'My Entity',

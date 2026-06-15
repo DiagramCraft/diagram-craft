@@ -150,4 +150,5 @@ export type WorkspaceDatabase = {
   ): Promise<void>;
   deletePublicIdPrefix(prefix: string): Promise<void>;
   allocatePublicId(prefix: string, updatedAt: Date): Promise<number>;
+  setPublicIdNextNumber(prefix: string, nextNumber: number, updatedAt: Date): Promise<void>;
 };

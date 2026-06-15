@@ -18,10 +18,7 @@ import type {
   EntitySnapshotDbResult
 } from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
-import { isUuidLike, normalizePublicIdPrefix } from '../../../utils/publicIds';
-
-const fallbackKeyPrefix = (name: string) =>
-  normalizePublicIdPrefix(name.replace(/[^a-z]/gi, '').slice(0, 5) || name.slice(0, 5));
+import { isUuidLike } from '../../../utils/publicIds';
 
 export class PostgresCatalogDatabase extends PostgresDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
@@ -55,7 +52,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     try {
       const rows = (await this.sql`
         INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, key_prefix, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix ?? fallbackKeyPrefix(input.name)}, ${input.created_at}, ${input.updated_at})
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as SchemaDbResult[];
       const [row] = rows;
@@ -75,7 +72,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             color = ${input.color},
             icon = ${input.icon},
             default_owner = ${input.default_owner},
-            key_prefix = ${input.key_prefix ?? fallbackKeyPrefix(input.name)},
+            key_prefix = ${input.key_prefix},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
@@ -175,8 +172,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async getEntity(workspace: string, identifier: string) {
     if (!isUuidLike(identifier)) {
-      const row = await this.getEntityByPublicId(identifier);
-      return row?.workspace === workspace ? row : null;
+      return this.getEntityByPublicId(workspace, identifier);
     }
     const [row] = await this.sql<EntityDbResult[]>`
       SELECT e.*,
@@ -194,7 +190,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return row ?? null;
   }
 
-  private async getEntityByPublicId(publicId: string) {
+  private async getEntityByPublicId(workspace: string, publicId: string) {
     const [row] = await this.sql<EntityDbResult[]>`
       SELECT e.*,
         wo.name   AS owner_name,
@@ -206,7 +202,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
       LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
       JOIN entity_schema es ON es.id = e.schema_id
-      WHERE e.public_id = ${publicId}
+      WHERE e.public_id = ${publicId} AND e.workspace = ${workspace}
     `;
     return row ?? null;
   }
@@ -218,7 +214,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         VALUES (
           ${input.id},
           ${input.workspace},
-          ${input.public_id ?? input.id},
+          ${input.public_id},
           ${input.slug},
           ${input.namespace},
           ${input.name},

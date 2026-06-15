@@ -78,18 +78,23 @@ export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
 
 export async function seedCatalogEntities(db: DatabaseAdapter): Promise<void> {
   const syncTimestamp = new Date();
-  const countsByPrefix = new Map<string, number>();
 
   for (const entity of seedEntities) {
     await db.catalog.createEntity(entity);
-    const prefix = (entity.public_id ?? entity.id).split('-')[0] ?? '';
-    countsByPrefix.set(prefix, (countsByPrefix.get(prefix) ?? 0) + 1);
   }
 
-  for (const [prefix, count] of countsByPrefix) {
-    for (let i = 0; i < count; i++) {
-      await db.workspace.allocatePublicId(prefix, syncTimestamp);
+  const maxByPrefix = new Map<string, number>();
+  for (const entity of seedEntities) {
+    if (!entity.public_id) continue;
+    const parts = entity.public_id.split('-');
+    const prefix = parts.slice(0, -1).join('-');
+    const seq = parseInt(parts.at(-1) ?? '0', 10);
+    if (prefix && !Number.isNaN(seq)) {
+      maxByPrefix.set(prefix, Math.max(maxByPrefix.get(prefix) ?? 0, seq));
     }
+  }
+  for (const [prefix, max] of maxByPrefix) {
+    await db.workspace.setPublicIdNextNumber(prefix, max + 1, syncTimestamp);
   }
 }
 

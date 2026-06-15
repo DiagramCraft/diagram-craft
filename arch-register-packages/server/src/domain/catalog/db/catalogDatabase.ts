@@ -13,7 +13,7 @@ export type SchemaDbResult = {
   color: string | null;
   icon: string | null;
   default_owner: string | null;
-  key_prefix?: string;
+  key_prefix: string;
   created_at: Date;
   updated_at: Date;
 };
@@ -73,7 +73,7 @@ export type PinnedEntityDbCreate = PinnedEntityDbResult;
 export type Entity = {
   id: string;
   workspace: string;
-  public_id?: string;
+  public_id: string;
   slug: string;
   namespace: string;
   name: string;
@@ -102,7 +102,7 @@ export type EntityDbResult = Entity & {
 
 export type EntityDbCreate = Entity;
 
-export type EntityDbUpdate = Omit<Entity, 'id' | 'workspace' | 'created_at'>;
+export type EntityDbUpdate = Omit<Entity, 'id' | 'workspace' | 'public_id' | 'created_at'>;
 
 // -- Entity Snapshot
 

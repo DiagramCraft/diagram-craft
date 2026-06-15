@@ -323,7 +323,7 @@ export const deleteProject = async (
       await storage.deleteAll(ws, project.id).catch(() => {});
     }
 
-    return { success: true, message: `Project '${id}' deleted` };
+    return { success: true, message: `Project '${project.id}' deleted` };
   } catch (e) {
     return handleError(e, 'Failed to delete project');
   }

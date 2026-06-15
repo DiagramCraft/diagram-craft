@@ -70,7 +70,7 @@ export const buildUpdateSchemaInput = (
     key_prefix:
       key_prefix !== undefined
         ? validatePublicIdPrefix(key_prefix, 'key_prefix')!
-        : current.key_prefix ?? validatePublicIdPrefix(defaultKeyPrefixFromName(name), 'key_prefix')!,
+        : current.key_prefix,
     description:
       description !== undefined
         ? typeof description === 'string'
@@ -127,7 +127,7 @@ export const toApiSchema = (
     workspace: schema.workspace,
     name: schema.name,
     description: schema.description,
-    key_prefix: schema.key_prefix ?? '',
+    key_prefix: schema.key_prefix,
     fields,
     color: schema.color,
     icon: schema.icon,

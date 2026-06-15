@@ -103,6 +103,7 @@ describe('enum route helpers', () => {
         color: null,
         icon: null,
         default_owner: null,
+        key_prefix: 'API',
         created_at: now,
         updated_at: now
       }
@@ -125,6 +126,7 @@ describe('enum route helpers', () => {
         color: null,
         icon: null,
         default_owner: null,
+        key_prefix: 'API',
         created_at: now,
         updated_at: now
       }

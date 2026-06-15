@@ -11,6 +11,7 @@ import {
 } from '../catalog/entityMutations';
 import { Entity } from '../catalog/db/catalogDatabase';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { formatPublicId } from '../../utils/publicIds';
 
 const checker = new PermissionChecker();
 
@@ -489,12 +490,18 @@ export const createAiChatTools = (
         : null;
 
     const timestamp = new Date();
+    if (!schema.key_prefix) throw new Error(`Schema '${args.schemaId}' is missing a key prefix`);
+    const publicId = formatPublicId(
+      schema.key_prefix,
+      await db.workspace.allocatePublicId(schema.key_prefix, timestamp)
+    );
     const entity = await createEntityWithAudit(db, {
       workspace: workspaceId,
       actor,
       entity: {
         id: randomUUID(),
         workspace: workspaceId,
+        public_id: publicId,
         slug:
           typeof args.slug === 'string' && args.slug.trim().length > 0
             ? args.slug.trim()

@@ -202,7 +202,12 @@ export const seedBootstrapData = async (db: Database) => {
   const syncTimestamp = new Date();
   for (const workspace of seedWorkspaces) {
     await db.workspace.createWorkspace(workspace);
-    await db.workspace.registerPublicIdPrefix(workspace.short_code, 'workspace', workspace.id, workspace.created_at);
+    await db.workspace.registerPublicIdPrefix(
+      workspace.short_code,
+      'workspace',
+      workspace.id,
+      workspace.created_at
+    );
   }
   for (const workspace of seedWorkspaces) {
     await db.workspace.replaceLifecycleStates(
@@ -224,7 +229,12 @@ export const seedBootstrapData = async (db: Database) => {
   for (const schema of seedSchemas) {
     await db.catalog.createSchema(schema);
     if (schema.key_prefix) {
-      await db.workspace.registerPublicIdPrefix(schema.key_prefix, 'schema', schema.id, schema.created_at);
+      await db.workspace.registerPublicIdPrefix(
+        schema.key_prefix,
+        'schema',
+        schema.id,
+        schema.created_at
+      );
     }
   }
   for (const workspace of seedWorkspaces) {
@@ -237,26 +247,18 @@ export const seedBootstrapData = async (db: Database) => {
     await db.project.createProject(project);
   }
 
-  const projectCountsByPrefix = new Map<string, number>();
-  for (const project of seedProjects) {
-    const prefix = (project.public_id ?? project.id).split('-')[0] ?? '';
-    projectCountsByPrefix.set(prefix, (projectCountsByPrefix.get(prefix) ?? 0) + 1);
-  }
-  for (const [prefix, count] of projectCountsByPrefix) {
-    for (let i = 0; i < count; i++) {
-      await db.workspace.allocatePublicId(prefix, syncTimestamp);
+  const maxByPrefix = new Map<string, number>();
+  for (const item of [...seedProjects, ...seedEntities]) {
+    if (!item.public_id) continue;
+    const parts = item.public_id.split('-');
+    const prefix = parts.slice(0, -1).join('-');
+    const seq = parseInt(parts.at(-1) ?? '0', 10);
+    if (prefix && !Number.isNaN(seq)) {
+      maxByPrefix.set(prefix, Math.max(maxByPrefix.get(prefix) ?? 0, seq));
     }
   }
-
-  const entityCountsByPrefix = new Map<string, number>();
-  for (const entity of seedEntities) {
-    const prefix = (entity.public_id ?? entity.id).split('-')[0] ?? '';
-    entityCountsByPrefix.set(prefix, (entityCountsByPrefix.get(prefix) ?? 0) + 1);
-  }
-  for (const [prefix, count] of entityCountsByPrefix) {
-    for (let i = 0; i < count; i++) {
-      await db.workspace.allocatePublicId(prefix, syncTimestamp);
-    }
+  for (const [prefix, max] of maxByPrefix) {
+    await db.workspace.setPublicIdNextNumber(prefix, max + 1, syncTimestamp);
   }
   for (const view of seedSavedViews) {
     await db.view.createSavedView(view);

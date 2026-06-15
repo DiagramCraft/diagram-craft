@@ -315,6 +315,14 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return tx();
   }
 
+  async setPublicIdNextNumber(prefix: string, nextNumber: number, updatedAt: Date) {
+    this.run('UPDATE public_id_prefix SET next_number = ?, updated_at = ? WHERE prefix = ?', [
+      nextNumber,
+      updatedAt.toISOString(),
+      prefix
+    ]);
+  }
+
   async getWorkspaceRole(workspace: string, userId: string) {
     const member = await this.getWorkspaceMember(workspace, userId);
     return member?.role ?? null;

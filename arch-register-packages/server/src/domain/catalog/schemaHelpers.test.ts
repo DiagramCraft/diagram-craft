@@ -52,6 +52,7 @@ describe('toApiSchema', () => {
     color: null,
     icon: null,
     default_owner: null,
+    key_prefix: 'APP',
     created_at: now,
     updated_at: now
   };

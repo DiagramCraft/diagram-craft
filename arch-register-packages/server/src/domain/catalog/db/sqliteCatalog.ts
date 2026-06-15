@@ -11,10 +11,7 @@ import type {
   EntitySnapshotDbCreate
 } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
-import { isUuidLike, normalizePublicIdPrefix } from '../../../utils/publicIds';
-
-const fallbackKeyPrefix = (name: string) =>
-  normalizePublicIdPrefix(name.replace(/[^a-z]/gi, '').slice(0, 5) || name.slice(0, 5));
+import { isUuidLike } from '../../../utils/publicIds';
 
 const ENTITY_JOIN_SQL = `
   SELECT e.*,
@@ -71,7 +68,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.color,
         input.icon,
         input.default_owner,
-        input.key_prefix ?? fallbackKeyPrefix(input.name),
+        input.key_prefix,
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -89,7 +86,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.color,
         input.icon,
         input.default_owner,
-        input.key_prefix ?? fallbackKeyPrefix(input.name),
+        input.key_prefix,
         input.updated_at.toISOString(),
         workspace,
         id
@@ -169,8 +166,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async getEntity(workspace: string, identifier: string) {
     if (!isUuidLike(identifier)) {
-      const row = await this.getEntityByPublicId(identifier);
-      return row?.workspace === workspace ? row : null;
+      return this.getEntityByPublicId(workspace, identifier);
     }
     return this.get(
       `${ENTITY_JOIN_SQL} WHERE e.workspace = ? AND e.id = ?`,
@@ -179,10 +175,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  private async getEntityByPublicId(publicId: string) {
+  private async getEntityByPublicId(workspace: string, publicId: string) {
     return this.get(
-      `${ENTITY_JOIN_SQL} WHERE e.public_id = ?`,
-      [publicId],
+      `${ENTITY_JOIN_SQL} WHERE e.public_id = ? AND e.workspace = ?`,
+      [publicId, workspace],
       sqliteMappers.enrichedEntity
     );
   }
@@ -193,7 +189,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [
         input.id,
         input.workspace,
-        input.public_id ?? input.id,
+        input.public_id,
         input.slug,
         input.namespace,
         input.name,
