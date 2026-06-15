@@ -1,7 +1,8 @@
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
-import { seedIds } from '../helpers/seedHelper';
+import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types/workspaceConfigContract';
+import { seedEntities, seedLifecycleStates } from '@arch-register/server/db/seedData';
 
 const now = new Date('2026-06-06T12:00:00.000Z');
 
@@ -87,6 +88,81 @@ test.describe('workspace config routes', () => {
       expect.objectContaining({ id: 'live', sort_order: 0 }),
       expect.objectContaining({ id: 'sunset', sort_order: 1 })
     ]);
+  });
+
+  test('PUT /api/:workspace/config/lifecycle-states generates ids for blank lifecycle states', async ({
+    orpc,
+    seededUsers: _
+  }) => {
+    const result = await orpc.config.lifecycleStates.replace({
+      params: { workspace: 'default' },
+      body: {
+        states: [{ id: '', label: 'Live', color: '#22aa55', sort_order: 0 }]
+      }
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        label: 'Live',
+        color: '#22aa55',
+        sort_order: 0
+      })
+    );
+    expect(result[0]?.id).toEqual(expect.any(String));
+    expect(result[0]?.id).not.toBe('');
+  });
+
+  test('PUT /api/:workspace/config/lifecycle-states preserves references to retained states', async ({
+    orpc,
+    server,
+    seededUsers: _
+  }) => {
+    await server.db.workspace.replaceLifecycleStates(
+      seedIds.workspace.default,
+      seedLifecycleStates.filter(state => state.workspace === seedIds.workspace.default)
+    );
+    const seededDefaultEntities = seedEntities.filter(
+      entity => entity.workspace === seedIds.workspace.default
+    );
+
+    try {
+      await seedCatalogEntities(server.db);
+      const entityWithProductionLifecycle = seededDefaultEntities.find(
+        entity => entity.lifecycle === seedIds.lifecycle.production
+      );
+      expect(entityWithProductionLifecycle).toBeDefined();
+
+      await orpc.config.lifecycleStates.replace({
+        params: { workspace: 'default' },
+        body: {
+          states: [
+            {
+              id: seedIds.lifecycle.production,
+              label: 'Production',
+              color: '#22aa55',
+              sort_order: 0
+            },
+            {
+              id: seedIds.lifecycle.deprecated,
+              label: 'Deprecated',
+              color: '#bb8800',
+              sort_order: 1
+            }
+          ]
+        }
+      });
+
+      const entity = await server.db.catalog.getEntity(
+        seedIds.workspace.default,
+        entityWithProductionLifecycle!.id
+      );
+      expect(entity?.lifecycle).toBe(seedIds.lifecycle.production);
+    } finally {
+      for (const entity of seededDefaultEntities) {
+        await server.db.catalog.deleteEntity(seedIds.workspace.default, entity.id);
+      }
+    }
   });
 
   test('GET /api/:workspace/config/teams returns the current team list', async ({

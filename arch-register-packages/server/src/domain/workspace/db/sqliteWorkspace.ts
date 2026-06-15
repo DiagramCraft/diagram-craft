@@ -95,10 +95,42 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
   async replaceLifecycleStates(workspace: string, states: LifecycleStateDbCreate[]) {
     const tx = this.db.transaction(() => {
-      this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspace]);
+      const stateIds = states.map(state => state.id);
+
+      if (stateIds.length === 0) {
+        this.run('UPDATE entity SET lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ?', [
+          workspace
+        ]);
+        this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspace]);
+        return;
+      }
+
+      const placeholders = stateIds.map(() => '?').join(', ');
+      this.run(
+        `UPDATE entity
+         SET lifecycle = NULL
+         WHERE workspace = ? AND lifecycle IS NOT NULL AND lifecycle NOT IN (${placeholders})`,
+        [workspace, ...stateIds]
+      );
+      this.run(
+        `UPDATE entity
+         SET target_lifecycle = NULL
+         WHERE workspace = ? AND target_lifecycle IS NOT NULL AND target_lifecycle NOT IN (${placeholders})`,
+        [workspace, ...stateIds]
+      );
+      this.run(
+        `DELETE FROM workspace_lifecycle_state WHERE workspace = ? AND id NOT IN (${placeholders})`,
+        [workspace, ...stateIds]
+      );
+
       for (const state of states) {
         this.run(
-          'INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          `INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(workspace, id) DO UPDATE SET
+             label = excluded.label,
+             color = excluded.color,
+             sort_order = excluded.sort_order`,
           [
             state.id,
             workspace,
