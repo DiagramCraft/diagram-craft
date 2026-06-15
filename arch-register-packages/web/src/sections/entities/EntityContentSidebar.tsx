@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { TbFile, TbFileText, TbFolder, TbHome, TbPlus, TbUpload } from 'react-icons/tb';
+import { TbFolder, TbHome, TbPlus, TbUpload } from 'react-icons/tb';
+import { getFileNodeIcon } from '../../lib/contentNode';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
@@ -171,7 +172,7 @@ export const EntityContentSidebar = ({
               <TreeRow
                 key={file.id}
                 depth={depth + 1}
-                icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
+                icon={getFileNodeIcon(file.type)}
                 label={file.original_filename ?? file.name}
                 active={file.id === activeFileId}
                 onClick={
@@ -260,7 +261,7 @@ export const EntityContentSidebar = ({
         {data?.rootFiles.map(file => (
           <TreeRow
             key={file.id}
-            icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
+            icon={getFileNodeIcon(file.type)}
             label={(file as EntityFileEntry).original_filename ?? file.name}
             active={file.id === activeFileId}
             onClick={

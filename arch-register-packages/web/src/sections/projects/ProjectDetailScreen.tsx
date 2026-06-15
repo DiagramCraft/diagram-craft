@@ -52,7 +52,13 @@ import {
 import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
 import { ProjectEntities } from './ProjectEntities';
-import type { ProjectMenuTarget } from './ProjectDiagramsView';
+import {
+  deleteConfirmLabel,
+  deleteMessage,
+  deleteTitle,
+  entityTypeLabel,
+  type MenuTarget as ProjectMenuTarget
+} from '../../lib/contentNode';
 import { RenameDialog } from '../../components/RenameDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 
@@ -769,65 +775,17 @@ export const ProjectDetailScreen = () => {
               : renameTarget.path
             : ''
         }
-        entityType={
-          renameTarget?.type === 'folder'
-            ? 'folder'
-            : renameTarget?.type === 'markdown'
-              ? 'document'
-              : renameTarget?.type === 'file'
-                ? 'file'
-                : 'diagram'
-        }
+        entityType={renameTarget ? entityTypeLabel(renameTarget.type) : 'diagram'}
         onRename={handleRenameConfirm}
         onCancel={() => setRenameTarget(null)}
       />
 
       <DeleteConfirmationDialog
         open={!!deleteTarget}
-        title={
-          deleteTarget?.type === 'folder'
-            ? 'Delete folder?'
-            : deleteTarget?.type === 'markdown'
-              ? 'Delete document?'
-              : deleteTarget?.type === 'file'
-                ? 'Delete file?'
-                : 'Delete diagram?'
-        }
-        message={
-          deleteTarget ? (
-            deleteTarget.type === 'folder' ? (
-              <>
-                The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently
-                deleted.
-              </>
-            ) : deleteTarget.type === 'markdown' ? (
-              <>
-                The document <b>{deleteTarget.file.name}</b> will be permanently deleted.
-              </>
-            ) : deleteTarget.type === 'file' ? (
-              <>
-                The file <b>{deleteTarget.file.original_filename ?? deleteTarget.file.name}</b> will
-                be permanently deleted.
-              </>
-            ) : (
-              <>
-                The diagram <b>{deleteTarget.file.name}</b> will be permanently deleted.
-              </>
-            )
-          ) : (
-            ''
-          )
-        }
+        title={deleteTarget ? deleteTitle(deleteTarget.type) : ''}
+        message={deleteTarget ? deleteMessage(deleteTarget) : ''}
         detail="This can't be undone."
-        confirmLabel={
-          deleteTarget?.type === 'folder'
-            ? 'Delete folder'
-            : deleteTarget?.type === 'markdown'
-              ? 'Delete document'
-              : deleteTarget?.type === 'file'
-                ? 'Delete file'
-                : 'Delete diagram'
-        }
+        confirmLabel={deleteTarget ? deleteConfirmLabel(deleteTarget.type) : ''}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
