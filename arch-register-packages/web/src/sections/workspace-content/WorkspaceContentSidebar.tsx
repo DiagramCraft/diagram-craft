@@ -107,7 +107,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
                   navigate(
                     file.type === 'markdown'
                       ? {
-                          to: '/$workspaceSlug/content/markdown/$nodeId',
+                          to: '/$workspaceSlug/content/wiki/$nodeId',
                           params: { workspaceSlug, nodeId: file.id }
                         }
                       : {
@@ -163,12 +163,12 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             label={file.name}
             active={file.id === activeFileId}
             onClick={() =>
-              navigate(
-                file.type === 'markdown'
-                  ? {
-                      to: '/$workspaceSlug/content/markdown/$nodeId',
-                      params: { workspaceSlug, nodeId: file.id }
-                    }
+                navigate(
+                  file.type === 'markdown'
+                    ? {
+                        to: '/$workspaceSlug/content/wiki/$nodeId',
+                        params: { workspaceSlug, nodeId: file.id }
+                      }
                   : {
                       to: '/$workspaceSlug/content/diagrams/$diagramId',
                       params: { workspaceSlug, diagramId: file.id }

@@ -38,7 +38,7 @@ import {
 } from '../../routes/publicObjectRoutes';
 
 type ProjectSection = 'home' | 'entities';
-type MenuTarget = { type: 'diagram'; file: FileEntry } | { type: 'folder'; path: string };
+type MenuTarget = { type: 'diagram' | 'markdown'; file: FileEntry } | { type: 'folder'; path: string };
 
 type FolderNode = {
   path: string;
@@ -254,12 +254,15 @@ export const ProjectContentSidebar = ({
 
     return (
       <>
-        <Menu.Item
-          leftSlot={<TbCopy size={13} />}
-          onClick={() => cloneFileMutation.mutate(target.file)}
-        >
-          Clone
-        </Menu.Item>
+        {target.type === 'diagram' && (
+          <Menu.Item
+            leftSlot={<TbCopy size={13} />}
+            onClick={() => cloneFileMutation.mutate(target.file)}
+          >
+            Clone
+          </Menu.Item>
+        )}
+        {target.type === 'diagram' && <Menu.Separator />}
         <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
           {renderMoveToSubmenu(target.file, allFolders, currentFolder)}
         </Menu.SubMenu>
@@ -285,7 +288,7 @@ export const ProjectContentSidebar = ({
       setRenameTarget(null);
       return;
     }
-    if (renameTarget.type === 'diagram') {
+    if (renameTarget.type !== 'folder') {
       if (trimmed !== renameTarget.file.name) {
         renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
       }
@@ -297,7 +300,7 @@ export const ProjectContentSidebar = ({
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
-    if (deleteTarget.type === 'diagram') {
+    if (deleteTarget.type !== 'folder') {
       deleteFileMutation.mutate(deleteTarget.file.path);
     } else {
       deleteFolderMutation.mutate(deleteTarget.path);
@@ -343,7 +346,11 @@ export const ProjectContentSidebar = ({
                 onContextMenu={e => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setMenu({ x: e.clientX, y: e.clientY, target: { type: 'diagram', file } });
+                  setMenu({
+                    x: e.clientX,
+                    y: e.clientY,
+                    target: { type: file.type === 'markdown' ? 'markdown' : 'diagram', file }
+                  });
                 }}
               />
             ))}
@@ -414,7 +421,11 @@ export const ProjectContentSidebar = ({
             onContextMenu={e => {
               e.preventDefault();
               e.stopPropagation();
-              setMenu({ x: e.clientX, y: e.clientY, target: { type: 'diagram', file } });
+              setMenu({
+                x: e.clientX,
+                y: e.clientY,
+                target: { type: file.type === 'markdown' ? 'markdown' : 'diagram', file }
+              });
             }}
           />
         ))}
@@ -468,25 +479,41 @@ export const ProjectContentSidebar = ({
         open={!!renameTarget}
         currentName={
           renameTarget
-            ? renameTarget.type === 'diagram'
+            ? renameTarget.type !== 'folder'
               ? renameTarget.file.name
               : renameTarget.path
             : ''
         }
-        entityType={renameTarget?.type === 'folder' ? 'folder' : 'diagram'}
+        entityType={
+          renameTarget?.type === 'folder'
+            ? 'folder'
+            : renameTarget?.type === 'markdown'
+              ? 'document'
+              : 'diagram'
+        }
         onRename={handleRenameConfirm}
         onCancel={() => setRenameTarget(null)}
       />
 
       <DeleteConfirmationDialog
         open={!!deleteTarget}
-        title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
+        title={
+          deleteTarget?.type === 'folder'
+            ? 'Delete folder?'
+            : deleteTarget?.type === 'markdown'
+              ? 'Delete document?'
+              : 'Delete diagram?'
+        }
         message={
           deleteTarget ? (
             deleteTarget.type === 'folder' ? (
               <>
                 The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently
                 deleted.
+              </>
+            ) : deleteTarget.type === 'markdown' ? (
+              <>
+                The document <b>{deleteTarget.file.name}</b> will be permanently deleted.
               </>
             ) : (
               <>
@@ -498,7 +525,13 @@ export const ProjectContentSidebar = ({
           )
         }
         detail="This can't be undone."
-        confirmLabel={deleteTarget?.type === 'folder' ? 'Delete folder' : 'Delete diagram'}
+        confirmLabel={
+          deleteTarget?.type === 'folder'
+            ? 'Delete folder'
+            : deleteTarget?.type === 'markdown'
+              ? 'Delete document'
+              : 'Delete diagram'
+        }
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />

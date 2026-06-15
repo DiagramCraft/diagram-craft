@@ -1704,6 +1704,26 @@ export const createWorkspaceMarkdownDoc = async (
 const storageScope = (ws: string, node: { project_id: string | null; entity_id: string | null }) =>
   node.project_id ?? node.entity_id ?? ws;
 
+const requireMarkdownNodeAccess = async (
+  db: DatabaseAdapter,
+  ws: string,
+  authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
+  node: { project_id: string | null },
+  action: 'read' | 'edit'
+) => {
+  if (!node.project_id) return;
+
+  const project = await db.project.getProject(ws, node.project_id);
+  httpAssert.present(project, { status: 404, message: `Project '${node.project_id}' not found` });
+
+  if (action === 'read') {
+    requireProjectAccess(authCtx, project.owner);
+    return;
+  }
+
+  requireProjectAction(authCtx, project.owner, 'edit_project', 'You do not have permission to modify this project');
+};
+
 export const getMarkdownContent = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
@@ -1713,10 +1733,11 @@ export const getMarkdownContent = async (
 ): Promise<{ body: string }> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
-    await buildApiAuthCtx(db, ws, event);
+    const authCtx = await buildApiAuthCtx(db, ws, event);
     const node = await db.project.getAnyContentNodeById(ws, nodeId);
     httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
     httpAssert.true(node.type === 'markdown', { status: 400, message: 'Node is not a markdown document' });
+    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
     const content = await storage.read(ws, storageScope(ws, node), node.id);
     const parsed = JSON.parse(content.toString('utf8')) as { body?: string };
     return { body: parsed.body ?? '' };
@@ -1736,10 +1757,11 @@ export const saveMarkdownContent = async (
 ): Promise<ProjectFile> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
-    await buildApiAuthCtx(db, ws, event);
+    const authCtx = await buildApiAuthCtx(db, ws, event);
     const node = await db.project.getAnyContentNodeById(ws, nodeId);
     httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
     httpAssert.true(node.type === 'markdown', { status: 400, message: 'Node is not a markdown document' });
+    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
     const content = Buffer.from(JSON.stringify({ body }), 'utf8');
     await storage.write(ws, storageScope(ws, node), node.id, content);
     const timestamp = new Date();

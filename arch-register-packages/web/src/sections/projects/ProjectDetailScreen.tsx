@@ -421,6 +421,39 @@ export const ProjectDetailScreen = () => {
     );
   };
 
+  const renderMarkdownMenu = (file: FileEntry) => {
+    const currentFolder = file.path.includes('/')
+      ? file.path.substring(0, file.path.lastIndexOf('/'))
+      : null;
+
+    const allFolders = project.files.folders
+      .map(f => f.path)
+      .filter(path => path !== currentFolder);
+
+    return (
+      <>
+        <Menu.Item
+          leftSlot={<TbPencil size={13} />}
+          onClick={() => setRenameTarget({ type: 'markdown', file })}
+        >
+          Rename
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
+          {renderMoveToSubmenu(file, allFolders, currentFolder)}
+        </Menu.SubMenu>
+        <Menu.Separator />
+        <Menu.Item
+          type="danger"
+          leftSlot={<TbTrash size={13} />}
+          onClick={() => setDeleteTarget({ type: 'markdown', file })}
+        >
+          Delete
+        </Menu.Item>
+      </>
+    );
+  };
+
   const renderFolderMenu = (path: string) => (
     <>
       <Menu.Item
@@ -461,7 +494,7 @@ export const ProjectDetailScreen = () => {
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
-    if (deleteTarget.type === 'diagram') {
+    if (deleteTarget.type !== 'folder') {
       deleteFileMutation.mutate(deleteTarget.file.path);
     } else {
       deleteFolderMutation.mutate(deleteTarget.path);
@@ -476,7 +509,7 @@ export const ProjectDetailScreen = () => {
       setRenameTarget(null);
       return;
     }
-    if (renameTarget.type === 'diagram') {
+    if (renameTarget.type !== 'folder') {
       if (trimmed !== renameTarget.file.name) {
         renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
       }
@@ -635,7 +668,9 @@ export const ProjectDetailScreen = () => {
         <ContextMenu.Imperative x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
           {menu.target.type === 'diagram'
             ? renderDiagramMenu(menu.target.file)
-            : renderFolderMenu(menu.target.path)}
+            : menu.target.type === 'markdown'
+              ? renderMarkdownMenu(menu.target.file)
+              : renderFolderMenu(menu.target.path)}
         </ContextMenu.Imperative>
       )}
 
@@ -667,25 +702,41 @@ export const ProjectDetailScreen = () => {
         open={!!renameTarget}
         currentName={
           renameTarget
-            ? renameTarget.type === 'diagram'
+            ? renameTarget.type !== 'folder'
               ? renameTarget.file.name
               : renameTarget.path
             : ''
         }
-        entityType={renameTarget?.type === 'folder' ? 'folder' : 'diagram'}
+        entityType={
+          renameTarget?.type === 'folder'
+            ? 'folder'
+            : renameTarget?.type === 'markdown'
+              ? 'document'
+              : 'diagram'
+        }
         onRename={handleRenameConfirm}
         onCancel={() => setRenameTarget(null)}
       />
 
       <DeleteConfirmationDialog
         open={!!deleteTarget}
-        title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
+        title={
+          deleteTarget?.type === 'folder'
+            ? 'Delete folder?'
+            : deleteTarget?.type === 'markdown'
+              ? 'Delete document?'
+              : 'Delete diagram?'
+        }
         message={
           deleteTarget ? (
             deleteTarget.type === 'folder' ? (
               <>
                 The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently
                 deleted.
+              </>
+            ) : deleteTarget.type === 'markdown' ? (
+              <>
+                The document <b>{deleteTarget.file.name}</b> will be permanently deleted.
               </>
             ) : (
               <>
@@ -697,7 +748,13 @@ export const ProjectDetailScreen = () => {
           )
         }
         detail="This can't be undone."
-        confirmLabel={deleteTarget?.type === 'folder' ? 'Delete folder' : 'Delete diagram'}
+        confirmLabel={
+          deleteTarget?.type === 'folder'
+            ? 'Delete folder'
+            : deleteTarget?.type === 'markdown'
+              ? 'Delete document'
+              : 'Delete diagram'
+        }
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />

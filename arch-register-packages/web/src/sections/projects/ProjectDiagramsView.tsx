@@ -8,6 +8,7 @@ import type { FileEntry } from '../../lib/api';
 
 export type ProjectMenuTarget =
   | { type: 'diagram'; file: FileEntry }
+  | { type: 'markdown'; file: FileEntry }
   | { type: 'folder'; path: string };
 
 export const ProjectDiagramsView = ({
@@ -57,7 +58,10 @@ export const ProjectDiagramsView = ({
         onOpenDiagram={file => onOpenDiagram(file.id)}
         onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
         onContextMenu={
-          onContextMenu ? (event, file) => onContextMenu(event, { type: 'diagram', file }) : undefined
+          onContextMenu
+            ? (event, file) =>
+                onContextMenu(event, { type: file.type === 'markdown' ? 'markdown' : 'diagram', file })
+            : undefined
         }
         onNewDiagram={onNewDiagram}
         emptyState={{
@@ -85,7 +89,10 @@ export const ProjectDiagramsView = ({
         onOpenDiagram={file => onOpenDiagram(file.id)}
         onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
         onContextMenu={
-          onContextMenu ? (event, file) => onContextMenu(event, { type: 'diagram', file }) : undefined
+          onContextMenu
+            ? (event, file) =>
+                onContextMenu(event, { type: file.type === 'markdown' ? 'markdown' : 'diagram', file })
+            : undefined
         }
         onNewDiagram={onNewDiagram}
         emptyState={{
@@ -136,7 +143,10 @@ export const ProjectDiagramsView = ({
       onOpenDiagram={file => onOpenDiagram(file.id)}
       onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
       onContextMenu={
-        onContextMenu ? (event, file) => onContextMenu(event, { type: 'diagram', file }) : undefined
+        onContextMenu
+          ? (event, file) =>
+              onContextMenu(event, { type: file.type === 'markdown' ? 'markdown' : 'diagram', file })
+          : undefined
       }
       onNewDiagram={onNewDiagram}
       emptyState={{ title: 'No diagrams yet', sub: 'Create your first diagram to get started.' }}

@@ -37,7 +37,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
 
   const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
     navigate({
-      to: '/$workspaceSlug/content/markdown/$nodeId',
+      to: '/$workspaceSlug/content/wiki/$nodeId',
       params: { workspaceSlug, nodeId: fileId },
       search: { mode }
     });
