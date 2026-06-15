@@ -18,12 +18,12 @@ import { useWorkspaceRoles } from '../../../hooks/useWorkspaceRoles';
 import styles from './MembersSubSection.module.css';
 import { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaceContract';
 
-const TeamChip = ({ teamId }: { teamId: string }) => {
+const TeamChip = ({ teamId, label }: { teamId: string; label: string }) => {
   const h = stableHue(teamId);
   return (
     <span className={styles.teamChip}>
       <span className={styles.teamChipBar} style={{ background: `oklch(0.65 0.15 ${h})` }} />
-      {teamId}
+      {label}
     </span>
   );
 };
@@ -80,6 +80,7 @@ export const MembersSubSection = ({
   const [teamFilter, setTeamFilter] = useState('');
 
   const usersById = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
+  const teamsById = useMemo(() => new Map(teams.map(team => [team.id, team])), [teams]);
   const teamsByUser = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const a of teamAssignments) {
@@ -157,7 +158,7 @@ export const MembersSubSection = ({
               <option value="">Any team</option>
               {teams.map(t => (
                 <option key={t.id} value={t.id}>
-                  {t.id}
+                  {t.name}
                 </option>
               ))}
             </select>
@@ -227,8 +228,12 @@ export const MembersSubSection = ({
                     <td>
                       <div className={styles.tags}>
                         {memberTeams.length === 0 && <span className={styles.dim}>—</span>}
-                        {memberTeams.slice(0, 2).map(t => (
-                          <TeamChip key={t} teamId={t} />
+                        {memberTeams.slice(0, 2).map(teamId => (
+                          <TeamChip
+                            key={teamId}
+                            teamId={teamId}
+                            label={teamsById.get(teamId)?.name ?? teamId}
+                          />
                         ))}
                         {memberTeams.length > 2 && (
                           <span className={styles.teamChipOverflow}>+{memberTeams.length - 2}</span>

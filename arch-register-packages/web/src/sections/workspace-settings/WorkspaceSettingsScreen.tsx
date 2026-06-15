@@ -368,7 +368,12 @@ const LifecycleOwnersSection = ({
     try {
       if (statesDirty) {
         await updateLifecycleStatesMutation.mutateAsync(
-          states.map((s, i) => ({ id: s.id, label: s.label, color: s.color, sort_order: i }))
+          states.map((s, i) => ({
+            id: s.id.trim() || crypto.randomUUID(),
+            label: s.label,
+            color: s.color,
+            sort_order: i
+          }))
         );
       }
     } catch {
@@ -382,7 +387,10 @@ const LifecycleOwnersSection = ({
   const removeState = (index: number) => setStates(prev => prev.filter((_, i) => i !== index));
 
   const addState = () =>
-    setStates(prev => [...prev, { id: '', label: '', color: 'var(--cmp-fg-disabled)' }]);
+    setStates(prev => [
+      ...prev,
+      { id: crypto.randomUUID(), label: '', color: 'var(--cmp-fg-disabled)' }
+    ]);
 
   return (
     <div className={styles.blockList}>
@@ -403,8 +411,8 @@ const LifecycleOwnersSection = ({
         <div className={styles.sectionHead}>
           <div className={styles.sectionTitle}>Lifecycle states</div>
           <div className={styles.sectionSub}>
-            Define the lifecycle stages an entity can be in. Each state has a machine key, a display
-            label, and a color.
+            Define the lifecycle stages an entity can be in. Each state has a display label and a
+            color.
           </div>
         </div>
         <div className={styles.sectionBody}>
@@ -412,18 +420,8 @@ const LifecycleOwnersSection = ({
             <div
               key={i}
               className={styles.field}
-              style={{ gridTemplateColumns: '1fr 1fr auto auto' }}
+              style={{ gridTemplateColumns: '1fr auto auto' }}
             >
-              <div className={styles.fieldRight}>
-                <TextInput
-                  value={s.id}
-                  onChange={value =>
-                    updateState(i, { id: (value ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-') })
-                  }
-                  placeholder="key (e.g. production)"
-                  style={{ fontFamily: 'var(--mono)' }}
-                />
-              </div>
               <div className={styles.fieldRight}>
                 <TextInput
                   value={s.label}

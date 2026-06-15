@@ -108,11 +108,47 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   async replaceLifecycleStates(workspace: string, states: LifecycleStateDbCreate[]) {
     try {
       await this.sql.begin(async tx => {
-        await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${workspace}`;
+        const stateIds = states.map(state => state.id);
+
+        if (stateIds.length === 0) {
+          await tx`
+            UPDATE entity
+            SET lifecycle = NULL,
+                target_lifecycle = NULL
+            WHERE workspace = ${workspace}
+          `;
+          await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${workspace}`;
+          return;
+        }
+
+        await tx`
+          UPDATE entity
+          SET lifecycle = NULL
+          WHERE workspace = ${workspace}
+            AND lifecycle IS NOT NULL
+            AND lifecycle NOT IN ${tx(stateIds)}
+        `;
+        await tx`
+          UPDATE entity
+          SET target_lifecycle = NULL
+          WHERE workspace = ${workspace}
+            AND target_lifecycle IS NOT NULL
+            AND target_lifecycle NOT IN ${tx(stateIds)}
+        `;
+        await tx`
+          DELETE FROM workspace_lifecycle_state
+          WHERE workspace = ${workspace}
+            AND id NOT IN ${tx(stateIds)}
+        `;
+
         for (const state of states) {
           await tx`
             INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order, created_at)
             VALUES (${state.id}, ${workspace}, ${state.label}, ${state.color}, ${state.sort_order}, ${state.created_at})
+            ON CONFLICT (workspace, id) DO UPDATE SET
+              label = EXCLUDED.label,
+              color = EXCLUDED.color,
+              sort_order = EXCLUDED.sort_order
           `;
         }
       });

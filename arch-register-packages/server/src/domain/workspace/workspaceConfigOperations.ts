@@ -56,7 +56,7 @@ export const replaceLifecycleStates = async (
   const now = new Date();
   const normalized = states.map(s => ({
     ...s,
-    id: typeof s.id === 'string' ? s.id : randomUUID()
+    id: typeof s.id === 'string' && s.id.trim() ? s.id : randomUUID()
   }));
   const ids = normalized.map(s => s.id);
   httpAssert.true(new Set(ids).size === ids.length, { message: 'Duplicate lifecycle state ids' });
