@@ -149,6 +149,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async getAnyContentNodeById(workspace: string, id: string) {
+    return this.get(
+      'SELECT * FROM content_node WHERE workspace = ? AND id = ?',
+      [workspace, id],
+      sqliteMappers.contentNode
+    );
+  }
+
   async updateContentNodeSizeById(
     workspace: string,
     projectId: string,

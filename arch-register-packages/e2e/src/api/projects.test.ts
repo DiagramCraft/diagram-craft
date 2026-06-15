@@ -1,6 +1,12 @@
-import { test, expect, createTestORPCClient } from '../helpers/fixtures';
-import { seedIds } from '../helpers/seedHelper';
+import { test, expect, createTestORPCClient, createApiTest } from '../helpers/fixtures';
+import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
+
+const entityTest = createApiTest({
+  afterSeed: async server => {
+    await seedCatalogEntities(server.db);
+  }
+});
 
 const minimalDiagramDocument = (name: string) => ({
   name,
@@ -211,5 +217,140 @@ test.describe('project routes', () => {
     });
 
     expect(deleteFolderResult).toMatchObject({ success: true, count: 1 });
+  });
+
+  test('project content routes accept project public ids', async ({ orpc }) => {
+    const created = await createProject(orpc, { name: 'Public Id Content Project' });
+    const projectId = created.public_id;
+
+    const folderResult = await orpc.projects.createFolder({
+      params: { workspace: 'default', id: projectId },
+      body: { path: 'docs' }
+    });
+    expect(folderResult).toMatchObject({ success: true, path: 'docs' });
+
+    const markdownResult = await orpc.projects.createProjectMarkdown({
+      params: { workspace: 'default', id: projectId },
+      body: { name: 'Architecture overview', folder: 'docs' }
+    });
+    expect(markdownResult).toMatchObject({
+      project_id: created.id,
+      path: 'docs/Architecture overview.md',
+      type: 'markdown'
+    });
+
+    const diagramResult = await orpc.projects.saveFile({
+      params: { workspace: 'default', id: projectId },
+      query: { path: 'docs/overview.json' },
+      body: minimalDiagramDocument('Overview')
+    });
+    expect(diagramResult).toMatchObject({
+      project_id: created.id,
+      path: 'docs/overview.json',
+      name: 'Overview'
+    });
+
+    const files = await orpc.projects.listFiles({ params: { workspace: 'default', id: projectId } });
+    expect(files.folders).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: 'docs',
+          files: expect.arrayContaining([
+            expect.objectContaining({ path: 'docs/Architecture overview.md', type: 'markdown' }),
+            expect.objectContaining({ path: 'docs/overview.json', type: 'diagram' })
+          ])
+        })
+      ])
+    );
+  });
+
+  test('saving markdown updates the document name from the first h1 without renaming the path', async ({ orpc }) => {
+    const created = await createProject(orpc, { name: 'Markdown Title Project' });
+
+    const markdownResult = await orpc.projects.createProjectMarkdown({
+      params: { workspace: 'default', id: created.public_id },
+      body: { name: 'Untitled document' }
+    });
+
+    const saved = await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id },
+      body: { body: '# Architecture Decision\n\nDetails', name: 'Architecture Decision' }
+    });
+
+    expect(saved).toMatchObject({
+      id: markdownResult.id,
+      name: 'Architecture Decision',
+      path: 'Untitled document.md',
+      type: 'markdown'
+    });
+
+    const savedWithoutHeading = await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id },
+      body: { body: 'No heading anymore' }
+    });
+
+    expect(savedWithoutHeading).toMatchObject({
+      id: markdownResult.id,
+      name: 'Architecture Decision',
+      path: 'Untitled document.md',
+      type: 'markdown'
+    });
+  });
+});
+
+entityTest.describe('entity content routes', () => {
+  entityTest('entity content routes accept entity public ids', async ({ orpc }) => {
+    const entity = await orpc.entities.create({
+      params: { workspace: 'default' },
+      body: {
+        _schemaId: '00000000-0000-0000-0000-000000000004',
+        _name: 'Entity Content Host',
+        _namespace: 'default',
+        api_type: 'openapi'
+      } as never
+    });
+
+    const entityId = entity._publicId;
+
+    const folderResult = await orpc.projects.createEntityFolder({
+      params: { workspace: 'default', entityId },
+      body: { path: 'docs' }
+    });
+    expect(folderResult).toMatchObject({ success: true, path: 'docs' });
+
+    const markdownResult = await orpc.projects.createEntityMarkdown({
+      params: { workspace: 'default', entityId },
+      body: { name: 'Architecture overview', folder: 'docs' }
+    });
+    expect(markdownResult).toMatchObject({
+      project_id: null,
+      path: 'docs/Architecture overview.md',
+      type: 'markdown'
+    });
+
+    const diagramResult = await orpc.projects.createEntityFile({
+      params: { workspace: 'default', entityId },
+      query: { path: 'docs/overview.json' },
+      body: minimalDiagramDocument('Overview') as never
+    });
+    expect(diagramResult).toMatchObject({
+      project_id: null,
+      path: 'docs/overview.json',
+      name: 'Overview',
+      type: 'diagram'
+    });
+
+    const files = await orpc.projects.listEntityFiles({ params: { workspace: 'default', entityId } });
+    expect(files.folders).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: 'docs',
+          files: expect.arrayContaining([
+            expect.objectContaining({ path: 'docs/Architecture overview.md', type: 'markdown' }),
+            expect.objectContaining({ path: 'docs/overview.json', type: 'diagram' })
+          ])
+        })
+      ])
+    );
   });
 });

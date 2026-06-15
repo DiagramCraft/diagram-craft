@@ -136,6 +136,14 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     return row ?? null;
   }
 
+  async getAnyContentNodeById(workspace: string, id: string) {
+    const [row] = await this.sql<ContentNodeDbResult[]>`
+      SELECT * FROM content_node
+      WHERE workspace = ${workspace} AND id = ${id}
+    `;
+    return row ?? null;
+  }
+
   async updateContentNodeSizeById(
     workspace: string,
     projectId: string,

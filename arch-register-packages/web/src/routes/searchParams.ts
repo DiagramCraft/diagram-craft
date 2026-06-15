@@ -41,6 +41,14 @@ export const validateEntityDetailSearch = (raw: Record<string, unknown>): Entity
   contentFolder: typeof raw.contentFolder === 'string' ? raw.contentFolder : undefined,
 });
 
+export type MarkdownSearchParams = {
+  mode?: 'edit' | 'preview';
+};
+
+export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSearchParams => ({
+  mode: raw.mode === 'edit' || raw.mode === 'preview' ? raw.mode : undefined,
+});
+
 // Project detail params
 export type ProjectSearchParams = {
   tab?: 'projects' | 'archive';

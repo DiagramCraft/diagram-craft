@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createDiagramFromTemplate, emptyDiagram } from '../lib/api';
-import { projectFileKeys, invalidateProjectQueries } from './queryKeys';
+import { projectFileKeys, invalidateProjectQueries, entityContentKeys } from './queryKeys';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -212,11 +212,14 @@ export const workspaceContentKeys = {
   all: (workspaceId: string) => ['workspace-content', workspaceId] as const
 };
 
-export const useWorkspaceContentNodes = (workspaceId: string) => {
+export const useWorkspaceContentNodes = (
+  workspaceId: string,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: workspaceContentKeys.all(workspaceId),
     queryFn: () => orpcClient.projects.listWorkspaceFiles({ params: { workspace: workspaceId } }),
-    enabled: !!workspaceId
+    enabled: (options?.enabled ?? true) && !!workspaceId
   });
 };
 
@@ -243,6 +246,93 @@ export const useCreateWorkspaceDiagram = (workspaceId: string) => {
       });
     },
     onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useCreateProjectMarkdown = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name, folder }: { name: string; folder?: string | null }) =>
+      orpcClient.projects.createProjectMarkdown({
+        params: { workspace: workspaceId, id: projectId },
+        body: { name, ...(folder ? { folder } : {}) }
+      }),
+    onSuccess: async () => {
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
+    }
+  });
+};
+
+export const useCreateEntityMarkdown = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name, folder }: { name: string; folder?: string | null }) =>
+      orpcClient.projects.createEntityMarkdown({
+        params: { workspace: workspaceId, entityId },
+        body: { name, ...(folder ? { folder } : {}) }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['entity-content', workspaceId, entityId] });
+    }
+  });
+};
+
+export const useCreateWorkspaceMarkdown = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name, folder }: { name: string; folder?: string | null }) =>
+      orpcClient.projects.createWorkspaceMarkdown({
+        params: { workspace: workspaceId },
+        body: { name, ...(folder ? { folder } : {}) }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const markdownContentKeys = {
+  detail: (workspaceId: string, nodeId: string) => ['markdown-content', workspaceId, nodeId] as const
+};
+
+export const useMarkdownContent = (workspaceId: string, nodeId: string) => {
+  return useQuery({
+    queryKey: markdownContentKeys.detail(workspaceId, nodeId),
+    queryFn: () =>
+      orpcClient.projects.getMarkdownContent({ params: { workspace: workspaceId, nodeId } }),
+    enabled: !!workspaceId && !!nodeId
+  });
+};
+
+export const useSaveMarkdownContent = (
+  workspaceId: string,
+  nodeId: string,
+  options?: { projectId?: string; entityId?: string }
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ body, name }: { body: string; name?: string }) =>
+      orpcClient.projects.saveMarkdownContent({
+        params: { workspace: workspaceId, nodeId },
+        body: { body, name }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: markdownContentKeys.detail(workspaceId, nodeId) });
+
+      if (options?.projectId) {
+        await invalidateProjectQueries(queryClient, workspaceId, options.projectId);
+        return;
+      }
+
+      if (options?.entityId) {
+        await queryClient.invalidateQueries({
+          queryKey: entityContentKeys.all(workspaceId, options.entityId)
+        });
+        return;
+      }
+
       await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
     }
   });

@@ -1,9 +1,10 @@
 import { createRoute } from '@tanstack/react-router';
 import { useParams, useSearch } from '@tanstack/react-router';
 import { DiagramScreen } from '../../sections/projects/DiagramScreen';
+import { MarkdownEditorScreen } from '../../sections/markdown/MarkdownEditorScreen';
 import { WorkspaceContentSidebar } from '../../sections/workspace-content/WorkspaceContentSidebar';
 import { WorkspaceContentScreen } from '../../sections/workspace-content/WorkspaceContentScreen';
-import { validateEntityDetailSearch } from '../searchParams';
+import { validateEntityDetailSearch, validateMarkdownSearch } from '../searchParams';
 import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
@@ -46,5 +47,20 @@ export const createContentWorkspaceRoutes = (
     () => ({ variant: 'overlay' })
   );
 
-  return [contentRoute, contentDiagramRoute];
+  const contentMarkdownRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'content/wiki/$nodeId',
+      validateSearch: validateMarkdownSearch,
+      component: MarkdownEditorScreen
+    }),
+    ctx => ({
+      variant: 'standard',
+      activeRailItem: 'content',
+      breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
+      primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
+    })
+  );
+
+  return [contentRoute, contentDiagramRoute, contentMarkdownRoute];
 };

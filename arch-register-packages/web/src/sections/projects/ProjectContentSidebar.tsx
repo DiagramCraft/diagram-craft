@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
@@ -7,6 +7,7 @@ import {
   TbBinaryTree2,
   TbCopy,
   TbFile,
+  TbFileText,
   TbFolder,
   TbFolderOpen,
   TbHome,
@@ -32,11 +33,12 @@ import { AddFolderDialog } from './AddFolderDialog';
 import {
   asProjectPublicId,
   projectDetailRoute,
-  projectDiagramRoute
+  projectDiagramRoute,
+  projectMarkdownRoute
 } from '../../routes/publicObjectRoutes';
 
 type ProjectSection = 'home' | 'entities';
-type MenuTarget = { type: 'diagram'; file: FileEntry } | { type: 'folder'; path: string };
+type MenuTarget = { type: 'diagram' | 'markdown'; file: FileEntry } | { type: 'folder'; path: string };
 
 type FolderNode = {
   path: string;
@@ -85,6 +87,7 @@ export const ProjectContentSidebar = ({
   projectId: string;
 }) => {
   const navigate = useNavigate();
+  const params = useParams({ strict: false }) as { diagramId?: string; nodeId?: string };
   const search = useSearch({ strict: false }) as {
     tab?: 'projects' | 'archive';
     folder?: string;
@@ -93,6 +96,8 @@ export const ProjectContentSidebar = ({
   };
   const section: ProjectSection = search.section === 'entities' ? 'entities' : 'home';
   const folderFilter = search.folder ?? null;
+  const activeFileId = params.nodeId ?? params.diagramId ?? null;
+  const isFileRoute = activeFileId !== null;
 
   const { data: project } = useProject(workspaceSlug, projectId);
   const { data: projectEntities = [] } = useProjectEntities(workspaceSlug, projectId);
@@ -249,12 +254,15 @@ export const ProjectContentSidebar = ({
 
     return (
       <>
-        <Menu.Item
-          leftSlot={<TbCopy size={13} />}
-          onClick={() => cloneFileMutation.mutate(target.file)}
-        >
-          Clone
-        </Menu.Item>
+        {target.type === 'diagram' && (
+          <Menu.Item
+            leftSlot={<TbCopy size={13} />}
+            onClick={() => cloneFileMutation.mutate(target.file)}
+          >
+            Clone
+          </Menu.Item>
+        )}
+        {target.type === 'diagram' && <Menu.Separator />}
         <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
           {renderMoveToSubmenu(target.file, allFolders, currentFolder)}
         </Menu.SubMenu>
@@ -280,7 +288,7 @@ export const ProjectContentSidebar = ({
       setRenameTarget(null);
       return;
     }
-    if (renameTarget.type === 'diagram') {
+    if (renameTarget.type !== 'folder') {
       if (trimmed !== renameTarget.file.name) {
         renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
       }
@@ -292,7 +300,7 @@ export const ProjectContentSidebar = ({
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
-    if (deleteTarget.type === 'diagram') {
+    if (deleteTarget.type !== 'folder') {
       deleteFileMutation.mutate(deleteTarget.file.path);
     } else {
       deleteFolderMutation.mutate(deleteTarget.path);
@@ -325,13 +333,24 @@ export const ProjectContentSidebar = ({
               <TreeRow
                 key={file.id}
                 depth={depth + 1}
-                icon={<TbFile size={13} />}
+                icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
                 label={file.name}
-                onClick={() => navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id))}
+                active={file.id === activeFileId}
+                onClick={() =>
+                  navigate(
+                    file.type === 'markdown'
+                      ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+                      : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+                  )
+                }
                 onContextMenu={e => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setMenu({ x: e.clientX, y: e.clientY, target: { type: 'diagram', file } });
+                  setMenu({
+                    x: e.clientX,
+                    y: e.clientY,
+                    target: { type: file.type === 'markdown' ? 'markdown' : 'diagram', file }
+                  });
                 }}
               />
             ))}
@@ -376,7 +395,7 @@ export const ProjectContentSidebar = ({
           testId="project-secondary-home"
           label="Home"
           icon={<TbHome size={13} />}
-          active={section === 'home' && !folderFilter}
+          active={section === 'home' && !folderFilter && !isFileRoute}
           onClick={() => navigateToProject({ section: 'home', folder: undefined })}
         />
         <TreeRow
@@ -386,21 +405,27 @@ export const ProjectContentSidebar = ({
           active={section === 'entities'}
           onClick={() => navigateToProject({ section: 'entities', folder: folderFilter ?? undefined })}
         />
-        {project?.files.rootFiles.length === 0 && project?.files.folders.length === 0 && (
-          <div className={styles.emptyState} style={{ color: 'var(--cmp-fg-disabled)', fontSize: 12 }}>
-            No diagrams yet
-          </div>
-        )}
         {project?.files.rootFiles.map(file => (
           <TreeRow
             key={file.id}
-            icon={<TbFile size={13} />}
+            icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
             label={file.name}
-            onClick={() => navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id))}
+            active={file.id === activeFileId}
+            onClick={() =>
+              navigate(
+                file.type === 'markdown'
+                  ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+                  : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+              )
+            }
             onContextMenu={e => {
               e.preventDefault();
               e.stopPropagation();
-              setMenu({ x: e.clientX, y: e.clientY, target: { type: 'diagram', file } });
+              setMenu({
+                x: e.clientX,
+                y: e.clientY,
+                target: { type: file.type === 'markdown' ? 'markdown' : 'diagram', file }
+              });
             }}
           />
         ))}
@@ -454,25 +479,41 @@ export const ProjectContentSidebar = ({
         open={!!renameTarget}
         currentName={
           renameTarget
-            ? renameTarget.type === 'diagram'
+            ? renameTarget.type !== 'folder'
               ? renameTarget.file.name
               : renameTarget.path
             : ''
         }
-        entityType={renameTarget?.type === 'folder' ? 'folder' : 'diagram'}
+        entityType={
+          renameTarget?.type === 'folder'
+            ? 'folder'
+            : renameTarget?.type === 'markdown'
+              ? 'document'
+              : 'diagram'
+        }
         onRename={handleRenameConfirm}
         onCancel={() => setRenameTarget(null)}
       />
 
       <DeleteConfirmationDialog
         open={!!deleteTarget}
-        title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
+        title={
+          deleteTarget?.type === 'folder'
+            ? 'Delete folder?'
+            : deleteTarget?.type === 'markdown'
+              ? 'Delete document?'
+              : 'Delete diagram?'
+        }
         message={
           deleteTarget ? (
             deleteTarget.type === 'folder' ? (
               <>
                 The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently
                 deleted.
+              </>
+            ) : deleteTarget.type === 'markdown' ? (
+              <>
+                The document <b>{deleteTarget.file.name}</b> will be permanently deleted.
               </>
             ) : (
               <>
@@ -484,7 +525,13 @@ export const ProjectContentSidebar = ({
           )
         }
         detail="This can't be undone."
-        confirmLabel={deleteTarget?.type === 'folder' ? 'Delete folder' : 'Delete diagram'}
+        confirmLabel={
+          deleteTarget?.type === 'folder'
+            ? 'Delete folder'
+            : deleteTarget?.type === 'markdown'
+              ? 'Delete document'
+              : 'Delete diagram'
+        }
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />

@@ -1,4 +1,4 @@
-import { TbCheck, TbFolder, TbMessageCircle, TbStar } from 'react-icons/tb';
+import { TbCheck, TbFolder, TbFileText, TbMessageCircle, TbStar } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import styles from '../sections/projects/ProjectDetailScreen.module.css';
 
@@ -53,7 +53,11 @@ export const DiagramCard = ({
     <div className={styles.diagramThumb}>
       <div className={styles.diagramThumbGrid} />
       <div className={styles.diagramThumbNodes}>
-        {file.preview_svg ? (
+        {file.type === 'markdown' ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--base-fg-more-dim)' }}>
+            <TbFileText size={36} />
+          </div>
+        ) : file.preview_svg ? (
           <div dangerouslySetInnerHTML={{ __html: file.preview_svg }} />
         ) : (
           <svg viewBox="0 0 140 80" preserveAspectRatio="none">
@@ -149,6 +153,7 @@ export const DiagramRow = ({
     onContextMenu={onContextMenu}
   >
     <div className={styles.diagramRowName}>
+      {file.type === 'markdown' && <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />}
       <span>{file.name}</span>
       {file.is_workspace_template && (
         <span className={styles.templateBadge} title="Workspace template">
