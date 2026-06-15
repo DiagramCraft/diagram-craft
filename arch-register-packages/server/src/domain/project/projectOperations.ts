@@ -388,7 +388,9 @@ export const createFolder = async (
       comment_count: 0,
       unresolved_comment_count: 0,
       created_atIfNew: timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: authCtx.userId,
+      updated_by: authCtx.userId
     });
     if (row) {
       await logAudit(db, {
@@ -446,7 +448,9 @@ export const createEntityFolder = async (
       comment_count: 0,
       unresolved_comment_count: 0,
       created_atIfNew: timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: authCtx.userId,
+      updated_by: authCtx.userId
     });
     if (row) {
       await logAudit(db, {
@@ -513,7 +517,9 @@ export const createEntityFile = async (
       comment_count: commentCounts.commentCount,
       unresolved_comment_count: commentCounts.unresolvedCommentCount,
       created_atIfNew: existingFile?.created_at ?? timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+      updated_by: authCtx.userId
     });
 
     await storage.write(ws, entityUuid, row.id, content);
@@ -720,7 +726,9 @@ export const saveFile = async (
       comment_count: commentCounts.commentCount,
       unresolved_comment_count: commentCounts.unresolvedCommentCount,
       created_atIfNew: existingFile?.created_at ?? timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+      updated_by: authCtx.userId
     });
 
     await storage.write(ws, projectUuid, row.id, content);
@@ -899,7 +907,9 @@ export const cloneFile = async (
       comment_count: commentCounts.commentCount,
       unresolved_comment_count: commentCounts.unresolvedCommentCount,
       created_atIfNew: timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: authCtx.userId,
+      updated_by: authCtx.userId
     });
 
     await storage.write(ws, projectUuid, row.id, clonedContent);
@@ -1025,7 +1035,9 @@ export const relocateFile = async (
       comment_count: commentCounts.commentCount,
       unresolved_comment_count: commentCounts.unresolvedCommentCount,
       created_atIfNew: existingFile.created_at,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: existingFile.created_by,
+      updated_by: authCtx.userId
     });
 
     if (existingFile.is_template || existingFile.is_workspace_template) {
@@ -1397,7 +1409,9 @@ export const createWorkspaceFolder = async (
       comment_count: 0,
       unresolved_comment_count: 0,
       created_atIfNew: timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: authCtx.userId,
+      updated_by: authCtx.userId
     });
     if (row) {
       await logAudit(db, {
@@ -1459,7 +1473,9 @@ export const createWorkspaceFile = async (
       comment_count: commentCounts.commentCount,
       unresolved_comment_count: commentCounts.unresolvedCommentCount,
       created_atIfNew: existingFile?.created_at ?? timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+      updated_by: authCtx.userId
     });
 
     await storage.write(ws, ws, row.id, content);
@@ -1570,7 +1586,9 @@ export const createProjectMarkdownDoc = async (
       comment_count: 0,
       unresolved_comment_count: 0,
       created_atIfNew: timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: authCtx.userId,
+      updated_by: authCtx.userId
     });
     await storage.write(ws, projectUuid, row.id, content);
     await logAudit(db, {
@@ -1628,7 +1646,9 @@ export const createEntityMarkdownDoc = async (
       comment_count: 0,
       unresolved_comment_count: 0,
       created_atIfNew: timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: authCtx.userId,
+      updated_by: authCtx.userId
     });
     await storage.write(ws, entityUuid, row.id, content);
     await logAudit(db, {
@@ -1682,7 +1702,9 @@ export const createWorkspaceMarkdownDoc = async (
       comment_count: 0,
       unresolved_comment_count: 0,
       created_atIfNew: timestamp,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: authCtx.userId,
+      updated_by: authCtx.userId
     });
     await storage.write(ws, ws, row.id, content);
     await logAudit(db, {
@@ -1779,7 +1801,9 @@ export const saveMarkdownContent = async (
       comment_count: 0,
       unresolved_comment_count: 0,
       created_atIfNew: node.created_at,
-      updated_at: timestamp
+      updated_at: timestamp,
+      created_byIfNew: node.created_by,
+      updated_by: authCtx.userId
     });
     return toApiProjectFile(row);
   } catch (e) {

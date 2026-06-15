@@ -50,7 +50,9 @@ export const projectFileSchema = z.object({
   preview_svg: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
-  type: z.enum(['diagram', 'folder', 'markdown', 'file'])
+  type: z.enum(['diagram', 'folder', 'markdown', 'file']),
+  created_by: z.string().nullable().optional(),
+  updated_by: z.string().nullable().optional()
 });
 
 const fileFolderSchema = z.object({

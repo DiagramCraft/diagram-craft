@@ -1,0 +1,3 @@
+ALTER TABLE content_node
+  ADD COLUMN created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  ADD COLUMN updated_by UUID REFERENCES users(id) ON DELETE SET NULL;

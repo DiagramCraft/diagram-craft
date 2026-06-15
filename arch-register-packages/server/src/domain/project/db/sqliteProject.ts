@@ -276,7 +276,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
       if (existing) {
         this.run(
-          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ? WHERE id = ?',
+          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ? WHERE id = ?',
           [
             input.name,
             input.parent_id ?? null,
@@ -284,12 +284,13 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
             input.comment_count,
             input.unresolved_comment_count,
             input.updated_at.toISOString(),
+            input.updated_by ?? null,
             existing.id
           ]
         );
       } else {
         this.run(
-          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
@@ -305,7 +306,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
             0,
             0,
             input.created_atIfNew.toISOString(),
-            input.updated_at.toISOString()
+            input.updated_at.toISOString(),
+            input.created_byIfNew ?? null,
+            input.updated_by ?? null
           ]
         );
       }

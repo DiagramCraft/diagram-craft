@@ -93,7 +93,7 @@ export const seedWorkspaces: WorkspaceDbResult[] = [
     description: seededWorkspaces.default.description,
     color: '',
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: WORKSPACE2_ID,
@@ -477,7 +477,7 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
     ],
     sort_order: 0,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   // Second workspace enums
   {
@@ -507,7 +507,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'DOM',
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0000-000000000002',
@@ -530,7 +530,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'SYS',
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0000-000000000003',
@@ -577,7 +577,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'CMP',
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0000-000000000004',
@@ -605,7 +605,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'API',
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0000-000000000005',
@@ -628,7 +628,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'RES',
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   // Second workspace schemas
   {
@@ -649,7 +649,7 @@ export const seedSchemas: SchemaDbResult[] = [
     default_owner: null,
     key_prefix: 'APP',
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0000-000000000012',
@@ -688,7 +688,7 @@ export const seedEntities: Entity[] = [
     data: {},
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0002-000000000001',
@@ -708,7 +708,7 @@ export const seedEntities: Entity[] = [
     data: { domain: '00000000-0000-0000-0001-000000000001' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0002-000000000002',
@@ -728,7 +728,7 @@ export const seedEntities: Entity[] = [
     data: { domain: '00000000-0000-0000-0001-000000000001' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0004-000000000001',
@@ -748,7 +748,7 @@ export const seedEntities: Entity[] = [
     data: { api_type: 'openapi', system: '00000000-0000-0000-0002-000000000001' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0004-000000000002',
@@ -768,7 +768,7 @@ export const seedEntities: Entity[] = [
     data: { api_type: 'grpc', system: '00000000-0000-0000-0002-000000000002' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0003-000000000001',
@@ -793,7 +793,7 @@ export const seedEntities: Entity[] = [
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0003-000000000002',
@@ -818,7 +818,7 @@ export const seedEntities: Entity[] = [
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0003-000000000003',
@@ -842,7 +842,7 @@ export const seedEntities: Entity[] = [
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0005-000000000001',
@@ -867,7 +867,7 @@ export const seedEntities: Entity[] = [
     },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   // Second workspace entities
   {
@@ -888,7 +888,7 @@ export const seedEntities: Entity[] = [
     data: { platform: 'ios' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0012-000000000001',
@@ -908,7 +908,7 @@ export const seedEntities: Entity[] = [
     data: { technology: 'Node' },
     visibility_mode: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0012-000000000002',
@@ -945,7 +945,7 @@ export const seedProjects: ProjectDbCreate[] = [
     target_date: null,
     pinned: false,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: seededProjects.authMigration.id,
@@ -959,7 +959,7 @@ export const seedProjects: ProjectDbCreate[] = [
     target_date: null,
     pinned: true,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: seededProjects.checkoutRevamp.id,
@@ -990,7 +990,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
     },
     config: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0020-000000000002',
@@ -1013,7 +1013,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
       }
     },
     created_at: now,
-    updated_at: now
+    updated_at: now,
   },
   {
     id: '00000000-0000-0000-0020-000000000003',
@@ -1239,7 +1239,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     is_workspace_template: false,
     preview_svg: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: null,
+    updated_by: null
   },
   {
     id: CONTENT_IDS.authApiOverviewDiagram,
@@ -1257,7 +1259,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     is_workspace_template: false,
     preview_svg: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: null,
+    updated_by: null
   },
   {
     id: CONTENT_IDS.authApiSequenceDiagram,
@@ -1275,7 +1279,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     is_workspace_template: false,
     preview_svg: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: null,
+    updated_by: null
   },
   {
     id: CONTENT_IDS.authApiSecurityFolder,
@@ -1293,7 +1299,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     is_workspace_template: false,
     preview_svg: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: null,
+    updated_by: null
   },
   {
     id: CONTENT_IDS.authApiThreatModel,
@@ -1311,7 +1319,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     is_workspace_template: false,
     preview_svg: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: null,
+    updated_by: null
   },
   // Workspace-level content nodes (both project_id and entity_id are null)
   {
@@ -1330,7 +1340,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     is_workspace_template: false,
     preview_svg: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: null,
+    updated_by: null
   },
   {
     id: CONTENT_IDS.wsStandardsFolder,
@@ -1348,7 +1360,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     is_workspace_template: false,
     preview_svg: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: null,
+    updated_by: null
   },
   {
     id: CONTENT_IDS.wsApiDesignGuide,
@@ -1366,7 +1380,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     is_workspace_template: false,
     preview_svg: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: null,
+    updated_by: null
   },
   {
     id: CONTENT_IDS.wsDeploymentTopology,
@@ -1384,7 +1400,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     is_workspace_template: false,
     preview_svg: null,
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: null,
+    updated_by: null
   }
 ];
 
