@@ -35,6 +35,28 @@ export const projectDiagramRoute = (
   params: { workspaceSlug, projectId, diagramId }
 });
 
+export const projectMarkdownRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  projectId: ProjectPublicId,
+  nodeId: string,
+  search?: TSearch
+) =>
+  withSearch({
+    to: '/$workspaceSlug/projects/$projectId/markdown/$nodeId' as const,
+    params: { workspaceSlug, projectId, nodeId }
+  }, search);
+
+export const entityMarkdownRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  entityId: EntityPublicId,
+  nodeId: string,
+  search?: TSearch
+) =>
+  withSearch({
+    to: '/$workspaceSlug/entities/$entityId/markdown/$nodeId' as const,
+    params: { workspaceSlug, entityId, nodeId }
+  }, search);
+
 export const entityDetailRoute = <TSearch = undefined>(
   workspaceSlug: string,
   entityId: EntityPublicId,

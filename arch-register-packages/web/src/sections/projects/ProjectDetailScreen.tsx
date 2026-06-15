@@ -39,18 +39,21 @@ import {
   useCloneProjectFile,
   useRenameProjectFile,
   useMoveProjectFile,
-  useToggleTemplateStatus
+  useToggleTemplateStatus,
+  useCreateProjectMarkdown
 } from '../../hooks/useProjectFiles';
 import {
   asProjectPublicId,
   projectDetailRoute,
-  projectDiagramRoute
+  projectDiagramRoute,
+  projectMarkdownRoute
 } from '../../routes/publicObjectRoutes';
 import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
 import { ProjectEntities } from './ProjectEntities';
 import type { ProjectMenuTarget } from './ProjectDiagramsView';
 import { RenameDialog } from '../../components/RenameDialog';
+import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 
 const PROJECT_STATUSES = [
   { value: 'draft', label: 'Draft' },
@@ -84,6 +87,8 @@ export const ProjectDetailScreen = () => {
   const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
+  const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
+  const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
   const [pinError, setPinError] = useState('');
   const [addEntityOpen, setAddEntityOpen] = useState(false);
 
@@ -110,6 +115,7 @@ export const ProjectDetailScreen = () => {
   const renameFileMutation = useRenameProjectFile(workspaceId, projectId);
   const moveFileMutation = useMoveProjectFile(workspaceId, projectId);
   const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
+  const createMarkdownMutation = useCreateProjectMarkdown(workspaceId, projectId);
 
   // Entity hooks
   const { data: projectEntities = [] } = useProjectEntities(workspaceId, projectId);
@@ -208,6 +214,10 @@ export const ProjectDetailScreen = () => {
 
   const handleNavigateDiagram = (diagramId: string) => {
     navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), diagramId));
+  };
+
+  const handleNavigateMarkdown = (nodeId: string, mode: 'edit' | 'preview' = 'preview') => {
+    navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), nodeId, { mode }));
   };
 
   const closeAddEntityDialog = () => {
@@ -515,11 +525,16 @@ export const ProjectDetailScreen = () => {
           onSetFilter={setFilter}
           onSetViewMode={setViewMode}
           onOpenDiagram={handleNavigateDiagram}
+          onOpenMarkdown={handleNavigateMarkdown}
           onAddFolder={() => setAddFolderOpen(true)}
           onAddDiagram={() => {
             setAddDiagramFolder(contentFolderFilter);
             setAddDiagramOpen(true);
           }}
+          onAddMarkdown={project.canManageFiles ? () => {
+            setAddMarkdownFolder(contentFolderFilter);
+            setAddMarkdownOpen(true);
+          } : undefined}
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
       ) : (
@@ -539,6 +554,7 @@ export const ProjectDetailScreen = () => {
           onSetFilter={setFilter}
           onSetViewMode={setViewMode}
           onOpenDiagram={handleNavigateDiagram}
+          onOpenMarkdown={handleNavigateMarkdown}
           onAddFolder={() => setAddFolderOpen(true)}
           onAddDiagram={() => {
             setAddDiagramFolder(contentFolderFilter);
@@ -589,6 +605,18 @@ export const ProjectDetailScreen = () => {
           projectId={projectId}
           projectName={project.name}
           folder={addDiagramFolder}
+        />
+      )}
+      {project.canManageFiles && (
+        <AddMarkdownDialog
+          open={addMarkdownOpen}
+          onClose={() => {
+            setAddMarkdownOpen(false);
+            setAddMarkdownFolder(null);
+          }}
+          onCreated={file => handleNavigateMarkdown(file.id, 'edit')}
+          onCreate={name => createMarkdownMutation.mutateAsync({ name, folder: addMarkdownFolder })}
+          isPending={createMarkdownMutation.isPending}
         />
       )}
 

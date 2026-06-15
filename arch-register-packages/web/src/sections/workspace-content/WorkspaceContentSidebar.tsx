@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { TbFile, TbFolder, TbHome, TbPlus } from 'react-icons/tb';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { TbFile, TbFileText, TbFolder, TbHome, TbPlus } from 'react-icons/tb';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { useWorkspaceContentNodes, useCreateWorkspaceFolder } from '../../hooks/useProjectFiles';
@@ -13,8 +13,11 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const createFolderMutation = useCreateWorkspaceFolder(workspaceSlug);
   const navigate = useNavigate();
+  const params = useParams({ strict: false }) as { diagramId?: string; nodeId?: string };
   const search = useSearch({ strict: false }) as { contentFolder?: string };
   const contentFolder = search.contentFolder;
+  const activeFileId = params.nodeId ?? params.diagramId ?? null;
+  const isFileRoute = activeFileId !== null;
 
   const toggleFolder = (path: string) => {
     setExpandedFolders(prev => {
@@ -28,17 +31,19 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
     });
   };
 
-  const hasContent = data && (data.rootFiles.length > 0 || data.folders.length > 0);
-
   type FolderNode = {
     path: string;
     name: string;
-    files: Array<{ id: string; name: string; project_id: string | null }>;
+    files: Array<{ id: string; name: string; path: string; project_id: string | null; type: 'diagram' | 'folder' | 'markdown' | 'file' }>;
     children: FolderNode[];
   };
 
   const buildFolderTree = (
-    folders: Array<{ path: string; name: string; files: Array<{ id: string; name: string; project_id: string | null }> }>
+    folders: Array<{
+      path: string;
+      name: string;
+      files: Array<{ id: string; name: string; path: string; project_id: string | null; type: 'diagram' | 'folder' | 'markdown' | 'file' }>;
+    }>
   ): FolderNode[] => {
     const root: FolderNode[] = [];
     const map = new Map<string, FolderNode>();
@@ -63,9 +68,14 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   };
 
   const folderTree = data ? buildFolderTree(data.folders) : [];
+  const activeFilePath = data
+    ? [...data.rootFiles, ...data.folders.flatMap(folder => folder.files)].find(file => file.id === activeFileId)?.path ?? null
+    : null;
 
   const renderFolderNode = (node: FolderNode, depth = 0): React.ReactNode => {
-    const isExpanded = expandedFolders.has(node.path);
+    const isExpanded =
+      expandedFolders.has(node.path) ||
+      activeFilePath?.startsWith(`${node.path}/`);
     return (
       <div key={node.path}>
         <TreeRow
@@ -90,13 +100,21 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
               <TreeRow
                 key={file.id}
                 depth={depth + 1}
-                icon={<TbFile size={13} />}
+                icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
                 label={file.name}
+                active={file.id === activeFileId}
                 onClick={() =>
-                  navigate({
-                    to: '/$workspaceSlug/content/diagrams/$diagramId',
-                    params: { workspaceSlug, diagramId: file.id }
-                  })
+                  navigate(
+                    file.type === 'markdown'
+                      ? {
+                          to: '/$workspaceSlug/content/markdown/$nodeId',
+                          params: { workspaceSlug, nodeId: file.id }
+                        }
+                      : {
+                          to: '/$workspaceSlug/content/diagrams/$diagramId',
+                          params: { workspaceSlug, diagramId: file.id }
+                        }
+                  )
                 }
               />
             ))}
@@ -130,7 +148,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
         <TreeRow
           label="Home"
           icon={<TbHome size={13} />}
-          active={!contentFolder}
+          active={!contentFolder && !isFileRoute}
           onClick={() =>
             navigate({
               to: '/$workspaceSlug/content',
@@ -138,21 +156,24 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             })
           }
         />
-        {!hasContent && (
-          <div className={styles.emptyState} style={{ color: 'var(--cmp-fg-disabled)', fontSize: 12 }}>
-            No diagrams yet
-          </div>
-        )}
         {data?.rootFiles.map(file => (
           <TreeRow
             key={file.id}
-            icon={<TbFile size={13} />}
+            icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
             label={file.name}
+            active={file.id === activeFileId}
             onClick={() =>
-              navigate({
-                to: '/$workspaceSlug/content/diagrams/$diagramId',
-                params: { workspaceSlug, diagramId: file.id }
-              })
+              navigate(
+                file.type === 'markdown'
+                  ? {
+                      to: '/$workspaceSlug/content/markdown/$nodeId',
+                      params: { workspaceSlug, nodeId: file.id }
+                    }
+                  : {
+                      to: '/$workspaceSlug/content/diagrams/$diagramId',
+                      params: { workspaceSlug, diagramId: file.id }
+                    }
+              )
             }
           />
         ))}

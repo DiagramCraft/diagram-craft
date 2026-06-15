@@ -418,6 +418,9 @@ export const createEntityFolder = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    const entity = await db.catalog.getEntity(ws, entityId);
+    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+    const entityUuid = entity.id;
 
     const lastSlash = folderPath.lastIndexOf('/');
     const folderName = lastSlash !== -1 ? folderPath.substring(lastSlash + 1) : folderPath;
@@ -425,7 +428,7 @@ export const createEntityFolder = async (
     if (lastSlash !== -1) {
       const parentPath = folderPath.substring(0, lastSlash);
       // For entity content, find parent by querying entity content nodes
-      const entityNodes = await db.project.listEntityContentNodes(ws, entityId);
+      const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
       const parentFolder = entityNodes.find(n => n.path === parentPath && n.type === 'folder');
       parentId = parentFolder?.id ?? null;
     }
@@ -434,7 +437,7 @@ export const createEntityFolder = async (
     const row = await db.project.createContentNodeIfAbsent({
       workspace: ws,
       project_id: null,
-      entity_id: entityId,
+      entity_id: entityUuid,
       parent_id: parentId,
       path: folderPath,
       name: folderName,
@@ -454,7 +457,7 @@ export const createEntityFolder = async (
         entityId: row.id,
         entityName: folderPath,
         changes: { new: { path: folderPath, type: 'folder' } },
-        metadata: { entity_id: entityId, path: folderPath, is_folder: true }
+        metadata: { entity_id: entityUuid, path: folderPath, is_folder: true }
       });
     }
     return { success: true, path: folderPath, marker: row ? toApiProjectFile(row) : null };
@@ -478,8 +481,11 @@ export const createEntityFile = async (
 
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    const entity = await db.catalog.getEntity(ws, entityId);
+    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+    const entityUuid = entity.id;
 
-    const existingFile = await db.project.listEntityContentNodes(ws, entityId).then(nodes =>
+    const existingFile = await db.project.listEntityContentNodes(ws, entityUuid).then(nodes =>
       nodes.find(n => n.path === filePath && n.type === 'diagram')
     );
     const isUpdate = !!existingFile;
@@ -487,7 +493,7 @@ export const createEntityFile = async (
     let fileParentId: string | null = null;
     const folderPath = folderFromPath(filePath);
     if (folderPath) {
-      const entityNodes = await db.project.listEntityContentNodes(ws, entityId);
+      const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
       const parentFolder = entityNodes.find(n => n.path === folderPath && n.type === 'folder');
       fileParentId = parentFolder?.id ?? null;
     }
@@ -499,7 +505,7 @@ export const createEntityFile = async (
     const row = await db.project.upsertContentNode({
       workspace: ws,
       project_id: null,
-      entity_id: entityId,
+      entity_id: entityUuid,
       parent_id: fileParentId,
       path: filePath,
       name: String(displayName),
@@ -510,7 +516,7 @@ export const createEntityFile = async (
       updated_at: timestamp
     });
 
-    await storage.write(ws, entityId, row.id, content);
+    await storage.write(ws, entityUuid, row.id, content);
 
     try {
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
@@ -518,7 +524,7 @@ export const createEntityFile = async (
       const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
       await db.project.updateContentNodeDerivedData(
         ws,
-        entityId,
+        entityUuid,
         row.id,
         content.length,
         commentCounts.commentCount,
@@ -529,7 +535,7 @@ export const createEntityFile = async (
     } catch {
       await db.project.updateContentNodeDerivedData(
         ws,
-        entityId,
+        entityUuid,
         row.id,
         content.length,
         commentCounts.commentCount,
@@ -552,7 +558,7 @@ export const createEntityFile = async (
         entityId: row.id,
         entityName: row.name,
         changes,
-        metadata: { entity_id: entityId, path: filePath }
+        metadata: { entity_id: entityUuid, path: filePath }
       });
     } else {
       await logAudit(db, {
@@ -565,7 +571,7 @@ export const createEntityFile = async (
         changes: {
           new: extractEntityFields(row)
         },
-        metadata: { entity_id: entityId, path: filePath }
+        metadata: { entity_id: entityUuid, path: filePath }
       });
     }
 
@@ -589,13 +595,14 @@ export const renameFolder = async (
     const authCtx = await buildApiAuthCtx(db, ws, event);
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    const projectUuid = project.id;
     requireProjectAction(
       authCtx,
       project.owner,
       'edit_project',
       'You do not have permission to modify this project'
     );
-    const result = await db.project.renameContentNodeFolder(ws, id, oldPath, newPath, new Date());
+    const result = await db.project.renameContentNodeFolder(ws, projectUuid, oldPath, newPath, new Date());
     httpAssert.true(result.length > 0, {
       status: 404,
       message: `No files found under folder '${oldPath}'`
@@ -627,7 +634,8 @@ export const getFileContent = async (
     if (project) {
       // It's a project - use normal project file lookup
       requireProjectAccess(authCtx, project.owner);
-      file = await db.project.getContentNodeByPath(ws, id, filePath);
+      storageId = project.id;
+      file = await db.project.getContentNodeByPath(ws, project.id, filePath);
     } else {
       // Not a project - try as entity content
       const entityNodes = await db.project.listEntityContentNodes(ws, id);
@@ -677,6 +685,7 @@ export const saveFile = async (
     if (!project) {
       return await createEntityFile(db, storage, workspace, id, filePath, body, event);
     }
+    const projectUuid = project.id;
 
     requireProjectAction(
       authCtx,
@@ -685,14 +694,14 @@ export const saveFile = async (
       'You do not have permission to modify this project'
     );
 
-    const existingFile = await db.project.getContentNodeByPath(ws, id, filePath);
+    const existingFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
     const isUpdate = !!existingFile;
 
     const fileLastSlash = filePath.lastIndexOf('/');
     let fileParentId: string | null = null;
     if (fileLastSlash !== -1) {
       const folderPath = filePath.substring(0, fileLastSlash);
-      const parentFolder = await db.project.getContentNodeByPath(ws, id, folderPath);
+      const parentFolder = await db.project.getContentNodeByPath(ws, projectUuid, folderPath);
       fileParentId = parentFolder?.id ?? null;
     }
 
@@ -703,7 +712,7 @@ export const saveFile = async (
     const commentCounts = getDiagramCommentCounts(doc);
     const row = await db.project.upsertContentNode({
       workspace: ws,
-      project_id: id,
+      project_id: projectUuid,
       parent_id: fileParentId,
       path: filePath,
       name: String(displayName),
@@ -714,7 +723,7 @@ export const saveFile = async (
       updated_at: timestamp
     });
 
-    await storage.write(ws, id, row.id, content);
+    await storage.write(ws, projectUuid, row.id, content);
 
     try {
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
@@ -722,7 +731,7 @@ export const saveFile = async (
       const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
       await db.project.updateContentNodeDerivedData(
         ws,
-        id,
+        projectUuid,
         row.id,
         content.length,
         commentCounts.commentCount,
@@ -733,7 +742,7 @@ export const saveFile = async (
     } catch {
       await db.project.updateContentNodeDerivedData(
         ws,
-        id,
+        projectUuid,
         row.id,
         content.length,
         commentCounts.commentCount,
@@ -756,7 +765,7 @@ export const saveFile = async (
         entityId: row.id,
         entityName: row.name,
         changes,
-        metadata: { project_id: id, path: filePath }
+        metadata: { project_id: projectUuid, path: filePath }
       });
     } else {
       await logAudit(db, {
@@ -769,7 +778,7 @@ export const saveFile = async (
         changes: {
           new: extractEntityFields(row)
         },
-        metadata: { project_id: id, path: filePath }
+        metadata: { project_id: projectUuid, path: filePath }
       });
     }
 
@@ -792,6 +801,7 @@ export const deleteFile = async (
     const authCtx = await buildApiAuthCtx(db, ws, event);
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    const projectUuid = project.id;
 
     requireProjectAction(
       authCtx,
@@ -800,10 +810,10 @@ export const deleteFile = async (
       'You do not have permission to modify this project'
     );
 
-    const file = await db.project.getContentNodeByPath(ws, id, filePath);
+    const file = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-    await db.project.deleteContentNodeByPath(ws, id, filePath);
+    await db.project.deleteContentNodeByPath(ws, projectUuid, filePath);
 
     await logAudit(db, {
       userId: authCtx.userId,
@@ -815,10 +825,10 @@ export const deleteFile = async (
       changes: {
         old: extractEntityFields(file)
       },
-      metadata: { project_id: id, path: filePath }
+      metadata: { project_id: projectUuid, path: filePath }
     });
 
-    await storage.delete(ws, id, file.id).catch(() => {});
+    await storage.delete(ws, projectUuid, file.id).catch(() => {});
 
     return { success: true };
   } catch (e) {
@@ -839,6 +849,7 @@ export const cloneFile = async (
     const authCtx = await buildApiAuthCtx(db, ws, event);
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    const projectUuid = project.id;
 
     requireProjectAction(
       authCtx,
@@ -847,10 +858,10 @@ export const cloneFile = async (
       'You do not have permission to modify this project'
     );
 
-    const sourceFile = await db.project.getContentNodeByPath(ws, id, filePath);
+    const sourceFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
     httpAssert.present(sourceFile, { status: 404, message: `File '${filePath}' not found` });
 
-    const content = await storage.read(ws, id, sourceFile.id);
+    const content = await storage.read(ws, projectUuid, sourceFile.id);
     const fileData = JSON.parse(content.toString('utf8'));
 
     const baseName = fileNameFromPath(filePath);
@@ -863,7 +874,7 @@ export const cloneFile = async (
     do {
       cloneName = `${baseNameWithoutExt} (${cloneNumber})`;
       clonePath = folder ? `${folder}/${cloneName}.json` : `${cloneName}.json`;
-      const existing = await db.project.getContentNodeByPath(ws, id, clonePath);
+      const existing = await db.project.getContentNodeByPath(ws, projectUuid, clonePath);
       if (!existing) break;
       cloneNumber++;
     } while (cloneNumber < 1000);
@@ -881,7 +892,7 @@ export const cloneFile = async (
 
     const row = await db.project.upsertContentNode({
       workspace: ws,
-      project_id: id,
+      project_id: projectUuid,
       path: clonePath,
       name: cloneName,
       size_bytes: clonedContent.length,
@@ -891,7 +902,7 @@ export const cloneFile = async (
       updated_at: timestamp
     });
 
-    await storage.write(ws, id, row.id, clonedContent);
+    await storage.write(ws, projectUuid, row.id, clonedContent);
 
     try {
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
@@ -899,7 +910,7 @@ export const cloneFile = async (
       const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
       await db.project.updateContentNodeDerivedData(
         ws,
-        id,
+        projectUuid,
         row.id,
         clonedContent.length,
         commentCounts.commentCount,
@@ -910,7 +921,7 @@ export const cloneFile = async (
     } catch {
       await db.project.updateContentNodeDerivedData(
         ws,
-        id,
+        projectUuid,
         row.id,
         clonedContent.length,
         commentCounts.commentCount,
@@ -933,7 +944,7 @@ export const cloneFile = async (
       changes: {
         new: extractEntityFields(row)
       },
-      metadata: { project_id: id, path: clonePath, cloned_from: filePath }
+      metadata: { project_id: projectUuid, path: clonePath, cloned_from: filePath }
     });
 
     return toApiProjectFile(row);
@@ -956,6 +967,7 @@ export const relocateFile = async (
     const authCtx = await buildApiAuthCtx(db, ws, event);
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    const projectUuid = project.id;
 
     requireProjectAction(
       authCtx,
@@ -964,20 +976,20 @@ export const relocateFile = async (
       'You do not have permission to modify this project'
     );
 
-    const existingFile = await db.project.getContentNodeByPath(ws, id, filePath);
+    const existingFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
     httpAssert.present(existingFile, { status: 404, message: `File '${filePath}' not found` });
 
     if (filePath === newPath) {
       return toApiProjectFile(existingFile);
     }
 
-    const targetExists = await db.project.getContentNodeByPath(ws, id, newPath);
+    const targetExists = await db.project.getContentNodeByPath(ws, projectUuid, newPath);
     httpAssert.true(!targetExists, {
       status: 409,
       message: `A file already exists at '${newPath}'`
     });
 
-    const content = await storage.read(ws, id, existingFile.id);
+    const content = await storage.read(ws, projectUuid, existingFile.id);
     const fileData = JSON.parse(content.toString('utf8'));
 
     const newName = newPath.includes('/')
@@ -999,13 +1011,13 @@ export const relocateFile = async (
     let newParentId: string | null = null;
     if (newLastSlash !== -1) {
       const newFolderPath = newPath.substring(0, newLastSlash);
-      const parentFolder = await db.project.getContentNodeByPath(ws, id, newFolderPath);
+      const parentFolder = await db.project.getContentNodeByPath(ws, projectUuid, newFolderPath);
       newParentId = parentFolder?.id ?? null;
     }
 
     const newFile = await db.project.upsertContentNode({
       workspace: ws,
-      project_id: id,
+      project_id: projectUuid,
       parent_id: newParentId,
       path: newPath,
       name: displayName,
@@ -1019,7 +1031,7 @@ export const relocateFile = async (
     if (existingFile.is_template || existingFile.is_workspace_template) {
       await db.project.updateContentNodeTemplateStatus(
         ws,
-        id,
+        projectUuid,
         newFile.id,
         existingFile.is_template ?? false,
         existingFile.is_workspace_template ?? false,
@@ -1037,7 +1049,7 @@ export const relocateFile = async (
     }
     await db.project.updateContentNodeDerivedData(
       ws,
-      id,
+      projectUuid,
       newFile.id,
       updatedContent.length,
       commentCounts.commentCount,
@@ -1046,10 +1058,10 @@ export const relocateFile = async (
       timestamp
     );
 
-    await storage.write(ws, id, newFile.id, updatedContent);
+    await storage.write(ws, projectUuid, newFile.id, updatedContent);
 
-    await db.project.deleteContentNodeByPath(ws, id, filePath);
-    await storage.delete(ws, id, existingFile.id).catch(() => {});
+    await db.project.deleteContentNodeByPath(ws, projectUuid, filePath);
+    await storage.delete(ws, projectUuid, existingFile.id).catch(() => {});
 
     await logAudit(db, {
       userId: authCtx.userId,
@@ -1063,7 +1075,7 @@ export const relocateFile = async (
         new: { path: newPath, name: displayName }
       },
       metadata: {
-        project_id: id,
+        project_id: projectUuid,
         operation: 'relocate'
       }
     });
@@ -1087,6 +1099,7 @@ export const deleteFolder = async (
     const authCtx = await buildApiAuthCtx(db, ws, event);
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    const projectUuid = project.id;
 
     requireProjectAction(
       authCtx,
@@ -1095,14 +1108,14 @@ export const deleteFolder = async (
       'You do not have permission to modify this project'
     );
 
-    const result = await db.project.deleteContentNodeFolder(ws, id, folderPath);
+    const result = await db.project.deleteContentNodeFolder(ws, projectUuid, folderPath);
 
     httpAssert.true(result.length > 0, {
       status: 404,
       message: `No files found under folder '${folderPath}'`
     });
 
-    await Promise.all(result.map(file => storage.delete(ws, id, file.id).catch(() => {})));
+    await Promise.all(result.map(file => storage.delete(ws, projectUuid, file.id).catch(() => {})));
 
     return { success: true, count: result.length };
   } catch (e) {
@@ -1124,6 +1137,7 @@ export const updateTemplateStatus = async (
     const authCtx = await buildApiAuthCtx(db, ws, event);
     const project = await db.project.getProject(ws, projectId);
     httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
+    const projectUuid = project.id;
 
     if (isWorkspaceTemplate) {
       requireWorkspaceAdmin(authCtx, 'Only workspace admins can manage workspace templates');
@@ -1131,19 +1145,19 @@ export const updateTemplateStatus = async (
       requireProjectAccess(authCtx, project.owner);
     }
 
-    const file = await db.project.getContentNodeByPath(ws, projectId, filePath);
+    const file = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
     await db.project.updateContentNodeTemplateStatus(
       ws,
-      projectId,
+      projectUuid,
       file.id,
       isTemplate,
       isWorkspaceTemplate,
       new Date()
     );
 
-    const updatedFile = await db.project.getContentNodeByPath(ws, projectId, filePath);
+    const updatedFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
     return toApiProjectFile(updatedFile!);
   } catch (e) {
     return handleError(e, 'Failed to update template status');
@@ -1511,4 +1525,242 @@ export const saveWorkspaceFile = async (
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
   return createWorkspaceFile(db, storage, workspace, filePath, body, event);
+};
+
+// ── Markdown document operations ──────────────────────────────
+
+const EMPTY_MARKDOWN_BODY = JSON.stringify({ body: '' });
+
+export const createProjectMarkdownDoc = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  projectId: string,
+  name: string,
+  folder: string | undefined,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
+  const content = Buffer.from(EMPTY_MARKDOWN_BODY, 'utf8');
+  const timestamp = new Date();
+
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, projectId);
+    httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
+    const projectUuid = project.id;
+    requireProjectAction(authCtx, project.owner, 'edit_project', 'You do not have permission to modify this project');
+
+    let fileParentId: string | null = null;
+    if (folder) {
+      const parentFolder = await db.project.getContentNodeByPath(ws, projectUuid, folder);
+      fileParentId = parentFolder?.id ?? null;
+    }
+
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: projectUuid,
+      entity_id: null,
+      parent_id: fileParentId,
+      path: filePath,
+      name,
+      type: 'markdown',
+      size_bytes: content.length,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: timestamp,
+      updated_at: timestamp
+    });
+    await storage.write(ws, projectUuid, row.id, content);
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'create',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: { new: extractEntityFields(row) },
+      metadata: { project_id: projectUuid, path: filePath }
+    });
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to create markdown document');
+  }
+};
+
+export const createEntityMarkdownDoc = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  entityId: string,
+  name: string,
+  folder: string | undefined,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
+  const content = Buffer.from(EMPTY_MARKDOWN_BODY, 'utf8');
+  const timestamp = new Date();
+
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const entity = await db.catalog.getEntity(ws, entityId);
+    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+    const entityUuid = entity.id;
+
+    let fileParentId: string | null = null;
+    if (folder) {
+      const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
+      const parentFolder = entityNodes.find(n => n.path === folder && n.type === 'folder');
+      fileParentId = parentFolder?.id ?? null;
+    }
+
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: null,
+      entity_id: entityUuid,
+      parent_id: fileParentId,
+      path: filePath,
+      name,
+      type: 'markdown',
+      size_bytes: content.length,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: timestamp,
+      updated_at: timestamp
+    });
+    await storage.write(ws, entityUuid, row.id, content);
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'create',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: { new: extractEntityFields(row) },
+      metadata: { entity_id: entityUuid, path: filePath }
+    });
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to create markdown document');
+  }
+};
+
+export const createWorkspaceMarkdownDoc = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  name: string,
+  folder: string | undefined,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
+  const content = Buffer.from(EMPTY_MARKDOWN_BODY, 'utf8');
+  const timestamp = new Date();
+
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+
+    let fileParentId: string | null = null;
+    if (folder) {
+      const wsNodes = await db.project.listWorkspaceContentNodes(ws);
+      const parentFolder = wsNodes.find(n => n.path === folder && n.type === 'folder');
+      fileParentId = parentFolder?.id ?? null;
+    }
+
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: null,
+      entity_id: null,
+      parent_id: fileParentId,
+      path: filePath,
+      name,
+      type: 'markdown',
+      size_bytes: content.length,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: timestamp,
+      updated_at: timestamp
+    });
+    await storage.write(ws, ws, row.id, content);
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'create',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: { new: extractEntityFields(row) },
+      metadata: { path: filePath }
+    });
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to create markdown document');
+  }
+};
+
+const storageScope = (ws: string, node: { project_id: string | null; entity_id: string | null }) =>
+  node.project_id ?? node.entity_id ?? ws;
+
+export const getMarkdownContent = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  nodeId: string,
+  event: AuthenticatedEvent
+): Promise<{ body: string }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    await buildApiAuthCtx(db, ws, event);
+    const node = await db.project.getAnyContentNodeById(ws, nodeId);
+    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+    httpAssert.true(node.type === 'markdown', { status: 400, message: 'Node is not a markdown document' });
+    const content = await storage.read(ws, storageScope(ws, node), node.id);
+    const parsed = JSON.parse(content.toString('utf8')) as { body?: string };
+    return { body: parsed.body ?? '' };
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve markdown content');
+  }
+};
+
+export const saveMarkdownContent = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  nodeId: string,
+  body: string,
+  name: string | undefined,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    await buildApiAuthCtx(db, ws, event);
+    const node = await db.project.getAnyContentNodeById(ws, nodeId);
+    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+    httpAssert.true(node.type === 'markdown', { status: 400, message: 'Node is not a markdown document' });
+    const content = Buffer.from(JSON.stringify({ body }), 'utf8');
+    await storage.write(ws, storageScope(ws, node), node.id, content);
+    const timestamp = new Date();
+    const nextName = name?.trim() ? name.trim() : node.name;
+    const row = await db.project.upsertContentNode({
+      id: node.id,
+      workspace: ws,
+      project_id: node.project_id,
+      entity_id: node.entity_id,
+      parent_id: node.parent_id,
+      path: node.path,
+      name: nextName,
+      type: 'markdown',
+      size_bytes: content.length,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: node.created_at,
+      updated_at: timestamp
+    });
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to save markdown content');
+  }
 };

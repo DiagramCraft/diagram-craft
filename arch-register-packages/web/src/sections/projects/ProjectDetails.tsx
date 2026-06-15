@@ -25,6 +25,7 @@ export const ProjectDetails = ({
   onSetFilter,
   onSetViewMode,
   onOpenDiagram,
+  onOpenMarkdown,
   onAddFolder,
   onAddDiagram,
   onContextMenu
@@ -44,6 +45,7 @@ export const ProjectDetails = ({
   onSetFilter: (value: string) => void;
   onSetViewMode: (value: 'grid' | 'list') => void;
   onOpenDiagram: (diagramId: string) => void;
+  onOpenMarkdown?: (nodeId: string) => void;
   onAddFolder: () => void;
   onAddDiagram: () => void;
   onContextMenu?: (e: React.MouseEvent, target: ProjectMenuTarget) => void;
@@ -119,6 +121,7 @@ export const ProjectDetails = ({
         filter={filter}
         viewMode={viewMode}
         onOpenDiagram={onOpenDiagram}
+        onOpenMarkdown={onOpenMarkdown}
         onNewDiagram={project.canManageFiles ? onAddDiagram : undefined}
         onContextMenu={onContextMenu}
       />

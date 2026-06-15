@@ -20,11 +20,15 @@ export const useProjects = (workspaceId: string) => {
 };
 
 // Hook for fetching a single project
-export const useProject = (workspaceId: string, projectId: string) => {
+export const useProject = (
+  workspaceId: string,
+  projectId: string,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: projectKeys.detail(workspaceId, projectId),
     queryFn: () => orpcClient.projects.get({ params: { workspace: workspaceId, id: projectId } }),
-    enabled: !!workspaceId && !!projectId
+    enabled: (options?.enabled ?? true) && !!workspaceId && !!projectId
   });
 };
 
@@ -208,14 +212,18 @@ export const useEntityDiagramFiles = (workspaceId: string, entityId: string) => 
 };
 
 // Hook for fetching content nodes owned by an entity
-export const useEntityContentNodes = (workspaceId: string, entityId: string) => {
+export const useEntityContentNodes = (
+  workspaceId: string,
+  entityId: string,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: entityContentKeys.all(workspaceId, entityId),
     queryFn: () =>
       orpcClient.projects.listEntityFiles({
         params: { workspace: workspaceId, entityId }
       }),
-    enabled: !!workspaceId && !!entityId
+    enabled: (options?.enabled ?? true) && !!workspaceId && !!entityId
   });
 };
 

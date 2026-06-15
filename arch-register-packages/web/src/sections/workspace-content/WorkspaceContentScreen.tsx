@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbPlus } from 'react-icons/tb';
+import { TbFileText, TbPlus } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { Title } from '../../components/Title';
-import { useWorkspaceContentNodes } from '../../hooks/useProjectFiles';
+import { useWorkspaceContentNodes, useCreateWorkspaceMarkdown } from '../../hooks/useProjectFiles';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Button } from '@diagram-craft/app-components/Button';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
+import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import {
   DiagramBrowserToolbar,
   DiagramBrowserView
@@ -21,14 +22,24 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const navigate = useNavigate();
   const { workspace } = useWorkspaceContext();
   const { data } = useWorkspaceContentNodes(workspaceSlug);
+  const createMarkdown = useCreateWorkspaceMarkdown(workspaceSlug);
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
+  const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
 
   const handleDiagramClick = (fileId: string) => {
     navigate({
       to: '/$workspaceSlug/content/diagrams/$diagramId',
       params: { workspaceSlug, diagramId: fileId }
+    });
+  };
+
+  const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
+    navigate({
+      to: '/$workspaceSlug/content/markdown/$nodeId',
+      params: { workspaceSlug, nodeId: fileId },
+      search: { mode }
     });
   };
 
@@ -48,16 +59,21 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
           title={workspace?.name ?? workspaceSlug}
           buttons={
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDiagramOpen(true)}>
-              New diagram
-            </Button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Button variant="secondary" icon={<TbFileText size={12} />} onClick={() => setAddMarkdownOpen(true)}>
+                New document
+              </Button>
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setAddDiagramOpen(true)}>
+                New diagram
+              </Button>
+            </div>
           }
         />
       </div>
 
       <div className={styles.meta}>
         <div className={styles.metaItem}>
-          <div className={styles.metaLabel}>Diagrams</div>
+          <div className={styles.metaLabel}>Items</div>
           <div className={styles.metaValue}>
             <span className="mono tabular">{files.length}</span>
           </div>
@@ -80,9 +96,10 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           items: section.items.map(file => ({ file }))
         }))}
         onOpenDiagram={file => handleDiagramClick(file.id)}
+        onOpenMarkdown={file => handleMarkdownClick(file.id)}
         onNewDiagram={() => setAddDiagramOpen(true)}
-        emptyState={{ title: 'No diagrams here', sub: 'Diagrams will appear here when added.' }}
-        noMatchState={{ title: 'No matches', sub: `No diagrams match "${filter}".` }}
+        emptyState={{ title: 'No content here', sub: 'Diagrams and documents will appear here when added.' }}
+        noMatchState={{ title: 'No matches', sub: `No items match "${filter}".` }}
       />
 
       <AddDiagramDialog
@@ -95,6 +112,14 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         workspaceId={workspaceSlug}
         context="workspace"
         folder={folder || null}
+      />
+
+      <AddMarkdownDialog
+        open={addMarkdownOpen}
+        onClose={() => setAddMarkdownOpen(false)}
+        onCreated={file => handleMarkdownClick(file.id, 'edit')}
+        onCreate={name => createMarkdown.mutateAsync({ name, folder: folder || null })}
+        isPending={createMarkdown.isPending}
       />
     </div>
   );

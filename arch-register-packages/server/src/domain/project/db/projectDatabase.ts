@@ -124,6 +124,7 @@ export type ProjectDatabase = {
     projectId: string,
     id: string
   ): Promise<ContentNodeDbResult | null>;
+  getAnyContentNodeById(ws: string, id: string): Promise<ContentNodeDbResult | null>;
   updateContentNodeSizeById(
     ws: string,
     projectId: string,

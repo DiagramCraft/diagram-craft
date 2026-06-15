@@ -33,7 +33,12 @@ import {
   createWorkspaceFolder,
   createWorkspaceFile,
   getWorkspaceFileContent,
-  saveWorkspaceFile
+  saveWorkspaceFile,
+  createProjectMarkdownDoc,
+  createEntityMarkdownDoc,
+  createWorkspaceMarkdownDoc,
+  getMarkdownContent,
+  saveMarkdownContent
 } from './projectOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -435,6 +440,93 @@ export const projectORPCRouter = projectRouter.router({
             input.params.workspace,
             input.query.path,
             input.body,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    createProjectMarkdown: projectRouter.projects.createProjectMarkdown.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await createProjectMarkdownDoc(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.id,
+            input.body.name,
+            input.body.folder,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    createEntityMarkdown: projectRouter.projects.createEntityMarkdown.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await createEntityMarkdownDoc(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.entityId,
+            input.body.name,
+            input.body.folder,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    createWorkspaceMarkdown: projectRouter.projects.createWorkspaceMarkdown.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await createWorkspaceMarkdownDoc(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.body.name,
+            input.body.folder,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    getMarkdownContent: projectRouter.projects.getMarkdownContent.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await getMarkdownContent(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.nodeId,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    saveMarkdownContent: projectRouter.projects.saveMarkdownContent.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await saveMarkdownContent(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.nodeId,
+            input.body.body,
+            input.body.name,
             context.event
           );
         } catch (error) {

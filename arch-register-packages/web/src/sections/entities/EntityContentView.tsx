@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbPlus } from 'react-icons/tb';
+import { TbFileText, TbPlus } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { useEntityContentNodes } from '../../hooks/useProjects';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Title } from '../../components/Title';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
+import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import {
   DiagramBrowserToolbar,
   DiagramBrowserView
@@ -13,8 +15,10 @@ import {
   asEntityPublicId,
   asProjectPublicId,
   entityDiagramRoute,
+  entityMarkdownRoute,
   projectDiagramRoute
 } from '../../routes/publicObjectRoutes';
+import { useCreateEntityMarkdown } from '../../hooks/useProjectFiles';
 
 type EntityContentViewProps = {
   workspaceSlug: string;
@@ -25,9 +29,11 @@ type EntityContentViewProps = {
 export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
   const navigate = useNavigate();
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
+  const createMarkdown = useCreateEntityMarkdown(workspaceSlug, entityId);
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
+  const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
 
   const handleDiagramClick = (fileId: string, projectId: string | null) => {
     if (projectId) {
@@ -35,6 +41,10 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
     } else {
       navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), fileId));
     }
+  };
+
+  const handleMarkdownClick = (fileId: string, mode: 'edit' | 'preview' = 'preview') => {
+    navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), fileId, { mode }));
   };
 
   // Find the folder and its files
@@ -48,23 +58,32 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>{folderName}</h1>
-        </div>
-        <div className={styles.actions}>
-          <Button
-            variant="primary"
-            icon={<TbPlus size={12} />}
-            onClick={() => setAddDiagramOpen(true)}
-          >
-            New diagram
-          </Button>
-        </div>
+        <Title
+          title={folderName}
+          buttons={
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Button
+                variant="secondary"
+                icon={<TbFileText size={12} />}
+                onClick={() => setAddMarkdownOpen(true)}
+              >
+                New document
+              </Button>
+              <Button
+                variant="primary"
+                icon={<TbPlus size={12} />}
+                onClick={() => setAddDiagramOpen(true)}
+              >
+                New diagram
+              </Button>
+            </div>
+          }
+        />
       </div>
 
       <div className={styles.meta}>
         <div className={styles.metaItem}>
-          <div className={styles.metaLabel}>Diagrams</div>
+          <div className={styles.metaLabel}>Items</div>
           <div className={styles.metaValue}>
             <span className="mono tabular">{files.length}</span>
           </div>
@@ -90,12 +109,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
           }
         ]}
         onOpenDiagram={file => handleDiagramClick(file.id, file.project_public_id ?? file.project_id)}
+        onOpenMarkdown={file => handleMarkdownClick(file.id)}
         onNewDiagram={() => setAddDiagramOpen(true)}
         emptyState={{
-          title: 'No diagrams in this folder',
-          sub: 'Diagrams will appear here when added to this folder.'
+          title: 'No content in this folder',
+          sub: 'Diagrams and documents will appear here when added to this folder.'
         }}
-        noMatchState={{ title: 'No matches', sub: `No diagrams match "${filter}".` }}
+        noMatchState={{ title: 'No matches', sub: `No items match "${filter}".` }}
       />
 
       <AddDiagramDialog
@@ -109,6 +129,14 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         context="entity"
         entityId={entityId}
         folder={folder}
+      />
+
+      <AddMarkdownDialog
+        open={addMarkdownOpen}
+        onClose={() => setAddMarkdownOpen(false)}
+        onCreated={file => handleMarkdownClick(file.id, 'edit')}
+        onCreate={name => createMarkdown.mutateAsync({ name, folder })}
+        isPending={createMarkdown.isPending}
       />
     </div>
   );

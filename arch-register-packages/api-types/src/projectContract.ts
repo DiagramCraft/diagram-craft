@@ -452,6 +452,60 @@ export const projectContract = {
         query: z.object({ path: z.string() }),
         body: z.record(z.string(), z.unknown())
       }))
+      .output(projectFileSchema),
+    createProjectMarkdown: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/markdown',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: wsAndId,
+        body: z.object({ name: z.string(), folder: z.string().optional() })
+      }))
+      .output(projectFileSchema),
+    createEntityMarkdown: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entities/{entityId}/markdown',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ entityId: z.string() }),
+        body: z.object({ name: z.string(), folder: z.string().optional() })
+      }))
+      .output(projectFileSchema),
+    createWorkspaceMarkdown: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/content/markdown',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws,
+        body: z.object({ name: z.string(), folder: z.string().optional() })
+      }))
+      .output(projectFileSchema),
+    getMarkdownContent: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/markdown/{nodeId}',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ nodeId: z.string() })
+      }))
+      .output(z.object({ body: z.string() })),
+    saveMarkdownContent: oc
+      .route({
+        method: 'PUT',
+        path: '/{workspace}/markdown/{nodeId}',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ nodeId: z.string() }),
+        body: z.object({ body: z.string(), name: z.string().optional() })
+      }))
       .output(projectFileSchema)
   }
 };

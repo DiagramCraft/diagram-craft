@@ -17,6 +17,7 @@ export const ProjectDiagramsView = ({
   filter,
   viewMode,
   onOpenDiagram,
+  onOpenMarkdown,
   onNewDiagram,
   onContextMenu
 }: {
@@ -26,6 +27,7 @@ export const ProjectDiagramsView = ({
   filter: string;
   viewMode: 'grid' | 'list';
   onOpenDiagram: (diagramId: string) => void;
+  onOpenMarkdown?: (nodeId: string) => void;
   onNewDiagram?: () => void;
   onContextMenu?: (e: React.MouseEvent, target: ProjectMenuTarget) => void;
 }) => {
@@ -53,6 +55,7 @@ export const ProjectDiagramsView = ({
         listItems={allItems}
         gridSections={[]}
         onOpenDiagram={file => onOpenDiagram(file.id)}
+        onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
         onContextMenu={
           onContextMenu ? (event, file) => onContextMenu(event, { type: 'diagram', file }) : undefined
         }
@@ -80,6 +83,7 @@ export const ProjectDiagramsView = ({
           }
         ]}
         onOpenDiagram={file => onOpenDiagram(file.id)}
+        onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
         onContextMenu={
           onContextMenu ? (event, file) => onContextMenu(event, { type: 'diagram', file }) : undefined
         }
@@ -130,6 +134,7 @@ export const ProjectDiagramsView = ({
       ]}
       gridSections={gridSections}
       onOpenDiagram={file => onOpenDiagram(file.id)}
+      onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
       onContextMenu={
         onContextMenu ? (event, file) => onContextMenu(event, { type: 'diagram', file }) : undefined
       }

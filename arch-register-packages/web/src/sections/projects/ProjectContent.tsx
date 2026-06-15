@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbFolderOpen, TbPlus } from 'react-icons/tb';
+import { TbFileText, TbFolderOpen, TbPlus } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type { FileEntry } from '../../lib/api';
 import styles from './ProjectDetailScreen.module.css';
@@ -22,8 +22,10 @@ export const ProjectContent = ({
   onSetFilter,
   onSetViewMode,
   onOpenDiagram,
+  onOpenMarkdown,
   onAddFolder,
   onAddDiagram,
+  onAddMarkdown,
   onContextMenu
 }: {
   project: ProjectDetailData;
@@ -38,8 +40,10 @@ export const ProjectContent = ({
   onSetFilter: (value: string) => void;
   onSetViewMode: (value: 'grid' | 'list') => void;
   onOpenDiagram: (diagramId: string) => void;
+  onOpenMarkdown?: (nodeId: string) => void;
   onAddFolder: () => void;
   onAddDiagram: () => void;
+  onAddMarkdown?: () => void;
   onContextMenu?: (e: React.MouseEvent, target: ProjectMenuTarget) => void;
 }) => {
   const navigate = useNavigate();
@@ -59,6 +63,11 @@ export const ProjectContent = ({
             <Button icon={<TbFolderOpen size={12} />} onClick={onAddFolder}>
               New folder
             </Button>
+            {onAddMarkdown && (
+              <Button icon={<TbFileText size={12} />} onClick={onAddMarkdown}>
+                New document
+              </Button>
+            )}
             <Button variant="primary" icon={<TbPlus size={12} />} onClick={onAddDiagram}>
               New diagram
             </Button>
@@ -67,7 +76,7 @@ export const ProjectContent = ({
       }
       meta={
         <>
-          <ProjectMetaItem label="Diagrams" value={<span className="mono tabular">{allFilesCount}</span>} />
+          <ProjectMetaItem label="Items" value={<span className="mono tabular">{allFilesCount}</span>} />
           <ProjectMetaItem label="Folders" value={<span className="mono tabular">{folderCount}</span>} />
           <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
           <ProjectMetaItem label="Last edit" value={new Date(project.updated_at).toLocaleDateString()} />
@@ -75,7 +84,7 @@ export const ProjectContent = ({
       }
       toolbar={
         <DiagramBrowserToolbar
-          label={<div className={styles.sectionLabel} style={{ margin: 0 }}>{`Diagrams (${visibleFiles.length})`}</div>}
+          label={<div className={styles.sectionLabel} style={{ margin: 0 }}>{`Content (${visibleFiles.length})`}</div>}
           filter={filter}
           onFilterChange={onSetFilter}
           viewMode={viewMode}
@@ -90,6 +99,7 @@ export const ProjectContent = ({
         filter={filter}
         viewMode={viewMode}
         onOpenDiagram={onOpenDiagram}
+        onOpenMarkdown={onOpenMarkdown}
         onNewDiagram={project.canManageFiles ? onAddDiagram : undefined}
         onContextMenu={onContextMenu}
       />

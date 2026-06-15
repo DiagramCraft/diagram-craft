@@ -2,10 +2,15 @@ import { createRoute } from '@tanstack/react-router';
 import { EntityBrowserScreen } from '../../sections/entities/EntityBrowserScreen';
 import { EntityDetailScreen } from '../../sections/entities/EntityDetailScreen';
 import { DiagramScreen } from '../../sections/projects/DiagramScreen';
+import { MarkdownEditorScreen } from '../../sections/markdown/MarkdownEditorScreen';
 import { ImportScreen } from '../../sections/entities/ImportScreen';
 import { EntitiesSidebar } from '../../sections/entities/EntitiesSidebar';
 import { EntityContentSidebar } from '../../sections/entities/EntityContentSidebar';
-import { validateEntityDetailSearch, validateEntitySearch } from '../searchParams';
+import {
+  validateEntityDetailSearch,
+  validateEntitySearch,
+  validateMarkdownSearch
+} from '../searchParams';
 import {
   buildEntityBreadcrumbs,
   getAllParams
@@ -87,5 +92,32 @@ export const createEntityWorkspaceRoutes = (
     )
   }));
 
-  return [entityBrowserRoute, importRoute, entityDetailRoute, entityDiagramRoute];
+  const entityMarkdownRoute = withWorkspaceShell(createRoute({
+    getParentRoute: () => workspaceRoute,
+    path: 'entities/$entityId/markdown/$nodeId',
+    validateSearch: validateMarkdownSearch,
+    component: MarkdownEditorScreen
+  }), ctx => {
+    const params = getAllParams(ctx.matches);
+    return {
+      variant: 'detail',
+      activeRailItem: 'entities',
+      breadcrumbs: buildEntityBreadcrumbs(ctx, true),
+      navigationLabel: 'Entities',
+      renderNavigation: controls => (
+        <EntitiesSidebar
+          schemas={ctx.schemas}
+          lifecycleStates={ctx.lifecycleStates}
+          workspaceSlug={ctx.workspaceSlug}
+          onCollapse={controls.expanded ? controls.collapse : undefined}
+          onExpand={controls.expanded ? undefined : controls.expand}
+        />
+      ),
+      secondarySidebar: params.entityId ? (
+        <EntityContentSidebar workspaceSlug={ctx.workspaceSlug} entityId={params.entityId} />
+      ) : undefined
+    };
+  });
+
+  return [entityBrowserRoute, importRoute, entityDetailRoute, entityDiagramRoute, entityMarkdownRoute];
 };
