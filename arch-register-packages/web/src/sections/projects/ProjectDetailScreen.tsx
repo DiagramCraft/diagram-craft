@@ -41,6 +41,11 @@ import {
   useMoveProjectFile,
   useToggleTemplateStatus
 } from '../../hooks/useProjectFiles';
+import {
+  asProjectPublicId,
+  projectDetailRoute,
+  projectDiagramRoute
+} from '../../routes/publicObjectRoutes';
 import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
 import { ProjectEntities } from './ProjectEntities';
@@ -171,7 +176,7 @@ export const ProjectDetailScreen = () => {
     setPinError('');
     updateProject.mutate(
       {
-        projectId: project.id,
+        projectId: project.public_id,
         data: {
           name: project.name,
           description: project.description,
@@ -192,36 +197,29 @@ export const ProjectDetailScreen = () => {
   };
 
   const handleNavigateProject = () => {
-    navigate({
-      to: '/$workspaceSlug/projects/$projectId',
-      params: { workspaceSlug, projectId },
-      search: {
+    navigate(
+      projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
         tab: search.tab as 'projects' | 'archive' | undefined,
         section: 'home',
         dialog: undefined
-      }
-    });
+      })
+    );
   };
 
   const handleNavigateDiagram = (diagramId: string) => {
-    navigate({
-      to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-      params: { workspaceSlug, projectId, diagramId }
-    });
+    navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), diagramId));
   };
 
   const closeAddEntityDialog = () => {
     setAddEntityOpen(false);
     if (pendingDialog !== 'add-entity') return;
     navigate({
-      to: '/$workspaceSlug/projects/$projectId',
-      params: { workspaceSlug, projectId },
-      search: {
+      ...projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
         tab: search.tab as 'projects' | 'archive' | undefined,
         folder: folderFilter ?? undefined,
         section,
         dialog: undefined
-      },
+      }),
       replace: true
     });
   };
@@ -725,7 +723,7 @@ const ProjectSettings = ({
     setError('');
     updateProject.mutate(
       {
-        projectId: project.id,
+        projectId: project.public_id,
         data: {
           name: trimmed,
           description: description.trim(),

@@ -34,6 +34,7 @@ import {
   ProjectFile
 } from '@arch-register/api-types/projectContract';
 import { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
+import { formatPublicId } from '../../utils/publicIds';
 
 const PROJECT_STATUSES = ['draft', 'active', 'complete', 'cancelled'] as const;
 type ProjectStatus = (typeof PROJECT_STATUSES)[number];
@@ -122,7 +123,7 @@ export const getProject = async (
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
     requireProjectAccess(authCtx, project.owner);
-    const files = await db.project.listContentNodes(ws, id);
+    const files = await db.project.listContentNodes(ws, project.id);
     return toApiProjectDetail(project, buildFileTree(files), authCtx);
   } catch (e) {
     return handleError(e, 'Failed to retrieve project');
@@ -148,12 +149,20 @@ export const createProject = async (
     const authCtx = await buildApiAuthCtx(db, ws, event);
     const teamIds = new Set((await db.workspace.listTeams(ws)).map(row => row.id));
     const timestamp = new Date();
+    const workspaceRow = await db.workspace.getWorkspace(ws);
+    httpAssert.present(workspaceRow, { status: 404, message: `Workspace '${ws}' not found` });
 
     httpAssert.present(input.name, { message: 'name is required' });
+
+    const publicId = formatPublicId(
+      workspaceRow.short_code,
+      await db.workspace.allocatePublicId(workspaceRow.short_code, timestamp)
+    );
 
     const createInput = {
       id: randomUUID(),
       workspace: ws,
+      public_id: publicId,
       name: input.name,
       description: input.description ?? '',
       owner: resolveProjectOwner(input.owner, teamIds),
@@ -257,7 +266,7 @@ export const updateProject = async (
       );
     }
 
-    const row = await db.project.updateProject(ws, id, updateInput);
+    const row = await db.project.updateProject(ws, oldRow.id, updateInput);
     httpAssert.present(row, { status: 404, message: `Project '${id}' not found` });
 
     const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
@@ -266,12 +275,12 @@ export const updateProject = async (
       workspace: ws,
       operation: 'update',
       entityType: 'project',
-      entityId: id,
+      entityId: oldRow.id,
       entityName: row.name,
       changes
     });
 
-    const fileCount = (await db.project.listContentNodes(ws, id)).length;
+    const fileCount = (await db.project.listContentNodes(ws, oldRow.id)).length;
     return toApiProject(row, fileCount, authCtx);
   } catch (e) {
     return handleError(e, 'Failed to update project');
@@ -298,20 +307,20 @@ export const deleteProject = async (
       'You do not have permission to delete this project'
     );
 
-    await db.project.deleteProject(ws, id);
+    await db.project.deleteProject(ws, project.id);
 
     await logAudit(db, {
       userId: authCtx.userId,
       workspace: ws,
       operation: 'delete',
       entityType: 'project',
-      entityId: id,
+      entityId: project.id,
       entityName: project.name,
       changes: { old: extractEntityFields(project) }
     });
 
     if (storage) {
-      await storage.deleteAll(ws, id).catch(() => {});
+      await storage.deleteAll(ws, project.id).catch(() => {});
     }
 
     return { success: true, message: `Project '${id}' deleted` };
@@ -332,7 +341,7 @@ export const listProjectFiles = async (
     const project = await db.project.getProject(ws, id);
     httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
     requireProjectAccess(authCtx, project.owner);
-    const files = await db.project.listContentNodes(ws, id);
+    const files = await db.project.listContentNodes(ws, project.id);
     return buildFileTree(files);
   } catch (e) {
     return handleError(e, 'Failed to list files');
@@ -363,14 +372,14 @@ export const createFolder = async (
     let parentId: string | null = null;
     if (lastSlash !== -1) {
       const parentPath = folderPath.substring(0, lastSlash);
-      const parentFolder = await db.project.getContentNodeByPath(ws, id, parentPath);
+      const parentFolder = await db.project.getContentNodeByPath(ws, project.id, parentPath);
       parentId = parentFolder?.id ?? null;
     }
 
     const timestamp = new Date();
     const row = await db.project.createContentNodeIfAbsent({
       workspace: ws,
-      project_id: id,
+      project_id: project.id,
       parent_id: parentId,
       path: folderPath,
       name: folderName,
@@ -390,7 +399,7 @@ export const createFolder = async (
         entityId: row.id,
         entityName: folderPath,
         changes: { new: { path: folderPath, type: 'folder' } },
-        metadata: { project_id: id, path: folderPath, is_folder: true }
+        metadata: { project_id: project.id, path: folderPath, is_folder: true }
       });
     }
     return { success: true, path: folderPath, marker: row ? toApiProjectFile(row) : null };
@@ -1153,7 +1162,7 @@ export const listProjectEntities = async (
     const project = await db.project.getProject(ws, projectId);
     httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
     requireProjectAccess(authCtx, project.owner);
-    const rows = await db.project.listProjectEntities(ws, projectId);
+    const rows = await db.project.listProjectEntities(ws, project.id);
     return rows.map(toApiProjectEntity);
   } catch (e) {
     return handleError(e, 'Failed to retrieve project entities');
@@ -1180,7 +1189,7 @@ export const addProjectEntity = async (
     );
     const row = await db.project.addProjectEntity({
       workspace: ws,
-      project_id: projectId,
+      project_id: project.id,
       entity_id: input.entity_id,
       entity_type_id: input.entity_type ?? null,
       is_done: input.is_done ?? false,
@@ -1211,7 +1220,7 @@ export const updateProjectEntity = async (
       'edit_project',
       'You do not have permission to edit this project'
     );
-    const existing = (await db.project.listProjectEntities(ws, projectId)).find(
+    const existing = (await db.project.listProjectEntities(ws, project.id)).find(
       e => e.entity_id === entityId
     );
     httpAssert.present(existing, {
@@ -1220,7 +1229,7 @@ export const updateProjectEntity = async (
     });
     const row = await db.project.updateProjectEntity(
       ws,
-      projectId,
+      project.id,
       entityId,
       input.entity_type !== undefined ? (input.entity_type ?? null) : existing.entity_type_id,
       input.is_done !== undefined ? input.is_done : existing.is_done
@@ -1250,7 +1259,7 @@ export const removeProjectEntity = async (
       'edit_project',
       'You do not have permission to edit this project'
     );
-    await db.project.removeProjectEntity(ws, projectId, entityId);
+    await db.project.removeProjectEntity(ws, project.id, entityId);
     return { success: true };
   } catch (e) {
     return handleError(e, 'Failed to remove entity from project');
@@ -1282,7 +1291,9 @@ export const listEntityContentNodes = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   await buildApiAuthCtx(db, ws, event);
   try {
-    const files = await db.project.listEntityContentNodes(ws, entityId);
+    const entity = await db.catalog.getEntity(ws, entityId);
+    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+    const files = await db.project.listEntityContentNodes(ws, entity.id);
     return buildFileTree(files);
   } catch (e) {
     return handleError(e, 'Failed to retrieve entity content nodes');
@@ -1298,7 +1309,9 @@ export const getEntityDiagramFiles = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   await buildApiAuthCtx(db, ws, event);
   try {
-    const rows = await db.project.getEntityDiagramFiles(ws, entityId);
+    const entity = await db.catalog.getEntity(ws, entityId);
+    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+    const rows = await db.project.getEntityDiagramFiles(ws, entity.id);
     return rows.map(row => ({
       file: {
         id: row.file_id,
@@ -1313,6 +1326,7 @@ export const getEntityDiagramFiles = async (
       },
       project: {
         id: row.project_id,
+        public_id: row.project_public_id,
         name: row.project_name
       }
     }));

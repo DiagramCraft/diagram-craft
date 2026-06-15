@@ -7,6 +7,7 @@ const AUTOSAVE_KEEP_COUNT = 50;
 const entityToBaseState = (row: Entity): Record<string, unknown> => ({
   id: row.id,
   workspace: row.workspace,
+  public_id: row.public_id,
   slug: row.slug,
   namespace: row.namespace,
   name: row.name,

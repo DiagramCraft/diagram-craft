@@ -41,6 +41,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { FilterBuilder } from '../../components/FilterBuilder';
+import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 import {
   useEntities,
   useEntityFacets,
@@ -491,10 +492,7 @@ export const EntityBrowserScreen = () => {
 
   const navigateToEntity = useCallback(
     (entityId: string) => {
-      navigate({
-        to: '/$workspaceSlug/entities/$entityId',
-        params: { workspaceSlug, entityId }
-      });
+      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
     },
     [navigate, workspaceSlug]
   );
@@ -540,7 +538,7 @@ export const EntityBrowserScreen = () => {
   const handleCloneEntity = async (entity: EntityRecord) => {
     try {
       const cloned = await cloneMutation.mutateAsync(entity._uid);
-      navigateToEntity(cloned._uid);
+      navigateToEntity(cloned._publicId);
     } catch {
       // Error handling is done by TanStack Query
     }
@@ -1126,7 +1124,7 @@ const TableView = ({
                 key={e._uid}
                 aria-label={`Entity row: ${entityName(e)}`}
                 className={selectedIds.has(e._uid) ? styles.tableRowSelected : undefined}
-                onClick={() => onEntityClick(e._uid)}
+                onClick={() => onEntityClick(e._publicId)}
               >
                 <td onClick={ev => ev.stopPropagation()}>
                   <input
@@ -1208,7 +1206,7 @@ const CardsView = ({
       const s = schemaMap.get(e._schema.id);
       const color = s ? resolveSchemaColor(s.schema, s.index) : 'var(--accent-fg)';
       return (
-        <div key={e._uid} className={styles.card} onClick={() => onEntityClick(e._uid)}>
+        <div key={e._uid} className={styles.card} onClick={() => onEntityClick(e._publicId)}>
           <span className={styles.cardBar} style={{ background: color }} />
           <div className={styles.cardHead}>
             {s && <TypeBadge color={color} name={s.schema.name} size={22} />}
@@ -1350,7 +1348,7 @@ const TreeNodeRow = ({
     <>
       <tr
         className={isAncestor ? styles.treeRowAncestor : undefined}
-        onClick={() => onEntityClick(item._uid)}
+        onClick={() => onEntityClick(item._publicId)}
       >
         <td>
           <div className={styles.tableName} style={{ paddingLeft: depth * 20 }}>

@@ -11,6 +11,7 @@ import type {
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { randomUUID } from 'node:crypto';
+import { isUuidLike } from '../../../utils/publicIds';
 
 export class PostgresProjectDatabase extends PostgresDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
@@ -23,12 +24,26 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     `;
   }
 
-  async getProject(workspace: string, id: string) {
+  async getProject(workspace: string, identifier: string) {
+    if (!isUuidLike(identifier)) {
+      const row = await this.getProjectByPublicId(identifier);
+      return row?.workspace === workspace ? row : null;
+    }
     const [row] = await this.sql<ProjectDbResult[]>`
       SELECT p.*, wo.name AS owner_name
       FROM project p
       LEFT JOIN workspace_owner wo ON wo.id = p.owner
-      WHERE p.workspace = ${workspace} AND p.id = ${id}
+      WHERE p.workspace = ${workspace} AND p.id = ${identifier}
+    `;
+    return row ?? null;
+  }
+
+  private async getProjectByPublicId(publicId: string) {
+    const [row] = await this.sql<ProjectDbResult[]>`
+      SELECT p.*, wo.name AS owner_name
+      FROM project p
+      LEFT JOIN workspace_owner wo ON wo.id = p.owner
+      WHERE p.public_id = ${publicId}
     `;
     return row ?? null;
   }
@@ -36,8 +51,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   async createProject(input: ProjectDbCreate) {
     try {
       await this.sql`
-        INSERT INTO project (id, workspace, name, description, owner, status, color, target_date, pinned, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.color}, ${input.target_date}, ${input.pinned}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO project (id, workspace, public_id, name, description, owner, status, color, target_date, pinned, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.public_id ?? input.id}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.color}, ${input.target_date}, ${input.pinned}, ${input.created_at}, ${input.updated_at})
       `;
       return (await this.getProject(input.workspace, input.id))!;
     } catch (error) {
@@ -550,6 +565,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         pf.created_at  AS file_created_at,
         pf.updated_at  AS file_updated_at,
         p.id           AS project_id,
+        p.public_id    AS project_public_id,
         p.name         AS project_name
       FROM diagram_entity_ref der
       JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace

@@ -129,6 +129,7 @@ export const listPinnedEntities = async (
       if (!canAccessPinnedEntity(authCtx, entityMap, pin.entity_id)) return null;
       return {
         entity_id: entity.id,
+        entity_public_id: entity.public_id ?? entity.id,
         entity_name: entity.name,
         entity_slug: entity.slug,
         schema_id: entity.schema_id,
@@ -154,12 +155,13 @@ export const createPinnedEntity = async (
   const pin = await db.catalog.createPinnedEntity({
     user_id: event.context.user.id,
     workspace,
-    entity_id: entityId,
+    entity_id: entity.id,
     created_at: new Date()
   });
 
   return {
     entity_id: entity.id,
+    entity_public_id: entity.public_id ?? entity.id,
     entity_name: entity.name,
     entity_slug: entity.slug,
     schema_id: entity.schema_id,
@@ -176,7 +178,9 @@ export const deletePinnedEntity = async (
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
-  await db.catalog.deletePinnedEntity(event.context.user.id, workspace, entityId);
+  const entity = await db.catalog.getEntity(workspace, entityId);
+  httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+  await db.catalog.deletePinnedEntity(event.context.user.id, workspace, entity.id);
 
   return { success: true, message: `Entity '${entityId}' unpinned` };
 };

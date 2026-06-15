@@ -285,6 +285,7 @@ export type ProjectFileSearchResult = {
 
 export type EntitySearchResult = {
   entityId: string;
+  publicId: string;
   schemaId: string;
   schemaName: string;
   _name: string;

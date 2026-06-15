@@ -11,6 +11,10 @@ import type {
   EntitySnapshotDbCreate
 } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import { isUuidLike, normalizePublicIdPrefix } from '../../../utils/publicIds';
+
+const fallbackKeyPrefix = (name: string) =>
+  normalizePublicIdPrefix(name.replace(/[^a-z]/gi, '').slice(0, 5) || name.slice(0, 5));
 
 const ENTITY_JOIN_SQL = `
   SELECT e.*,
@@ -47,9 +51,17 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
+  async getSchemaByKeyPrefix(prefix: string) {
+    return this.get(
+      'SELECT * FROM entity_schema WHERE key_prefix = ?',
+      [prefix],
+      sqliteMappers.schema
+    );
+  }
+
   async createSchema(input: SchemaDbCreate) {
     this.run(
-      'INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, key_prefix, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -59,6 +71,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.color,
         input.icon,
         input.default_owner,
+        input.key_prefix ?? fallbackKeyPrefix(input.name),
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -68,7 +81,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     this.run(
-      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, color = ?, icon = ?, default_owner = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
@@ -76,6 +89,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.color,
         input.icon,
         input.default_owner,
+        input.key_prefix ?? fallbackKeyPrefix(input.name),
         input.updated_at.toISOString(),
         workspace,
         id
@@ -153,20 +167,33 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async getEntity(workspace: string, id: string) {
+  async getEntity(workspace: string, identifier: string) {
+    if (!isUuidLike(identifier)) {
+      const row = await this.getEntityByPublicId(identifier);
+      return row?.workspace === workspace ? row : null;
+    }
     return this.get(
       `${ENTITY_JOIN_SQL} WHERE e.workspace = ? AND e.id = ?`,
-      [workspace, id],
+      [workspace, identifier],
+      sqliteMappers.enrichedEntity
+    );
+  }
+
+  private async getEntityByPublicId(publicId: string) {
+    return this.get(
+      `${ENTITY_JOIN_SQL} WHERE e.public_id = ?`,
+      [publicId],
       sqliteMappers.enrichedEntity
     );
   }
 
   async createEntity(input: EntityDbCreate) {
     this.run(
-      'INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
+        input.public_id ?? input.id,
         input.slug,
         input.namespace,
         input.name,
@@ -334,10 +361,14 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async listSnapshotsByProject(workspace: string, projectId: string) {
     return this.all(
-      `SELECT * FROM entity_snapshot
-       WHERE workspace = ? AND project_id = ? AND status IN ('future_update', 'applied')
-       ORDER BY CASE WHEN target_date IS NULL THEN 1 ELSE 0 END, target_date ASC, created_at DESC`,
-      [workspace, projectId],
+      `SELECT s.* FROM entity_snapshot s
+       INNER JOIN project p ON p.id = s.project_id
+       WHERE s.workspace = ?
+         AND p.workspace = ?
+         AND (p.id = ? OR p.public_id = ?)
+         AND s.status IN ('future_update', 'applied')
+       ORDER BY CASE WHEN s.target_date IS NULL THEN 1 ELSE 0 END, s.target_date ASC, s.created_at DESC`,
+      [workspace, workspace, projectId, projectId],
       sqliteMappers.entitySnapshot
     );
   }

@@ -220,6 +220,7 @@ describe('toApiAuditLogEntry', () => {
     expect(result.id).toBe('audit-1');
     expect(result.timestamp).toBe('2025-06-01T12:00:00.000Z');
     expect(result.operation).toBe('create');
+    expect(result.public_id).toBeNull();
     expect(result.changes).toEqual({ new: { name: 'My Entity' } });
   });
 });

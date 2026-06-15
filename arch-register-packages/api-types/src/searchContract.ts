@@ -21,6 +21,7 @@ const fileSearchResultSchema = z.object({
 
 const entitySearchResultSchema = z.object({
   entityId: z.string(),
+  publicId: z.string(),
   schemaId: z.string(),
   schemaName: z.string(),
   _name: z.string(),

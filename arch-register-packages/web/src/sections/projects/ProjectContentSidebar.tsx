@@ -29,6 +29,11 @@ import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { AddDiagramDialog } from './AddDiagramDialog';
 import { AddFolderDialog } from './AddFolderDialog';
+import {
+  asProjectPublicId,
+  projectDetailRoute,
+  projectDiagramRoute
+} from '../../routes/publicObjectRoutes';
 
 type ProjectSection = 'home' | 'entities';
 type MenuTarget = { type: 'diagram'; file: FileEntry } | { type: 'folder'; path: string };
@@ -111,29 +116,25 @@ export const ProjectContentSidebar = ({
   const folderTree = buildFolderTree(project?.files.folders ?? []);
 
   const navigateToProject = (next: { section?: ProjectSection; folder?: string }) => {
-    navigate({
-      to: '/$workspaceSlug/projects/$projectId',
-      params: { workspaceSlug, projectId },
-      search: {
+    navigate(
+      projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
         tab: search.tab,
         section: next.section ?? section,
         folder: next.folder,
         dialog: search.dialog
-      }
-    });
+      })
+    );
   };
 
   const openAddEntity = () => {
-    navigate({
-      to: '/$workspaceSlug/projects/$projectId',
-      params: { workspaceSlug, projectId },
-      search: {
+    navigate(
+      projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
         tab: search.tab,
         section: 'entities',
         folder: folderFilter ?? undefined,
         dialog: 'add-entity'
-      }
-    });
+      })
+    );
   };
 
   const toggleFolder = (path: string) => {
@@ -326,12 +327,7 @@ export const ProjectContentSidebar = ({
                 depth={depth + 1}
                 icon={<TbFile size={13} />}
                 label={file.name}
-                onClick={() =>
-                  navigate({
-                    to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-                    params: { workspaceSlug, projectId, diagramId: file.id }
-                  })
-                }
+                onClick={() => navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id))}
                 onContextMenu={e => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -400,12 +396,7 @@ export const ProjectContentSidebar = ({
             key={file.id}
             icon={<TbFile size={13} />}
             label={file.name}
-            onClick={() =>
-              navigate({
-                to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-                params: { workspaceSlug, projectId, diagramId: file.id }
-              })
-            }
+            onClick={() => navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id))}
             onContextMenu={e => {
               e.preventDefault();
               e.stopPropagation();

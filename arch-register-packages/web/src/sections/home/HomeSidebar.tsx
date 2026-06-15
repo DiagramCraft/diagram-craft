@@ -6,6 +6,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
 import { Project } from '@arch-register/api-types/projectContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
 import {
   SidebarGroupLabel,
   SidebarTitleHeader
@@ -42,11 +43,12 @@ export const HomeSidebar = ({
                 icon={<TbFolders size={12} style={p.color ? { color: p.color } : undefined} />}
                 label={p.name}
                 onClick={() =>
-                  navigate({
-                    to: '/$workspaceSlug/projects/$projectId',
-                    params: { workspaceSlug, projectId: p.id },
-                    search: { tab: 'projects' as const, section: 'home' as const }
-                  })
+                  navigate(
+                    projectDetailRoute(workspaceSlug, asProjectPublicId(p.public_id), {
+                      tab: 'projects' as const,
+                      section: 'home' as const
+                    })
+                  )
                 }
                 trailing={<span className="dim mono">{p.file_count}</span>}
                 tagColor={p.color ?? undefined}

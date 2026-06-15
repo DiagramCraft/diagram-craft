@@ -7,6 +7,7 @@ import { TreeRow } from '../../components/TreeRow';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import styles from '../../shell/SidePanel.module.css';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
+import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
 
 type ProjectSidebarTab = 'projects' | 'archive';
 
@@ -49,7 +50,8 @@ export const ProjectsSidebar = ({
   const projectId = allParams.projectId ?? null;
   const projectSidebarTab: ProjectSidebarTab = search.tab === 'archive' ? 'archive' : 'projects';
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const selectedProject = projects.find(project => project.id === projectId) ?? null;
+  const selectedProject =
+    projects.find(project => project.id === projectId || project.public_id === projectId) ?? null;
 
   const projectGroups =
     projectSidebarTab === 'archive'
@@ -63,28 +65,24 @@ export const ProjectsSidebar = ({
         ? 'archive'
         : 'projects';
     if (nextTab !== projectSidebarTab) {
-      navigate({
-        to: '/$workspaceSlug/projects/$projectId',
-        params: { workspaceSlug, projectId: selectedProject.id },
-        search: {
+      navigate(
+        projectDetailRoute(workspaceSlug, asProjectPublicId(selectedProject.public_id), {
           tab: nextTab as 'projects' | 'archive',
           folder: search.folder ?? undefined,
           section: search.section === 'entities' ? 'entities' : 'home'
-        }
-      });
+        })
+      );
     }
   }, [selectedProject, projectSidebarTab, navigate, workspaceSlug, search.folder, search.section]);
 
   const navigateToProject = (project: Project) => {
-    navigate({
-      to: '/$workspaceSlug/projects/$projectId',
-      params: { workspaceSlug, projectId: project.id },
-      search: {
+    navigate(
+      projectDetailRoute(workspaceSlug, asProjectPublicId(project.public_id), {
         tab:
           project.status === 'complete' || project.status === 'cancelled' ? 'archive' : 'projects',
         section: 'home'
-      }
-    });
+      })
+    );
   };
 
   const activateTab = (tab: ProjectSidebarTab) => {
@@ -96,22 +94,16 @@ export const ProjectsSidebar = ({
     if (!selectedProject || !targetProjects.some(project => project.id === selectedProject.id)) {
       const target = targetProjects[0];
       if (target) {
-        navigate({
-          to: '/$workspaceSlug/projects/$projectId',
-          params: { workspaceSlug, projectId: target.id },
-          search: { tab, section: 'home' }
-        });
+        navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(target.public_id), { tab, section: 'home' }));
       }
     } else {
-      navigate({
-        to: '/$workspaceSlug/projects/$projectId',
-        params: { workspaceSlug, projectId: selectedProject.id },
-        search: {
+      navigate(
+        projectDetailRoute(workspaceSlug, asProjectPublicId(selectedProject.public_id), {
           tab,
           folder: search.folder ?? undefined,
           section: search.section === 'entities' ? 'entities' : 'home'
-        }
-      });
+        })
+      );
     }
   };
 
@@ -171,7 +163,7 @@ export const ProjectsSidebar = ({
             <div key={group.title} data-testid={`project-group-${group.title}`}>
               <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               {group.projects.map(project => {
-                const isSelected = project.id === projectId;
+                const isSelected = project.id === projectId || project.public_id === projectId;
                 const isOpen = expanded[project.id] ?? isSelected;
 
                 return (
@@ -187,7 +179,7 @@ export const ProjectsSidebar = ({
                           style={project.color ? { color: project.color } : undefined}
                         />
                       }
-                      label={project.name}
+                      label={`${project.name} (${project.public_id})`}
                       active={isSelected}
                       onClick={() => navigateToProject(project)}
                       trailing={<span className="dim mono">{project.file_count}</span>}

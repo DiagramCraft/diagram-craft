@@ -7,6 +7,7 @@ import type { AuthorizationContext } from '@arch-register/permissions';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
 import { PermissionChecker } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
+import { formatPublicId } from '../../utils/publicIds';
 import {
   getLifecycleValues,
   getTeamIds,
@@ -150,6 +151,7 @@ export const importParse = async (
         matchType === 'name'
           ? nameMatches.map(e => ({
               id: e.id,
+              publicId: e.public_id ?? e.id,
               name: e.name,
               slug: e.slug,
               namespace: e.namespace
@@ -329,7 +331,12 @@ export const importCommit = async (
       updatedIds.push(existingId);
       nameToId.set(updatedEntity.name.toLowerCase(), existingId);
     } else {
+      httpAssert.present(schema.key_prefix, { status: 409, message: `Schema '${schemaId}' is missing a key prefix` });
       const createInput: EntityDbCreate = {
+        public_id: formatPublicId(
+          schema.key_prefix,
+          await db.workspace.allocatePublicId(schema.key_prefix, new Date())
+        ),
         id: randomUUID(),
         workspace,
         schema_id: schemaId,

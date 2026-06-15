@@ -13,6 +13,7 @@ export type SchemaDbResult = {
   color: string | null;
   icon: string | null;
   default_owner: string | null;
+  key_prefix?: string;
   created_at: Date;
   updated_at: Date;
 };
@@ -72,6 +73,7 @@ export type PinnedEntityDbCreate = PinnedEntityDbResult;
 export type Entity = {
   id: string;
   workspace: string;
+  public_id?: string;
   slug: string;
   namespace: string;
   name: string;
@@ -127,6 +129,7 @@ export type CatalogDatabase = {
 
   listSchemas(ws: string): Promise<SchemaDbResult[]>;
   getSchema(ws: string, id: string): Promise<SchemaDbResult | null>;
+  getSchemaByKeyPrefix(prefix: string): Promise<SchemaDbResult | null>;
   createSchema(input: SchemaDbCreate): Promise<SchemaDbResult>;
   updateSchema(ws: string, id: string, input: SchemaDbUpdate): Promise<SchemaDbResult | null>;
   deleteSchema(ws: string, id: string): Promise<SchemaDbResult | null>;
@@ -142,7 +145,7 @@ export type CatalogDatabase = {
   deleteEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;
 
   listEntities(ws: string): Promise<EntityDbResult[]>;
-  getEntity(ws: string, id: string): Promise<EntityDbResult | null>;
+  getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
   updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;
   deleteEntity(ws: string, id: string): Promise<Entity | null>;

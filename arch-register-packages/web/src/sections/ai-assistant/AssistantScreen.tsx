@@ -18,6 +18,7 @@ import {
 } from '../../hooks/useAiConversations';
 import type { WorkspaceTeam } from '../../lib/api';
 import { AiConversation } from '@arch-register/api-types/aiContract';
+import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 
 // ── Markdown renderer ──
 
@@ -608,10 +609,7 @@ export const AssistantScreen = () => {
 
   const navigateToEntity = useCallback(
     (entityId: string) => {
-      navigate({
-        to: '/$workspaceSlug/entities/$entityId',
-        params: { workspaceSlug, entityId }
-      });
+      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
     },
     [navigate, workspaceSlug]
   );

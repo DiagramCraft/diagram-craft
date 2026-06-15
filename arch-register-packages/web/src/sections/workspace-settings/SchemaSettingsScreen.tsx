@@ -20,6 +20,12 @@ import { EnumEditorScreen } from './EnumEditorScreen';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 
+const deriveKeyPrefix = (value: string) =>
+  value
+    .replace(/[^a-z]/gi, '')
+    .toUpperCase()
+    .slice(0, 5);
+
 export const SchemaSettingsScreen = () => {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as {
@@ -32,6 +38,7 @@ export const SchemaSettingsScreen = () => {
   const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
   const [name, setName] = useState('');
+  const [keyPrefix, setKeyPrefix] = useState('');
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<SchemaField[]>([]);
   const [color, setColor] = useState<string | null>(null);
@@ -60,6 +67,7 @@ export const SchemaSettingsScreen = () => {
   useEffect(() => {
     if (selected) {
       setName(selected.name);
+      setKeyPrefix(selected.key_prefix);
       setDescription(selected.description);
       setFields(selected.fields);
       setColor(selected.color);
@@ -73,17 +81,21 @@ export const SchemaSettingsScreen = () => {
     try {
       await updateSchemaMutation.mutateAsync({
         schemaId: selected.id,
-        data: { name, description, fields, color, icon }
+        data: { name, key_prefix: keyPrefix, description, fields, color, icon }
       });
       setDirty(false);
     } catch {
       // TODO: surface error
     }
-  }, [selected, name, description, fields, color, icon, dirty, updateSchemaMutation]);
+  }, [selected, name, keyPrefix, description, fields, color, icon, dirty, updateSchemaMutation]);
 
   const handleCreateType = useCallback(async () => {
     try {
-      const created = await createSchemaMutation.mutateAsync({ name: 'New type', fields: [] });
+      const created = await createSchemaMutation.mutateAsync({
+        name: 'New type',
+        key_prefix: 'TYPE',
+        fields: []
+      });
       onSelectSchema(created.id);
     } catch {
       // TODO: surface error
@@ -186,7 +198,26 @@ export const SchemaSettingsScreen = () => {
                   value={name}
                   disabled={!canEdit}
                   onChange={value => {
-                    setName(value ?? '');
+                    const nextName = value ?? '';
+                    setName(nextName);
+                    if (!dirty || keyPrefix === deriveKeyPrefix(name)) {
+                      setKeyPrefix(deriveKeyPrefix(nextName));
+                    }
+                    setDirty(true);
+                  }}
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.formRow}>
+              <div>
+                <div className={styles.formLabel}>Key Prefix</div>
+                <TextInput
+                  value={keyPrefix}
+                  disabled={!canEdit}
+                  onChange={value => {
+                    setKeyPrefix((value ?? '').toUpperCase());
                     setDirty(true);
                   }}
                   style={{ width: '100%' }}

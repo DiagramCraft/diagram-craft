@@ -5,6 +5,43 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 
+const resolveAuditPublicIds = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entry: AuditLogEntry
+): Promise<AuditLogEntry> => {
+  if (entry.entity_type === 'entity') {
+    const entity = await db.catalog.getEntity(workspace, entry.entity_id);
+    return {
+      ...entry,
+      public_id: entity?.public_id ?? null
+    };
+  }
+
+  if (entry.entity_type === 'project') {
+    const project = await db.project.getProject(workspace, entry.entity_id);
+    return {
+      ...entry,
+      public_id: project?.public_id ?? null
+    };
+  }
+
+  if (entry.entity_type === 'content_node') {
+    const projectId = typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
+    if (!projectId) return entry;
+    const project = await db.project.getProject(workspace, projectId);
+    return {
+      ...entry,
+      metadata: {
+        ...entry.metadata,
+        project_public_id: project?.public_id ?? null
+      }
+    };
+  }
+
+  return entry;
+};
+
 export const listAuditLog = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -24,7 +61,7 @@ export const listAuditLog = async (
   requireWorkspaceCapability(authCtx, 'ws.audit');
 
   const rows = await db.audit.listAuditLogs(ws);
-  return filterAndPaginateAuditLogs(rows, {
+  const entries = filterAndPaginateAuditLogs(rows, {
     entityType: filters.entityType ?? null,
     entityId: filters.entityId ?? null,
     operation: filters.operation ?? null,
@@ -32,7 +69,9 @@ export const listAuditLog = async (
     endDate: filters.endDate ?? null,
     limit: filters.limit ?? 50,
     offset: filters.offset ?? 0
-  }).map(toApiAuditLogEntry);
+  }).map(entry => toApiAuditLogEntry(entry));
+
+  return await Promise.all(entries.map(entry => resolveAuditPublicIds(db, ws, entry)));
 };
 
 export const getAuditStats = async (

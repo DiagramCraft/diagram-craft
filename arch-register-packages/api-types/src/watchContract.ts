@@ -7,6 +7,7 @@ import { ws, wsAndId } from '@arch-register/api-types/common';
 
 const watchedEntitySchema = z.object({
   entity_id: z.string(),
+  entity_public_id: z.string(),
   entity_name: z.string(),
   entity_slug: z.string(),
   schema_id: z.string(),
@@ -16,6 +17,7 @@ const watchedEntitySchema = z.object({
 const notificationItemSchema = z.object({
   id: z.string(),
   entity_id: z.string(),
+  entity_public_id: z.string(),
   entity_name: z.string(),
   entity_slug: z.string(),
   schema_id: z.string().nullable(),

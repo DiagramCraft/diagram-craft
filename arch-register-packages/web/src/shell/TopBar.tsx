@@ -38,6 +38,7 @@ import {
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { NotificationItem, WatchedEntity } from '@arch-register/api-types/watchContract';
 import type { BreadcrumbItem } from './shellTypes';
+import { asEntityPublicId, entityDetailRoute } from '../routes/publicObjectRoutes';
 
 type TopBarProps = {
   workspaces: Workspace[];
@@ -438,10 +439,7 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
 
   const openEntity = (entityId: string) => {
     setOpen(false);
-    navigate({
-      to: '/$workspaceSlug/entities/$entityId',
-      params: { workspaceSlug, entityId }
-    });
+    navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
   };
 
   return (
@@ -544,7 +542,7 @@ const NotificationList = ({
           className={`${styles.notificationRow} ${styles.notificationRowUnread}`}
           aria-label={`Notification: ${item.entity_name}`}
           onClick={() => {
-            if (item.operation !== 'delete') onOpenEntity(item.entity_id);
+            if (item.operation !== 'delete') onOpenEntity(item.entity_public_id);
           }}
         >
           <div className={styles.notifDot} />
@@ -608,7 +606,7 @@ const WatchingList = ({
           type="button"
           className={styles.notificationRow}
           aria-label={`Watching: ${item.entity_name}`}
-          onClick={() => onOpenEntity(item.entity_id)}
+          onClick={() => onOpenEntity(item.entity_public_id)}
         >
           <div className={styles.notificationRowMain}>
             <div className={styles.notificationEntity}>{item.entity_name}</div>

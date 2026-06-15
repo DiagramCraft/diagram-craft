@@ -36,6 +36,7 @@ export const toApiProject = (
   authCtx: AuthorizationContext | null
 ): Project => ({
   id: project.id,
+  public_id: project.public_id ?? project.id,
   workspace: project.workspace,
   name: project.name,
   description: project.description,
@@ -67,6 +68,7 @@ export const toApiProjectEntity = (row: ProjectEntityDbResult): ProjectEntity =>
 export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   id: file.id,
   project_id: file.project_id,
+  project_public_id: file.project_public_id ?? null,
   path: file.path,
   name: file.name,
   size_bytes: file.size_bytes,
@@ -86,6 +88,7 @@ export const toApiProjectDetail = (
   authCtx: AuthorizationContext | null
 ): ProjectDetail => ({
   id: project.id,
+  public_id: project.public_id ?? project.id,
   workspace: project.workspace,
   name: project.name,
   description: project.description,

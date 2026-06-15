@@ -31,6 +31,7 @@ export const toApiEntity = (
   completeness: number | null = null
 ): EntityRecord => ({
   _uid: entity.id,
+  _publicId: entity.public_id ?? entity.id,
   _schema: { id: entity.schema_id, name: entity.schema_name },
   _name: entity.name,
   _slug: entity.slug,
@@ -61,6 +62,7 @@ export const toApiEntitySummary = (
   completeness: number | null = null
 ): EntitySummary => ({
   _uid: entity.id,
+  _publicId: entity.public_id ?? entity.id,
   _schema: { id: entity.schema_id, name: entity.schema_name },
   _name: entity.name,
   _slug: entity.slug,

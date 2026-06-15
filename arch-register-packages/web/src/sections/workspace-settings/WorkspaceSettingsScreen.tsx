@@ -19,6 +19,12 @@ import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
 import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  projectDetailRoute
+} from '../../routes/publicObjectRoutes';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   'general': { title: 'General', sub: 'Name, description, and identity for this workspace.' },
@@ -547,36 +553,36 @@ const AuditLogSection = ({
   const handleEntryClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        navigate({
-          to: '/$workspaceSlug/entities/$entityId',
-          params: { workspaceSlug, entityId: entry.entity_id }
-        });
+        if (entry.public_id) navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
         return;
       case 'project':
-        navigate({
-          to: '/$workspaceSlug/projects/$projectId',
-          params: { workspaceSlug, projectId: entry.entity_id },
-          search: { tab: 'projects' as const, section: 'home' as const }
-        });
+        if (entry.public_id) {
+          navigate(
+            projectDetailRoute(workspaceSlug, asProjectPublicId(entry.public_id), {
+              tab: 'projects' as const,
+              section: 'home' as const
+            })
+          );
+        }
         return;
       case 'entity_schema':
         navigate({ to: '/$workspaceSlug/settings/schemas', params: { workspaceSlug } });
         return;
       case 'content_node': {
         const projectId =
-          typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
+          typeof entry.metadata['project_public_id'] === 'string'
+            ? entry.metadata['project_public_id']
+            : null;
         const path = typeof entry.metadata['path'] === 'string' ? entry.metadata['path'] : null;
         const folderFilter = path?.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
         if (projectId) {
-          navigate({
-            to: '/$workspaceSlug/projects/$projectId',
-            params: { workspaceSlug, projectId },
-            search: {
+          navigate(
+            projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
               tab: 'projects' as const,
               section: 'home' as const,
               folder: folderFilter ?? undefined
-            }
-          });
+            })
+          );
         }
       }
     }

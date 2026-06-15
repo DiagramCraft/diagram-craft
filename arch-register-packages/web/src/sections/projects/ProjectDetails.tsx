@@ -95,6 +95,7 @@ export const ProjectDetails = ({
       }
       meta={
         <>
+          <ProjectMetaItem label="Project ID" value={<span className="mono tabular">{project.public_id}</span>} />
           <ProjectMetaItem label="Diagrams" value={<span className="mono tabular">{allFilesCount}</span>} />
           <ProjectMetaItem label="Folders" value={<span className="mono tabular">{folderCount}</span>} />
           <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />

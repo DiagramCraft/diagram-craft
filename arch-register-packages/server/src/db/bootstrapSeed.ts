@@ -199,8 +199,10 @@ const seedBootstrapWatchesAndNotifications = async (db: Database) => {
 };
 
 export const seedBootstrapData = async (db: Database) => {
+  const syncTimestamp = new Date();
   for (const workspace of seedWorkspaces) {
     await db.workspace.createWorkspace(workspace);
+    await db.workspace.registerPublicIdPrefix(workspace.short_code, 'workspace', workspace.id, workspace.created_at);
   }
   for (const workspace of seedWorkspaces) {
     await db.workspace.replaceLifecycleStates(
@@ -221,6 +223,9 @@ export const seedBootstrapData = async (db: Database) => {
   }
   for (const schema of seedSchemas) {
     await db.catalog.createSchema(schema);
+    if (schema.key_prefix) {
+      await db.workspace.registerPublicIdPrefix(schema.key_prefix, 'schema', schema.id, schema.created_at);
+    }
   }
   for (const workspace of seedWorkspaces) {
     await db.ai.upsertAiConfig(workspace.id, seedAiConfig);
@@ -230,6 +235,28 @@ export const seedBootstrapData = async (db: Database) => {
   }
   for (const project of seedProjects) {
     await db.project.createProject(project);
+  }
+
+  const projectCountsByPrefix = new Map<string, number>();
+  for (const project of seedProjects) {
+    const prefix = (project.public_id ?? project.id).split('-')[0] ?? '';
+    projectCountsByPrefix.set(prefix, (projectCountsByPrefix.get(prefix) ?? 0) + 1);
+  }
+  for (const [prefix, count] of projectCountsByPrefix) {
+    for (let i = 0; i < count; i++) {
+      await db.workspace.allocatePublicId(prefix, syncTimestamp);
+    }
+  }
+
+  const entityCountsByPrefix = new Map<string, number>();
+  for (const entity of seedEntities) {
+    const prefix = (entity.public_id ?? entity.id).split('-')[0] ?? '';
+    entityCountsByPrefix.set(prefix, (entityCountsByPrefix.get(prefix) ?? 0) + 1);
+  }
+  for (const [prefix, count] of entityCountsByPrefix) {
+    for (let i = 0; i < count; i++) {
+      await db.workspace.allocatePublicId(prefix, syncTimestamp);
+    }
   }
   for (const view of seedSavedViews) {
     await db.view.createSavedView(view);

@@ -61,9 +61,9 @@ export const createWorkspaceSchema = async (
   try {
     const teamIds = new Set((await db.workspace.listTeams(workspace)).map(owner => owner.id));
     const timestamp = new Date();
-    const row = await db.catalog.createSchema(
-      buildCreateSchemaInput(workspace, body, teamIds, timestamp)
-    );
+    const row = await db.catalog.createSchema(buildCreateSchemaInput(workspace, body, teamIds, timestamp));
+    httpAssert.present(row.key_prefix, { status: 409, message: `Schema '${row.id}' is missing a key prefix` });
+    await db.workspace.registerPublicIdPrefix(row.key_prefix, 'schema', row.id, timestamp);
 
     await logAudit(db, {
       userId,
@@ -97,6 +97,7 @@ export const updateWorkspaceSchema = async (
     const next = buildUpdateSchemaInput(body, oldRow, teamIds, new Date());
     const row = await db.catalog.updateSchema(workspace, id, {
       name: next.name,
+      key_prefix: next.key_prefix,
       description: next.description,
       fields: next.fields,
       color: next.color,
@@ -106,6 +107,11 @@ export const updateWorkspaceSchema = async (
     });
 
     httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
+    if (oldRow.key_prefix !== row.key_prefix) {
+      httpAssert.present(oldRow.key_prefix, { status: 409, message: `Schema '${id}' is missing a key prefix` });
+      httpAssert.present(row.key_prefix, { status: 409, message: `Schema '${id}' is missing a key prefix` });
+      await db.workspace.updatePublicIdPrefix(oldRow.key_prefix, row.key_prefix, 'schema', id, next.updated_at);
+    }
     const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 
     await logAudit(db, {
@@ -145,6 +151,9 @@ export const deleteWorkspaceSchema = async (
     });
 
     await db.catalog.deleteSchema(workspace, id);
+    if (schema.key_prefix) {
+      await db.workspace.deletePublicIdPrefix(schema.key_prefix);
+    }
 
     await logAudit(db, {
       userId,

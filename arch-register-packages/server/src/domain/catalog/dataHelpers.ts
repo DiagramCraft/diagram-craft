@@ -61,6 +61,7 @@ export const filterEntities = (
 
 export type RelationRecord = {
   entityId: string;
+  publicId: string;
   entitySlug: string;
   entityName: string;
   entitySchemaId: string;
@@ -216,6 +217,7 @@ export const buildEntityRelations = (
       if (!target) continue;
       outgoing.push({
         entityId: refId,
+        publicId: target.public_id ?? refId,
         entitySlug: target.slug ?? refId,
         entityName: target.name ?? target.slug ?? refId,
         entitySchemaId: target.schema_id ?? field.schemaId,
@@ -234,6 +236,7 @@ export const buildEntityRelations = (
       if (!decodeRefs(row.data[field.id]).includes(entity.id)) continue;
       incoming.push({
         entityId: row.id,
+        publicId: row.public_id ?? row.id,
         entitySlug: row.slug,
         entityName: row.name || row.slug,
         entitySchemaId: row.schema_id,

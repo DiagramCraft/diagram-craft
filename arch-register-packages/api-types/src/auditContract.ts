@@ -11,6 +11,7 @@ const auditLogEntrySchema = z.object({
   operation: z.enum(['create', 'update', 'delete']),
   entity_type: z.enum(['workspace', 'entity_schema', 'entity', 'project', 'content_node']),
   entity_id: z.string(),
+  public_id: z.string().nullable(),
   entity_name: z.string(),
   entity_slug: z.string().nullable(),
   schema_id: z.string().nullable(),

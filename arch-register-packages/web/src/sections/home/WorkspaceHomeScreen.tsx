@@ -20,6 +20,12 @@ import { useEntityFacets } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Project } from '@arch-register/api-types/projectContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  projectDetailRoute
+} from '../../routes/publicObjectRoutes';
 
 const PROJECT_STATUS_META = {
   draft: { label: 'Draft' },
@@ -83,17 +89,17 @@ export const WorkspaceHomeScreen = () => {
   const handleActivityClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        navigate({
-          to: '/$workspaceSlug/entities/$entityId',
-          params: { workspaceSlug, entityId: entry.entity_id }
-        });
+        if (entry.public_id) navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entry.public_id)));
         break;
       case 'project':
-        navigate({
-          to: '/$workspaceSlug/projects/$projectId',
-          params: { workspaceSlug, projectId: entry.entity_id },
-          search: { tab: 'projects' as const, section: 'home' as const }
-        });
+        if (entry.public_id) {
+          navigate(
+            projectDetailRoute(workspaceSlug, asProjectPublicId(entry.public_id), {
+              tab: 'projects' as const,
+              section: 'home' as const
+            })
+          );
+        }
         break;
       case 'entity_schema':
         navigate({ to: '/$workspaceSlug/settings/schemas', params: { workspaceSlug } });
@@ -218,11 +224,12 @@ export const WorkspaceHomeScreen = () => {
                   project={p}
                   expanded={showAllProjects}
                   onClick={() =>
-                    navigate({
-                      to: '/$workspaceSlug/projects/$projectId',
-                      params: { workspaceSlug, projectId: p.id },
-                      search: { tab: 'projects' as const, section: 'home' as const }
-                    })
+                    navigate(
+                      projectDetailRoute(workspaceSlug, asProjectPublicId(p.public_id), {
+                        tab: 'projects' as const,
+                        section: 'home' as const
+                      })
+                    )
                   }
                 />
               ))

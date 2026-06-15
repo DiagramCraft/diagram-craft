@@ -19,7 +19,7 @@ export const useCreateSchema = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: { name: string; fields: SchemaField[] }) =>
+    mutationFn: (body: { name: string; key_prefix: string; fields: SchemaField[] }) =>
       orpcClient.schemas.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async () => {
       // Invalidate schema list to show the new schema
@@ -41,6 +41,7 @@ export const useUpdateSchema = (workspaceId: string) => {
       schemaId: string;
       data: {
         name: string;
+        key_prefix: string;
         description?: string;
         fields: SchemaField[];
         color?: string | null;

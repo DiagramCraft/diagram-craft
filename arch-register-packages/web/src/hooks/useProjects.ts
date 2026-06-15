@@ -93,15 +93,13 @@ export const useUpdateProject = (workspaceId: string) => {
       // Update the project list cache
       queryClient.setQueryData(projectKeys.list(workspaceId), (old: Project[] | undefined) => {
         if (!old) return old;
-        return old.map(p => (p.id === variables.projectId ? updatedProject : p));
+        return old.map(p =>
+          p.id === variables.projectId || p.public_id === variables.projectId ? updatedProject : p
+        );
       });
-      // Update the project detail cache
       queryClient.setQueryData(
-        projectKeys.detail(workspaceId, variables.projectId),
-        (old: ProjectDetail | undefined) => {
-          if (!old) return updatedProject;
-          return { ...old, ...updatedProject };
-        }
+        projectKeys.detail(workspaceId, updatedProject.public_id),
+        (old: ProjectDetail | undefined) => (old ? { ...old, ...updatedProject } : updatedProject)
       );
       await invalidateAuditQueries(queryClient, workspaceId);
     }

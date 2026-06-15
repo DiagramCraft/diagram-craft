@@ -14,6 +14,7 @@ const baseSchema: SchemaDbResult = {
   workspace: 'default',
   name: 'Component',
   description: 'Original',
+  key_prefix: 'COMP',
   fields: [{ id: 'technology', name: 'Technology', type: 'text' }],
   color: '#123456',
   icon: 'box',
@@ -52,6 +53,7 @@ describe('schema route helpers', () => {
       id: 'schema-created',
       workspace: 'default',
       name: 'Service',
+      key_prefix: 'SERVI',
       description: '',
       fields: [],
       color: null,
@@ -74,6 +76,7 @@ describe('schema route helpers', () => {
 
     expect(input).toEqual({
       name: 'Service',
+      key_prefix: 'COMP',
       description: 'Original',
       fields: [{ id: 'technology', name: 'Technology', type: 'text' }],
       color: '#123456',
@@ -100,6 +103,7 @@ describe('schema route helpers', () => {
 
     expect(input).toEqual({
       name: 'Service',
+      key_prefix: 'COMP',
       description: '',
       fields: [{ id: 'lifecycle', name: 'Lifecycle', type: 'text' }],
       color: null,

@@ -248,6 +248,7 @@ describe('data route helpers', () => {
     expect(relations.outgoing).toEqual([
       {
         entityId: 'system-1',
+        publicId: 'system-1',
         entitySlug: 'customer-portal',
         entityName: 'Customer Portal',
         entitySchemaId: 'schema-system',
@@ -256,6 +257,7 @@ describe('data route helpers', () => {
       },
       {
         entityId: 'component-2',
+        publicId: 'component-2',
         entitySlug: 'api-gateway',
         entityName: 'API Gateway',
         entitySchemaId: 'schema-component',

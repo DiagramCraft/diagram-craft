@@ -20,6 +20,7 @@ import {
   getLifecycleValues,
   getTeamIds
 } from './dataHelpers';
+import { formatPublicId } from '../../utils/publicIds';
 import {
   EntityFacets,
   EntityRecord,
@@ -28,6 +29,19 @@ import {
 } from '@arch-register/api-types/entityContract';
 
 const checker = new PermissionChecker();
+
+const allocateEntityPublicId = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schemaId: string,
+  timestamp: Date
+) => {
+  const schema = await db.catalog.getSchema(workspace, schemaId);
+  httpAssert.present(schema, { status: 404, message: `Schema '${schemaId}' not found` });
+  httpAssert.present(schema.key_prefix, { status: 409, message: `Schema '${schemaId}' is missing a key prefix` });
+  const sequenceNumber = await db.workspace.allocatePublicId(schema.key_prefix, timestamp);
+  return formatPublicId(schema.key_prefix, sequenceNumber);
+};
 
 export const listEntities = async (
   db: DatabaseAdapter,
@@ -349,12 +363,14 @@ export const createEntity = async (
     }
 
     const timestamp = new Date();
+    const publicId = await allocateEntityPublicId(db, workspace, payload.schemaId, timestamp);
     const row = await createEntityWithAudit(db, {
       workspace,
       actor,
       entity: {
         id: randomUUID(),
         workspace,
+        public_id: publicId,
         slug: payload.slug,
         namespace: payload.namespace,
         name: payload.name,
@@ -423,7 +439,7 @@ export const updateEntity = async (
 
     const row = await updateEntityWithAudit(db, {
       workspace,
-      entityId: id,
+      entityId: oldRow.id,
       previous: oldRow,
       actor,
       next: {
@@ -472,9 +488,11 @@ export const cloneEntity = async (
     const baseName = source.name ? `${source.name} (copy)` : source.slug;
     const baseSlug = slugify(baseName);
     const timestamp = new Date();
+    const publicId = await allocateEntityPublicId(db, workspace, source.schema_id, timestamp);
     const row = await db.catalog.createEntity({
       id: randomUUID(),
       workspace,
+      public_id: publicId,
       slug: baseSlug,
       namespace: source.namespace,
       name: baseName,
@@ -529,8 +547,8 @@ export const deleteEntity = async (
         'You do not have permission to delete this entity'
       );
 
-    const watcherUserIds = await db.watch.listWatcherUserIds(workspace, id);
-    await db.catalog.deleteEntity(workspace, id);
+    const watcherUserIds = await db.watch.listWatcherUserIds(workspace, row.id);
+    await db.catalog.deleteEntity(workspace, row.id);
 
     await logAudit(db, {
       workspace,
@@ -539,7 +557,7 @@ export const deleteEntity = async (
       watcherUserIds,
       operation: 'delete',
       entityType: 'entity',
-      entityId: id,
+      entityId: row.id,
       entityName: row.name,
       entitySlug: row.slug,
       schemaId: row.schema_id,
