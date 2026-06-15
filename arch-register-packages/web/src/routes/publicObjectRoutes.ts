@@ -42,7 +42,7 @@ export const projectMarkdownRoute = <TSearch = undefined>(
   search?: TSearch
 ) =>
   withSearch({
-    to: '/$workspaceSlug/projects/$projectId/markdown/$nodeId' as const,
+    to: '/$workspaceSlug/projects/$projectId/wiki/$nodeId' as const,
     params: { workspaceSlug, projectId, nodeId }
   }, search);
 
@@ -53,7 +53,7 @@ export const entityMarkdownRoute = <TSearch = undefined>(
   search?: TSearch
 ) =>
   withSearch({
-    to: '/$workspaceSlug/entities/$entityId/markdown/$nodeId' as const,
+    to: '/$workspaceSlug/entities/$entityId/wiki/$nodeId' as const,
     params: { workspaceSlug, entityId, nodeId }
   }, search);
 

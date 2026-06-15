@@ -63,7 +63,7 @@ export const createProjectWorkspaceRoutes = (
 
   const markdownRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
-    path: 'projects/$projectId/markdown/$nodeId',
+    path: 'projects/$projectId/wiki/$nodeId',
     validateSearch: validateMarkdownSearch,
     component: MarkdownEditorScreen
   }), ctx => {

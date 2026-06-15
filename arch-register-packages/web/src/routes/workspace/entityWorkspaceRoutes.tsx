@@ -94,7 +94,7 @@ export const createEntityWorkspaceRoutes = (
 
   const entityMarkdownRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
-    path: 'entities/$entityId/markdown/$nodeId',
+    path: 'entities/$entityId/wiki/$nodeId',
     validateSearch: validateMarkdownSearch,
     component: MarkdownEditorScreen
   }), ctx => {
