@@ -36,6 +36,15 @@ procs:
     log:
       file: storybook.log
 
+  "AR Storybook :6007":
+    cwd: "arch-register-packages/web"
+    shell: |
+      pnpm storybook
+    autostart: false
+    stop: SIGKILL
+    log:
+      file: ar-storybook.log
+
 proc_log:
   dir: .logs
   mode: truncate
