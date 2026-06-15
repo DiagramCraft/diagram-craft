@@ -52,7 +52,9 @@ export const projectFileSchema = z.object({
   updated_at: z.string(),
   type: z.enum(['diagram', 'folder', 'markdown', 'file']),
   created_by: z.string().nullable().optional(),
-  updated_by: z.string().nullable().optional()
+  updated_by: z.string().nullable().optional(),
+  mime_type: z.string().nullable().optional(),
+  original_filename: z.string().nullable().optional()
 });
 
 const fileFolderSchema = z.object({

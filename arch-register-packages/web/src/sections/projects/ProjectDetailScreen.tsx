@@ -14,7 +14,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ColorPicker } from '../../components/ColorPicker';
-import { TbPlus, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil } from 'react-icons/tb';
+import { TbPlus, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil, TbDownload } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/api';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -38,6 +38,7 @@ import {
   useRenameProjectFolder,
   useCloneProjectFile,
   useRenameProjectFile,
+  useRenameProjectBinaryFile,
   useMoveProjectFile,
   useToggleTemplateStatus,
   useCreateProjectMarkdown
@@ -113,6 +114,7 @@ export const ProjectDetailScreen = () => {
   const renameFolderMutation = useRenameProjectFolder(workspaceId, projectId);
   const cloneFileMutation = useCloneProjectFile(workspaceId, projectId);
   const renameFileMutation = useRenameProjectFile(workspaceId, projectId);
+  const renameBinaryFileMutation = useRenameProjectBinaryFile(workspaceId, projectId);
   const moveFileMutation = useMoveProjectFile(workspaceId, projectId);
   const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
   const createMarkdownMutation = useCreateProjectMarkdown(workspaceId, projectId);
@@ -454,6 +456,58 @@ export const ProjectDetailScreen = () => {
     );
   };
 
+  const triggerDownload = (file: FileEntry) => {
+    const a = document.createElement('a');
+    a.href = `/api/${workspaceId}/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`;
+    a.download = file.original_filename ?? file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const renderFileMenu = (file: FileEntry) => {
+    const currentFolder = file.path.includes('/')
+      ? file.path.substring(0, file.path.lastIndexOf('/'))
+      : null;
+
+    const allFolders = project.files.folders
+      .map(f => f.path)
+      .filter(path => path !== currentFolder);
+
+    return (
+      <>
+        <Menu.Item
+          leftSlot={<TbDownload size={13} />}
+          onClick={() => {
+            setMenu(null);
+            triggerDownload(file);
+          }}
+        >
+          Download
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.Item
+          leftSlot={<TbPencil size={13} />}
+          onClick={() => setRenameTarget({ type: 'file', file })}
+        >
+          Rename
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
+          {renderMoveToSubmenu(file, allFolders, currentFolder)}
+        </Menu.SubMenu>
+        <Menu.Separator />
+        <Menu.Item
+          type="danger"
+          leftSlot={<TbTrash size={13} />}
+          onClick={() => setDeleteTarget({ type: 'file', file })}
+        >
+          Delete
+        </Menu.Item>
+      </>
+    );
+  };
+
   const renderFolderMenu = (path: string) => (
     <>
       <Menu.Item
@@ -509,7 +563,11 @@ export const ProjectDetailScreen = () => {
       setRenameTarget(null);
       return;
     }
-    if (renameTarget.type !== 'folder') {
+    if (renameTarget.type === 'file') {
+      if (trimmed !== renameTarget.file.name) {
+        renameBinaryFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
+      }
+    } else if (renameTarget.type !== 'folder') {
       if (trimmed !== renameTarget.file.name) {
         renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
       }
@@ -559,6 +617,7 @@ export const ProjectDetailScreen = () => {
           onSetViewMode={setViewMode}
           onOpenDiagram={handleNavigateDiagram}
           onOpenMarkdown={handleNavigateMarkdown}
+          onDownloadFile={triggerDownload}
           onAddFolder={() => setAddFolderOpen(true)}
           onAddDiagram={() => {
             setAddDiagramFolder(contentFolderFilter);
@@ -588,6 +647,7 @@ export const ProjectDetailScreen = () => {
           onSetViewMode={setViewMode}
           onOpenDiagram={handleNavigateDiagram}
           onOpenMarkdown={handleNavigateMarkdown}
+          onDownloadFile={triggerDownload}
           onAddFolder={() => setAddFolderOpen(true)}
           onAddDiagram={() => {
             setAddDiagramFolder(contentFolderFilter);
@@ -670,7 +730,9 @@ export const ProjectDetailScreen = () => {
             ? renderDiagramMenu(menu.target.file)
             : menu.target.type === 'markdown'
               ? renderMarkdownMenu(menu.target.file)
-              : renderFolderMenu(menu.target.path)}
+              : menu.target.type === 'file'
+                ? renderFileMenu(menu.target.file)
+                : renderFolderMenu(menu.target.path)}
         </ContextMenu.Imperative>
       )}
 
@@ -712,7 +774,9 @@ export const ProjectDetailScreen = () => {
             ? 'folder'
             : renameTarget?.type === 'markdown'
               ? 'document'
-              : 'diagram'
+              : renameTarget?.type === 'file'
+                ? 'file'
+                : 'diagram'
         }
         onRename={handleRenameConfirm}
         onCancel={() => setRenameTarget(null)}
@@ -725,7 +789,9 @@ export const ProjectDetailScreen = () => {
             ? 'Delete folder?'
             : deleteTarget?.type === 'markdown'
               ? 'Delete document?'
-              : 'Delete diagram?'
+              : deleteTarget?.type === 'file'
+                ? 'Delete file?'
+                : 'Delete diagram?'
         }
         message={
           deleteTarget ? (
@@ -737,6 +803,11 @@ export const ProjectDetailScreen = () => {
             ) : deleteTarget.type === 'markdown' ? (
               <>
                 The document <b>{deleteTarget.file.name}</b> will be permanently deleted.
+              </>
+            ) : deleteTarget.type === 'file' ? (
+              <>
+                The file <b>{deleteTarget.file.original_filename ?? deleteTarget.file.name}</b> will
+                be permanently deleted.
               </>
             ) : (
               <>
@@ -753,7 +824,9 @@ export const ProjectDetailScreen = () => {
             ? 'Delete folder'
             : deleteTarget?.type === 'markdown'
               ? 'Delete document'
-              : 'Delete diagram'
+              : deleteTarget?.type === 'file'
+                ? 'Delete file'
+                : 'Delete diagram'
         }
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}

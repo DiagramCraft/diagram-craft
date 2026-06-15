@@ -1810,3 +1810,296 @@ export const saveMarkdownContent = async (
     return handleError(e, 'Failed to save markdown content');
   }
 };
+
+// ── Binary file upload / download ─────────────────────────────
+
+export const uploadProjectFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  id: string,
+  filePath: string,
+  buffer: Buffer,
+  mimeType: string,
+  originalFilename: string,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    const projectUuid = project.id;
+
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to modify this project'
+    );
+
+    const existingFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
+    const isUpdate = !!existingFile;
+
+    const fileLastSlash = filePath.lastIndexOf('/');
+    let fileParentId: string | null = null;
+    if (fileLastSlash !== -1) {
+      const folderPath = filePath.substring(0, fileLastSlash);
+      const parentFolder = await db.project.getContentNodeByPath(ws, projectUuid, folderPath);
+      fileParentId = parentFolder?.id ?? null;
+    }
+
+    const timestamp = new Date();
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: projectUuid,
+      parent_id: fileParentId,
+      path: filePath,
+      name: originalFilename,
+      type: 'file',
+      size_bytes: buffer.length,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: existingFile?.created_at ?? timestamp,
+      updated_at: timestamp,
+      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+      updated_by: authCtx.userId,
+      mime_type: mimeType,
+      original_filename: originalFilename
+    });
+
+    await storage.write(ws, projectUuid, row.id, buffer);
+
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: isUpdate ? 'update' : 'create',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: isUpdate
+        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
+        : { new: extractEntityFields(row) },
+      metadata: { project_id: projectUuid, path: filePath }
+    });
+
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to upload file');
+  }
+};
+
+export const downloadProjectFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  id: string,
+  filePath: string,
+  event: AuthenticatedEvent
+): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    await buildApiAuthCtx(db, ws, event);
+    const project = await db.project.getProject(ws, id);
+    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+    const projectUuid = project.id;
+
+    const file = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
+    httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+    httpAssert.true(file.type === 'file', { status: 400, message: 'Node is not a binary file' });
+
+    const buffer = await storage.read(ws, projectUuid, file.id);
+    return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
+  } catch (e) {
+    return handleError(e, 'Failed to download file');
+  }
+};
+
+export const uploadEntityFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  entityId: string,
+  filePath: string,
+  buffer: Buffer,
+  mimeType: string,
+  originalFilename: string,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const entity = await db.catalog.getEntity(ws, entityId);
+    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+    const entityUuid = entity.id;
+
+    const existingFile = await db.project.listEntityContentNodes(ws, entityUuid).then(nodes =>
+      nodes.find(n => n.path === filePath && n.type === 'file')
+    );
+    const isUpdate = !!existingFile;
+
+    let fileParentId: string | null = null;
+    const folderPath = folderFromPath(filePath);
+    if (folderPath) {
+      const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
+      const parentFolder = entityNodes.find(n => n.path === folderPath && n.type === 'folder');
+      fileParentId = parentFolder?.id ?? null;
+    }
+
+    const timestamp = new Date();
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: null,
+      entity_id: entityUuid,
+      parent_id: fileParentId,
+      path: filePath,
+      name: originalFilename,
+      type: 'file',
+      size_bytes: buffer.length,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: existingFile?.created_at ?? timestamp,
+      updated_at: timestamp,
+      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+      updated_by: authCtx.userId,
+      mime_type: mimeType,
+      original_filename: originalFilename
+    });
+
+    await storage.write(ws, entityUuid, row.id, buffer);
+
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: isUpdate ? 'update' : 'create',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: isUpdate
+        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
+        : { new: extractEntityFields(row) },
+      metadata: { entity_id: entityUuid, path: filePath }
+    });
+
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to upload entity file');
+  }
+};
+
+export const downloadEntityFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  entityId: string,
+  filePath: string,
+  event: AuthenticatedEvent
+): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    await buildApiAuthCtx(db, ws, event);
+    const entity = await db.catalog.getEntity(ws, entityId);
+    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+    const entityUuid = entity.id;
+
+    const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
+    const file = entityNodes.find(n => n.path === filePath) ?? null;
+    httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+    httpAssert.true(file.type === 'file', { status: 400, message: 'Node is not a binary file' });
+
+    const buffer = await storage.read(ws, entityUuid, file.id);
+    return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
+  } catch (e) {
+    return handleError(e, 'Failed to download entity file');
+  }
+};
+
+export const uploadWorkspaceFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  filePath: string,
+  buffer: Buffer,
+  mimeType: string,
+  originalFilename: string,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+
+    const existingFile = await db.project.listWorkspaceContentNodes(ws).then(nodes =>
+      nodes.find(n => n.path === filePath && n.type === 'file')
+    );
+    const isUpdate = !!existingFile;
+
+    let fileParentId: string | null = null;
+    const folderPath = folderFromPath(filePath);
+    if (folderPath) {
+      const wsNodes = await db.project.listWorkspaceContentNodes(ws);
+      const parentFolder = wsNodes.find(n => n.path === folderPath && n.type === 'folder');
+      fileParentId = parentFolder?.id ?? null;
+    }
+
+    const timestamp = new Date();
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: null,
+      entity_id: null,
+      parent_id: fileParentId,
+      path: filePath,
+      name: originalFilename,
+      type: 'file',
+      size_bytes: buffer.length,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: existingFile?.created_at ?? timestamp,
+      updated_at: timestamp,
+      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+      updated_by: authCtx.userId,
+      mime_type: mimeType,
+      original_filename: originalFilename
+    });
+
+    await storage.write(ws, ws, row.id, buffer);
+
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: isUpdate ? 'update' : 'create',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: isUpdate
+        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
+        : { new: extractEntityFields(row) },
+      metadata: { path: filePath }
+    });
+
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to upload workspace file');
+  }
+};
+
+export const downloadWorkspaceFile = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  filePath: string,
+  event: AuthenticatedEvent
+): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    await buildApiAuthCtx(db, ws, event);
+    const wsNodes = await db.project.listWorkspaceContentNodes(ws);
+    const file = wsNodes.find(n => n.path === filePath) ?? null;
+    httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+    httpAssert.true(file.type === 'file', { status: 400, message: 'Node is not a binary file' });
+
+    const buffer = await storage.read(ws, ws, file.id);
+    return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
+  } catch (e) {
+    return handleError(e, 'Failed to download workspace file');
+  }
+};

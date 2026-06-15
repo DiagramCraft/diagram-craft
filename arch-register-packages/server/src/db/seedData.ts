@@ -1241,7 +1241,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     created_at: now,
     updated_at: now,
     created_by: null,
-    updated_by: null
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
   },
   {
     id: CONTENT_IDS.authApiOverviewDiagram,
@@ -1261,7 +1263,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     created_at: now,
     updated_at: now,
     created_by: null,
-    updated_by: null
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
   },
   {
     id: CONTENT_IDS.authApiSequenceDiagram,
@@ -1281,7 +1285,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     created_at: now,
     updated_at: now,
     created_by: null,
-    updated_by: null
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
   },
   {
     id: CONTENT_IDS.authApiSecurityFolder,
@@ -1301,7 +1307,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     created_at: now,
     updated_at: now,
     created_by: null,
-    updated_by: null
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
   },
   {
     id: CONTENT_IDS.authApiThreatModel,
@@ -1321,7 +1329,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     created_at: now,
     updated_at: now,
     created_by: null,
-    updated_by: null
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
   },
   // Workspace-level content nodes (both project_id and entity_id are null)
   {
@@ -1342,7 +1352,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     created_at: now,
     updated_at: now,
     created_by: null,
-    updated_by: null
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
   },
   {
     id: CONTENT_IDS.wsStandardsFolder,
@@ -1362,7 +1374,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     created_at: now,
     updated_at: now,
     created_by: null,
-    updated_by: null
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
   },
   {
     id: CONTENT_IDS.wsApiDesignGuide,
@@ -1382,7 +1396,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     created_at: now,
     updated_at: now,
     created_by: null,
-    updated_by: null
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
   },
   {
     id: CONTENT_IDS.wsDeploymentTopology,
@@ -1402,7 +1418,9 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     created_at: now,
     updated_at: now,
     created_by: null,
-    updated_by: null
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
   }
 ];
 

@@ -9,6 +9,7 @@ import type { FileEntry } from '../../lib/api';
 export type ProjectMenuTarget =
   | { type: 'diagram'; file: FileEntry }
   | { type: 'markdown'; file: FileEntry }
+  | { type: 'file'; file: FileEntry }
   | { type: 'folder'; path: string };
 
 export const ProjectDiagramsView = ({
@@ -19,6 +20,7 @@ export const ProjectDiagramsView = ({
   viewMode,
   onOpenDiagram,
   onOpenMarkdown,
+  onDownloadFile,
   onNewDiagram,
   onContextMenu
 }: {
@@ -29,6 +31,7 @@ export const ProjectDiagramsView = ({
   viewMode: 'grid' | 'list';
   onOpenDiagram: (diagramId: string) => void;
   onOpenMarkdown?: (nodeId: string) => void;
+  onDownloadFile?: (file: FileEntry) => void;
   onNewDiagram?: () => void;
   onContextMenu?: (e: React.MouseEvent, target: ProjectMenuTarget) => void;
 }) => {
@@ -57,10 +60,14 @@ export const ProjectDiagramsView = ({
         gridSections={[]}
         onOpenDiagram={file => onOpenDiagram(file.id)}
         onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
+        onDownloadFile={onDownloadFile}
         onContextMenu={
           onContextMenu
             ? (event, file) =>
-                onContextMenu(event, { type: file.type === 'markdown' ? 'markdown' : 'diagram', file })
+                onContextMenu(event, {
+                  type: file.type === 'markdown' ? 'markdown' : file.type === 'file' ? 'file' : 'diagram',
+                  file
+                })
             : undefined
         }
         onNewDiagram={onNewDiagram}
@@ -88,10 +95,14 @@ export const ProjectDiagramsView = ({
         ]}
         onOpenDiagram={file => onOpenDiagram(file.id)}
         onOpenMarkdown={onOpenMarkdown ? file => onOpenMarkdown(file.id) : undefined}
+        onDownloadFile={onDownloadFile}
         onContextMenu={
           onContextMenu
             ? (event, file) =>
-                onContextMenu(event, { type: file.type === 'markdown' ? 'markdown' : 'diagram', file })
+                onContextMenu(event, {
+                  type: file.type === 'markdown' ? 'markdown' : file.type === 'file' ? 'file' : 'diagram',
+                  file
+                })
             : undefined
         }
         onNewDiagram={onNewDiagram}

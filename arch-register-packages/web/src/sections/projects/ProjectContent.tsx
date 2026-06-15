@@ -23,6 +23,7 @@ export const ProjectContent = ({
   onSetViewMode,
   onOpenDiagram,
   onOpenMarkdown,
+  onDownloadFile,
   onAddFolder,
   onAddDiagram,
   onAddMarkdown,
@@ -41,6 +42,7 @@ export const ProjectContent = ({
   onSetViewMode: (value: 'grid' | 'list') => void;
   onOpenDiagram: (diagramId: string) => void;
   onOpenMarkdown?: (nodeId: string) => void;
+  onDownloadFile?: (file: FileEntry) => void;
   onAddFolder: () => void;
   onAddDiagram: () => void;
   onAddMarkdown?: () => void;
@@ -100,6 +102,7 @@ export const ProjectContent = ({
         viewMode={viewMode}
         onOpenDiagram={onOpenDiagram}
         onOpenMarkdown={onOpenMarkdown}
+        onDownloadFile={onDownloadFile}
         onNewDiagram={project.canManageFiles ? onAddDiagram : undefined}
         onContextMenu={onContextMenu}
       />

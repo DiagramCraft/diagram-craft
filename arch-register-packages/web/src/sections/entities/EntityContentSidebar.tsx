@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { TbFile, TbFileText, TbFolder, TbHome, TbPlus } from 'react-icons/tb';
+import { useRef, useState } from 'react';
+import { TbFile, TbFileText, TbFolder, TbHome, TbPlus, TbUpload } from 'react-icons/tb';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
@@ -10,6 +10,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/api';
 import { TypeBadge } from '../../components/TypeBadge';
 import { AddEntityFolderDialog } from './AddEntityFolderDialog';
+import { useUploadEntityFile } from '../../hooks/useProjectFiles';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -31,6 +32,31 @@ export const EntityContentSidebar = ({
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const uploadFileMutation = useUploadEntityFile(workspaceSlug, entityId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadFolder, setUploadFolder] = useState<string | null>(null);
+
+  const triggerDownload = (file: EntityFileEntry) => {
+    const a = document.createElement('a');
+    a.href = `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(file.path)}`;
+    a.download = file.original_filename ?? file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) {
+      uploadFileMutation.mutate({ file: f, folder: uploadFolder });
+    }
+    e.target.value = '';
+  };
+
+  const openUploadPicker = (folder: string | null) => {
+    setUploadFolder(folder);
+    fileInputRef.current?.click();
+  };
   const ctx = useWorkspaceContext();
   const navigate = useNavigate();
   const params = useParams({ strict: false }) as { diagramId?: string; nodeId?: string };
@@ -56,17 +82,20 @@ export const EntityContentSidebar = ({
   };
 
   // Build folder tree for nested rendering
+  type EntityFileEntry = {
+    id: string;
+    name: string;
+    path: string;
+    project_id: string | null;
+    project_public_id?: string | null;
+    type: 'diagram' | 'folder' | 'markdown' | 'file';
+    original_filename?: string | null;
+  };
+
   type FolderNode = {
     path: string;
     name: string;
-    files: Array<{
-      id: string;
-      name: string;
-      path: string;
-      project_id: string | null;
-      project_public_id?: string | null;
-      type: 'diagram' | 'folder' | 'markdown' | 'file';
-    }>;
+    files: EntityFileEntry[];
     children: FolderNode[];
   };
 
@@ -74,14 +103,7 @@ export const EntityContentSidebar = ({
     folders: Array<{
       path: string;
       name: string;
-      files: Array<{
-        id: string;
-        name: string;
-        path: string;
-        project_id: string | null;
-        project_public_id?: string | null;
-        type: 'diagram' | 'folder' | 'markdown' | 'file';
-      }>;
+      files: EntityFileEntry[];
     }>
   ): FolderNode[] => {
     const root: FolderNode[] = [];
@@ -150,24 +172,44 @@ export const EntityContentSidebar = ({
                 key={file.id}
                 depth={depth + 1}
                 icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
-                label={file.name}
+                label={file.original_filename ?? file.name}
                 active={file.id === activeFileId}
-                onClick={() => {
-                  const projectId = file.project_public_id ?? file.project_id;
-                  if (projectId) {
-                    navigate(
-                      file.type === 'markdown'
-                        ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-                        : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-                    );
-                  } else {
-                    navigate(
-                      file.type === 'markdown'
-                        ? entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
-                        : entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
-                    );
-                  }
-                }}
+                onClick={
+                  file.type === 'file'
+                    ? () => triggerDownload(file)
+                    : () => {
+                        const projectId = file.project_public_id ?? file.project_id;
+                        if (projectId) {
+                          navigate(
+                            file.type === 'markdown'
+                              ? projectMarkdownRoute(
+                                  workspaceSlug,
+                                  asProjectPublicId(projectId),
+                                  file.id
+                                )
+                              : projectDiagramRoute(
+                                  workspaceSlug,
+                                  asProjectPublicId(projectId),
+                                  file.id
+                                )
+                          );
+                        } else {
+                          navigate(
+                            file.type === 'markdown'
+                              ? entityMarkdownRoute(
+                                  workspaceSlug,
+                                  asEntityPublicId(entityId),
+                                  file.id
+                                )
+                              : entityDiagramRoute(
+                                  workspaceSlug,
+                                  asEntityPublicId(entityId),
+                                  file.id
+                                )
+                          );
+                        }
+                      }
+                }
               />
             ))}
             {node.children.map(child => renderFolderNode(child, depth + 1))}
@@ -191,6 +233,14 @@ export const EntityContentSidebar = ({
           <button
             type="button"
             className={styles.action}
+            onClick={() => openUploadPicker(contentFolder ?? null)}
+            title="Upload file"
+          >
+            <TbUpload size={13} />
+          </button>
+          <button
+            type="button"
+            className={styles.action}
             onClick={() => setAddFolderOpen(true)}
             title="New folder"
           >
@@ -211,30 +261,40 @@ export const EntityContentSidebar = ({
           <TreeRow
             key={file.id}
             icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
-            label={file.name}
+            label={(file as EntityFileEntry).original_filename ?? file.name}
             active={file.id === activeFileId}
             onClick={
-              file.project_public_id ?? file.project_id
-                ? () => {
-                    const projectId = asProjectPublicId(file.project_public_id ?? file.project_id!);
-                    navigate(
-                      file.type === 'markdown'
-                        ? projectMarkdownRoute(workspaceSlug, projectId, file.id)
-                        : projectDiagramRoute(workspaceSlug, projectId, file.id)
-                    );
-                  }
-                : () => {
-                    navigate(
-                      file.type === 'markdown'
-                        ? entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
-                        : entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
-                    );
-                  }
+              file.type === 'file'
+                ? () => triggerDownload(file as EntityFileEntry)
+                : file.project_public_id ?? file.project_id
+                  ? () => {
+                      const projectId = asProjectPublicId(
+                        file.project_public_id ?? file.project_id!
+                      );
+                      navigate(
+                        file.type === 'markdown'
+                          ? projectMarkdownRoute(workspaceSlug, projectId, file.id)
+                          : projectDiagramRoute(workspaceSlug, projectId, file.id)
+                      );
+                    }
+                  : () => {
+                      navigate(
+                        file.type === 'markdown'
+                          ? entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
+                          : entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), file.id)
+                      );
+                    }
             }
           />
         ))}
         {folderTree.map(node => renderFolderNode(node, 0))}
       </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        style={{ display: 'none' }}
+        onChange={handleFileInputChange}
+      />
       <AddEntityFolderDialog
         open={addFolderOpen}
         onClose={() => setAddFolderOpen(false)}

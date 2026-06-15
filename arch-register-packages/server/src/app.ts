@@ -14,6 +14,7 @@ import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
 import { createWorkspaceManagementORPCHandler } from './domain/workspace/workspaceOrpc';
 import { createWorkspaceConfigORPCHandler } from './domain/workspace/workspaceConfigOrpc';
 import { createProjectORPCHandler } from './domain/project/projectOrpc';
+import { createProjectFileRoutesHandler } from './domain/project/projectFileRoutes';
 import { createAuditORPCHandler } from './domain/audit/auditOrpc';
 import { createWatchORPCHandler } from './domain/watch/watchOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
@@ -109,6 +110,7 @@ export const createApp = (
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
   app.use(createWorkspaceConfigORPCHandler(db));
+  app.use(createProjectFileRoutesHandler(db, storage));
   app.use(createProjectORPCHandler(db, storage));
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));

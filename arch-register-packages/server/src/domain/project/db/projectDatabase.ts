@@ -20,6 +20,8 @@ export type ContentNodeDbResult = {
   updated_at: Date;
   created_by: string | null;
   updated_by: string | null;
+  mime_type: string | null;
+  original_filename: string | null;
 };
 
 export type ContentNodeDbUpsert = {
@@ -38,6 +40,8 @@ export type ContentNodeDbUpsert = {
   created_atIfNew: Date;
   created_byIfNew?: string | null;
   updated_by?: string | null;
+  mime_type?: string | null;
+  original_filename?: string | null;
 };
 
 // -- Project

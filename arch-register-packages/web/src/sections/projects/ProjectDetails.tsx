@@ -26,6 +26,7 @@ export const ProjectDetails = ({
   onSetViewMode,
   onOpenDiagram,
   onOpenMarkdown,
+  onDownloadFile,
   onAddFolder,
   onAddDiagram,
   onContextMenu
@@ -46,6 +47,7 @@ export const ProjectDetails = ({
   onSetViewMode: (value: 'grid' | 'list') => void;
   onOpenDiagram: (diagramId: string) => void;
   onOpenMarkdown?: (nodeId: string) => void;
+  onDownloadFile?: (file: FileEntry) => void;
   onAddFolder: () => void;
   onAddDiagram: () => void;
   onContextMenu?: (e: React.MouseEvent, target: ProjectMenuTarget) => void;
@@ -122,6 +124,7 @@ export const ProjectDetails = ({
         viewMode={viewMode}
         onOpenDiagram={onOpenDiagram}
         onOpenMarkdown={onOpenMarkdown}
+        onDownloadFile={onDownloadFile}
         onNewDiagram={project.canManageFiles ? onAddDiagram : undefined}
         onContextMenu={onContextMenu}
       />

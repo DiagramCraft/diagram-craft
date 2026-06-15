@@ -1,23 +1,61 @@
-import { useState } from 'react';
-import { TbFile, TbFileText, TbFolder, TbHome, TbPlus } from 'react-icons/tb';
+import { useRef, useState } from 'react';
+import { TbFile, TbFileText, TbFolder, TbHome, TbPlus, TbUpload } from 'react-icons/tb';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
-import { useWorkspaceContentNodes, useCreateWorkspaceFolder } from '../../hooks/useProjectFiles';
+import {
+  useWorkspaceContentNodes,
+  useCreateWorkspaceFolder,
+  useUploadWorkspaceFile
+} from '../../hooks/useProjectFiles';
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+
+type WorkspaceFileEntry = {
+  id: string;
+  name: string;
+  path: string;
+  project_id: string | null;
+  type: 'diagram' | 'folder' | 'markdown' | 'file';
+  original_filename?: string | null;
+};
 
 export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const { data } = useWorkspaceContentNodes(workspaceSlug);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const createFolderMutation = useCreateWorkspaceFolder(workspaceSlug);
+  const uploadFileMutation = useUploadWorkspaceFile(workspaceSlug);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadFolder, setUploadFolder] = useState<string | null>(null);
   const navigate = useNavigate();
   const params = useParams({ strict: false }) as { diagramId?: string; nodeId?: string };
   const search = useSearch({ strict: false }) as { contentFolder?: string };
   const contentFolder = search.contentFolder;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
   const isFileRoute = activeFileId !== null;
+
+  const triggerDownload = (file: WorkspaceFileEntry) => {
+    const a = document.createElement('a');
+    a.href = `/api/${workspaceSlug}/content/files/download?path=${encodeURIComponent(file.path)}`;
+    a.download = file.original_filename ?? file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) {
+      uploadFileMutation.mutate({ file: f, folder: uploadFolder });
+    }
+    e.target.value = '';
+  };
+
+  const openUploadPicker = (folder: string | null) => {
+    setUploadFolder(folder);
+    fileInputRef.current?.click();
+  };
 
   const toggleFolder = (path: string) => {
     setExpandedFolders(prev => {
@@ -34,7 +72,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   type FolderNode = {
     path: string;
     name: string;
-    files: Array<{ id: string; name: string; path: string; project_id: string | null; type: 'diagram' | 'folder' | 'markdown' | 'file' }>;
+    files: WorkspaceFileEntry[];
     children: FolderNode[];
   };
 
@@ -42,7 +80,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
     folders: Array<{
       path: string;
       name: string;
-      files: Array<{ id: string; name: string; path: string; project_id: string | null; type: 'diagram' | 'folder' | 'markdown' | 'file' }>;
+      files: WorkspaceFileEntry[];
     }>
   ): FolderNode[] => {
     const root: FolderNode[] = [];
@@ -67,7 +105,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
     return root;
   };
 
-  const folderTree = data ? buildFolderTree(data.folders) : [];
+  const folderTree = data ? buildFolderTree(data.folders as unknown as Array<{ path: string; name: string; files: WorkspaceFileEntry[] }>) : [];
   const activeFilePath = data
     ? [...data.rootFiles, ...data.folders.flatMap(folder => folder.files)].find(file => file.id === activeFileId)?.path ?? null
     : null;
@@ -101,20 +139,23 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
                 key={file.id}
                 depth={depth + 1}
                 icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
-                label={file.name}
+                label={file.original_filename ?? file.name}
                 active={file.id === activeFileId}
-                onClick={() =>
-                  navigate(
-                    file.type === 'markdown'
-                      ? {
-                          to: '/$workspaceSlug/content/wiki/$nodeId',
-                          params: { workspaceSlug, nodeId: file.id }
-                        }
-                      : {
-                          to: '/$workspaceSlug/content/diagrams/$diagramId',
-                          params: { workspaceSlug, diagramId: file.id }
-                        }
-                  )
+                onClick={
+                  file.type === 'file'
+                    ? () => triggerDownload(file)
+                    : () =>
+                        navigate(
+                          file.type === 'markdown'
+                            ? {
+                                to: '/$workspaceSlug/content/wiki/$nodeId',
+                                params: { workspaceSlug, nodeId: file.id }
+                              }
+                            : {
+                                to: '/$workspaceSlug/content/diagrams/$diagramId',
+                                params: { workspaceSlug, diagramId: file.id }
+                              }
+                        )
                 }
               />
             ))}
@@ -134,6 +175,14 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
           </Tabs.List>
         </Tabs.Root>
         <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.action}
+            onClick={() => openUploadPicker(contentFolder ?? null)}
+            title="Upload file"
+          >
+            <TbUpload size={13} />
+          </button>
           <button
             type="button"
             className={styles.action}
@@ -160,25 +209,36 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
           <TreeRow
             key={file.id}
             icon={file.type === 'markdown' ? <TbFileText size={13} /> : <TbFile size={13} />}
-            label={file.name}
+            label={(file as unknown as WorkspaceFileEntry).original_filename ?? file.name}
             active={file.id === activeFileId}
-            onClick={() =>
-                navigate(
-                  file.type === 'markdown'
-                    ? {
-                        to: '/$workspaceSlug/content/wiki/$nodeId',
-                        params: { workspaceSlug, nodeId: file.id }
-                      }
-                  : {
-                      to: '/$workspaceSlug/content/diagrams/$diagramId',
-                      params: { workspaceSlug, diagramId: file.id }
-                    }
-              )
+            onClick={
+              file.type === 'file'
+                ? () => triggerDownload(file as unknown as WorkspaceFileEntry)
+                : () =>
+                    navigate(
+                      file.type === 'markdown'
+                        ? {
+                            to: '/$workspaceSlug/content/wiki/$nodeId',
+                            params: { workspaceSlug, nodeId: file.id }
+                          }
+                        : {
+                            to: '/$workspaceSlug/content/diagrams/$diagramId',
+                            params: { workspaceSlug, diagramId: file.id }
+                          }
+                    )
             }
           />
         ))}
         {folderTree.map(node => renderFolderNode(node, 0))}
       </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        style={{ display: 'none' }}
+        onChange={handleFileInputChange}
+      />
+
       <ContentFolderDialog
         open={addFolderOpen}
         onClose={() => setAddFolderOpen(false)}
