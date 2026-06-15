@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Title } from './Title';
-import { TbFolder, TbSettings, TbDots, TbPlus, TbDownload } from 'react-icons/tb';
+import { TbSettings, TbDots, TbPlus, TbDownload } from 'react-icons/tb';
 import { Chip } from './Chip';
 import { TypeBadge } from './TypeBadge';
 import { Button } from '@diagram-craft/app-components/Button';

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TreeRow } from './TreeRow';
 import { TbFolder, TbFile, TbDatabase, TbServer, TbCloud } from 'react-icons/tb';
 import { useState } from 'react';
@@ -81,7 +81,7 @@ export const Expanded: Story = {
   }
 };
 
-export const NestedDepth: Story = {
+export const NestedDepth = {
   render: () => (
     <div style={{ width: '300px', border: '1px solid #e5e7eb', borderRadius: '4px' }}>
       <TreeRow label="Root" icon={<TbFolder size={16} />} depth={0} expandable expanded />
@@ -95,7 +95,7 @@ export const NestedDepth: Story = {
   )
 };
 
-export const InteractiveTree: Story = {
+export const InteractiveTree = {
   render: () => {
     const [expanded, setExpanded] = useState<Record<string, boolean>>({
       root: true,
@@ -183,7 +183,7 @@ export const InteractiveTree: Story = {
   }
 };
 
-export const DifferentIcons: Story = {
+export const DifferentIcons = {
   render: () => (
     <div style={{ width: '300px', border: '1px solid #e5e7eb', borderRadius: '4px' }}>
       <TreeRow label="Folder" icon={<TbFolder size={16} />} />
@@ -199,14 +199,14 @@ export const WithContextMenu: Story = {
   args: {
     label: 'Right-click me',
     icon: <TbFile size={16} />,
-    onContextMenu: (e) => {
+    onContextMenu: (e: React.MouseEvent) => {
       e.preventDefault();
       alert('Context menu clicked!');
     }
   }
 };
 
-export const ComplexExample: Story = {
+export const ComplexExample = {
   render: () => (
     <div style={{ width: '400px', border: '1px solid #e5e7eb', borderRadius: '4px' }}>
       <TreeRow

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Chip } from './Chip';
 import { TbCheck, TbX } from 'react-icons/tb';
 
@@ -63,7 +63,7 @@ export const ErrorChip: Story = {
   }
 };
 
-export const MultipleChips: Story = {
+export const MultipleChips = {
   render: () => (
     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
       <Chip>Default</Chip>

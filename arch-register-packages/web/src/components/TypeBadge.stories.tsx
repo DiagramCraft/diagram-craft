@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TypeBadge, ICON_MAP } from './TypeBadge';
 
 const meta = {
@@ -91,7 +91,7 @@ export const NoIcon: Story = {
   }
 };
 
-export const AllIcons: Story = {
+export const AllIcons = {
   render: () => {
     const colors = [
       '#3b82f6',
@@ -110,7 +110,7 @@ export const AllIcons: Story = {
         {icons.map((icon, index) => (
           <div key={icon} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
             <TypeBadge
-              color={colors[index % colors.length]}
+              color={colors[index % colors.length]!}
               name={icon}
               icon={icon}
             />
@@ -124,7 +124,7 @@ export const AllIcons: Story = {
   }
 };
 
-export const ColorVariations: Story = {
+export const ColorVariations = {
   render: () => {
     const colors = [
       { color: '#3b82f6', name: 'Blue' },

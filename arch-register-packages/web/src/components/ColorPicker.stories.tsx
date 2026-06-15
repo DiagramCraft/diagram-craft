@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ColorPicker } from './ColorPicker';
 import { useState } from 'react';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
@@ -27,7 +27,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     value: SCHEMA_COLORS[0],
-    onChange: (color) => console.log('Selected color:', color)
+    onChange: (color: string | null) => console.log('Selected color:', color)
   }
 };
 
@@ -55,10 +55,10 @@ export const Disabled: Story = {
 };
 
 
-export const MultipleInstances: Story = {
+export const MultipleInstances = {
   render: () => {
-    const [color1, setColor1] = useState<string | null>(SCHEMA_COLORS[0]);
-    const [color2, setColor2] = useState<string | null>(SCHEMA_COLORS[4]);
+    const [color1, setColor1] = useState<string | null>(SCHEMA_COLORS[0] ?? null);
+    const [color2, setColor2] = useState<string | null>(SCHEMA_COLORS[4] ?? null);
     const [color3, setColor3] = useState<string | null>(null);
     
     return (
@@ -97,7 +97,7 @@ export const MultipleInstances: Story = {
   }
 };
 
-export const AllColors: Story = {
+export const AllColors = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ fontSize: '14px', fontWeight: 500 }}>
@@ -135,10 +135,10 @@ export const AllColors: Story = {
   )
 };
 
-export const SizeComparison: Story = {
+export const SizeComparison = {
   render: () => {
-    const [defaultColor, setDefaultColor] = useState<string | null>(SCHEMA_COLORS[2]);
-    const [smallColor, setSmallColor] = useState<string | null>(SCHEMA_COLORS[5]);
+    const [defaultColor, setDefaultColor] = useState<string | null>(SCHEMA_COLORS[2] ?? null);
+    const [smallColor, setSmallColor] = useState<string | null>(SCHEMA_COLORS[5] ?? null);
     
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>

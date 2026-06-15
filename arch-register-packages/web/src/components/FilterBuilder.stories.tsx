@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { FilterBuilder } from './FilterBuilder';
 import { useState } from 'react';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
@@ -9,58 +9,78 @@ import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 const mockSchemas: EntitySchema[] = [
   {
     id: 'service',
+    workspace: 'test',
     name: 'Service',
+    description: 'Service schema',
+    key_prefix: 'SVC',
     icon: 'server',
     color: '#3b82f6',
+    entity_count: 0,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
     fields: [
-      { id: 'version', name: 'Version', type: 'text', required: false },
-      { id: 'environment', name: 'Environment', type: 'select', enumId: 'env', required: false },
-      { id: 'deployDate', name: 'Deploy Date', type: 'date', required: false },
-      { id: 'active', name: 'Active', type: 'boolean', required: false }
+      { id: 'version', name: 'Version', type: 'text' },
+      { id: 'environment', name: 'Environment', type: 'select', enumId: 'env', options: [] },
+      { id: 'deployDate', name: 'Deploy Date', type: 'date' },
+      { id: 'active', name: 'Active', type: 'boolean' }
     ]
   },
   {
     id: 'database',
+    workspace: 'test',
     name: 'Database',
+    description: 'Database schema',
+    key_prefix: 'DB',
     icon: 'database',
     color: '#8b5cf6',
+    entity_count: 0,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
     fields: [
-      { id: 'engine', name: 'Engine', type: 'select', enumId: 'dbEngine', required: false },
-      { id: 'size', name: 'Size (GB)', type: 'text', required: false }
+      { id: 'engine', name: 'Engine', type: 'select', enumId: 'dbEngine', options: [] },
+      { id: 'size', name: 'Size (GB)', type: 'text' }
     ]
   }
 ];
 
 const mockLifecycleStates: WorkspaceLifecycleState[] = [
-  { id: 'active', label: 'Active', color: '#22c55e' },
-  { id: 'deprecated', label: 'Deprecated', color: '#f59e0b' },
-  { id: 'retired', label: 'Retired', color: '#ef4444' }
+  { id: 'active', label: 'Active', color: '#22c55e', sort_order: 0 },
+  { id: 'deprecated', label: 'Deprecated', color: '#f59e0b', sort_order: 1 },
+  { id: 'retired', label: 'Retired', color: '#ef4444', sort_order: 2 }
 ];
 
 const mockOwners: WorkspaceOwnerOption[] = [
-  { id: 'team-a', name: 'Team A' },
-  { id: 'team-b', name: 'Team B' },
-  { id: 'team-c', name: 'Team C' }
+  { id: 'team-a', name: 'Team A', sort_order: 0 },
+  { id: 'team-b', name: 'Team B', sort_order: 1 },
+  { id: 'team-c', name: 'Team C', sort_order: 2 }
 ];
 
 const mockEnums: WorkspaceEnum[] = [
   {
     id: 'env',
+    workspace: 'test',
     name: 'Environment',
     options: [
       { value: 'dev', label: 'Development' },
       { value: 'staging', label: 'Staging' },
       { value: 'prod', label: 'Production' }
-    ]
+    ],
+    sort_order: 0,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
   },
   {
     id: 'dbEngine',
+    workspace: 'test',
     name: 'Database Engine',
     options: [
       { value: 'postgres', label: 'PostgreSQL' },
       { value: 'mysql', label: 'MySQL' },
       { value: 'mongodb', label: 'MongoDB' }
-    ]
+    ],
+    sort_order: 1,
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
   }
 ];
 
@@ -160,7 +180,7 @@ export const EmptyOperators: Story = {
   }
 };
 
-export const Interactive: Story = {
+export const Interactive = {
   render: () => {
     const [conditions, setConditions] = useState<FilterCondition[]>([
       { fieldId: '_name', op: 'contains', value: '' }
@@ -233,7 +253,7 @@ export const ComplexFilters: Story = {
   }
 };
 
-export const WithCloseHandler: Story = {
+export const WithCloseHandler = {
   render: () => {
     const [conditions, setConditions] = useState<FilterCondition[]>([
       { fieldId: '_name', op: 'contains', value: 'test' }
@@ -276,7 +296,7 @@ export const WithCloseHandler: Story = {
   }
 };
 
-export const AllOperatorTypes: Story = {
+export const AllOperatorTypes = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div>

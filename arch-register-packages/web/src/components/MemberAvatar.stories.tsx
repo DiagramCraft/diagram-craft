@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemberAvatar } from './MemberAvatar';
 
 const meta = {
@@ -80,7 +80,7 @@ export const SingleLetter: Story = {
   }
 };
 
-export const MultipleAvatars: Story = {
+export const MultipleAvatars = {
   render: () => {
     const users = [
       { name: 'Alice Anderson', email: 'alice@example.com', userId: 'user-1' },
@@ -100,7 +100,7 @@ export const MultipleAvatars: Story = {
   }
 };
 
-export const DifferentSizes: Story = {
+export const DifferentSizes = {
   render: () => {
     const sizes = [16, 20, 24, 28, 32, 40, 48];
     
@@ -120,7 +120,7 @@ export const DifferentSizes: Story = {
   }
 };
 
-export const CustomColors: Story = {
+export const CustomColors = {
   render: () => {
     const colors = [
       '#3b82f6',
@@ -149,7 +149,7 @@ export const CustomColors: Story = {
   }
 };
 
-export const StableColors: Story = {
+export const StableColors = {
   render: () => {
     const userIds = ['user-a', 'user-b', 'user-c', 'user-d', 'user-e', 'user-f'];
     

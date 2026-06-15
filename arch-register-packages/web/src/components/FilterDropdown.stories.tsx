@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { FilterDropdown } from './FilterDropdown';
 import { useState } from 'react';
 
@@ -40,7 +40,7 @@ export const Default: Story = {
   args: {
     label: 'Status',
     value: 'all',
-    onChange: (value) => console.log('Selected:', value),
+    onChange: (value: string) => console.log('Selected:', value),
     options: statusOptions
   }
 };
@@ -63,7 +63,7 @@ export const SortDropdown: Story = {
   }
 };
 
-export const Interactive: Story = {
+export const Interactive = {
   render: () => {
     const [status, setStatus] = useState('all');
     const [type, setType] = useState('all');
@@ -110,7 +110,7 @@ export const Interactive: Story = {
 };
 
 
-export const MultipleInRow: Story = {
+export const MultipleInRow = {
   render: () => {
     const [filter1, setFilter1] = useState('all');
     const [filter2, setFilter2] = useState('all');
@@ -184,7 +184,7 @@ export const SingleOption: Story = {
   }
 };
 
-export const WithCallback: Story = {
+export const WithCallback = {
   render: () => {
     const [value, setValue] = useState('all');
     const [lastChanged, setLastChanged] = useState<string | null>(null);
