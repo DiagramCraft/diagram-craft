@@ -88,10 +88,10 @@ export const MarkdownEditorScreen = () => {
   const readTime = useMemo(() => calcReadTime(body), [body]);
   const updatedLabel = file?.updated_at ? relativeDate(file.updated_at) : null;
 
-  const parentLabel = projectId
+  const parentLabel: string = projectId
     ? (project?.name ?? 'Project')
     : entityId
-      ? (entity?.name ?? 'Entity')
+      ? (entity?._name ?? 'Entity')
       : (workspace?.name ?? workspaceSlug);
 
   const handleNavigateBack = useCallback(() => {
