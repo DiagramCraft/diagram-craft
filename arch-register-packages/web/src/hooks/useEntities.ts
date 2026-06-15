@@ -4,7 +4,14 @@ import type {
   CreateSavedViewRequest,
   UpdateSavedViewRequest
 } from '@arch-register/api-types/viewContract';
-import { entityKeys, schemaKeys, snapshotKeys, viewKeys } from './queryKeys';
+import {
+  entityKeys,
+  schemaKeys,
+  snapshotKeys,
+  viewKeys,
+  invalidateEntityQueries,
+  invalidateSnapshotQueries
+} from './queryKeys';
 import { invalidateAuditQueries } from './useAudit';
 import { invalidateNotificationQueries } from './useNotifications';
 import { orpcClient } from '../lib/orpcClient';
@@ -124,14 +131,13 @@ export const useUpdateEntity = (workspaceId: string) => {
         body: data
       }),
     onSuccess: async (_, variables) => {
-      // Invalidate the specific entity and relations
       await queryClient.invalidateQueries({
         queryKey: entityKeys.detail(workspaceId, variables.entityId)
       });
       await queryClient.invalidateQueries({
         queryKey: entityKeys.relations(workspaceId, variables.entityId)
       });
-      await queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
+      await invalidateEntityQueries(queryClient, workspaceId);
       await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
@@ -145,8 +151,7 @@ export const useCloneEntity = (workspaceId: string) => {
     mutationFn: (entityId: string) =>
       orpcClient.entities.clone({ params: { workspace: workspaceId, id: entityId } }),
     onSuccess: async () => {
-      // Invalidate entity lists to show the new clone
-      await queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
+      await invalidateEntityQueries(queryClient, workspaceId);
       await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
@@ -228,7 +233,8 @@ export const usePromoteSnapshot = (workspaceId: string, entityId: string) => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) });
+      invalidateSnapshotQueries(queryClient, workspaceId, entityId);
+      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) });
     }
   });
 };
@@ -247,8 +253,8 @@ export const useCreateFutureUpdate = (workspaceId: string, entityId: string) => 
         params: { workspace: workspaceId, id: entityId },
         body: params
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) });
+    onSuccess: (_, variables) => {
+      invalidateSnapshotQueries(queryClient, workspaceId, entityId, variables.projectId);
     }
   });
 };
@@ -259,6 +265,7 @@ export const useUpdateSnapshot = (workspaceId: string, entityId: string) => {
   return useMutation({
     mutationFn: (params: {
       snapshotId: string;
+      projectId?: string | null;
       proposedState?: Record<string, unknown>;
       targetDate?: string | null;
       commitMessage?: string | null;
@@ -271,8 +278,8 @@ export const useUpdateSnapshot = (workspaceId: string, entityId: string) => {
           commitMessage: params.commitMessage
         }
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) });
+    onSuccess: (_, variables) => {
+      invalidateSnapshotQueries(queryClient, workspaceId, entityId, variables.projectId);
     }
   });
 };
@@ -290,11 +297,9 @@ export const useApplySnapshot = (workspaceId: string, entityId: string, projectI
         body: { resolvedEntityData: params.resolvedEntityData }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) });
+      invalidateSnapshotQueries(queryClient, workspaceId, entityId, projectId);
       queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) });
-      if (projectId) {
-        queryClient.invalidateQueries({ queryKey: snapshotKeys.byProject(workspaceId, projectId) });
-      }
+      invalidateEntityQueries(queryClient, workspaceId);
       invalidateAuditQueries(queryClient, workspaceId);
     }
   });

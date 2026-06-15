@@ -1,17 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createDiagramFromTemplate, emptyDiagram } from '../lib/api';
-import { projectKeys } from './useProjects';
+import { projectFileKeys, invalidateProjectQueries } from './queryKeys';
 import { invalidateAuditQueries } from './useAudit';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
-
-// Query keys factory
-export const projectFileKeys = {
-  all: ['project-files'] as const,
-  lists: () => [...projectFileKeys.all, 'list'] as const,
-  list: (workspaceId: string, projectId: string) =>
-    [...projectFileKeys.lists(), workspaceId, projectId] as const
-};
 
 // Hook for fetching project files
 export const useProjectFiles = (workspaceId: string, projectId: string) => {
@@ -40,14 +32,7 @@ export const useCreateDiagramFile = (workspaceId: string, projectId: string) => 
       });
     },
     onSuccess: async () => {
-      // Invalidate project files to show the new file
-      await queryClient.invalidateQueries({
-        queryKey: projectFileKeys.list(workspaceId, projectId)
-      });
-      // Also invalidate the project detail which includes file count
-      await queryClient.invalidateQueries({
-        queryKey: projectKeys.detail(workspaceId, projectId)
-      });
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
       await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
@@ -64,29 +49,10 @@ export const useCreateFolder = (workspaceId: string, projectId: string) => {
         body: { path }
       }),
     onSuccess: async () => {
-      // Invalidate project files to show the new folder
-      await queryClient.invalidateQueries({
-        queryKey: projectFileKeys.list(workspaceId, projectId)
-      });
-      // Also invalidate project detail because the sidebar reads folders from project.files
-      await queryClient.invalidateQueries({
-        queryKey: projectKeys.detail(workspaceId, projectId)
-      });
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
       await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
-};
-
-const invalidateProjectAndFiles = (
-  queryClient: ReturnType<typeof useQueryClient>,
-  workspaceId: string,
-  projectId: string
-) => {
-  return Promise.all([
-    queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) }),
-    queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) }),
-    invalidateAuditQueries(queryClient, workspaceId)
-  ]);
 };
 
 export const useDeleteProjectFile = (workspaceId: string, projectId: string) => {
@@ -99,7 +65,8 @@ export const useDeleteProjectFile = (workspaceId: string, projectId: string) => 
         query: { path: filePath }
       }),
     onSuccess: async () => {
-      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
+      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -114,7 +81,8 @@ export const useDeleteProjectFolder = (workspaceId: string, projectId: string) =
         query: { path: folderPath }
       }),
     onSuccess: async () => {
-      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
+      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -129,7 +97,8 @@ export const useRenameProjectFolder = (workspaceId: string, projectId: string) =
         body: { oldPath, newPath }
       }),
     onSuccess: async () => {
-      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
+      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -144,7 +113,8 @@ export const useCloneProjectFile = (workspaceId: string, projectId: string) => {
         query: { path: file.path }
       }),
     onSuccess: async () => {
-      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
+      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -165,7 +135,8 @@ export const useRenameProjectFile = (workspaceId: string, projectId: string) => 
       });
     },
     onSuccess: async () => {
-      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
+      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -187,7 +158,8 @@ export const useMoveProjectFile = (workspaceId: string, projectId: string) => {
       });
     },
     onSuccess: async () => {
-      await invalidateProjectAndFiles(queryClient, workspaceId, projectId);
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
+      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };
@@ -238,12 +210,9 @@ export const useToggleTemplateStatus = (workspaceId: string, projectId: string) 
         body: { is_template: isTemplate, is_workspace_template: isWorkspaceTemplate }
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: projectFileKeys.list(workspaceId, projectId)
-      });
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
       // Invalidate all project templates in the workspace since workspace templates are shared
       await queryClient.invalidateQueries({ queryKey: ['project-templates', workspaceId] });
-      await queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
       await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
@@ -304,10 +273,7 @@ export const useCreateDiagramFromTemplate = (workspaceId: string, projectId: str
       folder?: string | null;
     }) => createDiagramFromTemplate(workspaceId, projectId, name, templateFile, folder),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: projectFileKeys.list(workspaceId, projectId)
-      });
-      await queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
       await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
