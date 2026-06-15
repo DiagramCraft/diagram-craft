@@ -22,6 +22,8 @@ const makeFile = (
   preview_svg: null,
   created_at: now,
   updated_at: now,
+  created_by: null,
+  updated_by: null,
   ...overrides
 });
 

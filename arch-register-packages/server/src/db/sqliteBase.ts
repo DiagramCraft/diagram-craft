@@ -214,7 +214,9 @@ export const sqliteMappers = {
     is_workspace_template: Boolean(row['is_workspace_template']),
     preview_svg: row['preview_svg'] == null ? null : String(row['preview_svg']),
     created_at: toDate(row['created_at']),
-    updated_at: toDate(row['updated_at'])
+    updated_at: toDate(row['updated_at']),
+    created_by: row['created_by'] == null ? null : String(row['created_by']),
+    updated_by: row['updated_by'] == null ? null : String(row['updated_by'])
   }),
   auditLog: (row: Record<string, unknown>): AuditLogDbResult => ({
     id: String(row['id']),

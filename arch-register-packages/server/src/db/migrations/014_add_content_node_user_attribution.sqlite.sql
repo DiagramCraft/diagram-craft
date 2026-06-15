@@ -1,0 +1,2 @@
+ALTER TABLE content_node ADD COLUMN created_by TEXT REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE content_node ADD COLUMN updated_by TEXT REFERENCES users(id) ON DELETE SET NULL;

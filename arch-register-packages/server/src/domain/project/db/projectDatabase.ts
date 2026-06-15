@@ -18,6 +18,8 @@ export type ContentNodeDbResult = {
   preview_svg: string | null;
   created_at: Date;
   updated_at: Date;
+  created_by: string | null;
+  updated_by: string | null;
 };
 
 export type ContentNodeDbUpsert = {
@@ -34,6 +36,8 @@ export type ContentNodeDbUpsert = {
   unresolved_comment_count: number;
   updated_at: Date;
   created_atIfNew: Date;
+  created_byIfNew?: string | null;
+  updated_by?: string | null;
 };
 
 // -- Project
