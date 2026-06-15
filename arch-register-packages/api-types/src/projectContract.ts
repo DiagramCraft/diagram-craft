@@ -12,6 +12,7 @@ const projectCapabilitiesSchema = z.object({
 
 const projectSchema = projectCapabilitiesSchema.extend({
   id: z.string(),
+  public_id: z.string(),
   workspace: z.string(),
   name: z.string(),
   description: z.string(),
@@ -38,6 +39,7 @@ const projectEntitySchema = z.object({
 export const projectFileSchema = z.object({
   id: z.string(),
   project_id: z.string().nullable(),
+  project_public_id: z.string().nullable().optional(),
   path: z.string(),
   name: z.string(),
   size_bytes: z.number(),
@@ -68,7 +70,7 @@ const projectDetailSchema = projectSchema.extend({
 
 const diagramEntityFileSchema = z.object({
   file: projectFileSchema,
-  project: z.object({ id: z.string(), name: z.string() })
+  project: z.object({ id: z.string(), public_id: z.string(), name: z.string() })
 });
 
 // ── Request schemas ───────────────────────────────────────────

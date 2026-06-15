@@ -9,6 +9,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import type { SchemaDbCreate } from '../../db/database';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
 type SymbolicField =
   | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' }
@@ -780,6 +781,7 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Sc
       workspace: workspaceId,
       name: schema.name,
       description: schema.description,
+      key_prefix: normalizePublicIdPrefix(schema.symId.replace(/[^a-z]/gi, '').slice(0, 5) || schema.name.slice(0, 5)),
       color: schema.color,
       icon: schema.icon,
       fields: resolvedFields,

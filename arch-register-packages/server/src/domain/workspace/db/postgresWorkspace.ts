@@ -74,6 +74,8 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
       `;
 
       await this.sql.begin(async tx => {
+        await tx`DELETE FROM public_id_prefix WHERE owner_type = 'schema' AND owner_id IN (SELECT id FROM entity_schema WHERE workspace = ${id})`;
+        await tx`DELETE FROM public_id_prefix WHERE owner_type = 'workspace' AND owner_id = ${id}`;
         await tx`DELETE FROM content_node WHERE workspace = ${id}`;
         await tx`DELETE FROM project WHERE workspace = ${id}`;
         await tx`DELETE FROM entity_grant WHERE workspace = ${id}`;
@@ -256,6 +258,73 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
       RETURNING *
     `;
     return row ?? null;
+  }
+
+  async registerPublicIdPrefix(
+    prefix: string,
+    ownerType: 'workspace' | 'schema',
+    ownerId: string,
+    createdAt: Date
+  ) {
+    try {
+      await this.sql`
+        INSERT INTO public_id_prefix (prefix, owner_type, owner_id, next_number, created_at, updated_at)
+        VALUES (${prefix}, ${ownerType}, ${ownerId}, 1, ${createdAt}, ${createdAt})
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updatePublicIdPrefix(
+    oldPrefix: string,
+    newPrefix: string,
+    ownerType: 'workspace' | 'schema',
+    ownerId: string,
+    updatedAt: Date
+  ) {
+    try {
+      await this.sql`
+        UPDATE public_id_prefix
+        SET prefix = ${newPrefix}, updated_at = ${updatedAt}
+        WHERE prefix = ${oldPrefix} AND owner_type = ${ownerType} AND owner_id = ${ownerId}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deletePublicIdPrefix(prefix: string) {
+    try {
+      await this.sql`DELETE FROM public_id_prefix WHERE prefix = ${prefix}`;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async allocatePublicId(prefix: string, updatedAt: Date) {
+    try {
+      const [row] = await this.sql<{ next_number: number }[]>`
+        UPDATE public_id_prefix
+        SET next_number = next_number + 1, updated_at = ${updatedAt}
+        WHERE prefix = ${prefix}
+        RETURNING next_number - 1 AS next_number
+      `;
+      if (!row) throw new Error(`Unknown public ID prefix '${prefix}'`);
+      return row.next_number;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async setPublicIdNextNumber(prefix: string, nextNumber: number, updatedAt: Date) {
+    try {
+      await this.sql`
+        UPDATE public_id_prefix SET next_number = ${nextNumber}, updated_at = ${updatedAt} WHERE prefix = ${prefix}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
   }
 
   async getWorkspaceRole(workspace: string, userId: string) {

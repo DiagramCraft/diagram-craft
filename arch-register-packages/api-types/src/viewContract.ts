@@ -72,6 +72,7 @@ export const savedViewSchema = z.object({
 
 export const pinnedEntitySchema = z.object({
   entity_id: z.string(),
+  entity_public_id: z.string(),
   entity_name: z.string(),
   entity_slug: z.string(),
   schema_id: z.string(),

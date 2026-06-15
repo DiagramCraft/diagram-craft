@@ -65,6 +65,8 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     ]).map(project => project.id);
 
     const tx = this.db.transaction((workspaceId: string) => {
+      this.run('DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id IN (SELECT id FROM entity_schema WHERE workspace = ?)', ['schema', workspaceId]);
+      this.run('DELETE FROM public_id_prefix WHERE owner_type = ? AND owner_id = ?', ['workspace', workspaceId]);
       this.run('DELETE FROM content_node WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM project WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_grant WHERE workspace = ?', [workspaceId]);
@@ -263,6 +265,62 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       userId
     ]);
     return member;
+  }
+
+  async registerPublicIdPrefix(
+    prefix: string,
+    ownerType: 'workspace' | 'schema',
+    ownerId: string,
+    createdAt: Date
+  ) {
+    this.run(
+      'INSERT INTO public_id_prefix (prefix, owner_type, owner_id, next_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [prefix, ownerType, ownerId, 1, createdAt.toISOString(), createdAt.toISOString()]
+    );
+  }
+
+  async updatePublicIdPrefix(
+    oldPrefix: string,
+    newPrefix: string,
+    ownerType: 'workspace' | 'schema',
+    ownerId: string,
+    updatedAt: Date
+  ) {
+    this.run(
+      'UPDATE public_id_prefix SET prefix = ?, updated_at = ? WHERE prefix = ? AND owner_type = ? AND owner_id = ?',
+      [newPrefix, updatedAt.toISOString(), oldPrefix, ownerType, ownerId]
+    );
+  }
+
+  async deletePublicIdPrefix(prefix: string) {
+    this.run('DELETE FROM public_id_prefix WHERE prefix = ?', [prefix]);
+  }
+
+  async allocatePublicId(prefix: string, updatedAt: Date) {
+    const tx = this.db.transaction(() => {
+      const current = this.get<{ next_number: number }>(
+        'SELECT next_number FROM public_id_prefix WHERE prefix = ?',
+        [prefix]
+      );
+      if (!current) {
+        throw new Error(`Unknown public ID prefix '${prefix}'`);
+      }
+      this.run('UPDATE public_id_prefix SET next_number = ?, updated_at = ? WHERE prefix = ?', [
+        current.next_number + 1,
+        updatedAt.toISOString(),
+        prefix
+      ]);
+      return current.next_number;
+    });
+    return tx();
+  }
+
+  async setPublicIdNextNumber(prefix: string, nextNumber: number, updatedAt: Date) {
+    this.run('UPDATE public_id_prefix SET next_number = ?, updated_at = ? WHERE prefix = ?', [
+      nextNumber,
+      updatedAt.toISOString(),
+      prefix
+    ]);
   }
 
   async getWorkspaceRole(workspace: string, userId: string) {

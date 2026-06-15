@@ -70,7 +70,7 @@ test.describe('workspace routes', () => {
       id: expect.any(String),
       name: 'Architecture Governance',
       url_slug: 'arch-gov',
-      short_code: 'AG',
+      short_code: 'AGX',
       color: '#112233',
       description: 'Workspace description'
     });

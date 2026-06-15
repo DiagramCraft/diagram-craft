@@ -104,6 +104,7 @@ export const sqliteMappers = {
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
+    key_prefix: String(row['key_prefix']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
@@ -119,6 +120,7 @@ export const sqliteMappers = {
   entity: (row: Record<string, unknown>): Entity => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
+    public_id: String(row['public_id']),
     slug: String(row['slug']),
     namespace: String(row['namespace']),
     name: String(row['name']),
@@ -142,6 +144,7 @@ export const sqliteMappers = {
   enrichedEntity: (row: Record<string, unknown>): EntityDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
+    public_id: String(row['public_id']),
     slug: String(row['slug']),
     namespace: String(row['namespace']),
     name: String(row['name']),
@@ -170,6 +173,7 @@ export const sqliteMappers = {
   enrichedProject: (row: Record<string, unknown>): ProjectDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
+    public_id: String(row['public_id']),
     name: String(row['name']),
     description: String(row['description']),
     owner: row['owner'] == null ? null : String(row['owner']),

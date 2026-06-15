@@ -10,6 +10,13 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/api';
 import { TypeBadge } from '../../components/TypeBadge';
 import { AddEntityFolderDialog } from './AddEntityFolderDialog';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  entityDiagramRoute,
+  projectDiagramRoute
+} from '../../routes/publicObjectRoutes';
 
 export const EntityContentSidebar = ({
   workspaceSlug,
@@ -49,11 +56,17 @@ export const EntityContentSidebar = ({
   type FolderNode = {
     path: string;
     name: string;
-    files: Array<{ id: string; name: string; project_id: string | null }>;
+    files: Array<{ id: string; name: string; project_id: string | null; project_public_id?: string | null }>;
     children: FolderNode[];
   };
 
-  const buildFolderTree = (folders: Array<{ path: string; name: string; files: Array<{ id: string; name: string; project_id: string | null }> }>): FolderNode[] => {
+  const buildFolderTree = (
+    folders: Array<{
+      path: string;
+      name: string;
+      files: Array<{ id: string; name: string; project_id: string | null; project_public_id?: string | null }>;
+    }>
+  ): FolderNode[] => {
     const root: FolderNode[] = [];
     const map = new Map<string, FolderNode>();
 
@@ -101,11 +114,11 @@ export const EntityContentSidebar = ({
           depth={depth}
           onExpand={() => toggleFolder(node.path)}
           onClick={() => {
-            navigate({
-              to: '/$workspaceSlug/entities/$entityId',
-              params: { workspaceSlug, entityId },
-              search: { contentFolder: node.path }
-            });
+            navigate(
+              entityDetailRoute(workspaceSlug, asEntityPublicId(entityId), {
+                contentFolder: node.path
+              })
+            );
           }}
         />
         {isExpanded && (
@@ -117,24 +130,11 @@ export const EntityContentSidebar = ({
                 icon={<TbFile size={13} />}
                 label={file.name}
                 onClick={() => {
-                  if (file.project_id) {
-                    navigate({
-                      to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-                      params: {
-                        workspaceSlug,
-                        projectId: file.project_id,
-                        diagramId: file.id
-                      }
-                    });
+                  const projectId = file.project_public_id ?? file.project_id;
+                  if (projectId) {
+                    navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id));
                   } else {
-                    navigate({
-                      to: '/$workspaceSlug/entities/$entityId/diagrams/$diagramId',
-                      params: {
-                        workspaceSlug,
-                        entityId,
-                        diagramId: file.id
-                      }
-                    });
+                    navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), file.id));
                   }
                 }}
               />
@@ -173,10 +173,7 @@ export const EntityContentSidebar = ({
           icon={<TbHome size={13} />}
           active={!contentFolder}
           onClick={() => {
-            navigate({
-              to: '/$workspaceSlug/entities/$entityId',
-              params: { workspaceSlug, entityId }
-            });
+            navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
           }}
         />
         {!hasContent && (
@@ -190,16 +187,15 @@ export const EntityContentSidebar = ({
             icon={<TbFile size={13} />}
             label={file.name}
             onClick={
-              file.project_id
+              file.project_public_id ?? file.project_id
                 ? () => {
-                    navigate({
-                      to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-                      params: {
+                    navigate(
+                      projectDiagramRoute(
                         workspaceSlug,
-                        projectId: file.project_id!,
-                        diagramId: file.id
-                      }
-                    });
+                        asProjectPublicId(file.project_public_id ?? file.project_id!),
+                        file.id
+                      )
+                    );
                   }
                 : undefined
             }

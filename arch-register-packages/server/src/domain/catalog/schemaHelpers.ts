@@ -4,9 +4,11 @@ import { SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
 import { httpAssert } from '../../utils/httpAssert';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
 
 type SchemaMutationPayload = {
   name: string;
+  key_prefix: string;
   description: string;
   fields: InternalEntitySchema['fields'];
   color: string | null;
@@ -23,6 +25,9 @@ export const resolveSchemaDefaultOwner = (
     ? requestedOwner
     : fallbackOwner;
 
+const defaultKeyPrefixFromName = (name: string) =>
+  normalizePublicIdPrefix(name.replace(/[^a-z]/gi, '').slice(0, 5) || name.slice(0, 5));
+
 export const buildCreateSchemaInput = (
   workspace: string,
   body: Record<string, unknown>,
@@ -30,13 +35,17 @@ export const buildCreateSchemaInput = (
   timestamp: Date,
   idFactory: () => string = randomUUID
 ) => {
-  const { name, description = '', fields = [], color, icon, default_owner } = body;
+  const { name, key_prefix, description = '', fields = [], color, icon, default_owner } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
   return {
     id: idFactory(),
     workspace,
     name,
+    key_prefix:
+      key_prefix !== undefined
+        ? validatePublicIdPrefix(key_prefix, 'key_prefix')!
+        : validatePublicIdPrefix(defaultKeyPrefixFromName(name), 'key_prefix')!,
     description: typeof description === 'string' ? description : '',
     fields: Array.isArray(fields) ? (fields as InternalEntitySchema['fields']) : [],
     color: typeof color === 'string' ? color : null,
@@ -53,11 +62,15 @@ export const buildUpdateSchemaInput = (
   teamIds: Set<string>,
   timestamp: Date
 ): SchemaMutationPayload & { updated_at: Date } => {
-  const { name, description, fields, color, icon, default_owner } = body;
+  const { name, key_prefix, description, fields, color, icon, default_owner } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
   return {
     name,
+    key_prefix:
+      key_prefix !== undefined
+        ? validatePublicIdPrefix(key_prefix, 'key_prefix')!
+        : current.key_prefix,
     description:
       description !== undefined
         ? typeof description === 'string'
@@ -114,6 +127,7 @@ export const toApiSchema = (
     workspace: schema.workspace,
     name: schema.name,
     description: schema.description,
+    key_prefix: schema.key_prefix,
     fields,
     color: schema.color,
     icon: schema.icon,

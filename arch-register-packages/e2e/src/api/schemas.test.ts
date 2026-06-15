@@ -212,6 +212,7 @@ test.describe('schema routes', () => {
     await server.db.catalog.createEntity({
       id: 'e2e-schema-ref-entity',
       workspace: seedIds.workspace.default,
+      public_id: 'API-99',
       slug: 'schema-ref-entity',
       namespace: 'default',
       name: 'Schema Ref Entity',

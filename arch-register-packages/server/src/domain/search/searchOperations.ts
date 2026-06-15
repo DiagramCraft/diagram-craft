@@ -156,6 +156,7 @@ export const searchWorkspace = async (
           if (matchedFields.length === 0 && matchedMetadata.length === 0) return null;
           return {
             entityId: entity.id,
+            publicId: entity.public_id ?? entity.id,
             schemaId: entity.schema_id,
             schemaName: entity.schema_name,
             _name: entity.name,

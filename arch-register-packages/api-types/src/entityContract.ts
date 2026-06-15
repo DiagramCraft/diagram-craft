@@ -22,6 +22,7 @@ const visibilityModeSchema = z.enum(['public', 'restricted']);
 
 const entitySummarySchema = entityCapabilitiesSchema.extend({
   _uid: z.string(),
+  _publicId: z.string(),
   _schema: foreignKeySchema,
   _name: z.string(),
   _slug: z.string(),
@@ -110,6 +111,7 @@ const treeResponseSchema = z.object({
 
 const entityRelationSchema = z.object({
   entityId: z.string(),
+  publicId: z.string(),
   entitySlug: z.string(),
   entityName: z.string(),
   entitySchemaId: z.string(),
@@ -168,6 +170,7 @@ const entitySnapshotSchema = z.object({
 
 const importNameMatchSchema = z.object({
   id: z.string(),
+  publicId: z.string(),
   name: z.string(),
   slug: z.string(),
   namespace: z.string()

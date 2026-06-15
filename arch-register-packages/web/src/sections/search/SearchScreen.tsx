@@ -27,6 +27,12 @@ import { useSearch } from '../../hooks/useSearch';
 import styles from './SearchScreen.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  projectDetailRoute
+} from '../../routes/publicObjectRoutes';
 
 type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas';
 type SearchPreview =
@@ -139,7 +145,7 @@ export const SearchScreen = () => {
       g.push({
         id: 'entities',
         label: 'Entities',
-        rows: results.entities.map(e => ({ kind: 'entity', id: e.entityId, data: e }))
+        rows: results.entities.map(e => ({ kind: 'entity', id: e.publicId, data: e }))
       });
     }
     if (filter === 'all' || filter === 'projects') {
@@ -225,36 +231,32 @@ export const SearchScreen = () => {
 
   const navigateToEntity = useCallback(
     (entityId: string) => {
-      routerNavigate({
-        to: '/$workspaceSlug/entities/$entityId',
-        params: { workspaceSlug, entityId }
-      });
+      routerNavigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
     },
     [routerNavigate, workspaceSlug]
   );
 
   const navigateToProject = useCallback(
     (projectId: string) => {
-      routerNavigate({
-        to: '/$workspaceSlug/projects/$projectId',
-        params: { workspaceSlug, projectId },
-        search: { tab: 'projects' as const, section: 'home' as const }
-      });
+      routerNavigate(
+        projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+          tab: 'projects' as const,
+          section: 'home' as const
+        })
+      );
     },
     [routerNavigate, workspaceSlug]
   );
 
   const navigateToProjectFolder = useCallback(
     (projectId: string, folder: string | null) => {
-      routerNavigate({
-        to: '/$workspaceSlug/projects/$projectId',
-        params: { workspaceSlug, projectId },
-        search: {
+      routerNavigate(
+        projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
           tab: 'projects' as const,
           section: 'home' as const,
           folder: folder ?? undefined
-        }
-      });
+        })
+      );
     },
     [routerNavigate, workspaceSlug]
   );
@@ -815,7 +817,7 @@ const PreviewPane = ({
           <button
             type="button"
             className={styles.previewBtn}
-            onClick={() => onEntityClick(e.entityId)}
+            onClick={() => onEntityClick(e.publicId)}
           >
             Open entity <TbArrowRight size={11} />
           </button>

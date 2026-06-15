@@ -134,4 +134,21 @@ export type WorkspaceDatabase = {
   ): Promise<RoleDefinitionDbResult | null>;
   deleteCustomWorkspaceRole(ws: string, roleId: string): Promise<RoleDefinitionDbResult | null>;
   countWorkspaceMembersByRole(ws: string, roleId: string): Promise<number>;
+
+  registerPublicIdPrefix(
+    prefix: string,
+    ownerType: 'workspace' | 'schema',
+    ownerId: string,
+    createdAt: Date
+  ): Promise<void>;
+  updatePublicIdPrefix(
+    oldPrefix: string,
+    newPrefix: string,
+    ownerType: 'workspace' | 'schema',
+    ownerId: string,
+    updatedAt: Date
+  ): Promise<void>;
+  deletePublicIdPrefix(prefix: string): Promise<void>;
+  allocatePublicId(prefix: string, updatedAt: Date): Promise<number>;
+  setPublicIdNextNumber(prefix: string, nextNumber: number, updatedAt: Date): Promise<void>;
 };

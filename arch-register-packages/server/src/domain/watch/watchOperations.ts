@@ -28,31 +28,43 @@ export const canAccessNotification = (
 };
 
 const toWatchedEntity = (
-  entity: { id: string; name: string; slug: string; schema_id: string; created_at: Date },
+  entity: {
+    id: string;
+    public_id?: string;
+    name: string;
+    slug: string;
+    schema_id: string;
+    created_at: Date;
+  },
   watchCreatedAt: Date
 ): WatchedEntity => ({
   entity_id: entity.id,
+  entity_public_id: entity.public_id ?? entity.id,
   entity_name: entity.name,
   entity_slug: entity.slug,
   schema_id: entity.schema_id,
   created_at: watchCreatedAt.toISOString()
 });
 
-const toNotificationItem = (notification: {
-  id: string;
-  entity_id: string;
-  entity_name: string;
-  entity_slug: string;
-  schema_id: string | null;
-  operation: 'create' | 'update' | 'delete';
-  changed_by_user_id: string;
-  changed_by_display_name: string;
-  timestamp: Date;
-  created_at: Date;
-  audit_log_id: string;
-}): NotificationItem => ({
+const toNotificationItem = (
+  notification: {
+    id: string;
+    entity_id: string;
+    entity_name: string;
+    entity_slug: string;
+    schema_id: string | null;
+    operation: 'create' | 'update' | 'delete';
+    changed_by_user_id: string;
+    changed_by_display_name: string;
+    timestamp: Date;
+    created_at: Date;
+    audit_log_id: string;
+  },
+  entityPublicId: string
+): NotificationItem => ({
   id: notification.id,
   entity_id: notification.entity_id,
+  entity_public_id: entityPublicId,
   entity_name: notification.entity_name,
   entity_slug: notification.entity_slug,
   schema_id: notification.schema_id,
@@ -112,7 +124,7 @@ export const createWatch = async (
   const watch = await db.watch.createWatch({
     user_id: event.context.user.id,
     workspace: ws,
-    entity_id: entityId,
+    entity_id: entity.id,
     created_at: new Date()
   });
 
@@ -129,7 +141,9 @@ export const deleteWatch = async (
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
-  await db.watch.deleteWatch(event.context.user.id, ws, entityId);
+  const entity = await db.catalog.getEntity(ws, entityId);
+  httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+  await db.watch.deleteWatch(event.context.user.id, ws, entity.id);
   return { success: true, message: `Entity '${entityId}' unwatched` };
 };
 
@@ -151,7 +165,10 @@ export const listNotifications = async (
 
   return notifications
     .filter(notification => canAccessNotification(authCtx, entityMap, notification))
-    .map(toNotificationItem);
+    .map(notification => {
+      const entity = entityMap.get(notification.entity_id);
+      return toNotificationItem(notification, entity?.public_id ?? notification.entity_id);
+    });
 };
 
 export const getNotificationCount = async (

@@ -185,7 +185,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           'view_entity',
           'You do not have access to view this entity'
         );
-        const grants = await context.db.catalog.getEntityGrants(workspace, input.params.id);
+        const grants = await context.db.catalog.getEntityGrants(workspace, entity.id);
         return {
           owner: entity.owner,
           visibility_mode: entity.visibility_mode,
@@ -213,13 +213,13 @@ export const workspaceEntityORPCRouter = entityRouter.router({
         );
         const rows = buildEntityGrantInputs(
           workspace,
-          input.params.id,
+          entity.id,
           input.body.grants,
           new Date()
         );
         const grants = await context.db.catalog.replaceEntityGrants(
           workspace,
-          input.params.id,
+          entity.id,
           rows
         );
         return {
@@ -454,7 +454,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
             'view_entity',
             'You do not have access to view this entity'
           );
-          const snapshots = await context.db.catalog.listSnapshots(workspace, input.params.id);
+          const snapshots = await context.db.catalog.listSnapshots(workspace, entity.id);
           return snapshots.map(serializeSnapshot);
         } catch (error) {
           return toORPCError(error);
@@ -493,9 +493,9 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           const snapshot = await context.db.catalog.createSnapshot({
             id: crypto.randomUUID(),
             workspace,
-            entity_id: input.params.id,
+            entity_id: entity.id,
             status: 'future_update',
-            project_id: input.body.projectId,
+            project_id: project.id,
             target_date: input.body.targetDate ?? null,
             commit_message: input.body.commitMessage ?? null,
             created_at: new Date(),
@@ -604,7 +604,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
             'edit_entity',
             'You do not have permission to edit this entity'
           );
-          const existing = await context.db.catalog.listSnapshots(workspace, input.params.id);
+          const existing = await context.db.catalog.listSnapshots(workspace, entity.id);
           const snapshot = existing.find(s => s.id === input.params.snapshotId);
           orpcAssert.present(snapshot, {
             code: 'NOT_FOUND',
@@ -619,7 +619,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           await updateEntity(
             context.db,
             workspace,
-            input.params.id,
+            entity.id,
             input.body.resolvedEntityData,
             authCtx,
             { id: auditUser.id, displayName: auditUser.display_name }

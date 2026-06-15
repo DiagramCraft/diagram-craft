@@ -49,6 +49,12 @@ import {
   usePinnedEntities,
   useWatchedEntities
 } from '../../hooks/useNotifications';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  projectDiagramHref
+} from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
 import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
@@ -63,6 +69,7 @@ type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes' | 'time
 
 type Relation = {
   entityId: string;
+  publicId: string;
   entitySlug: string;
   entityName: string;
   entitySchemaId: string;
@@ -96,10 +103,7 @@ export const EntityDetailScreen = () => {
 
   const navigateToEntity = useCallback(
     (id: string) => {
-      navigate({
-        to: '/$workspaceSlug/entities/$entityId',
-        params: { workspaceSlug, entityId: id }
-      });
+      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)));
     },
     [navigate, workspaceSlug]
   );
@@ -157,8 +161,8 @@ export const EntityDetailScreen = () => {
     }
     return null;
   }, [entity, schemas]);
-  const isWatched = watchedEntities.some(item => item.entity_id === entityId);
-  const isPinned = pinnedEntities.some(item => item.entity_id === entityId);
+  const isWatched = watchedEntities.some(item => item.entity_public_id === entityId);
+  const isPinned = pinnedEntities.some(item => item.entity_public_id === entityId);
 
   const schema = schemaEntry?.schema ?? null;
   const color = schemaEntry
@@ -202,6 +206,7 @@ export const EntityDetailScreen = () => {
     relations.outgoing.forEach(relation => {
       lookup.set(relation.entityId, {
         _uid: relation.entityId,
+        _publicId: relation.publicId,
         _schema: { id: relation.entitySchemaId, name: '' },
         _name: relation.entityName,
         _slug: relation.entitySlug,
@@ -338,7 +343,7 @@ export const EntityDetailScreen = () => {
 
   const handleClone = async () => {
     cloneEntity.mutate(entityId, {
-      onSuccess: cloned => navigateToEntity(cloned._uid)
+      onSuccess: cloned => navigateToEntity(cloned._publicId)
     });
   };
 
@@ -402,7 +407,9 @@ export const EntityDetailScreen = () => {
                     type="button"
                     className={`${styles.watchBtn} ${isWatched ? styles.watchBtnActive : ''}`}
                     onClick={() =>
-                      isWatched ? deleteWatch.mutate(entityId) : createWatch.mutate(entityId)
+                      isWatched
+                        ? deleteWatch.mutate(entity?._uid ?? entityId)
+                        : createWatch.mutate(entity?._uid ?? entityId)
                     }
                     disabled={createWatch.isPending || deleteWatch.isPending}
                     title={isWatched ? 'Unwatch entity' : 'Watch entity'}
@@ -415,9 +422,10 @@ export const EntityDetailScreen = () => {
                     className={`${styles.watchBtn} ${isPinned ? styles.watchBtnActive : ''}`}
                     onClick={() =>
                       isPinned
-                        ? deletePinnedEntity.mutate(entityId)
+                        ? deletePinnedEntity.mutate(entity?._uid ?? entityId)
                         : createPinnedEntity.mutate({
-                            entityId,
+                            entityId: entity?._uid ?? entityId,
+                            entityPublicId: entity?._publicId ?? entityId,
                             entityName: entity._name || entity._slug,
                             entitySlug: entity._slug,
                             schemaId: entity._schema.id
@@ -538,7 +546,7 @@ export const EntityDetailScreen = () => {
               Metadata
             </div>
             {schema && <MetaPropRow label="Schema" value={schema.name} />}
-            <MetaPropRow label="UID" value={entity._uid} />
+            <MetaPropRow label="Public ID" value={entity._publicId} />
             <MetaPropRow label="Namespace" value={entity._namespace} />
 
             <hr className={styles.divider} />
@@ -777,7 +785,7 @@ export const EntityDetailScreen = () => {
                   <a
                     key={file.id}
                     className={styles.miniDiagramRow}
-                    href={`/${workspaceSlug}/projects/${project.id}/diagrams/${file.id}`}
+                    href={projectDiagramHref(workspaceSlug, asProjectPublicId(project.public_id), file.id)}
                   >
                     <div className={styles.miniDiagramThumb}>
                       <div className={styles.miniDiagramThumbGrid} />
@@ -1115,7 +1123,7 @@ const PropertyRow = ({
                 key={id}
                 type="button"
                 className={styles.propLink}
-                onClick={() => onEntityClick(id)}
+                onClick={() => onEntityClick(ref?._publicId ?? id)}
               >
                 {label}
               </button>
@@ -1174,7 +1182,7 @@ const RelationRow = ({
     <button
       type="button"
       className={styles.relation}
-      onClick={() => onEntityClick(relation.entityId)}
+      onClick={() => onEntityClick(relation.publicId)}
     >
       <Chip tone="ghost">{relation.fieldName}</Chip>
       <TbChevronRight size={10} className={styles.dim} />
@@ -1476,7 +1484,7 @@ const TopologyView = ({
                   key={i}
                   type="button"
                   className={styles.topoParentChip}
-                  onClick={() => onEntityClick(p.entityId)}
+                  onClick={() => onEntityClick(p.publicId)}
                 >
                   <TypeBadge color={pc} name={ps?.name} icon={ps?.icon} size={14} />
                   <span className={styles.topoParentName}>{p.entityName}</span>
@@ -1523,7 +1531,7 @@ const TopologyView = ({
                     key={i}
                     type="button"
                     className={styles.topoChildCard}
-                    onClick={() => onEntityClick(c.entityId)}
+                    onClick={() => onEntityClick(c.publicId)}
                   >
                     <span className={styles.topoCardBar} style={{ background: cc }} />
                     <div className={styles.topoChildHead}>
@@ -1564,7 +1572,7 @@ const TopologyView = ({
                       type="button"
                       ref={setCardRef(`in-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
-                      onClick={() => onEntityClick(r.entityId)}
+                      onClick={() => onEntityClick(r.publicId)}
                     >
                       <span className={styles.topoCardBar} style={{ background: rc }} />
                       <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
@@ -1597,7 +1605,7 @@ const TopologyView = ({
                       type="button"
                       ref={setCardRef(`out-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
-                      onClick={() => onEntityClick(r.entityId)}
+                      onClick={() => onEntityClick(r.publicId)}
                     >
                       <span className={styles.topoCardBar} style={{ background: rc }} />
                       <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />

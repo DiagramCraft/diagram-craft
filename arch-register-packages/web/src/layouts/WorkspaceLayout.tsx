@@ -28,6 +28,12 @@ import {
 } from './workspaceShellDescriptors';
 import type { WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  projectDetailRoute
+} from '../routes/publicObjectRoutes';
 
 const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'home', icon: TbHome, tooltip: 'Workspace overview' },
@@ -323,17 +329,15 @@ export const WorkspaceLayout = () => {
           onClose={() => setAddProjectOpen(false)}
           onCreated={project => {
             void queryClient.invalidateQueries({ queryKey: projectKeys.list(workspaceSlug) });
-            navigate({
-              to: '/$workspaceSlug/projects/$projectId',
-              params: { workspaceSlug, projectId: project.id },
-              search: {
+            navigate(
+              projectDetailRoute(workspaceSlug, asProjectPublicId(project.public_id), {
                 tab:
                   project.status === 'complete' || project.status === 'cancelled'
                     ? 'archive'
                     : 'projects',
                 section: 'home'
-              }
-            });
+              })
+            );
           }}
           workspaceId={workspaceSlug}
           teams={teams}
@@ -344,10 +348,7 @@ export const WorkspaceLayout = () => {
           open={addEntityOpen}
           onClose={() => setAddEntityOpen(false)}
           onCreated={entity => {
-            navigate({
-              to: '/$workspaceSlug/entities/$entityId',
-              params: { workspaceSlug, entityId: entity._uid }
-            });
+            navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)));
           }}
           workspaceId={workspaceSlug}
           schemas={schemas}

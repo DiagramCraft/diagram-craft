@@ -505,6 +505,7 @@ export const seedSchemas: SchemaDbResult[] = [
     color: AR_COLOR_YELLOW,
     icon: 'globe',
     default_owner: null,
+    key_prefix: 'DOM',
     created_at: now,
     updated_at: now
   },
@@ -527,6 +528,7 @@ export const seedSchemas: SchemaDbResult[] = [
     color: AR_COLOR_PURPLE,
     icon: 'layers',
     default_owner: null,
+    key_prefix: 'SYS',
     created_at: now,
     updated_at: now
   },
@@ -573,6 +575,7 @@ export const seedSchemas: SchemaDbResult[] = [
     color: AR_COLOR_GREEN,
     icon: 'box',
     default_owner: null,
+    key_prefix: 'CMP',
     created_at: now,
     updated_at: now
   },
@@ -600,6 +603,7 @@ export const seedSchemas: SchemaDbResult[] = [
     color: AR_COLOR_BLUE,
     icon: 'api',
     default_owner: null,
+    key_prefix: 'API',
     created_at: now,
     updated_at: now
   },
@@ -622,6 +626,7 @@ export const seedSchemas: SchemaDbResult[] = [
     color: AR_COLOR_ORANGE,
     icon: 'database',
     default_owner: null,
+    key_prefix: 'RES',
     created_at: now,
     updated_at: now
   },
@@ -642,6 +647,7 @@ export const seedSchemas: SchemaDbResult[] = [
     color: AR_COLOR_TEAL,
     icon: 'box',
     default_owner: null,
+    key_prefix: 'APP',
     created_at: now,
     updated_at: now
   },
@@ -656,6 +662,7 @@ export const seedSchemas: SchemaDbResult[] = [
     color: AR_COLOR_CYAN,
     icon: 'layers',
     default_owner: null,
+    key_prefix: 'SVC',
     created_at: now,
     updated_at: now
   }
@@ -665,6 +672,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0001-000000000001',
     workspace: WORKSPACE_ID,
+    public_id: 'DOM-1',
     slug: 'engineering',
     namespace: 'default',
     name: 'Engineering',
@@ -685,6 +693,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0002-000000000001',
     workspace: WORKSPACE_ID,
+    public_id: 'SYS-1',
     slug: 'customer-portal',
     namespace: 'default',
     name: 'Customer Portal',
@@ -704,6 +713,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0002-000000000002',
     workspace: WORKSPACE_ID,
+    public_id: 'SYS-2',
     slug: 'identity-platform',
     namespace: 'default',
     name: 'Identity Platform',
@@ -723,6 +733,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0004-000000000001',
     workspace: WORKSPACE_ID,
+    public_id: 'API-1',
     slug: 'customer-api',
     namespace: 'default',
     name: 'Customer API',
@@ -742,6 +753,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0004-000000000002',
     workspace: WORKSPACE_ID,
+    public_id: 'API-2',
     slug: 'auth-api',
     namespace: 'default',
     name: 'Auth API',
@@ -761,6 +773,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0003-000000000001',
     workspace: WORKSPACE_ID,
+    public_id: 'CMP-1',
     slug: 'api-gateway',
     namespace: 'default',
     name: 'API Gateway',
@@ -785,6 +798,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0003-000000000002',
     workspace: WORKSPACE_ID,
+    public_id: 'CMP-2',
     slug: 'frontend-app',
     namespace: 'default',
     name: 'Frontend App',
@@ -809,6 +823,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0003-000000000003',
     workspace: WORKSPACE_ID,
+    public_id: 'CMP-3',
     slug: 'auth-service',
     namespace: 'default',
     name: 'Auth Service',
@@ -832,6 +847,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0005-000000000001',
     workspace: WORKSPACE_ID,
+    public_id: 'RES-1',
     slug: 'postgres-main',
     namespace: 'default',
     name: 'Postgres Main',
@@ -857,6 +873,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0011-000000000001',
     workspace: WORKSPACE2_ID,
+    public_id: 'APP-1',
     slug: 'mobile-app',
     namespace: 'default',
     name: 'Mobile App',
@@ -876,6 +893,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0012-000000000001',
     workspace: WORKSPACE2_ID,
+    public_id: 'SVC-1',
     slug: 'notifications-service',
     namespace: 'default',
     name: 'Notifications Service',
@@ -895,6 +913,7 @@ export const seedEntities: Entity[] = [
   {
     id: '00000000-0000-0000-0012-000000000002',
     workspace: WORKSPACE2_ID,
+    public_id: 'SVC-2',
     slug: 'delivery-service',
     namespace: 'default',
     name: 'Delivery Service',
@@ -917,6 +936,7 @@ export const seedProjects: ProjectDbCreate[] = [
   {
     id: seededProjects.portalRedesign.id,
     workspace: WORKSPACE_ID,
+    public_id: seededProjects.portalRedesign.publicId,
     name: seededProjects.portalRedesign.name,
     description: 'Redesign of the customer portal frontend and API layer.',
     owner: TEAM_IDS.design,
@@ -930,6 +950,7 @@ export const seedProjects: ProjectDbCreate[] = [
   {
     id: seededProjects.authMigration.id,
     workspace: WORKSPACE_ID,
+    public_id: seededProjects.authMigration.publicId,
     name: seededProjects.authMigration.name,
     description: 'Migration from legacy auth to the new identity platform.',
     owner: TEAM_IDS.security,
@@ -943,6 +964,7 @@ export const seedProjects: ProjectDbCreate[] = [
   {
     id: seededProjects.checkoutRevamp.id,
     workspace: WORKSPACE_ID,
+    public_id: seededProjects.checkoutRevamp.publicId,
     name: seededProjects.checkoutRevamp.name,
     description: 'Modernization of checkout orchestration and payment integrations.',
     owner: TEAM_IDS.platform,

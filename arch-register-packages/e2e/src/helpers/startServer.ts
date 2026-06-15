@@ -1,7 +1,7 @@
 // Standalone server script for Playwright webServer.
 // Env vars are injected by Playwright's webServer.env config.
 import { createServer } from 'node:http';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { toNodeHandler } from 'h3/node';
 import { seedBootstrapData } from '@arch-register/server/db/bootstrapSeed';
@@ -13,6 +13,7 @@ const PORT = Number(process.env['PORT'] ?? 3011);
 const dbPath = process.env['SQLITE_PATH'] ?? '/tmp/ar-e2e-ui/test.sqlite';
 
 await mkdir(dirname(dbPath), { recursive: true });
+await rm(dbPath, { force: true });
 
 const db = new SqliteDatabase(dbPath);
 await db.core.reset();

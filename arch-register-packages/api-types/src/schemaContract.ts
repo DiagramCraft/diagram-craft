@@ -62,6 +62,7 @@ const entitySchemaSchema = z.object({
   workspace: z.string(),
   name: z.string(),
   description: z.string(),
+  key_prefix: z.string(),
   fields: z.array(schemaFieldResponseSchema),
   color: z.string().nullable(),
   icon: z.string().nullable(),
@@ -72,6 +73,7 @@ const entitySchemaSchema = z.object({
 
 const createSchemaBodySchema = z.object({
   name: z.string(),
+  key_prefix: z.string().optional(),
   description: z.preprocess(
     v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
     z.string().optional()

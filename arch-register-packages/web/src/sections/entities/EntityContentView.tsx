@@ -9,6 +9,12 @@ import {
   DiagramBrowserToolbar,
   DiagramBrowserView
 } from '../../components/diagram-browser/DiagramBrowserView';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDiagramRoute,
+  projectDiagramRoute
+} from '../../routes/publicObjectRoutes';
 
 type EntityContentViewProps = {
   workspaceSlug: string;
@@ -25,25 +31,9 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
 
   const handleDiagramClick = (fileId: string, projectId: string | null) => {
     if (projectId) {
-      // Navigate to project diagram route
-      navigate({
-        to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-        params: {
-          workspaceSlug,
-          projectId,
-          diagramId: fileId
-        }
-      });
+      navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), fileId));
     } else {
-      // Navigate to entity diagram route
-      navigate({
-        to: '/$workspaceSlug/entities/$entityId/diagrams/$diagramId',
-        params: {
-          workspaceSlug,
-          entityId,
-          diagramId: fileId
-        }
-      });
+      navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), fileId));
     }
   };
 
@@ -99,7 +89,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
             showAddButton: true
           }
         ]}
-        onOpenDiagram={file => handleDiagramClick(file.id, file.project_id)}
+        onOpenDiagram={file => handleDiagramClick(file.id, file.project_public_id ?? file.project_id)}
         onNewDiagram={() => setAddDiagramOpen(true)}
         emptyState={{
           title: 'No diagrams in this folder',
@@ -113,7 +103,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         onClose={() => setAddDiagramOpen(false)}
         onCreated={file => {
           setAddDiagramOpen(false);
-          handleDiagramClick(file.id, file.project_id);
+          handleDiagramClick(file.id, file.project_public_id ?? file.project_id);
         }}
         workspaceId={workspaceSlug}
         context="entity"

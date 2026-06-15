@@ -106,16 +106,19 @@ export const seededUsers = {
 export const seededProjects = {
   portalRedesign: {
     id: '00000000-0000-0000-0010-000000000001',
+    publicId: 'DW-1',
     workspaceId: seededWorkspaces.default.id,
     name: 'Portal Redesign'
   },
   authMigration: {
     id: '00000000-0000-0000-0010-000000000002',
+    publicId: 'DW-2',
     workspaceId: seededWorkspaces.default.id,
     name: 'Auth Migration'
   },
   checkoutRevamp: {
     id: '00000000-0000-0000-0010-000000000003',
+    publicId: 'DW-3',
     workspaceId: seededWorkspaces.default.id,
     name: 'Checkout Revamp'
   }
@@ -167,30 +170,35 @@ export const seededEntities = {
   default: {
     customerPortal: {
       id: '00000000-0000-0000-0002-000000000001',
+      publicId: 'SYS-1',
       workspaceId: seededWorkspaces.default.id,
       schemaId: seededSchemas.default.system.id,
       name: 'Customer Portal'
     },
     customerApi: {
       id: '00000000-0000-0000-0004-000000000001',
+      publicId: 'API-1',
       workspaceId: seededWorkspaces.default.id,
       schemaId: seededSchemas.default.api.id,
       name: 'Customer API'
     },
     authApi: {
       id: '00000000-0000-0000-0004-000000000002',
+      publicId: 'API-2',
       workspaceId: seededWorkspaces.default.id,
       schemaId: seededSchemas.default.api.id,
       name: 'Auth API'
     },
     frontendApp: {
       id: '00000000-0000-0000-0003-000000000002',
+      publicId: 'CMP-2',
       workspaceId: seededWorkspaces.default.id,
       schemaId: seededSchemas.default.component.id,
       name: 'Frontend App'
     },
     authService: {
       id: '00000000-0000-0000-0003-000000000003',
+      publicId: 'CMP-3',
       workspaceId: seededWorkspaces.default.id,
       schemaId: seededSchemas.default.component.id,
       name: 'Auth Service'
@@ -199,12 +207,14 @@ export const seededEntities = {
   second: {
     notificationsService: {
       id: '00000000-0000-0000-0012-000000000001',
+      publicId: 'SVC-1',
       workspaceId: seededWorkspaces.second.id,
       schemaId: seededSchemas.second.service.id,
       name: 'Notifications Service'
     },
     deliveryService: {
       id: '00000000-0000-0000-0012-000000000002',
+      publicId: 'SVC-2',
       workspaceId: seededWorkspaces.second.id,
       schemaId: seededSchemas.second.service.id,
       name: 'Delivery Service'

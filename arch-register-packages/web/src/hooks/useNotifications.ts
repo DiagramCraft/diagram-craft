@@ -87,6 +87,7 @@ export const useCreatePinnedEntity = (workspaceId: string) => {
   return useMutation({
     mutationFn: (entity: {
       entityId: string;
+      entityPublicId: string;
       entityName: string;
       entitySlug: string;
       schemaId: string;
@@ -105,6 +106,7 @@ export const useCreatePinnedEntity = (workspaceId: string) => {
         queryClient.setQueryData<PinnedEntity[]>(notificationKeys.pinned(workspaceId), [
           {
             entity_id: entity.entityId,
+            entity_public_id: entity.entityPublicId,
             entity_name: entity.entityName,
             entity_slug: entity.entitySlug,
             schema_id: entity.schemaId,

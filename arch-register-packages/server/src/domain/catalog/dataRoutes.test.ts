@@ -33,6 +33,7 @@ const domainSchema: SchemaDbResult = {
   color: null,
   icon: null,
   default_owner: null,
+  key_prefix: 'DOM',
   created_at: now,
   updated_at: now
 };
@@ -55,6 +56,7 @@ const systemSchema: SchemaDbResult = {
   color: null,
   icon: null,
   default_owner: 'Design Systems',
+  key_prefix: 'SYS',
   created_at: now,
   updated_at: now
 };
@@ -85,6 +87,7 @@ const componentSchema: SchemaDbResult = {
   color: null,
   icon: null,
   default_owner: null,
+  key_prefix: 'CMP',
   created_at: now,
   updated_at: now
 };
@@ -92,6 +95,7 @@ const componentSchema: SchemaDbResult = {
 const domain: EntityDbResult = enriched({
   id: 'domain-1',
   workspace: 'default',
+  public_id: 'DOM-1',
   slug: 'engineering',
   namespace: 'default',
   name: 'Engineering',
@@ -112,6 +116,7 @@ const domain: EntityDbResult = enriched({
 const system: EntityDbResult = enriched({
   id: 'system-1',
   workspace: 'default',
+  public_id: 'SYS-1',
   slug: 'customer-portal',
   namespace: 'default',
   name: 'Customer Portal',
@@ -132,6 +137,7 @@ const system: EntityDbResult = enriched({
 const component: EntityDbResult = enriched({
   id: 'component-1',
   workspace: 'default',
+  public_id: 'CMP-1',
   slug: 'frontend-app',
   namespace: 'default',
   name: 'Frontend App',
@@ -152,6 +158,7 @@ const component: EntityDbResult = enriched({
 const dependency: EntityDbResult = enriched({
   id: 'component-2',
   workspace: 'default',
+  public_id: 'CMP-2',
   slug: 'api-gateway',
   namespace: 'default',
   name: 'API Gateway',
@@ -248,6 +255,7 @@ describe('data route helpers', () => {
     expect(relations.outgoing).toEqual([
       {
         entityId: 'system-1',
+        publicId: 'SYS-1',
         entitySlug: 'customer-portal',
         entityName: 'Customer Portal',
         entitySchemaId: 'schema-system',
@@ -256,6 +264,7 @@ describe('data route helpers', () => {
       },
       {
         entityId: 'component-2',
+        publicId: 'CMP-2',
         entitySlug: 'api-gateway',
         entityName: 'API Gateway',
         entitySchemaId: 'schema-component',

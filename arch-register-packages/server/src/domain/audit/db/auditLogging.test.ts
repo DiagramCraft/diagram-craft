@@ -7,6 +7,7 @@ const now = new Date('2026-06-08T10:00:00.000Z');
 const makeEntity = (overrides: Partial<EntityDbCreate> = {}): EntityDbCreate => ({
   id: 'e-1',
   workspace: 'ws-1',
+  public_id: 'ENT-1',
   slug: 'entity-1',
   namespace: 'default',
   name: 'Entity 1',

@@ -4,6 +4,7 @@ export type ContentNodeDbResult = {
   id: string;
   workspace: string;
   project_id: string | null;
+  project_public_id?: string | null;
   entity_id: string | null;
   parent_id: string | null;
   path: string;
@@ -40,6 +41,7 @@ export type ContentNodeDbUpsert = {
 type BaseProject = {
   id: string;
   workspace: string;
+  public_id?: string;
   name: string;
   description: string;
   owner: string | null;
@@ -96,6 +98,7 @@ export type DiagramEntityFileDbResult = {
   file_created_at: Date;
   file_updated_at: Date;
   project_id: string;
+  project_public_id: string;
   project_name: string;
 };
 
@@ -103,7 +106,7 @@ export type DiagramEntityFileDbResult = {
 
 export type ProjectDatabase = {
   listProjects(ws: string): Promise<ProjectDbResult[]>;
-  getProject(ws: string, id: string): Promise<ProjectDbResult | null>;
+  getProject(ws: string, identifier: string): Promise<ProjectDbResult | null>;
   createProject(input: ProjectDbCreate): Promise<ProjectDbResult>;
   updateProject(ws: string, id: string, input: ProjectDbUpdate): Promise<ProjectDbResult | null>;
   deleteProject(ws: string, id: string): Promise<void>;

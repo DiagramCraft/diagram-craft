@@ -9,6 +9,7 @@ describe('computeEntityCompleteness', () => {
     const entity: Entity = {
       id: 'e-1',
       workspace: 'ws-1',
+      public_id: 'ENT-1',
       slug: 'my-entity',
       namespace: 'ns',
       name: 'My Entity',
@@ -43,6 +44,7 @@ describe('computeEntityCompleteness', () => {
       color: null,
       icon: null,
       default_owner: null,
+      key_prefix: 'APP',
       created_at: now,
       updated_at: now
     };

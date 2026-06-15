@@ -25,6 +25,12 @@ import { orpcClient } from '../../lib/orpcClient';
 import { projectFileKeys } from '../../hooks/useProjectFiles';
 import { projectKeys } from '../../hooks/useProjects';
 import { stableHue } from '../../components/MemberAvatar';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  projectDetailRoute
+} from '../../routes/publicObjectRoutes';
 
 const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
 type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
@@ -163,11 +169,7 @@ export const DiagramScreen = () => {
         ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
         : undefined;
 
-      navigate({
-        to: '/$workspaceSlug/entities/$entityId',
-        params: { workspaceSlug, entityId: projectId },
-        search: folderPath ? { contentFolder: folderPath } : {}
-      });
+      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(projectId), folderPath ? { contentFolder: folderPath } : {}));
     } else {
       // Navigate back to project detail page
       await queryClient.refetchQueries({
@@ -176,18 +178,16 @@ export const DiagramScreen = () => {
       await queryClient.refetchQueries({
         queryKey: projectKeys.detail(workspaceId, projectId)
       });
-      navigate({
-        to: '/$workspaceSlug/projects/$projectId',
-        params: { workspaceSlug, projectId },
-        search: {
+      navigate(
+        projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
           tab: 'projects' as const,
           section: 'home' as const,
           folder:
             fileInfoRef.current?.path.includes('/')
               ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
               : undefined
-        }
-      });
+        })
+      );
     }
   }, [save, queryClient, navigate, workspaceId, workspaceSlug, projectId, isEntityDiagram, isWorkspaceContent]);
 

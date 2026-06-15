@@ -18,6 +18,7 @@ import type {
   EntitySnapshotDbResult
 } from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import { isUuidLike } from '../../../utils/publicIds';
 
 export class PostgresCatalogDatabase extends PostgresDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
@@ -40,13 +41,21 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return row ?? null;
   }
 
+  async getSchemaByKeyPrefix(prefix: string) {
+    const [row] = await this.sql<SchemaDbResult[]>`
+      SELECT * FROM entity_schema WHERE key_prefix = ${prefix}
+    `;
+    return row ?? null;
+  }
+
   async createSchema(input: SchemaDbCreate) {
     try {
-      const [row] = await this.sql<SchemaDbResult[]>`
-        INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.created_at}, ${input.updated_at})
+      const rows = (await this.sql`
+        INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, key_prefix, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
         RETURNING *
-      `;
+      `) as SchemaDbResult[];
+      const [row] = rows;
       return row!;
     } catch (error) {
       return normalizePostgresError(error);
@@ -55,7 +64,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     try {
-      const [row] = await this.sql<SchemaDbResult[]>`
+      const rows = (await this.sql`
         UPDATE entity_schema
         SET name = ${input.name},
             description = ${input.description},
@@ -63,10 +72,12 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             color = ${input.color},
             icon = ${input.icon},
             default_owner = ${input.default_owner},
+            key_prefix = ${input.key_prefix},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
-      `;
+      `) as SchemaDbResult[];
+      const [row] = rows;
       return row ?? null;
     } catch (error) {
       return normalizePostgresError(error);
@@ -159,7 +170,10 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     `;
   }
 
-  async getEntity(workspace: string, id: string) {
+  async getEntity(workspace: string, identifier: string) {
+    if (!isUuidLike(identifier)) {
+      return this.getEntityByPublicId(workspace, identifier);
+    }
     const [row] = await this.sql<EntityDbResult[]>`
       SELECT e.*,
         wo.name   AS owner_name,
@@ -171,7 +185,24 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
       LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
       JOIN entity_schema es ON es.id = e.schema_id
-      WHERE e.workspace = ${workspace} AND e.id = ${id}
+      WHERE e.workspace = ${workspace} AND e.id = ${identifier}
+    `;
+    return row ?? null;
+  }
+
+  private async getEntityByPublicId(workspace: string, publicId: string) {
+    const [row] = await this.sql<EntityDbResult[]>`
+      SELECT e.*,
+        wo.name   AS owner_name,
+        ls.label  AS lifecycle_label,
+        tls.label AS target_lifecycle_label,
+        es.name   AS schema_name
+      FROM entity e
+      LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
+      LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
+      LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
+      JOIN entity_schema es ON es.id = e.schema_id
+      WHERE e.public_id = ${publicId} AND e.workspace = ${workspace}
     `;
     return row ?? null;
   }
@@ -179,10 +210,11 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEntity(input: EntityDbCreate) {
     try {
       await this.sql`
-        INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at)
+        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, visibility_mode, created_at, updated_at)
         VALUES (
           ${input.id},
           ${input.workspace},
+          ${input.public_id},
           ${input.slug},
           ${input.namespace},
           ${input.name},
@@ -346,8 +378,12 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async listSnapshotsByProject(workspace: string, projectId: string) {
     return await this.sql<EntitySnapshotDbResult[]>`
-      SELECT * FROM entity_snapshot
-      WHERE workspace = ${workspace} AND project_id = ${projectId} AND status IN ('future_update', 'applied')
+      SELECT s.* FROM entity_snapshot s
+      INNER JOIN project p ON p.id = s.project_id
+      WHERE s.workspace = ${workspace}
+        AND p.workspace = ${workspace}
+        AND (p.id::text = ${projectId} OR p.public_id = ${projectId})
+        AND s.status IN ('future_update', 'applied')
       ORDER BY target_date ASC NULLS LAST, created_at DESC
     `;
   }

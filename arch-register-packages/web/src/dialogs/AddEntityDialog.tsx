@@ -17,6 +17,7 @@ import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContr
 
 type EntityApiResponse = {
   _uid: string;
+  _publicId: string;
   [key: string]: unknown;
 };
 

@@ -26,6 +26,7 @@ const schemas: SchemaDbResult[] = [
     color: null,
     icon: null,
     default_owner: null,
+    key_prefix: 'APP',
     created_at: now,
     updated_at: now
   },
@@ -38,6 +39,7 @@ const schemas: SchemaDbResult[] = [
     color: null,
     icon: null,
     default_owner: null,
+    key_prefix: 'CAP',
     created_at: now,
     updated_at: now
   }
@@ -47,6 +49,7 @@ const entities: Entity[] = [
   {
     id: 'entity-app-1',
     workspace: 'ws-1',
+    public_id: 'APP-1',
     slug: 'payments-api',
     namespace: '',
     name: 'Payments API',
@@ -68,6 +71,7 @@ const entities: Entity[] = [
   {
     id: 'entity-app-2',
     workspace: 'ws-1',
+    public_id: 'APP-2',
     slug: 'billing-api',
     namespace: '',
     name: 'Billing API',
@@ -90,6 +94,7 @@ const entities: Entity[] = [
   {
     id: 'entity-cap-1',
     workspace: 'ws-1',
+    public_id: 'CAP-1',
     slug: 'payment-processing',
     namespace: '',
     name: 'Payment Processing',
@@ -170,7 +175,8 @@ const db = {
         sort_order: 0,
         created_at: now
       }
-    ]
+    ],
+    allocatePublicId: vi.fn(async () => 1)
   },
   audit: {
     createAuditLog: vi.fn(async (input: AuditLogDbResult) => {

@@ -57,7 +57,13 @@ export const computeAuditStats = (
   };
 };
 
-export const toApiAuditLogEntry = (entry: InternalAuditLogEntry): AuditLogEntry => ({
+export const toApiAuditLogEntry = (
+  entry: InternalAuditLogEntry,
+  options?: {
+    publicId?: string | null;
+    metadata?: Record<string, unknown>;
+  }
+): AuditLogEntry => ({
   id: entry.id,
   workspace: entry.workspace,
   timestamp: entry.timestamp.toISOString(),
@@ -66,9 +72,10 @@ export const toApiAuditLogEntry = (entry: InternalAuditLogEntry): AuditLogEntry 
   operation: entry.operation,
   entity_type: entry.entity_type,
   entity_id: entry.entity_id,
+  public_id: options?.publicId ?? null,
   entity_name: entry.entity_name,
   entity_slug: entry.entity_slug,
   schema_id: entry.schema_id,
   changes: entry.changes,
-  metadata: entry.metadata
+  metadata: options?.metadata ?? entry.metadata
 });

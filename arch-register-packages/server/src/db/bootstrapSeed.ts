@@ -199,8 +199,15 @@ const seedBootstrapWatchesAndNotifications = async (db: Database) => {
 };
 
 export const seedBootstrapData = async (db: Database) => {
+  const syncTimestamp = new Date();
   for (const workspace of seedWorkspaces) {
     await db.workspace.createWorkspace(workspace);
+    await db.workspace.registerPublicIdPrefix(
+      workspace.short_code,
+      'workspace',
+      workspace.id,
+      workspace.created_at
+    );
   }
   for (const workspace of seedWorkspaces) {
     await db.workspace.replaceLifecycleStates(
@@ -221,6 +228,14 @@ export const seedBootstrapData = async (db: Database) => {
   }
   for (const schema of seedSchemas) {
     await db.catalog.createSchema(schema);
+    if (schema.key_prefix) {
+      await db.workspace.registerPublicIdPrefix(
+        schema.key_prefix,
+        'schema',
+        schema.id,
+        schema.created_at
+      );
+    }
   }
   for (const workspace of seedWorkspaces) {
     await db.ai.upsertAiConfig(workspace.id, seedAiConfig);
@@ -230,6 +245,20 @@ export const seedBootstrapData = async (db: Database) => {
   }
   for (const project of seedProjects) {
     await db.project.createProject(project);
+  }
+
+  const maxByPrefix = new Map<string, number>();
+  for (const item of [...seedProjects, ...seedEntities]) {
+    if (!item.public_id) continue;
+    const parts = item.public_id.split('-');
+    const prefix = parts.slice(0, -1).join('-');
+    const seq = parseInt(parts.at(-1) ?? '0', 10);
+    if (prefix && !Number.isNaN(seq)) {
+      maxByPrefix.set(prefix, Math.max(maxByPrefix.get(prefix) ?? 0, seq));
+    }
+  }
+  for (const [prefix, max] of maxByPrefix) {
+    await db.workspace.setPublicIdNextNumber(prefix, max + 1, syncTimestamp);
   }
   for (const view of seedSavedViews) {
     await db.view.createSavedView(view);

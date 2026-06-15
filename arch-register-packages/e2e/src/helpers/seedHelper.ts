@@ -27,6 +27,7 @@ export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
 
   for (const ws of seedWorkspaces) {
     await db.workspace.createWorkspace(ws);
+    await db.workspace.registerPublicIdPrefix(ws.short_code, 'workspace', ws.id, ws.created_at);
     const states = seedLifecycleStates.filter(s => s.workspace === ws.id);
     const owners = seedOwners.filter(o => o.workspace === ws.id);
     await db.workspace.replaceLifecycleStates(ws.id, states);
@@ -35,7 +36,17 @@ export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
       await db.catalog.createEnum(e);
     }
     for (const schema of seedSchemas.filter(s => s.workspace === ws.id)) {
-      await db.catalog.createSchema(schema);
+      const createdSchema = await db.catalog.createSchema(schema);
+      const keyPrefix = createdSchema.key_prefix ?? schema.key_prefix;
+      if (!keyPrefix) {
+        throw new Error(`Schema '${createdSchema.id}' is missing a key prefix`);
+      }
+      await db.workspace.registerPublicIdPrefix(
+        keyPrefix,
+        'schema',
+        createdSchema.id,
+        createdSchema.created_at
+      );
     }
     await db.ai.upsertAiConfig(ws.id, seedAiConfig);
   }
@@ -66,8 +77,24 @@ export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
 }
 
 export async function seedCatalogEntities(db: DatabaseAdapter): Promise<void> {
+  const syncTimestamp = new Date();
+
   for (const entity of seedEntities) {
     await db.catalog.createEntity(entity);
+  }
+
+  const maxByPrefix = new Map<string, number>();
+  for (const entity of seedEntities) {
+    if (!entity.public_id) continue;
+    const parts = entity.public_id.split('-');
+    const prefix = parts.slice(0, -1).join('-');
+    const seq = parseInt(parts.at(-1) ?? '0', 10);
+    if (prefix && !Number.isNaN(seq)) {
+      maxByPrefix.set(prefix, Math.max(maxByPrefix.get(prefix) ?? 0, seq));
+    }
+  }
+  for (const [prefix, max] of maxByPrefix) {
+    await db.workspace.setPublicIdNextNumber(prefix, max + 1, syncTimestamp);
   }
 }
 

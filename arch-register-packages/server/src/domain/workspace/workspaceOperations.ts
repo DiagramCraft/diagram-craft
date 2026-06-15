@@ -11,6 +11,7 @@ import { toApiWorkspace } from './workspaceHelpers';
 import { instantiateTemplate } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
+import { validatePublicIdPrefix } from '../../utils/publicIds';
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, { unique: 'A workspace with that name already exists' });
@@ -20,7 +21,7 @@ const shortCodeFrom = (name: string): string =>
     .split(/\s+/)
     .map(w => (w[0] ?? '').toUpperCase())
     .join('')
-    .slice(0, 2);
+    .slice(0, 5);
 
 const buildCreateInput = (
   input: {
@@ -42,7 +43,10 @@ const buildCreateInput = (
     id: randomUUID(),
     name: input.name,
     url_slug: urlSlug,
-    short_code: input.badge ? input.badge.slice(0, 2).toUpperCase() : shortCodeFrom(input.name),
+    short_code: validatePublicIdPrefix(
+      input.badge ?? shortCodeFrom(input.name),
+      'short_code'
+    )!,
     color: input.color ?? '',
     description: input.description ?? '',
     created_at: createdAt,
@@ -64,7 +68,10 @@ const buildUpdateInput = (
   name: input.name,
   url_slug:
     input.url_slug != null ? (slugify(input.url_slug) ?? current.url_slug) : current.url_slug,
-  short_code: input.short_code ?? current.short_code,
+  short_code:
+    input.short_code !== undefined
+      ? validatePublicIdPrefix(input.short_code, 'short_code')!
+      : current.short_code,
   color: input.color ?? current.color,
   description: input.description ?? current.description,
   updated_at: updatedAt
@@ -174,6 +181,7 @@ export const createWorkspace = async (
   try {
     const timestamp = new Date();
     const row = await db.workspace.createWorkspace(buildCreateInput(input, timestamp));
+    await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
 
     const { template, replicate_from, include } = input;
 
@@ -236,6 +244,7 @@ export const createWorkspace = async (
             workspace: row.id,
             name: schema.name,
             description: schema.description,
+            key_prefix: schema.key_prefix,
             color: schema.color,
             icon: schema.icon,
             fields: remappedFields,
@@ -243,6 +252,9 @@ export const createWorkspace = async (
             created_at: timestamp,
             updated_at: timestamp
           });
+          if (schema.key_prefix) {
+            await db.workspace.registerPublicIdPrefix(schema.key_prefix, 'schema', idMap.get(schema.id)!, timestamp);
+          }
         }
       }
     } else {
@@ -260,6 +272,9 @@ export const createWorkspace = async (
         const schemas = instantiateTemplate(row.id, template);
         for (const schema of schemas) {
           await db.catalog.createSchema(schema);
+          if (schema.key_prefix) {
+            await db.workspace.registerPublicIdPrefix(schema.key_prefix, 'schema', schema.id, timestamp);
+          }
         }
       }
     }
@@ -306,13 +321,25 @@ export const updateWorkspace = async (
         message: `Workspace '${id}' not found`
       });
 
-    const row = await db.workspace.updateWorkspace(id, buildUpdateInput(input, oldRow, new Date()));
+    const updatedAt = new Date();
+    const updateInput = buildUpdateInput(input, oldRow, updatedAt);
+    const row = await db.workspace.updateWorkspace(id, updateInput);
     if (row == null)
       throw new HTTPError({
         status: 404,
         statusText: 'Not Found',
         message: `Workspace '${id}' not found`
       });
+
+    if (oldRow.short_code !== row.short_code) {
+      await db.workspace.updatePublicIdPrefix(
+        oldRow.short_code,
+        row.short_code,
+        'workspace',
+        row.id,
+        updatedAt
+      );
+    }
 
     const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
     await logAudit(db, {

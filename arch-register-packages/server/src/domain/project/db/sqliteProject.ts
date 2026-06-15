@@ -7,6 +7,7 @@ import type {
   ContentNodeDbUpsert
 } from './projectDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import { isUuidLike } from '../../../utils/publicIds';
 
 const PROJECT_ENTITY_JOIN_SQL = `
   SELECT
@@ -42,20 +43,33 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
-  async getProject(workspace: string, id: string) {
+  async getProject(workspace: string, identifier: string) {
+    if (!isUuidLike(identifier)) {
+      const row = await this.getProjectByPublicId(identifier);
+      return row?.workspace === workspace ? row : null;
+    }
     return this.get(
       `${PROJECT_JOIN_SQL} WHERE p.workspace = ? AND p.id = ?`,
-      [workspace, id],
+      [workspace, identifier],
+      sqliteMappers.enrichedProject
+    );
+  }
+
+  private async getProjectByPublicId(publicId: string) {
+    return this.get(
+      `${PROJECT_JOIN_SQL} WHERE p.public_id = ?`,
+      [publicId],
       sqliteMappers.enrichedProject
     );
   }
 
   async createProject(input: ProjectDbCreate) {
     this.run(
-      'INSERT INTO project (id, workspace, name, description, owner, status, color, target_date, pinned, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO project (id, workspace, public_id, name, description, owner, status, color, target_date, pinned, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
+        input.public_id ?? input.id,
         input.name,
         input.description,
         input.owner,
@@ -495,6 +509,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         pf.created_at  AS file_created_at,
         pf.updated_at  AS file_updated_at,
         p.id           AS project_id,
+        p.public_id    AS project_public_id,
         p.name         AS project_name
       FROM diagram_entity_ref der
       JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
@@ -512,6 +527,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         file_created_at: new Date(String(row['file_created_at'])),
         file_updated_at: new Date(String(row['file_updated_at'])),
         project_id: String(row['project_id']),
+        project_public_id: String(row['project_public_id']),
         project_name: String(row['project_name'])
       })
     );

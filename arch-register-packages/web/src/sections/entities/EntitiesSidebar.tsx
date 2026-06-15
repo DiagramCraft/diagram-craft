@@ -31,6 +31,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 
 export const EntitiesSidebar = ({
   schemas,
@@ -381,13 +382,13 @@ export const EntitiesSidebar = ({
                     />
                   }
                   label={entity.entity_name}
-                  active={routeEntityId === entity.entity_id}
+                  active={routeEntityId === entity.entity_public_id}
                   onClick={() =>
-                    navigate({
-                      to: '/$workspaceSlug/entities/$entityId',
-                      params: { workspaceSlug, entityId: entity.entity_id },
-                      search: (prev: Record<string, unknown>) => ({ ...prev, sidebarTab: 'pinned' })
-                    })
+                    navigate(
+                      entityDetailRoute(workspaceSlug, asEntityPublicId(entity.entity_public_id), {
+                        sidebarTab: 'pinned'
+                      })
+                    )
                   }
                   trailing={<TbPinned size={12} className="dim" />}
                   tagColor={color}

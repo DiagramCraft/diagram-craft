@@ -179,7 +179,7 @@ const SnapBlock = ({
     <div className={styles.snapBlock}>
       {/* Entity header row */}
       <div className={styles.snapHeader}>
-        <div className={`${styles.labelCol} ${styles.labelColClickable}`} onClick={() => onEntityClick(entity._uid)}>
+        <div className={`${styles.labelCol} ${styles.labelColClickable}`} onClick={() => onEntityClick(entity._publicId)}>
           {s && (
             <TypeBadge
               color={resolveSchemaColor(s.schema, s.index)}
@@ -382,7 +382,7 @@ const SnapDetailPanel = ({
           </div>
 
           <div className={styles.detailFooter}>
-            <Button variant="primary" size="sm" onClick={() => onEntityClick(entity._uid)}>
+            <Button variant="primary" size="sm" onClick={() => onEntityClick(entity._publicId)}>
               Open entity <TbChevronRight size={11} />
             </Button>
           </div>
@@ -807,7 +807,7 @@ export const TimelineView = ({
                         {/* Sticky label — click navigates to entity */}
                         <div
                           className={`${styles.labelCol} ${styles.labelColClickable}`}
-                          onClick={() => onEntityClick(e._uid)}
+                          onClick={() => onEntityClick(e._publicId)}
                         >
                           {sc && (
                             <TypeBadge
@@ -888,7 +888,7 @@ export const TimelineView = ({
         dateFields={dateFields}
         schemaMap={schemaMap}
         onOpen={() => {
-          if (activeEntity) onEntityClick(activeEntity._uid);
+          if (activeEntity) onEntityClick(activeEntity._publicId);
         }}
         onClose={() => setActiveEntityId(null)}
       />
