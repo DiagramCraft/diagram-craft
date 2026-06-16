@@ -8,8 +8,8 @@ import type { TestORPCClient } from './orpcTestClient';
 const password = 'PermissionPassword123!';
 const now = new Date('2026-02-01T00:00:00.000Z');
 
-const OUTSIDER_USER_ID = 'permissions-outsider';
-const EXPLICIT_GRANT_USER_ID = 'permissions-explicit-grant';
+const OUTSIDER_USER_ID = '00000000-0000-0000-0000-e2e000000002';
+const EXPLICIT_GRANT_USER_ID = '00000000-0000-0000-0000-e2e000000003';
 
 type PersonaName =
   | 'globalAdmin'

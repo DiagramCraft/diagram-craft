@@ -1,5 +1,6 @@
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
+import { TMPL_PROJ_A_ID, TMPL_PROJ_B_ID, NONEXISTENT_UUID } from '../helpers/testIds';
 
 const now = new Date();
 
@@ -9,7 +10,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
     async ({ server }, use) => {
       // Project A — has a project-level template and a workspace template
       const projectA = await server.db.project.createProject({
-        id: 'e2e-tmpl-proj-a',
+        id: TMPL_PROJ_A_ID,
         workspace: seedIds.workspace.default,
         name: 'Template Project A',
         description: '',
@@ -24,7 +25,7 @@ const test = baseTest.extend<{ seeded: { projectId: string; wsProjectId: string 
 
       // Project B — has only a project-level template (no workspace templates)
       const projectB = await server.db.project.createProject({
-        id: 'e2e-tmpl-proj-b',
+        id: TMPL_PROJ_B_ID,
         workspace: seedIds.workspace.default,
         name: 'Template Project B',
         description: '',
@@ -150,7 +151,7 @@ test.describe('GET /api/:workspace/projects/:projectId/templates', () => {
   test('workspaceTemplates includes templates from other projects', async ({ orpc, seeded: _ }) => {
     // Project A has the workspace template — when viewing project B, we should still see it
     const body = await orpc.templates.listForProject({
-      params: { workspace: 'default', id: 'e2e-tmpl-proj-b' }
+      params: { workspace: 'default', id: TMPL_PROJ_B_ID }
     });
     expect(body.workspaceTemplates.length).toBeGreaterThanOrEqual(1);
     expect(body.workspaceTemplates.every(t => t.is_workspace_template === true)).toBe(true);
@@ -166,20 +167,20 @@ test.describe('GET /api/:workspace/projects/:projectId/templates', () => {
 
   test('returns 404 for unknown project', async ({ orpc, seeded: _ }) => {
     await expect(
-      orpc.templates.listForProject({ params: { workspace: 'default', id: 'nonexistent' } })
+      orpc.templates.listForProject({ params: { workspace: 'default', id: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   test('returns 401 without auth', async ({ server, seeded: _ }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
     await expect(
-      anonOrpc.templates.listForProject({ params: { workspace: 'default', id: 'e2e-tmpl-proj-a' } })
+      anonOrpc.templates.listForProject({ params: { workspace: 'default', id: TMPL_PROJ_A_ID } })
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 
   test('returns 404 for unknown workspace', async ({ orpc, seeded: _ }) => {
     await expect(
-      orpc.templates.listForProject({ params: { workspace: 'nonexistent', id: 'any' } })
+      orpc.templates.listForProject({ params: { workspace: 'nonexistent', id: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

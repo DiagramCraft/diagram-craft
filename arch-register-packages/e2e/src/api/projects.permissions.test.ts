@@ -1,8 +1,9 @@
 import { hashPassword } from '@arch-register/server/utils/password';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
+import { PERMISSIONS_DESIGN_ONLY_ID } from '../helpers/testIds';
 
-const teamOnlyUserId = 'permissions-design-only';
+const teamOnlyUserId = PERMISSIONS_DESIGN_ONLY_ID;
 const now = new Date('2026-02-03T00:00:00.000Z');
 
 const test = createPermissionApiTest().extend<{
@@ -14,7 +15,7 @@ const test = createPermissionApiTest().extend<{
 
       await server.db.auth.createUser({
         id: teamOnlyUserId,
-        user_id: teamOnlyUserId,
+        user_id: 'permissions-design-only',
         email: 'design-only@e2e.test',
         display_name: 'Design Only',
         auth_provider: 'local',

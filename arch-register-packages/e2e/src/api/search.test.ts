@@ -1,5 +1,6 @@
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
+import { SEARCH_PROJ_ALPHA_ID, SEARCH_PROJ_BETA_ID } from '../helpers/testIds';
 
 const now = new Date('2026-06-06T12:00:00.000Z');
 
@@ -9,7 +10,7 @@ const test = baseTest.extend<{ seeded: true }>({
       await seedCatalogEntities(server.db);
 
       await server.db.project.createProject({
-        id: 'search-proj-alpha',
+        id: SEARCH_PROJ_ALPHA_ID,
         workspace: seedIds.workspace.default,
         name: 'Alpha Search Project',
         description: 'Portal redesign diagrams and architecture notes.',
@@ -23,7 +24,7 @@ const test = baseTest.extend<{ seeded: true }>({
       });
 
       await server.db.project.createProject({
-        id: 'search-proj-beta',
+        id: SEARCH_PROJ_BETA_ID,
         workspace: seedIds.workspace.default,
         name: 'Beta Search Project',
         description: 'Authentication migration workstream.',
@@ -38,7 +39,7 @@ const test = baseTest.extend<{ seeded: true }>({
 
       await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
-        project_id: 'search-proj-alpha',
+        project_id: SEARCH_PROJ_ALPHA_ID,
         path: 'wireframes/portal-diagram.dgc',
         name: 'Portal Diagram',
         size_bytes: 0,
@@ -50,7 +51,7 @@ const test = baseTest.extend<{ seeded: true }>({
 
       await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
-        project_id: 'search-proj-beta',
+        project_id: SEARCH_PROJ_BETA_ID,
         path: 'flows/auth-diagram.dgc',
         name: 'Auth Diagram',
         size_bytes: 0,
@@ -79,11 +80,11 @@ test.describe('search routes', () => {
     });
     expect(result).toMatchObject({ query: 'portal', entities: [], schemas: [] });
     expect(result.projects).toEqual([
-      expect.objectContaining({ id: 'search-proj-alpha', name: 'Alpha Search Project' })
+      expect.objectContaining({ id: SEARCH_PROJ_ALPHA_ID, name: 'Alpha Search Project' })
     ]);
     expect(result.files).toEqual([
       expect.objectContaining({
-        projectId: 'search-proj-alpha',
+        projectId: SEARCH_PROJ_ALPHA_ID,
         projectName: 'Alpha Search Project',
         path: 'wireframes/portal-diagram.dgc',
         name: 'Portal Diagram'
@@ -140,7 +141,7 @@ test.describe('search routes', () => {
     expect(result.schemas).toEqual([]);
     expect(result.files).toEqual([
       expect.objectContaining({
-        projectId: 'search-proj-alpha',
+        projectId: SEARCH_PROJ_ALPHA_ID,
         projectName: 'Alpha Search Project',
         path: 'wireframes/portal-diagram.dgc'
       })

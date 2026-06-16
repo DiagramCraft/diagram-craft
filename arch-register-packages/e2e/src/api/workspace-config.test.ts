@@ -1,7 +1,14 @@
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
-import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
+import { seedCatalogEntities, seedIds, TEST_ADMIN } from '../helpers/seedHelper';
+import { CONFIG_USER_ID, CONFIG_REMOVE_USER_ID } from '../helpers/testIds';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types/workspaceConfigContract';
+import {
+  LIFECYCLE_LIVE_ID,
+  LIFECYCLE_SUNSET_ID,
+  TEAM_PLATFORM_ID,
+  TEAM_DESIGN_ID
+} from '../helpers/testIds';
 import { seedEntities, seedLifecycleStates } from '@arch-register/server/db/seedData';
 
 const now = new Date('2026-06-06T12:00:00.000Z');
@@ -10,7 +17,7 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
   seededUsers: [
     async ({ server }, use) => {
       await server.db.auth.createUser({
-        id: 'config-user',
+        id: CONFIG_USER_ID,
         user_id: 'config-user',
         email: 'config-user@e2e.test',
         display_name: 'Config User',
@@ -26,7 +33,7 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
       });
 
       await server.db.auth.createUser({
-        id: 'config-remove-user',
+        id: CONFIG_REMOVE_USER_ID,
         user_id: 'config-remove-user',
         email: 'config-remove-user@e2e.test',
         display_name: 'Config Remove User',
@@ -42,8 +49,8 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
       });
 
       await use({
-        configUserId: 'config-user',
-        removeUserId: 'config-remove-user'
+        configUserId: CONFIG_USER_ID,
+        removeUserId: CONFIG_REMOVE_USER_ID
       });
     },
     { scope: 'file' }
@@ -79,14 +86,14 @@ test.describe('workspace config routes', () => {
       params: { workspace: 'default' },
       body: {
         states: [
-          { id: 'live', label: 'Live', color: '#22aa55', sort_order: 99 },
-          { id: 'sunset', label: 'Sunset', color: '#bb8800', sort_order: 0 }
+          { id: LIFECYCLE_LIVE_ID, label: 'Live', color: '#22aa55', sort_order: 99 },
+          { id: LIFECYCLE_SUNSET_ID, label: 'Sunset', color: '#bb8800', sort_order: 0 }
         ]
       }
     });
     expect(result).toEqual([
-      expect.objectContaining({ id: 'live', sort_order: 0 }),
-      expect.objectContaining({ id: 'sunset', sort_order: 1 })
+      expect.objectContaining({ id: LIFECYCLE_LIVE_ID, sort_order: 0 }),
+      expect.objectContaining({ id: LIFECYCLE_SUNSET_ID, sort_order: 1 })
     ]);
   });
 
@@ -320,8 +327,8 @@ test.describe('workspace config routes', () => {
       params: { workspace: 'default' },
       body: {
         teams: [
-          { id: 'team-platform', name: 'Platform Engineering' },
-          { id: 'team-design', name: 'Design Systems' }
+          { id: TEAM_PLATFORM_ID, name: 'Platform Engineering' },
+          { id: TEAM_DESIGN_ID, name: 'Design Systems' }
         ]
       }
     });
@@ -331,7 +338,7 @@ test.describe('workspace config routes', () => {
       body: {
         assignments: [
           {
-            team_id: 'team-platform',
+            team_id: TEAM_PLATFORM_ID,
             user_id: seededUsers.configUserId,
             role: 'team_editor'
           }
@@ -341,7 +348,7 @@ test.describe('workspace config routes', () => {
 
     expect(putResult).toEqual([
       expect.objectContaining({
-        team_id: 'team-platform',
+        team_id: TEAM_PLATFORM_ID,
         user_id: seededUsers.configUserId,
         role: 'team_editor'
       })
@@ -350,7 +357,7 @@ test.describe('workspace config routes', () => {
     const assignments = await orpc.config.teamAssignments.list({ params: { workspace: 'default' } });
     expect(assignments).toEqual([
       expect.objectContaining({
-        team_id: 'team-platform',
+        team_id: TEAM_PLATFORM_ID,
         user_id: seededUsers.configUserId,
         role: 'team_editor'
       })
@@ -369,7 +376,7 @@ test.describe('workspace config routes', () => {
     expect(members).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          user_id: 'test-admin',
+          user_id: TEST_ADMIN.id,
           email: 'admin@e2e.test'
         })
       ])
@@ -377,11 +384,11 @@ test.describe('workspace config routes', () => {
     expect(users).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'test-admin',
+          id: TEST_ADMIN.id,
           email: 'admin@e2e.test'
         }),
         expect.objectContaining({
-          id: 'config-user',
+          id: CONFIG_USER_ID,
           email: 'config-user@e2e.test'
         })
       ])

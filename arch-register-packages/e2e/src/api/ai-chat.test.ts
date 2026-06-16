@@ -1,5 +1,13 @@
+import { randomUUID } from 'node:crypto';
 import { createApiTest, expect } from '../helpers/fixtures';
-import { seedIds } from '../helpers/seedHelper';
+import { TEST_ADMIN, seedIds } from '../helpers/seedHelper';
+import {
+  OTHER_AI_USER_ID,
+  NO_AI_WORKSPACE_ID,
+  AI_CONV_1_ID,
+  AI_MSG_1_ID,
+  AI_CONV_OTHER_ID
+} from '../helpers/testIds';
 
 type SeededFixtures = {
   conversationId: string;
@@ -23,10 +31,7 @@ const mockAiChatOverrides = {
       yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'reply' };
     })();
   }) as never,
-  randomId: (() => {
-    let i = 0;
-    return () => `mock-ai-id-${++i}`;
-  })()
+  randomId: randomUUID
 } as const;
 
 const test = createApiTest({
@@ -52,7 +57,7 @@ const test = createApiTest({
       });
 
       await server.db.workspace.createWorkspace({
-        id: 'no-ai',
+        id: NO_AI_WORKSPACE_ID,
         name: 'No AI Workspace',
         url_slug: 'no-ai',
         short_code: 'NA',
@@ -63,7 +68,7 @@ const test = createApiTest({
       });
 
       await server.db.auth.createUser({
-        id: 'other-ai-user',
+        id: OTHER_AI_USER_ID,
         user_id: 'other-ai-user',
         email: 'other-ai-user@e2e.test',
         display_name: 'Other AI User',
@@ -79,16 +84,16 @@ const test = createApiTest({
       });
 
       const ownConversation = await server.db.ai.createConversation({
-        id: 'ai-conv-1',
+        id: AI_CONV_1_ID,
         workspace: seedIds.workspace.default,
-        user_id: 'test-admin',
+        user_id: TEST_ADMIN.id,
         title: 'New conversation',
         created_at: now,
         updated_at: now
       });
 
       await server.db.ai.createMessage({
-        id: 'ai-msg-1',
+        id: AI_MSG_1_ID,
         conversation_id: ownConversation.id,
         role: 'assistant',
         content: 'Existing assistant message',
@@ -97,9 +102,9 @@ const test = createApiTest({
       });
 
       await server.db.ai.createConversation({
-        id: 'ai-conv-other',
+        id: AI_CONV_OTHER_ID,
         workspace: seedIds.workspace.default,
-        user_id: 'other-ai-user',
+        user_id: OTHER_AI_USER_ID,
         title: 'Other user conversation',
         created_at: now,
         updated_at: now
@@ -107,8 +112,8 @@ const test = createApiTest({
 
       await use({
         conversationId: ownConversation.id,
-        otherConversationId: 'ai-conv-other',
-        otherUserId: 'other-ai-user'
+        otherConversationId: AI_CONV_OTHER_ID,
+        otherUserId: OTHER_AI_USER_ID
       });
     },
     { scope: 'file' }
@@ -139,7 +144,7 @@ test.describe('ai chat routes', () => {
     });
     expect(defaultResult).toMatchObject({
       title: 'New conversation',
-      user_id: 'test-admin'
+      user_id: TEST_ADMIN.id
     });
 
     const customResult = await orpc.ai.createConversation({
@@ -148,7 +153,7 @@ test.describe('ai chat routes', () => {
     });
     expect(customResult).toMatchObject({
       title: 'Architecture Q&A',
-      user_id: 'test-admin'
+      user_id: TEST_ADMIN.id
     });
   });
 

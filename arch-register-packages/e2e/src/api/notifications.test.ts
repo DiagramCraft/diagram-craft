@@ -1,8 +1,9 @@
 import { createApiTest, expect } from '../helpers/fixtures';
 import { makeAuthHeader, seedCatalogEntities, seedIds } from '../helpers/seedHelper';
+import { TEST_EDITOR_ID } from '../helpers/testIds';
 
 const componentId = '00000000-0000-0000-0003-000000000002';
-const editorUserId = 'test-editor';
+const editorUserId = TEST_EDITOR_ID;
 
 const test = createApiTest({
   afterSeed: async server => {
@@ -10,7 +11,7 @@ const test = createApiTest({
     const now = new Date();
     await server.db.auth.createUser({
       id: editorUserId,
-      user_id: editorUserId,
+      user_id: 'test-editor',
       email: 'editor@e2e.test',
       display_name: 'E2E Editor',
       auth_provider: 'local',

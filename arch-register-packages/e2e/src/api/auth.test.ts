@@ -2,12 +2,19 @@ import { test, expect, createTestORPCClient } from '../helpers/fixtures';
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
 import { hashPassword } from '@arch-register/server/utils/password';
 import { generateTokenPair } from '@arch-register/server/utils/jwt';
-import { seedIds } from '../helpers/seedHelper';
+import { seedIds, TEST_ADMIN } from '../helpers/seedHelper';
+import {
+  INACTIVE_USER_ID,
+  ROLES_USER_ID,
+  ROLES_INVALID_USER_ID,
+  NONEXISTENT_UUID
+} from '../helpers/testIds';
 
 const createLocalUser = async (
   db: DatabaseAdapter,
   overrides: {
     id: string;
+    userId?: string;
     email: string;
     display_name?: string;
     password?: string;
@@ -20,8 +27,9 @@ const createLocalUser = async (
 
   await db.auth.createUser({
     id: overrides.id,
+    user_id: overrides.userId,
     email: overrides.email,
-    display_name: overrides.display_name ?? overrides.id,
+    display_name: overrides.display_name ?? overrides.userId ?? overrides.id,
     auth_provider: 'local',
     password_hash: passwordHash,
     oidc_issuer: null,
@@ -65,7 +73,8 @@ test.describe('auth public routes', () => {
 
   test('POST /api/auth/login returns 403 for inactive users', async ({ server, orpc }) => {
     const { password } = await createLocalUser(server.db, {
-      id: 'inactive-user',
+      id: INACTIVE_USER_ID,
+      userId: 'inactive-user',
       email: 'inactive@e2e.test',
       is_active: false
     });
@@ -83,7 +92,7 @@ test.describe('auth public routes', () => {
   });
 
   test('POST /api/auth/refresh accepts refresh token from the request body', async ({ server, orpc }) => {
-    const user = await server.db.auth.getUser('test-admin');
+    const user = await server.db.auth.getUser(TEST_ADMIN.id);
     expect(user).toBeTruthy();
 
     const tokens = generateTokenPair(user!);
@@ -96,7 +105,7 @@ test.describe('auth public routes', () => {
   });
 
   test('POST /api/auth/refresh returns 401 for an access token', async ({ server, orpc }) => {
-    const user = await server.db.auth.getUser('test-admin');
+    const user = await server.db.auth.getUser(TEST_ADMIN.id);
     expect(user).toBeTruthy();
 
     const tokens = generateTokenPair(user!);
@@ -115,7 +124,7 @@ test.describe('auth protected routes', () => {
   test('GET /api/auth/me returns the authenticated user profile', async ({ orpc }) => {
     const result = await orpc.authProtected.me(undefined);
     expect(result).toMatchObject({
-      id: 'test-admin',
+      id: TEST_ADMIN.id,
       email: 'admin@e2e.test',
       display_name: 'E2E Admin',
       auth_provider: 'local',
@@ -131,15 +140,15 @@ test.describe('auth protected routes', () => {
 
   test('PATCH /api/users/:id updates the current user settings', async ({ orpc }) => {
     const result = await orpc.authProtected.updateUser({
-      params: { id: 'test-admin' },
+      params: { id: TEST_ADMIN.id },
       body: { display_name: 'Admin Renamed', color: '#336699' }
     });
-    expect(result).toMatchObject({ id: 'test-admin', display_name: 'Admin Renamed', color: '#336699' });
+    expect(result).toMatchObject({ id: TEST_ADMIN.id, display_name: 'Admin Renamed', color: '#336699' });
   });
 
   test('PATCH /api/users/:id rejects updates to a different user', async ({ orpc }) => {
     await expect(
-      orpc.authProtected.updateUser({ params: { id: 'someone-else' }, body: { display_name: 'Nope' } })
+      orpc.authProtected.updateUser({ params: { id: NONEXISTENT_UUID }, body: { display_name: 'Nope' } })
     ).rejects.toMatchObject({ code: 'FORBIDDEN', message: 'You can only update your own account settings' });
   });
 
@@ -147,30 +156,30 @@ test.describe('auth protected routes', () => {
     const users = await orpc.authProtected.listUsers(undefined);
     expect(users).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'test-admin', email: 'admin@e2e.test', auth_provider: 'local', is_active: true })
+        expect.objectContaining({ id: TEST_ADMIN.id, email: 'admin@e2e.test', auth_provider: 'local', is_active: true })
       ])
     );
   });
 
   test('GET and PUT /api/auth/users/:id/global-roles manage global role assignments', async ({ server, orpc }) => {
-    await createLocalUser(server.db, { id: 'roles-user', email: 'roles@e2e.test' });
+    await createLocalUser(server.db, { id: ROLES_USER_ID, email: 'roles@e2e.test' });
 
     const putResult = await orpc.authProtected.replaceGlobalRoles({
-      params: { id: 'roles-user' },
+      params: { id: ROLES_USER_ID },
       body: { roles: ['workspace_admin'] }
     });
-    expect(putResult).toEqual([expect.objectContaining({ user_id: 'roles-user', role: 'workspace_admin' })]);
+    expect(putResult).toEqual([expect.objectContaining({ user_id: ROLES_USER_ID, role: 'workspace_admin' })]);
 
-    const getResult = await orpc.authProtected.getGlobalRoles({ params: { id: 'roles-user' } });
-    expect(getResult).toEqual([expect.objectContaining({ user_id: 'roles-user', role: 'workspace_admin' })]);
+    const getResult = await orpc.authProtected.getGlobalRoles({ params: { id: ROLES_USER_ID } });
+    expect(getResult).toEqual([expect.objectContaining({ user_id: ROLES_USER_ID, role: 'workspace_admin' })]);
   });
 
   test('PUT /api/auth/users/:id/global-roles rejects invalid role values', async ({ server, orpc }) => {
-    await createLocalUser(server.db, { id: 'roles-invalid-user', email: 'roles-invalid@e2e.test' });
+    await createLocalUser(server.db, { id: ROLES_INVALID_USER_ID, email: 'roles-invalid@e2e.test' });
 
     await expect(
       orpc.authProtected.replaceGlobalRoles({
-        params: { id: 'roles-invalid-user' },
+        params: { id: ROLES_INVALID_USER_ID },
         body: { roles: ['not-a-real-role' as never] }
       })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });

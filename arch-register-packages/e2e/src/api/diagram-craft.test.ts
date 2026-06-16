@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { createApiTest, expect } from '../helpers/fixtures';
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
+import { NO_AI_WORKSPACE_ID } from '../helpers/testIds';
 
 type MockAIState = {
   baseUrl: string;
@@ -94,7 +95,7 @@ const test = createApiTest().extend<{ mockAI: MockAIState }>({
         enabled: true
       });
       await server.db.workspace.createWorkspace({
-        id: 'no-ai',
+        id: NO_AI_WORKSPACE_ID,
         name: 'No AI Workspace',
         url_slug: 'no-ai',
         short_code: 'NA',

@@ -1,5 +1,6 @@
 import { test, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
+import { NONEXISTENT_UUID } from '../helpers/testIds';
 
 test.describe('workspace routes', () => {
   test('GET /api/workspaces returns seeded workspaces', async ({ orpc }) => {
@@ -131,7 +132,7 @@ test.describe('workspace routes', () => {
 
   test('PUT /api/workspaces/:id returns 404 for an unknown workspace id', async ({ orpc }) => {
     await expect(
-      orpc.workspaces.update({ params: { workspace: 'does-not-exist' }, body: { name: 'Nope' } })
+      orpc.workspaces.update({ params: { workspace: NONEXISTENT_UUID }, body: { name: 'Nope' } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
@@ -144,7 +145,7 @@ test.describe('workspace routes', () => {
 
   test('DELETE /api/workspaces/:id returns 404 for an unknown workspace id', async ({ orpc }) => {
     await expect(
-      orpc.workspaces.remove({ params: { workspace: 'does-not-exist' } })
+      orpc.workspaces.remove({ params: { workspace: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

@@ -32,11 +32,12 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly ai: PostgresAiDatabase;
   readonly core;
 
-  constructor(connectionString: string) {
+  constructor(connectionString: string, schema?: string) {
     this.sql = postgres(connectionString, {
       max: SERVER_DEFAULTS.MAX_DB_CONNECTIONS,
       idle_timeout: SERVER_DEFAULTS.DB_IDLE_TIMEOUT,
       connect_timeout: SERVER_DEFAULTS.DB_CONNECT_TIMEOUT,
+      ...(schema ? { connection: { search_path: schema } } : {}),
       onnotice: notice => {
         if (notice.code === '42710' && notice.message === PGCRYPTO_EXISTS_NOTICE) {
           return;
