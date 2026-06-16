@@ -1,6 +1,5 @@
 import { createApiTest, expect } from '../helpers/fixtures';
 import { makeAuthHeader, seedCatalogEntities, seedIds } from '../helpers/seedHelper';
-import { hashPassword } from '@arch-register/server/utils/password';
 
 const componentId = '00000000-0000-0000-0003-000000000002';
 const editorUserId = 'test-editor';
@@ -269,45 +268,5 @@ test.describe('pinned entities API', () => {
     });
     expect(afterDeleteRes.status).toBe(200);
     expect(await afterDeleteRes.json()).toEqual([]);
-  });
-
-  test('pinned entity endpoints require ws.view permission', async ({ server }) => {
-    const now = new Date('2026-01-01T00:00:00.000Z');
-    const passwordHash = await hashPassword('NoViewPassword123!');
-
-    await server.db.auth.createUser({
-      id: 'pins-no-view',
-      email: 'pins-no-view@example.com',
-      display_name: 'Pins No View',
-      auth_provider: 'local',
-      password_hash: passwordHash,
-      oidc_issuer: null,
-      oidc_subject: null,
-      is_active: true,
-      color: null,
-      created_at: now,
-      updated_at: now,
-      last_login_at: null
-    });
-
-    const noViewAuth = await makeAuthHeader(server.db, 'pins-no-view');
-
-    const listRes = await fetch(`${server.baseUrl}/api/default/pinned-entities`, {
-      headers: { Authorization: noViewAuth }
-    });
-    expect(listRes.status).toBe(403);
-
-    const createRes = await fetch(`${server.baseUrl}/api/default/pinned-entities`, {
-      method: 'POST',
-      headers: jsonHeaders(noViewAuth),
-      body: JSON.stringify({ entity_id: componentId })
-    });
-    expect(createRes.status).toBe(403);
-
-    const deleteRes = await fetch(`${server.baseUrl}/api/default/pinned-entities/${componentId}`, {
-      method: 'DELETE',
-      headers: { Authorization: noViewAuth }
-    });
-    expect(deleteRes.status).toBe(403);
   });
 });

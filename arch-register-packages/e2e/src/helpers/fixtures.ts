@@ -2,6 +2,7 @@ import { test as baseTest } from 'vitest';
 import { startTestServer, type TestServer } from './serverHelper';
 import { seedMinimal, makeAuthHeader } from './seedHelper';
 import { createTestORPCClient, type TestORPCClient } from './orpcTestClient';
+import { seedBootstrapData } from '@arch-register/server/db/bootstrapSeed';
 
 interface Fixtures {
   server: TestServer;
@@ -12,6 +13,7 @@ interface Fixtures {
 type CreateApiTestOptions = {
   appOptions?: NonNullable<Parameters<typeof startTestServer>[0]>['appOptions'];
   afterSeed?: (server: TestServer) => Promise<void>;
+  seed?: 'minimal' | 'bootstrap';
 };
 
 export const createApiTest = (options: CreateApiTestOptions = {}) =>
@@ -20,7 +22,11 @@ export const createApiTest = (options: CreateApiTestOptions = {}) =>
       // biome-ignore lint/correctness/noEmptyPattern: ok
       async ({}, use) => {
         const server = await startTestServer({ appOptions: options.appOptions });
-        await seedMinimal(server.db);
+        if (options.seed === 'bootstrap') {
+          await seedBootstrapData(server.db);
+        } else {
+          await seedMinimal(server.db);
+        }
         await options.afterSeed?.(server);
         await use(server);
         await server.stop();
