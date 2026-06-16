@@ -1,12 +1,15 @@
+import type { AuthorizationContext } from '@arch-register/permissions';
+import { filterVisibleEntities } from '../auth/authorization';
 import type { DatabaseAdapter } from '../../db/database';
 
 export const buildSystemPrompt = async (
   db: DatabaseAdapter,
   workspaceId: string,
+  authCtx: AuthorizationContext,
   customPrompt: string | null
 ): Promise<string> => {
   const schemas = await db.catalog.listSchemas(workspaceId);
-  const entities = await db.catalog.listEntities(workspaceId);
+  const entities = filterVisibleEntities(authCtx, await db.catalog.listEntities(workspaceId));
   const lifecycleStates = await db.workspace.listLifecycleStates(workspaceId);
   const teams = await db.workspace.listTeams(workspaceId);
 

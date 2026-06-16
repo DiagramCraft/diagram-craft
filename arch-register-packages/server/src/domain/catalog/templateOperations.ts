@@ -116,26 +116,31 @@ export const createFromTemplate = async (
   templatePath: string,
   folder: string | null | undefined,
   authCtx: AuthorizationContext | null
-): Promise<ReturnType<typeof import('../project/projectHelpers').toApiProjectFile>> => {
+  ): Promise<ReturnType<typeof import('../project/projectHelpers').toApiProjectFile>> => {
   try {
+    httpAssert.present(authCtx, { status: 401, message: 'Authentication required' });
+
     const project = await db.project.getProject(workspace, projectId);
     httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
-    
+
     const { requireProjectAction } = await import('../auth/authorization');
-    if (authCtx) {
-      requireProjectAction(
-        authCtx,
-        project.owner,
-        'edit_project',
-        'You do not have permission to modify this project'
-      );
-    }
+    requireProjectAction(
+      authCtx,
+      project.owner,
+      'edit_project',
+      'You do not have permission to modify this project'
+    );
 
     const templateProject = await db.project.getProject(workspace, templateProjectId);
     httpAssert.present(templateProject, {
       status: 404,
       message: `Template project '${templateProjectId}' not found`
     });
+    requireProjectAccess(
+      authCtx,
+      templateProject.owner,
+      'You do not have permission to view the source template project'
+    );
 
     const templateFile = await db.project.getContentNodeByPath(
       workspace,
@@ -145,6 +150,10 @@ export const createFromTemplate = async (
     httpAssert.present(templateFile, {
       status: 404,
       message: `Template file '${templatePath}' not found`
+    });
+    httpAssert.true(templateFile.is_template, {
+      status: 403,
+      message: `File '${templatePath}' is not available as a template`
     });
 
     const content = await storage.read(workspace, templateProjectId, templateFile.id);
@@ -237,4 +246,3 @@ export const createFromTemplate = async (
     return handleError(error, 'Failed to create from template');
   }
 };
-

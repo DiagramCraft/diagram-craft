@@ -274,7 +274,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           ].join('\n');
 
           const adapter = createAdapter(aiConfig);
-          const systemPrompt = await buildPrompt(context.db, workspace, extractPrompt);
+          const systemPrompt = await buildPrompt(context.db, workspace, authCtx, extractPrompt);
           const result = await chatImpl({
             adapter,
             messages: [{ role: 'user', content: input.body.text }],
@@ -302,7 +302,12 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
             });
           }
 
-          const systemPrompt = await buildPrompt(context.db, workspace, aiConfig.systemPrompt);
+          const systemPrompt = await buildPrompt(
+            context.db,
+            workspace,
+            authCtx,
+            aiConfig.systemPrompt
+          );
           const adapter = createAdapter(aiConfig);
           const user = context.event.context.user;
           const tools = createTools(context.db, workspace, authCtx, {
