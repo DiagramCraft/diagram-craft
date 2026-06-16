@@ -7,7 +7,7 @@ import type { DataSchema, SchemaMetadata } from '../diagramDocumentDataSchemas';
 import type { AdjustmentRule } from '../diagramLayerRuleTypes';
 import type { DataTemplate } from '../diagramDocument';
 import type { SerializedComment } from '../comment';
-import type { QueryEntry } from '../documentProps';
+import type { QueryEntry, DocumentMetadata } from '../documentProps';
 import type { ModificationType } from '../diagramLayerModification';
 import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '../anchor';
@@ -89,6 +89,7 @@ export interface SerializedDiagramDocument {
       history?: ReadonlyArray<QueryEntry>;
       saved?: ReadonlyArray<QueryEntry>;
     };
+    metadata?: DocumentMetadata;
   };
   data?: {
     providers?: Array<{

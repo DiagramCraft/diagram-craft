@@ -1,5 +1,4 @@
 import styles from './StyleOverviewToolWindow.module.css';
-import { ToolWindowPanel } from '../ToolWindowPanel';
 import {
   EdgeStylesheet,
   NodeStylesheet,
@@ -10,7 +9,7 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
 import { PickerConfig } from '../PickerToolWindow/pickerConfig';
 import { useApplication, useDiagram } from '../../../application';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TbLetterCase } from 'react-icons/tb';
 import { Diagram } from '@diagram-craft/model/diagram';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
@@ -260,64 +259,63 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
     return Array.from(groupMap.values()).sort((a, b) => typeOrder[a.type] - typeOrder[b.type]);
   }, [stylesheets]);
 
-  const openItems = useMemo(() => groups.map(g => g.type), [groups]);
+  const [openItems, setOpenItems] = useState<string[]>([]);
+  useEffect(() => setOpenItems(groups.map(g => g.type)), [groups]);
 
   return (
     <>
-      <ToolWindowPanel mode={'headless-no-padding'} id={'stylesheets-list'} title={'Stylesheets'}>
-        {groups.length === 0 ? (
-          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
-            No stylesheets found
-          </div>
-        ) : (
-          <Accordion.Root type={'multiple'} value={openItems}>
-            {groups.map(group => {
-              return (
-                <Accordion.Item key={group.type} value={group.type}>
-                  <Accordion.ItemHeader>
-                    <div className={styles.stylesheetName}>
-                      <span>{typeLabels[group.type]}</span>
-                      <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
-                        ({group.stylesheets.length})
-                      </span>
+      {groups.length === 0 ? (
+        <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--base-fg-dim)' }}>
+          No stylesheets found
+        </div>
+      ) : (
+        <Accordion.Root type={'multiple'} value={openItems} onValueChange={v => setOpenItems(v)}>
+          {groups.map(group => {
+            return (
+              <Accordion.Item key={group.type} value={group.type}>
+                <Accordion.ItemHeader>
+                  <div className={styles.stylesheetName}>
+                    <span>{typeLabels[group.type]}</span>
+                    <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
+                      ({group.stylesheets.length})
+                    </span>
+                  </div>
+                </Accordion.ItemHeader>
+                <Accordion.ItemContent>
+                  {group.type === 'text' ? (
+                    <div className={styles.styleList}>
+                      {group.stylesheets.map(stylesheet => (
+                        <TextStylesheetItem
+                          key={stylesheet.id}
+                          stylesheet={stylesheet as TextStylesheet}
+                          onModify={handleModify}
+                          onDelete={handleDelete}
+                          onRename={handleRename}
+                          onApply={handleApplyStylesheet}
+                        />
+                      ))}
                     </div>
-                  </Accordion.ItemHeader>
-                  <Accordion.ItemContent>
-                    {group.type === 'text' ? (
-                      <div className={styles.styleList}>
-                        {group.stylesheets.map(stylesheet => (
-                          <TextStylesheetItem
-                            key={stylesheet.id}
-                            stylesheet={stylesheet as TextStylesheet}
-                            onModify={handleModify}
-                            onDelete={handleDelete}
-                            onRename={handleRename}
-                            onApply={handleApplyStylesheet}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className={styles.styleList}>
-                        {group.stylesheets.map(stylesheet => (
-                          <ElementStylesheetItem
-                            key={stylesheet.id}
-                            stylesheet={stylesheet as NodeStylesheet | EdgeStylesheet}
-                            diagram={diagram}
-                            onModify={handleModify}
-                            onDelete={handleDelete}
-                            onRename={handleRename}
-                            onApply={handleApplyStylesheet}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </Accordion.ItemContent>
-                </Accordion.Item>
-              );
-            })}
-          </Accordion.Root>
-        )}
-      </ToolWindowPanel>
+                  ) : (
+                    <div className={styles.styleList}>
+                      {group.stylesheets.map(stylesheet => (
+                        <ElementStylesheetItem
+                          key={stylesheet.id}
+                          stylesheet={stylesheet as NodeStylesheet | EdgeStylesheet}
+                          diagram={diagram}
+                          onModify={handleModify}
+                          onDelete={handleDelete}
+                          onRename={handleRename}
+                          onApply={handleApplyStylesheet}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </Accordion.ItemContent>
+              </Accordion.Item>
+            );
+          })}
+        </Accordion.Root>
+      )}
       {dialogProps && (
         <ElementStylesheetDialog
           open={!!dialogProps}

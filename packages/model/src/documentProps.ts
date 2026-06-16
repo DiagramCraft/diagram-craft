@@ -1,7 +1,7 @@
 import type { DiagramDocument } from './diagramDocument';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import type { CRDTList, CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import type { CRDTList, CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { Releasable } from '@diagram-craft/utils/releasable';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 
@@ -214,6 +214,86 @@ class ActiveStencilPackages extends EventEmitter<{ change: EmptyObject }> {
   }
 }
 
+export type DocumentMetadata = {
+  title: string;
+  company: string;
+  category: string;
+  keywords: string;
+  description: string;
+};
+
+class Metadata extends EventEmitter<{ change: EmptyObject }> {
+  #map: CRDTMap<DocumentMetadata>;
+
+  constructor(root: CRDTRoot) {
+    super();
+    this.#map = root.getMap('metadata');
+  }
+
+  get title(): string {
+    return this.#map.get('title') ?? '';
+  }
+
+  set title(value: string) {
+    this.#map.set('title', value);
+    this.emitAsync('change');
+  }
+
+  get company(): string {
+    return this.#map.get('company') ?? '';
+  }
+
+  set company(value: string) {
+    this.#map.set('company', value);
+    this.emitAsync('change');
+  }
+
+  get category(): string {
+    return this.#map.get('category') ?? '';
+  }
+
+  set category(value: string) {
+    this.#map.set('category', value);
+    this.emitAsync('change');
+  }
+
+  get keywords(): string {
+    return this.#map.get('keywords') ?? '';
+  }
+
+  set keywords(value: string) {
+    this.#map.set('keywords', value);
+    this.emitAsync('change');
+  }
+
+  get description(): string {
+    return this.#map.get('description') ?? '';
+  }
+
+  set description(value: string) {
+    this.#map.set('description', value);
+    this.emitAsync('change');
+  }
+
+  getAll(): DocumentMetadata {
+    return {
+      title: this.title,
+      company: this.company,
+      category: this.category,
+      keywords: this.keywords,
+      description: this.description
+    };
+  }
+
+  setAll(metadata: Partial<DocumentMetadata>) {
+    if (metadata.title !== undefined) this.title = metadata.title;
+    if (metadata.company !== undefined) this.company = metadata.company;
+    if (metadata.category !== undefined) this.category = metadata.category;
+    if (metadata.keywords !== undefined) this.keywords = metadata.keywords;
+    if (metadata.description !== undefined) this.description = metadata.description;
+  }
+}
+
 /**
  * The DocumentProps allows extra application data to be stored
  * By design; changing the extra data field, the document is not to be
@@ -224,12 +304,14 @@ export class DocumentProps implements Releasable {
   readonly recentStencils: RecentStencils;
   readonly recentEdgeStylesheets: RecentEdgeStylesheets;
   readonly activeStencilPackages: ActiveStencilPackages;
+  readonly metadata: Metadata;
 
   constructor(root: CRDTRoot, document: DiagramDocument) {
     this.query = new Query(root, document);
     this.recentStencils = new RecentStencils(root);
     this.recentEdgeStylesheets = new RecentEdgeStylesheets(root);
     this.activeStencilPackages = new ActiveStencilPackages(root);
+    this.metadata = new Metadata(root);
   }
 
   release() {}
