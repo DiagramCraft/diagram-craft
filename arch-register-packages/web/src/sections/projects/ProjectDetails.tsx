@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbFileText, TbFolderOpen, TbPencil, TbPlus, TbStar, TbUpload } from 'react-icons/tb';
@@ -9,8 +8,8 @@ import { DiagramBrowserToolbar } from '../../components/diagram-browser/DiagramB
 import { ProjectDiagramsView, type ProjectMenuTarget } from './ProjectDiagramsView';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 
 export const ProjectDetails = ({
   project,
@@ -61,7 +60,6 @@ export const ProjectDetails = ({
 }) => {
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
-  const [newMenu, setNewMenu] = useState<{ x: number; y: number } | null>(null);
 
   return (
     <ProjectScreenLayout
@@ -95,48 +93,25 @@ export const ProjectDetails = ({
             </Button>
           )}
           {project.canManageFiles && (
-            <>
-              <Button
-                variant="primary"
-                icon={<TbPlus size={12} />}
-                onClick={e => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setNewMenu({ x: rect.right, y: rect.bottom });
-                }}
-              >
-                New
-              </Button>
-              {newMenu && (
-                <ContextMenu.Imperative x={newMenu.x} y={newMenu.y} align="right" onClose={() => setNewMenu(null)}>
-                  <Menu.Item
-                    leftSlot={<TbFolderOpen size={13} />}
-                    onClick={() => { setNewMenu(null); onAddFolder(); }}
-                  >
-                    New folder
+            <MenuButton.Root>
+              <MenuButton.Trigger element={<Button variant="primary" icon={<TbPlus size={12} />}>New</Button>} />
+              <MenuButton.Menu align="end">
+                <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={onAddFolder}>
+                  New folder
+                </Menu.Item>
+                <Menu.Item leftSlot={<TbUpload size={13} />} onClick={() => onUploadFile?.()}>
+                  Upload file
+                </Menu.Item>
+                <Menu.Item leftSlot={<TbPlus size={13} />} onClick={onAddDiagram}>
+                  New diagram
+                </Menu.Item>
+                {onAddMarkdown && (
+                  <Menu.Item leftSlot={<TbFileText size={13} />} onClick={onAddMarkdown}>
+                    New wiki page
                   </Menu.Item>
-                  <Menu.Item
-                    leftSlot={<TbUpload size={13} />}
-                    onClick={() => { setNewMenu(null); onUploadFile?.(); }}
-                  >
-                    Upload file
-                  </Menu.Item>
-                  <Menu.Item
-                    leftSlot={<TbPlus size={13} />}
-                    onClick={() => { setNewMenu(null); onAddDiagram(); }}
-                  >
-                    New diagram
-                  </Menu.Item>
-                  {onAddMarkdown && (
-                    <Menu.Item
-                      leftSlot={<TbFileText size={13} />}
-                      onClick={() => { setNewMenu(null); onAddMarkdown(); }}
-                    >
-                      New wiki page
-                    </Menu.Item>
-                  )}
-                </ContextMenu.Imperative>
-              )}
-            </>
+                )}
+              </MenuButton.Menu>
+            </MenuButton.Root>
           )}
         </>
       }

@@ -9,8 +9,8 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
-import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import {
   DiagramBrowserToolbar,
   DiagramBrowserView
@@ -31,7 +31,6 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [newMenu, setNewMenu] = useState<{ x: number; y: number } | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
@@ -84,16 +83,35 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
           title={workspace?.name ?? workspaceSlug}
           buttons={
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={e => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setNewMenu({ x: rect.right, y: rect.bottom });
-              }}
-            >
-              New
-            </Button>
+            <MenuButton.Root>
+              <MenuButton.Trigger element={<Button variant="primary" icon={<TbPlus size={12} />}>New</Button>} />
+              <MenuButton.Menu align="end">
+                <Menu.Item
+                  leftSlot={<TbFolderOpen size={13} />}
+                  onClick={() => setAddFolderOpen(true)}
+                >
+                  New folder
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbUpload size={13} />}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Upload file
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbPlus size={13} />}
+                  onClick={() => setAddDiagramOpen(true)}
+                >
+                  New diagram
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbFileText size={13} />}
+                  onClick={() => setAddMarkdownOpen(true)}
+                >
+                  New wiki page
+                </Menu.Item>
+              </MenuButton.Menu>
+            </MenuButton.Root>
           }
         />
       </div>
@@ -128,35 +146,6 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         emptyState={{ title: 'No content here', sub: 'Diagrams and documents will appear here when added.' }}
         noMatchState={{ title: 'No matches', sub: `No items match "${filter}".` }}
       />
-
-      {newMenu && (
-        <ContextMenu.Imperative x={newMenu.x} y={newMenu.y} align="right" onClose={() => setNewMenu(null)}>
-          <Menu.Item
-            leftSlot={<TbFolderOpen size={13} />}
-            onClick={() => { setNewMenu(null); setAddFolderOpen(true); }}
-          >
-            New folder
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbUpload size={13} />}
-            onClick={() => { setNewMenu(null); fileInputRef.current?.click(); }}
-          >
-            Upload file
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbPlus size={13} />}
-            onClick={() => { setNewMenu(null); setAddDiagramOpen(true); }}
-          >
-            New diagram
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbFileText size={13} />}
-            onClick={() => { setNewMenu(null); setAddMarkdownOpen(true); }}
-          >
-            New wiki page
-          </Menu.Item>
-        </ContextMenu.Imperative>
-      )}
 
       <input
         ref={fileInputRef}

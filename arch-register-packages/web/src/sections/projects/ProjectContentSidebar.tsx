@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import {
   TbBinaryTree2,
   TbCopy,
@@ -136,8 +137,6 @@ export const ProjectContentSidebar = ({
   const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
   const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
-  const [addMenu, setAddMenu] = useState<{ x: number; y: number } | null>(null);
-
   const folderTree = buildFolderTree(project?.files.folders ?? []);
 
   const navigateToProject = (next: { section?: ProjectSection; folder?: string }) => {
@@ -487,17 +486,59 @@ export const ProjectContentSidebar = ({
           {project?.name ?? 'Project'}
         </div>
         <div className={styles.headerActions}>
-          <button
-            type="button"
-            className={styles.action}
-            onClick={e => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setAddMenu({ x: rect.left, y: rect.bottom });
-            }}
-            title="Add"
-          >
-            <TbPlus size={13} />
-          </button>
+          <MenuButton.Root>
+            <MenuButton.Trigger element={
+              <button type="button" className={styles.action} title="Add">
+                <TbPlus size={13} />
+              </button>
+            } />
+            <MenuButton.Menu>
+              <Menu.Item
+                leftSlot={<TbFolderOpen size={13} />}
+                disabled={!project?.canManageFiles}
+                onClick={() => {
+                  setAddFolderParent(section === 'home' ? folderFilter : null);
+                  setAddFolderOpen(true);
+                }}
+              >
+                New folder
+              </Menu.Item>
+              <Menu.Item
+                leftSlot={<TbPlus size={13} />}
+                disabled={!project?.canManageFiles}
+                onClick={() => {
+                  setAddDiagramFolder(section === 'home' ? folderFilter : null);
+                  setAddDiagramOpen(true);
+                }}
+              >
+                New diagram
+              </Menu.Item>
+              <Menu.Item
+                leftSlot={<TbUpload size={13} />}
+                disabled={!project?.canManageFiles}
+                onClick={() => openUploadPicker(section === 'home' ? folderFilter : null)}
+              >
+                Upload file
+              </Menu.Item>
+              <Menu.Item
+                leftSlot={<TbFileText size={13} />}
+                disabled={!project?.canManageFiles}
+                onClick={() => {
+                  setAddMarkdownFolder(section === 'home' ? folderFilter : null);
+                  setAddMarkdownOpen(true);
+                }}
+              >
+                New wiki page
+              </Menu.Item>
+              <Menu.Item
+                leftSlot={<TbBinaryTree2 size={13} />}
+                disabled={!project?.canEdit}
+                onClick={openAddEntity}
+              >
+                Add entity
+              </Menu.Item>
+            </MenuButton.Menu>
+          </MenuButton.Root>
         </div>
       </div>
       <div className={styles.scroll}>
@@ -551,64 +592,6 @@ export const ProjectContentSidebar = ({
       {menu && (
         <ContextMenu.Imperative x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
           {renderMenu(menu.target)}
-        </ContextMenu.Imperative>
-      )}
-
-      {addMenu && (
-        <ContextMenu.Imperative x={addMenu.x} y={addMenu.y} onClose={() => setAddMenu(null)}>
-          <Menu.Item
-            leftSlot={<TbFolderOpen size={13} />}
-            disabled={!project?.canManageFiles}
-            onClick={() => {
-              setAddMenu(null);
-              setAddFolderParent(section === 'home' ? folderFilter : null);
-              setAddFolderOpen(true);
-            }}
-          >
-            New folder
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbPlus size={13} />}
-            disabled={!project?.canManageFiles}
-            onClick={() => {
-              setAddMenu(null);
-              setAddDiagramFolder(section === 'home' ? folderFilter : null);
-              setAddDiagramOpen(true);
-            }}
-          >
-            New diagram
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbUpload size={13} />}
-            disabled={!project?.canManageFiles}
-            onClick={() => {
-              setAddMenu(null);
-              openUploadPicker(section === 'home' ? folderFilter : null);
-            }}
-          >
-            Upload file
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbFileText size={13} />}
-            disabled={!project?.canManageFiles}
-            onClick={() => {
-              setAddMenu(null);
-              setAddMarkdownFolder(section === 'home' ? folderFilter : null);
-              setAddMarkdownOpen(true);
-            }}
-          >
-            New wiki page
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbBinaryTree2 size={13} />}
-            disabled={!project?.canEdit}
-            onClick={() => {
-              setAddMenu(null);
-              openAddEntity();
-            }}
-          >
-            Add entity
-          </Menu.Item>
         </ContextMenu.Imperative>
       )}
 
