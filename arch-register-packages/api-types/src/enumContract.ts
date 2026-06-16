@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId } from '@arch-register/api-types/common';
+import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
 const enumOptionSchema = z.object({
   value: z.string(),
@@ -39,7 +39,7 @@ export const workspaceEnumContract = {
       .route({ method: 'GET', path: '/{workspace}/enums/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: wsAndId
+          params: wsAndUUID
         })
       )
       .output(workspaceEnumSchema),
@@ -56,7 +56,7 @@ export const workspaceEnumContract = {
       .route({ method: 'PUT', path: '/{workspace}/enums/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: wsAndId,
+          params: wsAndUUID,
           body: createEnumBodySchema
         })
       )
@@ -65,7 +65,7 @@ export const workspaceEnumContract = {
       .route({ method: 'DELETE', path: '/{workspace}/enums/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: wsAndId
+          params: wsAndUUID
         })
       )
       .output(

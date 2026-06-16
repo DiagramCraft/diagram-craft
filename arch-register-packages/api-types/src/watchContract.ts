@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { pinnedEntitySchema } from '@arch-register/api-types/viewContract';
-import { ws, wsAndId } from '@arch-register/api-types/common';
+import { ws, wsAndId, wsAndUUID } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -75,7 +75,7 @@ export const watchContract = {
       })
       .input(
         z.object({
-          params: wsAndId
+          params: wsAndUUID
         })
       )
       .output(successResponseSchema)

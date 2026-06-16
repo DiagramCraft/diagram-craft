@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
+import { ws, wsAndId, foreignKeySchema, UUID_REGEX } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -410,7 +410,7 @@ export const workspaceEntityContract = {
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string() }),
+            params: z.object({ workspace: z.string(), id: z.string().regex(UUID_REGEX), snapshotId: z.string().regex(UUID_REGEX) }),
             body: z.object({
               proposedState: z.record(z.string(), z.unknown()).optional(),
               targetDate: z.string().nullable().optional(),
@@ -427,7 +427,7 @@ export const workspaceEntityContract = {
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string() }),
+            params: z.object({ workspace: z.string(), id: z.string().regex(UUID_REGEX), snapshotId: z.string().regex(UUID_REGEX) }),
             body: z.object({ commitMessage: z.string().optional() })
           })
         )
@@ -440,7 +440,7 @@ export const workspaceEntityContract = {
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string() }),
+            params: z.object({ workspace: z.string(), id: z.string().regex(UUID_REGEX), snapshotId: z.string().regex(UUID_REGEX) }),
             body: z.object({
               resolvedEntityData: z.record(z.string(), z.unknown())
             })
