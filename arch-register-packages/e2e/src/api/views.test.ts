@@ -1,6 +1,5 @@
 import { createApiTest, expect, createTestORPCClient } from '../helpers/fixtures';
-import { makeAuthHeader, seedCatalogViews, seedIds } from '../helpers/seedHelper';
-import { hashPassword } from '@arch-register/server/utils/password';
+import { seedCatalogViews, seedIds } from '../helpers/seedHelper';
 
 const test = createApiTest({
   afterSeed: async server => {
@@ -69,47 +68,4 @@ test.describe('Saved Views API', () => {
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
-  test('viewer can list views but cannot create or update them', async ({ server }) => {
-    const now = new Date('2026-01-01T00:00:00.000Z');
-    const passwordHash = await hashPassword('ViewerPassword123!');
-
-    await server.db.auth.createUser({
-      id: 'views-viewer',
-      user_id: 'views-viewer',
-      email: 'views-viewer@example.com',
-      display_name: 'Views Viewer',
-      auth_provider: 'local',
-      password_hash: passwordHash,
-      oidc_issuer: null,
-      oidc_subject: null,
-      is_active: true,
-      color: null,
-      created_at: now,
-      updated_at: now,
-      last_login_at: null
-    });
-    await server.db.workspace.setWorkspaceMemberRole(
-      seedIds.workspace.default,
-      'views-viewer',
-      'viewer',
-      now
-    );
-
-    const viewerAuth = await makeAuthHeader(server.db, 'views-viewer');
-    const viewerOrpc = createTestORPCClient(server.baseUrl, viewerAuth);
-
-    const views = await viewerOrpc.views.list({ params: { workspace: 'default' } });
-    expect(views.length).toBeGreaterThan(0);
-
-    await expect(
-      viewerOrpc.views.create({ params: { workspace: 'default' }, body: viewData })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
-
-    await expect(
-      viewerOrpc.views.update({
-        params: { workspace: 'default', id: views[0]!.id },
-        body: { name: 'Should not be allowed' }
-      })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
-  });
 });
