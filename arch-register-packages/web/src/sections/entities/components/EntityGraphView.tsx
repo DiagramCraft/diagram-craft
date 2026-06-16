@@ -14,9 +14,13 @@ import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { resolveSchemaColor } from '../../../lib/api';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
-import { TbEyeOff, TbPlus, TbVectorTriangle } from 'react-icons/tb';
+import { TbEyeOff, TbFileExport, TbPlus, TbVectorTriangle } from 'react-icons/tb';
 import styles from './EntityGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
+import { createDiagramFromGraph } from '../../../lib/diagramFromGraph';
+import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 
 type EntityNodeData = {
   entityId: string;
@@ -43,6 +47,9 @@ export const EntityGraphView = ({
   onEntityClick
 }: Props) => {
   const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
+  const [saveDiagramOpen, setSaveDiagramOpen] = useState(false);
+  const [pendingDiagramContent, setPendingDiagramContent] =
+    useState<SerializedDiagramDocument | null>(null);
   const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>({
     horizontalSpacing: 230,
     verticalSpacing: 108,
@@ -339,6 +346,25 @@ export const EntityGraphView = ({
         >
           Reset
         </Button>
+
+        <Button
+          size={'sm'}
+          onClick={() => {
+            const graphNodes = nodes.map(n => ({ id: n.id, label: n.data.entityName || n.id }));
+            const graphEdges = edges.map(e => ({ id: e.id, from: e.from, to: e.to, label: e.label, kind: e.kind }));
+            const content = createDiagramFromGraph(rootEntityName, graphNodes, graphEdges, {
+              layout,
+              ...layoutOptions,
+              nodeWidth: 200,
+              nodeHeight: 52
+            });
+            setPendingDiagramContent(content);
+            setSaveDiagramOpen(true);
+          }}
+        >
+          <TbFileExport size={14} />
+          Create diagram
+        </Button>
       </div>
 
       <div className={styles.eCanvas}>
@@ -402,6 +428,18 @@ export const EntityGraphView = ({
             Expand one level deeper
           </Menu.Item>
         </ContextMenu.Imperative>
+      )}
+
+      {saveDiagramOpen && pendingDiagramContent && (
+        <SaveDiagramFromGraphDialog
+          open={saveDiagramOpen}
+          onClose={() => setSaveDiagramOpen(false)}
+          onCreated={(_file: ProjectFile) => setSaveDiagramOpen(false)}
+          workspaceId={workspaceId}
+          diagramContent={pendingDiagramContent}
+          defaultName={rootEntityName}
+          initialDestination={{ type: 'entity', entityId: rootEntityId, entityName: rootEntityName }}
+        />
       )}
     </div>
   );

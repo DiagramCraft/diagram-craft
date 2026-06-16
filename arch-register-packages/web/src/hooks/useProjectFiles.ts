@@ -273,6 +273,56 @@ export const useCreateWorkspaceDiagram = (workspaceId: string) => {
   });
 };
 
+export const useCreateWorkspaceDiagramWithContent = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      name,
+      folder,
+      content
+    }: {
+      name: string;
+      folder?: string | null;
+      content: Record<string, unknown>;
+    }) => {
+      const filePath = folder ? `${folder}/${name}.json` : `${name}.json`;
+      return orpcClient.projects.createWorkspaceFile({
+        params: { workspace: workspaceId },
+        query: { path: filePath },
+        body: content
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useCreateProjectDiagramWithContent = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      name,
+      folder,
+      content
+    }: {
+      name: string;
+      folder?: string | null;
+      content: Record<string, unknown>;
+    }) => {
+      const filePath = folder ? `${folder}/${name}.json` : `${name}.json`;
+      return orpcClient.projects.saveFile({
+        params: { workspace: workspaceId, id: projectId },
+        query: { path: filePath },
+        body: content
+      });
+    },
+    onSuccess: async () => {
+      await invalidateProjectQueries(queryClient, workspaceId, projectId);
+    }
+  });
+};
+
 export const useCreateProjectMarkdown = (workspaceId: string, projectId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
