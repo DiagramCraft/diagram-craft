@@ -23,7 +23,7 @@ const PROJECT_ENTITY_JOIN_SQL = `
     pet.label     AS entity_type_label,
     pe.is_done
   FROM project_entity pe
-  JOIN entity e ON e.id = pe.entity_id
+  JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
   LEFT JOIN entity_schema es ON es.id = e.schema_id
   LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
 `;
