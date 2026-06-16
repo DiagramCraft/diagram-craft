@@ -2,7 +2,13 @@ import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
-import { buildApiAuthCtx, requireEntityAction } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  filterVisibleEntities,
+  requireEntityAction,
+  requireProjectAccess,
+  requireSchemaRead
+} from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
@@ -21,7 +27,6 @@ const serializeSnapshot = (s: EntitySnapshotDbResult) => ({
 import { importParse, importCommit } from './importOperations';
 import { generateCsv, formatArrayForCsv } from '../../utils/csv';
 import { decodeRefs } from '../../types';
-import { PermissionChecker } from '@arch-register/permissions';
 import {
   listEntities,
   getEntityFacets,
@@ -268,7 +273,6 @@ export const workspaceEntityORPCRouter = entityRouter.router({
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        const checker = new PermissionChecker();
         const schemaId = input.query._schemaId ?? null;
         const owner = input.query.owner ?? null;
         const lifecycle = input.query.lifecycle ?? null;
@@ -279,9 +283,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           context.db.catalog.listEntities(workspace)
         ]);
 
-        const allEntities = allEntitiesRaw.filter(entity =>
-          checker.hasEntityPermission(authCtx, entity, 'view_entity')
-        );
+        const allEntities = filterVisibleEntities(authCtx, allEntitiesRaw);
         const schemaMap = new Map(schemas.map(s => [s.id, s]));
         const entities = filterEntities(allEntities, { schemaId, owner, lifecycle, q }).sort(
           (a, b) => a.name.localeCompare(b.name)
@@ -406,7 +408,8 @@ export const workspaceEntityORPCRouter = entityRouter.router({
     downloadTemplate: entityRouter.entities.downloadTemplate.handler(async ({ input, context }) => {
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        await buildApiAuthCtx(context.db, workspace, context.event);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        requireSchemaRead(authCtx);
 
         const schema = await context.db.catalog.getSchema(workspace, input.params.schemaId);
         orpcAssert.present(schema, { code: 'NOT_FOUND', message: 'Schema not found' });
@@ -464,9 +467,24 @@ export const workspaceEntityORPCRouter = entityRouter.router({
       listByProject: entityRouter.entities.snapshots.listByProject.handler(async ({ input, context }) => {
         try {
           const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          await buildApiAuthCtx(context.db, workspace, context.event);
-          const snapshots = await context.db.catalog.listSnapshotsByProject(workspace, input.params.projectId);
-          return snapshots.map(serializeSnapshot);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+          const project = await context.db.project.getProject(workspace, input.params.projectId);
+          orpcAssert.present(project, { code: 'NOT_FOUND', message: 'Project not found' });
+          requireProjectAccess(
+            authCtx,
+            project.owner,
+            'You do not have permission to view snapshots for this project'
+          );
+
+          const [snapshots, entities] = await Promise.all([
+            context.db.catalog.listSnapshotsByProject(workspace, project.id),
+            context.db.catalog.listEntities(workspace)
+          ]);
+          const visibleEntityIds = new Set(filterVisibleEntities(authCtx, entities).map(e => e.id));
+
+          return snapshots
+            .filter(snapshot => visibleEntityIds.has(snapshot.entity_id))
+            .map(serializeSnapshot);
         } catch (error) {
           return toORPCError(error);
         }

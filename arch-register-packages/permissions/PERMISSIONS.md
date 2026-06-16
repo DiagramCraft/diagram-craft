@@ -55,13 +55,9 @@ Global permissions are granted through **global roles** and control platform-wid
 
 | Permission | Description | Granted By Role(s) |
 |------------|-------------|-------------------|
-| `view_schema` | View entity schemas and their definitions | `platform_admin`, `schema_admin` |
-| `edit_schema` | Create, modify, and delete entity schemas | `platform_admin`, `schema_admin` |
-| `manage_users` | Create, modify, and delete user accounts | `platform_admin`, `user_admin` |
-| `manage_teams` | Create, modify, and delete teams | `platform_admin`, `user_admin` |
-| `manage_global_roles` | Assign and revoke global roles | `platform_admin`, `user_admin` |
-| `view_audit` | View audit logs and system activity | `platform_admin`, `auditor` |
-| `admin_platform` | Full platform administration access | `platform_admin` |
+| `admin_platform` | Full platform administration access | `global_admin` |
+| `create_workspaces` | Create new workspaces | `global_admin`, `workspace_admin` |
+| `manage_workspace_roles` | Manage global workspace-role assignments | `global_admin`, `workspace_admin` |
 
 ### Virtual Permissions
 
@@ -69,8 +65,8 @@ Virtual permissions are **computed dynamically** and don't exist in the database
 
 | Permission | Description | Evaluation Logic |
 |------------|-------------|------------------|
-| `create_project` | Can create a new project | Platform admin OR has a team role that grants project creation for an owner option |
-| `create_top_level_entity` | Can create a top-level entity | Platform admin OR has a team role that grants entity creation for an owner option |
+| `create_project` | Can create a new project | `global_admin`, a workspace role with `proj.create`, or a team role that grants project creation for the requested owner |
+| `create_top_level_entity` | Can create a top-level entity | `global_admin`, a workspace role with `ent.edit`, or a team role that grants entity creation for the requested owner |
 
 **Why Virtual Permissions?**
 - Consolidate complex permission logic into reusable checks
@@ -83,10 +79,10 @@ Entity permissions control access to individual entities and are granted through
 
 | Action | Description | Granted By Role(s) |
 |--------|-------------|-------------------|
-| `view_entity` | View entity details | `viewer`, `editor`, `contributor`, `entity_admin`, `platform_admin` |
-| `edit_entity` | Modify entity properties | `editor`, `contributor`, `entity_admin`, `platform_admin` |
-| `create_child` | Create child entities | `contributor`, `entity_admin`, `platform_admin` |
-| `admin_entity` | Full entity administration (delete, manage grants) | `entity_admin`, `platform_admin` |
+| `view_entity` | View entity details | `viewer`, `editor`, `contributor`, `entity_admin`, `global_admin` |
+| `edit_entity` | Modify entity properties | `editor`, `contributor`, `entity_admin`, `global_admin` |
+| `create_child` | Create child entities | `contributor`, `entity_admin`, `global_admin` |
+| `admin_entity` | Full entity administration (delete, manage grants) | `entity_admin`, `global_admin` |
 
 **Entity Roles:**
 - `viewer`: Read-only access
@@ -150,10 +146,8 @@ Those sections map to different runtime concepts and should not be conflated:
 
 | Role | Description | Permissions |
 |------|-------------|-------------|
-| `platform_admin` | Full platform access | All global permissions + all entity actions on all entities |
-| `schema_admin` | Manage entity schemas | `view_schema`, `edit_schema` |
-| `user_admin` | Manage users and teams | `manage_users`, `manage_teams`, `manage_global_roles` |
-| `auditor` | View audit logs | `view_audit` |
+| `global_admin` | Full platform access | All global permissions + all workspace capabilities + all entity actions |
+| `workspace_admin` | Global workspace administration | `create_workspaces`, `manage_workspace_roles` |
 
 ## Permission Evaluation Flows
 
@@ -161,11 +155,11 @@ Those sections map to different runtime concepts and should not be conflated:
 
 ```
 hasGlobalPermission(permission)
-├─ Is user platform_admin?
+├─ Is user global_admin?
 │  └─ YES → ALLOW
 ├─ Is permission virtual?
 │  ├─ create_project or create_top_level_entity?
-│  │  ├─ Is user platform_admin? → YES → ALLOW
+│  │  ├─ Does user have the matching workspace capability? → YES → ALLOW
 │  │  └─ Does user have a team role in any owner team that grants creation?
 │  │     └─ YES → ALLOW
 │  │     └─ NO → DENY
@@ -175,14 +169,16 @@ hasGlobalPermission(permission)
 ```
 
 **Implementation:**
-- Server: `PermissionEvaluator.hasGlobalPermission(context, permission)`
+- Shared: `PermissionChecker.hasGlobalPermission(context, permission)`
 - Client: `AuthContext.hasGlobalPermission(permission, workspaceId?)`
 
 ### Project Permission Check
 
 ```
 hasProjectPermission(ownerTeamId, action)
-├─ Is user platform_admin?
+├─ Is user global_admin?
+│  └─ YES → ALLOW
+├─ Does user have workspace capability `proj.edit`?
 │  └─ YES → ALLOW
 └─ Does user have a team role on ownerTeamId that grants the requested project action?
    └─ YES → ALLOW
@@ -190,7 +186,7 @@ hasProjectPermission(ownerTeamId, action)
 ```
 
 **Implementation:**
-- Server: `PermissionEvaluator.hasProjectPermission(context, ownerTeamId, action)`
+- Shared: `PermissionChecker.hasProjectPermission(context, ownerTeamId, action)`
 - Helper: `canCreateProject(context, ownerTeamId)` - validates specific owner
 - Helper: `requireCanCreateProject(evaluator, context, ownerTeamId)` - throws if denied
 
@@ -203,8 +199,12 @@ hasProjectPermission(ownerTeamId, action)
 
 ```
 hasEntityPermission(entity, action)
-├─ Is user platform_admin?
+├─ Is user global_admin?
 │  └─ YES → ALLOW
+├─ Does user have workspace capability that implies entity access?
+│  ├─ `ent.edit` → contributor actions
+│  ├─ `ent.propose` → editor actions
+│  └─ `ws.view` → view_entity
 ├─ Is entity public?
 │  ├─ YES → Check if action is 'view_entity'
 │  │  └─ YES → ALLOW
@@ -225,7 +225,7 @@ hasEntityPermission(entity, action)
 ```
 
 **Implementation:**
-- Server: `PermissionEvaluator.hasEntityPermission(context, entity, action)`
+- Shared: `PermissionChecker.hasEntityPermission(context, entity, action)`
 - Helper: `canCreateTopLevelEntity(context, ownerTeamId)` - validates specific owner
 - Helper: `requireEntityAction(evaluator, context, entity, action)` - throws if denied
 
@@ -280,23 +280,26 @@ type AuthorizationContext = {
 **Location:** `arch-register-packages/server/src/auth/`
 
 **Components:**
-- `ServerPermissionEvaluator`: Extends `PermissionEvaluator` with database queries
+- `PermissionChecker`: Shared pure permission logic
+- `CapabilityEvaluator`: Shared computed capability logic
 - `ServerDataProvider`: Fetches permission data from database
 - `authorization.ts`: Helper functions for route protection
 
 **Usage:**
 ```typescript
 // Build context
-const context = await evaluator.buildContext(workspaceId, userId, dataProvider);
+const context = buildAuthorizationContext(
+  await fetchAuthorizationContextData(dataProvider, workspaceId, userId)
+);
 
 // Check permissions
-if (!evaluator.hasGlobalPermission(context, 'edit_schema')) {
+if (!checker.hasGlobalPermission(context, 'admin_platform')) {
   throw new Error('Forbidden');
 }
 
 // Or use helpers
-requireEntityAction(evaluator, context, entity, 'edit_entity');
-requireCanCreateProject(evaluator, context, ownerTeamId);
+requireEntityAction(context, entity, 'edit_entity');
+requireCanCreateProject(context, ownerTeamId);
 ```
 
 ### Client-Side (UI Enablement)
@@ -304,9 +307,8 @@ requireCanCreateProject(evaluator, context, ownerTeamId);
 **Location:** `arch-register-packages/web/src/auth/`
 
 **Components:**
-- `WebPermissionEvaluator`: Extends `PermissionEvaluator` with API calls and caching
-- `WebDataProvider`: Fetches permission data from API endpoints
 - `AuthContext`: React context providing permission checks
+- `WebDataProvider`: Fetches permission data from API endpoints
 
 **Usage:**
 ```typescript
@@ -344,31 +346,20 @@ requireCanCreateProject(evaluator, context, requestedOwnerTeamId);
 
 **Pattern:** Walk up containment tree to find inherited properties
 
-```typescript
-// Find effective visibility (walks up to first ancestor with visibility set)
-const visibility = evaluator.getEffectiveVisibility(context, entity);
-
-// Collect all ancestor IDs (for subtree grant checks)
-const ancestors = evaluator.collectAncestorIds(context, entity);
-```
+`PermissionChecker` resolves inherited visibility and ancestor relationships internally when
+evaluating `hasEntityPermission(...)`. Callers should use the high-level check rather than
+re-implement containment traversal.
 
 ### Caching (Client-Side Only)
 
 ```typescript
-// WebPermissionEvaluator caches contexts for 5 minutes
-const evaluator = new WebPermissionEvaluator();
-
-// Clear cache when permissions change
-evaluator.clearCache(workspaceId, userId);
-
-// Or clear all
-evaluator.clearCache();
+// Web clients should invalidate cached auth state after role/grant changes.
 ```
 
 ## Security Considerations
 
 1. **Server is Authoritative**: Client-side checks are for UX only. Always validate on server.
-2. **Platform Admin Bypass**: Platform admins bypass all permission checks.
+2. **Global Admin Bypass**: `global_admin` bypasses all permission checks.
 3. **Public Entities**: Public entities are viewable by anyone, but editing still requires grants.
 4. **Team Assignments**: Team-role assignments are workspace-scoped. Users can hold different team roles in different workspaces.
 5. **Grant Inheritance**: Subtree grants are powerful. Be careful when granting `entity_admin` with subtree scope.
@@ -383,8 +374,10 @@ Test individual permission checks with mock contexts:
 ```typescript
 const context: AuthorizationContext = {
   userId: 'user-123',
-  globalRoles: new Set(['schema_admin']),
-  globalPermissions: new Set(['view_schema', 'edit_schema']),
+  globalRoles: new Set(['workspace_admin']),
+  globalPermissions: new Set(['create_workspaces', 'manage_workspace_roles']),
+  workspaceRole: 'viewer',
+  workspaceRoles: new Map(),
   teamIds: new Set(['team-1']),
   teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
   teamRolesByTeam: new Map([['team-1', new Set(['team_admin'])]]),
@@ -394,7 +387,7 @@ const context: AuthorizationContext = {
   grants: []
 };
 
-expect(evaluator.hasGlobalPermission(context, 'edit_schema')).toBe(true);
+expect(checker.hasGlobalPermission(context, 'manage_workspace_roles')).toBe(true);
 ```
 
 ### Integration Tests
@@ -404,9 +397,11 @@ Test full permission flows with database:
 ```typescript
 // Create user, assign role, check permission
 const user = await db.createUser({ email: 'test@example.com' });
-await db.assignGlobalRole(user.id, 'schema_admin');
-const context = await evaluator.buildContext('workspace-1', user.id, dataProvider);
-expect(evaluator.hasGlobalPermission(context, 'edit_schema')).toBe(true);
+await db.assignGlobalRole(user.id, 'workspace_admin');
+const context = buildAuthorizationContext(
+  await fetchAuthorizationContextData(dataProvider, 'workspace-1', user.id)
+);
+expect(checker.hasGlobalPermission(context, 'manage_workspace_roles')).toBe(true);
 ```
 
 ## Migration Guide
@@ -421,14 +416,14 @@ expect(evaluator.hasGlobalPermission(context, 'edit_schema')).toBe(true);
 ### Adding a New Virtual Permission
 
 1. Add to `GlobalPermission` type with `| 'new_virtual_permission'`
-2. Implement logic in `PermissionEvaluator.hasGlobalPermission()`
+2. Implement logic in `PermissionChecker.hasGlobalPermission()` or `CapabilityEvaluator`
 3. Update client-side `AuthContext.hasGlobalPermission()` if needed
 4. Update this documentation
 5. Add tests for both client and server
 
 ### Changing Permission Logic
 
-1. Update `PermissionEvaluator` base class
-2. Ensure both `ServerPermissionEvaluator` and `WebPermissionEvaluator` inherit changes
+1. Update `PermissionChecker` or `CapabilityEvaluator`
+2. Ensure both server and client call sites continue to use the updated logic
 3. Update tests
 4. Update this documentation

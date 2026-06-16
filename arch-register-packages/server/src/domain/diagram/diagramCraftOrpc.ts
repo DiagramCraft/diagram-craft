@@ -6,7 +6,11 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  filterVisibleEntities,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import type { AIGenerateRequest } from '../ai/aiServer';
@@ -44,7 +48,10 @@ export const createDiagramCraftORPCRouter = () => {
           const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
           requireWorkspaceCapability(authCtx, 'ws.view');
 
-          const entities = await context.db.catalog.listEntities(workspace);
+          const entities = filterVisibleEntities(
+            authCtx,
+            await context.db.catalog.listEntities(workspace)
+          );
           return entities.map(entity => toDiagramCraftData(entity));
         } catch (error) {
           throw toORPCError(error);

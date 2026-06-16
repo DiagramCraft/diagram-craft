@@ -5,6 +5,7 @@ import {
   buildAuthorizationContext,
   CapabilityEvaluator,
   type EntityAction,
+  type Entity as PermissionEntity,
   fetchAuthorizationContextData,
   PermissionChecker,
   ProjectAction,
@@ -76,6 +77,19 @@ export const requireWorkspaceCapability = (
     message: message ?? 'Insufficient workspace permissions'
   });
 };
+
+export const requireSchemaRead = (context: AuthorizationContext, message?: string) => {
+  requireWorkspaceCapability(
+    context,
+    'ws.view',
+    message ?? 'You do not have permission to view schemas in this workspace'
+  );
+};
+
+export const filterVisibleEntities = <T extends PermissionEntity>(
+  context: AuthorizationContext,
+  entities: T[]
+): T[] => entities.filter(entity => checker.hasEntityPermission(context, entity, 'view_entity'));
 
 /**
  * Require project action permission, throw 403 if not allowed.

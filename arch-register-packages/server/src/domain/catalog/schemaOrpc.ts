@@ -2,7 +2,11 @@ import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  buildApiAuthCtx,
+  requireSchemaRead,
+  requireWorkspaceCapability
+} from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
@@ -28,7 +32,7 @@ export const workspaceSchemaORPCRouter = schemaRouter.router({
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        requireWorkspaceCapability(authCtx, 'ws.view');
+        requireSchemaRead(authCtx);
         return await listWorkspaceSchemas(context.db, workspace);
       } catch (error) {
         return toORPCError(error);
@@ -38,7 +42,7 @@ export const workspaceSchemaORPCRouter = schemaRouter.router({
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        requireWorkspaceCapability(authCtx, 'ws.view');
+        requireSchemaRead(authCtx);
         return await getWorkspaceSchema(context.db, workspace, input.params.id);
       } catch (error) {
         return toORPCError(error);
