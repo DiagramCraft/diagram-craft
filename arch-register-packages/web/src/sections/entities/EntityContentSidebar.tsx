@@ -44,6 +44,7 @@ import {
 } from '../../hooks/useProjectFiles';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { RenameDialog } from '../../components/RenameDialog';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
@@ -68,7 +69,6 @@ export const EntityContentSidebar = ({
   const { data: entity } = useEntity(workspaceSlug, entityId);
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const [addMenu, setAddMenu] = useState<{ x: number; y: number } | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
   const [renameTarget, setRenameTarget] = useState<MenuTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MenuTarget | null>(null);
@@ -504,17 +504,39 @@ export const EntityContentSidebar = ({
         />
         <span className={localStyles.entityName}>{entity?._name ?? '…'}</span>
         <div className={styles.headerActions}>
-          <button
-            type="button"
-            className={styles.action}
-            onClick={e => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setAddMenu({ x: rect.left, y: rect.bottom });
-            }}
-            title="New"
-          >
-            <TbPlus size={13} />
-          </button>
+          <MenuButton.Root>
+            <MenuButton.Trigger element={
+              <button type="button" className={styles.action} title="New">
+                <TbPlus size={13} />
+              </button>
+            } />
+            <MenuButton.Menu>
+              <Menu.Item
+                leftSlot={<TbFolderOpen size={13} />}
+                onClick={() => setAddFolderOpen(true)}
+              >
+                New folder
+              </Menu.Item>
+              <Menu.Item
+                leftSlot={<TbUpload size={13} />}
+                onClick={() => openUploadPicker(contentFolder ?? null)}
+              >
+                Upload file
+              </Menu.Item>
+              <Menu.Item
+                leftSlot={<TbPlus size={13} />}
+                onClick={() => setAddDiagramOpen(true)}
+              >
+                New diagram
+              </Menu.Item>
+              <Menu.Item
+                leftSlot={<TbFileText size={13} />}
+                onClick={() => setAddMarkdownOpen(true)}
+              >
+                New wiki page
+              </Menu.Item>
+            </MenuButton.Menu>
+          </MenuButton.Root>
         </div>
       </div>
       <div className={styles.scroll}>
@@ -577,35 +599,6 @@ export const EntityContentSidebar = ({
       {menu && (
         <ContextMenu.Imperative x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
           {renderMenu(menu.target)}
-        </ContextMenu.Imperative>
-      )}
-
-      {addMenu && (
-        <ContextMenu.Imperative x={addMenu.x} y={addMenu.y} onClose={() => setAddMenu(null)}>
-          <Menu.Item
-            leftSlot={<TbFolderOpen size={13} />}
-            onClick={() => { setAddMenu(null); setAddFolderOpen(true); }}
-          >
-            New folder
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbUpload size={13} />}
-            onClick={() => { setAddMenu(null); openUploadPicker(contentFolder ?? null); }}
-          >
-            Upload file
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbPlus size={13} />}
-            onClick={() => { setAddMenu(null); setAddDiagramOpen(true); }}
-          >
-            New diagram
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbFileText size={13} />}
-            onClick={() => { setAddMenu(null); setAddMarkdownOpen(true); }}
-          >
-            New wiki page
-          </Menu.Item>
         </ContextMenu.Imperative>
       )}
 

@@ -54,16 +54,12 @@ const Menu = (props: MenuProps) => {
 type ImperativeContextMenuProps = {
   x: number;
   y: number;
-  align?: 'left' | 'right';
   children: React.ReactNode;
   onClose: () => void;
 };
 
-const ImperativeContextMenu = ({ x, y, align = 'left', children, onClose }: ImperativeContextMenuProps) => {
-  const positionStyle: React.CSSProperties =
-    align === 'right'
-      ? { position: 'fixed', left: 'auto', right: window.innerWidth - x, top: y }
-      : { position: 'fixed', left: x, top: y };
+const ImperativeContextMenu = ({ x, y, children, onClose }: ImperativeContextMenuProps) => {
+  const positionStyle: React.CSSProperties = { position: 'fixed', left: x, top: y };
   return (
     <_Menu.Context type={'context'}>
       <BaseUIContextMenu.Root open onOpenChange={open => !open && onClose()}>

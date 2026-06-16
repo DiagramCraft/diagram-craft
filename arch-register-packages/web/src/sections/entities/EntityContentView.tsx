@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { useNavigate } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
@@ -8,7 +9,6 @@ import { Title } from '../../components/Title';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import { AddEntityFolderDialog } from './AddEntityFolderDialog';
-import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
   DiagramBrowserToolbar,
@@ -37,7 +37,6 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [newMenu, setNewMenu] = useState<{ x: number; y: number } | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
@@ -85,16 +84,35 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         <Title
           title={folderName}
           buttons={
-            <Button
-              variant="primary"
-              icon={<TbPlus size={12} />}
-              onClick={e => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setNewMenu({ x: rect.right, y: rect.bottom });
-              }}
-            >
-              New
-            </Button>
+            <MenuButton.Root>
+              <MenuButton.Trigger element={<Button variant="primary" icon={<TbPlus size={12} />}>New</Button>} />
+              <MenuButton.Menu align="end">
+                <Menu.Item
+                  leftSlot={<TbFolderOpen size={13} />}
+                  onClick={() => setAddFolderOpen(true)}
+                >
+                  New folder
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbUpload size={13} />}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Upload file
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbPlus size={13} />}
+                  onClick={() => setAddDiagramOpen(true)}
+                >
+                  New diagram
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbFileText size={13} />}
+                  onClick={() => setAddMarkdownOpen(true)}
+                >
+                  New wiki page
+                </Menu.Item>
+              </MenuButton.Menu>
+            </MenuButton.Root>
           }
         />
       </div>
@@ -135,35 +153,6 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
         }}
         noMatchState={{ title: 'No matches', sub: `No items match "${filter}".` }}
       />
-
-      {newMenu && (
-        <ContextMenu.Imperative x={newMenu.x} y={newMenu.y} align="right" onClose={() => setNewMenu(null)}>
-          <Menu.Item
-            leftSlot={<TbFolderOpen size={13} />}
-            onClick={() => { setNewMenu(null); setAddFolderOpen(true); }}
-          >
-            New folder
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbUpload size={13} />}
-            onClick={() => { setNewMenu(null); fileInputRef.current?.click(); }}
-          >
-            Upload file
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbPlus size={13} />}
-            onClick={() => { setNewMenu(null); setAddDiagramOpen(true); }}
-          >
-            New diagram
-          </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbFileText size={13} />}
-            onClick={() => { setNewMenu(null); setAddMarkdownOpen(true); }}
-          >
-            New wiki page
-          </Menu.Item>
-        </ContextMenu.Imperative>
-      )}
 
       <input
         ref={fileInputRef}
