@@ -14,7 +14,7 @@ import { generateTokenPair } from '@arch-register/server/utils/jwt';
 import { hashPassword } from '@arch-register/server/utils/password';
 
 export const TEST_ADMIN = {
-  id: 'test-admin',
+  id: '00000000-0000-0000-0000-e2e000000001',
   email: 'admin@e2e.test',
   password: 'TestPassword123!',
   display_name: 'E2E Admin'
@@ -54,6 +54,7 @@ export async function seedMinimal(db: DatabaseAdapter): Promise<void> {
   const passwordHash = await hashPassword(TEST_ADMIN.password);
   await db.auth.createUser({
     id: TEST_ADMIN.id,
+    user_id: 'test-admin',
     email: TEST_ADMIN.email,
     display_name: TEST_ADMIN.display_name,
     auth_provider: 'local',

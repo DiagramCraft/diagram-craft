@@ -1,5 +1,6 @@
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
 import { TEST_ADMIN, seedIds } from '../helpers/seedHelper';
+import { AUDIT_ENTITY_1_ID, AUDIT_ENTITY_2_ID, AUDIT_PROJ_1_ID } from '../helpers/testIds';
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
 
@@ -12,7 +13,7 @@ const test = baseTest.extend<{ seeded: void }>({
         user_id: TEST_ADMIN.id,
         operation: 'create',
         entity_type: 'entity',
-        entity_id: 'e2e-e-1',
+        entity_id: AUDIT_ENTITY_1_ID,
         entity_name: 'Entity One',
         entity_slug: 'entity-one',
         schema_id: null,
@@ -25,7 +26,7 @@ const test = baseTest.extend<{ seeded: void }>({
         user_id: TEST_ADMIN.id,
         operation: 'update',
         entity_type: 'entity',
-        entity_id: 'e2e-e-2',
+        entity_id: AUDIT_ENTITY_2_ID,
         entity_name: 'Entity Two',
         entity_slug: 'entity-two',
         schema_id: null,
@@ -38,7 +39,7 @@ const test = baseTest.extend<{ seeded: void }>({
         user_id: TEST_ADMIN.id,
         operation: 'delete',
         entity_type: 'project',
-        entity_id: 'e2e-p-1',
+        entity_id: AUDIT_PROJ_1_ID,
         entity_name: 'Project One',
         entity_slug: null,
         schema_id: null,
@@ -65,9 +66,9 @@ test.describe('GET /api/:workspace/audit', () => {
   });
 
   test('filters by entityId', async ({ orpc, seeded: _ }) => {
-    const logs = await orpc.audit.list({ params: { workspace: 'default' }, query: { entityId: 'e2e-e-1' } });
+    const logs = await orpc.audit.list({ params: { workspace: 'default' }, query: { entityId: AUDIT_ENTITY_1_ID } });
     expect(logs.length).toBe(1);
-    expect(logs[0]?.entity_id).toBe('e2e-e-1');
+    expect(logs[0]?.entity_id).toBe(AUDIT_ENTITY_1_ID);
   });
 
   test('filters by operation', async ({ orpc, seeded: _ }) => {
@@ -80,17 +81,17 @@ test.describe('GET /api/:workspace/audit', () => {
     const startDate = daysAgo(15).toISOString();
     const logs = await orpc.audit.list({ params: { workspace: 'default' }, query: { startDate } });
     const ids = logs.map(r => r.entity_id);
-    expect(ids).toContain('e2e-e-1');
-    expect(ids).not.toContain('e2e-e-2');
-    expect(ids).not.toContain('e2e-p-1');
+    expect(ids).toContain(AUDIT_ENTITY_1_ID);
+    expect(ids).not.toContain(AUDIT_ENTITY_2_ID);
+    expect(ids).not.toContain(AUDIT_PROJ_1_ID);
   });
 
   test('filters by endDate', async ({ orpc, seeded: _ }) => {
     const endDate = daysAgo(25).toISOString();
     const logs = await orpc.audit.list({ params: { workspace: 'default' }, query: { endDate } });
     const ids = logs.map(r => r.entity_id);
-    expect(ids).toContain('e2e-p-1');
-    expect(ids).not.toContain('e2e-e-1');
+    expect(ids).toContain(AUDIT_PROJ_1_ID);
+    expect(ids).not.toContain(AUDIT_ENTITY_1_ID);
   });
 
   test('filters by startDate and endDate range around the 20-day-old entry', async ({ orpc, seeded: _ }) => {
@@ -98,7 +99,7 @@ test.describe('GET /api/:workspace/audit', () => {
     const endDate = daysAgo(15).toISOString();
     const logs = await orpc.audit.list({ params: { workspace: 'default' }, query: { startDate, endDate } });
     expect(logs.length).toBe(1);
-    expect(logs[0]?.entity_id).toBe('e2e-e-2');
+    expect(logs[0]?.entity_id).toBe(AUDIT_ENTITY_2_ID);
   });
 
   test('limit=1 returns one entry', async ({ orpc, seeded: _ }) => {

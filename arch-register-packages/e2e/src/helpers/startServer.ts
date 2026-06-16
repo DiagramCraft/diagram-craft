@@ -5,17 +5,20 @@ import { mkdir, rm } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { toNodeHandler } from 'h3/node';
 import { seedBootstrapData } from '@arch-register/server/db/bootstrapSeed';
-import { SqliteDatabase } from '@arch-register/server/db/sqliteDatabase';
+import { createDatabase } from '@arch-register/server/db/factory';
 import { createApp } from '@arch-register/server/app';
 import { createStorage } from '@arch-register/server/storage/storage';
 
 const PORT = Number(process.env['PORT'] ?? 3011);
-const dbPath = process.env['SQLITE_PATH'] ?? '/tmp/ar-e2e-ui/test.sqlite';
+const driver = process.env['DB_DRIVER'] ?? 'sqlite';
 
-await mkdir(dirname(dbPath), { recursive: true });
-await rm(dbPath, { force: true });
+if (driver === 'sqlite') {
+  const dbPath = process.env['SQLITE_PATH'] ?? '/tmp/ar-e2e-ui/test.sqlite';
+  await mkdir(dirname(dbPath), { recursive: true });
+  await rm(dbPath, { force: true });
+}
 
-const db = new SqliteDatabase(dbPath);
+const db = await createDatabase();
 await db.core.reset();
 await seedBootstrapData(db);
 

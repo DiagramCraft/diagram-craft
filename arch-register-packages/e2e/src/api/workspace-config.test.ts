@@ -1,5 +1,6 @@
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
-import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
+import { seedCatalogEntities, seedIds, TEST_ADMIN } from '../helpers/seedHelper';
+import { CONFIG_USER_ID, CONFIG_REMOVE_USER_ID } from '../helpers/testIds';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types/workspaceConfigContract';
 import { seedEntities, seedLifecycleStates } from '@arch-register/server/db/seedData';
@@ -10,7 +11,7 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
   seededUsers: [
     async ({ server }, use) => {
       await server.db.auth.createUser({
-        id: 'config-user',
+        id: CONFIG_USER_ID,
         user_id: 'config-user',
         email: 'config-user@e2e.test',
         display_name: 'Config User',
@@ -26,7 +27,7 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
       });
 
       await server.db.auth.createUser({
-        id: 'config-remove-user',
+        id: CONFIG_REMOVE_USER_ID,
         user_id: 'config-remove-user',
         email: 'config-remove-user@e2e.test',
         display_name: 'Config Remove User',
@@ -42,8 +43,8 @@ const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId
       });
 
       await use({
-        configUserId: 'config-user',
-        removeUserId: 'config-remove-user'
+        configUserId: CONFIG_USER_ID,
+        removeUserId: CONFIG_REMOVE_USER_ID
       });
     },
     { scope: 'file' }
@@ -369,7 +370,7 @@ test.describe('workspace config routes', () => {
     expect(members).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          user_id: 'test-admin',
+          user_id: TEST_ADMIN.id,
           email: 'admin@e2e.test'
         })
       ])
@@ -377,11 +378,11 @@ test.describe('workspace config routes', () => {
     expect(users).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'test-admin',
+          id: TEST_ADMIN.id,
           email: 'admin@e2e.test'
         }),
         expect.objectContaining({
-          id: 'config-user',
+          id: CONFIG_USER_ID,
           email: 'config-user@e2e.test'
         })
       ])
