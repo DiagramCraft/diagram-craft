@@ -8,17 +8,25 @@ import type {
   LayoutOptions
 } from '../../components/DependencyGraph';
 import { TypeBadge } from '../../components/TypeBadge';
+import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { resolveSchemaColor } from '../../lib/api';
-import { TbVectorTriangle } from 'react-icons/tb';
+import { TbFileExport, TbVectorTriangle } from 'react-icons/tb';
 import styles from './SchemaGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { SaveDiagramFromGraphDialog } from '../entities/components/SaveDiagramFromGraphDialog';
+import { createDiagramFromGraph } from '../../lib/diagramFromGraph';
+import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 
 export const SchemaGraphView = () => {
-  const { schemas, workspaceSlug } = useWorkspaceContext();
+  const { schemas, workspaceSlug, workspace } = useWorkspaceContext();
   const navigate = useNavigate();
   const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
+  const [saveDiagramOpen, setSaveDiagramOpen] = useState(false);
+  const [pendingDiagramContent, setPendingDiagramContent] =
+    useState<SerializedDiagramDocument | null>(null);
   const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>({
     horizontalSpacing: 200,
     verticalSpacing: 108,
@@ -188,6 +196,26 @@ export const SchemaGraphView = () => {
             />
           </>
         )}
+
+        <Button
+          size={'sm'}
+          onClick={() => {
+            const graphNodes = schemas.map(s => ({ id: s.id, label: s.name }));
+            const graphEdges = edges.map(e => ({ id: e.id, from: e.from, to: e.to, label: e.label, kind: e.kind }));
+            const diagramName = workspace?.name ? `${workspace.name} model` : 'Model overview';
+            const content = createDiagramFromGraph(diagramName, graphNodes, graphEdges, {
+              layout,
+              ...layoutOptions,
+              nodeWidth: 170,
+              nodeHeight: 48
+            });
+            setPendingDiagramContent(content);
+            setSaveDiagramOpen(true);
+          }}
+        >
+          <TbFileExport size={14} />
+          Create diagram
+        </Button>
       </div>
       <div className={styles.eCanvas}>
         <DependencyGraph<EntitySchema>
@@ -210,6 +238,18 @@ export const SchemaGraphView = () => {
           onNodeClick={handleNodeClick}
         />
       </div>
+
+      {saveDiagramOpen && pendingDiagramContent && (
+        <SaveDiagramFromGraphDialog
+          open={saveDiagramOpen}
+          onClose={() => setSaveDiagramOpen(false)}
+          onCreated={(_file: ProjectFile) => setSaveDiagramOpen(false)}
+          workspaceId={workspaceSlug}
+          diagramContent={pendingDiagramContent}
+          defaultName={workspace?.name ? `${workspace.name} model` : 'Model overview'}
+          initialDestination={{ type: 'workspace' }}
+        />
+      )}
     </div>
   );
 };

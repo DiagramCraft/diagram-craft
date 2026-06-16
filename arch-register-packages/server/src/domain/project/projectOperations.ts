@@ -643,10 +643,13 @@ export const getFileContent = async (
       storageId = project.id;
       file = await db.project.getContentNodeByPath(ws, project.id, filePath);
     } else {
-      // Not a project - try as entity content
-      const entityNodes = await db.project.listEntityContentNodes(ws, id);
-      file = entityNodes.find(n => n.path === filePath && n.type === 'diagram') ?? null;
-      storageId = id; // entityId is used as storage path for entity diagrams
+      // Not a project - try as entity content (resolve public id → UUID)
+      const entity = await db.catalog.getEntity(ws, id);
+      if (entity) {
+        const entityNodes = await db.project.listEntityContentNodes(ws, entity.id);
+        file = entityNodes.find(n => n.path === filePath && n.type === 'diagram') ?? null;
+        storageId = entity.id; // entity UUID is used as storage path
+      }
     }
     
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });

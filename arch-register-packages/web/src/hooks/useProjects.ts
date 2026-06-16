@@ -292,6 +292,37 @@ export const useCreateEntityDiagram = (workspaceId: string, entityId: string) =>
   });
 };
 
+export const useCreateEntityDiagramWithContent = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      name,
+      folder,
+      content
+    }: {
+      name: string;
+      folder?: string | null;
+      content: Record<string, unknown>;
+    }) => {
+      const filePath = folder ? `${folder}/${name}.json` : `${name}.json`;
+      return orpcClient.projects.createEntityFile({
+        params: { workspace: workspaceId, entityId },
+        query: { path: filePath },
+        body: content
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: entityContentKeys.all(workspaceId, entityId)
+      });
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId)
+      });
+    }
+  });
+};
+
 export const useCreateEntityDiagramFromTemplate = (workspaceId: string, entityId: string) => {
   const queryClient = useQueryClient();
 
