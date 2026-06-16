@@ -44,6 +44,31 @@ export type ContentNodeDbUpsert = {
   original_filename?: string | null;
 };
 
+export type MarkdownRevisionDbResult = {
+  id: string;
+  workspace: string;
+  node_id: string;
+  revision_number: number;
+  title: string | null;
+  body: string;
+  created_at: Date;
+  created_by: string | null;
+  created_by_name: string | null;
+  restored_from_revision_id: string | null;
+};
+
+export type MarkdownRevisionDbCreate = {
+  id?: string;
+  workspace: string;
+  node_id: string;
+  revision_number: number;
+  title: string | null;
+  body: string;
+  created_at: Date;
+  created_by: string | null;
+  restored_from_revision_id?: string | null;
+};
+
 // -- Project
 
 type BaseProject = {
@@ -133,6 +158,10 @@ export type ProjectDatabase = {
     id: string
   ): Promise<ContentNodeDbResult | null>;
   getAnyContentNodeById(ws: string, id: string): Promise<ContentNodeDbResult | null>;
+  listMarkdownRevisions(ws: string, nodeId: string): Promise<MarkdownRevisionDbResult[]>;
+  getMarkdownRevision(ws: string, nodeId: string, revisionId: string): Promise<MarkdownRevisionDbResult | null>;
+  createMarkdownRevision(input: MarkdownRevisionDbCreate): Promise<MarkdownRevisionDbResult>;
+  getNextMarkdownRevisionNumber(ws: string, nodeId: string): Promise<number>;
   updateContentNodeSizeById(
     ws: string,
     projectId: string,

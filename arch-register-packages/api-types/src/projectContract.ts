@@ -57,6 +57,20 @@ export const projectFileSchema = z.object({
   original_filename: z.string().nullable().optional()
 });
 
+const markdownRevisionSummarySchema = z.object({
+  id: z.string(),
+  revision_number: z.number().int().positive(),
+  title: z.string().nullable(),
+  created_at: z.string(),
+  created_by: z.string().nullable(),
+  created_by_name: z.string().nullable(),
+  restored_from_revision_id: z.string().nullable()
+});
+
+const markdownRevisionDetailSchema = markdownRevisionSummarySchema.extend({
+  body: z.string()
+});
+
 const fileFolderSchema = z.object({
   path: z.string(),
   name: z.string(),
@@ -622,12 +636,44 @@ export const projectContract = {
         params: ws.extend({ nodeId: z.string() }),
         body: z.object({ body: z.string(), name: z.string().optional() })
       }))
+      .output(projectFileSchema),
+    listMarkdownRevisions: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/markdown/{nodeId}/revisions',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ nodeId: z.string() })
+      }))
+      .output(z.array(markdownRevisionSummarySchema)),
+    getMarkdownRevision: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/markdown/{nodeId}/revisions/{revisionId}',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ nodeId: z.string(), revisionId: z.string() })
+      }))
+      .output(markdownRevisionDetailSchema),
+    restoreMarkdownRevision: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/markdown/{nodeId}/revisions/{revisionId}/restore',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ nodeId: z.string(), revisionId: z.string() })
+      }))
       .output(projectFileSchema)
   }
 };
 
 export type Project = z.infer<typeof projectSchema>;
 export type ProjectFile = z.infer<typeof projectFileSchema>;
+export type MarkdownRevisionSummary = z.infer<typeof markdownRevisionSummarySchema>;
+export type MarkdownRevisionDetail = z.infer<typeof markdownRevisionDetailSchema>;
 export type FileTree = z.infer<typeof fileTreeSchema>;
 export type ProjectDetail = z.infer<typeof projectDetailSchema>;
 export type ProjectEntity = z.infer<typeof projectEntitySchema>;

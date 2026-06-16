@@ -48,7 +48,10 @@ import {
   createEntityMarkdownDoc,
   createWorkspaceMarkdownDoc,
   getMarkdownContent,
-  saveMarkdownContent
+  saveMarkdownContent,
+  listMarkdownRevisions,
+  getMarkdownRevision,
+  restoreMarkdownRevision
 } from './projectOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -702,6 +705,52 @@ export const projectORPCRouter = projectRouter.router({
             input.params.nodeId,
             input.body.body,
             input.body.name,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    listMarkdownRevisions: projectRouter.projects.listMarkdownRevisions.handler(
+      async ({ input, context }) => {
+        try {
+          return await listMarkdownRevisions(
+            context.db,
+            input.params.workspace,
+            input.params.nodeId,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    getMarkdownRevision: projectRouter.projects.getMarkdownRevision.handler(
+      async ({ input, context }) => {
+        try {
+          return await getMarkdownRevision(
+            context.db,
+            input.params.workspace,
+            input.params.nodeId,
+            input.params.revisionId,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    restoreMarkdownRevision: projectRouter.projects.restoreMarkdownRevision.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await restoreMarkdownRevision(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.nodeId,
+            input.params.revisionId,
             context.event
           );
         } catch (error) {

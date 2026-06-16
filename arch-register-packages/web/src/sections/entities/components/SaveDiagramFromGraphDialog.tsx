@@ -67,7 +67,7 @@ export const SaveDiagramFromGraphDialog = ({
     setSelectedFolder(null);
     setName(defaultName);
     setError('');
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, defaultDestType, initialDestination, defaultName]);
 
   // Determine if we're in a "fixed entity" mode (entity was passed in as initialDestination)
   const fixedEntityId =

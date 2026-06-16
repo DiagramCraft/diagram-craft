@@ -43,10 +43,14 @@ export const validateEntityDetailSearch = (raw: Record<string, unknown>): Entity
 
 export type MarkdownSearchParams = {
   mode?: 'edit' | 'preview';
+  panel?: 'preview' | 'history';
+  revisionId?: string;
 };
 
 export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSearchParams => ({
   mode: raw.mode === 'edit' || raw.mode === 'preview' ? raw.mode : undefined,
+  panel: raw.panel === 'preview' || raw.panel === 'history' ? raw.panel : undefined,
+  revisionId: typeof raw.revisionId === 'string' ? raw.revisionId : undefined
 });
 
 // Project detail params
