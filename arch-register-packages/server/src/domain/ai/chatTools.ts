@@ -56,6 +56,12 @@ type UpdateEntityArgs = {
   fields?: Record<string, unknown>;
 };
 
+type TraverseRelationsArgs = {
+  entityId: string;
+  depth?: number;
+  direction?: 'outgoing' | 'incoming' | 'both';
+};
+
 const queryEntitiesTool = toolDefinition({
   name: 'query_entities',
   description:
@@ -204,6 +210,61 @@ const updateEntityTool = toolDefinition({
       message: { type: 'string' }
     },
     required: ['entity', 'message'],
+    additionalProperties: false
+  }
+});
+
+const traverseRelationsTool = toolDefinition({
+  name: 'traverse_relations',
+  description:
+    'Walk the relation graph from a starting entity up to a given depth. Returns a subgraph of nodes (entities) and edges (relations). Useful for impact analysis, dependency discovery, and finding orphaned entities.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      entityId: { type: 'string' },
+      depth: { type: 'number', minimum: 1, maximum: 5 },
+      direction: { type: 'string', enum: ['outgoing', 'incoming', 'both'] }
+    },
+    required: ['entityId'],
+    additionalProperties: false
+  },
+  outputSchema: {
+    type: 'object',
+    properties: {
+      entityId: { type: 'string' },
+      nodes: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            slug: { type: 'string' },
+            schemaId: { type: 'string' },
+            schemaName: { type: 'string' }
+          },
+          required: ['id', 'name', 'slug', 'schemaId', 'schemaName'],
+          additionalProperties: false
+        }
+      },
+      edges: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            sourceId: { type: 'string' },
+            targetId: { type: 'string' },
+            fieldId: { type: 'string' },
+            fieldName: { type: 'string' },
+            kind: { type: 'string', enum: ['reference', 'containment'] }
+          },
+          required: ['sourceId', 'targetId', 'fieldId', 'fieldName', 'kind'],
+          additionalProperties: false
+        }
+      },
+      truncated: { type: 'boolean' }
+    },
+    required: ['entityId', 'nodes', 'edges', 'truncated'],
     additionalProperties: false
   }
 });
@@ -617,5 +678,95 @@ export const createAiChatTools = (
     };
   });
 
-  return [queryEntities, getEntityDetails, createEntity, updateEntity];
+  const traverseRelations = traverseRelationsTool.server(async rawArgs => {
+    const args = rawArgs as TraverseRelationsArgs;
+    const direction = args.direction ?? 'both';
+    const maxDepth = Math.min(Math.max(Math.trunc(args.depth ?? 2), 1), 5);
+
+    const [schemas, rawEntities] = await Promise.all([
+      db.catalog.listSchemas(workspaceId),
+      db.catalog.listEntities(workspaceId)
+    ]);
+    const entities = getVisibleEntities(rawEntities, authCtx);
+    const schemaMap = new Map(schemas.map(s => [s.id, s]));
+    const entityMap = new Map(entities.map(e => [e.id, e]));
+
+    const visited = new Set<string>([args.entityId]);
+    const nodes = new Map<string, ReturnType<typeof summarizeRelationTarget>>();
+    const edgeKeys = new Set<string>();
+    const edges: Array<{
+      sourceId: string;
+      targetId: string;
+      fieldId: string;
+      fieldName: string;
+      kind: string;
+    }> = [];
+
+    const queue: Array<{ id: string; depth: number }> = [{ id: args.entityId, depth: 0 }];
+
+    const MAX_NODES = 100;
+    let truncated = false;
+
+    const addEdge = (
+      sourceId: string,
+      targetId: string,
+      fieldId: string,
+      fieldName: string,
+      kind: string
+    ) => {
+      const key = `${sourceId}:${targetId}:${fieldId}`;
+      if (edgeKeys.has(key)) return;
+      edgeKeys.add(key);
+      edges.push({ sourceId, targetId, fieldId, fieldName, kind });
+    };
+
+    while (queue.length > 0) {
+      const { id: currentId, depth } = queue.shift()!;
+      const current = entityMap.get(currentId);
+      if (!current) continue;
+
+      const schema = schemaMap.get(current.schema_id);
+      nodes.set(currentId, summarizeRelationTarget(current, schema?.name));
+
+      if (depth >= maxDepth) continue;
+
+      if (direction === 'outgoing' || direction === 'both') {
+        for (const field of relationFields(schema?.fields ?? [])) {
+          for (const refId of decodeRefs(current.data[field.id])) {
+            addEdge(currentId, refId, field.id, field.name, field.type);
+            if (!visited.has(refId)) {
+              visited.add(refId);
+              if (nodes.size < MAX_NODES) queue.push({ id: refId, depth: depth + 1 });
+              else truncated = true;
+            }
+          }
+        }
+      }
+
+      if (direction === 'incoming' || direction === 'both') {
+        for (const source of entities) {
+          if (source.id === currentId) continue;
+          const sourceSchema = schemaMap.get(source.schema_id);
+          for (const field of relationFields(sourceSchema?.fields ?? [])) {
+            if (!decodeRefs(source.data[field.id]).includes(currentId)) continue;
+            addEdge(source.id, currentId, field.id, field.name, field.type);
+            if (!visited.has(source.id)) {
+              visited.add(source.id);
+              if (nodes.size < MAX_NODES) queue.push({ id: source.id, depth: depth + 1 });
+              else truncated = true;
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      entityId: args.entityId,
+      nodes: Array.from(nodes.values()),
+      edges,
+      truncated
+    };
+  });
+
+  return [queryEntities, getEntityDetails, createEntity, updateEntity, traverseRelations];
 };
