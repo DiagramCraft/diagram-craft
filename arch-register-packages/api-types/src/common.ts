@@ -11,6 +11,13 @@ export const wsAndId = z.object({
   id: z.string()
 });
 
+export const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+export const wsAndUUID = z.object({
+  workspace: z.string(),
+  id: z.string().regex(UUID_REGEX)
+});
+
 export const foreignKeySchema = z.object({
   id: z.string(),
   name: z.string()

@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId, teamRoleSchema, workspaceCapabilitySchema } from '@arch-register/api-types/common';
+import { ws, wsAndUUID, teamRoleSchema, workspaceCapabilitySchema } from '@arch-register/api-types/common';
 
 const timestampOutputSchema = z
   .union([z.string(), z.date()])
@@ -201,7 +201,7 @@ export const workspaceConfigContract = {
         })
         .input(
           z.object({
-            params: wsAndId,
+            params: wsAndUUID,
             body: roleInputSchema
           })
         )
@@ -212,7 +212,7 @@ export const workspaceConfigContract = {
           path: '/{workspace}/config/roles/{id}',
           inputStructure: 'detailed'
         })
-        .input(z.object({ params: wsAndId }))
+        .input(z.object({ params: wsAndUUID }))
         .output(roleDefinitionDbSchema)
     },
     members: {
@@ -228,7 +228,7 @@ export const workspaceConfigContract = {
         })
         .input(
           z.object({
-            params: wsAndId,
+            params: wsAndUUID,
             body: z.object({ roleId: z.string() })
           })
         )
@@ -239,7 +239,7 @@ export const workspaceConfigContract = {
           path: '/{workspace}/config/members/{id}',
           inputStructure: 'detailed'
         })
-        .input(z.object({ params: wsAndId }))
+        .input(z.object({ params: wsAndUUID }))
         .output(memberDbSchema)
     },
     users: {

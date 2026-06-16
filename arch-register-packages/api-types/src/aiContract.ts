@@ -1,6 +1,6 @@
 import { oc, eventIterator } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId } from '@arch-register/api-types/common';
+import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
 const aiConversationSchema = z.object({
   id: z.string(),
@@ -70,7 +70,7 @@ export const aiContract = {
       })
       .input(
         z.object({
-          params: wsAndId,
+          params: wsAndUUID,
           body: z.object({ title: z.string() })
         })
       )
@@ -81,7 +81,7 @@ export const aiContract = {
         path: '/{workspace}/ai/conversations/{id}',
         inputStructure: 'detailed'
       })
-      .input(z.object({ params: wsAndId }))
+      .input(z.object({ params: wsAndUUID }))
       .output(aiConversationSchema),
     listMessages: oc
       .route({
@@ -89,7 +89,7 @@ export const aiContract = {
         path: '/{workspace}/ai/conversations/{id}/messages',
         inputStructure: 'detailed'
       })
-      .input(z.object({ params: wsAndId }))
+      .input(z.object({ params: wsAndUUID }))
       .output(z.array(aiMessageSchema)),
     getConfig: oc
       .route({ method: 'GET', path: '/{workspace}/ai/config', inputStructure: 'detailed' })

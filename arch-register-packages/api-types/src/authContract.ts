@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { teamRoleSchema, workspaceCapabilitySchema } from '@arch-register/api-types/common';
+import { teamRoleSchema, workspaceCapabilitySchema, UUID_REGEX } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -106,7 +106,7 @@ export const authProtectedContract = {
       .route({ method: 'PATCH', path: '/users/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ id: z.string() }),
+          params: z.object({ id: z.string().regex(UUID_REGEX) }),
           body: z.object({
             color: z.string().nullable().optional(),
             display_name: z.string().optional()
@@ -117,13 +117,13 @@ export const authProtectedContract = {
     listUsers: oc.route({ method: 'GET', path: '/auth/users' }).output(z.array(userSummarySchema)),
     getGlobalRoles: oc
       .route({ method: 'GET', path: '/auth/users/{id}/global-roles', inputStructure: 'detailed' })
-      .input(z.object({ params: z.object({ id: z.string() }) }))
+      .input(z.object({ params: z.object({ id: z.string().regex(UUID_REGEX) }) }))
       .output(z.array(globalRoleAssignmentSchema)),
     replaceGlobalRoles: oc
       .route({ method: 'PUT', path: '/auth/users/{id}/global-roles', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: z.object({ id: z.string() }),
+          params: z.object({ id: z.string().regex(UUID_REGEX) }),
           body: z.object({ roles: z.array(globalRoleSchema) })
         })
       )

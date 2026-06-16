@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId } from '@arch-register/api-types/common';
+import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
 const requirementLevelSchema = z.enum(['required', 'expected', 'optional']).nullish();
 
@@ -114,7 +114,7 @@ export const workspaceSchemaContract = {
       .route({ method: 'GET', path: '/{workspace}/schemas/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: wsAndId
+          params: wsAndUUID
         })
       )
       .output(entitySchemaSchema),
@@ -126,7 +126,7 @@ export const workspaceSchemaContract = {
       .route({ method: 'PUT', path: '/{workspace}/schemas/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: wsAndId,
+          params: wsAndUUID,
           body: updateSchemaBodySchema
         })
       )
@@ -135,7 +135,7 @@ export const workspaceSchemaContract = {
       .route({ method: 'DELETE', path: '/{workspace}/schemas/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: wsAndId
+          params: wsAndUUID
         })
       )
       .output(deleteSchemaResponseSchema)

@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId } from '@arch-register/api-types/common';
+import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -134,7 +134,7 @@ export const workspaceViewContract = {
       .route({ method: 'PATCH', path: '/{workspace}/views/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: wsAndId,
+          params: wsAndUUID,
           body: updateViewBodySchema
         })
       )
@@ -143,7 +143,7 @@ export const workspaceViewContract = {
       .route({ method: 'DELETE', path: '/{workspace}/views/{id}', inputStructure: 'detailed' })
       .input(
         z.object({
-          params: wsAndId
+          params: wsAndUUID
         })
       )
       .output(deleteViewResponseSchema)
@@ -174,7 +174,7 @@ export const workspaceViewContract = {
       })
       .input(
         z.object({
-          params: wsAndId
+          params: wsAndUUID
         })
       )
       .output(deletePinnedEntityResponseSchema)
