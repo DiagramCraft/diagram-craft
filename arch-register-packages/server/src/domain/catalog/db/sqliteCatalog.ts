@@ -24,6 +24,7 @@ const ENTITY_JOIN_SQL = `
   LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
   LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
   JOIN entity_schema es ON es.id = e.schema_id
+  WHERE e.deleted_at IS NULL
 `;
 
 export class SqliteCatalogDatabase extends SqliteDatabaseBase implements CatalogDatabase {
@@ -158,7 +159,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async listEntities(workspace: string) {
     return this.all(
-      `${ENTITY_JOIN_SQL} WHERE e.workspace = ? ORDER BY e.name`,
+      `${ENTITY_JOIN_SQL} AND e.workspace = ? ORDER BY e.name`,
       [workspace],
       sqliteMappers.enrichedEntity
     );
@@ -169,7 +170,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       return this.getEntityByPublicId(workspace, identifier);
     }
     return this.get(
-      `${ENTITY_JOIN_SQL} WHERE e.workspace = ? AND e.id = ?`,
+      `${ENTITY_JOIN_SQL} AND e.workspace = ? AND e.id = ?`,
       [workspace, identifier],
       sqliteMappers.enrichedEntity
     );
@@ -177,7 +178,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   private async getEntityByPublicId(workspace: string, publicId: string) {
     return this.get(
-      `${ENTITY_JOIN_SQL} WHERE e.public_id = ? AND e.workspace = ?`,
+      `${ENTITY_JOIN_SQL} AND e.public_id = ? AND e.workspace = ?`,
       [publicId, workspace],
       sqliteMappers.enrichedEntity
     );
@@ -238,7 +239,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   async deleteEntity(workspace: string, id: string) {
     const row = await this.getEntity(workspace, id);
     if (!row) return null;
-    this.run('DELETE FROM entity WHERE workspace = ? AND id = ?', [workspace, id]);
+    this.run(
+      'UPDATE entity SET deleted_at = ?, owner = NULL, lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ? AND id = ?',
+      [new Date().toISOString(), workspace, id]
+    );
     return row;
   }
 

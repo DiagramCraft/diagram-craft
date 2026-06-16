@@ -580,7 +580,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         pet.label     AS entity_type_label,
         pe.is_done
       FROM project_entity pe
-      JOIN entity e ON e.id = pe.entity_id
+      JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
       LEFT JOIN entity_schema es ON es.id = e.schema_id
       LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
       WHERE pe.workspace = ${workspace} AND pe.project_id = ${projectId}
@@ -603,7 +603,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         pet.label     AS entity_type_label,
         pe.is_done
       FROM project_entity pe
-      JOIN entity e ON e.id = pe.entity_id
+      JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
       LEFT JOIN entity_schema es ON es.id = e.schema_id
       LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
       WHERE pe.workspace = ${workspace} AND pe.entity_id = ${entityId}
@@ -631,7 +631,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
           pet.label    AS entity_type_label,
           pe.is_done
         FROM project_entity pe
-        JOIN entity e ON e.id = pe.entity_id
+        JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
         LEFT JOIN entity_schema es ON es.id = e.schema_id
         LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
         WHERE pe.workspace = ${input.workspace} AND pe.project_id = ${input.project_id} AND pe.entity_id = ${input.entity_id}
@@ -670,7 +670,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
           pet.label    AS entity_type_label,
           pe.is_done
         FROM project_entity pe
-        JOIN entity e ON e.id = pe.entity_id
+        JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
         LEFT JOIN entity_schema es ON es.id = e.schema_id
         LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
         WHERE pe.workspace = ${workspace} AND pe.project_id = ${projectId} AND pe.entity_id = ${entityId}

@@ -12,7 +12,6 @@ import type {
   WorkspaceEnumDbResult,
   EntityGrantDbResult,
   PinnedEntityDbResult,
-  Entity,
   PinnedEntityDbCreate,
   EntitySnapshotDbCreate,
   EntitySnapshotDbResult
@@ -165,7 +164,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
       LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
       JOIN entity_schema es ON es.id = e.schema_id
-      WHERE e.workspace = ${workspace}
+      WHERE e.workspace = ${workspace} AND e.deleted_at IS NULL
       ORDER BY e.name
     `;
   }
@@ -185,7 +184,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
       LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
       JOIN entity_schema es ON es.id = e.schema_id
-      WHERE e.workspace = ${workspace} AND e.id = ${identifier}
+      WHERE e.workspace = ${workspace} AND e.id = ${identifier} AND e.deleted_at IS NULL
     `;
     return row ?? null;
   }
@@ -202,7 +201,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
       LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
       JOIN entity_schema es ON es.id = e.schema_id
-      WHERE e.public_id = ${publicId} AND e.workspace = ${workspace}
+      WHERE e.public_id = ${publicId} AND e.workspace = ${workspace} AND e.deleted_at IS NULL
     `;
     return row ?? null;
   }
@@ -267,12 +266,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async deleteEntity(workspace: string, id: string) {
     try {
-      const [row] = await this.sql<Entity[]>`
-        DELETE FROM entity
+      const row = await this.getEntity(workspace, id);
+      if (!row) return null;
+      await this.sql`
+        UPDATE entity
+        SET deleted_at = NOW(), owner = NULL, lifecycle = NULL, target_lifecycle = NULL
         WHERE workspace = ${workspace} AND id = ${id}
-        RETURNING *
       `;
-      return row ?? null;
+      return row;
     } catch (error) {
       return normalizePostgresError(error);
     }
