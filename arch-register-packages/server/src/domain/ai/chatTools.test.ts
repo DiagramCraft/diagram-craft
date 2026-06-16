@@ -35,7 +35,17 @@ const schemas: SchemaDbResult[] = [
     workspace: 'ws-1',
     name: 'Capability',
     description: '',
-    fields: [{ id: 'critical', name: 'Critical', type: 'boolean' }],
+    fields: [
+      { id: 'critical', name: 'Critical', type: 'boolean' },
+      {
+        id: 'builtOn',
+        name: 'Built on',
+        type: 'reference',
+        schemaId: 'capability',
+        minCount: 0,
+        maxCount: -1
+      }
+    ],
     color: null,
     icon: null,
     default_owner: null,
@@ -107,8 +117,51 @@ const entities: Entity[] = [
     links: [],
     schema_id: 'capability',
     data: {
-      critical: true
+      critical: true,
+      builtOn: 'entity-cap-2'
     },
+    visibility_mode: 'public',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: 'entity-cap-2',
+    workspace: 'ws-1',
+    public_id: 'CAP-2',
+    slug: 'card-network',
+    namespace: '',
+    name: 'Card Network',
+    description: 'External card network integration',
+    owner: 'team-payments',
+    lifecycle: 'production',
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: [],
+    links: [],
+    schema_id: 'capability',
+    data: {
+      critical: false
+    },
+    visibility_mode: 'public',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: 'entity-app-3',
+    workspace: 'ws-1',
+    public_id: 'APP-3',
+    slug: 'orphan-service',
+    namespace: '',
+    name: 'Orphan Service',
+    description: 'No relations',
+    owner: null,
+    lifecycle: null,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: [],
+    links: [],
+    schema_id: 'application',
+    data: {},
     visibility_mode: 'public',
     created_at: now,
     updated_at: now
@@ -312,6 +365,82 @@ describe('createAiChatTools', () => {
     });
     expect(createdNotifications.at(-1)).toMatchObject({
       changedByDisplayName: actor.displayName
+    });
+  });
+
+  it('traverses outgoing relations one hop', async () => {
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
+    const traverseRelations = tools.find(tool => tool.name === 'traverse_relations');
+
+    expect(traverseRelations).toBeDefined();
+
+    const result = await traverseRelations!.execute?.({
+      entityId: 'entity-app-2',
+      depth: 1,
+      direction: 'outgoing'
+    });
+
+    expect(result).toMatchObject({
+      entityId: 'entity-app-2',
+      truncated: false
+    });
+    expect((result as { nodes: { id: string }[] }).nodes.map(n => n.id).sort()).toEqual(
+      ['entity-app-2', 'entity-cap-1'].sort()
+    );
+    expect(result).toMatchObject({
+      edges: [{ sourceId: 'entity-app-2', targetId: 'entity-cap-1', fieldId: 'dependsOn', kind: 'reference' }]
+    });
+  });
+
+  it('traverses incoming relations one hop', async () => {
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
+    const traverseRelations = tools.find(tool => tool.name === 'traverse_relations');
+
+    const result = await traverseRelations!.execute?.({
+      entityId: 'entity-cap-1',
+      depth: 1,
+      direction: 'incoming'
+    });
+
+    expect((result as { nodes: { id: string }[] }).nodes.map(n => n.id).sort()).toEqual(
+      ['entity-app-2', 'entity-cap-1'].sort()
+    );
+    expect(result).toMatchObject({
+      edges: [{ sourceId: 'entity-app-2', targetId: 'entity-cap-1', fieldId: 'dependsOn', kind: 'reference' }]
+    });
+  });
+
+  it('traverses both directions across multiple hops', async () => {
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
+    const traverseRelations = tools.find(tool => tool.name === 'traverse_relations');
+
+    // entity-app-2 → entity-cap-1 → entity-cap-2 (depth 2, outgoing)
+    const result = await traverseRelations!.execute?.({
+      entityId: 'entity-app-2',
+      depth: 2,
+      direction: 'outgoing'
+    });
+
+    const nodeIds = (result as { nodes: { id: string }[] }).nodes.map(n => n.id).sort();
+    expect(nodeIds).toEqual(['entity-app-2', 'entity-cap-1', 'entity-cap-2'].sort());
+    expect((result as { edges: unknown[] }).edges).toHaveLength(2);
+  });
+
+  it('returns only the starting node for an entity with no relations', async () => {
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
+    const traverseRelations = tools.find(tool => tool.name === 'traverse_relations');
+
+    const result = await traverseRelations!.execute?.({
+      entityId: 'entity-app-3',
+      depth: 2,
+      direction: 'both'
+    });
+
+    expect(result).toMatchObject({
+      entityId: 'entity-app-3',
+      nodes: [{ id: 'entity-app-3', name: 'Orphan Service' }],
+      edges: [],
+      truncated: false
     });
   });
 });
