@@ -9,7 +9,7 @@ import type {
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
 import { PickerConfig } from '../PickerToolWindow/pickerConfig';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TbLetterCase } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import { mustExist } from '@diagram-craft/utils/assert';
@@ -96,91 +96,90 @@ export const StylesPanel = ({
   filterType,
   onFilterTypeChange
 }: StylesPanelProps<StyleCombination>) => {
-  const openItems = useMemo(() => groups.map(g => g.stylesheet?.id ?? 'no-stylesheet'), [groups]);
+  const [openItems, setOpenItems] = useState<string[]>([]);
+  useEffect(() => setOpenItems(groups.map(g => g.stylesheet?.id ?? 'no-stylesheet')), [groups]);
 
   return (
-    <ToolWindowPanel mode={'headless-no-padding'} id={'styles-list'} title={'Styles'}>
-      <div className={styles.icStylesPanel}>
-        <FilterSelect filterType={filterType} onFilterTypeChange={onFilterTypeChange} />
-        {groups.length === 0 ? (
-          <EmptyStyleComponent />
-        ) : (
-          <Accordion.Root type={'multiple'} value={openItems}>
-            {groups.map(group => {
-              const groupId = group.stylesheet?.id ?? 'no-stylesheet';
+    <div className={styles.icStylesPanel}>
+      <FilterSelect filterType={filterType} onFilterTypeChange={onFilterTypeChange} />
+      {groups.length === 0 ? (
+        <EmptyStyleComponent />
+      ) : (
+        <Accordion.Root type={'multiple'} value={openItems} onValueChange={v => setOpenItems(v)}>
+          {groups.map(group => {
+            const groupId = group.stylesheet?.id ?? 'no-stylesheet';
 
-              return (
-                <Accordion.Item key={groupId} value={groupId}>
-                  <Accordion.ItemHeader>
-                    <div className={styles.eName}>
-                      <span>{group.stylesheet?.name}</span>
-                      {group.stylesheet?.type && (
-                        <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
-                          ({group.stylesheet?.type})
-                        </span>
-                      )}
-                    </div>
-                  </Accordion.ItemHeader>
-                  <Accordion.ItemContent>
-                    <div className={styles.eStyleList}>
-                      {group.styles.map((style, idx) => {
-                        return (
-                          <ContextMenu.Root key={`${groupId}-${idx}`}>
-                            <ContextMenu.Trigger
-                              element={
-                                <div
-                                  key={`${groupId}-${idx}`}
-                                  className={styles.eItem}
-                                  onClick={() => onStyleClick(style)}
-                                >
-                                  <div className={styles.ePreview}>
-                                    <PickerCanvas
-                                      size={PickerConfig.size}
-                                      diagram={mustExist(style.previewDiagram)}
-                                      showHover={false}
-                                      onMouseDown={e => {
-                                        if (e.button !== 1) return;
-                                        onStyleClick(style);
-                                      }}
-                                    />
-                                  </div>
-                                  <div className={styles.eInfo}>
-                                    <div className={styles.eCount}>
-                                      {style.elements.length}
-                                      {style.differences.length > 0 && (
-                                        <span className={styles.eDirtyIndicator}>*</span>
-                                      )}
-                                    </div>
+            return (
+              <Accordion.Item key={groupId} value={groupId}>
+                <Accordion.ItemHeader>
+                  <div className={styles.eName}>
+                    <span>{group.stylesheet?.name}</span>
+                    {group.stylesheet?.type && (
+                      <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
+                        ({group.stylesheet?.type})
+                      </span>
+                    )}
+                  </div>
+                </Accordion.ItemHeader>
+                <Accordion.ItemContent>
+                  <div className={styles.eStyleList}>
+                    {group.styles.map((style, idx) => {
+                      return (
+                        <ContextMenu.Root key={`${groupId}-${idx}`}>
+                          <ContextMenu.Trigger
+                            element={
+                              <div
+                                key={`${groupId}-${idx}`}
+                                className={styles.eItem}
+                                onClick={() => onStyleClick(style)}
+                              >
+                                <div className={styles.ePreview}>
+                                  <PickerCanvas
+                                    size={PickerConfig.size}
+                                    diagram={mustExist(style.previewDiagram)}
+                                    showHover={false}
+                                    onMouseDown={e => {
+                                      if (e.button !== 1) return;
+                                      onStyleClick(style);
+                                    }}
+                                  />
+                                </div>
+                                <div className={styles.eInfo}>
+                                  <div className={styles.eCount}>
+                                    {style.elements.length}
+                                    {style.differences.length > 0 && (
+                                      <span className={styles.eDirtyIndicator}>*</span>
+                                    )}
                                   </div>
                                 </div>
-                              }
-                              tooltip={
-                                style.differences.length > 0 ? (
-                                  <div className={styles.icTooltip}>
-                                    {style.differences.join('\n')}
-                                  </div>
-                                ) : null
-                              }
-                            />
-                            <StyleContextMenu
-                              style={style}
-                              onStyleReset={onStyleReset}
-                              onCreateStylesheet={onCreateStylesheet}
-                              onCopyStyle={onCopyStyle}
-                              onPasteStyle={onPasteStyle}
-                            />
-                          </ContextMenu.Root>
-                        );
-                      })}
-                    </div>
-                  </Accordion.ItemContent>
-                </Accordion.Item>
-              );
-            })}
-          </Accordion.Root>
-        )}
-      </div>
-    </ToolWindowPanel>
+                              </div>
+                            }
+                            tooltip={
+                              style.differences.length > 0 ? (
+                                <div className={styles.icTooltip}>
+                                  {style.differences.join('\n')}
+                                </div>
+                              ) : null
+                            }
+                          />
+                          <StyleContextMenu
+                            style={style}
+                            onStyleReset={onStyleReset}
+                            onCreateStylesheet={onCreateStylesheet}
+                            onCopyStyle={onCopyStyle}
+                            onPasteStyle={onPasteStyle}
+                          />
+                        </ContextMenu.Root>
+                      );
+                    })}
+                  </div>
+                </Accordion.ItemContent>
+              </Accordion.Item>
+            );
+          })}
+        </Accordion.Root>
+      )}
+    </div>
   );
 };
 

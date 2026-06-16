@@ -361,6 +361,10 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
       doc.props.recentEdgeStylesheets.set(document.props.recentEdgeStylesheets);
     }
 
+    if (document.props?.metadata) {
+      doc.props.metadata.setAll(document.props.metadata);
+    }
+
     if (document.stories) {
       for (const story of document.stories) {
         const newStory = doc.stories.addStory(story.id, story.name);

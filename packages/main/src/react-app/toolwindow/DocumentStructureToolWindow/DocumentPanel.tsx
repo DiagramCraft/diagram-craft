@@ -5,13 +5,14 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { defaultAppActions } from '../../appActionMap';
-import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { type ReactElement } from 'react';
 import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
 import { mustExist } from '@diagram-craft/utils/assert';
 import styles from './StructureTree.module.css';
+import { MetadataFields } from '../../MetadataFields';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 type Relation = 'before' | 'after';
 
@@ -173,24 +174,31 @@ export const DocumentPanel = () => {
   };
 
   return (
-    <ToolWindowPanel
-      mode={'headless-no-padding'}
-      id={'document'}
-      title={'Document'}
-      style={{ padding: '0.25rem 0' }}
-    >
-      <div className="cmp-document-list">
-        <Tree.Root className={styles.icStructureTree}>
-          {document.diagrams.map(node => (
-            <RootDiagramNode
-              key={node.id}
-              node={node}
-              activeDiagramId={diagram.id}
-              onValueChange={onValueChange}
-            />
-          ))}
-        </Tree.Root>
-      </div>
-    </ToolWindowPanel>
+    <Accordion.Root type="multiple" defaultValue={['document', 'metadata']}>
+      <Accordion.Item value="metadata">
+        <Accordion.ItemHeader>Metadata</Accordion.ItemHeader>
+        <Accordion.ItemContent>
+          <MetadataFields document={document} />
+        </Accordion.ItemContent>
+      </Accordion.Item>
+
+      <Accordion.Item value="document">
+        <Accordion.ItemHeader>Diagrams</Accordion.ItemHeader>
+        <Accordion.ItemContent forceMount>
+          <div className="cmp-document-list">
+            <Tree.Root className={styles.icStructureTree}>
+              {document.diagrams.map(node => (
+                <RootDiagramNode
+                  key={node.id}
+                  node={node}
+                  activeDiagramId={diagram.id}
+                  onValueChange={onValueChange}
+                />
+              ))}
+            </Tree.Root>
+          </div>
+        </Accordion.ItemContent>
+      </Accordion.Item>
+    </Accordion.Root>
   );
 };

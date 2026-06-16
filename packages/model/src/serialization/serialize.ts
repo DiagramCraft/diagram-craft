@@ -51,7 +51,8 @@ export const serializeDiagramDocument = async (
       },
       stencils: document.props.recentStencils.stencils,
       activeStencilPackages: document.props.activeStencilPackages.ids,
-      recentEdgeStylesheets: document.props.recentEdgeStylesheets.stylesheets
+      recentEdgeStylesheets: document.props.recentEdgeStylesheets.stylesheets,
+      metadata: document.props.metadata.getAll()
     },
     data: {
       providers: document.data.providers.map(p => ({
