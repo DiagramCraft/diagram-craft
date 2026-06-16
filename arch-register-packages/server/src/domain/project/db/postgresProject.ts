@@ -7,7 +7,9 @@ import type {
   ContentNodeDbResult,
   ProjectDbUpdate,
   ContentNodeDbUpsert,
-  DiagramEntityFileDbResult
+  DiagramEntityFileDbResult,
+  MarkdownRevisionDbCreate,
+  MarkdownRevisionDbResult
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { randomUUID } from 'node:crypto';
@@ -142,6 +144,54 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       WHERE workspace = ${workspace} AND id = ${id}
     `;
     return row ?? null;
+  }
+
+  async listMarkdownRevisions(workspace: string, nodeId: string) {
+    return await this.sql<MarkdownRevisionDbResult[]>`
+      SELECT mr.*, u.display_name AS created_by_name
+      FROM content_node_revision mr
+      LEFT JOIN users u ON u.id = mr.created_by
+      WHERE mr.workspace = ${workspace} AND mr.node_id = ${nodeId}
+      ORDER BY mr.revision_number DESC
+    `;
+  }
+
+  async getMarkdownRevision(workspace: string, nodeId: string, revisionId: string) {
+    const [row] = await this.sql<MarkdownRevisionDbResult[]>`
+      SELECT mr.*, u.display_name AS created_by_name
+      FROM content_node_revision mr
+      LEFT JOIN users u ON u.id = mr.created_by
+      WHERE mr.workspace = ${workspace} AND mr.node_id = ${nodeId} AND mr.id = ${revisionId}
+    `;
+    return row ?? null;
+  }
+
+  async createMarkdownRevision(input: MarkdownRevisionDbCreate) {
+    try {
+      const id = input.id ?? randomUUID();
+      const [row] = await this.sql<MarkdownRevisionDbResult[]>`
+        INSERT INTO content_node_revision
+          (id, workspace, node_id, revision_number, title, body, created_at, created_by, restored_from_revision_id)
+        VALUES
+          (${id}, ${input.workspace}, ${input.node_id}, ${input.revision_number}, ${input.title}, ${input.body}, ${input.created_at}, ${input.created_by}, ${input.restored_from_revision_id ?? null})
+        RETURNING *
+      `;
+      if (!row) {
+        throw new Error('Failed to create markdown revision');
+      }
+      return (await this.getMarkdownRevision(input.workspace, input.node_id, row.id))!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async getNextMarkdownRevisionNumber(workspace: string, nodeId: string) {
+    const [row] = await this.sql<{ next_revision_number: number }[]>`
+      SELECT COALESCE(MAX(revision_number), 0) + 1 AS next_revision_number
+      FROM content_node_revision
+      WHERE workspace = ${workspace} AND node_id = ${nodeId}
+    `;
+    return Number(row?.next_revision_number ?? 1);
   }
 
   async updateContentNodeSizeById(

@@ -28,6 +28,8 @@ import { httpAssert } from '../../utils/httpAssert';
 import {
   DiagramEntityFile,
   FileTree,
+  MarkdownRevisionDetail,
+  MarkdownRevisionSummary,
   Project,
   ProjectDetail,
   ProjectEntity,
@@ -35,6 +37,7 @@ import {
 } from '@arch-register/api-types/projectContract';
 import { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { formatPublicId } from '../../utils/publicIds';
+import type { MarkdownRevisionDbResult } from './db/projectDatabase';
 
 const PROJECT_STATUSES = ['draft', 'active', 'complete', 'cancelled'] as const;
 type ProjectStatus = (typeof PROJECT_STATUSES)[number];
@@ -75,6 +78,48 @@ export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
     }));
 
   return { folders, rootFiles };
+};
+
+const toApiMarkdownRevisionSummary = (
+  revision: MarkdownRevisionDbResult
+): MarkdownRevisionSummary => ({
+  id: revision.id,
+  revision_number: revision.revision_number,
+  title: revision.title,
+  created_at: revision.created_at.toISOString(),
+  created_by: revision.created_by,
+  created_by_name: revision.created_by_name,
+  restored_from_revision_id: revision.restored_from_revision_id
+});
+
+const toApiMarkdownRevisionDetail = (
+  revision: MarkdownRevisionDbResult
+): MarkdownRevisionDetail => ({
+  ...toApiMarkdownRevisionSummary(revision),
+  body: revision.body
+});
+
+const createContentNodeRevision = async (
+  db: DatabaseAdapter,
+  ws: string,
+  nodeId: string,
+  body: string,
+  title: string | null,
+  createdBy: string | null,
+  createdAt: Date,
+  restoredFromRevisionId?: string | null
+) => {
+  const revisionNumber = await db.project.getNextMarkdownRevisionNumber(ws, nodeId);
+  return await db.project.createMarkdownRevision({
+    workspace: ws,
+    node_id: nodeId,
+    revision_number: revisionNumber,
+    title,
+    body,
+    created_at: createdAt,
+    created_by: createdBy,
+    restored_from_revision_id: restoredFromRevisionId ?? null
+  });
 };
 
 export const listProjects = async (
@@ -1808,9 +1853,144 @@ export const saveMarkdownContent = async (
       created_byIfNew: node.created_by,
       updated_by: authCtx.userId
     });
+    const revision = await createContentNodeRevision(
+      db,
+      ws,
+      node.id,
+      body,
+      nextName,
+      authCtx.userId,
+      timestamp
+    );
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'update',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: computeChanges(extractEntityFields(node), extractEntityFields(row)),
+      metadata: {
+        path: row.path,
+        revision_id: revision.id,
+        revision_number: revision.revision_number
+      }
+    });
     return toApiProjectFile(row);
   } catch (e) {
     return handleError(e, 'Failed to save markdown content');
+  }
+};
+
+export const listMarkdownRevisions = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  nodeId: string,
+  event: AuthenticatedEvent
+): Promise<MarkdownRevisionSummary[]> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const node = await db.project.getAnyContentNodeById(ws, nodeId);
+    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+    httpAssert.true(node.type === 'markdown', { status: 400, message: 'Node is not a markdown document' });
+    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+    const revisions = await db.project.listMarkdownRevisions(ws, node.id);
+    return revisions.map(toApiMarkdownRevisionSummary);
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve markdown revisions');
+  }
+};
+
+export const getMarkdownRevision = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  nodeId: string,
+  revisionId: string,
+  event: AuthenticatedEvent
+): Promise<MarkdownRevisionDetail> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const node = await db.project.getAnyContentNodeById(ws, nodeId);
+    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+    httpAssert.true(node.type === 'markdown', { status: 400, message: 'Node is not a markdown document' });
+    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+    const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
+    httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
+    return toApiMarkdownRevisionDetail(revision);
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve markdown revision');
+  }
+};
+
+export const restoreMarkdownRevision = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  nodeId: string,
+  revisionId: string,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const node = await db.project.getAnyContentNodeById(ws, nodeId);
+    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+    httpAssert.true(node.type === 'markdown', { status: 400, message: 'Node is not a markdown document' });
+    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
+    const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
+    httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
+
+    const content = Buffer.from(JSON.stringify({ body: revision.body }), 'utf8');
+    await storage.write(ws, storageScope(ws, node), node.id, content);
+    const timestamp = new Date();
+    const nextName = revision.title?.trim() ? revision.title.trim() : node.name;
+    const row = await db.project.upsertContentNode({
+      id: node.id,
+      workspace: ws,
+      project_id: node.project_id,
+      entity_id: node.entity_id,
+      parent_id: node.parent_id,
+      path: node.path,
+      name: nextName,
+      type: 'markdown',
+      size_bytes: content.length,
+      comment_count: node.comment_count,
+      unresolved_comment_count: node.unresolved_comment_count,
+      created_atIfNew: node.created_at,
+      updated_at: timestamp,
+      created_byIfNew: node.created_by,
+      updated_by: authCtx.userId
+    });
+    const restoredRevision = await createContentNodeRevision(
+      db,
+      ws,
+      node.id,
+      revision.body,
+      nextName,
+      authCtx.userId,
+      timestamp,
+      revision.id
+    );
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'update',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: computeChanges(extractEntityFields(node), extractEntityFields(row)),
+      metadata: {
+        path: row.path,
+        revision_id: restoredRevision.id,
+        revision_number: restoredRevision.revision_number,
+        restored_from_revision_id: revision.id
+      }
+    });
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to restore markdown revision');
   }
 };
 

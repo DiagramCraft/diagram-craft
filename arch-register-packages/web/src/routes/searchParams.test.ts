@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateEntitySearch } from './searchParams';
+import { validateEntitySearch, validateMarkdownSearch } from './searchParams';
 
 describe('validateEntitySearch', () => {
   it('parses entity browser search params used by saved views', () => {
@@ -45,6 +45,22 @@ describe('validateEntitySearch', () => {
       radarConfig: undefined,
       timelineConfig: undefined,
       sidebarTab: undefined,
+    });
+  });
+});
+
+describe('validateMarkdownSearch', () => {
+  it('parses markdown screen params', () => {
+    expect(
+      validateMarkdownSearch({
+        mode: 'preview',
+        panel: 'history',
+        revisionId: 'rev-123'
+      })
+    ).toEqual({
+      mode: 'preview',
+      panel: 'history',
+      revisionId: 'rev-123'
     });
   });
 });

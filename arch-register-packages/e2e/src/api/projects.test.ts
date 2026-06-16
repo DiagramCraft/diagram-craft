@@ -296,6 +296,96 @@ test.describe('project routes', () => {
       type: 'markdown'
     });
   });
+
+  test('markdown revisions can be listed, fetched, and restored for project content', async ({ orpc }) => {
+    const created = await createProject(orpc, { name: 'Markdown History Project' });
+    const markdownResult = await orpc.projects.createProjectMarkdown({
+      params: { workspace: 'default', id: created.public_id },
+      body: { name: 'ADR' }
+    });
+
+    await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id },
+      body: { body: '# First title\n\nFirst body', name: 'First title' }
+    });
+    await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id },
+      body: { body: '# Second title\n\nSecond body', name: 'Second title' }
+    });
+
+    const revisions = await orpc.projects.listMarkdownRevisions({
+      params: { workspace: 'default', nodeId: markdownResult.id }
+    });
+
+    expect(revisions).toHaveLength(2);
+    expect(revisions[0]).toMatchObject({
+      revision_number: 2,
+      title: 'Second title'
+    });
+    expect(revisions[1]).toMatchObject({
+      revision_number: 1,
+      title: 'First title'
+    });
+
+    const firstRevision = await orpc.projects.getMarkdownRevision({
+      params: { workspace: 'default', nodeId: markdownResult.id, revisionId: revisions[1]!.id }
+    });
+
+    expect(firstRevision.body).toContain('First body');
+
+    const restored = await orpc.projects.restoreMarkdownRevision({
+      params: { workspace: 'default', nodeId: markdownResult.id, revisionId: revisions[1]!.id }
+    });
+
+    expect(restored).toMatchObject({
+      id: markdownResult.id,
+      name: 'First title'
+    });
+
+    const restoredContent = await orpc.projects.getMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id }
+    });
+    expect(restoredContent.body).toContain('First body');
+
+    const revisionsAfterRestore = await orpc.projects.listMarkdownRevisions({
+      params: { workspace: 'default', nodeId: markdownResult.id }
+    });
+    expect(revisionsAfterRestore[0]).toMatchObject({
+      revision_number: 3,
+      title: 'First title',
+      restored_from_revision_id: revisions[1]!.id
+    });
+  });
+
+  test('workspace markdown revisions can be created and restored', async ({ orpc }) => {
+    const markdownResult = await orpc.projects.createWorkspaceMarkdown({
+      params: { workspace: 'default' },
+      body: { name: 'Workspace wiki' }
+    });
+
+    await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id },
+      body: { body: '# Workspace title\n\nAlpha', name: 'Workspace title' }
+    });
+    await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id },
+      body: { body: '# Workspace title\n\nBeta', name: 'Workspace title' }
+    });
+
+    const revisions = await orpc.projects.listMarkdownRevisions({
+      params: { workspace: 'default', nodeId: markdownResult.id }
+    });
+    expect(revisions).toHaveLength(2);
+
+    await orpc.projects.restoreMarkdownRevision({
+      params: { workspace: 'default', nodeId: markdownResult.id, revisionId: revisions[1]!.id }
+    });
+
+    const restoredContent = await orpc.projects.getMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id }
+    });
+    expect(restoredContent.body).toContain('Alpha');
+  });
 });
 
 entityTest.describe('entity content routes', () => {
@@ -352,5 +442,45 @@ entityTest.describe('entity content routes', () => {
         })
       ])
     );
+  });
+
+  entityTest('entity markdown revisions can be created and restored', async ({ orpc }) => {
+    const entity = await orpc.entities.create({
+      params: { workspace: 'default' },
+      body: {
+        _schemaId: '00000000-0000-0000-0000-000000000004',
+        _name: 'Entity Revision Host',
+        _namespace: 'default',
+        api_type: 'openapi'
+      } as never
+    });
+
+    const markdownResult = await orpc.projects.createEntityMarkdown({
+      params: { workspace: 'default', entityId: entity._publicId },
+      body: { name: 'Entity wiki' }
+    });
+
+    await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id },
+      body: { body: '# Entity title\n\nOne', name: 'Entity title' }
+    });
+    await orpc.projects.saveMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id },
+      body: { body: '# Entity title\n\nTwo', name: 'Entity title' }
+    });
+
+    const revisions = await orpc.projects.listMarkdownRevisions({
+      params: { workspace: 'default', nodeId: markdownResult.id }
+    });
+    expect(revisions).toHaveLength(2);
+
+    await orpc.projects.restoreMarkdownRevision({
+      params: { workspace: 'default', nodeId: markdownResult.id, revisionId: revisions[1]!.id }
+    });
+
+    const restoredContent = await orpc.projects.getMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id }
+    });
+    expect(restoredContent.body).toContain('One');
   });
 });

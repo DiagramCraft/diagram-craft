@@ -12,7 +12,8 @@ import type {
 import type {
   ProjectDbResult,
   ProjectEntityDbResult,
-  ContentNodeDbResult
+  ContentNodeDbResult,
+  MarkdownRevisionDbResult
 } from '../domain/project/db/projectDatabase';
 import { SQLITE_ERROR_PATTERNS } from '../constants';
 import { DatabaseError } from './database';
@@ -219,6 +220,19 @@ export const sqliteMappers = {
     updated_by: row['updated_by'] == null ? null : String(row['updated_by']),
     mime_type: row['mime_type'] == null ? null : String(row['mime_type']),
     original_filename: row['original_filename'] == null ? null : String(row['original_filename'])
+  }),
+  markdownRevision: (row: Record<string, unknown>): MarkdownRevisionDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    node_id: String(row['node_id']),
+    revision_number: Number(row['revision_number']),
+    title: row['title'] == null ? null : String(row['title']),
+    body: String(row['body']),
+    created_at: toDate(row['created_at']),
+    created_by: row['created_by'] == null ? null : String(row['created_by']),
+    created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
+    restored_from_revision_id:
+      row['restored_from_revision_id'] == null ? null : String(row['restored_from_revision_id'])
   }),
   auditLog: (row: Record<string, unknown>): AuditLogDbResult => ({
     id: String(row['id']),
