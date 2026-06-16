@@ -1,4 +1,4 @@
-import { newid } from '@diagram-craft/utils/id';
+import { randomUUID } from 'node:crypto';
 import type {
   WorkspaceEnumDbCreate,
   WorkspaceEnumDbUpdate
@@ -23,7 +23,7 @@ export const buildCreateEnumInput = (
   httpAssert.string(name, { message: 'name is required and must be a string' });
 
   return {
-    id: newid(),
+    id: randomUUID(),
     workspace,
     name,
     options: toEnumOptions(options, []),

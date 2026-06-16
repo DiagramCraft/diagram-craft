@@ -1,5 +1,6 @@
 import { test, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
+import { NONEXISTENT_UUID } from '../helpers/testIds';
 
 const seededEnumId = '00000000-0000-0000-0000-e00000000001';
 
@@ -47,7 +48,7 @@ test.describe('GET /api/:workspace/enums/:id', () => {
 
   test('returns 404 for an unknown enum id', async ({ orpc }) => {
     await expect(
-      orpc.enums.get({ params: { workspace: 'default', id: 'does-not-exist' } })
+      orpc.enums.get({ params: { workspace: 'default', id: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
@@ -130,7 +131,7 @@ test.describe('PUT /api/:workspace/enums/:id', () => {
 
   test('returns 404 for an unknown enum id', async ({ orpc }) => {
     await expect(
-      orpc.enums.update({ params: { workspace: 'default', id: 'does-not-exist' }, body: { name: 'Nope' } })
+      orpc.enums.update({ params: { workspace: 'default', id: NONEXISTENT_UUID }, body: { name: 'Nope' } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
@@ -157,7 +158,7 @@ test.describe('DELETE /api/:workspace/enums/:id', () => {
 
   test('returns 404 for an unknown enum id', async ({ orpc }) => {
     await expect(
-      orpc.enums.remove({ params: { workspace: 'default', id: 'does-not-exist' } })
+      orpc.enums.remove({ params: { workspace: 'default', id: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

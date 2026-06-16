@@ -40,3 +40,17 @@ export const TMPL_PROJ_B_ID = '00000000-0000-0000-0007-e2e000000002';
 export const AUDIT_ENTITY_1_ID = '00000000-0000-0000-0008-e2e000000001';
 export const AUDIT_ENTITY_2_ID = '00000000-0000-0000-0008-e2e000000002';
 export const AUDIT_PROJ_1_ID = '00000000-0000-0000-0008-e2e000000003';
+
+// schemas.test.ts fixtures
+export const SCHEMA_REF_ENTITY_ID = '00000000-0000-0000-0009-e2e000000001';
+
+// workspace-config.test.ts: lifecycle state ids (UUID column)
+export const LIFECYCLE_LIVE_ID = '00000000-0000-0000-000a-e2e000000001';
+export const LIFECYCLE_SUNSET_ID = '00000000-0000-0000-000a-e2e000000002';
+
+// workspace-config.test.ts: team ids (UUID column)
+export const TEAM_PLATFORM_ID = '00000000-0000-0000-000a-e2e000000003';
+export const TEAM_DESIGN_ID = '00000000-0000-0000-000a-e2e000000004';
+
+// Generic nonexistent UUID for 404 tests (workspaces.test.ts etc.)
+export const NONEXISTENT_UUID = '00000000-0000-0000-0000-000000000000';

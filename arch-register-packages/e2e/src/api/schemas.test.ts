@@ -1,5 +1,6 @@
 import { test, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
+import { SCHEMA_REF_ENTITY_ID, NONEXISTENT_UUID } from '../helpers/testIds';
 
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
 const apiTypeEnumId = '00000000-0000-0000-0000-e00000000001';
@@ -56,7 +57,7 @@ test.describe('schema routes', () => {
 
   test('GET /api/:workspace/schemas/:id returns 404 for an unknown schema id', async ({ orpc }) => {
     await expect(
-      orpc.schemas.get({ params: { workspace: 'default', id: 'does-not-exist' } })
+      orpc.schemas.get({ params: { workspace: 'default', id: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
@@ -194,7 +195,7 @@ test.describe('schema routes', () => {
 
   test('PUT /api/:workspace/schemas/:id returns 404 for an unknown schema id', async ({ orpc }) => {
     await expect(
-      orpc.schemas.update({ params: { workspace: 'default', id: 'does-not-exist' }, body: { name: 'Nope' } })
+      orpc.schemas.update({ params: { workspace: 'default', id: NONEXISTENT_UUID }, body: { name: 'Nope' } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
@@ -210,7 +211,7 @@ test.describe('schema routes', () => {
 
   test('DELETE /api/:workspace/schemas/:id returns 409 for a referenced seeded schema', async ({ server, orpc }) => {
     await server.db.catalog.createEntity({
-      id: 'e2e-schema-ref-entity',
+      id: SCHEMA_REF_ENTITY_ID,
       workspace: seedIds.workspace.default,
       public_id: 'API-99',
       slug: 'schema-ref-entity',
@@ -237,7 +238,7 @@ test.describe('schema routes', () => {
 
   test('DELETE /api/:workspace/schemas/:id returns 404 for an unknown schema id', async ({ orpc }) => {
     await expect(
-      orpc.schemas.remove({ params: { workspace: 'default', id: 'does-not-exist' } })
+      orpc.schemas.remove({ params: { workspace: 'default', id: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

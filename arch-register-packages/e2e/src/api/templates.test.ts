@@ -1,6 +1,6 @@
 import { test as baseTest, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
-import { TMPL_PROJ_A_ID, TMPL_PROJ_B_ID } from '../helpers/testIds';
+import { TMPL_PROJ_A_ID, TMPL_PROJ_B_ID, NONEXISTENT_UUID } from '../helpers/testIds';
 
 const now = new Date();
 
@@ -167,7 +167,7 @@ test.describe('GET /api/:workspace/projects/:projectId/templates', () => {
 
   test('returns 404 for unknown project', async ({ orpc, seeded: _ }) => {
     await expect(
-      orpc.templates.listForProject({ params: { workspace: 'default', id: 'nonexistent' } })
+      orpc.templates.listForProject({ params: { workspace: 'default', id: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
@@ -180,7 +180,7 @@ test.describe('GET /api/:workspace/projects/:projectId/templates', () => {
 
   test('returns 404 for unknown workspace', async ({ orpc, seeded: _ }) => {
     await expect(
-      orpc.templates.listForProject({ params: { workspace: 'nonexistent', id: 'any' } })
+      orpc.templates.listForProject({ params: { workspace: 'nonexistent', id: NONEXISTENT_UUID } })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });

@@ -3,6 +3,12 @@ import { seedCatalogEntities, seedIds, TEST_ADMIN } from '../helpers/seedHelper'
 import { CONFIG_USER_ID, CONFIG_REMOVE_USER_ID } from '../helpers/testIds';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
 import type { WorkspaceRoleCapability } from '@arch-register/api-types/workspaceConfigContract';
+import {
+  LIFECYCLE_LIVE_ID,
+  LIFECYCLE_SUNSET_ID,
+  TEAM_PLATFORM_ID,
+  TEAM_DESIGN_ID
+} from '../helpers/testIds';
 import { seedEntities, seedLifecycleStates } from '@arch-register/server/db/seedData';
 
 const now = new Date('2026-06-06T12:00:00.000Z');
@@ -80,14 +86,14 @@ test.describe('workspace config routes', () => {
       params: { workspace: 'default' },
       body: {
         states: [
-          { id: 'live', label: 'Live', color: '#22aa55', sort_order: 99 },
-          { id: 'sunset', label: 'Sunset', color: '#bb8800', sort_order: 0 }
+          { id: LIFECYCLE_LIVE_ID, label: 'Live', color: '#22aa55', sort_order: 99 },
+          { id: LIFECYCLE_SUNSET_ID, label: 'Sunset', color: '#bb8800', sort_order: 0 }
         ]
       }
     });
     expect(result).toEqual([
-      expect.objectContaining({ id: 'live', sort_order: 0 }),
-      expect.objectContaining({ id: 'sunset', sort_order: 1 })
+      expect.objectContaining({ id: LIFECYCLE_LIVE_ID, sort_order: 0 }),
+      expect.objectContaining({ id: LIFECYCLE_SUNSET_ID, sort_order: 1 })
     ]);
   });
 
@@ -321,8 +327,8 @@ test.describe('workspace config routes', () => {
       params: { workspace: 'default' },
       body: {
         teams: [
-          { id: 'team-platform', name: 'Platform Engineering' },
-          { id: 'team-design', name: 'Design Systems' }
+          { id: TEAM_PLATFORM_ID, name: 'Platform Engineering' },
+          { id: TEAM_DESIGN_ID, name: 'Design Systems' }
         ]
       }
     });
@@ -332,7 +338,7 @@ test.describe('workspace config routes', () => {
       body: {
         assignments: [
           {
-            team_id: 'team-platform',
+            team_id: TEAM_PLATFORM_ID,
             user_id: seededUsers.configUserId,
             role: 'team_editor'
           }
@@ -342,7 +348,7 @@ test.describe('workspace config routes', () => {
 
     expect(putResult).toEqual([
       expect.objectContaining({
-        team_id: 'team-platform',
+        team_id: TEAM_PLATFORM_ID,
         user_id: seededUsers.configUserId,
         role: 'team_editor'
       })
@@ -351,7 +357,7 @@ test.describe('workspace config routes', () => {
     const assignments = await orpc.config.teamAssignments.list({ params: { workspace: 'default' } });
     expect(assignments).toEqual([
       expect.objectContaining({
-        team_id: 'team-platform',
+        team_id: TEAM_PLATFORM_ID,
         user_id: seededUsers.configUserId,
         role: 'team_editor'
       })

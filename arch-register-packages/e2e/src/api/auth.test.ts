@@ -6,7 +6,8 @@ import { seedIds, TEST_ADMIN } from '../helpers/seedHelper';
 import {
   INACTIVE_USER_ID,
   ROLES_USER_ID,
-  ROLES_INVALID_USER_ID
+  ROLES_INVALID_USER_ID,
+  NONEXISTENT_UUID
 } from '../helpers/testIds';
 
 const createLocalUser = async (
@@ -147,7 +148,7 @@ test.describe('auth protected routes', () => {
 
   test('PATCH /api/users/:id rejects updates to a different user', async ({ orpc }) => {
     await expect(
-      orpc.authProtected.updateUser({ params: { id: 'someone-else' }, body: { display_name: 'Nope' } })
+      orpc.authProtected.updateUser({ params: { id: NONEXISTENT_UUID }, body: { display_name: 'Nope' } })
     ).rejects.toMatchObject({ code: 'FORBIDDEN', message: 'You can only update your own account settings' });
   });
 

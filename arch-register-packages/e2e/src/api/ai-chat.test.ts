@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { createApiTest, expect } from '../helpers/fixtures';
 import { TEST_ADMIN, seedIds } from '../helpers/seedHelper';
 import {
@@ -30,10 +31,7 @@ const mockAiChatOverrides = {
       yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'reply' };
     })();
   }) as never,
-  randomId: (() => {
-    let i = 0;
-    return () => `mock-ai-id-${++i}`;
-  })()
+  randomId: randomUUID
 } as const;
 
 const test = createApiTest({

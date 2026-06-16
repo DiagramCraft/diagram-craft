@@ -18,7 +18,7 @@ if (driver === 'sqlite') {
   await rm(dbPath, { force: true });
 }
 
-const db = await createDatabase();
+const db = await createDatabase({ initialize: false });
 await db.core.reset();
 await seedBootstrapData(db);
 
