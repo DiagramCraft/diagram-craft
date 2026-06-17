@@ -40,8 +40,13 @@
 }
 
 @media (max-width: 1100px) {
-  .bodyGrid { grid-template-columns: minmax(0, 1fr); }
-  .toc { display: none; }
+  .bodyGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .toc {
+    display: none;
+  }
 }
 
 .historyGrid {
@@ -60,29 +65,6 @@
   background: var(--panel-bg);
 }
 
-.historySidebarHead {
-  padding: 18px 18px 12px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.historySidebarHeadRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.historySidebarLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--base-fg);
-}
-
-.historySidebarSub {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--cmp-fg-dimmed);
-}
 
 .historySidebarBody {
   flex: 1;
@@ -114,7 +96,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.revisionBadges {
+  margin-left: auto;
 }
 
 .revisionBadge,
@@ -129,13 +115,14 @@
 
 .revisionBadge {
   background: var(--cmp-bg);
-  color: var(--cmp-fg-dimmed);
+  color: var(--cmp-fg);
   border: 1px solid var(--panel-border);
 }
 
 .restoreBadge {
   background: color-mix(in srgb, var(--accent-fg) 12%, transparent);
   color: var(--accent-fg);
+  margin-right: 4px;
 }
 
 .revisionTitle {
@@ -157,25 +144,6 @@
   padding: 28px 24px 80px;
 }
 
-.historyPreviewHead {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
-
-.historyPreviewLabel {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--base-fg);
-}
-
-.historyPreviewMeta {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--cmp-fg-dimmed);
-}
 
 @media (max-width: 1100px) {
   .historyGrid {
@@ -186,11 +154,6 @@
     border-left: none;
     border-bottom: 1px solid var(--panel-border);
     max-height: 260px;
-  }
-
-  .historyPreviewHead {
-    flex-direction: column;
-    align-items: stretch;
   }
 }
 
@@ -222,7 +185,9 @@
   border-bottom: 1px solid var(--panel-border);
 }
 
-.article :global(h2:first-child) { margin-top: 0; }
+.article :global(h2:first-child) {
+  margin-top: 0;
+}
 
 .article :global(h3) {
   font-size: 14px;
@@ -392,6 +357,66 @@
   border-left-color: var(--accent-fg);
 }
 
+/* ── toolbar ── */
+
+.toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 24px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  gap: 8px;
+}
+
+.toolbarNavGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbarMeta {
+  font-size: 12px;
+  color: var(--cmp-fg);
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paneToggle {
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 2px;
+  background: var(--base-bg);
+}
+
+.paneToggleBtn {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: calc(var(--r-md) - 2px);
+  border: none;
+  background: transparent;
+  color: var(--cmp-fg-dimmed);
+  cursor: pointer;
+  transition: background 80ms, color 80ms;
+}
+
+.paneToggleBtn:hover {
+  color: var(--base-fg);
+}
+
+.paneToggleBtnActive {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  font-weight: 500;
+}
+
 /* ── edit mode ── */
 
 .editPane {
@@ -417,26 +442,17 @@
   box-sizing: border-box;
 }
 
-.editorFooter {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: 8px 24px;
-  border-top: 1px solid var(--panel-border);
-  gap: 8px;
-}
-
 .dirty {
-  font-size: 11.5px;
-  color: var(--cmp-fg-dimmed);
+  font-size: 12px;
+  color: var(--cmp-fg);
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
 .clean {
-  font-size: 11.5px;
-  color: var(--cmp-fg-disabled);
+  font-size: 12px;
+  color: var(--cmp-fg);
 }
 
 .dirtyDot {
@@ -444,7 +460,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent-fg);
+  background: var(--error-fg);
   opacity: 0.7;
 }
 
@@ -467,3 +483,90 @@
   font-size: 1rem;
   color: var(--cmp-fg-disabled);
 }
+
+/* ── compare view ── */
+
+.compareView {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.compareBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── diff rows ── */
+
+.diffRow {
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  position: relative;
+}
+
+.diffRowUnchanged {
+  opacity: 0.55;
+}
+
+.diffRowAdded {
+  background: color-mix(in srgb, #22c55e 10%, transparent);
+  border-left: 3px solid #22c55e;
+}
+
+.diffRowRemoved {
+  background: color-mix(in srgb, #ef4444 10%, transparent);
+  border-left: 3px solid #ef4444;
+}
+
+.diffRowModified {
+  border-left: 3px solid #f59e0b;
+  background: color-mix(in srgb, #f59e0b 8%, transparent);
+  position: relative;
+}
+
+.diffRowModifiedPopup {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.diffRowModified:hover .diffRowModifiedPopup {
+  display: block;
+}
+
+.diffRowModifiedPopupLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--cmp-fg-disabled);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.diffRowMarker {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  width: 10px;
+  text-align: center;
+  color: var(--cmp-fg-dimmed);
+}
+
