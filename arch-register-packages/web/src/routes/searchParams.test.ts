@@ -60,7 +60,58 @@ describe('validateMarkdownSearch', () => {
     ).toEqual({
       mode: 'preview',
       panel: 'history',
-      revisionId: 'rev-123'
+      revisionId: 'rev-123',
+      historyMode: undefined,
+      compareMode: undefined,
+    });
+  });
+
+  it('parses compare-to-current params', () => {
+    expect(
+      validateMarkdownSearch({
+        panel: 'history',
+        revisionId: 'rev-3',
+        historyMode: 'compare',
+        compareMode: 'to-current',
+      })
+    ).toEqual({
+      mode: undefined,
+      panel: 'history',
+      revisionId: 'rev-3',
+      historyMode: 'compare',
+      compareMode: 'to-current',
+    });
+  });
+
+  it('parses changes-in-version params', () => {
+    expect(
+      validateMarkdownSearch({
+        panel: 'history',
+        revisionId: 'rev-3',
+        historyMode: 'compare',
+        compareMode: 'changes-in-version',
+      })
+    ).toEqual({
+      mode: undefined,
+      panel: 'history',
+      revisionId: 'rev-3',
+      historyMode: 'compare',
+      compareMode: 'changes-in-version',
+    });
+  });
+
+  it('drops invalid historyMode and compareMode values', () => {
+    expect(
+      validateMarkdownSearch({
+        historyMode: 'audit',
+        compareMode: 'diff',
+      })
+    ).toEqual({
+      mode: undefined,
+      panel: undefined,
+      revisionId: undefined,
+      historyMode: undefined,
+      compareMode: undefined,
     });
   });
 });

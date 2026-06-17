@@ -48,12 +48,16 @@ export type MarkdownSearchParams = {
   mode?: 'edit' | 'preview';
   panel?: 'preview' | 'history';
   revisionId?: string;
+  historyMode?: 'preview' | 'compare';
+  compareMode?: 'to-current' | 'changes-in-version';
 };
 
 export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSearchParams => ({
   mode: raw.mode === 'edit' || raw.mode === 'preview' ? raw.mode : undefined,
   panel: raw.panel === 'preview' || raw.panel === 'history' ? raw.panel : undefined,
-  revisionId: typeof raw.revisionId === 'string' ? raw.revisionId : undefined
+  revisionId: typeof raw.revisionId === 'string' ? raw.revisionId : undefined,
+  historyMode: raw.historyMode === 'preview' || raw.historyMode === 'compare' ? raw.historyMode : undefined,
+  compareMode: raw.compareMode === 'to-current' || raw.compareMode === 'changes-in-version' ? raw.compareMode : undefined,
 });
 
 // Project detail params
