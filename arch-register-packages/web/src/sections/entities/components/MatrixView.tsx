@@ -267,8 +267,8 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
       const rMask = rows.map((_, ri) => !hideEmptyRows || full[ri]!.some(Boolean));
       const cMask = allCols.map((_, ci) => !hideEmptyCols || rows.some((_, ri) => full[ri]![ci]));
 
-      const rIdx = rows.reduce<number[]>((a, _, i) => (rMask[i] ? [...a, i] : a), []);
-      const cIdx = allCols.reduce<number[]>((a, _, i) => (cMask[i] ? [...a, i] : a), []);
+      const rIdx = rows.flatMap((_, i) => (rMask[i] ? [i] : []));
+      const cIdx = allCols.flatMap((_, i) => (cMask[i] ? [i] : []));
 
       const displayRows = rIdx.map(i => rows[i]!);
       const displayCols = cIdx.map(i => allCols[i]!);
@@ -292,14 +292,6 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
     ]);
 
   // ── Derived display values ─────────────────────────────────────────────────
-
-  const rowSchemaEntries = useMemo(
-    () =>
-      schemas
-        .filter(s => rowSchemaIds.has(s.id))
-        .map(s => ({ schema: s, entry: schemaMap.get(s.id) })),
-    [schemas, rowSchemaIds, schemaMap]
-  );
 
   const colSchemaEntry = effColSchemaId ? schemaMap.get(effColSchemaId) : null;
   const colSchemaName = colSchemaEntry?.schema.name ?? '…';
