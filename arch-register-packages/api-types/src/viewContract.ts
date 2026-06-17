@@ -4,7 +4,7 @@ import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-export const browserViewSchema = z.enum(['table', 'cards', 'tree', 'radar', 'timeline']);
+export const browserViewSchema = z.enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix']);
 
 export const filterConditionSchema = z.object({
   fieldId: z.string(),
