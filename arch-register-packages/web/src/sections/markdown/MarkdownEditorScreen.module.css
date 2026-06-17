@@ -531,32 +531,6 @@
   position: relative;
 }
 
-.diffRowModifiedPopup {
-  display: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 4px);
-  z-index: 20;
-  background: var(--base-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  padding: 10px 14px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-}
-
-.diffRowModified:hover .diffRowModifiedPopup {
-  display: block;
-}
-
-.diffRowModifiedPopupLabel {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--cmp-fg-disabled);
-  font-weight: 600;
-  margin-bottom: 6px;
-}
 
 .diffRowMarker {
   position: absolute;

@@ -85,6 +85,35 @@ describe('diffMarkdown', () => {
     }
   });
 
+  it('modified rows contain inlineHtml', () => {
+    const rows = diffMarkdown('Old text.', 'New text.');
+    const modified = rows.find(r => r.kind === 'modified');
+    expect(modified?.kind === 'modified' && modified.inlineHtml).toBeTruthy();
+  });
+
+  it('inlineHtml wraps removed words in <del> and added words in <ins>', () => {
+    const rows = diffMarkdown('Old text.', 'New text.');
+    const modified = rows.find(r => r.kind === 'modified');
+    if (modified?.kind === 'modified') {
+      expect(modified.inlineHtml).toContain('<del ');
+      expect(modified.inlineHtml).toContain('Old');
+      expect(modified.inlineHtml).toContain('<ins ');
+      expect(modified.inlineHtml).toContain('New');
+    }
+  });
+
+  it('inlineHtml preserves unchanged words without markup', () => {
+    const rows = diffMarkdown('Hello old world.', 'Hello new world.');
+    const modified = rows.find(r => r.kind === 'modified');
+    if (modified?.kind === 'modified') {
+      // "Hello" and "world." should appear without del/ins wrapping
+      expect(modified.inlineHtml).toContain('Hello');
+      expect(modified.inlineHtml).toContain('world.');
+      expect(modified.inlineHtml).toContain('<del ');
+      expect(modified.inlineHtml).toContain('<ins ');
+    }
+  });
+
   it('added rows contain html', () => {
     const rows = diffMarkdown('', 'Hello.');
     const added = rows.find(r => r.kind === 'added');
