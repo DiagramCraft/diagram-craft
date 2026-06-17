@@ -6,7 +6,7 @@ export type DiffRow =
   | { kind: 'unchanged'; html: string }
   | { kind: 'added'; html: string }
   | { kind: 'removed'; html: string }
-  | { kind: 'modified'; baseHtml: string; targetHtml: string };
+  | { kind: 'modified'; baseHtml: string; targetHtml: string; inlineHtml: string };
 
 const markdownEngine = new MarkdownEngine();
 
@@ -73,6 +73,54 @@ const diffNodes = (baseNodes: ASTNode[], targetNodes: ASTNode[]): EditOp[] => {
   return ops;
 };
 
+const splitOuterTag = (html: string): [string, string, string] => {
+  const trimmed = html.trim();
+  const openMatch = trimmed.match(/^(<[^>]+>)/);
+  if (!openMatch?.[1]) return ['', trimmed, ''];
+  const openTag = openMatch[1];
+  const tagName = openTag.match(/^<([a-zA-Z][a-zA-Z0-9]*)/)?.[1];
+  if (!tagName) return ['', trimmed, ''];
+  const closeTag = `</${tagName}>`;
+  if (trimmed.endsWith(closeTag)) {
+    return [openTag, trimmed.slice(openTag.length, -closeTag.length), closeTag];
+  }
+  return ['', trimmed, ''];
+};
+
+const DEL_STYLE =
+  'background:rgba(239,68,68,0.18);color:#b91c1c;text-decoration:line-through;border-radius:2px;';
+const INS_STYLE =
+  'background:rgba(34,197,94,0.18);color:#15803d;text-decoration:none;border-radius:2px;';
+
+const computeInlineDiff = (baseHtml: string, targetHtml: string): string => {
+  const [openTag, baseInner, closeTag] = splitOuterTag(baseHtml);
+  const [, targetInner] = splitOuterTag(targetHtml);
+
+  const baseTokens = baseInner.match(/\S+|\s+/g) ?? [];
+  const targetTokens = targetInner.match(/\S+|\s+/g) ?? [];
+  const dp = lcsTable(baseTokens, targetTokens);
+
+  let i = baseTokens.length;
+  let j = targetTokens.length;
+  const parts: string[] = [];
+
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && baseTokens[i - 1] === targetTokens[j - 1]) {
+      parts.unshift(baseTokens[i - 1]!);
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || dp[i]![j - 1]! >= dp[i - 1]![j]!)) {
+      parts.unshift(`<ins style="${INS_STYLE}">${targetTokens[j - 1]}</ins>`);
+      j--;
+    } else {
+      parts.unshift(`<del style="${DEL_STYLE}">${baseTokens[i - 1]}</del>`);
+      i--;
+    }
+  }
+
+  return `${openTag}${parts.join('')}${closeTag}`;
+};
+
 const collapseModified = (ops: EditOp[]): DiffRow[] => {
   const rows: DiffRow[] = [];
   let idx = 0;
@@ -94,10 +142,13 @@ const collapseModified = (ops: EditOp[]): DiffRow[] => {
       blockTypeKey(op.base) === blockTypeKey((ops[idx + 1] as { op: 'add'; target: ASTNode }).target)
     ) {
       const next = ops[idx + 1] as { op: 'add'; target: ASTNode };
+      const baseHtml = renderNode(op.base);
+      const targetHtml = renderNode(next.target);
       rows.push({
         kind: 'modified',
-        baseHtml: renderNode(op.base),
-        targetHtml: renderNode(next.target),
+        baseHtml,
+        targetHtml,
+        inlineHtml: computeInlineDiff(baseHtml, targetHtml),
       });
       idx += 2;
       continue;

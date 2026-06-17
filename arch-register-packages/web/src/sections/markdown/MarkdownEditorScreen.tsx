@@ -146,11 +146,7 @@ const DiffRowView = ({ row }: { row: DiffRow }) => {
   // modified
   return (
     <div className={`${styles.diffRow} ${styles.diffRowModified}`}>
-      <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.targetHtml }} />
-      <div className={styles.diffRowModifiedPopup}>
-        <div className={styles.diffRowModifiedPopupLabel}>Before</div>
-        <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.baseHtml }} />
-      </div>
+      <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.inlineHtml }} />
     </div>
   );
 };
@@ -813,20 +809,18 @@ export const MarkdownEditorScreen = () => {
               ) : revisionLoading ? (
                 <div className={styles.previewEmpty}>Loading selected version…</div>
               ) : selectedRevision ? (
-                <>
-                  <article className={styles.article}>
-                    {selectedRevisionHtml.trim() ? (
-                      <>
-                        <div dangerouslySetInnerHTML={{ __html: selectedRevisionHtml }} />
-                        <div className={styles.articleFooter}>
-                          Saved {formatRevisionDate(selectedRevision.created_at)}
-                        </div>
-                      </>
-                    ) : (
-                      <div className={styles.previewEmpty}>This revision is empty.</div>
-                    )}
-                  </article>
-                </>
+                <article className={styles.article}>
+                  {selectedRevisionHtml.trim() ? (
+                    <>
+                      <div dangerouslySetInnerHTML={{ __html: selectedRevisionHtml }} />
+                      <div className={styles.articleFooter}>
+                        Saved {formatRevisionDate(selectedRevision.created_at)}
+                      </div>
+                    </>
+                  ) : (
+                    <div className={styles.previewEmpty}>This revision is empty.</div>
+                  )}
+                </article>
               ) : (
                 <div className={styles.previewEmpty}>Select a version to preview it here.</div>
               )}
