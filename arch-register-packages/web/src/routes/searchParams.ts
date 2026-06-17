@@ -5,9 +5,10 @@ export type EntitySearchParams = {
   owner?: string;
   q?: string;
   viewId?: string;
-  viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline';
+  viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix';
   radarConfig?: string;
   timelineConfig?: string;
+  matrixConfig?: string;
   sidebarTab?: 'filters' | 'views' | 'pinned';
   filters?: string; // JSON string of FilterCondition[]
 };
@@ -23,11 +24,13 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
     raw.viewMode === 'cards' ||
     raw.viewMode === 'tree' ||
     raw.viewMode === 'radar' ||
-    raw.viewMode === 'timeline'
+    raw.viewMode === 'timeline' ||
+    raw.viewMode === 'matrix'
       ? raw.viewMode
       : undefined,
   radarConfig: typeof raw.radarConfig === 'string' ? raw.radarConfig : undefined,
   timelineConfig: typeof raw.timelineConfig === 'string' ? raw.timelineConfig : undefined,
+  matrixConfig: typeof raw.matrixConfig === 'string' ? raw.matrixConfig : undefined,
   sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'pinned' ? raw.sidebarTab : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
 });

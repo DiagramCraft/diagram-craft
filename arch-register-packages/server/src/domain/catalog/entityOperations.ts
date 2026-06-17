@@ -303,6 +303,33 @@ export const getEntityRelations = async (
   }
 };
 
+export const getBatchEntityRelations = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  ids: string[],
+  authCtx: AuthorizationContext | null
+): Promise<Record<string, EntityRelations>> => {
+  try {
+    const [schemas, entitiesRaw] = await Promise.all([
+      db.catalog.listSchemas(workspace),
+      db.catalog.listEntities(workspace)
+    ]);
+    const entities = authCtx
+      ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
+      : entitiesRaw;
+    const entityLookup = new Map(entities.map(e => [e.id, e]));
+    const result: Record<string, EntityRelations> = {};
+    for (const id of ids) {
+      const entity = entityLookup.get(id);
+      if (!entity) continue;
+      result[id] = buildEntityRelations(entity, schemas, entities);
+    }
+    return result;
+  } catch (error) {
+    return handleError(error, 'Failed to retrieve batch entity relations');
+  }
+};
+
 export const createEntity = async (
   db: DatabaseAdapter,
   workspace: string,

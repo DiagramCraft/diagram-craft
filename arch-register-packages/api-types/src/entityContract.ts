@@ -258,6 +258,14 @@ export const workspaceEntityContract = {
       })
       .input(z.object({ params: wsAndId }))
       .output(entityRelationsSchema),
+    batchRelations: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/data/batch-relations',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({ params: ws, body: z.object({ ids: z.array(z.string()) }) }))
+      .output(z.record(z.string(), entityRelationsSchema)),
     create: oc
       .route({ method: 'POST', path: '/{workspace}/data', inputStructure: 'detailed' })
       .input(

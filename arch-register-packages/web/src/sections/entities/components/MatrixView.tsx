@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import styles from './MatrixView.module.css';
 import { TbChevronDown, TbRowRemove, TbColumnRemove } from 'react-icons/tb';
@@ -13,10 +13,21 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type MatrixConfig = {
+  colMode: 'entity' | 'attribute';
+  colSchemaId: string | null;
+  colEnumFieldId: string | null;
+  filterFieldName: string | null;
+  hideEmptyRows: boolean;
+  hideEmptyCols: boolean;
+};
+
 type MatrixViewProps = {
   rows: EntityRecord[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   onEntityClick: (entityId: string) => void;
+  config: MatrixConfig | null;
+  onConfigChange: (cfg: MatrixConfig) => void;
 };
 
 type ColMode = 'entity' | 'attribute';
@@ -71,7 +82,7 @@ const getMetadataValue = (row: EntityRecord, fieldId: string): string | null => 
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) => {
+export const MatrixView = ({ rows, schemaMap, onEntityClick, config, onConfigChange }: MatrixViewProps) => {
   const {
     workspaceSlug: workspaceId,
     schemas,
@@ -80,12 +91,24 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
     teams
   } = useWorkspaceContext();
 
-  const [colMode, setColMode] = useState<ColMode>('entity');
-  const [colSchemaId, setColSchemaId] = useState<string | null>(null);
-  const [colEnumFieldId, setColEnumFieldId] = useState<string | null>(null);
-  const [filterFieldName, setFilterFieldName] = useState<string | null>(null);
-  const [hideEmptyRows, setHideEmptyRows] = useState(false);
-  const [hideEmptyCols, setHideEmptyCols] = useState(false);
+  const [colMode, setColMode] = useState<ColMode>(config?.colMode ?? 'entity');
+  const [colSchemaId, setColSchemaId] = useState<string | null>(config?.colSchemaId ?? null);
+  const [colEnumFieldId, setColEnumFieldId] = useState<string | null>(config?.colEnumFieldId ?? null);
+  const [filterFieldName, setFilterFieldName] = useState<string | null>(config?.filterFieldName ?? null);
+  const [hideEmptyRows, setHideEmptyRows] = useState(config?.hideEmptyRows ?? false);
+  const [hideEmptyCols, setHideEmptyCols] = useState(config?.hideEmptyCols ?? false);
+
+  const notifyConfigChange = useCallback((patch: Partial<MatrixConfig>) => {
+    onConfigChange({
+      colMode,
+      colSchemaId,
+      colEnumFieldId,
+      filterFieldName,
+      hideEmptyRows,
+      hideEmptyCols,
+      ...patch
+    });
+  }, [onConfigChange, colMode, colSchemaId, colEnumFieldId, filterFieldName, hideEmptyRows, hideEmptyCols]);
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
 
   const rowEntityIds = useMemo(() => rows.map(r => r._uid), [rows]);
@@ -205,6 +228,7 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
   const handleColSchemaChange = (id: string) => {
     setColSchemaId(id);
     setFilterFieldName(null);
+    notifyConfigChange({ colSchemaId: id, filterFieldName: null });
   };
 
   // ── Matrix computation ─────────────────────────────────────────────────────
@@ -214,28 +238,28 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
       if (!rows.length)
         return {
           displayRows: [],
-          displayCols: [] as { id: string; label: string }[],
+          displayCols: [] as { id: string; publicId: string; label: string }[],
           cellMatrix: [] as boolean[][],
           totalFilled: 0,
           rowCounts: [] as number[],
           colCounts: [] as number[]
         };
 
-      let allCols: { id: string; label: string }[];
+      let allCols: { id: string; publicId: string; label: string }[];
       if (colMode === 'entity') {
-        allCols = colEntitiesRaw.map(e => ({ id: e._uid, label: e._name }));
+        allCols = colEntitiesRaw.map(e => ({ id: e._uid, publicId: e._publicId, label: e._name }));
       } else {
-        allCols = (effAttrField?.options ?? []).map(o => ({ id: o.value, label: o.label }));
+        allCols = (effAttrField?.options ?? []).map(o => ({ id: o.value, publicId: o.value, label: o.label }));
       }
 
       if (!allCols.length)
         return {
-          displayRows: [],
-          displayCols: [],
-          cellMatrix: [],
+          displayRows: [] as EntityRecord[],
+          displayCols: [] as { id: string; publicId: string; label: string }[],
+          cellMatrix: [] as boolean[][],
           totalFilled: 0,
-          rowCounts: [],
-          colCounts: []
+          rowCounts: [] as number[],
+          colCounts: [] as number[]
         };
 
       const full = rows.map(row => {
@@ -336,14 +360,14 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
             <button
               type="button"
               className={colMode === 'entity' ? styles.segmentedActive : ''}
-              onClick={() => setColMode('entity')}
+              onClick={() => { setColMode('entity'); notifyConfigChange({ colMode: 'entity' }); }}
             >
               Entity
             </button>
             <button
               type="button"
               className={colMode === 'attribute' ? styles.segmentedActive : ''}
-              onClick={() => setColMode('attribute')}
+              onClick={() => { setColMode('attribute'); notifyConfigChange({ colMode: 'attribute' }); }}
             >
               Attribute
             </button>
@@ -372,9 +396,11 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
                   <select
                     className={styles.select}
                     value={filterFieldName ?? 'any'}
-                    onChange={e =>
-                      setFilterFieldName(e.target.value === 'any' ? null : e.target.value)
-                    }
+                    onChange={e => {
+                      const v = e.target.value === 'any' ? null : e.target.value;
+                      setFilterFieldName(v);
+                      notifyConfigChange({ filterFieldName: v });
+                    }}
                   >
                     <option value="any">any relation</option>
                     {availableFieldNames.map(fn => (
@@ -396,7 +422,7 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
               <select
                 className={styles.select}
                 value={effColFieldId ?? ''}
-                onChange={e => setColEnumFieldId(e.target.value)}
+                onChange={e => { setColEnumFieldId(e.target.value); notifyConfigChange({ colEnumFieldId: e.target.value }); }}
               >
                 {attrFields.map(f => (
                   <option key={f.fieldId} value={f.fieldId}>
@@ -427,7 +453,7 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
             type="button"
             data-active={hideEmptyRows ? 'true' : 'false'}
             title="Hide empty rows"
-            onClick={() => setHideEmptyRows(v => !v)}
+            onClick={() => { const next = !hideEmptyRows; setHideEmptyRows(next); notifyConfigChange({ hideEmptyRows: next }); }}
           >
             <TbRowRemove size={10} />
           </button>
@@ -435,7 +461,7 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
             type="button"
             data-active={hideEmptyCols ? 'true' : 'false'}
             title="Hide empty cols"
-            onClick={() => setHideEmptyCols(v => !v)}
+            onClick={() => { const next = !hideEmptyCols; setHideEmptyCols(next); notifyConfigChange({ hideEmptyCols: next }); }}
           >
             <TbColumnRemove size={10} />
           </button>
@@ -479,7 +505,7 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
                           type="button"
                           className={styles.colLabel}
                           title={col.label}
-                          onClick={() => onEntityClick(col.id)}
+                          onClick={() => onEntityClick(col.publicId)}
                         >
                           {col.label}
                         </button>
@@ -510,7 +536,7 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick }: MatrixViewProps) 
                         <button
                           type="button"
                           className={styles.rowBtn}
-                          onClick={() => onEntityClick(row._uid)}
+                          onClick={() => onEntityClick(row._publicId)}
                         >
                           <TypeBadge color={rowColor} icon={rowEntry?.schema.icon} size={13} />
                           <span className={styles.rowName}>{row._name}</span>

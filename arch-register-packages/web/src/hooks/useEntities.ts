@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { EntityRelation } from '../lib/api';
 import type {
@@ -156,31 +157,35 @@ export type EntityRelationData = {
   isLoading: boolean;
 };
 
-// Hook for fetching relations for multiple entities at once
+// Hook for fetching relations for multiple entities at once (single batch request)
 export const useMultipleEntityRelations = (
   workspaceId: string,
   entityIds: string[]
 ): Map<string, EntityRelationData> => {
-  const results = useQueries({
-    queries: entityIds.map(entityId => ({
-      queryKey: entityKeys.relations(workspaceId, entityId),
-      queryFn: () =>
-        orpcClient.entities.relations({ params: { workspace: workspaceId, id: entityId } }),
-      enabled: !!workspaceId && !!entityId
-    }))
+  const sortedIds = useMemo(() => [...entityIds].sort(), [entityIds]);
+
+  const { data, isLoading } = useQuery({
+    queryKey: entityKeys.batchRelations(workspaceId, sortedIds),
+    queryFn: () =>
+      orpcClient.entities.batchRelations({
+        params: { workspace: workspaceId },
+        body: { ids: sortedIds }
+      }),
+    enabled: !!workspaceId && sortedIds.length > 0
   });
 
-  const map = new Map<string, EntityRelationData>();
-  for (let i = 0; i < entityIds.length; i++) {
-    const id = entityIds[i]!;
-    const result = results[i];
-    map.set(id, {
-      outgoing: result?.data?.outgoing ?? [],
-      incoming: result?.data?.incoming ?? [],
-      isLoading: result?.isLoading ?? true
-    });
-  }
-  return map;
+  return useMemo(() => {
+    const map = new Map<string, EntityRelationData>();
+    for (const id of entityIds) {
+      const rel = data?.[id];
+      map.set(id, {
+        outgoing: rel?.outgoing ?? [],
+        incoming: rel?.incoming ?? [],
+        isLoading
+      });
+    }
+    return map;
+  }, [data, isLoading, entityIds]);
 };
 
 // Hook for fetching entities by multiple schema IDs
