@@ -33,6 +33,7 @@ import {
   getEntityTree,
   getEntity,
   getEntityRelations,
+  getBatchEntityRelations,
   createEntity,
   updateEntity,
   cloneEntity,
@@ -107,6 +108,16 @@ export const workspaceEntityORPCRouter = entityRouter.router({
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         return await getEntityRelations(context.db, workspace, input.params.id, authCtx);
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    batchRelations: entityRouter.entities.batchRelations.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        return await getBatchEntityRelations(context.db, workspace, input.body.ids, authCtx);
       } catch (error) {
         return toORPCError(error);
       }

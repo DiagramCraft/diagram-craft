@@ -4,7 +4,7 @@ import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-export const browserViewSchema = z.enum(['table', 'cards', 'tree', 'radar', 'timeline']);
+export const browserViewSchema = z.enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix']);
 
 export const filterConditionSchema = z.object({
   fieldId: z.string(),
@@ -51,10 +51,20 @@ export const timelineViewConfigSchema = z.object({
   zoom: z.enum(['month', 'quarter', 'year'])
 });
 
+export const matrixViewConfigSchema = z.object({
+  colMode: z.enum(['entity', 'attribute']),
+  colSchemaId: z.string().nullable(),
+  colEnumFieldId: z.string().nullable(),
+  filterFieldName: z.string().nullable(),
+  hideEmptyRows: z.boolean(),
+  hideEmptyCols: z.boolean()
+});
+
 const viewConfigSchema = z
   .object({
     radar: radarViewConfigSchema.optional(),
-    timeline: timelineViewConfigSchema.optional()
+    timeline: timelineViewConfigSchema.optional(),
+    matrix: matrixViewConfigSchema.optional()
   })
   .nullable();
 

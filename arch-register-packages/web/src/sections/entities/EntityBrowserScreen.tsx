@@ -24,12 +24,14 @@ import {
   TbTrash,
   TbChartRadar,
   TbCalendarWeek,
+  TbTable,
   TbCheck,
   TbX,
   TbFilter
 } from 'react-icons/tb';
 import { RadarView, type RadarConfig } from './components/RadarView';
 import { TimelineView, type TimelineConfig } from './components/TimelineView';
+import { MatrixView, type MatrixConfig } from './components/MatrixView';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../../lib/api';
 import type { TreeNode, TreeEdge, WorkspaceTeam } from '../../lib/api';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
@@ -58,7 +60,7 @@ import { EntityRecord } from '@arch-register/api-types/entityContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 
-type BrowserView = 'table' | 'cards' | 'tree' | 'radar' | 'timeline';
+type BrowserView = 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix';
 type DateFilterOperator = 'on' | 'before' | 'after' | 'empty';
 
 const parseDateValue = (value: unknown) => {
@@ -268,10 +270,12 @@ const SaveViewDialog = ({
 const toSavedViewConfig = (
   view: BrowserView,
   radarConfig: RadarConfig | null,
-  timelineConfig: TimelineConfig | null
+  timelineConfig: TimelineConfig | null,
+  matrixConfig: MatrixConfig | null
 ) => {
   if (view === 'radar' && radarConfig) return { radar: radarConfig };
   if (view === 'timeline' && timelineConfig) return { timeline: timelineConfig };
+  if (view === 'matrix' && matrixConfig) return { matrix: matrixConfig };
   return null;
 };
 
@@ -296,6 +300,7 @@ export const EntityBrowserScreen = () => {
     viewMode?: BrowserView;
     radarConfig?: string;
     timelineConfig?: string;
+    matrixConfig?: string;
     sidebarTab?: 'filters' | 'views';
     filters?: string;
   };
@@ -358,6 +363,16 @@ export const EntityBrowserScreen = () => {
     }
     return null;
   });
+  const [matrixConfig, setMatrixConfig] = useState<MatrixConfig | null>(() => {
+    if (search.matrixConfig) {
+      try {
+        return JSON.parse(search.matrixConfig);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -394,7 +409,14 @@ export const EntityBrowserScreen = () => {
         // ignore
       }
     }
-  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.q, search.filters]);
+    if (search.matrixConfig) {
+      try {
+        setMatrixConfig(JSON.parse(search.matrixConfig));
+      } catch {
+        // ignore
+      }
+    }
+  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.matrixConfig, search.q, search.filters]);
 
   // Use TanStack Query hooks for data fetching
   const { data: entities = [] } = useEntities(workspaceId, {
@@ -456,6 +478,7 @@ export const EntityBrowserScreen = () => {
       viewMode?: BrowserView;
       radarConfig?: string;
       timelineConfig?: string;
+      matrixConfig?: string;
       sidebarTab?: 'filters' | 'views';
       filters?: FilterCondition[];
     }) => {
@@ -472,6 +495,8 @@ export const EntityBrowserScreen = () => {
             params.radarConfig ?? (radarConfig ? JSON.stringify(radarConfig) : undefined),
           timelineConfig:
             params.timelineConfig ?? (timelineConfig ? JSON.stringify(timelineConfig) : undefined),
+          matrixConfig:
+            params.matrixConfig ?? (matrixConfig ? JSON.stringify(matrixConfig) : undefined),
           sidebarTab: params.sidebarTab ?? search.sidebarTab,
           filters: nextFilters.length > 0 ? JSON.stringify(nextFilters) : undefined
         }
@@ -485,6 +510,7 @@ export const EntityBrowserScreen = () => {
       view,
       radarConfig,
       timelineConfig,
+      matrixConfig,
       search.sidebarTab,
       conditions
     ]
@@ -709,7 +735,7 @@ export const EntityBrowserScreen = () => {
           sort,
           conditions
         },
-        config: toSavedViewConfig(view, radarConfig, timelineConfig)
+        config: toSavedViewConfig(view, radarConfig, timelineConfig, matrixConfig)
       });
     } catch {
       // Error handling is done by TanStack Query
@@ -732,7 +758,7 @@ export const EntityBrowserScreen = () => {
             sort,
             conditions
           },
-          config: toSavedViewConfig(view, radarConfig, timelineConfig)
+          config: toSavedViewConfig(view, radarConfig, timelineConfig, matrixConfig)
         }
       });
     } catch {
@@ -750,7 +776,8 @@ export const EntityBrowserScreen = () => {
     sort,
     conditions,
     radarConfig,
-    timelineConfig
+    timelineConfig,
+    matrixConfig
   ]);
 
   const menuItems = useMemo(() => {
@@ -918,10 +945,26 @@ export const EntityBrowserScreen = () => {
           >
             <TbCalendarWeek size={13} />
           </button>
+          <button
+            type="button"
+            className={view === 'matrix' ? styles.segmentedActive : ''}
+            onClick={() => setView('matrix')}
+            title="Matrix"
+          >
+            <TbTable size={13} />
+          </button>
         </div>
       </div>
 
-      {view === 'timeline' ? (
+      {view === 'matrix' ? (
+        <MatrixView
+          rows={filtered}
+          schemaMap={schemaMap}
+          onEntityClick={navigateToEntity}
+          config={matrixConfig}
+          onConfigChange={setMatrixConfig}
+        />
+      ) : view === 'timeline' ? (
         <TimelineView
           rows={filtered}
           schemas={schemas}
