@@ -186,6 +186,7 @@ export const SchemasTab = () => {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Description</th>
                 <th>Field Names</th>
                 <th>Source</th>
                 <th>Available for Element Data</th>
@@ -201,10 +202,13 @@ export const SchemasTab = () => {
                 return (
                   <tr
                     key={schema.id}
-                    onClick={isEditable ? () => setEditSchemaDialog({ open: true, schema }) : undefined}
+                    onClick={
+                      isEditable ? () => setEditSchemaDialog({ open: true, schema }) : undefined
+                    }
                     style={isEditable ? { cursor: 'pointer' } : undefined}
                   >
                     <td>{schema.name}</td>
+                    <td>{schema.description ?? '-'}</td>
                     <td>{getFieldNamesDisplay(schema)}</td>
                     <td>{schema.providerId}</td>
                     <td onClick={ev => ev.stopPropagation()}>
@@ -232,9 +236,21 @@ export const SchemasTab = () => {
                       <td onClick={ev => ev.stopPropagation()}>
                         {isEditable && (
                           <MenuButton.Root>
-                            <MenuButton.Trigger element={<button type="button" className={styles.eDotsBtn}><TbDots size={14} /></button>} />
+                            <MenuButton.Trigger
+                              element={
+                                <button type="button" className={styles.eDotsBtn}>
+                                  <TbDots size={14} />
+                                </button>
+                              }
+                            />
                             <MenuButton.Menu>
-                              <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => handleDeleteSchema(schema)}>Delete</Menu.Item>
+                              <Menu.Item
+                                type="danger"
+                                leftSlot={<TbTrash size={13} />}
+                                onClick={() => handleDeleteSchema(schema)}
+                              >
+                                Delete
+                              </Menu.Item>
                             </MenuButton.Menu>
                           </MenuButton.Root>
                         )}

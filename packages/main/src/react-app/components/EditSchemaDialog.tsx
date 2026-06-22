@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbTrash } from 'react-icons/tb';
@@ -49,6 +50,7 @@ const schemaHasAssociatedData = (
 
 export const EditSchemaDialog = (props: Props) => {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [fields, setFields] = useState<DataSchemaField[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [originalFieldIds, setOriginalFieldIds] = useState<Set<string>>(new Set());
@@ -56,11 +58,13 @@ export const EditSchemaDialog = (props: Props) => {
   useEffect(() => {
     if (props.open && props.schema) {
       setName(props.schema.name);
+      setDescription(props.schema.description ?? '');
       setFields([...props.schema.fields]);
       setOriginalFieldIds(new Set(props.schema.fields.map(f => f.id)));
       setErrors({});
     } else if (props.open && !props.schema) {
       setName($t('dialog.schema.new_schema', 'New schema'));
+      setDescription('');
       setFields(INITIAL_SCHEMA_FIELDS);
       setOriginalFieldIds(new Set());
       setErrors({});
@@ -208,6 +212,7 @@ export const EditSchemaDialog = (props: Props) => {
     const resultSchema: DataSchema = {
       id: props.schema?.id ?? newid(),
       name: name.trim(),
+      description: description.trim() ?? undefined,
       providerId: props.schema?.providerId ?? 'document',
       fields: fields
     };
@@ -242,6 +247,19 @@ export const EditSchemaDialog = (props: Props) => {
           placeholder={$t('dialog.schema.enter_schema_name', 'Enter schema name')}
         />
         {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
+      </div>
+
+      <div
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}
+      >
+        <label>{$t('dialog.schema.description', 'Description')}:</label>
+        <TextArea
+          id="schema-description"
+          value={description}
+          onChange={value => setDescription(value ?? '')}
+          placeholder={$t('dialog.schema.enter_description', 'Enter description (optional)')}
+          rows={3}
+        />
       </div>
 
       <div
