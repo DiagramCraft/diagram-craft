@@ -166,6 +166,7 @@
 }
 
 .diagramCard {
+  width: 100%;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
