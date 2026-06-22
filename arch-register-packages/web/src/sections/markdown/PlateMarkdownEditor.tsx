@@ -19,6 +19,7 @@ import { NodeIdPlugin } from 'platejs';
 import { MarkdownPlugin, deserializeMd, serializeMd } from '@platejs/markdown';
 import { DndPlugin, useDraggable, useDropLine, DndScroller } from '@platejs/dnd';
 import { ListPlugin } from '@platejs/list/react';
+import { toggleList } from '@platejs/list';
 import { SlashPlugin, SlashInputPlugin } from '@platejs/slash-command/react';
 import {
   useFloatingToolbarState,
@@ -30,6 +31,7 @@ import {
 import type { TElement, Value } from 'platejs';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Drag handle & drop indicator ──────────────────────────────────────────
@@ -349,6 +351,24 @@ const StrikethroughLeaf = (props: PlateLeafProps) => (
 
 // ─── Slash command definitions ──────────────────────────────────────────────
 
+// When on an empty paragraph, replace it rather than splitting it (which would
+// leave an extra empty block behind).
+const insertOrReplaceBlock = (editor: ReturnType<typeof useEditorRef>, node: TElement) => {
+  const { selection } = editor;
+  if (selection) {
+    const topIndex = selection.anchor.path[0];
+    if (topIndex !== undefined) {
+      const block = editor.children[topIndex] as TElement | undefined;
+      if (block?.type === 'p' && getNodeText(block as Record<string, unknown>) === '') {
+        editor.tf.removeNodes({ at: [topIndex] });
+        editor.tf.insertNodes(node, { at: [topIndex] });
+        return;
+      }
+    }
+  }
+  editor.tf.insertNodes(node);
+};
+
 type SlashCommandItem = {
   key: string;
   label: string;
@@ -409,16 +429,7 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     description: 'Unordered list',
     icon: <span className={styles.slashIcon}>•</span>,
     keywords: ['bullet', 'list'],
-    onSelect: editor =>
-      editor.tf.insertNodes([
-        {
-          type: 'list',
-          listStyleType: 'disc',
-          children: [
-            { type: 'li', children: [{ type: 'lic', children: [{ text: '' }] }] }
-          ]
-        }
-      ])
+    onSelect: editor => toggleList(editor, { listStyleType: 'disc' })
   },
   {
     key: 'ol',
@@ -426,16 +437,7 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     description: 'Ordered list',
     icon: <span className={styles.slashIcon}>1.</span>,
     keywords: ['numbered', 'ordered'],
-    onSelect: editor =>
-      editor.tf.insertNodes([
-        {
-          type: 'list',
-          listStyleType: 'decimal',
-          children: [
-            { type: 'li', children: [{ type: 'lic', children: [{ text: '' }] }] }
-          ]
-        }
-      ])
+    onSelect: editor => toggleList(editor, { listStyleType: 'decimal' })
   },
   {
     key: 'code',
@@ -448,12 +450,10 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     ),
     keywords: ['pre', 'code'],
     onSelect: editor =>
-      editor.tf.insertNodes([
-        {
-          type: 'code_block',
-          children: [{ type: 'code_line', children: [{ text: '' }] }]
-        }
-      ])
+      insertOrReplaceBlock(editor, {
+        type: 'code_block',
+        children: [{ type: 'code_line', children: [{ text: '' }] }]
+      })
   },
   {
     key: 'blockquote',
@@ -462,7 +462,7 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     icon: <span className={styles.slashIcon}>"</span>,
     keywords: ['quote', 'callout'],
     onSelect: editor =>
-      editor.tf.insertNodes([{ type: 'blockquote', children: [{ text: '' }] }])
+      insertOrReplaceBlock(editor, { type: 'blockquote', children: [{ text: '' }] })
   },
   {
     key: 'hr',
@@ -470,11 +470,30 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     description: 'Horizontal rule',
     icon: <span className={styles.slashIcon}>—</span>,
     keywords: ['divider', 'rule', 'line'],
-    onSelect: editor =>
+    onSelect: editor => {
+      const { selection } = editor;
+      if (selection) {
+        const topIndex = selection.anchor.path[0];
+        if (topIndex !== undefined) {
+          const block = editor.children[topIndex] as TElement | undefined;
+          if (block?.type === 'p' && getNodeText(block as Record<string, unknown>) === '') {
+            editor.tf.removeNodes({ at: [topIndex] });
+            editor.tf.insertNodes(
+              [
+                { type: 'hr', children: [{ text: '' }] },
+                { type: 'p', children: [{ text: '' }] }
+              ],
+              { at: [topIndex] }
+            );
+            return;
+          }
+        }
+      }
       editor.tf.insertNodes([
         { type: 'hr', children: [{ text: '' }] },
         { type: 'p', children: [{ text: '' }] }
-      ])
+      ]);
+    }
   }
 ];
 
@@ -657,9 +676,9 @@ const MarkButton = ({
   const isActive = !!(editor.api.marks() as Record<string, unknown> | null)?.[mark];
 
   return (
-    <button
+    <Toolbar.Button
       type="button"
-      className={`${styles.toolbarBtn} ${isActive ? styles.toolbarBtnActive : ''}`}
+      data-pressed={isActive ? true : undefined}
       title={label}
       onMouseDown={e => {
         e.preventDefault();
@@ -667,16 +686,15 @@ const MarkButton = ({
       }}
     >
       {children}
-    </button>
+    </Toolbar.Button>
   );
 };
 
 const HeadingButton = ({ type, label }: { type: string; label: string }) => {
   const editor = useEditorRef();
   return (
-    <button
+    <Toolbar.Button
       type="button"
-      className={styles.toolbarBtn}
       title={label}
       onMouseDown={e => {
         e.preventDefault();
@@ -684,18 +702,24 @@ const HeadingButton = ({ type, label }: { type: string; label: string }) => {
       }}
     >
       {type.toUpperCase()}
-    </button>
+    </Toolbar.Button>
   );
 };
 
 const FloatingToolbar = () => {
   const editorId = useEditorId();
   const focusedEditorId = useEventEditorValue('focus');
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setPortalContainer(document.querySelector('.ar-app'));
+  }, []);
 
   const state = useFloatingToolbarState({
     editorId,
     focusedEditorId,
     floatingOptions: {
+      strategy: 'fixed',
       placement: 'top',
       middleware: [offset(8), flip({ padding: 8 })],
       getBoundingClientRect: getDOMSelectionBoundingClientRect
@@ -706,31 +730,35 @@ const FloatingToolbar = () => {
 
   if (hidden) return null;
 
-  return (
+  const toolbar = (
     <div
       ref={ref}
       {...toolbarProps}
       className={styles.floatingToolbar}
       onMouseDown={e => e.preventDefault()}
     >
-      <MarkButton mark="bold" label="Bold">
-        <strong>B</strong>
-      </MarkButton>
-      <MarkButton mark="italic" label="Italic">
-        <em>I</em>
-      </MarkButton>
-      <MarkButton mark="code" label="Inline code">
-        <code>`</code>
-      </MarkButton>
-      <MarkButton mark="strikethrough" label="Strikethrough">
-        <s>S</s>
-      </MarkButton>
-      <div className={styles.toolbarDivider} />
-      <HeadingButton type="h1" label="Heading 1" />
-      <HeadingButton type="h2" label="Heading 2" />
-      <HeadingButton type="h3" label="Heading 3" />
+      <Toolbar.Root>
+        <MarkButton mark="bold" label="Bold">
+          <strong>B</strong>
+        </MarkButton>
+        <MarkButton mark="italic" label="Italic">
+          <em>I</em>
+        </MarkButton>
+        <MarkButton mark="code" label="Inline code">
+          <code>`</code>
+        </MarkButton>
+        <MarkButton mark="strikethrough" label="Strikethrough">
+          <s>S</s>
+        </MarkButton>
+        <Toolbar.Separator />
+        <HeadingButton type="h1" label="Heading 1" />
+        <HeadingButton type="h2" label="Heading 2" />
+        <HeadingButton type="h3" label="Heading 3" />
+      </Toolbar.Root>
     </div>
   );
+
+  return portalContainer ? createPortal(toolbar, portalContainer) : toolbar;
 };
 
 // ─── Plugin definitions ─────────────────────────────────────────────────────
