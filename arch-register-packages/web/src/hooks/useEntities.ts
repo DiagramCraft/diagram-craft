@@ -133,6 +133,7 @@ export const useUpdateEntity = (workspaceId: string) => {
     onSuccess: async (_, variables) => {
       await invalidateEntityDetails(queryClient, workspaceId, variables.entityId);
       await invalidateEntityQueries(queryClient, workspaceId);
+      await invalidateSnapshotQueries(queryClient, workspaceId, variables.entityId);
     }
   });
 };
@@ -277,6 +278,22 @@ export const useUpdateSnapshot = (workspaceId: string, entityId: string) => {
       }),
     onSuccess: (_, variables) => {
       invalidateSnapshotQueries(queryClient, workspaceId, entityId, variables.projectId);
+    }
+  });
+};
+
+export const useRestoreSnapshot = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: { snapshotId: string; commitMessage?: string }) =>
+      orpcClient.entities.snapshots.restore({
+        params: { workspace: workspaceId, id: entityId, snapshotId: params.snapshotId },
+        body: { commitMessage: params.commitMessage }
+      }),
+    onSuccess: () => {
+      invalidateEntityDetails(queryClient, workspaceId, entityId);
+      invalidateSnapshotQueries(queryClient, workspaceId, entityId);
     }
   });
 };

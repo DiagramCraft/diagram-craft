@@ -373,6 +373,7 @@ export const sqliteMappers = {
     commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
     created_at: toDate(row['created_at']),
     created_by: String(row['created_by']),
+    created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
     base_state: parseJson<Record<string, unknown>>(row['base_state'], {}),
     proposed_state: row['proposed_state'] == null
       ? null

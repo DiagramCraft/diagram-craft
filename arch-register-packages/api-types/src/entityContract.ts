@@ -162,6 +162,7 @@ const entitySnapshotSchema = z.object({
   commit_message: z.string().nullable(),
   created_at: z.string(),
   created_by: z.string(),
+  created_by_name: z.string().nullable(),
   base_state: z.record(z.string(), z.unknown()),
   proposed_state: z.record(z.string(), z.unknown()).nullable()
 });
@@ -435,7 +436,7 @@ export const workspaceEntityContract = {
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), id: z.string().regex(UUID_REGEX), snapshotId: z.string().regex(UUID_REGEX) }),
+            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string().regex(UUID_REGEX) }),
             body: z.object({ commitMessage: z.string().optional() })
           })
         )
@@ -448,13 +449,27 @@ export const workspaceEntityContract = {
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), id: z.string().regex(UUID_REGEX), snapshotId: z.string().regex(UUID_REGEX) }),
+            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string().regex(UUID_REGEX) }),
             body: z.object({
               resolvedEntityData: z.record(z.string(), z.unknown())
             })
           })
         )
-        .output(entitySnapshotSchema)
+        .output(entitySnapshotSchema),
+      restore: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/data/{id}/snapshots/{snapshotId}/restore',
+          inputStructure: 'detailed'
+        })
+        .input(
+          z.object({
+            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string().regex(UUID_REGEX) }),
+            body: z.object({ commitMessage: z.string().optional() })
+          })
+        )
+        .output(entitySnapshotSchema),
+
     }
   }
 };

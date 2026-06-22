@@ -19,7 +19,7 @@ import {
   TbBell,
   TbPinned
 } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor, WorkspaceTeam } from '../../lib/api';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -34,12 +34,10 @@ import {
   useCloneEntity,
   useEntitiesBySchema,
   useEntitySnapshots,
-  usePromoteSnapshot
+  usePromoteSnapshot,
+  useRestoreSnapshot
 } from '../../hooks/useEntities';
-import {
-  useEntityDiagramFiles,
-  useEntityProjects
-} from '../../hooks/useProjects';
+import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
 import { useAuditLog } from '../../hooks/useAudit';
 import {
   useCreatePinnedEntity,
@@ -57,13 +55,18 @@ import {
 } from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
-import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
+import {
+  EntityRecord,
+  EntitySummary,
+  EntitySnapshot
+} from '@arch-register/api-types/entityContract';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { EntityContentView } from './EntityContentView';
 import { EntityTimelineTab } from './EntityTimelineTab';
 import { Title } from '../../components/Title';
+import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
 
 type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes' | 'timeline';
 
@@ -144,6 +147,7 @@ export const EntityDetailScreen = () => {
   const deleteEntity = useDeleteEntity(workspaceId);
   const cloneEntity = useCloneEntity(workspaceId);
   const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);
+  const restoreSnapshot = useRestoreSnapshot(workspaceId, entityId);
   const { data: allSnapshots = [] } = useEntitySnapshots(workspaceId, entityId, true);
   const futureSnapshots = allSnapshots.filter(s => s.status === 'future_update');
   const createWatch = useCreateWatch(workspaceId);
@@ -381,7 +385,10 @@ export const EntityDetailScreen = () => {
         <div className={styles.head}>
           <Title
             breadcrumb={[
-              { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+              {
+                label: 'Home',
+                onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+              },
               { label: 'Entities', onClick: () => navigateToEntities() }
             ]}
             icon={<TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={32} />}
@@ -391,12 +398,16 @@ export const EntityDetailScreen = () => {
               entity._lifecycle ? (
                 <>
                   <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
-                  {entity._targetLifecycle && entity._targetLifecycle.id !== entity._lifecycle.id && (
-                    <>
-                      <span>→</span>
-                      <StatusChip value={entity._targetLifecycle.id} lifecycleStates={lifecycleStates} />
-                    </>
-                  )}
+                  {entity._targetLifecycle &&
+                    entity._targetLifecycle.id !== entity._lifecycle.id && (
+                      <>
+                        <span>→</span>
+                        <StatusChip
+                          value={entity._targetLifecycle.id}
+                          lifecycleStates={lifecycleStates}
+                        />
+                      </>
+                    )}
                 </>
               ) : undefined
             }
@@ -456,7 +467,11 @@ export const EntityDetailScreen = () => {
                     </Button>
                   )}
                   <Button onClick={cancelEdit}>Cancel</Button>
-                  <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending || saveConfirmOpen}>
+                  <Button
+                    variant="primary"
+                    onClick={saveEdit}
+                    disabled={updateEntity.isPending || saveConfirmOpen}
+                  >
                     {updateEntity.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </>
@@ -722,9 +737,7 @@ export const EntityDetailScreen = () => {
 
             <hr className={styles.divider} />
 
-            <div className={styles.sectionLabel}>
-              Projects
-            </div>
+            <div className={styles.sectionLabel}>Projects</div>
             {entityProjects.length === 0 ? (
               <div className={styles.metaPropRow}>
                 <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
@@ -736,7 +749,11 @@ export const EntityDetailScreen = () => {
                 <div key={project.id} className={styles.metaPropRow}>
                   <span className={styles.metaPropLabel}>{project.name}</span>
                   <span className={styles.metaPropValue}>
-                    {entity_type ? entity_type.name : <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>}
+                    {entity_type ? (
+                      entity_type.name
+                    ) : (
+                      <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
+                    )}
                   </span>
                 </div>
               ))
@@ -747,9 +764,9 @@ export const EntityDetailScreen = () => {
                 <hr className={styles.divider} />
                 <div className={styles.sectionLabel}>Future plans</div>
                 {futureSnapshots.map(snap => {
-                  const projectName = entityProjects.find(
-                    ep => ep.project.id === snap.project_id
-                  )?.project.name ?? snap.project_id;
+                  const projectName =
+                    entityProjects.find(ep => ep.project.id === snap.project_id)?.project.name ??
+                    snap.project_id;
                   return (
                     <div key={snap.id} className={styles.futurePlan}>
                       <div className={styles.futurePlanMeta}>
@@ -771,9 +788,7 @@ export const EntityDetailScreen = () => {
 
             <hr className={styles.divider} />
 
-            <div className={styles.sectionLabel}>
-              Diagrams
-            </div>
+            <div className={styles.sectionLabel}>Diagrams</div>
             {entityDiagramFiles.length === 0 ? (
               <div className={styles.metaPropRow}>
                 <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
@@ -786,7 +801,11 @@ export const EntityDetailScreen = () => {
                   <a
                     key={file.id}
                     className={styles.miniDiagramRow}
-                    href={projectDiagramHref(workspaceSlug, asProjectPublicId(project.public_id), file.id)}
+                    href={projectDiagramHref(
+                      workspaceSlug,
+                      asProjectPublicId(project.public_id),
+                      file.id
+                    )}
                   >
                     <div className={styles.miniDiagramThumb}>
                       <div className={styles.miniDiagramThumbGrid} />
@@ -796,12 +815,57 @@ export const EntityDetailScreen = () => {
                           dangerouslySetInnerHTML={{ __html: file.preview_svg }}
                         />
                       ) : (
-                        <svg className={styles.miniDiagramThumbSvg} viewBox="0 0 60 30" preserveAspectRatio="none">
-                          <rect x="3" y="7" width="12" height="7" rx="1" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="0.7" />
-                          <rect x="23" y="3" width="12" height="7" rx="1" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="0.7" />
-                          <rect x="23" y="20" width="12" height="7" rx="1" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="0.7" />
-                          <rect x="43" y="10" width="12" height="7" rx="1" fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))" stroke="var(--tag-component)" strokeWidth="0.7" />
-                          <path d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14" stroke="var(--cmp-fg-disabled)" fill="none" strokeWidth="0.7" />
+                        <svg
+                          className={styles.miniDiagramThumbSvg}
+                          viewBox="0 0 60 30"
+                          preserveAspectRatio="none"
+                        >
+                          <rect
+                            x="3"
+                            y="7"
+                            width="12"
+                            height="7"
+                            rx="1"
+                            fill="var(--cmp-bg)"
+                            stroke="var(--base-fg-more-dim)"
+                            strokeWidth="0.7"
+                          />
+                          <rect
+                            x="23"
+                            y="3"
+                            width="12"
+                            height="7"
+                            rx="1"
+                            fill="var(--cmp-bg)"
+                            stroke="var(--base-fg-more-dim)"
+                            strokeWidth="0.7"
+                          />
+                          <rect
+                            x="23"
+                            y="20"
+                            width="12"
+                            height="7"
+                            rx="1"
+                            fill="var(--cmp-bg)"
+                            stroke="var(--base-fg-more-dim)"
+                            strokeWidth="0.7"
+                          />
+                          <rect
+                            x="43"
+                            y="10"
+                            width="12"
+                            height="7"
+                            rx="1"
+                            fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
+                            stroke="var(--tag-component)"
+                            strokeWidth="0.7"
+                          />
+                          <path
+                            d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14"
+                            stroke="var(--cmp-fg-disabled)"
+                            fill="none"
+                            strokeWidth="0.7"
+                          />
                         </svg>
                       )}
                     </div>
@@ -895,7 +959,21 @@ export const EntityDetailScreen = () => {
       )}
 
       {/* Change history */}
-      {!contentFolder && tab === 'changes' && <ChangeHistory auditLog={auditLog} loading={loadingAudit} />}
+      {!contentFolder && tab === 'changes' && (
+        <ChangeHistory
+          auditLog={auditLog}
+          loading={loadingAudit}
+          snapshots={allSnapshots}
+          onRestore={(snapshotId, commitMessage) =>
+            restoreSnapshot.mutateAsync({ snapshotId, commitMessage })
+          }
+          isRestoring={restoreSnapshot.isPending}
+          entity={entity}
+          schema={schema}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
+        />
+      )}
 
       {/* Timeline */}
       {!contentFolder && tab === 'timeline' && (
@@ -955,7 +1033,6 @@ export const EntityDetailScreen = () => {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-
     </div>
   );
 };
@@ -1199,109 +1276,53 @@ const RelationRow = ({
   );
 };
 
-const formatTimestamp = (timestamp: string) => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
+const ChangeHistory = ({
+  auditLog,
+  loading,
+  snapshots,
+  onRestore,
+  isRestoring,
+  entity,
+  schema,
+  lifecycleStates,
+  teams
+}: {
+  auditLog: AuditLogEntry[];
+  loading: boolean;
+  snapshots: EntitySnapshot[];
+  onRestore: (snapshotId: string, commitMessage?: string) => Promise<unknown>;
+  isRestoring: boolean;
+  entity: EntityRecord | null;
+  schema: EntitySchema | null;
+  lifecycleStates: WorkspaceLifecycleState[];
+  teams: WorkspaceTeam[];
+}) => {
+  const [restoreDialogSnapshot, setRestoreDialogSnapshot] = useState<EntitySnapshot | null>(null);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
-};
+  const savedSnapshots = useMemo(
+    () =>
+      snapshots.filter(
+        s => s.status === 'autosave' || s.status === 'saved_version' || s.status === 'applied'
+      ),
+    [snapshots]
+  );
 
-const formatValue = (val: unknown) => {
-  if (val == null || val === '') return '—';
-  if (typeof val === 'object') return JSON.stringify(val);
-  return String(val);
-};
-
-const getOperationLabel = (op: string) => {
-  switch (op) {
-    case 'create':
-      return 'created entity';
-    case 'update':
-      return 'updated';
-    case 'delete':
-      return 'deleted entity';
-    default:
-      return op;
-  }
-};
-
-type ChangeRowData = {
-  when: string;
-  who: string;
-  what: string;
-  from: string;
-  to: string;
-};
-
-const flattenAuditEntries = (entries: AuditLogEntry[]): ChangeRowData[] => {
-  const rows: ChangeRowData[] = [];
-  for (const entry of entries) {
-    const when = formatTimestamp(entry.timestamp);
-    const who = entry.user_display_name ?? entry.user_id ?? 'Unknown';
-
-    if (entry.operation === 'create') {
-      rows.push({ when, who, what: 'created entity', from: '—', to: '—' });
-      continue;
-    }
-
-    if (entry.operation === 'delete') {
-      rows.push({ when, who, what: 'deleted entity', from: '—', to: '—' });
-      continue;
-    }
-
-    const oldData = entry.changes.old ?? {};
-    const newData = entry.changes.new ?? {};
-    const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
-    let hasChanges = false;
-
-    allKeys.forEach(key => {
-      if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
-        hasChanges = true;
-        const label = key.startsWith('_') ? key.slice(1) : key;
-        rows.push({
-          when,
-          who,
-          what: `changed ${label}`,
-          from: formatValue(oldData[key]),
-          to: formatValue(newData[key])
-        });
+  const handleRestore = async (commitMessage?: string) => {
+    if (restoreDialogSnapshot) {
+      try {
+        await onRestore(restoreDialogSnapshot.id, commitMessage);
+        setRestoreDialogSnapshot(null);
+      } catch {
+        // keep dialog open so the user can retry
       }
-    });
-
-    if (!hasChanges) {
-      rows.push({ when, who, what: getOperationLabel(entry.operation), from: '—', to: '—' });
     }
-  }
-  return rows;
-};
-
-const ChangeRow = ({ row }: { row: ChangeRowData }) => (
-  <div className={styles.changeRow}>
-    <span className={styles.changeWhen}>{row.when}</span>
-    <span className={styles.changeWho}>{row.who}</span>
-    <span className={styles.changeWhat}>{row.what}</span>
-    <span className={styles.changeFrom}>{row.from}</span>
-    <TbChevronRight size={10} className={styles.dim} />
-    <span className={styles.changeTo}>{row.to}</span>
-  </div>
-);
-
-const ChangeHistory = ({ auditLog, loading }: { auditLog: AuditLogEntry[]; loading: boolean }) => {
-  const rows = useMemo(() => flattenAuditEntries(auditLog), [auditLog]);
+  };
 
   if (loading) {
     return <div className={styles.loading}>Loading change history...</div>;
   }
 
-  if (auditLog.length === 0) {
+  if (auditLog.length === 0 && savedSnapshots.length === 0) {
     return (
       <div className={styles.empty}>
         <div className={styles.emptyTitle}>No change history yet</div>
@@ -1311,11 +1332,88 @@ const ChangeHistory = ({ auditLog, loading }: { auditLog: AuditLogEntry[]; loadi
   }
 
   return (
-    <div className={styles.changesList}>
-      {rows.map((row, i) => (
-        <ChangeRow key={i} row={row} />
-      ))}
-    </div>
+    <>
+      <div className={styles.changeHistory}>
+        {savedSnapshots.length > 0 && (
+          <div>
+            <div className={styles.chTableWrap}>
+              <table className={styles.chTable}>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>By</th>
+                    <th>Message</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {savedSnapshots.map(snapshot => (
+                    <tr key={snapshot.id}>
+                      <td className={styles.chDim}>
+                        {new Date(snapshot.created_at).toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </td>
+                      <td>
+                        <span
+                          className={`${styles.snapshotTypeBadge} ${snapshot.status !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}
+                        >
+                          {snapshot.status === 'saved_version'
+                            ? 'saved'
+                            : snapshot.status === 'applied'
+                              ? 'applied'
+                              : 'autosave'}
+                        </span>
+                      </td>
+                      <td>{snapshot.created_by_name ?? '—'}</td>
+                      <td className={styles.chDim}>{snapshot.commit_message ?? '—'}</td>
+                      <td className={styles.chActionsCell}>
+                        {snapshot.status !== 'future_update' && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setRestoreDialogSnapshot(snapshot)}
+                          >
+                            Restore
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {restoreDialogSnapshot && entity && (
+        <RestoreSnapshotDialog
+          isOpen={true}
+          onClose={() => setRestoreDialogSnapshot(null)}
+          onConfirm={handleRestore}
+          snapshot={restoreDialogSnapshot}
+          currentState={{
+            name: entity._name,
+            description: entity._description,
+            lifecycle: entity._lifecycle?.id ?? null,
+            target_lifecycle: entity._targetLifecycle?.id ?? null,
+            target_lifecycle_date: entity._targetLifecycleDate,
+            owner: entity._owner?.id ?? null,
+            data: schema ? Object.fromEntries(schema.fields.map(f => [f.id, entity[f.id]])) : {}
+          }}
+          schema={schema}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
+          isRestoring={isRestoring}
+        />
+      )}
+    </>
   );
 };
 

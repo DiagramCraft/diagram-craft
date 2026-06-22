@@ -359,8 +359,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSnapshot(input: EntitySnapshotDbCreate) {
     try {
       const [row] = await this.sql<EntitySnapshotDbResult[]>`
-        INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, commit_message, created_at, created_by, base_state, proposed_state)
-        VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.status}, ${input.project_id}, ${input.target_date}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${this.json(input.base_state)}, ${input.proposed_state != null ? this.json(input.proposed_state) : null})
+        INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, commit_message, created_at, created_by, created_by_name, base_state, proposed_state)
+        VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.status}, ${input.project_id}, ${input.target_date}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${input.created_by_name}, ${this.json(input.base_state)}, ${input.proposed_state != null ? this.json(input.proposed_state) : null})
         RETURNING *
       `;
       return row!;
@@ -369,23 +369,38 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     }
   }
 
+  async getSnapshot(workspace: string, snapshotId: string) {
+    const [row] = await this.sql<EntitySnapshotDbResult[]>`
+      SELECT s.*, u.display_name as created_by_name
+      FROM entity_snapshot s
+      LEFT JOIN users u ON u.id = s.created_by
+      WHERE s.workspace = ${workspace} AND s.id = ${snapshotId}
+    `;
+    return row ?? null;
+  }
+
+
   async listSnapshots(workspace: string, entityId: string) {
     return await this.sql<EntitySnapshotDbResult[]>`
-      SELECT * FROM entity_snapshot
-      WHERE workspace = ${workspace} AND entity_id = ${entityId}
-      ORDER BY created_at DESC
+      SELECT s.*, u.display_name as created_by_name
+      FROM entity_snapshot s
+      LEFT JOIN users u ON u.id = s.created_by
+      WHERE s.workspace = ${workspace} AND s.entity_id = ${entityId}
+      ORDER BY s.created_at DESC
     `;
   }
 
   async listSnapshotsByProject(workspace: string, projectId: string) {
     return await this.sql<EntitySnapshotDbResult[]>`
-      SELECT s.* FROM entity_snapshot s
+      SELECT s.*, u.display_name as created_by_name
+      FROM entity_snapshot s
       INNER JOIN project p ON p.id = s.project_id
+      LEFT JOIN users u ON u.id = s.created_by
       WHERE s.workspace = ${workspace}
         AND p.workspace = ${workspace}
         AND (p.id::text = ${projectId} OR p.public_id = ${projectId})
         AND s.status IN ('future_update', 'applied')
-      ORDER BY target_date ASC NULLS LAST, created_at DESC
+      ORDER BY s.target_date ASC NULLS LAST, s.created_at DESC
     `;
   }
 
@@ -404,10 +419,15 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async promoteSnapshot(workspace: string, snapshotId: string, commitMessage: string | null) {
     const [row] = await this.sql<EntitySnapshotDbResult[]>`
-      UPDATE entity_snapshot
-      SET status = 'saved_version', commit_message = ${commitMessage}
-      WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'autosave'
-      RETURNING *
+      WITH updated AS (
+        UPDATE entity_snapshot
+        SET status = 'saved_version', commit_message = ${commitMessage}
+        WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'autosave'
+        RETURNING *
+      )
+      SELECT u.*, us.display_name as created_by_name
+      FROM updated u
+      LEFT JOIN users us ON us.id = u.created_by
     `;
     return row ?? null;
   }
