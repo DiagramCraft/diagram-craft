@@ -124,14 +124,15 @@ export const EntityDetailScreen = () => {
 
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
+  const auditEntityId = entity?._uid ?? null;
   const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(
     workspaceId,
     entityId
   );
   const { data: auditLog = [], isLoading: loadingAudit } = useAuditLog(
     workspaceId,
-    { entityId, limit: 100 },
-    { enabled: canViewAudit && tab === 'changes' }
+    { entityId: auditEntityId, limit: 100 },
+    { enabled: canViewAudit && tab === 'changes' && !!auditEntityId }
   );
 
   // Project association hooks

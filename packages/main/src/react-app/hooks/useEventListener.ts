@@ -66,7 +66,7 @@ export function useDomEventListener<
     const $target =
       // biome-ignore lint/suspicious/noExplicitAny: false positive
       element === window || element === document ? element : (element as RefObject<any>).current;
-    if (!$target || !$target.addEventListener) return;
+    if (!$target?.addEventListener) return;
 
     $target.addEventListener(eventName, handler);
     return () => {

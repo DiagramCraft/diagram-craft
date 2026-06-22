@@ -1,0 +1,408 @@
+.editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+}
+
+.plateContent {
+  flex: 1;
+  width: 100%;
+  padding: 28px 100px 80px 40px;
+  outline: none;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--base-fg-dim);
+  background: var(--base-bg);
+  box-sizing: border-box;
+  cursor: text;
+}
+
+/* ── Drag & drop ─────────────────────────────────────────────────────────── */
+
+.draggableBlock {
+  position: relative;
+}
+
+.draggableBlock {
+  &::before {
+    content: '';
+    position: absolute;
+    background: var(--panel-bg);
+    border-radius: var(--r-sm);
+
+    left: -35px;
+    right: -95px;
+    top: -5px;
+    bottom: -5px;
+    visibility: hidden;
+  }
+}
+
+.draggableBlock:hover {
+
+  &::before {
+    visibility: visible;
+  }
+}
+
+.draggableBlock:hover .dragHandle {
+  opacity: 1;
+}
+
+.dragHandle {
+  position: absolute;
+  left: -28px;
+  top: 0;
+  width: 20px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  cursor: grab;
+  color: var(--cmp-fg-disabled);
+  border-radius: var(--r-sm);
+  transition: opacity 0.1s, color 0.1s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dragHandle:hover {
+  color: var(--base-fg-dim);
+  background: var(--cmp-bg);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragging {
+  opacity: 0.4;
+}
+
+.dropLine {
+  position: relative;
+  height: 2px;
+  background: var(--accent-fg);
+  border-radius: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.dropLine::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-fg);
+  border-radius: 50%;
+}
+
+/* ── Slash command ────────────────────────────────────────────────────────── */
+
+.slashTrigger {
+  color: var(--accent-fg);
+  font-style: italic;
+  min-width: 1px;
+  display: inline;
+}
+
+.slashDropdown {
+  position: fixed;
+  z-index: 9999;
+  background: var(--panel-bg, var(--base-bg));
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  padding: 4px;
+  min-width: 256px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.slashItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: left;
+  color: var(--base-fg);
+  transition: background 0.08s;
+}
+
+.slashItem:hover,
+.slashItemActive {
+  background: var(--cmp-bg);
+}
+
+.slashIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  font-size: 12px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--base-fg-dim);
+}
+
+.slashItemText {
+  min-width: 0;
+}
+
+.slashItemLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.slashItemDesc {
+  font-size: 11.5px;
+  color: var(--cmp-fg-disabled);
+  margin-top: 1px;
+}
+
+/* ── Floating toolbar ─────────────────────────────────────────────────────── */
+
+.floatingToolbar {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 4px;
+  z-index: 9999;
+  background: var(--panel-bg, var(--base-bg));
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+
+  & > div {
+    padding: 0;
+  }
+}
+
+.toolbarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  color: var(--base-fg-dim);
+  font-size: 13px;
+  transition: background 0.08s, color 0.08s;
+}
+
+.toolbarBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+.toolbarBtnActive {
+  background: var(--accent-bg, var(--cmp-bg));
+  color: var(--accent-fg);
+}
+
+.toolbarDivider {
+  width: 1px;
+  height: 18px;
+  background: var(--panel-border);
+  margin: 0 2px;
+}
+
+/* ── Article typography (mirrors MarkdownEditorScreen .article rules) ─────── */
+
+.plateContent :global(h1) {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--base-fg);
+  letter-spacing: -0.3px;
+  margin: 0 0 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.plateContent :global(h2) {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--base-fg);
+  letter-spacing: -0.2px;
+  margin: 30px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.plateContent :global(h2:first-child) {
+  margin-top: 0;
+}
+
+.plateContent :global(h3) {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+  margin: 22px 0 8px;
+}
+
+.plateContent :global(p) {
+  margin: 0 0 14px;
+  text-wrap: pretty;
+}
+
+.plateContent :global(ul),
+.plateContent :global(ol) {
+  margin: 0 0 13px;
+  padding-left: 22px;
+}
+
+.plateContent :global(ul) {
+  list-style: none;
+  padding-left: 4px;
+}
+
+.plateContent :global(ul li) {
+  position: relative;
+  padding-left: 18px;
+  margin: 0 0 6px;
+  list-style: none;
+}
+
+.plateContent :global(ul li::before) {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-fg);
+  opacity: 0.7;
+}
+
+.plateContent :global(ol li) {
+  margin: 0 0 6px;
+}
+
+.plateContent :global(pre) {
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 13px 16px;
+  margin: 0 0 14px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--base-fg-dim);
+}
+
+.plateContent :global(pre code) {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  border: none;
+}
+
+.plateContent :global(code) {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--base-fg);
+}
+
+.plateContent :global(blockquote) {
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--accent-fg);
+  background: var(--panel-bg);
+  color: var(--base-fg-dim);
+}
+
+.plateContent :global(a) {
+  color: var(--accent-fg);
+  text-decoration: none;
+}
+
+.plateContent :global(a:hover) {
+  text-decoration: underline;
+}
+
+.plateContent :global(hr) {
+  border: none;
+  border-top: 1px solid var(--panel-border);
+  margin: 1.5em 0;
+}
+
+/* ── block action buttons ─────────────────────────────────────────────────── */
+
+.blockActions {
+  position: absolute;
+  right: -90px;
+  top: 0;
+  display: flex;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity 80ms;
+}
+
+.draggableBlock:hover .blockActions {
+  opacity: 1;
+}
+
+.blockActionBtn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--cmp-fg-disabled);
+  transition: background 60ms, color 60ms;
+}
+
+.blockActionBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg-dim);
+}
+
+.blockActionBtn:disabled {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.blockActionBtnDelete:hover {
+  color: var(--error-fg);
+}
+
+/* Slate placeholder */
+.plateContent :global([data-slate-placeholder]) {
+  color: var(--cmp-fg-disabled);
+  font-style: italic;
+  pointer-events: none;
+  position: absolute;
+  top: 28px;
+  left: 40px;
+}

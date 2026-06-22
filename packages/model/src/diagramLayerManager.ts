@@ -137,7 +137,7 @@ export class LayerManager
         const firstRegularLayer = this.diagram.selection.elements
           .map(e => e.layer)
           .filter(e => e.type === 'regular')[0];
-        if (!this.diagram.selection.isEmpty() && !!firstRegularLayer) {
+        if (!this.diagram.selection.isEmpty() && firstRegularLayer) {
           this.active = firstRegularLayer;
         }
       })
@@ -151,7 +151,7 @@ export class LayerManager
         const firstRegularLayer = this.diagram.selection.elements
           .map(e => e.layer)
           .filter(e => e.type === 'regular')[0];
-        if (!this.diagram.selection.isEmpty() && !!firstRegularLayer) {
+        if (!this.diagram.selection.isEmpty() && firstRegularLayer) {
           this.active = firstRegularLayer;
         }
       })

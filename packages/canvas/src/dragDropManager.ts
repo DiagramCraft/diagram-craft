@@ -52,7 +52,7 @@ export type State = {
 export const bindDocumentDragAndDrop = () => {
   document.addEventListener('mousemove', event => {
     const drag = DRAG_DROP_MANAGER.current();
-    if (!drag || !drag.isGlobal) return;
+    if (!drag?.isGlobal) return;
 
     const point = { x: event.clientX, y: event.clientY };
     const initialTarget = resolveTargetAtPoint(point) ?? event.target!;
@@ -99,7 +99,7 @@ export const bindDocumentDragAndDrop = () => {
   });
   document.addEventListener('keyup', event => {
     const drag = DRAG_DROP_MANAGER.current();
-    if (!drag || !drag.isGlobal) return;
+    if (!drag?.isGlobal) return;
 
     drag.onKeyUp(event);
   });
