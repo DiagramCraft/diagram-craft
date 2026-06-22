@@ -444,7 +444,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> implements R
   }
 
   deleteData(schema: DataSchema, data: Data) {
-    if (this.useDocumentOverridesForSchema(schema.id)) {
+    if (this.hasDocumentOverridesForSchema(schema.id)) {
       this.addOverride(schema.id, { type: 'delete', data });
       return Promise.resolve();
     }
@@ -454,7 +454,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> implements R
   }
 
   updateData(schema: DataSchema, data: Data) {
-    if (this.useDocumentOverridesForSchema(schema.id)) {
+    if (this.hasDocumentOverridesForSchema(schema.id)) {
       this.addOverride(schema.id, { type: 'update', data });
       return Promise.resolve();
     }
@@ -464,7 +464,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> implements R
   }
 
   addData(schema: DataSchema, data: Data) {
-    if (this.useDocumentOverridesForSchema(schema.id)) {
+    if (this.hasDocumentOverridesForSchema(schema.id)) {
       this.addOverride(schema.id, { type: 'add', data });
       return Promise.resolve();
     }
@@ -489,7 +489,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> implements R
     this.providers.forEach(p => p.off(eventName, fnOrId));
   }
 
-  private useDocumentOverridesForSchema(schemaId: string): boolean {
+  private hasDocumentOverridesForSchema(schemaId: string): boolean {
     return this.schemaRegistry.getMetadata(schemaId).useDocumentOverrides ?? false;
   }
 
@@ -513,7 +513,7 @@ export class DataManager extends EventEmitter<DataProviderEventMap> implements R
   }
 
   private mergeWithOverrides(schemaId: string, providerData: Data[]): Data[] {
-    if (!this.useDocumentOverridesForSchema(schemaId)) {
+    if (!this.hasDocumentOverridesForSchema(schemaId)) {
       return providerData;
     }
 
