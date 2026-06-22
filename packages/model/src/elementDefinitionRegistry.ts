@@ -469,7 +469,6 @@ export interface NodeDefinition {
     resolvedOptions: NodeLinkOptions,
     uow: UnitOfWork
   ): void;
-
 }
 
 export type AttachPhase = 'drag' | 'dragEnd';
