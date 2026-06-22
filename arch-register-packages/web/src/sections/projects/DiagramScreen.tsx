@@ -22,7 +22,14 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../../auth/AuthContext';
 import { orpcClient } from '../../lib/orpcClient';
-import { projectFileKeys, projectKeys } from '../../hooks/queryKeys';
+import {
+  entityContentKeys,
+  projectEntityKeys,
+  projectFileKeys,
+  projectKeys,
+  workspaceContentKeys
+} from '../../hooks/queryKeys';
+import { searchKeys } from '../../hooks/useSearch';
 import { stableHue } from '../../components/MemberAvatar';
 import {
   asEntityPublicId,
@@ -150,8 +157,33 @@ export const DiagramScreen = () => {
     }
   }, [workspaceId, projectId, isWorkspaceContent]);
 
+  const refreshDiagramCaches = useCallback(async () => {
+    if (isWorkspaceContent) {
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    } else if (isEntityDiagram) {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: entityContentKeys.all(workspaceId, projectId) }),
+        queryClient.invalidateQueries({
+          queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, projectId)
+        })
+      ]);
+    } else {
+      await Promise.all([
+        queryClient.refetchQueries({
+          queryKey: projectFileKeys.list(workspaceId, projectId)
+        }),
+        queryClient.refetchQueries({
+          queryKey: projectKeys.detail(workspaceId, projectId)
+        })
+      ]);
+    }
+
+    await queryClient.invalidateQueries({ queryKey: searchKeys.all });
+  }, [isWorkspaceContent, isEntityDiagram, queryClient, workspaceId, projectId]);
+
   const handleClose = useCallback(async () => {
     await save();
+    await refreshDiagramCaches();
 
     if (isWorkspaceContent) {
       const folderPath = fileInfoRef.current?.path.includes('/')
@@ -171,12 +203,6 @@ export const DiagramScreen = () => {
       navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(projectId), folderPath ? { contentFolder: folderPath } : {}));
     } else {
       // Navigate back to project detail page
-      await queryClient.refetchQueries({
-        queryKey: projectFileKeys.list(workspaceId, projectId)
-      });
-      await queryClient.refetchQueries({
-        queryKey: projectKeys.detail(workspaceId, projectId)
-      });
       navigate(
         projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
           tab: 'projects' as const,
@@ -188,7 +214,15 @@ export const DiagramScreen = () => {
         })
       );
     }
-  }, [save, queryClient, navigate, workspaceId, workspaceSlug, projectId, isEntityDiagram, isWorkspaceContent]);
+  }, [
+    save,
+    refreshDiagramCaches,
+    navigate,
+    workspaceSlug,
+    projectId,
+    isEntityDiagram,
+    isWorkspaceContent
+  ]);
 
   useEffect(() => {
     let releaseDataChange = () => {};

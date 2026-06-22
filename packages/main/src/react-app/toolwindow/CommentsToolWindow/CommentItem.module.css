@@ -112,6 +112,8 @@
     }
 
     .eRootBody {
+      display: flex;
+      flex-direction: column;
       flex: 1;
       min-width: 0;
 
@@ -184,6 +186,7 @@
       padding: 7px 0;
       position: relative;
 
+
       &::before {
         content: '';
         position: absolute;
@@ -243,7 +246,6 @@
       align-items: center;
       gap: 8px;
       padding: 7px 0 8px;
-      border-top: 1px solid var(--panel-border);
       margin-top: 2px;
 
       .eComposerInput {

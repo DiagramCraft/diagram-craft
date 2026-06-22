@@ -63,6 +63,10 @@ export const entityContentKeys = {
     ['entity-content', workspaceId, entityId] as const,
 };
 
+export const workspaceContentKeys = {
+  all: (workspaceId: string) => ['workspace-content', workspaceId] as const,
+};
+
 export const projectFileKeys = {
   all: ['project-files'] as const,
   lists: () => [...projectFileKeys.all, 'list'] as const,

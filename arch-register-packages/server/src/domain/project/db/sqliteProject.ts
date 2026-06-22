@@ -35,6 +35,18 @@ const PROJECT_JOIN_SQL = `
   LEFT JOIN workspace_owner wo ON wo.id = p.owner
 `;
 
+const CONTENT_NODE_SELECT_SQL = `
+  SELECT
+    cn.*,
+    cm.title AS metadata_title,
+    cm.description AS metadata_description,
+    cm.company AS metadata_company,
+    cm.category AS metadata_category,
+    cm.keywords AS metadata_keywords
+  FROM content_node cn
+  LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
+`;
+
 export class SqliteProjectDatabase extends SqliteDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
     return this.all(
@@ -112,7 +124,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async listContentNodes(workspace: string, projectId: string) {
     return this.all(
-      'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? ORDER BY path',
+      `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? ORDER BY cn.path`,
       [workspace, projectId],
       sqliteMappers.contentNode
     );
@@ -120,7 +132,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async listEntityContentNodes(workspace: string, entityId: string) {
     return this.all(
-      'SELECT * FROM content_node WHERE workspace = ? AND entity_id = ? ORDER BY path',
+      `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.entity_id = ? ORDER BY cn.path`,
       [workspace, entityId],
       sqliteMappers.contentNode
     );
@@ -128,7 +140,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async listWorkspaceContentNodes(workspace: string) {
     return this.all(
-      'SELECT * FROM content_node WHERE workspace = ? AND project_id IS NULL AND entity_id IS NULL ORDER BY path',
+      `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id IS NULL AND cn.entity_id IS NULL ORDER BY cn.path`,
       [workspace],
       sqliteMappers.contentNode
     );
@@ -136,7 +148,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async getContentNodeByPath(workspace: string, projectId: string, path: string) {
     return this.get(
-      'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? AND path = ?',
+      `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? AND cn.path = ?`,
       [workspace, projectId, path],
       sqliteMappers.contentNode
     );
@@ -144,7 +156,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async getContentNodeById(workspace: string, projectId: string, id: string) {
     return this.get(
-      'SELECT * FROM content_node WHERE workspace = ? AND project_id = ? AND id = ?',
+      `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? AND cn.id = ?`,
       [workspace, projectId, id],
       sqliteMappers.contentNode
     );
@@ -152,7 +164,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async getAnyContentNodeById(workspace: string, id: string) {
     return this.get(
-      'SELECT * FROM content_node WHERE workspace = ? AND id = ?',
+      `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.id = ?`,
       [workspace, id],
       sqliteMappers.contentNode
     );
@@ -308,6 +320,46 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         fileId
       ]
     );
+  }
+
+  async upsertContentMetadata(input: {
+    workspace: string;
+    node_id: string;
+    title: string | null;
+    description: string | null;
+    company: string | null;
+    category: string | null;
+    keywords: string[];
+    updated_at: Date;
+  }) {
+    this.run(
+      `INSERT INTO content_metadata (workspace, node_id, title, description, company, category, keywords, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(workspace, node_id) DO UPDATE SET
+         title = excluded.title,
+         description = excluded.description,
+         company = excluded.company,
+         category = excluded.category,
+         keywords = excluded.keywords,
+         updated_at = excluded.updated_at`,
+      [
+        input.workspace,
+        input.node_id,
+        input.title,
+        input.description,
+        input.company,
+        input.category,
+        JSON.stringify(input.keywords),
+        input.updated_at.toISOString()
+      ]
+    );
+  }
+
+  async deleteContentMetadata(workspace: string, nodeId: string) {
+    this.run('DELETE FROM content_metadata WHERE workspace = ? AND node_id = ?', [
+      workspace,
+      nodeId
+    ]);
   }
 
   async upsertContentNode(input: ContentNodeDbUpsert) {
@@ -475,7 +527,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
          SELECT cn.id FROM content_node cn
          JOIN desc_tree d ON cn.parent_id = d.id
        )
-       SELECT * FROM content_node WHERE id IN (SELECT id FROM desc_tree)`,
+       SELECT cn.*, cm.title AS metadata_title, cm.description AS metadata_description,
+              cm.company AS metadata_company, cm.category AS metadata_category, cm.keywords AS metadata_keywords
+       FROM content_node cn
+       LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
+       WHERE cn.id IN (SELECT id FROM desc_tree)`,
       [folder.id],
       sqliteMappers.contentNode
     );
@@ -562,7 +618,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
          SELECT cn.id FROM content_node cn
          JOIN desc_tree d ON cn.parent_id = d.id
        )
-       SELECT * FROM content_node WHERE id IN (SELECT id FROM desc_tree)`,
+       SELECT cn.*, cm.title AS metadata_title, cm.description AS metadata_description,
+              cm.company AS metadata_company, cm.category AS metadata_category, cm.keywords AS metadata_keywords
+       FROM content_node cn
+       LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
+       WHERE cn.id IN (SELECT id FROM desc_tree)`,
       [folder.id],
       sqliteMappers.contentNode
     );
@@ -646,7 +706,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
          SELECT cn.id FROM content_node cn
          JOIN desc_tree d ON cn.parent_id = d.id
        )
-       SELECT * FROM content_node WHERE id IN (SELECT id FROM desc_tree)`,
+       SELECT cn.*, cm.title AS metadata_title, cm.description AS metadata_description,
+              cm.company AS metadata_company, cm.category AS metadata_category, cm.keywords AS metadata_keywords
+       FROM content_node cn
+       LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
+       WHERE cn.id IN (SELECT id FROM desc_tree)`,
       [folder.id],
       sqliteMappers.contentNode
     );
@@ -746,13 +810,21 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         pf.size_bytes  AS file_size_bytes,
         pf.type        AS file_type,
         pf.preview_svg AS file_preview_svg,
+        pf.comment_count AS file_comment_count,
+        pf.unresolved_comment_count AS file_unresolved_comment_count,
         pf.created_at  AS file_created_at,
         pf.updated_at  AS file_updated_at,
+        cm.title       AS file_metadata_title,
+        cm.description AS file_metadata_description,
+        cm.company     AS file_metadata_company,
+        cm.category    AS file_metadata_category,
+        cm.keywords    AS file_metadata_keywords,
         p.id           AS project_id,
         p.public_id    AS project_public_id,
         p.name         AS project_name
       FROM diagram_entity_ref der
       JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
+      LEFT JOIN content_metadata cm ON cm.workspace = pf.workspace AND cm.node_id = pf.id
       LEFT JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
       WHERE der.workspace = ? AND der.entity_id = ?
       ORDER BY COALESCE(p.name, ''), pf.name`,
@@ -764,8 +836,21 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         file_size_bytes: Number(row['file_size_bytes']),
         file_type: String(row['file_type']) as 'diagram' | 'folder' | 'markdown' | 'file',
         file_preview_svg: row['file_preview_svg'] != null ? String(row['file_preview_svg']) : null,
+        file_comment_count: Number(row['file_comment_count'] ?? 0),
+        file_unresolved_comment_count: Number(row['file_unresolved_comment_count'] ?? 0),
         file_created_at: new Date(String(row['file_created_at'])),
         file_updated_at: new Date(String(row['file_updated_at'])),
+        file_metadata_title:
+          row['file_metadata_title'] != null ? String(row['file_metadata_title']) : null,
+        file_metadata_description:
+          row['file_metadata_description'] != null
+            ? String(row['file_metadata_description'])
+            : null,
+        file_metadata_company:
+          row['file_metadata_company'] != null ? String(row['file_metadata_company']) : null,
+        file_metadata_category:
+          row['file_metadata_category'] != null ? String(row['file_metadata_category']) : null,
+        file_metadata_keywords: JSON.parse(String(row['file_metadata_keywords'] ?? '[]')) as string[],
         project_id: String(row['project_id']),
         project_public_id: String(row['project_public_id']),
         project_name: String(row['project_name'])

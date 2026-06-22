@@ -36,6 +36,14 @@ const projectEntitySchema = z.object({
   is_done: z.boolean()
 });
 
+export const contentMetadataSchema = z.object({
+  title: z.string().nullable(),
+  description: z.string().nullable(),
+  company: z.string().nullable(),
+  category: z.string().nullable(),
+  keywords: z.array(z.string())
+});
+
 export const projectFileSchema = z.object({
   id: z.string(),
   project_id: z.string().nullable(),
@@ -54,7 +62,8 @@ export const projectFileSchema = z.object({
   created_by: z.string().nullable().optional(),
   updated_by: z.string().nullable().optional(),
   mime_type: z.string().nullable().optional(),
-  original_filename: z.string().nullable().optional()
+  original_filename: z.string().nullable().optional(),
+  content_metadata: contentMetadataSchema.nullable()
 });
 
 const markdownRevisionSummarySchema = z.object({
@@ -672,6 +681,7 @@ export const projectContract = {
 
 export type Project = z.infer<typeof projectSchema>;
 export type ProjectFile = z.infer<typeof projectFileSchema>;
+export type ContentMetadata = z.infer<typeof contentMetadataSchema>;
 export type MarkdownRevisionSummary = z.infer<typeof markdownRevisionSummarySchema>;
 export type MarkdownRevisionDetail = z.infer<typeof markdownRevisionDetailSchema>;
 export type FileTree = z.infer<typeof fileTreeSchema>;

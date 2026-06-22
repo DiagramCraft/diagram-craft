@@ -15,6 +15,18 @@ import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgr
 import { randomUUID } from 'node:crypto';
 import { isUuidLike } from '../../../utils/publicIds';
 
+const CONTENT_NODE_SELECT_SQL = `
+  SELECT
+    cn.*,
+    cm.title AS metadata_title,
+    cm.description AS metadata_description,
+    cm.company AS metadata_company,
+    cm.category AS metadata_category,
+    COALESCE(cm.keywords, '[]'::jsonb) AS metadata_keywords
+  FROM content_node cn
+  LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
+`;
+
 export class PostgresProjectDatabase extends PostgresDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
     return await this.sql<ProjectDbResult[]>`
@@ -96,53 +108,56 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async listContentNodes(workspace: string, projectId: string) {
-    return await this.sql<ContentNodeDbResult[]>`
-      SELECT *
-      FROM content_node
-      WHERE workspace = ${workspace} AND project_id = ${projectId}
-      ORDER BY path
-    `;
+    return await this.sql.unsafe<ContentNodeDbResult[]>(
+      `${CONTENT_NODE_SELECT_SQL}
+       WHERE cn.workspace = $1 AND cn.project_id = $2
+       ORDER BY cn.path`,
+      [workspace, projectId]
+    );
   }
 
   async listEntityContentNodes(workspace: string, entityId: string) {
-    return await this.sql<ContentNodeDbResult[]>`
-      SELECT *
-      FROM content_node
-      WHERE workspace = ${workspace} AND entity_id = ${entityId}
-      ORDER BY path
-    `;
+    return await this.sql.unsafe<ContentNodeDbResult[]>(
+      `${CONTENT_NODE_SELECT_SQL}
+       WHERE cn.workspace = $1 AND cn.entity_id = $2
+       ORDER BY cn.path`,
+      [workspace, entityId]
+    );
   }
 
   async listWorkspaceContentNodes(workspace: string) {
-    return await this.sql<ContentNodeDbResult[]>`
-      SELECT *
-      FROM content_node
-      WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
-      ORDER BY path
-    `;
+    return await this.sql.unsafe<ContentNodeDbResult[]>(
+      `${CONTENT_NODE_SELECT_SQL}
+       WHERE cn.workspace = $1 AND cn.project_id IS NULL AND cn.entity_id IS NULL
+       ORDER BY cn.path`,
+      [workspace]
+    );
   }
 
   async getContentNodeByPath(workspace: string, projectId: string, path: string) {
-    const [row] = await this.sql<ContentNodeDbResult[]>`
-      SELECT * FROM content_node
-      WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
-    `;
+    const [row] = await this.sql.unsafe<ContentNodeDbResult[]>(
+      `${CONTENT_NODE_SELECT_SQL}
+       WHERE cn.workspace = $1 AND cn.project_id = $2 AND cn.path = $3`,
+      [workspace, projectId, path]
+    );
     return row ?? null;
   }
 
   async getContentNodeById(workspace: string, projectId: string, id: string) {
-    const [row] = await this.sql<ContentNodeDbResult[]>`
-      SELECT * FROM content_node
-      WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
-    `;
+    const [row] = await this.sql.unsafe<ContentNodeDbResult[]>(
+      `${CONTENT_NODE_SELECT_SQL}
+       WHERE cn.workspace = $1 AND cn.project_id = $2 AND cn.id = $3`,
+      [workspace, projectId, id]
+    );
     return row ?? null;
   }
 
   async getAnyContentNodeById(workspace: string, id: string) {
-    const [row] = await this.sql<ContentNodeDbResult[]>`
-      SELECT * FROM content_node
-      WHERE workspace = ${workspace} AND id = ${id}
-    `;
+    const [row] = await this.sql.unsafe<ContentNodeDbResult[]>(
+      `${CONTENT_NODE_SELECT_SQL}
+       WHERE cn.workspace = $1 AND cn.id = $2`,
+      [workspace, id]
+    );
     return row ?? null;
   }
 
@@ -296,6 +311,45 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         UPDATE content_node
         SET is_template = ${isTemplate}, is_workspace_template = ${isWorkspaceTemplate}, updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async upsertContentMetadata(input: {
+    workspace: string;
+    node_id: string;
+    title: string | null;
+    description: string | null;
+    company: string | null;
+    category: string | null;
+    keywords: string[];
+    updated_at: Date;
+  }) {
+    try {
+      await this.sql`
+        INSERT INTO content_metadata (workspace, node_id, title, description, company, category, keywords, updated_at)
+        VALUES (${input.workspace}, ${input.node_id}, ${input.title}, ${input.description}, ${input.company}, ${input.category}, ${this.json(input.keywords)}, ${input.updated_at})
+        ON CONFLICT (workspace, node_id)
+        DO UPDATE SET
+          title = EXCLUDED.title,
+          description = EXCLUDED.description,
+          company = EXCLUDED.company,
+          category = EXCLUDED.category,
+          keywords = EXCLUDED.keywords,
+          updated_at = EXCLUDED.updated_at
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteContentMetadata(workspace: string, nodeId: string) {
+    try {
+      await this.sql`
+        DELETE FROM content_metadata
+        WHERE workspace = ${workspace} AND node_id = ${nodeId}
       `;
     } catch (error) {
       return normalizePostgresError(error);
@@ -771,13 +825,21 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         pf.size_bytes  AS file_size_bytes,
         pf.type        AS file_type,
         pf.preview_svg AS file_preview_svg,
+        pf.comment_count AS file_comment_count,
+        pf.unresolved_comment_count AS file_unresolved_comment_count,
         pf.created_at  AS file_created_at,
         pf.updated_at  AS file_updated_at,
+        cm.title       AS file_metadata_title,
+        cm.description AS file_metadata_description,
+        cm.company     AS file_metadata_company,
+        cm.category    AS file_metadata_category,
+        COALESCE(cm.keywords, '[]'::jsonb) AS file_metadata_keywords,
         p.id           AS project_id,
         p.public_id    AS project_public_id,
         p.name         AS project_name
       FROM diagram_entity_ref der
       JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
+      LEFT JOIN content_metadata cm ON cm.workspace = pf.workspace AND cm.node_id = pf.id
       LEFT JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
       WHERE der.workspace = ${workspace} AND der.entity_id = ${entityId}
       ORDER BY COALESCE(p.name, ''), pf.name

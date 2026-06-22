@@ -219,7 +219,13 @@ export const sqliteMappers = {
     created_by: row['created_by'] == null ? null : String(row['created_by']),
     updated_by: row['updated_by'] == null ? null : String(row['updated_by']),
     mime_type: row['mime_type'] == null ? null : String(row['mime_type']),
-    original_filename: row['original_filename'] == null ? null : String(row['original_filename'])
+    original_filename: row['original_filename'] == null ? null : String(row['original_filename']),
+    metadata_title: row['metadata_title'] == null ? null : String(row['metadata_title']),
+    metadata_description:
+      row['metadata_description'] == null ? null : String(row['metadata_description']),
+    metadata_company: row['metadata_company'] == null ? null : String(row['metadata_company']),
+    metadata_category: row['metadata_category'] == null ? null : String(row['metadata_category']),
+    metadata_keywords: parseJson(row['metadata_keywords'], [])
   }),
   markdownRevision: (row: Record<string, unknown>): MarkdownRevisionDbResult => ({
     id: String(row['id']),

@@ -22,6 +22,33 @@ export type ContentNodeDbResult = {
   updated_by: string | null;
   mime_type: string | null;
   original_filename: string | null;
+  metadata_title?: string | null;
+  metadata_description?: string | null;
+  metadata_company?: string | null;
+  metadata_category?: string | null;
+  metadata_keywords?: string[];
+};
+
+export type ContentMetadataDbResult = {
+  workspace: string;
+  node_id: string;
+  title: string | null;
+  description: string | null;
+  company: string | null;
+  category: string | null;
+  keywords: string[];
+  updated_at: Date;
+};
+
+export type ContentMetadataDbUpsert = {
+  workspace: string;
+  node_id: string;
+  title: string | null;
+  description: string | null;
+  company: string | null;
+  category: string | null;
+  keywords: string[];
+  updated_at: Date;
 };
 
 export type ContentNodeDbUpsert = {
@@ -133,6 +160,13 @@ export type DiagramEntityFileDbResult = {
   project_id: string;
   project_public_id: string;
   project_name: string;
+  file_comment_count: number;
+  file_unresolved_comment_count: number;
+  file_metadata_title: string | null;
+  file_metadata_description: string | null;
+  file_metadata_company: string | null;
+  file_metadata_category: string | null;
+  file_metadata_keywords: string[];
 };
 
 // --
@@ -202,6 +236,8 @@ export type ProjectDatabase = {
     isWorkspaceTemplate: boolean,
     updated_at: Date
   ): Promise<void>;
+  upsertContentMetadata(input: ContentMetadataDbUpsert): Promise<void>;
+  deleteContentMetadata(ws: string, nodeId: string): Promise<void>;
   upsertContentNode(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult>;
   createContentNodeIfAbsent(input: ContentNodeDbUpsert): Promise<ContentNodeDbResult | null>;
   deleteContentNodeByPath(

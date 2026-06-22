@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, foreignKeySchema } from '@arch-register/api-types/common';
+import { contentMetadataSchema } from '@arch-register/api-types/projectContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -16,7 +17,10 @@ const fileSearchResultSchema = z.object({
   projectName: z.string(),
   fileId: z.string(),
   path: z.string(),
-  name: z.string()
+  name: z.string(),
+  comment_count: z.number(),
+  unresolved_comment_count: z.number(),
+  content_metadata: contentMetadataSchema.nullable()
 });
 
 const entitySearchResultSchema = z.object({

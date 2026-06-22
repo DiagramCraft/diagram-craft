@@ -115,6 +115,15 @@ export const searchWorkspace = async (
     fileId: string;
     path: string;
     name: string;
+    comment_count: number;
+    unresolved_comment_count: number;
+    content_metadata: {
+      title: string | null;
+      description: string | null;
+      company: string | null;
+      category: string | null;
+      keywords: string[];
+    } | null;
   }> = [];
 
   if (types.includes('files')) {
@@ -139,7 +148,23 @@ export const searchWorkspace = async (
           projectName,
           fileId: file.id,
           path: file.path,
-          name: file.name
+          name: file.name,
+          comment_count: file.comment_count,
+          unresolved_comment_count: file.unresolved_comment_count,
+          content_metadata:
+            file.metadata_title != null ||
+            file.metadata_description != null ||
+            file.metadata_company != null ||
+            file.metadata_category != null ||
+            (file.metadata_keywords?.length ?? 0) > 0
+              ? {
+                  title: file.metadata_title ?? null,
+                  description: file.metadata_description ?? null,
+                  company: file.metadata_company ?? null,
+                  category: file.metadata_category ?? null,
+                  keywords: file.metadata_keywords ?? []
+                }
+              : null
         });
       }
     }

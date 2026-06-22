@@ -80,7 +80,10 @@ export const CommentsToolWindow = () => {
   const commentThreads =
     selectedIds.size > 0
       ? allThreads.filter(
-          t => t.root.type === 'element' && t.root.element != null && selectedIds.has(t.root.element.id)
+          t =>
+            t.root.type === 'element' &&
+            t.root.element != null &&
+            selectedIds.has(t.root.element.id)
         )
       : allThreads;
 
@@ -192,16 +195,14 @@ const ThreadsContent = ({ threads, grouped, onResolve, formatDate }: ThreadsCont
       grouped.map(group => (
         <div key={group.key} className={styles.eGroup}>
           {group.title && <div className={styles.eTitle}>{group.title}</div>}
-          <ul>
-            {group.threads.map(thread => (
-              <CommentItem
-                key={thread.root.id}
-                thread={thread}
-                onResolve={onResolve}
-                formatDate={formatDate}
-              />
-            ))}
-          </ul>
+          {group.threads.map(thread => (
+            <CommentItem
+              key={thread.root.id}
+              thread={thread}
+              onResolve={onResolve}
+              formatDate={formatDate}
+            />
+          ))}
         </div>
       ))
     )}

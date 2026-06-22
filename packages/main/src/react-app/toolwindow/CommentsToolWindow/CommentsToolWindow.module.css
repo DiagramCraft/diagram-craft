@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /*  padding: 0 0 0 10px;*/
 
   .eNoComments {
     text-align: center;
@@ -18,5 +19,15 @@
       font-weight: bold;
       color: var(--base-fg-dim);
     }
+
+    /*
+        ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }*/
   }
 }
