@@ -6,7 +6,6 @@ import { useCallback, useState } from 'react';
 import {
   buildCommentThreads,
   type CommentThread,
-  type CommentThreadNode,
   type GroupBy,
   groupThreadsByAuthor,
   groupThreadsByElement,
@@ -33,6 +32,8 @@ export const CommentsToolWindow = () => {
   useEventListener(diagram.commentManager, 'commentAdded', redraw);
   useEventListener(diagram.commentManager, 'commentUpdated', redraw);
   useEventListener(diagram.commentManager, 'commentRemoved', redraw);
+  useEventListener(diagram.selection, 'add', redraw);
+  useEventListener(diagram.selection, 'remove', redraw);
 
   const handleResolveComment = useCallback(
     (comment: Comment) => {
@@ -71,8 +72,17 @@ export const CommentsToolWindow = () => {
     }
   });
 
-  // Build nested comment threads
-  const commentThreads = buildCommentThreads(sortedComments);
+  // Build comment threads
+  const allThreads = buildCommentThreads(sortedComments);
+
+  // Filter to selected element when something is selected on the canvas
+  const selectedIds = new Set(diagram.selection.elements.map(e => e.id));
+  const commentThreads =
+    selectedIds.size > 0
+      ? allThreads.filter(
+          t => t.root.type === 'element' && t.root.element != null && selectedIds.has(t.root.element.id)
+        )
+      : allThreads;
 
   // Sort threads by their root comment date
   commentThreads.sort((a, b) => {
@@ -182,57 +192,18 @@ const ThreadsContent = ({ threads, grouped, onResolve, formatDate }: ThreadsCont
       grouped.map(group => (
         <div key={group.key} className={styles.eGroup}>
           {group.title && <div className={styles.eTitle}>{group.title}</div>}
-          {group.threads.map(thread => (
-            <div key={thread.root.id} className={styles.eThread}>
+          <ul>
+            {group.threads.map(thread => (
               <CommentItem
-                comment={thread.root}
+                key={thread.root.id}
+                thread={thread}
                 onResolve={onResolve}
                 formatDate={formatDate}
-                level={0}
-              >
-                <NestedReplies
-                  replies={thread.replies}
-                  onResolve={onResolve}
-                  formatDate={formatDate}
-                />
-              </CommentItem>
-            </div>
-          ))}
+              />
+            ))}
+          </ul>
         </div>
       ))
     )}
   </div>
 );
-
-type NestedRepliesProps = {
-  replies: CommentThreadNode[];
-  onResolve: (comment: Comment) => void;
-  formatDate: (date: Date) => string;
-};
-
-const NestedReplies = ({ replies, onResolve, formatDate }: NestedRepliesProps) => {
-  return (
-    <>
-      {replies.map(replyNode => (
-        <div key={replyNode.comment.id}>
-          <div
-            className={styles.eNestedReply}
-            style={{ marginLeft: `${(replyNode.level - 1) * 20}px` }}
-          >
-            <CommentItem
-              comment={replyNode.comment}
-              onResolve={onResolve}
-              formatDate={formatDate}
-              level={replyNode.level}
-            />
-          </div>
-          <NestedReplies
-            replies={replyNode.replies}
-            onResolve={onResolve}
-            formatDate={formatDate}
-          />
-        </div>
-      ))}
-    </>
-  );
-};
