@@ -19,7 +19,7 @@ import {
   TbBell,
   TbPinned
 } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor, WorkspaceTeam } from '../../lib/api';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -37,10 +37,7 @@ import {
   usePromoteSnapshot,
   useRestoreSnapshot
 } from '../../hooks/useEntities';
-import {
-  useEntityDiagramFiles,
-  useEntityProjects
-} from '../../hooks/useProjects';
+import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
 import { useAuditLog } from '../../hooks/useAudit';
 import {
   useCreatePinnedEntity,
@@ -58,15 +55,18 @@ import {
 } from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
-import { EntityRecord, EntitySummary, EntitySnapshot } from '@arch-register/api-types/entityContract';
+import {
+  EntityRecord,
+  EntitySummary,
+  EntitySnapshot
+} from '@arch-register/api-types/entityContract';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
-import type { WorkspaceTeam } from '../../lib/api';
 import { EntityContentView } from './EntityContentView';
 import { EntityTimelineTab } from './EntityTimelineTab';
-import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
 import { Title } from '../../components/Title';
+import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
 
 type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes' | 'timeline';
 
@@ -127,14 +127,15 @@ export const EntityDetailScreen = () => {
 
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
+  const auditEntityId = entity?._uid ?? null;
   const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(
     workspaceId,
     entityId
   );
   const { data: auditLog = [], isLoading: loadingAudit } = useAuditLog(
     workspaceId,
-    { entityId },
-    { enabled: canViewAudit && tab === 'changes' }
+    { entityId: auditEntityId, limit: 100 },
+    { enabled: canViewAudit && tab === 'changes' && !!auditEntityId }
   );
 
   // Project association hooks
@@ -384,7 +385,10 @@ export const EntityDetailScreen = () => {
         <div className={styles.head}>
           <Title
             breadcrumb={[
-              { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+              {
+                label: 'Home',
+                onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+              },
               { label: 'Entities', onClick: () => navigateToEntities() }
             ]}
             icon={<TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={32} />}
@@ -394,12 +398,16 @@ export const EntityDetailScreen = () => {
               entity._lifecycle ? (
                 <>
                   <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
-                  {entity._targetLifecycle && entity._targetLifecycle.id !== entity._lifecycle.id && (
-                    <>
-                      <span>→</span>
-                      <StatusChip value={entity._targetLifecycle.id} lifecycleStates={lifecycleStates} />
-                    </>
-                  )}
+                  {entity._targetLifecycle &&
+                    entity._targetLifecycle.id !== entity._lifecycle.id && (
+                      <>
+                        <span>→</span>
+                        <StatusChip
+                          value={entity._targetLifecycle.id}
+                          lifecycleStates={lifecycleStates}
+                        />
+                      </>
+                    )}
                 </>
               ) : undefined
             }
@@ -459,7 +467,11 @@ export const EntityDetailScreen = () => {
                     </Button>
                   )}
                   <Button onClick={cancelEdit}>Cancel</Button>
-                  <Button variant="primary" onClick={saveEdit} disabled={updateEntity.isPending || saveConfirmOpen}>
+                  <Button
+                    variant="primary"
+                    onClick={saveEdit}
+                    disabled={updateEntity.isPending || saveConfirmOpen}
+                  >
                     {updateEntity.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </>
@@ -725,9 +737,7 @@ export const EntityDetailScreen = () => {
 
             <hr className={styles.divider} />
 
-            <div className={styles.sectionLabel}>
-              Projects
-            </div>
+            <div className={styles.sectionLabel}>Projects</div>
             {entityProjects.length === 0 ? (
               <div className={styles.metaPropRow}>
                 <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
@@ -739,7 +749,11 @@ export const EntityDetailScreen = () => {
                 <div key={project.id} className={styles.metaPropRow}>
                   <span className={styles.metaPropLabel}>{project.name}</span>
                   <span className={styles.metaPropValue}>
-                    {entity_type ? entity_type.name : <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>}
+                    {entity_type ? (
+                      entity_type.name
+                    ) : (
+                      <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
+                    )}
                   </span>
                 </div>
               ))
@@ -750,9 +764,9 @@ export const EntityDetailScreen = () => {
                 <hr className={styles.divider} />
                 <div className={styles.sectionLabel}>Future plans</div>
                 {futureSnapshots.map(snap => {
-                  const projectName = entityProjects.find(
-                    ep => ep.project.id === snap.project_id
-                  )?.project.name ?? snap.project_id;
+                  const projectName =
+                    entityProjects.find(ep => ep.project.id === snap.project_id)?.project.name ??
+                    snap.project_id;
                   return (
                     <div key={snap.id} className={styles.futurePlan}>
                       <div className={styles.futurePlanMeta}>
@@ -774,9 +788,7 @@ export const EntityDetailScreen = () => {
 
             <hr className={styles.divider} />
 
-            <div className={styles.sectionLabel}>
-              Diagrams
-            </div>
+            <div className={styles.sectionLabel}>Diagrams</div>
             {entityDiagramFiles.length === 0 ? (
               <div className={styles.metaPropRow}>
                 <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
@@ -789,7 +801,11 @@ export const EntityDetailScreen = () => {
                   <a
                     key={file.id}
                     className={styles.miniDiagramRow}
-                    href={projectDiagramHref(workspaceSlug, asProjectPublicId(project.public_id), file.id)}
+                    href={projectDiagramHref(
+                      workspaceSlug,
+                      asProjectPublicId(project.public_id),
+                      file.id
+                    )}
                   >
                     <div className={styles.miniDiagramThumb}>
                       <div className={styles.miniDiagramThumbGrid} />
@@ -799,12 +815,57 @@ export const EntityDetailScreen = () => {
                           dangerouslySetInnerHTML={{ __html: file.preview_svg }}
                         />
                       ) : (
-                        <svg className={styles.miniDiagramThumbSvg} viewBox="0 0 60 30" preserveAspectRatio="none">
-                          <rect x="3" y="7" width="12" height="7" rx="1" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="0.7" />
-                          <rect x="23" y="3" width="12" height="7" rx="1" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="0.7" />
-                          <rect x="23" y="20" width="12" height="7" rx="1" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="0.7" />
-                          <rect x="43" y="10" width="12" height="7" rx="1" fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))" stroke="var(--tag-component)" strokeWidth="0.7" />
-                          <path d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14" stroke="var(--cmp-fg-disabled)" fill="none" strokeWidth="0.7" />
+                        <svg
+                          className={styles.miniDiagramThumbSvg}
+                          viewBox="0 0 60 30"
+                          preserveAspectRatio="none"
+                        >
+                          <rect
+                            x="3"
+                            y="7"
+                            width="12"
+                            height="7"
+                            rx="1"
+                            fill="var(--cmp-bg)"
+                            stroke="var(--base-fg-more-dim)"
+                            strokeWidth="0.7"
+                          />
+                          <rect
+                            x="23"
+                            y="3"
+                            width="12"
+                            height="7"
+                            rx="1"
+                            fill="var(--cmp-bg)"
+                            stroke="var(--base-fg-more-dim)"
+                            strokeWidth="0.7"
+                          />
+                          <rect
+                            x="23"
+                            y="20"
+                            width="12"
+                            height="7"
+                            rx="1"
+                            fill="var(--cmp-bg)"
+                            stroke="var(--base-fg-more-dim)"
+                            strokeWidth="0.7"
+                          />
+                          <rect
+                            x="43"
+                            y="10"
+                            width="12"
+                            height="7"
+                            rx="1"
+                            fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
+                            stroke="var(--tag-component)"
+                            strokeWidth="0.7"
+                          />
+                          <path
+                            d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14"
+                            stroke="var(--cmp-fg-disabled)"
+                            fill="none"
+                            strokeWidth="0.7"
+                          />
                         </svg>
                       )}
                     </div>
@@ -972,7 +1033,6 @@ export const EntityDetailScreen = () => {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-
     </div>
   );
 };
@@ -1331,11 +1391,13 @@ const ChangeHistory = ({
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
 }) => {
-  const rows = useMemo(() => flattenAuditEntries(auditLog), [auditLog]);
   const [restoreDialogSnapshot, setRestoreDialogSnapshot] = useState<EntitySnapshot | null>(null);
 
   const savedSnapshots = useMemo(
-    () => snapshots.filter(s => s.status === 'autosave' || s.status === 'saved_version' || s.status === 'applied'),
+    () =>
+      snapshots.filter(
+        s => s.status === 'autosave' || s.status === 'saved_version' || s.status === 'applied'
+      ),
     [snapshots]
   );
 
@@ -1392,44 +1454,30 @@ const ChangeHistory = ({
                         })}
                       </td>
                       <td>
-                        <span className={`${styles.snapshotTypeBadge} ${snapshot.status !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}>
-                          {snapshot.status === 'saved_version' ? 'saved' : snapshot.status === 'applied' ? 'applied' : 'autosave'}
+                        <span
+                          className={`${styles.snapshotTypeBadge} ${snapshot.status !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}
+                        >
+                          {snapshot.status === 'saved_version'
+                            ? 'saved'
+                            : snapshot.status === 'applied'
+                              ? 'applied'
+                              : 'autosave'}
                         </span>
                       </td>
                       <td>{snapshot.created_by_name ?? '—'}</td>
                       <td className={styles.chDim}>{snapshot.commit_message ?? '—'}</td>
                       <td className={styles.chActionsCell}>
                         {snapshot.status !== 'future_update' && (
-                          <Button variant="secondary" size="sm" onClick={() => setRestoreDialogSnapshot(snapshot)}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setRestoreDialogSnapshot(snapshot)}
+                          >
                             Restore
                           </Button>
                         )}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {rows.length > 0 && (
-          <div>
-            <div className={styles.chSectionLabel}>Audit log</div>
-            <div className={styles.chTableWrap}>
-              <table className={styles.chTable}>
-                <thead>
-                  <tr>
-                    <th>When</th>
-                    <th>Who</th>
-                    <th>What</th>
-                    <th>Old value</th>
-                    <th>New value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, i) => (
-                    <ChangeRow key={i} row={row} />
                   ))}
                 </tbody>
               </table>
@@ -1451,9 +1499,7 @@ const ChangeHistory = ({
             target_lifecycle: entity._targetLifecycle?.id ?? null,
             target_lifecycle_date: entity._targetLifecycleDate,
             owner: entity._owner?.id ?? null,
-            data: schema
-              ? Object.fromEntries(schema.fields.map(f => [f.id, entity[f.id]]))
-              : {}
+            data: schema ? Object.fromEntries(schema.fields.map(f => [f.id, entity[f.id]])) : {}
           }}
           schema={schema}
           lifecycleStates={lifecycleStates}

@@ -444,7 +444,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     const existing = await this.sql<EntitySnapshotDbResult[]>`
       SELECT * FROM entity_snapshot WHERE id = ${snapshotId} AND workspace = ${workspace}
     `;
-    if (!existing[0] || existing[0].status !== 'future_update') return null;
+    if (existing[0]?.status !== 'future_update') return null;
 
     const [row] = await this.sql<EntitySnapshotDbResult[]>`
       UPDATE entity_snapshot

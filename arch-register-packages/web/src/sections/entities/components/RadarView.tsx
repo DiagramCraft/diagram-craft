@@ -126,7 +126,7 @@ const getFieldValues = (
       .map(s => ({ value: s.id, label: s.label }));
   }
   const field = schema.fields.find(f => f.id === fieldId);
-  if (!field || field.type !== 'select') return [];
+  if (field?.type !== 'select') return [];
   return (field as ApiSelectField).options ?? [];
 };
 

@@ -67,7 +67,6 @@ export function PropertyEditor<T>(props: Props<T>) {
                   }}
                 >
                   {props.property.hasMultipleValues &&
-                    props.property.values !== undefined &&
                     props.property.values?.map((e, i) => (
                       <React.Fragment key={i}>
                         <div>{e.count}</div>

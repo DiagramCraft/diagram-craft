@@ -415,7 +415,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [snapshotId, workspace],
       sqliteMappers.entitySnapshot
     );
-    if (!existing || existing.status !== 'autosave') return null;
+    if (existing?.status !== 'autosave') return null;
 
     this.run(
       `UPDATE entity_snapshot SET status = 'saved_version', commit_message = ? WHERE id = ?`,
@@ -445,7 +445,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [snapshotId, workspace],
       sqliteMappers.entitySnapshot
     );
-    if (!existing || existing.status !== 'future_update') return null;
+    if (existing?.status !== 'future_update') return null;
 
     const setClauses: string[] = [];
     const params: unknown[] = [];
@@ -483,7 +483,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [snapshotId, workspace],
       sqliteMappers.entitySnapshot
     );
-    if (!existing || existing.status !== 'future_update') return null;
+    if (existing?.status !== 'future_update') return null;
 
     this.run(
       `UPDATE entity_snapshot SET status = 'applied' WHERE id = ?`,
