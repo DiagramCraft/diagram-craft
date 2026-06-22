@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.0/schema.json",
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -52,7 +52,7 @@
       "test": "recommended"
     },
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "a11y": {
         "useKeyWithClickEvents": "off",
         "noStaticElementInteractions": "off",
@@ -76,7 +76,14 @@
         "noConfusingVoidType": "off",
         "noImportantInKeyframe": "off",
         "noConfusingLabels": "off",
-        "noControlCharactersInRegex": "off"
+        "noControlCharactersInRegex": "off",
+        "noUnnecessaryConditions": "off",
+        "noImportCycles": {
+          "level": "error",
+          "options": {
+            "ignoreTypes": true
+          }
+        }
       },
       "complexity": {
         "noImportantStyles": "off",
@@ -97,14 +104,7 @@
         "noDangerouslySetInnerHtml": "off"
       },
       "nursery": {
-        "noFloatingPromises": "off",
-        "noUnnecessaryConditions": "off",
-        "noImportCycles": {
-          "level": "error",
-          "options": {
-            "ignoreTypes": true
-          }
-        }
+        "noFloatingPromises": "off"
       },
       "performance": {
         "noBarrelFile": "error"
