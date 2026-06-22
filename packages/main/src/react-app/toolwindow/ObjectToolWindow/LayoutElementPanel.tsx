@@ -35,7 +35,7 @@ export const LayoutElementPanel = (props: Props) => {
 
   // Check all have parents
   const firstElement = elements[0];
-  if (!firstElement || !firstElement.parent) return null;
+  if (!firstElement?.parent) return null;
 
   const allHaveParents = elements.every(e => e.parent !== undefined);
   if (!allHaveParents) return null;

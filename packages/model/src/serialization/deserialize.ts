@@ -122,7 +122,7 @@ export const deserializeDiagramElements = (
         // Note: this is for backwards compatibility only
         // biome-ignore lint/suspicious/noExplicitAny: false positive
         const textProps: any = c.props.text;
-        if (textProps?.text && (!c.texts || !c.texts.text)) {
+        if (textProps?.text && !c.texts?.text) {
           c.texts ??= { text: textProps.text };
           c.texts.text = textProps.text;
           delete textProps.text;
