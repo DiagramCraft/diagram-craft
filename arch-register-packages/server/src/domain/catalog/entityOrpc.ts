@@ -22,9 +22,10 @@ const serializeSnapshot = (s: EntitySnapshotDbResult) => ({
   ...s,
   created_at: s.created_at.toISOString(),
   created_by_name: s.created_by_name,
-  target_date: (s.target_date as unknown) instanceof Date
-    ? (s.target_date as unknown as Date).toISOString().slice(0, 10)
-    : s.target_date
+  target_date:
+    (s.target_date as unknown) instanceof Date
+      ? (s.target_date as unknown as Date).toISOString().slice(0, 10)
+      : s.target_date
 });
 import { importParse, importCommit } from './importOperations';
 import { generateCsv, formatArrayForCsv } from '../../utils/csv';
@@ -229,17 +230,8 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           'admin_entity',
           'You do not have permission to manage entity access'
         );
-        const rows = buildEntityGrantInputs(
-          workspace,
-          entity.id,
-          input.body.grants,
-          new Date()
-        );
-        const grants = await context.db.catalog.replaceEntityGrants(
-          workspace,
-          entity.id,
-          rows
-        );
+        const rows = buildEntityGrantInputs(workspace, entity.id, input.body.grants, new Date());
+        const grants = await context.db.catalog.replaceEntityGrants(workspace, entity.id, rows);
         return {
           owner: entity.owner,
           visibility_mode: entity.visibility_mode,
@@ -477,31 +469,35 @@ export const workspaceEntityORPCRouter = entityRouter.router({
         }
       }),
 
-      listByProject: entityRouter.entities.snapshots.listByProject.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-          const project = await context.db.project.getProject(workspace, input.params.projectId);
-          orpcAssert.present(project, { code: 'NOT_FOUND', message: 'Project not found' });
-          requireProjectAccess(
-            authCtx,
-            project.owner,
-            'You do not have permission to view snapshots for this project'
-          );
+      listByProject: entityRouter.entities.snapshots.listByProject.handler(
+        async ({ input, context }) => {
+          try {
+            const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+            const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+            const project = await context.db.project.getProject(workspace, input.params.projectId);
+            orpcAssert.present(project, { code: 'NOT_FOUND', message: 'Project not found' });
+            requireProjectAccess(
+              authCtx,
+              project.owner,
+              'You do not have permission to view snapshots for this project'
+            );
 
-          const [snapshots, entities] = await Promise.all([
-            context.db.catalog.listSnapshotsByProject(workspace, project.id),
-            context.db.catalog.listEntities(workspace)
-          ]);
-          const visibleEntityIds = new Set(filterVisibleEntities(authCtx, entities).map(e => e.id));
+            const [snapshots, entities] = await Promise.all([
+              context.db.catalog.listSnapshotsByProject(workspace, project.id),
+              context.db.catalog.listEntities(workspace)
+            ]);
+            const visibleEntityIds = new Set(
+              filterVisibleEntities(authCtx, entities).map(e => e.id)
+            );
 
-          return snapshots
-            .filter(snapshot => visibleEntityIds.has(snapshot.entity_id))
-            .map(serializeSnapshot);
-        } catch (error) {
-          return toORPCError(error);
+            return snapshots
+              .filter(snapshot => visibleEntityIds.has(snapshot.entity_id))
+              .map(serializeSnapshot);
+          } catch (error) {
+            return toORPCError(error);
+          }
         }
-      }),
+      ),
 
       create: entityRouter.entities.snapshots.create.handler(async ({ input, context }) => {
         try {
@@ -657,7 +653,10 @@ export const workspaceEntityORPCRouter = entityRouter.router({
             { id: auditUser.id, displayName: auditUser.display_name }
           );
 
-          const applied = await context.db.catalog.applySnapshot(workspace, input.params.snapshotId);
+          const applied = await context.db.catalog.applySnapshot(
+            workspace,
+            input.params.snapshotId
+          );
           orpcAssert.present(applied, {
             code: 'NOT_FOUND',
             message: 'Failed to apply snapshot'
@@ -679,20 +678,24 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           });
 
           if (authCtx) {
-            requireEntityAction(authCtx, entity, 'edit_entity', 'You do not have permission to restore this entity');
+            requireEntityAction(
+              authCtx,
+              entity,
+              'edit_entity',
+              'You do not have permission to restore this entity'
+            );
           }
 
           const snapshot = await context.db.catalog.getSnapshot(workspace, input.params.snapshotId);
-          orpcAssert.present(snapshot, {
-            code: 'NOT_FOUND',
-            message: 'Snapshot not found'
-          });
+          orpcAssert.present(snapshot, { code: 'NOT_FOUND', message: 'Snapshot not found' });
           orpcAssert.true(snapshot.entity_id === entity.id, {
             code: 'BAD_REQUEST',
             message: 'Snapshot does not belong to this entity'
           });
           orpcAssert.true(
-            snapshot.status === 'autosave' || snapshot.status === 'saved_version' || snapshot.status === 'applied',
+            snapshot.status === 'autosave' ||
+              snapshot.status === 'saved_version' ||
+              snapshot.status === 'applied',
             {
               code: 'BAD_REQUEST',
               message: 'Only autosave, saved_version, or applied snapshots can be restored'
@@ -700,24 +703,21 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           );
 
           const auditUser = context.event.context.user;
-          await updateEntityWithAudit(
-            context.db,
-            {
-              workspace,
-              entityId: entity.id,
-              previous: entity,
-              next: {
-                ...snapshot.base_state,
-                updated_at: new Date()
-              } as EntityDbUpdate,
-              actor: { id: auditUser.id, displayName: auditUser.display_name },
-              auditMetadata: {
-                restore_from_snapshot_id: snapshot.id,
-                restore_from_snapshot_created_at: snapshot.created_at.toISOString(),
-                restore_commit_message: input.body.commitMessage ?? null
-              }
+          await updateEntityWithAudit(context.db, {
+            workspace,
+            entityId: entity.id,
+            previous: entity,
+            next: {
+              ...snapshot.base_state,
+              updated_at: new Date()
+            } as EntityDbUpdate,
+            actor: { id: auditUser.id, displayName: auditUser.display_name },
+            auditMetadata: {
+              restore_from_snapshot_id: snapshot.id,
+              restore_from_snapshot_created_at: snapshot.created_at.toISOString(),
+              restore_commit_message: input.body.commitMessage ?? null
             }
-          );
+          });
 
           return serializeSnapshot(snapshot);
         } catch (error) {
