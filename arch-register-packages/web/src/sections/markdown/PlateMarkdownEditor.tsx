@@ -18,6 +18,7 @@ import {
 import { NodeIdPlugin } from 'platejs';
 import { MarkdownPlugin, deserializeMd, serializeMd } from '@platejs/markdown';
 import { DndPlugin, useDraggable, useDropLine, DndScroller } from '@platejs/dnd';
+import { ListPlugin } from '@platejs/list/react';
 import { SlashPlugin, SlashInputPlugin } from '@platejs/slash-command/react';
 import {
   useFloatingToolbarState,
@@ -523,9 +524,7 @@ const editorPlugins = [
     key: 'code_line',
     node: { isElement: true }
   }).withComponent(CodeLineElement),
-  createPlatePlugin({ key: 'list', node: { isElement: true } }).withComponent(
-    ListElement
-  ),
+  ListPlugin.withComponent(ListElement),
   createPlatePlugin({ key: 'li', node: { isElement: true } }).withComponent(
     ListItemElement
   ),
