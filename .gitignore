@@ -30,6 +30,8 @@ packages/main/public/img
 packages/main/public/stencils
 packages/main/public/Test*
 
+herdr.yaml
+
 # Editor directories and files
 .tsimp
 .vscode/*
@@ -76,3 +78,7 @@ packages/main/public/.temp/*
 arch-register-packages/server/data
 
 .wiki
+
+# Worktree tooling
+mprocs.local.yaml
+.worktrees/
