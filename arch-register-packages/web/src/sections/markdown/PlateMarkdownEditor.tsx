@@ -29,6 +29,12 @@ import {
   flip
 } from '@platejs/floating';
 import type { TElement, Value } from 'platejs';
+import {
+  TbChevronDown,
+  TbChevronUp,
+  TbGripVertical,
+  TbTrash
+} from 'react-icons/tb';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
@@ -47,14 +53,7 @@ const DragHandle = ({
     contentEditable={false}
     title="Drag to reorder"
   >
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <circle cx="4" cy="3.5" r="1.2" fill="currentColor" />
-      <circle cx="4" cy="7" r="1.2" fill="currentColor" />
-      <circle cx="4" cy="10.5" r="1.2" fill="currentColor" />
-      <circle cx="9" cy="3.5" r="1.2" fill="currentColor" />
-      <circle cx="9" cy="7" r="1.2" fill="currentColor" />
-      <circle cx="9" cy="10.5" r="1.2" fill="currentColor" />
-    </svg>
+    <TbGripVertical size={14} />
   </div>
 );
 
@@ -93,9 +92,7 @@ const BlockActionButtons = ({ element }: { element: TElement }) => {
           }
         }}
       >
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-          <path d="M2 7L5.5 3.5L9 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <TbChevronUp size={11} />
       </button>
       <button
         type="button"
@@ -113,9 +110,7 @@ const BlockActionButtons = ({ element }: { element: TElement }) => {
           }
         }}
       >
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-          <path d="M2 4L5.5 7.5L9 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <TbChevronDown size={11} />
       </button>
       <button
         type="button"
@@ -128,9 +123,7 @@ const BlockActionButtons = ({ element }: { element: TElement }) => {
           editor.tf.removeNodes({ at: [idx] });
         }}
       >
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-          <path d="M2 3h7M4.5 3V2h2v1M3.5 3.5l.5 5.5h3l.5-5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <TbTrash size={11} />
       </button>
     </div>
   );
