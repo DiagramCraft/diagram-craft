@@ -58,6 +58,7 @@ export const decodeDataReferences = (refs: string | undefined) =>
 export type DataSchema = {
   id: string;
   name: string;
+  description?: string;
   providerId: string;
   fields: DataSchemaField[];
 };

@@ -186,6 +186,7 @@ export const SchemasTab = () => {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Description</th>
                 <th>Field Names</th>
                 <th>Source</th>
                 <th>Available for Element Data</th>
@@ -205,6 +206,7 @@ export const SchemasTab = () => {
                     style={isEditable ? { cursor: 'pointer' } : undefined}
                   >
                     <td>{schema.name}</td>
+                    <td>{schema.description || '-'}</td>
                     <td>{getFieldNamesDisplay(schema)}</td>
                     <td>{schema.providerId}</td>
                     <td onClick={ev => ev.stopPropagation()}>

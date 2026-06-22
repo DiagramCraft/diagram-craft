@@ -68,6 +68,10 @@ export function assertDataSchema(value: unknown): asserts value is DataSchema {
   const schema = value as Record<string, unknown>;
   assertString(schema.id, 'Schema id');
   assertString(schema.name, 'Schema name');
+  // description is optional
+  if (schema.description !== undefined) {
+    assertString(schema.description, 'Schema description');
+  }
   // providerId is optional during fetch - it gets set by the data provider after fetching
   if (schema.providerId !== undefined) {
     assertString(schema.providerId, 'Schema providerId');

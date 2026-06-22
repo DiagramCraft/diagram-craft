@@ -12,6 +12,7 @@ export type DiagramCraftSchemaField =
 export type DiagramCraftSchema = {
   id: string;
   name: string;
+  description?: string;
   fields: DiagramCraftSchemaField[];
 };
 
@@ -51,6 +52,7 @@ export const toDiagramCraftSchema = (
 ): DiagramCraftSchema => ({
   id: schema.id,
   name: schema.name,
+  description: schema.description,
   fields: [
     ...DIAGRAM_CRAFT_METADATA_FIELDS.filter(
       metadataField => !schema.fields.some(field => field.id === metadataField.id)
