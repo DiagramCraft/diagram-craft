@@ -1,0 +1,128 @@
+.anchor {
+  display: block;
+}
+
+.panel {
+  width: min(276px, calc(100vw - 24px));
+  padding: 12px 14px;
+  background-color: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 28px oklch(0 0 0 / 0.45);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.panel *,
+.panel *::before,
+.panel *::after {
+  box-sizing: border-box;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--base-fg);
+}
+
+.description {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--base-fg-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.badgeRows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.badgeLabel {
+  color: var(--base-fg-more-dim);
+  min-width: 54px;
+  flex-shrink: 0;
+}
+
+.badgeValue {
+  color: var(--base-fg-dim);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  padding: 1px 7px;
+  font-size: 11px;
+  line-height: 1.6;
+  width: 100%;
+}
+
+.keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.keyword {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.commentFooter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding-top: 8px;
+  border-top: 1px solid var(--panel-border);
+  color: var(--base-fg-dim);
+}
+
+.commentDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warning-fg);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--warning-fg) 30%, transparent);
+  flex-shrink: 0;
+}
+
+.commentUnresolved {
+  color: var(--warning-fg);
+}
+
+.commentCheck {
+  color: oklch(0.66 0.14 145);
+  flex-shrink: 0;
+}
+
+.commentTotal {
+  color: var(--base-fg-more-dim);
+}

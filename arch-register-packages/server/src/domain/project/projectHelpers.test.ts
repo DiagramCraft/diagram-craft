@@ -41,7 +41,12 @@ const baseProjectFile: ContentNodeDbResult = {
   created_by: null,
   updated_by: null,
   mime_type: null,
-  original_filename: null
+  original_filename: null,
+  metadata_title: 'System overview',
+  metadata_description: 'High level diagram',
+  metadata_company: 'Acme',
+  metadata_category: 'Architecture',
+  metadata_keywords: ['system', 'overview']
 };
 
 // ── toApiProject ──────────────────────────────────────────────
@@ -68,6 +73,8 @@ describe('toApiProjectFile', () => {
     expect(result.unresolved_comment_count).toBe(1);
     expect(result.is_template).toBe(false);
     expect(result.created_at).toBe(nowIso);
+    expect(result.content_metadata?.title).toBe('System overview');
+    expect(result.content_metadata?.keywords).toEqual(['system', 'overview']);
   });
 });
 

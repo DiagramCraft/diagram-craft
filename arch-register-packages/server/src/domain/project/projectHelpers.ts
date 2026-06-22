@@ -2,6 +2,7 @@ import type { ProjectDbResult, ProjectEntityDbResult } from './db/projectDatabas
 import type { ContentNodeDbResult as InternalProjectFile } from './db/projectDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import {
+  ContentMetadata,
   FileTree,
   Project,
   ProjectDetail,
@@ -65,6 +66,25 @@ export const toApiProjectEntity = (row: ProjectEntityDbResult): ProjectEntity =>
   is_done: row.is_done
 });
 
+const toApiContentMetadata = (file: InternalProjectFile): ContentMetadata | null => {
+  const metadata = {
+    title: file.metadata_title ?? null,
+    description: file.metadata_description ?? null,
+    company: file.metadata_company ?? null,
+    category: file.metadata_category ?? null,
+    keywords: file.metadata_keywords ?? []
+  };
+
+  const hasMetadata =
+    metadata.title !== null ||
+    metadata.description !== null ||
+    metadata.company !== null ||
+    metadata.category !== null ||
+    metadata.keywords.length > 0;
+
+  return hasMetadata ? metadata : null;
+};
+
 export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   id: file.id,
   project_id: file.project_id,
@@ -83,7 +103,8 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   created_by: file.created_by ?? null,
   updated_by: file.updated_by ?? null,
   mime_type: file.mime_type ?? null,
-  original_filename: file.original_filename ?? null
+  original_filename: file.original_filename ?? null,
+  content_metadata: toApiContentMetadata(file)
 });
 
 export const toApiProjectDetail = (

@@ -63,6 +63,77 @@ const parseProjectStatus = (value: unknown): ProjectStatus => {
 const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
   typeof owner === 'string' && teamIds.has(owner) ? owner : null;
 
+const normalizeContentMetadataText = (value: unknown) => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized === '' ? null : normalized;
+};
+
+const normalizeContentMetadataKeywords = (value: unknown) => {
+  if (typeof value !== 'string') return [];
+  const seen = new Set<string>();
+  const keywords: string[] = [];
+
+  for (const part of value.split(/[\n,]/)) {
+    const normalized = part.trim();
+    if (normalized === '' || seen.has(normalized)) continue;
+    seen.add(normalized);
+    keywords.push(normalized);
+  }
+
+  return keywords;
+};
+
+const extractContentMetadataFromDiagram = (doc: SerializedDiagramDocument) => {
+  const metadata = doc.props?.metadata;
+
+  return {
+    title: normalizeContentMetadataText(metadata?.title),
+    description: normalizeContentMetadataText(metadata?.description),
+    company: normalizeContentMetadataText(metadata?.company),
+    category: normalizeContentMetadataText(metadata?.category),
+    keywords: normalizeContentMetadataKeywords(metadata?.keywords)
+  };
+};
+
+const hasContentMetadata = (metadata: ReturnType<typeof extractContentMetadataFromDiagram>) =>
+  metadata.title !== null ||
+  metadata.description !== null ||
+  metadata.company !== null ||
+  metadata.category !== null ||
+  metadata.keywords.length > 0;
+
+const syncDiagramContentMetadata = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  nodeId: string,
+  doc: SerializedDiagramDocument,
+  updatedAt: Date
+) => {
+  const metadata = extractContentMetadataFromDiagram(doc);
+  if (!hasContentMetadata(metadata)) {
+    await db.project.deleteContentMetadata(workspace, nodeId);
+    return;
+  }
+
+  await db.project.upsertContentMetadata({
+    workspace,
+    node_id: nodeId,
+    title: metadata.title,
+    description: metadata.description,
+    company: metadata.company,
+    category: metadata.category,
+    keywords: metadata.keywords,
+    updated_at: updatedAt
+  });
+};
+
+const reloadContentNode = async (db: DatabaseAdapter, workspace: string, nodeId: string) => {
+  const row = await db.project.getAnyContentNodeById(workspace, nodeId);
+  httpAssert.present(row, { status: 404, message: `Content node '${nodeId}' not found` });
+  return row;
+};
+
 export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
   const folderNodes = files.filter(f => f.type === 'folder');
   const nonFolderNodes = files.filter(f => f.type !== 'folder');
@@ -598,16 +669,18 @@ export const createEntityFile = async (
 
     const entityRefs = getDiagramEntityRefs(doc);
     await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
+    await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
+    const savedRow = await reloadContentNode(db, ws, row.id);
 
     if (isUpdate) {
-      const changes = computeChanges(extractEntityFields(existingFile), extractEntityFields(row));
+      const changes = computeChanges(extractEntityFields(existingFile), extractEntityFields(savedRow));
       await logAudit(db, {
         userId: authCtx.userId,
         workspace: ws,
         operation: 'update',
         entityType: 'content_node',
         entityId: row.id,
-        entityName: row.name,
+        entityName: savedRow.name,
         changes,
         metadata: { entity_id: entityUuid, path: filePath }
       });
@@ -618,15 +691,15 @@ export const createEntityFile = async (
         operation: 'create',
         entityType: 'content_node',
         entityId: row.id,
-        entityName: row.name,
+        entityName: savedRow.name,
         changes: {
-          new: extractEntityFields(row)
+          new: extractEntityFields(savedRow)
         },
         metadata: { entity_id: entityUuid, path: filePath }
       });
     }
 
-    return toApiProjectFile(row);
+    return toApiProjectFile(savedRow);
   } catch (e) {
     console.error('Error in createEntityFile:', e);
     return handleError(e, 'Failed to create entity diagram');
@@ -810,16 +883,18 @@ export const saveFile = async (
 
     const entityRefs = getDiagramEntityRefs(doc);
     await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
+    await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
+    const savedRow = await reloadContentNode(db, ws, row.id);
 
     if (isUpdate) {
-      const changes = computeChanges(extractEntityFields(existingFile), extractEntityFields(row));
+      const changes = computeChanges(extractEntityFields(existingFile), extractEntityFields(savedRow));
       await logAudit(db, {
         userId: authCtx.userId,
         workspace: ws,
         operation: 'update',
         entityType: 'content_node',
         entityId: row.id,
-        entityName: row.name,
+        entityName: savedRow.name,
         changes,
         metadata: { project_id: projectUuid, path: filePath }
       });
@@ -830,15 +905,15 @@ export const saveFile = async (
         operation: 'create',
         entityType: 'content_node',
         entityId: row.id,
-        entityName: row.name,
+        entityName: savedRow.name,
         changes: {
-          new: extractEntityFields(row)
+          new: extractEntityFields(savedRow)
         },
         metadata: { project_id: projectUuid, path: filePath }
       });
     }
 
-    return toApiProjectFile(row);
+    return toApiProjectFile(savedRow);
   } catch (e) {
     return handleError(e, 'Failed to write file');
   }
@@ -991,6 +1066,8 @@ export const cloneFile = async (
 
     const entityRefs = getDiagramEntityRefs(doc);
     await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
+    await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
+    const savedRow = await reloadContentNode(db, ws, row.id);
 
     await logAudit(db, {
       userId: authCtx.userId,
@@ -998,14 +1075,14 @@ export const cloneFile = async (
       operation: 'create',
       entityType: 'content_node',
       entityId: row.id,
-      entityName: row.name,
+      entityName: savedRow.name,
       changes: {
-        new: extractEntityFields(row)
+        new: extractEntityFields(savedRow)
       },
       metadata: { project_id: projectUuid, path: clonePath, cloned_from: filePath }
     });
 
-    return toApiProjectFile(row);
+    return toApiProjectFile(savedRow);
   } catch (e) {
     return handleError(e, 'Failed to clone file');
   }
@@ -1119,6 +1196,8 @@ export const relocateFile = async (
     );
 
     await storage.write(ws, projectUuid, newFile.id, updatedContent);
+    await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
+    const savedFile = await reloadContentNode(db, ws, newFile.id);
 
     await db.project.deleteContentNodeByPath(ws, projectUuid, filePath);
     await storage.delete(ws, projectUuid, existingFile.id).catch(() => {});
@@ -1128,7 +1207,7 @@ export const relocateFile = async (
       workspace: ws,
       operation: 'update',
       entityType: 'content_node',
-      entityId: newFile.id,
+      entityId: savedFile.id,
       entityName: displayName,
       changes: {
         old: { path: filePath, name: existingFile.name },
@@ -1140,7 +1219,7 @@ export const relocateFile = async (
       }
     });
 
-    return toApiProjectFile(newFile);
+    return toApiProjectFile(savedFile);
   } catch (e) {
     return handleError(e, 'Failed to relocate file');
   }
@@ -1393,10 +1472,26 @@ export const getEntityDiagramFiles = async (
         path: row.file_path,
         name: row.file_name,
         size_bytes: row.file_size_bytes,
+        comment_count: row.file_comment_count,
+        unresolved_comment_count: row.file_unresolved_comment_count,
         type: row.file_type,
         preview_svg: row.file_preview_svg,
         created_at: row.file_created_at.toISOString(),
-        updated_at: row.file_updated_at.toISOString()
+        updated_at: row.file_updated_at.toISOString(),
+        content_metadata:
+          row.file_metadata_title !== null ||
+          row.file_metadata_description !== null ||
+          row.file_metadata_company !== null ||
+          row.file_metadata_category !== null ||
+          row.file_metadata_keywords.length > 0
+            ? {
+                title: row.file_metadata_title,
+                description: row.file_metadata_description,
+                company: row.file_metadata_company,
+                category: row.file_metadata_category,
+                keywords: row.file_metadata_keywords
+              }
+            : null
       },
       project: {
         id: row.project_id,
@@ -1543,18 +1638,23 @@ export const createWorkspaceFile = async (
       );
     }
 
+    await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
+    const savedRow = await reloadContentNode(db, ws, row.id);
+
     await logAudit(db, {
       userId: authCtx.userId,
       workspace: ws,
       operation: isUpdate ? 'update' : 'create',
       entityType: 'content_node',
       entityId: row.id,
-      entityName: row.name,
-      changes: isUpdate ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row)) : { new: extractEntityFields(row) },
+      entityName: savedRow.name,
+      changes: isUpdate
+        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(savedRow))
+        : { new: extractEntityFields(savedRow) },
       metadata: { path: filePath }
     });
 
-    return toApiProjectFile(row);
+    return toApiProjectFile(savedRow);
   } catch (e) {
     return handleError(e, 'Failed to create workspace diagram');
   }
@@ -2502,7 +2602,10 @@ export const cloneEntityFile = async (
           commentCounts.commentCount, commentCounts.unresolvedCommentCount, null, timestamp
         );
       }
+      await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
     }
+
+    const savedRow = await reloadContentNode(db, ws, row.id);
 
     await logAudit(db, {
       userId: authCtx.userId,
@@ -2510,12 +2613,12 @@ export const cloneEntityFile = async (
       operation: 'create',
       entityType: 'content_node',
       entityId: row.id,
-      entityName: row.name,
-      changes: { new: extractEntityFields(row) },
+      entityName: savedRow.name,
+      changes: { new: extractEntityFields(savedRow) },
       metadata: { entity_id: entityUuid, path: clonePath, cloned_from: filePath }
     });
 
-    return toApiProjectFile(row);
+    return toApiProjectFile(savedRow);
   } catch (e) {
     return handleError(e, 'Failed to clone entity file');
   }
@@ -2613,9 +2716,11 @@ export const relocateEntityFile = async (
         ws, entityUuid, newFile.id, updatedContent.length,
         commentCounts.commentCount, commentCounts.unresolvedCommentCount, previewSvg, timestamp
       );
+      await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
     }
 
     await storage.write(ws, entityUuid, newFile.id, updatedContent);
+    const savedFile = await reloadContentNode(db, ws, newFile.id);
     await db.project.deleteEntityContentNodeByPath(ws, entityUuid, filePath);
     await storage.delete(ws, entityUuid, existingFile.id).catch(() => {});
 
@@ -2633,7 +2738,7 @@ export const relocateEntityFile = async (
       metadata: { entity_id: entityUuid, operation: 'relocate' }
     });
 
-    return toApiProjectFile(newFile);
+    return toApiProjectFile(savedFile);
   } catch (e) {
     return handleError(e, 'Failed to relocate entity file');
   }
@@ -2837,7 +2942,10 @@ export const cloneWorkspaceFile = async (
           commentCounts.commentCount, commentCounts.unresolvedCommentCount, null, timestamp
         );
       }
+      await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
     }
+
+    const savedRow = await reloadContentNode(db, ws, row.id);
 
     await logAudit(db, {
       userId: authCtx.userId,
@@ -2845,12 +2953,12 @@ export const cloneWorkspaceFile = async (
       operation: 'create',
       entityType: 'content_node',
       entityId: row.id,
-      entityName: row.name,
-      changes: { new: extractEntityFields(row) },
+      entityName: savedRow.name,
+      changes: { new: extractEntityFields(savedRow) },
       metadata: { path: clonePath, cloned_from: filePath }
     });
 
-    return toApiProjectFile(row);
+    return toApiProjectFile(savedRow);
   } catch (e) {
     return handleError(e, 'Failed to clone workspace file');
   }
@@ -2944,9 +3052,11 @@ export const relocateWorkspaceFile = async (
         ws, newFile.id, updatedContent.length,
         commentCounts.commentCount, commentCounts.unresolvedCommentCount, previewSvg, timestamp
       );
+      await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
     }
 
     await storage.write(ws, ws, newFile.id, updatedContent);
+    const savedFile = await reloadContentNode(db, ws, newFile.id);
     await db.project.deleteWorkspaceContentNodeByPath(ws, filePath);
     await storage.delete(ws, ws, existingFile.id).catch(() => {});
 
@@ -2964,7 +3074,7 @@ export const relocateWorkspaceFile = async (
       metadata: { operation: 'relocate' }
     });
 
-    return toApiProjectFile(newFile);
+    return toApiProjectFile(savedFile);
   } catch (e) {
     return handleError(e, 'Failed to relocate workspace file');
   }

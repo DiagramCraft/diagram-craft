@@ -36,9 +36,13 @@ const Avatar = ({ author, color, large }: AvatarProps) => (
 );
 
 const MoreButton = ({ className }: { className?: string }) => (
-  <MenuButton.Trigger element={<button type="button" className={className} aria-label="More options" />}>
-    <TbDots size={14} />
-  </MenuButton.Trigger>
+  <MenuButton.Trigger
+    element={
+      <button type="button" className={className} aria-label="More options">
+        <TbDots size={14} />
+      </button>
+    }
+  />
 );
 
 export const CommentItem = ({ thread, onResolve, formatDate }: CommentItemProps) => {
@@ -143,9 +147,11 @@ export const CommentItem = ({ thread, onResolve, formatDate }: CommentItemProps)
           )}
 
           {isResolved && (
-            <div className={styles.eResolvedPill}>
-              <TbCheck size={11} />
-              Resolved
+            <div>
+              <div className={styles.eResolvedPill}>
+                <TbCheck size={11} />
+                Resolved
+              </div>
             </div>
           )}
         </div>
@@ -167,9 +173,7 @@ export const CommentItem = ({ thread, onResolve, formatDate }: CommentItemProps)
                   <MoreButton className={styles.eMoreBtn} />
                   <MenuButton.Menu>
                     <Menu.Item
-                      onClick={() =>
-                        application.actions.COMMENT_EDIT!.execute({ comment: reply })
-                      }
+                      onClick={() => application.actions.COMMENT_EDIT!.execute({ comment: reply })}
                       leftSlot={<TbEdit size={14} />}
                     >
                       Edit comment

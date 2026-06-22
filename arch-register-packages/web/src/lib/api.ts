@@ -10,7 +10,11 @@ import type {
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink, EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
-import { Project, ProjectFile } from '@arch-register/api-types/projectContract';
+import {
+  Project,
+  ProjectFile,
+  type ContentMetadata
+} from '@arch-register/api-types/projectContract';
 
 // Re-export commonly used types for convenience
 export type { SavedView };
@@ -281,6 +285,9 @@ export type ProjectFileSearchResult = {
   fileId: string;
   path: string;
   name: string;
+  comment_count: number;
+  unresolved_comment_count: number;
+  content_metadata: ContentMetadata | null;
 };
 
 export type EntitySearchResult = {

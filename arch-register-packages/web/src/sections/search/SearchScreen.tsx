@@ -27,6 +27,7 @@ import { useSearch } from '../../hooks/useSearch';
 import styles from './SearchScreen.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import { DiagramMetadataPopover } from '../../components/DiagramMetadataPopover';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -617,43 +618,51 @@ const ResultRow = ({
   if (row.kind === 'file') {
     const f = row.data as ProjectFileSearchResult;
     return (
-      <div
-        className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
-        onMouseEnter={onSelect}
-        onClick={onSelect}
-        onDoubleClick={onOpen}
+      <DiagramMetadataPopover
+        type="diagram"
+        fallbackTitle={f.name}
+        contentMetadata={f.content_metadata}
+        commentCount={f.comment_count}
+        unresolvedCommentCount={f.unresolved_comment_count}
       >
-        <span className={styles.rowIcon}>
-          <TbFolder size={14} />
-        </span>
-        <div className={styles.rowBody}>
-          <div className={styles.rowTitle}>
-            <button
-              type="button"
-              className={styles.rowName}
-              onClick={ev => {
-                ev.stopPropagation();
-                onOpen();
-              }}
-            >
-              <Hi s={f.name} q={q} />
-            </button>
-            <Chip tone="ghost">Diagram</Chip>
+        <div
+          className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
+          onMouseEnter={onSelect}
+          onClick={onSelect}
+          onDoubleClick={onOpen}
+        >
+          <span className={styles.rowIcon}>
+            <TbFolder size={14} />
+          </span>
+          <div className={styles.rowBody}>
+            <div className={styles.rowTitle}>
+              <button
+                type="button"
+                className={styles.rowName}
+                onClick={ev => {
+                  ev.stopPropagation();
+                  onOpen();
+                }}
+              >
+                <Hi s={f.name} q={q} />
+              </button>
+              <Chip tone="ghost">Diagram</Chip>
+            </div>
+            <div className={styles.rowMeta}>
+              <span className={styles.rowPath}>
+                <TbHome size={10} /> <Hi s={f.projectName} q={q} />
+                {f.path.includes('/') && (
+                  <>
+                    <span className={styles.dim}>/</span>
+                    {f.path.slice(0, f.path.lastIndexOf('/'))}
+                  </>
+                )}
+              </span>
+            </div>
           </div>
-          <div className={styles.rowMeta}>
-            <span className={styles.rowPath}>
-              <TbHome size={10} /> <Hi s={f.projectName} q={q} />
-              {f.path.includes('/') && (
-                <>
-                  <span className={styles.dim}>/</span>
-                  {f.path.slice(0, f.path.lastIndexOf('/'))}
-                </>
-              )}
-            </span>
-          </div>
+          <RowGo onOpen={onOpen} />
         </div>
-        <RowGo onOpen={onOpen} />
-      </div>
+      </DiagramMetadataPopover>
     );
   }
 

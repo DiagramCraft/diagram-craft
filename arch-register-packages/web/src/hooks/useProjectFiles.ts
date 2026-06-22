@@ -4,7 +4,8 @@ import {
   projectFileKeys,
   invalidateProjectQueries,
   entityContentKeys,
-  invalidateAuditQueries
+  invalidateAuditQueries,
+  workspaceContentKeys
 } from './queryKeys';
 import {
   MarkdownRevisionDetail,
@@ -237,10 +238,6 @@ export const useToggleTemplateStatus = (workspaceId: string, projectId: string) 
       await queryClient.invalidateQueries({ queryKey: ['project-templates', workspaceId] });
     }
   });
-};
-
-export const workspaceContentKeys = {
-  all: (workspaceId: string) => ['workspace-content', workspaceId] as const
 };
 
 export const useWorkspaceContentNodes = (
