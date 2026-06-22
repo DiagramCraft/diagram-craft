@@ -899,13 +899,14 @@ export const EntityDetailScreen = () => {
 
       {/* Change history */}
       {!contentFolder && tab === 'changes' && (
-        <ChangeHistory 
-          auditLog={auditLog} 
+        <ChangeHistory
+          auditLog={auditLog}
           loading={loadingAudit}
           snapshots={allSnapshots}
-          onRestore={(snapshotId, commitMessage) => {
-            restoreSnapshot.mutate({ snapshotId, commitMessage });
-          }}
+          onRestore={(snapshotId, commitMessage) =>
+            restoreSnapshot.mutateAsync({ snapshotId, commitMessage })
+          }
+          isRestoring={restoreSnapshot.isPending}
           entity={entity}
           schema={schema}
           lifecycleStates={lifecycleStates}
@@ -1309,20 +1310,22 @@ const ChangeRow = ({ row }: { row: ChangeRowData }) => (
   </tr>
 );
 
-const ChangeHistory = ({ 
-  auditLog, 
-  loading, 
-  snapshots, 
+const ChangeHistory = ({
+  auditLog,
+  loading,
+  snapshots,
   onRestore,
+  isRestoring,
   entity,
   schema,
   lifecycleStates,
   teams
-}: { 
-  auditLog: AuditLogEntry[]; 
+}: {
+  auditLog: AuditLogEntry[];
   loading: boolean;
   snapshots: EntitySnapshot[];
-  onRestore: (snapshotId: string, commitMessage?: string) => void;
+  onRestore: (snapshotId: string, commitMessage?: string) => Promise<unknown>;
+  isRestoring: boolean;
   entity: EntityRecord | null;
   schema: EntitySchema | null;
   lifecycleStates: WorkspaceLifecycleState[];
@@ -1336,10 +1339,14 @@ const ChangeHistory = ({
     [snapshots]
   );
 
-  const handleRestore = (commitMessage?: string) => {
+  const handleRestore = async (commitMessage?: string) => {
     if (restoreDialogSnapshot) {
-      onRestore(restoreDialogSnapshot.id, commitMessage);
-      setRestoreDialogSnapshot(null);
+      try {
+        await onRestore(restoreDialogSnapshot.id, commitMessage);
+        setRestoreDialogSnapshot(null);
+      } catch {
+        // keep dialog open so the user can retry
+      }
     }
   };
 
@@ -1451,7 +1458,7 @@ const ChangeHistory = ({
           schema={schema}
           lifecycleStates={lifecycleStates}
           teams={teams}
-          isRestoring={false}
+          isRestoring={isRestoring}
         />
       )}
     </>

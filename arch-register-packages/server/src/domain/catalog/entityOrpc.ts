@@ -687,6 +687,10 @@ export const workspaceEntityORPCRouter = entityRouter.router({
             code: 'NOT_FOUND',
             message: 'Snapshot not found'
           });
+          orpcAssert.true(snapshot.entity_id === entity.id, {
+            code: 'BAD_REQUEST',
+            message: 'Snapshot does not belong to this entity'
+          });
           orpcAssert.true(
             snapshot.status === 'autosave' || snapshot.status === 'saved_version' || snapshot.status === 'applied',
             {
