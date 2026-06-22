@@ -171,6 +171,17 @@ const createConvertedBlock = (type: Exclude<ConvertType, 'list-disc' | 'list-dec
   children: [{ text }]
 });
 
+export const isListParagraph = (element: TElement) =>
+  element.type === 'p' &&
+  typeof (element as TElement & { listStyleType?: unknown }).listStyleType === 'string';
+
+export const createListParagraph = (text: string, listStyleType: 'disc' | 'decimal') => ({
+  type: 'p',
+  indent: 1,
+  listStyleType,
+  children: [{ text }]
+});
+
 const BlockContextMenu = ({
   element,
   position,
@@ -214,14 +225,9 @@ const BlockContextMenu = ({
 
     if (toType === 'list-disc' || toType === 'list-decimal') {
       editor.tf.removeNodes({ at: [idx] });
-      editor.tf.insertNodes(
-        {
-          type: 'list',
-          listStyleType: toType === 'list-decimal' ? 'decimal' : 'disc',
-          children: [{ type: 'li', children: [{ type: 'lic', children: [{ text }] }] }]
-        },
-        { at: [idx] }
-      );
+      editor.tf.insertNodes(createListParagraph(text, toType === 'list-decimal' ? 'decimal' : 'disc'), {
+        at: [idx]
+      });
     } else if (blockType === 'code_block') {
       editor.tf.removeNodes({ at: [idx] });
       editor.tf.insertNodes(createConvertedBlock(toType, text), { at: [idx] });
@@ -295,7 +301,9 @@ const Draggable = ({
 
 // ─── Block element components ───────────────────────────────────────────────
 
-const PElement = (props: PlateElementProps) => <Draggable as="p" {...props} />;
+const PElement = (props: PlateElementProps) => (
+  <Draggable as={isListParagraph(props.element) ? 'div' : 'p'} {...props} />
+);
 const H1Element = (props: PlateElementProps) => <Draggable as="h1" {...props} />;
 const H2Element = (props: PlateElementProps) => <Draggable as="h2" {...props} />;
 const H3Element = (props: PlateElementProps) => <Draggable as="h3" {...props} />;
