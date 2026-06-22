@@ -181,9 +181,12 @@ export class UMLStructuredClassifierComponent extends BaseNodeComponent<UMLStruc
     const stereotypeIcon = nodeProps.custom.umlStructuredClassifier.stereotypeIcon ?? 'empty';
     const customIcon = nodeProps.custom.umlStructuredClassifier.icon ?? '';
 
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    builder.boundaryPath(boundary.all());
+
     const titleFill = nodeProps.additionalFills?.['0'];
     if (titleFill?.enabled) {
-      const strokeWidth = 0; //nodeProps.stroke.enabled ? nodeProps.stroke.width : 0;
+      const strokeWidth = nodeProps.stroke.enabled ? nodeProps.stroke.width : 0;
       const color = titleFill.color ?? 'transparent';
       builder.add(
         svg.rect({
@@ -201,9 +204,6 @@ export class UMLStructuredClassifierComponent extends BaseNodeComponent<UMLStruc
         })
       );
     }
-
-    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    builder.boundaryPath(boundary.all());
 
     builder.add(
       svg.line({

@@ -132,15 +132,19 @@ export class UMLPackageComponent extends BaseNodeComponent<UMLPackageNodeDefinit
       props.node.children.length > 0 && this.def.shouldRenderChildren(props.node);
     const tabH = this.def.getTabH(props.node);
 
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    builder.boundaryPath(boundary.all());
+
     const tabFill = nodeProps.additionalFills?.['0'];
     if (tabFill?.enabled) {
+      const strokeWidth = nodeProps.stroke.enabled ? nodeProps.stroke.width : 0;
       const color = tabFill.color ?? 'transparent';
       builder.add(
         svg.rect({
-          x: bounds.x,
-          y: bounds.y,
-          width: effectiveTabW,
-          height: tabH,
+          x: bounds.x + strokeWidth,
+          y: bounds.y + strokeWidth,
+          width: effectiveTabW - 2 * strokeWidth,
+          height: tabH - 2 * strokeWidth,
           fill: color,
           stroke: 'none',
           style: 'pointer-events: none',
@@ -151,9 +155,6 @@ export class UMLPackageComponent extends BaseNodeComponent<UMLPackageNodeDefinit
         })
       );
     }
-
-    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    builder.boundaryPath(boundary.all());
 
     // Interior line separating tab from body
     const interiorPath = new PathListBuilder().withTransform([new Translation(bounds)]);

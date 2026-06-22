@@ -162,6 +162,9 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
     const stereotypeIcon = props.nodeProps.custom.umlClass.stereotypeIcon ?? 'empty';
     const customIcon = props.nodeProps.custom.umlClass.icon ?? '';
 
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    builder.boundaryPath(boundary.all());
+
     const titleFill = props.nodeProps.additionalFills?.['0'];
     if (titleFill?.enabled) {
       const strokeWidth = props.nodeProps.stroke.enabled ? props.nodeProps.stroke.width : 0;
@@ -183,9 +186,6 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
         })
       );
     }
-
-    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    builder.boundaryPath(boundary.all());
 
     const childrenVisible =
       props.node.children.length > 0 && this.def.shouldRenderChildren(props.node);
