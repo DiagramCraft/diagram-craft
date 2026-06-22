@@ -118,6 +118,7 @@ export type EntitySnapshotDbResult = {
   commit_message: string | null;
   created_at: Date;
   created_by: string;
+  created_by_name: string | null;
   base_state: Record<string, unknown>;
   proposed_state: Record<string, unknown> | null;
 };
@@ -172,6 +173,7 @@ export type CatalogDatabase = {
   ): Promise<PinnedEntityDbResult | null>;
 
   createSnapshot(input: EntitySnapshotDbCreate): Promise<EntitySnapshotDbResult>;
+  getSnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
   listSnapshots(ws: string, entityId: string): Promise<EntitySnapshotDbResult[]>;
   listSnapshotsByProject(ws: string, projectId: string): Promise<EntitySnapshotDbResult[]>;
   pruneAutosaveSnapshots(ws: string, entityId: string, keepCount: number): Promise<void>;

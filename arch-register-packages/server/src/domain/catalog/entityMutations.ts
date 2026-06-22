@@ -42,6 +42,7 @@ type UpdateEntityWithAuditParams = {
   previous: Entity;
   next: EntityDbUpdate;
   actor: EntityMutationActor;
+  auditMetadata?: Record<string, unknown>;
 };
 
 export const createEntityWithAudit = async (
@@ -75,6 +76,7 @@ export const createEntityWithAudit = async (
     commit_message: null,
     created_at: new Date(),
     created_by: params.actor.id,
+    created_by_name: params.actor.displayName,
     base_state: entityToBaseState(row),
     proposed_state: null
   });
@@ -104,7 +106,8 @@ export const updateEntityWithAudit = async (
     changes: computeChanges(
       flattenEntityAuditFields(params.previous),
       flattenEntityAuditFields(row)
-    )
+    ),
+    metadata: params.auditMetadata
   });
 
   await db.catalog.createSnapshot({
@@ -117,6 +120,7 @@ export const updateEntityWithAudit = async (
     commit_message: null,
     created_at: new Date(),
     created_by: params.actor.id,
+    created_by_name: params.actor.displayName,
     base_state: entityToBaseState(params.previous),
     proposed_state: entityToBaseState(row)
   });

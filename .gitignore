@@ -73,3 +73,5 @@ packages/main/public/.snapshot/*
 packages/main/public/.temp/*
 
 arch-register-packages/server/data
+
+.wiki

@@ -329,7 +329,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSnapshot(input: EntitySnapshotDbCreate) {
     this.run(
-      'INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, commit_message, created_at, created_by, base_state, proposed_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, commit_message, created_at, created_by, created_by_name, base_state, proposed_state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -340,20 +340,40 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.commit_message,
         input.created_at.toISOString(),
         input.created_by,
+        input.created_by_name,
         JSON.stringify(input.base_state),
         input.proposed_state != null ? JSON.stringify(input.proposed_state) : null
       ]
     );
     return (await this.get(
-      'SELECT * FROM entity_snapshot WHERE id = ?',
+      `SELECT s.*, u.display_name as created_by_name
+       FROM entity_snapshot s
+       LEFT JOIN users u ON u.id = s.created_by
+       WHERE s.id = ?`,
       [input.id],
       sqliteMappers.entitySnapshot
     ))!;
   }
 
+
+  async getSnapshot(workspace: string, snapshotId: string) {
+    return await this.get(
+      `SELECT s.*, u.display_name as created_by_name
+       FROM entity_snapshot s
+       LEFT JOIN users u ON u.id = s.created_by
+       WHERE s.workspace = ? AND s.id = ?`,
+      [workspace, snapshotId],
+      sqliteMappers.entitySnapshot
+    );
+  }
+
   async listSnapshots(workspace: string, entityId: string) {
     return this.all(
-      'SELECT * FROM entity_snapshot WHERE workspace = ? AND entity_id = ? ORDER BY created_at DESC',
+      `SELECT s.*, u.display_name as created_by_name
+       FROM entity_snapshot s
+       LEFT JOIN users u ON u.id = s.created_by
+       WHERE s.workspace = ? AND s.entity_id = ?
+       ORDER BY s.created_at DESC`,
       [workspace, entityId],
       sqliteMappers.entitySnapshot
     );
@@ -361,8 +381,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async listSnapshotsByProject(workspace: string, projectId: string) {
     return this.all(
-      `SELECT s.* FROM entity_snapshot s
+      `SELECT s.*, u.display_name as created_by_name
+       FROM entity_snapshot s
        INNER JOIN project p ON p.id = s.project_id
+       LEFT JOIN users u ON u.id = s.created_by
        WHERE s.workspace = ?
          AND p.workspace = ?
          AND (p.id = ? OR p.public_id = ?)
@@ -400,7 +422,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [commitMessage, snapshotId]
     );
     return await this.get(
-      'SELECT * FROM entity_snapshot WHERE id = ?',
+      `SELECT s.*, u.display_name as created_by_name
+       FROM entity_snapshot s
+       LEFT JOIN users u ON u.id = s.created_by
+       WHERE s.id = ?`,
       [snapshotId],
       sqliteMappers.entitySnapshot
     );

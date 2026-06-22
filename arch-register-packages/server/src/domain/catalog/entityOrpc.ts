@@ -1,7 +1,7 @@
 import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
-import type { DatabaseAdapter } from '../../db/database';
+import type { DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import {
   buildApiAuthCtx,
   filterVisibleEntities,
@@ -16,10 +16,12 @@ import { httpAssert } from '../../utils/httpAssert';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { buildEntityGrantInputs, filterEntities, relationFields } from './dataHelpers';
 import type { EntitySnapshotDbResult } from './db/catalogDatabase';
+import { updateEntityWithAudit } from './entityMutations';
 
 const serializeSnapshot = (s: EntitySnapshotDbResult) => ({
   ...s,
   created_at: s.created_at.toISOString(),
+  created_by_name: s.created_by_name,
   target_date: (s.target_date as unknown) instanceof Date
     ? (s.target_date as unknown as Date).toISOString().slice(0, 10)
     : s.target_date
@@ -529,6 +531,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
             commit_message: input.body.commitMessage ?? null,
             created_at: new Date(),
             created_by: context.event.context.user.id,
+            created_by_name: context.event.context.user.display_name,
             base_state: {
               id: entity.id,
               workspace: entity.workspace,
@@ -660,6 +663,59 @@ export const workspaceEntityORPCRouter = entityRouter.router({
             message: 'Failed to apply snapshot'
           });
           return serializeSnapshot(applied);
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }),
+      restore: entityRouter.entities.snapshots.restore.handler(async ({ input, context }) => {
+        try {
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+
+          const entity = await context.db.catalog.getEntity(workspace, input.params.id);
+          orpcAssert.present(entity, {
+            code: 'NOT_FOUND',
+            message: 'Entity not found'
+          });
+
+          if (authCtx) {
+            requireEntityAction(authCtx, entity, 'edit_entity', 'You do not have permission to restore this entity');
+          }
+
+          const snapshot = await context.db.catalog.getSnapshot(workspace, input.params.snapshotId);
+          orpcAssert.present(snapshot, {
+            code: 'NOT_FOUND',
+            message: 'Snapshot not found'
+          });
+          orpcAssert.true(
+            snapshot.status === 'autosave' || snapshot.status === 'saved_version' || snapshot.status === 'applied',
+            {
+              code: 'BAD_REQUEST',
+              message: 'Only autosave, saved_version, or applied snapshots can be restored'
+            }
+          );
+
+          const auditUser = context.event.context.user;
+          await updateEntityWithAudit(
+            context.db,
+            {
+              workspace,
+              entityId: entity.id,
+              previous: entity,
+              next: {
+                ...snapshot.base_state,
+                updated_at: new Date()
+              } as EntityDbUpdate,
+              actor: { id: auditUser.id, displayName: auditUser.display_name },
+              auditMetadata: {
+                restore_from_snapshot_id: snapshot.id,
+                restore_from_snapshot_created_at: snapshot.created_at.toISOString(),
+                restore_commit_message: input.body.commitMessage ?? null
+              }
+            }
+          );
+
+          return serializeSnapshot(snapshot);
         } catch (error) {
           return toORPCError(error);
         }

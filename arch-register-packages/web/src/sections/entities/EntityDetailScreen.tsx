@@ -34,7 +34,8 @@ import {
   useCloneEntity,
   useEntitiesBySchema,
   useEntitySnapshots,
-  usePromoteSnapshot
+  usePromoteSnapshot,
+  useRestoreSnapshot
 } from '../../hooks/useEntities';
 import {
   useEntityDiagramFiles,
@@ -57,12 +58,14 @@ import {
 } from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
-import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
+import { EntityRecord, EntitySummary, EntitySnapshot } from '@arch-register/api-types/entityContract';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
+import type { WorkspaceTeam } from '../../lib/api';
 import { EntityContentView } from './EntityContentView';
 import { EntityTimelineTab } from './EntityTimelineTab';
+import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
 import { Title } from '../../components/Title';
 
 type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes' | 'timeline';
@@ -130,7 +133,7 @@ export const EntityDetailScreen = () => {
   );
   const { data: auditLog = [], isLoading: loadingAudit } = useAuditLog(
     workspaceId,
-    { entityId, limit: 100 },
+    { entityId },
     { enabled: canViewAudit && tab === 'changes' }
   );
 
@@ -143,6 +146,7 @@ export const EntityDetailScreen = () => {
   const deleteEntity = useDeleteEntity(workspaceId);
   const cloneEntity = useCloneEntity(workspaceId);
   const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);
+  const restoreSnapshot = useRestoreSnapshot(workspaceId, entityId);
   const { data: allSnapshots = [] } = useEntitySnapshots(workspaceId, entityId, true);
   const futureSnapshots = allSnapshots.filter(s => s.status === 'future_update');
   const createWatch = useCreateWatch(workspaceId);
@@ -894,7 +898,20 @@ export const EntityDetailScreen = () => {
       )}
 
       {/* Change history */}
-      {!contentFolder && tab === 'changes' && <ChangeHistory auditLog={auditLog} loading={loadingAudit} />}
+      {!contentFolder && tab === 'changes' && (
+        <ChangeHistory 
+          auditLog={auditLog} 
+          loading={loadingAudit}
+          snapshots={allSnapshots}
+          onRestore={(snapshotId, commitMessage) => {
+            restoreSnapshot.mutate({ snapshotId, commitMessage });
+          }}
+          entity={entity}
+          schema={schema}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
+        />
+      )}
 
       {/* Timeline */}
       {!contentFolder && tab === 'timeline' && (
@@ -1283,24 +1300,54 @@ const flattenAuditEntries = (entries: AuditLogEntry[]): ChangeRowData[] => {
 };
 
 const ChangeRow = ({ row }: { row: ChangeRowData }) => (
-  <div className={styles.changeRow}>
-    <span className={styles.changeWhen}>{row.when}</span>
-    <span className={styles.changeWho}>{row.who}</span>
-    <span className={styles.changeWhat}>{row.what}</span>
-    <span className={styles.changeFrom}>{row.from}</span>
-    <TbChevronRight size={10} className={styles.dim} />
-    <span className={styles.changeTo}>{row.to}</span>
-  </div>
+  <tr>
+    <td className={styles.chDim}>{row.when}</td>
+    <td>{row.who}</td>
+    <td className={styles.chDim}>{row.what}</td>
+    <td className={styles.chMono}>{row.from}</td>
+    <td className={styles.chMono}>{row.to}</td>
+  </tr>
 );
 
-const ChangeHistory = ({ auditLog, loading }: { auditLog: AuditLogEntry[]; loading: boolean }) => {
+const ChangeHistory = ({ 
+  auditLog, 
+  loading, 
+  snapshots, 
+  onRestore,
+  entity,
+  schema,
+  lifecycleStates,
+  teams
+}: { 
+  auditLog: AuditLogEntry[]; 
+  loading: boolean;
+  snapshots: EntitySnapshot[];
+  onRestore: (snapshotId: string, commitMessage?: string) => void;
+  entity: EntityRecord | null;
+  schema: EntitySchema | null;
+  lifecycleStates: WorkspaceLifecycleState[];
+  teams: WorkspaceTeam[];
+}) => {
   const rows = useMemo(() => flattenAuditEntries(auditLog), [auditLog]);
+  const [restoreDialogSnapshot, setRestoreDialogSnapshot] = useState<EntitySnapshot | null>(null);
+
+  const savedSnapshots = useMemo(
+    () => snapshots.filter(s => s.status === 'autosave' || s.status === 'saved_version' || s.status === 'applied'),
+    [snapshots]
+  );
+
+  const handleRestore = (commitMessage?: string) => {
+    if (restoreDialogSnapshot) {
+      onRestore(restoreDialogSnapshot.id, commitMessage);
+      setRestoreDialogSnapshot(null);
+    }
+  };
 
   if (loading) {
     return <div className={styles.loading}>Loading change history...</div>;
   }
 
-  if (auditLog.length === 0) {
+  if (auditLog.length === 0 && savedSnapshots.length === 0) {
     return (
       <div className={styles.empty}>
         <div className={styles.emptyTitle}>No change history yet</div>
@@ -1310,11 +1357,104 @@ const ChangeHistory = ({ auditLog, loading }: { auditLog: AuditLogEntry[]; loadi
   }
 
   return (
-    <div className={styles.changesList}>
-      {rows.map((row, i) => (
-        <ChangeRow key={i} row={row} />
-      ))}
-    </div>
+    <>
+      <div className={styles.changeHistory}>
+        {savedSnapshots.length > 0 && (
+          <div>
+            <div className={styles.chTableWrap}>
+              <table className={styles.chTable}>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>By</th>
+                    <th>Message</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {savedSnapshots.map(snapshot => (
+                    <tr key={snapshot.id}>
+                      <td className={styles.chDim}>
+                        {new Date(snapshot.created_at).toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </td>
+                      <td>
+                        <span className={`${styles.snapshotTypeBadge} ${snapshot.status !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}>
+                          {snapshot.status === 'saved_version' ? 'saved' : snapshot.status === 'applied' ? 'applied' : 'autosave'}
+                        </span>
+                      </td>
+                      <td>{snapshot.created_by_name ?? '—'}</td>
+                      <td className={styles.chDim}>{snapshot.commit_message ?? '—'}</td>
+                      <td className={styles.chActionsCell}>
+                        {snapshot.status !== 'future_update' && (
+                          <Button variant="secondary" size="sm" onClick={() => setRestoreDialogSnapshot(snapshot)}>
+                            Restore
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {rows.length > 0 && (
+          <div>
+            <div className={styles.chSectionLabel}>Audit log</div>
+            <div className={styles.chTableWrap}>
+              <table className={styles.chTable}>
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>Who</th>
+                    <th>What</th>
+                    <th>Old value</th>
+                    <th>New value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <ChangeRow key={i} row={row} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {restoreDialogSnapshot && entity && (
+        <RestoreSnapshotDialog
+          isOpen={true}
+          onClose={() => setRestoreDialogSnapshot(null)}
+          onConfirm={handleRestore}
+          snapshot={restoreDialogSnapshot}
+          currentState={{
+            name: entity._name,
+            description: entity._description,
+            lifecycle: entity._lifecycle?.id ?? null,
+            target_lifecycle: entity._targetLifecycle?.id ?? null,
+            target_lifecycle_date: entity._targetLifecycleDate,
+            owner: entity._owner?.id ?? null,
+            data: schema
+              ? Object.fromEntries(schema.fields.map(f => [f.id, entity[f.id]]))
+              : {}
+          }}
+          schema={schema}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
+          isRestoring={false}
+        />
+      )}
+    </>
   );
 };
 
