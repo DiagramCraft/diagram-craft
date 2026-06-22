@@ -194,17 +194,26 @@ export class UMLFrameComponent extends BaseNodeComponent<UMLFrameNodeDefinition>
 
     const isFillDisabled = nodeProps.fill.enabled === false;
 
+    let boundaryProps: NodePropsForEditing = nodeProps;
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    if (isFillDisabled) {
+      // We set to none to make it easier to select nodes behind the frame
+      boundaryProps = { ...nodeProps, fill: { color: 'none' } };
+    }
+    builder.boundaryPath(boundary.all(), boundaryProps);
+
     const labelFill = props.nodeProps.additionalFills?.['0'];
     if (labelFill?.enabled) {
+      const strokeWidth = nodeProps.stroke.enabled ? nodeProps.stroke.width : 0;
       const color = labelFill.color ?? 'transparent';
       builder.add(
         svg.path({
           'd': [
-            `M ${bounds.x} ${bounds.y}`,
-            `L ${bounds.x + labelW} ${bounds.y}`,
+            `M ${bounds.x + strokeWidth} ${bounds.y + strokeWidth}`,
+            `L ${bounds.x + labelW} ${bounds.y + strokeWidth}`,
             `L ${bounds.x + labelW} ${bounds.y + labelH - cut}`,
             `L ${bounds.x + labelW - cut} ${bounds.y + labelH}`,
-            `L ${bounds.x} ${bounds.y + labelH}`,
+            `L ${bounds.x + strokeWidth} ${bounds.y + labelH}`,
             'Z'
           ].join(' '),
           'fill': color,
@@ -226,14 +235,6 @@ export class UMLFrameComponent extends BaseNodeComponent<UMLFrameNodeDefinition>
         })
       );
     }
-
-    let boundaryProps: NodePropsForEditing = nodeProps;
-    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    if (isFillDisabled) {
-      // We set to none to make it easier to select nodes behind the frame
-      boundaryProps = { ...nodeProps, fill: { color: 'none' } };
-    }
-    builder.boundaryPath(boundary.all(), boundaryProps);
 
     // Label box inner border: right edge → diagonal cut → bottom edge
     // The top and left edges are shared with the outer rectangle border
