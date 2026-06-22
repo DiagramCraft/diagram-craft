@@ -4,12 +4,13 @@
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  position: relative;
 }
 
 .plateContent {
   flex: 1;
   width: 100%;
-  padding: 24px;
+  padding: 24px 24px 24px 52px; /* left pad reserves space for drag handles */
   outline: none;
   overflow-y: auto;
   font-size: 14px;
@@ -20,7 +21,187 @@
   cursor: text;
 }
 
-/* Typography — mirrors .article rules in MarkdownEditorScreen.module.css */
+/* ── Drag & drop ─────────────────────────────────────────────────────────── */
+
+.draggableBlock {
+  position: relative;
+}
+
+.draggableBlock:hover .dragHandle {
+  opacity: 1;
+}
+
+.dragHandle {
+  position: absolute;
+  left: -28px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  cursor: grab;
+  color: var(--cmp-fg-disabled);
+  border-radius: var(--r-sm);
+  transition: opacity 0.1s, color 0.1s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dragHandle:hover {
+  color: var(--base-fg-dim);
+  background: var(--cmp-bg);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragging {
+  opacity: 0.4;
+}
+
+.dropLine {
+  position: relative;
+  height: 2px;
+  background: var(--accent-fg);
+  border-radius: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.dropLine::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-fg);
+  border-radius: 50%;
+}
+
+/* ── Slash command ────────────────────────────────────────────────────────── */
+
+.slashTrigger {
+  color: var(--accent-fg);
+  font-style: italic;
+  min-width: 1px;
+  display: inline;
+}
+
+.slashDropdown {
+  position: fixed;
+  z-index: 9999;
+  background: var(--panel-bg, var(--base-bg));
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 4px;
+  min-width: 240px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.slashItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: left;
+  color: var(--base-fg);
+  transition: background 0.08s;
+}
+
+.slashItem:hover,
+.slashItemActive {
+  background: var(--cmp-bg);
+}
+
+.slashIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  font-size: 12px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--base-fg-dim);
+}
+
+.slashItemText {
+  min-width: 0;
+}
+
+.slashItemLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.slashItemDesc {
+  font-size: 11.5px;
+  color: var(--cmp-fg-disabled);
+  margin-top: 1px;
+}
+
+/* ── Floating toolbar ─────────────────────────────────────────────────────── */
+
+.floatingToolbar {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 4px;
+  background: var(--panel-bg, var(--base-bg));
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  pointer-events: auto;
+}
+
+.toolbarBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  color: var(--base-fg-dim);
+  font-size: 13px;
+  transition: background 0.08s, color 0.08s;
+}
+
+.toolbarBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+}
+
+.toolbarBtnActive {
+  background: var(--accent-bg, var(--cmp-bg));
+  color: var(--accent-fg);
+}
+
+.toolbarDivider {
+  width: 1px;
+  height: 18px;
+  background: var(--panel-border);
+  margin: 0 2px;
+}
+
+/* ── Article typography (mirrors MarkdownEditorScreen .article rules) ─────── */
 
 .plateContent :global(h1) {
   font-size: 22px;
@@ -150,5 +331,5 @@
   pointer-events: none;
   position: absolute;
   top: 24px;
-  left: 24px;
+  left: 52px;
 }
