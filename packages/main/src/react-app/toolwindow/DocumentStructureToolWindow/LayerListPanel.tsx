@@ -33,6 +33,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { addHighlight, removeHighlight } from '@diagram-craft/canvas/highlight';
+import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleContextMenu } from './RuleContextMenu';
 import { useApplication, useDiagram } from '../../../application';
@@ -444,7 +445,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
       {(childrenAllowed || (isEdge(e) && e.children.length > 0)) && (
         <Tree.Children>
           {(isNode(e)
-            ? (e.getDefinition().getSortedChildren?.(e) ?? e.children.toReversed())
+            ? (e.getDefinition() as ShapeNodeDefinition).getSortedChildren(e)
             : e.children.toReversed()
           ).map(c => (
             <ElementEntry key={c.id} element={c} />

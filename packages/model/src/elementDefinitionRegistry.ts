@@ -470,7 +470,6 @@ export interface NodeDefinition {
     uow: UnitOfWork
   ): void;
 
-  getSortedChildren?(node: DiagramNode): ReadonlyArray<DiagramElement>;
 }
 
 export type AttachPhase = 'drag' | 'dragEnd';

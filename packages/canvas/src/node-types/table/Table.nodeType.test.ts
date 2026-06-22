@@ -6,6 +6,7 @@ import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { TestLayerBuilder } from '@diagram-craft/model/test-support/testModel';
+import { ShapeNodeDefinition } from '../../shape/shapeNodeDefinition';
 
 describe('TableHelper', () => {
   let diagram: Diagram;
@@ -248,13 +249,13 @@ describe('TableHelper', () => {
   });
 
   test('getSortedChildren on table returns rows top to bottom', () => {
-    const sorted = table.getDefinition().getSortedChildren!(table);
+    const sorted = (table.getDefinition() as ShapeNodeDefinition).getSortedChildren(table);
     expect(sorted.map(r => r.id)).toEqual(['row-1', 'row-2']);
   });
 
   test('getSortedChildren on tableRow returns cells left to right', () => {
     const row1 = table.children[1] as DiagramNode;
-    const sorted = row1.getDefinition().getSortedChildren!(row1);
+    const sorted = (row1.getDefinition() as ShapeNodeDefinition).getSortedChildren(row1);
     expect(sorted.map(c => c.id)).toEqual(['cell-a', 'cell-b']);
   });
 
