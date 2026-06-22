@@ -469,6 +469,8 @@ export interface NodeDefinition {
     resolvedOptions: NodeLinkOptions,
     uow: UnitOfWork
   ): void;
+
+  getSortedChildren?(node: DiagramNode): ReadonlyArray<DiagramElement>;
 }
 
 export type AttachPhase = 'drag' | 'dragEnd';

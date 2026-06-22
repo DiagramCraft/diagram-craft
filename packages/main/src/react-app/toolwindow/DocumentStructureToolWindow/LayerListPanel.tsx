@@ -443,7 +443,10 @@ const ElementEntry = (props: { element: DiagramElement }) => {
 
       {(childrenAllowed || (isEdge(e) && e.children.length > 0)) && (
         <Tree.Children>
-          {e.children.toReversed().map(c => (
+          {(isNode(e)
+            ? (e.getDefinition().getSortedChildren?.(e) ?? e.children.toReversed())
+            : e.children.toReversed()
+          ).map(c => (
             <ElementEntry key={c.id} element={c} />
           ))}
         </Tree.Children>
