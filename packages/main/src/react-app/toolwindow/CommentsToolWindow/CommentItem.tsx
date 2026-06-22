@@ -30,10 +30,27 @@ type CommentItemMenuProps = {
   onDeleteComment: () => void;
 };
 
-const MoreButton = ({ className }: { className?: string }) => (
-  <MenuButton.Trigger element={<button type="button" className={className} aria-label="More options" />}>
-    <TbDots size={14} />
-  </MenuButton.Trigger>
+const CommentItemMenu = (props: CommentItemMenuProps) => (
+  <MenuButton.Root>
+    <MenuButton.Trigger className={styles.eMenuButton}>
+      <TbDots size={14} />
+    </MenuButton.Trigger>
+    <MenuButton.Menu>
+      <Menu.Item onClick={props.onEditComment} leftSlot={<TbEdit size={14} />}>
+        Edit Comment
+      </Menu.Item>
+      <Menu.Item
+        onClick={props.onChangeState}
+        disabled={!props.canChangeState}
+        leftSlot={<TbCheck size={14} />}
+      >
+        {props.state === 'resolved' ? 'Unresolve' : 'Resolve'}
+      </Menu.Item>
+      <Menu.Item onClick={props.onDeleteComment} leftSlot={<TbTrash size={14} />}>
+        Delete Comment
+      </Menu.Item>
+    </MenuButton.Menu>
+  </MenuButton.Root>
 );
 
 export const CommentItem = ({
@@ -88,38 +105,40 @@ export const CommentItem = ({
   }, [diagram, comment.id, application]);
 
   return (
-    <li className={styles.icThread} data-resolved={isResolved || undefined}>
-      <div className={styles.eRootComment}>
-        <Avatar author={root.author} color={root.userColor} large />
-        <div className={styles.eRootBody}>
-          <div className={styles.eCommentRowTop}>
-            <div>
-              <div className={styles.eAuthor}>{root.author}</div>
-              <div className={styles.eTime}>{formatDate(root.date)}</div>
+    <div className={styles.icCommentItem} data-state={comment.isReply() ? 'reply' : comment.state}>
+      <div className={styles.eHeader}>
+        <Tooltip
+          message={comment.author}
+          element={
+            <div
+              className={styles.eAvatar}
+              style={{
+                background: comment.userColor ?? '#336633'
+              }}
+            >
+              {comment.author
+                .split(' ')
+                .map(e => e[0])
+                .slice(0, 2)
+                .join('')
+                .toUpperCase()}
             </div>
-            <MenuButton.Root>
-              <MoreButton className={styles.eMoreBtn} />
-              <MenuButton.Menu>
-                <Menu.Item
-                  onClick={() => application.actions.COMMENT_EDIT!.execute({ comment: root })}
-                  leftSlot={<TbEdit size={14} />}
-                >
-                  Edit comment
-                </Menu.Item>
-                <Menu.Item onClick={() => onResolve(root)} leftSlot={<TbCheck size={14} />}>
-                  {isResolved ? 'Unresolve' : 'Resolve'}
-                </Menu.Item>
-                <Menu.Separator />
-                <Menu.Item
-                  onClick={() => confirmDelete(root.id, true)}
-                  leftSlot={<TbTrash size={14} />}
-                  type="danger"
-                >
-                  Delete comment
-                </Menu.Item>
-              </MenuButton.Menu>
-            </MenuButton.Root>
-          </div>
+          }
+        />
+        <div>
+          <div>{comment.author}</div>
+          <div>{formatDate(comment.date)}</div>
+        </div>
+        <div className={styles.eMenu}>
+          <CommentItemMenu
+            onEditComment={() => application.actions.COMMENT_EDIT!.execute({ comment })}
+            onChangeState={() => onResolve(comment)}
+            canChangeState={!comment.isReply()}
+            state={comment.state}
+            onDeleteComment={handleDelete}
+          />
+        </div>
+      </div>
 
       <div className={styles.eContent}>{comment.message}</div>
 
