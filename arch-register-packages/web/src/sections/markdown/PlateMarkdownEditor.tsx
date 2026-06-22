@@ -28,6 +28,8 @@ import {
   flip
 } from '@platejs/floating';
 import type { TElement, Value } from 'platejs';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Drag handle & drop indicator ──────────────────────────────────────────
@@ -54,6 +56,176 @@ const DragHandle = ({
   </div>
 );
 
+// ─── Block action buttons (up / down / delete) ──────────────────────────────
+
+const BlockActionButtons = ({ element }: { element: TElement }) => {
+  const editor = useEditorRef();
+  const path = editor.api.findPath(element);
+  if (!path || path.length === 0) return null;
+
+  const index = path[0]!;
+  const isFirst = index === 0;
+  const isLast = index === editor.children.length - 1;
+
+  // Re-resolve path at click time to avoid stale closure issues
+  const currentIndex = () => {
+    const p = editor.api.findPath(element);
+    return p && p.length > 0 ? p[0]! : null;
+  };
+
+  return (
+    <div className={styles.blockActions} contentEditable={false}>
+      <button
+        type="button"
+        className={styles.blockActionBtn}
+        title="Move up"
+        disabled={isFirst}
+        onMouseDown={e => {
+          e.preventDefault();
+          const idx = currentIndex();
+          if (idx === null || idx === 0) return;
+          const node = editor.children[idx];
+          if (node) {
+            editor.tf.removeNodes({ at: [idx] });
+            editor.tf.insertNodes(node, { at: [idx - 1] });
+          }
+        }}
+      >
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+          <path d="M2 7L5.5 3.5L9 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className={styles.blockActionBtn}
+        title="Move down"
+        disabled={isLast}
+        onMouseDown={e => {
+          e.preventDefault();
+          const idx = currentIndex();
+          if (idx === null || idx >= editor.children.length - 1) return;
+          const node = editor.children[idx];
+          if (node) {
+            editor.tf.removeNodes({ at: [idx] });
+            editor.tf.insertNodes(node, { at: [idx + 1] });
+          }
+        }}
+      >
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+          <path d="M2 4L5.5 7.5L9 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className={`${styles.blockActionBtn} ${styles.blockActionBtnDelete}`}
+        title="Delete block"
+        onMouseDown={e => {
+          e.preventDefault();
+          const idx = currentIndex();
+          if (idx === null) return;
+          editor.tf.removeNodes({ at: [idx] });
+        }}
+      >
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+          <path d="M2 3h7M4.5 3V2h2v1M3.5 3.5l.5 5.5h3l.5-5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+    </div>
+  );
+};
+
+// ─── Block context menu ──────────────────────────────────────────────────────
+
+const CONVERTIBLE_TYPES = new Set(['p', 'h1', 'h2', 'h3', 'blockquote', 'code_block']);
+
+const CONVERT_OPTIONS = [
+  { type: 'p', label: 'Paragraph' },
+  { type: 'h1', label: 'Heading 1' },
+  { type: 'h2', label: 'Heading 2' },
+  { type: 'h3', label: 'Heading 3' },
+  { type: 'blockquote', label: 'Quote' },
+  { type: 'list-disc', label: 'Bullet list' },
+  { type: 'list-decimal', label: 'Numbered list' },
+] as const;
+
+type ConvertType = (typeof CONVERT_OPTIONS)[number]['type'];
+
+const BlockContextMenu = ({
+  element,
+  position,
+  onClose,
+}: {
+  element: TElement;
+  position: { x: number; y: number };
+  onClose: () => void;
+}) => {
+  const editor = useEditorRef();
+
+  const currentIdx = () => {
+    const p = editor.api.findPath(element);
+    return p && p.length > 0 ? p[0]! : null;
+  };
+
+  const blockType = element.type as string;
+  const isConvertible = CONVERTIBLE_TYPES.has(blockType);
+
+  const handleRemove = () => {
+    const idx = currentIdx();
+    if (idx !== null) editor.tf.removeNodes({ at: [idx] });
+    onClose();
+  };
+
+  const handleDuplicate = () => {
+    const idx = currentIdx();
+    if (idx !== null) {
+      const node = editor.children[idx];
+      if (node) editor.tf.insertNodes(node, { at: [idx + 1] });
+    }
+    onClose();
+  };
+
+  const handleConvert = (toType: ConvertType) => {
+    const idx = currentIdx();
+    if (idx === null) { onClose(); return; }
+
+    if (toType === 'list-disc' || toType === 'list-decimal') {
+      const node = editor.children[idx] as TElement | undefined;
+      const text = node?.children?.map((c: Record<string, unknown>) => c['text'] ?? '').join('') ?? '';
+      editor.tf.removeNodes({ at: [idx] });
+      editor.tf.insertNodes(
+        {
+          type: 'list',
+          listStyleType: toType === 'list-decimal' ? 'decimal' : 'disc',
+          children: [{ type: 'li', children: [{ type: 'lic', children: [{ text }] }] }]
+        },
+        { at: [idx] }
+      );
+    } else {
+      editor.tf.setNodes({ type: toType }, { at: [idx] });
+    }
+    onClose();
+  };
+
+  return (
+    <ContextMenu.Imperative x={position.x} y={position.y} onClose={onClose}>
+      <Menu.Item onClick={handleDuplicate}>Duplicate block</Menu.Item>
+      <Menu.Item type="danger" onClick={handleRemove}>Remove block</Menu.Item>
+      {isConvertible && (
+        <>
+          <Menu.Separator />
+          <Menu.SubMenu label="Convert to">
+            {CONVERT_OPTIONS.filter(opt => opt.type !== blockType).map(opt => (
+              <Menu.Item key={opt.type} onClick={() => handleConvert(opt.type)}>
+                {opt.label}
+              </Menu.Item>
+            ))}
+          </Menu.SubMenu>
+        </>
+      )}
+    </ContextMenu.Imperative>
+  );
+};
+
 // Reusable wrapper that adds drag/drop to any block element
 const Draggable = ({
   element,
@@ -63,11 +235,16 @@ const Draggable = ({
 }: PlateElementProps & { as?: keyof HTMLElementTagNameMap }) => {
   const { handleRef, nodeRef, isDragging } = useDraggable({ element });
   const { dropLine } = useDropLine({ id: element.id as string | undefined });
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   return (
     <div
       ref={nodeRef}
       className={`${styles.draggableBlock} ${isDragging ? styles.dragging : ''}`}
+      onContextMenu={e => {
+        e.preventDefault();
+        setContextMenu({ x: e.clientX, y: e.clientY });
+      }}
     >
       {dropLine === 'top' && (
         <div className={styles.dropLine} contentEditable={false} />
@@ -76,8 +253,16 @@ const Draggable = ({
       <PlateElement as={as} element={element} {...plateProps}>
         {children}
       </PlateElement>
+      <BlockActionButtons element={element} />
       {dropLine === 'bottom' && (
         <div className={styles.dropLine} contentEditable={false} />
+      )}
+      {contextMenu && (
+        <BlockContextMenu
+          element={element}
+          position={contextMenu}
+          onClose={() => setContextMenu(null)}
+        />
       )}
     </div>
   );
@@ -275,12 +460,9 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
 const SlashInputElement = ({ element, children, ...props }: PlateElementProps) => {
   const editor = useEditorRef();
   const containerRef = useRef<HTMLSpanElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
-
-  // Search text is the Slate text content typed after "/"
-  const searchText = (
-    (element.children as Array<{ text?: string }>)[0]?.text ?? ''
-  ).trimStart();
+  const [searchText, setSearchText] = useState('');
 
   const filteredCommands = SLASH_COMMANDS.filter(cmd => {
     if (!searchText) return true;
@@ -292,8 +474,9 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
   });
 
   useEffect(() => {
-    setSelectedIndex(0);
-  }, [searchText]);
+    const item = dropdownRef.current?.children[selectedIndex] as HTMLElement | undefined;
+    item?.scrollIntoView({ block: 'nearest' });
+  }, [selectedIndex]);
 
   const removeSlashInput = useCallback(
     (focusEditor = true) => {
@@ -329,6 +512,13 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
 
     const handleKeyDown = (e: Event) => {
       const ke = e as KeyboardEvent;
+      if (ke.key.length === 1 && !ke.ctrlKey && !ke.metaKey && !ke.altKey) {
+        setSearchText(prev => prev + ke.key);
+        setSelectedIndex(0);
+      } else if (ke.key === 'Backspace') {
+        setSearchText(prev => prev.slice(0, -1));
+        setSelectedIndex(0);
+      }
       if (ke.key === 'Escape') {
         ke.preventDefault();
         ke.stopPropagation();
@@ -384,12 +574,14 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
         dropdownPos &&
         createPortal(
           <div
+            ref={dropdownRef}
             className={styles.slashDropdown}
             style={{ top: dropdownPos.top, left: dropdownPos.left }}
             onMouseDown={e => e.preventDefault()}
           >
             {filteredCommands.map((cmd, i) => (
               <button
+                type="button"
                 key={cmd.key}
                 className={`${styles.slashItem} ${
                   i === selectedIndex ? styles.slashItemActive : ''
@@ -423,10 +615,11 @@ const MarkButton = ({
   children: React.ReactNode;
 }) => {
   const editor = useEditorRef();
-  const isActive = !!((editor.api.marks() as Record<string, unknown> | null) ?? {})[mark];
+  const isActive = !!(editor.api.marks() as Record<string, unknown> | null)?.[mark];
 
   return (
     <button
+      type="button"
       className={`${styles.toolbarBtn} ${isActive ? styles.toolbarBtnActive : ''}`}
       title={label}
       onMouseDown={e => {
@@ -443,6 +636,7 @@ const HeadingButton = ({ type, label }: { type: string; label: string }) => {
   const editor = useEditorRef();
   return (
     <button
+      type="button"
       className={styles.toolbarBtn}
       title={label}
       onMouseDown={e => {
@@ -502,12 +696,36 @@ const FloatingToolbar = () => {
 
 // ─── Plugin definitions ─────────────────────────────────────────────────────
 
+const HEADING_TYPES = new Set(['h1', 'h2', 'h3']);
+
+const HeadingBreakPlugin = createPlatePlugin({
+  key: 'heading-break',
+  extendEditor({ editor }) {
+    const insertBreak = editor.insertBreak as (() => void) | undefined;
+    editor.insertBreak = () => {
+      const { selection } = editor;
+      if (selection) {
+        const topIndex = selection.anchor.path[0];
+        const block = topIndex !== undefined ? (editor.children[topIndex] as TElement | undefined) : undefined;
+        if (block && HEADING_TYPES.has(block.type as string)) {
+          editor.tf.splitNodes({ always: true });
+          editor.tf.setNodes({ type: 'p' });
+          return;
+        }
+      }
+      insertBreak?.();
+    };
+    return editor;
+  }
+});
+
 const editorPlugins = [
   NodeIdPlugin,
   MarkdownPlugin,
   DndPlugin,
   SlashPlugin,
   SlashInputPlugin.withComponent(SlashInputElement),
+  HeadingBreakPlugin,
   createPlatePlugin({ key: 'p', node: { isElement: true } }).withComponent(PElement),
   createPlatePlugin({ key: 'h1', node: { isElement: true } }).withComponent(H1Element),
   createPlatePlugin({ key: 'h2', node: { isElement: true } }).withComponent(H2Element),

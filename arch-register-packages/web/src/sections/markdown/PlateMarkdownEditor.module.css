@@ -10,7 +10,7 @@
 .plateContent {
   flex: 1;
   width: 100%;
-  padding: 24px 24px 24px 52px; /* left pad reserves space for drag handles */
+  padding: 28px 100px 80px 40px;
   outline: none;
   overflow-y: auto;
   font-size: 14px;
@@ -27,6 +27,28 @@
   position: relative;
 }
 
+.draggableBlock {
+  &::before {
+    content: '';
+    position: absolute;
+    background: var(--panel-bg);
+    border-radius: var(--r-sm);
+
+    left: -35px;
+    right: -95px;
+    top: -5px;
+    bottom: -5px;
+    visibility: hidden;
+  }
+}
+
+.draggableBlock:hover {
+
+  &::before {
+    visibility: visible;
+  }
+}
+
 .draggableBlock:hover .dragHandle {
   opacity: 1;
 }
@@ -34,8 +56,7 @@
 .dragHandle {
   position: absolute;
   left: -28px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
   width: 20px;
   height: 24px;
   display: flex;
@@ -98,9 +119,9 @@
   background: var(--panel-bg, var(--base-bg));
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   padding: 4px;
-  min-width: 240px;
+  min-width: 256px;
   max-height: 320px;
   overflow-y: auto;
 }
@@ -165,7 +186,7 @@
   background: var(--panel-bg, var(--base-bg));
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   pointer-events: auto;
 }
 
@@ -214,12 +235,12 @@
 }
 
 .plateContent :global(h2) {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--base-fg);
   letter-spacing: -0.2px;
-  margin: 28px 0 10px;
-  padding-bottom: 6px;
+  margin: 30px 0 12px;
+  padding-bottom: 7px;
   border-bottom: 1px solid var(--panel-border);
 }
 
@@ -228,14 +249,14 @@
 }
 
 .plateContent :global(h3) {
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--base-fg);
-  margin: 20px 0 6px;
+  margin: 22px 0 8px;
 }
 
 .plateContent :global(p) {
-  margin: 0 0 13px;
+  margin: 0 0 14px;
   text-wrap: pretty;
 }
 
@@ -253,7 +274,7 @@
 .plateContent :global(ul li) {
   position: relative;
   padding-left: 18px;
-  margin: 0 0 5px;
+  margin: 0 0 6px;
   list-style: none;
 }
 
@@ -270,7 +291,7 @@
 }
 
 .plateContent :global(ol li) {
-  margin: 0 0 5px;
+  margin: 0 0 6px;
 }
 
 .plateContent :global(pre) {
@@ -304,10 +325,15 @@
 }
 
 .plateContent :global(blockquote) {
-  border-left: 3px solid var(--panel-border);
-  padding-left: 1em;
-  margin-left: 0;
-  color: var(--cmp-fg-dimmed);
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--accent-fg);
+  background: var(--panel-bg);
+  color: var(--base-fg-dim);
 }
 
 .plateContent :global(a) {
@@ -325,12 +351,53 @@
   margin: 1.5em 0;
 }
 
+/* ── block action buttons ─────────────────────────────────────────────────── */
+
+.blockActions {
+  position: absolute;
+  right: -90px;
+  top: 0;
+  display: flex;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity 80ms;
+}
+
+.draggableBlock:hover .blockActions {
+  opacity: 1;
+}
+
+.blockActionBtn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--cmp-fg-disabled);
+  transition: background 60ms, color 60ms;
+}
+
+.blockActionBtn:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg-dim);
+}
+
+.blockActionBtn:disabled {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.blockActionBtnDelete:hover {
+  color: var(--error-fg);
+}
+
 /* Slate placeholder */
 .plateContent :global([data-slate-placeholder]) {
   color: var(--cmp-fg-disabled);
   font-style: italic;
   pointer-events: none;
   position: absolute;
-  top: 24px;
-  left: 52px;
+  top: 28px;
+  left: 40px;
 }
