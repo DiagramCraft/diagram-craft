@@ -12,12 +12,13 @@ overrides:
   postcss: '>=8.5.10'
   esbuild: ^0.25.0
   form-data: '>=4.0.6'
-  axios: 1.15.2
+  axios: 1.16.0
   ip-address: 10.1.1
   brace-expansion: 5.0.6
   follow-redirects: '>=1.16.0'
   js-yaml: '>=4.2.0'
   tar: '>=7.5.16'
+  undici: 7.28.0
   '@xmldom/xmldom': 0.8.13
   '@tootallnate/once': '>=3.0.1'
   defu: '>=6.1.6'
@@ -2610,8 +2611,8 @@ packages:
   aws4@1.13.2:
     resolution: {integrity: sha512-lHe62zvbTB5eEABUVi/AwVh0ZKY9rMMDhmm+eeyuuUQbQ3+J+fONVQOZyj+DdrvD4BY33uYniyRJ4UJIaSKAfw==}
 
-  axios@1.15.2:
-    resolution: {integrity: sha512-wLrXxPtcrPTsNlJmKjkPnNPK2Ihe0hn0wGSaTEiHRPxwjvJwT3hKmXF4dpqxmPO9SoNb2FsYXj/xEo0gHN+D5A==}
+  axios@1.16.0:
+    resolution: {integrity: sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==}
 
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
@@ -5145,8 +5146,8 @@ packages:
   undici-types@7.26.0:
     resolution: {integrity: sha512-OY7qWYg4TsPpqg/kL2FfNnGA8cmAhPpLt45XQ2jd8p9UobYQ7Q09LeiCq5QwZhlKNLBj0iTUlBNhs4M2AVFmxA==}
 
-  undici@7.26.0:
-    resolution: {integrity: sha512-3O9Tf67pGhgOv9jM35AbhkXAKi13f3oy3aE4CSgr+TckGeY+/iu97ZXN+J7DpHPzLbVApFd1IFhcnBjREYXYcg==}
+  undici@7.28.0:
+    resolution: {integrity: sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA==}
     engines: {node: '>=20.18.1'}
 
   unique-filename@4.0.0:
@@ -5662,7 +5663,7 @@ snapshots:
 
   '@codspeed/core@5.5.0':
     dependencies:
-      axios: 1.15.2
+      axios: 1.16.0
       find-up: 6.3.0
       form-data: 4.0.6
       node-gyp-build: 4.8.4
@@ -5745,7 +5746,7 @@ snapshots:
       semver: 7.8.1
       sumchecker: 3.0.1
     optionalDependencies:
-      undici: 7.26.0
+      undici: 7.28.0
     transitivePeerDependencies:
       - supports-color
 
@@ -7190,7 +7191,7 @@ snapshots:
 
   aws4@1.13.2: {}
 
-  axios@1.15.2:
+  axios@1.16.0:
     dependencies:
       follow-redirects: 1.16.0
       form-data: 4.0.6
@@ -8477,7 +8478,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.1
-      undici: 7.26.0
+      undici: 7.28.0
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -9990,7 +9991,7 @@ snapshots:
 
   undici-types@7.26.0: {}
 
-  undici@7.26.0: {}
+  undici@7.28.0: {}
 
   unique-filename@4.0.0:
     dependencies:
@@ -10145,7 +10146,7 @@ snapshots:
 
   wait-on@9.0.10:
     dependencies:
-      axios: 1.15.2
+      axios: 1.16.0
       joi: 18.2.1
       lodash: 4.18.1
       minimist: 1.2.8
