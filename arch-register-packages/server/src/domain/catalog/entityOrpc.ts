@@ -636,7 +636,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           const snapshot = existing.find(s => s.id === input.params.snapshotId);
           orpcAssert.present(snapshot, {
             code: 'NOT_FOUND',
-            message: 'Snapshot not found'
+            message: 'Snapshot is not found'
           });
           orpcAssert.true(snapshot.status === 'future_update', {
             code: 'BAD_REQUEST',
