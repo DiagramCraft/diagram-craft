@@ -1,0 +1,154 @@
+.editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.plateContent {
+  flex: 1;
+  width: 100%;
+  padding: 24px;
+  outline: none;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--base-fg-dim);
+  background: var(--base-bg);
+  box-sizing: border-box;
+  cursor: text;
+}
+
+/* Typography — mirrors .article rules in MarkdownEditorScreen.module.css */
+
+.plateContent :global(h1) {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--base-fg);
+  letter-spacing: -0.3px;
+  margin: 0 0 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.plateContent :global(h2) {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--base-fg);
+  letter-spacing: -0.2px;
+  margin: 28px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.plateContent :global(h2:first-child) {
+  margin-top: 0;
+}
+
+.plateContent :global(h3) {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--base-fg);
+  margin: 20px 0 6px;
+}
+
+.plateContent :global(p) {
+  margin: 0 0 13px;
+  text-wrap: pretty;
+}
+
+.plateContent :global(ul),
+.plateContent :global(ol) {
+  margin: 0 0 13px;
+  padding-left: 22px;
+}
+
+.plateContent :global(ul) {
+  list-style: none;
+  padding-left: 4px;
+}
+
+.plateContent :global(ul li) {
+  position: relative;
+  padding-left: 18px;
+  margin: 0 0 5px;
+}
+
+.plateContent :global(ul li::before) {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-fg);
+  opacity: 0.7;
+}
+
+.plateContent :global(ol li) {
+  margin: 0 0 5px;
+}
+
+.plateContent :global(pre) {
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 13px 16px;
+  margin: 0 0 14px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--base-fg-dim);
+}
+
+.plateContent :global(pre code) {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  border: none;
+}
+
+.plateContent :global(code) {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--base-fg);
+}
+
+.plateContent :global(blockquote) {
+  border-left: 3px solid var(--panel-border);
+  padding-left: 1em;
+  margin-left: 0;
+  color: var(--cmp-fg-dimmed);
+}
+
+.plateContent :global(a) {
+  color: var(--accent-fg);
+  text-decoration: none;
+}
+
+.plateContent :global(a:hover) {
+  text-decoration: underline;
+}
+
+.plateContent :global(hr) {
+  border: none;
+  border-top: 1px solid var(--panel-border);
+  margin: 1.5em 0;
+}
+
+/* Slate placeholder */
+.plateContent :global([data-slate-placeholder]) {
+  color: var(--cmp-fg-disabled);
+  font-style: italic;
+  pointer-events: none;
+  position: absolute;
+  top: 24px;
+  left: 24px;
+}

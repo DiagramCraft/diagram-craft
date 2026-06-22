@@ -40,6 +40,7 @@ import type {
   ProjectFile
 } from '@arch-register/api-types/projectContract';
 import styles from './MarkdownEditorScreen.module.css';
+import { PlateMarkdownEditor } from './PlateMarkdownEditor';
 import { extractFirstHeadingTitle, renderMarkdownWithoutFirstHeading } from './markdownTitle';
 import { diffMarkdown } from './markdownDiff';
 import type { DiffRow } from './markdownDiff';
@@ -51,7 +52,7 @@ import {
 } from '../../routes/publicObjectRoutes';
 
 type EditorMode = 'view' | 'edit';
-type PaneMode = 'edit' | 'preview';
+type PaneMode = 'edit' | 'raw' | 'preview';
 type ViewPanel = 'preview' | 'history';
 
 const findFileById = (tree: FileTree | undefined, nodeId: string): ProjectFile | undefined => {
@@ -229,7 +230,8 @@ export const MarkdownEditorScreen = () => {
   const { workspaceSlug, nodeId, projectId, entityId } = params;
   const navigate = useNavigate();
   const { workspace } = useWorkspaceContext();
-  const requestedMode = search.mode === 'edit' ? 'edit' : 'preview';
+  const requestedMode =
+    search.mode === 'edit' ? 'edit' : search.mode === 'raw' ? 'raw' : 'preview';
   const requestedPanel = search.panel === 'history' ? 'history' : 'preview';
   const historyMode = search.historyMode === 'compare' ? 'compare' : 'preview';
   const compareMode = search.compareMode ?? 'to-current';
@@ -351,7 +353,7 @@ export const MarkdownEditorScreen = () => {
   }, [nodeId]);
 
   useEffect(() => {
-    setEditorMode(requestedMode === 'edit' ? 'edit' : 'view');
+    setEditorMode(requestedMode === 'preview' ? 'view' : 'edit');
     setPaneMode(requestedMode);
     setViewPanel(requestedPanel);
   }, [requestedMode, requestedPanel]);
@@ -552,7 +554,8 @@ export const MarkdownEditorScreen = () => {
     );
   }
 
-  const showEditor = editorMode === 'edit' && paneMode === 'edit';
+  const showPlateEditor = editorMode === 'edit' && paneMode === 'edit';
+  const showRawEditor = editorMode === 'edit' && paneMode === 'raw';
 
   const homeItem = {
     label: 'Home',
@@ -594,7 +597,7 @@ export const MarkdownEditorScreen = () => {
     </div>
   );
 
-  const titleDescription = showEditor
+  const titleDescription = showPlateEditor || showRawEditor
     ? 'Editing now'
     : viewPanel === 'history'
       ? `Version history${revisions.length > 0 ? ` · ${revisions.length} saved` : ''}`
@@ -649,6 +652,13 @@ export const MarkdownEditorScreen = () => {
             </button>
             <button
               type="button"
+              className={`${styles.paneToggleBtn} ${paneMode === 'raw' ? styles.paneToggleBtnActive : ''}`}
+              onClick={() => setPaneMode('raw')}
+            >
+              Raw
+            </button>
+            <button
+              type="button"
               className={`${styles.paneToggleBtn} ${paneMode === 'preview' ? styles.paneToggleBtnActive : ''}`}
               onClick={() => setPaneMode('preview')}
             >
@@ -684,7 +694,9 @@ export const MarkdownEditorScreen = () => {
         </div>
       )}
 
-      {showEditor ? (
+      {showPlateEditor ? (
+        <PlateMarkdownEditor value={body} onChange={handleChange} />
+      ) : showRawEditor ? (
         <div className={styles.editPane}>
           <textarea
             className={styles.textarea}
