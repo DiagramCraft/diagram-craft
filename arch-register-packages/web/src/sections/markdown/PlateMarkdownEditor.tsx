@@ -150,6 +150,25 @@ const CONVERT_OPTIONS = [
 
 type ConvertType = (typeof CONVERT_OPTIONS)[number]['type'];
 
+const getNodeText = (node: Record<string, unknown>): string => {
+  const text = node['text'];
+  if (typeof text === 'string') return text;
+
+  const children = Array.isArray(node['children'])
+    ? (node['children'] as Record<string, unknown>[])
+    : [];
+
+  const type = node['type'];
+  const separator = type === 'code_block' || type === 'code_line' ? '\n' : '';
+
+  return children.map(getNodeText).join(separator).replace(/\n+$/u, '');
+};
+
+const createConvertedBlock = (type: Exclude<ConvertType, 'list-disc' | 'list-decimal'>, text: string) => ({
+  type,
+  children: [{ text }]
+});
+
 const BlockContextMenu = ({
   element,
   position,
@@ -188,9 +207,10 @@ const BlockContextMenu = ({
     const idx = currentIdx();
     if (idx === null) { onClose(); return; }
 
+    const node = editor.children[idx] as TElement | undefined;
+    const text = node ? getNodeText(node as Record<string, unknown>) : '';
+
     if (toType === 'list-disc' || toType === 'list-decimal') {
-      const node = editor.children[idx] as TElement | undefined;
-      const text = node?.children?.map((c: Record<string, unknown>) => c['text'] ?? '').join('') ?? '';
       editor.tf.removeNodes({ at: [idx] });
       editor.tf.insertNodes(
         {
@@ -200,6 +220,9 @@ const BlockContextMenu = ({
         },
         { at: [idx] }
       );
+    } else if (blockType === 'code_block') {
+      editor.tf.removeNodes({ at: [idx] });
+      editor.tf.insertNodes(createConvertedBlock(toType, text), { at: [idx] });
     } else {
       editor.tf.setNodes({ type: toType }, { at: [idx] });
     }
@@ -553,17 +576,33 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
     return () => contentEditable.removeEventListener('keydown', handleKeyDown);
   }, [removeSlashInput, executeCommand]);
 
-  // Dropdown position (computed each render to stay in sync with scrolling)
   const [dropdownPos, setDropdownPos] = useState<{
     top: number;
     left: number;
   } | null>(null);
 
+  const updateDropdownPos = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const nextPos = { top: rect.bottom + 4, left: rect.left };
+    setDropdownPos(prev =>
+      prev?.top === nextPos.top && prev?.left === nextPos.left ? prev : nextPos
+    );
+  }, []);
+
   useEffect(() => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    setDropdownPos({ top: rect.bottom + 4, left: rect.left });
-  });
+    updateDropdownPos();
+
+    window.addEventListener('resize', updateDropdownPos);
+    window.addEventListener('scroll', updateDropdownPos, true);
+
+    return () => {
+      window.removeEventListener('resize', updateDropdownPos);
+      window.removeEventListener('scroll', updateDropdownPos, true);
+    };
+  }, [updateDropdownPos]);
 
   return (
     <PlateElement element={element} as="span" {...props}>
