@@ -1,34 +1,22 @@
 .icCommentsToolWindow {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 6px;
 
   .eNoComments {
     text-align: center;
-    color: var(--base-fg-dim);
+    color: var(--base-fg-more-dim);
     padding: 0.25rem 0;
   }
 
   .eGroup {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 6px;
 
     .eTitle {
       font-weight: bold;
       color: var(--base-fg-dim);
-    }
-
-    .eThread {
-      margin-bottom: 16px;
-
-      .eNestedReply {
-        margin-top: 8px;
-      }
-
-      &:last-of-type {
-        margin-bottom: 0;
-      }
     }
   }
 }
