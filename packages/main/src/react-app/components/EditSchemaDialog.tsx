@@ -212,7 +212,7 @@ export const EditSchemaDialog = (props: Props) => {
     const resultSchema: DataSchema = {
       id: props.schema?.id ?? newid(),
       name: name.trim(),
-      description: description.trim() || undefined,
+      description: description.trim() ?? undefined,
       providerId: props.schema?.providerId ?? 'document',
       fields: fields
     };
@@ -249,7 +249,9 @@ export const EditSchemaDialog = (props: Props) => {
         {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
+      <div
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}
+      >
         <label>{$t('dialog.schema.description', 'Description')}:</label>
         <TextArea
           id="schema-description"
