@@ -7,7 +7,7 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { setBoundsAndTransformChildren } from './tableUtils';
+import { getTableColumnsSorted, setBoundsAndTransformChildren } from './tableUtils';
 
 export class TableRowNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -20,6 +20,10 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
       [NodeFlags.ChildrenManagedByParent]: true,
       [NodeFlags.AnchorsVisibleOnHover]: false
     });
+  }
+
+  getSortedChildren(node: DiagramNode) {
+    return getTableColumnsSorted(node);
   }
 
   layoutChildren(_node: DiagramNode, _uow: UnitOfWork) {

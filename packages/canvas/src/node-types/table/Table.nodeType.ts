@@ -26,6 +26,7 @@ import {
   assertTableCell,
   assertTableRow,
   getTableDividerBands,
+  getTableRowsSorted,
   setBoundsAndTransformChildren,
   TableHelper
 } from './tableUtils';
@@ -102,6 +103,10 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
       [NodeFlags.ChildrenSelectParent]: true,
       [NodeFlags.ChildrenCanConvertToContainer]: false
     });
+  }
+
+  getSortedChildren(node: DiagramNode) {
+    return getTableRowsSorted(node);
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
