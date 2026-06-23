@@ -1,0 +1,82 @@
+.card {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+  font-size: 13px;
+  min-width: 260px;
+  max-width: 480px;
+  box-sizing: border-box;
+  margin: 4px 0;
+}
+
+.card.error {
+  border-color: color-mix(in oklch, var(--error-fg) 30%, transparent);
+  background: color-mix(in oklch, var(--error-fg) 6%, transparent);
+}
+
+.loading {
+  color: var(--cmp-fg-disabled);
+  font-style: italic;
+  padding: 2px 0;
+}
+
+.errorText {
+  color: var(--error-fg);
+  font-size: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.name {
+  font-weight: 600;
+  color: var(--base-fg);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.schema {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.owner {
+  font-size: 12px;
+  color: var(--base-fg-dim);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--accent-fg);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

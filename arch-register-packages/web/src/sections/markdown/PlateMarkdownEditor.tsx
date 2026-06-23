@@ -15,8 +15,8 @@ import {
   type PlateElementProps,
   type PlateLeafProps
 } from 'platejs/react';
-import { NodeIdPlugin } from 'platejs';
-import { MarkdownPlugin, deserializeMd, serializeMd } from '@platejs/markdown';
+import { NodeIdPlugin, getPluginType } from 'platejs';
+import { MarkdownPlugin, deserializeMd, serializeMd, parseAttributes, propsToAttributes, remarkMdx } from '@platejs/markdown';
 import { DndPlugin, useDraggable, useDropLine, DndScroller } from '@platejs/dnd';
 import { ListPlugin } from '@platejs/list/react';
 import { toggleList } from '@platejs/list';
@@ -33,11 +33,15 @@ import {
   TbChevronDown,
   TbChevronUp,
   TbGripVertical,
-  TbTrash
+  TbTrash,
+  TbAddressBook
 } from 'react-icons/tb';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useEntities } from '../../hooks/useEntities';
+import { EntityCardBlock } from './EntityCardBlock';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Drag handle & drop indicator ──────────────────────────────────────────
@@ -341,6 +345,101 @@ const HrElement = ({ children, ...props }: PlateElementProps) => (
   </Draggable>
 );
 
+// ─── Entity card components ─────────────────────────────────────────────────
+
+interface EntityCardSlateElement extends TElement {
+  entityId: string;
+}
+
+const EntityPicker = ({ element }: { element: TElement }) => {
+  const editor = useEditorRef();
+  const { workspaceSlug } = useWorkspaceContext();
+  const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { data: entities = [] } = useEntities(workspaceSlug, {
+    q: query || undefined,
+    view: 'summary',
+    limit: 8,
+  });
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const selectEntity = (publicId: string) => {
+    const path = editor.api.findPath(element);
+    if (path) {
+      editor.tf.setNodes({ entityId: publicId }, { at: path });
+    }
+  };
+
+  const dismiss = () => {
+    const path = editor.api.findPath(element);
+    if (path) {
+      editor.tf.removeNodes({ at: path });
+    }
+    editor.tf.focus();
+  };
+
+  return (
+    <div className={styles.entityPicker} onMouseDown={e => e.stopPropagation()}>
+      <input
+        ref={inputRef}
+        type="text"
+        className={styles.entityPickerInput}
+        placeholder="Search for an entity…"
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            dismiss();
+          }
+        }}
+      />
+      {entities.length > 0 ? (
+        <div className={styles.entityPickerResults}>
+          {entities.map(entity => (
+            <button
+              key={entity._publicId}
+              type="button"
+              className={styles.entityPickerItem}
+              onMouseDown={e => {
+                e.preventDefault();
+                selectEntity(entity._publicId);
+              }}
+            >
+              <span className={styles.entityPickerName}>{entity._name}</span>
+              <span className={styles.entityPickerSchema}>{entity._schema?.name}</span>
+            </button>
+          ))}
+        </div>
+      ) : query ? (
+        <div className={styles.entityPickerHint}>No entities found</div>
+      ) : (
+        <div className={styles.entityPickerHint}>Type to search…</div>
+      )}
+    </div>
+  );
+};
+
+const EntityCardPlateElement = ({ element, children, ...props }: PlateElementProps) => {
+  const entityId = (element as EntityCardSlateElement).entityId ?? '';
+  return (
+    <Draggable element={element} {...props}>
+      <div contentEditable={false}>
+        {entityId ? (
+          <EntityCardBlock id={entityId} />
+        ) : (
+          <EntityPicker element={element} />
+        )}
+      </div>
+      {children}
+    </Draggable>
+  );
+};
+
 // ─── Leaf (mark) components ────────────────────────────────────────────────
 
 const BoldLeaf = (props: PlateLeafProps) => <PlateLeaf as="strong" {...props} />;
@@ -464,6 +563,20 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     keywords: ['quote', 'callout'],
     onSelect: editor =>
       insertOrReplaceBlock(editor, { type: 'blockquote', children: [{ text: '' }] })
+  },
+  {
+    key: 'entity-card',
+    label: 'Entity Card',
+    description: 'Embed entity metadata inline',
+    icon: <TbAddressBook className={styles.slashIcon} size={14} />,
+    keywords: ['entity', 'card', 'catalog', 'service'],
+    onSelect: (editor) => {
+      insertOrReplaceBlock(editor, {
+        type: 'EntityCard',
+        entityId: '',
+        children: [{ text: '' }],
+      });
+    },
   },
   {
     key: 'hr',
@@ -787,9 +900,27 @@ const HeadingBreakPlugin = createPlatePlugin({
   }
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mdxRules: Record<string, any> = {
+  EntityCard: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    deserialize: (mdastNode: any, _deco: unknown, options: any) => ({
+      children: [{ text: '' }],
+      type: getPluginType(options.editor, 'EntityCard'),
+      entityId: (parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>)['id'] ?? '',
+    }),
+    serialize: (slateNode: any) => ({
+      attributes: propsToAttributes({ id: slateNode.entityId ?? '' }),
+      children: [],
+      name: 'EntityCard',
+      type: 'mdxJsxFlowElement',
+    }),
+  },
+};
+
 const editorPlugins = [
   NodeIdPlugin,
-  MarkdownPlugin,
+  MarkdownPlugin.configure({ options: { rules: mdxRules, remarkPlugins: [remarkMdx] } }),
   DndPlugin,
   SlashPlugin,
   SlashInputPlugin.withComponent(SlashInputElement),
@@ -825,6 +956,10 @@ const editorPlugins = [
     key: 'hr',
     node: { isElement: true, isVoid: true }
   }).withComponent(HrElement),
+  createPlatePlugin({
+    key: 'EntityCard',
+    node: { isElement: true, isVoid: true }
+  }).withComponent(EntityCardPlateElement),
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
   createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(
     ItalicLeaf
