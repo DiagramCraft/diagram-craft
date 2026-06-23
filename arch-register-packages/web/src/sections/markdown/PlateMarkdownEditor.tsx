@@ -748,14 +748,16 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [searchText, setSearchText] = useState('');
 
-  const filteredCommands = SLASH_COMMANDS.filter(cmd => {
-    if (!searchText) return true;
-    const q = searchText.toLowerCase();
-    return (
-      cmd.label.toLowerCase().includes(q) ||
-      (cmd.keywords?.some(k => k.includes(q)) ?? false)
-    );
-  });
+  const filteredCommands = useMemo(() => 
+    SLASH_COMMANDS.filter(cmd => {
+      if (!searchText) return true;
+      const q = searchText.toLowerCase();
+      return (
+        cmd.label.toLowerCase().includes(q) ||
+        (cmd.keywords?.some(k => k.includes(q)) ?? false)
+      );
+    }), [searchText]
+  );
 
   useEffect(() => {
     const item = dropdownRef.current?.children[selectedIndex] as HTMLElement | undefined;

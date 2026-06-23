@@ -7,6 +7,20 @@ const engine = new MarkdownEngine();
 //   <EntityCard id="payment-service" />
 const JSX_LINE_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>\s*$/;
 
+// Validation patterns for prop names and values
+const SAFE_PROP_NAME = /^[a-zA-Z0-9_-]+$/;
+const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,\s]*$/;
+
+const validateProps = (props: Record<string, string>): Record<string, string> => {
+  const validated: Record<string, string> = {};
+  for (const [key, value] of Object.entries(props)) {
+    if (SAFE_PROP_NAME.test(key) && SAFE_PROP_VALUE.test(value)) {
+      validated[key] = value;
+    }
+  }
+  return validated;
+};
+
 // Minimal JSX attribute parser: extracts prop="value" pairs from a props string
 const parseJsxProps = (rawProps: string): Record<string, string> => {
   const result: Record<string, string> = {};
@@ -88,9 +102,8 @@ export const MdxPreview = ({ body, withoutFirstHeading = false }: MdxPreviewProp
         if (seg.type === 'jsx') {
           const Component = MDX_COMPONENTS[seg.componentName];
           if (!Component) return null;
-          // The MDX_COMPONENTS registry uses `entityId` as prop name; pass all parsed props
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return <Component key={i} {...(seg.props as any)} />;
+          // Validate props before spreading to prevent injection attacks
+          return <Component key={i} {...validateProps(seg.props)} />;
         }
 
         const isFirstMd = !firstMdSeen;

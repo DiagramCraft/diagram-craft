@@ -26,7 +26,9 @@ const renderSchemaFieldValue = (
   if (value == null || value === '') return null;
   if (field.type === 'boolean') return value ? 'Yes' : 'No';
   if (field.type === 'select') {
-    const opt = (field as ApiSelectField).options.find(o => o.value === String(value));
+    const selectField = field as ApiSelectField;
+    if (!selectField.options) return String(value);
+    const opt = selectField.options.find(o => o.value === String(value));
     return opt?.label ?? String(value);
   }
   if (field.type === 'date') {
