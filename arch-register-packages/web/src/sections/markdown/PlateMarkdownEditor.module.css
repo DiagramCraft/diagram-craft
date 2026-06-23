@@ -21,89 +21,6 @@
   cursor: text;
 }
 
-/* ── Drag & drop ─────────────────────────────────────────────────────────── */
-
-.draggableBlock {
-  position: relative;
-}
-
-.draggableBlock {
-  &::before {
-    content: '';
-    position: absolute;
-    background: var(--panel-bg);
-    border-radius: var(--r-sm);
-
-    left: -35px;
-    right: -95px;
-    top: -5px;
-    bottom: -5px;
-    visibility: hidden;
-  }
-}
-
-.draggableBlock:hover {
-
-  &::before {
-    visibility: visible;
-  }
-}
-
-.draggableBlock:hover .dragHandle {
-  opacity: 1;
-}
-
-.dragHandle {
-  position: absolute;
-  left: -28px;
-  top: 0;
-  width: 20px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  cursor: grab;
-  color: var(--cmp-fg-disabled);
-  border-radius: var(--r-sm);
-  transition: opacity 0.1s, color 0.1s;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.dragHandle:hover {
-  color: var(--base-fg-dim);
-  background: var(--cmp-bg);
-}
-
-.dragHandle:active {
-  cursor: grabbing;
-}
-
-.dragging {
-  opacity: 0.4;
-}
-
-.dropLine {
-  position: relative;
-  height: 2px;
-  background: var(--accent-fg);
-  border-radius: 1px;
-  margin: 0;
-  pointer-events: none;
-}
-
-.dropLine::before {
-  content: '';
-  position: absolute;
-  left: -4px;
-  top: -3px;
-  width: 8px;
-  height: 8px;
-  background: var(--accent-fg);
-  border-radius: 50%;
-}
-
 /* ── Slash command ────────────────────────────────────────────────────────── */
 
 .slashTrigger {
@@ -354,47 +271,6 @@
   border: none;
   border-top: 1px solid var(--panel-border);
   margin: 1.5em 0;
-}
-
-/* ── block action buttons ─────────────────────────────────────────────────── */
-
-.blockActions {
-  position: absolute;
-  right: -90px;
-  top: 0;
-  display: flex;
-  gap: 1px;
-  opacity: 0;
-  transition: opacity 80ms;
-}
-
-.draggableBlock:hover .blockActions {
-  opacity: 1;
-}
-
-.blockActionBtn {
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r);
-  color: var(--cmp-fg-disabled);
-  transition: background 60ms, color 60ms;
-}
-
-.blockActionBtn:hover {
-  background: var(--cmp-bg);
-  color: var(--base-fg-dim);
-}
-
-.blockActionBtn:disabled {
-  opacity: 0.25;
-  pointer-events: none;
-}
-
-.blockActionBtnDelete:hover {
-  color: var(--error-fg);
 }
 
 /* Slate placeholder */

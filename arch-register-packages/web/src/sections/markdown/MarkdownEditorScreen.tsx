@@ -42,6 +42,7 @@ import type {
 import styles from './MarkdownEditorScreen.module.css';
 import { PlateMarkdownEditor } from './PlateMarkdownEditor';
 import { extractFirstHeadingTitle, renderMarkdownWithoutFirstHeading } from './markdownTitle';
+import { MdxPreview } from './MdxPreview';
 import { diffMarkdown } from './markdownDiff';
 import type { DiffRow } from './markdownDiff';
 import {
@@ -295,7 +296,6 @@ export const MarkdownEditorScreen = () => {
   const documentTitle = file?.name ?? 'Markdown document';
   const headingTitle = useMemo(() => extractFirstHeadingTitle(body), [body]);
   const resolvedTitle = headingTitle ?? documentTitle;
-  const previewHtml = useMemo(() => renderMarkdownWithoutFirstHeading(body), [body]);
   const toc = useMemo(() => extractToc(body), [body]);
   const readTime = useMemo(() => calcReadTime(body), [body]);
   const updatedLabel = file?.updated_at ? relativeDate(file.updated_at) : null;
@@ -709,8 +709,8 @@ export const MarkdownEditorScreen = () => {
       ) : editorMode === 'edit' ? (
         <div className={styles.bodyGrid}>
           <article className={styles.article}>
-            {previewHtml.trim() ? (
-              <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+            {body.trim() ? (
+              <MdxPreview body={body} withoutFirstHeading />
             ) : (
               <div className={styles.previewEmpty}>Nothing to preview yet.</div>
             )}
@@ -862,9 +862,9 @@ export const MarkdownEditorScreen = () => {
       ) : (
         <div className={styles.bodyGrid}>
           <article className={styles.article}>
-            {previewHtml.trim() ? (
+            {body.trim() ? (
               <>
-                <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                <MdxPreview body={body} withoutFirstHeading />
                 <div className={styles.articleFooter}>
                   {updatedLabel && <>Last edited {updatedLabel} · </>}
                   {readTime} min read
