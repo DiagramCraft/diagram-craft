@@ -12,9 +12,9 @@
 #left-sidebar,
 .icObjectPicker {
   /* Component-local theme variables - default to light theme */
-  --_canvas-fg: var(--theme-light-sidebar-canvas-fg, var(--gray-11));
-  --_canvas-bg: var(--theme-light-sidebar-canvas-bg, var(--gray-4));
-  --_canvas-bg2: var(--theme-light-sidebar-canvas-bg2, var(--gray-3));
+  --_canvas-fg: var(--gray-11);
+  --_canvas-bg: var(--gray-4);
+  --_canvas-bg2: var(--gray-3);
 
   /* Override global canvas variables with local ones */
   --canvas-fg: var(--_canvas-fg);
@@ -28,26 +28,16 @@
 
 .dark-theme #left-sidebar,
 .dark-theme .icObjectPicker {
-  --_canvas-fg: var(--theme-dark-sidebar-canvas-fg, var(--gray-11));
-  --_canvas-bg: var(--theme-dark-sidebar-canvas-bg, var(--gray-2));
-  --_canvas-bg2: var(--theme-dark-sidebar-canvas-bg2, var(--gray-3));
-  
-  /* Override global canvas variables */
-  --canvas-fg: var(--_canvas-fg);
-  --canvas-bg: var(--_canvas-bg);
-  --canvas-bg2: var(--_canvas-bg2);
+  --_canvas-fg: var(--gray-11);
+  --_canvas-bg: var(--gray-2);
+  --_canvas-bg2: var(--gray-3);
 }
 
 .light-theme #left-sidebar,
 .light-theme .icObjectPicker {
-  --_canvas-fg: var(--theme-light-sidebar-canvas-fg, var(--gray-11));
-  --_canvas-bg: var(--theme-light-sidebar-canvas-bg, var(--gray-4));
-  --_canvas-bg2: var(--theme-light-sidebar-canvas-bg2, var(--gray-3));
-  
-  /* Override global canvas variables */
-  --canvas-fg: var(--_canvas-fg);
-  --canvas-bg: var(--_canvas-bg);
-  --canvas-bg2: var(--_canvas-bg2);
+  --_canvas-fg: var(--gray-11);
+  --_canvas-bg: var(--gray-4);
+  --_canvas-bg2: var(--gray-3);
 }
 
 /* region Base HTML element styling ************************************************************ */
