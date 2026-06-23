@@ -13,18 +13,12 @@ import {
   TbDownload,
   TbUpload,
   TbPlus,
-  TbList,
-  TbLayoutGrid,
-  TbBinaryTree2,
   TbChevronDown,
   TbChevronRight,
   TbDots,
   TbUsers,
   TbCopy,
   TbTrash,
-  TbChartRadar,
-  TbCalendarWeek,
-  TbTable,
   TbCheck,
   TbX,
   TbFilter
@@ -32,6 +26,7 @@ import {
 import { RadarView, type RadarConfig } from './components/RadarView';
 import { TimelineView, type TimelineConfig } from './components/TimelineView';
 import { MatrixView, type MatrixConfig } from './components/MatrixView';
+import { HierarchyView, type HierarchyConfig } from './components/HierarchyView';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../../lib/api';
 import type { TreeNode, TreeEdge, WorkspaceTeam } from '../../lib/api';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
@@ -60,7 +55,7 @@ import { EntityRecord } from '@arch-register/api-types/entityContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 
-type BrowserView = 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix';
+type BrowserView = 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix' | 'hierarchy';
 type DateFilterOperator = 'on' | 'before' | 'after' | 'empty';
 
 const parseDateValue = (value: unknown) => {
@@ -271,11 +266,13 @@ const toSavedViewConfig = (
   view: BrowserView,
   radarConfig: RadarConfig | null,
   timelineConfig: TimelineConfig | null,
-  matrixConfig: MatrixConfig | null
+  matrixConfig: MatrixConfig | null,
+  hierarchyConfig: HierarchyConfig | null
 ) => {
   if (view === 'radar' && radarConfig) return { radar: radarConfig };
   if (view === 'timeline' && timelineConfig) return { timeline: timelineConfig };
   if (view === 'matrix' && matrixConfig) return { matrix: matrixConfig };
+  if (view === 'hierarchy' && hierarchyConfig) return { hierarchy: hierarchyConfig };
   return null;
 };
 
@@ -301,6 +298,7 @@ export const EntityBrowserScreen = () => {
     radarConfig?: string;
     timelineConfig?: string;
     matrixConfig?: string;
+    hierarchyConfig?: string;
     sidebarTab?: 'filters' | 'views';
     filters?: string;
   };
@@ -373,6 +371,16 @@ export const EntityBrowserScreen = () => {
     }
     return null;
   });
+  const [hierarchyConfig, setHierarchyConfig] = useState<HierarchyConfig | null>(() => {
+    if (search.hierarchyConfig) {
+      try {
+        return JSON.parse(search.hierarchyConfig);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -416,7 +424,14 @@ export const EntityBrowserScreen = () => {
         // ignore
       }
     }
-  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.matrixConfig, search.q, search.filters]);
+    if (search.hierarchyConfig) {
+      try {
+        setHierarchyConfig(JSON.parse(search.hierarchyConfig));
+      } catch {
+        // ignore
+      }
+    }
+  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.matrixConfig, search.hierarchyConfig, search.q, search.filters]);
 
   // Use TanStack Query hooks for data fetching
   const { data: entities = [] } = useEntities(workspaceId, {
@@ -479,6 +494,7 @@ export const EntityBrowserScreen = () => {
       radarConfig?: string;
       timelineConfig?: string;
       matrixConfig?: string;
+      hierarchyConfig?: string;
       sidebarTab?: 'filters' | 'views';
       filters?: FilterCondition[];
     }) => {
@@ -497,6 +513,9 @@ export const EntityBrowserScreen = () => {
             params.timelineConfig ?? (timelineConfig ? JSON.stringify(timelineConfig) : undefined),
           matrixConfig:
             params.matrixConfig ?? (matrixConfig ? JSON.stringify(matrixConfig) : undefined),
+          hierarchyConfig:
+            params.hierarchyConfig ??
+            (hierarchyConfig ? JSON.stringify(hierarchyConfig) : undefined),
           sidebarTab: params.sidebarTab ?? search.sidebarTab,
           filters: nextFilters.length > 0 ? JSON.stringify(nextFilters) : undefined
         }
@@ -511,6 +530,7 @@ export const EntityBrowserScreen = () => {
       radarConfig,
       timelineConfig,
       matrixConfig,
+      hierarchyConfig,
       search.sidebarTab,
       conditions
     ]
@@ -735,7 +755,7 @@ export const EntityBrowserScreen = () => {
           sort,
           conditions
         },
-        config: toSavedViewConfig(view, radarConfig, timelineConfig, matrixConfig)
+        config: toSavedViewConfig(view, radarConfig, timelineConfig, matrixConfig, hierarchyConfig)
       });
     } catch {
       // Error handling is done by TanStack Query
@@ -758,7 +778,7 @@ export const EntityBrowserScreen = () => {
             sort,
             conditions
           },
-          config: toSavedViewConfig(view, radarConfig, timelineConfig, matrixConfig)
+          config: toSavedViewConfig(view, radarConfig, timelineConfig, matrixConfig, hierarchyConfig)
         }
       });
     } catch {
@@ -777,7 +797,8 @@ export const EntityBrowserScreen = () => {
     conditions,
     radarConfig,
     timelineConfig,
-    matrixConfig
+    matrixConfig,
+    hierarchyConfig
   ]);
 
   const menuItems = useMemo(() => {
@@ -904,59 +925,31 @@ export const EntityBrowserScreen = () => {
 
         <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
 
-        <div className={styles.segmented}>
-          <button
-            type="button"
-            className={view === 'table' ? styles.segmentedActive : ''}
-            onClick={() => setView('table')}
-            title="Table"
-          >
-            <TbList size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'cards' ? styles.segmentedActive : ''}
-            onClick={() => setView('cards')}
-            title="Cards"
-          >
-            <TbLayoutGrid size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'tree' ? styles.segmentedActive : ''}
-            onClick={() => setView('tree')}
-            title="Tree"
-          >
-            <TbBinaryTree2 size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'radar' ? styles.segmentedActive : ''}
-            onClick={() => setView('radar')}
-            title="Radar"
-          >
-            <TbChartRadar size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'timeline' ? styles.segmentedActive : ''}
-            onClick={() => setView('timeline')}
-            title="Timeline"
-          >
-            <TbCalendarWeek size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'matrix' ? styles.segmentedActive : ''}
-            onClick={() => setView('matrix')}
-            title="Matrix"
-          >
-            <TbTable size={13} />
-          </button>
-        </div>
+        <FilterDropdown
+          label="View"
+          value={view}
+          onChange={v => setView(v as BrowserView)}
+          options={[
+            { value: 'table', label: 'Table' },
+            { value: 'cards', label: 'Cards' },
+            { value: 'tree', label: 'Tree' },
+            { value: 'radar', label: 'Radar' },
+            { value: 'timeline', label: 'Timeline' },
+            { value: 'matrix', label: 'Matrix' },
+            { value: 'hierarchy', label: 'Hierarchy' }
+          ]}
+        />
       </div>
 
-      {view === 'matrix' ? (
+      {view === 'hierarchy' ? (
+        <HierarchyView
+          nodes={treeNodes}
+          edges={treeEdges}
+          onEntityClick={navigateToEntity}
+          config={hierarchyConfig}
+          onConfigChange={setHierarchyConfig}
+        />
+      ) : view === 'matrix' ? (
         <MatrixView
           rows={filtered}
           schemaMap={schemaMap}

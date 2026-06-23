@@ -1,0 +1,297 @@
+/* Outer wrapper */
+.wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+/* ── Config bar ──────────────────────────────────────────────── */
+
+.config {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 42px;
+}
+
+.axisPill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  height: 28px;
+}
+
+.axisKicker {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+}
+
+.cross {
+  font-size: 13px;
+  color: var(--base-fg-more-dim);
+  font-weight: 300;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+
+.selectWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 0 6px 0 8px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 11.5px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+/* ── Empty state ─────────────────────────────────────────────── */
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--base-fg-more-dim);
+  text-align: center;
+  padding: 40px;
+}
+
+.emptyTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.emptySub {
+  font-size: 12px;
+}
+
+/* ── Scroll area ─────────────────────────────────────────────── */
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+
+/* ── Level grids ─────────────────────────────────────────────── */
+
+.level1Grid {
+  display: grid;
+  gap: 12px;
+}
+
+.childGrid {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ── Level boxes ─────────────────────────────────────────────── */
+
+.level1Box {
+  min-width: 0;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 10px;
+}
+
+.level2Box {
+  min-width: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 8px;
+}
+
+.level3Box {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 5px;
+  background: var(--cmp-bg-hover);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 5px 8px;
+  min-height: 28px;
+}
+
+/* ── Level headers ───────────────────────────────────────────── */
+
+.levelHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 5px;
+  min-height: 22px;
+}
+
+.colorDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.entityLink {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--base-fg);
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entityLink:hover {
+  color: var(--accent-fg);
+}
+
+/* ── Entity tooltip ──────────────────────────────────────────── */
+
+.tooltipAnchor {
+  flex: 1 1 60px;
+  min-width: 60px;
+  overflow: hidden;
+}
+
+.tooltipPanel {
+  width: min(260px, calc(100vw - 24px));
+  padding: 12px 14px;
+  background-color: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 28px oklch(0 0 0 / 0.45);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tooltipBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tooltipTitle {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--base-fg);
+}
+
+.tooltipDesc {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--base-fg-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tooltipRows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.tooltipLabel {
+  color: var(--base-fg-more-dim);
+  min-width: 54px;
+  flex-shrink: 0;
+}
+
+.tooltipValue {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--base-fg-dim);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  padding: 1px 7px;
+  font-size: 11px;
+  line-height: 1.6;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tooltipTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tooltipTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+  line-height: 1;
+}
