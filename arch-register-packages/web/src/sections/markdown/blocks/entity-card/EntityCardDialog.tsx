@@ -3,16 +3,18 @@ import { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
-import { useEntities, useEntity } from '../../../../hooks/useEntities';
-import { STANDARD_FIELD_OPTIONS, DEFAULT_FIELDS, STANDARD_FIELD_IDS } from './EntityCardBlock';
+import { useEntity } from '../../../../hooks/useEntities';
+import { STANDARD_FIELD_OPTIONS, DEFAULT_FIELDS, STANDARD_FIELD_IDS } from './EntityCard';
+import { EntityPicker } from '../../../../components/EntityPicker';
+import { DialogContent, DialogSection } from '../../BlockDialog';
 import type { EntityCardSlateElement } from './types';
-import styles from './EntityCardEditor.module.css';
+import styles from './EntityCardDialog.module.css';
 
 export const EntityCardDialog = ({
   element,
   open,
   onClose,
-  isNew,
+  isNew
 }: {
   element: TElement;
   open: boolean;
@@ -25,40 +27,25 @@ export const EntityCardDialog = ({
   const currentEntityId = (element as EntityCardSlateElement).entityId ?? '';
   const currentFields = (element as EntityCardSlateElement).fields ?? '';
 
-  const [query, setQuery] = useState('');
   const [selectedEntityId, setSelectedEntityId] = useState(currentEntityId);
   const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
   const [selectedFields, setSelectedFields] = useState<string[]>(() =>
     currentFields ? currentFields.split(',').filter(Boolean) : DEFAULT_FIELDS
   );
 
-  // Hits React Query cache immediately when the card is already rendered on the page
   const { data: selectedEntity } = useEntity(workspaceSlug, selectedEntityId);
   useEffect(() => {
     if (selectedEntity?._schema?.id) setSelectedSchemaId(selectedEntity._schema.id);
   }, [selectedEntity]);
 
-  const { data: searchResults = [] } = useEntities(workspaceSlug, {
-    q: query || undefined,
-    view: 'summary',
-    limit: 8,
-  });
-
   const currentSchema = schemas.find(s => s.id === selectedSchemaId);
-  const schemaFields = currentSchema?.fields?.filter(
-    f => f.type !== 'containment' && f.type !== 'reference'
-  ) ?? [];
+  const schemaFields =
+    currentSchema?.fields?.filter(f => f.type !== 'containment' && f.type !== 'reference') ?? [];
 
   const toggleField = (fieldId: string) =>
     setSelectedFields(prev =>
       prev.includes(fieldId) ? prev.filter(f => f !== fieldId) : [...prev, fieldId]
     );
-
-  const handleSelectEntity = (entity: { _publicId: string; _schema?: { id: string } | null }) => {
-    setSelectedEntityId(entity._publicId);
-    setSelectedSchemaId(entity._schema?.id ?? null);
-    setQuery('');
-  };
 
   const handleConfirm = () => {
     const path = editor.api.findPath(element);
@@ -90,61 +77,30 @@ export const EntityCardDialog = ({
       width={440}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: handleClose },
-        { label: 'Save', type: 'default', disabled: !selectedEntityId, onClick: handleConfirm },
+        { label: 'Save', type: 'default', disabled: !selectedEntityId, onClick: handleConfirm }
       ]}
     >
-      <div className={styles.entityCardDialogContent}>
-        <div className={styles.entityCardSection}>
-          <div className={styles.entityCardSectionLabel}>Entity</div>
-          {selectedEntityId && selectedEntity && !query && (
-            <div className={styles.entityCardSelectedChip}>
-              <span className={styles.entityPickerName}>{selectedEntity._name}</span>
-              <span className={styles.entityPickerSchema}>{selectedEntity._schema?.name}</span>
-              <button
-                type="button"
-                className={styles.entityCardChipClear}
-                onClick={() => { setSelectedEntityId(''); setSelectedSchemaId(null); }}
-              >
-                ×
-              </button>
-            </div>
-          )}
-          <input
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus
-            type="text"
-            className={styles.entityPickerInput}
-            placeholder={selectedEntityId ? 'Search to change entity…' : 'Search for an entity…'}
-            value={query}
-            onChange={e => setQuery(e.target.value)}
+      <DialogContent>
+        <DialogSection label="Entity">
+          <EntityPicker
+            selectedEntityId={selectedEntityId}
+            selectedEntity={selectedEntity}
+            onSelectEntity={entity => {
+              setSelectedEntityId(entity._publicId);
+              setSelectedSchemaId(entity._schema?.id ?? null);
+            }}
+            onClearEntity={() => {
+              setSelectedEntityId('');
+              setSelectedSchemaId(null);
+            }}
           />
-          {query && (
-            searchResults.length > 0 ? (
-              <div className={styles.entityPickerResults}>
-                {searchResults.map(entity => (
-                  <button
-                    key={entity._publicId}
-                    type="button"
-                    className={`${styles.entityPickerItem} ${entity._publicId === selectedEntityId ? styles.entityPickerItemActive : ''}`}
-                    onClick={() => handleSelectEntity(entity)}
-                  >
-                    <span className={styles.entityPickerName}>{entity._name}</span>
-                    <span className={styles.entityPickerSchema}>{entity._schema?.name}</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className={styles.entityPickerHint}>No entities found</div>
-            )
-          )}
-        </div>
+        </DialogSection>
 
         {selectedEntityId && (
-          <div className={styles.entityCardSection}>
-            <div className={styles.entityCardSectionLabel}>Fields</div>
-            <div className={styles.entityCardFieldGrid}>
+          <DialogSection label="Fields">
+            <div className={styles.fieldGrid}>
               {STANDARD_FIELD_OPTIONS.map(opt => (
-                <label key={opt.id} className={styles.entityCardFieldOption}>
+                <label key={opt.id} className={styles.fieldOption}>
                   <input
                     type="checkbox"
                     checked={selectedFields.includes(opt.id)}
@@ -156,7 +112,7 @@ export const EntityCardDialog = ({
               {schemaFields.map(field => (
                 <label
                   key={field.id}
-                  className={`${styles.entityCardFieldOption} ${STANDARD_FIELD_IDS.has(field.id) ? '' : styles.entityCardFieldOptionSchema}`}
+                  className={`${styles.fieldOption} ${STANDARD_FIELD_IDS.has(field.id) ? '' : styles.fieldOptionSchema}`}
                 >
                   <input
                     type="checkbox"
@@ -167,9 +123,9 @@ export const EntityCardDialog = ({
                 </label>
               ))}
             </div>
-          </div>
+          </DialogSection>
         )}
-      </div>
+      </DialogContent>
     </Dialog>
   );
 };

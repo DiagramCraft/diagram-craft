@@ -1,5 +1,4 @@
 import { useNavigate } from '@tanstack/react-router';
-import { TbPencil } from 'react-icons/tb';
 import type { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
 import { TypeBadge } from '../../../../components/TypeBadge';
 import { StatusChip } from '../../../../components/StatusChip';
@@ -7,13 +6,13 @@ import { useEntity } from '../../../../hooks/useEntities';
 import { resolveSchemaColor } from '../../../../lib/api';
 import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../../../routes/publicObjectRoutes';
-import styles from './EntityCardBlock.module.css';
+import styles from './EntityCard.module.css';
 
 export const STANDARD_FIELD_OPTIONS = [
   { id: 'lifecycle', label: 'Lifecycle' },
   { id: 'owner', label: 'Owner' },
   { id: 'description', label: 'Description' },
-  { id: 'tags', label: 'Tags' },
+  { id: 'tags', label: 'Tags' }
 ] as const;
 
 export const DEFAULT_FIELDS = ['lifecycle', 'owner'];
@@ -32,21 +31,17 @@ export const renderSchemaFieldValue = (
     return opt?.label ?? String(value);
   }
   if (field.type === 'date') {
-    try { return new Date(String(value)).toLocaleDateString(); } catch { return String(value); }
+    try {
+      return new Date(String(value)).toLocaleDateString();
+    } catch {
+      return String(value);
+    }
   }
   if (field.type === 'reference' || field.type === 'containment') return null;
   return String(value);
 };
 
-export const EntityCardBlock = ({
-  id,
-  fields,
-  onEdit,
-}: {
-  id: string;
-  fields?: string;
-  onEdit?: () => void;
-}) => {
+export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
   const navigate = useNavigate();
@@ -89,20 +84,12 @@ export const EntityCardBlock = ({
     const fieldDef = schema?.fields.find(f => f.id === fieldId);
     if (!fieldDef) continue;
     const rendered = renderSchemaFieldValue(fieldDef, (entity as Record<string, unknown>)[fieldId]);
-    if (rendered != null) labeledFields.push({ key: fieldId, label: fieldDef.name, value: rendered });
+    if (rendered != null)
+      labeledFields.push({ key: fieldId, label: fieldDef.name, value: rendered });
   }
 
   return (
-    <div
-      className={`${styles.card} ${onEdit ? styles.editable : ''}`}
-      onDoubleClick={onEdit}
-    >
-      {onEdit && (
-        <button type="button" className={styles.editBtn} onClick={onEdit} title="Edit card">
-          <TbPencil size={12} />
-        </button>
-      )}
-
+    <div className={styles.card}>
       <div className={styles.header}>
         <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={18} />
         <span className={styles.name}>{entity._name}</span>
@@ -122,7 +109,9 @@ export const EntityCardBlock = ({
       {showTags && entity._tags.length > 0 && (
         <div className={styles.tags}>
           {entity._tags.map(tag => (
-            <span key={tag} className={styles.tag}>{tag}</span>
+            <span key={tag} className={styles.tag}>
+              {tag}
+            </span>
           ))}
         </div>
       )}

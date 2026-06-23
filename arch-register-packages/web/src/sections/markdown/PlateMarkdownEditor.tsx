@@ -32,8 +32,11 @@ import type { TElement, Value } from 'platejs';
 import { TbId, TbHash } from 'react-icons/tb';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { Draggable, isListParagraph, getNodeText } from './Draggable';
-import { EntityCardPlateElement, entityCardMdxRule } from './blocks/entity-card/EntityCardPlateElement';
-import { EntityFieldPlateElement, entityFieldMdxRule } from './inlines/entity-field/EntityFieldPlateElement';
+import { EntityCardEditable, entityCardMdxRule } from './blocks/entity-card/EntityCardEditable';
+import {
+  EntityFieldEditable,
+  entityFieldMdxRule
+} from './inlines/entity-field/EntityFieldEditable';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
@@ -44,15 +47,9 @@ const PElement = (props: PlateElementProps) => (
 const H1Element = (props: PlateElementProps) => <Draggable as="h1" {...props} />;
 const H2Element = (props: PlateElementProps) => <Draggable as="h2" {...props} />;
 const H3Element = (props: PlateElementProps) => <Draggable as="h3" {...props} />;
-const BlockquoteElement = (props: PlateElementProps) => (
-  <Draggable as="blockquote" {...props} />
-);
-const CodeBlockElement = (props: PlateElementProps) => (
-  <Draggable as="pre" {...props} />
-);
-const CodeLineElement = (props: PlateElementProps) => (
-  <PlateElement as="code" {...props} />
-);
+const BlockquoteElement = (props: PlateElementProps) => <Draggable as="blockquote" {...props} />;
+const CodeBlockElement = (props: PlateElementProps) => <Draggable as="pre" {...props} />;
+const CodeLineElement = (props: PlateElementProps) => <PlateElement as="code" {...props} />;
 
 const ListElement = ({ element, ...props }: PlateElementProps) => {
   const as =
@@ -62,12 +59,8 @@ const ListElement = ({ element, ...props }: PlateElementProps) => {
   return <Draggable as={as} element={element} {...props} />;
 };
 
-const ListItemElement = (props: PlateElementProps) => (
-  <PlateElement as="li" {...props} />
-);
-const ListItemContentElement = (props: PlateElementProps) => (
-  <PlateElement {...props} />
-);
+const ListItemElement = (props: PlateElementProps) => <PlateElement as="li" {...props} />;
+const ListItemContentElement = (props: PlateElementProps) => <PlateElement {...props} />;
 
 const LinkElement = ({ element, children, ...props }: PlateElementProps) => {
   const url = (element as TElement & { url?: string }).url;
@@ -90,9 +83,7 @@ const HrElement = ({ children, ...props }: PlateElementProps) => (
 const BoldLeaf = (props: PlateLeafProps) => <PlateLeaf as="strong" {...props} />;
 const ItalicLeaf = (props: PlateLeafProps) => <PlateLeaf as="em" {...props} />;
 const InlineCodeLeaf = (props: PlateLeafProps) => <PlateLeaf as="code" {...props} />;
-const StrikethroughLeaf = (props: PlateLeafProps) => (
-  <PlateLeaf as="s" {...props} />
-);
+const StrikethroughLeaf = (props: PlateLeafProps) => <PlateLeaf as="s" {...props} />;
 
 // ─── Slash command definitions ──────────────────────────────────────────────
 
@@ -213,30 +204,38 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     key: 'entity-card',
     label: 'Entity Card',
     description: 'Embed entity metadata inline',
-    icon: <span className={styles.slashIcon}><TbId size={14} /></span>,
+    icon: (
+      <span className={styles.slashIcon}>
+        <TbId size={14} />
+      </span>
+    ),
     keywords: ['entity', 'card', 'catalog', 'service'],
-    onSelect: (editor) => {
+    onSelect: editor => {
       insertOrReplaceBlock(editor, {
         type: 'EntityCard',
         entityId: '',
-        children: [{ text: '' }],
+        children: [{ text: '' }]
       });
-    },
+    }
   },
   {
     key: 'entity-field',
     label: 'Field Embed',
     description: 'Embed a live entity field value',
-    icon: <span className={styles.slashIcon}><TbHash size={14} /></span>,
+    icon: (
+      <span className={styles.slashIcon}>
+        <TbHash size={14} />
+      </span>
+    ),
     keywords: ['field', 'entity', 'value', 'embed', 'inline'],
-    onSelect: (editor) => {
+    onSelect: editor => {
       editor.tf.insertNodes({
         type: 'EntityField',
         entityId: '',
         field: '',
-        children: [{ text: '' }],
+        children: [{ text: '' }]
       });
-    },
+    }
   },
   {
     key: 'hr',
@@ -280,15 +279,16 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [searchText, setSearchText] = useState('');
 
-  const filteredCommands = useMemo(() => 
-    SLASH_COMMANDS.filter(cmd => {
-      if (!searchText) return true;
-      const q = searchText.toLowerCase();
-      return (
-        cmd.label.toLowerCase().includes(q) ||
-        (cmd.keywords?.some(k => k.includes(q)) ?? false)
-      );
-    }), [searchText]
+  const filteredCommands = useMemo(
+    () =>
+      SLASH_COMMANDS.filter(cmd => {
+        if (!searchText) return true;
+        const q = searchText.toLowerCase();
+        return (
+          cmd.label.toLowerCase().includes(q) || (cmd.keywords?.some(k => k.includes(q)) ?? false)
+        );
+      }),
+    [searchText]
   );
 
   useEffect(() => {
@@ -346,9 +346,7 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
       if (ke.key === 'ArrowDown') {
         ke.preventDefault();
         ke.stopPropagation();
-        setSelectedIndex(i =>
-          Math.min(i + 1, filteredCommandsRef.current.length - 1)
-        );
+        setSelectedIndex(i => Math.min(i + 1, filteredCommandsRef.current.length - 1));
         return;
       }
       if (ke.key === 'ArrowUp') {
@@ -386,9 +384,7 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
 
     const spaceBelow = window.innerHeight - rect.bottom - GAP;
     const openAbove = spaceBelow < DROPDOWN_MAX_HEIGHT && rect.top > spaceBelow;
-    const top = openAbove
-      ? Math.max(GAP, rect.top - GAP - DROPDOWN_MAX_HEIGHT)
-      : rect.bottom + GAP;
+    const top = openAbove ? Math.max(GAP, rect.top - GAP - DROPDOWN_MAX_HEIGHT) : rect.bottom + GAP;
 
     const nextPos = { top, left: rect.left };
     setDropdownPos(prev =>
@@ -558,7 +554,8 @@ const HeadingBreakPlugin = createPlatePlugin({
       const { selection } = editor;
       if (selection) {
         const topIndex = selection.anchor.path[0];
-        const block = topIndex !== undefined ? (editor.children[topIndex] as TElement | undefined) : undefined;
+        const block =
+          topIndex !== undefined ? (editor.children[topIndex] as TElement | undefined) : undefined;
         if (block && HEADING_TYPES.has(block.type as string)) {
           editor.tf.splitNodes({ always: true });
           editor.tf.setNodes({ type: 'p' });
@@ -574,7 +571,7 @@ const HeadingBreakPlugin = createPlatePlugin({
 // biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing for mdast nodes
 const mdxRules: Record<string, any> = {
   EntityCard: entityCardMdxRule,
-  EntityField: entityFieldMdxRule,
+  EntityField: entityFieldMdxRule
 };
 
 const editorPlugins = [
@@ -601,9 +598,7 @@ const editorPlugins = [
     node: { isElement: true }
   }).withComponent(CodeLineElement),
   ListPlugin.withComponent(ListElement),
-  createPlatePlugin({ key: 'li', node: { isElement: true } }).withComponent(
-    ListItemElement
-  ),
+  createPlatePlugin({ key: 'li', node: { isElement: true } }).withComponent(ListItemElement),
   createPlatePlugin({ key: 'lic', node: { isElement: true } }).withComponent(
     ListItemContentElement
   ),
@@ -618,18 +613,14 @@ const editorPlugins = [
   createPlatePlugin({
     key: 'EntityCard',
     node: { isElement: true, isVoid: true }
-  }).withComponent(EntityCardPlateElement),
+  }).withComponent(EntityCardEditable),
   createPlatePlugin({
     key: 'EntityField',
     node: { isElement: true, isVoid: true, isInline: true }
-  }).withComponent(EntityFieldPlateElement),
+  }).withComponent(EntityFieldEditable),
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
-  createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(
-    ItalicLeaf
-  ),
-  createPlatePlugin({ key: 'code', node: { isLeaf: true } }).withComponent(
-    InlineCodeLeaf
-  ),
+  createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(ItalicLeaf),
+  createPlatePlugin({ key: 'code', node: { isLeaf: true } }).withComponent(InlineCodeLeaf),
   createPlatePlugin({
     key: 'strikethrough',
     node: { isLeaf: true }

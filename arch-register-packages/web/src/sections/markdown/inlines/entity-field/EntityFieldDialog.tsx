@@ -3,16 +3,18 @@ import { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
-import { useEntities, useEntity } from '../../../../hooks/useEntities';
-import { STANDARD_FIELD_OPTIONS, STANDARD_FIELD_IDS } from '../../blocks/entity-card/EntityCardBlock';
+import { useEntity } from '../../../../hooks/useEntities';
+import { STANDARD_FIELD_OPTIONS, STANDARD_FIELD_IDS } from '../../blocks/entity-card/EntityCard';
+import { EntityPicker } from '../../../../components/EntityPicker';
+import { DialogContent, DialogSection } from '../../BlockDialog';
 import type { EntityFieldSlateElement } from './types';
-import styles from './EntityFieldEditor.module.css';
+import styles from './EntityFieldDialog.module.css';
 
 export const EntityFieldDialog = ({
   element,
   open,
   onClose,
-  isNew,
+  isNew
 }: {
   element: TElement;
   open: boolean;
@@ -25,7 +27,6 @@ export const EntityFieldDialog = ({
   const currentEntityId = (element as EntityFieldSlateElement).entityId ?? '';
   const currentField = (element as EntityFieldSlateElement).field ?? '';
 
-  const [query, setQuery] = useState('');
   const [selectedEntityId, setSelectedEntityId] = useState(currentEntityId);
   const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
   const [selectedField, setSelectedField] = useState(currentField);
@@ -35,23 +36,9 @@ export const EntityFieldDialog = ({
     if (selectedEntity?._schema?.id) setSelectedSchemaId(selectedEntity._schema.id);
   }, [selectedEntity]);
 
-  const { data: searchResults = [] } = useEntities(workspaceSlug, {
-    q: query || undefined,
-    view: 'summary',
-    limit: 8,
-  });
-
   const currentSchema = schemas.find(s => s.id === selectedSchemaId);
-  const schemaFields = currentSchema?.fields?.filter(
-    f => f.type !== 'containment' && f.type !== 'reference'
-  ) ?? [];
-
-  const handleSelectEntity = (entity: { _publicId: string; _schema?: { id: string } | null }) => {
-    setSelectedEntityId(entity._publicId);
-    setSelectedSchemaId(entity._schema?.id ?? null);
-    setSelectedField('');
-    setQuery('');
-  };
+  const schemaFields =
+    currentSchema?.fields?.filter(f => f.type !== 'containment' && f.type !== 'reference') ?? [];
 
   const handleConfirm = () => {
     const path = editor.api.findPath(element);
@@ -60,10 +47,7 @@ export const EntityFieldDialog = ({
       onClose();
       return;
     }
-    editor.tf.setNodes(
-      { entityId: selectedEntityId, field: selectedField },
-      { at: path }
-    );
+    editor.tf.setNodes({ entityId: selectedEntityId, field: selectedField }, { at: path });
     onClose();
   };
 
@@ -75,8 +59,6 @@ export const EntityFieldDialog = ({
     onClose();
   };
 
-  const canSave = !!selectedEntityId && !!selectedField;
-
   return (
     <Dialog
       open={open}
@@ -85,61 +67,40 @@ export const EntityFieldDialog = ({
       width={400}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: handleClose },
-        { label: 'Save', type: 'default', disabled: !canSave, onClick: handleConfirm },
+        {
+          label: 'Save',
+          type: 'default',
+          disabled: !selectedEntityId || !selectedField,
+          onClick: handleConfirm
+        }
       ]}
     >
-      <div className={styles.dialogContent}>
-        <div className={styles.section}>
-          <div className={styles.sectionLabel}>Entity</div>
-          {selectedEntityId && selectedEntity && !query && (
-            <div className={styles.selectedChip}>
-              <span className={styles.pickerName}>{selectedEntity._name}</span>
-              <span className={styles.pickerSchema}>{selectedEntity._schema?.name}</span>
-              <button
-                type="button"
-                className={styles.chipClear}
-                onClick={() => { setSelectedEntityId(''); setSelectedSchemaId(null); setSelectedField(''); }}
-              >
-                ×
-              </button>
-            </div>
-          )}
-          <input
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus
-            type="text"
-            className={styles.pickerInput}
-            placeholder={selectedEntityId ? 'Search to change entity…' : 'Search for an entity…'}
-            value={query}
-            onChange={e => setQuery(e.target.value)}
+      <DialogContent>
+        <DialogSection label="Entity">
+          <EntityPicker
+            selectedEntityId={selectedEntityId}
+            selectedEntity={selectedEntity}
+            onSelectEntity={entity => {
+              setSelectedEntityId(entity._publicId);
+              setSelectedSchemaId(entity._schema?.id ?? null);
+              setSelectedField('');
+            }}
+            onClearEntity={() => {
+              setSelectedEntityId('');
+              setSelectedSchemaId(null);
+              setSelectedField('');
+            }}
           />
-          {query && (
-            searchResults.length > 0 ? (
-              <div className={styles.pickerResults}>
-                {searchResults.map(entity => (
-                  <button
-                    key={entity._publicId}
-                    type="button"
-                    className={`${styles.pickerItem} ${entity._publicId === selectedEntityId ? styles.pickerItemActive : ''}`}
-                    onClick={() => handleSelectEntity(entity)}
-                  >
-                    <span className={styles.pickerName}>{entity._name}</span>
-                    <span className={styles.pickerSchema}>{entity._schema?.name}</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className={styles.pickerHint}>No entities found</div>
-            )
-          )}
-        </div>
+        </DialogSection>
 
         {selectedEntityId && (
-          <div className={styles.section}>
-            <div className={styles.sectionLabel}>Field</div>
+          <DialogSection label="Field">
             <div className={styles.fieldList}>
               {STANDARD_FIELD_OPTIONS.map(opt => (
-                <label key={opt.id} className={`${styles.fieldOption} ${selectedField === opt.id ? styles.fieldOptionSelected : ''}`}>
+                <label
+                  key={opt.id}
+                  className={`${styles.fieldOption} ${selectedField === opt.id ? styles.fieldOptionSelected : ''}`}
+                >
                   <input
                     type="radio"
                     name="field"
@@ -166,9 +127,9 @@ export const EntityFieldDialog = ({
                 </label>
               ))}
             </div>
-          </div>
+          </DialogSection>
         )}
-      </div>
+      </DialogContent>
     </Dialog>
   );
 };

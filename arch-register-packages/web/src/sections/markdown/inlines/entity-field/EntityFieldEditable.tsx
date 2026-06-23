@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { PlateElement, type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbHash, TbPencil } from 'react-icons/tb';
-import { EntityFieldInline } from './EntityFieldInline';
+import { TbHash } from 'react-icons/tb';
+import { EntityField } from './EntityField';
 import { EntityFieldDialog } from './EntityFieldDialog';
+import { BaseInlineEditable } from '../BaseInlineEditable';
 import type { EntityFieldSlateElement } from './types';
-import styles from './EntityFieldEditor.module.css';
 
 // ── MDX serialization rule ────────────────────────────────────────────────────
 
@@ -19,24 +19,24 @@ export const entityFieldMdxRule: Record<string, any> = {
       children: [{ text: '' }],
       type: getPluginType(options.editor, 'EntityField'),
       entityId: attrs['id'] ?? '',
-      field: attrs['field'] ?? '',
+      field: attrs['field'] ?? ''
     };
   },
   // biome-ignore lint/suspicious/noExplicitAny: Slate node structure is dynamic
   serialize: (slateNode: any) => ({
     attributes: propsToAttributes({
       id: slateNode.entityId ?? '',
-      field: slateNode.field ?? '',
+      field: slateNode.field ?? ''
     }),
     children: [],
     name: 'EntityField',
-    type: 'mdxJsxTextElement',
-  }),
+    type: 'mdxJsxTextElement'
+  })
 };
 
 // ── Plate element ─────────────────────────────────────────────────────────────
 
-export const EntityFieldPlateElement = ({ element, children, ...props }: PlateElementProps) => {
+export const EntityFieldEditable = ({ element, children, ...props }: PlateElementProps) => {
   const entityId = (element as EntityFieldSlateElement).entityId ?? '';
   const field = (element as EntityFieldSlateElement).field ?? '';
   const [dialogOpen, setDialogOpen] = useState(() => !entityId);
@@ -44,21 +44,18 @@ export const EntityFieldPlateElement = ({ element, children, ...props }: PlateEl
 
   return (
     <PlateElement element={element} as="span" {...props}>
-      <span contentEditable={false} className={styles.chipWrapper} onClick={() => setDialogOpen(true)}>
-        {entityId && field ? (
+      <BaseInlineEditable
+        onEdit={() => setDialogOpen(true)}
+        hasValue={!!(entityId && field)}
+        placeholder={
           <>
-            <EntityFieldInline id={entityId} field={field} />
-            <span className={styles.chipEditButton} title="Edit field embed">
-              <TbPencil size={10} />
-            </span>
-          </>
-        ) : (
-          <span className={styles.placeholder}>
             <TbHash size={12} />
             <span>field…</span>
-          </span>
-        )}
-      </span>
+          </>
+        }
+      >
+        <EntityField id={entityId} field={field} />
+      </BaseInlineEditable>
       {children}
       {dialogOpen && (
         <EntityFieldDialog

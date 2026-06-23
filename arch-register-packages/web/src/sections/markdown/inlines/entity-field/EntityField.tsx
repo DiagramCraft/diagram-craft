@@ -1,7 +1,7 @@
 import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../hooks/useEntities';
-import { renderSchemaFieldValue, STANDARD_FIELD_IDS } from '../../blocks/entity-card/EntityCardBlock';
-import styles from './EntityFieldInline.module.css';
+import { renderSchemaFieldValue, STANDARD_FIELD_IDS } from '../../blocks/entity-card/EntityCard';
+import styles from './EntityField.module.css';
 
 const resolveFieldValue = (
   entity: Record<string, unknown> & {
@@ -16,7 +16,8 @@ const resolveFieldValue = (
 ): string | null => {
   if (field === 'owner') return entity._owner?.name ?? null;
   if (field === 'lifecycle') return entity._lifecycle?.name ?? null;
-  if (field === 'description') return typeof entity._description === 'string' ? entity._description : null;
+  if (field === 'description')
+    return typeof entity._description === 'string' ? entity._description : null;
   if (field === 'tags') {
     const tags = entity._tags ?? [];
     return Array.isArray(tags) && tags.length > 0 ? tags.join(', ') : null;
@@ -34,14 +35,18 @@ const resolveFieldValue = (
   return null;
 };
 
-export const EntityFieldInline = ({ id, field }: { id: string; field: string }) => {
+export const EntityField = ({ id, field }: { id: string; field: string }) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
 
   if (!id || !field) return null;
 
   if (isLoading) {
-    return <span className={`${styles.chip} ${styles.chipLoading}`}>{id}·{field}</span>;
+    return (
+      <span className={`${styles.chip} ${styles.chipLoading}`}>
+        {id}·{field}
+      </span>
+    );
   }
 
   if (isError || !entity) {

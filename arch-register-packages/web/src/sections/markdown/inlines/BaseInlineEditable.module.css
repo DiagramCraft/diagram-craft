@@ -1,0 +1,37 @@
+.wrapper {
+  display: inline-flex;
+  position: relative;
+  cursor: pointer;
+}
+
+.editButton {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  color: var(--base-fg);
+  background: color-mix(in srgb, var(--cmp-bg) 85%, transparent);
+}
+
+.wrapper:hover .editButton {
+  display: flex;
+}
+
+.placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 8px;
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--cmp-fg-disabled);
+  font-size: 0.9em;
+  transition: border-color 80ms, color 80ms;
+}
+
+.placeholder:hover {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+}

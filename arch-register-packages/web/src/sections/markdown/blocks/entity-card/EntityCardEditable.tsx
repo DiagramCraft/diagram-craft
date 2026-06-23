@@ -3,12 +3,10 @@ import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbId } from 'react-icons/tb';
-import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { Draggable } from '../../Draggable';
-import { EntityCardBlock } from './EntityCardBlock';
+import { BaseBlockEditable } from '../BaseBlockEditable';
+import { EntityCard } from './EntityCard';
 import { EntityCardDialog } from './EntityCardDialog';
 import type { EntityCardSlateElement } from './types';
-import styles from './EntityCardEditor.module.css';
 
 // ── MDX serialization rule (consumed by PlateMarkdownEditor) ─────────────────
 
@@ -38,39 +36,26 @@ export const entityCardMdxRule: Record<string, any> = {
 
 // ── Plate element ─────────────────────────────────────────────────────────────
 
-export const EntityCardPlateElement = ({ element, children, ...props }: PlateElementProps) => {
+export const EntityCardEditable = ({ element, children, ...props }: PlateElementProps) => {
   const entityId = (element as EntityCardSlateElement).entityId ?? '';
   const fields = (element as EntityCardSlateElement).fields ?? '';
   const [pickerOpen, setPickerOpen] = useState(() => !entityId);
   const isNew = !entityId;
 
-  const openPicker = () => setPickerOpen(true);
-
   return (
-    <Draggable
+    <BaseBlockEditable
       element={element}
-      extraContextMenuItems={onClose => (
-        <Menu.Item
-          onClick={() => {
-            openPicker();
-            onClose();
-          }}
-        >
-          Edit card
-        </Menu.Item>
-      )}
+      onEdit={() => setPickerOpen(true)}
+      hasValue={!!entityId}
+      placeholder={
+        <>
+          <TbId size={16} />
+          <span>Choose entity…</span>
+        </>
+      }
+      content={<EntityCard id={entityId} fields={fields} />}
       {...props}
     >
-      <div contentEditable={false}>
-        {entityId ? (
-          <EntityCardBlock id={entityId} fields={fields} onEdit={openPicker} />
-        ) : (
-          <div className={styles.entityCardPlaceholder} onClick={openPicker}>
-            <TbId size={16} />
-            <span>Choose entity…</span>
-          </div>
-        )}
-      </div>
       {children}
       {pickerOpen && (
         <EntityCardDialog
@@ -80,6 +65,6 @@ export const EntityCardPlateElement = ({ element, children, ...props }: PlateEle
           isNew={isNew}
         />
       )}
-    </Draggable>
+    </BaseBlockEditable>
   );
 };
