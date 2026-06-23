@@ -7,6 +7,8 @@ import { EntityCard } from './EntityCard';
 import { EntityCardDialog } from './EntityCardDialog';
 import type { EntityCardSlateElement } from './types';
 
+export const ENTITY_CARD_TYPE = 'EntityCard' as const;
+
 // ── MDX serialization rule (consumed by PlateMarkdownEditor) ─────────────────
 
 // biome-ignore lint/suspicious/noExplicitAny: ok
@@ -16,7 +18,7 @@ export const entityCardMdxRule: Record<string, any> = {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, 'EntityCard'),
+      type: getPluginType(options.editor, ENTITY_CARD_TYPE),
       entityId: attrs['id'] ?? '',
       fields: attrs['fields'] ?? ''
     };
@@ -28,7 +30,7 @@ export const entityCardMdxRule: Record<string, any> = {
       ...(slateNode.fields ? { fields: slateNode.fields } : {})
     }),
     children: [],
-    name: 'EntityCard',
+    name: ENTITY_CARD_TYPE,
     type: 'mdxJsxFlowElement'
   })
 };

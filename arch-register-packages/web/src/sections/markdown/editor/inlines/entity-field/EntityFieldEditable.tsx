@@ -7,6 +7,8 @@ import { EntityFieldDialog } from './EntityFieldDialog';
 import { BaseInlineEditable } from '../BaseInlineEditable';
 import type { EntityFieldSlateElement } from './types';
 
+export const ENTITY_FIELD_TYPE = 'EntityField' as const;
+
 // ── MDX serialization rule ────────────────────────────────────────────────────
 
 // biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing
@@ -16,7 +18,7 @@ export const entityFieldMdxRule: Record<string, any> = {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, 'EntityField'),
+      type: getPluginType(options.editor, ENTITY_FIELD_TYPE),
       entityId: attrs['id'] ?? '',
       field: attrs['field'] ?? ''
     };
@@ -28,7 +30,7 @@ export const entityFieldMdxRule: Record<string, any> = {
       field: slateNode.field ?? ''
     }),
     children: [],
-    name: 'EntityField',
+    name: ENTITY_FIELD_TYPE,
     type: 'mdxJsxTextElement'
   })
 };
