@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PlateElement, type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
-import { TbHash } from 'react-icons/tb';
+import { TbHash, TbPencil } from 'react-icons/tb';
 import { EntityFieldInline } from './EntityFieldInline';
 import { EntityFieldDialog } from './EntityFieldDialog';
 import type { EntityFieldSlateElement } from './types';
@@ -44,9 +44,14 @@ export const EntityFieldPlateElement = ({ element, children, ...props }: PlateEl
 
   return (
     <PlateElement element={element} as="span" {...props}>
-      <span contentEditable={false} onClick={() => setDialogOpen(true)}>
+      <span contentEditable={false} className={styles.chipWrapper} onClick={() => setDialogOpen(true)}>
         {entityId && field ? (
-          <EntityFieldInline id={entityId} field={field} />
+          <>
+            <EntityFieldInline id={entityId} field={field} />
+            <span className={styles.chipEditButton} title="Edit field embed">
+              <TbPencil size={10} />
+            </span>
+          </>
         ) : (
           <span className={styles.placeholder}>
             <TbHash size={12} />

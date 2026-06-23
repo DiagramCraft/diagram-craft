@@ -1,3 +1,26 @@
+/* ── Chip wrapper — shows edit button on hover ───────────────────────────── */
+
+.chipWrapper {
+  display: inline-flex;
+  position: relative;
+  cursor: pointer;
+}
+
+.chipEditButton {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  color: var(--base-fg);
+  background: color-mix(in srgb, var(--cmp-bg) 85%, transparent);
+}
+
+.chipWrapper:hover .chipEditButton {
+  display: flex;
+}
+
 /* ── Inline placeholder (shown in editor when empty) ─────────────────────── */
 
 .placeholder {
