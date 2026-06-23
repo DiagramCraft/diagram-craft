@@ -37,7 +37,7 @@ const test = baseTest.extend<{ seeded: true }>({
         updated_at: now
       });
 
-      await server.db.project.upsertContentNode({
+      const portalDiagram = await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: SEARCH_PROJ_ALPHA_ID,
         path: 'wireframes/portal-diagram.dgc',
@@ -49,7 +49,7 @@ const test = baseTest.extend<{ seeded: true }>({
         created_atIfNew: now
       });
 
-      await server.db.project.upsertContentNode({
+      const authDiagram = await server.db.project.upsertContentNode({
         workspace: seedIds.workspace.default,
         project_id: SEARCH_PROJ_BETA_ID,
         path: 'flows/auth-diagram.dgc',
@@ -59,6 +59,28 @@ const test = baseTest.extend<{ seeded: true }>({
         unresolved_comment_count: 0,
         updated_at: now,
         created_atIfNew: now
+      });
+
+      await server.db.project.upsertContentMetadata({
+        workspace: seedIds.workspace.default,
+        node_id: portalDiagram.id,
+        title: 'Customer experience blueprint',
+        description: 'Maps the onboarding journey and portal navigation.',
+        company: null,
+        category: 'Experience',
+        keywords: ['journey', 'onboarding'],
+        updated_at: now
+      });
+
+      await server.db.project.upsertContentMetadata({
+        workspace: seedIds.workspace.default,
+        node_id: authDiagram.id,
+        title: 'Identity boundary overview',
+        description: 'Documents token exchange between the client app and auth service.',
+        company: null,
+        category: 'Security',
+        keywords: ['jwt', 'sso'],
+        updated_at: now
       });
 
       await use(true);
@@ -88,6 +110,89 @@ test.describe('search routes', () => {
         projectName: 'Alpha Search Project',
         path: 'wireframes/portal-diagram.dgc',
         name: 'Portal Diagram'
+      })
+    ]);
+  });
+
+  test('GET /api/:workspace/search finds files by metadata title', async ({ orpc, seeded: _ }) => {
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'blueprint', types: 'files' }
+    });
+
+    expect(result.projects).toEqual([]);
+    expect(result.entities).toEqual([]);
+    expect(result.schemas).toEqual([]);
+    expect(result.files).toEqual([
+      expect.objectContaining({
+        projectId: SEARCH_PROJ_ALPHA_ID,
+        name: 'Portal Diagram',
+        content_metadata: expect.objectContaining({
+          title: 'Customer experience blueprint'
+        })
+      })
+    ]);
+  });
+
+  test('GET /api/:workspace/search finds files by metadata description', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'token exchange', types: 'files' }
+    });
+
+    expect(result.projects).toEqual([]);
+    expect(result.entities).toEqual([]);
+    expect(result.schemas).toEqual([]);
+    expect(result.files).toEqual([
+      expect.objectContaining({
+        projectId: SEARCH_PROJ_BETA_ID,
+        name: 'Auth Diagram',
+        content_metadata: expect.objectContaining({
+          description: 'Documents token exchange between the client app and auth service.'
+        })
+      })
+    ]);
+  });
+
+  test('GET /api/:workspace/search finds files by metadata category', async ({ orpc, seeded: _ }) => {
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'security', types: 'files' }
+    });
+
+    expect(result.projects).toEqual([]);
+    expect(result.entities).toEqual([]);
+    expect(result.schemas).toEqual([]);
+    expect(result.files).toEqual([
+      expect.objectContaining({
+        projectId: SEARCH_PROJ_BETA_ID,
+        name: 'Auth Diagram',
+        content_metadata: expect.objectContaining({
+          category: 'Security'
+        })
+      })
+    ]);
+  });
+
+  test('GET /api/:workspace/search finds files by metadata keywords', async ({ orpc, seeded: _ }) => {
+    const result = await orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'onboarding', types: 'files' }
+    });
+
+    expect(result.projects).toEqual([]);
+    expect(result.entities).toEqual([]);
+    expect(result.schemas).toEqual([]);
+    expect(result.files).toEqual([
+      expect.objectContaining({
+        projectId: SEARCH_PROJ_ALPHA_ID,
+        name: 'Portal Diagram',
+        content_metadata: expect.objectContaining({
+          keywords: expect.arrayContaining(['journey', 'onboarding'])
+        })
       })
     ]);
   });
