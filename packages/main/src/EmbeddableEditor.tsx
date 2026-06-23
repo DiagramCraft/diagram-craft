@@ -80,12 +80,7 @@ import { usePanOnDrag } from './react-app/hooks/usePanOnDrag';
 import { NodeActionChooserDialog } from './react-app/components/NodeActionChooserDialog';
 import { applyThemeMode, themeModeClassName } from './react-app/themeMode';
 import { DocumentName } from './react-app/DocumentName';
-import {
-  oncePerEvent,
-  tools,
-  updateApplicationModel,
-  type DialogStackItem
-} from './editorShared';
+import { oncePerEvent, tools, updateApplicationModel, type DialogStackItem } from './editorShared';
 
 export type { DialogStackItem } from './editorShared';
 
@@ -306,7 +301,7 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
   useEffect(() => bindDocumentDragAndDrop());
 
   useLayoutEffect(() => {
-    applyThemeMode(userState.current.themeMode);
+    applyThemeMode(userState.current.effectiveTheme);
   });
 
   usePanOnDrag($d, userState.current!);
@@ -589,7 +584,7 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
 
             {extraDialogs?.(dialogStack)}
 
-            <div id="app" className={themeModeClassName(userState.current.themeMode)}>
+            <div id="app" className={themeModeClassName(userState.current.effectiveTheme)}>
               <TopBar
                 id="menu"
                 leftSlot={
@@ -647,9 +642,7 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                           createContextMenu={state => {
                             if (state.type === 'canvas') {
                               return (
-                                <CanvasContextMenu
-                                  target={state as ContextMenuTarget<'canvas'>}
-                                />
+                                <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>} />
                               );
                             } else if (state.type === 'selection') {
                               return (
@@ -659,9 +652,7 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
                               );
                             } else if (state.type === 'guide') {
                               return (
-                                <GuideContextMenu
-                                  target={state as ContextMenuTarget<'guide'>}
-                                />
+                                <GuideContextMenu target={state as ContextMenuTarget<'guide'>} />
                               );
                             } else {
                               VERIFY_NOT_REACHED();

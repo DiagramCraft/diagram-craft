@@ -27,6 +27,16 @@
     overflow: visible;
 
     .eStencilView {
+      /* Component-local theme variables */
+      --_canvas-fg: var(--gray-11);
+      --_canvas-bg: var(--gray-4);
+      --_canvas-bg2: var(--gray-3);
+
+      /* Map local variables to global canvas variables for SVG rendering */
+      --canvas-fg: var(--_canvas-fg);
+      --canvas-bg: var(--_canvas-bg);
+      --canvas-bg2: var(--_canvas-bg2);
+
       background: transparent;
 
       padding: 2px;
@@ -64,15 +74,11 @@
 }
 
 :global(.light-theme) .eStencilView {
-  --canvas-fg: var(--theme-light-sidebar-canvas-fg, var(--gray-11));
-  --canvas-bg: var(--theme-light-sidebar-canvas-bg, var(--gray-4));
-  --canvas-bg2: var(--theme-light-sidebar-canvas-bg2, var(--gray-3));
+  --_canvas-bg: var(--gray-4);
 }
 
 :global(.dark-theme) .eStencilView {
-  --canvas-fg: var(--theme-dark-sidebar-canvas-fg, var(--gray-11));
-  --canvas-bg: var(--theme-dark-sidebar-canvas-bg, var(--gray-2));
-  --canvas-bg2: var(--theme-dark-sidebar-canvas-bg2, var(--gray-3));
+  --_canvas-bg: var(--gray-2);
 }
 
 .icIconsTabs {

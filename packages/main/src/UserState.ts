@@ -7,7 +7,9 @@ type UserStateEvents = {
   change: { after: UserState };
 };
 
-export type ThemeMode = 'dark' | 'light';
+export type ThemePreference = 'system' | 'dark' | 'light';
+export type EffectiveTheme = 'dark' | 'light';
+export type ThemeMode = EffectiveTheme; // Deprecated: Use ThemePreference instead
 export type PickerViewMode = 'grid' | 'list';
 
 const DEFAULT_STENCILS = [{ id: 'default', isOpen: true }];
@@ -29,8 +31,10 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #stencilPickerViewMode: PickerViewMode = 'grid';
   #stencilSearchAllPackages: boolean = true;
   #recentFiles: Array<string>;
-  #themeMode: ThemeMode = 'dark';
+  #themePreference: ThemePreference = 'system';
+  #effectiveTheme: EffectiveTheme = 'dark';
   #toolWindowTabs: Record<string, string> = {};
+  #mediaQueryList: MediaQueryList | undefined;
   #documentTabs: Array<{ documentKey: string; tabId: string }> = [];
   #persistedState: string;
 
@@ -62,7 +66,19 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#stencilPickerViewMode = state.stencilPickerViewMode === 'list' ? 'list' : 'grid';
     this.#stencilSearchAllPackages = state.stencilSearchAllPackages ?? true;
     this.#recentFiles = state.recentFiles ?? [];
-    this.#themeMode = state.themeMode === 'light' ? 'light' : 'dark';
+    
+    // Handle theme preference with backward compatibility
+    const storedTheme = state.themePreference ?? state.themeMode;
+    if (storedTheme === 'light' || storedTheme === 'dark') {
+      this.#themePreference = storedTheme;
+    } else {
+      this.#themePreference = 'system';
+    }
+    
+    // Compute effective theme and set up listener
+    this.#effectiveTheme = this.computeEffectiveTheme();
+    this.setupMediaQueryListener();
+    
     this.#toolWindowTabs = state.toolWindowTabs ?? {};
     this.#documentTabs = state.documentTabs ?? [];
     this.#persistedState = this.serializeState();
@@ -100,14 +116,81 @@ export class UserState extends EventEmitter<UserStateEvents> {
     return this.#recentFiles;
   }
 
+  // Backward compatibility - deprecated
   set themeMode(themeMode: ThemeMode) {
-    if (this.#themeMode === themeMode) return;
-    this.#themeMode = themeMode;
+    this.themePreference = themeMode;
+  }
+
+  // Backward compatibility - deprecated
+  get themeMode(): ThemeMode {
+    return this.#effectiveTheme;
+  }
+
+  set themePreference(preference: ThemePreference) {
+    if (this.#themePreference === preference) return;
+    this.#themePreference = preference;
+    
+    const newEffectiveTheme = this.computeEffectiveTheme();
+    if (newEffectiveTheme !== this.#effectiveTheme) {
+      this.#effectiveTheme = newEffectiveTheme;
+    }
+    
+    this.setupMediaQueryListener();
     this.triggerChange();
   }
 
-  get themeMode(): ThemeMode {
-    return this.#themeMode;
+  get themePreference(): ThemePreference {
+    return this.#themePreference;
+  }
+
+  get effectiveTheme(): EffectiveTheme {
+    return this.#effectiveTheme;
+  }
+
+  private computeEffectiveTheme(): EffectiveTheme {
+    if (this.#themePreference === 'system') {
+      // Guard for environments without window (e.g., tests)
+      if (typeof window === 'undefined' || !window.matchMedia) {
+        return 'dark'; // Default fallback
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return this.#themePreference;
+  }
+
+  private setupMediaQueryListener() {
+    // Guard for environments without window
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return;
+    }
+
+    // Clean up existing listener
+    if (this.#mediaQueryList) {
+      this.#mediaQueryList.removeEventListener('change', this.handleMediaQueryChange);
+    }
+
+    // Only listen to system preference changes when in 'system' mode
+    if (this.#themePreference === 'system') {
+      this.#mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+      this.#mediaQueryList.addEventListener('change', this.handleMediaQueryChange);
+    } else {
+      this.#mediaQueryList = undefined;
+    }
+  }
+
+  private handleMediaQueryChange = (e: MediaQueryListEvent) => {
+    const newEffectiveTheme: EffectiveTheme = e.matches ? 'dark' : 'light';
+    if (newEffectiveTheme !== this.#effectiveTheme) {
+      this.#effectiveTheme = newEffectiveTheme;
+      this.triggerChange();
+    }
+  };
+
+  destroy() {
+    if (this.#mediaQueryList) {
+      this.#mediaQueryList.removeEventListener('change', this.handleMediaQueryChange);
+      this.#mediaQueryList = undefined;
+    }
   }
 
   set panelLeft(panelLeft: number | undefined) {
@@ -236,7 +319,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
       stencilPickerViewMode: this.#stencilPickerViewMode,
       stencilSearchAllPackages: this.#stencilSearchAllPackages,
       recentFiles: this.#recentFiles,
-      themeMode: this.#themeMode,
+      themePreference: this.#themePreference,
       toolWindowTabs: this.#toolWindowTabs,
       documentTabs: this.#documentTabs
     });

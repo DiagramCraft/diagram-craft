@@ -21,7 +21,10 @@
   --font-sans: var(--theme-font-sans, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif);
 }
 
+[data-theme='dark'],
 .dark-theme {
+  color-scheme: dark;
+
   --accent-1: var(--blue-1);
   --accent-2: var(--blue-2);
   --accent-3: var(--blue-3);
@@ -84,7 +87,10 @@
   --warning-fg: var(--theme-dark-warning-fg, var(--orange-9));
 }
 
+[data-theme='light'],
 .light-theme {
+  color-scheme: light;
+
   --accent-1: var(--blue-1);
   --accent-2: var(--blue-2);
   --accent-3: var(--blue-3);
