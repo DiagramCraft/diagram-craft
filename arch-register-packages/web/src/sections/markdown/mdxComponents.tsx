@@ -1,6 +1,6 @@
-import { EntityCardBlock } from './EntityCardBlock';
+import { EntityCardBlock } from './blocks/entity-card/EntityCardBlock';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: ok
 export const MDX_COMPONENTS: Record<string, React.ComponentType<any>> = {
-  EntityCard: EntityCardBlock,
+  EntityCard: EntityCardBlock
 };

@@ -1,0 +1,159 @@
+/* ── Placeholder (shown in editor when entityId is empty) ───────────────────── */
+
+.entityCardPlaceholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--r-md);
+  color: var(--cmp-fg-disabled);
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 200px;
+  margin: 0 0 14px;
+  transition: border-color 80ms, color 80ms;
+}
+
+.entityCardPlaceholder:hover {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+}
+
+/* ── Entity card dialog ──────────────────────────────────────────────────────── */
+
+.entityCardDialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.entityCardSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.entityCardSectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cmp-fg-disabled);
+}
+
+.entityCardSelectedChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  background: var(--cmp-bg);
+  font-size: 13px;
+}
+
+.entityCardChipClear {
+  margin-left: auto;
+  padding: 0 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--cmp-fg-disabled);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.entityCardChipClear:hover {
+  color: var(--base-fg);
+}
+
+.entityPickerItemActive {
+  background: var(--cmp-bg);
+}
+
+.entityCardFieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 12px;
+}
+
+.entityCardFieldOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.entityCardFieldOptionSchema {
+  color: var(--base-fg-dim);
+}
+
+/* ── Entity search picker ─────────────────────────────────────────────────── */
+
+.entityPickerInput {
+  width: 100%;
+  font-size: 13px;
+  padding: 5px 8px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--base-fg);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.entityPickerInput:focus {
+  border-color: var(--accent-fg);
+}
+
+.entityPickerResults {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.entityPickerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: var(--r-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 8px;
+  color: var(--base-fg);
+}
+
+.entityPickerItem:hover {
+  background: var(--cmp-bg);
+}
+
+.entityPickerName {
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entityPickerSchema {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  white-space: nowrap;
+}
+
+.entityPickerHint {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  padding: 2px 8px;
+}
