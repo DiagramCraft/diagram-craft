@@ -9,7 +9,7 @@ type UserStateEvents = {
 
 export type ThemePreference = 'system' | 'dark' | 'light';
 export type EffectiveTheme = 'dark' | 'light';
-export type ThemeMode = ThemePreference; // Deprecated: Use ThemePreference instead
+export type ThemeMode = EffectiveTheme; // Deprecated: Use ThemePreference instead
 export type PickerViewMode = 'grid' | 'list';
 
 const DEFAULT_STENCILS = [{ id: 'default', isOpen: true }];
@@ -123,7 +123,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
 
   // Backward compatibility - deprecated
   get themeMode(): ThemeMode {
-    return this.#themePreference;
+    return this.#effectiveTheme;
   }
 
   set themePreference(preference: ThemePreference) {
@@ -185,6 +185,13 @@ export class UserState extends EventEmitter<UserStateEvents> {
       this.triggerChange();
     }
   };
+
+  destroy() {
+    if (this.#mediaQueryList) {
+      this.#mediaQueryList.removeEventListener('change', this.handleMediaQueryChange);
+      this.#mediaQueryList = undefined;
+    }
+  }
 
   set panelLeft(panelLeft: number | undefined) {
     this.#panelLeft = panelLeft;

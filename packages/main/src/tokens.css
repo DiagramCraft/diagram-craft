@@ -23,6 +23,8 @@
 
 [data-theme='dark'],
 .dark-theme {
+  color-scheme: dark;
+
   --accent-1: var(--blue-1);
   --accent-2: var(--blue-2);
   --accent-3: var(--blue-3);
@@ -87,6 +89,8 @@
 
 [data-theme='light'],
 .light-theme {
+  color-scheme: light;
+
   --accent-1: var(--blue-1);
   --accent-2: var(--blue-2);
   --accent-3: var(--blue-3);

@@ -23,6 +23,4 @@ export const applyThemeMode = (theme: EffectiveTheme) => {
     appRoot.setAttribute('data-theme', theme);
   }
 
-  // Set color-scheme on document root
-  document.documentElement.style.colorScheme = theme;
 };

@@ -44,17 +44,18 @@ describe('UserState', () => {
   });
 
   test('system mode resolves to effective theme based on prefers-color-scheme', () => {
+    Object.defineProperty(globalThis, 'matchMedia', {
+      value: (query: string) => ({
+        matches: query === '(prefers-color-scheme: dark)',
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      }),
+      configurable: true
+    });
+
     const userState = new UserState();
     userState.themePreference = 'system';
-    
-    // In test environment without window, defaults to 'dark'
-    // In browser environment, would match system preference
-    if (typeof window === 'undefined' || !window.matchMedia) {
-      expect(userState.effectiveTheme).toBe('dark');
-    } else {
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      expect(userState.effectiveTheme).toBe(systemPrefersDark ? 'dark' : 'light');
-    }
+    expect(userState.effectiveTheme).toBe('dark');
   });
 
   test('explicit light preference ignores system preference', () => {
