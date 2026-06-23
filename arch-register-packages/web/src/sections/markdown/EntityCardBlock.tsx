@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { TbPencil } from 'react-icons/tb';
+import type { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
 import { TypeBadge } from '../../components/TypeBadge';
 import { StatusChip } from '../../components/StatusChip';
 import { useEntity } from '../../hooks/useEntities';
@@ -8,7 +9,42 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
 import styles from './EntityCardBlock.module.css';
 
-export const EntityCardBlock = ({ id, onEdit }: { id: string; onEdit?: () => void }) => {
+export const STANDARD_FIELD_OPTIONS = [
+  { id: 'lifecycle', label: 'Lifecycle' },
+  { id: 'owner', label: 'Owner' },
+  { id: 'description', label: 'Description' },
+  { id: 'tags', label: 'Tags' },
+] as const;
+
+export const DEFAULT_FIELDS = ['lifecycle', 'owner'];
+export const STANDARD_FIELD_IDS: Set<string> = new Set(STANDARD_FIELD_OPTIONS.map(f => f.id));
+
+const renderSchemaFieldValue = (
+  field: EntitySchema['fields'][number],
+  value: unknown
+): string | null => {
+  if (value == null || value === '') return null;
+  if (field.type === 'boolean') return value ? 'Yes' : 'No';
+  if (field.type === 'select') {
+    const opt = (field as ApiSelectField).options.find(o => o.value === String(value));
+    return opt?.label ?? String(value);
+  }
+  if (field.type === 'date') {
+    try { return new Date(String(value)).toLocaleDateString(); } catch { return String(value); }
+  }
+  if (field.type === 'reference' || field.type === 'containment') return null;
+  return String(value);
+};
+
+export const EntityCardBlock = ({
+  id,
+  fields,
+  onEdit,
+}: {
+  id: string;
+  fields?: string;
+  onEdit?: () => void;
+}) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
   const navigate = useNavigate();
@@ -35,31 +71,71 @@ export const EntityCardBlock = ({ id, onEdit }: { id: string; onEdit?: () => voi
   const schema = schemaIdx >= 0 ? schemas[schemaIdx] : undefined;
   const color = schema ? resolveSchemaColor(schema, schemaIdx) : 'var(--accent-fg)';
 
+  const activeFields = fields ? fields.split(',').filter(Boolean) : DEFAULT_FIELDS;
+  const showLifecycle = activeFields.includes('lifecycle');
+  const showOwner = activeFields.includes('owner');
+  const showDescription = activeFields.includes('description');
+  const showTags = activeFields.includes('tags');
+  const schemaFieldIds = activeFields.filter(f => !STANDARD_FIELD_IDS.has(f));
+
+  type LabeledField = { key: string; label: string; value: string };
+  const labeledFields: LabeledField[] = [];
+  if (showOwner && entity._owner) {
+    labeledFields.push({ key: 'owner', label: 'Owner', value: entity._owner.name });
+  }
+  for (const fieldId of schemaFieldIds) {
+    const fieldDef = schema?.fields.find(f => f.id === fieldId);
+    if (!fieldDef) continue;
+    const rendered = renderSchemaFieldValue(fieldDef, (entity as Record<string, unknown>)[fieldId]);
+    if (rendered != null) labeledFields.push({ key: fieldId, label: fieldDef.name, value: rendered });
+  }
+
   return (
     <div
       className={`${styles.card} ${onEdit ? styles.editable : ''}`}
       onDoubleClick={onEdit}
     >
       {onEdit && (
-        <button type="button" className={styles.editBtn} onClick={onEdit} title="Change entity">
+        <button type="button" className={styles.editBtn} onClick={onEdit} title="Edit card">
           <TbPencil size={12} />
         </button>
       )}
+
       <div className={styles.header}>
         <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={18} />
         <span className={styles.name}>{entity._name}</span>
         {schema && <span className={styles.schema}>{schema.name}</span>}
       </div>
-      {(entity._lifecycle ?? entity._owner) && (
+
+      {showLifecycle && entity._lifecycle && (
         <div className={styles.meta}>
-          {entity._lifecycle && (
-            <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
-          )}
-          {entity._owner && (
-            <span className={styles.owner}>{entity._owner.name}</span>
-          )}
+          <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
         </div>
       )}
+
+      {showDescription && entity._description && (
+        <p className={styles.description}>{entity._description}</p>
+      )}
+
+      {showTags && entity._tags.length > 0 && (
+        <div className={styles.tags}>
+          {entity._tags.map(tag => (
+            <span key={tag} className={styles.tag}>{tag}</span>
+          ))}
+        </div>
+      )}
+
+      {labeledFields.length > 0 && (
+        <dl className={styles.schemaFields}>
+          {labeledFields.map(({ key, label, value }) => (
+            <div key={key} className={styles.schemaField}>
+              <dt className={styles.schemaFieldLabel}>{label}</dt>
+              <dd className={styles.schemaFieldValue}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
       <button
         type="button"
         className={styles.link}

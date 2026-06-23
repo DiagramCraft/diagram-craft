@@ -419,12 +419,76 @@
   color: var(--accent-fg);
 }
 
-/* ── Entity picker dialog content ────────────────────────────────────────────── */
+/* ── Entity card dialog ──────────────────────────────────────────────────────── */
 
-.entityPickerDialogContent {
+.entityCardDialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.entityCardSection {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.entityCardSectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cmp-fg-disabled);
+}
+
+.entityCardSelectedChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  background: var(--cmp-bg);
+  font-size: 13px;
+}
+
+.entityCardChipClear {
+  margin-left: auto;
+  padding: 0 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--cmp-fg-disabled);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.entityCardChipClear:hover {
+  color: var(--base-fg);
+}
+
+.entityPickerItemActive {
+  background: var(--cmp-bg);
+}
+
+.entityCardFieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 12px;
+}
+
+.entityCardFieldOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.entityCardFieldOptionSchema {
+  color: var(--base-fg-dim);
 }
 
 .entityPickerInput {

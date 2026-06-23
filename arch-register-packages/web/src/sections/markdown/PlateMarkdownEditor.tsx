@@ -41,8 +41,8 @@ import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { useEntities } from '../../hooks/useEntities';
-import { EntityCardBlock } from './EntityCardBlock';
+import { useEntities, useEntity } from '../../hooks/useEntities';
+import { EntityCardBlock, STANDARD_FIELD_OPTIONS, DEFAULT_FIELDS, STANDARD_FIELD_IDS } from './EntityCardBlock';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Drag handle & drop indicator ──────────────────────────────────────────
@@ -359,9 +359,10 @@ const HrElement = ({ children, ...props }: PlateElementProps) => (
 
 interface EntityCardSlateElement extends TElement {
   entityId: string;
+  fields?: string;
 }
 
-const EntityPickerDialog = ({
+const EntityCardDialog = ({
   element,
   open,
   onClose,
@@ -373,20 +374,58 @@ const EntityPickerDialog = ({
   isNew: boolean;
 }) => {
   const editor = useEditorRef();
-  const { workspaceSlug } = useWorkspaceContext();
-  const [query, setQuery] = useState('');
+  const { workspaceSlug, schemas } = useWorkspaceContext();
 
-  const { data: entities = [] } = useEntities(workspaceSlug, {
+  const currentEntityId = (element as EntityCardSlateElement).entityId ?? '';
+  const currentFields = (element as EntityCardSlateElement).fields ?? '';
+
+  const [query, setQuery] = useState('');
+  const [selectedEntityId, setSelectedEntityId] = useState(currentEntityId);
+  const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
+  const [selectedFields, setSelectedFields] = useState<string[]>(() =>
+    currentFields ? currentFields.split(',').filter(Boolean) : DEFAULT_FIELDS
+  );
+
+  // Fetch the selected entity so we can resolve its schema (hits React Query cache
+  // immediately when the entity card is already rendered on the page)
+  const { data: selectedEntity } = useEntity(workspaceSlug, selectedEntityId);
+  useEffect(() => {
+    if (selectedEntity?._schema?.id) setSelectedSchemaId(selectedEntity._schema.id);
+  }, [selectedEntity]);
+
+  const { data: searchResults = [] } = useEntities(workspaceSlug, {
     q: query || undefined,
     view: 'summary',
     limit: 8,
   });
 
-  const selectEntity = (publicId: string) => {
+  const currentSchema = schemas.find(s => s.id === selectedSchemaId);
+  const schemaFields = currentSchema?.fields?.filter(
+    f => f.type !== 'containment' && f.type !== 'reference'
+  ) ?? [];
+
+  const toggleField = (fieldId: string) =>
+    setSelectedFields(prev =>
+      prev.includes(fieldId) ? prev.filter(f => f !== fieldId) : [...prev, fieldId]
+    );
+
+  const handleSelectEntity = (entity: { _publicId: string; _schema?: { id: string } | null; _name: string }) => {
+    setSelectedEntityId(entity._publicId);
+    setSelectedSchemaId(entity._schema?.id ?? null);
+    setQuery('');
+  };
+
+  const handleConfirm = () => {
     const path = editor.api.findPath(element);
-    if (path) {
-      editor.tf.setNodes({ entityId: publicId }, { at: path });
+    if (!selectedEntityId || !path) {
+      if (isNew && path) editor.tf.removeNodes({ at: path });
+      onClose();
+      return;
     }
+    editor.tf.setNodes(
+      { entityId: selectedEntityId, fields: selectedFields.join(',') },
+      { at: path }
+    );
     onClose();
   };
 
@@ -402,38 +441,88 @@ const EntityPickerDialog = ({
     <Dialog
       open={open}
       onClose={handleClose}
-      title="Choose entity"
-      width={420}
-      buttons={[{ label: 'Cancel', type: 'cancel', onClick: handleClose }]}
+      title="Entity card"
+      width={440}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: handleClose },
+        { label: 'Save', type: 'default', disabled: !selectedEntityId, onClick: handleConfirm },
+      ]}
     >
-      <div className={styles.entityPickerDialogContent}>
-        <input
-          // eslint-disable-next-line jsx-a11y/no-autofocus
-          autoFocus
-          type="text"
-          className={styles.entityPickerInput}
-          placeholder="Search for an entity…"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
-        {entities.length > 0 ? (
-          <div className={styles.entityPickerResults}>
-            {entities.map(entity => (
+      <div className={styles.entityCardDialogContent}>
+        <div className={styles.entityCardSection}>
+          <div className={styles.entityCardSectionLabel}>Entity</div>
+          {selectedEntityId && selectedEntity && !query && (
+            <div className={styles.entityCardSelectedChip}>
+              <span className={styles.entityPickerName}>{selectedEntity._name}</span>
+              <span className={styles.entityPickerSchema}>{selectedEntity._schema?.name}</span>
               <button
-                key={entity._publicId}
                 type="button"
-                className={styles.entityPickerItem}
-                onClick={() => selectEntity(entity._publicId)}
+                className={styles.entityCardChipClear}
+                onClick={() => { setSelectedEntityId(''); setSelectedSchemaId(null); }}
               >
-                <span className={styles.entityPickerName}>{entity._name}</span>
-                <span className={styles.entityPickerSchema}>{entity._schema?.name}</span>
+                ×
               </button>
-            ))}
+            </div>
+          )}
+          <input
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            type="text"
+            className={styles.entityPickerInput}
+            placeholder={selectedEntityId ? 'Search to change entity…' : 'Search for an entity…'}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+          {query && (
+            searchResults.length > 0 ? (
+              <div className={styles.entityPickerResults}>
+                {searchResults.map(entity => (
+                  <button
+                    key={entity._publicId}
+                    type="button"
+                    className={`${styles.entityPickerItem} ${entity._publicId === selectedEntityId ? styles.entityPickerItemActive : ''}`}
+                    onClick={() => handleSelectEntity(entity)}
+                  >
+                    <span className={styles.entityPickerName}>{entity._name}</span>
+                    <span className={styles.entityPickerSchema}>{entity._schema?.name}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.entityPickerHint}>No entities found</div>
+            )
+          )}
+        </div>
+
+        {selectedEntityId && (
+          <div className={styles.entityCardSection}>
+            <div className={styles.entityCardSectionLabel}>Fields</div>
+            <div className={styles.entityCardFieldGrid}>
+              {STANDARD_FIELD_OPTIONS.map(opt => (
+                <label key={opt.id} className={styles.entityCardFieldOption}>
+                  <input
+                    type="checkbox"
+                    checked={selectedFields.includes(opt.id)}
+                    onChange={() => toggleField(opt.id)}
+                  />
+                  {opt.label}
+                </label>
+              ))}
+              {schemaFields.map(field => (
+                <label
+                  key={field.id}
+                  className={`${styles.entityCardFieldOption} ${STANDARD_FIELD_IDS.has(field.id as string) ? '' : styles.entityCardFieldOptionSchema}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedFields.includes(field.id)}
+                    onChange={() => toggleField(field.id)}
+                  />
+                  {field.name}
+                </label>
+              ))}
+            </div>
           </div>
-        ) : query ? (
-          <div className={styles.entityPickerHint}>No entities found</div>
-        ) : (
-          <div className={styles.entityPickerHint}>Type to search…</div>
         )}
       </div>
     </Dialog>
@@ -442,6 +531,7 @@ const EntityPickerDialog = ({
 
 const EntityCardPlateElement = ({ element, children, ...props }: PlateElementProps) => {
   const entityId = (element as EntityCardSlateElement).entityId ?? '';
+  const fields = (element as EntityCardSlateElement).fields ?? '';
   const [pickerOpen, setPickerOpen] = useState(() => !entityId);
   const isNew = !entityId;
 
@@ -451,13 +541,13 @@ const EntityCardPlateElement = ({ element, children, ...props }: PlateElementPro
     <Draggable
       element={element}
       extraContextMenuItems={(onClose) => (
-        <Menu.Item onClick={() => { openPicker(); onClose(); }}>Change entity</Menu.Item>
+        <Menu.Item onClick={() => { openPicker(); onClose(); }}>Edit card</Menu.Item>
       )}
       {...props}
     >
       <div contentEditable={false}>
         {entityId ? (
-          <EntityCardBlock id={entityId} onEdit={openPicker} />
+          <EntityCardBlock id={entityId} fields={fields} onEdit={openPicker} />
         ) : (
           <div className={styles.entityCardPlaceholder} onClick={openPicker}>
             <TbId size={16} />
@@ -467,7 +557,7 @@ const EntityCardPlateElement = ({ element, children, ...props }: PlateElementPro
       </div>
       {children}
       {pickerOpen && (
-        <EntityPickerDialog
+        <EntityCardDialog
           element={element}
           open={pickerOpen}
           onClose={() => setPickerOpen(false)}
@@ -951,13 +1041,20 @@ const HeadingBreakPlugin = createPlatePlugin({
 const mdxRules: Record<string, any> = {
   EntityCard: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    deserialize: (mdastNode: any, _deco: unknown, options: any) => ({
-      children: [{ text: '' }],
-      type: getPluginType(options.editor, 'EntityCard'),
-      entityId: (parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>)['id'] ?? '',
-    }),
+    deserialize: (mdastNode: any, _deco: unknown, options: any) => {
+      const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
+      return {
+        children: [{ text: '' }],
+        type: getPluginType(options.editor, 'EntityCard'),
+        entityId: attrs['id'] ?? '',
+        fields: attrs['fields'] ?? '',
+      };
+    },
     serialize: (slateNode: any) => ({
-      attributes: propsToAttributes({ id: slateNode.entityId ?? '' }),
+      attributes: propsToAttributes({
+        id: slateNode.entityId ?? '',
+        ...(slateNode.fields ? { fields: slateNode.fields } : {}),
+      }),
       children: [],
       name: 'EntityCard',
       type: 'mdxJsxFlowElement',
