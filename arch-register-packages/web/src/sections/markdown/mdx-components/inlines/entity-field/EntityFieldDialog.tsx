@@ -4,7 +4,7 @@ import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../../hooks/useEntities';
-import { STANDARD_FIELD_OPTIONS, STANDARD_FIELD_IDS } from '../../blocks/entity-card/EntityCard';
+import { STANDARD_FIELD_OPTIONS, STANDARD_FIELD_IDS, filterSchemaFields } from '../../blocks/entity-card/EntityCard';
 import { EntityPicker } from '../../../../../components/EntityPicker';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import type { EntityFieldSlateElement } from './types';
@@ -37,8 +37,7 @@ export const EntityFieldDialog = ({
   }, [selectedEntity]);
 
   const currentSchema = schemas.find(s => s.id === selectedSchemaId);
-  const schemaFields =
-    currentSchema?.fields?.filter(f => f.type !== 'containment' && f.type !== 'reference') ?? [];
+  const schemaFields = filterSchemaFields(currentSchema?.fields ?? []);
 
   const handleConfirm = () => {
     const path = editor.api.findPath(element);

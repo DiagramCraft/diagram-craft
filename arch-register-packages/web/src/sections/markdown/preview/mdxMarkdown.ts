@@ -2,13 +2,11 @@ import {
   type ASTNode,
   type BlockParser,
   InlineParser,
-  MarkdownEngine,
   type Parser,
   type ParserState
 } from '@diagram-craft/markdown';
+import { markdownEngine } from './markdownAstUtils';
 import { MDX_COMPONENTS, type MdxComponentName } from '../mdx-components/mdxRegistry';
-
-const engine = new MarkdownEngine();
 
 const JSX_BLOCK_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>\s*$/;
 const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;
@@ -30,6 +28,10 @@ const validateProps = (
       allowedProps.includes(key as (typeof allowedProps)[number])
     ) {
       validated[key] = value;
+    } else if (import.meta.env?.DEV) {
+      console.warn(
+        `[MDX] Prop "${key}"="${value}" was filtered for <${name}> — not in allowedProps or failed prop name/value validation`
+      );
     }
   }
   return validated;
@@ -98,7 +100,7 @@ class MdxComponentInlineHandler extends InlineParser {
 }
 
 const parseMarkdownWithComponents = (body: string): ASTNode[] => {
-  return engine
+  return markdownEngine
     .parser('strict', {
       block: [new MdxComponentBlockHandler()],
       inline: [new MdxComponentInlineHandler()]

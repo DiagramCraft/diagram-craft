@@ -95,9 +95,9 @@ describe('diffMarkdown', () => {
     const rows = diffMarkdown('Old text.', 'New text.');
     const modified = rows.find(r => r.kind === 'modified');
     if (modified?.kind === 'modified') {
-      expect(modified.inlineHtml).toContain('<del ');
+      expect(modified.inlineHtml).toContain('<del>');
       expect(modified.inlineHtml).toContain('Old');
-      expect(modified.inlineHtml).toContain('<ins ');
+      expect(modified.inlineHtml).toContain('<ins>');
       expect(modified.inlineHtml).toContain('New');
     }
   });
@@ -109,8 +109,8 @@ describe('diffMarkdown', () => {
       // "Hello" and "world." should appear without del/ins wrapping
       expect(modified.inlineHtml).toContain('Hello');
       expect(modified.inlineHtml).toContain('world.');
-      expect(modified.inlineHtml).toContain('<del ');
-      expect(modified.inlineHtml).toContain('<ins ');
+      expect(modified.inlineHtml).toContain('<del>');
+      expect(modified.inlineHtml).toContain('<ins>');
     }
   });
 

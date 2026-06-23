@@ -542,6 +542,22 @@
 }
 
 
+.diffRowModified :global(ins) {
+  background: color-mix(in srgb, #22c55e 18%, transparent);
+  color: var(--success-fg, #15803d);
+  text-decoration: none;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.diffRowModified :global(del) {
+  background: color-mix(in srgb, #ef4444 18%, transparent);
+  color: var(--error-fg, #b91c1c);
+  text-decoration: line-through;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 .diffRowMarker {
   position: absolute;
   left: 4px;

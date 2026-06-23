@@ -8,6 +8,9 @@ import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
 import styles from './EntityCard.module.css';
 
+export const filterSchemaFields = <T extends { type: string }>(fields: T[]): T[] =>
+  fields.filter(f => f.type !== 'containment' && f.type !== 'reference');
+
 export const STANDARD_FIELD_OPTIONS = [
   { id: 'lifecycle', label: 'Lifecycle' },
   { id: 'owner', label: 'Owner' },

@@ -23,7 +23,6 @@ const resolveFieldValue = (
     return Array.isArray(tags) && tags.length > 0 ? tags.join(', ') : null;
   }
 
-  // Schema field
   if (!STANDARD_FIELD_IDS.has(field)) {
     const schema = schemas.find(s => s.id === (entity._schema as { id?: string } | null)?.id);
     const fieldDef = schema?.fields.find(f => f.id === field);
@@ -37,6 +36,7 @@ const resolveFieldValue = (
 
 export const EntityField = ({ id, field }: { id: string; field: string }) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
+  // useEntity has enabled: !!entityId internally, so no request fires when id is empty
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
 
   if (!id || !field) return null;

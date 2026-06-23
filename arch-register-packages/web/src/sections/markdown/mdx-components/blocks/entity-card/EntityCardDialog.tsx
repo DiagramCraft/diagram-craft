@@ -4,7 +4,7 @@ import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../../hooks/useEntities';
-import { STANDARD_FIELD_OPTIONS, DEFAULT_FIELDS, STANDARD_FIELD_IDS } from './EntityCard';
+import { STANDARD_FIELD_OPTIONS, DEFAULT_FIELDS, STANDARD_FIELD_IDS, filterSchemaFields } from './EntityCard';
 import { EntityPicker } from '../../../../../components/EntityPicker';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import type { EntityCardSlateElement } from './types';
@@ -39,8 +39,7 @@ export const EntityCardDialog = ({
   }, [selectedEntity]);
 
   const currentSchema = schemas.find(s => s.id === selectedSchemaId);
-  const schemaFields =
-    currentSchema?.fields?.filter(f => f.type !== 'containment' && f.type !== 'reference') ?? [];
+  const schemaFields = filterSchemaFields(currentSchema?.fields ?? []);
 
   const toggleField = (fieldId: string) =>
     setSelectedFields(prev =>
