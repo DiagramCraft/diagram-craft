@@ -268,7 +268,7 @@ cat > "${AR_SERVER_ENV}" <<EOF
 DB_DRIVER=sqlite
 SQLITE_PATH=./data/arch-register.sqlite
 AUTH_MODE=local
-JWT_SECRET=worktree-dev-secret-key-min-32-characters-ok
+JWT_SECRET=your-secret-key-here-min-32-characters-required
 EOF
 
 # ---------------------------------------------------------------------------
