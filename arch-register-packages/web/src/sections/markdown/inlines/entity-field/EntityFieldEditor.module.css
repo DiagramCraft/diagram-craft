@@ -1,0 +1,162 @@
+/* ── Inline placeholder (shown in editor when empty) ─────────────────────── */
+
+.placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 8px;
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--cmp-fg-disabled);
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: border-color 80ms, color 80ms;
+}
+
+.placeholder:hover {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+}
+
+/* ── Dialog ─────────────────────────────────────────────────────────────── */
+
+.dialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cmp-fg-disabled);
+}
+
+.selectedChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  background: var(--cmp-bg);
+  font-size: 13px;
+}
+
+.chipClear {
+  margin-left: auto;
+  padding: 0 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--cmp-fg-disabled);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.chipClear:hover {
+  color: var(--base-fg);
+}
+
+/* ── Entity search picker ─────────────────────────────────────────────── */
+
+.pickerInput {
+  width: 100%;
+  font-size: 13px;
+  padding: 5px 8px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--base-fg);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.pickerInput:focus {
+  border-color: var(--accent-fg);
+}
+
+.pickerResults {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.pickerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: var(--r-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 8px;
+  color: var(--base-fg);
+}
+
+.pickerItem:hover,
+.pickerItemActive {
+  background: var(--cmp-bg);
+}
+
+.pickerName {
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickerSchema {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  white-space: nowrap;
+}
+
+.pickerHint {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  padding: 2px 8px;
+}
+
+/* ── Field picker ────────────────────────────────────────────────────────── */
+
+.fieldList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px 12px;
+}
+
+.fieldOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 3px 0;
+  border-radius: var(--r-sm);
+}
+
+.fieldOptionSchema {
+  color: var(--base-fg-dim);
+}
+
+.fieldOptionSelected {
+  color: var(--accent-fg);
+  font-weight: 500;
+}

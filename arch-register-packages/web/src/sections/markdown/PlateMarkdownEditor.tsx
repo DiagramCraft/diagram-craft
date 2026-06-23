@@ -29,10 +29,11 @@ import {
   flip
 } from '@platejs/floating';
 import type { TElement, Value } from 'platejs';
-import { TbId } from 'react-icons/tb';
+import { TbId, TbHash } from 'react-icons/tb';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { Draggable, isListParagraph, getNodeText } from './Draggable';
 import { EntityCardPlateElement, entityCardMdxRule } from './blocks/entity-card/EntityCardPlateElement';
+import { EntityFieldPlateElement, entityFieldMdxRule } from './inlines/entity-field/EntityFieldPlateElement';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
@@ -218,6 +219,21 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
       insertOrReplaceBlock(editor, {
         type: 'EntityCard',
         entityId: '',
+        children: [{ text: '' }],
+      });
+    },
+  },
+  {
+    key: 'entity-field',
+    label: 'Field Embed',
+    description: 'Embed a live entity field value',
+    icon: <span className={styles.slashIcon}><TbHash size={14} /></span>,
+    keywords: ['field', 'entity', 'value', 'embed', 'inline'],
+    onSelect: (editor) => {
+      editor.tf.insertNodes({
+        type: 'EntityField',
+        entityId: '',
+        field: '',
         children: [{ text: '' }],
       });
     },
@@ -558,6 +574,7 @@ const HeadingBreakPlugin = createPlatePlugin({
 // biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing for mdast nodes
 const mdxRules: Record<string, any> = {
   EntityCard: entityCardMdxRule,
+  EntityField: entityFieldMdxRule,
 };
 
 const editorPlugins = [
@@ -602,6 +619,10 @@ const editorPlugins = [
     key: 'EntityCard',
     node: { isElement: true, isVoid: true }
   }).withComponent(EntityCardPlateElement),
+  createPlatePlugin({
+    key: 'EntityField',
+    node: { isElement: true, isVoid: true, isInline: true }
+  }).withComponent(EntityFieldPlateElement),
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
   createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(
     ItalicLeaf

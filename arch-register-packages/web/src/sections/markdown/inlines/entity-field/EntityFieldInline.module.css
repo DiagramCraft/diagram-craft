@@ -1,0 +1,26 @@
+.chip {
+  display: inline;
+  font-weight: 600;
+  color: var(--base-fg);
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  padding: 0 5px;
+  font-size: 0.9em;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.chipLoading {
+  color: var(--cmp-fg-disabled);
+  font-weight: 400;
+  font-style: italic;
+  border-style: dashed;
+}
+
+.chipUnavailable {
+  color: var(--error-fg, var(--cmp-fg-disabled));
+  border-style: dashed;
+  font-weight: 400;
+  font-style: italic;
+}

@@ -19,7 +19,7 @@ export const STANDARD_FIELD_OPTIONS = [
 export const DEFAULT_FIELDS = ['lifecycle', 'owner'];
 export const STANDARD_FIELD_IDS: Set<string> = new Set(STANDARD_FIELD_OPTIONS.map(f => f.id));
 
-const renderSchemaFieldValue = (
+export const renderSchemaFieldValue = (
   field: EntitySchema['fields'][number],
   value: unknown
 ): string | null => {
