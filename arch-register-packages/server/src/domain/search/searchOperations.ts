@@ -17,6 +17,24 @@ const includesQuery = (value: unknown, query: string) =>
     .toLowerCase()
     .includes(query);
 
+const fileMatchesQuery = (
+  file: {
+    name: string;
+    path: string;
+    metadata_title?: string | null;
+    metadata_description?: string | null;
+    metadata_category?: string | null;
+    metadata_keywords?: string[];
+  },
+  query: string
+) =>
+  includesQuery(file.name, query) ||
+  includesQuery(file.path, query) ||
+  includesQuery(file.metadata_title, query) ||
+  includesQuery(file.metadata_description, query) ||
+  includesQuery(file.metadata_category, query) ||
+  (file.metadata_keywords?.some(keyword => includesQuery(keyword, query)) ?? false);
+
 const collectMatchedMetadata = (entity: EntityDbResult, query: string) => {
   const matches: string[] = [];
   if (includesQuery(entity.name, query)) matches.push('name');
@@ -90,7 +108,9 @@ export const searchWorkspace = async (
     types.includes('schemas') || types.includes('entities')
       ? db.catalog.listSchemas(ws)
       : Promise.resolve([]),
-    types.includes('entities') ? db.catalog.listEntities(ws) : Promise.resolve([])
+    types.includes('entities') || types.includes('files')
+      ? db.catalog.listEntities(ws)
+      : Promise.resolve([])
   ]);
 
   const visibleEntities = authCtx
@@ -110,8 +130,13 @@ export const searchWorkspace = async (
     : [];
 
   const filesResults: Array<{
-    projectId: string;
-    projectName: string;
+    scope: 'project' | 'entity' | 'workspace';
+    projectId: string | null;
+    projectPublicId: string | null;
+    projectName: string | null;
+    entityId: string | null;
+    entityPublicId: string | null;
+    entityName: string | null;
     fileId: string;
     path: string;
     name: string;
@@ -127,25 +152,31 @@ export const searchWorkspace = async (
   }> = [];
 
   if (types.includes('files')) {
-    const projectMap = new Map(visibleProjects.map(project => [project.id, project.name]));
-    const projectIds = [...projectMap.keys()];
-    const filesByProject = await Promise.all(
-      projectIds.map(async projectId => ({
-        projectId,
-        files: await db.project.listContentNodes(ws, projectId)
+    const projectFiles = await Promise.all(
+      visibleProjects.map(async project => ({
+        project,
+        files: await db.project.listContentNodes(ws, project.id)
       }))
     );
-    for (const { projectId, files } of filesByProject) {
-      const projectName = projectMap.get(projectId) ?? projectId;
+    const entityFiles = await Promise.all(
+      visibleEntities.map(async entity => ({
+        entity,
+        files: await db.project.listEntityContentNodes(ws, entity.id)
+      }))
+    );
+    const workspaceFiles = await db.project.listWorkspaceContentNodes(ws);
+
+    for (const { project, files } of projectFiles) {
       for (const file of files) {
-        if (
-          !includesQuery(file.name, normalizedQuery) &&
-          !includesQuery(file.path, normalizedQuery)
-        )
-          continue;
+        if (!fileMatchesQuery(file, normalizedQuery)) continue;
         filesResults.push({
-          projectId: file.project_id ?? projectId,
-          projectName,
+          scope: 'project',
+          projectId: file.project_id ?? project.id,
+          projectPublicId: project.public_id ?? null,
+          projectName: project.name,
+          entityId: null,
+          entityPublicId: null,
+          entityName: null,
           fileId: file.id,
           path: file.path,
           name: file.name,
@@ -168,8 +199,78 @@ export const searchWorkspace = async (
         });
       }
     }
+
+    for (const { entity, files } of entityFiles) {
+      for (const file of files) {
+        if (!fileMatchesQuery(file, normalizedQuery)) continue;
+        filesResults.push({
+          scope: 'entity',
+          projectId: null,
+          projectPublicId: null,
+          projectName: null,
+          entityId: entity.id,
+          entityPublicId: entity.public_id ?? null,
+          entityName: entity.name,
+          fileId: file.id,
+          path: file.path,
+          name: file.name,
+          comment_count: file.comment_count,
+          unresolved_comment_count: file.unresolved_comment_count,
+          content_metadata:
+            file.metadata_title != null ||
+            file.metadata_description != null ||
+            file.metadata_company != null ||
+            file.metadata_category != null ||
+            (file.metadata_keywords?.length ?? 0) > 0
+              ? {
+                  title: file.metadata_title ?? null,
+                  description: file.metadata_description ?? null,
+                  company: file.metadata_company ?? null,
+                  category: file.metadata_category ?? null,
+                  keywords: file.metadata_keywords ?? []
+                }
+              : null
+        });
+      }
+    }
+
+    for (const file of workspaceFiles) {
+      if (!fileMatchesQuery(file, normalizedQuery)) continue;
+      filesResults.push({
+        scope: 'workspace',
+        projectId: null,
+        projectPublicId: null,
+        projectName: null,
+        entityId: null,
+        entityPublicId: null,
+        entityName: null,
+        fileId: file.id,
+        path: file.path,
+        name: file.name,
+        comment_count: file.comment_count,
+        unresolved_comment_count: file.unresolved_comment_count,
+        content_metadata:
+          file.metadata_title != null ||
+          file.metadata_description != null ||
+          file.metadata_company != null ||
+          file.metadata_category != null ||
+          (file.metadata_keywords?.length ?? 0) > 0
+            ? {
+                title: file.metadata_title ?? null,
+                description: file.metadata_description ?? null,
+                company: file.metadata_company ?? null,
+                category: file.metadata_category ?? null,
+                keywords: file.metadata_keywords ?? []
+              }
+            : null
+      });
+    }
+
     filesResults.sort(
-      (a, b) => a.projectName.localeCompare(b.projectName) || a.path.localeCompare(b.path)
+      (a, b) =>
+        (a.projectName ?? a.entityName ?? 'Workspace').localeCompare(
+          b.projectName ?? b.entityName ?? 'Workspace'
+        ) || a.path.localeCompare(b.path)
     );
   }
 

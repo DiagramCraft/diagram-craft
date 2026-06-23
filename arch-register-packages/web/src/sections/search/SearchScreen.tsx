@@ -91,6 +91,23 @@ const snippetAround = (text: string | null | undefined, q: string, max = 140) =>
   return (start > 0 ? '…' : '') + t.slice(start, end) + (end < t.length ? '…' : '');
 };
 
+const getFileMetadataSummary = (file: ProjectFileSearchResult, q: string) => {
+  const parts: string[] = [];
+  const description = snippetAround(file.content_metadata?.description, q, 110);
+  if (description) parts.push(description);
+  if (file.content_metadata?.category) parts.push(`Category: ${file.content_metadata.category}`);
+  return parts.join(' · ');
+};
+
+const getFileFolder = (path: string) =>
+  path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : 'Root';
+
+const getFileContextLabel = (file: ProjectFileSearchResult) => {
+  if (file.scope === 'project') return file.projectName ?? 'Project';
+  if (file.scope === 'entity') return file.entityName ?? 'Entity';
+  return 'Workspace';
+};
+
 // ── Screen ───────────────────────────────────────────────────
 
 export const SearchScreen = () => {
@@ -273,6 +290,28 @@ export const SearchScreen = () => {
     [routerNavigate, workspaceSlug]
   );
 
+  const navigateToEntityFolder = useCallback(
+    (entityId: string, folder: string | null) => {
+      routerNavigate(
+        entityDetailRoute(workspaceSlug, asEntityPublicId(entityId), {
+          contentFolder: folder ?? undefined
+        })
+      );
+    },
+    [routerNavigate, workspaceSlug]
+  );
+
+  const navigateToWorkspaceFolder = useCallback(
+    (folder: string | null) => {
+      routerNavigate({
+        to: '/$workspaceSlug/content',
+        params: { workspaceSlug },
+        search: { contentFolder: folder ?? undefined }
+      });
+    },
+    [routerNavigate, workspaceSlug]
+  );
+
   const openRow = useCallback(
     (row: { kind: string; id: string; data: unknown }) => {
       if (row.kind === 'entity') {
@@ -281,15 +320,19 @@ export const SearchScreen = () => {
         navigateToProject(row.id);
       } else if (row.kind === 'file') {
         const f = row.data as ProjectFileSearchResult;
-        navigateToProjectFolder(
-          f.projectId,
-          f.path.includes('/') ? f.path.slice(0, f.path.lastIndexOf('/')) : null
-        );
+        const folder = f.path.includes('/') ? f.path.slice(0, f.path.lastIndexOf('/')) : null;
+        if (f.scope === 'project' && f.projectId) {
+          navigateToProjectFolder(f.projectId, folder);
+        } else if (f.scope === 'entity' && f.entityPublicId) {
+          navigateToEntityFolder(f.entityPublicId, folder);
+        } else if (f.scope === 'workspace') {
+          navigateToWorkspaceFolder(folder);
+        }
       } else if (row.kind === 'schema') {
         navigateToSchema(row.id);
       }
     },
-    [navigateToEntity, navigateToProject, navigateToProjectFolder, navigateToSchema]
+    [navigateToEntity, navigateToProject, navigateToProjectFolder, navigateToSchema, navigateToEntityFolder, navigateToWorkspaceFolder]
   );
 
   // Keyboard navigation
@@ -478,6 +521,8 @@ export const SearchScreen = () => {
             onEntityClick={navigateToEntity}
             onProjectClick={navigateToProject}
             onProjectFolderClick={navigateToProjectFolder}
+            onEntityFolderClick={navigateToEntityFolder}
+            onWorkspaceFolderClick={navigateToWorkspaceFolder}
             onSchemaClick={navigateToSchema}
             q={trimmed}
             lifecycleStates={lifecycleStates}
@@ -617,6 +662,7 @@ const ResultRow = ({
 
   if (row.kind === 'file') {
     const f = row.data as ProjectFileSearchResult;
+    const metadataSummary = getFileMetadataSummary(f, q);
     return (
       <DiagramMetadataPopover
         type="diagram"
@@ -648,9 +694,14 @@ const ResultRow = ({
               </button>
               <Chip tone="ghost">Diagram</Chip>
             </div>
+            {metadataSummary && (
+              <div className={styles.rowSnippet}>
+                <Hi s={metadataSummary} q={q} />
+              </div>
+            )}
             <div className={styles.rowMeta}>
               <span className={styles.rowPath}>
-                <TbHome size={10} /> <Hi s={f.projectName} q={q} />
+                <TbHome size={10} /> <Hi s={getFileContextLabel(f)} q={q} />
                 {f.path.includes('/') && (
                   <>
                     <span className={styles.dim}>/</span>
@@ -658,6 +709,11 @@ const ResultRow = ({
                   </>
                 )}
               </span>
+              {f.content_metadata?.keywords.slice(0, 4).map(keyword => (
+                <Chip key={keyword} tone="ghost">
+                  <Hi s={keyword} q={q} />
+                </Chip>
+              ))}
             </div>
           </div>
           <RowGo onOpen={onOpen} />
@@ -747,6 +803,8 @@ const PreviewPane = ({
   onEntityClick,
   onProjectClick,
   onProjectFolderClick,
+  onEntityFolderClick,
+  onWorkspaceFolderClick,
   onSchemaClick,
   q,
   lifecycleStates
@@ -756,6 +814,8 @@ const PreviewPane = ({
   onEntityClick: (entityId: string) => void;
   onProjectClick: (projectId: string) => void;
   onProjectFolderClick: (projectId: string, folder: string | null) => void;
+  onEntityFolderClick: (entityId: string, folder: string | null) => void;
+  onWorkspaceFolderClick: (folder: string | null) => void;
   onSchemaClick: (schemaId: string) => void;
   q: string;
   lifecycleStates: WorkspaceLifecycleState[];
@@ -885,7 +945,9 @@ const PreviewPane = ({
 
   if (preview.type === 'file') {
     const f = preview.data;
-    const folder = f.path.includes('/') ? f.path.slice(0, f.path.lastIndexOf('/')) : 'Root';
+    const folder = getFileFolder(f.path);
+    const locationLabel =
+      f.scope === 'project' ? 'Project' : f.scope === 'entity' ? 'Entity' : 'Workspace';
     return (
       <div className={styles.previewBody}>
         <div className={styles.previewHead}>
@@ -904,9 +966,17 @@ const PreviewPane = ({
           <dd>
             <Hi s={f.name} q={q} />
           </dd>
-          <dt>Project</dt>
+          {f.content_metadata?.title && (
+            <>
+              <dt>Metadata title</dt>
+              <dd>
+                <Hi s={f.content_metadata.title} q={q} />
+              </dd>
+            </>
+          )}
+          <dt>{locationLabel}</dt>
           <dd>
-            <Hi s={f.projectName} q={q} />
+            <Hi s={getFileContextLabel(f)} q={q} />
           </dd>
           <dt>Folder</dt>
           <dd>
@@ -916,14 +986,54 @@ const PreviewPane = ({
           <dd className={styles.mono}>
             <Hi s={f.path} q={q} />
           </dd>
+          {f.content_metadata?.description && (
+            <>
+              <dt>Description</dt>
+              <dd>
+                <Hi s={f.content_metadata.description} q={q} />
+              </dd>
+            </>
+          )}
+          {f.content_metadata?.category && (
+            <>
+              <dt>Category</dt>
+              <dd>
+                <Hi s={f.content_metadata.category} q={q} />
+              </dd>
+            </>
+          )}
+          {f.content_metadata?.keywords.length ? (
+            <>
+              <dt>Keywords</dt>
+              <dd className={styles.tags}>
+                {f.content_metadata.keywords.map(keyword => (
+                  <Chip key={keyword} tone="ghost">
+                    <Hi s={keyword} q={q} />
+                  </Chip>
+                ))}
+              </dd>
+            </>
+          ) : null}
         </dl>
         <div className={styles.previewActions}>
           <button
             type="button"
             className={styles.previewBtn}
-            onClick={() => onProjectFolderClick(f.projectId, f.path.includes('/') ? folder : null)}
+            onClick={() => {
+              if (f.scope === 'project' && f.projectId) {
+                onProjectFolderClick(f.projectId!, f.path.includes('/') ? folder : null);
+                return;
+              }
+              if (f.scope === 'entity' && f.entityPublicId) {
+                onEntityFolderClick(f.entityPublicId, f.path.includes('/') ? folder : null);
+                return;
+              }
+              if (f.scope === 'workspace') {
+                onWorkspaceFolderClick(f.path.includes('/') ? folder : null);
+              }
+            }}
           >
-            Open in project <TbArrowRight size={11} />
+            Open {f.scope === 'project' ? 'in project' : f.scope === 'entity' ? 'entity' : 'workspace'} <TbArrowRight size={11} />
           </button>
         </div>
       </div>

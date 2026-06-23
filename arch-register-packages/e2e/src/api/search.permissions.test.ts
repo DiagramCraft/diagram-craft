@@ -1,6 +1,8 @@
 import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 
+const now = new Date('2026-02-02T00:00:00.000Z');
+
 const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
   restrictedSeed: [
     async ({ server, resources }, use) => {
@@ -12,6 +14,18 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
       if (!customerPortal) {
         throw new Error('Expected seeded customer portal entity to exist');
       }
+
+      const hiddenDiagram = await server.db.project.upsertContentNode({
+        workspace: resources.workspaceId,
+        project_id: resources.projectIds.authMigration,
+        path: 'flows/login-sequence.dgc',
+        name: 'Login Sequence',
+        size_bytes: 0,
+        comment_count: 0,
+        unresolved_comment_count: 0,
+        updated_at: now,
+        created_atIfNew: now
+      });
 
       await server.db.catalog.updateEntity(resources.workspaceId, customerPortal.id, {
         slug: customerPortal.slug,
@@ -27,7 +41,18 @@ const test = createPermissionApiTest().extend<{ restrictedSeed: true }>({
         schema_id: customerPortal.schema_id,
         data: customerPortal.data,
         visibility_mode: 'restricted',
-        updated_at: new Date('2026-02-02T00:00:00.000Z')
+        updated_at: now
+      });
+
+      await server.db.project.upsertContentMetadata({
+        workspace: resources.workspaceId,
+        node_id: hiddenDiagram.id,
+        title: 'Zero trust login flow',
+        description: 'Restricted review of sign-in sequence hardening.',
+        company: null,
+        category: 'Security',
+        keywords: ['boundary-review'],
+        updated_at: now
       });
 
       await use(true);
@@ -72,8 +97,14 @@ test.describe('search permission routes', () => {
       query: { q: 'auth', types: 'projects,files' }
     });
 
+    const metadataResult = await personas.workspaceViewer.orpc.search.query({
+      params: { workspace: 'default' },
+      query: { q: 'boundary-review', types: 'files' }
+    });
+
     expect(result.projects).toEqual([]);
     expect(result.files).toEqual([]);
+    expect(metadataResult.files).toEqual([]);
   });
 
   test('non-disclosure: outsider cannot discover restricted entities by exact query', async ({

@@ -13,8 +13,13 @@ const projectSearchResultSchema = z.object({
 });
 
 const fileSearchResultSchema = z.object({
-  projectId: z.string(),
-  projectName: z.string(),
+  scope: z.enum(['project', 'entity', 'workspace']),
+  projectId: z.string().nullable(),
+  projectPublicId: z.string().nullable(),
+  projectName: z.string().nullable(),
+  entityId: z.string().nullable(),
+  entityPublicId: z.string().nullable(),
+  entityName: z.string().nullable(),
   fileId: z.string(),
   path: z.string(),
   name: z.string(),

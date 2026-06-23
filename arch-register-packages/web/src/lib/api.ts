@@ -280,8 +280,13 @@ export type ProjectSearchResult = {
 };
 
 export type ProjectFileSearchResult = {
-  projectId: string;
-  projectName: string;
+  scope: 'project' | 'entity' | 'workspace';
+  projectId: string | null;
+  projectPublicId: string | null;
+  projectName: string | null;
+  entityId: string | null;
+  entityPublicId: string | null;
+  entityName: string | null;
   fileId: string;
   path: string;
   name: string;

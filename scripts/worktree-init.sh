@@ -40,6 +40,7 @@ LINK_TARGETS=(
   "packages/main/public/stencils"
   ".claude"
   ".codex"
+  ".local"
 )
 
 for rel in "${LINK_TARGETS[@]}"; do
