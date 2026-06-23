@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { parseMarkdownPreview, renderMarkdownPreview } from './mdxMarkdown';
+import { parseMarkdownPreview } from './mdxMarkdown';
+import { renderMarkdownPreview } from './mdxRenderNode';
 
 type MdxPreviewProps = {
   body: string;

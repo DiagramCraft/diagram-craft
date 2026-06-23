@@ -31,7 +31,7 @@ import {
 import type { TElement, Value } from 'platejs';
 import { TbId, TbHash } from 'react-icons/tb';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
-import { Draggable, isListParagraph, getNodeText } from './Draggable';
+import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
 import { EntityCardEditable, entityCardMdxRule } from './blocks/entity-card/EntityCardEditable';
 import {
   EntityFieldEditable,
@@ -42,13 +42,13 @@ import styles from './PlateMarkdownEditor.module.css';
 // ─── Block element components ───────────────────────────────────────────────
 
 const PElement = (props: PlateElementProps) => (
-  <Draggable as={isListParagraph(props.element) ? 'div' : 'p'} {...props} />
+  <EditorBlock as={isListParagraph(props.element) ? 'div' : 'p'} {...props} />
 );
-const H1Element = (props: PlateElementProps) => <Draggable as="h1" {...props} />;
-const H2Element = (props: PlateElementProps) => <Draggable as="h2" {...props} />;
-const H3Element = (props: PlateElementProps) => <Draggable as="h3" {...props} />;
-const BlockquoteElement = (props: PlateElementProps) => <Draggable as="blockquote" {...props} />;
-const CodeBlockElement = (props: PlateElementProps) => <Draggable as="pre" {...props} />;
+const H1Element = (props: PlateElementProps) => <EditorBlock as="h1" {...props} />;
+const H2Element = (props: PlateElementProps) => <EditorBlock as="h2" {...props} />;
+const H3Element = (props: PlateElementProps) => <EditorBlock as="h3" {...props} />;
+const BlockquoteElement = (props: PlateElementProps) => <EditorBlock as="blockquote" {...props} />;
+const CodeBlockElement = (props: PlateElementProps) => <EditorBlock as="pre" {...props} />;
 const CodeLineElement = (props: PlateElementProps) => <PlateElement as="code" {...props} />;
 
 const ListElement = ({ element, ...props }: PlateElementProps) => {
@@ -56,7 +56,7 @@ const ListElement = ({ element, ...props }: PlateElementProps) => {
     (element as TElement & { listStyleType?: string }).listStyleType === 'decimal'
       ? ('ol' as const)
       : ('ul' as const);
-  return <Draggable as={as} element={element} {...props} />;
+  return <EditorBlock as={as} element={element} {...props} />;
 };
 
 const ListItemElement = (props: PlateElementProps) => <PlateElement as="li" {...props} />;
@@ -72,10 +72,10 @@ const LinkElement = ({ element, children, ...props }: PlateElementProps) => {
 };
 
 const HrElement = ({ children, ...props }: PlateElementProps) => (
-  <Draggable {...props}>
+  <EditorBlock {...props}>
     <hr contentEditable={false} />
     {children}
-  </Draggable>
+  </EditorBlock>
 );
 
 // ─── Leaf (mark) components ────────────────────────────────────────────────

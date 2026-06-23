@@ -5,7 +5,7 @@ import { useDraggable, useDropLine } from '@platejs/dnd';
 import { TbChevronDown, TbChevronUp, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import styles from './Draggable.module.css';
+import styles from './EditorBlock.module.css';
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 
@@ -215,9 +215,9 @@ const BlockContextMenu = ({
   );
 };
 
-// ── Draggable block wrapper ───────────────────────────────────────────────────
+// ── EditorBlock wrapper ───────────────────────────────────────────────────────
 
-export const Draggable = ({
+export const EditorBlock = ({
   element,
   as,
   children,

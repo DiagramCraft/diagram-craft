@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createListParagraph, isListParagraph } from './Draggable';
+import { createListParagraph, isListParagraph } from './EditorBlock';
 
 describe('PlateMarkdownEditor list helpers', () => {
   it('marks Plate list paragraphs as list paragraphs', () => {

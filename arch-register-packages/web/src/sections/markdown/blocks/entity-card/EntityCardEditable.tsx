@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
@@ -39,32 +38,20 @@ export const entityCardMdxRule: Record<string, any> = {
 export const EntityCardEditable = ({ element, children, ...props }: PlateElementProps) => {
   const entityId = (element as EntityCardSlateElement).entityId ?? '';
   const fields = (element as EntityCardSlateElement).fields ?? '';
-  const [pickerOpen, setPickerOpen] = useState(() => !entityId);
   const isNew = !entityId;
 
   return (
     <BaseBlockEditable
       element={element}
-      onEdit={() => setPickerOpen(true)}
       hasValue={!!entityId}
-      placeholder={
-        <>
-          <TbId size={16} />
-          <span>Choose entity…</span>
-        </>
-      }
+      placeholder={<><TbId size={16} /><span>Choose entity…</span></>}
       content={<EntityCard id={entityId} fields={fields} />}
+      dialog={(open, onClose) => (
+        <EntityCardDialog element={element} open={open} onClose={onClose} isNew={isNew} />
+      )}
       {...props}
     >
       {children}
-      {pickerOpen && (
-        <EntityCardDialog
-          element={element}
-          open={pickerOpen}
-          onClose={() => setPickerOpen(false)}
-          isNew={isNew}
-        />
-      )}
     </BaseBlockEditable>
   );
 };
