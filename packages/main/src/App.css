@@ -11,12 +11,10 @@
 
 #left-sidebar,
 .icObjectPicker {
-  /* Component-local theme variables - default to light theme */
   --_canvas-fg: var(--gray-11);
   --_canvas-bg: var(--gray-4);
   --_canvas-bg2: var(--gray-3);
 
-  /* Override global canvas variables with local ones */
   --canvas-fg: var(--_canvas-fg);
   --canvas-bg: var(--_canvas-bg);
   --canvas-bg2: var(--_canvas-bg2);

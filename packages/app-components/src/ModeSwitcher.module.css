@@ -5,7 +5,6 @@
  */
 
 .cModeSwitcher {
-  /* Component-local theme variable */
   --_active-bg: var(--cmp-bg);
 
   display: grid;

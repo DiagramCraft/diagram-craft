@@ -32,6 +32,11 @@
       --_canvas-bg: var(--gray-4);
       --_canvas-bg2: var(--gray-3);
 
+      /* Map local variables to global canvas variables for SVG rendering */
+      --canvas-fg: var(--_canvas-fg);
+      --canvas-bg: var(--_canvas-bg);
+      --canvas-bg2: var(--_canvas-bg2);
+
       background: transparent;
 
       padding: 2px;
@@ -69,25 +74,11 @@
 }
 
 :global(.light-theme) .eStencilView {
-  --_canvas-fg: var(--gray-11);
   --_canvas-bg: var(--gray-4);
-  --_canvas-bg2: var(--gray-3);
-  
-  /* Map local variables to global canvas variables */
-  --canvas-fg: var(--_canvas-fg);
-  --canvas-bg: var(--_canvas-bg);
-  --canvas-bg2: var(--_canvas-bg2);
 }
 
 :global(.dark-theme) .eStencilView {
-  --_canvas-fg: var(--gray-11);
   --_canvas-bg: var(--gray-2);
-  --_canvas-bg2: var(--gray-3);
-  
-  /* Map local variables to global canvas variables */
-  --canvas-fg: var(--_canvas-fg);
-  --canvas-bg: var(--_canvas-bg);
-  --canvas-bg2: var(--_canvas-bg2);
 }
 
 .icIconsTabs {
