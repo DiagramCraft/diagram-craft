@@ -6,7 +6,7 @@ import {
   type Parser,
   type ParserState
 } from '@diagram-craft/markdown';
-import { MDX_COMPONENTS, type MdxComponentName } from '../mdxRegistry';
+import { MDX_COMPONENTS, type MdxComponentName } from '../mdx-components/mdxRegistry';
 
 const engine = new MarkdownEngine();
 

@@ -1,6 +1,6 @@
 import type React from 'react';
 import { TbHash } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../../types';
+import type { MdxComponentSpec } from '../../types';
 import { EntityField } from './EntityField';
 import { ENTITY_FIELD_TYPE, EntityFieldEditable, entityFieldMdxRule } from './EntityFieldEditable';
 
@@ -9,7 +9,9 @@ export const entityFieldSpec = {
   mode: 'inline',
   allowedProps: ['id', 'field'],
   editorSpec: {
-    editableComponent: EntityFieldEditable as unknown as React.ComponentType<Record<string, unknown>>,
+    editableComponent: EntityFieldEditable as unknown as React.ComponentType<
+      Record<string, unknown>
+    >,
     nodeOptions: { isVoid: true as const, isInline: true as const },
     mdxRule: entityFieldMdxRule,
     slashCommand: {

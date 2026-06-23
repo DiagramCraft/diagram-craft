@@ -31,7 +31,7 @@ import {
 import type { TElement, Value } from 'platejs';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
-import { MDX_COMPONENTS } from '../mdxRegistry';
+import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
@@ -563,7 +563,7 @@ const mdxElementPlugins = Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) 
     createPlatePlugin({
       key: name,
       node: { isElement: true, ...nodeOptions }
-    // biome-ignore lint/suspicious/noExplicitAny: component typing bridged via registry
+      // biome-ignore lint/suspicious/noExplicitAny: component typing bridged via registry
     }).withComponent(editableComponent as any)
   ];
 });

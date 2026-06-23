@@ -1,6 +1,6 @@
 import type React from 'react';
 import { TbId } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../../types';
+import type { MdxComponentSpec } from '../../types';
 import { EntityCard } from './EntityCard';
 import { ENTITY_CARD_TYPE, EntityCardEditable, entityCardMdxRule } from './EntityCardEditable';
 
@@ -9,7 +9,9 @@ export const entityCardSpec = {
   mode: 'block',
   allowedProps: ['id', 'fields'],
   editorSpec: {
-    editableComponent: EntityCardEditable as unknown as React.ComponentType<Record<string, unknown>>,
+    editableComponent: EntityCardEditable as unknown as React.ComponentType<
+      Record<string, unknown>
+    >,
     nodeOptions: { isVoid: true as const },
     mdxRule: entityCardMdxRule,
     slashCommand: {

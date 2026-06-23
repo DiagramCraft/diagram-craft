@@ -3,7 +3,7 @@ import type React from 'react';
 import { TbPencil } from 'react-icons/tb';
 import type { PlateElementProps } from 'platejs/react';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { EditorBlock } from '../EditorBlock';
+import { EditorBlock } from '../../editor/EditorBlock';
 import styles from './BaseBlockEditable.module.css';
 
 export const BaseBlockEditable = ({

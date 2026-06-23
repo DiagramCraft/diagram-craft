@@ -6,7 +6,7 @@ import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../../hooks/useEntities';
 import { STANDARD_FIELD_OPTIONS, STANDARD_FIELD_IDS } from '../../blocks/entity-card/EntityCard';
 import { EntityPicker } from '../../../../../components/EntityPicker';
-import { DialogContent, DialogSection } from '../../BlockDialog';
+import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import type { EntityFieldSlateElement } from './types';
 import styles from './EntityFieldDialog.module.css';
 
