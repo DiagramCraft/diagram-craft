@@ -11,6 +11,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Install dependencies first
+echo "Running pnpm install..."
+pnpm install
+
 # Initialise (idempotent — safe to call even if already initialised)
 "${SCRIPT_DIR}/worktree-init.sh"
 

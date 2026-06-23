@@ -32,7 +32,27 @@ if [ "${WORKTREE_ROOT}" = "${MAIN_TREE}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 2. Idempotency guard — if already initialised, print info and exit cleanly
+# 2. Link shared folders from the main tree into this worktree (always runs)
+# ---------------------------------------------------------------------------
+LINK_TARGETS=(
+  "packages/main/public/diagrams"
+  "packages/main/public/img"
+  "packages/main/public/stencils"
+  ".claude"
+  ".codex"
+)
+
+for rel in "${LINK_TARGETS[@]}"; do
+  src="${MAIN_TREE}/${rel}"
+  dst="${WORKTREE_ROOT}/${rel}"
+  if [ -e "${src}" ] || [ -L "${src}" ]; then
+    mkdir -p "$(dirname "${dst}")"
+    ln -sfn "${src}" "${dst}"
+  fi
+done
+
+# ---------------------------------------------------------------------------
+# 3. Idempotency guard — if already initialised, print info and exit cleanly
 # ---------------------------------------------------------------------------
 if [ -f "${WORKTREE_ROOT}/mprocs.local.yaml" ]; then
   echo "This worktree is already initialised."
@@ -59,7 +79,7 @@ for e in reg.get('worktrees', []):
 fi
 
 # ---------------------------------------------------------------------------
-# 3. Ensure registry directory and file exist in the main tree
+# 4. Ensure registry directory and file exist in the main tree
 # ---------------------------------------------------------------------------
 REGISTRY_DIR="${MAIN_TREE}/.worktrees"
 REGISTRY="${REGISTRY_DIR}/registry.json"
@@ -71,7 +91,7 @@ if [ ! -f "${REGISTRY}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Prune registry entries for worktrees that no longer exist on disk
+# 5. Prune registry entries for worktrees that no longer exist on disk
 # ---------------------------------------------------------------------------
 PRUNED="$(python3 - <<PYEOF
 import json, os
@@ -98,12 +118,12 @@ if [ "${PRUNED}" -gt 0 ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 5. Determine the current branch name
+# 6. Determine the current branch name
 # ---------------------------------------------------------------------------
 BRANCH="$(git -C "${WORKTREE_ROOT}" symbolic-ref --short HEAD 2>/dev/null || git -C "${WORKTREE_ROOT}" rev-parse --short HEAD)"
 
 # ---------------------------------------------------------------------------
-# 6. Find the next free index
+# 7. Find the next free index
 # ---------------------------------------------------------------------------
 NEXT_INDEX="$(python3 -c "
 import json
@@ -113,7 +133,7 @@ print(max(existing, default=0) + 1)
 ")"
 
 # ---------------------------------------------------------------------------
-# 7. Compute port block
+# 8. Compute port block
 # ---------------------------------------------------------------------------
 BASE=$((7000 + NEXT_INDEX * 10))
 PORT_DC_WEB=$((BASE + 1))
@@ -124,7 +144,7 @@ PORT_SB_DC=$((BASE + 5))
 PORT_SB_AR=$((BASE + 6))
 
 # ---------------------------------------------------------------------------
-# 8. Append entry to registry
+# 9. Append entry to registry
 # ---------------------------------------------------------------------------
 TODAY="$(date +%Y-%m-%d)"
 
@@ -160,7 +180,7 @@ print("Registry updated:", registry_path)
 PYEOF
 
 # ---------------------------------------------------------------------------
-# 9. Write mprocs.local.yaml
+# 10. Write mprocs.local.yaml
 # ---------------------------------------------------------------------------
 BOOTSTRAP_DATA="${MAIN_TREE}/packages/main/public/data/dataset1/data.json"
 BOOTSTRAP_SCHEMAS="${MAIN_TREE}/packages/main/public/data/dataset1/schemas.json"
@@ -176,9 +196,7 @@ procs:
   "DC server :${PORT_DC_SERVER}":
     shell: |
       cd packages/server-main && \\
-      pnpm run dev --data-dir ./data --fs-root ../main/public --bootstrap-data ${BOOTSTRAP_DATA} --bootstrap-schemas ${BOOTSTRAP_SCHEMAS}
-    env:
-      PORT: "${PORT_DC_SERVER}"
+      PORT=${PORT_DC_SERVER} pnpm run dev --data-dir ./data --fs-root ../main/public --bootstrap-data ${BOOTSTRAP_DATA} --bootstrap-schemas ${BOOTSTRAP_SCHEMAS}
     stop: SIGKILL
     log:
       file: dc-server.log
@@ -192,9 +210,7 @@ procs:
   "AR server :${PORT_AR_SERVER}":
     shell: |
       cd arch-register-packages/server && \\
-      pnpm dev
-    env:
-      PORT: "${PORT_AR_SERVER}"
+      PORT=${PORT_AR_SERVER} pnpm dev
     stop: SIGKILL
     log:
       file: ar-server.log
@@ -223,7 +239,7 @@ proc_log:
 EOF
 
 # ---------------------------------------------------------------------------
-# 10. Write arch-register-packages/server/.env
+# 11. Write arch-register-packages/server/.env
 # ---------------------------------------------------------------------------
 AR_SERVER_ENV="${WORKTREE_ROOT}/arch-register-packages/server/.env"
 
@@ -234,7 +250,7 @@ JWT_SECRET=worktree-dev-secret-key-min-32-characters-ok
 EOF
 
 # ---------------------------------------------------------------------------
-# 11. Write arch-register-packages/web/.env
+# 12. Write arch-register-packages/web/.env
 # ---------------------------------------------------------------------------
 AR_WEB_ENV="${WORKTREE_ROOT}/arch-register-packages/web/.env"
 
@@ -243,7 +259,7 @@ VITE_AR_SERVER_PORT=${PORT_AR_SERVER}
 EOF
 
 # ---------------------------------------------------------------------------
-# 12. Print summary
+# 13. Print summary
 # ---------------------------------------------------------------------------
 echo ""
 echo "Worktree initialised"
