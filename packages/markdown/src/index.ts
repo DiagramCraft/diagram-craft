@@ -1,5 +1,13 @@
-import type { ASTNode, ParserConfiguration, ParserType } from './parser';
+import type {
+  ASTNode,
+  ASTNodeOfType,
+  BlockParser,
+  ParserConfiguration,
+  ParserState,
+  ParserType
+} from './parser';
 import { Parser } from './parser';
+import { InlineParser } from './parser';
 import { HTMLRenderer } from './html-renderer';
 import { ParagraphHandler } from './handlers';
 import { strictParser, extendedParser } from './strict-parser';
@@ -157,3 +165,12 @@ export const markdownToPlainText = (markdown: string): string => {
 // Export HTML to Markdown functionality
 export { HTMLToMarkdownConverter, htmlToMarkdown, htmlStringToMarkdown };
 export type { HTMLToMarkdownOptions };
+export { InlineParser, Parser };
+export type {
+  ASTNode,
+  ASTNodeOfType,
+  BlockParser,
+  ParserConfiguration,
+  ParserState,
+  ParserType,
+};
