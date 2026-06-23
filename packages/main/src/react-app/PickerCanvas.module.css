@@ -3,7 +3,7 @@
   width: 150px;
   min-height: 110px;
   z-index: 200;
-  background: var(--canvas-bg);
+  background: var(--_canvas-bg, var(--canvas-bg));
   font-family: var(--font-sans, system-ui);
   border-radius: 4px;
   line-Height: 0;
@@ -11,7 +11,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: start;
-  color: var(--canvas-fg);
+  color: var(--_canvas-fg, var(--canvas-fg));
   font-size: 11px;
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
