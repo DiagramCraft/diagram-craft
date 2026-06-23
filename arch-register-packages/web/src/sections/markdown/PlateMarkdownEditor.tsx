@@ -29,14 +29,9 @@ import {
   flip
 } from '@platejs/floating';
 import type { TElement, Value } from 'platejs';
-import { TbId, TbHash } from 'react-icons/tb';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
-import { EntityCardEditable, entityCardMdxRule } from './blocks/entity-card/EntityCardEditable';
-import {
-  EntityFieldEditable,
-  entityFieldMdxRule
-} from './inlines/entity-field/EntityFieldEditable';
+import { MDX_COMPONENTS } from './mdxComponents';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
@@ -114,7 +109,8 @@ type SlashCommandItem = {
   onSelect: (editor: ReturnType<typeof useEditorRef>) => void;
 };
 
-const SLASH_COMMANDS: SlashCommandItem[] = [
+// Built-in (non-MDX) slash commands
+const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   {
     key: 'h1',
     label: 'Heading 1',
@@ -201,43 +197,6 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
       insertOrReplaceBlock(editor, { type: 'blockquote', children: [{ text: '' }] })
   },
   {
-    key: 'entity-card',
-    label: 'Entity Card',
-    description: 'Embed entity metadata inline',
-    icon: (
-      <span className={styles.slashIcon}>
-        <TbId size={14} />
-      </span>
-    ),
-    keywords: ['entity', 'card', 'catalog', 'service'],
-    onSelect: editor => {
-      insertOrReplaceBlock(editor, {
-        type: 'EntityCard',
-        entityId: '',
-        children: [{ text: '' }]
-      });
-    }
-  },
-  {
-    key: 'entity-field',
-    label: 'Field Embed',
-    description: 'Embed a live entity field value',
-    icon: (
-      <span className={styles.slashIcon}>
-        <TbHash size={14} />
-      </span>
-    ),
-    keywords: ['field', 'entity', 'value', 'embed', 'inline'],
-    onSelect: editor => {
-      editor.tf.insertNodes({
-        type: 'EntityField',
-        entityId: '',
-        field: '',
-        children: [{ text: '' }]
-      });
-    }
-  },
-  {
     key: 'hr',
     label: 'Divider',
     description: 'Horizontal rule',
@@ -269,6 +228,27 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     }
   }
 ];
+
+// MDX component slash commands — derived from the registry
+const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.entries(MDX_COMPONENTS).flatMap(
+  ([, spec]) => {
+    const cmd = spec.editorSpec?.slashCommand;
+    if (!cmd) return [];
+    return [
+      {
+        key: cmd.key,
+        label: cmd.label,
+        description: cmd.description,
+        icon: cmd.icon,
+        keywords: cmd.keywords,
+        onSelect: (editor: ReturnType<typeof useEditorRef>) =>
+          cmd.onSelect(editor, { insertOrReplaceBlock })
+      }
+    ];
+  }
+);
+
+const SLASH_COMMANDS: SlashCommandItem[] = [...BUILTIN_SLASH_COMMANDS, ...MDX_SLASH_COMMANDS];
 
 // ─── Slash input element ────────────────────────────────────────────────────
 
@@ -569,10 +549,24 @@ const HeadingBreakPlugin = createPlatePlugin({
 });
 
 // biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing for mdast nodes
-const mdxRules: Record<string, any> = {
-  EntityCard: entityCardMdxRule,
-  EntityField: entityFieldMdxRule
-};
+const mdxRules: Record<string, any> = Object.fromEntries(
+  Object.entries(MDX_COMPONENTS)
+    .filter(([, spec]) => spec.editorSpec?.mdxRule)
+    .map(([name, spec]) => [name, spec.editorSpec!.mdxRule])
+);
+
+// Custom MDX element plugins — derived from the registry
+const mdxElementPlugins = Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) => {
+  if (!spec.editorSpec) return [];
+  const { nodeOptions, editableComponent } = spec.editorSpec;
+  return [
+    createPlatePlugin({
+      key: name,
+      node: { isElement: true, ...nodeOptions }
+    // biome-ignore lint/suspicious/noExplicitAny: component typing bridged via registry
+    }).withComponent(editableComponent as any)
+  ];
+});
 
 const editorPlugins = [
   NodeIdPlugin,
@@ -610,14 +604,7 @@ const editorPlugins = [
     key: 'hr',
     node: { isElement: true, isVoid: true }
   }).withComponent(HrElement),
-  createPlatePlugin({
-    key: 'EntityCard',
-    node: { isElement: true, isVoid: true }
-  }).withComponent(EntityCardEditable),
-  createPlatePlugin({
-    key: 'EntityField',
-    node: { isElement: true, isVoid: true, isInline: true }
-  }).withComponent(EntityFieldEditable),
+  ...mdxElementPlugins,
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
   createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(ItalicLeaf),
   createPlatePlugin({ key: 'code', node: { isLeaf: true } }).withComponent(InlineCodeLeaf),
