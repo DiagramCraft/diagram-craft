@@ -397,19 +397,34 @@
   color: var(--error-fg);
 }
 
-/* ── Entity card picker (inline, shown when entityId is empty) ──────────────── */
+/* ── Entity card placeholder (shown when entityId is empty) ─────────────────── */
 
-.entityPicker {
+.entityCardPlaceholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--r-md);
+  color: var(--cmp-fg-disabled);
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 200px;
+  margin: 0 0 14px;
+  transition: border-color 80ms, color 80ms;
+}
+
+.entityCardPlaceholder:hover {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+}
+
+/* ── Entity picker dialog content ────────────────────────────────────────────── */
+
+.entityPickerDialogContent {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  border: 1px solid var(--accent-fg);
-  border-radius: var(--r-md);
-  padding: 8px;
-  background: var(--panel-bg);
-  min-width: 260px;
-  max-width: 480px;
-  margin: 4px 0;
+  gap: 6px;
 }
 
 .entityPickerInput {

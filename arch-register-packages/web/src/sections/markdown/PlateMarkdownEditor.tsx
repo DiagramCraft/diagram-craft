@@ -34,8 +34,9 @@ import {
   TbChevronUp,
   TbGripVertical,
   TbTrash,
-  TbAddressBook
+  TbId,
 } from 'react-icons/tb';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
@@ -183,10 +184,12 @@ const BlockContextMenu = ({
   element,
   position,
   onClose,
+  extraItems,
 }: {
   element: TElement;
   position: { x: number; y: number };
   onClose: () => void;
+  extraItems?: (onClose: () => void) => React.ReactNode;
 }) => {
   const editor = useEditorRef();
 
@@ -236,6 +239,8 @@ const BlockContextMenu = ({
 
   return (
     <ContextMenu.Imperative x={position.x} y={position.y} onClose={onClose}>
+      {extraItems?.(onClose)}
+      {extraItems && <Menu.Separator />}
       <Menu.Item onClick={handleDuplicate}>Duplicate block</Menu.Item>
       <Menu.Item type="danger" onClick={handleRemove}>Remove block</Menu.Item>
       {isConvertible && (
@@ -259,8 +264,12 @@ const Draggable = ({
   element,
   as,
   children,
+  extraContextMenuItems,
   ...plateProps
-}: PlateElementProps & { as?: keyof HTMLElementTagNameMap }) => {
+}: PlateElementProps & {
+  as?: keyof HTMLElementTagNameMap;
+  extraContextMenuItems?: (onClose: () => void) => React.ReactNode;
+}) => {
   const { handleRef, nodeRef, isDragging } = useDraggable({ element });
   const { dropLine } = useDropLine({ id: element.id as string | undefined });
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -290,6 +299,7 @@ const Draggable = ({
           element={element}
           position={contextMenu}
           onClose={() => setContextMenu(null)}
+          extraItems={extraContextMenuItems}
         />
       )}
     </div>
@@ -351,11 +361,20 @@ interface EntityCardSlateElement extends TElement {
   entityId: string;
 }
 
-const EntityPicker = ({ element }: { element: TElement }) => {
+const EntityPickerDialog = ({
+  element,
+  open,
+  onClose,
+  isNew,
+}: {
+  element: TElement;
+  open: boolean;
+  onClose: () => void;
+  isNew: boolean;
+}) => {
   const editor = useEditorRef();
   const { workspaceSlug } = useWorkspaceContext();
   const [query, setQuery] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: entities = [] } = useEntities(workspaceSlug, {
     q: query || undefined,
@@ -363,79 +382,98 @@ const EntityPicker = ({ element }: { element: TElement }) => {
     limit: 8,
   });
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
   const selectEntity = (publicId: string) => {
     const path = editor.api.findPath(element);
     if (path) {
       editor.tf.setNodes({ entityId: publicId }, { at: path });
     }
+    onClose();
   };
 
-  const dismiss = () => {
-    const path = editor.api.findPath(element);
-    if (path) {
-      editor.tf.removeNodes({ at: path });
+  const handleClose = () => {
+    if (isNew) {
+      const path = editor.api.findPath(element);
+      if (path) editor.tf.removeNodes({ at: path });
     }
-    editor.tf.focus();
+    onClose();
   };
 
   return (
-    <div className={styles.entityPicker} onMouseDown={e => e.stopPropagation()}>
-      <input
-        ref={inputRef}
-        type="text"
-        className={styles.entityPickerInput}
-        placeholder="Search for an entity…"
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Escape') {
-            e.preventDefault();
-            dismiss();
-          }
-        }}
-      />
-      {entities.length > 0 ? (
-        <div className={styles.entityPickerResults}>
-          {entities.map(entity => (
-            <button
-              key={entity._publicId}
-              type="button"
-              className={styles.entityPickerItem}
-              onMouseDown={e => {
-                e.preventDefault();
-                selectEntity(entity._publicId);
-              }}
-            >
-              <span className={styles.entityPickerName}>{entity._name}</span>
-              <span className={styles.entityPickerSchema}>{entity._schema?.name}</span>
-            </button>
-          ))}
-        </div>
-      ) : query ? (
-        <div className={styles.entityPickerHint}>No entities found</div>
-      ) : (
-        <div className={styles.entityPickerHint}>Type to search…</div>
-      )}
-    </div>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      title="Choose entity"
+      width={420}
+      buttons={[{ label: 'Cancel', type: 'cancel', onClick: handleClose }]}
+    >
+      <div className={styles.entityPickerDialogContent}>
+        <input
+          // eslint-disable-next-line jsx-a11y/no-autofocus
+          autoFocus
+          type="text"
+          className={styles.entityPickerInput}
+          placeholder="Search for an entity…"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+        />
+        {entities.length > 0 ? (
+          <div className={styles.entityPickerResults}>
+            {entities.map(entity => (
+              <button
+                key={entity._publicId}
+                type="button"
+                className={styles.entityPickerItem}
+                onClick={() => selectEntity(entity._publicId)}
+              >
+                <span className={styles.entityPickerName}>{entity._name}</span>
+                <span className={styles.entityPickerSchema}>{entity._schema?.name}</span>
+              </button>
+            ))}
+          </div>
+        ) : query ? (
+          <div className={styles.entityPickerHint}>No entities found</div>
+        ) : (
+          <div className={styles.entityPickerHint}>Type to search…</div>
+        )}
+      </div>
+    </Dialog>
   );
 };
 
 const EntityCardPlateElement = ({ element, children, ...props }: PlateElementProps) => {
   const entityId = (element as EntityCardSlateElement).entityId ?? '';
+  const [pickerOpen, setPickerOpen] = useState(() => !entityId);
+  const isNew = !entityId;
+
+  const openPicker = () => setPickerOpen(true);
+
   return (
-    <Draggable element={element} {...props}>
+    <Draggable
+      element={element}
+      extraContextMenuItems={(onClose) => (
+        <Menu.Item onClick={() => { openPicker(); onClose(); }}>Change entity</Menu.Item>
+      )}
+      {...props}
+    >
       <div contentEditable={false}>
         {entityId ? (
-          <EntityCardBlock id={entityId} />
+          <EntityCardBlock id={entityId} onEdit={openPicker} />
         ) : (
-          <EntityPicker element={element} />
+          <div className={styles.entityCardPlaceholder} onClick={openPicker}>
+            <TbId size={16} />
+            <span>Choose entity…</span>
+          </div>
         )}
       </div>
       {children}
+      {pickerOpen && (
+        <EntityPickerDialog
+          element={element}
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          isNew={isNew}
+        />
+      )}
     </Draggable>
   );
 };
@@ -568,7 +606,7 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     key: 'entity-card',
     label: 'Entity Card',
     description: 'Embed entity metadata inline',
-    icon: <TbAddressBook className={styles.slashIcon} size={14} />,
+    icon: <span className={styles.slashIcon}><TbId size={14} /></span>,
     keywords: ['entity', 'card', 'catalog', 'service'],
     onSelect: (editor) => {
       insertOrReplaceBlock(editor, {
@@ -719,7 +757,16 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
     if (!el) return;
 
     const rect = el.getBoundingClientRect();
-    const nextPos = { top: rect.bottom + 4, left: rect.left };
+    const DROPDOWN_MAX_HEIGHT = 320;
+    const GAP = 4;
+
+    const spaceBelow = window.innerHeight - rect.bottom - GAP;
+    const openAbove = spaceBelow < DROPDOWN_MAX_HEIGHT && rect.top > spaceBelow;
+    const top = openAbove
+      ? Math.max(GAP, rect.top - GAP - DROPDOWN_MAX_HEIGHT)
+      : rect.bottom + GAP;
+
+    const nextPos = { top, left: rect.left };
     setDropdownPos(prev =>
       prev?.top === nextPos.top && prev?.left === nextPos.left ? prev : nextPos
     );

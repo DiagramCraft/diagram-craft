@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { TbPencil } from 'react-icons/tb';
 import { TypeBadge } from '../../components/TypeBadge';
 import { StatusChip } from '../../components/StatusChip';
 import { useEntity } from '../../hooks/useEntities';
@@ -7,7 +8,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
 import styles from './EntityCardBlock.module.css';
 
-export const EntityCardBlock = ({ id }: { id: string }) => {
+export const EntityCardBlock = ({ id, onEdit }: { id: string; onEdit?: () => void }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
   const navigate = useNavigate();
@@ -35,7 +36,15 @@ export const EntityCardBlock = ({ id }: { id: string }) => {
   const color = schema ? resolveSchemaColor(schema, schemaIdx) : 'var(--accent-fg)';
 
   return (
-    <div className={styles.card}>
+    <div
+      className={`${styles.card} ${onEdit ? styles.editable : ''}`}
+      onDoubleClick={onEdit}
+    >
+      {onEdit && (
+        <button type="button" className={styles.editBtn} onClick={onEdit} title="Change entity">
+          <TbPencil size={12} />
+        </button>
+      )}
       <div className={styles.header}>
         <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={18} />
         <span className={styles.name}>{entity._name}</span>
