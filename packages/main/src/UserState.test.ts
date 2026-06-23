@@ -17,19 +17,56 @@ describe('UserState', () => {
     });
   });
 
-  test('persists the selected theme mode', () => {
+  test('persists the selected theme preference', () => {
     const userState = new UserState();
 
-    userState.themeMode = 'light';
+    userState.themePreference = 'light';
 
     expect(JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}')).toMatchObject({
-      themeMode: 'light'
+      themePreference: 'light'
     });
-    expect(new UserState().themeMode).toBe('light');
+    expect(new UserState().themePreference).toBe('light');
+    expect(new UserState().effectiveTheme).toBe('light');
   });
 
-  test('defaults to dark mode when no theme mode is stored', () => {
-    expect(new UserState().themeMode).toBe('dark');
+  test('defaults to system mode when no theme preference is stored', () => {
+    const userState = new UserState();
+    expect(userState.themePreference).toBe('system');
+    // effectiveTheme depends on system preference
+    expect(['light', 'dark']).toContain(userState.effectiveTheme);
+  });
+
+  test('backward compatibility: reads old themeMode as themePreference', () => {
+    storage.set('diagram-craft.user-state', JSON.stringify({ themeMode: 'light' }));
+    const userState = new UserState();
+    expect(userState.themePreference).toBe('light');
+    expect(userState.effectiveTheme).toBe('light');
+  });
+
+  test('system mode resolves to effective theme based on prefers-color-scheme', () => {
+    const userState = new UserState();
+    userState.themePreference = 'system';
+    
+    // In test environment without window, defaults to 'dark'
+    // In browser environment, would match system preference
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      expect(userState.effectiveTheme).toBe('dark');
+    } else {
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      expect(userState.effectiveTheme).toBe(systemPrefersDark ? 'dark' : 'light');
+    }
+  });
+
+  test('explicit light preference ignores system preference', () => {
+    const userState = new UserState();
+    userState.themePreference = 'light';
+    expect(userState.effectiveTheme).toBe('light');
+  });
+
+  test('explicit dark preference ignores system preference', () => {
+    const userState = new UserState();
+    userState.themePreference = 'dark';
+    expect(userState.effectiveTheme).toBe('dark');
   });
 
   test('persists the stencil picker view mode', () => {

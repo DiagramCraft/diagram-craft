@@ -306,7 +306,7 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
   useEffect(() => bindDocumentDragAndDrop());
 
   useLayoutEffect(() => {
-    applyThemeMode(userState.current.themeMode);
+    applyThemeMode(userState.current.effectiveTheme);
   });
 
   usePanOnDrag($d, userState.current!);
@@ -589,7 +589,7 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
 
             {extraDialogs?.(dialogStack)}
 
-            <div id="app" className={themeModeClassName(userState.current.themeMode)}>
+    <div id="app" className={themeModeClassName(userState.current.effectiveTheme)}>
               <TopBar
                 id="menu"
                 leftSlot={
