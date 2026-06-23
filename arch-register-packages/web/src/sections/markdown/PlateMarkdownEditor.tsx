@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -1039,10 +1039,10 @@ const HeadingBreakPlugin = createPlatePlugin({
   }
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing for mdast nodes
 const mdxRules: Record<string, any> = {
   EntityCard: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: Plate.js internal types are not exported, mdastNode structure varies by plugin
     deserialize: (mdastNode: any, _deco: unknown, options: any) => {
       const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
       return {
@@ -1052,6 +1052,7 @@ const mdxRules: Record<string, any> = {
         fields: attrs['fields'] ?? '',
       };
     },
+    // biome-ignore lint/suspicious/noExplicitAny: Slate node structure is dynamic and not fully typed by Plate.js
     serialize: (slateNode: any) => ({
       attributes: propsToAttributes({
         id: slateNode.entityId ?? '',
