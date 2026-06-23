@@ -13,22 +13,15 @@ import {
   TbDownload,
   TbUpload,
   TbPlus,
-  TbList,
-  TbLayoutGrid,
-  TbBinaryTree2,
   TbChevronDown,
   TbChevronRight,
   TbDots,
   TbUsers,
   TbCopy,
   TbTrash,
-  TbChartRadar,
-  TbCalendarWeek,
-  TbTable,
   TbCheck,
   TbX,
-  TbFilter,
-  TbLayoutBoard
+  TbFilter
 } from 'react-icons/tb';
 import { RadarView, type RadarConfig } from './components/RadarView';
 import { TimelineView, type TimelineConfig } from './components/TimelineView';
@@ -501,6 +494,7 @@ export const EntityBrowserScreen = () => {
       radarConfig?: string;
       timelineConfig?: string;
       matrixConfig?: string;
+      hierarchyConfig?: string;
       sidebarTab?: 'filters' | 'views';
       filters?: FilterCondition[];
     }) => {
@@ -519,6 +513,9 @@ export const EntityBrowserScreen = () => {
             params.timelineConfig ?? (timelineConfig ? JSON.stringify(timelineConfig) : undefined),
           matrixConfig:
             params.matrixConfig ?? (matrixConfig ? JSON.stringify(matrixConfig) : undefined),
+          hierarchyConfig:
+            params.hierarchyConfig ??
+            (hierarchyConfig ? JSON.stringify(hierarchyConfig) : undefined),
           sidebarTab: params.sidebarTab ?? search.sidebarTab,
           filters: nextFilters.length > 0 ? JSON.stringify(nextFilters) : undefined
         }
@@ -533,6 +530,7 @@ export const EntityBrowserScreen = () => {
       radarConfig,
       timelineConfig,
       matrixConfig,
+      hierarchyConfig,
       search.sidebarTab,
       conditions
     ]
@@ -799,7 +797,8 @@ export const EntityBrowserScreen = () => {
     conditions,
     radarConfig,
     timelineConfig,
-    matrixConfig
+    matrixConfig,
+    hierarchyConfig
   ]);
 
   const menuItems = useMemo(() => {
@@ -926,64 +925,20 @@ export const EntityBrowserScreen = () => {
 
         <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
 
-        <div className={styles.segmented}>
-          <button
-            type="button"
-            className={view === 'table' ? styles.segmentedActive : ''}
-            onClick={() => setView('table')}
-            title="Table"
-          >
-            <TbList size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'cards' ? styles.segmentedActive : ''}
-            onClick={() => setView('cards')}
-            title="Cards"
-          >
-            <TbLayoutGrid size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'tree' ? styles.segmentedActive : ''}
-            onClick={() => setView('tree')}
-            title="Tree"
-          >
-            <TbBinaryTree2 size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'radar' ? styles.segmentedActive : ''}
-            onClick={() => setView('radar')}
-            title="Radar"
-          >
-            <TbChartRadar size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'timeline' ? styles.segmentedActive : ''}
-            onClick={() => setView('timeline')}
-            title="Timeline"
-          >
-            <TbCalendarWeek size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'matrix' ? styles.segmentedActive : ''}
-            onClick={() => setView('matrix')}
-            title="Matrix"
-          >
-            <TbTable size={13} />
-          </button>
-          <button
-            type="button"
-            className={view === 'hierarchy' ? styles.segmentedActive : ''}
-            onClick={() => setView('hierarchy')}
-            title="Hierarchy"
-          >
-            <TbLayoutBoard size={13} />
-          </button>
-        </div>
+        <FilterDropdown
+          label="View"
+          value={view}
+          onChange={v => setView(v as BrowserView)}
+          options={[
+            { value: 'table', label: 'Table' },
+            { value: 'cards', label: 'Cards' },
+            { value: 'tree', label: 'Tree' },
+            { value: 'radar', label: 'Radar' },
+            { value: 'timeline', label: 'Timeline' },
+            { value: 'matrix', label: 'Matrix' },
+            { value: 'hierarchy', label: 'Hierarchy' }
+          ]}
+        />
       </div>
 
       {view === 'hierarchy' ? (

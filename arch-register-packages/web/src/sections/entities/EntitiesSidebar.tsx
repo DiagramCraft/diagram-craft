@@ -191,6 +191,9 @@ export const EntitiesSidebar = ({
         radarConfig: view.config?.radar ? JSON.stringify(view.config.radar) : undefined,
         timelineConfig: view.config?.timeline ? JSON.stringify(view.config.timeline) : undefined,
         matrixConfig: view.config?.matrix ? JSON.stringify(view.config.matrix) : undefined,
+        hierarchyConfig: view.config?.hierarchy
+          ? JSON.stringify(view.config.hierarchy)
+          : undefined,
         sidebarTab: 'views',
         filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined
         // biome-ignore lint/suspicious/noExplicitAny: bypass
