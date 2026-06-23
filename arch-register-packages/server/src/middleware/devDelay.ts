@@ -9,7 +9,7 @@ const parseDelayValue = (name: string, rawValue: string | undefined) => {
   }
 
   const value = Number(rawValue);
-  if (!Number.isFinite(value) || value &lt; 0) {
+  if (!Number.isFinite(value) || value < 0) {
     logger.warn(`Ignoring invalid ${name} value "${rawValue}", expected a non-negative number`);
     return 0;
   }
@@ -17,12 +17,9 @@ const parseDelayValue = (name: string, rawValue: string | undefined) => {
   return value;
 };
 
-const sleep = (delayMs: number) =>
-  new Promise(resolve =&gt; {
-    setTimeout(resolve, delayMs);
-  });
+const sleep = (delayMs: number) => new Promise(resolve => setTimeout(resolve, delayMs));
 
-export const createDevDelayMiddleware = () =&gt; {
+export const createDevDelayMiddleware = () => {
   const isDev = process.env.NODE_ENV === 'development';
   const avgDelay = parseDelayValue('DEV_API_DELAY_MS', process.env.DEV_API_DELAY_MS);
   const variance = parseDelayValue(
@@ -31,12 +28,12 @@ export const createDevDelayMiddleware = () =&gt; {
   );
 
   if (!isDev || avgDelay === 0) {
-    return defineHandler(() =&gt; {});
+    return defineHandler(() => undefined);
   }
 
   logger.info(`API delay middleware enabled: ${avgDelay}ms ±${variance}ms`);
 
-  return defineHandler(async () =&gt; {
+  return defineHandler(async () => {
     const randomizedDelay = avgDelay + (Math.random() * 2 - 1) * variance;
     const actualDelay = Math.max(0, randomizedDelay);
     await sleep(actualDelay);
