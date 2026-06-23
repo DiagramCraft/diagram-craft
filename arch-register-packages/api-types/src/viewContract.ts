@@ -4,7 +4,15 @@ import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-export const browserViewSchema = z.enum(['table', 'cards', 'tree', 'radar', 'timeline', 'matrix']);
+export const browserViewSchema = z.enum([
+  'table',
+  'cards',
+  'tree',
+  'radar',
+  'timeline',
+  'matrix',
+  'hierarchy'
+]);
 
 export const filterConditionSchema = z.object({
   fieldId: z.string(),
@@ -60,11 +68,22 @@ export const matrixViewConfigSchema = z.object({
   hideEmptyCols: z.boolean()
 });
 
+export const hierarchyViewConfigSchema = z.object({
+  levels: z.number().int().min(1).max(3),
+  level1SchemaId: z.string().nullable(),
+  level1Columns: z.number().int().min(1).max(4),
+  level2SchemaId: z.string().nullable().optional(),
+  level2Columns: z.number().int().min(1).max(4).optional(),
+  level3SchemaId: z.string().nullable().optional(),
+  level3Columns: z.number().int().min(1).max(4).optional()
+});
+
 const viewConfigSchema = z
   .object({
     radar: radarViewConfigSchema.optional(),
     timeline: timelineViewConfigSchema.optional(),
-    matrix: matrixViewConfigSchema.optional()
+    matrix: matrixViewConfigSchema.optional(),
+    hierarchy: hierarchyViewConfigSchema.optional()
   })
   .nullable();
 
