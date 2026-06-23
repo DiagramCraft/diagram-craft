@@ -1,0 +1,19 @@
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 12px;
+}
+
+.fieldOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.fieldOptionSchema {
+  color: var(--base-fg-dim);
+}

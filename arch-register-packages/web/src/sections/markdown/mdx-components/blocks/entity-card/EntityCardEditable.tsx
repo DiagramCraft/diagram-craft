@@ -1,14 +1,13 @@
-import { useState } from 'react';
 import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbId } from 'react-icons/tb';
-import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { Draggable } from '../../Draggable';
-import { EntityCardBlock } from './EntityCardBlock';
+import { BaseBlockEditable } from '../BaseBlockEditable';
+import { EntityCard } from './EntityCard';
 import { EntityCardDialog } from './EntityCardDialog';
 import type { EntityCardSlateElement } from './types';
-import styles from './EntityCardEditor.module.css';
+
+export const ENTITY_CARD_TYPE = 'EntityCard' as const;
 
 // ── MDX serialization rule (consumed by PlateMarkdownEditor) ─────────────────
 
@@ -19,7 +18,7 @@ export const entityCardMdxRule: Record<string, any> = {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, 'EntityCard'),
+      type: getPluginType(options.editor, ENTITY_CARD_TYPE),
       entityId: attrs['id'] ?? '',
       fields: attrs['fields'] ?? ''
     };
@@ -31,55 +30,30 @@ export const entityCardMdxRule: Record<string, any> = {
       ...(slateNode.fields ? { fields: slateNode.fields } : {})
     }),
     children: [],
-    name: 'EntityCard',
+    name: ENTITY_CARD_TYPE,
     type: 'mdxJsxFlowElement'
   })
 };
 
 // ── Plate element ─────────────────────────────────────────────────────────────
 
-export const EntityCardPlateElement = ({ element, children, ...props }: PlateElementProps) => {
+export const EntityCardEditable = ({ element, children, ...props }: PlateElementProps) => {
   const entityId = (element as EntityCardSlateElement).entityId ?? '';
   const fields = (element as EntityCardSlateElement).fields ?? '';
-  const [pickerOpen, setPickerOpen] = useState(() => !entityId);
   const isNew = !entityId;
 
-  const openPicker = () => setPickerOpen(true);
-
   return (
-    <Draggable
+    <BaseBlockEditable
       element={element}
-      extraContextMenuItems={onClose => (
-        <Menu.Item
-          onClick={() => {
-            openPicker();
-            onClose();
-          }}
-        >
-          Edit card
-        </Menu.Item>
+      hasValue={!!entityId}
+      placeholder={<><TbId size={16} /><span>Choose entity…</span></>}
+      content={<EntityCard id={entityId} fields={fields} />}
+      dialog={(open, onClose) => (
+        <EntityCardDialog element={element} open={open} onClose={onClose} isNew={isNew} />
       )}
       {...props}
     >
-      <div contentEditable={false}>
-        {entityId ? (
-          <EntityCardBlock id={entityId} fields={fields} onEdit={openPicker} />
-        ) : (
-          <div className={styles.entityCardPlaceholder} onClick={openPicker}>
-            <TbId size={16} />
-            <span>Choose entity…</span>
-          </div>
-        )}
-      </div>
       {children}
-      {pickerOpen && (
-        <EntityCardDialog
-          element={element}
-          open={pickerOpen}
-          onClose={() => setPickerOpen(false)}
-          isNew={isNew}
-        />
-      )}
-    </Draggable>
+    </BaseBlockEditable>
   );
 };

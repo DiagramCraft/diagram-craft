@@ -16,6 +16,14 @@ interface HTMLASTNode extends BaseASTNode {
   html?: string;
 }
 
+interface ComponentASTNode extends BaseASTNode {
+  type: 'component';
+  subtype: 'inline' | 'block';
+  name: string;
+  props: Record<string, string>;
+  source: string;
+}
+
 interface LinkASTNode extends BaseASTNode {
   type: 'link' | 'image';
   href?: string;
@@ -90,6 +98,7 @@ interface HeadingASTNode extends BaseASTNode {
  * All markdown elements are represented as AST nodes with a type and optional properties.
  */
 export type ASTNode =
+  | ComponentASTNode
   | HTMLASTNode
   | LinkASTNode
   | LinkDefinitionASTNode

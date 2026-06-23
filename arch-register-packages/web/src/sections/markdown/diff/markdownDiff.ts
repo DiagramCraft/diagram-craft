@@ -1,4 +1,5 @@
-import { MarkdownEngine, parseMarkdown } from '@diagram-craft/markdown';
+import { parseMarkdown } from '@diagram-craft/markdown';
+import { markdownEngine, flattenNodeText } from '../preview/markdownAstUtils';
 
 type ASTNode = ReturnType<typeof parseMarkdown>[number];
 
@@ -8,18 +9,9 @@ export type DiffRow =
   | { kind: 'removed'; html: string }
   | { kind: 'modified'; baseHtml: string; targetHtml: string; inlineHtml: string };
 
-const markdownEngine = new MarkdownEngine();
-
-const flattenText = (nodes: ASTNode['children']): string => {
-  if (!nodes) return '';
-  return nodes
-    .map(n => (n.type === 'literal' ? n.value : flattenText(n.children)))
-    .join('');
-};
-
 const blockSignature = (node: ASTNode): string => {
   const level = node.type === 'heading' ? String(node.level) : '';
-  return `${node.type}${level}:${flattenText(node.children).trim().toLowerCase()}`;
+  return `${node.type}${level}:${flattenNodeText(node.children).trim().toLowerCase()}`;
 };
 
 const blockTypeKey = (node: ASTNode): string => {
@@ -29,14 +21,16 @@ const blockTypeKey = (node: ASTNode): string => {
 
 const renderNode = (node: ASTNode): string => markdownEngine.toHTML([node]);
 
-// Standard LCS length table
 const lcsTable = (a: string[], b: string[]): number[][] => {
   const m = a.length;
   const n = b.length;
   const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      dp[i]![j] = a[i - 1] === b[j - 1] ? dp[i - 1]![j - 1]! + 1 : Math.max(dp[i - 1]![j]!, dp[i]![j - 1]!);
+      dp[i]![j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1]![j - 1]! + 1
+          : Math.max(dp[i - 1]![j]!, dp[i]![j - 1]!);
     }
   }
   return dp;
@@ -87,11 +81,6 @@ const splitOuterTag = (html: string): [string, string, string] => {
   return ['', trimmed, ''];
 };
 
-const DEL_STYLE =
-  'background:rgba(239,68,68,0.18);color:#b91c1c;text-decoration:line-through;border-radius:2px;';
-const INS_STYLE =
-  'background:rgba(34,197,94,0.18);color:#15803d;text-decoration:none;border-radius:2px;';
-
 const computeInlineDiff = (baseHtml: string, targetHtml: string): string => {
   const [openTag, baseInner, closeTag] = splitOuterTag(baseHtml);
   const [, targetInner] = splitOuterTag(targetHtml);
@@ -110,10 +99,10 @@ const computeInlineDiff = (baseHtml: string, targetHtml: string): string => {
       i--;
       j--;
     } else if (j > 0 && (i === 0 || dp[i]![j - 1]! >= dp[i - 1]![j]!)) {
-      parts.unshift(`<ins style="${INS_STYLE}">${targetTokens[j - 1]}</ins>`);
+      parts.unshift(`<ins>${targetTokens[j - 1]}</ins>`);
       j--;
     } else {
-      parts.unshift(`<del style="${DEL_STYLE}">${baseTokens[i - 1]}</del>`);
+      parts.unshift(`<del>${baseTokens[i - 1]}</del>`);
       i--;
     }
   }
@@ -134,7 +123,6 @@ const collapseModified = (ops: EditOp[]): DiffRow[] => {
       continue;
     }
 
-    // Look ahead: remove followed by add of same block type → modified
     if (
       op.op === 'remove' &&
       idx + 1 < ops.length &&
@@ -144,12 +132,7 @@ const collapseModified = (ops: EditOp[]): DiffRow[] => {
       const next = ops[idx + 1] as { op: 'add'; target: ASTNode };
       const baseHtml = renderNode(op.base);
       const targetHtml = renderNode(next.target);
-      rows.push({
-        kind: 'modified',
-        baseHtml,
-        targetHtml,
-        inlineHtml: computeInlineDiff(baseHtml, targetHtml),
-      });
+      rows.push({ kind: 'modified', baseHtml, targetHtml, inlineHtml: computeInlineDiff(baseHtml, targetHtml) });
       idx += 2;
       continue;
     }
@@ -160,7 +143,6 @@ const collapseModified = (ops: EditOp[]): DiffRow[] => {
       continue;
     }
 
-    // op === 'add'
     rows.push({ kind: 'added', html: renderNode(op.target) });
     idx++;
   }

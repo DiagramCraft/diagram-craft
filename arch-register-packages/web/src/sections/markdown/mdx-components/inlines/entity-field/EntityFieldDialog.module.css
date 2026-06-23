@@ -1,0 +1,25 @@
+.fieldList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px 12px;
+}
+
+.fieldOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 3px 0;
+  border-radius: var(--r-sm);
+}
+
+.fieldOptionSchema {
+  color: var(--base-fg-dim);
+}
+
+.fieldOptionSelected {
+  color: var(--accent-fg);
+  font-weight: 500;
+}

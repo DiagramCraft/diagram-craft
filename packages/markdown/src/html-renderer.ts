@@ -49,6 +49,9 @@ export class HTMLRenderer {
 
   private processNode(astNode: ASTNode): string {
     switch (astNode.type) {
+      case 'component':
+        return astNode.source;
+
       case 'literal':
         return this.createHtmlEntities(astNode.value);
 

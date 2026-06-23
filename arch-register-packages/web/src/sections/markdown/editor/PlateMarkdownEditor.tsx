@@ -29,44 +29,33 @@ import {
   flip
 } from '@platejs/floating';
 import type { TElement, Value } from 'platejs';
-import { TbId } from 'react-icons/tb';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
-import { Draggable, isListParagraph, getNodeText } from './Draggable';
-import { EntityCardPlateElement, entityCardMdxRule } from './blocks/entity-card/EntityCardPlateElement';
+import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
+import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
 
 const PElement = (props: PlateElementProps) => (
-  <Draggable as={isListParagraph(props.element) ? 'div' : 'p'} {...props} />
+  <EditorBlock as={isListParagraph(props.element) ? 'div' : 'p'} {...props} />
 );
-const H1Element = (props: PlateElementProps) => <Draggable as="h1" {...props} />;
-const H2Element = (props: PlateElementProps) => <Draggable as="h2" {...props} />;
-const H3Element = (props: PlateElementProps) => <Draggable as="h3" {...props} />;
-const BlockquoteElement = (props: PlateElementProps) => (
-  <Draggable as="blockquote" {...props} />
-);
-const CodeBlockElement = (props: PlateElementProps) => (
-  <Draggable as="pre" {...props} />
-);
-const CodeLineElement = (props: PlateElementProps) => (
-  <PlateElement as="code" {...props} />
-);
+const H1Element = (props: PlateElementProps) => <EditorBlock as="h1" {...props} />;
+const H2Element = (props: PlateElementProps) => <EditorBlock as="h2" {...props} />;
+const H3Element = (props: PlateElementProps) => <EditorBlock as="h3" {...props} />;
+const BlockquoteElement = (props: PlateElementProps) => <EditorBlock as="blockquote" {...props} />;
+const CodeBlockElement = (props: PlateElementProps) => <EditorBlock as="pre" {...props} />;
+const CodeLineElement = (props: PlateElementProps) => <PlateElement as="code" {...props} />;
 
 const ListElement = ({ element, ...props }: PlateElementProps) => {
   const as =
     (element as TElement & { listStyleType?: string }).listStyleType === 'decimal'
       ? ('ol' as const)
       : ('ul' as const);
-  return <Draggable as={as} element={element} {...props} />;
+  return <EditorBlock as={as} element={element} {...props} />;
 };
 
-const ListItemElement = (props: PlateElementProps) => (
-  <PlateElement as="li" {...props} />
-);
-const ListItemContentElement = (props: PlateElementProps) => (
-  <PlateElement {...props} />
-);
+const ListItemElement = (props: PlateElementProps) => <PlateElement as="li" {...props} />;
+const ListItemContentElement = (props: PlateElementProps) => <PlateElement {...props} />;
 
 const LinkElement = ({ element, children, ...props }: PlateElementProps) => {
   const url = (element as TElement & { url?: string }).url;
@@ -78,10 +67,10 @@ const LinkElement = ({ element, children, ...props }: PlateElementProps) => {
 };
 
 const HrElement = ({ children, ...props }: PlateElementProps) => (
-  <Draggable {...props}>
+  <EditorBlock {...props}>
     <hr contentEditable={false} />
     {children}
-  </Draggable>
+  </EditorBlock>
 );
 
 // ─── Leaf (mark) components ────────────────────────────────────────────────
@@ -89,9 +78,7 @@ const HrElement = ({ children, ...props }: PlateElementProps) => (
 const BoldLeaf = (props: PlateLeafProps) => <PlateLeaf as="strong" {...props} />;
 const ItalicLeaf = (props: PlateLeafProps) => <PlateLeaf as="em" {...props} />;
 const InlineCodeLeaf = (props: PlateLeafProps) => <PlateLeaf as="code" {...props} />;
-const StrikethroughLeaf = (props: PlateLeafProps) => (
-  <PlateLeaf as="s" {...props} />
-);
+const StrikethroughLeaf = (props: PlateLeafProps) => <PlateLeaf as="s" {...props} />;
 
 // ─── Slash command definitions ──────────────────────────────────────────────
 
@@ -122,7 +109,8 @@ type SlashCommandItem = {
   onSelect: (editor: ReturnType<typeof useEditorRef>) => void;
 };
 
-const SLASH_COMMANDS: SlashCommandItem[] = [
+// Built-in (non-MDX) slash commands
+const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
   {
     key: 'h1',
     label: 'Heading 1',
@@ -209,20 +197,6 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
       insertOrReplaceBlock(editor, { type: 'blockquote', children: [{ text: '' }] })
   },
   {
-    key: 'entity-card',
-    label: 'Entity Card',
-    description: 'Embed entity metadata inline',
-    icon: <span className={styles.slashIcon}><TbId size={14} /></span>,
-    keywords: ['entity', 'card', 'catalog', 'service'],
-    onSelect: (editor) => {
-      insertOrReplaceBlock(editor, {
-        type: 'EntityCard',
-        entityId: '',
-        children: [{ text: '' }],
-      });
-    },
-  },
-  {
     key: 'hr',
     label: 'Divider',
     description: 'Horizontal rule',
@@ -255,6 +229,27 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
   }
 ];
 
+// MDX component slash commands — derived from the registry
+const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.entries(MDX_COMPONENTS).flatMap(
+  ([, spec]) => {
+    const cmd = spec.editorSpec?.slashCommand;
+    if (!cmd) return [];
+    return [
+      {
+        key: cmd.key,
+        label: cmd.label,
+        description: cmd.description,
+        icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
+        keywords: cmd.keywords,
+        onSelect: (editor: ReturnType<typeof useEditorRef>) =>
+          cmd.onSelect(editor, { insertOrReplaceBlock })
+      }
+    ];
+  }
+);
+
+const SLASH_COMMANDS: SlashCommandItem[] = [...BUILTIN_SLASH_COMMANDS, ...MDX_SLASH_COMMANDS];
+
 // ─── Slash input element ────────────────────────────────────────────────────
 
 const SlashInputElement = ({ element, children, ...props }: PlateElementProps) => {
@@ -264,15 +259,16 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [searchText, setSearchText] = useState('');
 
-  const filteredCommands = useMemo(() => 
-    SLASH_COMMANDS.filter(cmd => {
-      if (!searchText) return true;
-      const q = searchText.toLowerCase();
-      return (
-        cmd.label.toLowerCase().includes(q) ||
-        (cmd.keywords?.some(k => k.includes(q)) ?? false)
-      );
-    }), [searchText]
+  const filteredCommands = useMemo(
+    () =>
+      SLASH_COMMANDS.filter(cmd => {
+        if (!searchText) return true;
+        const q = searchText.toLowerCase();
+        return (
+          cmd.label.toLowerCase().includes(q) || (cmd.keywords?.some(k => k.includes(q)) ?? false)
+        );
+      }),
+    [searchText]
   );
 
   useEffect(() => {
@@ -330,9 +326,7 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
       if (ke.key === 'ArrowDown') {
         ke.preventDefault();
         ke.stopPropagation();
-        setSelectedIndex(i =>
-          Math.min(i + 1, filteredCommandsRef.current.length - 1)
-        );
+        setSelectedIndex(i => Math.min(i + 1, filteredCommandsRef.current.length - 1));
         return;
       }
       if (ke.key === 'ArrowUp') {
@@ -370,9 +364,7 @@ const SlashInputElement = ({ element, children, ...props }: PlateElementProps) =
 
     const spaceBelow = window.innerHeight - rect.bottom - GAP;
     const openAbove = spaceBelow < DROPDOWN_MAX_HEIGHT && rect.top > spaceBelow;
-    const top = openAbove
-      ? Math.max(GAP, rect.top - GAP - DROPDOWN_MAX_HEIGHT)
-      : rect.bottom + GAP;
+    const top = openAbove ? Math.max(GAP, rect.top - GAP - DROPDOWN_MAX_HEIGHT) : rect.bottom + GAP;
 
     const nextPos = { top, left: rect.left };
     setDropdownPos(prev =>
@@ -542,7 +534,8 @@ const HeadingBreakPlugin = createPlatePlugin({
       const { selection } = editor;
       if (selection) {
         const topIndex = selection.anchor.path[0];
-        const block = topIndex !== undefined ? (editor.children[topIndex] as TElement | undefined) : undefined;
+        const block =
+          topIndex !== undefined ? (editor.children[topIndex] as TElement | undefined) : undefined;
         if (block && HEADING_TYPES.has(block.type as string)) {
           editor.tf.splitNodes({ always: true });
           editor.tf.setNodes({ type: 'p' });
@@ -556,9 +549,24 @@ const HeadingBreakPlugin = createPlatePlugin({
 });
 
 // biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing for mdast nodes
-const mdxRules: Record<string, any> = {
-  EntityCard: entityCardMdxRule,
-};
+const mdxRules: Record<string, any> = Object.fromEntries(
+  Object.entries(MDX_COMPONENTS)
+    .filter(([, spec]) => spec.editorSpec?.mdxRule)
+    .map(([name, spec]) => [name, spec.editorSpec!.mdxRule])
+);
+
+// Custom MDX element plugins — derived from the registry
+const mdxElementPlugins = Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) => {
+  if (!spec.editorSpec) return [];
+  const { nodeOptions, editableComponent } = spec.editorSpec;
+  return [
+    createPlatePlugin({
+      key: name,
+      node: { isElement: true, ...nodeOptions }
+      // biome-ignore lint/suspicious/noExplicitAny: component typing bridged via registry
+    }).withComponent(editableComponent as any)
+  ];
+});
 
 const editorPlugins = [
   NodeIdPlugin,
@@ -584,9 +592,7 @@ const editorPlugins = [
     node: { isElement: true }
   }).withComponent(CodeLineElement),
   ListPlugin.withComponent(ListElement),
-  createPlatePlugin({ key: 'li', node: { isElement: true } }).withComponent(
-    ListItemElement
-  ),
+  createPlatePlugin({ key: 'li', node: { isElement: true } }).withComponent(ListItemElement),
   createPlatePlugin({ key: 'lic', node: { isElement: true } }).withComponent(
     ListItemContentElement
   ),
@@ -598,17 +604,10 @@ const editorPlugins = [
     key: 'hr',
     node: { isElement: true, isVoid: true }
   }).withComponent(HrElement),
-  createPlatePlugin({
-    key: 'EntityCard',
-    node: { isElement: true, isVoid: true }
-  }).withComponent(EntityCardPlateElement),
+  ...mdxElementPlugins,
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
-  createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(
-    ItalicLeaf
-  ),
-  createPlatePlugin({ key: 'code', node: { isLeaf: true } }).withComponent(
-    InlineCodeLeaf
-  ),
+  createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(ItalicLeaf),
+  createPlatePlugin({ key: 'code', node: { isLeaf: true } }).withComponent(InlineCodeLeaf),
   createPlatePlugin({
     key: 'strikethrough',
     node: { isLeaf: true }

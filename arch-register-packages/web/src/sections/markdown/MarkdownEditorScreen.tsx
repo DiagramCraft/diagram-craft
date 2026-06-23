@@ -1,14 +1,11 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useParams, useSearch, useNavigate } from '@tanstack/react-router';
 import {
-  TbChevronLeft,
-  TbChevronRight,
   TbDeviceFloppy,
   TbDots,
   TbFileText,
   TbHistory,
   TbPencil,
-  TbRestore,
   TbTrash,
   TbX
 } from 'react-icons/tb';
@@ -16,7 +13,6 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import {
   useMarkdownContent,
-  useMarkdownRevision,
   useMarkdownRevisions,
   useRestoreMarkdownRevision,
   useSaveMarkdownContent,
@@ -34,17 +30,14 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Title } from '../../components/Title';
 import { RenameDialog } from '../../components/RenameDialog';
 import { DropdownMenu } from '../../components/DropdownMenu';
-import type {
-  FileTree,
-  MarkdownRevisionSummary,
-  ProjectFile
-} from '@arch-register/api-types/projectContract';
+import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import styles from './MarkdownEditorScreen.module.css';
-import { PlateMarkdownEditor } from './PlateMarkdownEditor';
-import { extractFirstHeadingTitle, renderMarkdownWithoutFirstHeading } from './markdownTitle';
-import { MdxPreview } from './MdxPreview';
-import { diffMarkdown } from './markdownDiff';
-import type { DiffRow } from './markdownDiff';
+import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
+import {
+  extractFirstHeadingTitle,
+} from './preview/markdownTitle';
+import { MdxPreview } from './preview/MdxPreview';
+import { MarkdownHistoryPanel } from './MarkdownHistoryPanel';
 import {
   projectDetailRoute,
   entityDetailRoute,
@@ -52,7 +45,6 @@ import {
   asEntityPublicId
 } from '../../routes/publicObjectRoutes';
 
-type EditorMode = 'view' | 'edit';
 type PaneMode = 'edit' | 'raw' | 'preview';
 type ViewPanel = 'preview' | 'history';
 
@@ -83,137 +75,6 @@ const relativeDate = (iso: string): string => {
   return `${months} months ago`;
 };
 
-const formatRevisionDate = (iso: string): string =>
-  new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit'
-  }).format(new Date(iso));
-
-const RevisionListItem = (props: {
-  revision: MarkdownRevisionSummary;
-  active: boolean;
-  onClick: () => void;
-}) => {
-  const { revision, active, onClick } = props;
-  return (
-    <button
-      type="button"
-      className={`${styles.revisionItem} ${active ? styles.revisionItemActive : ''}`}
-      onClick={onClick}
-    >
-      <div className={styles.revisionItemHead}>
-        <div className={styles.revisionTitle}>{revision.title ?? 'Untitled revision'}</div>
-
-        <div className={styles.revisionBadges}>
-          {revision.restored_from_revision_id ? (
-            <span className={styles.restoreBadge}>Restore</span>
-          ) : null}
-          <span className={styles.revisionBadge}>v{revision.revision_number}</span>
-        </div>
-      </div>
-      <div className={styles.revisionMeta}>
-        {revision.created_by_name ?? 'Unknown author'} · {relativeDate(revision.created_at)}
-      </div>
-    </button>
-  );
-};
-
-const DiffRowView = ({ row }: { row: DiffRow }) => {
-  if (row.kind === 'unchanged') {
-    return (
-      <div className={`${styles.diffRow} ${styles.diffRowUnchanged}`}>
-        <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.html }} />
-      </div>
-    );
-  }
-  if (row.kind === 'added') {
-    return (
-      <div className={`${styles.diffRow} ${styles.diffRowAdded}`}>
-        <div className={styles.diffRowMarker}>+</div>
-        <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.html }} />
-      </div>
-    );
-  }
-  if (row.kind === 'removed') {
-    return (
-      <div className={`${styles.diffRow} ${styles.diffRowRemoved}`}>
-        <div className={styles.diffRowMarker}>−</div>
-        <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.html }} />
-      </div>
-    );
-  }
-  // modified
-  return (
-    <div className={`${styles.diffRow} ${styles.diffRowModified}`}>
-      <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.inlineHtml }} />
-    </div>
-  );
-};
-
-const CompareView = (props: {
-  workspaceSlug: string;
-  nodeId: string;
-  currentBody: string;
-  revisions: MarkdownRevisionSummary[];
-  selectedRevisionId: string;
-  compareMode: 'to-current' | 'changes-in-version';
-}) => {
-  const { workspaceSlug, nodeId, currentBody, revisions, selectedRevisionId, compareMode } = props;
-
-  const selectedIndex = revisions.findIndex(r => r.id === selectedRevisionId);
-  const previousRevision = revisions[selectedIndex + 1] ?? null; // revisions are newest-first
-
-  // to-current: base = selected revision, target = current document
-  // changes-in-version: base = previous revision, target = selected revision
-  const baseRevisionId = compareMode === 'to-current' ? selectedRevisionId : previousRevision?.id;
-  const targetRevisionId = compareMode === 'to-current' ? undefined : selectedRevisionId;
-
-  const { data: baseRevision, isLoading: baseLoading } = useMarkdownRevision(
-    workspaceSlug,
-    nodeId,
-    baseRevisionId
-  );
-  const { data: targetRevision, isLoading: targetLoading } = useMarkdownRevision(
-    workspaceSlug,
-    nodeId,
-    targetRevisionId
-  );
-
-  const baseBody = baseRevision?.body ?? null;
-  const targetBody = compareMode === 'to-current' ? currentBody : (targetRevision?.body ?? null);
-
-  const rows = useMemo(() => {
-    if (baseBody === null) return null;
-    return diffMarkdown(baseBody, targetBody ?? '');
-  }, [baseBody, targetBody]);
-
-  const isLoading = baseLoading || (compareMode === 'changes-in-version' && targetLoading);
-  const noPreviousVersion = compareMode === 'changes-in-version' && !previousRevision;
-
-  return (
-    <div className={styles.compareView}>
-      <div className={styles.compareBody}>
-        {noPreviousVersion ? (
-          <div className={styles.previewEmpty}>
-            This is the first version — no previous version to compare against.
-          </div>
-        ) : isLoading ? (
-          <div className={styles.previewEmpty}>Loading…</div>
-        ) : rows === null ? (
-          <div className={styles.previewEmpty}>Loading…</div>
-        ) : rows.length === 0 ? (
-          <div className={styles.previewEmpty}>These versions are identical.</div>
-        ) : (
-          rows.map((row, i) => <DiffRowView key={i} row={row} />)
-        )}
-      </div>
-    </div>
-  );
-};
-
 export const MarkdownEditorScreen = () => {
   const params = useParams({ strict: false }) as {
     workspaceSlug: string;
@@ -231,8 +92,7 @@ export const MarkdownEditorScreen = () => {
   const { workspaceSlug, nodeId, projectId, entityId } = params;
   const navigate = useNavigate();
   const { workspace } = useWorkspaceContext();
-  const requestedMode =
-    search.mode === 'edit' ? 'edit' : search.mode === 'raw' ? 'raw' : 'preview';
+  const requestedMode = search.mode === 'edit' ? 'edit' : search.mode === 'raw' ? 'raw' : 'preview';
   const requestedPanel = search.panel === 'history' ? 'history' : 'preview';
   const historyMode = search.historyMode === 'compare' ? 'compare' : 'preview';
   const compareMode = search.compareMode ?? 'to-current';
@@ -263,9 +123,6 @@ export const MarkdownEditorScreen = () => {
   });
 
   const [body, setBody] = useState('');
-  const [editorMode, setEditorMode] = useState<EditorMode>(
-    requestedMode === 'edit' ? 'edit' : 'view'
-  );
   const [paneMode, setPaneMode] = useState<PaneMode>(requestedMode);
   const [viewPanel, setViewPanel] = useState<ViewPanel>(requestedPanel);
   const [dirty, setDirty] = useState(false);
@@ -274,16 +131,10 @@ export const MarkdownEditorScreen = () => {
   const initializedRef = useRef(false);
   const previousNodeIdRef = useRef(nodeId);
 
+  // editorMode is fully derived from paneMode — edit/raw → editing, preview → viewing
+  const editorMode = paneMode === 'preview' ? 'view' : 'edit';
+
   const selectedRevisionId = search.revisionId;
-  const selectedRevisionSummary = useMemo(
-    () => revisions.find(revision => revision.id === selectedRevisionId) ?? null,
-    [revisions, selectedRevisionId]
-  );
-  const { data: selectedRevision, isLoading: revisionLoading } = useMarkdownRevision(
-    workspaceSlug,
-    nodeId,
-    selectedRevisionSummary?.id
-  );
 
   const file = useMemo(() => {
     return projectId
@@ -299,11 +150,8 @@ export const MarkdownEditorScreen = () => {
   const toc = useMemo(() => extractToc(body), [body]);
   const readTime = useMemo(() => calcReadTime(body), [body]);
   const updatedLabel = file?.updated_at ? relativeDate(file.updated_at) : null;
-  const selectedRevisionHtml = useMemo(
-    () => renderMarkdownWithoutFirstHeading(selectedRevision?.body ?? ''),
-    [selectedRevision?.body]
-  );
 
+  // navigate's function-update form for search means updateSearch only needs navigate as dep
   const updateSearch = useCallback(
     (
       next: Partial<{
@@ -315,17 +163,18 @@ export const MarkdownEditorScreen = () => {
       }>
     ) => {
       navigate({
-        search: {
-          ...(search as Record<string, unknown>),
-          mode: next.mode,
-          panel: next.panel,
-          revisionId: next.revisionId,
-          historyMode: next.historyMode,
-          compareMode: next.compareMode
-        } as never
+        search: (prev: Record<string, unknown>) =>
+          ({
+            ...prev,
+            mode: next.mode,
+            panel: next.panel,
+            revisionId: next.revisionId,
+            historyMode: next.historyMode,
+            compareMode: next.compareMode
+          }) as never
       });
     },
-    [navigate, search]
+    [navigate]
   );
 
   const parentLabel: string = projectId
@@ -353,7 +202,6 @@ export const MarkdownEditorScreen = () => {
   }, [nodeId]);
 
   useEffect(() => {
-    setEditorMode(requestedMode === 'preview' ? 'view' : 'edit');
     setPaneMode(requestedMode);
     setViewPanel(requestedPanel);
   }, [requestedMode, requestedPanel]);
@@ -373,13 +221,13 @@ export const MarkdownEditorScreen = () => {
 
   useEffect(() => {
     if (viewPanel !== 'history' || revisions.length === 0) return;
-    if (selectedRevisionSummary) return;
+    if (selectedRevisionId) return;
     updateSearch({
       mode: 'preview',
       panel: 'history',
       revisionId: revisions[0]!.id
     });
-  }, [revisions, selectedRevisionSummary, updateSearch, viewPanel]);
+  }, [revisions, selectedRevisionId, updateSearch, viewPanel]);
 
   const handleChange = useCallback((value: string) => {
     setBody(value);
@@ -396,7 +244,6 @@ export const MarkdownEditorScreen = () => {
     if (saveMutation.isPending) return;
     await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
     setDirty(false);
-    setEditorMode('view');
     setPaneMode('preview');
     setViewPanel('preview');
     updateSearch({ mode: 'preview', panel: 'preview', revisionId: undefined });
@@ -407,7 +254,6 @@ export const MarkdownEditorScreen = () => {
       setBody(data?.body ?? '');
       setDirty(false);
     }
-    setEditorMode('view');
     setPaneMode('preview');
     setViewPanel('preview');
     updateSearch({
@@ -419,7 +265,6 @@ export const MarkdownEditorScreen = () => {
   }, [data?.body, dirty, updateSearch]);
 
   const handleEnterEdit = useCallback(() => {
-    setEditorMode('edit');
     setPaneMode('edit');
     updateSearch({ mode: 'edit', panel: undefined, revisionId: undefined });
   }, [updateSearch]);
@@ -436,7 +281,6 @@ export const MarkdownEditorScreen = () => {
   }, [updateSearch]);
 
   const handleOpenHistory = useCallback(() => {
-    setEditorMode('view');
     setPaneMode('preview');
     setViewPanel('history');
     updateSearch({
@@ -523,20 +367,22 @@ export const MarkdownEditorScreen = () => {
     });
   }, [selectedRevisionId, updateSearch]);
 
-  const handleRestore = useCallback(async () => {
-    if (!selectedRevisionSummary || restoreMutation.isPending) return;
-    await restoreMutation.mutateAsync(selectedRevisionSummary.id);
-    setDirty(false);
-    setEditorMode('view');
-    setPaneMode('preview');
-    setViewPanel('preview');
-    updateSearch({
-      mode: 'preview',
-      panel: 'preview',
-      revisionId: undefined,
-      historyMode: undefined
-    });
-  }, [restoreMutation, selectedRevisionSummary, updateSearch]);
+  const handleRestore = useCallback(
+    async (revisionId: string) => {
+      if (restoreMutation.isPending) return;
+      await restoreMutation.mutateAsync(revisionId);
+      setDirty(false);
+      setPaneMode('preview');
+      setViewPanel('preview');
+      updateSearch({
+        mode: 'preview',
+        panel: 'preview',
+        revisionId: undefined,
+        historyMode: undefined
+      });
+    },
+    [restoreMutation, updateSearch]
+  );
 
   if (isLoading) {
     return (
@@ -597,13 +443,14 @@ export const MarkdownEditorScreen = () => {
     </div>
   );
 
-  const titleDescription = showPlateEditor || showRawEditor
-    ? 'Editing now'
-    : viewPanel === 'history'
-      ? `Version history${revisions.length > 0 ? ` · ${revisions.length} saved` : ''}`
-      : [updatedLabel ? `Updated ${updatedLabel}` : null, `${readTime} min read`]
-          .filter(Boolean)
-          .join(' · ');
+  const titleDescription =
+    showPlateEditor || showRawEditor
+      ? 'Editing now'
+      : viewPanel === 'history'
+        ? `Version history${revisions.length > 0 ? ` · ${revisions.length} saved` : ''}`
+        : [updatedLabel ? `Updated ${updatedLabel}` : null, `${readTime} min read`]
+            .filter(Boolean)
+            .join(' · ');
 
   const isViewMode = editorMode === 'view' && viewPanel === 'preview';
 
@@ -727,138 +574,22 @@ export const MarkdownEditorScreen = () => {
           )}
         </div>
       ) : viewPanel === 'history' ? (
-        <>
-          <div className={styles.toolbar}>
-            <div className={styles.paneToggle}>
-              <button
-                type="button"
-                className={`${styles.paneToggleBtn} ${historyMode === 'preview' ? styles.paneToggleBtnActive : ''}`}
-                disabled={!selectedRevisionSummary}
-                onClick={handleViewVersion}
-              >
-                Version
-              </button>
-              <button
-                type="button"
-                className={`${styles.paneToggleBtn} ${historyMode === 'compare' && compareMode === 'changes-in-version' ? styles.paneToggleBtnActive : ''}`}
-                disabled={!selectedRevisionSummary}
-                onClick={() => handleEnterCompare('changes-in-version')}
-              >
-                Diff
-              </button>
-              <button
-                type="button"
-                className={`${styles.paneToggleBtn} ${historyMode === 'compare' && compareMode === 'to-current' ? styles.paneToggleBtnActive : ''}`}
-                disabled={!selectedRevisionSummary}
-                onClick={() => handleEnterCompare('to-current')}
-              >
-                vs Current
-              </button>
-            </div>
-
-            <div className={styles.toolbarNavGroup}>
-              {selectedRevisionSummary ? (
-                <span className={styles.toolbarMeta}>
-                  v{selectedRevisionSummary.revision_number}
-                  {' · '}
-                  {selectedRevisionSummary.created_by_name ?? 'Unknown author'}
-                  {' · '}
-                  {formatRevisionDate(selectedRevisionSummary.created_at)}
-                </span>
-              ) : (
-                <span className={styles.toolbarMeta}>No version selected</span>
-              )}
-            </div>
-            <div className={styles.toolbarActions}>
-              <Button
-                variant="secondary"
-                icon={<TbChevronLeft size={14} />}
-                disabled={
-                  !selectedRevisionSummary ||
-                  revisions.indexOf(selectedRevisionSummary) === revisions.length - 1
-                }
-                onClick={() => {
-                  const idx = revisions.indexOf(selectedRevisionSummary!);
-                  handleSelectRevision(revisions[idx + 1]!.id);
-                }}
-              />
-              <Button
-                variant="secondary"
-                icon={<TbChevronRight size={14} />}
-                disabled={
-                  !selectedRevisionSummary || revisions.indexOf(selectedRevisionSummary) === 0
-                }
-                onClick={() => {
-                  const idx = revisions.indexOf(selectedRevisionSummary!);
-                  handleSelectRevision(revisions[idx - 1]!.id);
-                }}
-              />
-
-              <Button
-                variant="secondary"
-                icon={<TbRestore size={13} />}
-                disabled={!selectedRevisionSummary}
-                onClick={handleRestore}
-              >
-                Restore
-              </Button>
-              <Button variant="secondary" icon={<TbX size={13} />} onClick={handlePreview}>
-                Close
-              </Button>
-            </div>
-          </div>
-          <div className={styles.historyGrid}>
-            <section className={styles.historyPreview}>
-              {historyMode === 'compare' && selectedRevisionId ? (
-                <CompareView
-                  workspaceSlug={workspaceSlug}
-                  nodeId={nodeId}
-                  currentBody={body}
-                  revisions={revisions}
-                  selectedRevisionId={selectedRevisionId}
-                  compareMode={compareMode}
-                />
-              ) : revisionLoading ? (
-                <div className={styles.previewEmpty}>Loading selected version…</div>
-              ) : selectedRevision ? (
-                <article className={styles.article}>
-                  {selectedRevisionHtml.trim() ? (
-                    <>
-                      <div dangerouslySetInnerHTML={{ __html: selectedRevisionHtml }} />
-                      <div className={styles.articleFooter}>
-                        Saved {formatRevisionDate(selectedRevision.created_at)}
-                      </div>
-                    </>
-                  ) : (
-                    <div className={styles.previewEmpty}>This revision is empty.</div>
-                  )}
-                </article>
-              ) : (
-                <div className={styles.previewEmpty}>Select a version to preview it here.</div>
-              )}
-            </section>
-            <aside className={styles.historySidebar}>
-              <div className={styles.historySidebarBody}>
-                {revisionsLoading ? (
-                  <div className={styles.previewEmpty}>Loading versions…</div>
-                ) : revisions.length === 0 ? (
-                  <div className={styles.previewEmpty}>
-                    No saved versions yet. Save this document to start a history.
-                  </div>
-                ) : (
-                  revisions.map(revision => (
-                    <RevisionListItem
-                      key={revision.id}
-                      revision={revision}
-                      active={revision.id === selectedRevisionSummary?.id}
-                      onClick={() => handleSelectRevision(revision.id)}
-                    />
-                  ))
-                )}
-              </div>
-            </aside>
-          </div>
-        </>
+        <MarkdownHistoryPanel
+          workspaceSlug={workspaceSlug}
+          nodeId={nodeId}
+          currentBody={body}
+          revisions={revisions}
+          revisionsLoading={revisionsLoading}
+          selectedRevisionId={selectedRevisionId}
+          historyMode={historyMode}
+          compareMode={compareMode}
+          isRestoring={restoreMutation.isPending}
+          onSelectRevision={handleSelectRevision}
+          onViewVersion={handleViewVersion}
+          onEnterCompare={handleEnterCompare}
+          onRestore={handleRestore}
+          onClose={handlePreview}
+        />
       ) : (
         <div className={styles.bodyGrid}>
           <article className={styles.article}>

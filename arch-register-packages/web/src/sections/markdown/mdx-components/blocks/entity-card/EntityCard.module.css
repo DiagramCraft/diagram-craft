@@ -14,38 +14,6 @@
   position: relative;
 }
 
-.editable {
-  cursor: default;
-}
-
-.editBtn {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-sm);
-  color: var(--cmp-fg-disabled);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 80ms, color 80ms;
-}
-
-.card:hover .editBtn {
-  opacity: 1;
-}
-
-.editBtn:hover {
-  color: var(--base-fg);
-  background: var(--cmp-bg);
-}
-
 .card.error {
   border-color: color-mix(in oklch, var(--error-fg) 30%, transparent);
   background: color-mix(in oklch, var(--error-fg) 6%, transparent);
