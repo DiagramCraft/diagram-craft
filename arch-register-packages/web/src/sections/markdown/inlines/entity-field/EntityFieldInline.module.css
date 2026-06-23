@@ -2,13 +2,15 @@
   display: inline;
   font-weight: 600;
   color: var(--base-fg);
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+*[data-block-id] .chip {
   background: var(--cmp-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--r-sm);
-  padding: 0 5px;
-  font-size: 0.9em;
-  vertical-align: baseline;
-  white-space: nowrap;
+  padding: 2px 5px;
 }
 
 .chipLoading {
