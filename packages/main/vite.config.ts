@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react';
 import yaml from '@rollup/plugin-yaml';
 
 export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const dcServerPort = env['VITE_DC_SERVER_PORT'] ?? process.env['VITE_DC_SERVER_PORT'] ?? '3000';
+
   // https://vitejs.dev/config/
   const userConfig: UserConfig = {
     base: './',
@@ -40,9 +43,10 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
       tsconfigPaths: true
     },
     server: {
+      port: parseInt(process.env['PORT'] ?? '5173'),
       proxy: {
         '/api': {
-          target: 'http://localhost:3000',
+          target: `http://localhost:${dcServerPort}`,
           changeOrigin: true
         }
       }

@@ -75,6 +75,18 @@ for e in reg.get('worktrees', []):
 " 2>/dev/null || true)"
     [ -n "${ENTRY}" ] && echo "${ENTRY}"
   fi
+
+  # Bootstrap DB if it was deleted (safe to re-run; only seeds when DB is absent)
+  AR_SERVER_DIR="${WORKTREE_ROOT}/arch-register-packages/server"
+  AR_DB_PATH="${AR_SERVER_DIR}/data/arch-register.sqlite"
+  if [ ! -f "${AR_DB_PATH}" ]; then
+    echo ""
+    echo "Bootstrapping AR server database..."
+    mkdir -p "${AR_SERVER_DIR}/data"
+    (cd "${AR_SERVER_DIR}" && pnpm bootstrap)
+    echo "AR server database bootstrapped."
+  fi
+
   exit 0
 fi
 
@@ -239,18 +251,41 @@ proc_log:
 EOF
 
 # ---------------------------------------------------------------------------
-# 11. Write arch-register-packages/server/.env
+# 11. Write packages/main/.env
+# ---------------------------------------------------------------------------
+DC_WEB_ENV="${WORKTREE_ROOT}/packages/main/.env"
+
+cat > "${DC_WEB_ENV}" <<EOF
+VITE_DC_SERVER_PORT=${PORT_DC_SERVER}
+EOF
+
+# ---------------------------------------------------------------------------
+# 13. Write arch-register-packages/server/.env
 # ---------------------------------------------------------------------------
 AR_SERVER_ENV="${WORKTREE_ROOT}/arch-register-packages/server/.env"
 
 cat > "${AR_SERVER_ENV}" <<EOF
-DATABASE_URL=sqlite://./data/arch-register.sqlite
+DB_DRIVER=sqlite
+SQLITE_PATH=./data/arch-register.sqlite
 AUTH_MODE=local
 JWT_SECRET=worktree-dev-secret-key-min-32-characters-ok
 EOF
 
 # ---------------------------------------------------------------------------
-# 12. Write arch-register-packages/web/.env
+# 14. Bootstrap AR server database (SQLite, first run only)
+# ---------------------------------------------------------------------------
+AR_SERVER_DIR="${WORKTREE_ROOT}/arch-register-packages/server"
+AR_DB_PATH="${AR_SERVER_DIR}/data/arch-register.sqlite"
+
+if [ ! -f "${AR_DB_PATH}" ]; then
+  echo "Bootstrapping AR server database..."
+  mkdir -p "${AR_SERVER_DIR}/data"
+  (cd "${AR_SERVER_DIR}" && pnpm bootstrap)
+  echo "AR server database bootstrapped."
+fi
+
+# ---------------------------------------------------------------------------
+# 15. Write arch-register-packages/web/.env
 # ---------------------------------------------------------------------------
 AR_WEB_ENV="${WORKTREE_ROOT}/arch-register-packages/web/.env"
 
@@ -259,7 +294,7 @@ VITE_AR_SERVER_PORT=${PORT_AR_SERVER}
 EOF
 
 # ---------------------------------------------------------------------------
-# 13. Print summary
+# 16. Print summary
 # ---------------------------------------------------------------------------
 echo ""
 echo "Worktree initialised"
