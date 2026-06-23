@@ -132,6 +132,20 @@ cd web
 pnpm dev
 ```
 
+### Simulating API Latency In Development
+
+The server can add artificial latency to all API requests in development mode to help surface loading-state issues, race conditions, and responsiveness problems earlier.
+
+Configure these environment variables in `server/.env` or `server/.env.local`:
+
+```bash
+NODE_ENV=development
+DEV_API_DELAY_MS=500
+DEV_API_DELAY_VARIANCE_MS=200
+```
+
+This applies an approximate 300-700ms delay to each API request. The delay middleware is disabled by default and has no effect outside development mode.
+
 **Production build:**
 ```bash
 # Build all packages
