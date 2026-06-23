@@ -21,6 +21,7 @@
   --font-sans: var(--theme-font-sans, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif);
 }
 
+[data-theme='dark'],
 .dark-theme {
   --accent-1: var(--blue-1);
   --accent-2: var(--blue-2);
@@ -84,6 +85,7 @@
   --warning-fg: var(--theme-dark-warning-fg, var(--orange-9));
 }
 
+[data-theme='light'],
 .light-theme {
   --accent-1: var(--blue-1);
   --accent-2: var(--blue-2);

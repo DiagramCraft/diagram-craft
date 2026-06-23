@@ -5,6 +5,9 @@
  */
 
 .cModeSwitcher {
+  /* Component-local theme variable */
+  --_active-bg: var(--cmp-bg);
+
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 6px;
@@ -33,7 +36,7 @@
     }
 
     &[data-active='true'] {
-      background: var(--cmp-bg);
+      background: var(--_active-bg);
       color: var(--base-fg);
       border-color: var(--panel-border);
       box-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
@@ -47,10 +50,10 @@
   }
 }
 
-:global(.light-theme) .cModeSwitcher .eBtn[data-active='true'] {
-  background: white;
+:global(.light-theme) .cModeSwitcher {
+  --_active-bg: white;
 }
 
-:global(.dark-theme) .cModeSwitcher .eBtn[data-active='true'] {
-  background: var(--gray-2);
+:global(.dark-theme) .cModeSwitcher {
+  --_active-bg: var(--gray-2);
 }
