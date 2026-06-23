@@ -31,7 +31,7 @@ import {
 import type { TElement, Value } from 'platejs';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
-import { MDX_COMPONENTS } from './mdxComponents';
+import { MDX_COMPONENTS } from '../mdxRegistry';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
@@ -239,7 +239,7 @@ const MDX_SLASH_COMMANDS: SlashCommandItem[] = Object.entries(MDX_COMPONENTS).fl
         key: cmd.key,
         label: cmd.label,
         description: cmd.description,
-        icon: cmd.icon,
+        icon: <span className={styles.slashIcon}>{cmd.icon}</span>,
         keywords: cmd.keywords,
         onSelect: (editor: ReturnType<typeof useEditorRef>) =>
           cmd.onSelect(editor, { insertOrReplaceBlock })

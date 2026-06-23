@@ -1,11 +1,11 @@
 import { useNavigate } from '@tanstack/react-router';
 import type { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
-import { TypeBadge } from '../../../../components/TypeBadge';
-import { StatusChip } from '../../../../components/StatusChip';
-import { useEntity } from '../../../../hooks/useEntities';
-import { resolveSchemaColor } from '../../../../lib/api';
-import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
-import { entityDetailRoute, asEntityPublicId } from '../../../../routes/publicObjectRoutes';
+import { TypeBadge } from '../../../../../components/TypeBadge';
+import { StatusChip } from '../../../../../components/StatusChip';
+import { useEntity } from '../../../../../hooks/useEntities';
+import { resolveSchemaColor } from '../../../../../lib/api';
+import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
+import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
 import styles from './EntityCard.module.css';
 
 export const STANDARD_FIELD_OPTIONS = [

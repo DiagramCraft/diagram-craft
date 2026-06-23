@@ -1,5 +1,5 @@
-import { useWorkspaceContext } from '../../../../layouts/WorkspaceContext';
-import { useEntity } from '../../../../hooks/useEntities';
+import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
+import { useEntity } from '../../../../../hooks/useEntities';
 import { renderSchemaFieldValue, STANDARD_FIELD_IDS } from '../../blocks/entity-card/EntityCard';
 import styles from './EntityField.module.css';
 

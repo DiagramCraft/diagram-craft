@@ -40,11 +40,14 @@ import type {
   ProjectFile
 } from '@arch-register/api-types/projectContract';
 import styles from './MarkdownEditorScreen.module.css';
-import { PlateMarkdownEditor } from './PlateMarkdownEditor';
-import { extractFirstHeadingTitle, renderMarkdownWithoutFirstHeading } from './markdownTitle';
-import { MdxPreview } from './MdxPreview';
-import { diffMarkdown } from './markdownDiff';
-import type { DiffRow } from './markdownDiff';
+import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
+import {
+  extractFirstHeadingTitle,
+  renderMarkdownWithoutFirstHeading
+} from './preview/markdownTitle';
+import { MdxPreview } from './preview/MdxPreview';
+import { diffMarkdown } from './diff/markdownDiff';
+import type { DiffRow } from './diff/markdownDiff';
 import {
   projectDetailRoute,
   entityDetailRoute,
@@ -231,8 +234,7 @@ export const MarkdownEditorScreen = () => {
   const { workspaceSlug, nodeId, projectId, entityId } = params;
   const navigate = useNavigate();
   const { workspace } = useWorkspaceContext();
-  const requestedMode =
-    search.mode === 'edit' ? 'edit' : search.mode === 'raw' ? 'raw' : 'preview';
+  const requestedMode = search.mode === 'edit' ? 'edit' : search.mode === 'raw' ? 'raw' : 'preview';
   const requestedPanel = search.panel === 'history' ? 'history' : 'preview';
   const historyMode = search.historyMode === 'compare' ? 'compare' : 'preview';
   const compareMode = search.compareMode ?? 'to-current';
@@ -597,13 +599,14 @@ export const MarkdownEditorScreen = () => {
     </div>
   );
 
-  const titleDescription = showPlateEditor || showRawEditor
-    ? 'Editing now'
-    : viewPanel === 'history'
-      ? `Version history${revisions.length > 0 ? ` · ${revisions.length} saved` : ''}`
-      : [updatedLabel ? `Updated ${updatedLabel}` : null, `${readTime} min read`]
-          .filter(Boolean)
-          .join(' · ');
+  const titleDescription =
+    showPlateEditor || showRawEditor
+      ? 'Editing now'
+      : viewPanel === 'history'
+        ? `Version history${revisions.length > 0 ? ` · ${revisions.length} saved` : ''}`
+        : [updatedLabel ? `Updated ${updatedLabel}` : null, `${readTime} min read`]
+            .filter(Boolean)
+            .join(' · ');
 
   const isViewMode = editorMode === 'view' && viewPanel === 'preview';
 

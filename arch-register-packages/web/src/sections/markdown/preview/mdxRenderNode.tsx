@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
 import { type ASTNode } from '@diagram-craft/markdown';
-import { MDX_COMPONENTS, type MdxComponentName } from './mdxComponents';
+import { MDX_COMPONENTS, type MdxComponentName } from '../mdxRegistry';
 
 export const renderNodes = (nodes: ASTNode[], keyPrefix: string): ReactNode[] => {
   return nodes.flatMap((node, index) => renderNode(node, `${keyPrefix}-${index}`));

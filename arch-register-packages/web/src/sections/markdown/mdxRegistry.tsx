@@ -2,11 +2,10 @@ import type React from 'react';
 import type { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { TbId, TbHash } from 'react-icons/tb';
-import { EntityCard } from './blocks/entity-card/EntityCard';
-import { EntityCardEditable, entityCardMdxRule } from './blocks/entity-card/EntityCardEditable';
-import { EntityField } from './inlines/entity-field/EntityField';
-import { EntityFieldEditable, entityFieldMdxRule } from './inlines/entity-field/EntityFieldEditable';
-import styles from './PlateMarkdownEditor.module.css';
+import { EntityCard } from './editor/blocks/entity-card/EntityCard';
+import { EntityCardEditable, entityCardMdxRule } from './editor/blocks/entity-card/EntityCardEditable';
+import { EntityField } from './editor/inlines/entity-field/EntityField';
+import { EntityFieldEditable, entityFieldMdxRule } from './editor/inlines/entity-field/EntityFieldEditable';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -62,7 +61,7 @@ export const MDX_COMPONENTS = {
         key: 'entity-card',
         label: 'Entity Card',
         description: 'Embed entity metadata inline',
-        icon: <span className={styles.slashIcon}><TbId size={14} /></span>,
+        icon: <TbId size={14} />,
         keywords: ['entity', 'card', 'catalog', 'service'],
         onSelect: (editor, { insertOrReplaceBlock }) => {
           insertOrReplaceBlock(editor, {
@@ -86,7 +85,7 @@ export const MDX_COMPONENTS = {
         key: 'entity-field',
         label: 'Field Embed',
         description: 'Embed a live entity field value',
-        icon: <span className={styles.slashIcon}><TbHash size={14} /></span>,
+        icon: <TbHash size={14} />,
         keywords: ['field', 'entity', 'value', 'embed', 'inline'],
         onSelect: editor => {
           editor.tf.insertNodes({
