@@ -16,6 +16,7 @@ import { workspaceViewContract } from '@arch-register/api-types/viewContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
+import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
 const ORPC_BASE_PATH = '/api';
@@ -38,6 +39,7 @@ const webContracts = {
   ...aiContract,
   ...authPublicContract,
   ...authProtectedContract,
+  ...workspaceAnalyticsContract,
   ...diagramCraftContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,

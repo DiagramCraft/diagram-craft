@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { auditKeys, invalidateAuditQueries } from './queryKeys';
+import { auditKeys, invalidateAuditQueries, workspaceAnalyticsKeys } from './queryKeys';
 
 describe('auditKeys', () => {
   it('nests log queries under a workspace-scoped prefix', () => {
@@ -21,12 +21,15 @@ describe('invalidateAuditQueries', () => {
 
     await invalidateAuditQueries(queryClient as never, 'ws-1');
 
-    expect(invalidateQueries).toHaveBeenCalledTimes(2);
+    expect(invalidateQueries).toHaveBeenCalledTimes(3);
     expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
       queryKey: auditKeys.workspaceLogs('ws-1'),
     });
     expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
       queryKey: auditKeys.stats('ws-1'),
+    });
+    expect(invalidateQueries).toHaveBeenNthCalledWith(3, {
+      queryKey: workspaceAnalyticsKeys.detail('ws-1'),
     });
   });
 });
