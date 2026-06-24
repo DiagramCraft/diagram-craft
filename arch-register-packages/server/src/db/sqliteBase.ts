@@ -35,12 +35,12 @@ import {
 } from '../domain/ai/db/aiDatabase';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 
-const parseJson = <T>(value: unknown, fallback: T): T => {
+const parseJson = <T>(value: unknown, fallback: T, field: string): T => {
   if (typeof value !== 'string' || value === '') return fallback;
   try {
     return JSON.parse(value) as T;
-  } catch {
-    return fallback;
+  } catch (error) {
+    throw new DatabaseError('unknown', `Invalid JSON in SQLite column "${field}"`, error);
   }
 };
 
@@ -49,7 +49,10 @@ const toDate = (value: unknown) => new Date(String(value));
 export const normalizeSqliteError = (error: unknown): never => {
   if (error != null && typeof error === 'object' && 'code' in error) {
     const code = String((error as { code: unknown }).code);
-    if (code.includes(SQLITE_ERROR_PATTERNS.UNIQUE))
+    if (
+      code.includes(SQLITE_ERROR_PATTERNS.UNIQUE) ||
+      code.includes(SQLITE_ERROR_PATTERNS.PRIMARY_KEY)
+    )
       throw new DatabaseError('unique', 'Unique constraint violation', error);
     if (code.includes(SQLITE_ERROR_PATTERNS.FOREIGN_KEY))
       throw new DatabaseError('foreign', 'Foreign key constraint violation', error);
@@ -101,7 +104,7 @@ export const sqliteMappers = {
     workspace: String(row['workspace']),
     name: String(row['name']),
     description: String(row['description'] ?? ''),
-    fields: parseJson(row['fields'], []),
+    fields: parseJson(row['fields'], [], 'entity_schema.fields'),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
@@ -113,7 +116,7 @@ export const sqliteMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
-    options: parseJson(row['options'], []),
+    options: parseJson(row['options'], [], 'workspace_enum.options'),
     sort_order: Number(row['sort_order'] ?? 0),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
@@ -131,10 +134,10 @@ export const sqliteMappers = {
     target_lifecycle: row['target_lifecycle'] == null ? null : String(row['target_lifecycle']),
     target_lifecycle_date:
       row['target_lifecycle_date'] == null ? null : String(row['target_lifecycle_date']),
-    tags: parseJson<string[]>(row['tags'], []),
-    links: parseJson<EntityLink[]>(row['links'], []),
+    tags: parseJson<string[]>(row['tags'], [], 'entity.tags'),
+    links: parseJson<EntityLink[]>(row['links'], [], 'entity.links'),
     schema_id: String(row['schema_id']),
-    data: parseJson<Record<string, unknown>>(row['data'], {}),
+    data: parseJson<Record<string, unknown>>(row['data'], {}, 'entity.data'),
     visibility_mode:
       row['visibility_mode'] == null
         ? null
@@ -155,10 +158,10 @@ export const sqliteMappers = {
     target_lifecycle: row['target_lifecycle'] == null ? null : String(row['target_lifecycle']),
     target_lifecycle_date:
       row['target_lifecycle_date'] == null ? null : String(row['target_lifecycle_date']),
-    tags: parseJson<string[]>(row['tags'], []),
-    links: parseJson<EntityLink[]>(row['links'], []),
+    tags: parseJson<string[]>(row['tags'], [], 'entity.tags'),
+    links: parseJson<EntityLink[]>(row['links'], [], 'entity.links'),
     schema_id: String(row['schema_id']),
-    data: parseJson<Record<string, unknown>>(row['data'], {}),
+    data: parseJson<Record<string, unknown>>(row['data'], {}, 'entity.data'),
     visibility_mode:
       row['visibility_mode'] == null
         ? null
@@ -225,7 +228,7 @@ export const sqliteMappers = {
       row['metadata_description'] == null ? null : String(row['metadata_description']),
     metadata_company: row['metadata_company'] == null ? null : String(row['metadata_company']),
     metadata_category: row['metadata_category'] == null ? null : String(row['metadata_category']),
-    metadata_keywords: parseJson(row['metadata_keywords'], [])
+    metadata_keywords: parseJson(row['metadata_keywords'], [], 'content_node.metadata_keywords')
   }),
   markdownRevision: (row: Record<string, unknown>): MarkdownRevisionDbResult => ({
     id: String(row['id']),
@@ -252,8 +255,8 @@ export const sqliteMappers = {
     entity_name: String(row['entity_name']),
     entity_slug: row['entity_slug'] == null ? null : String(row['entity_slug']),
     schema_id: row['schema_id'] == null ? null : String(row['schema_id']),
-    changes: parseJson(row['changes'], {}),
-    metadata: parseJson(row['metadata'], {})
+    changes: parseJson(row['changes'], {}, 'audit_log.changes'),
+    metadata: parseJson(row['metadata'], {}, 'audit_log.metadata')
   }),
   userWatch: (row: Record<string, unknown>): WatchDbResult => ({
     user_id: String(row['user_id']),
@@ -316,7 +319,11 @@ export const sqliteMappers = {
     description: String(row['description']),
     tone: String(row['tone']),
     builtin: Boolean(row['builtin']),
-    capabilities: parseJson<RoleDefinitionDbResult['capabilities']>(row['capabilities'], []),
+    capabilities: parseJson<RoleDefinitionDbResult['capabilities']>(
+      row['capabilities'],
+      [],
+      'workspace_role.capabilities'
+    ),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
@@ -336,8 +343,8 @@ export const sqliteMappers = {
     name: String(row['name']),
     description: row['description'] == null ? null : String(row['description']),
     view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'],
-    filters: parseJson(row['filters'], {}),
-    config: parseJson(row['config'], null),
+    filters: parseJson(row['filters'], {}, 'saved_view.filters'),
+    config: parseJson(row['config'], null, 'saved_view.config'),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
@@ -366,7 +373,7 @@ export const sqliteMappers = {
     conversation_id: String(row['conversation_id']),
     role: String(row['role']) as AiMessageDbResult['role'],
     content: String(row['content']),
-    metadata: parseJson(row['metadata'], {}),
+    metadata: parseJson(row['metadata'], {}, 'ai_message.metadata'),
     created_at: toDate(row['created_at'])
   }),
   entitySnapshot: (row: Record<string, unknown>): EntitySnapshotDbResult => ({
@@ -380,10 +387,14 @@ export const sqliteMappers = {
     created_at: toDate(row['created_at']),
     created_by: String(row['created_by']),
     created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
-    base_state: parseJson<Record<string, unknown>>(row['base_state'], {}),
+    base_state: parseJson<Record<string, unknown>>(row['base_state'], {}, 'entity_snapshot.base_state'),
     proposed_state: row['proposed_state'] == null
       ? null
-      : parseJson<Record<string, unknown>>(row['proposed_state'], {})
+      : parseJson<Record<string, unknown>>(
+          row['proposed_state'],
+          {},
+          'entity_snapshot.proposed_state'
+        )
   })
 };
 
