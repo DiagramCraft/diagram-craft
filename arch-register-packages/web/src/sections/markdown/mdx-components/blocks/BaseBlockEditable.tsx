@@ -13,12 +13,14 @@ export const BaseBlockEditable = ({
   placeholder,
   content,
   dialog,
+  fullWidth,
   ...props
 }: PlateElementProps & {
   hasValue: boolean;
   placeholder: React.ReactNode;
   content: React.ReactNode;
   dialog: (open: boolean, onClose: () => void) => React.ReactNode;
+  fullWidth?: boolean;
 }) => {
   const [dialogOpen, setDialogOpen] = useState(!hasValue);
 
@@ -39,7 +41,7 @@ export const BaseBlockEditable = ({
     >
       <div
         contentEditable={false}
-        className={styles.wrapper}
+        className={`${styles.wrapper} ${fullWidth ? styles.wrapperFullWidth : ''}`}
         onDoubleClick={hasValue ? () => setDialogOpen(true) : undefined}
       >
         {hasValue ? (

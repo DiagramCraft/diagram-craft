@@ -4,6 +4,8 @@ import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContrac
 export type AuditListFilters = {
   entityType: string | null;
   entityId: string | null;
+  entityIds?: string[] | null;
+  schemaId?: string | null;
   operation: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -18,6 +20,8 @@ export const filterAndPaginateAuditLogs = (
   let result = rows;
   if (filters.entityType) result = result.filter(row => row.entity_type === filters.entityType);
   if (filters.entityId) result = result.filter(row => row.entity_id === filters.entityId);
+  if (filters.entityIds) result = result.filter(row => filters.entityIds!.includes(row.entity_id));
+  if (filters.schemaId) result = result.filter(row => row.schema_id === filters.schemaId);
   if (filters.operation) result = result.filter(row => row.operation === filters.operation);
   if (filters.startDate)
     result = result.filter(row => row.timestamp >= new Date(filters.startDate!));

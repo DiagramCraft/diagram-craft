@@ -1,0 +1,54 @@
+.modeTabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.modeTab {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--r);
+  border: 1px solid var(--panel-border);
+  background: var(--cmp-bg);
+  color: var(--base-fg-dim);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--cmp-border-hover);
+    color: var(--base-fg);
+  }
+}
+
+.modeTabActive {
+  background: var(--accent-bg);
+  border-color: var(--accent-border, var(--accent-bg));
+  color: var(--accent-fg);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.optionLabel {
+  font-size: 12px;
+  color: var(--base-fg-dim);
+  min-width: 48px;
+}
+
+.optionSelect {
+  font-size: 12px;
+  padding: 3px 6px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  cursor: pointer;
+}

@@ -8,6 +8,9 @@ export const useAuditLog = (
   options: {
     entityType?: string | null;
     entityId?: string | null;
+    schemaId?: string | null;
+    owner?: string | null;
+    lifecycle?: string | null;
     operation?: string | null;
     startDate?: string | null;
     endDate?: string | null;
@@ -24,6 +27,9 @@ export const useAuditLog = (
         query: {
           entityType: options.entityType ?? undefined,
           entityId: options.entityId ?? undefined,
+          schemaId: options.schemaId ?? undefined,
+          owner: options.owner ?? undefined,
+          lifecycle: options.lifecycle ?? undefined,
           operation: options.operation ?? undefined,
           startDate: options.startDate ?? undefined,
           endDate: options.endDate ?? undefined,
