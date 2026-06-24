@@ -93,7 +93,6 @@ class MdxComponentInlineHandler extends InlineParser {
     return this.applyInlineRegExp(parser, parserState, s, INLINE_JSX_RE, match => {
       const name = match[1];
       if (!name || !isKnownComponent(name)) return null;
-      if (MDX_COMPONENTS[name].mode !== 'inline') return null;
       return makeComponentNode(parser, 'inline', name, match[2], parser.unescape(match[0]));
     });
   }
