@@ -3,12 +3,7 @@ import type { WorkspaceAnalytics } from '@arch-register/api-types/analyticsContr
 import { useWorkspaceAnalytics } from '../../hooks/useWorkspaceAnalytics';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import styles from './WorkspaceAnalyticsScreen.module.css';
-import {
-  completenessSearch,
-  lifecycleSearch,
-  ownershipGapSearch,
-  schemaLifecycleSearch
-} from './workspaceAnalyticsHelpers';
+import { lifecycleSearch, ownershipGapSearch } from './workspaceAnalyticsHelpers';
 
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
@@ -32,21 +27,28 @@ const StackedBar = ({
   buckets
 }: {
   buckets: Array<{ count: number; percent: number; color: string | null }>;
-}) => (
-  <div className={styles.bar}>
-    {buckets.map((bucket, index) => (
-      <div
-        // biome-ignore lint/suspicious/noArrayIndexKey: analytics buckets are static and ordered
-        key={index}
-        className={styles.barSegment}
-        style={{
-          width: `${bucket.percent}%`,
-          background: bucket.count === 0 ? 'transparent' : (bucket.color ?? '#c7ced6')
-        }}
-      />
-    ))}
-  </div>
-);
+}) => {
+  const visible = buckets.filter(b => b.count > 0);
+
+  if (visible.length === 0) return <div className={styles.bar} />;
+
+  const stops: string[] = [];
+  let pos = 0;
+  for (const bucket of visible) {
+    const color = bucket.color ?? '#c7ced6';
+    const end = Math.min(pos + bucket.percent, 100);
+    stops.push(`${color} ${pos}%`, `${color} ${end}%`);
+    pos = end;
+  }
+  if (pos < 100) stops.push(`${visible[visible.length - 1]!.color ?? '#c7ced6'} 100%`);
+
+  return (
+    <div
+      className={styles.bar}
+      style={{ background: `linear-gradient(to right, ${stops.join(', ')})` }}
+    />
+  );
+};
 
 const Section = ({
   title,
@@ -75,7 +77,10 @@ const LifecycleSection = ({
   analytics: WorkspaceAnalytics;
   onNavigate: (search: Record<string, unknown>) => void;
 }) => (
-  <Section title="Lifecycle Breakdown" sub="Workspace-wide counts and percentages by lifecycle value.">
+  <Section
+    title="Lifecycle Breakdown"
+    sub="Workspace-wide counts and percentages by lifecycle value."
+  >
     <div className={styles.bucketList}>
       {analytics.lifecycleBreakdown.map(bucket => (
         <button
@@ -87,13 +92,13 @@ const LifecycleSection = ({
           <div className={styles.bucketMeta}>
             <span
               className={styles.bucketSwatch}
-              style={{ ['--bucket-color' as string]: bucket.color ?? '#98a2b3' }}
+              style={{ background: bucket.color ?? '#98a2b3' }}
             />
-            <div>{bucket.label}</div>
+            <span className={styles.bucketName}>{bucket.label}</span>
           </div>
           <div className={styles.bucketValue}>
-            <div>{bucket.count}</div>
-            <div>{formatPercent(bucket.percent)}</div>
+            <span className={styles.bucketCount}>{bucket.count}</span>
+            <span className={styles.bucketPct}>{formatPercent(bucket.percent)}</span>
           </div>
         </button>
       ))}
@@ -142,12 +147,14 @@ export const WorkspaceAnalyticsScreen = () => {
         {analytics.coverage.length === 0 ? (
           <EmptyState text="No schemas are available for this workspace." />
         ) : (
-          <table className={styles.table}>
+          <table className={`${styles.table} ${styles.fixedTable}`}>
             <thead>
               <tr>
-                <th>Schema</th>
+                <th style={{ width: 160 }}>Schema</th>
                 <th>Lifecycle mix</th>
-                <th className={styles.right}>Entities</th>
+                <th className={styles.right} style={{ width: 80 }}>
+                  Entities
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -173,153 +180,119 @@ export const WorkspaceAnalyticsScreen = () => {
         )}
       </Section>
 
-      <Section title="Ownership Gaps" sub="Schemas with the most unowned entities.">
-        <table className={styles.table}>
+      <Section title="Completeness" sub="Field completeness distribution per schema.">
+        <table className={`${styles.table} ${styles.fixedTable}`}>
           <thead>
             <tr>
-              <th>Schema</th>
-              <th className={styles.right}>Missing owner</th>
-              <th className={styles.right}>Percent</th>
-            </tr>
-          </thead>
-          <tbody>
-            {analytics.ownershipGaps.map(row => (
-              <tr key={row.schemaId}>
-                <td>
-                  {row.missingOwnerCount > 0 ? (
-                    <button
-                      type="button"
-                      className={styles.linkButton}
-                      onClick={() => navigateToEntities(ownershipGapSearch(row.schemaId))}
-                    >
-                      {row.schemaName}
-                    </button>
-                  ) : (
-                    row.schemaName
-                  )}
-                </td>
-                <td className={styles.right}>{row.missingOwnerCount}</td>
-                <td className={styles.right}>{formatPercent(row.missingOwnerPercent)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Section>
-
-      <Section title="Completeness" sub="Counts by completeness bucket per schema.">
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Schema</th>
-              <th className={styles.right}>Below 50%</th>
-              <th className={styles.right}>50-79%</th>
-              <th className={styles.right}>80%+</th>
+              <th style={{ width: 160 }}>Schema</th>
+              <th>Completeness mix</th>
+              <th className={styles.right} style={{ width: 80 }}>
+                Entities
+              </th>
             </tr>
           </thead>
           <tbody>
             {analytics.completeness.map(row => (
               <tr key={row.schemaId}>
                 <td>{row.schemaName}</td>
-                <td className={styles.right}>
-                  {row.below50Count > 0 ? (
-                    <button
-                      type="button"
-                      className={styles.linkButton}
-                      onClick={() => navigateToEntities(completenessSearch(row.schemaId, 'below50'))}
-                    >
-                      {row.below50Count}
-                    </button>
-                  ) : (
-                    0
-                  )}
-                </td>
-                <td className={styles.right}>
-                  {row.between50And79Count > 0 ? (
-                    <button
-                      type="button"
-                      className={styles.linkButton}
-                      onClick={() =>
-                        navigateToEntities(completenessSearch(row.schemaId, 'between50And79'))
+                <td>
+                  <StackedBar
+                    buckets={[
+                      {
+                        count: row.below50Count,
+                        percent: row.totalCount > 0 ? (row.below50Count / row.totalCount) * 100 : 0,
+                        color: 'var(--error-fg)'
+                      },
+                      {
+                        count: row.between50And79Count,
+                        percent:
+                          row.totalCount > 0 ? (row.between50And79Count / row.totalCount) * 100 : 0,
+                        color: 'var(--warning-fg)'
+                      },
+                      {
+                        count: row.above80Count,
+                        percent: row.totalCount > 0 ? (row.above80Count / row.totalCount) * 100 : 0,
+                        color: 'var(--green)'
                       }
-                    >
-                      {row.between50And79Count}
-                    </button>
-                  ) : (
-                    0
-                  )}
+                    ]}
+                  />
                 </td>
-                <td className={styles.right}>{row.above80Count}</td>
+                <td className={styles.right}>{row.totalCount}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </Section>
 
-      <Section title="Schema Utilisation" sub="Entity counts, including empty schemas.">
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Schema</th>
-              <th className={styles.right}>Entities</th>
-            </tr>
-          </thead>
-          <tbody>
-            {analytics.schemaUtilization.map(row => (
-              <tr key={row.schemaId}>
-                <td>
-                  {row.count > 0 ? (
-                    <button
-                      type="button"
-                      className={styles.linkButton}
-                      onClick={() => navigateToEntities({ type: row.schemaId })}
-                    >
-                      {row.schemaName}
-                    </button>
-                  ) : (
-                    row.schemaName
-                  )}
-                </td>
-                <td className={styles.right}>{row.count}</td>
+      <div className={styles.sideBySide}>
+        <Section title="Ownership Gaps" sub="Schemas with the most unowned entities.">
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Schema</th>
+                <th style={{ width: 120 }}>Missing</th>
+                <th className={styles.right} style={{ width: 80 }}>
+                  Percent
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </Section>
-
-      <Section title="Coverage Details" sub="Clickable lifecycle buckets for each schema.">
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Schema</th>
-              <th>Lifecycle buckets</th>
-            </tr>
-          </thead>
-          <tbody>
-            {analytics.coverage.map(row => (
-              <tr key={`${row.schemaId}-buckets`}>
-                <td>{row.schemaName}</td>
-                <td>
-                  {row.lifecycleBuckets
-                    .filter(bucket => bucket.count > 0)
-                    .map(bucket => (
+            </thead>
+            <tbody>
+              {analytics.ownershipGaps.map(row => (
+                <tr key={row.schemaId}>
+                  <td>
+                    {row.missingOwnerCount > 0 ? (
                       <button
-                        key={`${row.schemaId}-${bucket.lifecycleId ?? 'unassigned'}`}
                         type="button"
                         className={styles.linkButton}
-                        onClick={() =>
-                          navigateToEntities(schemaLifecycleSearch(row.schemaId, bucket.lifecycleId))
-                        }
-                        style={{ marginRight: 12 }}
+                        onClick={() => navigateToEntities(ownershipGapSearch(row.schemaId))}
                       >
-                        {bucket.label} ({bucket.count})
+                        {row.schemaName}
                       </button>
-                    ))}
-                </td>
+                    ) : (
+                      row.schemaName
+                    )}
+                  </td>
+                  <td>{row.missingOwnerCount}</td>
+                  <td className={styles.right}>{formatPercent(row.missingOwnerPercent)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Section>
+
+        <Section title="Schema Utilisation" sub="Entity counts, including empty schemas.">
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Schema</th>
+                <th className={styles.right} style={{ width: 80 }}>
+                  Entities
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </Section>
+            </thead>
+            <tbody>
+              {analytics.schemaUtilization.map(row => (
+                <tr key={row.schemaId}>
+                  <td>
+                    {row.count > 0 ? (
+                      <button
+                        type="button"
+                        className={styles.linkButton}
+                        onClick={() => navigateToEntities({ type: row.schemaId })}
+                      >
+                        {row.schemaName}
+                      </button>
+                    ) : (
+                      row.schemaName
+                    )}
+                  </td>
+                  <td className={styles.right}>{row.count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Section>
+      </div>
     </div>
   );
 };

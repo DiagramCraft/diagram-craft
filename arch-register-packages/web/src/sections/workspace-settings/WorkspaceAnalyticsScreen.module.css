@@ -1,64 +1,80 @@
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
+  padding: 16px 24px 32px;
 }
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
-.card,
-.section {
-  border: 1px solid var(--panel-border, rgba(0, 0, 0, 0.08));
-  background: var(--panel-bg, #fff);
-  border-radius: 14px;
+.sideBySide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
 }
 
 .card {
-  padding: 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
 }
 
 .cardLabel {
-  font-size: 12px;
-  color: var(--text-muted, #667085);
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
 }
 
 .cardValue {
   font-size: 28px;
-  font-weight: 700;
-  margin-top: 8px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  margin-bottom: 6px;
 }
 
 .cardSub {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--text-muted, #667085);
-}
-
-.section {
-  overflow: hidden;
+  font-size: 11.5px;
+  color: var(--base-fg-more-dim);
 }
 
 .sectionHead {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 12px;
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--panel-border, rgba(0, 0, 0, 0.08));
+  gap: 16px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .sectionTitle {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--base-fg);
+  white-space: nowrap;
 }
 
 .sectionSub {
-  font-size: 12px;
-  color: var(--text-muted, #667085);
+  font-size: 11.5px;
+  color: var(--base-fg-more-dim);
+  text-align: right;
 }
 
 .table {
@@ -66,20 +82,29 @@
   border-collapse: collapse;
 }
 
+.fixedTable {
+  table-layout: fixed;
+}
+
 .table th,
 .table td {
-  padding: 12px 18px;
-  border-top: 1px solid var(--panel-border, rgba(0, 0, 0, 0.08));
+  padding: 10px 16px;
+  border-top: 1px solid var(--panel-border);
   text-align: left;
   font-size: 13px;
 }
 
-.table th {
+.table thead th {
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-muted, #667085);
+  color: var(--base-fg-more-dim);
   border-top: 0;
+  background: var(--base-bg);
+}
+
+.table tbody tr {
+  cursor: default;
 }
 
 .right {
@@ -100,59 +125,89 @@
   text-decoration: underline;
 }
 
+/* Stacked lifecycle bar — rendered as a gradient on a single element */
 .bar {
-  display: flex;
   width: 100%;
-  min-width: 180px;
-  height: 10px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--panel-border, rgba(0, 0, 0, 0.08)) 60%, transparent);
+  height: 8px;
+  border-radius: 4px;
+  background: var(--base-bg);
 }
 
-.barSegment {
-  height: 100%;
+.bar:hover {
+  opacity: 0.8;
 }
 
+/* Lifecycle breakdown pills */
 .bucketList {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  padding: 16px 18px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 14px 14px;
 }
 
 .bucketCard {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid var(--panel-border, rgba(0, 0, 0, 0.08));
-  border-radius: 12px;
-  padding: 12px 14px;
-  background: color-mix(in srgb, var(--panel-bg, #fff) 92%, #f4f6f8);
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  min-width: 148px;
+  cursor: pointer;
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  transition: background 80ms;
+}
+
+.bucketCard:hover {
+  background: var(--cmp-bg-hover);
 }
 
 .bucketMeta {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .bucketSwatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--bucket-color, #98a2b3);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bucketName {
+  font-size: 12.5px;
+  min-width: 0;
 }
 
 .bucketValue {
-  text-align: right;
-  font-size: 12px;
-  color: var(--text-muted, #667085);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
 }
 
+.bucketCount {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.bucketPct {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}
+
+
 .empty {
-  padding: 18px;
-  color: var(--text-muted, #667085);
+  padding: 18px 16px;
+  color: var(--base-fg-more-dim);
   font-size: 13px;
 }
