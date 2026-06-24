@@ -152,6 +152,7 @@ export type EntityFacets = {
 
 export type EntityRelation = {
   entityId: string;
+  publicId: string;
   entitySlug: string;
   entityName: string;
   entitySchemaId: string;

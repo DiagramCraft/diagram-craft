@@ -5,10 +5,12 @@ export type EntitySearchParams = {
   owner?: string;
   q?: string;
   viewId?: string;
-  viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix';
+  viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix' | 'hierarchy' | 'explore';
   radarConfig?: string;
   timelineConfig?: string;
   matrixConfig?: string;
+  hierarchyConfig?: string;
+  exploreConfig?: string;
   sidebarTab?: 'filters' | 'views' | 'pinned';
   filters?: string; // JSON string of FilterCondition[]
 };
@@ -25,12 +27,16 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
     raw.viewMode === 'tree' ||
     raw.viewMode === 'radar' ||
     raw.viewMode === 'timeline' ||
-    raw.viewMode === 'matrix'
+    raw.viewMode === 'matrix' ||
+    raw.viewMode === 'hierarchy' ||
+    raw.viewMode === 'explore'
       ? raw.viewMode
       : undefined,
   radarConfig: typeof raw.radarConfig === 'string' ? raw.radarConfig : undefined,
   timelineConfig: typeof raw.timelineConfig === 'string' ? raw.timelineConfig : undefined,
   matrixConfig: typeof raw.matrixConfig === 'string' ? raw.matrixConfig : undefined,
+  hierarchyConfig: typeof raw.hierarchyConfig === 'string' ? raw.hierarchyConfig : undefined,
+  exploreConfig: typeof raw.exploreConfig === 'string' ? raw.exploreConfig : undefined,
   sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'pinned' ? raw.sidebarTab : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
 });

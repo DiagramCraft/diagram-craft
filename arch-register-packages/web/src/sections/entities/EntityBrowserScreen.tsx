@@ -27,9 +27,18 @@ import { RadarView, type RadarConfig } from './components/RadarView';
 import { TimelineView, type TimelineConfig } from './components/TimelineView';
 import { MatrixView, type MatrixConfig } from './components/MatrixView';
 import { HierarchyView, type HierarchyConfig } from './components/HierarchyView';
+import { ExploreView } from './components/ExploreView';
+import {
+  DEFAULT_EXPLORE_CONFIG,
+  parseExploreConfigValue
+} from './components/ExploreView.helpers';
 import { resolveSchemaColor, exportEntitiesToCSV } from '../../lib/api';
 import type { TreeNode, TreeEdge, WorkspaceTeam } from '../../lib/api';
-import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import {
+  type BrowserView,
+  type ExploreViewConfig,
+  type FilterCondition
+} from '@arch-register/api-types/viewContract';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -54,8 +63,6 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-
-type BrowserView = 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix' | 'hierarchy';
 type DateFilterOperator = 'on' | 'before' | 'after' | 'empty';
 
 const parseDateValue = (value: unknown) => {
@@ -267,12 +274,14 @@ const toSavedViewConfig = (
   radarConfig: RadarConfig | null,
   timelineConfig: TimelineConfig | null,
   matrixConfig: MatrixConfig | null,
-  hierarchyConfig: HierarchyConfig | null
+  hierarchyConfig: HierarchyConfig | null,
+  exploreConfig: ExploreViewConfig | null
 ) => {
   if (view === 'radar' && radarConfig) return { radar: radarConfig };
   if (view === 'timeline' && timelineConfig) return { timeline: timelineConfig };
   if (view === 'matrix' && matrixConfig) return { matrix: matrixConfig };
   if (view === 'hierarchy' && hierarchyConfig) return { hierarchy: hierarchyConfig };
+  if (view === 'explore') return { explore: exploreConfig ?? DEFAULT_EXPLORE_CONFIG };
   return null;
 };
 
@@ -299,6 +308,7 @@ export const EntityBrowserScreen = () => {
     timelineConfig?: string;
     matrixConfig?: string;
     hierarchyConfig?: string;
+    exploreConfig?: string;
     sidebarTab?: 'filters' | 'views';
     filters?: string;
   };
@@ -381,6 +391,9 @@ export const EntityBrowserScreen = () => {
     }
     return null;
   });
+  const [exploreConfig, setExploreConfig] = useState<ExploreViewConfig | null>(() =>
+    parseExploreConfigValue(search.exploreConfig)
+  );
 
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -431,7 +444,8 @@ export const EntityBrowserScreen = () => {
         // ignore
       }
     }
-  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.matrixConfig, search.hierarchyConfig, search.q, search.filters]);
+    setExploreConfig(parseExploreConfigValue(search.exploreConfig));
+  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.matrixConfig, search.hierarchyConfig, search.exploreConfig, search.q, search.filters]);
 
   // Use TanStack Query hooks for data fetching
   const { data: entities = [] } = useEntities(workspaceId, {
@@ -495,6 +509,7 @@ export const EntityBrowserScreen = () => {
       timelineConfig?: string;
       matrixConfig?: string;
       hierarchyConfig?: string;
+      exploreConfig?: string;
       sidebarTab?: 'filters' | 'views';
       filters?: FilterCondition[];
     }) => {
@@ -516,6 +531,8 @@ export const EntityBrowserScreen = () => {
           hierarchyConfig:
             params.hierarchyConfig ??
             (hierarchyConfig ? JSON.stringify(hierarchyConfig) : undefined),
+          exploreConfig:
+            params.exploreConfig ?? (exploreConfig ? JSON.stringify(exploreConfig) : undefined),
           sidebarTab: params.sidebarTab ?? search.sidebarTab,
           filters: nextFilters.length > 0 ? JSON.stringify(nextFilters) : undefined
         }
@@ -531,6 +548,7 @@ export const EntityBrowserScreen = () => {
       timelineConfig,
       matrixConfig,
       hierarchyConfig,
+      exploreConfig,
       search.sidebarTab,
       conditions
     ]
@@ -755,7 +773,14 @@ export const EntityBrowserScreen = () => {
           sort,
           conditions
         },
-        config: toSavedViewConfig(view, radarConfig, timelineConfig, matrixConfig, hierarchyConfig)
+        config: toSavedViewConfig(
+          view,
+          radarConfig,
+          timelineConfig,
+          matrixConfig,
+          hierarchyConfig,
+          exploreConfig
+        )
       });
     } catch {
       // Error handling is done by TanStack Query
@@ -778,7 +803,14 @@ export const EntityBrowserScreen = () => {
             sort,
             conditions
           },
-          config: toSavedViewConfig(view, radarConfig, timelineConfig, matrixConfig, hierarchyConfig)
+          config: toSavedViewConfig(
+            view,
+            radarConfig,
+            timelineConfig,
+            matrixConfig,
+            hierarchyConfig,
+            exploreConfig
+          )
         }
       });
     } catch {
@@ -798,7 +830,8 @@ export const EntityBrowserScreen = () => {
     radarConfig,
     timelineConfig,
     matrixConfig,
-    hierarchyConfig
+    hierarchyConfig,
+    exploreConfig
   ]);
 
   const menuItems = useMemo(() => {
@@ -936,7 +969,8 @@ export const EntityBrowserScreen = () => {
             { value: 'radar', label: 'Radar' },
             { value: 'timeline', label: 'Timeline' },
             { value: 'matrix', label: 'Matrix' },
-            { value: 'hierarchy', label: 'Hierarchy' }
+            { value: 'hierarchy', label: 'Hierarchy' },
+            { value: 'explore', label: 'Explore' }
           ]}
         />
       </div>
@@ -948,6 +982,13 @@ export const EntityBrowserScreen = () => {
           onEntityClick={navigateToEntity}
           config={hierarchyConfig}
           onConfigChange={setHierarchyConfig}
+        />
+      ) : view === 'explore' ? (
+        <ExploreView
+          rows={filtered}
+          onEntityClick={navigateToEntity}
+          config={exploreConfig}
+          onConfigChange={setExploreConfig}
         />
       ) : view === 'matrix' ? (
         <MatrixView

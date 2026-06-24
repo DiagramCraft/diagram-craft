@@ -10,9 +10,11 @@ describe('validateEntitySearch', () => {
         owner: 'Platform Engineering',
         q: 'auth',
         viewId: 'view-123',
-        viewMode: 'radar',
+        viewMode: 'explore',
         radarConfig: '{"schemaId":"application"}',
         timelineConfig: '{"groupBy":"owner"}',
+        hierarchyConfig: '{"levels":2}',
+        exploreConfig: '{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}',
         sidebarTab: 'views',
       })
     ).toEqual({
@@ -21,10 +23,14 @@ describe('validateEntitySearch', () => {
       owner: 'Platform Engineering',
       q: 'auth',
       viewId: 'view-123',
-      viewMode: 'radar',
+      viewMode: 'explore',
       radarConfig: '{"schemaId":"application"}',
       timelineConfig: '{"groupBy":"owner"}',
+      hierarchyConfig: '{"levels":2}',
+      exploreConfig: '{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}',
       sidebarTab: 'views',
+      filters: undefined,
+      matrixConfig: undefined
     });
   });
 
@@ -44,7 +50,11 @@ describe('validateEntitySearch', () => {
       viewMode: undefined,
       radarConfig: undefined,
       timelineConfig: undefined,
+      matrixConfig: undefined,
+      hierarchyConfig: undefined,
+      exploreConfig: undefined,
       sidebarTab: undefined,
+      filters: undefined
     });
   });
 });
