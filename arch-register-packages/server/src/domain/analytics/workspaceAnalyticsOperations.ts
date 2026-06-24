@@ -48,8 +48,22 @@ export const computeWorkspaceAnalytics = (
 ): WorkspaceAnalytics => {
   const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
   const totalEntities = entities.length;
-  const entitiesWithOwner = entities.filter(entity => entity.owner != null).length;
   const lifecycleStatesSorted = [...lifecycleStates].sort((a, b) => a.sort_order - b.sort_order);
+
+  // Single pass: group entities by schema and count by lifecycle
+  const entitiesBySchema = new Map<string, EntityDbResult[]>();
+  const lifecycleCounts = new Map<string | null, number>();
+  let entitiesWithOwner = 0;
+
+  for (const entity of entities) {
+    const arr = entitiesBySchema.get(entity.schema_id);
+    if (arr) arr.push(entity);
+    else entitiesBySchema.set(entity.schema_id, [entity]);
+
+    lifecycleCounts.set(entity.lifecycle, (lifecycleCounts.get(entity.lifecycle) ?? 0) + 1);
+
+    if (entity.owner != null) entitiesWithOwner++;
+  }
 
   const lifecycleBreakdown = [
     ...lifecycleStatesSorted.map(state =>
@@ -57,24 +71,22 @@ export const computeWorkspaceAnalytics = (
         state.id,
         state.label,
         state.color,
-        entities.filter(entity => entity.lifecycle === state.id).length,
+        lifecycleCounts.get(state.id) ?? 0,
         totalEntities
       )
     ),
-    makeLifecycleBucket(
-      null,
-      'Unassigned',
-      null,
-      entities.filter(entity => entity.lifecycle == null).length,
-      totalEntities
-    )
+    makeLifecycleBucket(null, 'Unassigned', null, lifecycleCounts.get(null) ?? 0, totalEntities)
   ];
 
   const summaryCompleteness = summarizeCompleteness(entities, schemaMap);
 
   const coverage = schemas
     .map(schema => {
-      const schemaEntities = entities.filter(entity => entity.schema_id === schema.id);
+      const schemaEntities = entitiesBySchema.get(schema.id) ?? [];
+      const schemaLifecycleCounts = new Map<string | null, number>();
+      for (const e of schemaEntities) {
+        schemaLifecycleCounts.set(e.lifecycle, (schemaLifecycleCounts.get(e.lifecycle) ?? 0) + 1);
+      }
       return {
         schemaId: schema.id,
         schemaName: schema.name,
@@ -85,7 +97,7 @@ export const computeWorkspaceAnalytics = (
               state.id,
               state.label,
               state.color,
-              schemaEntities.filter(entity => entity.lifecycle === state.id).length,
+              schemaLifecycleCounts.get(state.id) ?? 0,
               schemaEntities.length
             )
           ),
@@ -93,7 +105,7 @@ export const computeWorkspaceAnalytics = (
             null,
             'Unassigned',
             null,
-            schemaEntities.filter(entity => entity.lifecycle == null).length,
+            schemaLifecycleCounts.get(null) ?? 0,
             schemaEntities.length
           )
         ].map(bucket => ({ ...bucket, schemaId: schema.id }))
@@ -103,8 +115,11 @@ export const computeWorkspaceAnalytics = (
 
   const ownershipGaps = schemas
     .map(schema => {
-      const schemaEntities = entities.filter(entity => entity.schema_id === schema.id);
-      const missingOwnerCount = schemaEntities.filter(entity => entity.owner == null).length;
+      const schemaEntities = entitiesBySchema.get(schema.id) ?? [];
+      let missingOwnerCount = 0;
+      for (const e of schemaEntities) {
+        if (e.owner == null) missingOwnerCount++;
+      }
       return {
         schemaId: schema.id,
         schemaName: schema.name,
@@ -122,7 +137,7 @@ export const computeWorkspaceAnalytics = (
 
   const completeness = schemas
     .map(schema => {
-      const schemaEntities = entities.filter(entity => entity.schema_id === schema.id);
+      const schemaEntities = entitiesBySchema.get(schema.id) ?? [];
       return {
         schemaId: schema.id,
         schemaName: schema.name,
@@ -136,7 +151,7 @@ export const computeWorkspaceAnalytics = (
     .map(schema => ({
       schemaId: schema.id,
       schemaName: schema.name,
-      count: entities.filter(entity => entity.schema_id === schema.id).length
+      count: entitiesBySchema.get(schema.id)?.length ?? 0
     }))
     .sort((a, b) => b.count - a.count || a.schemaName.localeCompare(b.schemaName));
 

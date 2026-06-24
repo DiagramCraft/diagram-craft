@@ -2,8 +2,14 @@ import { useNavigate } from '@tanstack/react-router';
 import type { WorkspaceAnalytics } from '@arch-register/api-types/analyticsContract';
 import { useWorkspaceAnalytics } from '../../hooks/useWorkspaceAnalytics';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import type { EntitySearchParams } from '../../routes/searchParams';
 import styles from './WorkspaceAnalyticsScreen.module.css';
-import { lifecycleSearch, ownershipGapSearch } from './workspaceAnalyticsHelpers';
+import {
+  completenessSearch,
+  lifecycleSearch,
+  ownershipGapSearch,
+  schemaLifecycleSearch
+} from './workspaceAnalyticsHelpers';
 
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
@@ -23,11 +29,15 @@ const StatCard = ({
   </div>
 );
 
-const StackedBar = ({
-  buckets
-}: {
-  buckets: Array<{ count: number; percent: number; color: string | null; label?: string }>;
-}) => {
+type BarBucket = {
+  count: number;
+  percent: number;
+  color: string | null;
+  label?: string;
+  onClick?: () => void;
+};
+
+const StackedBar = ({ buckets }: { buckets: BarBucket[] }) => {
   const visible = buckets.filter(b => b.count > 0);
 
   if (visible.length === 0) return <div className={styles.bar} />;
@@ -62,9 +72,23 @@ const StackedBar = ({
     >
       {visible.map((bucket, index) => (
         <div
-          key={index}
+          key={bucket.label ?? index}
+          role={bucket.onClick ? 'button' : undefined}
+          tabIndex={bucket.onClick ? 0 : undefined}
+          onClick={bucket.onClick}
+          onKeyDown={
+            bucket.onClick
+              ? e => {
+                  if (e.key === 'Enter' || e.key === ' ') bucket.onClick?.();
+                }
+              : undefined
+          }
           className={styles.barOverlay}
-          style={{ left: `${positions[index]}%`, width: `${bucket.percent}%` }}
+          style={{
+            left: `${positions[index]}%`,
+            width: `${bucket.percent}%`,
+            cursor: bucket.onClick ? 'pointer' : undefined
+          }}
           title={
             bucket.label
               ? `${bucket.label}: ${bucket.count} (${bucket.percent.toFixed(1)}%)`
@@ -101,7 +125,7 @@ const LifecycleSection = ({
   onNavigate
 }: {
   analytics: WorkspaceAnalytics;
-  onNavigate: (search: Record<string, unknown>) => void;
+  onNavigate: (search: EntitySearchParams) => void;
 }) => (
   <Section
     title="Lifecycle Breakdown"
@@ -137,7 +161,7 @@ export const WorkspaceAnalyticsScreen = () => {
   const { workspaceSlug } = useWorkspaceContext();
   const { data: analytics, isLoading, isError } = useWorkspaceAnalytics(workspaceSlug);
 
-  const navigateToEntities = (search: Record<string, unknown>) =>
+  const navigateToEntities = (search: EntitySearchParams) =>
     navigate({
       to: '/$workspaceSlug/entities',
       params: { workspaceSlug },
@@ -194,7 +218,11 @@ export const WorkspaceAnalyticsScreen = () => {
                   </td>
                   <td>
                     <StackedBar
-                      buckets={row.lifecycleBuckets.map(b => ({ ...b, label: b.label }))}
+                      buckets={row.lifecycleBuckets.map(b => ({
+                        ...b,
+                        onClick: () =>
+                          navigateToEntities(schemaLifecycleSearch(row.schemaId, b.lifecycleId))
+                      }))}
                     />
                   </td>
                 </tr>
@@ -215,7 +243,19 @@ export const WorkspaceAnalyticsScreen = () => {
           <tbody>
             {analytics.completeness.map(row => (
               <tr key={row.schemaId}>
-                <td>{row.schemaName}</td>
+                <td>
+                  {row.totalCount > 0 ? (
+                    <button
+                      type="button"
+                      className={styles.linkButton}
+                      onClick={() => navigateToEntities({ type: row.schemaId })}
+                    >
+                      {row.schemaName}
+                    </button>
+                  ) : (
+                    row.schemaName
+                  )}
+                </td>
                 <td>
                   <StackedBar
                     buckets={[
@@ -223,14 +263,25 @@ export const WorkspaceAnalyticsScreen = () => {
                         label: 'Below 50%',
                         count: row.below50Count,
                         percent: row.totalCount > 0 ? (row.below50Count / row.totalCount) * 100 : 0,
-                        color: 'var(--error-fg)'
+                        color: 'var(--error-fg)',
+                        onClick:
+                          row.below50Count > 0
+                            ? () => navigateToEntities(completenessSearch(row.schemaId, 'below50'))
+                            : undefined
                       },
                       {
                         label: '50–79%',
                         count: row.between50And79Count,
                         percent:
                           row.totalCount > 0 ? (row.between50And79Count / row.totalCount) * 100 : 0,
-                        color: 'var(--warning-fg)'
+                        color: 'var(--warning-fg)',
+                        onClick:
+                          row.between50And79Count > 0
+                            ? () =>
+                                navigateToEntities(
+                                  completenessSearch(row.schemaId, 'between50And79')
+                                )
+                            : undefined
                       },
                       {
                         label: '80%+',
