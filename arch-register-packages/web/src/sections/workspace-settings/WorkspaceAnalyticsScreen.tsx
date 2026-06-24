@@ -62,7 +62,6 @@ const StackedBar = ({
     >
       {visible.map((bucket, index) => (
         <div
-          // biome-ignore lint/suspicious/noArrayIndexKey: bar segments are positional
           key={index}
           className={styles.barOverlay}
           style={{ left: `${positions[index]}%`, width: `${bucket.percent}%` }}
