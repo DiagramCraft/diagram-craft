@@ -18,7 +18,7 @@ const parseAlignments = (sep: string): Array<'left' | 'center' | 'right' | undef
 
 export class TableHandler implements BlockParser {
   private rowRe = /^\|(.+)/;
-  private sepRe = /^\|[\s|:\-]+\|?\s*$/;
+  private sepRe = /^\|[\s|:-]+\|?\s*$/;
 
   parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
     if (!stream.peek().match(this.rowRe)) return false;
