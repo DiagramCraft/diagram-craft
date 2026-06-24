@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -11,6 +11,7 @@ import {
   usePlateEditor,
   useEditorRef,
   useEditorId,
+  useEditorSelector,
   useEventEditorValue,
   type PlateElementProps,
   type PlateLeafProps
@@ -76,9 +77,22 @@ const HrElement = ({ children, ...props }: PlateElementProps) => (
   </EditorBlock>
 );
 
-const TableElement = (props: PlateElementProps) => (
-  <EditorBlock as="table" suppressCellHover {...props} />
-);
+const TableElement = ({ element, children, ...props }: PlateElementProps) => {
+  const rows = element.children as TElement[];
+  const firstBodyRow = rows.findIndex(
+    row => ((row.children as TElement[] | undefined)?.[0]?.type ?? 'td') !== 'th'
+  );
+  const headerCount = firstBodyRow === -1 ? rows.length : firstBodyRow;
+  const childArray = React.Children.toArray(children);
+  const headRows = childArray.slice(0, headerCount);
+  const bodyRows = childArray.slice(headerCount);
+  return (
+    <EditorBlock as="table" suppressCellHover element={element} {...props}>
+      {headRows.length > 0 && <thead>{headRows}</thead>}
+      {bodyRows.length > 0 && <tbody>{bodyRows}</tbody>}
+    </EditorBlock>
+  );
+};
 const TableRowElement = (props: PlateElementProps) => <PlateElement as="tr" {...props} />;
 
 // ── Table cell context menu ───────────────────────────────────────────────────
@@ -190,9 +204,26 @@ const TableCellWrapper = ({
   ...props
 }: PlateElementProps & { as: 'td' | 'th' }) => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const isFocused = useEditorSelector(
+    ed => {
+      if (!ed.selection) return false;
+      const cellPath = ed.api.findPath(element);
+      if (!cellPath) return false;
+      const { focus } = ed.selection;
+      return focus.path.length >= cellPath.length && cellPath.every((p, i) => focus.path[i] === p);
+    },
+    [element]
+  );
+
   return (
     <>
-      <PlateElement as={as} element={element} {...props}>
+      <PlateElement
+        as={as}
+        element={element}
+        {...props}
+        className={isFocused ? styles.tableCellActive : undefined}
+      >
         <div
           className={styles.tableCellContent}
           onContextMenu={e => {
@@ -809,6 +840,31 @@ export const PlateMarkdownEditor = ({ value, onChange }: PlateMarkdownEditorProp
     value: ed => deserializeMd(ed, value)
   });
 
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+      const { selection } = editor;
+      if (!selection) return;
+      const focusPath = selection.focus.path;
+      if (focusPath.length < 3) return;
+      const tableIdx = focusPath[0]!;
+      const tableNode = editor.children[tableIdx] as TElement | undefined;
+      if (tableNode?.type !== 'table') return;
+      const rowIdx = focusPath[1]!;
+      const cellIdx = focusPath[2]!;
+      const rows = tableNode.children as TElement[];
+      const targetRowIdx = event.key === 'ArrowDown' ? rowIdx + 1 : rowIdx - 1;
+      if (targetRowIdx < 0 || targetRowIdx >= rows.length) return;
+      const targetRow = rows[targetRowIdx] as TElement | undefined;
+      if (!targetRow) return;
+      const targetCells = targetRow.children as TElement[];
+      const targetCellIdx = Math.min(cellIdx, targetCells.length - 1);
+      event.preventDefault();
+      editor.tf.select({ path: [tableIdx, targetRowIdx, targetCellIdx, 0], offset: 0 });
+    },
+    [editor]
+  );
+
   // Sync when an external change arrives (e.g. restore from revision history)
   useEffect(() => {
     if (value === externalValueRef.current) return;
@@ -833,6 +889,7 @@ export const PlateMarkdownEditor = ({ value, onChange }: PlateMarkdownEditorProp
             className={styles.plateContent}
             placeholder="Start writing, or type / for commands…"
             spellCheck
+            onKeyDown={handleKeyDown}
           />
           <FloatingToolbar />
           <DndScroller />

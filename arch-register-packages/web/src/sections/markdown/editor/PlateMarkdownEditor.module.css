@@ -314,6 +314,11 @@
   min-height: 20px;
 }
 
+.tableCellActive {
+  outline: 1px solid var(--cmp-border-focus);
+  outline-offset: -1px;
+}
+
 /* Slate placeholder */
 .plateContent :global([data-slate-placeholder]) {
   color: var(--cmp-fg-disabled);
