@@ -81,6 +81,37 @@
   border-radius: 50%;
 }
 
+/* ── Nested blocks (inside table cells) — no controls, no hover bg ───────── */
+
+.nestedBlock::before,
+.nestedBlock:hover::before {
+  display: none !important;
+}
+
+/* ── Cell-hover suppression (tables) ─────────────────────────────────────── */
+
+.suppressCellHover {
+  td:hover, th:hover {
+    outline: 1px solid var(--cmp-border-focus);
+
+    .draggableBlock::before {
+      background-color: transparent;
+    }
+  }
+}
+
+.suppressCellHover:has(td:hover, th:hover)::before {
+  visibility: hidden !important;
+}
+
+.suppressCellHover:has(td:hover, th:hover) .dragHandle {
+  opacity: 0 !important;
+}
+
+.suppressCellHover:has(td:hover, th:hover) .blockActions {
+  opacity: 0 !important;
+}
+
 /* ── Block action buttons ─────────────────────────────────────────────────── */
 
 .blockActions {

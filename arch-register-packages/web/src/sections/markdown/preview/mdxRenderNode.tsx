@@ -105,6 +105,38 @@ const renderNode = (node: ASTNode, key: string): ReactNode[] => {
     case 'link-definition':
       return [];
 
+    case 'table': {
+      const rows = node.children ?? [];
+      const headerRows = rows.filter(r => r.type === 'table-row' && (r as { header?: boolean }).header);
+      const bodyRows = rows.filter(r => r.type === 'table-row' && !(r as { header?: boolean }).header);
+      return [
+        <table key={key}>
+          {headerRows.length > 0 && (
+            <thead>
+              {headerRows.map((r, i) => (
+                <tr key={`${key}-h${i}`}>{renderNodes(r.children ?? [], `${key}-h${i}`)}</tr>
+              ))}
+            </thead>
+          )}
+          {bodyRows.length > 0 && (
+            <tbody>
+              {bodyRows.map((r, i) => (
+                <tr key={`${key}-b${i}`}>{renderNodes(r.children ?? [], `${key}-b${i}`)}</tr>
+              ))}
+            </tbody>
+          )}
+        </table>
+      ];
+    }
+
+    case 'table-row':
+      return [<tr key={key}>{renderNodes(node.children ?? [], key)}</tr>];
+
+    case 'table-cell':
+      return node.header
+        ? [<th key={key}>{renderNodes(node.children ?? [], key)}</th>]
+        : [<td key={key}>{renderNodes(node.children ?? [], key)}</td>];
+
     default:
       return [];
   }

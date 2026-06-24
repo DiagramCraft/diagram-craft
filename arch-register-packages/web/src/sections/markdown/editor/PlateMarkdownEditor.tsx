@@ -20,6 +20,7 @@ import { MarkdownPlugin, deserializeMd, serializeMd, remarkMdx } from '@platejs/
 import { DndPlugin, DndScroller } from '@platejs/dnd';
 import { ListPlugin } from '@platejs/list/react';
 import { toggleList } from '@platejs/list';
+import remarkGfm from 'remark-gfm';
 import { SlashPlugin, SlashInputPlugin } from '@platejs/slash-command/react';
 import {
   useFloatingToolbarState,
@@ -72,6 +73,11 @@ const HrElement = ({ children, ...props }: PlateElementProps) => (
     {children}
   </EditorBlock>
 );
+
+const TableElement = (props: PlateElementProps) => <EditorBlock as="table" suppressCellHover {...props} />;
+const TableRowElement = (props: PlateElementProps) => <PlateElement as="tr" {...props} />;
+const TableCellElement = (props: PlateElementProps) => <PlateElement as="td" {...props} />;
+const TableHeaderCellElement = (props: PlateElementProps) => <PlateElement as="th" {...props} />;
 
 // ─── Leaf (mark) components ────────────────────────────────────────────────
 
@@ -195,6 +201,33 @@ const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     keywords: ['quote', 'callout'],
     onSelect: editor =>
       insertOrReplaceBlock(editor, { type: 'blockquote', children: [{ text: '' }] })
+  },
+  {
+    key: 'table',
+    label: 'Table',
+    description: 'Insert a table',
+    icon: <span className={styles.slashIcon}>⊞</span>,
+    keywords: ['table', 'grid'],
+    onSelect: editor =>
+      insertOrReplaceBlock(editor, {
+        type: 'table',
+        children: [
+          {
+            type: 'tr',
+            children: [
+              { type: 'th', children: [{ text: 'Header 1' }] },
+              { type: 'th', children: [{ text: 'Header 2' }] }
+            ]
+          },
+          {
+            type: 'tr',
+            children: [
+              { type: 'td', children: [{ text: '' }] },
+              { type: 'td', children: [{ text: '' }] }
+            ]
+          }
+        ]
+      })
   },
   {
     key: 'hr',
@@ -570,7 +603,7 @@ const mdxElementPlugins = Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) 
 
 const editorPlugins = [
   NodeIdPlugin,
-  MarkdownPlugin.configure({ options: { rules: mdxRules, remarkPlugins: [remarkMdx] } }),
+  MarkdownPlugin.configure({ options: { rules: mdxRules, remarkPlugins: [remarkMdx, remarkGfm] } }),
   DndPlugin,
   SlashPlugin,
   SlashInputPlugin.withComponent(SlashInputElement),
@@ -604,6 +637,10 @@ const editorPlugins = [
     key: 'hr',
     node: { isElement: true, isVoid: true }
   }).withComponent(HrElement),
+  createPlatePlugin({ key: 'table', node: { isElement: true } }).withComponent(TableElement),
+  createPlatePlugin({ key: 'tr', node: { isElement: true } }).withComponent(TableRowElement),
+  createPlatePlugin({ key: 'td', node: { isElement: true } }).withComponent(TableCellElement),
+  createPlatePlugin({ key: 'th', node: { isElement: true } }).withComponent(TableHeaderCellElement),
   ...mdxElementPlugins,
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
   createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(ItalicLeaf),

@@ -15,7 +15,8 @@ import {
   ListHandler,
   ReferenceLinkDefinitionHandler,
   SetextHeaderHandler,
-  SmallHandler
+  SmallHandler,
+  TableHandler
 } from './handlers';
 
 export const strictParser = {
@@ -27,6 +28,7 @@ export const strictParser = {
     new FencedCodeHandler(),
     new CodeHandler(),
     new ListHandler(),
+    new TableHandler(),
     new HorizontalRulerHandler(),
     new ReferenceLinkDefinitionHandler(),
     new HtmlHandler(),
@@ -57,6 +59,7 @@ export const extendedParser = {
     new FencedCodeHandler(),
     new CodeHandler(),
     new ListHandler(),
+    new TableHandler(),
     new HorizontalRulerHandler(),
     new ReferenceLinkDefinitionHandler(),
     new HtmlHandler(),

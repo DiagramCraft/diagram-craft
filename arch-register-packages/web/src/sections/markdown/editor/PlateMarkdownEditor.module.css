@@ -276,6 +276,31 @@
   margin: 1.5em 0;
 }
 
+.plateContent :global(table) {
+  border-collapse: collapse;
+  margin: 0 0 var(--article-block-gap);
+  width: 100%;
+  font-size: 13px;
+}
+
+.plateContent :global(th),
+.plateContent :global(td) {
+  border: 1px solid var(--panel-border);
+  padding: 6px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.plateContent :global(th) {
+  background: var(--cmp-bg);
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.plateContent :global(td) {
+  color: var(--base-fg-dim);
+}
+
 /* Slate placeholder */
 .plateContent :global([data-slate-placeholder]) {
   color: var(--cmp-fg-disabled);

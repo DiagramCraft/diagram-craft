@@ -222,36 +222,42 @@ export const EditorBlock = ({
   as,
   children,
   extraContextMenuItems,
+  suppressCellHover,
   ...plateProps
 }: PlateElementProps & {
   as?: keyof HTMLElementTagNameMap;
   extraContextMenuItems?: (onClose: () => void) => React.ReactNode;
+  suppressCellHover?: boolean;
 }) => {
+  const editor = useEditorRef();
   const { handleRef, nodeRef, isDragging } = useDraggable({ element });
   const { dropLine } = useDropLine({ id: element.id as string | undefined });
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
+  const path = editor.api.findPath(element);
+  const isTopLevel = !path || path.length <= 1;
+
   return (
     <div
       ref={nodeRef}
-      className={`${styles.draggableBlock} ${isDragging ? styles.dragging : ''}`}
-      onContextMenu={e => {
+      className={`${styles.draggableBlock} ${isDragging ? styles.dragging : ''} ${suppressCellHover ? styles.suppressCellHover : ''} ${!isTopLevel ? styles.nestedBlock : ''}`}
+      onContextMenu={isTopLevel ? e => {
         e.preventDefault();
         setContextMenu({ x: e.clientX, y: e.clientY });
-      }}
+      } : undefined}
     >
-      {dropLine === 'top' && (
+      {isTopLevel && dropLine === 'top' && (
         <div className={styles.dropLine} contentEditable={false} />
       )}
-      <DragHandle handleRef={handleRef} />
+      {isTopLevel && <DragHandle handleRef={handleRef} />}
       <PlateElement as={as} element={element} {...plateProps}>
         {children}
       </PlateElement>
-      <BlockActionButtons element={element} />
-      {dropLine === 'bottom' && (
+      {isTopLevel && <BlockActionButtons element={element} />}
+      {isTopLevel && dropLine === 'bottom' && (
         <div className={styles.dropLine} contentEditable={false} />
       )}
-      {contextMenu && (
+      {isTopLevel && contextMenu && (
         <BlockContextMenu
           element={element}
           position={contextMenu}

@@ -141,6 +141,29 @@ export class HTMLRenderer {
       case 'link-definition':
         return '';
 
+      case 'table': {
+        const rows = astNode.children ?? [];
+        const headerRows = rows.filter(r => r.type === 'table-row' && (r as { header?: boolean }).header);
+        const bodyRows = rows.filter(r => r.type === 'table-row' && !(r as { header?: boolean }).header);
+        let html = '';
+        if (headerRows.length > 0) {
+          html += this.makeTag('thead', headerRows.map(r => this.makeTag('tr', this.processNodeArray(r.children ?? []))).join(''));
+        }
+        if (bodyRows.length > 0) {
+          html += this.makeTag('tbody', bodyRows.map(r => this.makeTag('tr', this.processNodeArray(r.children ?? []))).join(''));
+        }
+        return this.makeTag('table', html);
+      }
+
+      case 'table-row':
+        return this.makeTag('tr', this.processNodeArray(astNode.children ?? []));
+
+      case 'table-cell':
+        return this.makeTag(
+          astNode.header ? 'th' : 'td',
+          this.processNodeArray(astNode.children ?? [])
+        );
+
       default:
         // biome-ignore lint/suspicious/noExplicitAny: false positive
         console.log(`*** Unsupported type ${(astNode as any).type}`);
