@@ -295,7 +295,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: var(--cmp-fg-dimmed);
+  color: var(--cmp-fg);
   background: var(--cmp-bg);
   padding: 8px 12px;
   border-bottom: 1px solid var(--panel-border);

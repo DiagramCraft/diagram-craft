@@ -93,6 +93,7 @@
 .suppressCellHover {
   td:hover, th:hover {
     outline: 1px solid var(--cmp-border-focus);
+    outline-offset: -1px;
 
     .draggableBlock::before {
       background-color: transparent;

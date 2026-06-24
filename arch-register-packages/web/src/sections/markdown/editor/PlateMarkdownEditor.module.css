@@ -278,14 +278,17 @@
 
 .plateContent :global(table) {
   border-collapse: collapse;
-  margin: 0 0 var(--article-block-gap);
   width: 100%;
   font-size: 13px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin: 0 0 var(--article-block-gap);
 }
 
 .plateContent :global(th),
 .plateContent :global(td) {
-  border: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
   padding: 0;
   text-align: left;
   vertical-align: top;
