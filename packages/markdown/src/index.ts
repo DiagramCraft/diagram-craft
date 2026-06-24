@@ -10,7 +10,7 @@ import { Parser } from './parser';
 import { InlineParser } from './parser';
 import { HTMLRenderer } from './html-renderer';
 import { ParagraphHandler } from './handlers';
-import { strictParser, extendedParser } from './strict-parser';
+import { commonmarkPreset, gfmPreset, extendedPreset } from './presets';
 import { HTMLToMarkdownConverter, htmlToMarkdown, htmlStringToMarkdown } from './html-to-markdown';
 import type { HTMLToMarkdownOptions } from './html-to-markdown';
 
@@ -27,8 +27,10 @@ export class MarkdownEngine {
    * and various inline elements like emphasis, links, and inline code.
    */
   constructor() {
-    this.registerParser('strict', strictParser);
-    this.registerParser('extended', extendedParser);
+    this.registerParser('commonmark', commonmarkPreset);
+    this.registerParser('gfm', gfmPreset);
+    this.registerParser('extended', extendedPreset);
+    this.registerParser('strict', commonmarkPreset); // backward-compat alias
   }
 
   /**

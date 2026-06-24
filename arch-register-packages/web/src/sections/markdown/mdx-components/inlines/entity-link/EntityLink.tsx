@@ -29,6 +29,7 @@ export const EntityLink = ({ id }: { id: string }) => {
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)));
   };
 

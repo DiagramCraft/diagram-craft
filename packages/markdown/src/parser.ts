@@ -93,6 +93,21 @@ interface HeadingASTNode extends BaseASTNode {
   level?: number;
 }
 
+interface TableASTNode extends BaseASTNode {
+  type: 'table';
+}
+
+interface TableRowASTNode extends BaseASTNode {
+  type: 'table-row';
+  header?: boolean;
+}
+
+interface TableCellASTNode extends BaseASTNode {
+  type: 'table-cell';
+  align?: 'left' | 'center' | 'right';
+  header?: boolean;
+}
+
 /**
  * Represents a node in the Abstract Syntax Tree (AST) for parsed markdown.
  * All markdown elements are represented as AST nodes with a type and optional properties.
@@ -113,6 +128,9 @@ export type ASTNode =
   | ListASTNode
   | ItemASTNode
   | HeadingASTNode
+  | TableASTNode
+  | TableRowASTNode
+  | TableCellASTNode
   | LiteralASTNode;
 
 export type ASTNodeOfType<T extends ASTNode['type']> = ASTNode & { type: T };
@@ -188,7 +206,7 @@ export abstract class InlineParser {
 /**
  * Valid parser type identifiers. 'strict' is the default implementation.
  */
-export type ParserType = 'strict' | string;
+export type ParserType = 'commonmark' | 'gfm' | 'extended' | 'strict' | string;
 
 /**
  * Core markdown parser that processes markdown text into an Abstract Syntax Tree (AST).

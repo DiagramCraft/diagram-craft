@@ -81,6 +81,26 @@
   border-radius: 50%;
 }
 
+/* ── Nested blocks (inside table cells) — no controls, no hover bg ───────── */
+
+.nestedBlock::before,
+.nestedBlock:hover::before {
+  display: none !important;
+}
+
+/* ── Table cell hover: outline the hovered cell, suppress nested bg ───────── */
+
+.suppressCellHover {
+  td:hover, th:hover {
+    outline: 1px solid var(--cmp-border-focus);
+    outline-offset: -1px;
+
+    .draggableBlock::before {
+      background-color: transparent;
+    }
+  }
+}
+
 /* ── Block action buttons ─────────────────────────────────────────────────── */
 
 .blockActions {

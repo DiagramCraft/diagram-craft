@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -11,6 +11,7 @@ import {
   usePlateEditor,
   useEditorRef,
   useEditorId,
+  useEditorSelector,
   useEventEditorValue,
   type PlateElementProps,
   type PlateLeafProps
@@ -20,6 +21,7 @@ import { MarkdownPlugin, deserializeMd, serializeMd, remarkMdx } from '@platejs/
 import { DndPlugin, DndScroller } from '@platejs/dnd';
 import { ListPlugin } from '@platejs/list/react';
 import { toggleList } from '@platejs/list';
+import remarkGfm from 'remark-gfm';
 import { SlashPlugin, SlashInputPlugin } from '@platejs/slash-command/react';
 import {
   useFloatingToolbarState,
@@ -31,6 +33,8 @@ import {
 import type { TElement, Value } from 'platejs';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
 import styles from './PlateMarkdownEditor.module.css';
 
@@ -71,6 +75,182 @@ const HrElement = ({ children, ...props }: PlateElementProps) => (
     <hr contentEditable={false} />
     {children}
   </EditorBlock>
+);
+
+const TableElement = ({ element, children, ...props }: PlateElementProps) => {
+  const rows = element.children as TElement[];
+  const firstBodyRow = rows.findIndex(
+    row => ((row.children as TElement[] | undefined)?.[0]?.type ?? 'td') !== 'th'
+  );
+  const headerCount = firstBodyRow === -1 ? rows.length : firstBodyRow;
+  const childArray = React.Children.toArray(children);
+  const headRows = childArray.slice(0, headerCount);
+  const bodyRows = childArray.slice(headerCount);
+  return (
+    <EditorBlock as="table" suppressCellHover element={element} {...props}>
+      {headRows.length > 0 && <thead>{headRows}</thead>}
+      {bodyRows.length > 0 && <tbody>{bodyRows}</tbody>}
+    </EditorBlock>
+  );
+};
+const TableRowElement = (props: PlateElementProps) => <PlateElement as="tr" {...props} />;
+
+// ── Table cell context menu ───────────────────────────────────────────────────
+
+const TableCellContextMenu = ({
+  element,
+  position,
+  onClose
+}: {
+  element: TElement;
+  position: { x: number; y: number };
+  onClose: () => void;
+}) => {
+  const editor = useEditorRef();
+
+  const getTableInfo = () => {
+    const cellPath = editor.api.findPath(element);
+    if (!cellPath || cellPath.length < 3) return null;
+    const tableIdx = cellPath[0]!;
+    const rowIdx = cellPath[1]!;
+    const cellIdx = cellPath[2]!;
+    const tableNode = editor.children[tableIdx] as TElement;
+    const rows = tableNode?.children as TElement[] | undefined;
+    if (!rows) return null;
+    return { tableIdx, rowIdx, cellIdx, rows };
+  };
+
+  const addRow = (above: boolean) => {
+    const info = getTableInfo();
+    if (!info) return;
+    const { tableIdx, rowIdx, rows } = info;
+    const colCount = (rows[0]?.children as TElement[] | undefined)?.length ?? 0;
+    const newCells = Array.from({ length: colCount }, () => ({
+      type: 'td' as const,
+      children: [{ text: '' }]
+    }));
+    editor.tf.insertNodes(
+      { type: 'tr', children: newCells },
+      { at: [tableIdx, above ? rowIdx : rowIdx + 1] }
+    );
+    onClose();
+  };
+
+  const addColumn = (before: boolean) => {
+    const info = getTableInfo();
+    if (!info) return;
+    const { tableIdx, cellIdx, rows } = info;
+    for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+      const row = rows[rIdx] as TElement;
+      const existingCell = (row.children as TElement[])[cellIdx];
+      const cellType = existingCell?.type === 'th' ? 'th' : 'td';
+      editor.tf.insertNodes(
+        { type: cellType, children: [{ text: '' }] },
+        { at: [tableIdx, rIdx, before ? cellIdx : cellIdx + 1] }
+      );
+    }
+    onClose();
+  };
+
+  const removeRow = () => {
+    const info = getTableInfo();
+    if (!info) return;
+    const { tableIdx, rowIdx, rows } = info;
+    if (rows.length <= 1) {
+      editor.tf.removeNodes({ at: [tableIdx] });
+    } else {
+      editor.tf.removeNodes({ at: [tableIdx, rowIdx] });
+    }
+    onClose();
+  };
+
+  const removeColumn = () => {
+    const info = getTableInfo();
+    if (!info) return;
+    const { tableIdx, cellIdx, rows } = info;
+    const colCount = (rows[0]?.children as TElement[] | undefined)?.length ?? 0;
+    if (colCount <= 1) {
+      editor.tf.removeNodes({ at: [tableIdx] });
+    } else {
+      for (let rIdx = rows.length - 1; rIdx >= 0; rIdx--) {
+        editor.tf.removeNodes({ at: [tableIdx, rIdx, cellIdx] });
+      }
+    }
+    onClose();
+  };
+
+  return (
+    <ContextMenu.Imperative x={position.x} y={position.y} onClose={onClose}>
+      <Menu.Item onClick={() => addRow(true)}>Add row above</Menu.Item>
+      <Menu.Item onClick={() => addRow(false)}>Add row below</Menu.Item>
+      <Menu.Separator />
+      <Menu.Item onClick={() => addColumn(true)}>Add column before</Menu.Item>
+      <Menu.Item onClick={() => addColumn(false)}>Add column after</Menu.Item>
+      <Menu.Separator />
+      <Menu.Item type="danger" onClick={removeRow}>
+        Remove row
+      </Menu.Item>
+      <Menu.Item type="danger" onClick={removeColumn}>
+        Remove column
+      </Menu.Item>
+    </ContextMenu.Imperative>
+  );
+};
+
+const TableCellWrapper = ({
+  element,
+  as,
+  children,
+  ...props
+}: PlateElementProps & { as: 'td' | 'th' }) => {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const isFocused = useEditorSelector(
+    ed => {
+      if (!ed.selection) return false;
+      const cellPath = ed.api.findPath(element);
+      if (!cellPath) return false;
+      const { focus } = ed.selection;
+      return focus.path.length >= cellPath.length && cellPath.every((p, i) => focus.path[i] === p);
+    },
+    [element]
+  );
+
+  return (
+    <>
+      <PlateElement
+        as={as}
+        element={element}
+        {...props}
+        className={isFocused ? styles.tableCellActive : undefined}
+      >
+        <div
+          className={styles.tableCellContent}
+          onContextMenu={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            setContextMenu({ x: e.clientX, y: e.clientY });
+          }}
+        >
+          {children}
+        </div>
+      </PlateElement>
+      {contextMenu &&
+        createPortal(
+          <TableCellContextMenu
+            element={element}
+            position={contextMenu}
+            onClose={() => setContextMenu(null)}
+          />,
+          document.body
+        )}
+    </>
+  );
+};
+
+const TableCellElement = (props: PlateElementProps) => <TableCellWrapper as="td" {...props} />;
+const TableHeaderCellElement = (props: PlateElementProps) => (
+  <TableCellWrapper as="th" {...props} />
 );
 
 // ─── Leaf (mark) components ────────────────────────────────────────────────
@@ -195,6 +375,33 @@ const BUILTIN_SLASH_COMMANDS: SlashCommandItem[] = [
     keywords: ['quote', 'callout'],
     onSelect: editor =>
       insertOrReplaceBlock(editor, { type: 'blockquote', children: [{ text: '' }] })
+  },
+  {
+    key: 'table',
+    label: 'Table',
+    description: 'Insert a table',
+    icon: <span className={styles.slashIcon}>⊞</span>,
+    keywords: ['table', 'grid'],
+    onSelect: editor =>
+      insertOrReplaceBlock(editor, {
+        type: 'table',
+        children: [
+          {
+            type: 'tr',
+            children: [
+              { type: 'th', children: [{ text: 'Header 1' }] },
+              { type: 'th', children: [{ text: 'Header 2' }] }
+            ]
+          },
+          {
+            type: 'tr',
+            children: [
+              { type: 'td', children: [{ text: '' }] },
+              { type: 'td', children: [{ text: '' }] }
+            ]
+          }
+        ]
+      })
   },
   {
     key: 'hr',
@@ -570,7 +777,7 @@ const mdxElementPlugins = Object.entries(MDX_COMPONENTS).flatMap(([name, spec]) 
 
 const editorPlugins = [
   NodeIdPlugin,
-  MarkdownPlugin.configure({ options: { rules: mdxRules, remarkPlugins: [remarkMdx] } }),
+  MarkdownPlugin.configure({ options: { rules: mdxRules, remarkPlugins: [remarkMdx, remarkGfm] } }),
   DndPlugin,
   SlashPlugin,
   SlashInputPlugin.withComponent(SlashInputElement),
@@ -604,6 +811,10 @@ const editorPlugins = [
     key: 'hr',
     node: { isElement: true, isVoid: true }
   }).withComponent(HrElement),
+  createPlatePlugin({ key: 'table', node: { isElement: true } }).withComponent(TableElement),
+  createPlatePlugin({ key: 'tr', node: { isElement: true } }).withComponent(TableRowElement),
+  createPlatePlugin({ key: 'td', node: { isElement: true } }).withComponent(TableCellElement),
+  createPlatePlugin({ key: 'th', node: { isElement: true } }).withComponent(TableHeaderCellElement),
   ...mdxElementPlugins,
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
   createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(ItalicLeaf),
@@ -629,6 +840,31 @@ export const PlateMarkdownEditor = ({ value, onChange }: PlateMarkdownEditorProp
     value: ed => deserializeMd(ed, value)
   });
 
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+      const { selection } = editor;
+      if (!selection) return;
+      const focusPath = selection.focus.path;
+      if (focusPath.length < 3) return;
+      const tableIdx = focusPath[0]!;
+      const tableNode = editor.children[tableIdx] as TElement | undefined;
+      if (tableNode?.type !== 'table') return;
+      const rowIdx = focusPath[1]!;
+      const cellIdx = focusPath[2]!;
+      const rows = tableNode.children as TElement[];
+      const targetRowIdx = event.key === 'ArrowDown' ? rowIdx + 1 : rowIdx - 1;
+      if (targetRowIdx < 0 || targetRowIdx >= rows.length) return;
+      const targetRow = rows[targetRowIdx] as TElement | undefined;
+      if (!targetRow) return;
+      const targetCells = targetRow.children as TElement[];
+      const targetCellIdx = Math.min(cellIdx, targetCells.length - 1);
+      event.preventDefault();
+      editor.tf.select({ path: [tableIdx, targetRowIdx, targetCellIdx, 0], offset: 0 });
+    },
+    [editor]
+  );
+
   // Sync when an external change arrives (e.g. restore from revision history)
   useEffect(() => {
     if (value === externalValueRef.current) return;
@@ -653,6 +889,7 @@ export const PlateMarkdownEditor = ({ value, onChange }: PlateMarkdownEditorProp
             className={styles.plateContent}
             placeholder="Start writing, or type / for commands…"
             spellCheck
+            onKeyDown={handleKeyDown}
           />
           <FloatingToolbar />
           <DndScroller />

@@ -276,6 +276,49 @@
   margin: 1.5em 0;
 }
 
+.plateContent :global(table) {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin: 0 0 var(--article-block-gap);
+}
+
+.plateContent :global(th),
+.plateContent :global(td) {
+  border-bottom: 1px solid var(--panel-border);
+  padding: 0;
+  text-align: left;
+  vertical-align: top;
+
+  > div > div:last-of-type > p {
+    margin: 0;
+  }
+}
+
+.plateContent :global(th) {
+  background: var(--cmp-bg);
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.plateContent :global(td) {
+  color: var(--base-fg-dim);
+}
+
+/* Inner cell wrapper — carries the padding so right-click works across the full cell area */
+.tableCellContent {
+  padding: 6px 12px;
+  min-height: 20px;
+}
+
+.tableCellActive {
+  outline: 1px solid var(--cmp-border-focus);
+  outline-offset: -1px;
+}
+
 /* Slate placeholder */
 .plateContent :global([data-slate-placeholder]) {
   color: var(--cmp-fg-disabled);
