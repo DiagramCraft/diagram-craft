@@ -1,0 +1,58 @@
+.container {
+  padding: 8px 0;
+}
+
+.skeleton {
+  height: 36px;
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  margin-bottom: 4px;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.empty {
+  font-size: 13px;
+  color: var(--base-fg-more-dim);
+  padding: 8px 0;
+  margin: 0;
+}
+
+/* .tableWrapper .th/.td — specificity (0,2,0) beats the editor's
+   .plateContent :global(th/td) at (0,1,1), restoring our padding. */
+.tableWrapper .th,
+.tableWrapper .td {
+  padding: 8px 12px;
+}
+
+.op {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.op_create  { background: color-mix(in srgb, var(--success-bg) 60%, transparent); color: var(--success-fg); }
+.op_update  { background: color-mix(in srgb, var(--accent-bg) 60%, transparent);  color: var(--accent-fg); }
+.op_delete  { background: color-mix(in srgb, var(--danger-bg) 60%, transparent);  color: var(--danger-fg); }
+
+.entityLink {
+  color: var(--accent-fg);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

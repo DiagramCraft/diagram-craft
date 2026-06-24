@@ -3,6 +3,11 @@
   position: relative;
 }
 
+.wrapperFullWidth {
+  display: block;
+  width: 100%;
+}
+
 .editBtn {
   position: absolute;
   top: 7px;

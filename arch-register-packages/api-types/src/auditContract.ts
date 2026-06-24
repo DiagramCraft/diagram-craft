@@ -41,6 +41,9 @@ export const auditContract = {
           query: z.object({
             entityType: z.string().optional(),
             entityId: z.string().optional(),
+            schemaId: z.string().optional(),
+            owner: z.string().optional(),
+            lifecycle: z.string().optional(),
             operation: z.string().optional(),
             startDate: z.string().optional(),
             endDate: z.string().optional(),

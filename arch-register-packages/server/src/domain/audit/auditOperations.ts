@@ -3,6 +3,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
+import { listEntities } from '../catalog/entityOperations';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 
 const resolveAuditPublicIds = async (
@@ -48,6 +49,9 @@ export const listAuditLog = async (
   filters: {
     entityType?: string;
     entityId?: string;
+    schemaId?: string;
+    owner?: string;
+    lifecycle?: string;
     operation?: string;
     startDate?: string;
     endDate?: string;
@@ -60,10 +64,22 @@ export const listAuditLog = async (
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.audit');
 
+  let entityIds: string[] | null = null;
+  if (filters.owner || filters.lifecycle) {
+    const matchingEntities = await listEntities(db, ws, null, {
+      schemaId: filters.schemaId,
+      owner: filters.owner,
+      lifecycle: filters.lifecycle
+    });
+    entityIds = matchingEntities.map(e => e._uid);
+  }
+
   const rows = await db.audit.listAuditLogs(ws);
   const entries = filterAndPaginateAuditLogs(rows, {
     entityType: filters.entityType ?? null,
     entityId: filters.entityId ?? null,
+    entityIds,
+    schemaId: filters.owner || filters.lifecycle ? null : (filters.schemaId ?? null),
     operation: filters.operation ?? null,
     startDate: filters.startDate ?? null,
     endDate: filters.endDate ?? null,
