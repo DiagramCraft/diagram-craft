@@ -8,7 +8,8 @@ import {
 import { Button } from '@diagram-craft/app-components/Button';
 import { useMarkdownRevision } from '../../hooks/useProjectFiles';
 import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectContract';
-import { renderMarkdownWithoutFirstHeading } from './preview/markdownTitle';
+import { MdxPreview } from './preview/MdxPreview';
+import { renderMarkdownPreview } from './preview/mdxRenderNode';
 import { diffMarkdown } from './diff/markdownDiff';
 import type { DiffRow } from './diff/markdownDiff';
 import styles from './MarkdownEditorScreen.module.css';
@@ -74,7 +75,7 @@ const DiffRowView = ({ row }: { row: DiffRow }) => {
   if (row.kind === 'unchanged') {
     return (
       <div className={`${styles.diffRow} ${styles.diffRowUnchanged}`}>
-        <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.html }} />
+        <div className={styles.article}>{renderMarkdownPreview(row.nodes)}</div>
       </div>
     );
   }
@@ -82,7 +83,7 @@ const DiffRowView = ({ row }: { row: DiffRow }) => {
     return (
       <div className={`${styles.diffRow} ${styles.diffRowAdded}`}>
         <div className={styles.diffRowMarker}>+</div>
-        <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.html }} />
+        <div className={styles.article}>{renderMarkdownPreview(row.nodes)}</div>
       </div>
     );
   }
@@ -90,7 +91,7 @@ const DiffRowView = ({ row }: { row: DiffRow }) => {
     return (
       <div className={`${styles.diffRow} ${styles.diffRowRemoved}`}>
         <div className={styles.diffRowMarker}>−</div>
-        <div className={styles.article} dangerouslySetInnerHTML={{ __html: row.html }} />
+        <div className={styles.article}>{renderMarkdownPreview(row.nodes)}</div>
       </div>
     );
   }
@@ -206,11 +207,6 @@ export const MarkdownHistoryPanel = ({
     selectedRevisionSummary?.id
   );
 
-  const selectedRevisionHtml = useMemo(
-    () => renderMarkdownWithoutFirstHeading(selectedRevision?.body ?? ''),
-    [selectedRevision?.body]
-  );
-
   return (
     <>
       <div className={styles.toolbar}>
@@ -308,9 +304,9 @@ export const MarkdownHistoryPanel = ({
             <div className={styles.previewEmpty}>Loading selected version…</div>
           ) : selectedRevision ? (
             <article className={styles.article}>
-              {selectedRevisionHtml.trim() ? (
+              {(selectedRevision.body ?? '').trim() ? (
                 <>
-                  <div dangerouslySetInnerHTML={{ __html: selectedRevisionHtml }} />
+                  <MdxPreview body={selectedRevision.body ?? ''} withoutFirstHeading />
                   <div className={styles.articleFooter}>
                     Saved {formatRevisionDate(selectedRevision.created_at)}
                   </div>

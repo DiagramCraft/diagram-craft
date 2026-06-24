@@ -1,15 +1,15 @@
-import { parseMarkdown } from '@diagram-craft/markdown';
+import type { ASTNode } from '@diagram-craft/markdown';
 import { markdownEngine, flattenNodeText } from '../preview/markdownAstUtils';
-
-type ASTNode = ReturnType<typeof parseMarkdown>[number];
+import { parseMarkdownWithComponents } from '../preview/mdxMarkdown';
 
 export type DiffRow =
-  | { kind: 'unchanged'; html: string }
-  | { kind: 'added'; html: string }
-  | { kind: 'removed'; html: string }
+  | { kind: 'unchanged'; nodes: ASTNode[] }
+  | { kind: 'added'; nodes: ASTNode[] }
+  | { kind: 'removed'; nodes: ASTNode[] }
   | { kind: 'modified'; baseHtml: string; targetHtml: string; inlineHtml: string };
 
 const blockSignature = (node: ASTNode): string => {
+  if (node.type === 'component') return `component:${node.name}:${node.source}`;
   const level = node.type === 'heading' ? String(node.level) : '';
   return `${node.type}${level}:${flattenNodeText(node.children).trim().toLowerCase()}`;
 };
@@ -118,7 +118,7 @@ const collapseModified = (ops: EditOp[]): DiffRow[] => {
     const op = ops[idx]!;
 
     if (op.op === 'keep') {
-      rows.push({ kind: 'unchanged', html: renderNode(op.base) });
+      rows.push({ kind: 'unchanged', nodes: [op.base] });
       idx++;
       continue;
     }
@@ -138,12 +138,12 @@ const collapseModified = (ops: EditOp[]): DiffRow[] => {
     }
 
     if (op.op === 'remove') {
-      rows.push({ kind: 'removed', html: renderNode(op.base) });
+      rows.push({ kind: 'removed', nodes: [op.base] });
       idx++;
       continue;
     }
 
-    rows.push({ kind: 'added', html: renderNode(op.target) });
+    rows.push({ kind: 'added', nodes: [op.target] });
     idx++;
   }
 
@@ -151,8 +151,8 @@ const collapseModified = (ops: EditOp[]): DiffRow[] => {
 };
 
 export const diffMarkdown = (baseBody: string, targetBody: string): DiffRow[] => {
-  const baseNodes = parseMarkdown(baseBody);
-  const targetNodes = parseMarkdown(targetBody);
+  const baseNodes = parseMarkdownWithComponents(baseBody);
+  const targetNodes = parseMarkdownWithComponents(targetBody);
   const ops = diffNodes(baseNodes, targetNodes);
   return collapseModified(ops);
 };

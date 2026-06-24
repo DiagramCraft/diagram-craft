@@ -522,26 +522,40 @@
   border-radius: var(--r-sm);
   padding: 10px 14px;
   position: relative;
+  margin-bottom: 14px;
 }
 
 .diffRowUnchanged {
-  opacity: 0.55;
+  padding: 0;
+  margin-bottom: 0;
 }
 
 .diffRowAdded {
   background: color-mix(in srgb, #22c55e 10%, transparent);
   border-left: 3px solid #22c55e;
+
+  > * {
+    --article-block-gap: 0;
+  }
 }
 
 .diffRowRemoved {
   background: color-mix(in srgb, #ef4444 10%, transparent);
   border-left: 3px solid #ef4444;
+
+  > * {
+    --article-block-gap: 0;
+  }
 }
 
 .diffRowModified {
   border-left: 3px solid #f59e0b;
   background: color-mix(in srgb, #f59e0b 8%, transparent);
   position: relative;
+
+  > * {
+    --article-block-gap: 0;
+  }
 }
 
 
