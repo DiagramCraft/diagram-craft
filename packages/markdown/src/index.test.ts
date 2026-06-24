@@ -71,12 +71,12 @@ describe('Markdown Parser', () => {
 
   describe('table parsing', () => {
     test('parses a basic GFM table into a table node', () => {
-      const result = parseMarkdown('| A | B |\n| --- | --- |\n| 1 | 2 |');
+      const result = parseMarkdown('| A | B |\n| --- | --- |\n| 1 | 2 |', 'gfm');
       expect(result[0]!.type).toBe('table');
     });
 
     test('produces header and body rows', () => {
-      const result = parseMarkdown('| A | B |\n| --- | --- |\n| 1 | 2 |');
+      const result = parseMarkdown('| A | B |\n| --- | --- |\n| 1 | 2 |', 'gfm');
       const table = result[0]! as { type: 'table'; children: Array<{ type: string; header?: boolean; children: unknown[] }> };
       const rows = table.children;
       expect(rows[0]!.header).toBe(true);
@@ -84,7 +84,7 @@ describe('Markdown Parser', () => {
     });
 
     test('detects column alignment', () => {
-      const result = parseMarkdown('| A | B | C |\n| :--- | :---: | ---: |\n| 1 | 2 | 3 |');
+      const result = parseMarkdown('| A | B | C |\n| :--- | :---: | ---: |\n| 1 | 2 | 3 |', 'gfm');
       const table = result[0]! as { type: 'table'; children: Array<{ children: Array<{ align?: string }> }> };
       const headerCells = table.children[0]!.children;
       expect(headerCells[0]!.align).toBe('left');
@@ -93,7 +93,7 @@ describe('Markdown Parser', () => {
     });
 
     test('renders to HTML with thead and tbody', () => {
-      const html = markdownToHTML('| Name | Age |\n| --- | --- |\n| Alice | 30 |');
+      const html = markdownToHTML('| Name | Age |\n| --- | --- |\n| Alice | 30 |', 'gfm');
       expect(html).toContain('<table>');
       expect(html).toContain('<thead>');
       expect(html).toContain('<tbody>');
@@ -102,13 +102,13 @@ describe('Markdown Parser', () => {
     });
 
     test('allows inline formatting inside cells', () => {
-      const html = markdownToHTML('| **Bold** | *Italic* |\n| --- | --- |\n| x | y |');
+      const html = markdownToHTML('| **Bold** | *Italic* |\n| --- | --- |\n| x | y |', 'gfm');
       expect(html).toContain('<strong>Bold</strong>');
       expect(html).toContain('<em>Italic</em>');
     });
 
     test('does not treat a line with pipe but no separator row as a table', () => {
-      const result = parseMarkdown('some | text');
+      const result = parseMarkdown('some | text', 'gfm');
       expect(result[0]!.type).toBe('paragraph');
     });
   });

@@ -100,7 +100,7 @@ class MdxComponentInlineHandler extends InlineParser {
 
 export const parseMarkdownWithComponents = (body: string): ASTNode[] => {
   return markdownEngine
-    .parser('strict', {
+    .parser('gfm', {
       block: [new MdxComponentBlockHandler()],
       inline: [new MdxComponentInlineHandler()]
     })

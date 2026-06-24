@@ -206,7 +206,7 @@ export abstract class InlineParser {
 /**
  * Valid parser type identifiers. 'strict' is the default implementation.
  */
-export type ParserType = 'strict' | string;
+export type ParserType = 'commonmark' | 'gfm' | 'extended' | 'strict' | string;
 
 /**
  * Core markdown parser that processes markdown text into an Abstract Syntax Tree (AST).
