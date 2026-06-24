@@ -33,9 +33,7 @@ import { DropdownMenu } from '../../components/DropdownMenu';
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import styles from './MarkdownEditorScreen.module.css';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
-import {
-  extractFirstHeadingTitle,
-} from './preview/markdownTitle';
+import { extractFirstHeadingTitle } from './preview/markdownTitle';
 import { MdxPreview } from './preview/MdxPreview';
 import { MarkdownHistoryPanel } from './MarkdownHistoryPanel';
 import {
@@ -44,9 +42,16 @@ import {
   asProjectPublicId,
   asEntityPublicId
 } from '../../routes/publicObjectRoutes';
-
-type PaneMode = 'edit' | 'raw' | 'preview';
-type ViewPanel = 'preview' | 'history';
+import {
+  enterMarkdownEditMode,
+  exitMarkdownEditMode,
+  getInitialMarkdownEditorScreenState,
+  openMarkdownHistory,
+  selectMarkdownEditPane,
+  syncMarkdownEditorScreenState,
+  type MarkdownScreenMode,
+  type MarkdownViewPanel
+} from './MarkdownEditorScreen.state';
 
 const findFileById = (tree: FileTree | undefined, nodeId: string): ProjectFile | undefined => {
   if (!tree) return undefined;
@@ -83,8 +88,8 @@ export const MarkdownEditorScreen = () => {
     entityId?: string;
   };
   const search = useSearch({ strict: false }) as {
-    mode?: PaneMode;
-    panel?: ViewPanel;
+    mode?: MarkdownScreenMode;
+    panel?: MarkdownViewPanel;
     revisionId?: string;
     historyMode?: 'preview' | 'compare';
     compareMode?: 'to-current' | 'changes-in-version';
@@ -92,8 +97,8 @@ export const MarkdownEditorScreen = () => {
   const { workspaceSlug, nodeId, projectId, entityId } = params;
   const navigate = useNavigate();
   const { workspace } = useWorkspaceContext();
-  const requestedMode = search.mode === 'edit' ? 'edit' : search.mode === 'raw' ? 'raw' : 'preview';
-  const requestedPanel = search.panel === 'history' ? 'history' : 'preview';
+  const requestedMode = search.mode;
+  const requestedPanel = search.panel;
   const historyMode = search.historyMode === 'compare' ? 'compare' : 'preview';
   const compareMode = search.compareMode ?? 'to-current';
 
@@ -123,16 +128,14 @@ export const MarkdownEditorScreen = () => {
   });
 
   const [body, setBody] = useState('');
-  const [paneMode, setPaneMode] = useState<PaneMode>(requestedMode);
-  const [viewPanel, setViewPanel] = useState<ViewPanel>(requestedPanel);
+  const [screenState, setScreenState] = useState(() =>
+    getInitialMarkdownEditorScreenState(requestedMode, requestedPanel)
+  );
   const [dirty, setDirty] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const initializedRef = useRef(false);
   const previousNodeIdRef = useRef(nodeId);
-
-  // editorMode is fully derived from paneMode — edit/raw → editing, preview → viewing
-  const editorMode = paneMode === 'preview' ? 'view' : 'edit';
 
   const selectedRevisionId = search.revisionId;
 
@@ -155,8 +158,8 @@ export const MarkdownEditorScreen = () => {
   const updateSearch = useCallback(
     (
       next: Partial<{
-        mode: PaneMode;
-        panel: ViewPanel;
+        mode: MarkdownScreenMode | undefined;
+        panel: MarkdownViewPanel | undefined;
         revisionId: string | undefined;
         historyMode: 'preview' | 'compare' | undefined;
         compareMode: 'to-current' | 'changes-in-version' | undefined;
@@ -202,8 +205,7 @@ export const MarkdownEditorScreen = () => {
   }, [nodeId]);
 
   useEffect(() => {
-    setPaneMode(requestedMode);
-    setViewPanel(requestedPanel);
+    setScreenState(current => syncMarkdownEditorScreenState(current, requestedMode, requestedPanel));
   }, [requestedMode, requestedPanel]);
 
   useEffect(() => {
@@ -220,14 +222,14 @@ export const MarkdownEditorScreen = () => {
   }, [data, dirty]);
 
   useEffect(() => {
-    if (viewPanel !== 'history' || revisions.length === 0) return;
+    if (screenState.viewPanel !== 'history' || revisions.length === 0) return;
     if (selectedRevisionId) return;
     updateSearch({
       mode: 'preview',
       panel: 'history',
       revisionId: revisions[0]!.id
     });
-  }, [revisions, selectedRevisionId, updateSearch, viewPanel]);
+  }, [revisions, screenState.viewPanel, selectedRevisionId, updateSearch]);
 
   const handleChange = useCallback((value: string) => {
     setBody(value);
@@ -244,8 +246,7 @@ export const MarkdownEditorScreen = () => {
     if (saveMutation.isPending) return;
     await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
     setDirty(false);
-    setPaneMode('preview');
-    setViewPanel('preview');
+    setScreenState(exitMarkdownEditMode());
     updateSearch({ mode: 'preview', panel: 'preview', revisionId: undefined });
   }, [body, headingTitle, saveMutation, updateSearch]);
 
@@ -254,8 +255,7 @@ export const MarkdownEditorScreen = () => {
       setBody(data?.body ?? '');
       setDirty(false);
     }
-    setPaneMode('preview');
-    setViewPanel('preview');
+    setScreenState(exitMarkdownEditMode());
     updateSearch({
       mode: 'preview',
       panel: 'preview',
@@ -265,13 +265,12 @@ export const MarkdownEditorScreen = () => {
   }, [data?.body, dirty, updateSearch]);
 
   const handleEnterEdit = useCallback(() => {
-    setPaneMode('edit');
+    setScreenState(enterMarkdownEditMode());
     updateSearch({ mode: 'edit', panel: undefined, revisionId: undefined });
   }, [updateSearch]);
 
   const handlePreview = useCallback(() => {
-    setPaneMode('preview');
-    setViewPanel('preview');
+    setScreenState(exitMarkdownEditMode());
     updateSearch({
       mode: 'preview',
       panel: 'preview',
@@ -281,8 +280,7 @@ export const MarkdownEditorScreen = () => {
   }, [updateSearch]);
 
   const handleOpenHistory = useCallback(() => {
-    setPaneMode('preview');
-    setViewPanel('history');
+    setScreenState(openMarkdownHistory());
     updateSearch({
       mode: 'preview',
       panel: 'history',
@@ -372,8 +370,7 @@ export const MarkdownEditorScreen = () => {
       if (restoreMutation.isPending) return;
       await restoreMutation.mutateAsync(revisionId);
       setDirty(false);
-      setPaneMode('preview');
-      setViewPanel('preview');
+      setScreenState(exitMarkdownEditMode());
       updateSearch({
         mode: 'preview',
         panel: 'preview',
@@ -400,8 +397,8 @@ export const MarkdownEditorScreen = () => {
     );
   }
 
-  const showPlateEditor = editorMode === 'edit' && paneMode === 'edit';
-  const showRawEditor = editorMode === 'edit' && paneMode === 'raw';
+  const showPlateEditor = screenState.screenMode === 'edit' && screenState.paneMode === 'edit';
+  const showRawEditor = screenState.screenMode === 'edit' && screenState.paneMode === 'raw';
 
   const homeItem = {
     label: 'Home',
@@ -444,15 +441,15 @@ export const MarkdownEditorScreen = () => {
   );
 
   const titleDescription =
-    showPlateEditor || showRawEditor
+    screenState.screenMode === 'edit'
       ? 'Editing now'
-      : viewPanel === 'history'
+      : screenState.viewPanel === 'history'
         ? `Version history${revisions.length > 0 ? ` · ${revisions.length} saved` : ''}`
         : [updatedLabel ? `Updated ${updatedLabel}` : null, `${readTime} min read`]
             .filter(Boolean)
             .join(' · ');
 
-  const isViewMode = editorMode === 'view' && viewPanel === 'preview';
+  const isViewMode = screenState.screenMode === 'preview' && screenState.viewPanel === 'preview';
 
   const titleButtons = (
     <>
@@ -487,27 +484,27 @@ export const MarkdownEditorScreen = () => {
         />
       </div>
 
-      {editorMode === 'edit' && (
+      {screenState.screenMode === 'edit' && (
         <div className={styles.toolbar}>
           <div className={styles.paneToggle}>
             <button
               type="button"
-              className={`${styles.paneToggleBtn} ${paneMode === 'edit' ? styles.paneToggleBtnActive : ''}`}
-              onClick={() => setPaneMode('edit')}
+              className={`${styles.paneToggleBtn} ${screenState.paneMode === 'edit' ? styles.paneToggleBtnActive : ''}`}
+              onClick={() => setScreenState(selectMarkdownEditPane('edit'))}
             >
               Edit
             </button>
             <button
               type="button"
-              className={`${styles.paneToggleBtn} ${paneMode === 'raw' ? styles.paneToggleBtnActive : ''}`}
-              onClick={() => setPaneMode('raw')}
+              className={`${styles.paneToggleBtn} ${screenState.paneMode === 'raw' ? styles.paneToggleBtnActive : ''}`}
+              onClick={() => setScreenState(selectMarkdownEditPane('raw'))}
             >
               Raw
             </button>
             <button
               type="button"
-              className={`${styles.paneToggleBtn} ${paneMode === 'preview' ? styles.paneToggleBtnActive : ''}`}
-              onClick={() => setPaneMode('preview')}
+              className={`${styles.paneToggleBtn} ${screenState.paneMode === 'preview' ? styles.paneToggleBtnActive : ''}`}
+              onClick={() => setScreenState(selectMarkdownEditPane('preview'))}
             >
               Preview
             </button>
@@ -553,7 +550,7 @@ export const MarkdownEditorScreen = () => {
             spellCheck
           />
         </div>
-      ) : editorMode === 'edit' ? (
+      ) : screenState.screenMode === 'edit' ? (
         <div className={styles.bodyGrid}>
           <article className={styles.article}>
             {body.trim() ? (
@@ -573,7 +570,7 @@ export const MarkdownEditorScreen = () => {
             </aside>
           )}
         </div>
-      ) : viewPanel === 'history' ? (
+      ) : screenState.viewPanel === 'history' ? (
         <MarkdownHistoryPanel
           workspaceSlug={workspaceSlug}
           nodeId={nodeId}
