@@ -15,6 +15,7 @@ import { workspaceTemplateContract } from '@arch-register/api-types/templateCont
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
 import { aiContract } from '@arch-register/api-types/aiContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
+import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 
 export const allContracts = {
   ...workspaceEnumContract,
@@ -31,7 +32,8 @@ export const allContracts = {
   ...authPublicContract,
   ...authProtectedContract,
   ...aiContract,
-  ...diagramCraftContract
+  ...diagramCraftContract,
+  ...workspaceAnalyticsContract
 };
 
 let generatedUnifiedSpec: Promise<object> | null = null;

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearch, useLocation } from '@tanstack/react-router';
 import {
+  TbChartBar,
   TbSettings,
   TbTag,
   TbUsers,
@@ -43,6 +44,7 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
     group: 'Global Settings'
   },
   { id: 'ai', label: 'AI', icon: <TbSparkles size={12} />, group: 'Workspace' },
+  { id: 'analytics', label: 'Analytics', icon: <TbChartBar size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
   {
     id: 'danger',

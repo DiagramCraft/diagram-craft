@@ -83,6 +83,11 @@ export const auditKeys = {
   stats: (workspaceId: string) => [...auditKeys.all, 'stats', workspaceId] as const,
 };
 
+export const workspaceAnalyticsKeys = {
+  all: ['workspace-analytics'] as const,
+  detail: (workspaceId: string) => [...workspaceAnalyticsKeys.all, workspaceId] as const
+};
+
 // ── Domain invalidation helpers ───────────────────────────────
 //
 // Each helper covers all queries that may be stale after a mutation in that domain.
@@ -93,6 +98,7 @@ export const invalidateAuditQueries = async (queryClient: QueryClient, workspace
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) }),
   ]);
 };
 
@@ -116,6 +122,7 @@ export const invalidateEntityQueries = async (queryClient: QueryClient, workspac
     queryClient.invalidateQueries({ queryKey: entityKeys.facets(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) }),
   ]);
 };
 
@@ -125,6 +132,7 @@ export const invalidateAllEntityCaches = async (queryClient: QueryClient, worksp
     queryClient.invalidateQueries({ queryKey: entityKeys.all }),
     queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) }),
   ]);
 };
 
@@ -138,6 +146,7 @@ export const invalidateProjectQueries = async (
     queryClient.invalidateQueries({ queryKey: projectKeys.list(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) }),
   ];
   if (projectId) {
     tasks.push(
@@ -155,6 +164,7 @@ export const invalidateAllProjectCaches = async (queryClient: QueryClient, works
     queryClient.invalidateQueries({ queryKey: projectKeys.all }),
     queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) }),
   ]);
 };
 
@@ -169,6 +179,7 @@ export const invalidateSnapshotQueries = async (
     queryClient.invalidateQueries({ queryKey: snapshotKeys.list(workspaceId, entityId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) }),
     ...(projectId
       ? [queryClient.invalidateQueries({ queryKey: snapshotKeys.byProject(workspaceId, projectId) })]
       : []),

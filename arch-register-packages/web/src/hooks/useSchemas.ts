@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { schemaKeys, invalidateEntityQueries, invalidateAuditQueries } from './queryKeys';
+import {
+  schemaKeys,
+  invalidateEntityQueries,
+  invalidateAuditQueries,
+  workspaceAnalyticsKeys
+} from './queryKeys';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -24,6 +29,7 @@ export const useCreateSchema = (workspaceId: string) => {
       // Invalidate schema list to show the new schema
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
       await invalidateAuditQueries(queryClient, workspaceId);
+      await queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) });
     }
   });
 };
@@ -54,6 +60,7 @@ export const useUpdateSchema = (workspaceId: string) => {
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
       // Completeness scores and entity type icons/colours are derived from the schema
       await invalidateEntityQueries(queryClient, workspaceId);
+      await queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) });
     }
   });
 };
@@ -68,6 +75,7 @@ export const useDeleteSchema = (workspaceId: string) => {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: schemaKeys.all });
       await invalidateEntityQueries(queryClient, workspaceId);
+      await queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) });
     }
   });
 };

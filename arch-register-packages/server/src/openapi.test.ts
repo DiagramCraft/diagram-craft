@@ -19,6 +19,7 @@ describe('unified OpenAPI spec', () => {
       '/{workspace}/config/teams': expect.any(Object),
       '/{workspace}/projects': expect.any(Object),
       '/{workspace}/audit': expect.any(Object),
+      '/{workspace}/analytics': expect.any(Object),
       '/{workspace}/watching': expect.any(Object),
       '/{workspace}/search': expect.any(Object)
     });
