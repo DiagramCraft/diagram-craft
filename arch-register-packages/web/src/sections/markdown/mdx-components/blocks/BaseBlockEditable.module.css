@@ -42,7 +42,7 @@
   font-size: 13px;
   cursor: pointer;
   min-width: 200px;
-  margin: 0 0 14px;
+  margin: 0 0 var(--article-block-gap);
   transition: border-color 80ms, color 80ms;
 }
 
