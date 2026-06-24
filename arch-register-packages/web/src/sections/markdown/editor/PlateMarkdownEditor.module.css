@@ -289,6 +289,10 @@
   padding: 0;
   text-align: left;
   vertical-align: top;
+
+  > div > div:last-of-type > p {
+    margin: 0;
+  }
 }
 
 .plateContent :global(th) {
