@@ -32,6 +32,8 @@ import {
 import type { TElement, Value } from 'platejs';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
 import styles from './PlateMarkdownEditor.module.css';
 
@@ -74,10 +76,151 @@ const HrElement = ({ children, ...props }: PlateElementProps) => (
   </EditorBlock>
 );
 
-const TableElement = (props: PlateElementProps) => <EditorBlock as="table" suppressCellHover {...props} />;
+const TableElement = (props: PlateElementProps) => (
+  <EditorBlock as="table" suppressCellHover {...props} />
+);
 const TableRowElement = (props: PlateElementProps) => <PlateElement as="tr" {...props} />;
-const TableCellElement = (props: PlateElementProps) => <PlateElement as="td" {...props} />;
-const TableHeaderCellElement = (props: PlateElementProps) => <PlateElement as="th" {...props} />;
+
+// ── Table cell context menu ───────────────────────────────────────────────────
+
+const TableCellContextMenu = ({
+  element,
+  position,
+  onClose
+}: {
+  element: TElement;
+  position: { x: number; y: number };
+  onClose: () => void;
+}) => {
+  const editor = useEditorRef();
+
+  const getTableInfo = () => {
+    const cellPath = editor.api.findPath(element);
+    if (!cellPath || cellPath.length < 3) return null;
+    const tableIdx = cellPath[0]!;
+    const rowIdx = cellPath[1]!;
+    const cellIdx = cellPath[2]!;
+    const tableNode = editor.children[tableIdx] as TElement;
+    const rows = tableNode?.children as TElement[] | undefined;
+    if (!rows) return null;
+    return { tableIdx, rowIdx, cellIdx, rows };
+  };
+
+  const addRow = (above: boolean) => {
+    const info = getTableInfo();
+    if (!info) return;
+    const { tableIdx, rowIdx, rows } = info;
+    const colCount = (rows[0]?.children as TElement[] | undefined)?.length ?? 0;
+    const newCells = Array.from({ length: colCount }, () => ({
+      type: 'td' as const,
+      children: [{ text: '' }]
+    }));
+    editor.tf.insertNodes(
+      { type: 'tr', children: newCells },
+      { at: [tableIdx, above ? rowIdx : rowIdx + 1] }
+    );
+    onClose();
+  };
+
+  const addColumn = (before: boolean) => {
+    const info = getTableInfo();
+    if (!info) return;
+    const { tableIdx, cellIdx, rows } = info;
+    for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+      const row = rows[rIdx] as TElement;
+      const existingCell = (row.children as TElement[])[cellIdx];
+      const cellType = existingCell?.type === 'th' ? 'th' : 'td';
+      editor.tf.insertNodes(
+        { type: cellType, children: [{ text: '' }] },
+        { at: [tableIdx, rIdx, before ? cellIdx : cellIdx + 1] }
+      );
+    }
+    onClose();
+  };
+
+  const removeRow = () => {
+    const info = getTableInfo();
+    if (!info) return;
+    const { tableIdx, rowIdx, rows } = info;
+    if (rows.length <= 1) {
+      editor.tf.removeNodes({ at: [tableIdx] });
+    } else {
+      editor.tf.removeNodes({ at: [tableIdx, rowIdx] });
+    }
+    onClose();
+  };
+
+  const removeColumn = () => {
+    const info = getTableInfo();
+    if (!info) return;
+    const { tableIdx, cellIdx, rows } = info;
+    const colCount = (rows[0]?.children as TElement[] | undefined)?.length ?? 0;
+    if (colCount <= 1) {
+      editor.tf.removeNodes({ at: [tableIdx] });
+    } else {
+      for (let rIdx = rows.length - 1; rIdx >= 0; rIdx--) {
+        editor.tf.removeNodes({ at: [tableIdx, rIdx, cellIdx] });
+      }
+    }
+    onClose();
+  };
+
+  return (
+    <ContextMenu.Imperative x={position.x} y={position.y} onClose={onClose}>
+      <Menu.Item onClick={() => addRow(true)}>Add row above</Menu.Item>
+      <Menu.Item onClick={() => addRow(false)}>Add row below</Menu.Item>
+      <Menu.Separator />
+      <Menu.Item onClick={() => addColumn(true)}>Add column before</Menu.Item>
+      <Menu.Item onClick={() => addColumn(false)}>Add column after</Menu.Item>
+      <Menu.Separator />
+      <Menu.Item type="danger" onClick={removeRow}>
+        Remove row
+      </Menu.Item>
+      <Menu.Item type="danger" onClick={removeColumn}>
+        Remove column
+      </Menu.Item>
+    </ContextMenu.Imperative>
+  );
+};
+
+const TableCellWrapper = ({
+  element,
+  as,
+  children,
+  ...props
+}: PlateElementProps & { as: 'td' | 'th' }) => {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  return (
+    <>
+      <PlateElement as={as} element={element} {...props}>
+        <div
+          className={styles.tableCellContent}
+          onContextMenu={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            setContextMenu({ x: e.clientX, y: e.clientY });
+          }}
+        >
+          {children}
+        </div>
+      </PlateElement>
+      {contextMenu &&
+        createPortal(
+          <TableCellContextMenu
+            element={element}
+            position={contextMenu}
+            onClose={() => setContextMenu(null)}
+          />,
+          document.body
+        )}
+    </>
+  );
+};
+
+const TableCellElement = (props: PlateElementProps) => <TableCellWrapper as="td" {...props} />;
+const TableHeaderCellElement = (props: PlateElementProps) => (
+  <TableCellWrapper as="th" {...props} />
+);
 
 // ─── Leaf (mark) components ────────────────────────────────────────────────
 

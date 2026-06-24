@@ -286,7 +286,7 @@
 .plateContent :global(th),
 .plateContent :global(td) {
   border: 1px solid var(--panel-border);
-  padding: 6px 12px;
+  padding: 0;
   text-align: left;
   vertical-align: top;
 }
@@ -299,6 +299,12 @@
 
 .plateContent :global(td) {
   color: var(--base-fg-dim);
+}
+
+/* Inner cell wrapper — carries the padding so right-click works across the full cell area */
+.tableCellContent {
+  padding: 6px 12px;
+  min-height: 20px;
 }
 
 /* Slate placeholder */
