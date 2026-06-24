@@ -88,7 +88,7 @@
   display: none !important;
 }
 
-/* ── Cell-hover suppression (tables) ─────────────────────────────────────── */
+/* ── Table cell hover: outline the hovered cell, suppress nested bg ───────── */
 
 .suppressCellHover {
   td:hover, th:hover {
@@ -99,18 +99,6 @@
       background-color: transparent;
     }
   }
-}
-
-.suppressCellHover:has(td:hover, th:hover)::before {
-  visibility: hidden !important;
-}
-
-.suppressCellHover:has(td:hover, th:hover) .dragHandle {
-  opacity: 0 !important;
-}
-
-.suppressCellHover:has(td:hover, th:hover) .blockActions {
-  opacity: 0 !important;
 }
 
 /* ── Block action buttons ─────────────────────────────────────────────────── */
