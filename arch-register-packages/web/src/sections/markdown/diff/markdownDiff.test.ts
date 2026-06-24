@@ -114,9 +114,9 @@ describe('diffMarkdown', () => {
     }
   });
 
-  it('added rows contain html', () => {
+  it('added rows contain nodes', () => {
     const rows = diffMarkdown('', 'Hello.');
     const added = rows.find(r => r.kind === 'added');
-    expect(added?.kind === 'added' && added.html).toBeTruthy();
+    expect(added?.kind === 'added' && added.nodes.length > 0).toBeTruthy();
   });
 });
