@@ -26,27 +26,54 @@ const StatCard = ({
 const StackedBar = ({
   buckets
 }: {
-  buckets: Array<{ count: number; percent: number; color: string | null }>;
+  buckets: Array<{ count: number; percent: number; color: string | null; label?: string }>;
 }) => {
   const visible = buckets.filter(b => b.count > 0);
 
   if (visible.length === 0) return <div className={styles.bar} />;
 
   const stops: string[] = [];
+  const positions: number[] = [];
   let pos = 0;
-  for (const bucket of visible) {
+  for (let i = 0; i < visible.length; i++) {
+    const bucket = visible[i]!;
     const color = bucket.color ?? '#c7ced6';
+    const isFirst = i === 0;
+    const isLast = i === visible.length - 1;
+    positions.push(pos);
     const end = Math.min(pos + bucket.percent, 100);
-    stops.push(`${color} ${pos}%`, `${color} ${end}%`);
+    stops.push(isFirst ? `${color} 0%` : `${color} calc(${pos}% + 1px)`);
+    if (isLast) {
+      stops.push(`${color} 100%`);
+    } else {
+      stops.push(
+        `${color} calc(${end}% - 1px)`,
+        `var(--base-bg) calc(${end}% - 1px)`,
+        `var(--base-bg) calc(${end}% + 1px)`
+      );
+    }
     pos = end;
   }
-  if (pos < 100) stops.push(`${visible[visible.length - 1]!.color ?? '#c7ced6'} 100%`);
 
   return (
     <div
       className={styles.bar}
       style={{ background: `linear-gradient(to right, ${stops.join(', ')})` }}
-    />
+    >
+      {visible.map((bucket, index) => (
+        <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: bar segments are positional
+          key={index}
+          className={styles.barOverlay}
+          style={{ left: `${positions[index]}%`, width: `${bucket.percent}%` }}
+          title={
+            bucket.label
+              ? `${bucket.label}: ${bucket.count} (${bucket.percent.toFixed(1)}%)`
+              : undefined
+          }
+        />
+      ))}
+    </div>
   );
 };
 
@@ -152,9 +179,6 @@ export const WorkspaceAnalyticsScreen = () => {
               <tr>
                 <th style={{ width: 160 }}>Schema</th>
                 <th>Lifecycle mix</th>
-                <th className={styles.right} style={{ width: 80 }}>
-                  Entities
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -170,9 +194,10 @@ export const WorkspaceAnalyticsScreen = () => {
                     </button>
                   </td>
                   <td>
-                    <StackedBar buckets={row.lifecycleBuckets} />
+                    <StackedBar
+                      buckets={row.lifecycleBuckets.map(b => ({ ...b, label: b.label }))}
+                    />
                   </td>
-                  <td className={styles.right}>{row.totalCount}</td>
                 </tr>
               ))}
             </tbody>
@@ -186,9 +211,6 @@ export const WorkspaceAnalyticsScreen = () => {
             <tr>
               <th style={{ width: 160 }}>Schema</th>
               <th>Completeness mix</th>
-              <th className={styles.right} style={{ width: 80 }}>
-                Entities
-              </th>
             </tr>
           </thead>
           <tbody>
@@ -199,17 +221,20 @@ export const WorkspaceAnalyticsScreen = () => {
                   <StackedBar
                     buckets={[
                       {
+                        label: 'Below 50%',
                         count: row.below50Count,
                         percent: row.totalCount > 0 ? (row.below50Count / row.totalCount) * 100 : 0,
                         color: 'var(--error-fg)'
                       },
                       {
+                        label: '50–79%',
                         count: row.between50And79Count,
                         percent:
                           row.totalCount > 0 ? (row.between50And79Count / row.totalCount) * 100 : 0,
                         color: 'var(--warning-fg)'
                       },
                       {
+                        label: '80%+',
                         count: row.above80Count,
                         percent: row.totalCount > 0 ? (row.above80Count / row.totalCount) * 100 : 0,
                         color: 'var(--green)'
@@ -217,7 +242,6 @@ export const WorkspaceAnalyticsScreen = () => {
                     ]}
                   />
                 </td>
-                <td className={styles.right}>{row.totalCount}</td>
               </tr>
             ))}
           </tbody>
