@@ -40,7 +40,7 @@ export const EntityMention = ({ id }: { id: string }) => {
   };
 
   return (
-    <span className={styles.mention} onClick={handleClick} role="button" tabIndex={0}>
+    <button type="button" className={styles.mention} onClick={handleClick}>
       <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={16} />
       <span className={styles.name}>{entity._name}</span>
       {schema && (
@@ -55,6 +55,6 @@ export const EntityMention = ({ id }: { id: string }) => {
           <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
         </>
       )}
-    </span>
+    </button>
   );
 };
