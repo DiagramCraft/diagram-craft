@@ -148,12 +148,11 @@ export const ExploreView = ({ rows, onEntityClick, config, onConfigChange }: Exp
 
   const relationFieldOptions = useMemo(() => buildRelationFieldOptions(schemas), [schemas]);
   const centerIds = useMemo(() => rows.map(row => row._uid).sort(), [rows]);
-  const centerIdsKey = useMemo(() => centerIds.join('|'), [centerIds]);
   const [fetchIds, setFetchIds] = useState<string[]>(centerIds);
 
   useEffect(() => {
     setFetchIds(centerIds);
-  }, [centerIds, centerIdsKey]);
+  }, [centerIds]);
 
   const relationsMap = useMultipleEntityRelations(workspaceSlug, fetchIds);
   const graph = useMemo(
@@ -284,7 +283,7 @@ export const ExploreView = ({ rows, onEntityClick, config, onConfigChange }: Exp
       window.removeEventListener('resize', recompute);
       observer?.disconnect();
     };
-  }, [graph.connectors, graph.columns]);
+  }, [graph.connectors]);
 
   if (rows.length === 0) {
     return (
