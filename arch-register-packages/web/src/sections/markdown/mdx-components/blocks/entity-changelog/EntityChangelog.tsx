@@ -15,7 +15,7 @@ const OPERATION_LABELS: Record<string, string> = {
 const parseSince = (since: string | undefined): string | undefined => {
   if (!since) return undefined;
   const match = /^(\d+)d$/.exec(since);
-  if (!match || !match[1]) return undefined;
+  if (!match?.[1]) return undefined;
   const days = parseInt(match[1], 10);
   return new Date(Date.now() - days * 86_400_000).toISOString();
 };
@@ -42,8 +42,8 @@ const changedFields = (entry: AuditLogEntry): string[] => {
   const oldKeys = new Set(Object.keys(entry.changes.old ?? {}));
   const newKeys = new Set(Object.keys(entry.changes.new ?? {}));
   return [...new Set([...oldKeys, ...newKeys])].filter(k => {
-    const o = (entry.changes.old ?? {})[k];
-    const n = (entry.changes.new ?? {})[k];
+    const o = entry.changes.old?.[k];
+    const n = entry.changes.new?.[k];
     return JSON.stringify(o) !== JSON.stringify(n);
   });
 };
