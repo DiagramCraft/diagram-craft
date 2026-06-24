@@ -1,0 +1,62 @@
+.mention {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--base-fg);
+  font-weight: 500;
+  font-size: 0.95em;
+  vertical-align: baseline;
+  cursor: pointer;
+  transition: border-color 80ms, background 80ms;
+  text-decoration: none;
+}
+
+.mention:hover {
+  border-color: var(--accent-fg);
+  background: color-mix(in srgb, var(--accent-fg) 8%, var(--cmp-bg));
+}
+
+.mentionLoading {
+  color: var(--cmp-fg-disabled);
+  font-weight: 400;
+  font-style: italic;
+  border-style: dashed;
+  cursor: default;
+}
+
+.mentionLoading:hover {
+  border-color: var(--panel-border);
+  background: var(--cmp-bg);
+}
+
+.mentionUnavailable {
+  color: var(--error-fg, var(--cmp-fg-disabled));
+  border-style: dashed;
+  font-weight: 400;
+  font-style: italic;
+  cursor: default;
+}
+
+.mentionUnavailable:hover {
+  border-color: var(--panel-border);
+  background: var(--cmp-bg);
+}
+
+.name {
+  line-height: 1.2;
+}
+
+.schema {
+  color: var(--base-fg-dim);
+  font-size: 0.9em;
+  font-weight: 400;
+}
+
+.separator {
+  color: var(--base-fg-dim);
+  font-weight: 400;
+}
