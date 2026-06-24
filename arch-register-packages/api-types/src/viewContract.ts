@@ -11,7 +11,8 @@ export const browserViewSchema = z.enum([
   'radar',
   'timeline',
   'matrix',
-  'hierarchy'
+  'hierarchy',
+  'explore'
 ]);
 
 export const filterConditionSchema = z.object({
@@ -78,12 +79,19 @@ export const hierarchyViewConfigSchema = z.object({
   level3Columns: z.number().int().min(1).max(4).optional()
 });
 
+export const exploreViewConfigSchema = z.object({
+  leftDepth: z.number().int().min(0),
+  rightDepth: z.number().int().min(0),
+  relationFieldNames: z.array(z.string())
+});
+
 const viewConfigSchema = z
   .object({
     radar: radarViewConfigSchema.optional(),
     timeline: timelineViewConfigSchema.optional(),
     matrix: matrixViewConfigSchema.optional(),
-    hierarchy: hierarchyViewConfigSchema.optional()
+    hierarchy: hierarchyViewConfigSchema.optional(),
+    explore: exploreViewConfigSchema.optional()
   })
   .nullable();
 
@@ -217,6 +225,14 @@ export type FilterCondition = z.infer<typeof filterConditionSchema>;
 export type EntityFilters = z.infer<typeof entityFiltersSchema>;
 
 export type RadarViewConfig = z.infer<typeof radarViewConfigSchema>;
+
+export type TimelineViewConfig = z.infer<typeof timelineViewConfigSchema>;
+
+export type MatrixViewConfig = z.infer<typeof matrixViewConfigSchema>;
+
+export type HierarchyViewConfig = z.infer<typeof hierarchyViewConfigSchema>;
+
+export type ExploreViewConfig = z.infer<typeof exploreViewConfigSchema>;
 
 export type SavedView = z.infer<typeof savedViewSchema>;
 

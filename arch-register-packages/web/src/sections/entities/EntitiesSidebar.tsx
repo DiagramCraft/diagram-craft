@@ -16,6 +16,7 @@ import {
   TbCalendarWeek,
   TbTable,
   TbLayoutBoard,
+  TbColumns3,
   TbPinned,
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand
@@ -59,6 +60,9 @@ export const EntitiesSidebar = ({
     viewMode?: string;
     radarConfig?: string;
     timelineConfig?: string;
+    matrixConfig?: string;
+    hierarchyConfig?: string;
+    exploreConfig?: string;
     sidebarTab?: 'filters' | 'views' | 'pinned';
     filters?: string;
     entityId?: string;
@@ -194,6 +198,7 @@ export const EntitiesSidebar = ({
         hierarchyConfig: view.config?.hierarchy
           ? JSON.stringify(view.config.hierarchy)
           : undefined,
+        exploreConfig: view.config?.explore ? JSON.stringify(view.config.explore) : undefined,
         sidebarTab: 'views',
         filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined
         // biome-ignore lint/suspicious/noExplicitAny: bypass
@@ -215,6 +220,8 @@ export const EntitiesSidebar = ({
         return <TbCalendarWeek size={12} />;
       case 'hierarchy':
         return <TbLayoutBoard size={12} />;
+      case 'explore':
+        return <TbColumns3 size={12} />;
       default:
         return <TbTable size={12} />;
     }

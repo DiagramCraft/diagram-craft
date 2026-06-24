@@ -24,6 +24,14 @@
 
   /* --- Sizes --- */
 
+  &[data-size="xs"] {
+    height: 20px;
+    padding: 0 4px;
+    font-size: 11px;
+    border-radius: max(calc(var(--cmp-radius) - 1px), 3px);
+    gap: 5px;
+  }
+
   &[data-size="sm"] {
     height: 23px;
     padding: 0 8px;

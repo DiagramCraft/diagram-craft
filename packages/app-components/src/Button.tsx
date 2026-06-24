@@ -49,7 +49,7 @@ type ButtonProps<E> = {
   children?: React.ReactNode;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-solid' | 'icon-only';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
   iconRight?: React.ReactNode;
 } & Omit<React.HTMLAttributes<E>, 'type'> &

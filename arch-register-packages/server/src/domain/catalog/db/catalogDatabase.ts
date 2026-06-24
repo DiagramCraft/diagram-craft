@@ -1,4 +1,12 @@
-import { BrowserView, EntityFilters, RadarViewConfig } from '@arch-register/api-types/viewContract';
+import {
+  BrowserView,
+  EntityFilters,
+  ExploreViewConfig,
+  HierarchyViewConfig,
+  MatrixViewConfig,
+  RadarViewConfig,
+  TimelineViewConfig
+} from '@arch-register/api-types/viewContract';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
 
@@ -205,6 +213,10 @@ export type SavedViewDbResult = {
   filters: EntityFilters;
   config: {
     radar?: RadarViewConfig;
+    timeline?: TimelineViewConfig;
+    matrix?: MatrixViewConfig;
+    hierarchy?: HierarchyViewConfig;
+    explore?: ExploreViewConfig;
   } | null;
   created_at: Date;
   updated_at: Date;
