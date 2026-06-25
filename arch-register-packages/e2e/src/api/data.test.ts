@@ -460,4 +460,62 @@ test.describe('data routes', () => {
 
     expect(created._targetLifecycle).toBeNull();
   });
+
+  test('GET /api/:workspace/data filters by conditions _name contains', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const conditions = JSON.stringify([{ fieldId: '_name', op: 'contains', value: 'Auth' }]);
+    const body = await orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { conditions }
+    });
+    const names = body.map(e => e._name);
+    expect(names).toEqual(expect.arrayContaining(['Auth Service', 'Auth API']));
+    expect(names).not.toContain('API Gateway');
+    expect(names).not.toContain('Engineering');
+  });
+
+  test('GET /api/:workspace/data filters by conditions _lifecycle equals', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const conditions = JSON.stringify([
+      { fieldId: '_lifecycle', op: 'equals', value: seedIds.lifecycle.experimental }
+    ]);
+    const body = await orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { _schemaId: componentSchemaId, conditions }
+    });
+    expect(body).toHaveLength(1);
+    expect(body[0]).toMatchObject({ _name: 'Auth Service' });
+  });
+
+  test('GET /api/:workspace/data filters by conditions _lifecycle empty', async ({
+    orpc,
+    seeded: _
+  }) => {
+    await orpc.entities.create({
+      params: { workspace: 'default' },
+      body: { _schemaId: componentSchemaId, _name: 'No Lifecycle Component' } as never
+    });
+    await orpc.entities.create({
+      params: { workspace: 'default' },
+      body: {
+        _schemaId: componentSchemaId,
+        _name: 'Has Lifecycle Component',
+        _lifecycle: seedIds.lifecycle.production
+      } as never
+    });
+
+    const conditions = JSON.stringify([{ fieldId: '_lifecycle', op: 'empty', value: '' }]);
+    const body = await orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { _schemaId: componentSchemaId, conditions }
+    });
+    const names = body.map(e => e._name);
+    expect(names).toContain('No Lifecycle Component');
+    expect(names).not.toContain('Has Lifecycle Component');
+    expect(names).not.toContain('API Gateway');
+  });
 });
