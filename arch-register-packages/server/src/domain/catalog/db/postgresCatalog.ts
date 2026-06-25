@@ -414,6 +414,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return row ?? null;
   }
 
+
   async listSnapshots(workspace: string, entityId: string) {
     return await this.sql<EntitySnapshotDbResult[]>`
       SELECT s.*, u.display_name as created_by_name
