@@ -212,6 +212,104 @@ test.describe('data routes', () => {
     expect(body.incoming).toEqual([]);
   });
 
+  test('POST /api/:workspace/data/batch-relations returns relations for multiple entities', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const body = await orpc.entities.batchRelations({
+      params: { workspace: 'default' },
+      body: { ids: [componentId, apiId, systemId] }
+    });
+
+    // Verify response structure
+    expect(body).toHaveProperty(componentId);
+    expect(body).toHaveProperty(apiId);
+    expect(body).toHaveProperty(systemId);
+
+    // Verify componentId relations
+    expect(body[componentId]).toMatchObject({
+      outgoing: expect.arrayContaining([
+        expect.objectContaining({
+          entityId: systemId,
+          fieldName: 'System',
+          kind: 'containment'
+        }),
+        expect.objectContaining({
+          entityId: apiId,
+          fieldName: 'Consumed APIs',
+          kind: 'reference'
+        })
+      ]),
+      incoming: []
+    });
+
+    // Verify apiId has incoming relation from componentId
+    expect(body[apiId]).toMatchObject({
+      outgoing: expect.arrayContaining([
+        expect.objectContaining({
+          entityId: systemId,
+          fieldName: 'System',
+          kind: 'containment'
+        })
+      ]),
+      incoming: expect.arrayContaining([
+        expect.objectContaining({
+          entityId: componentId,
+          fieldName: 'Consumed APIs',
+          kind: 'reference'
+        })
+      ])
+    });
+
+    // Verify systemId has incoming containment relations
+    expect(body[systemId]).toBeDefined();
+    expect(body[systemId]!.incoming).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entityId: componentId,
+          fieldName: 'System',
+          kind: 'containment'
+        }),
+        expect.objectContaining({
+          entityId: apiId,
+          fieldName: 'System',
+          kind: 'containment'
+        })
+      ])
+    );
+  });
+
+  test('POST /api/:workspace/data/batch-relations handles non-existent entity IDs gracefully', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const nonExistentId = '00000000-0000-0000-9999-999999999999';
+    const body = await orpc.entities.batchRelations({
+      params: { workspace: 'default' },
+      body: { ids: [componentId, nonExistentId] }
+    });
+
+    // Should return relations for existing entity
+    expect(body).toHaveProperty(componentId);
+    expect(body[componentId]).toHaveProperty('outgoing');
+    expect(body[componentId]).toHaveProperty('incoming');
+
+    // Should not include non-existent entity
+    expect(body).not.toHaveProperty(nonExistentId);
+  });
+
+  test('POST /api/:workspace/data/batch-relations returns empty object for empty ID list', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const body = await orpc.entities.batchRelations({
+      params: { workspace: 'default' },
+      body: { ids: [] }
+    });
+
+    expect(body).toEqual({});
+  });
+
   test('GET and PUT /api/:workspace/data/:id/access round-trip grants', async ({
     orpc,
     seeded: _

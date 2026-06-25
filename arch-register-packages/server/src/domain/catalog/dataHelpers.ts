@@ -256,7 +256,7 @@ export const buildEntityRelations = (
         publicId: target.public_id ?? refId,
         entitySlug: target.slug ?? refId,
         entityName: target.name ?? target.slug ?? refId,
-        entitySchemaId: target.schema_id ?? field.schemaId,
+        entitySchemaId: target.schema_id,
         fieldName: field.name,
         kind: field.type
       });
