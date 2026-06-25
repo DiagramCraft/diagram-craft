@@ -1,0 +1,41 @@
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.optionLabel {
+  font-size: 13px;
+  color: var(--base-fg);
+}
+
+.optionControl {
+  min-width: 180px;
+}
+
+.labelInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  outline: none;
+}
+
+.labelInput:focus {
+  border-color: var(--accent-fg);
+}
+
+.labelInput::placeholder {
+  color: var(--cmp-fg-disabled);
+}

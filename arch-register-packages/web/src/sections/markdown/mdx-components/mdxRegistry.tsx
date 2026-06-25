@@ -2,6 +2,10 @@ import { ENTITY_CARD_TYPE } from './blocks/entity-card/EntityCardEditable';
 import { entityCardSpec } from './blocks/entity-card/EntityCardRegistration';
 import { ENTITY_CHANGELOG_TYPE } from './blocks/entity-changelog/EntityChangelogEditable';
 import { entityChangelogSpec } from './blocks/entity-changelog/EntityChangelogRegistration';
+import { ENTITY_CHART_TYPE } from './blocks/entity-chart/EntityChartEditable';
+import { entityChartSpec } from './blocks/entity-chart/EntityChartRegistration';
+import { ENTITY_METRIC_TYPE } from './blocks/entity-metric/EntityMetricEditable';
+import { entityMetricSpec } from './blocks/entity-metric/EntityMetricRegistration';
 import { ENTITY_TABLE_TYPE } from './blocks/entity-table/EntityTableEditable';
 import { entityTableSpec } from './blocks/entity-table/EntityTableRegistration';
 import { ENTITY_FIELD_TYPE } from './inlines/entity-field/EntityFieldEditable';
@@ -16,6 +20,8 @@ export type { SlashCommandDef, EditorSpec, MdxComponentSpec } from './types';
 export const MDX_COMPONENTS = {
   [ENTITY_CARD_TYPE]: entityCardSpec,
   [ENTITY_CHANGELOG_TYPE]: entityChangelogSpec,
+  [ENTITY_CHART_TYPE]: entityChartSpec,
+  [ENTITY_METRIC_TYPE]: entityMetricSpec,
   [ENTITY_TABLE_TYPE]: entityTableSpec,
   [ENTITY_FIELD_TYPE]: entityFieldSpec,
   [ENTITY_MENTION_TYPE]: entityMentionSpec,
