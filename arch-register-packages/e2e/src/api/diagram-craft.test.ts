@@ -166,7 +166,7 @@ test.describe('diagram craft routes', () => {
           name: 'Frontend App',
           description: 'React single-page application served to end users.',
           technology: 'React',
-          system: '00000000-0000-0000-0002-000000000001'
+          system: ['00000000-0000-0000-0002-000000000001']
         })
       ])
     );
