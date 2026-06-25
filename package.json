@@ -20,7 +20,11 @@
     "test:bench": "vitest bench --run",
     "lint:tsc": "tsc --noEmit",
     "lint": "biome lint --max-diagnostics=100 && pnpm lint:tsc",
-    "doc": "typedoc"
+    "doc": "typedoc",
+    "docs:dev": "pnpm --filter docs-site docusaurus start",
+    "docs:build": "pnpm --filter docs-site build",
+    "docs:serve": "pnpm --filter docs-site serve",
+    "docs:clear": "pnpm --filter docs-site clear"
   },
   "keywords": [],
   "author": "Magnus Johansson",

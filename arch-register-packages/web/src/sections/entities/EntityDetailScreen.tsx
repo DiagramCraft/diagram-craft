@@ -909,7 +909,7 @@ export const EntityDetailScreen = () => {
         <div className={styles.graphPanel}>
           <EntityGraphView
             workspaceId={workspaceId}
-            rootEntityId={entityId}
+            rootEntityId={entity._uid}
             rootEntityName={entity._name || entity._slug}
             rootEntitySchemaId={entity._schema.id}
             schemas={schemas}

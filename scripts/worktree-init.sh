@@ -155,6 +155,7 @@ PORT_AR_WEB=$((BASE + 3))
 PORT_AR_SERVER=$((BASE + 4))
 PORT_SB_DC=$((BASE + 5))
 PORT_SB_AR=$((BASE + 6))
+PORT_DOCS=$((BASE + 7))
 
 # ---------------------------------------------------------------------------
 # 9. Append entry to registry
@@ -178,7 +179,8 @@ entry = {
         "ar_web":       ${PORT_AR_WEB},
         "ar_server":    ${PORT_AR_SERVER},
         "storybook_dc": ${PORT_SB_DC},
-        "storybook_ar": ${PORT_SB_AR}
+        "storybook_ar": ${PORT_SB_AR},
+        "docs":         ${PORT_DOCS}
     },
     "database": "sqlite://./data/arch-register.sqlite"
 }
@@ -246,6 +248,14 @@ procs:
     log:
       file: ar-storybook.log
 
+  "Docs :${PORT_DOCS}":
+    shell: |
+      pnpm docs:dev -- --port ${PORT_DOCS} --no-open
+    autostart: false
+    stop: SIGKILL
+    log:
+      file: docs.log
+
 proc_log:
   dir: .logs
   mode: truncate
@@ -311,6 +321,7 @@ printf "  AR web           %s\n" "${PORT_AR_WEB}"
 printf "  AR server        %s\n" "${PORT_AR_SERVER}"
 printf "  Storybook DC     %s\n" "${PORT_SB_DC}"
 printf "  Storybook AR     %s\n" "${PORT_SB_AR}"
+printf "  Docs             %s\n" "${PORT_DOCS}"
 echo ""
 echo "  Database    : SQLite (./data/arch-register.sqlite)"
 echo "  Registry    : ${REGISTRY}"

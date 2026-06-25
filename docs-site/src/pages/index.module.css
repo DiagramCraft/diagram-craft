@@ -1,0 +1,30 @@
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.products {
+  padding: 4rem 0;
+}
+
+.productCard {
+  margin-bottom: 2rem;
+}
+
+.productCard .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.productCard .card__body {
+  flex-grow: 1;
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 2rem;
+  }
+}

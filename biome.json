@@ -33,6 +33,7 @@
       "!!**/storybook-static",
       "!!**/playground",
       "!!**/output",
+      "!!docs-site",
       "!packages/main/public",
       "!**/*.png",
       "!**/eslintrc.cjs",
