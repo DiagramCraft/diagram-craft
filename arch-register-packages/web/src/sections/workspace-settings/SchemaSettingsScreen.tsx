@@ -462,8 +462,9 @@ const FieldRow = ({
             <TextInput
               value={field.predicate ?? ''}
               disabled={!canEdit}
-              onChange={value => onUpdate({ predicate: value ?? '' } as Partial<SchemaField>)}
+              onChange={value => onUpdate({ predicate: value?.trim() || undefined } as Partial<SchemaField>)}
               style={{ width: '100%' }}
+              placeholder="e.g., belongs to, depends on"
             />
           </div>
           {field.type === 'reference' ? (
