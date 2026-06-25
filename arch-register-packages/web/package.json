@@ -63,7 +63,7 @@
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^6.0.2",
     "storybook": "^10.4.6",
-    "typescript": "^6.0.3",
+    "typescript": "rc",
     "vite": "^8.0.16",
     "vitest": "^4.1.9"
   }
