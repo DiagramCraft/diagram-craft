@@ -29,7 +29,8 @@ export const useEntities = (
     view?: 'summary' | 'full';
     limit?: number | null;
     offset?: number | null;
-  } = {}
+  } = {},
+  queryOptions?: { enabled?: boolean }
 ) => {
   return useQuery({
     queryKey: entityKeys.list(workspaceId, options),
@@ -46,7 +47,7 @@ export const useEntities = (
           offset: options.offset ?? undefined
         }
       }),
-    enabled: !!workspaceId
+    enabled: queryOptions?.enabled ?? !!workspaceId
   });
 };
 
