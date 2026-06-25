@@ -403,7 +403,47 @@ importers:
         version: 8.0.16(@types/node@24.12.4)(esbuild@0.25.12)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.9(@types/node@24.12.4)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@24.12.4)(esbuild@0.25.12)(jiti@2.7.0)(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.1.9(@types/node@24.12.4)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1)(vite@8.0.16(@types/node@24.12.4)(esbuild@0.25.12)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+
+  docs-site:
+    dependencies:
+      '@docusaurus/core':
+        specifier: ^3.6.3
+        version: 3.10.1(@mdx-js/react@3.1.1(@types/react@19.2.17)(react@18.3.1))(esbuild@0.25.12)(postcss@8.5.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.3)
+      '@docusaurus/preset-classic':
+        specifier: ^3.6.3
+        version: 3.10.1(@algolia/client-search@5.55.1)(@mdx-js/react@3.1.1(@types/react@19.2.17)(react@18.3.1))(@types/react@19.2.17)(esbuild@0.25.12)(postcss@8.5.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(search-insights@2.17.3)(typescript@5.7.3)
+      '@mdx-js/react':
+        specifier: ^3.1.0
+        version: 3.1.1(@types/react@19.2.17)(react@18.3.1)
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      gray-matter:
+        specifier: ^4.0.3
+        version: 4.0.3
+      prism-react-renderer:
+        specifier: ^2.4.1
+        version: 2.4.1(react@18.3.1)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@docusaurus/module-type-aliases':
+        specifier: ^3.6.3
+        version: 3.10.1(esbuild@0.25.12)(postcss@8.5.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@docusaurus/tsconfig':
+        specifier: ^3.6.3
+        version: 3.10.1
+      '@docusaurus/types':
+        specifier: ^3.6.3
+        version: 3.10.1(esbuild@0.25.12)(postcss@8.5.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      typescript:
+        specifier: ~5.7.2
+        version: 5.7.3
 
   packages/app-components:
     dependencies:
@@ -6356,7 +6396,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.29.7
       '@babel/helper-validator-option': 7.29.7
-      browserslist: 4.28.2
+      browserslist: 4.28.4
       lru-cache: 5.1.1
       semver: 6.3.1
 
@@ -7234,7 +7274,7 @@ snapshots:
 
   '@peculiar/webcrypto@1.7.1':
     dependencies:
-      '@peculiar/asn1-schema': 2.7.0
+      '@peculiar/asn1-schema': 2.8.0
       '@peculiar/json-schema': 1.1.12
       '@peculiar/utils': 2.0.3
       tslib: 2.8.1
@@ -12116,7 +12156,7 @@ snapshots:
 
   webcrypto-core@1.9.2:
     dependencies:
-      '@peculiar/asn1-schema': 2.7.0
+      '@peculiar/asn1-schema': 2.8.0
       '@peculiar/json-schema': 1.1.12
       '@peculiar/utils': 2.0.3
       asn1js: 3.0.10
@@ -12125,6 +12165,141 @@ snapshots:
   webidl-conversions@8.0.1: {}
 
   webpack-virtual-modules@0.6.2: {}
+
+  webpack@5.107.2(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.12)(html-minifier-terser@7.2.0)(postcss@8.5.15):
+    dependencies:
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.16.0
+      acorn-import-phases: 1.0.4(acorn@8.16.0)
+      browserslist: 4.28.4
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.24.0
+      es-module-lexer: 2.1.0
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      loader-runner: 4.3.2
+      mime-db: 1.54.0
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.3
+      terser-webpack-plugin: 5.6.1(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.15))(esbuild@0.25.12)(html-minifier-terser@7.2.0)(postcss@8.5.15)(webpack@5.107.2(esbuild@0.25.12)(postcss@8.5.15))
+      watchpack: 2.5.2
+      webpack-sources: 3.5.0
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - uglify-js
+
+  webpack@5.107.2(esbuild@0.25.12):
+    dependencies:
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.16.0
+      acorn-import-phases: 1.0.4(acorn@8.16.0)
+      browserslist: 4.28.4
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.24.0
+      es-module-lexer: 2.1.0
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      loader-runner: 4.3.2
+      mime-db: 1.54.0
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.3
+      terser-webpack-plugin: 5.6.1(esbuild@0.25.12)(webpack@5.107.2(esbuild@0.25.12))
+      watchpack: 2.5.2
+      webpack-sources: 3.5.0
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - uglify-js
+    optional: true
+
+  webpack@5.107.2(esbuild@0.25.12)(postcss@8.5.15):
+    dependencies:
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.16.0
+      acorn-import-phases: 1.0.4(acorn@8.16.0)
+      browserslist: 4.28.4
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.24.0
+      es-module-lexer: 2.1.0
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      loader-runner: 4.3.2
+      mime-db: 1.54.0
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.3
+      terser-webpack-plugin: 5.6.1(esbuild@0.25.12)(postcss@8.5.15)(webpack@5.107.2(esbuild@0.25.12)(postcss@8.5.15))
+      watchpack: 2.5.2
+      webpack-sources: 3.5.0
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - uglify-js
+
+  webpackbar@7.0.0(webpack@5.107.2(esbuild@0.25.12)(postcss@8.5.15)):
+    dependencies:
+      ansis: 3.17.0
+      consola: 3.4.2
+      pretty-time: 1.1.0
+      std-env: 3.10.0
+    optionalDependencies:
+      webpack: 5.107.2(esbuild@0.25.12)(postcss@8.5.15)
+
+  websocket-driver@0.7.5:
+    dependencies:
+      http-parser-js: 0.5.10
+      safe-buffer: 5.2.1
+      websocket-extensions: 0.1.4
+
+  websocket-extensions@0.1.4: {}
 
   whatwg-mimetype@5.0.0: {}
 

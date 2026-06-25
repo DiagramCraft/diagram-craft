@@ -41,3 +41,4 @@ overrides:
   defu: ">=6.1.6"
   lodash: ">=4.18.1"
   lodash-es: ">=4.18.1"
+  gray-matter: "4.0.3"

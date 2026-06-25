@@ -2,11 +2,20 @@ import {
   BrowserView,
   EntityFilters,
   ExploreViewConfig,
+  FilterCondition,
   HierarchyViewConfig,
   MatrixViewConfig,
   RadarViewConfig,
   TimelineViewConfig
 } from '@arch-register/api-types/viewContract';
+
+export type EntityListDbFilters = {
+  schemaId?: string | null;
+  owner?: string | null;
+  lifecycle?: string | null;
+  q?: string | null;
+  conditions?: FilterCondition[];
+};
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
 
@@ -153,7 +162,7 @@ export type CatalogDatabase = {
   ): Promise<WorkspaceEnumDbResult | null>;
   deleteEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;
 
-  listEntities(ws: string): Promise<EntityDbResult[]>;
+  listEntities(ws: string, filters?: EntityListDbFilters): Promise<EntityDbResult[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
   updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;

@@ -70,9 +70,19 @@ export const listEntities = async (
     limit,
     offset = 0
   } = options;
+  // _completeness is computed post-fetch; all other conditions can be evaluated in SQL
+  const sqlConditions = conditions.filter(c => c.fieldId !== '_completeness');
+  const completenessConditions = conditions.filter(c => c.fieldId === '_completeness');
+
   try {
     const [allEntities, schemas] = await Promise.all([
-      db.catalog.listEntities(workspace),
+      db.catalog.listEntities(workspace, {
+        schemaId,
+        owner,
+        lifecycle,
+        q: q ?? '',
+        conditions: sqlConditions
+      }),
       db.catalog.listSchemas(workspace)
     ]);
     const schemaMap = new Map(schemas.map(s => [s.id, s]));
@@ -81,18 +91,19 @@ export const listEntities = async (
     );
     const safeOffset = offset ?? 0;
 
-    const basicFiltered = filterEntities(visibleEntities, { schemaId, owner, lifecycle, q: q ?? '' });
-    const withCompleteness = basicFiltered.map(entity => ({
+    const withCompleteness = visibleEntities.map(entity => ({
       entity,
-      completeness: schemaMap.get(entity.schema_id) != null
-        ? computeEntityCompleteness(entity, schemaMap.get(entity.schema_id)!)
-        : null
+      completeness:
+        schemaMap.get(entity.schema_id) != null
+          ? computeEntityCompleteness(entity, schemaMap.get(entity.schema_id)!)
+          : null
     }));
-    const conditionFiltered = conditions.length === 0
-      ? withCompleteness
-      : withCompleteness.filter(({ entity, completeness }) =>
-          conditions.every(c => matchesFilterCondition(entity, c, completeness))
-        );
+    const conditionFiltered =
+      completenessConditions.length === 0
+        ? withCompleteness
+        : withCompleteness.filter(({ entity, completeness }) =>
+            completenessConditions.every(c => matchesFilterCondition(entity, c, completeness))
+          );
     const rows = conditionFiltered
       .sort((a, b) => a.entity.name.localeCompare(b.entity.name))
       .slice(safeOffset, limit != null ? safeOffset + limit : undefined);
@@ -101,9 +112,7 @@ export const listEntities = async (
       ? rows.map(({ entity: row, completeness }) =>
           toApiEntitySummary(row, authCtx, completeness) as EntityRecord
         )
-      : rows.map(({ entity: row, completeness }) =>
-          toApiEntity(row, authCtx, completeness)
-        );
+      : rows.map(({ entity: row, completeness }) => toApiEntity(row, authCtx, completeness));
   } catch (error) {
     return handleError(error, 'Failed to retrieve data');
   }

@@ -2,6 +2,7 @@ import type {
   CatalogDatabase,
   EntityGrantDbCretae,
   EntityDbCreate,
+  EntityListDbFilters,
   WorkspaceEnumDbCreate,
   SchemaDbCreate,
   EntityDbUpdate,
@@ -12,8 +13,15 @@ import type {
 } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 import { isUuidLike } from '../../../utils/publicIds';
+import {
+  ENTITY_BUILTIN_COLUMNS,
+  isValidFieldId,
+  escapeLike,
+  buildConditionClause
+} from './filterBuilder';
 
-const ENTITY_JOIN_SQL = `
+// SELECT + JOINs only — no WHERE clause (callers add it dynamically)
+const ENTITY_JOINS_SQL = `
   SELECT e.*,
     wo.name   AS owner_name,
     ls.label  AS lifecycle_label,
@@ -24,8 +32,10 @@ const ENTITY_JOIN_SQL = `
   LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
   LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
   JOIN entity_schema es ON es.id = e.schema_id
-  WHERE e.deleted_at IS NULL
 `;
+
+// Convenience for single-entity lookups that always need deleted_at filtering
+const ENTITY_JOIN_SQL = `${ENTITY_JOINS_SQL}  WHERE e.deleted_at IS NULL\n`;
 
 export class SqliteCatalogDatabase extends SqliteDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
@@ -157,10 +167,35 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return row;
   }
 
-  async listEntities(workspace: string) {
+  async listEntities(workspace: string, filters?: EntityListDbFilters) {
+    const whereParts: string[] = ['e.workspace = ? AND e.deleted_at IS NULL'];
+    const params: unknown[] = [workspace];
+    const addParam = (v: unknown) => {
+      params.push(v);
+      return '?';
+    };
+
+    if (filters?.schemaId) whereParts.push(`e.schema_id = ${addParam(filters.schemaId)}`);
+    if (filters?.owner) whereParts.push(`e.owner = ${addParam(filters.owner)}`);
+    if (filters?.lifecycle) whereParts.push(`e.lifecycle = ${addParam(filters.lifecycle)}`);
+    if (filters?.q?.trim()) {
+      const pat = `%${escapeLike(filters.q.trim())}%`;
+      whereParts.push(
+        `(LOWER(e.name) LIKE LOWER(${addParam(pat)}) OR LOWER(e.slug) LIKE LOWER(${addParam(pat)}) OR LOWER(e.description) LIKE LOWER(${addParam(pat)}))`
+      );
+    }
+    for (const cond of filters?.conditions ?? []) {
+      const col =
+        ENTITY_BUILTIN_COLUMNS[cond.fieldId] ??
+        (isValidFieldId(cond.fieldId) ? `json_extract(e.data, '$.${cond.fieldId}')` : null);
+      if (!col) continue;
+      const clause = buildConditionClause(col, cond, addParam, 'sqlite');
+      if (clause) whereParts.push(clause);
+    }
+
     return this.all(
-      `${ENTITY_JOIN_SQL} AND e.workspace = ? ORDER BY e.name`,
-      [workspace],
+      `${ENTITY_JOINS_SQL} WHERE ${whereParts.join(' AND ')} ORDER BY e.name`,
+      params,
       sqliteMappers.enrichedEntity
     );
   }
