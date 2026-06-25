@@ -457,32 +457,46 @@ const FieldRow = ({
           </Select.Root>
           {field.type === 'reference' ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <TextInput
-                value={String(field.minCount)}
-                disabled={!canEdit}
-                onChange={value => {
-                  const next = Number(value ?? 0);
-                  onUpdate({ minCount: Number.isNaN(next) ? 0 : Math.max(0, next) } as Partial<SchemaField>);
-                }}
-                style={{ width: '100%' }}
-                placeholder="Min"
-              />
-              <TextInput
-                value={String(field.maxCount)}
-                disabled={!canEdit}
-                onChange={value => {
-                  const next = Number(value ?? -1);
-                  onUpdate({ maxCount: Number.isNaN(next) ? -1 : next < 0 ? -1 : Math.max(0, next) } as Partial<SchemaField>);
-                }}
-                style={{ width: '100%' }}
-                placeholder="Max (-1 = many)"
-              />
+              <div style={{ display: 'grid', gap: 4 }}>
+                <span className="dim" style={{ fontSize: 11 }}>
+                  Min
+                </span>
+                <TextInput
+                  value={String(field.minCount)}
+                  disabled={!canEdit}
+                  onChange={value => {
+                    const next = Number(value ?? 0);
+                    onUpdate({
+                      minCount: Number.isNaN(next) ? 0 : Math.max(0, next)
+                    } as Partial<SchemaField>);
+                  }}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div style={{ display: 'grid', gap: 4 }}>
+                <span className="dim" style={{ fontSize: 11 }}>
+                  Max
+                </span>
+                <TextInput
+                  value={field.maxCount === -1 ? '' : String(field.maxCount)}
+                  disabled={!canEdit}
+                  onChange={value => {
+                    const raw = value ?? '';
+                    if (raw.trim() === '') {
+                      onUpdate({ maxCount: -1 } as Partial<SchemaField>);
+                      return;
+                    }
+                    const next = Number(raw);
+                    onUpdate({
+                      maxCount: Number.isNaN(next) ? -1 : Math.max(0, next)
+                    } as Partial<SchemaField>);
+                  }}
+                  style={{ width: '100%' }}
+                  placeholder="Unbounded"
+                />
+              </div>
             </div>
-          ) : (
-            <div className="dim" style={{ fontSize: 12 }}>
-              Single parent only
-            </div>
-          )}
+          ) : null}
         </div>
       );
     }
@@ -490,7 +504,7 @@ const FieldRow = ({
   };
 
   return (
-    <div className={styles.fieldRow}>
+    <div className={styles.fieldRow} style={{ alignItems: 'flex-start' }}>
       <span className={styles.fieldHandle}>
         <TbGripVertical size={14} />
       </span>

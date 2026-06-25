@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -1133,21 +1134,18 @@ const PropertyRow = ({
   const renderEditor = () => {
     if (field.type === 'reference') {
       const candidates = referenceOptions[field.schemaId] ?? [];
+      const availableItems: MultiSelectItem[] = candidates.map(entity => ({
+        value: entity._uid,
+        label: entity._name || entity._slug
+      }));
       return (
-        <select
-          multiple
-          className={styles.selectInline}
-          value={getRelationIds(editValue)}
-          onChange={event =>
-            onChange(Array.from(event.currentTarget.selectedOptions, option => option.value))
-          }
-        >
-          {candidates.map(e => (
-            <option key={e._uid} value={e._uid}>
-              {e._name || e._slug}
-            </option>
-          ))}
-        </select>
+        <MultiSelect
+          selectedValues={getRelationIds(editValue)}
+          availableItems={availableItems}
+          onSelectionChange={onChange}
+          placeholder={`Search ${field.name.toLowerCase()}...`}
+          style={{ width: '100%' }}
+        />
       );
     }
     if (field.type === 'containment') {
