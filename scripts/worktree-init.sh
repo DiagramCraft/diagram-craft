@@ -250,7 +250,7 @@ procs:
 
   "Docs :${PORT_DOCS}":
     shell: |
-      pnpm docs:dev -- --port ${PORT_DOCS}
+      pnpm docs:dev -- --port ${PORT_DOCS} --no-open
     autostart: false
     stop: SIGKILL
     log:
