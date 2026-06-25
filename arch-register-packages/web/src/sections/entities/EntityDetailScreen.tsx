@@ -266,7 +266,9 @@ export const EntityDetailScreen = () => {
     };
     for (const f of schema.fields) {
       state[f.id] =
-        f.type === 'reference' || f.type === 'containment' ? getRelationIds(entity[f.id]) : (entity[f.id] ?? '');
+        f.type === 'reference' || f.type === 'containment'
+          ? getRelationIds(entity[f.id])
+          : (entity[f.id] ?? '');
     }
     setEditState(state);
     setEditLinks(entity._links.map(l => ({ ...l })));
@@ -1233,18 +1235,20 @@ const PropertyRow = ({
       if (ids.length === 0) return <span className={styles.dim}>—</span>;
       return (
         <>
-          {ids.map(id => {
+          {ids.map((id, index) => {
             const ref = refLookup.get(id);
             const label = ref?._name ?? ref?._slug ?? id;
             return (
-              <button
-                key={id}
-                type="button"
-                className={styles.propLink}
-                onClick={() => onEntityClick(ref?._publicId ?? id)}
-              >
-                {label}
-              </button>
+              <span key={id}>
+                {index > 0 && ', '}
+                <button
+                  type="button"
+                  className={styles.propLink}
+                  onClick={() => onEntityClick(ref?._publicId ?? id)}
+                >
+                  {label}
+                </button>
+              </span>
             );
           })}
         </>
@@ -1302,15 +1306,33 @@ const RelationRow = ({
       className={styles.relation}
       onClick={() => onEntityClick(relation.publicId)}
     >
-      <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
-      <TbChevronRight size={10} className={styles.dim} />
-      <TypeBadge
-        color={targetColor}
-        name={targetSchema?.name}
-        icon={targetSchema?.icon}
-        size={16}
-      />
-      <span className={styles.relationName}>{relation.entityName}</span>
+      <span className={styles.relationLead}>
+        {direction === 'incoming' ? (
+          <>
+            <TypeBadge
+              color={targetColor}
+              name={targetSchema?.name}
+              icon={targetSchema?.icon}
+              size={16}
+            />
+            <span className={styles.relationName}>{relation.entityName}</span>
+            <TbChevronRight size={10} className={styles.dim} />
+            <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
+          </>
+        ) : (
+          <>
+            <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
+            <TbChevronRight size={10} className={styles.dim} />
+            <TypeBadge
+              color={targetColor}
+              name={targetSchema?.name}
+              icon={targetSchema?.icon}
+              size={16}
+            />
+            <span className={styles.relationName}>{relation.entityName}</span>
+          </>
+        )}
+      </span>
       <span className={styles.dim}>{relation.entitySlug}</span>
     </button>
   );
@@ -1635,19 +1657,23 @@ const TopologyView = ({
                 >
                   <TypeBadge color={pc} name={ps?.name} icon={ps?.icon} size={14} />
                   <span className={styles.topoParentName}>{p.entityName}</span>
-                  <span className={styles.dim}>{getRelationDisplayLabel(p)}</span>
                 </button>
               );
             })}
           </div>
-          <svg width="12" height="18" viewBox="0 0 12 18" className={styles.topoParentArrow}>
-            <path
-              d="M 6 0 L 6 14 M 2 10 L 6 14 L 10 10"
-              stroke="var(--base-fg-more-dim)"
-              strokeWidth="1.2"
-              fill="none"
-            />
-          </svg>
+          <div className={styles.topoParentArrowWrap}>
+            <svg width="12" height="18" viewBox="0 3 12 18" className={styles.topoParentArrow}>
+              <path
+                d="M 6 18 L 6 4 M 2 8 L 6 4 L 10 8"
+                stroke="var(--base-fg-more-dim)"
+                strokeWidth="1.2"
+                fill="none"
+              />
+            </svg>
+            <span className={styles.topoParentPredicate}>
+              {getRelationDisplayLabel(parents[0]!)}
+            </span>
+          </div>
         </div>
       )}
 
@@ -1708,9 +1734,7 @@ const TopologyView = ({
             )}
             {groupByField(usedByRefs).map(group => (
               <div key={group.key} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>
-                  {group.label} ({group.relations.length})
-                </div>
+                <div className={styles.topoAxisLabel}>{group.label}</div>
                 {group.relations.map((r, i) => {
                   const { schema: rs, color: rc } = resolveRelColor(r);
                   return (
@@ -1741,9 +1765,7 @@ const TopologyView = ({
             )}
             {groupByField(consumesRefs).map(group => (
               <div key={group.key} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>
-                  {group.label} ({group.relations.length})
-                </div>
+                <div className={styles.topoAxisLabel}>{group.label}</div>
                 {group.relations.map((r, i) => {
                   const { schema: rs, color: rc } = resolveRelColor(r);
                   return (
