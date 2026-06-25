@@ -207,6 +207,7 @@ const FilterRow = ({
   const [localTextValue, setLocalTextValue] = React.useState(
     (condition.value as string) || ''
   );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fieldId is intentional — resets localTextValue when field changes, even if condition.value was already ''
   React.useEffect(() => {
     setLocalTextValue((condition.value as string) || '');
   }, [condition.fieldId, condition.value]);
