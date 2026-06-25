@@ -2,6 +2,8 @@ import { test, expect, createTestORPCClient, createApiTest } from '../helpers/fi
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
 
+const systemId = '00000000-0000-0000-0002-000000000001';
+
 const entityTest = createApiTest({
   afterSeed: async server => {
     await seedCatalogEntities(server.db);
@@ -396,7 +398,8 @@ entityTest.describe('entity content routes', () => {
         _schemaId: '00000000-0000-0000-0000-000000000004',
         _name: 'Entity Content Host',
         _namespace: 'default',
-        api_type: 'openapi'
+        api_type: 'openapi',
+        system: [systemId]
       } as never
     });
 
@@ -451,7 +454,8 @@ entityTest.describe('entity content routes', () => {
         _schemaId: '00000000-0000-0000-0000-000000000004',
         _name: 'Entity Revision Host',
         _namespace: 'default',
-        api_type: 'openapi'
+        api_type: 'openapi',
+        system: [systemId]
       } as never
     });
 

@@ -164,7 +164,7 @@ test.describe('data routes', () => {
       _lifecycle: seedIds.lifecycle.production,
       _tags: ['rest'],
       api_type: 'openapi',
-      system: systemId
+      system: [systemId]
     });
 
     expect(created).toMatchObject({
@@ -173,7 +173,7 @@ test.describe('data routes', () => {
       _owner: expect.objectContaining({ id: seedIds.teams.design }),
       _lifecycle: expect.objectContaining({ id: seedIds.lifecycle.production }),
       api_type: 'openapi',
-      system: systemId
+      system: [systemId]
     });
   });
 
@@ -186,7 +186,10 @@ test.describe('data routes', () => {
       _uid: componentId,
       _name: 'Frontend App',
       technology: 'React',
-      depends_on: '00000000-0000-0000-0003-000000000001'
+      depends_on: [
+        '00000000-0000-0000-0003-000000000001',
+        '00000000-0000-0000-0003-000000000003'
+      ]
     });
   });
 
@@ -355,7 +358,7 @@ test.describe('data routes', () => {
       _owner: seedIds.teams.platform,
       _lifecycle: seedIds.lifecycle.production,
       technology: 'Node.js',
-      system: systemId
+      system: [systemId]
     });
 
     const updated = await orpc.entities.update({
@@ -371,7 +374,7 @@ test.describe('data routes', () => {
         _tags: ['worker'],
         _visibilityMode: 'restricted',
         technology: 'Go',
-        system: systemId
+        system: [systemId]
       } as never
     });
 
@@ -394,7 +397,7 @@ test.describe('data routes', () => {
       _name: 'Customer API (copy)',
       _slug: 'customer-api-copy',
       api_type: 'openapi',
-      system: systemId
+      system: [systemId]
     });
   });
 
@@ -408,7 +411,7 @@ test.describe('data routes', () => {
       _owner: seedIds.teams.platform,
       _lifecycle: seedIds.lifecycle.production,
       technology: 'TypeScript',
-      system: systemId
+      system: [systemId]
     });
 
     const body = await orpc.entities.importCommit({
@@ -470,7 +473,7 @@ test.describe('data routes', () => {
       _schemaId: apiSchemaId,
       _name: 'Delete Me API',
       api_type: 'graphql',
-      system: systemId
+      system: [systemId]
     });
 
     const result = await orpc.entities.remove({ params: { workspace: 'default', id: created._uid } });
@@ -497,7 +500,7 @@ test.describe('data routes', () => {
       _targetLifecycle: seedIds.lifecycle.deprecated,
       _targetLifecycleDate: '2026-12-31',
       api_type: 'openapi',
-      system: systemId
+      system: [systemId]
     });
 
     expect(created).toMatchObject({
@@ -517,7 +520,7 @@ test.describe('data routes', () => {
       _name: 'Future API',
       _lifecycle: seedIds.lifecycle.experimental,
       api_type: 'openapi',
-      system: systemId
+      system: [systemId]
     });
 
     expect(created._targetLifecycle).toBeNull();
@@ -532,7 +535,7 @@ test.describe('data routes', () => {
         _targetLifecycle: seedIds.lifecycle.production,
         _targetLifecycleDate: '2026-09-30',
         api_type: 'openapi',
-        system: systemId
+        system: [systemId]
       } as never
     });
 
@@ -553,7 +556,7 @@ test.describe('data routes', () => {
       _lifecycle: seedIds.lifecycle.production,
       _targetLifecycle: 'nonexistent-state',
       api_type: 'openapi',
-      system: systemId
+      system: [systemId]
     });
 
     expect(created._targetLifecycle).toBeNull();
@@ -595,14 +598,19 @@ test.describe('data routes', () => {
   }) => {
     await orpc.entities.create({
       params: { workspace: 'default' },
-      body: { _schemaId: componentSchemaId, _name: 'No Lifecycle Component' } as never
+      body: {
+        _schemaId: componentSchemaId,
+        _name: 'No Lifecycle Component',
+        system: [systemId]
+      } as never
     });
     await orpc.entities.create({
       params: { workspace: 'default' },
       body: {
         _schemaId: componentSchemaId,
         _name: 'Has Lifecycle Component',
-        _lifecycle: seedIds.lifecycle.production
+        _lifecycle: seedIds.lifecycle.production,
+        system: [systemId]
       } as never
     });
 

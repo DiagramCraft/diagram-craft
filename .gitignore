@@ -84,3 +84,6 @@ arch-register-packages/server/data
 # Worktree tooling
 mprocs.local.yaml
 .worktrees/
+
+docs-site/build
+docs-site/.docusaurus

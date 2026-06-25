@@ -705,7 +705,7 @@ export const seedEntities: Entity[] = [
     tags: ['tier-0', 'customer-facing'],
     links: [{ url: 'https://wiki.example.com/customer-portal', title: 'Wiki', type: 'docs' }],
     schema_id: '00000000-0000-0000-0000-000000000002',
-    data: { domain: '00000000-0000-0000-0001-000000000001' },
+    data: { domain: ['00000000-0000-0000-0001-000000000001'] },
     visibility_mode: null,
     created_at: now,
     updated_at: now,
@@ -725,7 +725,7 @@ export const seedEntities: Entity[] = [
     tags: ['tier-0', 'security'],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000002',
-    data: { domain: '00000000-0000-0000-0001-000000000001' },
+    data: { domain: ['00000000-0000-0000-0001-000000000001'] },
     visibility_mode: null,
     created_at: now,
     updated_at: now,
@@ -745,7 +745,7 @@ export const seedEntities: Entity[] = [
     tags: ['rest', 'public'],
     links: [{ url: 'https://api.example.com/docs/customer', title: 'API Docs', type: 'docs' }],
     schema_id: '00000000-0000-0000-0000-000000000004',
-    data: { api_type: 'openapi', system: '00000000-0000-0000-0002-000000000001' },
+    data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000001'] },
     visibility_mode: null,
     created_at: now,
     updated_at: now,
@@ -765,7 +765,7 @@ export const seedEntities: Entity[] = [
     tags: ['grpc', 'internal'],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
-    data: { api_type: 'grpc', system: '00000000-0000-0000-0002-000000000002' },
+    data: { api_type: 'grpc', system: ['00000000-0000-0000-0002-000000000002'] },
     visibility_mode: null,
     created_at: now,
     updated_at: now,
@@ -787,9 +787,10 @@ export const seedEntities: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
       technology: 'Node',
-      system: '00000000-0000-0000-0002-000000000001',
-      provides_apis: '00000000-0000-0000-0004-000000000001',
-      consumes_apis: '00000000-0000-0000-0004-000000000002'
+      system: ['00000000-0000-0000-0002-000000000001'],
+      provides_apis: ['00000000-0000-0000-0004-000000000001'],
+      consumes_apis: ['00000000-0000-0000-0004-000000000002'],
+      depends_on: ['00000000-0000-0000-0003-000000000003']
     },
     visibility_mode: null,
     created_at: now,
@@ -812,9 +813,15 @@ export const seedEntities: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
       technology: 'React',
-      system: '00000000-0000-0000-0002-000000000001',
-      consumes_apis: '00000000-0000-0000-0004-000000000001',
-      depends_on: '00000000-0000-0000-0003-000000000001'
+      system: ['00000000-0000-0000-0002-000000000001'],
+      consumes_apis: [
+        '00000000-0000-0000-0004-000000000001',
+        '00000000-0000-0000-0004-000000000002'
+      ],
+      depends_on: [
+        '00000000-0000-0000-0003-000000000001',
+        '00000000-0000-0000-0003-000000000003'
+      ]
     },
     visibility_mode: null,
     created_at: now,
@@ -837,8 +844,8 @@ export const seedEntities: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000003',
     data: {
       technology: 'Go',
-      system: '00000000-0000-0000-0002-000000000002',
-      provides_apis: '00000000-0000-0000-0004-000000000002'
+      system: ['00000000-0000-0000-0002-000000000002'],
+      provides_apis: ['00000000-0000-0000-0004-000000000002']
     },
     visibility_mode: null,
     created_at: now,
@@ -863,7 +870,7 @@ export const seedEntities: Entity[] = [
     schema_id: '00000000-0000-0000-0000-000000000005',
     data: {
       resource_type: 'database',
-      system: '00000000-0000-0000-0002-000000000001'
+      system: ['00000000-0000-0000-0002-000000000001']
     },
     visibility_mode: null,
     created_at: now,

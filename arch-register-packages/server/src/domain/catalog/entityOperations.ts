@@ -10,6 +10,7 @@ import type { EntityMutationActor } from './entityMutations';
 import { createEntityWithAudit, updateEntityWithAudit } from './entityMutations';
 import { logAudit, flattenEntityAuditFields } from '../audit/db/auditLogging';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
+import { decodeRefs } from '../../types';
 import {
   handleError,
   parseEntityMutationPayload,
@@ -19,7 +20,8 @@ import {
   resolveCreateOwner,
   getEntityParentsFromPayload,
   getLifecycleValues,
-  getTeamIds
+  getTeamIds,
+  normalizeEntityRelationFields
 } from './dataHelpers';
 import { formatPublicId } from '../../utils/publicIds';
 import {
@@ -231,12 +233,7 @@ export const getEntityTree = async (
       for (const entity of currentLevel) {
         const cFields = containmentFieldsBySchema.get(entity.schema_id) ?? [];
         for (const fieldId of cFields) {
-          for (const parentId of entity.data[fieldId]
-            ? String(entity.data[fieldId])
-                .split(',')
-                .map(s => s.trim())
-                .filter(Boolean)
-            : []) {
+          for (const parentId of decodeRefs(entity.data[fieldId])) {
             edges.push({ childId: entity.id, parentId });
             const parent = entityById.get(parentId);
             if (parent && !allIncluded.has(parent.id)) {
@@ -376,8 +373,13 @@ export const createEntity = async (
       status: 404,
       message: `Schema '${payload.schemaId}' not found`
     });
+    const normalizedFields = normalizeEntityRelationFields({
+      schema,
+      fields: payload.fields,
+      entities
+    });
     const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
-    const parents = getEntityParentsFromPayload(schema, payload.fields, entityLookup);
+    const parents = getEntityParentsFromPayload(schema, normalizedFields, entityLookup);
     const fallbackOwner = (await db.workspace.listTeams(workspace))[0]?.id ?? null;
     const owner = resolveCreateOwner(
       payload.requestedOwner,
@@ -426,7 +428,7 @@ export const createEntity = async (
         tags: payload.tags,
         links: payload.links,
         schema_id: payload.schemaId,
-        data: payload.fields,
+        data: normalizedFields,
         visibility_mode: payload.visibilityMode,
         created_at: timestamp,
         updated_at: timestamp
@@ -463,8 +465,16 @@ export const updateEntity = async (
     payload.requestedOwner && teamIds.has(payload.requestedOwner) ? payload.requestedOwner : null;
 
   try {
-    const oldRow = await db.catalog.getEntity(workspace, id);
+    const [oldRow, schema, entities] = await Promise.all([
+      db.catalog.getEntity(workspace, id),
+      db.catalog.getSchema(workspace, payload.schemaId),
+      db.catalog.listEntities(workspace)
+    ]);
     httpAssert.present(oldRow, { status: 404, message: `Data record '${id}' not found` });
+    httpAssert.present(schema, {
+      status: 404,
+      message: `Schema '${payload.schemaId}' not found`
+    });
     if (authCtx)
       requireEntityAction(
         authCtx,
@@ -480,6 +490,12 @@ export const updateEntity = async (
         'You do not have permission to change ownership or visibility'
       );
     }
+
+    const normalizedFields = normalizeEntityRelationFields({
+      schema,
+      fields: payload.fields,
+      entities
+    });
 
     const row = await updateEntityWithAudit(db, {
       workspace,
@@ -498,7 +514,7 @@ export const updateEntity = async (
         tags: payload.tags,
         links: payload.links,
         schema_id: payload.schemaId,
-        data: payload.fields,
+        data: normalizedFields,
         visibility_mode: payload.visibilityMode,
         updated_at: new Date()
       }

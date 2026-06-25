@@ -224,12 +224,20 @@ describe('PermissionChecker - Subtree Grants', () => {
       name: 'Schema 1',
       fields: [
         {
-          id: 'parents',
-          name: 'Parents',
+          id: 'parent_a',
+          name: 'Parent A',
           type: 'containment',
           schemaId: 'schema-1',
           minCount: 0,
-          maxCount: 10
+          maxCount: 1
+        },
+        {
+          id: 'parent_b',
+          name: 'Parent B',
+          type: 'containment',
+          schemaId: 'schema-1',
+          minCount: 0,
+          maxCount: 1
         }
       ],
       color: null,
@@ -243,7 +251,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const parent2 = createEntity('parent2');
     const child: Entity = {
       ...createEntity('child'),
-      data: { parents: 'parent1,parent2' }
+      data: { parent_a: ['parent1'], parent_b: ['parent2'] }
     };
 
     const grant1 = createGrant('parent1', 'user-1', 'viewer', 'subtree');

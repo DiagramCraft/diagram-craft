@@ -128,7 +128,7 @@ const system: EntityDbResult = enriched({
   tags: ['frontend'],
   links: [],
   schema_id: 'schema-system',
-  data: { domain: 'domain-1' },
+  data: { domain: ['domain-1'] },
   visibility_mode: null,
   created_at: now,
   updated_at: now
@@ -149,7 +149,7 @@ const component: EntityDbResult = enriched({
   tags: ['react'],
   links: [],
   schema_id: 'schema-component',
-  data: { system: 'system-1', depends_on: 'component-2' },
+  data: { system: ['system-1'], depends_on: ['component-2'] },
   visibility_mode: null,
   created_at: now,
   updated_at: now
@@ -170,7 +170,7 @@ const dependency: EntityDbResult = enriched({
   tags: ['nodejs'],
   links: [],
   schema_id: 'schema-component',
-  data: { system: 'system-1' },
+  data: { system: ['system-1'] },
   visibility_mode: null,
   created_at: now,
   updated_at: now
@@ -188,7 +188,7 @@ describe('data route helpers', () => {
         _tags: ['react', 1],
         _links: 'invalid',
         _visibilityMode: 'public',
-        system: 'system-1'
+        system: ['system-1']
       })
     ).toEqual({
       schemaId: 'schema-component',
@@ -203,7 +203,7 @@ describe('data route helpers', () => {
       tags: ['react'],
       links: [],
       visibilityMode: 'public',
-      fields: { system: 'system-1' }
+      fields: { system: ['system-1'] }
     });
   });
 
