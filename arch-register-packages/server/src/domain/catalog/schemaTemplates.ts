@@ -17,6 +17,7 @@ type SymbolicField =
   | {
       id: string;
       name: string;
+      predicate?: string;
       type: 'reference';
       symSchemaId: string;
       minCount: number;
@@ -25,6 +26,7 @@ type SymbolicField =
   | {
       id: string;
       name: string;
+      predicate?: string;
       type: 'containment';
       symSchemaId: string;
       minCount: 0 | 1;
@@ -72,6 +74,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'domain',
             name: 'Domain',
+            predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'domain',
             minCount: 1,
@@ -90,6 +93,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'system',
             name: 'System',
+            predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
             minCount: 1,
@@ -110,6 +114,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'system',
             name: 'System',
+            predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
             minCount: 1,
@@ -118,6 +123,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'provides_apis',
             name: 'Provided APIs',
+            predicate: 'provides',
             type: 'reference',
             symSchemaId: 'api',
             minCount: 0,
@@ -126,6 +132,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'consumes_apis',
             name: 'Consumed APIs',
+            predicate: 'consumes',
             type: 'reference',
             symSchemaId: 'api',
             minCount: 0,
@@ -146,6 +153,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'system',
             name: 'System',
+            predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
             minCount: 0,
@@ -189,6 +197,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'system',
             name: 'Software System',
+            predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'software_system',
             minCount: 1,
@@ -207,6 +216,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'container',
             name: 'Container',
+            predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'container',
             minCount: 1,
@@ -215,6 +225,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           {
             id: 'depends_on',
             name: 'Depends On',
+            predicate: 'depends on',
             type: 'reference',
             symSchemaId: 'component',
             minCount: 0,
@@ -788,6 +799,7 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Sc
         return {
           id: field.id,
           name: field.name,
+          predicate: field.predicate,
           type: 'reference',
           schemaId: resolvedId,
           minCount: field.minCount,
@@ -799,6 +811,7 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Sc
         return {
           id: field.id,
           name: field.name,
+          predicate: field.predicate,
           type: 'containment',
           schemaId: resolvedId,
           minCount: field.minCount,

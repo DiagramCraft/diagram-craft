@@ -102,6 +102,7 @@ export type RelationRecord = {
   entityName: string;
   entitySchemaId: string;
   fieldName: string;
+  fieldPredicate?: string;
   kind: 'reference' | 'containment';
 };
 
@@ -328,6 +329,7 @@ export const buildEntityRelations = (
         entityName: target.name ?? target.slug ?? refId,
         entitySchemaId: target.schema_id,
         fieldName: field.name,
+        fieldPredicate: field.predicate,
         kind: field.type
       });
     }
@@ -347,6 +349,7 @@ export const buildEntityRelations = (
         entityName: row.name || row.slug,
         entitySchemaId: row.schema_id,
         fieldName: field.name,
+        fieldPredicate: field.predicate,
         kind: field.type
       });
     }

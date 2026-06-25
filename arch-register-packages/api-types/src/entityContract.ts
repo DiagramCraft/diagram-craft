@@ -117,6 +117,7 @@ const entityRelationSchema = z.object({
   entityName: z.string(),
   entitySchemaId: z.string(),
   fieldName: z.string(),
+  fieldPredicate: z.string().optional(),
   kind: z.enum(['reference', 'containment'])
 });
 

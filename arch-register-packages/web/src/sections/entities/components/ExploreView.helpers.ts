@@ -5,7 +5,7 @@ import {
   type ExploreViewConfig
 } from '@arch-register/api-types/viewContract';
 import type { EntityRelationData } from '../../../hooks/useEntities';
-import type { EntityRelation } from '../../../lib/api';
+import { getRelationDisplayLabel, type EntityRelation } from '../../../lib/api';
 
 export type ExploreEntity = {
   entityId: string;
@@ -33,6 +33,7 @@ export type ExploreConnector = {
   toEntityId: string;
   toEntityName: string;
   fieldName: string;
+  fieldLabel: string;
   kind: EntityRelation['kind'];
 };
 
@@ -77,19 +78,19 @@ export const parseExploreConfigValue = (raw: string | undefined): ExploreViewCon
 export const buildRelationFieldOptions = (
   schemas: EntitySchema[]
 ): ExploreRelationFieldOption[] => {
-  const names = new Set<string>();
+  const labels = new Map<string, string>();
 
   for (const schema of schemas) {
     for (const field of schema.fields) {
       if (field.type === 'reference' || field.type === 'containment') {
-        names.add(field.name);
+        labels.set(field.name, field.predicate ?? field.name);
       }
     }
   }
 
-  return [...names]
-    .sort((a, b) => a.localeCompare(b))
-    .map(name => ({ label: name, value: name }));
+  return [...labels.entries()]
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([value, label]) => ({ label, value }));
 };
 
 export const buildDefaultRelationFieldNames = (schemas: EntitySchema[]): string[] => {
@@ -183,6 +184,7 @@ export const buildExploreGraph = ({
           toEntityId: entity.entityId,
           toEntityName: entity.name || entity.slug,
           fieldName: relation.fieldName,
+          fieldLabel: getRelationDisplayLabel(relation),
           kind: relation.kind
         });
       }
@@ -212,6 +214,7 @@ export const buildExploreGraph = ({
           toEntityId: relation.entityId,
           toEntityName: relation.entityName,
           fieldName: relation.fieldName,
+          fieldLabel: getRelationDisplayLabel(relation),
           kind: relation.kind
         });
       }

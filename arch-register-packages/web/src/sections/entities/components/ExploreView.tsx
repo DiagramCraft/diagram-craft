@@ -34,7 +34,7 @@ type ConnectorLine = ExploreConnector & {
 
 type ConnectorTooltip = {
   fromEntityName: string;
-  fieldName: string;
+  fieldLabel: string;
   toEntityName: string;
   x: number;
   y: number;
@@ -190,7 +190,7 @@ export const ExploreView = ({ rows, onEntityClick, config, onConfigChange }: Exp
       const canvasRect = canvas.getBoundingClientRect();
       setConnectorTooltip({
         fromEntityName: line.fromEntityName,
-        fieldName: line.fieldName,
+        fieldLabel: line.fieldLabel,
         toEntityName: line.toEntityName,
         x: event.clientX - canvasRect.left + 12,
         y: event.clientY - canvasRect.top + 12
@@ -395,7 +395,7 @@ export const ExploreView = ({ rows, onEntityClick, config, onConfigChange }: Exp
             >
               <strong>{connectorTooltip.fromEntityName}</strong>
               <span className={styles.connectorTooltipSep}> --[ </span>
-              <span className={styles.connectorTooltipField}>{connectorTooltip.fieldName}</span>
+              <span className={styles.connectorTooltipField}>{connectorTooltip.fieldLabel}</span>
               <span className={styles.connectorTooltipSep}> ]-- </span>
               <strong>{connectorTooltip.toEntityName}</strong>
             </div>

@@ -48,6 +48,7 @@ const systemSchema: SchemaDbResult = {
       id: 'domain',
       name: 'Domain',
       type: 'containment',
+      predicate: 'belongs to',
       schemaId: 'schema-domain',
       minCount: 1,
       maxCount: 1
@@ -71,6 +72,7 @@ const componentSchema: SchemaDbResult = {
       id: 'system',
       name: 'System',
       type: 'containment',
+      predicate: 'belongs to',
       schemaId: 'schema-system',
       minCount: 1,
       maxCount: 1
@@ -79,6 +81,7 @@ const componentSchema: SchemaDbResult = {
       id: 'depends_on',
       name: 'Depends On',
       type: 'reference',
+      predicate: 'depends on',
       schemaId: 'schema-component',
       minCount: 0,
       maxCount: -1
@@ -260,6 +263,7 @@ describe('data route helpers', () => {
         entityName: 'Customer Portal',
         entitySchemaId: 'schema-system',
         fieldName: 'System',
+        fieldPredicate: 'belongs to',
         kind: 'containment'
       },
       {
@@ -269,6 +273,7 @@ describe('data route helpers', () => {
         entityName: 'API Gateway',
         entitySchemaId: 'schema-component',
         fieldName: 'Depends On',
+        fieldPredicate: 'depends on',
         kind: 'reference'
       }
     ]);

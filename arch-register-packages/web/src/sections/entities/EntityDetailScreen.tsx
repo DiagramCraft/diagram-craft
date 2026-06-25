@@ -20,7 +20,7 @@ import {
   TbBell,
   TbPinned
 } from 'react-icons/tb';
-import { resolveSchemaColor, WorkspaceTeam } from '../../lib/api';
+import { getRelationDisplayLabel, resolveSchemaColor, WorkspaceTeam } from '../../lib/api';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -79,7 +79,14 @@ type Relation = {
   entityName: string;
   entitySchemaId: string;
   fieldName: string;
+  fieldPredicate?: string;
   kind: 'reference' | 'containment';
+};
+
+type RelationGroup = {
+  key: string;
+  label: string;
+  relations: Relation[];
 };
 
 type RefLookup = Map<string, EntitySummary>;
@@ -259,7 +266,9 @@ export const EntityDetailScreen = () => {
     };
     for (const f of schema.fields) {
       state[f.id] =
-        f.type === 'reference' || f.type === 'containment' ? getRelationIds(entity[f.id]) : (entity[f.id] ?? '');
+        f.type === 'reference' || f.type === 'containment'
+          ? getRelationIds(entity[f.id])
+          : (entity[f.id] ?? '');
     }
     setEditState(state);
     setEditLinks(entity._links.map(l => ({ ...l })));
@@ -1226,18 +1235,20 @@ const PropertyRow = ({
       if (ids.length === 0) return <span className={styles.dim}>—</span>;
       return (
         <>
-          {ids.map(id => {
+          {ids.map((id, index) => {
             const ref = refLookup.get(id);
             const label = ref?._name ?? ref?._slug ?? id;
             return (
-              <button
-                key={id}
-                type="button"
-                className={styles.propLink}
-                onClick={() => onEntityClick(ref?._publicId ?? id)}
-              >
-                {label}
-              </button>
+              <span key={id}>
+                {index > 0 && ', '}
+                <button
+                  type="button"
+                  className={styles.propLink}
+                  onClick={() => onEntityClick(ref?._publicId ?? id)}
+                >
+                  {label}
+                </button>
+              </span>
             );
           })}
         </>
@@ -1295,15 +1306,33 @@ const RelationRow = ({
       className={styles.relation}
       onClick={() => onEntityClick(relation.publicId)}
     >
-      <Chip tone="ghost">{relation.fieldName}</Chip>
-      <TbChevronRight size={10} className={styles.dim} />
-      <TypeBadge
-        color={targetColor}
-        name={targetSchema?.name}
-        icon={targetSchema?.icon}
-        size={16}
-      />
-      <span className={styles.relationName}>{relation.entityName}</span>
+      <span className={styles.relationLead}>
+        {direction === 'incoming' ? (
+          <>
+            <TypeBadge
+              color={targetColor}
+              name={targetSchema?.name}
+              icon={targetSchema?.icon}
+              size={16}
+            />
+            <span className={styles.relationName}>{relation.entityName}</span>
+            <TbChevronRight size={10} className={styles.dim} />
+            <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
+          </>
+        ) : (
+          <>
+            <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
+            <TbChevronRight size={10} className={styles.dim} />
+            <TypeBadge
+              color={targetColor}
+              name={targetSchema?.name}
+              icon={targetSchema?.icon}
+              size={16}
+            />
+            <span className={styles.relationName}>{relation.entityName}</span>
+          </>
+        )}
+      </span>
       <span className={styles.dim}>{relation.entitySlug}</span>
     </button>
   );
@@ -1470,14 +1499,22 @@ type TopologyViewProps = {
   onEntityClick: (entityId: string) => void;
 };
 
-const groupByField = (rels: Relation[]): [string, Relation[]][] => {
-  const groups = new Map<string, Relation[]>();
+const groupByField = (rels: Relation[]): RelationGroup[] => {
+  const groups = new Map<string, RelationGroup>();
   for (const r of rels) {
-    const list = groups.get(r.fieldName);
-    if (list) list.push(r);
-    else groups.set(r.fieldName, [r]);
+    const key = r.fieldName;
+    const group = groups.get(key);
+    if (group) {
+      group.relations.push(r);
+    } else {
+      groups.set(key, {
+        key,
+        label: getRelationDisplayLabel(r),
+        relations: [r]
+      });
+    }
   }
-  return [...groups.entries()];
+  return [...groups.values()];
 };
 
 const TopologyView = ({
@@ -1620,19 +1657,23 @@ const TopologyView = ({
                 >
                   <TypeBadge color={pc} name={ps?.name} icon={ps?.icon} size={14} />
                   <span className={styles.topoParentName}>{p.entityName}</span>
-                  <span className={styles.dim}>part of</span>
                 </button>
               );
             })}
           </div>
-          <svg width="12" height="18" viewBox="0 0 12 18" className={styles.topoParentArrow}>
-            <path
-              d="M 6 0 L 6 14 M 2 10 L 6 14 L 10 10"
-              stroke="var(--base-fg-more-dim)"
-              strokeWidth="1.2"
-              fill="none"
-            />
-          </svg>
+          <div className={styles.topoParentArrowWrap}>
+            <svg width="12" height="18" viewBox="0 3 12 18" className={styles.topoParentArrow}>
+              <path
+                d="M 6 18 L 6 4 M 2 8 L 6 4 L 10 8"
+                stroke="var(--base-fg-more-dim)"
+                strokeWidth="1.2"
+                fill="none"
+              />
+            </svg>
+            <span className={styles.topoParentPredicate}>
+              {getRelationDisplayLabel(parents[0]!)}
+            </span>
+          </div>
         </div>
       )}
 
@@ -1691,18 +1732,16 @@ const TopologyView = ({
             {usedByRefs.length === 0 && (
               <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No incoming references</div>
             )}
-            {groupByField(usedByRefs).map(([fieldName, rels]) => (
-              <div key={fieldName} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>
-                  {fieldName} ({rels.length})
-                </div>
-                {rels.map((r, i) => {
+            {groupByField(usedByRefs).map(group => (
+              <div key={group.key} className={styles.topoRefGroup}>
+                <div className={styles.topoAxisLabel}>{group.label}</div>
+                {group.relations.map((r, i) => {
                   const { schema: rs, color: rc } = resolveRelColor(r);
                   return (
                     <button
                       key={i}
                       type="button"
-                      ref={setCardRef(`in-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
+                      ref={setCardRef(`in-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
                       onClick={() => onEntityClick(r.publicId)}
                     >
@@ -1724,18 +1763,16 @@ const TopologyView = ({
             {consumesRefs.length === 0 && (
               <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No outgoing references</div>
             )}
-            {groupByField(consumesRefs).map(([fieldName, rels]) => (
-              <div key={fieldName} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>
-                  {fieldName} ({rels.length})
-                </div>
-                {rels.map((r, i) => {
+            {groupByField(consumesRefs).map(group => (
+              <div key={group.key} className={styles.topoRefGroup}>
+                <div className={styles.topoAxisLabel}>{group.label}</div>
+                {group.relations.map((r, i) => {
                   const { schema: rs, color: rc } = resolveRelColor(r);
                   return (
                     <button
                       key={i}
                       type="button"
-                      ref={setCardRef(`out-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
+                      ref={setCardRef(`out-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
                       onClick={() => onEntityClick(r.publicId)}
                     >

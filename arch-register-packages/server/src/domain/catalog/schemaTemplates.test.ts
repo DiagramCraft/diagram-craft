@@ -43,4 +43,15 @@ describe('instantiateTemplate', () => {
       schemaId: sourceSystem?.id
     });
   });
+
+  it('preserves relation predicates when present in templates', () => {
+    const schemas = instantiateTemplate('ws-1', 'backstage');
+    const component = schemas.find(schema => schema.name === 'Component');
+
+    expect(component?.fields.find(field => field.id === 'consumes_apis')).toMatchObject({
+      id: 'consumes_apis',
+      type: 'reference',
+      predicate: 'consumes'
+    });
+  });
 });

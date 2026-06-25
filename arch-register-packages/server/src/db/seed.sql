@@ -42,6 +42,7 @@ VALUES ('00000000-0000-0000-0000-000000000001',
         'System',
         '[
           {"id": "domain",       "name": "Domain",        "type": "containment",
+           "predicate": "belongs to",
            "schemaId": "00000000-0000-0000-0000-000000000001", "minCount": 1, "maxCount": 1}
         ]',
         'oklch(0.62 0.14 295)', 'layers'),
@@ -51,12 +52,16 @@ VALUES ('00000000-0000-0000-0000-000000000001',
         '[
           {"id": "technology",   "name": "Technology",   "type": "text"},
           {"id": "system",       "name": "System",        "type": "containment",
+           "predicate": "belongs to",
            "schemaId": "00000000-0000-0000-0000-000000000002", "minCount": 1, "maxCount": 1},
           {"id": "provides_apis","name": "Provided APIs", "type": "reference",
+           "predicate": "provides",
            "schemaId": "00000000-0000-0000-0000-000000000004", "minCount": 0, "maxCount": -1},
           {"id": "consumes_apis","name": "Consumed APIs", "type": "reference",
+           "predicate": "consumes",
            "schemaId": "00000000-0000-0000-0000-000000000004", "minCount": 0, "maxCount": -1},
           {"id": "depends_on",   "name": "Depends On",   "type": "reference",
+           "predicate": "depends on",
            "schemaId": "00000000-0000-0000-0000-000000000003", "minCount": 0, "maxCount": -1}
         ]',
         'oklch(0.62 0.13 145)', 'box'),
@@ -72,6 +77,7 @@ VALUES ('00000000-0000-0000-0000-000000000001',
              {"value": "asyncapi", "label": "AsyncAPI"}
            ]},
           {"id": "system",       "name": "System",        "type": "containment",
+           "predicate": "belongs to",
            "schemaId": "00000000-0000-0000-0000-000000000002", "minCount": 1, "maxCount": 1}
         ]',
         'oklch(0.66 0.16 258)', 'api'),
@@ -81,6 +87,7 @@ VALUES ('00000000-0000-0000-0000-000000000001',
         '[
           {"id": "resource_type","name": "Type",          "type": "text"},
           {"id": "system",       "name": "System",        "type": "containment",
+           "predicate": "belongs to",
            "schemaId": "00000000-0000-0000-0000-000000000002", "minCount": 0, "maxCount": 1}
         ]',
         'oklch(0.66 0.14 35)', 'database');
