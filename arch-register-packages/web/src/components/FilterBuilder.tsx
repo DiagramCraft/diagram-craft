@@ -209,7 +209,7 @@ const FilterRow = ({
   );
   React.useEffect(() => {
     setLocalTextValue((condition.value as string) || '');
-  }, [condition.fieldId]);
+  }, [condition.fieldId, condition.value]);
 
   const commitTextValue = () => onUpdate({ value: localTextValue });
 
