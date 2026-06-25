@@ -7,7 +7,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities, useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { entityKeys } from '../../../hooks/queryKeys';
 import { orpcClient } from '../../../lib/orpcClient';
-import { resolveSchemaColor } from '../../../lib/api';
+import { getRelationDisplayLabel, resolveSchemaColor } from '../../../lib/api';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 
@@ -37,6 +37,11 @@ type AttrField = {
   label: string;
   options: { value: string; label: string }[];
   isMetadata: boolean;
+};
+
+type RelationFieldOption = {
+  value: string;
+  label: string;
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -212,17 +217,21 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick, config, onConfigCha
   const effAttrField = attrFields.find(f => f.fieldId === effColFieldId) ?? null;
 
   // Available field names for entity × entity "via" filtering
-  const availableFieldNames = useMemo(() => {
+  const availableFieldNames = useMemo((): RelationFieldOption[] => {
     if (colMode !== 'entity' || !effColSchemaId) return [];
-    const names = new Set<string>();
+    const names = new Map<string, string>();
     rows.forEach(row => {
       const rel = relationsMap.get(row._uid);
       if (!rel) return;
       [...rel.outgoing, ...rel.incoming].forEach(r => {
-        if (r.entitySchemaId === effColSchemaId) names.add(r.fieldName);
+        if (r.entitySchemaId === effColSchemaId) {
+          names.set(r.fieldName, getRelationDisplayLabel(r));
+        }
       });
     });
-    return [...names].sort();
+    return [...names.entries()]
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([value, label]) => ({ value, label }));
   }, [colMode, rows, relationsMap, effColSchemaId]);
 
   const handleColSchemaChange = (id: string) => {
@@ -403,9 +412,9 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick, config, onConfigCha
                     }}
                   >
                     <option value="any">any relation</option>
-                    {availableFieldNames.map(fn => (
-                      <option key={fn} value={fn}>
-                        {fn}
+                    {availableFieldNames.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
                       </option>
                     ))}
                   </select>

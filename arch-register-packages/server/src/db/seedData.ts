@@ -520,6 +520,7 @@ export const seedSchemas: SchemaDbResult[] = [
         id: 'domain',
         name: 'Domain',
         type: 'containment',
+        predicate: 'belongs to',
         schemaId: '00000000-0000-0000-0000-000000000001',
         minCount: 1,
         maxCount: 1
@@ -543,6 +544,7 @@ export const seedSchemas: SchemaDbResult[] = [
         id: 'system',
         name: 'System',
         type: 'containment',
+        predicate: 'belongs to',
         schemaId: '00000000-0000-0000-0000-000000000002',
         minCount: 1,
         maxCount: 1
@@ -551,6 +553,7 @@ export const seedSchemas: SchemaDbResult[] = [
         id: 'provides_apis',
         name: 'Provided APIs',
         type: 'reference',
+        predicate: 'provides',
         schemaId: '00000000-0000-0000-0000-000000000004',
         minCount: 0,
         maxCount: -1
@@ -559,6 +562,7 @@ export const seedSchemas: SchemaDbResult[] = [
         id: 'consumes_apis',
         name: 'Consumed APIs',
         type: 'reference',
+        predicate: 'consumes',
         schemaId: '00000000-0000-0000-0000-000000000004',
         minCount: 0,
         maxCount: -1
@@ -567,6 +571,7 @@ export const seedSchemas: SchemaDbResult[] = [
         id: 'depends_on',
         name: 'Depends On',
         type: 'reference',
+        predicate: 'depends on',
         schemaId: '00000000-0000-0000-0000-000000000003',
         minCount: 0,
         maxCount: -1
@@ -595,6 +600,7 @@ export const seedSchemas: SchemaDbResult[] = [
         id: 'system',
         name: 'System',
         type: 'containment',
+        predicate: 'belongs to',
         schemaId: '00000000-0000-0000-0000-000000000002',
         minCount: 1,
         maxCount: 1
@@ -618,6 +624,7 @@ export const seedSchemas: SchemaDbResult[] = [
         id: 'system',
         name: 'System',
         type: 'containment',
+        predicate: 'belongs to',
         schemaId: '00000000-0000-0000-0000-000000000002',
         minCount: 0,
         maxCount: 1

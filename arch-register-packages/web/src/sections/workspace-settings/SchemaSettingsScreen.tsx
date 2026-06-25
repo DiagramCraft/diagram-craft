@@ -154,9 +154,9 @@ export const SchemaSettingsScreen = () => {
           case 'select':
             return { ...base, type: 'select', enumId: enums[0]?.id ?? '', options: [] };
           case 'reference':
-            return { ...base, type: 'reference', schemaId: '', minCount: 0, maxCount: -1 };
+            return { ...base, type: 'reference', predicate: '', schemaId: '', minCount: 0, maxCount: -1 };
           case 'containment':
-            return { ...base, type: 'containment', schemaId: '', minCount: 0, maxCount: 1 };
+            return { ...base, type: 'containment', predicate: '', schemaId: '', minCount: 0, maxCount: 1 };
         }
       })
     );
@@ -451,10 +451,21 @@ const FieldRow = ({
           >
             {schemas.map(s => (
               <Select.Item key={s.id} value={s.id}>
-                {s.name}
-              </Select.Item>
-            ))}
+              {s.name}
+            </Select.Item>
+          ))}
           </Select.Root>
+          <div style={{ display: 'grid', gap: 4 }}>
+            <span className="dim" style={{ fontSize: 11 }}>
+              Predicate
+            </span>
+            <TextInput
+              value={field.predicate ?? ''}
+              disabled={!canEdit}
+              onChange={value => onUpdate({ predicate: value ?? '' } as Partial<SchemaField>)}
+              style={{ width: '100%' }}
+            />
+          </div>
           {field.type === 'reference' ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div style={{ display: 'grid', gap: 4 }}>

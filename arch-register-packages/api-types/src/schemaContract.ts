@@ -20,12 +20,14 @@ const selectFieldInputSchema = baseFieldSchema.extend({
 });
 const referenceFieldSchema = baseFieldSchema.extend({
   type: z.literal('reference'),
+  predicate: z.string().optional(),
   schemaId: z.string(),
   minCount: z.number().int().min(0),
   maxCount: z.union([z.literal(-1), z.number().int().min(0)])
 });
 const containmentFieldSchema = baseFieldSchema.extend({
   type: z.literal('containment'),
+  predicate: z.string().optional(),
   schemaId: z.string(),
   minCount: z.union([z.literal(0), z.literal(1)]),
   maxCount: z.literal(1)

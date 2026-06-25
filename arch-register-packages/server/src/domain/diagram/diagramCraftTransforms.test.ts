@@ -12,8 +12,8 @@ describe('diagram craft transforms', () => {
       id: 'schema-1',
       name: 'System',
       fields: [
-        { id: 'system', name: 'System', type: 'containment', schemaId: 'schema-2' },
-        { id: 'depends_on', name: 'Depends on', type: 'reference', schemaId: 'schema-2' }
+        { id: 'system', name: 'System', predicate: 'belongs to', type: 'containment', schemaId: 'schema-2' },
+        { id: 'depends_on', name: 'Depends on', predicate: 'depends on', type: 'reference', schemaId: 'schema-2' }
       ]
     } as SchemaDbResult;
 
@@ -23,8 +23,8 @@ describe('diagram craft transforms', () => {
       fields: [
         { id: 'name', name: 'Name', type: 'text' },
         { id: 'description', name: 'Description', type: 'longtext' },
-        { id: 'system', name: 'System', type: 'containment', schemaId: 'schema-2' },
-        { id: 'depends_on', name: 'Depends on', type: 'reference', schemaId: 'schema-2' }
+        { id: 'system', name: 'System', predicate: 'belongs to', type: 'containment', schemaId: 'schema-2' },
+        { id: 'depends_on', name: 'Depends on', predicate: 'depends on', type: 'reference', schemaId: 'schema-2' }
       ]
     });
   });

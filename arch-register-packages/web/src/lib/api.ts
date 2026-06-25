@@ -157,8 +157,12 @@ export type EntityRelation = {
   entityName: string;
   entitySchemaId: string;
   fieldName: string;
+  fieldPredicate?: string;
   kind: 'reference' | 'containment';
 };
+
+export const getRelationDisplayLabel = (relation: Pick<EntityRelation, 'fieldName' | 'fieldPredicate'>) =>
+  relation.fieldPredicate ?? relation.fieldName;
 
 // Note: Entity operations now use ORPC client via hooks (useEntities)
 

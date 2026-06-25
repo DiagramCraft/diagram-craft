@@ -20,7 +20,7 @@ import {
   TbBell,
   TbPinned
 } from 'react-icons/tb';
-import { resolveSchemaColor, WorkspaceTeam } from '../../lib/api';
+import { getRelationDisplayLabel, resolveSchemaColor, WorkspaceTeam } from '../../lib/api';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -79,7 +79,14 @@ type Relation = {
   entityName: string;
   entitySchemaId: string;
   fieldName: string;
+  fieldPredicate?: string;
   kind: 'reference' | 'containment';
+};
+
+type RelationGroup = {
+  key: string;
+  label: string;
+  relations: Relation[];
 };
 
 type RefLookup = Map<string, EntitySummary>;
@@ -1295,7 +1302,7 @@ const RelationRow = ({
       className={styles.relation}
       onClick={() => onEntityClick(relation.publicId)}
     >
-      <Chip tone="ghost">{relation.fieldName}</Chip>
+      <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
       <TbChevronRight size={10} className={styles.dim} />
       <TypeBadge
         color={targetColor}
@@ -1470,14 +1477,22 @@ type TopologyViewProps = {
   onEntityClick: (entityId: string) => void;
 };
 
-const groupByField = (rels: Relation[]): [string, Relation[]][] => {
-  const groups = new Map<string, Relation[]>();
+const groupByField = (rels: Relation[]): RelationGroup[] => {
+  const groups = new Map<string, RelationGroup>();
   for (const r of rels) {
-    const list = groups.get(r.fieldName);
-    if (list) list.push(r);
-    else groups.set(r.fieldName, [r]);
+    const key = r.fieldName;
+    const group = groups.get(key);
+    if (group) {
+      group.relations.push(r);
+    } else {
+      groups.set(key, {
+        key,
+        label: getRelationDisplayLabel(r),
+        relations: [r]
+      });
+    }
   }
-  return [...groups.entries()];
+  return [...groups.values()];
 };
 
 const TopologyView = ({
@@ -1620,7 +1635,7 @@ const TopologyView = ({
                 >
                   <TypeBadge color={pc} name={ps?.name} icon={ps?.icon} size={14} />
                   <span className={styles.topoParentName}>{p.entityName}</span>
-                  <span className={styles.dim}>part of</span>
+                  <span className={styles.dim}>{getRelationDisplayLabel(p)}</span>
                 </button>
               );
             })}
@@ -1691,18 +1706,18 @@ const TopologyView = ({
             {usedByRefs.length === 0 && (
               <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No incoming references</div>
             )}
-            {groupByField(usedByRefs).map(([fieldName, rels]) => (
-              <div key={fieldName} className={styles.topoRefGroup}>
+            {groupByField(usedByRefs).map(group => (
+              <div key={group.key} className={styles.topoRefGroup}>
                 <div className={styles.topoAxisLabel}>
-                  {fieldName} ({rels.length})
+                  {group.label} ({group.relations.length})
                 </div>
-                {rels.map((r, i) => {
+                {group.relations.map((r, i) => {
                   const { schema: rs, color: rc } = resolveRelColor(r);
                   return (
                     <button
                       key={i}
                       type="button"
-                      ref={setCardRef(`in-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
+                      ref={setCardRef(`in-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
                       onClick={() => onEntityClick(r.publicId)}
                     >
@@ -1724,18 +1739,18 @@ const TopologyView = ({
             {consumesRefs.length === 0 && (
               <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No outgoing references</div>
             )}
-            {groupByField(consumesRefs).map(([fieldName, rels]) => (
-              <div key={fieldName} className={styles.topoRefGroup}>
+            {groupByField(consumesRefs).map(group => (
+              <div key={group.key} className={styles.topoRefGroup}>
                 <div className={styles.topoAxisLabel}>
-                  {fieldName} ({rels.length})
+                  {group.label} ({group.relations.length})
                 </div>
-                {rels.map((r, i) => {
+                {group.relations.map((r, i) => {
                   const { schema: rs, color: rc } = resolveRelColor(r);
                   return (
                     <button
                       key={i}
                       type="button"
-                      ref={setCardRef(`out-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
+                      ref={setCardRef(`out-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
                       onClick={() => onEntityClick(r.publicId)}
                     >
