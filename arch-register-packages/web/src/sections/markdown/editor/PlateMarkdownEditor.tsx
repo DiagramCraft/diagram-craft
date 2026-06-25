@@ -263,8 +263,11 @@ const StrikethroughLeaf = (props: PlateLeafProps) => <PlateLeaf as="s" {...props
 // ─── Slash command definitions ──────────────────────────────────────────────
 
 // When on an empty paragraph, replace it rather than splitting it (which would
-// leave an extra empty block behind).
+// leave an extra empty block behind). For void blocks, always ensure a trailing
+// paragraph so the user can continue typing after the inserted element.
 const insertOrReplaceBlock = (editor: ReturnType<typeof useEditorRef>, node: TElement) => {
+  const isVoid = editor.api.isVoid(node);
+  const trailingP = { type: 'p', children: [{ text: '' }] };
   const { selection } = editor;
   if (selection) {
     const topIndex = selection.anchor.path[0];
@@ -272,12 +275,21 @@ const insertOrReplaceBlock = (editor: ReturnType<typeof useEditorRef>, node: TEl
       const block = editor.children[topIndex] as TElement | undefined;
       if (block?.type === 'p' && getNodeText(block as Record<string, unknown>) === '') {
         editor.tf.removeNodes({ at: [topIndex] });
-        editor.tf.insertNodes(node, { at: [topIndex] });
+        if (isVoid) {
+          editor.tf.insertNodes([node, trailingP], { at: [topIndex] });
+          editor.tf.select({ path: [topIndex + 1, 0], offset: 0 });
+        } else {
+          editor.tf.insertNodes(node, { at: [topIndex] });
+        }
         return;
       }
     }
   }
-  editor.tf.insertNodes(node);
+  if (isVoid) {
+    editor.tf.insertNodes([node, trailingP]);
+  } else {
+    editor.tf.insertNodes(node);
+  }
 };
 
 type SlashCommandItem = {
@@ -746,6 +758,16 @@ const HeadingBreakPlugin = createPlatePlugin({
         if (block && HEADING_TYPES.has(block.type as string)) {
           editor.tf.splitNodes({ always: true });
           editor.tf.setNodes({ type: 'p' });
+          return;
+        }
+        // For void blocks, always insert a paragraph immediately after and move cursor there.
+        if (block && topIndex !== undefined && editor.api.isVoid(block)) {
+          const nextIndex = topIndex + 1;
+          editor.tf.insertNodes(
+            { type: 'p', children: [{ text: '' }] },
+            { at: [nextIndex] }
+          );
+          editor.tf.select({ path: [nextIndex, 0], offset: 0 });
           return;
         }
       }
