@@ -24,7 +24,7 @@ export const entityChartSpec = {
       description: 'Display a live chart of entities by field',
       icon: <TbChartDonut size={14} />,
       keywords: ['entity', 'chart', 'donut', 'bar', 'graph', 'visualize', 'analytics'],
-      onSelect: (editor: any, { insertOrReplaceBlock }: any) => {
+      onSelect: (editor, { insertOrReplaceBlock }) => {
         insertOrReplaceBlock(editor, {
           type: ENTITY_CHART_TYPE,
           schema: '',

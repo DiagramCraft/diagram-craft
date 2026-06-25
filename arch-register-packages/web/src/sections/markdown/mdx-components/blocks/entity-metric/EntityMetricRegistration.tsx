@@ -24,7 +24,7 @@ export const entityMetricSpec = {
       description: 'Display a live count of entities',
       icon: <TbHash size={14} />,
       keywords: ['entity', 'metric', 'count', 'number', 'stat', 'kpi'],
-      onSelect: (editor: any, { insertOrReplaceBlock }: any) => {
+      onSelect: (editor, { insertOrReplaceBlock }) => {
         insertOrReplaceBlock(editor, {
           type: ENTITY_METRIC_TYPE,
           schema: '',
