@@ -5,7 +5,7 @@ import { Entity, type SchemaDbResult as InternalEntitySchema } from './db/catalo
 import type { EntityDbResult } from './db/catalogDatabase';
 import { handleDbError, slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
-import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { ContainmentField, SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
@@ -132,6 +132,80 @@ export const relationFields = (fields: SchemaField[]) =>
       field.type === 'reference' || field.type === 'containment'
   );
 
+const normalizeRelationIds = (value: unknown, field: Extract<SchemaField, { type: 'reference' | 'containment' }>) => {
+  httpAssert.true(Array.isArray(value), {
+    message: `${field.name} must be provided as an array of entity ids`
+  });
+
+  const rawValues = Array.isArray(value) ? value : [];
+  const ids = rawValues
+    .map((item: unknown) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean);
+
+  httpAssert.true(ids.length === rawValues.length, {
+    message: `${field.name} must contain only non-empty string ids`
+  });
+
+  return ids;
+};
+
+const validateContainmentField = (field: ContainmentField) => {
+  httpAssert.true(field.maxCount === 1, {
+    message: `${field.name} containment fields must have maxCount set to 1`
+  });
+  httpAssert.true(field.minCount === 0 || field.minCount === 1, {
+    message: `${field.name} containment fields must have minCount set to 0 or 1`
+  });
+};
+
+export const normalizeEntityRelationFields = ({
+  schema,
+  fields,
+  entities
+}: {
+  schema: InternalEntitySchema;
+  fields: Record<string, unknown>;
+  entities: Entity[];
+}) => {
+  const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
+  const normalizedFields = { ...fields };
+
+  for (const field of relationFields(schema.fields)) {
+    if (field.type === 'containment') validateContainmentField(field);
+
+    const rawValue = normalizedFields[field.id];
+    const ids =
+      rawValue == null || rawValue === ''
+        ? []
+        : normalizeRelationIds(rawValue, field);
+
+    httpAssert.true(ids.length >= field.minCount, {
+      message: `${field.name} requires at least ${field.minCount} relation(s)`
+    });
+    httpAssert.true(field.maxCount === -1 || ids.length <= field.maxCount, {
+      message: `${field.name} allows at most ${field.maxCount} relation(s)`
+    });
+
+    for (const id of ids) {
+      const target = entityLookup.get(id);
+      httpAssert.present(target, {
+        status: 400,
+        message: `${field.name} references unknown entity '${id}'`
+      });
+      httpAssert.true(target.workspace === schema.workspace, {
+        message: `${field.name} references an entity in a different workspace`
+      });
+      httpAssert.true(target.schema_id === field.schemaId, {
+        message: `${field.name} must reference entities of schema '${field.schemaId}'`
+      });
+    }
+
+    normalizedFields[field.id] = ids;
+  }
+
+  return normalizedFields;
+};
+
 const extractId = (value: unknown): string | null => {
   if (typeof value === 'string') return value;
   if (
@@ -226,11 +300,7 @@ export const getEntityParentsFromPayload = (
     )
     .flatMap(field => {
       const raw = payload[field.id];
-      if (raw == null || raw === '') return [];
-      return String(raw)
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
+      return decodeRefs(raw);
     });
   return parentIds
     .map(parentId => entityLookup.get(parentId))

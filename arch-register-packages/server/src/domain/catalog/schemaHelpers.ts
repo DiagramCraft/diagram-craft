@@ -28,6 +28,25 @@ export const resolveSchemaDefaultOwner = (
 const defaultKeyPrefixFromName = (name: string) =>
   normalizePublicIdPrefix(name.replace(/[^a-z]/gi, '').slice(0, 5) || name.slice(0, 5));
 
+const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] => {
+  if (!Array.isArray(fields)) return [];
+
+  return fields.map(field => {
+    httpAssert.json(field, { message: 'Schema fields must be objects' });
+
+    if (field.type === 'containment') {
+      httpAssert.true(field.maxCount === 1, {
+        message: 'Containment fields must have maxCount set to 1'
+      });
+      httpAssert.true(field.minCount === 0 || field.minCount === 1, {
+        message: 'Containment fields must have minCount set to 0 or 1'
+      });
+    }
+
+    return field as InternalEntitySchema['fields'][number];
+  });
+};
+
 export const buildCreateSchemaInput = (
   workspace: string,
   body: Record<string, unknown>,
@@ -47,7 +66,7 @@ export const buildCreateSchemaInput = (
         ? validatePublicIdPrefix(key_prefix, 'key_prefix')!
         : validatePublicIdPrefix(defaultKeyPrefixFromName(name), 'key_prefix')!,
     description: typeof description === 'string' ? description : '',
-    fields: Array.isArray(fields) ? (fields as InternalEntitySchema['fields']) : [],
+    fields: normalizeSchemaFields(fields),
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
@@ -77,10 +96,7 @@ export const buildUpdateSchemaInput = (
           ? description
           : ''
         : current.description,
-    fields:
-      fields !== undefined && Array.isArray(fields)
-        ? (fields as InternalEntitySchema['fields'])
-        : current.fields,
+    fields: fields !== undefined ? normalizeSchemaFields(fields) : current.fields,
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
     defaultOwner:

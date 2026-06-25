@@ -11,7 +11,8 @@ import { formatPublicId } from '../../utils/publicIds';
 import {
   getLifecycleValues,
   getTeamIds,
-  resolveCreateOwner
+  resolveCreateOwner,
+  normalizeEntityRelationFields
 } from './dataHelpers';
 
 const checker = new PermissionChecker();
@@ -274,13 +275,19 @@ export const importCommit = async (
             .map(name => nameToId.get(name.toLowerCase()))
             .filter((id): id is string => id !== undefined);
           if (refIds.length > 0) {
-            resolvedData[field.id] = refIds.join(',');
+            resolvedData[field.id] = refIds;
           } else {
-            delete resolvedData[field.id];
+            resolvedData[field.id] = [];
           }
         }
       }
     }
+
+    const normalizedRelationFields = normalizeEntityRelationFields({
+      schema,
+      fields: Object.fromEntries(Object.entries(resolvedData).filter(([key]) => !key.startsWith('_'))),
+      entities: allEntities
+    });
 
     if (isUpdate && existingId && existingEntity) {
       requireEntityAction(
@@ -304,7 +311,7 @@ export const importCommit = async (
           : existingEntity.tags,
         links: existingEntity.links,
         schema_id: existingEntity.schema_id,
-        data: extractEntityFields(Object.fromEntries(Object.entries(resolvedData).filter(([k]) => !k.startsWith('_')))),
+        data: extractEntityFields(normalizedRelationFields),
         visibility_mode: existingEntity.visibility_mode,
         updated_at: new Date()
       };
@@ -350,7 +357,7 @@ export const importCommit = async (
         target_lifecycle_date,
         tags: Array.isArray(resolvedData._tags) ? (resolvedData._tags as string[]) : [],
         links: [],
-        data: extractEntityFields(Object.fromEntries(Object.entries(resolvedData).filter(([k]) => !k.startsWith('_')))),
+        data: extractEntityFields(normalizedRelationFields),
         visibility_mode: null,
         created_at: new Date(),
         updated_at: new Date()

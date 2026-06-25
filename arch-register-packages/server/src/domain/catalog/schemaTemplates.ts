@@ -17,10 +17,18 @@ type SymbolicField =
   | {
       id: string;
       name: string;
-      type: 'reference' | 'containment';
+      type: 'reference';
       symSchemaId: string;
       minCount: number;
       maxCount: number;
+    }
+  | {
+      id: string;
+      name: string;
+      type: 'containment';
+      symSchemaId: string;
+      minCount: 0 | 1;
+      maxCount: 1;
     };
 
 type TemplateSchema = {
@@ -295,7 +303,23 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [
           { id: 'host_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'environment', name: 'Environment', type: 'select', enumId: '' },
-          { id: 'patch_deadline', name: 'Patch Deadline', type: 'date' }
+          { id: 'patch_deadline', name: 'Patch Deadline', type: 'date' },
+          {
+            id: 'applications',
+            name: 'Applications',
+            type: 'reference',
+            symSchemaId: 'application',
+            minCount: 0,
+            maxCount: -1
+          },
+          {
+            id: 'databases',
+            name: 'Databases',
+            type: 'reference',
+            symSchemaId: 'database',
+            minCount: 0,
+            maxCount: -1
+          }
         ]
       }
     ]
@@ -759,12 +783,23 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Sc
 
   return template.schemas.map(schema => {
     const resolvedFields: SchemaField[] = schema.fields.map(field => {
-      if (field.type === 'reference' || field.type === 'containment') {
+      if (field.type === 'reference') {
         const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
         return {
           id: field.id,
           name: field.name,
-          type: field.type,
+          type: 'reference',
+          schemaId: resolvedId,
+          minCount: field.minCount,
+          maxCount: field.maxCount
+        };
+      }
+      if (field.type === 'containment') {
+        const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
+        return {
+          id: field.id,
+          name: field.name,
+          type: 'containment',
           schemaId: resolvedId,
           minCount: field.minCount,
           maxCount: field.maxCount
@@ -773,7 +808,16 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Sc
       if (field.type === 'select') {
         return { id: field.id, name: field.name, type: field.type, enumId: field.enumId };
       }
-      return { id: field.id, name: field.name, type: field.type };
+      if (field.type === 'text') {
+        return { id: field.id, name: field.name, type: 'text' };
+      }
+      if (field.type === 'longtext') {
+        return { id: field.id, name: field.name, type: 'longtext' };
+      }
+      if (field.type === 'boolean') {
+        return { id: field.id, name: field.name, type: 'boolean' };
+      }
+      return { id: field.id, name: field.name, type: 'date' };
     });
 
     return {

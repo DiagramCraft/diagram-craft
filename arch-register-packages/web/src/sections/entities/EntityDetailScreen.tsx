@@ -96,6 +96,9 @@ const formatDateValue = (value: unknown) => {
   return date.toLocaleDateString();
 };
 
+const getRelationIds = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
 export const EntityDetailScreen = () => {
   const navigate = useNavigate();
   const { entityId } = useParams({ strict: false }) as { entityId: string };
@@ -254,7 +257,8 @@ export const EntityDetailScreen = () => {
       _tags: (entity._tags ?? []).join(', ')
     };
     for (const f of schema.fields) {
-      state[f.id] = entity[f.id] ?? '';
+      state[f.id] =
+        f.type === 'reference' || f.type === 'containment' ? getRelationIds(entity[f.id]) : (entity[f.id] ?? '');
     }
     setEditState(state);
     setEditLinks(entity._links.map(l => ({ ...l })));
@@ -275,7 +279,10 @@ export const EntityDetailScreen = () => {
     for (const f of schema.fields) {
       if (f.requirementLevel === 'required') {
         const val = editState[f.id];
-        const isEmpty = val == null || (typeof val === 'string' && val.trim() === '');
+        const isEmpty =
+          val == null ||
+          (typeof val === 'string' && val.trim() === '') ||
+          (Array.isArray(val) && val.length === 0);
         if (isEmpty) errors.add(f.id);
       }
     }
@@ -287,7 +294,10 @@ export const EntityDetailScreen = () => {
 
     const dataFields: Record<string, unknown> = {};
     for (const f of schema.fields) {
-      dataFields[f.id] = editState[f.id] ?? '';
+      dataFields[f.id] =
+        f.type === 'reference' || f.type === 'containment'
+          ? getRelationIds(editState[f.id])
+          : (editState[f.id] ?? '');
     }
 
     const tagsStr = (editState['_tags'] as string) ?? '';
@@ -1121,13 +1131,32 @@ const PropertyRow = ({
   hasError?: boolean;
 }) => {
   const renderEditor = () => {
-    if (field.type === 'reference' || field.type === 'containment') {
+    if (field.type === 'reference') {
+      const candidates = referenceOptions[field.schemaId] ?? [];
+      return (
+        <select
+          multiple
+          className={styles.selectInline}
+          value={getRelationIds(editValue)}
+          onChange={event =>
+            onChange(Array.from(event.currentTarget.selectedOptions, option => option.value))
+          }
+        >
+          {candidates.map(e => (
+            <option key={e._uid} value={e._uid}>
+              {e._name || e._slug}
+            </option>
+          ))}
+        </select>
+      );
+    }
+    if (field.type === 'containment') {
       const candidates = referenceOptions[field.schemaId] ?? [];
       return (
         <select
           className={styles.selectInline}
-          value={(editValue as string) ?? ''}
-          onChange={e => onChange(e.target.value)}
+          value={getRelationIds(editValue)[0] ?? ''}
+          onChange={e => onChange(e.target.value ? [e.target.value] : [])}
         >
           <option value="">—</option>
           {candidates.map(e => (
@@ -1195,10 +1224,7 @@ const PropertyRow = ({
       return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
     }
     if (field.type === 'reference' || field.type === 'containment') {
-      const ids = String(value)
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
+      const ids = getRelationIds(value);
       if (ids.length === 0) return <span className={styles.dim}>—</span>;
       return (
         <>

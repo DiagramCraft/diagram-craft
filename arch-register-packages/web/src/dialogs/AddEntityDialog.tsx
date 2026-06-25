@@ -21,6 +21,9 @@ type EntityApiResponse = {
   [key: string]: unknown;
 };
 
+const getRelationFieldValue = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
 type AddEntityDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -45,7 +48,7 @@ export const AddEntityDialog = ({
   const { canCreateTopLevelEntity } = usePermissions();
   const [schemaId, setSchemaId] = useState('');
   const [entityName, setEntityName] = useState('');
-  const [fields, setFields] = useState<Record<string, string>>({});
+  const [fields, setFields] = useState<Record<string, unknown>>({});
   const [meta, setMeta] = useState({
     description: '',
     owner: '',
@@ -110,7 +113,7 @@ export const AddEntityDialog = ({
     return nextOptions;
   }, [open, targetSchemaIds, entitiesQueries]);
 
-  const setField = (id: string, value: string) => setFields(f => ({ ...f, [id]: value }));
+  const setField = (id: string, value: unknown) => setFields(f => ({ ...f, [id]: value }));
   const setMetaField = (key: string, value: string) => setMeta(m => ({ ...m, [key]: value }));
 
   const handleSubmit = async () => {
@@ -130,7 +133,8 @@ export const AddEntityDialog = ({
     if (selectedSchema) {
       for (const f of selectedSchema.fields) {
         const val = fields[f.id];
-        if (val !== undefined && val !== '') {
+        const isEmptyArray = Array.isArray(val) && val.length === 0;
+        if (val !== undefined && val !== '' && !isEmptyArray) {
           if (f.type === 'boolean') {
             dataFields[f.id] = val === 'true';
           } else {
@@ -239,7 +243,11 @@ export const AddEntityDialog = ({
                     <FieldInput
                       key={f.id}
                       field={f}
-                      value={fields[f.id] ?? ''}
+                      value={
+                        f.type === 'reference' || f.type === 'containment'
+                          ? getRelationFieldValue(fields[f.id])
+                          : ((fields[f.id] ?? '') as string)
+                      }
                       onChange={v => setField(f.id, v)}
                       referenceOptions={derivedReferenceOptions}
                     />
@@ -324,18 +332,41 @@ const FieldInput = ({
   referenceOptions
 }: {
   field: EntitySchema['fields'][number];
-  value: string;
-  onChange: (v: string) => void;
+  value: string | string[];
+  onChange: (v: string | string[]) => void;
   nameRef?: React.RefObject<HTMLInputElement | null>;
   referenceOptions?: Record<string, EntitySummary[]>;
 }) => {
-  if (field.type === 'reference' || field.type === 'containment') {
+  if (field.type === 'reference') {
     const candidates = referenceOptions?.[field.schemaId] ?? [];
     return (
       <FormElement label={field.name}>
+        <select
+          multiple
+          value={Array.isArray(value) ? value : []}
+          onChange={event =>
+            onChange(Array.from(event.currentTarget.selectedOptions, option => option.value))
+          }
+          style={{ width: '100%', minHeight: 120 }}
+        >
+          {candidates.map(entity => (
+            <option key={entity._uid} value={entity._uid}>
+              {entity._name || entity._slug}
+            </option>
+          ))}
+        </select>
+      </FormElement>
+    );
+  }
+
+  if (field.type === 'containment') {
+    const candidates = referenceOptions?.[field.schemaId] ?? [];
+    const selected = Array.isArray(value) ? value[0] ?? '' : '';
+    return (
+      <FormElement label={field.name}>
         <Select.Root
-          value={value || undefined}
-          onChange={nextValue => onChange(nextValue ?? '')}
+          value={selected || undefined}
+          onChange={nextValue => onChange(nextValue ? [nextValue] : [])}
           placeholder="—"
           style={{ width: '100%' }}
         >
@@ -353,7 +384,7 @@ const FieldInput = ({
     return (
       <FormElement label={field.name}>
         <Select.Root
-          value={value || undefined}
+          value={typeof value === 'string' ? value || undefined : undefined}
           onChange={nextValue => onChange(nextValue ?? '')}
           placeholder="—"
           style={{ width: '100%' }}
@@ -372,7 +403,7 @@ const FieldInput = ({
     return (
       <FormElement label={field.name}>
         <TextArea
-          value={value}
+          value={typeof value === 'string' ? value : ''}
           onChange={nextValue => onChange(nextValue ?? '')}
           rows={3}
           style={{ width: '100%' }}
@@ -401,7 +432,7 @@ const FieldInput = ({
       <FormElement label={field.name}>
         <input
           type="date"
-          value={value}
+          value={typeof value === 'string' ? value : ''}
           onChange={e => onChange(e.target.value)}
           style={{ width: '100%' }}
         />
@@ -413,7 +444,7 @@ const FieldInput = ({
     <FormElement label={field.name}>
       <TextInput
         ref={field.id === 'name' ? nameRef : undefined}
-        value={value}
+        value={typeof value === 'string' ? value : ''}
         onChange={nextValue => onChange(nextValue ?? '')}
         style={{ width: '100%' }}
       />

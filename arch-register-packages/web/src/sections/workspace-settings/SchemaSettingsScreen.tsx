@@ -441,19 +441,49 @@ const FieldRow = ({
     }
     if (field.type === 'reference' || field.type === 'containment') {
       return (
-        <Select.Root
-          value={field.schemaId || undefined}
-          disabled={!canEdit}
-          onChange={value => onUpdate({ schemaId: value ?? '' } as Partial<SchemaField>)}
-          placeholder="Select type..."
-          style={{ width: '100%' }}
-        >
-          {schemas.map(s => (
-            <Select.Item key={s.id} value={s.id}>
-              {s.name}
-            </Select.Item>
-          ))}
-        </Select.Root>
+        <div style={{ display: 'grid', gap: 8 }}>
+          <Select.Root
+            value={field.schemaId || undefined}
+            disabled={!canEdit}
+            onChange={value => onUpdate({ schemaId: value ?? '' } as Partial<SchemaField>)}
+            placeholder="Select type..."
+            style={{ width: '100%' }}
+          >
+            {schemas.map(s => (
+              <Select.Item key={s.id} value={s.id}>
+                {s.name}
+              </Select.Item>
+            ))}
+          </Select.Root>
+          {field.type === 'reference' ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <TextInput
+                value={String(field.minCount)}
+                disabled={!canEdit}
+                onChange={value => {
+                  const next = Number(value ?? 0);
+                  onUpdate({ minCount: Number.isNaN(next) ? 0 : Math.max(0, next) } as Partial<SchemaField>);
+                }}
+                style={{ width: '100%' }}
+                placeholder="Min"
+              />
+              <TextInput
+                value={String(field.maxCount)}
+                disabled={!canEdit}
+                onChange={value => {
+                  const next = Number(value ?? -1);
+                  onUpdate({ maxCount: Number.isNaN(next) ? -1 : next < 0 ? -1 : Math.max(0, next) } as Partial<SchemaField>);
+                }}
+                style={{ width: '100%' }}
+                placeholder="Max (-1 = many)"
+              />
+            </div>
+          ) : (
+            <div className="dim" style={{ fontSize: 12 }}>
+              Single parent only
+            </div>
+          )}
+        </div>
       );
     }
     return <span className="dim">&mdash;</span>;

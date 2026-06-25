@@ -24,7 +24,7 @@ type ExtractedEntity = {
   id: string;
   name: string;
   schema_id: string;
-  fields: Record<string, string>;
+  fields: Record<string, unknown>;
   confidence: number;
   source: string;
   accepted: boolean;
@@ -231,9 +231,9 @@ export const ExtractScreen = () => {
                   .filter((id): id is string => id !== undefined);
 
                 if (refIds.length > 0) {
-                  fields[field.id] = refIds.join(',');
+                  fields[field.id] = refIds;
                 } else {
-                  delete fields[field.id];
+                  fields[field.id] = [];
                 }
               }
             }
