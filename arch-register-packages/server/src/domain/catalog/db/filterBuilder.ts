@@ -39,9 +39,14 @@ export const buildConditionClause = (
 
   switch (cond.op) {
     case 'empty':
-      return `(${col} IS NULL OR ${col} = '')`;
+      // UUID columns in Postgres reject `= ''` (type mismatch); cast to text first
+      return dialect === 'postgres'
+        ? `(${col} IS NULL OR ${col}::text = '')`
+        : `(${col} IS NULL OR ${col} = '')`;
     case 'not_empty':
-      return `(${col} IS NOT NULL AND ${col} != '')`;
+      return dialect === 'postgres'
+        ? `(${col} IS NOT NULL AND ${col}::text != '')`
+        : `(${col} IS NOT NULL AND ${col} != '')`;
     case 'equals':
       return `${col} = ${addParam(cond.value ?? '')}`;
     case 'not_equals':
