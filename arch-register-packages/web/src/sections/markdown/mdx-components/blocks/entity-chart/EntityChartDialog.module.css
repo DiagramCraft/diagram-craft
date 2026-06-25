@@ -1,0 +1,21 @@
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.optionLabel {
+  font-size: 13px;
+  color: var(--base-fg);
+}
+
+.optionControl {
+  min-width: 180px;
+}
