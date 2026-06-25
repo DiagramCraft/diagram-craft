@@ -2,14 +2,15 @@ import type {
   CatalogDatabase,
   EntityGrantDbCretae,
   EntityDbCreate,
-  WorkspaceEnumDbCreate,
-  SchemaDbCreate,
   EntityDbResult,
+  EntityListDbFilters,
   SchemaDbResult,
   EntityDbUpdate,
-  WorkspaceEnumDbUpdate,
-  SchemaDbUpdate,
+  WorkspaceEnumDbCreate,
   WorkspaceEnumDbResult,
+  WorkspaceEnumDbUpdate,
+  SchemaDbCreate,
+  SchemaDbUpdate,
   EntityGrantDbResult,
   PinnedEntityDbResult,
   PinnedEntityDbCreate,
@@ -18,6 +19,12 @@ import type {
 } from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { isUuidLike } from '../../../utils/publicIds';
+import {
+  ENTITY_BUILTIN_COLUMNS,
+  isValidFieldId,
+  escapeLike,
+  buildConditionClause
+} from './filterBuilder';
 
 export class PostgresCatalogDatabase extends PostgresDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
@@ -152,21 +159,49 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     }
   }
 
-  async listEntities(workspace: string) {
-    return await this.sql<EntityDbResult[]>`
-      SELECT e.*,
+  async listEntities(workspace: string, filters?: EntityListDbFilters) {
+    const whereParts: string[] = ['e.workspace = $1 AND e.deleted_at IS NULL'];
+    const params: unknown[] = [workspace];
+    const addParam = (v: unknown) => {
+      params.push(v);
+      return `$${params.length}`;
+    };
+
+    if (filters?.schemaId) whereParts.push(`e.schema_id = ${addParam(filters.schemaId)}`);
+    if (filters?.owner) whereParts.push(`e.owner = ${addParam(filters.owner)}`);
+    if (filters?.lifecycle) whereParts.push(`e.lifecycle = ${addParam(filters.lifecycle)}`);
+    if (filters?.q?.trim()) {
+      const pat = `%${escapeLike(filters.q.trim())}%`;
+      whereParts.push(
+        `(e.name ILIKE ${addParam(pat)} OR e.slug ILIKE ${addParam(pat)} OR e.description ILIKE ${addParam(pat)})`
+      );
+    }
+    for (const cond of filters?.conditions ?? []) {
+      const col =
+        ENTITY_BUILTIN_COLUMNS[cond.fieldId] ??
+        (isValidFieldId(cond.fieldId) ? `(e.data->>'${cond.fieldId}')` : null);
+      if (!col) continue;
+      const clause = buildConditionClause(col, cond, addParam, 'postgres');
+      if (clause) whereParts.push(clause);
+    }
+
+    return this.sql.unsafe<EntityDbResult[]>(
+      `SELECT e.*,
         wo.name   AS owner_name,
         ls.label  AS lifecycle_label,
         tls.label AS target_lifecycle_label,
         es.name   AS schema_name
-      FROM entity e
-      LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
-      LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
-      LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
-      JOIN entity_schema es ON es.id = e.schema_id
-      WHERE e.workspace = ${workspace} AND e.deleted_at IS NULL
-      ORDER BY e.name
-    `;
+       FROM entity e
+       LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
+       LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
+       LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
+       JOIN entity_schema es ON es.id = e.schema_id
+       WHERE ${whereParts.join(' AND ')}
+       ORDER BY e.name`,
+      // postgres.js accepts string | number | boolean | null | Date; cast from unknown[] is safe
+      // because all values we push are those types
+      params as Parameters<typeof this.sql.unsafe>[1]
+    );
   }
 
   async getEntity(workspace: string, identifier: string) {

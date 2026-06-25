@@ -203,6 +203,17 @@ const FilterRow = ({
 }) => {
   const field = fields.find(f => f.id === condition.fieldId) ?? fields[0]!;
 
+  // Local draft value for text inputs — only committed on Enter to avoid per-keystroke requests
+  const [localTextValue, setLocalTextValue] = React.useState(
+    (condition.value as string) || ''
+  );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fieldId is intentional — resets localTextValue when field changes, even if condition.value was already ''
+  React.useEffect(() => {
+    setLocalTextValue((condition.value as string) || '');
+  }, [condition.fieldId, condition.value]);
+
+  const commitTextValue = () => onUpdate({ value: localTextValue });
+
   const operators = React.useMemo(() => {
     if (field.type === 'date') return DATE_OPERATORS;
     if (field.type === 'select') return SELECT_OPERATORS;
@@ -212,7 +223,14 @@ const FilterRow = ({
   const showValueInput = condition.op !== 'empty' && condition.op !== 'not_empty';
 
   return (
-    <div className={styles.row}>
+    <div
+      className={styles.row}
+      onBlur={e => {
+        if (field.type === 'text' && !e.currentTarget.contains(e.relatedTarget as Node)) {
+          commitTextValue();
+        }
+      }}
+    >
       <div className={styles.rowHead}>
         <div className={styles.tokField}>
           <Select.Root value={condition.fieldId} onChange={v => onUpdate({ fieldId: v })}>
@@ -254,8 +272,11 @@ const FilterRow = ({
             />
           ) : (
             <TextInput
-              value={(condition.value as string) || ''}
-              onChange={v => onUpdate({ value: v })}
+              value={localTextValue}
+              onChange={v => setLocalTextValue(v ?? '')}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter') commitTextValue();
+              }}
             />
           )}
         </div>

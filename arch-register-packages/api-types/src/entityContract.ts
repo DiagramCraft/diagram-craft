@@ -72,7 +72,8 @@ const listFiltersSchema = z.object({
   _schemaId: z.string().optional(),
   owner: z.string().optional(),
   lifecycle: z.string().optional(),
-  q: z.string().optional()
+  q: z.string().optional(),
+  conditions: z.string().optional()
 });
 
 const deleteEntityResponseSchema = z.object({

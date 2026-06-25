@@ -63,8 +63,6 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-type DateFilterOperator = 'on' | 'before' | 'after' | 'empty';
-
 const parseDateValue = (value: unknown) => {
   if (typeof value !== 'string' || value === '') return null;
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
@@ -77,19 +75,6 @@ const formatDateValue = (value: unknown) => {
   return Number.isNaN(date.getTime()) ? parsed : date.toLocaleDateString();
 };
 
-const matchesDateFilter = (value: unknown, operator: DateFilterOperator, expected: string) => {
-  const parsed = parseDateValue(value);
-  if (operator === 'empty') return parsed == null;
-  if (parsed == null || expected === '') return true;
-  switch (operator) {
-    case 'on':
-      return parsed === expected;
-    case 'before':
-      return parsed < expected;
-    case 'after':
-      return parsed > expected;
-  }
-};
 
 type BulkEditToolbarProps = {
   selectedIds: Set<string>;
@@ -453,6 +438,7 @@ export const EntityBrowserScreen = () => {
     owner: ownerFilter,
     lifecycle: statusFilter,
     q,
+    conditions,
     view: 'summary'
   });
 
@@ -654,55 +640,8 @@ export const EntityBrowserScreen = () => {
   );
   const dateBrowserEnabled = view === 'table' && selectedSchema != null && dateFields.length > 0;
 
-  const matchesCondition = useCallback((e: EntityRecord, c: FilterCondition) => {
-    const value =
-      c.fieldId === '_schemaId'
-        ? e._schema.id
-        : c.fieldId === '_lifecycle'
-          ? (e._lifecycle?.id ?? null)
-          : c.fieldId === '_owner'
-            ? (e._owner?.id ?? null)
-            : e[c.fieldId as keyof EntityRecord];
-    if (c.op === 'empty') return value == null || value === '';
-    if (c.op === 'not_empty') return value != null && value !== '';
-
-    if (value == null) return false;
-
-    const expected = c.value;
-    switch (c.op) {
-      case 'equals':
-        return String(value) === String(expected);
-      case 'not_equals':
-        return String(value) !== String(expected);
-      case 'contains':
-        return String(value).toLowerCase().includes(String(expected).toLowerCase());
-      case 'starts_with':
-        return String(value).toLowerCase().startsWith(String(expected).toLowerCase());
-      case 'ends_with':
-        return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
-      case 'on':
-        return matchesDateFilter(value, 'on', expected as string);
-      case 'before':
-        return matchesDateFilter(value, 'before', expected as string);
-      case 'after':
-        return matchesDateFilter(value, 'after', expected as string);
-      case 'gt':
-        return Number(value) > Number(expected);
-      case 'lt':
-        return Number(value) < Number(expected);
-      default:
-        return true;
-    }
-  }, []);
-
   const filtered = useMemo<EntityRecord[]>(() => {
-    const result = entities.filter(e => {
-      for (const c of conditions) {
-        if (!matchesCondition(e, c)) return false;
-      }
-      return true;
-    });
-
+    const result = [...entities];
     result.sort((a, b) => {
       if (sort === 'name')
         return (a._name ?? a._slug ?? '').localeCompare(b._name ?? b._slug ?? '');
@@ -718,7 +657,7 @@ export const EntityBrowserScreen = () => {
       return 0;
     });
     return result;
-  }, [entities, conditions, sort, dateBrowserEnabled, matchesCondition]);
+  }, [entities, sort, dateBrowserEnabled]);
 
   useEffect(() => {
     setSelectedIds(new Set());

@@ -3,6 +3,7 @@ import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/rea
 import type { EntityRelation } from '../lib/api';
 import type {
   CreateSavedViewRequest,
+  FilterCondition,
   UpdateSavedViewRequest
 } from '@arch-register/api-types/viewContract';
 import {
@@ -26,6 +27,7 @@ export const useEntities = (
     owner?: string | null;
     lifecycle?: string | null;
     q?: string | null;
+    conditions?: FilterCondition[];
     view?: 'summary' | 'full';
     limit?: number | null;
     offset?: number | null;
@@ -42,6 +44,9 @@ export const useEntities = (
           owner: options.owner ?? undefined,
           lifecycle: options.lifecycle ?? undefined,
           q: options.q ?? undefined,
+          conditions: options.conditions?.length
+            ? JSON.stringify(options.conditions)
+            : undefined,
           view: options.view,
           limit: options.limit ?? undefined,
           offset: options.offset ?? undefined
