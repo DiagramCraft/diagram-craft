@@ -7,6 +7,7 @@ import { handleDbError, slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
 export const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
@@ -38,6 +39,41 @@ const entityMatchesPattern = (entity: Entity, pattern: string) => {
     includesQuery(entity.owner, query) ||
     entity.tags.some(tag => includesQuery(tag, query))
   );
+};
+
+export const matchesFilterCondition = (
+  entity: EntityDbResult,
+  condition: FilterCondition,
+  completeness: number | null
+): boolean => {
+  let value: unknown;
+  switch (condition.fieldId) {
+    case '_schemaId': value = entity.schema_id; break;
+    case '_lifecycle': value = entity.lifecycle; break;
+    case '_owner': value = entity.owner; break;
+    case '_name': value = entity.name; break;
+    case '_slug': value = entity.slug; break;
+    case '_description': value = entity.description; break;
+    case '_namespace': value = entity.namespace; break;
+    case '_completeness': value = completeness; break;
+    default: value = entity.data[condition.fieldId];
+  }
+
+  if (condition.op === 'empty') return value == null || value === '';
+  if (condition.op === 'not_empty') return value != null && value !== '';
+  if (value == null) return false;
+
+  const expected = condition.value;
+  switch (condition.op) {
+    case 'equals': return String(value) === String(expected);
+    case 'not_equals': return String(value) !== String(expected);
+    case 'contains': return String(value).toLowerCase().includes(String(expected).toLowerCase());
+    case 'starts_with': return String(value).toLowerCase().startsWith(String(expected).toLowerCase());
+    case 'ends_with': return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
+    case 'gt': return Number(value) > Number(expected);
+    case 'lt': return Number(value) < Number(expected);
+    default: return true;
+  }
 };
 
 export const filterEntities = (

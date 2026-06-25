@@ -15,6 +15,7 @@ import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
 import { httpAssert } from '../../utils/httpAssert';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { buildEntityGrantInputs, filterEntities, relationFields } from './dataHelpers';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntitySnapshotDbResult } from './db/catalogDatabase';
 import { updateEntityWithAudit } from './entityMutations';
 
@@ -57,11 +58,20 @@ export const workspaceEntityORPCRouter = entityRouter.router({
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        let conditions: FilterCondition[] = [];
+        if (input.query.conditions) {
+          try {
+            conditions = JSON.parse(input.query.conditions) as FilterCondition[];
+          } catch {
+            conditions = [];
+          }
+        }
         return await listEntities(context.db, workspace, authCtx, {
           schemaId: input.query._schemaId ?? null,
           owner: input.query.owner ?? null,
           lifecycle: input.query.lifecycle ?? null,
           q: input.query.q ?? '',
+          conditions,
           view: input.query.view ?? 'full',
           limit: input.query.limit ?? null,
           offset: input.query.offset ?? 0

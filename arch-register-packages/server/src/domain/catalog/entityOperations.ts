@@ -14,6 +14,7 @@ import {
   handleError,
   parseEntityMutationPayload,
   filterEntities,
+  matchesFilterCondition,
   buildEntityRelations,
   resolveCreateOwner,
   getEntityParentsFromPayload,
@@ -27,6 +28,7 @@ import {
   EntityRelations,
   TreeResponse
 } from '@arch-register/api-types/entityContract';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
 const checker = new PermissionChecker();
 
@@ -52,6 +54,7 @@ export const listEntities = async (
     owner?: string | null;
     lifecycle?: string | null;
     q?: string | null;
+    conditions?: FilterCondition[];
     view?: 'summary' | 'full';
     limit?: number | null;
     offset?: number | null;
@@ -62,6 +65,7 @@ export const listEntities = async (
     owner = null,
     lifecycle = null,
     q = '',
+    conditions = [],
     view = 'full',
     limit,
     offset = 0
@@ -76,26 +80,30 @@ export const listEntities = async (
       entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
     );
     const safeOffset = offset ?? 0;
-    const rows = filterEntities(visibleEntities, { schemaId, owner, lifecycle, q: q ?? '' })
-      .sort((a, b) => a.name.localeCompare(b.name))
+
+    const basicFiltered = filterEntities(visibleEntities, { schemaId, owner, lifecycle, q: q ?? '' });
+    const withCompleteness = basicFiltered.map(entity => ({
+      entity,
+      completeness: schemaMap.get(entity.schema_id) != null
+        ? computeEntityCompleteness(entity, schemaMap.get(entity.schema_id)!)
+        : null
+    }));
+    const conditionFiltered = conditions.length === 0
+      ? withCompleteness
+      : withCompleteness.filter(({ entity, completeness }) =>
+          conditions.every(c => matchesFilterCondition(entity, c, completeness))
+        );
+    const rows = conditionFiltered
+      .sort((a, b) => a.entity.name.localeCompare(b.entity.name))
       .slice(safeOffset, limit != null ? safeOffset + limit : undefined);
+
     return view === 'summary'
-      ? rows.map(row => {
-          const schema = schemaMap.get(row.schema_id);
-          return toApiEntitySummary(
-            row,
-            authCtx,
-            schema != null ? computeEntityCompleteness(row, schema) : null
-          ) as EntityRecord;
-        })
-      : rows.map(row => {
-          const schema = schemaMap.get(row.schema_id);
-          return toApiEntity(
-            row,
-            authCtx,
-            schema != null ? computeEntityCompleteness(row, schema) : null
-          );
-        });
+      ? rows.map(({ entity: row, completeness }) =>
+          toApiEntitySummary(row, authCtx, completeness) as EntityRecord
+        )
+      : rows.map(({ entity: row, completeness }) =>
+          toApiEntity(row, authCtx, completeness)
+        );
   } catch (error) {
     return handleError(error, 'Failed to retrieve data');
   }
