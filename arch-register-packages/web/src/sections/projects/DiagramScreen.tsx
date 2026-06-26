@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from '@tanstack/react-router';
+import { useParams, useNavigate, useSearch, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from './DiagramScreen.module.css';
 import { TbArrowLeft } from 'react-icons/tb';
@@ -56,6 +56,8 @@ export const DiagramScreen = () => {
   const projectId = params.projectId ?? params.entityId ?? workspaceId;
 
   const navigate = useNavigate();
+  const router = useRouter();
+  const search = useSearch({ strict: false }) as { returnTo?: string };
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const userId = user?.id;
@@ -186,6 +188,11 @@ export const DiagramScreen = () => {
     await save();
     await refreshDiagramCaches();
 
+    if (search.returnTo) {
+      router.history.push(search.returnTo);
+      return;
+    }
+
     if (isWorkspaceContent) {
       const folderPath = fileInfoRef.current?.path.includes('/')
         ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
@@ -219,6 +226,8 @@ export const DiagramScreen = () => {
     save,
     refreshDiagramCaches,
     navigate,
+    router,
+    search.returnTo,
     workspaceSlug,
     projectId,
     isEntityDiagram,

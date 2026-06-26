@@ -26,14 +26,19 @@ export const projectDetailRoute = <TSearch = undefined>(
     search
   );
 
-export const projectDiagramRoute = (
+export const projectDiagramRoute = <TSearch = undefined>(
   workspaceSlug: string,
   projectId: ProjectPublicId,
-  diagramId: string
-) => ({
-  to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId' as const,
-  params: { workspaceSlug, projectId, diagramId }
-});
+  diagramId: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId' as const,
+      params: { workspaceSlug, projectId, diagramId }
+    },
+    search
+  );
 
 export const projectMarkdownRoute = <TSearch = undefined>(
   workspaceSlug: string,
@@ -70,14 +75,19 @@ export const entityDetailRoute = <TSearch = undefined>(
     search
   );
 
-export const entityDiagramRoute = (
+export const entityDiagramRoute = <TSearch = undefined>(
   workspaceSlug: string,
   entityId: EntityPublicId,
-  diagramId: string
-) => ({
-  to: '/$workspaceSlug/entities/$entityId/diagrams/$diagramId' as const,
-  params: { workspaceSlug, entityId, diagramId }
-});
+  diagramId: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/entities/$entityId/diagrams/$diagramId' as const,
+      params: { workspaceSlug, entityId, diagramId }
+    },
+    search
+  );
 
 export const projectDiagramHref = (
   workspaceSlug: string,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useLocation } from '@tanstack/react-router';
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 import type { StaticCanvasProps } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
@@ -48,6 +48,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   const { data: rawContent } = useProjectFileContent(workspaceSlug, id);
   const [diagram, setDiagram] = useState<Diagram | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const params = useParams({ strict: false }) as { projectId?: string; entityId?: string };
 
   useEffect(() => {
@@ -69,16 +70,18 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
 
   const handleClick = () => {
     if (!file) return;
+    const returnTo = location.href;
     if (file.project_public_id) {
       void navigate(
-        projectDiagramRoute(workspaceSlug, asProjectPublicId(file.project_public_id), file.id)
+        projectDiagramRoute(workspaceSlug, asProjectPublicId(file.project_public_id), file.id, { returnTo })
       );
     } else if (params.entityId) {
-      void navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(params.entityId), file.id));
+      void navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(params.entityId), file.id, { returnTo }));
     } else {
       void navigate({
         to: '/$workspaceSlug/content/diagrams/$diagramId',
-        params: { workspaceSlug, diagramId: file.id }
+        params: { workspaceSlug, diagramId: file.id },
+        search: { returnTo }
       });
     }
   };

@@ -99,6 +99,15 @@ export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteS
   q: typeof raw.q === 'string' ? raw.q : undefined,
 });
 
+// Diagram params
+export type DiagramSearchParams = {
+  returnTo?: string;
+};
+
+export const validateDiagramSearch = (raw: Record<string, unknown>): DiagramSearchParams => ({
+  returnTo: typeof raw.returnTo === 'string' ? raw.returnTo : undefined,
+});
+
 // Data model params
 export type ModelSearchParams = {
   tab?: 'types' | 'enums' | 'graph';

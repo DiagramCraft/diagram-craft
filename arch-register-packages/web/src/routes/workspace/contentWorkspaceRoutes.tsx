@@ -4,7 +4,7 @@ import { DiagramScreen } from '../../sections/projects/DiagramScreen';
 import { MarkdownEditorScreen } from '../../sections/markdown/MarkdownEditorScreen';
 import { WorkspaceContentSidebar } from '../../sections/workspace-content/WorkspaceContentSidebar';
 import { WorkspaceContentScreen } from '../../sections/workspace-content/WorkspaceContentScreen';
-import { validateEntityDetailSearch, validateMarkdownSearch } from '../searchParams';
+import { validateDiagramSearch, validateEntityDetailSearch, validateMarkdownSearch } from '../searchParams';
 import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
@@ -42,6 +42,7 @@ export const createContentWorkspaceRoutes = (
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: 'content/diagrams/$diagramId',
+      validateSearch: validateDiagramSearch,
       component: DiagramScreen
     }),
     () => ({ variant: 'overlay' })
