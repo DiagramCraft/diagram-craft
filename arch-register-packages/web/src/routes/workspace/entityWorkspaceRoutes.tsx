@@ -7,6 +7,7 @@ import { ImportScreen } from '../../sections/entities/ImportScreen';
 import { EntitiesSidebar } from '../../sections/entities/EntitiesSidebar';
 import { EntityContentSidebar } from '../../sections/entities/EntityContentSidebar';
 import {
+  validateDiagramSearch,
   validateEntityDetailSearch,
   validateEntitySearch,
   validateMarkdownSearch
@@ -69,6 +70,7 @@ export const createEntityWorkspaceRoutes = (
   const entityDiagramRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'entities/$entityId/diagrams/$diagramId',
+    validateSearch: validateDiagramSearch,
     component: DiagramScreen
   }), () => ({
     variant: 'overlay'
