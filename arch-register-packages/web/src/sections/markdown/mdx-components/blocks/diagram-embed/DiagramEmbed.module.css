@@ -10,6 +10,14 @@
   max-width: 100%;
 }
 
+.container.clickable {
+  cursor: pointer;
+}
+
+.container.clickable:hover {
+  border-color: var(--accent-fg);
+}
+
 .container.error {
   border-color: color-mix(in oklch, var(--error-fg) 30%, transparent);
   background: color-mix(in oklch, var(--error-fg) 6%, transparent);

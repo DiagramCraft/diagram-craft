@@ -1909,6 +1909,7 @@ export const getProjectFile = async (
       const project = await db.project.getProject(ws, node.project_id);
       httpAssert.present(project, { status: 404, message: 'Project not found' });
       requireProjectAccess(authCtx, project.owner);
+      node.project_public_id = project.public_id;
     }
     return toApiProjectFile(node);
   } catch (e) {
