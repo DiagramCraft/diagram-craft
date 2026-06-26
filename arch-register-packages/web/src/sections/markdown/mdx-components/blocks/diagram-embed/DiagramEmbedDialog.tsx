@@ -92,7 +92,7 @@ export const DiagramEmbedDialog = ({
         name,
         content: emptyDiagram(name)
       });
-      trackCreatedDiagram({ id: file.id, path: file.path });
+      trackCreatedDiagram({ id: file.id, path: file.path, name: file.name });
       resolvedFileId = file.id;
     }
 

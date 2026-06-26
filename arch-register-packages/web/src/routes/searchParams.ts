@@ -56,6 +56,7 @@ export type MarkdownSearchParams = {
   revisionId?: string;
   historyMode?: 'preview' | 'compare';
   compareMode?: 'to-current' | 'changes-in-version';
+  diagramSessionId?: string;
 };
 
 export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSearchParams => ({
@@ -64,6 +65,7 @@ export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSe
   revisionId: typeof raw.revisionId === 'string' ? raw.revisionId : undefined,
   historyMode: raw.historyMode === 'preview' || raw.historyMode === 'compare' ? raw.historyMode : undefined,
   compareMode: raw.compareMode === 'to-current' || raw.compareMode === 'changes-in-version' ? raw.compareMode : undefined,
+  diagramSessionId: typeof raw.diagramSessionId === 'string' ? raw.diagramSessionId : undefined,
 });
 
 // Project detail params
@@ -102,10 +104,12 @@ export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteS
 // Diagram params
 export type DiagramSearchParams = {
   returnTo?: string;
+  markdownSessionId?: string;
 };
 
 export const validateDiagramSearch = (raw: Record<string, unknown>): DiagramSearchParams => ({
   returnTo: typeof raw.returnTo === 'string' ? raw.returnTo : undefined,
+  markdownSessionId: typeof raw.markdownSessionId === 'string' ? raw.markdownSessionId : undefined,
 });
 
 // Data model params

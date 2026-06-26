@@ -27,7 +27,8 @@ export const useProjectFile = (workspaceSlug: string, fileId: string) =>
     queryFn: () =>
       orpcClient.projects.getFile({ params: { workspace: workspaceSlug, fileId } }),
     enabled: !!workspaceSlug && !!fileId,
-    retry: noRetryOnClientError
+    retry: noRetryOnClientError,
+    refetchOnMount: true
   });
 
 export const useProjectFileContent = (workspaceSlug: string, fileId: string) =>
@@ -36,7 +37,8 @@ export const useProjectFileContent = (workspaceSlug: string, fileId: string) =>
     queryFn: () =>
       orpcClient.projects.getDiagramContent({ params: { workspace: workspaceSlug, fileId } }),
     enabled: !!workspaceSlug && !!fileId,
-    retry: noRetryOnClientError
+    retry: noRetryOnClientError,
+    refetchOnMount: true
   });
 
 // Hook for fetching project files

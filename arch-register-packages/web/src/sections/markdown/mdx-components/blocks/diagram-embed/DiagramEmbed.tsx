@@ -21,6 +21,7 @@ import {
   entityDiagramRoute,
   projectDiagramRoute
 } from '../../../../../routes/publicObjectRoutes';
+import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
 import styles from './DiagramEmbed.module.css';
 
 const boundsViewbox = (diagram: Diagram): string => {
@@ -50,6 +51,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams({ strict: false }) as { projectId?: string; entityId?: string };
+  const { sessionId } = useMarkdownDiagramSession();
 
   useEffect(() => {
     if (!rawContent) return;
@@ -71,17 +73,24 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   const handleClick = () => {
     if (!file) return;
     const returnTo = location.href;
+    const search = {
+      returnTo,
+      markdownSessionId: sessionId
+    };
+
     if (file.project_public_id) {
       void navigate(
-        projectDiagramRoute(workspaceSlug, asProjectPublicId(file.project_public_id), file.id, { returnTo })
+        projectDiagramRoute(workspaceSlug, asProjectPublicId(file.project_public_id), file.id, search)
       );
     } else if (params.entityId) {
-      void navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(params.entityId), file.id, { returnTo }));
+      void navigate(
+        entityDiagramRoute(workspaceSlug, asEntityPublicId(params.entityId), file.id, search)
+      );
     } else {
       void navigate({
         to: '/$workspaceSlug/content/diagrams/$diagramId',
         params: { workspaceSlug, diagramId: file.id },
-        search: { returnTo }
+        search
       });
     }
   };

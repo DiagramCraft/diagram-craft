@@ -1,0 +1,67 @@
+.dialogBody {
+  display: grid;
+  gap: 16px;
+}
+
+.summary {
+  margin: 0;
+  color: var(--text-color-secondary, #4b5563);
+}
+
+.section {
+  display: grid;
+  gap: 8px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sectionHelp {
+  font-size: 12px;
+  color: var(--text-color-secondary, #6b7280);
+}
+
+.list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.listItem {
+  display: grid;
+  gap: 2px;
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.checklistItem {
+  margin: 0;
+}
+
+.checkboxRow {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.checkboxRowDisabled {
+  opacity: 0.7;
+}
+
+.checkboxText {
+  display: grid;
+  gap: 2px;
+}
+
+.reason {
+  font-size: 12px;
+  color: var(--text-color-secondary, #6b7280);
+}
