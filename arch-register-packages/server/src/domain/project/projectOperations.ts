@@ -1917,6 +1917,38 @@ export const getProjectFile = async (
   }
 };
 
+export const getFileContentById = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  fileId: string,
+  event: AuthenticatedEvent
+): Promise<Record<string, unknown>> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const node = await db.project.getAnyContentNodeById(ws, fileId);
+    httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
+
+    let storageId: string;
+    if (node.project_id) {
+      const project = await db.project.getProject(ws, node.project_id);
+      httpAssert.present(project, { status: 404, message: 'Project not found' });
+      requireProjectAccess(authCtx, project.owner);
+      storageId = node.project_id;
+    } else if (node.entity_id) {
+      storageId = node.entity_id;
+    } else {
+      storageId = ws;
+    }
+
+    const content = await storage.read(ws, storageId, node.id);
+    return JSON.parse(content.toString('utf8'));
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve file content');
+  }
+};
+
 export const getMarkdownContent = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,

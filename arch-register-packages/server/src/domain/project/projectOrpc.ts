@@ -48,6 +48,7 @@ import {
   createEntityMarkdownDoc,
   createWorkspaceMarkdownDoc,
   getProjectFile,
+  getFileContentById,
   getMarkdownContent,
   saveMarkdownContent,
   listMarkdownRevisions,
@@ -684,6 +685,22 @@ export const projectORPCRouter = projectRouter.router({
         try {
           return await getProjectFile(
             context.db,
+            input.params.workspace,
+            input.params.fileId,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    getDiagramContent: projectRouter.projects.getDiagramContent.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await getFileContentById(
+            context.db,
+            context.storage,
             input.params.workspace,
             input.params.fileId,
             context.event

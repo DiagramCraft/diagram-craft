@@ -23,6 +23,14 @@ export const useProjectFile = (workspaceSlug: string, fileId: string) =>
     enabled: !!workspaceSlug && !!fileId
   });
 
+export const useProjectFileContent = (workspaceSlug: string, fileId: string) =>
+  useQuery({
+    queryKey: projectFileKeys.content(workspaceSlug, fileId),
+    queryFn: () =>
+      orpcClient.projects.getDiagramContent({ params: { workspace: workspaceSlug, fileId } }),
+    enabled: !!workspaceSlug && !!fileId
+  });
+
 // Hook for fetching project files
 export const useProjectFiles = (workspaceId: string, projectId: string) => {
   return useQuery({

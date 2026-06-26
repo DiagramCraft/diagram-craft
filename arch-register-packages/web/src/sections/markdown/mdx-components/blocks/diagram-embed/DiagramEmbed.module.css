@@ -6,8 +6,7 @@
   background: var(--panel-bg);
   box-sizing: border-box;
   margin: 0 0 var(--article-block-gap) 0;
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
 }
 
 .container.clickable {
