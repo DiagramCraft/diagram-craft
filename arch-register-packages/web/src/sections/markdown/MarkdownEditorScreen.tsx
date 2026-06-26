@@ -7,6 +7,7 @@ import {
   TbHistory,
   TbPencil,
   TbTrash,
+  TbUpload,
   TbX
 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -22,7 +23,9 @@ import {
   useDeleteProjectFile,
   useRenameProjectFile,
   useDeleteEntityFile,
-  useRenameEntityFile
+  useRenameEntityFile,
+  useUploadMarkdownAttachment,
+  useDeleteMarkdownAttachment
 } from '../../hooks/useProjectFiles';
 import { useProject, useEntityContentNodes } from '../../hooks/useProjects';
 import { useEntity } from '../../hooks/useEntities';
@@ -117,6 +120,14 @@ export const MarkdownEditorScreen = () => {
     projectId,
     entityId
   });
+  const uploadAttachmentMutation = useUploadMarkdownAttachment(workspaceSlug, nodeId, {
+    projectId,
+    entityId
+  });
+  const deleteAttachmentMutation = useDeleteMarkdownAttachment(workspaceSlug, nodeId, {
+    projectId,
+    entityId
+  });
   const deleteWorkspaceFile = useDeleteWorkspaceFile(workspaceSlug);
   const renameWorkspaceFile = useRenameWorkspaceFile(workspaceSlug);
   const deleteProjectFile = useDeleteProjectFile(workspaceSlug, projectId ?? '');
@@ -139,6 +150,8 @@ export const MarkdownEditorScreen = () => {
   const [dirty, setDirty] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [attachmentDeleteTarget, setAttachmentDeleteTarget] = useState<ProjectFile | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const initializedRef = useRef(false);
   const previousNodeIdRef = useRef(nodeId);
 
@@ -335,6 +348,12 @@ export const MarkdownEditorScreen = () => {
     handleNavigateBack
   ]);
 
+  const handleAttachmentDeleteConfirm = useCallback(async () => {
+    if (!attachmentDeleteTarget) return;
+    await deleteAttachmentMutation.mutateAsync(attachmentDeleteTarget.path);
+    setAttachmentDeleteTarget(null);
+  }, [attachmentDeleteTarget, deleteAttachmentMutation]);
+
   const handleSelectRevision = useCallback(
     (revisionId: string) => {
       updateSearch({
@@ -432,6 +451,17 @@ export const MarkdownEditorScreen = () => {
     [entityId, navigate, projectId, workspaceSlug]
   );
 
+  const handleAttachmentInputChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files ?? []);
+      event.target.value = '';
+      for (const file of files) {
+        await uploadAttachmentMutation.mutateAsync(file);
+      }
+    },
+    [uploadAttachmentMutation]
+  );
+
   if (isLoading) {
     return (
       <div className={styles.screen}>
@@ -504,6 +534,13 @@ export const MarkdownEditorScreen = () => {
 
   const titleButtons = (
     <>
+      <Button
+        icon={<TbUpload size={13} />}
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploadAttachmentMutation.isPending || screenState.viewPanel === 'history'}
+      >
+        {uploadAttachmentMutation.isPending ? 'Uploading…' : 'Attach file'}
+      </Button>
       <Button icon={<TbPencil size={13} />} onClick={handleEnterEdit} disabled={!isViewMode}>
         Edit
       </Button>
@@ -525,6 +562,13 @@ export const MarkdownEditorScreen = () => {
 
   return (
     <div className={styles.screen}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className={styles.hiddenInput}
+        onChange={handleAttachmentInputChange}
+      />
       <div className={styles.header}>
         <Title
           breadcrumb={titleBreadcrumb}
@@ -654,28 +698,41 @@ export const MarkdownEditorScreen = () => {
                     </div>
                     <div className={styles.attachmentsList}>
                       {attachments.map(attachment => (
-                        <button
-                          key={attachment.id}
-                          type="button"
-                          className={styles.attachmentItem}
-                          onClick={() => handleOpenAttachment(attachment)}
-                        >
-                          <span className={styles.attachmentIcon}>
-                            {getFileNodeIcon(attachment.type, 14)}
-                          </span>
-                          <span className={styles.attachmentBody}>
-                            <span className={styles.attachmentName}>
-                              {attachment.original_filename ?? attachment.name}
+                        <div key={attachment.id} className={styles.attachmentItem}>
+                          <button
+                            type="button"
+                            className={styles.attachmentMain}
+                            onClick={() => handleOpenAttachment(attachment)}
+                          >
+                            <span className={styles.attachmentIcon}>
+                              {getFileNodeIcon(attachment.type, 14)}
                             </span>
-                            <span className={styles.attachmentMeta}>
-                              {attachment.type === 'diagram'
-                                ? 'Diagram'
-                                : attachment.type === 'markdown'
-                                  ? 'Wiki page'
-                                  : attachment.mime_type ?? 'File'}
+                            <span className={styles.attachmentBody}>
+                              <span className={styles.attachmentName}>
+                                {attachment.original_filename ?? attachment.name}
+                              </span>
+                              <span className={styles.attachmentMeta}>
+                                {attachment.type === 'diagram'
+                                  ? 'Diagram'
+                                  : attachment.type === 'markdown'
+                                    ? 'Wiki page'
+                                    : attachment.mime_type ?? 'File'}
+                              </span>
                             </span>
-                          </span>
-                        </button>
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.attachmentDelete}
+                            onClick={event => {
+                              event.stopPropagation();
+                              setAttachmentDeleteTarget(attachment);
+                            }}
+                            aria-label={`Delete ${attachment.original_filename ?? attachment.name}`}
+                            disabled={deleteAttachmentMutation.isPending}
+                          >
+                            <TbTrash size={14} />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </section>
@@ -722,6 +779,21 @@ export const MarkdownEditorScreen = () => {
         confirmLabel="Delete document"
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteOpen(false)}
+      />
+
+      <DeleteConfirmationDialog
+        open={attachmentDeleteTarget !== null}
+        title="Delete attachment?"
+        message={
+          <>
+            The attachment <b>{attachmentDeleteTarget?.original_filename ?? attachmentDeleteTarget?.name ?? ''}</b>{' '}
+            will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete attachment"
+        onConfirm={handleAttachmentDeleteConfirm}
+        onCancel={() => setAttachmentDeleteTarget(null)}
       />
     </div>
   );

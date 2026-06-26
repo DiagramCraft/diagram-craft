@@ -16,8 +16,10 @@ import { logAudit, extractEntityFields, computeChanges } from '../audit/db/audit
 import { handleDbError } from '../../utils/http';
 import { fileNameFromPath, displayNameFromBody, folderFromPath, stripJsonExtension } from './contentFileHelpers';
 import {
+  ATTACHMENT_CONTAINER_NAME,
   collectDescendantNodes,
   collectHiddenAttachmentNodeIds,
+  CONTENT_NODE_ROLE_ATTACHMENT_CONTAINER,
   getAttachmentContainerForMarkdownNode,
   getMarkdownAttachmentNodes
 } from './contentNodeRoleUtils';
@@ -2071,6 +2073,66 @@ export const createWorkspaceMarkdownDoc = async (
 const storageScope = (ws: string, node: { project_id: string | null; entity_id: string | null }) =>
   node.project_id ?? node.entity_id ?? ws;
 
+const getAttachmentContainerPath = (markdownPath: string) =>
+  `${markdownPath.endsWith('.md') ? markdownPath.slice(0, -3) : markdownPath}/${ATTACHMENT_CONTAINER_NAME}`;
+
+const ensureMarkdownAttachmentContainer = async (
+  db: DatabaseAdapter,
+  ws: string,
+  markdownNode: ContentNodeDbResult,
+  authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
+  timestamp: Date
+) => {
+  const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+  const existingContainer = getAttachmentContainerForMarkdownNode(siblingNodes, markdownNode.id);
+  if (existingContainer) return existingContainer;
+
+  const containerPath = getAttachmentContainerPath(markdownNode.path);
+  const createdContainer = await db.project.createContentNodeIfAbsent({
+    workspace: ws,
+    project_id: markdownNode.project_id,
+    entity_id: markdownNode.entity_id,
+    parent_id: markdownNode.id,
+    path: containerPath,
+    name: ATTACHMENT_CONTAINER_NAME,
+    role: CONTENT_NODE_ROLE_ATTACHMENT_CONTAINER,
+    type: 'folder',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    created_atIfNew: timestamp,
+    updated_at: timestamp,
+    created_byIfNew: authCtx.userId,
+    updated_by: authCtx.userId
+  });
+
+  if (createdContainer) {
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'create',
+      entityType: 'content_node',
+      entityId: createdContainer.id,
+      entityName: createdContainer.name,
+      changes: { new: extractEntityFields(createdContainer) },
+      metadata: {
+        path: createdContainer.path,
+        parent_markdown_node_id: markdownNode.id,
+        role: CONTENT_NODE_ROLE_ATTACHMENT_CONTAINER
+      }
+    });
+    return createdContainer;
+  }
+
+  const nextSiblingNodes = await listSiblingNodes(db, ws, markdownNode);
+  const container = getAttachmentContainerForMarkdownNode(nextSiblingNodes, markdownNode.id);
+  httpAssert.present(container, {
+    status: 500,
+    message: `Attachment container for markdown document '${markdownNode.id}' could not be created`
+  });
+  return container;
+};
+
 const requireMarkdownNodeAccess = async (
   db: DatabaseAdapter,
   ws: string,
@@ -2167,6 +2229,86 @@ export const getMarkdownContent = async (
     return { body: parsed.body ?? '', attachments };
   } catch (e) {
     return handleError(e, 'Failed to retrieve markdown content');
+  }
+};
+
+export const uploadMarkdownAttachment = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  nodeId: string,
+  filePath: string,
+  buffer: Buffer,
+  mimeType: string,
+  originalFilename: string,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const fileName = fileNameFromPath(filePath) || originalFilename;
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
+    httpAssert.present(markdownNode, {
+      status: 404,
+      message: `Markdown document '${nodeId}' not found`
+    });
+    httpAssert.true(markdownNode.type === 'markdown', {
+      status: 400,
+      message: 'Node is not a markdown document'
+    });
+    await requireMarkdownNodeAccess(db, ws, authCtx, markdownNode, 'edit');
+
+    const timestamp = new Date();
+    const container = await ensureMarkdownAttachmentContainer(db, ws, markdownNode, authCtx, timestamp);
+    const attachmentPath = `${container.path}/${fileName}`;
+    const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+    const existingFile =
+      getMarkdownAttachmentNodes(siblingNodes, markdownNode.id).find(
+        node => node.path === attachmentPath && node.type === 'file'
+      ) ?? null;
+    const isUpdate = existingFile !== null;
+
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: markdownNode.project_id,
+      entity_id: markdownNode.entity_id,
+      parent_id: container.id,
+      path: attachmentPath,
+      name: originalFilename,
+      type: 'file',
+      size_bytes: buffer.length,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: existingFile?.created_at ?? timestamp,
+      updated_at: timestamp,
+      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+      updated_by: authCtx.userId,
+      mime_type: mimeType,
+      original_filename: originalFilename
+    });
+
+    await storage.write(ws, storageScope(ws, markdownNode), row.id, buffer);
+
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: isUpdate ? 'update' : 'create',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: isUpdate
+        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
+        : { new: extractEntityFields(row) },
+      metadata: {
+        path: attachmentPath,
+        parent_markdown_node_id: markdownNode.id,
+        is_attachment: true
+      }
+    });
+
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to upload markdown attachment');
   }
 };
 

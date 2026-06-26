@@ -20,6 +20,28 @@ const createProject = async (
   body: { name: string; description?: unknown; owner?: string | null; status?: 'draft' | 'active' | 'complete' | 'cancelled'; pinned?: boolean; color?: string | null | number }
 ) => orpc.projects.create({ params: { workspace: 'default' }, body: body as Parameters<typeof orpc.projects.create>[0]['body'] });
 
+const uploadMarkdownAttachment = async (
+  baseUrl: string,
+  auth: string,
+  nodeId: string,
+  fileName: string,
+  body: string
+) => {
+  const formData = new FormData();
+  formData.append('file', new Blob([body], { type: 'text/plain' }), fileName);
+  const response = await fetch(
+    `${baseUrl}/api/default/markdown/${nodeId}/attachments/upload?path=${encodeURIComponent(fileName)}`,
+    {
+      method: 'POST',
+      headers: { Authorization: auth },
+      body: formData
+    }
+  );
+
+  expect(response.ok).toBe(true);
+  return response.json();
+};
+
 test.describe('project routes', () => {
   test('GET /api/:workspace/projects lists created projects', async ({ orpc }) => {
     await createProject(orpc, { name: 'Portal Redesign', owner: seedIds.teams.design, status: 'active' });
@@ -387,6 +409,46 @@ test.describe('project routes', () => {
       params: { workspace: 'default', nodeId: markdownResult.id }
     });
     expect(restoredContent.body).toContain('Alpha');
+  });
+
+  test('markdown attachments can be uploaded through the markdown page endpoint', async ({
+    orpc,
+    server,
+    auth
+  }) => {
+    const created = await createProject(orpc, { name: 'Attachment Project' });
+    const markdownResult = await orpc.projects.createProjectMarkdown({
+      params: { workspace: 'default', id: created.public_id },
+      body: { name: 'Architecture overview', folder: 'docs' }
+    });
+
+    const uploaded = await uploadMarkdownAttachment(
+      server.baseUrl,
+      auth,
+      markdownResult.id,
+      'notes.txt',
+      'attachment body'
+    );
+
+    expect(uploaded).toMatchObject({
+      type: 'file',
+      name: 'notes.txt',
+      original_filename: 'notes.txt',
+      mime_type: 'text/plain',
+      path: 'docs/Architecture overview/__attachments/notes.txt'
+    });
+
+    const markdownContent = await orpc.projects.getMarkdownContent({
+      params: { workspace: 'default', nodeId: markdownResult.id }
+    });
+
+    expect(markdownContent.attachments).toEqual([
+      expect.objectContaining({
+        id: uploaded.id,
+        type: 'file',
+        path: 'docs/Architecture overview/__attachments/notes.txt'
+      })
+    ]);
   });
 });
 

@@ -8,6 +8,10 @@
   overflow: hidden;
 }
 
+.hiddenInput {
+  display: none;
+}
+
 .header {
   padding: 20px 40px 16px;
   border-bottom: 1px solid var(--panel-border);
@@ -392,6 +396,20 @@
   background: color-mix(in srgb, var(--accent-fg) 6%, var(--panel-bg));
 }
 
+.attachmentMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
 .attachmentIcon {
   display: grid;
   place-items: center;
@@ -419,6 +437,26 @@
   color: var(--cmp-fg-dimmed);
   font-size: 11.5px;
   margin-top: 2px;
+}
+
+.attachmentDelete {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--base-bg);
+  color: var(--cmp-fg-dimmed);
+  cursor: pointer;
+  transition: border-color 80ms, color 80ms, background 80ms;
+}
+
+.attachmentDelete:hover {
+  border-color: var(--danger-fg, #c23b3b);
+  color: var(--danger-fg, #c23b3b);
+  background: color-mix(in srgb, var(--danger-fg, #c23b3b) 8%, var(--base-bg));
 }
 
 /* ── Table of contents ── */
