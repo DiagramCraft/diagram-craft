@@ -4,7 +4,8 @@ import {
   projectEntityKeys,
   entityContentKeys,
   invalidateAuditQueries,
-  invalidateAllProjectCaches
+  invalidateAllProjectCaches,
+  invalidateEntityQueries
 } from './queryKeys';
 import { Project, ProjectDetail, ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
@@ -106,12 +107,16 @@ export const useDeleteProject = (workspaceId: string) => {
 };
 
 // Hook for fetching entities associated with a project
-export const useProjectEntities = (workspaceId: string, projectId: string) => {
+export const useProjectEntities = (
+  workspaceId: string,
+  projectId: string,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: projectEntityKeys.all(workspaceId, projectId),
     queryFn: () =>
       orpcClient.projects.listEntities({ params: { workspace: workspaceId, id: projectId } }),
-    enabled: !!workspaceId && !!projectId
+    enabled: (options?.enabled ?? true) && !!workspaceId && !!projectId
   });
 };
 
@@ -149,6 +154,7 @@ export const useAddProjectEntity = (workspaceId: string, projectId: string) => {
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.entityProjects(workspaceId, variables.entity_id)
       });
+      await invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };
@@ -175,6 +181,7 @@ export const useUpdateProjectEntity = (workspaceId: string, projectId: string) =
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.all(workspaceId, projectId)
       });
+      await invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };
@@ -195,6 +202,7 @@ export const useRemoveProjectEntity = (workspaceId: string, projectId: string) =
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.entityProjects(workspaceId, entityId)
       });
+      await invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };

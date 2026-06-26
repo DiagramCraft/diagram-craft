@@ -97,6 +97,7 @@ const SNAP_STATUS_LABEL: Record<string, string> = {
 
 type SnapBlockProps = {
   entity: EntityRecord;
+  isLinked: boolean;
   workspaceId: string;
   projects: Project[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
@@ -115,6 +116,7 @@ type SnapBlockProps = {
 
 const SnapBlock = ({
   entity,
+  isLinked,
   workspaceId,
   projects,
   schemaMap,
@@ -188,7 +190,12 @@ const SnapBlock = ({
               size={14}
             />
           )}
-          <span className={styles.entityName}>{entity._name ?? entity._slug}</span>
+          <span
+            className={styles.entityName}
+            style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+          >
+            {entity._name ?? entity._slug}
+          </span>
           {entity._lifecycle && (
             <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
           )}
@@ -290,6 +297,7 @@ const SnapBlock = ({
 
 const SnapDetailPanel = ({
   detail,
+  isLinked,
   projects,
   schemaMap,
   lifecycleStates,
@@ -297,6 +305,7 @@ const SnapDetailPanel = ({
   onClose
 }: {
   detail: { snap: EntitySnapshot; entity: EntityRecord } | null;
+  isLinked: boolean;
   projects: Project[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   lifecycleStates: WorkspaceLifecycleState[];
@@ -321,7 +330,12 @@ const SnapDetailPanel = ({
               />
             )}
             <div className={styles.detailMeta}>
-              <div className={styles.detailName}>{entity._name ?? entity._slug}</div>
+              <div
+                className={styles.detailName}
+                style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+              >
+                {entity._name ?? entity._slug}
+              </div>
               {s && <div className={styles.detailType}>{s.schema.name}</div>}
             </div>
             <button type="button" className={styles.detailCloseBtn} onClick={onClose} title="Close">
@@ -473,6 +487,7 @@ const ConfigBar = ({
 
 const DetailPanel = ({
   entity,
+  isLinked,
   cfg,
   dateFields,
   schemaMap,
@@ -480,6 +495,7 @@ const DetailPanel = ({
   onClose
 }: {
   entity: EntityRecord | null;
+  isLinked: boolean;
   cfg: TimelineConfig;
   dateFields: TimelineDateField[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
@@ -507,7 +523,12 @@ const DetailPanel = ({
               />
             )}
             <div className={styles.detailMeta}>
-              <div className={styles.detailName}>{entity._name ?? entity._slug}</div>
+              <div
+                className={styles.detailName}
+                style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+              >
+                {entity._name ?? entity._slug}
+              </div>
               {s && <div className={styles.detailType}>{s.schema.name}</div>}
             </div>
             <button type="button" className={styles.detailCloseBtn} onClick={onClose} title="Close">
@@ -554,6 +575,7 @@ type TimelineViewProps = {
   onConfigChange: (cfg: TimelineConfig) => void;
   workspaceId: string;
   projects: Project[];
+  linkedEntityIds?: string[];
 };
 
 export const TimelineView = ({
@@ -564,10 +586,12 @@ export const TimelineView = ({
   config,
   onConfigChange,
   workspaceId,
-  projects
+  projects,
+  linkedEntityIds
 }: TimelineViewProps) => {
   const dateFields = useDateFieldOptions(schemas);
   const TODAY = useMemo(() => new Date(), []);
+  const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
   // Derive effective config: use external config if provided, otherwise defaults
   const cfg: TimelineConfig = config ?? {
@@ -817,7 +841,16 @@ export const TimelineView = ({
                               size={14}
                             />
                           )}
-                          <span className={styles.entityName}>{e._name ?? e._slug}</span>
+                          <span
+                            className={styles.entityName}
+                            style={
+                              linkedEntityIds != null && !linkedEntityIdSet.has(e._uid)
+                                ? { color: 'var(--base-fg-more-dim)' }
+                                : undefined
+                            }
+                          >
+                            {e._name ?? e._slug}
+                          </span>
                           {e._lifecycle && (
                             <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
                           )}
@@ -872,6 +905,7 @@ export const TimelineView = ({
                   endFieldId={cfg.endFieldId}
                   TODAY={TODAY}
                   lifecycleStates={lifecycleStates}
+                  isLinked={linkedEntityIds == null || linkedEntityIdSet.has(entity._uid)}
                   selectedSnapId={snapDetail?.snap.id ?? null}
                   onSnapSelect={handleSnapSelect}
                   onEntityClick={onEntityClick}
@@ -884,6 +918,7 @@ export const TimelineView = ({
       {/* Entity detail panel (bar/milestone click in all modes) */}
       <DetailPanel
         entity={activeEntity}
+        isLinked={activeEntity == null || linkedEntityIds == null || linkedEntityIdSet.has(activeEntity._uid)}
         cfg={cfg}
         dateFields={dateFields}
         schemaMap={schemaMap}
@@ -896,6 +931,7 @@ export const TimelineView = ({
       {/* Snapshot detail panel (snap dot click in snapshot mode) */}
       <SnapDetailPanel
         detail={snapDetail}
+        isLinked={snapDetail == null || linkedEntityIds == null || linkedEntityIdSet.has(snapDetail.entity._uid)}
         projects={projects}
         schemaMap={schemaMap}
         lifecycleStates={lifecycleStates}

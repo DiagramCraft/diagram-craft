@@ -47,7 +47,12 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { FilterBuilder } from '../../components/FilterBuilder';
-import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  projectDetailRoute
+} from '../../routes/publicObjectRoutes';
 import {
   useEntities,
   useEntityFacets,
@@ -62,6 +67,11 @@ import {
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
+import type {
+  EntitySearchParams,
+  ProjectSearchParams
+} from '../../routes/searchParams';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 const parseDateValue = (value: unknown) => {
   if (typeof value !== 'string' || value === '') return null;
@@ -270,197 +280,157 @@ const toSavedViewConfig = (
   return null;
 };
 
-export const EntityBrowserScreen = () => {
-  const navigate = useNavigate();
-  const {
-    workspaceSlug,
-    schemas,
-    enums,
-    lifecycleStates,
-    teams,
-    projects,
-    permissions,
-    openAddEntityDialog
-  } = useWorkspaceContext();
-  const search = useSearch({ strict: false }) as {
-    type?: string;
-    status?: string;
-    owner?: string;
-    q?: string;
-    viewId?: string;
-    viewMode?: BrowserView;
-    radarConfig?: string;
-    timelineConfig?: string;
-    matrixConfig?: string;
-    hierarchyConfig?: string;
-    exploreConfig?: string;
-    sidebarTab?: 'filters' | 'views';
-    filters?: string;
+type BrowserSearch = EntitySearchParams &
+  ProjectSearchParams & {
+    sidebarTab?: 'filters' | 'views' | 'pinned';
   };
+
+type ProjectLinkState = {
+  linked: boolean;
+  entityType: { id: string; name: string } | null;
+  isDone: boolean;
+};
+
+type BrowserEntityRecord = EntityRecord & {
+  _projectLink?: ProjectLinkState;
+};
+
+type ProjectBrowserContext = {
+  project: Pick<ProjectDetail, 'id' | 'canEdit'>;
+  projectEntities: ProjectEntity[];
+  entityTypeColorMap: Map<string, string>;
+  onToggleDone: (entityId: string, isDone: boolean) => void;
+  onRemoveEntity: (entityId: string) => void;
+  onPlanFutureChange: (entityId: string) => void;
+};
+
+type EntityBrowserProps = {
+  projectContext?: ProjectBrowserContext;
+  onCountChange?: (count: number) => void;
+};
+
+const parseConditionsFromSearch = (search: BrowserSearch): FilterCondition[] => {
+  if (search.filters) {
+    try {
+      return JSON.parse(search.filters) as FilterCondition[];
+    } catch {
+      return [];
+    }
+  }
+  const initial: FilterCondition[] = [];
+  if (search.type) initial.push({ fieldId: '_schemaId', op: 'equals', value: search.type });
+  if (search.status) initial.push({ fieldId: '_lifecycle', op: 'equals', value: search.status });
+  if (search.owner) initial.push({ fieldId: '_owner', op: 'equals', value: search.owner });
+  return initial;
+};
+
+const parseJsonConfig = <T,>(value: string | undefined): T | null => {
+  if (!value) return null;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
+  }
+};
+
+const serializeConfig = <T,>(value: T | null) => (value ? JSON.stringify(value) : undefined);
+
+const getFilterValue = (conditions: FilterCondition[], fieldId: string) =>
+  (conditions.find(c => c.fieldId === fieldId && c.op === 'equals')?.value as string) ?? null;
+
+export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserProps) => {
+  const navigate = useNavigate();
+  const { workspaceSlug, schemas, enums, lifecycleStates, teams, projects } = useWorkspaceContext();
+  const search = useSearch({ strict: false }) as BrowserSearch;
   const workspaceId = workspaceSlug;
+  const projectId = projectContext?.project.id;
   const [q, setQ] = useState(search.q ?? '');
-  const [conditions, setConditions] = useState<FilterCondition[]>(() => {
-    if (search.filters) {
-      try {
-        return JSON.parse(search.filters);
-      } catch {
-        return [];
-      }
-    }
-    // Backward compatibility for old search params
-    const initial: FilterCondition[] = [];
-    if (search.type) initial.push({ fieldId: '_schemaId', op: 'equals', value: search.type });
-    if (search.status) initial.push({ fieldId: '_lifecycle', op: 'equals', value: search.status });
-    if (search.owner) initial.push({ fieldId: '_owner', op: 'equals', value: search.owner });
-    return initial;
-  });
-
-  const typeFilter = useMemo(
-    () =>
-      (conditions.find(c => c.fieldId === '_schemaId' && c.op === 'equals')?.value as string) ??
-      null,
-    [conditions]
+  const [conditions, setConditions] = useState<FilterCondition[]>(() => parseConditionsFromSearch(search));
+  const [projectScope, setProjectScope] = useState<'project' | 'all'>(
+    projectId ? (search.projectScope ?? 'project') : 'all'
   );
-  const statusFilter = useMemo(
-    () =>
-      (conditions.find(c => c.fieldId === '_lifecycle' && c.op === 'equals')?.value as string) ??
-      null,
-    [conditions]
-  );
-  const ownerFilter = useMemo(
-    () =>
-      (conditions.find(c => c.fieldId === '_owner' && c.op === 'equals')?.value as string) ?? null,
-    [conditions]
-  );
-
-  const viewId = search.viewId ?? null;
-  const [sort, setSort] = useState('name');
+  const [sort, setSort] = useState(search.sort ?? 'name');
   const [view, setView] = useState<BrowserView>(search.viewMode ?? 'table');
-  const [radarConfig, setRadarConfig] = useState<RadarConfig | null>(() => {
-    if (search.radarConfig) {
-      try {
-        return JSON.parse(search.radarConfig);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
-  const [timelineConfig, setTimelineConfig] = useState<TimelineConfig | null>(() => {
-    if (search.timelineConfig) {
-      try {
-        return JSON.parse(search.timelineConfig);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
-  const [matrixConfig, setMatrixConfig] = useState<MatrixConfig | null>(() => {
-    if (search.matrixConfig) {
-      try {
-        return JSON.parse(search.matrixConfig);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
-  const [hierarchyConfig, setHierarchyConfig] = useState<HierarchyConfig | null>(() => {
-    if (search.hierarchyConfig) {
-      try {
-        return JSON.parse(search.hierarchyConfig);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
-  const [exploreConfig, setExploreConfig] = useState<ExploreViewConfig | null>(() =>
-    parseExploreConfigValue(search.exploreConfig)
+  const [radarConfig, setRadarConfig] = useState<RadarConfig | null>(
+    () => parseJsonConfig<RadarConfig>(search.radarConfig)
   );
+  const [timelineConfig, setTimelineConfig] = useState<TimelineConfig | null>(
+    () => parseJsonConfig<TimelineConfig>(search.timelineConfig)
+  );
+  const [matrixConfig, setMatrixConfig] = useState<MatrixConfig | null>(
+    () => parseJsonConfig<MatrixConfig>(search.matrixConfig)
+  );
+  const [hierarchyConfig, setHierarchyConfig] = useState<HierarchyConfig | null>(
+    () => parseJsonConfig<HierarchyConfig>(search.hierarchyConfig)
+  );
+  const [exploreConfig, setExploreConfig] = useState<ExploreViewConfig | null>(() => parseExploreConfigValue(search.exploreConfig));
 
   const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkConfirming, setBulkConfirming] = useState(false);
   const [bulkLifecycleValue, setBulkLifecycleValue] = useState('');
   const [bulkOwnerValue, setBulkOwnerValue] = useState('');
-  const [isSavingView, setIsSavingView] = useState(false);
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
-  // Sync view from search params when it changes (e.g. applying a saved view)
-  useEffect(() => {
-    if (search.viewMode) setView(search.viewMode);
-    if (search.q !== undefined) setQ(search.q);
-    if (search.filters) {
-      try {
-        setConditions(JSON.parse(search.filters));
-      } catch {
-        // ignore
-      }
-    } else {
-      setConditions([]);
-    }
-    if (search.radarConfig) {
-      try {
-        setRadarConfig(JSON.parse(search.radarConfig));
-      } catch {
-        // ignore
-      }
-    }
-    if (search.timelineConfig) {
-      try {
-        setTimelineConfig(JSON.parse(search.timelineConfig));
-      } catch {
-        // ignore
-      }
-    }
-    if (search.matrixConfig) {
-      try {
-        setMatrixConfig(JSON.parse(search.matrixConfig));
-      } catch {
-        // ignore
-      }
-    }
-    if (search.hierarchyConfig) {
-      try {
-        setHierarchyConfig(JSON.parse(search.hierarchyConfig));
-      } catch {
-        // ignore
-      }
-    }
-    setExploreConfig(parseExploreConfigValue(search.exploreConfig));
-  }, [search.viewMode, search.radarConfig, search.timelineConfig, search.matrixConfig, search.hierarchyConfig, search.exploreConfig, search.q, search.filters]);
+  const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
+  const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
+  const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
 
-  // Use TanStack Query hooks for data fetching
+  useEffect(() => {
+    setQ(search.q ?? '');
+    setConditions(parseConditionsFromSearch(search));
+    setProjectScope(projectId ? (search.projectScope ?? 'project') : 'all');
+    setSort(search.sort ?? 'name');
+    setView(search.viewMode ?? 'table');
+    setRadarConfig(parseJsonConfig<RadarConfig>(search.radarConfig));
+    setTimelineConfig(parseJsonConfig<TimelineConfig>(search.timelineConfig));
+    setMatrixConfig(parseJsonConfig<MatrixConfig>(search.matrixConfig));
+    setHierarchyConfig(parseJsonConfig<HierarchyConfig>(search.hierarchyConfig));
+    setExploreConfig(parseExploreConfigValue(search.exploreConfig));
+  }, [
+    projectId,
+    search.exploreConfig,
+    search.filters,
+    search.hierarchyConfig,
+    search.matrixConfig,
+    search.projectScope,
+    search.q,
+    search.radarConfig,
+    search.sort,
+    search.timelineConfig,
+    search.type,
+    search.status,
+    search.owner,
+    search.viewMode
+  ]);
+
   const { data: entities = [] } = useEntities(workspaceId, {
     schemaId: typeFilter,
     owner: ownerFilter,
     lifecycle: statusFilter,
     q,
     conditions,
-    view: 'summary'
+    projectId: projectId ?? undefined,
+    projectScope: projectId ? projectScope : undefined,
+    view: 'full'
   });
 
   const { data: facets } = useEntityFacets(workspaceId);
-  const { data: savedViews = [] } = useSavedViews(workspaceId);
-
   const { data: treeData } = useEntityTree(workspaceId, {
     schemaId: typeFilter,
     owner: ownerFilter,
     lifecycle: statusFilter,
-    q
+    q,
+    projectId: projectId ?? undefined,
+    projectScope: projectId ? projectScope : undefined
   });
 
   const treeNodes = treeData?.nodes ?? [];
   const treeEdges = treeData?.edges ?? [];
 
-  // Mutations for delete, clone, and update
   const deleteMutation = useDeleteEntity(workspaceId);
   const cloneMutation = useCloneEntity(workspaceId);
   const updateEntityMutation = useUpdateEntity(workspaceId);
-  const createSavedViewMutation = useCreateSavedView(workspaceId);
-  const updateSavedViewMutation = useUpdateSavedView(workspaceId);
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { schema: EntitySchema; index: number }>();
@@ -469,6 +439,13 @@ export const EntityBrowserScreen = () => {
   }, [schemas]);
 
   const owners = useMemo(() => {
+    if (projectId) {
+      return [...new Map(
+        entities
+          .filter((entity): entity is BrowserEntityRecord & { _owner: { id: string; name: string } } => entity._owner != null)
+          .map(entity => [entity._owner.id, { id: entity._owner.id, name: entity._owner.name, sort_order: 0 }])
+      ).values()];
+    }
     return (facets?.owner ?? [])
       .filter(
         (bucket): bucket is typeof bucket & { value: string } =>
@@ -477,68 +454,109 @@ export const EntityBrowserScreen = () => {
       .map((bucket, i) => ({
         id: bucket.value,
         name: bucket.label ?? bucket.value,
-        sort_order: i
-      }));
-  }, [facets]);
+          sort_order: i
+        }));
+  }, [entities, facets, projectId]);
 
-  const activeSavedView = useMemo(
-    () => savedViews.find(savedView => savedView.id === viewId) ?? null,
-    [savedViews, viewId]
-  );
+  const navigateBrowser = useCallback(
+    (replace: boolean) => {
+      const nextSearch = {
+        q: q === '' ? undefined : q,
+        type: undefined,
+        status: undefined,
+        owner: undefined,
+        viewMode: view,
+        sort,
+        projectScope: projectId ? projectScope : undefined,
+        radarConfig: serializeConfig(radarConfig),
+        timelineConfig: serializeConfig(timelineConfig),
+        matrixConfig: serializeConfig(matrixConfig),
+        hierarchyConfig: serializeConfig(hierarchyConfig),
+        exploreConfig: serializeConfig(exploreConfig),
+        filters: conditions.length > 0 ? JSON.stringify(conditions) : undefined
+      };
 
-  const navigateEntities = useCallback(
-    (params: {
-      q?: string;
-      viewId?: string;
-      viewMode?: BrowserView;
-      radarConfig?: string;
-      timelineConfig?: string;
-      matrixConfig?: string;
-      hierarchyConfig?: string;
-      exploreConfig?: string;
-      sidebarTab?: 'filters' | 'views';
-      filters?: FilterCondition[];
-    }) => {
-      const nextQuery = params.q ?? q;
-      const nextFilters = params.filters ?? conditions;
+      if (projectId) {
+        navigate({
+          ...projectDetailRoute(workspaceSlug, asProjectPublicId(projectId)),
+          search: (prev: Record<string, unknown>) => ({
+            ...prev,
+            ...nextSearch,
+            section: 'entities'
+          }),
+          replace
+        });
+        return;
+      }
+
       navigate({
         to: '/$workspaceSlug/entities',
         params: { workspaceSlug },
-        search: {
-          q: nextQuery === '' ? undefined : nextQuery,
-          viewId: params.viewId ?? viewId ?? undefined,
-          viewMode: params.viewMode ?? view,
-          radarConfig:
-            params.radarConfig ?? (radarConfig ? JSON.stringify(radarConfig) : undefined),
-          timelineConfig:
-            params.timelineConfig ?? (timelineConfig ? JSON.stringify(timelineConfig) : undefined),
-          matrixConfig:
-            params.matrixConfig ?? (matrixConfig ? JSON.stringify(matrixConfig) : undefined),
-          hierarchyConfig:
-            params.hierarchyConfig ??
-            (hierarchyConfig ? JSON.stringify(hierarchyConfig) : undefined),
-          exploreConfig:
-            params.exploreConfig ?? (exploreConfig ? JSON.stringify(exploreConfig) : undefined),
-          sidebarTab: params.sidebarTab ?? search.sidebarTab,
-          filters: nextFilters.length > 0 ? JSON.stringify(nextFilters) : undefined
-        }
+        search: (prev: Record<string, unknown>) => ({
+          ...prev,
+          ...nextSearch
+        }),
+        replace
       });
     },
     [
+      conditions,
+      exploreConfig,
+      hierarchyConfig,
       navigate,
-      workspaceSlug,
+      projectId,
+      projectScope,
       q,
-      viewId,
-      view,
       radarConfig,
+      sort,
       timelineConfig,
       matrixConfig,
-      hierarchyConfig,
-      exploreConfig,
-      search.sidebarTab,
-      conditions
+      view,
+      workspaceSlug
     ]
   );
+
+  useEffect(() => {
+    const nextFilters = conditions.length > 0 ? JSON.stringify(conditions) : undefined;
+    if (
+      (search.q ?? undefined) !== (q === '' ? undefined : q) ||
+      search.viewMode !== view ||
+      search.sort !== sort ||
+      (projectId ? search.projectScope ?? 'project' : undefined) !==
+        (projectId ? projectScope : undefined) ||
+      search.filters !== nextFilters ||
+      search.radarConfig !== serializeConfig(radarConfig) ||
+      search.timelineConfig !== serializeConfig(timelineConfig) ||
+      search.matrixConfig !== serializeConfig(matrixConfig) ||
+      search.hierarchyConfig !== serializeConfig(hierarchyConfig) ||
+      search.exploreConfig !== serializeConfig(exploreConfig)
+    ) {
+      navigateBrowser(true);
+    }
+  }, [
+    conditions,
+    exploreConfig,
+    hierarchyConfig,
+    matrixConfig,
+    navigateBrowser,
+    projectId,
+    projectScope,
+    q,
+    radarConfig,
+    search.exploreConfig,
+    search.filters,
+    search.hierarchyConfig,
+    search.matrixConfig,
+    search.projectScope,
+    search.q,
+    search.radarConfig,
+    search.sort,
+    search.timelineConfig,
+    search.viewMode,
+    sort,
+    timelineConfig,
+    view
+  ]);
 
   const navigateToEntity = useCallback(
     (entityId: string) => {
@@ -546,30 +564,6 @@ export const EntityBrowserScreen = () => {
     },
     [navigate, workspaceSlug]
   );
-
-  const handleExport = useCallback(async () => {
-    try {
-      const blob = await exportEntitiesToCSV(workspaceId, {
-        schemaId: typeFilter,
-        owner: ownerFilter,
-        lifecycle: statusFilter,
-        q
-      });
-
-      // Trigger download
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `entities-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Failed to export entities. Please try again.');
-    }
-  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q]);
 
   const handleDeleteEntity = (entity: EntityRecord) => {
     setDeleteTarget(entity);
@@ -593,10 +587,6 @@ export const EntityBrowserScreen = () => {
       // Error handling is done by TanStack Query
     }
   };
-
-  const typeName = typeFilter
-    ? (schemaMap.get(typeFilter)?.schema.name ?? 'Entities')
-    : 'All entities';
 
   const selectedSchema = typeFilter != null ? (schemaMap.get(typeFilter)?.schema ?? null) : null;
   const dateFields = useMemo(
@@ -639,9 +629,8 @@ export const EntityBrowserScreen = () => {
     [dateFields, activeDateFieldId]
   );
   const dateBrowserEnabled = view === 'table' && selectedSchema != null && dateFields.length > 0;
-
-  const filtered = useMemo<EntityRecord[]>(() => {
-    const result = [...entities];
+  const filtered = useMemo<BrowserEntityRecord[]>(() => {
+    const result = [...entities] as BrowserEntityRecord[];
     result.sort((a, b) => {
       if (sort === 'name')
         return (a._name ?? a._slug ?? '').localeCompare(b._name ?? b._slug ?? '');
@@ -660,8 +649,12 @@ export const EntityBrowserScreen = () => {
   }, [entities, sort, dateBrowserEnabled]);
 
   useEffect(() => {
+    onCountChange?.(filtered.length);
+  }, [filtered.length, onCountChange]);
+
+  useEffect(() => {
     setSelectedIds(new Set());
-  }, []);
+  }, [filtered]);
 
   const handleSelectAll = useCallback(() => {
     if (selectedIds.size === filtered.length) {
@@ -698,6 +691,275 @@ export const EntityBrowserScreen = () => {
     setBulkOwnerValue('');
   };
 
+  return (
+    <>
+      <div className={styles.toolbar}>
+        <div className={styles.searchInline}>
+          <TbSearch size={12} />
+          <input
+            placeholder="Search by name, owner…"
+            value={q}
+            onChange={e => setQ(e.target.value)}
+          />
+        </div>
+
+        <Popover.Root actionsRef={filterPopoverRef}>
+          <Popover.Trigger
+            element={
+              <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
+                <TbFilter size={12} style={{ marginRight: 4 }} />
+                Filter
+                {conditions.length > 0 && (
+                  <span className={styles.filterCount}>{conditions.length}</span>
+                )}
+              </Button>
+            }
+          />
+          <Popover.Content
+            sideOffset={4}
+            align="start"
+            arrow={false}
+            closeButton={false}
+            className={styles.filterPopover}
+          >
+            <FilterBuilder
+              conditions={conditions}
+              onChange={setConditions}
+              onClose={() => filterPopoverRef.current?.close()}
+              schemas={schemas}
+              lifecycleStates={lifecycleStates}
+              owners={owners}
+              enums={enums}
+              selectedSchemaId={typeFilter}
+            />
+          </Popover.Content>
+        </Popover.Root>
+
+        {projectId && (
+          <FilterDropdown
+            label="Scope"
+            value={projectScope}
+            onChange={v => setProjectScope((v as 'project' | 'all') ?? 'project')}
+            options={[
+              { value: 'project', label: 'Project entities only' },
+              { value: 'all', label: 'All entities' }
+            ]}
+          />
+        )}
+
+        <div style={{ flex: 1 }} />
+
+        <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
+
+        <FilterDropdown
+          label="View"
+          value={view}
+          onChange={v => setView(v as BrowserView)}
+          options={[
+            { value: 'table', label: 'Table' },
+            { value: 'cards', label: 'Cards' },
+            { value: 'tree', label: 'Tree' },
+            { value: 'radar', label: 'Radar' },
+            { value: 'timeline', label: 'Timeline' },
+            { value: 'matrix', label: 'Matrix' },
+            { value: 'hierarchy', label: 'Hierarchy' },
+            { value: 'explore', label: 'Explore' }
+          ]}
+        />
+      </div>
+
+      {view === 'hierarchy' ? (
+        <HierarchyView
+          nodes={treeNodes}
+          edges={treeEdges}
+          onEntityClick={navigateToEntity}
+          config={hierarchyConfig}
+          onConfigChange={setHierarchyConfig}
+          linkedEntityIds={
+            projectContext
+              ? filtered.filter(entity => entity._projectLink?.linked).map(entity => entity._uid)
+              : undefined
+          }
+        />
+      ) : view === 'explore' ? (
+        <ExploreView
+          rows={filtered}
+          onEntityClick={navigateToEntity}
+          config={exploreConfig}
+          onConfigChange={setExploreConfig}
+          linkedEntityIds={
+            projectContext
+              ? filtered.filter(entity => entity._projectLink?.linked).map(entity => entity._uid)
+              : undefined
+          }
+        />
+      ) : view === 'matrix' ? (
+        <MatrixView
+          rows={filtered}
+          schemaMap={schemaMap}
+          onEntityClick={navigateToEntity}
+          config={matrixConfig}
+          onConfigChange={setMatrixConfig}
+          linkedEntityIds={
+            projectContext
+              ? filtered.filter(entity => entity._projectLink?.linked).map(entity => entity._uid)
+              : undefined
+          }
+        />
+      ) : view === 'timeline' ? (
+        <TimelineView
+          rows={filtered}
+          schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          onEntityClick={navigateToEntity}
+          config={timelineConfig}
+          onConfigChange={setTimelineConfig}
+          workspaceId={workspaceId}
+          projects={projects}
+          linkedEntityIds={
+            projectContext
+              ? filtered.filter(entity => entity._projectLink?.linked).map(entity => entity._uid)
+              : undefined
+          }
+        />
+      ) : view === 'radar' ? (
+        <RadarView
+          rows={filtered}
+          linkedEntityIds={
+            projectContext
+              ? filtered.filter(entity => entity._projectLink?.linked).map(entity => entity._uid)
+              : undefined
+          }
+          onEntityClick={navigateToEntity}
+          owner={ownerFilter}
+          lifecycle={statusFilter}
+          q={q}
+          config={radarConfig}
+          onConfigChange={setRadarConfig}
+        />
+      ) : view === 'tree' ? (
+        treeNodes.length === 0 ? (
+          <div className={styles.empty}>
+            <div className={styles.emptyTitle}>No entities found</div>
+            <div>Try adjusting your search or filters.</div>
+          </div>
+        ) : (
+          <TreeView
+            nodes={treeNodes}
+            edges={treeEdges}
+            schemaMap={schemaMap}
+            onEntityClick={navigateToEntity}
+            onDelete={handleDeleteEntity}
+            onClone={handleCloneEntity}
+            lifecycleStates={lifecycleStates}
+            projectContext={projectContext}
+          />
+        )
+      ) : filtered.length === 0 ? (
+        <div className={styles.empty}>
+          <div className={styles.emptyTitle}>No entities found</div>
+          <div>Try adjusting your search or filters.</div>
+        </div>
+      ) : (
+        <>
+          {view === 'table' && selectedIds.size > 0 && (
+            <BulkEditToolbar
+              selectedIds={selectedIds}
+              bulkConfirming={bulkConfirming}
+              setBulkConfirming={setBulkConfirming}
+              bulkLifecycleValue={bulkLifecycleValue}
+              setBulkLifecycleValue={setBulkLifecycleValue}
+              bulkOwnerValue={bulkOwnerValue}
+              setBulkOwnerValue={setBulkOwnerValue}
+              lifecycleStates={lifecycleStates}
+              teams={teams}
+              onClear={() => {
+                setSelectedIds(new Set());
+                setBulkLifecycleValue('');
+                setBulkOwnerValue('');
+              }}
+              onConfirm={doBulkUpdate}
+            />
+          )}
+          {view === 'table' && (
+            <TableView
+              rows={filtered}
+              schemaMap={schemaMap}
+              activeDateField={dateBrowserEnabled ? activeDateField : null}
+              onEntityClick={navigateToEntity}
+              onDelete={handleDeleteEntity}
+              onClone={handleCloneEntity}
+              selectedIds={selectedIds}
+              onSelectAll={handleSelectAll}
+              onSelectRow={handleSelectRow}
+              lifecycleStates={lifecycleStates}
+              projectContext={projectContext}
+            />
+          )}
+          {view === 'cards' && (
+            <CardsView
+              rows={filtered}
+              schemaMap={schemaMap}
+              onEntityClick={navigateToEntity}
+              onDelete={handleDeleteEntity}
+              onClone={handleCloneEntity}
+              lifecycleStates={lifecycleStates}
+              projectContext={projectContext}
+            />
+          )}
+        </>
+      )}
+
+      <DeleteConfirmationDialog
+        open={!!deleteTarget}
+        title="Delete entity?"
+        message={
+          deleteTarget ? (
+            <>
+              The entity <b>{deleteTarget._name || deleteTarget._slug}</b> will be permanently
+              deleted.
+            </>
+          ) : (
+            ''
+          )
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete entity"
+        onConfirm={doDeleteEntity}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </>
+  );
+};
+
+export const EntityBrowserScreen = () => {
+  const navigate = useNavigate();
+  const { workspaceSlug, schemas, permissions, openAddEntityDialog } = useWorkspaceContext();
+  const search = useSearch({ strict: false }) as BrowserSearch;
+  const workspaceId = workspaceSlug;
+  const [count, setCount] = useState(0);
+  const [isSavingView, setIsSavingView] = useState(false);
+  const { data: savedViews = [] } = useSavedViews(workspaceId);
+  const createSavedViewMutation = useCreateSavedView(workspaceId);
+  const updateSavedViewMutation = useUpdateSavedView(workspaceId);
+  const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
+  const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
+  const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
+  const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
+  const view = search.viewMode ?? 'table';
+  const q = search.q ?? '';
+  const sort = search.sort ?? 'name';
+  const radarConfig = parseJsonConfig<RadarConfig>(search.radarConfig);
+  const timelineConfig = parseJsonConfig<TimelineConfig>(search.timelineConfig);
+  const matrixConfig = parseJsonConfig<MatrixConfig>(search.matrixConfig);
+  const hierarchyConfig = parseJsonConfig<HierarchyConfig>(search.hierarchyConfig);
+  const exploreConfig = parseExploreConfigValue(search.exploreConfig);
+  const activeSavedView = useMemo(
+    () => savedViews.find(savedView => savedView.id === search.viewId) ?? null,
+    [savedViews, search.viewId]
+  );
+  const typeName = typeFilter ? (schemas.find(schema => schema.id === typeFilter)?.name ?? 'Entities') : 'All entities';
+
   const handleSaveView = async (name: string, description: string) => {
     try {
       await createSavedViewMutation.mutateAsync({
@@ -728,7 +990,6 @@ export const EntityBrowserScreen = () => {
 
   const handleUpdateSavedView = useCallback(async () => {
     if (!permissions.canManageViews || activeSavedView == null) return;
-
     try {
       await updateSavedViewMutation.mutateAsync({
         id: activeSavedView.id,
@@ -756,22 +1017,45 @@ export const EntityBrowserScreen = () => {
       // Error handling is done by TanStack Query
     }
   }, [
-    permissions.canManageViews,
     activeSavedView,
-    updateSavedViewMutation,
-    view,
-    typeFilter,
-    statusFilter,
-    ownerFilter,
-    q,
-    sort,
     conditions,
-    radarConfig,
-    timelineConfig,
-    matrixConfig,
+    exploreConfig,
     hierarchyConfig,
-    exploreConfig
+    matrixConfig,
+    ownerFilter,
+    permissions.canManageViews,
+    q,
+    radarConfig,
+    sort,
+    statusFilter,
+    timelineConfig,
+    typeFilter,
+    updateSavedViewMutation,
+    view
   ]);
+
+  const handleExport = useCallback(async () => {
+    try {
+      const blob = await exportEntitiesToCSV(workspaceId, {
+        schemaId: typeFilter,
+        owner: ownerFilter,
+        lifecycle: statusFilter,
+        q
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `entities-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export entities. Please try again.');
+    }
+  }, [ownerFilter, q, statusFilter, typeFilter, workspaceId]);
 
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
@@ -813,13 +1097,14 @@ export const EntityBrowserScreen = () => {
 
     return items;
   }, [
-    permissions,
     activeSavedView,
-    handleUpdateSavedView,
     handleExport,
+    handleUpdateSavedView,
     navigate,
-    workspaceSlug,
-    typeFilter
+    permissions.canCreateEntities,
+    permissions.canManageViews,
+    typeFilter,
+    workspaceSlug
   ]);
 
   return (
@@ -831,7 +1116,7 @@ export const EntityBrowserScreen = () => {
           titleTestId="entity-browser-title"
           chips={
             <span data-testid="entity-browser-count" className={styles.count}>
-              {filtered.length}
+              {count}
             </span>
           }
           description="Search, filter, and inspect everything in the IT landscape."
@@ -851,200 +1136,7 @@ export const EntityBrowserScreen = () => {
         />
       </div>
 
-      <div className={styles.toolbar}>
-        <div className={styles.searchInline}>
-          <TbSearch size={12} />
-          <input
-            placeholder="Search by name, owner…"
-            value={q}
-            onChange={e => setQ(e.target.value)}
-          />
-        </div>
-
-        <Popover.Root actionsRef={filterPopoverRef}>
-          <Popover.Trigger
-            element={
-              <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
-                <TbFilter size={12} style={{ marginRight: 4 }} />
-                Filter
-                {conditions.length > 0 && (
-                  <span className={styles.filterCount}>{conditions.length}</span>
-                )}
-              </Button>
-            }
-          />
-          <Popover.Content
-            sideOffset={4}
-            align="start"
-            arrow={false}
-            closeButton={false}
-            className={styles.filterPopover}
-          >
-            <FilterBuilder
-              conditions={conditions}
-              onChange={c => navigateEntities({ filters: c })}
-              onClose={() => filterPopoverRef.current?.close()}
-              schemas={schemas}
-              lifecycleStates={lifecycleStates}
-              owners={owners}
-              enums={enums}
-              selectedSchemaId={typeFilter}
-            />
-          </Popover.Content>
-        </Popover.Root>
-
-        <div style={{ flex: 1 }} />
-
-        <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
-
-        <FilterDropdown
-          label="View"
-          value={view}
-          onChange={v => setView(v as BrowserView)}
-          options={[
-            { value: 'table', label: 'Table' },
-            { value: 'cards', label: 'Cards' },
-            { value: 'tree', label: 'Tree' },
-            { value: 'radar', label: 'Radar' },
-            { value: 'timeline', label: 'Timeline' },
-            { value: 'matrix', label: 'Matrix' },
-            { value: 'hierarchy', label: 'Hierarchy' },
-            { value: 'explore', label: 'Explore' }
-          ]}
-        />
-      </div>
-
-      {view === 'hierarchy' ? (
-        <HierarchyView
-          nodes={treeNodes}
-          edges={treeEdges}
-          onEntityClick={navigateToEntity}
-          config={hierarchyConfig}
-          onConfigChange={setHierarchyConfig}
-        />
-      ) : view === 'explore' ? (
-        <ExploreView
-          rows={filtered}
-          onEntityClick={navigateToEntity}
-          config={exploreConfig}
-          onConfigChange={setExploreConfig}
-        />
-      ) : view === 'matrix' ? (
-        <MatrixView
-          rows={filtered}
-          schemaMap={schemaMap}
-          onEntityClick={navigateToEntity}
-          config={matrixConfig}
-          onConfigChange={setMatrixConfig}
-        />
-      ) : view === 'timeline' ? (
-        <TimelineView
-          rows={filtered}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          onEntityClick={navigateToEntity}
-          config={timelineConfig}
-          onConfigChange={setTimelineConfig}
-          workspaceId={workspaceId}
-          projects={projects}
-        />
-      ) : view === 'radar' ? (
-        <RadarView
-          onEntityClick={navigateToEntity}
-          owner={ownerFilter}
-          lifecycle={statusFilter}
-          q={q}
-          config={radarConfig}
-          onConfigChange={setRadarConfig}
-        />
-      ) : view === 'tree' ? (
-        treeNodes.length === 0 ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyTitle}>No entities found</div>
-            <div>Try adjusting your search or filters.</div>
-          </div>
-        ) : (
-          <TreeView
-            nodes={treeNodes}
-            edges={treeEdges}
-            schemaMap={schemaMap}
-            onEntityClick={navigateToEntity}
-            onDelete={handleDeleteEntity}
-            onClone={handleCloneEntity}
-            lifecycleStates={lifecycleStates}
-          />
-        )
-      ) : filtered.length === 0 ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No entities found</div>
-          <div>Try adjusting your search or filters.</div>
-        </div>
-      ) : (
-        <>
-          {view === 'table' && selectedIds.size > 0 && (
-            <BulkEditToolbar
-              selectedIds={selectedIds}
-              bulkConfirming={bulkConfirming}
-              setBulkConfirming={setBulkConfirming}
-              bulkLifecycleValue={bulkLifecycleValue}
-              setBulkLifecycleValue={setBulkLifecycleValue}
-              bulkOwnerValue={bulkOwnerValue}
-              setBulkOwnerValue={setBulkOwnerValue}
-              lifecycleStates={lifecycleStates}
-              teams={teams}
-              onClear={() => {
-                setSelectedIds(new Set());
-                setBulkLifecycleValue('');
-                setBulkOwnerValue('');
-              }}
-              onConfirm={doBulkUpdate}
-            />
-          )}
-          {view === 'table' && (
-            <TableView
-              rows={filtered}
-              schemaMap={schemaMap}
-              activeDateField={dateBrowserEnabled ? activeDateField : null}
-              onEntityClick={navigateToEntity}
-              onDelete={handleDeleteEntity}
-              onClone={handleCloneEntity}
-              selectedIds={selectedIds}
-              onSelectAll={handleSelectAll}
-              onSelectRow={handleSelectRow}
-              lifecycleStates={lifecycleStates}
-            />
-          )}
-          {view === 'cards' && (
-            <CardsView
-              rows={filtered}
-              schemaMap={schemaMap}
-              onEntityClick={navigateToEntity}
-              onDelete={handleDeleteEntity}
-              onClone={handleCloneEntity}
-              lifecycleStates={lifecycleStates}
-            />
-          )}
-        </>
-      )}
-
-      <DeleteConfirmationDialog
-        open={!!deleteTarget}
-        title="Delete entity?"
-        message={
-          deleteTarget ? (
-            <>
-              The entity <b>{deleteTarget._name || deleteTarget._slug}</b> will be permanently
-              deleted.
-            </>
-          ) : (
-            ''
-          )
-        }
-        detail="This can't be undone."
-        confirmLabel="Delete entity"
-        onConfirm={doDeleteEntity}
-        onCancel={() => setDeleteTarget(null)}
-      />
+      <EntityBrowser onCountChange={setCount} />
 
       <SaveViewDialog
         open={isSavingView}
@@ -1057,13 +1149,14 @@ export const EntityBrowserScreen = () => {
 
 
 type ViewProps = {
-  rows: EntityRecord[];
+  rows: BrowserEntityRecord[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   activeDateField?: Extract<EntitySchema['fields'][number], { type: 'date' }> | null;
   onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
+  projectContext?: ProjectBrowserContext;
 };
 
 const entityName = (e: EntityRecord) => e._name || e._slug;
@@ -1088,6 +1181,34 @@ const entityMenuItems = (
   return items;
 };
 
+const projectEntityMenuItems = (
+  entity: BrowserEntityRecord,
+  projectContext: ProjectBrowserContext | undefined
+): MenuItem[] => {
+  if (!projectContext || !projectContext.project.canEdit || entity._projectLink?.linked !== true) {
+    return [];
+  }
+
+  return [
+    {
+      label: 'Plan future change',
+      icon: <TbCheck size={14} />,
+      onClick: () => projectContext.onPlanFutureChange(entity._uid)
+    },
+    {
+      label: entity._projectLink.isDone ? 'Mark not done' : 'Mark done',
+      icon: <TbCheck size={14} />,
+      onClick: () => projectContext.onToggleDone(entity._uid, entity._projectLink?.isDone ?? false)
+    },
+    {
+      label: 'Remove from project',
+      icon: <TbTrash size={14} />,
+      danger: true,
+      onClick: () => projectContext.onRemoveEntity(entity._uid)
+    }
+  ];
+};
+
 const TableView = ({
   rows,
   schemaMap,
@@ -1096,6 +1217,7 @@ const TableView = ({
   onDelete,
   onClone,
   lifecycleStates,
+  projectContext,
   selectedIds,
   onSelectAll,
   onSelectRow
@@ -1126,6 +1248,7 @@ const TableView = ({
             <th>Type</th>
             <th>Owner</th>
             <th>Status</th>
+            {projectContext && <th>Role</th>}
             {activeDateField && <th>{activeDateField.name}</th>}
             <th style={{ width: 80 }}>NS</th>
             <th style={{ width: 80 }}></th>
@@ -1135,6 +1258,10 @@ const TableView = ({
         <tbody>
           {rows.map(e => {
             const s = schemaMap.get(e._schema.id);
+            const menuItems = [
+              ...entityMenuItems(e, onClone, onDelete),
+              ...projectEntityMenuItems(e, projectContext)
+            ];
             return (
               <tr
                 key={e._uid}
@@ -1161,7 +1288,16 @@ const TableView = ({
                       />
                     )}
                     <div>
-                      <div className={styles.tableNameMain}>{entityName(e)}</div>
+                      <div
+                        className={styles.tableNameMain}
+                        style={
+                          projectContext && e._projectLink?.linked === false
+                            ? { color: 'var(--base-fg-more-dim)' }
+                            : undefined
+                        }
+                      >
+                        {entityName(e)}
+                      </div>
                       {e._description && (
                         <div className={styles.tableNameSub}>{e._description}</div>
                       )}
@@ -1177,6 +1313,24 @@ const TableView = ({
                     <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
                   )}
                 </td>
+                {projectContext && (
+                  <td>
+                    {e._projectLink?.entityType?.name ? (
+                      <Chip
+                        tone="ghost"
+                        dot={
+                          e._projectLink.entityType.id
+                            ? projectContext.entityTypeColorMap.get(e._projectLink.entityType.id)
+                            : undefined
+                        }
+                      >
+                        {e._projectLink.entityType.name}
+                      </Chip>
+                    ) : (
+                      <span className="dim">—</span>
+                    )}
+                  </td>
+                )}
                 {activeDateField && (
                   <td>
                     <span className="dim">{formatDateValue(e[activeDateField.id])}</span>
@@ -1189,14 +1343,14 @@ const TableView = ({
                   <CompletenessCell value={e._completeness} />
                 </td>
                 <td onClick={ev => ev.stopPropagation()}>
-                  {entityMenuItems(e, onClone, onDelete).length > 0 && (
+                  {menuItems.length > 0 && (
                     <DropdownMenu
                       trigger={
                         <button type="button" className={styles.dotsBtn}>
                           <TbDots size={14} />
                         </button>
                       }
-                      items={entityMenuItems(e, onClone, onDelete)}
+                      items={menuItems}
                     />
                   )}
                 </td>
@@ -1215,12 +1369,17 @@ const CardsView = ({
   onEntityClick,
   onDelete,
   onClone,
-  lifecycleStates
+  lifecycleStates,
+  projectContext
 }: ViewProps) => (
   <div className={styles.cardGrid}>
     {rows.map(e => {
       const s = schemaMap.get(e._schema.id);
       const color = s ? resolveSchemaColor(s.schema, s.index) : 'var(--accent-fg)';
+      const menuItems = [
+        ...entityMenuItems(e, onClone, onDelete),
+        ...projectEntityMenuItems(e, projectContext)
+      ];
       return (
         <div key={e._uid} className={styles.card} onClick={() => onEntityClick(e._publicId)}>
           <span className={styles.cardBar} style={{ background: color }} />
@@ -1230,7 +1389,7 @@ const CardsView = ({
               {e._lifecycle && (
                 <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
               )}
-              {entityMenuItems(e, onClone, onDelete).length > 0 && (
+              {menuItems.length > 0 && (
                 <span onClick={ev => ev.stopPropagation()}>
                   <DropdownMenu
                     trigger={
@@ -1238,19 +1397,39 @@ const CardsView = ({
                         <TbDots size={14} />
                       </button>
                     }
-                    items={entityMenuItems(e, onClone, onDelete)}
+                    items={menuItems}
                   />
                 </span>
               )}
             </div>
           </div>
-          <div className={styles.cardName}>{entityName(e)}</div>
+          <div
+            className={styles.cardName}
+            style={
+              projectContext && e._projectLink?.linked === false
+                ? { color: 'var(--base-fg-more-dim)' }
+                : undefined
+            }
+          >
+            {entityName(e)}
+          </div>
           {e._description && <div className={styles.cardDesc}>{e._description}</div>}
           <div className={styles.cardMeta}>
             <Chip tone="ghost" icon={<TbUsers size={10} />}>
               {e._owner?.name ?? '—'}
             </Chip>
             {s && <Chip tone="ghost">{s.schema.name}</Chip>}
+            {projectContext && e._projectLink?.entityType?.name && (
+              <Chip
+                tone="ghost"
+                dot={projectContext.entityTypeColorMap.get(e._projectLink.entityType.id) ?? undefined}
+              >
+                {e._projectLink.entityType.name}
+              </Chip>
+            )}
+            {projectContext && e._projectLink?.linked && (
+              <Chip tone="ghost">{e._projectLink.isDone ? 'Done' : 'Open'}</Chip>
+            )}
           </div>
         </div>
       );
@@ -1259,16 +1438,17 @@ const CardsView = ({
 );
 
 type TreeViewProps = {
-  nodes: TreeNode[];
+  nodes: Array<TreeNode & { _projectLink?: ProjectLinkState }>;
   edges: TreeEdge[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
+  projectContext?: ProjectBrowserContext;
 };
 
-type TreeItem = TreeNode & { children: TreeItem[] };
+type TreeItem = (TreeNode & { _projectLink?: ProjectLinkState }) & { children: TreeItem[] };
 
 const TreeView = ({
   nodes,
@@ -1277,7 +1457,8 @@ const TreeView = ({
   onEntityClick,
   onDelete,
   onClone,
-  lifecycleStates
+  lifecycleStates,
+  projectContext
 }: TreeViewProps) => {
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();
@@ -1330,6 +1511,7 @@ const TreeView = ({
               onDelete={onDelete}
               onClone={onClone}
               lifecycleStates={lifecycleStates}
+              projectContext={projectContext}
             />
           ))}
         </tbody>
@@ -1345,7 +1527,8 @@ const TreeNodeRow = ({
   onEntityClick,
   onDelete,
   onClone,
-  lifecycleStates
+  lifecycleStates,
+  projectContext
 }: {
   item: TreeItem;
   depth: number;
@@ -1354,6 +1537,7 @@ const TreeNodeRow = ({
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
+  projectContext?: ProjectBrowserContext;
 }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = item.children.length > 0;
@@ -1391,7 +1575,16 @@ const TreeNodeRow = ({
               />
             )}
             <div>
-              <div className={styles.tableNameMain}>{item._name || item._slug}</div>
+              <div
+                className={styles.tableNameMain}
+                style={
+                  projectContext && item._projectLink?.linked === false
+                    ? { color: 'var(--base-fg-more-dim)' }
+                    : undefined
+                }
+              >
+                {item._name || item._slug}
+              </div>
               {item._description && <div className={styles.tableNameSub}>{item._description}</div>}
             </div>
           </div>
@@ -1432,6 +1625,7 @@ const TreeNodeRow = ({
             onDelete={onDelete}
             onClone={onClone}
             lifecycleStates={lifecycleStates}
+            projectContext={projectContext}
           />
         ))}
     </>

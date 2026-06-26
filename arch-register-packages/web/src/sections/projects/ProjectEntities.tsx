@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TbCheck, TbCalendarEvent, TbDatabase, TbDots, TbPlus, TbTrash, TbLayoutList, TbCalendar } from 'react-icons/tb';
+import { TbCalendarEvent, TbPlus, TbLayoutList, TbCalendar } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData, ProjectEntity } from '@arch-register/api-types/projectContract';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -9,11 +9,11 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { WorkspaceTeam } from '../../lib/api';
 import { Chip } from '../../components/Chip';
 import { TypeBadge } from '../../components/TypeBadge';
-import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { EntityBrowser } from '../entities/EntityBrowserScreen';
 
 type ViewTab = 'entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
@@ -134,16 +134,18 @@ export const ProjectEntities = ({
       }
     >
       {activeTab === 'entities' ? (
-        <EntitiesTab
-          project={project}
-          projectEntities={projectEntities}
-          schemaMap={schemaMap}
-          entityTypeColorMap={entityTypeColorMap}
-          onAddEntity={onAddEntity}
-          onToggleDone={onToggleDone}
-          onRemoveEntity={onRemoveEntity}
-          onPlanFutureChange={onPlanFutureChange}
-        />
+        <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
+          <EntityBrowser
+            projectContext={{
+              project: { id: project.id, canEdit: project.canEdit },
+              projectEntities,
+              entityTypeColorMap,
+              onToggleDone,
+              onRemoveEntity,
+              onPlanFutureChange
+            }}
+          />
+        </div>
       ) : activeTab === 'future-changes' ? (
         <FutureChangesTab
           project={project}
@@ -170,137 +172,6 @@ export const ProjectEntities = ({
         </div>
       )}
     </ProjectScreenLayout>
-  );
-};
-
-const EntitiesTab = ({
-  project,
-  projectEntities,
-  schemaMap,
-  entityTypeColorMap,
-  onAddEntity,
-  onToggleDone,
-  onRemoveEntity,
-  onPlanFutureChange
-}: {
-  project: ProjectDetailData;
-  projectEntities: ProjectEntity[];
-  schemaMap: Map<string, { color: string; icon: string | null }>;
-  entityTypeColorMap: Map<string, string>;
-  onAddEntity: () => void;
-  onToggleDone: (entityId: string, isDone: boolean) => void;
-  onRemoveEntity: (entityId: string) => void;
-  onPlanFutureChange: (entityId: string) => void;
-}) => {
-  if (projectEntities.length === 0) {
-    return (
-      <div className={styles.entityTab}>
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon}>
-            <TbDatabase size={22} />
-          </div>
-          <div className={styles.emptyTitle}>No entities linked</div>
-          <div className={styles.emptySub}>
-            Link entities this project decommissions, modifies, creates, or depends on.
-          </div>
-          {project.canEdit && (
-            <button type="button" className="ar-btn" onClick={onAddEntity}>
-              <TbPlus size={11} /> Add entity
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.entityTab}>
-      <div className={styles.pentTable}>
-        <div className={styles.pentHead}>
-          <span>Name</span>
-          <span>Type</span>
-          <span>Role</span>
-          <span>Done</span>
-          <span />
-        </div>
-        {projectEntities.map(entity => {
-          const schema = entity.entity_schema ? schemaMap.get(entity.entity_schema.id) : undefined;
-          const roleColor = entity.entity_type
-            ? entityTypeColorMap.get(entity.entity_type.id)
-            : undefined;
-
-          const rowMenuItems: MenuItem[] = [
-            ...(project.canEdit
-              ? [{
-                  label: 'Plan future change',
-                  icon: <TbCalendarEvent size={14} />,
-                  onClick: () => onPlanFutureChange(entity.entity_id)
-                }]
-              : []),
-            ...(project.canEdit
-              ? [{
-                  label: 'Remove',
-                  icon: <TbTrash size={14} />,
-                  danger: true,
-                  onClick: () => onRemoveEntity(entity.entity_id)
-                }]
-              : [])
-          ];
-
-          return (
-            <div key={entity.entity_id} className={styles.pentRow}>
-              <button type="button" className={styles.pentName}>
-                {schema && <TypeBadge color={schema.color} icon={schema.icon} size={18} />}
-                <div>
-                  <div>{entity.entity_name}</div>
-                  {entity.entity_description && (
-                    <div className={styles.pentNameSub}>{entity.entity_description}</div>
-                  )}
-                </div>
-              </button>
-              <span className={styles.pentType}>
-                {entity.entity_schema ? (
-                  <Chip tone="ghost">{entity.entity_schema.name}</Chip>
-                ) : (
-                  <span className="dim">—</span>
-                )}
-              </span>
-              <span className={styles.pentRole}>
-                {entity.entity_type?.name ? (
-                  <Chip tone="ghost" dot={roleColor}>
-                    {entity.entity_type.name}
-                  </Chip>
-                ) : (
-                  <span className="dim">—</span>
-                )}
-              </span>
-              <span className={styles.pentActions}>
-                <button
-                  type="button"
-                  className={`${styles.pentCheck} ${entity.is_done ? styles.pentCheckDone : ''}`}
-                  onClick={() => project.canEdit && onToggleDone(entity.entity_id, entity.is_done)}
-                  title={entity.is_done ? 'Mark as not done' : 'Mark as done'}
-                >
-                  <TbCheck size={11} />
-                </button>
-              </span>
-              <span className={styles.pentRowMenu}>
-                {rowMenuItems.length > 0 && (
-                  <DropdownMenu
-                    trigger={
-                      <button type="button" className={styles.pentMenuBtn}>
-                        <TbDots size={14} />
-                      </button>
-                    }
-                    items={rowMenuItems}
-                  />
-                )}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 };
 

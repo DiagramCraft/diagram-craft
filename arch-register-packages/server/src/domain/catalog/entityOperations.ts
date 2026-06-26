@@ -57,6 +57,8 @@ export const listEntities = async (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    projectId?: string | null;
+    projectScope?: 'project' | 'all';
     view?: 'summary' | 'full';
     limit?: number | null;
     offset?: number | null;
@@ -68,6 +70,8 @@ export const listEntities = async (
     lifecycle = null,
     q = '',
     conditions = [],
+    projectId = null,
+    projectScope = 'all',
     view = 'full',
     limit,
     offset = 0
@@ -77,7 +81,7 @@ export const listEntities = async (
   const completenessConditions = conditions.filter(c => c.fieldId === '_completeness');
 
   try {
-    const [allEntities, schemas] = await Promise.all([
+    const [allEntities, schemas, projectEntities] = await Promise.all([
       db.catalog.listEntities(workspace, {
         schemaId,
         owner,
@@ -85,15 +89,21 @@ export const listEntities = async (
         q: q ?? '',
         conditions: sqlConditions
       }),
-      db.catalog.listSchemas(workspace)
+      db.catalog.listSchemas(workspace),
+      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
     ]);
     const schemaMap = new Map(schemas.map(s => [s.id, s]));
+    const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
     const visibleEntities = allEntities.filter(
       entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
     );
+    const scopedEntities =
+      projectId && projectScope === 'project'
+        ? visibleEntities.filter(entity => projectEntityMap.has(entity.id))
+        : visibleEntities;
     const safeOffset = offset ?? 0;
 
-    const withCompleteness = visibleEntities.map(entity => ({
+    const withCompleteness = scopedEntities.map(entity => ({
       entity,
       completeness:
         schemaMap.get(entity.schema_id) != null
@@ -110,11 +120,37 @@ export const listEntities = async (
       .sort((a, b) => a.entity.name.localeCompare(b.entity.name))
       .slice(safeOffset, limit != null ? safeOffset + limit : undefined);
 
+    const attachProjectLink = (entity: EntityRecord, rowId: string) => {
+      if (!projectId) return entity;
+      const projectEntity = projectEntityMap.get(rowId);
+      return {
+        ...entity,
+        _projectLink: projectEntity
+          ? {
+              linked: true,
+              entityType: projectEntity.entity_type_id
+                ? { id: projectEntity.entity_type_id, name: projectEntity.entity_type_label ?? projectEntity.entity_type_id }
+                : null,
+              isDone: projectEntity.is_done
+            }
+          : {
+              linked: false,
+              entityType: null,
+              isDone: false
+            }
+      };
+    };
+
     return view === 'summary'
       ? rows.map(({ entity: row, completeness }) =>
-          toApiEntitySummary(row, authCtx, completeness) as EntityRecord
+          attachProjectLink(
+            toApiEntitySummary(row, authCtx, completeness) as EntityRecord,
+            row.id
+          )
         )
-      : rows.map(({ entity: row, completeness }) => toApiEntity(row, authCtx, completeness));
+      : rows.map(({ entity: row, completeness }) =>
+          attachProjectLink(toApiEntity(row, authCtx, completeness), row.id)
+        );
   } catch (error) {
     return handleError(error, 'Failed to retrieve data');
   }
@@ -196,17 +232,32 @@ export const getEntityTree = async (
     owner?: string | null;
     lifecycle?: string | null;
     q?: string | null;
+    projectId?: string | null;
+    projectScope?: 'project' | 'all';
   }
 ): Promise<TreeResponse> => {
-  const { schemaId = null, owner = null, lifecycle = null, q = '' } = options;
+  const {
+    schemaId = null,
+    owner = null,
+    lifecycle = null,
+    q = '',
+    projectId = null,
+    projectScope = 'all'
+  } = options;
   try {
-    const [schemas, allEntitiesRaw] = await Promise.all([
+    const [schemas, allEntitiesRaw, projectEntities] = await Promise.all([
       db.catalog.listSchemas(workspace),
-      db.catalog.listEntities(workspace)
+      db.catalog.listEntities(workspace),
+      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
     ]);
+    const projectEntityMap = new Set(projectEntities.map(entity => entity.entity_id));
     const allEntities = allEntitiesRaw.filter(
       entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
     );
+    const scopedEntities =
+      projectId && projectScope === 'project'
+        ? allEntities.filter(entity => projectEntityMap.has(entity.id))
+        : allEntities;
 
     const containmentFieldsBySchema = new Map<string, string[]>();
     for (const schema of schemas) {
@@ -219,11 +270,14 @@ export const getEntityTree = async (
       if (cFields.length > 0) containmentFieldsBySchema.set(schema.id, cFields);
     }
 
-    const matchRows = filterEntities(allEntities, { schemaId, owner, lifecycle, q: q ?? '' }).sort(
-      (a, b) => a.name.localeCompare(b.name)
-    );
+    const matchRows = filterEntities(scopedEntities, {
+      schemaId,
+      owner,
+      lifecycle,
+      q: q ?? ''
+    }).sort((a, b) => a.name.localeCompare(b.name));
     const matchIds = new Set(matchRows.map(r => r.id));
-    const entityById = new Map(allEntities.map(entity => [entity.id, entity]));
+    const entityById = new Map(scopedEntities.map(entity => [entity.id, entity]));
     const allIncluded = new Map(matchRows.map(entity => [entity.id, entity]));
     const edges: Array<{ childId: string; parentId: string }> = [];
 
@@ -246,9 +300,33 @@ export const getEntityTree = async (
       currentLevel = nextLevel;
     }
 
+    const attachProjectLink = (entity: EntityRecord, rowId: string) => {
+      if (!projectId) return entity;
+      const projectEntity = projectEntities.find(item => item.entity_id === rowId);
+      return {
+        ...entity,
+        _projectLink: projectEntity
+          ? {
+              linked: true,
+              entityType: projectEntity.entity_type_id
+                ? {
+                    id: projectEntity.entity_type_id,
+                    name: projectEntity.entity_type_label ?? projectEntity.entity_type_id
+                  }
+                : null,
+              isDone: projectEntity.is_done
+            }
+          : {
+              linked: false,
+              entityType: null,
+              isDone: false
+            }
+      };
+    };
+
     return {
       nodes: [...allIncluded.values()].map(row => ({
-        ...toApiEntitySummary(row, authCtx),
+        ...attachProjectLink(toApiEntitySummary(row, authCtx) as EntityRecord, row.id),
         _isMatch: matchIds.has(row.id)
       })),
       edges

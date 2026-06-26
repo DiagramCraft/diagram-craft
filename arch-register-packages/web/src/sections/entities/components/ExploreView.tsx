@@ -23,6 +23,7 @@ type ExploreViewProps = {
   onEntityClick: (entityPublicId: string) => void;
   config: ExploreViewConfig | null;
   onConfigChange: (cfg: ExploreViewConfig) => void;
+  linkedEntityIds?: string[];
 };
 
 type ConnectorLine = ExploreConnector & {
@@ -93,7 +94,13 @@ const connectorDistance = (line: ConnectorLine, px: number, py: number) => {
   return minDistance;
 };
 
-export const ExploreView = ({ rows, onEntityClick, config, onConfigChange }: ExploreViewProps) => {
+export const ExploreView = ({
+  rows,
+  onEntityClick,
+  config,
+  onConfigChange,
+  linkedEntityIds
+}: ExploreViewProps) => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const schemaMap = useMemo(() => {
     const map = new Map<string, { name: string; color: string; icon: string | null }>();
@@ -118,6 +125,7 @@ export const ExploreView = ({ rows, onEntityClick, config, onConfigChange }: Exp
     () => normalizeExploreConfig(config ?? localConfig),
     [config, localConfig]
   );
+  const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
   const [connectorTooltip, setConnectorTooltip] = useState<ConnectorTooltip>(null);
 
   useEffect(() => {
@@ -501,6 +509,8 @@ export const ExploreView = ({ rows, onEntityClick, config, onConfigChange }: Exp
                     column.entities.map(entity => {
                       const schema = schemaMap.get(entity.schemaId);
                       const isDuplicate = graph.duplicateIds.has(entity.entityId);
+                      const isLinked =
+                        linkedEntityIds == null ? true : linkedEntityIdSet.has(entity.entityId);
                       return (
                         <button
                           key={entity.entityId}
@@ -520,7 +530,10 @@ export const ExploreView = ({ rows, onEntityClick, config, onConfigChange }: Exp
                                 />
                               )}
                               <div className={styles.entityText}>
-                                <div className={styles.entityName}>
+                                <div
+                                  className={styles.entityName}
+                                  style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+                                >
                                   {entity.name || entity.slug}
                                 </div>
                                 <div className={styles.entitySlug}>{entity.slug}</div>

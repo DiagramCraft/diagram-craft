@@ -10,6 +10,12 @@ const entityLinkSchema = z.object({
   type: z.string().optional()
 });
 
+const projectLinkSchema = z.object({
+  linked: z.boolean(),
+  entityType: foreignKeySchema.nullable(),
+  isDone: z.boolean()
+});
+
 const entityCapabilitiesSchema = z.object({
   canView: z.boolean(),
   canEdit: z.boolean(),
@@ -35,7 +41,8 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
   _tags: z.array(z.string()),
   _links: z.array(entityLinkSchema),
   _visibilityMode: visibilityModeSchema.nullable(),
-  _completeness: z.number().nullable()
+  _completeness: z.number().nullable(),
+  _projectLink: projectLinkSchema.optional()
 });
 
 // EntityRecord = EntitySummary + dynamic schema fields
@@ -73,7 +80,9 @@ const listFiltersSchema = z.object({
   owner: z.string().optional(),
   lifecycle: z.string().optional(),
   q: z.string().optional(),
-  conditions: z.string().optional()
+  conditions: z.string().optional(),
+  projectId: z.string().optional(),
+  projectScope: z.enum(['project', 'all']).optional()
 });
 
 const deleteEntityResponseSchema = z.object({

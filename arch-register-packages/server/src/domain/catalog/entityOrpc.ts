@@ -58,6 +58,11 @@ export const workspaceEntityORPCRouter = entityRouter.router({
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        if (input.query.projectId) {
+          const project = await context.db.project.getProject(workspace, input.query.projectId);
+          httpAssert.present(project, { status: 404, message: `Project '${input.query.projectId}' not found` });
+          requireProjectAccess(authCtx, project.owner);
+        }
         let conditions: FilterCondition[] = [];
         if (input.query.conditions) {
           try {
@@ -72,6 +77,8 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           lifecycle: input.query.lifecycle ?? null,
           q: input.query.q ?? '',
           conditions,
+          projectId: input.query.projectId ?? null,
+          projectScope: input.query.projectScope ?? 'all',
           view: input.query.view ?? 'full',
           limit: input.query.limit ?? null,
           offset: input.query.offset ?? 0
@@ -95,11 +102,18 @@ export const workspaceEntityORPCRouter = entityRouter.router({
       try {
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        if (input.query.projectId) {
+          const project = await context.db.project.getProject(workspace, input.query.projectId);
+          httpAssert.present(project, { status: 404, message: `Project '${input.query.projectId}' not found` });
+          requireProjectAccess(authCtx, project.owner);
+        }
         return await getEntityTree(context.db, workspace, authCtx, {
           schemaId: input.query._schemaId ?? null,
           owner: input.query.owner ?? null,
           lifecycle: input.query.lifecycle ?? null,
-          q: input.query.q ?? ''
+          q: input.query.q ?? '',
+          projectId: input.query.projectId ?? null,
+          projectScope: input.query.projectScope ?? 'all'
         });
       } catch (error) {
         return toORPCError(error);

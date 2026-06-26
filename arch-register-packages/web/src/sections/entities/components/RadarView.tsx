@@ -231,6 +231,8 @@ function buildBlips(
 // ── RadarView ─────────────────────────────────────────────────────────────────
 
 export const RadarView = ({
+  rows,
+  linkedEntityIds,
   onEntityClick,
   owner,
   lifecycle,
@@ -238,6 +240,8 @@ export const RadarView = ({
   config: configProp,
   onConfigChange
 }: {
+  rows?: EntityRecord[];
+  linkedEntityIds?: string[];
   onEntityClick: (entityId: string) => void;
   owner?: string | null;
   lifecycle?: string | null;
@@ -259,13 +263,15 @@ export const RadarView = ({
   const [pinned, setPinned] = useState<string | null>(null);
   const [tipPos, setTipPos] = useState({ x: 0, y: 0 });
   const wrapRef = useRef<HTMLDivElement>(null);
+  const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
-  const { data: entities = [] } = useEntities(workspaceSlug, {
+  const { data: fetchedEntities = [] } = useEntities(workspaceSlug, {
     schemaId: config?.schemaId ?? null,
     owner: owner ?? null,
     lifecycle: lifecycle ?? null,
     view: 'full'
   });
+  const entities = rows ?? fetchedEntities;
 
   const schema = config ? (schemas.find(s => s.id === config.schemaId) ?? null) : null;
 
@@ -454,6 +460,7 @@ export const RadarView = ({
                   blip={activeBlip}
                   quad={activeQuad}
                   ring={activeRing}
+                  isLinked={linkedEntityIds == null || linkedEntityIdSet.has(activeBlip.id)}
                   x={tipPos.x}
                   y={tipPos.y}
                   pinned={pinned === activeBlip.id}
@@ -490,6 +497,7 @@ export const RadarView = ({
                             quadColor={quad.color}
                             ringLabel={ring?.label ?? blip.ringValue}
                             ringColor={ring?.color ?? 'var(--base-fg-more-dim)'}
+                            isLinked={linkedEntityIds == null || linkedEntityIdSet.has(blip.id)}
                             active={activeId === blip.id}
                             onMouseEnter={() => {
                               if (!pinned) setHovered(blip.id);
@@ -718,6 +726,7 @@ const BlipTooltip = ({
   blip,
   quad,
   ring,
+  isLinked,
   x,
   y,
   pinned,
@@ -727,6 +736,7 @@ const BlipTooltip = ({
   blip: Blip;
   quad: Quadrant;
   ring: Ring;
+  isLinked: boolean;
   x: number;
   y: number;
   pinned: boolean;
@@ -742,7 +752,12 @@ const BlipTooltip = ({
         <span className={styles.tooltipNum} style={{ background: quad.color }}>
           {blip.num}
         </span>
-        <span className={styles.tooltipName}>{blip.name}</span>
+        <span
+          className={styles.tooltipName}
+          style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+        >
+          {blip.name}
+        </span>
         {pinned && (
           <button type="button" className={styles.tooltipClose} onClick={onDismiss}>
             ✕
@@ -773,6 +788,7 @@ const LegendRow = ({
   quadColor,
   ringLabel,
   ringColor,
+  isLinked,
   active,
   onMouseEnter,
   onMouseLeave,
@@ -782,6 +798,7 @@ const LegendRow = ({
   quadColor: string;
   ringLabel: string;
   ringColor: string;
+  isLinked: boolean;
   active: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
@@ -798,7 +815,12 @@ const LegendRow = ({
       <span className={styles.legendRowNum} style={{ background: quadColor }}>
         {blip.num}
       </span>
-      <span className={styles.legendRowName}>{blip.name}</span>
+      <span
+        className={styles.legendRowName}
+        style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+      >
+        {blip.name}
+      </span>
       <span className={styles.legendRowRing} style={{ color: ringColor }}>
         {ringLabel}
       </span>
