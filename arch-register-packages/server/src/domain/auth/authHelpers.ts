@@ -20,6 +20,18 @@ type WorkspaceMembershipData = {
   workspace_roles: ReturnType<typeof resolveWorkspaceRoleDefinitions>;
 };
 
+/**
+ * Selects the refresh token to use for a token-refresh request.
+ *
+ * **Primary source (browser flow):** the `ar_refresh_token` httpOnly cookie.
+ * The cookie is set automatically by the server after login and is not readable
+ * by JavaScript, which is the preferred and most secure path.
+ *
+ * **Fallback (non-browser / API clients):** `refresh_token` field in the JSON
+ * request body. This exists to support scripted or server-side API consumers
+ * that cannot use cookies. It should never be used from a browser context, as
+ * it exposes the token to JavaScript and undermines the httpOnly protection.
+ */
 export const selectRefreshToken = (cookieToken: string | null | undefined, body?: RefreshBody) =>
   cookieToken ?? body?.refresh_token;
 

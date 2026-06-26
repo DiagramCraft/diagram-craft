@@ -7,10 +7,32 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
 
+const FALLBACK_SALT = 'arch-register-ai';
+
 const getKey = (): Buffer | null => {
   const raw = process.env['AI_ENCRYPTION_KEY'];
   if (!raw) return null;
-  return scryptSync(raw, 'arch-register-ai', 32);
+  const salt = process.env['AI_ENCRYPTION_SALT'] ?? FALLBACK_SALT;
+  return scryptSync(raw, salt, 32);
+};
+
+/**
+ * Returns startup warning messages for missing AI encryption configuration.
+ * Call this once at server startup and log each returned string as a warning.
+ */
+export const getEncryptionWarnings = (): string[] => {
+  const warnings: string[] = [];
+  if (!process.env['AI_ENCRYPTION_KEY']) {
+    warnings.push(
+      'AI_ENCRYPTION_KEY is not set — AI provider API keys will be stored as plaintext in the database'
+    );
+  }
+  if (!process.env['AI_ENCRYPTION_SALT']) {
+    warnings.push(
+      'AI_ENCRYPTION_SALT is not set — falling back to default salt (not recommended for production deployments)'
+    );
+  }
+  return warnings;
 };
 
 export const encrypt = (plaintext: string): string => {

@@ -7,6 +7,7 @@ import { createUnifiedOpenAPISpecHandler } from './openapi';
 import { createOidcCallbackRoute } from './domain/auth/oidcCallbackRoute';
 import { requireAuth } from './middleware/auth';
 import { createDevDelayMiddleware } from './middleware/devDelay';
+import { createSecurityHeadersMiddleware } from './middleware/securityHeaders';
 import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
 import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
 import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
@@ -95,6 +96,7 @@ export const createApp = (
 
   app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
 
+  app.use(createSecurityHeadersMiddleware());
   app.use(createDevDelayMiddleware());
 
   // Public routes (no auth required)
