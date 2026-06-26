@@ -37,6 +37,11 @@ import {
   entityDetailRoute,
   projectDetailRoute
 } from '../../routes/publicObjectRoutes';
+import {
+  hashDiagramContent,
+  rememberMarkdownDiagramOriginal,
+  updateMarkdownDiagramSessionRecord
+} from '../markdown/markdownDiagramSession';
 
 const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
 type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
@@ -57,7 +62,10 @@ export const DiagramScreen = () => {
 
   const navigate = useNavigate();
   const router = useRouter();
-  const search = useSearch({ strict: false }) as { returnTo?: string };
+  const search = useSearch({ strict: false }) as {
+    returnTo?: string;
+    markdownSessionId?: string;
+  };
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const userId = user?.id;
@@ -66,9 +74,16 @@ export const DiagramScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fileInfo, setFileInfo] = useState<{ path: string; name: string } | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [doc, setDoc] = useState<DiagramDocument | null>(null);
   const docRef = useRef<DiagramDocument | null>(null);
   const fileInfoRef = useRef<{ path: string; name: string } | null>(null);
+  const dirtyRef = useRef(false);
+  const sawCollaboratorsRef = useRef(false);
+
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
 
   const normalizePublicSchemas = useCallback(
     (publicSchemas: PublicSchema[]) =>
@@ -154,10 +169,19 @@ export const DiagramScreen = () => {
           body: serialized as unknown as Record<string, unknown>
         });
       }
+
+      if (search.markdownSessionId && dirtyRef.current) {
+        updateMarkdownDiagramSessionRecord(search.markdownSessionId, diagramId, {
+          path: fileInfoRef.current.path,
+          name: fileInfoRef.current.name,
+          lastSavedContentHash: hashDiagramContent(JSON.stringify(serialized)),
+          sawCollaborators: sawCollaboratorsRef.current
+        });
+      }
     } catch (err) {
       console.error('Save failed:', err);
     }
-  }, [workspaceId, projectId, isWorkspaceContent]);
+  }, [workspaceId, projectId, isWorkspaceContent, search.markdownSessionId, diagramId]);
 
   const refreshDiagramCaches = useCallback(async () => {
     if (isWorkspaceContent) {
@@ -181,6 +205,7 @@ export const DiagramScreen = () => {
     }
 
     await queryClient.invalidateQueries({ queryKey: searchKeys.all });
+    await queryClient.invalidateQueries({ queryKey: projectFileKeys.detail(workspaceId, diagramId) });
     await queryClient.invalidateQueries({ queryKey: projectFileKeys.content(workspaceId, diagramId) });
   }, [isWorkspaceContent, isEntityDiagram, queryClient, workspaceId, projectId, diagramId]);
 
@@ -236,10 +261,12 @@ export const DiagramScreen = () => {
 
   useEffect(() => {
     let releaseDataChange = () => {};
+    let releaseAwarenessChange = () => {};
 
     const loadDiagram = async () => {
       try {
         setLoading(true);
+        sawCollaboratorsRef.current = false;
 
         const suppressDefaultProvider = async (document: DiagramDocument) => {
           const defaultProvider = document.data.providers.find(
@@ -344,6 +371,26 @@ export const DiagramScreen = () => {
         setFileInfo({ path: file.path, name: file.name });
         fileInfoRef.current = { path: file.path, name: file.name };
 
+        const rawDiagramData = isWorkspaceContent
+          ? await orpcClient.projects.getWorkspaceFileContent({
+              params: { workspace: workspaceId },
+              query: { path: file.path }
+            })
+          : await orpcClient.projects.getFileContent({
+              params: { workspace: workspaceId, id: projectId },
+              query: { path: file.path }
+            });
+        const serializedDiagramData = rawDiagramData as unknown as SerializedDiagramDocument;
+
+        if (search.markdownSessionId) {
+          rememberMarkdownDiagramOriginal(search.markdownSessionId, {
+            diagramId,
+            path: file.path,
+            name: file.name,
+            originalContent: JSON.stringify(serializedDiagramData)
+          });
+        }
+
         // Construct the collaboration room name
         const roomName = isWorkspaceContent
           ? `${workspaceId}/workspace-content/${file.id}.json`
@@ -374,16 +421,6 @@ export const DiagramScreen = () => {
         // If the CRDT already has state (another client is connected), use it directly.
         // Otherwise, this is the first client — load from REST and deserialize.
         if (document.diagrams.length === 0) {
-          const rawDiagramData = isWorkspaceContent
-            ? await orpcClient.projects.getWorkspaceFileContent({
-                params: { workspace: workspaceId },
-                query: { path: file.path }
-              })
-            : await orpcClient.projects.getFileContent({
-                params: { workspace: workspaceId, id: projectId },
-                query: { path: file.path }
-              });
-          const serializedDiagramData = rawDiagramData as unknown as SerializedDiagramDocument;
           const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas);
 
           await deserializeDiagramDocument(diagramData, document, diagramFactory, {
@@ -398,6 +435,17 @@ export const DiagramScreen = () => {
           void enforcePublicProvider(document, publicSchemas);
         };
         releaseDataChange = document.data.on('change', handleDataChange);
+
+        const handleAwarenessChange = () => {
+          if ((CollaborationConfig.Backend.awareness?.getUserStates().length ?? 0) > 1) {
+            sawCollaboratorsRef.current = true;
+          }
+        };
+        releaseAwarenessChange = CollaborationConfig.Backend.awareness?.on(
+          'changeUser',
+          handleAwarenessChange
+        ) ?? (() => {});
+        handleAwarenessChange();
 
         if (document.diagrams.length === 0) {
           throw new Error('Diagram file contains no diagrams');
@@ -416,6 +464,7 @@ export const DiagramScreen = () => {
 
     return () => {
       CollaborationConfig.Backend.disconnect(() => {});
+      releaseAwarenessChange();
       releaseDataChange();
       if (docRef.current) {
         docRef.current.deactivate(() => {});
@@ -433,7 +482,8 @@ export const DiagramScreen = () => {
     userDisplayName,
     userColor,
     isEntityDiagram,
-    isWorkspaceContent
+    isWorkspaceContent,
+    search.markdownSessionId
   ]);
 
   const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);
@@ -469,7 +519,8 @@ export const DiagramScreen = () => {
         documentFactory={documentFactory}
         diagramFactory={diagramFactory}
         documentName={fileInfo.name}
-        dirty={false}
+        dirty={dirty}
+        onDirtyChange={setDirty}
         headerLeft={
           <button
             type={'button'}

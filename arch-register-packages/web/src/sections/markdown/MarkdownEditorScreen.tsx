@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useParams, useSearch, useNavigate } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   TbDeviceFloppy,
   TbDots,
@@ -35,6 +36,8 @@ import { RenameDialog } from '../../components/RenameDialog';
 import { DropdownMenu } from '../../components/DropdownMenu';
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import { getFileNodeIcon } from '../../lib/contentNode';
+import { newid } from '@diagram-craft/utils/id';
+import { orpcClient } from '../../lib/orpcClient';
 import styles from './MarkdownEditorScreen.module.css';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
 import { extractFirstHeadingTitle } from './preview/markdownTitle';
@@ -61,6 +64,16 @@ import {
   type MarkdownViewPanel
 } from './MarkdownEditorScreen.state';
 import { MarkdownDiagramSessionContext } from './MarkdownDiagramSessionContext';
+import { MarkdownCloseDialog } from './MarkdownCloseDialog';
+import {
+  buildMarkdownCloseImpactSummary,
+  clearMarkdownDiagramSession,
+  getMarkdownDiagramRollbackRecords,
+  hashDiagramContent,
+  type DiagramSessionRecord,
+  type MarkdownCloseImpactSummary
+} from './markdownDiagramSession';
+import { projectFileKeys } from '../../hooks/queryKeys';
 
 const findFileById = (tree: FileTree | undefined, nodeId: string): ProjectFile | undefined => {
   if (!tree) return undefined;
@@ -102,9 +115,11 @@ export const MarkdownEditorScreen = () => {
     revisionId?: string;
     historyMode?: 'preview' | 'compare';
     compareMode?: 'to-current' | 'changes-in-version';
+    diagramSessionId?: string;
   };
   const { workspaceSlug, nodeId, projectId, entityId } = params;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { workspace } = useWorkspaceContext();
   const requestedMode = search.mode;
   const requestedPanel = search.panel;
@@ -152,12 +167,15 @@ export const MarkdownEditorScreen = () => {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [attachmentDeleteTarget, setAttachmentDeleteTarget] = useState<ProjectFile | null>(null);
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [closeSummary, setCloseSummary] = useState<MarkdownCloseImpactSummary | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initializedRef = useRef(false);
   const previousNodeIdRef = useRef(nodeId);
-  const createdDiagramsRef = useRef<{ id: string; path: string }[]>([]);
+  const createdDiagramsRef = useRef<DiagramSessionRecord[]>([]);
+  const sessionIdRef = useRef(search.diagramSessionId ?? newid());
 
-  const trackCreatedDiagram = useCallback((record: { id: string; path: string }) => {
+  const trackCreatedDiagram = useCallback((record: { id: string; path: string; name?: string }) => {
     createdDiagramsRef.current.push(record);
   }, []);
 
@@ -178,6 +196,10 @@ export const MarkdownEditorScreen = () => {
   const toc = useMemo(() => extractToc(body), [body]);
   const readTime = useMemo(() => calcReadTime(body), [body]);
   const updatedLabel = file?.updated_at ? relativeDate(file.updated_at) : null;
+  const hasPendingDiagramChanges =
+    createdDiagramsRef.current.length > 0 ||
+    getMarkdownDiagramRollbackRecords(sessionIdRef.current).some(record => !!record.lastSavedContentHash);
+  const hasUnsavedChanges = dirty || hasPendingDiagramChanges;
 
   // navigate's function-update form for search means updateSearch only needs navigate as dep
   const updateSearch = useCallback(
@@ -188,6 +210,7 @@ export const MarkdownEditorScreen = () => {
         revisionId: string | undefined;
         historyMode: 'preview' | 'compare' | undefined;
         compareMode: 'to-current' | 'changes-in-version' | undefined;
+        diagramSessionId: string | undefined;
       }>
     ) => {
       navigate({
@@ -198,7 +221,8 @@ export const MarkdownEditorScreen = () => {
             panel: next.panel,
             revisionId: next.revisionId,
             historyMode: next.historyMode,
-            compareMode: next.compareMode
+            compareMode: next.compareMode,
+            diagramSessionId: next.diagramSessionId
           }) as never
       });
     },
@@ -223,15 +247,26 @@ export const MarkdownEditorScreen = () => {
 
   useEffect(() => {
     if (previousNodeIdRef.current === nodeId) return;
+    clearMarkdownDiagramSession(sessionIdRef.current);
+    sessionIdRef.current = newid();
     previousNodeIdRef.current = nodeId;
     initializedRef.current = false;
     setBody('');
     setDirty(false);
+    setCloseDialogOpen(false);
+    setCloseSummary(null);
+    createdDiagramsRef.current = [];
   }, [nodeId]);
 
   useEffect(() => {
     setScreenState(current => syncMarkdownEditorScreenState(current, requestedMode, requestedPanel));
   }, [requestedMode, requestedPanel]);
+
+  useEffect(() => {
+    if (screenState.screenMode !== 'edit') return;
+    if (search.diagramSessionId === sessionIdRef.current) return;
+    updateSearch({ diagramSessionId: sessionIdRef.current });
+  }, [screenState.screenMode, search.diagramSessionId, updateSearch]);
 
   useEffect(() => {
     if (!data) return;
@@ -261,46 +296,224 @@ export const MarkdownEditorScreen = () => {
     setDirty(true);
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (saveMutation.isPending) return;
-    await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
-    setDirty(false);
+  const clearDiagramSessionState = useCallback(() => {
+    clearMarkdownDiagramSession(sessionIdRef.current);
     createdDiagramsRef.current = [];
-  }, [body, headingTitle, saveMutation]);
+  }, []);
 
-  const handleSaveAndClose = useCallback(async () => {
-    if (saveMutation.isPending) return;
-    await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
-    setDirty(false);
+  const rotateDiagramSession = useCallback(() => {
+    clearMarkdownDiagramSession(sessionIdRef.current);
     createdDiagramsRef.current = [];
-    setScreenState(exitMarkdownEditMode());
-    updateSearch({ mode: 'preview', panel: 'preview', revisionId: undefined });
-  }, [body, headingTitle, saveMutation, updateSearch]);
+    sessionIdRef.current = newid();
+    updateSearch({ diagramSessionId: sessionIdRef.current });
+  }, [updateSearch]);
 
-  const handleClose = useCallback(() => {
-    if (dirty) {
-      const savedBody = data?.body ?? '';
-      for (const { id, path } of createdDiagramsRef.current) {
-        if (!savedBody.includes(id)) {
-          void deleteAttachmentMutation.mutateAsync(path);
-        }
+  const loadDiagramContentByPath = useCallback(
+    async (path: string) => {
+      if (!projectId && !entityId) {
+        return await orpcClient.projects.getWorkspaceFileContent({
+          params: { workspace: workspaceSlug },
+          query: { path }
+        });
       }
-      createdDiagramsRef.current = [];
-      setBody(savedBody);
-      setDirty(false);
-    }
+
+      return await orpcClient.projects.getFileContent({
+        params: { workspace: workspaceSlug, id: projectId ?? entityId ?? '' },
+        query: { path }
+      });
+    },
+    [entityId, projectId, workspaceSlug]
+  );
+
+  const saveDiagramContentByPath = useCallback(
+    async (path: string, content: Record<string, unknown>) => {
+      if (!projectId && !entityId) {
+        await orpcClient.projects.saveWorkspaceFile({
+          params: { workspace: workspaceSlug },
+          query: { path },
+          body: content
+        });
+        return;
+      }
+
+      await orpcClient.projects.saveFile({
+        params: { workspace: workspaceSlug, id: projectId ?? entityId ?? '' },
+        query: { path },
+        body: content
+      });
+    },
+    [entityId, projectId, workspaceSlug]
+  );
+
+  const refreshDiagramPreviewCaches = useCallback(
+    async (diagramIds: string[]) => {
+      await Promise.all(
+        diagramIds.flatMap(diagramId => [
+          queryClient.invalidateQueries({ queryKey: projectFileKeys.detail(workspaceSlug, diagramId) }),
+          queryClient.invalidateQueries({ queryKey: projectFileKeys.content(workspaceSlug, diagramId) })
+        ])
+      );
+    },
+    [queryClient, workspaceSlug]
+  );
+
+  const buildCloseSummary = useCallback(async () => {
+    const records = getMarkdownDiagramRollbackRecords(sessionIdRef.current);
+    const currentContentHashes = Object.fromEntries(
+      await Promise.all(
+        records
+          .filter(record => !!record.lastSavedContentHash)
+          .map(async record => {
+            try {
+              const content = await loadDiagramContentByPath(record.path);
+              return [record.diagramId, hashDiagramContent(JSON.stringify(content))] as const;
+            } catch {
+              return [record.diagramId, undefined] as const;
+            }
+          })
+      )
+    );
+
+    return buildMarkdownCloseImpactSummary({
+      createdDiagrams: createdDiagramsRef.current,
+      records,
+      savedBody: data?.body ?? '',
+      currentContentHashes
+    });
+  }, [data?.body, loadDiagramContentByPath]);
+
+  const exitMarkdownEditor = useCallback(() => {
     setScreenState(exitMarkdownEditMode());
     updateSearch({
       mode: 'preview',
       panel: 'preview',
       revisionId: undefined,
-      historyMode: undefined
+      historyMode: undefined,
+      diagramSessionId: undefined
     });
-  }, [data?.body, dirty, updateSearch, deleteAttachmentMutation]);
+  }, [updateSearch]);
+
+  const handleSave = useCallback(async () => {
+    if (!dirty) {
+      if (hasPendingDiagramChanges) {
+        rotateDiagramSession();
+        setCloseSummary(null);
+      }
+      return;
+    }
+    if (saveMutation.isPending) return;
+    await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
+    setDirty(false);
+    rotateDiagramSession();
+    setCloseSummary(null);
+  }, [body, dirty, hasPendingDiagramChanges, headingTitle, saveMutation, rotateDiagramSession]);
+
+  const handleSaveAndClose = useCallback(async () => {
+    if (dirty) {
+      if (saveMutation.isPending) return;
+      await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
+      setDirty(false);
+    }
+    clearDiagramSessionState();
+    setCloseSummary(null);
+    exitMarkdownEditor();
+  }, [body, dirty, headingTitle, saveMutation, clearDiagramSessionState, exitMarkdownEditor]);
+
+  const finalizeClose = useCallback(async () => {
+    setBody(data?.body ?? '');
+    setDirty(false);
+    setCloseDialogOpen(false);
+    setCloseSummary(null);
+    clearDiagramSessionState();
+    exitMarkdownEditor();
+  }, [clearDiagramSessionState, data?.body, exitMarkdownEditor]);
+
+  const handleKeepDiagramChanges = useCallback(async () => {
+    const savedBody = data?.body ?? '';
+    const touchedDiagramIds = getMarkdownDiagramRollbackRecords(sessionIdRef.current).map(
+      record => record.diagramId
+    );
+
+    for (const { id, path } of createdDiagramsRef.current) {
+      if (!savedBody.includes(id)) {
+        await deleteAttachmentMutation.mutateAsync(path);
+      }
+    }
+
+    await refreshDiagramPreviewCaches(touchedDiagramIds);
+    await finalizeClose();
+  }, [data?.body, deleteAttachmentMutation, finalizeClose, refreshDiagramPreviewCaches]);
+
+  const handleRevertEligibleDiagramChanges = useCallback(async (diagramIds: string[]) => {
+    const summary = closeSummary;
+    if (!summary) {
+      await handleKeepDiagramChanges();
+      return;
+    }
+
+    const recordsById = new Map(
+      getMarkdownDiagramRollbackRecords(sessionIdRef.current).map(record => [record.diagramId, record])
+    );
+
+    for (const diagram of summary.createdDiagramsToDelete) {
+      await deleteAttachmentMutation.mutateAsync(diagram.path);
+    }
+
+    const revertedDiagramIds = summary.revertableDiagrams
+      .filter(diagram => diagramIds.includes(diagram.diagramId))
+      .map(diagram => diagram.diagramId);
+
+    for (const diagram of summary.revertableDiagrams.filter(diagram =>
+      diagramIds.includes(diagram.diagramId)
+    )) {
+      const record = recordsById.get(diagram.diagramId);
+      if (!record) continue;
+      await saveDiagramContentByPath(
+        record.path,
+        JSON.parse(record.originalContent) as Record<string, unknown>
+      );
+    }
+
+    await refreshDiagramPreviewCaches(
+      Array.from(
+        new Set([
+          ...summary.createdDiagramsToDelete.map(diagram => diagram.id),
+          ...summary.revertableDiagrams.map(diagram => diagram.diagramId),
+          ...summary.nonRevertableDiagrams.map(diagram => diagram.diagramId),
+          ...revertedDiagramIds
+        ])
+      )
+    );
+
+    await finalizeClose();
+  }, [
+    closeSummary,
+    deleteAttachmentMutation,
+    finalizeClose,
+    handleKeepDiagramChanges,
+    refreshDiagramPreviewCaches,
+    saveDiagramContentByPath
+  ]);
+
+  const handleClose = useCallback(async () => {
+    if (!dirty && !hasPendingDiagramChanges) {
+      exitMarkdownEditor();
+      return;
+    }
+
+    const summary = await buildCloseSummary();
+    setCloseSummary(summary);
+    setCloseDialogOpen(true);
+  }, [buildCloseSummary, dirty, exitMarkdownEditor, hasPendingDiagramChanges]);
 
   const handleEnterEdit = useCallback(() => {
     setScreenState(enterMarkdownEditMode());
-    updateSearch({ mode: 'edit', panel: undefined, revisionId: undefined });
+    updateSearch({
+      mode: 'edit',
+      panel: undefined,
+      revisionId: undefined,
+      diagramSessionId: sessionIdRef.current
+    });
   }, [updateSearch]);
 
   const handlePreview = useCallback(() => {
@@ -309,7 +522,8 @@ export const MarkdownEditorScreen = () => {
       mode: 'preview',
       panel: 'preview',
       revisionId: undefined,
-      historyMode: undefined
+      historyMode: undefined,
+      diagramSessionId: undefined
     });
   }, [updateSearch]);
 
@@ -318,7 +532,8 @@ export const MarkdownEditorScreen = () => {
     updateSearch({
       mode: 'preview',
       panel: 'history',
-      revisionId: revisions[0]?.id
+      revisionId: revisions[0]?.id,
+      diagramSessionId: undefined
     });
   }, [revisions, updateSearch]);
 
@@ -376,7 +591,8 @@ export const MarkdownEditorScreen = () => {
         panel: 'history',
         revisionId,
         historyMode: historyMode === 'compare' ? 'compare' : undefined,
-        compareMode: historyMode === 'compare' ? compareMode : undefined
+        compareMode: historyMode === 'compare' ? compareMode : undefined,
+        diagramSessionId: undefined
       });
     },
     [historyMode, compareMode, updateSearch]
@@ -389,7 +605,8 @@ export const MarkdownEditorScreen = () => {
         panel: 'history',
         historyMode: 'compare',
         compareMode: mode,
-        revisionId: selectedRevisionId
+        revisionId: selectedRevisionId,
+        diagramSessionId: undefined
       });
     },
     [selectedRevisionId, updateSearch]
@@ -401,7 +618,8 @@ export const MarkdownEditorScreen = () => {
       panel: 'history',
       revisionId: selectedRevisionId,
       historyMode: undefined,
-      compareMode: undefined
+      compareMode: undefined,
+      diagramSessionId: undefined
     });
   }, [selectedRevisionId, updateSearch]);
 
@@ -410,15 +628,10 @@ export const MarkdownEditorScreen = () => {
       if (restoreMutation.isPending) return;
       await restoreMutation.mutateAsync(revisionId);
       setDirty(false);
-      setScreenState(exitMarkdownEditMode());
-      updateSearch({
-        mode: 'preview',
-        panel: 'preview',
-        revisionId: undefined,
-        historyMode: undefined
-      });
+      clearDiagramSessionState();
+      exitMarkdownEditor();
     },
-    [restoreMutation, updateSearch]
+    [restoreMutation, clearDiagramSessionState, exitMarkdownEditor]
   );
 
   const handleOpenAttachment = useCallback(
@@ -576,7 +789,9 @@ export const MarkdownEditorScreen = () => {
   );
 
   return (
-    <MarkdownDiagramSessionContext.Provider value={{ trackCreatedDiagram }}>
+    <MarkdownDiagramSessionContext.Provider
+      value={{ sessionId: sessionIdRef.current, trackCreatedDiagram }}
+    >
     <div className={styles.screen}>
       <input
         ref={fileInputRef}
@@ -621,8 +836,8 @@ export const MarkdownEditorScreen = () => {
             </button>
           </div>
 
-          <span className={dirty ? styles.dirty : styles.clean}>
-            {dirty ? (
+          <span className={hasUnsavedChanges ? styles.dirty : styles.clean}>
+            {hasUnsavedChanges ? (
               <>
                 <span className={styles.dirtyDot} /> Unsaved changes
               </>
@@ -810,6 +1025,17 @@ export const MarkdownEditorScreen = () => {
         confirmLabel="Delete attachment"
         onConfirm={handleAttachmentDeleteConfirm}
         onCancel={() => setAttachmentDeleteTarget(null)}
+      />
+
+      <MarkdownCloseDialog
+        open={closeDialogOpen}
+        summary={closeSummary}
+        onCancel={() => setCloseDialogOpen(false)}
+        onCloseWithSelection={diagramIds =>
+          void (diagramIds.length > 0
+            ? handleRevertEligibleDiagramChanges(diagramIds)
+            : handleKeepDiagramChanges())
+        }
       />
     </div>
     </MarkdownDiagramSessionContext.Provider>
