@@ -15,6 +15,14 @@ import {
 import { orpcClient } from '../lib/orpcClient';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
+export const useProjectFile = (workspaceSlug: string, fileId: string) =>
+  useQuery({
+    queryKey: projectFileKeys.detail(workspaceSlug, fileId),
+    queryFn: () =>
+      orpcClient.projects.getFile({ params: { workspace: workspaceSlug, fileId } }),
+    enabled: !!workspaceSlug && !!fileId
+  });
+
 // Hook for fetching project files
 export const useProjectFiles = (workspaceId: string, projectId: string) => {
   return useQuery({

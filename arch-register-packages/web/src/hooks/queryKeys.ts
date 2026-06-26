@@ -72,6 +72,8 @@ export const projectFileKeys = {
   lists: () => [...projectFileKeys.all, 'list'] as const,
   list: (workspaceId: string, projectId: string) =>
     [...projectFileKeys.lists(), workspaceId, projectId] as const,
+  detail: (workspaceId: string, fileId: string) =>
+    [...projectFileKeys.all, 'detail', workspaceId, fileId] as const
 };
 
 export const auditKeys = {

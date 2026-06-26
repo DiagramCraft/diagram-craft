@@ -1894,6 +1894,28 @@ const requireMarkdownNodeAccess = async (
   requireProjectAction(authCtx, project.owner, 'edit_project', 'You do not have permission to modify this project');
 };
 
+export const getProjectFile = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  fileId: string,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const node = await db.project.getAnyContentNodeById(ws, fileId);
+    httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
+    if (node.project_id) {
+      const project = await db.project.getProject(ws, node.project_id);
+      httpAssert.present(project, { status: 404, message: 'Project not found' });
+      requireProjectAccess(authCtx, project.owner);
+    }
+    return toApiProjectFile(node);
+  } catch (e) {
+    return handleError(e, 'Failed to retrieve file');
+  }
+};
+
 export const getMarkdownContent = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,

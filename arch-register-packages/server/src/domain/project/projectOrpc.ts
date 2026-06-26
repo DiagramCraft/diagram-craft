@@ -47,6 +47,7 @@ import {
   createProjectMarkdownDoc,
   createEntityMarkdownDoc,
   createWorkspaceMarkdownDoc,
+  getProjectFile,
   getMarkdownContent,
   saveMarkdownContent,
   listMarkdownRevisions,
@@ -671,6 +672,20 @@ export const projectORPCRouter = projectRouter.router({
             input.params.workspace,
             input.body.name,
             input.body.folder,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    getFile: projectRouter.projects.getFile.handler(
+      async ({ input, context }) => {
+        try {
+          return await getProjectFile(
+            context.db,
+            input.params.workspace,
+            input.params.fileId,
             context.event
           );
         } catch (error) {

@@ -1,0 +1,55 @@
+.container {
+  display: block;
+  padding: 14px 20px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+  box-sizing: border-box;
+  margin: 0 0 var(--article-block-gap) 0;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.container.error {
+  border-color: color-mix(in oklch, var(--error-fg) 30%, transparent);
+  background: color-mix(in oklch, var(--error-fg) 6%, transparent);
+}
+
+.loading {
+  color: var(--cmp-fg-disabled);
+  font-style: italic;
+  font-size: 13px;
+  padding: 2px 0;
+}
+
+.errorText {
+  color: var(--error-fg);
+  font-size: 12px;
+}
+
+.empty {
+  color: var(--base-fg-more-dim);
+  font-size: 13px;
+}
+
+.svgWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.svgWrapper svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.caption {
+  font-size: 12px;
+  color: var(--base-fg-dim);
+  text-align: center;
+  margin: 8px 0 0 0;
+  font-style: italic;
+}

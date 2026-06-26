@@ -1,3 +1,5 @@
+import { DIAGRAM_EMBED_TYPE } from './blocks/diagram-embed/DiagramEmbedEditable';
+import { diagramEmbedSpec } from './blocks/diagram-embed/DiagramEmbedRegistration';
 import { ENTITY_CARD_TYPE } from './blocks/entity-card/EntityCardEditable';
 import { entityCardSpec } from './blocks/entity-card/EntityCardRegistration';
 import { ENTITY_CHANGELOG_TYPE } from './blocks/entity-changelog/EntityChangelogEditable';
@@ -18,6 +20,7 @@ import type { MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec } from './types';
 
 export const MDX_COMPONENTS = {
+  [DIAGRAM_EMBED_TYPE]: diagramEmbedSpec,
   [ENTITY_CARD_TYPE]: entityCardSpec,
   [ENTITY_CHANGELOG_TYPE]: entityChangelogSpec,
   [ENTITY_CHART_TYPE]: entityChartSpec,

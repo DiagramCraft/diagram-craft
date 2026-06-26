@@ -625,6 +625,16 @@ export const projectContract = {
         body: z.object({ name: z.string(), folder: z.string().optional() })
       }))
       .output(projectFileSchema),
+    getFile: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/files/{fileId}',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ fileId: z.string() })
+      }))
+      .output(projectFileSchema),
     getMarkdownContent: oc
       .route({
         method: 'GET',
