@@ -9,6 +9,7 @@ export type ContentNodeDbResult = {
   parent_id: string | null;
   path: string;
   name: string;
+  role?: 'attachment-container' | null;
   type: 'diagram' | 'folder' | 'markdown' | 'file';
   size_bytes: number;
   comment_count: number;
@@ -59,6 +60,7 @@ export type ContentNodeDbUpsert = {
   parent_id?: string | null;
   path: string;
   name: string;
+  role?: 'attachment-container' | null;
   type?: 'diagram' | 'folder' | 'markdown' | 'file';
   size_bytes: number;
   comment_count: number;

@@ -50,6 +50,7 @@ export const projectFileSchema = z.object({
   project_public_id: z.string().nullable().optional(),
   path: z.string(),
   name: z.string(),
+  role: z.enum(['attachment-container']).nullable().optional(),
   size_bytes: z.number(),
   comment_count: z.number().optional(),
   unresolved_comment_count: z.number().optional(),
@@ -78,6 +79,11 @@ const markdownRevisionSummarySchema = z.object({
 
 const markdownRevisionDetailSchema = markdownRevisionSummarySchema.extend({
   body: z.string()
+});
+
+const markdownContentSchema = z.object({
+  body: z.string(),
+  attachments: z.array(projectFileSchema)
 });
 
 const fileFolderSchema = z.object({
@@ -654,7 +660,7 @@ export const projectContract = {
       .input(z.object({
         params: ws.extend({ nodeId: z.string() })
       }))
-      .output(z.object({ body: z.string() })),
+      .output(markdownContentSchema),
     saveMarkdownContent: oc
       .route({
         method: 'PUT',
@@ -702,6 +708,7 @@ export const projectContract = {
 export type Project = z.infer<typeof projectSchema>;
 export type ProjectFile = z.infer<typeof projectFileSchema>;
 export type ContentMetadata = z.infer<typeof contentMetadataSchema>;
+export type MarkdownContent = z.infer<typeof markdownContentSchema>;
 export type MarkdownRevisionSummary = z.infer<typeof markdownRevisionSummarySchema>;
 export type MarkdownRevisionDetail = z.infer<typeof markdownRevisionDetailSchema>;
 export type FileTree = z.infer<typeof fileTreeSchema>;

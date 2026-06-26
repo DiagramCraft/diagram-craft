@@ -14,7 +14,8 @@ import {
   uploadEntityFile,
   downloadEntityFile,
   uploadWorkspaceFile,
-  downloadWorkspaceFile
+  downloadWorkspaceFile,
+  uploadMarkdownAttachment
 } from './projectOperations';
 
 const MAX_SIZE_BYTES =
@@ -49,6 +50,24 @@ export const createProjectFileRoutesHandler = (
   const router = createRouter();
 
   // ── Project-scoped ─────────────────────────────────────────
+
+  router.post('/api/:workspace/markdown/:nodeId/attachments/upload', async event => {
+    const workspace = getRouterParam(event, 'workspace')!;
+    const nodeId = getRouterParam(event, 'nodeId')!;
+    const { path } = getQuery(event) as { path: string };
+    const { buffer, mimeType, originalFilename } = await readUpload(event as AuthenticatedEvent);
+    return uploadMarkdownAttachment(
+      db,
+      storage,
+      workspace,
+      nodeId,
+      path,
+      buffer,
+      mimeType,
+      originalFilename,
+      event as AuthenticatedEvent
+    );
+  });
 
   router.post('/api/:workspace/projects/:id/files/upload', async event => {
     const workspace = getRouterParam(event, 'workspace')!;

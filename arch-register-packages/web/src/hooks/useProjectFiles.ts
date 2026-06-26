@@ -8,6 +8,7 @@ import {
   workspaceContentKeys
 } from './queryKeys';
 import {
+  MarkdownContent,
   MarkdownRevisionDetail,
   MarkdownRevisionSummary,
   ProjectFile
@@ -154,7 +155,8 @@ export const useRenameProjectFile = (workspaceId: string, projectId: string) => 
       const folder = file.path.includes('/')
         ? file.path.substring(0, file.path.lastIndexOf('/'))
         : null;
-      const newPath = folder ? `${folder}/${newName}.json` : `${newName}.json`;
+      const ext = file.type === 'markdown' ? '.md' : '.json';
+      const newPath = folder ? `${folder}/${newName}${ext}` : `${newName}${ext}`;
       return orpcClient.projects.relocateFile({
         params: { workspace: workspaceId, id: projectId },
         query: { path: file.path },
@@ -403,7 +405,7 @@ export const markdownContentKeys = {
 };
 
 export const useMarkdownContent = (workspaceId: string, nodeId: string) => {
-  return useQuery({
+  return useQuery<MarkdownContent>({
     queryKey: markdownContentKeys.detail(workspaceId, nodeId),
     queryFn: () =>
       orpcClient.projects.getMarkdownContent({ params: { workspace: workspaceId, nodeId } }),
@@ -534,6 +536,84 @@ const uploadFile = async (
     throw new Error(text);
   }
   return response.json() as Promise<ProjectFile>;
+};
+
+export const useUploadMarkdownAttachment = (
+  workspaceId: string,
+  nodeId: string,
+  options?: { projectId?: string; entityId?: string }
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) =>
+      uploadFile(`/api/${workspaceId}/markdown/${nodeId}/attachments/upload`, file, file.name),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: markdownContentKeys.detail(workspaceId, nodeId) });
+      await invalidateAuditQueries(queryClient, workspaceId);
+
+      if (options?.projectId) {
+        await invalidateProjectQueries(queryClient, workspaceId, options.projectId);
+        return;
+      }
+
+      if (options?.entityId) {
+        await queryClient.invalidateQueries({
+          queryKey: entityContentKeys.all(workspaceId, options.entityId)
+        });
+        return;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
+export const useDeleteMarkdownAttachment = (
+  workspaceId: string,
+  nodeId: string,
+  options?: { projectId?: string; entityId?: string }
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (filePath: string) => {
+      if (options?.projectId) {
+        return orpcClient.projects.deleteFile({
+          params: { workspace: workspaceId, id: options.projectId },
+          query: { path: filePath }
+        });
+      }
+
+      if (options?.entityId) {
+        return orpcClient.projects.deleteEntityFile({
+          params: { workspace: workspaceId, entityId: options.entityId },
+          query: { path: filePath }
+        });
+      }
+
+      return orpcClient.projects.deleteWorkspaceFile({
+        params: { workspace: workspaceId },
+        query: { path: filePath }
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: markdownContentKeys.detail(workspaceId, nodeId) });
+      await invalidateAuditQueries(queryClient, workspaceId);
+
+      if (options?.projectId) {
+        await invalidateProjectQueries(queryClient, workspaceId, options.projectId);
+        return;
+      }
+
+      if (options?.entityId) {
+        await queryClient.invalidateQueries({
+          queryKey: entityContentKeys.all(workspaceId, options.entityId)
+        });
+        return;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
 };
 
 export const useUploadProjectFile = (workspaceId: string, projectId: string) => {

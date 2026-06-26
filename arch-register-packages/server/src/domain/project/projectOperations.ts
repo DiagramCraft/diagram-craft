@@ -16,6 +16,14 @@ import { logAudit, extractEntityFields, computeChanges } from '../audit/db/audit
 import { handleDbError } from '../../utils/http';
 import { fileNameFromPath, displayNameFromBody, folderFromPath, stripJsonExtension } from './contentFileHelpers';
 import {
+  ATTACHMENT_CONTAINER_NAME,
+  collectDescendantNodes,
+  collectHiddenAttachmentNodeIds,
+  CONTENT_NODE_ROLE_ATTACHMENT_CONTAINER,
+  getAttachmentContainerForMarkdownNode,
+  getMarkdownAttachmentNodes
+} from './contentNodeRoleUtils';
+import {
   toApiProject,
   toApiProjectFile,
   toApiProjectDetail,
@@ -28,6 +36,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import {
   DiagramEntityFile,
   FileTree,
+  MarkdownContent,
   MarkdownRevisionDetail,
   MarkdownRevisionSummary,
   Project,
@@ -135,8 +144,10 @@ const reloadContentNode = async (db: DatabaseAdapter, workspace: string, nodeId:
 };
 
 export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
-  const folderNodes = files.filter(f => f.type === 'folder');
-  const nonFolderNodes = files.filter(f => f.type !== 'folder');
+  const hiddenAttachmentNodeIds = collectHiddenAttachmentNodeIds(files);
+  const visibleFiles = files.filter(file => !hiddenAttachmentNodeIds.has(file.id));
+  const folderNodes = visibleFiles.filter(f => f.type === 'folder');
+  const nonFolderNodes = visibleFiles.filter(f => f.type !== 'folder');
 
   const rootFiles = nonFolderNodes.filter(f => f.parent_id === null).map(toApiProjectFile);
 
@@ -149,6 +160,129 @@ export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
     }));
 
   return { folders, rootFiles };
+};
+
+const getNodeExtension = (node: Pick<ContentNodeDbResult, 'type'>) => {
+  switch (node.type) {
+    case 'markdown':
+      return '.md';
+    case 'file':
+      return '';
+    default:
+      return '.json';
+  }
+};
+
+const getDisplayNameForPath = (
+  node: Pick<ContentNodeDbResult, 'type'>,
+  path: string
+) => {
+  const fileName = fileNameFromPath(path);
+  if (node.type === 'file') return fileName;
+  if (node.type === 'markdown' && fileName.endsWith('.md')) return fileName.slice(0, -3);
+  if (fileName.endsWith('.json')) return fileName.slice(0, -5);
+  return fileName;
+};
+
+const listSiblingNodes = async (
+  db: DatabaseAdapter,
+  ws: string,
+  node: Pick<ContentNodeDbResult, 'project_id' | 'entity_id'>
+) => {
+  if (node.project_id) return await db.project.listContentNodes(ws, node.project_id);
+  if (node.entity_id) return await db.project.listEntityContentNodes(ws, node.entity_id);
+  return await db.project.listWorkspaceContentNodes(ws);
+};
+
+const buildRelocatedAttachmentPath = (
+  previousRootPath: string,
+  nextRootPath: string,
+  currentPath: string
+) => {
+  if (currentPath === previousRootPath) return nextRootPath;
+  const suffix = currentPath.startsWith(`${previousRootPath}/`)
+    ? currentPath.slice(previousRootPath.length + 1)
+    : currentPath;
+  return `${nextRootPath}/${suffix}`;
+};
+
+const cloneMarkdownAttachmentSubtree = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  ws: string,
+  storageId: string,
+  sourceMarkdownNode: ContentNodeDbResult,
+  targetMarkdownNode: ContentNodeDbResult,
+  siblingNodes: readonly ContentNodeDbResult[],
+  authCtx: { userId: string | null },
+  timestamp: Date
+) => {
+  const container = getAttachmentContainerForMarkdownNode(siblingNodes, sourceMarkdownNode.id);
+  if (!container) return;
+
+  const descendants = collectDescendantNodes(siblingNodes, container.id);
+  const previousRootPath = sourceMarkdownNode.path.endsWith('.md')
+    ? sourceMarkdownNode.path.slice(0, -3)
+    : sourceMarkdownNode.path;
+  const nextRootPath = targetMarkdownNode.path.endsWith('.md')
+    ? targetMarkdownNode.path.slice(0, -3)
+    : targetMarkdownNode.path;
+
+  const createdByOldId = new Map<string, ContentNodeDbResult>();
+  createdByOldId.set(sourceMarkdownNode.id, targetMarkdownNode);
+
+  const sourceNodes = [container, ...descendants];
+  for (const sourceNode of sourceNodes) {
+    const newPath = buildRelocatedAttachmentPath(previousRootPath, nextRootPath, sourceNode.path);
+    const parentId =
+      sourceNode.parent_id === sourceMarkdownNode.id
+        ? targetMarkdownNode.id
+        : createdByOldId.get(sourceNode.parent_id ?? '')?.id ?? null;
+
+    const createdNode = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: targetMarkdownNode.project_id,
+      entity_id: targetMarkdownNode.entity_id,
+      parent_id: parentId,
+      path: newPath,
+      name: sourceNode.name,
+      role: sourceNode.role,
+      type: sourceNode.type,
+      size_bytes: sourceNode.size_bytes,
+      comment_count: sourceNode.comment_count,
+      unresolved_comment_count: sourceNode.unresolved_comment_count,
+      created_atIfNew: timestamp,
+      updated_at: timestamp,
+      created_byIfNew: authCtx.userId,
+      updated_by: authCtx.userId,
+      mime_type: sourceNode.mime_type,
+      original_filename: sourceNode.original_filename
+    });
+    createdByOldId.set(sourceNode.id, createdNode);
+
+    if (sourceNode.type !== 'folder') {
+      const content = await storage.read(ws, storageId, sourceNode.id);
+      await storage.write(ws, storageId, createdNode.id, content);
+    }
+  }
+};
+
+const deleteMarkdownAttachmentSubtree = async (
+  storage: StorageAdapter,
+  ws: string,
+  storageId: string,
+  siblingNodes: readonly ContentNodeDbResult[],
+  markdownNodeId: string
+) => {
+  const container = getAttachmentContainerForMarkdownNode(siblingNodes, markdownNodeId);
+  if (!container) return;
+
+  const subtree = [container, ...collectDescendantNodes(siblingNodes, container.id)];
+  await Promise.all(
+    subtree
+      .filter(node => node.type !== 'folder')
+      .map(node => storage.delete(ws, storageId, node.id).catch(() => {}))
+  );
 };
 
 const toApiMarkdownRevisionSummary = (
@@ -943,6 +1077,8 @@ export const deleteFile = async (
 
     const file = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+    const siblingNodes =
+      file.type === 'markdown' ? await db.project.listContentNodes(ws, projectUuid) : [];
 
     await db.project.deleteContentNodeByPath(ws, projectUuid, filePath);
 
@@ -959,6 +1095,9 @@ export const deleteFile = async (
       metadata: { project_id: projectUuid, path: filePath }
     });
 
+    if (file.type === 'markdown') {
+      await deleteMarkdownAttachmentSubtree(storage, ws, projectUuid, siblingNodes, file.id);
+    }
     await storage.delete(ws, projectUuid, file.id).catch(() => {});
 
     return { success: true };
@@ -992,55 +1131,74 @@ export const cloneFile = async (
     const sourceFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
     httpAssert.present(sourceFile, { status: 404, message: `File '${filePath}' not found` });
 
-    const content = await storage.read(ws, projectUuid, sourceFile.id);
-    const fileData = JSON.parse(content.toString('utf8'));
-
     const baseName = fileNameFromPath(filePath);
-    const baseNameWithoutExt = stripJsonExtension(baseName);
     const folder = folderFromPath(filePath);
+    const extension = getNodeExtension(sourceFile);
+    const baseNameWithoutExt =
+      sourceFile.type === 'file'
+        ? baseName
+        : sourceFile.type === 'markdown' && baseName.endsWith('.md')
+          ? baseName.slice(0, -3)
+          : stripJsonExtension(baseName);
 
     let cloneNumber = 1;
     let clonePath: string;
     let cloneName: string;
     do {
       cloneName = `${baseNameWithoutExt} (${cloneNumber})`;
-      clonePath = folder ? `${folder}/${cloneName}.json` : `${cloneName}.json`;
+      clonePath = folder ? `${folder}/${cloneName}${extension}` : `${cloneName}${extension}`;
       const existing = await db.project.getContentNodeByPath(ws, projectUuid, clonePath);
       if (!existing) break;
       cloneNumber++;
     } while (cloneNumber < 1000);
-
-    if (fileData && typeof fileData === 'object' && 'name' in fileData) {
-      fileData.name = cloneName;
-    }
-
-    // TODO: We should add validation for this
-    const doc = fileData as unknown as SerializedDiagramDocument;
-
     const timestamp = new Date();
-    const clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-    const commentCounts = getDiagramCommentCounts(doc);
+    const content = await storage.read(ws, projectUuid, sourceFile.id);
+    let clonedContent = content;
+    let commentCounts = {
+      commentCount: sourceFile.comment_count,
+      unresolvedCommentCount: sourceFile.unresolved_comment_count
+    };
+    let previewSvg = sourceFile.preview_svg;
+
+    if (sourceFile.type === 'diagram') {
+      const fileData = JSON.parse(content.toString('utf8'));
+      if (fileData && typeof fileData === 'object' && 'name' in fileData) {
+        fileData.name = cloneName;
+      }
+      const doc = fileData as unknown as SerializedDiagramDocument;
+      clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
+      commentCounts = getDiagramCommentCounts(doc);
+
+      try {
+        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
+      } catch {
+        previewSvg = null;
+      }
+    }
 
     const row = await db.project.upsertContentNode({
       workspace: ws,
       project_id: projectUuid,
       path: clonePath,
       name: cloneName,
+      role: sourceFile.role,
+      type: sourceFile.type,
       size_bytes: clonedContent.length,
       comment_count: commentCounts.commentCount,
       unresolved_comment_count: commentCounts.unresolvedCommentCount,
       created_atIfNew: timestamp,
       updated_at: timestamp,
       created_byIfNew: authCtx.userId,
-      updated_by: authCtx.userId
+      updated_by: authCtx.userId,
+      mime_type: sourceFile.mime_type,
+      original_filename: sourceFile.type === 'file' ? cloneName : sourceFile.original_filename
     });
 
     await storage.write(ws, projectUuid, row.id, clonedContent);
 
-    try {
-      const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-      const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-      const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
+    if (sourceFile.type === 'diagram') {
       await db.project.updateContentNodeDerivedData(
         ws,
         projectUuid,
@@ -1051,22 +1209,26 @@ export const cloneFile = async (
         previewSvg ?? null,
         timestamp
       );
-    } catch {
-      await db.project.updateContentNodeDerivedData(
+
+      const fileData = JSON.parse(clonedContent.toString('utf8'));
+      const doc = fileData as unknown as SerializedDiagramDocument;
+      const entityRefs = getDiagramEntityRefs(doc);
+      await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
+      await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
+    } else if (sourceFile.type === 'markdown') {
+      const siblingNodes = await db.project.listContentNodes(ws, projectUuid);
+      await cloneMarkdownAttachmentSubtree(
+        db,
+        storage,
         ws,
         projectUuid,
-        row.id,
-        clonedContent.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        null,
+        sourceFile,
+        row,
+        siblingNodes,
+        authCtx,
         timestamp
       );
     }
-
-    const entityRefs = getDiagramEntityRefs(doc);
-    await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
-    await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
     const savedRow = await reloadContentNode(db, ws, row.id);
 
     await logAudit(db, {
@@ -1123,24 +1285,39 @@ export const relocateFile = async (
       status: 409,
       message: `A file already exists at '${newPath}'`
     });
+    const attachmentSourceNodes =
+      existingFile.type === 'markdown' ? await db.project.listContentNodes(ws, projectUuid) : [];
 
-    const content = await storage.read(ws, projectUuid, existingFile.id);
-    const fileData = JSON.parse(content.toString('utf8'));
-
-    const newName = newPath.includes('/')
-      ? newPath.substring(newPath.lastIndexOf('/') + 1)
-      : newPath;
-    const displayName = newName.endsWith('.json') ? newName.slice(0, -5) : newName;
-
-    if (fileData && typeof fileData === 'object' && 'name' in fileData) {
-      fileData.name = displayName;
-    }
-
-    const doc = fileData as unknown as SerializedDiagramDocument;
+    const displayName = getDisplayNameForPath(existingFile, newPath);
 
     const timestamp = new Date();
-    const updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-    const commentCounts = getDiagramCommentCounts(doc);
+    const content = await storage.read(ws, projectUuid, existingFile.id);
+    let updatedContent = content;
+    let commentCounts = {
+      commentCount: existingFile.comment_count,
+      unresolvedCommentCount: existingFile.unresolved_comment_count
+    };
+    let previewSvg = existingFile.preview_svg;
+
+    if (existingFile.type === 'diagram') {
+      const fileData = JSON.parse(content.toString('utf8'));
+
+      if (fileData && typeof fileData === 'object' && 'name' in fileData) {
+        fileData.name = displayName;
+      }
+
+      const doc = fileData as unknown as SerializedDiagramDocument;
+      updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
+      commentCounts = getDiagramCommentCounts(doc);
+
+      try {
+        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
+      } catch {
+        previewSvg = null;
+      }
+    }
 
     const newLastSlash = newPath.lastIndexOf('/');
     let newParentId: string | null = null;
@@ -1156,13 +1333,17 @@ export const relocateFile = async (
       parent_id: newParentId,
       path: newPath,
       name: displayName,
+      role: existingFile.role,
+      type: existingFile.type,
       size_bytes: updatedContent.length,
       comment_count: commentCounts.commentCount,
       unresolved_comment_count: commentCounts.unresolvedCommentCount,
       created_atIfNew: existingFile.created_at,
       updated_at: timestamp,
       created_byIfNew: existingFile.created_by,
-      updated_by: authCtx.userId
+      updated_by: authCtx.userId,
+      mime_type: existingFile.mime_type,
+      original_filename: existingFile.type === 'file' ? displayName : existingFile.original_filename
     });
 
     if (existingFile.is_template || existingFile.is_workspace_template) {
@@ -1176,30 +1357,48 @@ export const relocateFile = async (
       );
     }
 
-    let previewSvg: string | null;
-    try {
-      const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-      const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-      previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
-    } catch {
-      previewSvg = null;
-    }
-    await db.project.updateContentNodeDerivedData(
-      ws,
-      projectUuid,
-      newFile.id,
-      updatedContent.length,
-      commentCounts.commentCount,
-      commentCounts.unresolvedCommentCount,
-      previewSvg,
-      timestamp
-    );
-
     await storage.write(ws, projectUuid, newFile.id, updatedContent);
-    await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
+
+    if (existingFile.type === 'diagram') {
+      await db.project.updateContentNodeDerivedData(
+        ws,
+        projectUuid,
+        newFile.id,
+        updatedContent.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        previewSvg,
+        timestamp
+      );
+
+      const fileData = JSON.parse(updatedContent.toString('utf8'));
+      const doc = fileData as unknown as SerializedDiagramDocument;
+      await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
+    } else if (existingFile.type === 'markdown') {
+      await cloneMarkdownAttachmentSubtree(
+        db,
+        storage,
+        ws,
+        projectUuid,
+        existingFile,
+        newFile,
+        attachmentSourceNodes,
+        authCtx,
+        timestamp
+      );
+    }
     const savedFile = await reloadContentNode(db, ws, newFile.id);
 
     await db.project.deleteContentNodeByPath(ws, projectUuid, filePath);
+    if (existingFile.type === 'markdown') {
+      await deleteMarkdownAttachmentSubtree(
+        storage,
+        ws,
+        projectUuid,
+        attachmentSourceNodes,
+        existingFile.id
+      );
+    }
     await storage.delete(ws, projectUuid, existingFile.id).catch(() => {});
 
     await logAudit(db, {
@@ -1874,6 +2073,66 @@ export const createWorkspaceMarkdownDoc = async (
 const storageScope = (ws: string, node: { project_id: string | null; entity_id: string | null }) =>
   node.project_id ?? node.entity_id ?? ws;
 
+const getAttachmentContainerPath = (markdownPath: string) =>
+  `${markdownPath.endsWith('.md') ? markdownPath.slice(0, -3) : markdownPath}/${ATTACHMENT_CONTAINER_NAME}`;
+
+const ensureMarkdownAttachmentContainer = async (
+  db: DatabaseAdapter,
+  ws: string,
+  markdownNode: ContentNodeDbResult,
+  authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
+  timestamp: Date
+) => {
+  const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+  const existingContainer = getAttachmentContainerForMarkdownNode(siblingNodes, markdownNode.id);
+  if (existingContainer) return existingContainer;
+
+  const containerPath = getAttachmentContainerPath(markdownNode.path);
+  const createdContainer = await db.project.createContentNodeIfAbsent({
+    workspace: ws,
+    project_id: markdownNode.project_id,
+    entity_id: markdownNode.entity_id,
+    parent_id: markdownNode.id,
+    path: containerPath,
+    name: ATTACHMENT_CONTAINER_NAME,
+    role: CONTENT_NODE_ROLE_ATTACHMENT_CONTAINER,
+    type: 'folder',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    created_atIfNew: timestamp,
+    updated_at: timestamp,
+    created_byIfNew: authCtx.userId,
+    updated_by: authCtx.userId
+  });
+
+  if (createdContainer) {
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'create',
+      entityType: 'content_node',
+      entityId: createdContainer.id,
+      entityName: createdContainer.name,
+      changes: { new: extractEntityFields(createdContainer) },
+      metadata: {
+        path: createdContainer.path,
+        parent_markdown_node_id: markdownNode.id,
+        role: CONTENT_NODE_ROLE_ATTACHMENT_CONTAINER
+      }
+    });
+    return createdContainer;
+  }
+
+  const nextSiblingNodes = await listSiblingNodes(db, ws, markdownNode);
+  const container = getAttachmentContainerForMarkdownNode(nextSiblingNodes, markdownNode.id);
+  httpAssert.present(container, {
+    status: 500,
+    message: `Attachment container for markdown document '${markdownNode.id}' could not be created`
+  });
+  return container;
+};
+
 const requireMarkdownNodeAccess = async (
   db: DatabaseAdapter,
   ws: string,
@@ -1955,7 +2214,7 @@ export const getMarkdownContent = async (
   workspace: string,
   nodeId: string,
   event: AuthenticatedEvent
-): Promise<{ body: string }> => {
+): Promise<MarkdownContent> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
@@ -1963,11 +2222,93 @@ export const getMarkdownContent = async (
     httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
     httpAssert.true(node.type === 'markdown', { status: 400, message: 'Node is not a markdown document' });
     await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+    const siblingNodes = await listSiblingNodes(db, ws, node);
+    const attachments = getMarkdownAttachmentNodes(siblingNodes, node.id).map(toApiProjectFile);
     const content = await storage.read(ws, storageScope(ws, node), node.id);
     const parsed = JSON.parse(content.toString('utf8')) as { body?: string };
-    return { body: parsed.body ?? '' };
+    return { body: parsed.body ?? '', attachments };
   } catch (e) {
     return handleError(e, 'Failed to retrieve markdown content');
+  }
+};
+
+export const uploadMarkdownAttachment = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  nodeId: string,
+  filePath: string,
+  buffer: Buffer,
+  mimeType: string,
+  originalFilename: string,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const fileName = fileNameFromPath(filePath) || originalFilename;
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
+    httpAssert.present(markdownNode, {
+      status: 404,
+      message: `Markdown document '${nodeId}' not found`
+    });
+    httpAssert.true(markdownNode.type === 'markdown', {
+      status: 400,
+      message: 'Node is not a markdown document'
+    });
+    await requireMarkdownNodeAccess(db, ws, authCtx, markdownNode, 'edit');
+
+    const timestamp = new Date();
+    const container = await ensureMarkdownAttachmentContainer(db, ws, markdownNode, authCtx, timestamp);
+    const attachmentPath = `${container.path}/${fileName}`;
+    const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+    const existingFile =
+      getMarkdownAttachmentNodes(siblingNodes, markdownNode.id).find(
+        node => node.path === attachmentPath && node.type === 'file'
+      ) ?? null;
+    const isUpdate = existingFile !== null;
+
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: markdownNode.project_id,
+      entity_id: markdownNode.entity_id,
+      parent_id: container.id,
+      path: attachmentPath,
+      name: originalFilename,
+      type: 'file',
+      size_bytes: buffer.length,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: existingFile?.created_at ?? timestamp,
+      updated_at: timestamp,
+      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+      updated_by: authCtx.userId,
+      mime_type: mimeType,
+      original_filename: originalFilename
+    });
+
+    await storage.write(ws, storageScope(ws, markdownNode), row.id, buffer);
+
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: isUpdate ? 'update' : 'create',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: isUpdate
+        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
+        : { new: extractEntityFields(row) },
+      metadata: {
+        path: attachmentPath,
+        parent_markdown_node_id: markdownNode.id,
+        is_attachment: true
+      }
+    });
+
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to upload markdown attachment');
   }
 };
 
@@ -2477,6 +2818,9 @@ export const deleteEntityFile = async (
       metadata: { entity_id: entityUuid, path: filePath }
     });
 
+    if (file.type === 'markdown') {
+      await deleteMarkdownAttachmentSubtree(storage, ws, entityUuid, entityNodes, file.id);
+    }
     await storage.delete(ws, entityUuid, file.id).catch(() => {});
 
     return { success: true };
@@ -2583,50 +2927,62 @@ export const cloneEntityFile = async (
     const sourceFile = entityNodes.find(n => n.path === filePath) ?? null;
     httpAssert.present(sourceFile, { status: 404, message: `File '${filePath}' not found` });
 
-    const content = await storage.read(ws, entityUuid, sourceFile.id);
-
     const baseName = fileNameFromPath(filePath);
     const folder = folderFromPath(filePath);
+    const extension = getNodeExtension(sourceFile);
     const isBinary = sourceFile.type === 'file';
-
-    const baseNameWithoutExt = isBinary ? baseName : stripJsonExtension(baseName);
+    const baseNameWithoutExt =
+      sourceFile.type === 'file'
+        ? baseName
+        : sourceFile.type === 'markdown' && baseName.endsWith('.md')
+          ? baseName.slice(0, -3)
+          : stripJsonExtension(baseName);
 
     let cloneNumber = 1;
     let clonePath: string;
     let cloneName: string;
     do {
       cloneName = `${baseNameWithoutExt} (${cloneNumber})`;
-      const ext = isBinary ? '' : '.json';
-      clonePath = folder ? `${folder}/${cloneName}${ext}` : `${cloneName}${ext}`;
+      clonePath = folder ? `${folder}/${cloneName}${extension}` : `${cloneName}${extension}`;
       const existing = entityNodes.find(n => n.path === clonePath);
       if (!existing) break;
       cloneNumber++;
     } while (cloneNumber < 1000);
 
-    let clonedContent: Buffer;
-    let commentCounts = { commentCount: 0, unresolvedCommentCount: 0 };
+    const timestamp = new Date();
+    const content = await storage.read(ws, entityUuid, sourceFile.id);
+    let clonedContent = content;
+    let commentCounts = {
+      commentCount: sourceFile.comment_count,
+      unresolvedCommentCount: sourceFile.unresolved_comment_count
+    };
+    let previewSvg = sourceFile.preview_svg;
 
-    if (isBinary) {
-      clonedContent = content;
-    } else {
+    if (sourceFile.type === 'diagram') {
       const fileData = JSON.parse(content.toString('utf8'));
       if (fileData && typeof fileData === 'object' && 'name' in fileData) {
         fileData.name = cloneName;
       }
+      const doc = fileData as unknown as SerializedDiagramDocument;
       clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      if (sourceFile.type === 'diagram') {
-        const doc = fileData as unknown as SerializedDiagramDocument;
-        commentCounts = getDiagramCommentCounts(doc);
+      commentCounts = getDiagramCommentCounts(doc);
+
+      try {
+        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
+      } catch {
+        previewSvg = null;
       }
     }
 
-    const timestamp = new Date();
     const row = await db.project.upsertContentNode({
       workspace: ws,
       project_id: null,
       entity_id: entityUuid,
       path: clonePath,
       name: cloneName,
+      role: sourceFile.role,
       type: sourceFile.type,
       size_bytes: clonedContent.length,
       comment_count: commentCounts.commentCount,
@@ -2635,29 +2991,38 @@ export const cloneEntityFile = async (
       updated_at: timestamp,
       created_byIfNew: authCtx.userId,
       updated_by: authCtx.userId,
-      ...(isBinary ? { mime_type: sourceFile.mime_type, original_filename: cloneName } : {})
+      mime_type: sourceFile.mime_type,
+      original_filename: sourceFile.type === 'file' ? cloneName : sourceFile.original_filename
     });
 
     await storage.write(ws, entityUuid, row.id, clonedContent);
 
     if (!isBinary && sourceFile.type === 'diagram') {
+      await db.project.updateContentNodeDerivedData(
+        ws,
+        entityUuid,
+        row.id,
+        clonedContent.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        previewSvg ?? null,
+        timestamp
+      );
       const fileData = JSON.parse(clonedContent.toString('utf8'));
       const doc = fileData as unknown as SerializedDiagramDocument;
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-        await db.project.updateContentNodeDerivedData(
-          ws, entityUuid, row.id, clonedContent.length,
-          commentCounts.commentCount, commentCounts.unresolvedCommentCount, previewSvg ?? null, timestamp
-        );
-      } catch {
-        await db.project.updateContentNodeDerivedData(
-          ws, entityUuid, row.id, clonedContent.length,
-          commentCounts.commentCount, commentCounts.unresolvedCommentCount, null, timestamp
-        );
-      }
       await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
+    } else if (sourceFile.type === 'markdown') {
+      await cloneMarkdownAttachmentSubtree(
+        db,
+        storage,
+        ws,
+        entityUuid,
+        sourceFile,
+        row,
+        entityNodes,
+        authCtx,
+        timestamp
+      );
     }
 
     const savedRow = await reloadContentNode(db, ws, row.id);
@@ -2706,26 +3071,31 @@ export const relocateEntityFile = async (
     const targetExists = entityNodes.find(n => n.path === newPath);
     httpAssert.true(!targetExists, { status: 409, message: `A file already exists at '${newPath}'` });
 
-    const content = await storage.read(ws, entityUuid, existingFile.id);
     const isBinary = existingFile.type === 'file';
+    const displayName = getDisplayNameForPath(existingFile, newPath);
+    const content = await storage.read(ws, entityUuid, existingFile.id);
+    let updatedContent = content;
+    let commentCounts = {
+      commentCount: existingFile.comment_count,
+      unresolvedCommentCount: existingFile.unresolved_comment_count
+    };
+    let previewSvg = existingFile.preview_svg;
 
-    const newName = newPath.includes('/') ? newPath.substring(newPath.lastIndexOf('/') + 1) : newPath;
-    const displayName = (!isBinary && newName.endsWith('.json')) ? newName.slice(0, -5) : newName;
-
-    let updatedContent: Buffer;
-    let commentCounts = { commentCount: 0, unresolvedCommentCount: 0 };
-
-    if (isBinary) {
-      updatedContent = content;
-    } else {
+    if (existingFile.type === 'diagram') {
       const fileData = JSON.parse(content.toString('utf8'));
       if (fileData && typeof fileData === 'object' && 'name' in fileData) {
         fileData.name = displayName;
       }
+      const doc = fileData as unknown as SerializedDiagramDocument;
       updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      if (existingFile.type === 'diagram') {
-        const doc = fileData as unknown as SerializedDiagramDocument;
-        commentCounts = getDiagramCommentCounts(doc);
+      commentCounts = getDiagramCommentCounts(doc);
+
+      try {
+        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
+      } catch {
+        previewSvg = null;
       }
     }
 
@@ -2745,6 +3115,7 @@ export const relocateEntityFile = async (
       parent_id: newParentId,
       path: newPath,
       name: displayName,
+      role: existingFile.role,
       type: existingFile.type,
       size_bytes: updatedContent.length,
       comment_count: commentCounts.commentCount,
@@ -2753,30 +3124,52 @@ export const relocateEntityFile = async (
       updated_at: timestamp,
       created_byIfNew: existingFile.created_by,
       updated_by: authCtx.userId,
-      ...(isBinary ? { mime_type: existingFile.mime_type, original_filename: displayName } : {})
+      mime_type: existingFile.mime_type,
+      original_filename: existingFile.type === 'file' ? displayName : existingFile.original_filename
     });
 
+    const attachmentSourceNodes = existingFile.type === 'markdown' ? entityNodes : [];
+
     if (!isBinary && existingFile.type === 'diagram') {
+      await db.project.updateContentNodeDerivedData(
+        ws,
+        entityUuid,
+        newFile.id,
+        updatedContent.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        previewSvg,
+        timestamp
+      );
       const fileData = JSON.parse(updatedContent.toString('utf8'));
       const doc = fileData as unknown as SerializedDiagramDocument;
-      let previewSvg: string | null = null;
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
-      } catch {
-        previewSvg = null;
-      }
-      await db.project.updateContentNodeDerivedData(
-        ws, entityUuid, newFile.id, updatedContent.length,
-        commentCounts.commentCount, commentCounts.unresolvedCommentCount, previewSvg, timestamp
-      );
       await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
+    } else if (existingFile.type === 'markdown') {
+      await cloneMarkdownAttachmentSubtree(
+        db,
+        storage,
+        ws,
+        entityUuid,
+        existingFile,
+        newFile,
+        attachmentSourceNodes,
+        authCtx,
+        timestamp
+      );
     }
 
     await storage.write(ws, entityUuid, newFile.id, updatedContent);
     const savedFile = await reloadContentNode(db, ws, newFile.id);
     await db.project.deleteEntityContentNodeByPath(ws, entityUuid, filePath);
+    if (existingFile.type === 'markdown') {
+      await deleteMarkdownAttachmentSubtree(
+        storage,
+        ws,
+        entityUuid,
+        attachmentSourceNodes,
+        existingFile.id
+      );
+    }
     await storage.delete(ws, entityUuid, existingFile.id).catch(() => {});
 
     await logAudit(db, {
@@ -2829,6 +3222,9 @@ export const deleteWorkspaceFile = async (
       metadata: { path: filePath }
     });
 
+    if (file.type === 'markdown') {
+      await deleteMarkdownAttachmentSubtree(storage, ws, ws, wsNodes, file.id);
+    }
     await storage.delete(ws, ws, file.id).catch(() => {});
 
     return { success: true };
@@ -2923,50 +3319,62 @@ export const cloneWorkspaceFile = async (
     const sourceFile = wsNodes.find(n => n.path === filePath) ?? null;
     httpAssert.present(sourceFile, { status: 404, message: `File '${filePath}' not found` });
 
-    const content = await storage.read(ws, ws, sourceFile.id);
-
     const baseName = fileNameFromPath(filePath);
     const folder = folderFromPath(filePath);
     const isBinary = sourceFile.type === 'file';
-
-    const baseNameWithoutExt = isBinary ? baseName : stripJsonExtension(baseName);
+    const extension = getNodeExtension(sourceFile);
+    const baseNameWithoutExt =
+      sourceFile.type === 'file'
+        ? baseName
+        : sourceFile.type === 'markdown' && baseName.endsWith('.md')
+          ? baseName.slice(0, -3)
+          : stripJsonExtension(baseName);
 
     let cloneNumber = 1;
     let clonePath: string;
     let cloneName: string;
     do {
       cloneName = `${baseNameWithoutExt} (${cloneNumber})`;
-      const ext = isBinary ? '' : '.json';
-      clonePath = folder ? `${folder}/${cloneName}${ext}` : `${cloneName}${ext}`;
+      clonePath = folder ? `${folder}/${cloneName}${extension}` : `${cloneName}${extension}`;
       const existing = wsNodes.find(n => n.path === clonePath);
       if (!existing) break;
       cloneNumber++;
     } while (cloneNumber < 1000);
 
-    let clonedContent: Buffer;
-    let commentCounts = { commentCount: 0, unresolvedCommentCount: 0 };
+    const timestamp = new Date();
+    const content = await storage.read(ws, ws, sourceFile.id);
+    let clonedContent = content;
+    let commentCounts = {
+      commentCount: sourceFile.comment_count,
+      unresolvedCommentCount: sourceFile.unresolved_comment_count
+    };
+    let previewSvg = sourceFile.preview_svg;
 
-    if (isBinary) {
-      clonedContent = content;
-    } else {
+    if (sourceFile.type === 'diagram') {
       const fileData = JSON.parse(content.toString('utf8'));
       if (fileData && typeof fileData === 'object' && 'name' in fileData) {
         fileData.name = cloneName;
       }
+      const doc = fileData as unknown as SerializedDiagramDocument;
       clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      if (sourceFile.type === 'diagram') {
-        const doc = fileData as unknown as SerializedDiagramDocument;
-        commentCounts = getDiagramCommentCounts(doc);
+      commentCounts = getDiagramCommentCounts(doc);
+
+      try {
+        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
+      } catch {
+        previewSvg = null;
       }
     }
 
-    const timestamp = new Date();
     const row = await db.project.upsertContentNode({
       workspace: ws,
       project_id: null,
       entity_id: null,
       path: clonePath,
       name: cloneName,
+      role: sourceFile.role,
       type: sourceFile.type,
       size_bytes: clonedContent.length,
       comment_count: commentCounts.commentCount,
@@ -2975,29 +3383,37 @@ export const cloneWorkspaceFile = async (
       updated_at: timestamp,
       created_byIfNew: authCtx.userId,
       updated_by: authCtx.userId,
-      ...(isBinary ? { mime_type: sourceFile.mime_type, original_filename: cloneName } : {})
+      mime_type: sourceFile.mime_type,
+      original_filename: sourceFile.type === 'file' ? cloneName : sourceFile.original_filename
     });
 
     await storage.write(ws, ws, row.id, clonedContent);
 
     if (!isBinary && sourceFile.type === 'diagram') {
+      await db.project.updateWorkspaceContentNodeDerivedData(
+        ws,
+        row.id,
+        clonedContent.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        previewSvg ?? null,
+        timestamp
+      );
       const fileData = JSON.parse(clonedContent.toString('utf8'));
       const doc = fileData as unknown as SerializedDiagramDocument;
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-        await db.project.updateWorkspaceContentNodeDerivedData(
-          ws, row.id, clonedContent.length,
-          commentCounts.commentCount, commentCounts.unresolvedCommentCount, previewSvg ?? null, timestamp
-        );
-      } catch {
-        await db.project.updateWorkspaceContentNodeDerivedData(
-          ws, row.id, clonedContent.length,
-          commentCounts.commentCount, commentCounts.unresolvedCommentCount, null, timestamp
-        );
-      }
       await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
+    } else if (sourceFile.type === 'markdown') {
+      await cloneMarkdownAttachmentSubtree(
+        db,
+        storage,
+        ws,
+        ws,
+        sourceFile,
+        row,
+        wsNodes,
+        authCtx,
+        timestamp
+      );
     }
 
     const savedRow = await reloadContentNode(db, ws, row.id);
@@ -3042,26 +3458,31 @@ export const relocateWorkspaceFile = async (
     const targetExists = wsNodes.find(n => n.path === newPath);
     httpAssert.true(!targetExists, { status: 409, message: `A file already exists at '${newPath}'` });
 
-    const content = await storage.read(ws, ws, existingFile.id);
     const isBinary = existingFile.type === 'file';
+    const displayName = getDisplayNameForPath(existingFile, newPath);
+    const content = await storage.read(ws, ws, existingFile.id);
+    let updatedContent = content;
+    let commentCounts = {
+      commentCount: existingFile.comment_count,
+      unresolvedCommentCount: existingFile.unresolved_comment_count
+    };
+    let previewSvg = existingFile.preview_svg;
 
-    const newName = newPath.includes('/') ? newPath.substring(newPath.lastIndexOf('/') + 1) : newPath;
-    const displayName = (!isBinary && newName.endsWith('.json')) ? newName.slice(0, -5) : newName;
-
-    let updatedContent: Buffer;
-    let commentCounts = { commentCount: 0, unresolvedCommentCount: 0 };
-
-    if (isBinary) {
-      updatedContent = content;
-    } else {
+    if (existingFile.type === 'diagram') {
       const fileData = JSON.parse(content.toString('utf8'));
       if (fileData && typeof fileData === 'object' && 'name' in fileData) {
         fileData.name = displayName;
       }
+      const doc = fileData as unknown as SerializedDiagramDocument;
       updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      if (existingFile.type === 'diagram') {
-        const doc = fileData as unknown as SerializedDiagramDocument;
-        commentCounts = getDiagramCommentCounts(doc);
+      commentCounts = getDiagramCommentCounts(doc);
+
+      try {
+        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
+        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
+      } catch {
+        previewSvg = null;
       }
     }
 
@@ -3081,6 +3502,7 @@ export const relocateWorkspaceFile = async (
       parent_id: newParentId,
       path: newPath,
       name: displayName,
+      role: existingFile.role,
       type: existingFile.type,
       size_bytes: updatedContent.length,
       comment_count: commentCounts.commentCount,
@@ -3089,30 +3511,45 @@ export const relocateWorkspaceFile = async (
       updated_at: timestamp,
       created_byIfNew: existingFile.created_by,
       updated_by: authCtx.userId,
-      ...(isBinary ? { mime_type: existingFile.mime_type, original_filename: displayName } : {})
+      mime_type: existingFile.mime_type,
+      original_filename: existingFile.type === 'file' ? displayName : existingFile.original_filename
     });
 
+    const attachmentSourceNodes = existingFile.type === 'markdown' ? wsNodes : [];
+
     if (!isBinary && existingFile.type === 'diagram') {
+      await db.project.updateWorkspaceContentNodeDerivedData(
+        ws,
+        newFile.id,
+        updatedContent.length,
+        commentCounts.commentCount,
+        commentCounts.unresolvedCommentCount,
+        previewSvg,
+        timestamp
+      );
       const fileData = JSON.parse(updatedContent.toString('utf8'));
       const doc = fileData as unknown as SerializedDiagramDocument;
-      let previewSvg: string | null = null;
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
-      } catch {
-        previewSvg = null;
-      }
-      await db.project.updateWorkspaceContentNodeDerivedData(
-        ws, newFile.id, updatedContent.length,
-        commentCounts.commentCount, commentCounts.unresolvedCommentCount, previewSvg, timestamp
-      );
       await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
+    } else if (existingFile.type === 'markdown') {
+      await cloneMarkdownAttachmentSubtree(
+        db,
+        storage,
+        ws,
+        ws,
+        existingFile,
+        newFile,
+        attachmentSourceNodes,
+        authCtx,
+        timestamp
+      );
     }
 
     await storage.write(ws, ws, newFile.id, updatedContent);
     const savedFile = await reloadContentNode(db, ws, newFile.id);
     await db.project.deleteWorkspaceContentNodeByPath(ws, filePath);
+    if (existingFile.type === 'markdown') {
+      await deleteMarkdownAttachmentSubtree(storage, ws, ws, attachmentSourceNodes, existingFile.id);
+    }
     await storage.delete(ws, ws, existingFile.id).catch(() => {});
 
     await logAudit(db, {
