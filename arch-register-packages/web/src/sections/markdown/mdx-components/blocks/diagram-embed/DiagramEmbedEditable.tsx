@@ -48,6 +48,7 @@ export const DiagramEmbedEditable = ({ element, children, ...props }: PlateEleme
       dialog={(open, onClose) => (
         <DiagramEmbedDialog element={element} open={open} onClose={onClose} isNew={isNew} />
       )}
+      fullWidth
       {...props}
     >
       {children}
