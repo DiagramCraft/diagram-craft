@@ -91,6 +91,7 @@ export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   project_public_id: file.project_public_id ?? null,
   path: file.path,
   name: file.name,
+  role: file.role ?? null,
   size_bytes: file.size_bytes,
   comment_count: file.comment_count,
   unresolved_comment_count: file.unresolved_comment_count,

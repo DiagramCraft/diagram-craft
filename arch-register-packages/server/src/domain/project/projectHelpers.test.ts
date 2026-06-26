@@ -29,6 +29,7 @@ const baseProjectFile: ContentNodeDbResult = {
   parent_id: null,
   path: '/diagrams/main.dc',
   name: 'Main',
+  role: null,
   type: 'diagram',
   size_bytes: 1024,
   comment_count: 2,
@@ -68,6 +69,7 @@ describe('toApiProjectFile', () => {
     const result = toApiProjectFile(baseProjectFile);
     expect(result.id).toBe('f-1');
     expect(result.project_id).toBe('p-1');
+    expect(result.role).toBeNull();
     expect(result.size_bytes).toBe(1024);
     expect(result.comment_count).toBe(2);
     expect(result.unresolved_comment_count).toBe(1);

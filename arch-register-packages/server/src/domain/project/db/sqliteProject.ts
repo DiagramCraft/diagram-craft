@@ -382,10 +382,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
       if (existing) {
         this.run(
-          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = COALESCE(?, original_filename) WHERE id = ?',
+          'UPDATE content_node SET name = ?, parent_id = COALESCE(?, parent_id), role = ?, size_bytes = ?, comment_count = ?, unresolved_comment_count = ?, updated_at = ?, updated_by = ?, mime_type = COALESCE(?, mime_type), original_filename = COALESCE(?, original_filename) WHERE id = ?',
           [
             input.name,
             input.parent_id ?? null,
+            input.role ?? null,
             input.size_bytes,
             input.comment_count,
             input.unresolved_comment_count,
@@ -398,7 +399,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         );
       } else {
         this.run(
-          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
@@ -407,6 +408,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
             input.parent_id ?? null,
             input.path,
             input.name,
+            input.role ?? null,
             input.type ?? 'diagram',
             input.size_bytes,
             input.comment_count,

@@ -31,6 +31,7 @@ import { Title } from '../../components/Title';
 import { RenameDialog } from '../../components/RenameDialog';
 import { DropdownMenu } from '../../components/DropdownMenu';
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
+import { getFileNodeIcon } from '../../lib/contentNode';
 import styles from './MarkdownEditorScreen.module.css';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
 import { extractFirstHeadingTitle } from './preview/markdownTitle';
@@ -40,7 +41,11 @@ import {
   projectDetailRoute,
   entityDetailRoute,
   asProjectPublicId,
-  asEntityPublicId
+  asEntityPublicId,
+  projectDiagramRoute,
+  entityDiagramRoute,
+  projectMarkdownRoute,
+  entityMarkdownRoute
 } from '../../routes/publicObjectRoutes';
 import {
   enterMarkdownEditMode,
@@ -148,6 +153,7 @@ export const MarkdownEditorScreen = () => {
   }, [entityFiles, entityId, nodeId, project?.files, projectId, workspaceFiles]);
 
   const documentTitle = file?.name ?? 'Markdown document';
+  const attachments = data?.attachments ?? [];
   const headingTitle = useMemo(() => extractFirstHeadingTitle(body), [body]);
   const resolvedTitle = headingTitle ?? documentTitle;
   const toc = useMemo(() => extractToc(body), [body]);
@@ -381,6 +387,51 @@ export const MarkdownEditorScreen = () => {
     [restoreMutation, updateSearch]
   );
 
+  const handleOpenAttachment = useCallback(
+    (attachment: ProjectFile) => {
+      if (attachment.type === 'file') {
+        const href = projectId
+          ? `/api/${workspaceSlug}/projects/${projectId}/files/download?path=${encodeURIComponent(attachment.path)}`
+          : entityId
+            ? `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(attachment.path)}`
+            : `/api/${workspaceSlug}/content/files/download?path=${encodeURIComponent(attachment.path)}`;
+        const a = document.createElement('a');
+        a.href = href;
+        a.download = attachment.original_filename ?? attachment.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+
+      if (attachment.type === 'markdown') {
+        if (projectId) {
+          navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), attachment.id));
+        } else if (entityId) {
+          navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), attachment.id));
+        } else {
+          navigate({
+            to: '/$workspaceSlug/content/wiki/$nodeId',
+            params: { workspaceSlug, nodeId: attachment.id }
+          });
+        }
+        return;
+      }
+
+      if (projectId) {
+        navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), attachment.id));
+      } else if (entityId) {
+        navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(entityId), attachment.id));
+      } else {
+        navigate({
+          to: '/$workspaceSlug/content/diagrams/$diagramId',
+          params: { workspaceSlug, diagramId: attachment.id }
+        });
+      }
+    },
+    [entityId, navigate, projectId, workspaceSlug]
+  );
+
   if (isLoading) {
     return (
       <div className={styles.screen}>
@@ -593,6 +644,42 @@ export const MarkdownEditorScreen = () => {
             {body.trim() ? (
               <>
                 <MdxPreview body={body} withoutFirstHeading />
+                {attachments.length > 0 && (
+                  <section className={styles.attachmentsSection}>
+                    <div className={styles.attachmentsHeader}>
+                      <h2 className={styles.attachmentsTitle}>Attachments</h2>
+                      <span className={styles.attachmentsCount}>
+                        {attachments.length} {attachments.length === 1 ? 'item' : 'items'}
+                      </span>
+                    </div>
+                    <div className={styles.attachmentsList}>
+                      {attachments.map(attachment => (
+                        <button
+                          key={attachment.id}
+                          type="button"
+                          className={styles.attachmentItem}
+                          onClick={() => handleOpenAttachment(attachment)}
+                        >
+                          <span className={styles.attachmentIcon}>
+                            {getFileNodeIcon(attachment.type, 14)}
+                          </span>
+                          <span className={styles.attachmentBody}>
+                            <span className={styles.attachmentName}>
+                              {attachment.original_filename ?? attachment.name}
+                            </span>
+                            <span className={styles.attachmentMeta}>
+                              {attachment.type === 'diagram'
+                                ? 'Diagram'
+                                : attachment.type === 'markdown'
+                                  ? 'Wiki page'
+                                  : attachment.mime_type ?? 'File'}
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
                 <div className={styles.articleFooter}>
                   {updatedLabel && <>Last edited {updatedLabel} · </>}
                   {readTime} min read

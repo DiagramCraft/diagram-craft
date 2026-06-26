@@ -8,6 +8,7 @@ import {
   workspaceContentKeys
 } from './queryKeys';
 import {
+  MarkdownContent,
   MarkdownRevisionDetail,
   MarkdownRevisionSummary,
   ProjectFile
@@ -154,7 +155,8 @@ export const useRenameProjectFile = (workspaceId: string, projectId: string) => 
       const folder = file.path.includes('/')
         ? file.path.substring(0, file.path.lastIndexOf('/'))
         : null;
-      const newPath = folder ? `${folder}/${newName}.json` : `${newName}.json`;
+      const ext = file.type === 'markdown' ? '.md' : '.json';
+      const newPath = folder ? `${folder}/${newName}${ext}` : `${newName}${ext}`;
       return orpcClient.projects.relocateFile({
         params: { workspace: workspaceId, id: projectId },
         query: { path: file.path },
@@ -403,7 +405,7 @@ export const markdownContentKeys = {
 };
 
 export const useMarkdownContent = (workspaceId: string, nodeId: string) => {
-  return useQuery({
+  return useQuery<MarkdownContent>({
     queryKey: markdownContentKeys.detail(workspaceId, nodeId),
     queryFn: () =>
       orpcClient.projects.getMarkdownContent({ params: { workspace: workspaceId, nodeId } }),
