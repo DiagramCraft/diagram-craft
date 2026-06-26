@@ -15,6 +15,7 @@ import {
 import { emptyDiagram } from '../../../../../lib/api';
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
+import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
 import type { DiagramEmbedSlateElement } from './types';
 import styles from './DiagramEmbedDialog.module.css';
 
@@ -38,6 +39,7 @@ export const DiagramEmbedDialog = ({
 }) => {
   const editor = useEditorRef();
   const { workspaceSlug } = useWorkspaceContext();
+  const { trackCreatedDiagram } = useMarkdownDiagramSession();
   const params = useParams({ strict: false }) as {
     projectId?: string;
     entityId?: string;
@@ -90,6 +92,7 @@ export const DiagramEmbedDialog = ({
         name,
         content: emptyDiagram(name)
       });
+      trackCreatedDiagram({ id: file.id, path: file.path });
       resolvedFileId = file.id;
     }
 
