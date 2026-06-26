@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { diffMarkdown } from './markdownDiff';
 import type { DiffRow } from './markdownDiff';

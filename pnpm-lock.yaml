@@ -264,6 +264,9 @@ importers:
       '@diagram-craft/canvas-drawio':
         specifier: workspace:^
         version: link:../../packages/canvas-drawio
+      '@diagram-craft/canvas-react':
+        specifier: workspace:^
+        version: link:../../packages/canvas-react
       '@diagram-craft/collaboration':
         specifier: workspace:^
         version: link:../../packages/collaboration

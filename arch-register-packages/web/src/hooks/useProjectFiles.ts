@@ -15,6 +15,29 @@ import {
 import { orpcClient } from '../lib/orpcClient';
 import { fetchWithAuthResponse } from '../auth/authClient';
 
+const noRetryOnClientError = (_: number, error: unknown) => {
+  const status = (error as { status?: number })?.status;
+  return status === undefined || status >= 500;
+};
+
+export const useProjectFile = (workspaceSlug: string, fileId: string) =>
+  useQuery({
+    queryKey: projectFileKeys.detail(workspaceSlug, fileId),
+    queryFn: () =>
+      orpcClient.projects.getFile({ params: { workspace: workspaceSlug, fileId } }),
+    enabled: !!workspaceSlug && !!fileId,
+    retry: noRetryOnClientError
+  });
+
+export const useProjectFileContent = (workspaceSlug: string, fileId: string) =>
+  useQuery({
+    queryKey: projectFileKeys.content(workspaceSlug, fileId),
+    queryFn: () =>
+      orpcClient.projects.getDiagramContent({ params: { workspace: workspaceSlug, fileId } }),
+    enabled: !!workspaceSlug && !!fileId,
+    retry: noRetryOnClientError
+  });
+
 // Hook for fetching project files
 export const useProjectFiles = (workspaceId: string, projectId: string) => {
   return useQuery({

@@ -1,0 +1,72 @@
+.tree {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  background: var(--cmp-bg);
+  overflow-y: auto;
+  max-height: 280px;
+  min-height: 80px;
+}
+
+.empty {
+  padding: 16px;
+  font-size: 13px;
+  color: var(--cmp-fg-disabled);
+  font-style: italic;
+  text-align: center;
+}
+
+.folder {
+  display: flex;
+  flex-direction: column;
+}
+
+.folderRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 13px;
+  color: var(--base-fg-dim);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  user-select: none;
+}
+
+.folderRow:hover {
+  background: var(--cmp-bg-hover);
+}
+
+.folderFiles {
+  display: flex;
+  flex-direction: column;
+  padding-left: 16px;
+}
+
+.diagramRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 13px;
+  color: var(--base-fg);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  border-radius: var(--r-xs);
+}
+
+.diagramRow:hover {
+  background: var(--cmp-bg-hover);
+}
+
+.diagramRow.selected {
+  background: color-mix(in oklch, var(--accent-fg) 12%, transparent);
+  color: var(--accent-fg);
+}

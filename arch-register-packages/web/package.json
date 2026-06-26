@@ -17,6 +17,7 @@
     "@diagram-craft/app-components": "workspace:^",
     "@diagram-craft/canvas": "workspace:^",
     "@diagram-craft/canvas-app": "workspace:^",
+    "@diagram-craft/canvas-react": "workspace:^",
     "@diagram-craft/canvas-drawio": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/geometry": "workspace:^",

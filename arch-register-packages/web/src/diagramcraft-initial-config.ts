@@ -6,7 +6,7 @@ import {
   makeDefaultDocumentFactory
 } from '@diagram-craft/model/diagramDocumentFactory';
 import type { DocumentFactory, DiagramFactory } from '@diagram-craft/model/diagramDocumentFactory';
-import type { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { stencilLoaderRegistry } from '@diagram-craft/model/stencilRegistry';
 import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { AppConfig } from '@diagram-craft/main/appConfig';
@@ -32,6 +32,7 @@ let _currentWorkspaceId: string | undefined;
 let _documentFactory: DocumentFactory;
 let _diagramFactory: DiagramFactory;
 let _nodeRegistry: NodeDefinitionRegistry;
+let _registry: Registry;
 
 const initializeDiagramCraft = (workspaceId: string) => {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -59,6 +60,7 @@ const initializeDiagramCraft = (workspaceId: string) => {
       documentFactory: _documentFactory,
       diagramFactory: _diagramFactory,
       nodeRegistry: _nodeRegistry,
+      registry: _registry,
       includedPackages: getIncludedPackages()
     };
   }
@@ -101,6 +103,7 @@ const initializeDiagramCraft = (workspaceId: string) => {
   _diagramFactory = makeDefaultDiagramFactory();
   _documentFactory = makeDefaultDocumentFactory({ nodes, edges, stencils });
   _nodeRegistry = nodes;
+  _registry = { nodes, edges, stencils };
 
   initialized = true;
 
@@ -108,6 +111,7 @@ const initializeDiagramCraft = (workspaceId: string) => {
     documentFactory: _documentFactory,
     diagramFactory: _diagramFactory,
     nodeRegistry: _nodeRegistry,
+    registry: _registry,
     includedPackages: getIncludedPackages()
   };
 };

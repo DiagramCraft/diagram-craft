@@ -179,7 +179,8 @@ export const DiagramScreen = () => {
     }
 
     await queryClient.invalidateQueries({ queryKey: searchKeys.all });
-  }, [isWorkspaceContent, isEntityDiagram, queryClient, workspaceId, projectId]);
+    await queryClient.invalidateQueries({ queryKey: projectFileKeys.content(workspaceId, diagramId) });
+  }, [isWorkspaceContent, isEntityDiagram, queryClient, workspaceId, projectId, diagramId]);
 
   const handleClose = useCallback(async () => {
     await save();
