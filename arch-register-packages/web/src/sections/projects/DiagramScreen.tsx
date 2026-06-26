@@ -322,7 +322,15 @@ export const DiagramScreen = () => {
           });
           file = findFileInFolders(project.files.folders, project.files.rootFiles);
         }
-        
+
+        // Attachment diagrams are hidden from the file tree — look them up directly by ID
+        if (!file) {
+          const directFile = await orpcClient.projects.getFile({
+            params: { workspace: workspaceId, fileId: diagramId }
+          });
+          if (directFile) file = directFile;
+        }
+
         if (!file) throw new Error('Diagram file not found');
         setFileInfo({ path: file.path, name: file.name });
         fileInfoRef.current = { path: file.path, name: file.name };

@@ -53,7 +53,8 @@ import {
   saveMarkdownContent,
   listMarkdownRevisions,
   getMarkdownRevision,
-  restoreMarkdownRevision
+  restoreMarkdownRevision,
+  createMarkdownDiagramAttachment
 } from './projectOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
@@ -783,6 +784,24 @@ export const projectORPCRouter = projectRouter.router({
             input.params.workspace,
             input.params.nodeId,
             input.params.revisionId,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    ),
+    createMarkdownDiagramAttachment: projectRouter.projects.createMarkdownDiagramAttachment.handler(
+      async ({ input, context }) => {
+        try {
+          if (!context.storage) throw new Error('Storage adapter not available');
+          return await createMarkdownDiagramAttachment(
+            context.db,
+            context.storage,
+            input.params.workspace,
+            input.params.nodeId,
+            input.body.name,
+            input.body.content,
             context.event
           );
         } catch (error) {

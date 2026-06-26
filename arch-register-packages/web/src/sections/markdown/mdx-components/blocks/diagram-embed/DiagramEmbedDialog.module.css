@@ -13,3 +13,7 @@
 .input:focus {
   border-color: var(--accent-fg);
 }
+
+.modeSwitcher {
+  margin-bottom: 12px;
+}

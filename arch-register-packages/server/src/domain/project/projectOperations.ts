@@ -2312,6 +2312,84 @@ export const uploadMarkdownAttachment = async (
   }
 };
 
+export const createMarkdownDiagramAttachment = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  nodeId: string,
+  name: string,
+  content: Record<string, unknown>,
+  event: AuthenticatedEvent
+): Promise<ProjectFile> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
+    httpAssert.present(markdownNode, {
+      status: 404,
+      message: `Markdown document '${nodeId}' not found`
+    });
+    httpAssert.true(markdownNode.type === 'markdown', {
+      status: 400,
+      message: 'Node is not a markdown document'
+    });
+    await requireMarkdownNodeAccess(db, ws, authCtx, markdownNode, 'edit');
+
+    const timestamp = new Date();
+    const container = await ensureMarkdownAttachmentContainer(db, ws, markdownNode, authCtx, timestamp);
+
+    const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+    const existingDiagrams = getMarkdownAttachmentNodes(siblingNodes, markdownNode.id).filter(
+      n => n.type === 'diagram'
+    );
+
+    let diagramName = name;
+    let counter = 2;
+    while (existingDiagrams.some(n => n.path === `${container.path}/${diagramName}.json`)) {
+      diagramName = `${name} ${counter++}`;
+    }
+    const diagramPath = `${container.path}/${diagramName}.json`;
+
+    const row = await db.project.upsertContentNode({
+      workspace: ws,
+      project_id: markdownNode.project_id,
+      entity_id: markdownNode.entity_id,
+      parent_id: container.id,
+      path: diagramPath,
+      name: diagramName,
+      type: 'diagram',
+      size_bytes: 0,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      created_atIfNew: timestamp,
+      updated_at: timestamp,
+      created_byIfNew: authCtx.userId,
+      updated_by: authCtx.userId
+    });
+
+    await storage.write(ws, storageScope(ws, markdownNode), row.id, Buffer.from(JSON.stringify(content)));
+
+    await logAudit(db, {
+      userId: authCtx.userId,
+      workspace: ws,
+      operation: 'create',
+      entityType: 'content_node',
+      entityId: row.id,
+      entityName: row.name,
+      changes: { new: extractEntityFields(row) },
+      metadata: {
+        path: diagramPath,
+        parent_markdown_node_id: markdownNode.id,
+        is_attachment: true
+      }
+    });
+
+    return toApiProjectFile(row);
+  } catch (e) {
+    return handleError(e, 'Failed to create diagram attachment');
+  }
+};
+
 export const saveMarkdownContent = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,

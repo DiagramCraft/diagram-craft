@@ -2,6 +2,7 @@ import {
   createRouter,
   getQuery,
   getRouterParam,
+  readBody,
   readMultipartFormData,
   HTTPError
 } from 'h3';
@@ -15,7 +16,8 @@ import {
   downloadEntityFile,
   uploadWorkspaceFile,
   downloadWorkspaceFile,
-  uploadMarkdownAttachment
+  uploadMarkdownAttachment,
+  createMarkdownDiagramAttachment
 } from './projectOperations';
 
 const MAX_SIZE_BYTES =
@@ -65,6 +67,16 @@ export const createProjectFileRoutesHandler = (
       buffer,
       mimeType,
       originalFilename,
+      event as AuthenticatedEvent
+    );
+  });
+
+  router.post('/api/:workspace/markdown/:nodeId/attachments/diagram', async event => {
+    const workspace = getRouterParam(event, 'workspace')!;
+    const nodeId = getRouterParam(event, 'nodeId')!;
+    const body = await readBody(event) as { name: string; content: Record<string, unknown> };
+    return createMarkdownDiagramAttachment(
+      db, storage, workspace, nodeId, body.name, body.content,
       event as AuthenticatedEvent
     );
   });
