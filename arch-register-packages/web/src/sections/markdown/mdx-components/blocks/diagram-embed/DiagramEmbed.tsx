@@ -70,7 +70,9 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   const handleClick = () => {
     if (!file) return;
     if (file.project_public_id) {
-      void navigate(projectDiagramRoute(workspaceSlug, asProjectPublicId(file.project_public_id), file.id));
+      void navigate(
+        projectDiagramRoute(workspaceSlug, asProjectPublicId(file.project_public_id), file.id)
+      );
     } else if (params.entityId) {
       void navigate(entityDiagramRoute(workspaceSlug, asEntityPublicId(params.entityId), file.id));
     } else {
@@ -116,7 +118,6 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   if (file.preview_svg) {
     return (
       <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: SVG is server-generated */}
         <div className={styles.svgWrapper} dangerouslySetInnerHTML={{ __html: file.preview_svg }} />
         {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
       </figure>
