@@ -701,6 +701,20 @@ export const projectContract = {
       .input(z.object({
         params: ws.extend({ nodeId: z.string(), revisionId: z.string() })
       }))
+      .output(projectFileSchema),
+    createMarkdownDiagramAttachment: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/markdown/{nodeId}/attachments/diagram',
+        inputStructure: 'detailed'
+      })
+      .input(z.object({
+        params: ws.extend({ nodeId: z.string() }),
+        body: z.object({
+          name: z.string(),
+          content: z.record(z.string(), z.unknown())
+        })
+      }))
       .output(projectFileSchema)
   }
 };

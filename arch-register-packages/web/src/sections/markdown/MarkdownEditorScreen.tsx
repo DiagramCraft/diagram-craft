@@ -60,6 +60,7 @@ import {
   type MarkdownScreenMode,
   type MarkdownViewPanel
 } from './MarkdownEditorScreen.state';
+import { MarkdownDiagramSessionContext } from './MarkdownDiagramSessionContext';
 
 const findFileById = (tree: FileTree | undefined, nodeId: string): ProjectFile | undefined => {
   if (!tree) return undefined;
@@ -154,6 +155,11 @@ export const MarkdownEditorScreen = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initializedRef = useRef(false);
   const previousNodeIdRef = useRef(nodeId);
+  const createdDiagramsRef = useRef<{ id: string; path: string }[]>([]);
+
+  const trackCreatedDiagram = useCallback((record: { id: string; path: string }) => {
+    createdDiagramsRef.current.push(record);
+  }, []);
 
   const selectedRevisionId = search.revisionId;
 
@@ -259,19 +265,28 @@ export const MarkdownEditorScreen = () => {
     if (saveMutation.isPending) return;
     await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
     setDirty(false);
+    createdDiagramsRef.current = [];
   }, [body, headingTitle, saveMutation]);
 
   const handleSaveAndClose = useCallback(async () => {
     if (saveMutation.isPending) return;
     await saveMutation.mutateAsync({ body, name: headingTitle ?? undefined });
     setDirty(false);
+    createdDiagramsRef.current = [];
     setScreenState(exitMarkdownEditMode());
     updateSearch({ mode: 'preview', panel: 'preview', revisionId: undefined });
   }, [body, headingTitle, saveMutation, updateSearch]);
 
   const handleClose = useCallback(() => {
     if (dirty) {
-      setBody(data?.body ?? '');
+      const savedBody = data?.body ?? '';
+      for (const { id, path } of createdDiagramsRef.current) {
+        if (!savedBody.includes(id)) {
+          void deleteAttachmentMutation.mutateAsync(path);
+        }
+      }
+      createdDiagramsRef.current = [];
+      setBody(savedBody);
       setDirty(false);
     }
     setScreenState(exitMarkdownEditMode());
@@ -281,7 +296,7 @@ export const MarkdownEditorScreen = () => {
       revisionId: undefined,
       historyMode: undefined
     });
-  }, [data?.body, dirty, updateSearch]);
+  }, [data?.body, dirty, updateSearch, deleteAttachmentMutation]);
 
   const handleEnterEdit = useCallback(() => {
     setScreenState(enterMarkdownEditMode());
@@ -561,6 +576,7 @@ export const MarkdownEditorScreen = () => {
   );
 
   return (
+    <MarkdownDiagramSessionContext.Provider value={{ trackCreatedDiagram }}>
     <div className={styles.screen}>
       <input
         ref={fileInputRef}
@@ -796,5 +812,6 @@ export const MarkdownEditorScreen = () => {
         onCancel={() => setAttachmentDeleteTarget(null)}
       />
     </div>
+    </MarkdownDiagramSessionContext.Provider>
   );
 };

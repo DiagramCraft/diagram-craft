@@ -568,6 +568,39 @@ export const useUploadMarkdownAttachment = (
   });
 };
 
+export const useCreateMarkdownDiagramAttachment = (
+  workspaceId: string,
+  nodeId: string,
+  options?: { projectId?: string; entityId?: string }
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name, content }: { name: string; content: Record<string, unknown> }) =>
+      orpcClient.projects.createMarkdownDiagramAttachment({
+        params: { workspace: workspaceId, nodeId },
+        body: { name, content }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: markdownContentKeys.detail(workspaceId, nodeId) });
+      await invalidateAuditQueries(queryClient, workspaceId);
+
+      if (options?.projectId) {
+        await invalidateProjectQueries(queryClient, workspaceId, options.projectId);
+        return;
+      }
+
+      if (options?.entityId) {
+        await queryClient.invalidateQueries({
+          queryKey: entityContentKeys.all(workspaceId, options.entityId)
+        });
+        return;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
+    }
+  });
+};
+
 export const useDeleteMarkdownAttachment = (
   workspaceId: string,
   nodeId: string,

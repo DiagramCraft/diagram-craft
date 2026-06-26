@@ -3,17 +3,28 @@ import { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { useParams } from '@tanstack/react-router';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntityContentNodes } from '../../../../../hooks/useProjects';
 import {
   useProjectFiles,
-  useWorkspaceContentNodes
+  useWorkspaceContentNodes,
+  useCreateMarkdownDiagramAttachment
 } from '../../../../../hooks/useProjectFiles';
+import { emptyDiagram } from '../../../../../lib/api';
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
+import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
 import type { DiagramEmbedSlateElement } from './types';
 import styles from './DiagramEmbedDialog.module.css';
+
+type EmbedMode = 'new' | 'existing';
+
+const EMBED_MODES: { value: EmbedMode; label: string }[] = [
+  { value: 'new', label: 'Create new' },
+  { value: 'existing', label: 'Embed existing' }
+];
 
 export const DiagramEmbedDialog = ({
   element,
@@ -28,14 +39,19 @@ export const DiagramEmbedDialog = ({
 }) => {
   const editor = useEditorRef();
   const { workspaceSlug } = useWorkspaceContext();
+  const { trackCreatedDiagram } = useMarkdownDiagramSession();
   const params = useParams({ strict: false }) as {
     projectId?: string;
     entityId?: string;
+    nodeId?: string;
   };
-  const { projectId, entityId } = params;
+  const { projectId, entityId, nodeId } = params;
 
   const el = element as DiagramEmbedSlateElement;
+  const hasExisting = !!el.fileId;
+  const [mode, setMode] = useState<EmbedMode>(nodeId && !hasExisting ? 'new' : 'existing');
   const [fileId, setFileId] = useState(el.fileId ?? '');
+  const [diagramName, setDiagramName] = useState('Diagram');
   const [caption, setCaption] = useState(el.caption ?? '');
 
   const { data: entityFiles } = useEntityContentNodes(workspaceSlug, entityId ?? '', {
@@ -46,6 +62,11 @@ export const DiagramEmbedDialog = ({
   const { data: workspaceFiles } = useWorkspaceContentNodes(workspaceSlug, {
     enabled: !projectId && !entityId
   });
+  const createDiagramAttachment = useCreateMarkdownDiagramAttachment(
+    workspaceSlug,
+    nodeId ?? '',
+    { projectId, entityId }
+  );
 
   const fileTree: FileTree | undefined = entityId
     ? entityFiles
@@ -57,15 +78,32 @@ export const DiagramEmbedDialog = ({
     setFileId(file.id);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const path = editor.api.findPath(element);
-    if (!fileId || !path) {
-      if (isNew && path) editor.tf.removeNodes({ at: path });
+    if (!path) {
       onClose();
       return;
     }
+
+    let resolvedFileId = fileId;
+    if (mode === 'new') {
+      const name = diagramName.trim() || 'Diagram';
+      const file = await createDiagramAttachment.mutateAsync({
+        name,
+        content: emptyDiagram(name)
+      });
+      trackCreatedDiagram({ id: file.id, path: file.path });
+      resolvedFileId = file.id;
+    }
+
+    if (!resolvedFileId) {
+      if (isNew) editor.tf.removeNodes({ at: path });
+      onClose();
+      return;
+    }
+
     editor.tf.setNodes(
-      { fileId, caption: caption.trim() },
+      { fileId: resolvedFileId, caption: caption.trim() },
       { at: path }
     );
     onClose();
@@ -79,6 +117,10 @@ export const DiagramEmbedDialog = ({
     onClose();
   };
 
+  const isSaveDisabled =
+    createDiagramAttachment.isPending ||
+    (mode === 'existing' && !fileId);
+
   return (
     <Dialog
       open={open}
@@ -87,13 +129,31 @@ export const DiagramEmbedDialog = ({
       width={480}
       buttons={[
         { label: 'Cancel', type: 'cancel', onClick: handleClose },
-        { label: 'Save', type: 'default', disabled: !fileId, onClick: handleConfirm }
+        { label: 'Save', type: 'default', disabled: isSaveDisabled, onClick: handleConfirm }
       ]}
     >
       <DialogContent>
-        <DialogSection label="Diagram">
-          <DiagramPicker fileTree={fileTree} selectedId={fileId} onSelect={handleSelectFile} />
-        </DialogSection>
+        {nodeId && (
+          <div className={styles.modeSwitcher}>
+            <ModeSwitcher modes={EMBED_MODES} value={mode} onChange={setMode} />
+          </div>
+        )}
+        {mode === 'new' ? (
+          <DialogSection label="Name">
+            <input
+              className={styles.input}
+              type="text"
+              placeholder="Diagram name…"
+              value={diagramName}
+              onChange={e => setDiagramName(e.target.value)}
+              autoFocus
+            />
+          </DialogSection>
+        ) : (
+          <DialogSection label="Diagram">
+            <DiagramPicker fileTree={fileTree} selectedId={fileId} onSelect={handleSelectFile} />
+          </DialogSection>
+        )}
         <DialogSection label="Caption (optional)">
           <input
             className={styles.input}
