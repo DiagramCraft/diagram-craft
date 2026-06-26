@@ -106,6 +106,7 @@ export const authPublicORPCRouter = publicRouter.router({
           context.event as Parameters<typeof getCookie>[0],
           'ar_refresh_token'
         );
+        // Cookie is preferred (browser flow). Body fallback is for non-browser API clients only.
         const refreshToken = selectRefreshToken(cookieToken, input.body);
         orpcAssert.present(refreshToken, { code: 'UNAUTHORIZED', message: 'Refresh token is required' });
 

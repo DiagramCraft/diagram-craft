@@ -11,12 +11,17 @@ import { generateSvgPreview } from './domain/diagram/svgPreviewGenerator';
 import { generateAccurateSvgPreview } from './domain/diagram/serverDiagramRenderer';
 import { getDiagramCommentCounts } from './domain/diagram/commentCounts';
 import { createLogger } from './utils/logger';
+import { getEncryptionWarnings } from './utils/encryption';
 
 const logger = createLogger('server');
 
 const PORT = Number(process.env['PORT'] ?? SERVER_DEFAULTS.PORT);
 
 const main = async () => {
+  for (const warning of getEncryptionWarnings()) {
+    logger.warn(warning);
+  }
+
   const db = await createDatabase();
   const storage = createStorage();
   const app = createApp(db, storage);

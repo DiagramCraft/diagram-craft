@@ -321,7 +321,7 @@ test.describe('diagram craft routes', () => {
 
     expect(res.status).toBe(429);
     await expect(res.json()).resolves.toMatchObject({
-      message: 'Provider rate limited this request'
+      message: 'AI provider returned an error'
     });
   });
 });

@@ -2,6 +2,9 @@ import { HTTPError } from 'h3';
 import type { AIGenerateRequest, AIResult, AIServer, AIMessage } from './aiServer';
 import { httpAssert } from '../../utils/httpAssert';
 import type { EffectiveAiConfig } from './tanstackAiAdapter';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('configuredAiServer');
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
@@ -53,19 +56,21 @@ export class ConfiguredAIServer implements AIServer {
 
       if (!response.ok) {
         const errorBody = await response.text();
-        let errorMessage = `${isOpenAI ? 'OpenAI' : 'OpenRouter'} API error`;
+        const providerName = isOpenAI ? 'OpenAI' : 'OpenRouter';
+        let upstreamDetail = `${providerName} API error`;
 
         try {
           const errorJson = JSON.parse(errorBody);
-          errorMessage = errorJson.error?.message ?? errorMessage;
+          upstreamDetail = errorJson.error?.message ?? upstreamDetail;
         } catch {
-          // Ignore invalid JSON error bodies and keep the default message.
+          // Ignore invalid JSON error bodies.
         }
 
+        logger.error(`${providerName} API error (${response.status}): ${upstreamDetail}`);
         throw new HTTPError({
           status: response.status,
           statusText: response.statusText,
-          message: errorMessage
+          message: 'AI provider returned an error'
         });
       }
 
@@ -98,10 +103,11 @@ export class ConfiguredAIServer implements AIServer {
       }
 
       if (error instanceof Error) {
+        logger.error(`Unexpected error calling AI provider: ${error.message}`);
         throw new HTTPError({
           status: 500,
           statusText: 'Internal Server Error',
-          message: `Failed to generate AI response: ${error.message}`
+          message: 'Failed to generate AI response'
         });
       }
 

@@ -4,7 +4,7 @@ import {
   buildUserUpdateInput,
   parseRequestedGlobalRoles,
   selectRefreshToken
-} from './authRoutes';
+} from './authHelpers';
 import { UserDbResult } from './db/authDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');

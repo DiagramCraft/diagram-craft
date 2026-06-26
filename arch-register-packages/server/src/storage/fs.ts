@@ -1,12 +1,20 @@
-import { join, dirname } from 'node:path';
+import { join, resolve, dirname, sep } from 'node:path';
 import { mkdir, readFile, writeFile, unlink, rm } from 'node:fs/promises';
 import type { StorageAdapter } from './storage.types';
 
 export class FilesystemStorage implements StorageAdapter {
-  constructor(private baseDir: string) {}
+  private readonly resolvedBaseDir: string;
+
+  constructor(private baseDir: string) {
+    this.resolvedBaseDir = resolve(baseDir);
+  }
 
   private resolvePath(workspace: string, projectId: string, fileId: string): string {
-    return join(this.baseDir, workspace, projectId, fileId);
+    const fullPath = resolve(join(this.baseDir, workspace, projectId, fileId));
+    if (!fullPath.startsWith(this.resolvedBaseDir + sep) && fullPath !== this.resolvedBaseDir) {
+      throw new Error(`Path traversal detected: resolved path escapes base directory`);
+    }
+    return fullPath;
   }
 
   async read(workspace: string, projectId: string, fileId: string): Promise<Buffer> {
