@@ -85,13 +85,13 @@ class WSSharedDoc extends Y.Doc {
       }
     );
 
-    this.on('update', (update, _origin, doc) => {
+    this.on('update', (update, _origin, _doc) => {
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, messageSync);
       syncProtocol.writeUpdate(encoder, update);
       const message = encoding.toUint8Array(encoder);
 
-      (doc as WSSharedDoc).conns.forEach((_ids, conn) => this.sendCallback(doc as WSSharedDoc, conn, message));
+      this.conns.forEach((_ids, conn) => this.sendCallback(this, conn, message));
     });
   }
 }
