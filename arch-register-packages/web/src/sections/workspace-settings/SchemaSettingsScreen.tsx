@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -15,10 +15,12 @@ import { ICON_MAP } from '../../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../../hooks/useSchemas';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { newid } from '@diagram-craft/utils/id';
 import { EnumEditorScreen } from './EnumEditorScreen';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+
+const toFieldId = (name: string) =>
+  name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
 const deriveKeyPrefix = (value: string) =>
   value
@@ -45,6 +47,7 @@ export const SchemaSettingsScreen = () => {
   const [icon, setIcon] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const fieldKeysRef = useRef<Map<string, string>>(new Map());
 
   const createSchemaMutation = useCreateSchema(workspaceSlug);
   const updateSchemaMutation = useUpdateSchema(workspaceSlug);
@@ -73,6 +76,7 @@ export const SchemaSettingsScreen = () => {
       setColor(selected.color);
       setIcon(selected.icon);
       setDirty(false);
+      fieldKeysRef.current.clear();
     }
   }, [selected]);
 
@@ -120,6 +124,13 @@ export const SchemaSettingsScreen = () => {
   }, [selected, deleteSchemaMutation, onSelectSchema, schemas]);
 
   const updateField = (fieldId: string, patch: Partial<SchemaField>) => {
+    if (patch.id && patch.id !== fieldId) {
+      const stableKey = fieldKeysRef.current.get(fieldId);
+      if (stableKey) {
+        fieldKeysRef.current.delete(fieldId);
+        fieldKeysRef.current.set(patch.id, stableKey);
+      }
+    }
     setFields(prev => prev.map(f => (f.id === fieldId ? ({ ...f, ...patch } as SchemaField) : f)));
     setDirty(true);
   };
@@ -130,11 +141,9 @@ export const SchemaSettingsScreen = () => {
   };
 
   const addField = () => {
-    const newField: SchemaField = {
-      id: newid(),
-      name: 'new_field',
-      type: 'text'
-    };
+    const id = toFieldId('new_field');
+    fieldKeysRef.current.set(id, crypto.randomUUID());
+    const newField: SchemaField = { id, name: 'new_field', type: 'text' };
     setFields(prev => [...prev, newField]);
     setDirty(true);
   };
@@ -312,7 +321,7 @@ export const SchemaSettingsScreen = () => {
                   );
                   return (
                     <FieldRow
-                      key={f.id}
+                      key={fieldKeysRef.current.get(f.id) ?? f.id}
                       field={f}
                       schemas={schemas}
                       enums={enums}
@@ -421,6 +430,8 @@ const FieldRow = ({
   containmentDisabled: boolean;
   canEdit: boolean;
 }) => {
+  const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
+
   const optionsDisplay = () => {
     if (field.type === 'select') {
       return (
@@ -520,11 +531,26 @@ const FieldRow = ({
       <span className={styles.fieldHandle}>
         <TbGripVertical size={14} />
       </span>
-      <span className={styles.fieldName}>{field.id}</span>
+      <TextInput
+        value={field.id}
+        disabled={!canEdit}
+        onChange={value => {
+          setIdUserEdited(true);
+          onUpdate({ id: value ?? '' });
+        }}
+        style={{ width: '100%', fontFamily: 'monospace' }}
+      />
       <TextInput
         value={field.name}
         disabled={!canEdit}
-        onChange={value => onUpdate({ name: value ?? '' })}
+        onChange={value => {
+          const name = value ?? '';
+          if (!idUserEdited) {
+            onUpdate({ name, id: toFieldId(name) });
+          } else {
+            onUpdate({ name });
+          }
+        }}
         style={{ width: '100%' }}
       />
       <Select.Root
