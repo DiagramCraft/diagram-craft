@@ -34,6 +34,28 @@ import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
 const checker = new PermissionChecker();
 
+const attachProjectLink = (
+  entity: EntityRecord,
+  rowId: string,
+  projectId: string | null,
+  projectEntityMap: Map<string, { entity_type_id: string | null; entity_type_label: string | null; is_done: boolean }>
+): EntityRecord => {
+  if (!projectId) return entity;
+  const projectEntity = projectEntityMap.get(rowId);
+  return {
+    ...entity,
+    _projectLink: projectEntity
+      ? {
+          linked: true,
+          entityType: projectEntity.entity_type_id
+            ? { id: projectEntity.entity_type_id, name: projectEntity.entity_type_label ?? projectEntity.entity_type_id }
+            : null,
+          isDone: projectEntity.is_done
+        }
+      : { linked: false, entityType: null, isDone: false }
+  };
+};
+
 const allocateEntityPublicId = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -120,36 +142,17 @@ export const listEntities = async (
       .sort((a, b) => a.entity.name.localeCompare(b.entity.name))
       .slice(safeOffset, limit != null ? safeOffset + limit : undefined);
 
-    const attachProjectLink = (entity: EntityRecord, rowId: string) => {
-      if (!projectId) return entity;
-      const projectEntity = projectEntityMap.get(rowId);
-      return {
-        ...entity,
-        _projectLink: projectEntity
-          ? {
-              linked: true,
-              entityType: projectEntity.entity_type_id
-                ? { id: projectEntity.entity_type_id, name: projectEntity.entity_type_label ?? projectEntity.entity_type_id }
-                : null,
-              isDone: projectEntity.is_done
-            }
-          : {
-              linked: false,
-              entityType: null,
-              isDone: false
-            }
-      };
-    };
-
     return view === 'summary'
       ? rows.map(({ entity: row, completeness }) =>
           attachProjectLink(
             toApiEntitySummary(row, authCtx, completeness) as EntityRecord,
-            row.id
+            row.id,
+            projectId,
+            projectEntityMap
           )
         )
       : rows.map(({ entity: row, completeness }) =>
-          attachProjectLink(toApiEntity(row, authCtx, completeness), row.id)
+          attachProjectLink(toApiEntity(row, authCtx, completeness), row.id, projectId, projectEntityMap)
         );
   } catch (error) {
     return handleError(error, 'Failed to retrieve data');
@@ -250,7 +253,7 @@ export const getEntityTree = async (
       db.catalog.listEntities(workspace),
       projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
     ]);
-    const projectEntityMap = new Set(projectEntities.map(entity => entity.entity_id));
+    const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
     const allEntities = allEntitiesRaw.filter(
       entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
     );
@@ -300,33 +303,9 @@ export const getEntityTree = async (
       currentLevel = nextLevel;
     }
 
-    const attachProjectLink = (entity: EntityRecord, rowId: string) => {
-      if (!projectId) return entity;
-      const projectEntity = projectEntities.find(item => item.entity_id === rowId);
-      return {
-        ...entity,
-        _projectLink: projectEntity
-          ? {
-              linked: true,
-              entityType: projectEntity.entity_type_id
-                ? {
-                    id: projectEntity.entity_type_id,
-                    name: projectEntity.entity_type_label ?? projectEntity.entity_type_id
-                  }
-                : null,
-              isDone: projectEntity.is_done
-            }
-          : {
-              linked: false,
-              entityType: null,
-              isDone: false
-            }
-      };
-    };
-
     return {
       nodes: [...allIncluded.values()].map(row => ({
-        ...attachProjectLink(toApiEntitySummary(row, authCtx) as EntityRecord, row.id),
+        ...attachProjectLink(toApiEntitySummary(row, authCtx) as EntityRecord, row.id, projectId, projectEntityMap),
         _isMatch: matchIds.has(row.id)
       })),
       edges

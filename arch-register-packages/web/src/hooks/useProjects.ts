@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  entityKeys,
   projectKeys,
   projectEntityKeys,
   entityContentKeys,
@@ -108,16 +107,12 @@ export const useDeleteProject = (workspaceId: string) => {
 };
 
 // Hook for fetching entities associated with a project
-export const useProjectEntities = (
-  workspaceId: string,
-  projectId: string,
-  options?: { enabled?: boolean }
-) => {
+export const useProjectEntities = (workspaceId: string, projectId: string) => {
   return useQuery({
     queryKey: projectEntityKeys.all(workspaceId, projectId),
     queryFn: () =>
       orpcClient.projects.listEntities({ params: { workspace: workspaceId, id: projectId } }),
-    enabled: (options?.enabled ?? true) && !!workspaceId && !!projectId
+    enabled: !!workspaceId && !!projectId
   });
 };
 
@@ -163,8 +158,6 @@ export const useAddProjectEntity = (workspaceId: string, projectId: string) => {
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.entityProjects(workspaceId, variables.entity_id)
       });
-      await queryClient.refetchQueries({ queryKey: entityKeys.lists() });
-      await queryClient.refetchQueries({ queryKey: ['entities', 'tree'] as const });
       await invalidateEntityQueries(queryClient, workspaceId);
     }
   });

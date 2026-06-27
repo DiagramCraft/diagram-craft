@@ -368,7 +368,12 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
 
   useEffect(() => {
     setQ(search.q ?? '');
-    setConditions(parseConditionsFromSearch(search));
+    setConditions(parseConditionsFromSearch({
+      filters: search.filters,
+      type: search.type,
+      status: search.status,
+      owner: search.owner
+    } as BrowserSearch));
     setProjectScope(projectId ? (search.projectScope ?? 'project') : 'all');
     setSort(search.sort ?? 'name');
     setView(search.viewMode ?? 'table');
@@ -379,7 +384,19 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     setExploreConfig(parseExploreConfigValue(search.exploreConfig));
   }, [
     projectId,
-    search
+    search.q,
+    search.filters,
+    search.type,
+    search.status,
+    search.owner,
+    search.projectScope,
+    search.sort,
+    search.viewMode,
+    search.radarConfig,
+    search.timelineConfig,
+    search.matrixConfig,
+    search.hierarchyConfig,
+    search.exploreConfig
   ]);
 
   const { data: entities = [] } = useEntities(workspaceId, {
@@ -390,7 +407,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     conditions,
     projectId: projectId ?? undefined,
     projectScope: projectId ? projectScope : undefined,
-    view: 'full'
+    view: 'summary'
   });
 
   const { data: facets } = useEntityFacets(workspaceId);
