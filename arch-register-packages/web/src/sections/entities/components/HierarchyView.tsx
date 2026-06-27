@@ -25,6 +25,7 @@ type HierarchyViewProps = {
   onEntityClick: (entityId: string) => void;
   config: HierarchyConfig | null;
   onConfigChange: (cfg: HierarchyConfig) => void;
+  linkedEntityIds?: string[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -62,11 +63,13 @@ const EntityTooltip = ({
   node,
   color,
   schemaName,
+  isLinked,
   children
 }: {
   node: TreeNode;
   color: string;
   schemaName: string;
+  isLinked: boolean;
   children: React.ReactNode;
 }) => {
   const anchorRef = useRef<HTMLSpanElement | null>(null);
@@ -126,7 +129,12 @@ const EntityTooltip = ({
             onMouseEnter={scheduleOpen}
             onMouseLeave={scheduleClose}
           >
-            <h4 className={styles.tooltipTitle}>{nodeName(node)}</h4>
+            <h4
+              className={styles.tooltipTitle}
+              style={isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }}
+            >
+              {nodeName(node)}
+            </h4>
 
             {node._description && (
               <p className={styles.tooltipDesc}>{node._description}</p>
@@ -233,10 +241,12 @@ export const HierarchyView = ({
   edges,
   onEntityClick,
   config,
-  onConfigChange
+  onConfigChange,
+  linkedEntityIds
 }: HierarchyViewProps) => {
   const { schemas } = useWorkspaceContext();
   const [localConfig, setLocalConfig] = useState<HierarchyConfig>(config ?? DEFAULT_CONFIG);
+  const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
   const cfg = config ?? localConfig;
 
@@ -401,11 +411,17 @@ export const HierarchyView = ({
                       node={l1}
                       color={color}
                       schemaName={schemaEntry?.schema.name ?? l1._schema.name}
+                      isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l1._uid)}
                     >
                       <button
                         type="button"
                         className={styles.entityLink}
                         onClick={() => onEntityClick(l1._publicId)}
+                        style={
+                          linkedEntityIds != null && !linkedEntityIdSet.has(l1._uid)
+                            ? { color: 'var(--base-fg-more-dim)' }
+                            : undefined
+                        }
                       >
                         {nodeName(l1)}
                       </button>
@@ -432,11 +448,17 @@ export const HierarchyView = ({
                                 node={l2}
                                 color={l2Color}
                                 schemaName={l2SchemaEntry?.schema.name ?? l2._schema.name}
+                                isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l2._uid)}
                               >
                                 <button
                                   type="button"
                                   className={styles.entityLink}
                                   onClick={() => onEntityClick(l2._publicId)}
+                                  style={
+                                    linkedEntityIds != null && !linkedEntityIdSet.has(l2._uid)
+                                      ? { color: 'var(--base-fg-more-dim)' }
+                                      : undefined
+                                  }
                                 >
                                   {nodeName(l2)}
                                 </button>
@@ -466,11 +488,17 @@ export const HierarchyView = ({
                                         node={l3}
                                         color={l3Color}
                                         schemaName={l3SchemaEntry?.schema.name ?? l3._schema.name}
+                                        isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l3._uid)}
                                       >
                                         <button
                                           type="button"
                                           className={styles.entityLink}
                                           onClick={() => onEntityClick(l3._publicId)}
+                                          style={
+                                            linkedEntityIds != null && !linkedEntityIdSet.has(l3._uid)
+                                              ? { color: 'var(--base-fg-more-dim)' }
+                                              : undefined
+                                          }
                                         >
                                           {nodeName(l3)}
                                         </button>

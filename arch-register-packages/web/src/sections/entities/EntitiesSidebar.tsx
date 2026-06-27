@@ -58,6 +58,7 @@ export const EntitiesSidebar = ({
     q?: string;
     viewId?: string;
     viewMode?: string;
+    sort?: string;
     radarConfig?: string;
     timelineConfig?: string;
     matrixConfig?: string;
@@ -192,6 +193,7 @@ export const EntitiesSidebar = ({
         q: view.filters.q ?? undefined,
         viewId: view.id,
         viewMode: view.viewMode,
+        sort: view.filters.sort ?? undefined,
         radarConfig: view.config?.radar ? JSON.stringify(view.config.radar) : undefined,
         timelineConfig: view.config?.timeline ? JSON.stringify(view.config.timeline) : undefined,
         matrixConfig: view.config?.matrix ? JSON.stringify(view.config.matrix) : undefined,

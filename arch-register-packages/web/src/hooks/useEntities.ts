@@ -28,6 +28,8 @@ export const useEntities = (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    projectId?: string | null;
+    projectScope?: 'project' | 'all';
     view?: 'summary' | 'full';
     limit?: number | null;
     offset?: number | null;
@@ -47,6 +49,8 @@ export const useEntities = (
           conditions: options.conditions?.length
             ? JSON.stringify(options.conditions)
             : undefined,
+          projectId: options.projectId ?? undefined,
+          projectScope: options.projectScope ?? undefined,
           view: options.view,
           limit: options.limit ?? undefined,
           offset: options.offset ?? undefined
@@ -92,6 +96,8 @@ export const useEntityTree = (
     owner?: string | null;
     lifecycle?: string | null;
     q?: string | null;
+    projectId?: string | null;
+    projectScope?: 'project' | 'all';
   } = {}
 ) => {
   return useQuery({
@@ -103,7 +109,9 @@ export const useEntityTree = (
           _schemaId: options.schemaId ?? undefined,
           owner: options.owner ?? undefined,
           lifecycle: options.lifecycle ?? undefined,
-          q: options.q ?? undefined
+          q: options.q ?? undefined,
+          projectId: options.projectId ?? undefined,
+          projectScope: options.projectScope ?? undefined
         }
       }),
     enabled: !!workspaceId

@@ -1,11 +1,12 @@
-// Entity browser filters
-export type EntitySearchParams = {
+export type SharedEntityBrowserSearchParams = {
   type?: string;
   status?: string;
   owner?: string;
   q?: string;
   viewId?: string;
   viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix' | 'hierarchy' | 'explore';
+  sort?: string;
+  projectScope?: 'project' | 'all';
   radarConfig?: string;
   timelineConfig?: string;
   matrixConfig?: string;
@@ -15,7 +16,9 @@ export type EntitySearchParams = {
   filters?: string; // JSON string of FilterCondition[]
 };
 
-export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearchParams => ({
+const validateSharedEntityBrowserSearch = (
+  raw: Record<string, unknown>
+): SharedEntityBrowserSearchParams => ({
   type: typeof raw.type === 'string' ? raw.type : undefined,
   status: typeof raw.status === 'string' ? raw.status : undefined,
   owner: typeof raw.owner === 'string' ? raw.owner : undefined,
@@ -32,6 +35,8 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
     raw.viewMode === 'explore'
       ? raw.viewMode
       : undefined,
+  sort: typeof raw.sort === 'string' ? raw.sort : undefined,
+  projectScope: raw.projectScope === 'project' || raw.projectScope === 'all' ? raw.projectScope : undefined,
   radarConfig: typeof raw.radarConfig === 'string' ? raw.radarConfig : undefined,
   timelineConfig: typeof raw.timelineConfig === 'string' ? raw.timelineConfig : undefined,
   matrixConfig: typeof raw.matrixConfig === 'string' ? raw.matrixConfig : undefined,
@@ -40,6 +45,12 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
   sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'pinned' ? raw.sidebarTab : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
 });
+
+// Entity browser filters
+export type EntitySearchParams = SharedEntityBrowserSearchParams;
+
+export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearchParams =>
+  validateSharedEntityBrowserSearch(raw);
 
 // Entity detail params
 export type EntityDetailSearchParams = {
@@ -74,9 +85,10 @@ export type ProjectSearchParams = {
   folder?: string;
   section?: 'home' | 'entities';
   dialog?: 'add-entity';
-};
+} & SharedEntityBrowserSearchParams;
 
 export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSearchParams => ({
+  ...validateSharedEntityBrowserSearch(raw),
   tab: raw.tab === 'projects' || raw.tab === 'archive' ? raw.tab : undefined,
   folder: typeof raw.folder === 'string' ? raw.folder : undefined,
   section: raw.section === 'home' || raw.section === 'entities' ? raw.section : undefined,

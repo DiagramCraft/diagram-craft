@@ -4,9 +4,10 @@ import {
   projectEntityKeys,
   entityContentKeys,
   invalidateAuditQueries,
-  invalidateAllProjectCaches
+  invalidateAllProjectCaches,
+  invalidateEntityQueries
 } from './queryKeys';
-import { Project, ProjectDetail, ProjectFile } from '@arch-register/api-types/projectContract';
+import { Project, ProjectDetail, ProjectEntity, ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
 import { emptyDiagram, createEntityDiagramFromTemplate } from '../lib/api';
 
@@ -142,13 +143,22 @@ export const useAddProjectEntity = (workspaceId: string, projectId: string) => {
   return useMutation({
     mutationFn: (body: { entity_id: string; entity_type?: string | null; is_done?: boolean }) =>
       orpcClient.projects.addEntity({ params: { workspace: workspaceId, id: projectId }, body }),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (createdProjectEntity, variables) => {
+      queryClient.setQueryData<ProjectEntity[] | undefined>(
+        projectEntityKeys.all(workspaceId, projectId),
+        old => {
+          if (!old) return [createdProjectEntity];
+          if (old.some(entity => entity.entity_id === createdProjectEntity.entity_id)) return old;
+          return [...old, createdProjectEntity];
+        }
+      );
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.all(workspaceId, projectId)
       });
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.entityProjects(workspaceId, variables.entity_id)
       });
+      await invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };
@@ -175,6 +185,7 @@ export const useUpdateProjectEntity = (workspaceId: string, projectId: string) =
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.all(workspaceId, projectId)
       });
+      await invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };
@@ -195,6 +206,7 @@ export const useRemoveProjectEntity = (workspaceId: string, projectId: string) =
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.entityProjects(workspaceId, entityId)
       });
+      await invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };

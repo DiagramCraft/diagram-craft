@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateEntitySearch, validateMarkdownSearch } from './searchParams';
+import { validateEntitySearch, validateMarkdownSearch, validateProjectSearch } from './searchParams';
 
 describe('validateEntitySearch', () => {
   it('parses entity browser search params used by saved views', () => {
@@ -11,6 +11,8 @@ describe('validateEntitySearch', () => {
         q: 'auth',
         viewId: 'view-123',
         viewMode: 'explore',
+        sort: 'owner',
+        projectScope: 'all',
         radarConfig: '{"schemaId":"application"}',
         timelineConfig: '{"groupBy":"owner"}',
         hierarchyConfig: '{"levels":2}',
@@ -24,6 +26,8 @@ describe('validateEntitySearch', () => {
       q: 'auth',
       viewId: 'view-123',
       viewMode: 'explore',
+      sort: 'owner',
+      projectScope: 'all',
       radarConfig: '{"schemaId":"application"}',
       timelineConfig: '{"groupBy":"owner"}',
       hierarchyConfig: '{"levels":2}',
@@ -48,6 +52,8 @@ describe('validateEntitySearch', () => {
       q: undefined,
       viewId: undefined,
       viewMode: undefined,
+      sort: undefined,
+      projectScope: undefined,
       radarConfig: undefined,
       timelineConfig: undefined,
       matrixConfig: undefined,
@@ -55,6 +61,42 @@ describe('validateEntitySearch', () => {
       exploreConfig: undefined,
       sidebarTab: undefined,
       filters: undefined
+    });
+  });
+});
+
+describe('validateProjectSearch', () => {
+  it('parses shared entity browser state on project routes', () => {
+    expect(
+      validateProjectSearch({
+        tab: 'projects',
+        section: 'entities',
+        q: 'auth',
+        viewMode: 'timeline',
+        sort: 'date:goLive',
+        projectScope: 'project',
+        filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]'
+      })
+    ).toEqual({
+      tab: 'projects',
+      folder: undefined,
+      section: 'entities',
+      dialog: undefined,
+      type: undefined,
+      status: undefined,
+      owner: undefined,
+      q: 'auth',
+      viewId: undefined,
+      viewMode: 'timeline',
+      sort: 'date:goLive',
+      projectScope: 'project',
+      radarConfig: undefined,
+      timelineConfig: undefined,
+      matrixConfig: undefined,
+      hierarchyConfig: undefined,
+      exploreConfig: undefined,
+      sidebarTab: undefined,
+      filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]'
     });
   });
 });

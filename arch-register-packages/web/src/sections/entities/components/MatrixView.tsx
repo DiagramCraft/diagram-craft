@@ -28,6 +28,7 @@ type MatrixViewProps = {
   onEntityClick: (entityId: string) => void;
   config: MatrixConfig | null;
   onConfigChange: (cfg: MatrixConfig) => void;
+  linkedEntityIds?: string[];
 };
 
 type ColMode = 'entity' | 'attribute';
@@ -87,7 +88,14 @@ const getMetadataValue = (row: EntityRecord, fieldId: string): string | null => 
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export const MatrixView = ({ rows, schemaMap, onEntityClick, config, onConfigChange }: MatrixViewProps) => {
+export const MatrixView = ({
+  rows,
+  schemaMap,
+  onEntityClick,
+  config,
+  onConfigChange,
+  linkedEntityIds
+}: MatrixViewProps) => {
   const {
     workspaceSlug: workspaceId,
     schemas,
@@ -115,6 +123,7 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick, config, onConfigCha
     });
   }, [onConfigChange, colMode, colSchemaId, colEnumFieldId, filterFieldName, hideEmptyRows, hideEmptyCols]);
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
+  const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
   const rowEntityIds = useMemo(() => rows.map(r => r._uid), [rows]);
   const rowSchemaIds = useMemo(() => new Set(rows.map(r => r._schema.id)), [rows]);
@@ -515,6 +524,11 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick, config, onConfigCha
                           className={styles.colLabel}
                           title={col.label}
                           onClick={() => onEntityClick(col.publicId)}
+                          style={
+                            linkedEntityIds != null && !linkedEntityIdSet.has(col.id)
+                              ? { color: 'var(--base-fg-more-dim)' }
+                              : undefined
+                          }
                         >
                           {col.label}
                         </button>
@@ -548,7 +562,16 @@ export const MatrixView = ({ rows, schemaMap, onEntityClick, config, onConfigCha
                           onClick={() => onEntityClick(row._publicId)}
                         >
                           <TypeBadge color={rowColor} icon={rowEntry?.schema.icon} size={13} />
-                          <span className={styles.rowName}>{row._name}</span>
+                          <span
+                            className={styles.rowName}
+                            style={
+                              linkedEntityIds != null && !linkedEntityIdSet.has(row._uid)
+                                ? { color: 'var(--base-fg-more-dim)' }
+                                : undefined
+                            }
+                          >
+                            {row._name}
+                          </span>
                         </button>
                         <span className={styles.rowCount}>
                           {rowCounts[ri]! > 0 ? rowCounts[ri] : ''}
