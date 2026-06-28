@@ -16,8 +16,9 @@ Entities appear in the entity browser, in entity detail screens, and in search r
 
 ## Project
 
-A project groups diagrams and related files.
+A project groups diagrams, folders, and related files.
 Projects are separate from entities, but can reference them.
+Project diagrams can also be marked as templates and opened collaboratively.
 
 ## Team
 
@@ -30,7 +31,9 @@ They are part of workspace configuration.
 
 - Home shows the current workspace summary.
 - Entities shows the list, filters, and create flow.
-- Projects shows project lists and project detail screens.
+- Projects shows project lists, project detail screens, folders, and diagram creation.
 - Settings contains workspace configuration.
 
 Next: [Create your first entity](first-entity).
+
+For project and diagram workflows, continue with [Projects](../user-guide/projects).

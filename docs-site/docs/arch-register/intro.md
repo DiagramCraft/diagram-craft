@@ -25,3 +25,4 @@ Arch Register is a workspace-based application for storing architectural entitie
 - Creating the first workspace
 - Adding the first entity
 - Reference material for workspaces, entities, and projects
+- Project folders, diagrams, templates, and collaboration

@@ -1,10 +1,11 @@
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { chromium, type Browser, type Page } from '@playwright/test';
+import { chromium, expect, type Browser, type Page } from '@playwright/test';
 import { DataModelPage } from '../../arch-register-packages/e2e/src/ui/pages/DataModelPage';
 import { EntitiesPage } from '../../arch-register-packages/e2e/src/ui/pages/EntitiesPage';
 import { HomePage } from '../../arch-register-packages/e2e/src/ui/pages/HomePage';
@@ -56,6 +57,206 @@ const webBaseUrl = `http://localhost:${screenshotWebPort}`;
 const serverBaseUrl = `http://localhost:${screenshotServerPort}`;
 const defaultViewport = { width: 1280, height: 800 } satisfies Viewport;
 const defaultDeviceScaleFactor = process.platform === 'darwin' ? 2 : 1;
+const projectDiagramName = 'Project overview draft';
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const createBlankDiagramDocument = (name: string) => {
+  const diagramId = randomUUID();
+  const layerId = randomUUID();
+
+  return {
+    name,
+    diagrams: [
+      {
+        id: diagramId,
+        name,
+        layers: [
+          {
+            id: layerId,
+            name: 'Default',
+            type: 'layer',
+            layerType: 'regular',
+            elements: [],
+            isLocked: false
+          }
+        ],
+        activeLayerId: layerId,
+        visibleLayers: [layerId],
+        diagrams: [],
+        comments: [],
+        zoom: { x: 0, y: 0, zoom: 1 },
+        canvas: { x: -20, y: -20, w: 1076, h: 904 }
+      }
+    ],
+    attachments: {},
+    customPalette: Array(14).fill('#000000'),
+    styles: {
+      edgeStyles: [
+        {
+          id: 'default-edge',
+          name: 'Default',
+          props: { stroke: { color: 'var(--canvas-fg)' }, type: 'straight' },
+          type: 'edge'
+        }
+      ],
+      nodeStyles: [
+        {
+          id: 'default',
+          name: 'Default',
+          props: {
+            fill: { color: 'var(--canvas-bg2)' },
+            stroke: { color: 'var(--canvas-fg)' },
+            text: { color: 'var(--canvas-fg)' }
+          },
+          type: 'node'
+        },
+        {
+          id: 'default-text',
+          name: 'Text',
+          props: {
+            fill: { enabled: false },
+            stroke: { enabled: false },
+            text: { color: 'var(--canvas-fg)' }
+          },
+          type: 'node'
+        }
+      ],
+      textStyles: [
+        {
+          id: 'default-text-default',
+          name: 'Default',
+          props: {
+            text: { fontSize: 10, font: 'sans-serif', top: 0, left: 0, right: 0, bottom: 0 }
+          },
+          type: 'text'
+        },
+        {
+          id: 'h1',
+          name: 'H1',
+          props: {
+            text: {
+              fontSize: 20,
+              bold: true,
+              font: 'sans-serif',
+              align: 'left',
+              top: 6,
+              left: 6,
+              right: 6,
+              bottom: 6
+            }
+          },
+          type: 'text'
+        }
+      ]
+    },
+    schemas: [
+      {
+        id: 'default',
+        name: 'Default',
+        providerId: 'default',
+        fields: [
+          { id: 'name', name: 'Name', type: 'text' },
+          { id: 'notes', name: 'Notes', type: 'longtext' }
+        ]
+      }
+    ],
+    schemaMetadata: {
+      default: { availableForElementLocalData: false, useDocumentOverrides: false }
+    },
+    props: {
+      query: { history: [], saved: [] },
+      stencils: ['default@@rect'],
+      activeStencilPackages: [],
+      recentEdgeStylesheets: []
+    },
+    data: {
+      providers: [
+        {
+          id: 'default',
+          providerId: 'defaultDataProvider',
+          data: '{"schemas":[{"id":"default","name":"Default","providerId":"default","fields":[{"id":"name","name":"Name","type":"text"},{"id":"notes","name":"Notes","type":"longtext"}]}],"data":[]}'
+        }
+      ],
+      templates: [],
+      overrides: {}
+    },
+    activeDiagramId: diagramId,
+    hash: `${randomUUID()}${randomUUID()}`
+  };
+};
+
+const openProjectNewDiagramDialog = async (page: Page) => {
+  await page.getByRole('main').getByRole('button', { name: 'New' }).click();
+  const newDiagramItem = page.getByRole('menuitem', { name: 'New diagram' });
+  await expect(newDiagramItem).toBeVisible();
+  await newDiagramItem.click();
+  await expect(page.getByText('Choose a starting point')).toBeVisible();
+};
+
+const createBlankProjectDiagram = async (page: Page, name: string) => {
+  await page.evaluate(
+    async ({ workspaceSlug, projectId, diagramName, diagramBody }) => {
+      const response = await fetch(
+        `/api/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/files?path=${encodeURIComponent(diagramName)}.json`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify(diagramBody)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to create diagram: ${response.status}`);
+      }
+    },
+    {
+      workspaceSlug: defaultWorkspace.slug,
+      projectId: authMigrationProject.id,
+      diagramName: name,
+      diagramBody: createBlankDiagramDocument(name)
+    }
+  );
+
+  await page.reload();
+  await expect(page.getByRole('main').getByRole('button', { name: new RegExp(escapeRegExp(name)) })).toBeVisible();
+};
+
+const markProjectDiagramAsTemplate = async (page: Page, name: string) => {
+  await page.evaluate(
+    async ({ workspaceSlug, projectId, diagramName }) => {
+      const response = await fetch(
+        `/api/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/template-status?path=${encodeURIComponent(diagramName)}.json`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            is_template: true,
+            is_workspace_template: false
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to promote diagram to template: ${response.status}`);
+      }
+    },
+    {
+      workspaceSlug: defaultWorkspace.slug,
+      projectId: authMigrationProject.id,
+      diagramName: name
+    }
+  );
+};
+
+const openDiagramEditorFromProject = async (page: Page, name: string) => {
+  await page.getByRole('main').getByRole('button', { name: new RegExp(escapeRegExp(name)) }).first().click();
+  await expect(page.locator('#awareness')).toBeVisible();
+};
 
 const env = {
   ...process.env,
@@ -205,6 +406,44 @@ const screenshotConfigs: ScreenshotConfig[] = [
     setup: async ({ projectsPage }) => {
       await projectsPage.gotoProject(authMigrationProject.id);
       await projectsPage.expectProjectOpened(authMigrationProject.name);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'add-diagram-dialog',
+    selector: '[role="alertdialog"]',
+    setup: async ({ projectsPage }) => {
+      await projectsPage.gotoProject(authMigrationProject.id);
+      await projectsPage.expectProjectOpened(authMigrationProject.name);
+      await openProjectNewDiagramDialog(projectsPage.page);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'diagram-editor',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await projectsPage.gotoProject(authMigrationProject.id);
+      await projectsPage.expectProjectOpened(authMigrationProject.name);
+      await createBlankProjectDiagram(projectsPage.page, projectDiagramName);
+      await openDiagramEditorFromProject(projectsPage.page, projectDiagramName);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'template-dialog',
+    selector: '[role="alertdialog"]',
+    setup: async ({ projectsPage }) => {
+      await projectsPage.gotoProject(authMigrationProject.id);
+      await projectsPage.expectProjectOpened(authMigrationProject.name);
+      await markProjectDiagramAsTemplate(projectsPage.page, projectDiagramName);
+      await sleep(500);
+      await projectsPage.gotoProject(authMigrationProject.id);
+      await projectsPage.expectProjectOpened(authMigrationProject.name);
+      await openProjectNewDiagramDialog(projectsPage.page);
     }
   },
   {
