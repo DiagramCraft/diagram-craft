@@ -3,6 +3,59 @@
 Entities are records created from schemas.
 They carry the schema fields plus workspace metadata like name, owner, lifecycle, tags, links, and target lifecycle.
 
+## Browse entities
+
+The entity browser is the main way to inspect records.
+Use **Table** for side-by-side comparison, **Cards** for scanning, and **Tree** for containment hierarchies.
+
+![Entity browser table view](/img/arch-register/entities/browser-overview.png)
+
+Table view is the default.
+It shows name, type, owner, lifecycle, namespace, and completeness in one grid.
+
+![Entity browser cards view](/img/arch-register/entities/browser-cards.png)
+
+Cards view is better for quick visual scanning.
+It keeps the same filters, search, and sort state as table view.
+
+![Entity browser tree view](/img/arch-register/entities/browser-tree.png)
+
+Tree view follows containment relationships.
+Use it when you want to verify a parent-child structure.
+
+The browser title shows the active slice and the result count.
+When you change filters, the count updates to match the current result set.
+
+![Entity browser actions menu](/img/arch-register/entities/browser-export-menu.png)
+
+Open the actions menu for saved views, CSV export, and import.
+CSV export downloads the current browser slice.
+
+## Filter entities
+
+Use the search box for quick text matching on names and owners.
+Use **Filter** when you need structured conditions for schema type, lifecycle, owner, or schema fields.
+
+The sidebar also shows workspace facet counts by type, lifecycle, and owner.
+Those counts stay anchored to the workspace catalog while the browser result count changes with the current filter set.
+
+Common patterns:
+
+- Filter by type, then narrow by lifecycle.
+- Filter by owner to review a team-owned slice.
+- Combine text search with a type filter to find one record in a large schema.
+
+![Filtered entity browser](/img/arch-register/entities/browser-filtered.png)
+
+## Search the workspace
+
+The global search page looks across entities, projects, diagrams, and schemas.
+Use it when you do not know which section contains the item you need.
+
+Results are grouped by category and the matching text is highlighted.
+
+![Workspace search results](/img/arch-register/search/results.png)
+
 ## Create an entity
 
 Use **Entities** when you want to add a new record to the catalog.
@@ -45,28 +98,6 @@ Arch Register supports:
 Reference fields point to other entities.
 Containment fields define a parent-child hierarchy and are what the tree view follows.
 Schemas can also set minimum and maximum counts, so a field can be required or limited to a single related entity.
-
-## Browser views
-
-The entity browser keeps the same filters across all views.
-Use the view switcher when you want a different way to scan the same data.
-
-![Entity browser table view](/img/arch-register/entities/browser-overview.png)
-
-Table view is the default.
-It is the best choice when you need to compare owner, lifecycle, and field values side by side.
-
-![Entity browser cards view](/img/arch-register/entities/browser-cards.png)
-
-Cards view is better for quick visual scanning.
-It keeps the same filter state but gives each entity a more compact summary.
-
-![Entity browser tree view](/img/arch-register/entities/browser-tree.png)
-
-Tree view follows containment relationships.
-Use it when you want to check domain or system structure.
-
-The browser also supports search, filter facets, saved views, CSV export, and import from the actions menu.
 
 ## Ownership and lifecycle
 

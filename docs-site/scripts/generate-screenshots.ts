@@ -143,6 +143,18 @@ const screenshotConfigs: ScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'entities',
+    name: 'browser-export-menu',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto();
+      await entitiesPage.expectLoaded();
+      await entitiesPage.openExportMenu();
+      await entitiesPage.page.getByRole('menuitem', { name: 'Export CSV' }).waitFor();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
     name: 'create-dialog',
     selector: '[role="alertdialog"]',
     setup: async ({ entitiesPage }) => {

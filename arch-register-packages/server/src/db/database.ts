@@ -8,27 +8,15 @@ import type { WorkspaceDatabase } from '../domain/workspace/db/workspaceDatabase
 
 export type DbDriver = 'postgres' | 'sqlite';
 
-export type NormalizedDbErrorCode =
-  | 'unique'          // Unique constraint violation
-  | 'foreign'         // Foreign key constraint violation
-  | 'check'           // Check constraint violation
-  | 'notnull'         // Not null constraint violation
-  | 'deadlock'        // Deadlock detected
-  | 'timeout'         // Query timeout
-  | 'connection'      // Connection error
-  | 'serialization'   // Serialization failure (concurrent update)
-  | 'disk_full'       // Disk full error
-  | 'unknown';        // Unknown error
+export type NormalizedDbErrorCode = 'unique' | 'foreign' | 'check' | 'notnull' | 'unknown';
 
 export class DatabaseError extends Error {
   constructor(
     readonly code: NormalizedDbErrorCode,
     message: string,
-    readonly cause?: unknown,
-    readonly details?: Record<string, unknown>  // Additional error details
+    readonly cause?: unknown
   ) {
     super(message);
-    this.name = 'DatabaseError';
   }
 }
 
