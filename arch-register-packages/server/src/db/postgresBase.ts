@@ -1,5 +1,4 @@
 import postgres from 'postgres';
-import { DB_ERROR_CODES } from '../constants';
 import { DatabaseError } from './database';
 
 export type PostgresSqlClient = ReturnType<typeof postgres>;
