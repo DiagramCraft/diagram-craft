@@ -48,6 +48,49 @@ pnpm build
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
+### Screenshot Generation
+
+The docs site includes a Playwright-based screenshot generator for Arch Register UI assets.
+
+```bash
+pnpm docs:screenshots
+```
+
+The command:
+
+1. Boots the Arch Register server and web app in dev mode.
+2. Seeds a temporary SQLite database with the standard demo data.
+3. Logs in as the seeded demo user.
+4. Writes PNG files into `static/img/arch-register/{category}/`.
+
+By default the generator uses dedicated ports `5073` for the Arch Register server and `5074` for the web app.
+You can override them with `SCREENSHOT_SERVER_PORT` and `SCREENSHOT_WEB_PORT` if those ports are already in use.
+
+Screenshots default to a `1280x800` viewport. Individual screenshots can override that size and can also target a
+specific element with a CSS selector when a cropped capture is more useful than a full-page image.
+
+Example screenshot config:
+
+```ts
+{
+  product: 'arch-register',
+  category: 'entities',
+  name: 'browser-filtered',
+  selector: '[data-testid="entity-browser-title"]',
+  setup: async ({ entitiesPage }) => {
+    await entitiesPage.goto();
+    await entitiesPage.expectLoaded();
+  }
+}
+```
+
+To add a new screenshot:
+
+1. Add a new config entry in `scripts/generate-screenshots.ts`.
+2. Reuse the existing page objects from `arch-register-packages/e2e/src/ui/pages/`.
+3. Choose an output category under `static/img/arch-register/`.
+4. Run `pnpm docs:screenshots` to regenerate the asset.
+
 ### Serve Built Site
 
 To test the production build locally:
@@ -111,7 +154,6 @@ GitHub Actions workflow will be configured separately to automatically deploy on
 ## Future Enhancements
 
 - TypeDoc API documentation integration
-- Screenshot automation
 - Content migration from existing `/docs` directory
 - Search integration (Algolia DocSearch)
 - Versioning support
@@ -124,7 +166,7 @@ When adding new documentation:
 1. Follow the existing structure and naming conventions
 2. Use clear, concise language
 3. Include code examples where appropriate
-4. Add screenshots for UI-related documentation (when screenshot automation is set up)
+4. Add screenshots for UI-related documentation by adding a config to `scripts/generate-screenshots.ts`
 5. Test locally before committing
 
 ## Troubleshooting
