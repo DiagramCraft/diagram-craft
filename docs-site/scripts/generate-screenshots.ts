@@ -52,6 +52,7 @@ const screenshotWebPort = Number(process.env['SCREENSHOT_WEB_PORT'] ?? '5074');
 const webBaseUrl = `http://localhost:${screenshotWebPort}`;
 const serverBaseUrl = `http://localhost:${screenshotServerPort}`;
 const defaultViewport = { width: 1280, height: 800 } satisfies Viewport;
+const defaultDeviceScaleFactor = process.platform === 'darwin' ? 2 : 1;
 
 const env = {
   ...process.env,
@@ -76,6 +77,38 @@ const screenshotConfigs: ScreenshotConfig[] = [
   },
   {
     product: 'arch-register',
+    category: 'workspace',
+    name: 'selector-open',
+    fullPage: false,
+    setup: async ({ homePage }) => {
+      await homePage.goto();
+      await homePage.expectLoaded(defaultWorkspace.name);
+      await homePage.workspaceShell.topBar.openWorkspaceSwitcher();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'workspace',
+    name: 'create-dialog',
+    selector: '[role="alertdialog"]',
+    setup: async ({ homePage }) => {
+      await homePage.goto();
+      await homePage.expectLoaded(defaultWorkspace.name);
+      await homePage.workspaceShell.topBar.openAddWorkspaceFromSwitcher();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'browser-overview',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto();
+      await entitiesPage.expectLoaded();
+    }
+  },
+  {
+    product: 'arch-register',
     category: 'entities',
     name: 'browser-filtered',
     setup: async ({ entitiesPage }) => {
@@ -88,13 +121,12 @@ const screenshotConfigs: ScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'entities',
-    name: 'browser-title',
-    selector: '[data-testid="entity-browser-title"]',
+    name: 'create-dialog',
+    selector: '[role="alertdialog"]',
     setup: async ({ entitiesPage }) => {
       await entitiesPage.goto();
       await entitiesPage.expectLoaded();
-      await entitiesPage.filterByType(apiSchema.name);
-      await entitiesPage.expectFilteredResultCount(2);
+      await entitiesPage.openNewEntityDialog();
     }
   },
   {
@@ -294,7 +326,7 @@ const main = async () => {
     const context = await browser.newContext({
       baseURL: webBaseUrl,
       colorScheme: 'light',
-      deviceScaleFactor: 1,
+      deviceScaleFactor: defaultDeviceScaleFactor,
       locale: 'en-US',
       viewport: defaultViewport
     });

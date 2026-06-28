@@ -2,37 +2,26 @@
 sidebar_position: 1
 ---
 
-# Introduction to Arch Register
+# Arch Register
 
-Welcome to Arch Register documentation!
+Arch Register is a workspace-based application for storing architectural entities, defining schemas, and organizing related projects and documentation.
 
-Arch Register is a comprehensive architecture management platform that helps teams document, visualize, and manage their software architecture.
+## Start here
 
-## What is Arch Register?
+- [Getting started](getting-started/intro)
+- [User guide](user-guide/workspaces)
 
-Arch Register provides a centralized platform for:
+## Core concepts
 
-- **Entity Management**: Track applications, APIs, databases, and other architectural components
-- **Relationship Mapping**: Define and visualize connections between entities
-- **Diagram Creation**: Create architecture diagrams with integrated entity data
-- **AI-Powered Insights**: Use AI to extract entities from text and answer architecture questions
-- **Team Collaboration**: Work together on architecture documentation
+- **Workspace**: the top-level boundary for schemas, entities, projects, teams, and settings.
+- **Schema**: the definition of an entity type and its fields.
+- **Entity**: a record created from a schema.
+- **Project**: a container for related diagrams and files.
+- **Team**: a group used for ownership and permissions.
 
-## Getting Started
+## What this section covers
 
-To get started with Arch Register, check out our [Getting Started Guide](#) (coming soon).
-
-## Key Features
-
-- Flexible entity schemas
-- Rich relationship modeling
-- Integrated diagramming (powered by Diagram Craft)
-- AI assistant for architecture questions
-- Real-time collaboration
-- Advanced search and filtering
-
-## Next Steps
-
-- Learn about [basic concepts](#) (coming soon)
-- Explore the [user guide](#) (coming soon)
-- Read the [admin guide](#) (coming soon)
+- Local setup and bootstrap
+- Creating the first workspace
+- Adding the first entity
+- Reference material for workspaces, entities, and projects
