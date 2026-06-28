@@ -408,9 +408,10 @@ article code {
 }
 
 article img {
+  display: block;
   max-width: 100%;
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
+  width: auto;
+  border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 12px oklch(0 0 0 / 0.18);
 }
 
