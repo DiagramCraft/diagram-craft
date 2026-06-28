@@ -17,8 +17,13 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'User guide',
-      items: ['user-guide/workspaces', 'user-guide/entities', 'user-guide/projects']
-    }
+      items: [
+        'user-guide/workspaces',
+        'user-guide/entities',
+        'user-guide/projects',
+        { type: 'doc', id: 'admin-guide', label: 'Administration' }
+      ]
+    },
   ],
 };
 

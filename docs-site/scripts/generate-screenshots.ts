@@ -16,6 +16,7 @@ import { authMigrationProject } from '../../arch-register-packages/e2e/src/ui/su
 import { frontendAppEntity } from '../../arch-register-packages/e2e/src/ui/support/entities';
 import { apiSchema, componentSchema } from '../../arch-register-packages/e2e/src/ui/support/schemas';
 import { defaultWorkspace } from '../../arch-register-packages/e2e/src/ui/support/workspaces';
+import { workspaceModelRoute } from '../../arch-register-packages/e2e/src/ui/support/routes';
 
 type Viewport = {
   width: number;
@@ -225,6 +226,44 @@ const screenshotConfigs: ScreenshotConfig[] = [
     setup: async ({ settingsPage }) => {
       await settingsPage.goto();
       await settingsPage.expectLoaded();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'settings',
+    name: 'schema-management',
+    setup: async ({ settingsPage }) => {
+      await settingsPage.page.goto(
+        `${workspaceModelRoute(defaultWorkspace.slug)}?tab=types&schema=${componentSchema.id}`
+      );
+      await settingsPage.page.getByTestId('schema-editor-title').waitFor();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'settings',
+    name: 'teams',
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('teams');
+      await settingsPage.page.getByRole('heading', { name: 'Teams' }).waitFor();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'settings',
+    name: 'roles-permissions',
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('roles');
+      await settingsPage.page.getByRole('heading', { name: 'Roles & permissions' }).waitFor();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'settings',
+    name: 'ai-settings',
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('ai');
+      await settingsPage.page.getByRole('heading', { name: 'AI' }).waitFor();
     }
   },
   {
