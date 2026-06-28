@@ -3,8 +3,8 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Diagram Craft & Arch Register',
-  tagline: 'Interactive Diagramming and Architecture Management',
+  title: 'Docs',
+  tagline: 'Arch Register & Diagram Craft documentation',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -65,11 +65,15 @@ const config: Config = {
   ],
 
   themeConfig: {
+    colorMode: {
+      defaultMode: 'dark',
+      respectPrefersColorScheme: true,
+    },
     image: 'img/social-card.jpg',
     navbar: {
-      title: 'Diagram Craft & Arch Register',
+      title: 'Docs',
       logo: {
-        alt: 'Logo',
+        alt: 'Arch Register & Diagram Craft',
         src: 'img/logo.svg',
       },
       items: [

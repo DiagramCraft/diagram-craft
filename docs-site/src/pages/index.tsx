@@ -1,81 +1,137 @@
-import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
-import Heading from '@theme/Heading';
 import type {ReactElement} from 'react';
 
-import styles from './index.module.css';
+const ArrowRight = () => (
+  <svg className="doc-hub-card-link-arrow" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M3 8h10M9 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 
-function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
-  return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container">
-        <Heading as="h1" className="hero__title">
-          {siteConfig.title}
-        </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
-      </div>
-    </header>
-  );
-}
+const ClockIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <circle cx="8" cy="8" r="6.5"/>
+    <path d="M8 5v3.5L10.5 10" strokeLinecap="round"/>
+  </svg>
+);
 
-function ProductCard({
-  title,
-  description,
-  link,
-}: {
-  title: string;
+const EntityIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <rect x="1.5" y="1.5" width="5" height="5" rx="1"/>
+    <rect x="9.5" y="1.5" width="5" height="5" rx="1"/>
+    <rect x="1.5" y="9.5" width="5" height="5" rx="1"/>
+    <path d="M12 9.5v5M9.5 12h5" strokeLinecap="round"/>
+  </svg>
+);
+
+const InfoIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <circle cx="8" cy="8" r="6.5"/>
+    <path d="M8 5v4M8 11v.5" strokeLinecap="round"/>
+  </svg>
+);
+
+type QuickLink = {
+  icon: ReactElement;
+  label: string;
+  to: string;
+};
+
+type ProductCardProps = {
+  accentColor: string;
+  icon: ReactElement;
+  name: string;
+  badge?: { label: string; warn?: boolean };
   description: string;
-  link: string;
-}) {
+  links: QuickLink[];
+  dim?: boolean;
+};
+
+function ProductCard({accentColor, icon, name, badge, description, links, dim}: ProductCardProps) {
   return (
-    <div className={clsx('col col--6', styles.productCard)}>
-      <div className="card">
-        <div className="card__header">
-          <Heading as="h3">{title}</Heading>
-        </div>
-        <div className="card__body">
-          <p>{description}</p>
-        </div>
-        <div className="card__footer">
-          <Link
-            className="button button--primary button--block"
-            to={link}>
-            View Documentation
+    <div className="doc-hub-card" style={dim ? {opacity: 0.72} : undefined}>
+      <div
+        className="doc-hub-card-icon"
+        style={{background: `color-mix(in oklch, ${accentColor} 14%, var(--bg-3))`}}
+      >
+        {icon}
+      </div>
+      <div className="doc-hub-card-name">
+        {name}
+        {badge && (
+          <span className={`doc-badge${badge.warn ? ' doc-badge--warn' : ''}`}>
+            {badge.label}
+          </span>
+        )}
+      </div>
+      <p className="doc-hub-card-desc">{description}</p>
+      <div className="doc-hub-card-links">
+        {links.map(link => (
+          <Link key={link.to} className="doc-hub-card-link" to={link.to}>
+            {link.icon}
+            {link.label}
+            <ArrowRight />
           </Link>
-        </div>
+        ))}
       </div>
     </div>
   );
 }
 
+const AR_COLOR = 'oklch(0.62 0.14 145)';
+const DC_COLOR = 'oklch(0.66 0.17 258)';
+
 export default function Home(): ReactElement {
-  const {siteConfig} = useDocusaurusContext();
   return (
-    <Layout
-      title={`${siteConfig.title}`}
-      description="Documentation for Diagram Craft and Arch Register">
-      <HomepageHeader />
-      <main>
-        <section className={styles.products}>
-          <div className="container">
-            <div className="row">
-              <ProductCard
-                title="Diagram Craft"
-                description="Interactive diagramming tool for creating professional diagrams with real-time collaboration, advanced features, and flexible export options."
-                link="/diagram-craft/diagram-craft/intro"
-              />
-              <ProductCard
-                title="Arch Register"
-                description="Architecture management platform for documenting, visualizing, and managing software architecture with AI-powered insights and team collaboration."
-                link="/diagram-craft/arch-register/intro"
-              />
-            </div>
-          </div>
-        </section>
-      </main>
+    <Layout title="Documentation" description="Documentation for Arch Register and Diagram Craft">
+      <div className="doc-hub">
+        <div className="doc-hub-hero">
+          <h1 className="doc-hub-title">Documentation</h1>
+          <p className="doc-hub-sub">
+            Everything you need to understand, build with, and extend your architecture registry.
+            Choose a product to get started.
+          </p>
+        </div>
+
+        <div className="doc-hub-products">
+          <ProductCard
+            accentColor={AR_COLOR}
+            icon={
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke={AR_COLOR} strokeWidth="1.5">
+                <rect x="2" y="6" width="7.5" height="7.5" rx="1.5"/>
+                <rect x="12.5" y="9" width="7.5" height="7.5" rx="1.5"/>
+                <path d="M9.5 9.5l3 2" strokeLinecap="round"/>
+              </svg>
+            }
+            name="Arch Register"
+            badge={{label: 'v2.4'}}
+            description="Map and document your system landscape. Register services, APIs, databases and teams — link them with typed relationships and visualise them in live diagrams."
+            links={[
+              {icon: <ClockIcon />, label: 'Quick Start', to: '/arch-register/getting-started/intro'},
+              {icon: <EntityIcon />, label: 'Entities', to: '/arch-register/user-guide/entities'},
+              {icon: <InfoIcon />, label: 'Overview', to: '/arch-register/intro'},
+            ]}
+          />
+
+          <ProductCard
+            accentColor={DC_COLOR}
+            icon={
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke={DC_COLOR} strokeWidth="1.5">
+                <rect x="2" y="2" width="8" height="8" rx="1.5"/>
+                <rect x="12" y="12" width="8" height="8" rx="1.5"/>
+                <path d="M10 6h3M16 10v2.5" strokeLinecap="round"/>
+              </svg>
+            }
+            name="Diagram Craft"
+            badge={{label: 'Coming soon', warn: true}}
+            description="The collaborative diagram editor at the heart of Arch Register. Build architecture diagrams with smart connectors, live entity data, and team annotations."
+            links={[
+              {icon: <InfoIcon />, label: 'Documentation in progress', to: '/diagram-craft/intro'},
+            ]}
+            dim
+          />
+        </div>
+      </div>
     </Layout>
   );
 }
