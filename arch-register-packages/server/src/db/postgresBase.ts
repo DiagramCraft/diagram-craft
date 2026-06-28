@@ -1,5 +1,4 @@
 import postgres from 'postgres';
-import { DB_ERROR_CODES } from '../constants';
 import { DatabaseError } from './database';
 
 export type PostgresSqlClient = ReturnType<typeof postgres>;
@@ -13,20 +12,25 @@ const POSTGRES_ERROR_CODES = {
   DEADLOCK: '40P01',
   SERIALIZATION_FAILURE: '40001',
   QUERY_CANCELED: '57014',
-  DISK_FULL: '53100',
+  DISK_FULL: '53100'
 } as const;
 
 export const normalizePostgresError = (error: unknown): never => {
   if (error != null && typeof error === 'object' && 'code' in error) {
-    const pgError = error as { code: string; detail?: string; constraint?: string; message?: string };
+    const pgError = error as {
+      code: string;
+      detail?: string;
+      constraint?: string;
+      message?: string;
+    };
     const code = pgError.code;
-    
+
     const details = {
       constraint: pgError.constraint,
       detail: pgError.detail,
-      message: pgError.message,
+      message: pgError.message
     };
-    
+
     if (code === POSTGRES_ERROR_CODES.UNIQUE)
       throw new DatabaseError('unique', 'Unique constraint violation', error, details);
     if (code === POSTGRES_ERROR_CODES.FOREIGN_KEY)
