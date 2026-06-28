@@ -36,6 +36,7 @@ export type ScreenshotConfig = {
   name: string;
   viewport?: Viewport;
   selector?: string;
+  selectorGap?: number;
   fullPage?: boolean;
   setup: (context: ScreenshotContext) => Promise<void>;
 };
@@ -269,11 +270,24 @@ const captureScreenshot = async (page: Page, config: ScreenshotConfig) => {
   await mkdir(dirname(screenshotPath), { recursive: true });
 
   if (config.selector != null) {
-    await page.locator(config.selector).screenshot({
-      animations: 'disabled',
-      caret: 'hide',
-      path: screenshotPath
-    });
+    const gap = config.selectorGap ?? 16;
+    const element = page.locator(config.selector);
+    const box = await element.boundingBox();
+    if (box != null) {
+      await page.screenshot({
+        animations: 'disabled',
+        caret: 'hide',
+        clip: {
+          x: Math.max(0, box.x - gap),
+          y: Math.max(0, box.y - gap),
+          width: box.width + gap * 2,
+          height: box.height + gap * 2
+        },
+        path: screenshotPath
+      });
+    } else {
+      await element.screenshot({ animations: 'disabled', caret: 'hide', path: screenshotPath });
+    }
     return screenshotPath;
   }
 
