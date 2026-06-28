@@ -1,6 +1,9 @@
 name: Generate TypeDoc and Deploy to GitHub Pages
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -34,7 +37,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate TypeDoc
-        run: pnpm run doc
+        run: pnpm --dir docs-site run typedoc
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
