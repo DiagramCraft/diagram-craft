@@ -110,6 +110,29 @@ describe('DuplicateAction', () => {
       expect(diagram.selection.elements).toHaveLength(2);
       expect(diagram.selection.elements.every(isNode)).toBe(true);
     });
+
+    test('should not duplicate a selected descendant twice when its ancestor is also selected', () => {
+      const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
+      const child = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+
+      UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
+
+      diagram.selection.setElements([parent, child]);
+
+      new DuplicateAction(mkContext(diagram)).execute();
+
+      const duplicatedParent = layer.elements.filter(isNode).find(n => n.id !== parent.id)!;
+
+      expect(layer.elements.filter(isNode)).toHaveLength(2);
+      expect(duplicatedParent.children).toHaveLength(1);
+
+      const duplicatedChild = duplicatedParent.children[0]!;
+      expect(isNode(duplicatedChild)).toBe(true);
+      expect(duplicatedChild.id).not.toBe(child.id);
+
+      expect(diagram.selection.elements).toHaveLength(1);
+      expect(diagram.selection.elements[0]).toBe(duplicatedParent);
+    });
   });
 
   describe('edges only', () => {
@@ -343,6 +366,32 @@ describe('DuplicateAction', () => {
       expect(endEndpoint.ref).toEqual({ x: 0.5, y: 0.5 });
       expect(endEndpoint.offset).toEqual({ x: 10, y: 10 });
       expect(endEndpoint.offsetType).toBe('relative');
+    });
+
+    test('should reconnect duplicated edges to duplicated descendants of selected containers', () => {
+      const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
+      const child = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+
+      UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
+
+      const edge = ElementFactory.edge({
+        start: new AnchorEndpoint(child, 'c', Point.ORIGIN),
+        end: new FreeEndpoint({ x: 300, y: 300 }),
+        layer
+      });
+      UnitOfWork.execute(diagram, uow => layer.addElement(edge, uow));
+
+      diagram.selection.setElements([parent, edge]);
+
+      new DuplicateAction(mkContext(diagram)).execute();
+
+      const duplicatedParent = layer.elements.filter(isNode).find(n => n.id !== parent.id)!;
+      const duplicatedChild = duplicatedParent.children[0]!;
+      const duplicatedEdge = layer.elements.filter(isEdge).find(e => e.id !== edge.id)!;
+
+      expect(duplicatedEdge.start).toBeInstanceOf(AnchorEndpoint);
+      expect((duplicatedEdge.start as AnchorEndpoint).node).toBe(duplicatedChild);
+      expect(duplicatedEdge.end).toBeInstanceOf(FreeEndpoint);
     });
   });
 

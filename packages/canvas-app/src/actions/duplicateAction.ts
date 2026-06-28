@@ -1,7 +1,7 @@
 import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, DuplicationContext } from '@diagram-craft/model/diagramNode';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import {
@@ -13,7 +13,7 @@ import {
   PointOnEdgeEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
@@ -30,6 +30,20 @@ export const duplicateActions = (application: ActionContext) => ({
 });
 
 const OFFSET = 10;
+
+const hasSelectedAncestor = (
+  element: DiagramElement,
+  selectedElements: ReadonlySet<DiagramElement>
+): boolean => {
+  let current = element.parent;
+  while (current) {
+    if (selectedElements.has(current)) {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+};
 
 const reconnectEndpoint = (
   originalEndpoint: Endpoint,
@@ -98,37 +112,43 @@ export class DuplicateAction extends AbstractSelectionAction {
     diagram.undoManager.execute('Duplicate selection', uow => {
       // Check if all selected elements have the same parent
       const selection = [...diagram.selection.elements];
+      const selectedElements = new Set(selection);
+      const rootSelection = selection.filter(element => !hasSelectedAncestor(element, selectedElements));
       const commonParent =
         selection.length > 0 && selection.every(e => e.parent === selection[0]?.parent)
           ? selection[0]?.parent
           : undefined;
 
-      // Create mapping of original nodes to duplicated nodes
+      const duplicationContext: DuplicationContext = {
+        targetElementsInGroup: new Map()
+      };
+
       const nodeMapping = new Map<string, DiagramNode>();
       const edgeMapping = new Map<string, DiagramEdge>();
-      const newElements: DiagramElement[] = [];
 
       const activeLayer = diagram.activeLayer;
       assertRegularLayer(activeLayer);
 
-      // Duplicate selected nodes
-      for (const node of diagram.selection.nodes) {
-        const newNode = node.duplicate();
+      for (const node of rootSelection.filter(isNode)) {
+        const newNode = node.duplicate(duplicationContext);
         this.add(newNode, activeLayer, commonParent, uow);
         newNode.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
-
-        nodeMapping.set(node.id, newNode);
-        newElements.push(newNode);
       }
 
-      // Duplicate edges with proper reconnection logic
-      for (const originalEdge of diagram.selection.edges) {
-        const newEdge = originalEdge.duplicate() as DiagramEdge;
+      for (const originalEdge of rootSelection.filter(isEdge)) {
+        const newEdge = originalEdge.duplicate(duplicationContext) as DiagramEdge;
         this.add(newEdge, activeLayer, commonParent, uow);
-        edgeMapping.set(originalEdge.id, newEdge);
       }
 
-      for (const originalEdge of diagram.selection.edges) {
+      for (const [originalId, duplicatedElement] of duplicationContext.targetElementsInGroup) {
+        if (isNode(duplicatedElement)) {
+          nodeMapping.set(originalId, duplicatedElement);
+        } else if (isEdge(duplicatedElement)) {
+          edgeMapping.set(originalId, duplicatedElement);
+        }
+      }
+
+      for (const originalEdge of rootSelection.filter(isEdge)) {
         const newEdge = edgeMapping.get(originalEdge.id)!;
         const newStart = reconnectEndpoint(originalEdge.start, nodeMapping, edgeMapping);
         const newEnd = reconnectEndpoint(originalEdge.end, nodeMapping, edgeMapping);
@@ -137,8 +157,11 @@ export class DuplicateAction extends AbstractSelectionAction {
         newEdge.setEnd(newEnd, uow);
 
         newEdge.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
-        newElements.push(newEdge);
       }
+
+      const newElements = selection
+        .map(element => duplicationContext.targetElementsInGroup.get(element.id))
+        .filter((element): element is DiagramElement => element !== undefined);
 
       uow.select(diagram, newElements);
     });
