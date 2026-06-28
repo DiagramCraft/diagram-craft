@@ -126,7 +126,7 @@ export default function Home(): ReactElement {
             badge={{label: 'Coming soon', warn: true}}
             description="The collaborative diagram editor at the heart of Arch Register. Build architecture diagrams with smart connectors, live entity data, and team annotations."
             links={[
-              {icon: <InfoIcon />, label: 'Documentation in progress', to: '/diagram-craft/intro'},
+              {icon: <InfoIcon />, label: 'Documentation in progress', to: '/arch-register/intro'},
             ]}
             dim
           />

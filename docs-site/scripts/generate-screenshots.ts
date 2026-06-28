@@ -13,6 +13,7 @@ import { ProjectsPage } from '../../arch-register-packages/e2e/src/ui/pages/Proj
 import { SearchPage } from '../../arch-register-packages/e2e/src/ui/pages/SearchPage';
 import { SettingsPage } from '../../arch-register-packages/e2e/src/ui/pages/SettingsPage';
 import { authMigrationProject } from '../../arch-register-packages/e2e/src/ui/support/projects';
+import { frontendAppEntity } from '../../arch-register-packages/e2e/src/ui/support/entities';
 import { apiSchema, componentSchema } from '../../arch-register-packages/e2e/src/ui/support/schemas';
 import { defaultWorkspace } from '../../arch-register-packages/e2e/src/ui/support/workspaces';
 
@@ -111,6 +112,26 @@ const screenshotConfigs: ScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'entities',
+    name: 'browser-cards',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto({ viewMode: 'cards' });
+      await entitiesPage.expectLoaded();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'browser-tree',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto({ viewMode: 'tree' });
+      await entitiesPage.expectLoaded();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
     name: 'browser-filtered',
     setup: async ({ entitiesPage }) => {
       await entitiesPage.goto();
@@ -128,6 +149,31 @@ const screenshotConfigs: ScreenshotConfig[] = [
       await entitiesPage.goto();
       await entitiesPage.expectLoaded();
       await entitiesPage.openNewEntityDialog();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'detail-overview',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto();
+      await entitiesPage.expectLoaded();
+      await entitiesPage.openEntity(frontendAppEntity.name);
+      await entitiesPage.expectEntityDetailLoaded(frontendAppEntity.name);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'detail-edit',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto();
+      await entitiesPage.expectLoaded();
+      await entitiesPage.openEntity(frontendAppEntity.name);
+      await entitiesPage.expectEntityDetailLoaded(frontendAppEntity.name);
+      await entitiesPage.startEditingEntity();
     }
   },
   {
