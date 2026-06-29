@@ -32,6 +32,20 @@ pnpm start
 
 This starts a local development server and opens a browser window. Most changes are reflected live without having to restart the server.
 
+TypeDoc API generation is skipped in dev mode so the site starts faster. If you want to refresh the API docs while the site is running, open a second terminal and run:
+
+```bash
+pnpm docs:typedoc
+```
+
+If you want the dev server to generate TypeDoc on startup anyway, set:
+
+```bash
+DOCS_SITE_TYPEDOC=1 pnpm docs:dev
+```
+
+The generated API pages live under the Diagram Craft docs section, not as a separate top-level docs area.
+
 ### Build
 
 From the repository root:
@@ -47,6 +61,14 @@ pnpm build
 ```
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
+
+### TypeDoc API Docs
+
+Generate the TypeDoc markdown files used by the API docs with:
+
+```bash
+pnpm docs:typedoc
+```
 
 ### Screenshot Generation
 

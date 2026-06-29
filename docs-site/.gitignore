@@ -3,6 +3,8 @@
 
 # Production
 /build
+/docs/api/
+/docs/diagram-craft/api/
 
 # Generated files
 .docusaurus

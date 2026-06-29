@@ -20,8 +20,8 @@
     "test:bench": "vitest bench --run",
     "lint:tsc": "tsc --noEmit",
     "lint": "biome lint --max-diagnostics=100 && pnpm lint:tsc",
-    "doc": "pnpm --dir docs-site run typedoc",
-    "docs:dev": "pnpm --filter docs-site docusaurus start",
+    "docs:typedoc": "pnpm --filter docs-site typedoc",
+    "docs:dev": "pnpm --filter docs-site start",
     "docs:build": "pnpm --filter docs-site build",
     "docs:serve": "pnpm --filter docs-site serve",
     "docs:clear": "pnpm --filter docs-site clear"
