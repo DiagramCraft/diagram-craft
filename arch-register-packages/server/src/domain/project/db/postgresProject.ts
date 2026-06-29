@@ -116,6 +116,15 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     );
   }
 
+  async listAllContentNodes(workspace: string) {
+    return await this.sql.unsafe<ContentNodeDbResult[]>(
+      `${CONTENT_NODE_SELECT_SQL}
+       WHERE cn.workspace = $1
+       ORDER BY cn.path`,
+      [workspace]
+    );
+  }
+
   async listEntityContentNodes(workspace: string, entityId: string) {
     return await this.sql.unsafe<ContentNodeDbResult[]>(
       `${CONTENT_NODE_SELECT_SQL}

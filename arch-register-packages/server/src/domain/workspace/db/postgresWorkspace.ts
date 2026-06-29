@@ -16,6 +16,7 @@ import {
   ProjectEntityTypeDbResult,
   ProjectEntityTypeDbCreate
 } from './workspaceDatabase';
+import type { ImportCacheEntry } from '../importCache';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
 export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements WorkspaceDatabase {
@@ -437,5 +438,47 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
       WHERE workspace = ${workspace} AND role = ${roleId}
     `;
     return row?.count ?? 0;
+  }
+
+  async storeImportCache(entry: ImportCacheEntry): Promise<void> {
+    await this.sql`
+      INSERT INTO import_cache (
+        import_id, workspace_id, user_id, manifest, data, content_files, created_at, expires_at
+      )
+      VALUES (
+        ${entry.import_id},
+        ${entry.workspace_id},
+        ${entry.user_id},
+        ${this.json(entry.manifest)},
+        ${this.json(entry.data)},
+        ${entry.content_files ? this.json(entry.content_files) : null},
+        ${entry.created_at},
+        ${entry.expires_at}
+      )
+    `;
+  }
+
+  async getImportCache(importId: string): Promise<ImportCacheEntry | null> {
+    const [row] = await this.sql<ImportCacheEntry[]>`
+      SELECT import_id, workspace_id, user_id, manifest, data, content_files, created_at, expires_at
+      FROM import_cache
+      WHERE import_id = ${importId}
+    `;
+    return row ?? null;
+  }
+
+  async deleteImportCache(importId: string): Promise<void> {
+    await this.sql`
+      DELETE FROM import_cache
+      WHERE import_id = ${importId}
+    `;
+  }
+
+  async cleanupExpiredImportCache(): Promise<number> {
+    const result = await this.sql`
+      DELETE FROM import_cache
+      WHERE expires_at < NOW()
+    `;
+    return result.count ?? 0;
   }
 }

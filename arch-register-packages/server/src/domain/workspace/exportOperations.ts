@@ -1,0 +1,287 @@
+import { createHash } from 'node:crypto';
+import type { DatabaseAdapter } from '../../db/database';
+import type { StorageAdapter } from '../../storage/storage';
+import type { AuthorizationContext } from '@arch-register/permissions';
+import { PermissionChecker } from '@arch-register/permissions';
+import { httpAssert } from '../../utils/httpAssert';
+import type {
+  ExportOptions,
+  ExportManifest,
+  ExportConfig,
+  ExportSchema,
+  ExportEntity,
+  ExportProject,
+  ExportContentNode
+} from './exportTypes';
+
+const checker = new PermissionChecker();
+
+export const exportWorkspace = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter | undefined,
+  authCtx: AuthorizationContext,
+  workspace: string,
+  options: ExportOptions
+): Promise<{
+  manifest: ExportManifest;
+  data: {
+    config?: ExportConfig;
+    schemas?: ExportSchema[];
+    entities?: ExportEntity[];
+    projects?: ExportProject[];
+    content_nodes?: ExportContentNode[];
+  };
+  contentFiles?: Map<string, Buffer>;
+}> => {
+  // Check export permission
+  httpAssert.true(
+    checker.hasWorkspaceCapability(authCtx, 'export'),
+    { status: 403, message: 'You do not have permission to export this workspace' }
+  );
+
+  const workspaceData = await db.workspace.getWorkspace(workspace);
+  httpAssert.present(workspaceData, { status: 404, message: 'Workspace not found' });
+
+  const exportedAt = new Date().toISOString();
+  const user = await db.auth.getUser(authCtx.userId);
+  const exportedBy = user?.email ?? user?.display_name ?? authCtx.userId;
+
+  const data: {
+    config?: ExportConfig;
+    schemas?: ExportSchema[];
+    entities?: ExportEntity[];
+    projects?: ExportProject[];
+    content_nodes?: ExportContentNode[];
+  } = {};
+
+  const statistics = {
+    entity_count: 0,
+    project_count: 0,
+    schema_count: 0,
+    content_node_count: 0,
+    total_content_size_bytes: 0
+  };
+
+  // Export configuration
+  if (options.include.includes('config')) {
+    data.config = await exportConfig(db, workspace);
+  }
+
+  // Export schemas
+  if (options.include.includes('schemas')) {
+    data.schemas = await exportSchemas(db, workspace);
+    statistics.schema_count = data.schemas.length;
+  }
+
+  // Export entities
+  if (options.include.includes('entities')) {
+    data.entities = await exportEntities(
+      db,
+      authCtx,
+      workspace,
+      options.entity_filters,
+      options.include_grants ?? false
+    );
+    statistics.entity_count = data.entities.length;
+  }
+
+  // Export projects
+  if (options.include.includes('projects')) {
+    data.projects = await exportProjects(db, workspace, options.project_ids);
+    statistics.project_count = data.projects.length;
+  }
+
+  // Export content nodes
+  let contentFiles: Map<string, Buffer> | undefined;
+  if (options.include.includes('content_nodes')) {
+    const result = await exportContentNodes(
+      db,
+      storage,
+      workspace,
+      options.project_ids,
+      options.include_content ?? true
+    );
+    data.content_nodes = result.nodes;
+    contentFiles = result.contentFiles;
+    statistics.content_node_count = result.nodes.length;
+    statistics.total_content_size_bytes = result.nodes.reduce(
+      (sum, node) => sum + node.size_bytes,
+      0
+    );
+  }
+
+  const manifest: ExportManifest = {
+    version: '1.0',
+    format: 'zip-multi-file',
+    exported_at: exportedAt,
+    exported_by: exportedBy,
+    source_workspace: {
+      id: workspaceData.id,
+      name: workspaceData.name,
+      url_slug: workspaceData.url_slug
+    },
+    export_options: options.include,
+    files: {
+      ...(data.config && { config: 'config.json' }),
+      ...(data.schemas && { schemas: 'schemas.json' }),
+      ...(data.entities && { entities: 'entities.json' }),
+      ...(data.projects && { projects: 'projects.json' }),
+      ...(data.content_nodes && { content_nodes: 'content-nodes.json' }),
+      ...(data.content_nodes && options.include_content && { content_directory: 'content/' })
+    },
+    statistics,
+    checksums: {}
+  };
+
+  return { manifest, data, contentFiles };
+};
+
+const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<ExportConfig> => {
+  const [lifecycleStates, teams, customRoles] = await Promise.all([
+    db.workspace.listLifecycleStates(workspace),
+    db.workspace.listTeams(workspace),
+    db.workspace.listCustomWorkspaceRoles(workspace)
+  ]);
+
+  return {
+    lifecycle_states: lifecycleStates.map(state => ({
+      id: state.id,
+      label: state.label,
+      color: state.color,
+      sort_order: state.sort_order
+    })),
+    teams: teams.map(team => ({
+      id: team.id,
+      name: team.name,
+      sort_order: team.sort_order,
+      color: team.color,
+      description: team.description
+    })),
+    roles: customRoles.map(role => ({
+      id: role.id,
+      name: role.name,
+      description: role.description,
+      tone: role.tone,
+      capabilities: role.capabilities
+    }))
+  };
+};
+
+const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<ExportSchema[]> => {
+  const schemas = await db.catalog.listSchemas(workspace);
+
+  return schemas.map(schema => ({
+    id: schema.id,
+    name: schema.name,
+    fields: schema.fields,
+    color: schema.color,
+    icon: schema.icon,
+    default_owner: schema.default_owner,
+    key_prefix: schema.key_prefix
+  }));
+};
+
+const exportEntities = async (
+  _db: DatabaseAdapter,
+  _authCtx: AuthorizationContext,
+  _workspace: string,
+  _filters?: {
+    schema_ids?: string[];
+    owner_ids?: string[];
+    lifecycle_ids?: string[];
+    include_subtrees?: boolean;
+  },
+  _includeGrants = false
+): Promise<ExportEntity[]> => {
+  // TODO: Implement when listEntities method is available
+  // For now, return empty array
+  return [];
+};
+
+const exportProjects = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectIds?: string[]
+): Promise<ExportProject[]> => {
+  let projects = await db.project.listProjects(workspace);
+
+  // Filter by project IDs if specified
+  if (projectIds && projectIds.length > 0) {
+    projects = projects.filter(p => projectIds.includes(p.id));
+  }
+
+  return projects.map(project => ({
+    id: project.id,
+    name: project.name,
+    description: project.description,
+    owner: project.owner,
+    status: project.status as 'pinned' | 'active' | 'archived',
+    color: project.color
+  }));
+};
+
+const exportContentNodes = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter | undefined,
+  workspace: string,
+  projectIds?: string[],
+  includeContent = true
+): Promise<{ nodes: ExportContentNode[]; contentFiles: Map<string, Buffer> }> => {
+  let contentNodes = await db.project.listAllContentNodes(workspace);
+
+  // Filter by project IDs if specified
+  if (projectIds && projectIds.length > 0) {
+    contentNodes = contentNodes.filter(
+      node => node.project_id && projectIds.includes(node.project_id)
+    );
+  }
+
+  const nodes: ExportContentNode[] = [];
+  const contentFiles = new Map<string, Buffer>();
+
+  for (const node of contentNodes) {
+    const exportNode: ExportContentNode = {
+      id: node.id,
+      project_id: node.project_id,
+      entity_id: node.entity_id,
+      parent_id: node.parent_id,
+      path: node.path,
+      name: node.name,
+      type: node.type,
+      size_bytes: node.size_bytes,
+      is_template: node.is_template,
+      is_workspace_template: node.is_workspace_template
+    };
+
+    // Add content file references and read actual content if requested
+    if (includeContent && node.type !== 'folder' && storage && node.project_id) {
+      try {
+        const fileExt = node.type === 'diagram' ? 'json' : node.type === 'markdown' ? 'md' : 'bin';
+        const contentPath = `content/${node.type}s/${node.id}.${fileExt}`;
+        exportNode.content_file = contentPath;
+
+        // Read actual file content from storage
+        const content = await storage.read(workspace, node.project_id, node.id);
+        contentFiles.set(contentPath, content);
+
+        // Handle preview SVG if available
+        if (node.preview_svg) {
+          const previewPath = `content/${node.type}s/${node.id}.svg`;
+          exportNode.preview_file = previewPath;
+          contentFiles.set(previewPath, Buffer.from(node.preview_svg, 'utf-8'));
+        }
+      } catch (error) {
+        // If file cannot be read, skip it but keep the node metadata
+        console.warn(`Failed to read content for node ${node.id}:`, error);
+      }
+    }
+
+    nodes.push(exportNode);
+  }
+
+  return { nodes, contentFiles };
+};
+
+export const calculateChecksum = (content: string): string => {
+  return createHash('sha256').update(content).digest('hex');
+};

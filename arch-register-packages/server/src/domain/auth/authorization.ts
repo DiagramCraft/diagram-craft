@@ -17,6 +17,9 @@ import { Entity } from '../catalog/db/catalogDatabase';
 
 export const GLOBAL_WS = '__global__';
 
+// Re-export for convenience
+export { buildAuthorizationContext };
+
 // Singleton instances for performance
 const checker = new PermissionChecker();
 const capabilities = new CapabilityEvaluator();

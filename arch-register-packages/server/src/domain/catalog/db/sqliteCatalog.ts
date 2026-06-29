@@ -169,6 +169,14 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return row;
   }
 
+  async listEntities(workspace: string) {
+    return this.all(
+      `${ENTITY_JOINS_SQL} WHERE e.workspace = ? AND e.deleted_at IS NULL ORDER BY e.name, e.id`,
+      [workspace],
+      sqliteMappers.enrichedEntity
+    );
+  }
+
   async listEntitiesPaginated(
     workspace: string,
     filters?: EntityListDbFilters,

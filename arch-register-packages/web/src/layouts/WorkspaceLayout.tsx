@@ -20,12 +20,17 @@ import { useAuthorizationData } from '../auth/AuthorizationDataContext';
 import { WorkspaceContext } from './WorkspaceContext';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
-import { TbDatabase, TbFileAi, TbFiles, TbFolders, TbHome, TbMessageCircleStar, TbSearch } from 'react-icons/tb';
-import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import {
-  navigateFromRailItem,
-  resolveWorkspaceShellDescriptor
-} from './workspaceShellDescriptors';
+  TbDatabase,
+  TbFileAi,
+  TbFiles,
+  TbFolders,
+  TbHome,
+  TbMessageCircleStar,
+  TbSearch
+} from 'react-icons/tb';
+import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
+import { navigateFromRailItem, resolveWorkspaceShellDescriptor } from './workspaceShellDescriptors';
 import type { WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
 import {
@@ -67,7 +72,10 @@ export const WorkspaceLayout = () => {
   const { data: schemas = [], error: schemasError } = useSchemas(workspaceSlug, !!workspaceSlug);
   const { data: enums = [], error: enumsError } = useEnums(workspaceSlug, !!workspaceSlug);
   const { data: projects = [], error: projectsError } = useProjects(workspaceSlug);
-  const { lifecycleStates, teams, projectEntityTypes } = useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
+  const { lifecycleStates, teams, projectEntityTypes } = useWorkspaceConfig(
+    workspaceSlug,
+    !!workspaceSlug
+  );
   const { data: aiConfig } = useAiConfig(workspaceSlug, !!workspaceSlug);
 
   const {
@@ -89,7 +97,7 @@ export const WorkspaceLayout = () => {
 
   const availableSettingsSections = useMemo(
     () => [
-      ...(canManageWorkspaces ? ['general', 'danger'] : []),
+      ...(canManageWorkspaces ? ['general', 'danger', 'export-import'] : []),
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
       ...(canViewSchemas ? ['model-overview', 'schemas'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
@@ -151,7 +159,9 @@ export const WorkspaceLayout = () => {
 
   const visibleRailItems = useMemo(() => {
     const aiEnabled = aiConfig?.enabled === true;
-    return ALL_RAIL_ITEMS.filter(item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract'));
+    return ALL_RAIL_ITEMS.filter(
+      item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract')
+    );
   }, [aiConfig?.enabled]);
 
   const contextValue = useMemo(
@@ -299,10 +309,9 @@ export const WorkspaceLayout = () => {
             </WorkspaceDetailLayout>
           ) : (
             <div
-              className={[
-                styles.body,
-                shellDescriptor.primarySidebar ? '' : styles.bodyNoSidebar
-              ].filter(Boolean).join(' ')}
+              className={[styles.body, shellDescriptor.primarySidebar ? '' : styles.bodyNoSidebar]
+                .filter(Boolean)
+                .join(' ')}
             >
               {navRail}
               {shellDescriptor.primarySidebar && (

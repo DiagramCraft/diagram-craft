@@ -1,4 +1,5 @@
 import { TeamRole, WorkspaceCapability } from '@arch-register/permissions';
+import type { ImportCacheEntry } from '../importCache';
 
 export type WorkspaceDbResult = {
   id: string;
@@ -151,4 +152,10 @@ export type WorkspaceDatabase = {
   deletePublicIdPrefix(prefix: string): Promise<void>;
   allocatePublicId(prefix: string, updatedAt: Date): Promise<number>;
   setPublicIdNextNumber(prefix: string, nextNumber: number, updatedAt: Date): Promise<void>;
+
+  // Import cache operations
+  storeImportCache(entry: ImportCacheEntry): Promise<void>;
+  getImportCache(importId: string): Promise<ImportCacheEntry | null>;
+  deleteImportCache(importId: string): Promise<void>;
+  cleanupExpiredImportCache(): Promise<number>;
 };

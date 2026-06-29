@@ -1,0 +1,231 @@
+// Export/Import type definitions for workspace data
+
+export type ExportDataType = 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes';
+
+export type ExportManifest = {
+  version: string;
+  format: 'zip-multi-file';
+  exported_at: string;
+  exported_by: string;
+  source_workspace: {
+    id: string;
+    name: string;
+    url_slug: string;
+  };
+  export_options: ExportDataType[];
+  files: {
+    config?: string;
+    schemas?: string;
+    entities?: string;
+    projects?: string;
+    content_nodes?: string;
+    content_directory?: string;
+  };
+  statistics: {
+    entity_count: number;
+    project_count: number;
+    schema_count: number;
+    content_node_count: number;
+    total_content_size_bytes: number;
+  };
+  checksums: Record<string, string>;
+};
+
+export type ExportConfig = {
+  lifecycle_states: Array<{
+    id: string;
+    label: string;
+    color: string;
+    sort_order: number;
+  }>;
+  teams: Array<{
+    id: string;
+    name: string;
+    sort_order: number;
+    color: string | null;
+    description: string;
+  }>;
+  roles: Array<{
+    id: string;
+    name: string;
+    description: string;
+    tone: string;
+    capabilities: string[];
+  }>;
+  project_entity_types?: Array<{
+    id: string;
+    label: string;
+    sort_order: number;
+  }>;
+};
+
+export type ExportSchema = {
+  id: string;
+  name: string;
+  fields: unknown[];
+  color: string | null;
+  icon: string | null;
+  default_owner: string | null;
+  key_prefix: string | null;
+};
+
+export type ExportEntity = {
+  id: string;
+  public_id: string | null;
+  schema_id: string;
+  name: string;
+  slug: string;
+  namespace: string;
+  description: string;
+  owner: string | null;
+  lifecycle: string | null;
+  target_lifecycle: string | null;
+  target_lifecycle_date: string | null;
+  tags: string[];
+  links: unknown[];
+  data: Record<string, unknown>;
+  visibility_mode: 'public' | 'restricted' | null;
+  grants?: Array<{
+    id: string;
+    principal_type: 'user' | 'team';
+    principal_id: string;
+    role: string;
+    applies_to: 'self' | 'subtree';
+  }>;
+};
+
+export type ExportProject = {
+  id: string;
+  name: string;
+  description: string;
+  owner: string | null;
+  status: 'pinned' | 'active' | 'archived';
+  color: string | null;
+};
+
+export type ExportContentNode = {
+  id: string;
+  project_id: string | null;
+  entity_id: string | null;
+  parent_id: string | null;
+  path: string;
+  name: string;
+  type: 'diagram' | 'folder' | 'markdown' | 'file';
+  size_bytes: number;
+  is_template: boolean;
+  is_workspace_template: boolean;
+  content_file?: string;
+  preview_file?: string;
+};
+
+export type ExportOptions = {
+  include: ExportDataType[];
+  entity_filters?: {
+    schema_ids?: string[];
+    owner_ids?: string[];
+    lifecycle_ids?: string[];
+    include_subtrees?: boolean;
+  };
+  project_ids?: string[];
+  include_grants?: boolean;
+  include_content?: boolean;
+};
+
+export type ImportConflict = {
+  type: ExportDataType;
+  item_id: string;
+  item_name: string;
+  conflict_reason: 'duplicate_name' | 'duplicate_slug' | 'missing_dependency' | 'schema_mismatch';
+  existing_item?: Record<string, unknown>;
+  import_item: Record<string, unknown>;
+  suggested_resolution: 'skip' | 'merge' | 'overwrite' | 'rename';
+};
+
+export type ImportParseResult = {
+  valid: boolean;
+  version: string;
+  source_workspace: {
+    id: string;
+    name: string;
+    url_slug: string;
+  };
+  available_data_types: ExportDataType[];
+  summary: {
+    config?: {
+      lifecycle_states: number;
+      teams: number;
+      roles: number;
+    };
+    schemas?: {
+      count: number;
+      conflicts: number;
+    };
+    entities?: {
+      count: number;
+      conflicts: number;
+    };
+    projects?: {
+      count: number;
+      conflicts: number;
+    };
+    content_nodes?: {
+      count: number;
+      conflicts: number;
+    };
+  };
+  conflicts: ImportConflict[];
+  errors: string[];
+  warnings: string[];
+};
+
+export type ConflictResolution = {
+  action: 'skip' | 'merge' | 'overwrite' | 'rename';
+  new_name?: string;
+};
+
+export type ImportExecuteOptions = {
+  import_id: string;
+  include: ExportDataType[];
+  conflict_resolutions: Record<string, ConflictResolution>;
+  preserve_ids?: boolean;
+  update_references?: boolean;
+};
+
+export type ImportExecuteResult = {
+  success: boolean;
+  imported: {
+    config?: {
+      lifecycle_states: number;
+      teams: number;
+      roles: number;
+    };
+    schemas?: {
+      created: number;
+      updated: number;
+    };
+    entities?: {
+      created: number;
+      updated: number;
+      skipped: number;
+    };
+    projects?: {
+      created: number;
+      updated: number;
+    };
+    content_nodes?: {
+      created: number;
+      updated: number;
+    };
+  };
+  errors: string[];
+  warnings: string[];
+};
+
+export type IdMapping = {
+  schemas: Map<string, string>;
+  entities: Map<string, string>;
+  teams: Map<string, string>;
+  lifecycle_states: Map<string, string>;
+  projects: Map<string, string>;
+  content_nodes: Map<string, string>;
+};

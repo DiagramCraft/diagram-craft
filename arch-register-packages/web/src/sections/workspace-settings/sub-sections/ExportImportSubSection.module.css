@@ -1,0 +1,84 @@
+.checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.successMessage {
+  padding: 0.75rem;
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.fileInput {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: var(--color-bg-secondary);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.importSummary {
+  padding: 1rem;
+  background-color: var(--color-bg-secondary);
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.importSummary h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.importSummary ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.importSummary li {
+  margin-bottom: 0.25rem;
+}
+
+.importActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+.warning strong {
+  font-weight: 600;
+}

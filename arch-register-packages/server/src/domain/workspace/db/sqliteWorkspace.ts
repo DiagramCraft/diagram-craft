@@ -10,6 +10,7 @@ import {
   MemberDbResult,
   ProjectEntityTypeDbCreate
 } from './workspaceDatabase';
+import type { ImportCacheEntry } from '../importCache';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 
 type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
@@ -451,5 +452,63 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       [workspace, roleId]
     );
     return row?.count ?? 0;
+  }
+
+  async storeImportCache(entry: ImportCacheEntry): Promise<void> {
+    this.run(
+      `INSERT INTO import_cache (
+        import_id, workspace_id, user_id, manifest, data, content_files, created_at, expires_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        entry.import_id,
+        entry.workspace_id,
+        entry.user_id,
+        JSON.stringify(entry.manifest),
+        JSON.stringify(entry.data),
+        entry.content_files ? JSON.stringify(entry.content_files) : null,
+        entry.created_at.toISOString(),
+        entry.expires_at.toISOString()
+      ]
+    );
+  }
+
+  async getImportCache(importId: string): Promise<ImportCacheEntry | null> {
+    const row = this.get<{
+      import_id: string;
+      workspace_id: string;
+      user_id: string;
+      manifest: string;
+      data: string;
+      content_files: string | null;
+      created_at: string;
+      expires_at: string;
+    }>(
+      'SELECT import_id, workspace_id, user_id, manifest, data, content_files, created_at, expires_at FROM import_cache WHERE import_id = ?',
+      [importId]
+    );
+
+    if (!row) return null;
+
+    return {
+      import_id: row.import_id,
+      workspace_id: row.workspace_id,
+      user_id: row.user_id,
+      manifest: JSON.parse(row.manifest),
+      data: JSON.parse(row.data),
+      content_files: row.content_files ? JSON.parse(row.content_files) : undefined,
+      created_at: new Date(row.created_at),
+      expires_at: new Date(row.expires_at)
+    };
+  }
+
+  async deleteImportCache(importId: string): Promise<void> {
+    this.run('DELETE FROM import_cache WHERE import_id = ?', [importId]);
+  }
+
+  async cleanupExpiredImportCache(): Promise<number> {
+    const result = this.run(
+      'DELETE FROM import_cache WHERE expires_at < datetime("now")'
+    );
+    return result.changes ?? 0;
   }
 }
