@@ -1,6 +1,14 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
-const typedocSidebar = require('./docs/diagram-craft/api/typedoc-sidebar.cjs') as any;
+const typedocSidebarPath = './docs/diagram-craft/api/typedoc-sidebar.cjs';
+
+const typedocSidebar = (() => {
+  try {
+    return require(typedocSidebarPath) as any;
+  } catch {
+    return [];
+  }
+})();
 
 const stripDocsRootPrefix = (item: any): any => {
   if (Array.isArray(item)) {
