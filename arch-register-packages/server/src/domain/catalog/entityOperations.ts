@@ -32,6 +32,7 @@ import {
   TreeResponse
 } from '@arch-register/api-types/entityContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { listAllCatalogEntities } from './entityLoader';
 
 const checker = new PermissionChecker();
 
@@ -180,10 +181,10 @@ const collectEntities = async (
   // _completeness is computed post-fetch; all other conditions can be evaluated in SQL
   const sqlConditions = conditions.filter(c => c.fieldId !== '_completeness');
   const completenessConditions = conditions.filter(c => c.fieldId === '_completeness');
-  const [schemas, projectEntities] = await Promise.all([
-    db.catalog.listSchemas(workspace),
-    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
-  ]);
+    const [schemas, projectEntities] = await Promise.all([
+      db.catalog.listSchemas(workspace),
+      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
+    ]);
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   const rows: CollectedEntity[] = [];
@@ -254,7 +255,7 @@ export const getEntityFacets = async (
 ): Promise<EntityFacets> => {
   try {
     const [allEntities, schemas] = await Promise.all([
-      db.catalog.listEntities(workspace),
+      listAllCatalogEntities(db, workspace),
       db.catalog.listSchemas(workspace)
     ]);
     const schemaMap = new Map(schemas.map(s => [s.id, s]));
@@ -338,7 +339,7 @@ export const getEntityTree = async (
   try {
     const [schemas, allEntitiesRaw, projectEntities] = await Promise.all([
       db.catalog.listSchemas(workspace),
-      db.catalog.listEntities(workspace),
+      listAllCatalogEntities(db, workspace),
       projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
     ]);
     const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
@@ -443,7 +444,7 @@ export const getEntityRelations = async (
     const [entity, schemas, entitiesRaw] = await Promise.all([
       db.catalog.getEntity(workspace, id),
       db.catalog.listSchemas(workspace),
-      db.catalog.listEntities(workspace)
+      listAllCatalogEntities(db, workspace)
     ]);
     httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
     if (authCtx)
@@ -471,7 +472,7 @@ export const getBatchEntityRelations = async (
   try {
     const [schemas, entitiesRaw] = await Promise.all([
       db.catalog.listSchemas(workspace),
-      db.catalog.listEntities(workspace)
+      listAllCatalogEntities(db, workspace)
     ]);
     const entities = authCtx
       ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
@@ -512,7 +513,7 @@ export const createEntity = async (
   try {
     const [schema, entities] = await Promise.all([
       db.catalog.getSchema(workspace, payload.schemaId),
-      db.catalog.listEntities(workspace)
+      listAllCatalogEntities(db, workspace)
     ]);
     httpAssert.present(schema, {
       status: 404,
@@ -613,7 +614,7 @@ export const updateEntity = async (
     const [oldRow, schema, entities] = await Promise.all([
       db.catalog.getEntity(workspace, id),
       db.catalog.getSchema(workspace, payload.schemaId),
-      db.catalog.listEntities(workspace)
+      listAllCatalogEntities(db, workspace)
     ]);
     httpAssert.present(oldRow, { status: 404, message: `Data record '${id}' not found` });
     httpAssert.present(schema, {

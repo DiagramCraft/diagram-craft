@@ -14,6 +14,7 @@ import {
   resolveCreateOwner,
   normalizeEntityRelationFields
 } from './dataHelpers';
+import { listAllCatalogEntities } from './entityLoader';
 
 const checker = new PermissionChecker();
 
@@ -43,7 +44,7 @@ export const importParse = async (
   const parseResult = parseCsv(csvContent);
   const validatedRows = validateCsvData(parseResult.rows, schema.fields);
 
-  const allEntities = await db.catalog.listEntities(workspace);
+  const allEntities = await listAllCatalogEntities(db, workspace);
   const schemaEntities = allEntities.filter(e => e.schema_id === schemaId);
 
   const existingEntitiesMap = new Map(schemaEntities.map(e => [e.id, e]));
@@ -207,7 +208,7 @@ export const importCommit = async (
   const [lifecycleValues, teamIds, allEntities] = await Promise.all([
     getLifecycleValues(db, workspace),
     getTeamIds(db, workspace),
-    db.catalog.listEntities(workspace)
+    listAllCatalogEntities(db, workspace)
   ]);
 
   const nameToId = new Map(allEntities.map(e => [e.name.toLowerCase(), e.id]));

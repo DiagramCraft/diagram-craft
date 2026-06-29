@@ -208,24 +208,6 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
-  async listEntities(workspace: string, filters?: EntityListDbFilters) {
-    const pageSize = ENTITY_DEFAULTS.PAGE_SIZE;
-    const rows: Awaited<ReturnType<typeof this.listEntitiesPaginated>> = [];
-    let offset = 0;
-
-    while (true) {
-      const page = await this.listEntitiesPaginated(workspace, filters, {
-        limit: pageSize,
-        offset
-      });
-      rows.push(...page);
-      if (page.length < pageSize) break;
-      offset += pageSize;
-    }
-
-    return rows;
-  }
-
   async getEntity(workspace: string, identifier: string) {
     if (!isUuidLike(identifier)) {
       return this.getEntityByPublicId(workspace, identifier);

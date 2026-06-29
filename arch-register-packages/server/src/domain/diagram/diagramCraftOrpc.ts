@@ -15,6 +15,7 @@ import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import type { AIGenerateRequest } from '../ai/aiServer';
 import { toDiagramCraftData, toDiagramCraftSchema } from './diagramCraftTransforms';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -50,7 +51,7 @@ export const createDiagramCraftORPCRouter = () => {
 
           const entities = filterVisibleEntities(
             authCtx,
-            await context.db.catalog.listEntities(workspace)
+            await listAllCatalogEntities(context.db, workspace)
           );
           return entities.map(entity => toDiagramCraftData(entity));
         } catch (error) {

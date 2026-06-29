@@ -44,6 +44,7 @@ import {
   cloneEntity,
   deleteEntity
 } from './entityOperations';
+import { listAllCatalogEntities } from './entityLoader';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 
 type ORPCContext = {
@@ -342,7 +343,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
         const [schemas, allEntitiesRaw] = await Promise.all([
           context.db.catalog.listSchemas(workspace),
-          context.db.catalog.listEntities(workspace)
+          listAllCatalogEntities(context.db, workspace)
         ]);
 
         const allEntities = filterVisibleEntities(authCtx, allEntitiesRaw);
@@ -541,7 +542,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
             const [snapshots, entities] = await Promise.all([
               context.db.catalog.listSnapshotsByProject(workspace, project.id),
-              context.db.catalog.listEntities(workspace)
+              listAllCatalogEntities(context.db, workspace)
             ]);
             const visibleEntityIds = new Set(
               filterVisibleEntities(authCtx, entities).map(e => e.id)

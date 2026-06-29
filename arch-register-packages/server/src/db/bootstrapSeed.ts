@@ -23,6 +23,7 @@ import { decodeRefs } from '../types';
 import { hashPassword } from '../utils/password';
 import { UserDbCreate } from './database';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
+import { listAllCatalogEntities } from '../domain/catalog/entityLoader';
 
 type Database = Awaited<ReturnType<typeof createDatabase>>;
 
@@ -34,7 +35,7 @@ export const validateBootstrapSeed = async (db: Database) => {
   ).flat();
   const schemaMap = new Map(schemas.map(s => [`${s.workspace}:${s.id}`, s]));
   const entities = (
-    await Promise.all(workspaces.map(workspace => db.catalog.listEntities(workspace.id)))
+    await Promise.all(workspaces.map(workspace => listAllCatalogEntities(db, workspace.id)))
   ).flat();
   const entityMap = new Map(entities.map(e => [`${e.workspace}:${e.id}`, e]));
 

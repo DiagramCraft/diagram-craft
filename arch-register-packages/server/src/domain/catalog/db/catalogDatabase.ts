@@ -172,11 +172,6 @@ export type CatalogDatabase = {
     filters?: EntityListDbFilters,
     pagination?: EntityListDbPagination
   ): Promise<EntityDbResult[]>;
-  /**
-   * Temporary compatibility wrapper for callers that still need an unbounded
-   * entity scan. Prefer listEntitiesPaginated for new code.
-   */
-  listEntities(ws: string, filters?: EntityListDbFilters): Promise<EntityDbResult[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
   updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;
