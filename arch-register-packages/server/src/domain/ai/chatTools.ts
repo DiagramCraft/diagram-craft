@@ -12,6 +12,7 @@ import {
 import { Entity } from '../catalog/db/catalogDatabase';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { formatPublicId } from '../../utils/publicIds';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
 
 const checker = new PermissionChecker();
 
@@ -378,7 +379,7 @@ export const createAiChatTools = (
     const args = rawArgs as QueryEntitiesArgs;
     const [schemas, rawEntities] = await Promise.all([
       db.catalog.listSchemas(workspaceId),
-      db.catalog.listEntities(workspaceId)
+      listAllCatalogEntities(db, workspaceId)
     ]);
     const entities = getVisibleEntities(rawEntities, authCtx);
     const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
@@ -436,7 +437,7 @@ export const createAiChatTools = (
     const args = rawArgs as GetEntityDetailsArgs;
     const [schemas, rawEntities] = await Promise.all([
       db.catalog.listSchemas(workspaceId),
-      db.catalog.listEntities(workspaceId)
+      listAllCatalogEntities(db, workspaceId)
     ]);
     const entities = getVisibleEntities(rawEntities, authCtx);
     const entity =
@@ -685,7 +686,7 @@ export const createAiChatTools = (
 
     const [schemas, rawEntities] = await Promise.all([
       db.catalog.listSchemas(workspaceId),
-      db.catalog.listEntities(workspaceId)
+      listAllCatalogEntities(db, workspaceId)
     ]);
     const entities = getVisibleEntities(rawEntities, authCtx);
     const schemaMap = new Map(schemas.map(s => [s.id, s]));

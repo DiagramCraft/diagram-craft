@@ -90,6 +90,10 @@ const deleteEntityResponseSchema = z.object({
   message: z.string()
 });
 
+const entityCountResponseSchema = z.object({
+  total: z.number().int()
+});
+
 // ── Facets ────────────────────────────────────────────────────
 
 const entityFacetBucketSchema = z.object({
@@ -245,6 +249,15 @@ export const workspaceEntityContract = {
         })
       )
       .output(z.array(entityRecordSchema)),
+    count: oc
+      .route({ method: 'GET', path: '/{workspace}/data/count', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: ws,
+          query: listFiltersSchema
+        })
+      )
+      .output(entityCountResponseSchema),
     facets: oc
       .route({ method: 'GET', path: '/{workspace}/data/facets', inputStructure: 'detailed' })
       .input(z.object({ params: ws }))

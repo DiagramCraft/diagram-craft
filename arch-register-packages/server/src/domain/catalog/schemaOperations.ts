@@ -2,11 +2,12 @@ import type { DatabaseAdapter } from '../../db/database';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
+import { countEntities } from './entityOperations';
+import { listAllCatalogEntities } from './entityLoader';
 import {
   toApiSchema,
   buildCreateSchemaInput,
-  buildUpdateSchemaInput,
-  isSchemaReferencedByEntities
+  buildUpdateSchemaInput
 } from './schemaHelpers';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 
@@ -21,14 +22,16 @@ export const listWorkspaceSchemas = async (
   workspace: string
 ): Promise<EntitySchema[]> => {
   try {
-    const [schemas, entities, enums] = await Promise.all([
+    const [schemas, enums, allEntities] = await Promise.all([
       db.catalog.listSchemas(workspace),
-      db.catalog.listEntities(workspace),
-      db.catalog.listEnums(workspace)
+      db.catalog.listEnums(workspace),
+      listAllCatalogEntities(db, workspace)
     ]);
-    return schemas.map(schema =>
-      toApiSchema(schema, entities.filter(entity => entity.schema_id === schema.id).length, enums)
-    );
+    const countBySchema = new Map<string, number>();
+    for (const entity of allEntities) {
+      countBySchema.set(entity.schema_id, (countBySchema.get(entity.schema_id) ?? 0) + 1);
+    }
+    return schemas.map(schema => toApiSchema(schema, countBySchema.get(schema.id) ?? 0, enums));
   } catch (error) {
     return handleError(error, 'Failed to retrieve schemas');
   }
@@ -40,13 +43,15 @@ export const getWorkspaceSchema = async (
   id: string
 ): Promise<EntitySchema> => {
   try {
-    const [row, entities, enums] = await Promise.all([
+    const [row, enums] = await Promise.all([
       db.catalog.getSchema(workspace, id),
-      db.catalog.listEntities(workspace),
       db.catalog.listEnums(workspace)
     ]);
     httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
-    return toApiSchema(row, entities.filter(entity => entity.schema_id === id).length, enums);
+    const entityCount = await countEntities(db, workspace, null, {
+      schemaId: id
+    });
+    return toApiSchema(row, entityCount, enums);
   } catch (error) {
     return handleError(error, 'Failed to retrieve schema');
   }
@@ -128,11 +133,13 @@ export const updateWorkspaceSchema = async (
       changes
     });
 
-    const [entities, enums] = await Promise.all([
-      db.catalog.listEntities(workspace),
+    const [entityCount, enums] = await Promise.all([
+      countEntities(db, workspace, null, {
+        schemaId: id
+      }),
       db.catalog.listEnums(workspace)
     ]);
-    return toApiSchema(row, entities.filter(entity => entity.schema_id === id).length, enums);
+    return toApiSchema(row, entityCount, enums);
   } catch (error) {
     return handleError(error, 'Failed to update schema');
   }
@@ -148,8 +155,10 @@ export const deleteWorkspaceSchema = async (
     const schema = await db.catalog.getSchema(workspace, id);
     httpAssert.present(schema, { status: 404, message: `Schema '${id}' not found` });
 
-    const entities = await db.catalog.listEntities(workspace);
-    httpAssert.true(!isSchemaReferencedByEntities(id, entities), {
+    const entityCount = await countEntities(db, workspace, null, {
+      schemaId: id
+    });
+    httpAssert.true(entityCount === 0, {
       status: 409,
       message: 'Cannot delete schema: entities still reference it'
     });

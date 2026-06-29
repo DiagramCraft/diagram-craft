@@ -10,6 +10,7 @@ import {
   resolveWorkspaceRoleDefinitions
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
 
 /**
  * Server-side data provider that fetches permission data from the database
@@ -18,7 +19,7 @@ export class ServerDataProvider implements PermissionDataProvider {
   constructor(private db: DatabaseAdapter) {}
 
   async getEntities(workspaceId: string): Promise<Entity[]> {
-    return this.db.catalog.listEntities(workspaceId);
+    return listAllCatalogEntities(this.db, workspaceId);
   }
 
   async getSchemas(workspaceId: string): Promise<EntitySchema[]> {

@@ -78,6 +78,38 @@ export const useEntityFacets = (workspaceId: string) => {
   });
 };
 
+export const useEntityCount = (
+  workspaceId: string,
+  options: {
+    schemaId?: string | null;
+    owner?: string | null;
+    lifecycle?: string | null;
+    q?: string | null;
+    conditions?: FilterCondition[];
+    projectId?: string | null;
+    projectScope?: 'project' | 'all';
+  } = {},
+  queryOptions?: { enabled?: boolean }
+) => {
+  return useQuery({
+    queryKey: entityKeys.count(workspaceId, options),
+    queryFn: () =>
+      orpcClient.entities.count({
+        params: { workspace: workspaceId },
+        query: {
+          _schemaId: options.schemaId ?? undefined,
+          owner: options.owner ?? undefined,
+          lifecycle: options.lifecycle ?? undefined,
+          q: options.q ?? undefined,
+          conditions: options.conditions?.length ? JSON.stringify(options.conditions) : undefined,
+          projectId: options.projectId ?? undefined,
+          projectScope: options.projectScope ?? undefined
+        }
+      }),
+    enabled: queryOptions?.enabled ?? !!workspaceId
+  });
+};
+
 // Hook for fetching entity relations
 export const useEntityRelations = (workspaceId: string, entityId: string) => {
   return useQuery({

@@ -50,6 +50,35 @@ const makeDb = (): DatabaseAdapter =>
           target_lifecycle_date: null
         }
       ]),
+      listEntitiesPaginated: vi.fn(async (_ws: string, _filters: unknown, { limit, offset }: { limit: number; offset: number }) => {
+        const all = [
+          {
+            id: 'visible-entity',
+            public_id: 'ENT-1',
+            schema_id: 'schema-1',
+            schema_name: 'Component',
+            name: 'Visible Entity',
+            slug: 'visible-entity',
+            description: '',
+            owner: 'visible-team',
+            owner_name: 'Visible Team',
+            lifecycle: null,
+            lifecycle_label: null,
+            target_lifecycle: null,
+            target_lifecycle_label: null,
+            tags: [],
+            links: [],
+            data: {},
+            namespace: '',
+            workspace: 'ws-1',
+            visibility_mode: null,
+            created_at: new Date(),
+            updated_at: new Date(),
+            target_lifecycle_date: null
+          }
+        ];
+        return all.slice(offset, offset + limit);
+      }),
       resolveWorkspaceSlug: vi.fn(async () => 'ws-1')
     },
     project: {

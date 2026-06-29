@@ -6,6 +6,7 @@ import { SEARCH_DEFAULTS } from '../../constants';
 import { PermissionChecker } from '@arch-register/permissions';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
 
 const checker = new PermissionChecker();
 
@@ -109,7 +110,7 @@ export const searchWorkspace = async (
       ? db.catalog.listSchemas(ws)
       : Promise.resolve([]),
     types.includes('entities') || types.includes('files')
-      ? db.catalog.listEntities(ws)
+      ? listAllCatalogEntities(db, ws)
       : Promise.resolve([])
   ]);
 

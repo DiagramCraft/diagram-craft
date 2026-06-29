@@ -33,6 +33,7 @@ import { generateCsv, formatArrayForCsv } from '../../utils/csv';
 import { decodeRefs } from '../../types';
 import {
   listEntities,
+  countEntities,
   getEntityFacets,
   getEntityTree,
   getEntity,
@@ -43,6 +44,7 @@ import {
   cloneEntity,
   deleteEntity
 } from './entityOperations';
+import { listAllCatalogEntities } from './entityLoader';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 
 type ORPCContext = {
@@ -83,6 +85,38 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           limit: input.query.limit ?? null,
           offset: input.query.offset ?? 0
         });
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    count: entityRouter.entities.count.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        if (input.query.projectId) {
+          const project = await context.db.project.getProject(workspace, input.query.projectId);
+          httpAssert.present(project, { status: 404, message: `Project '${input.query.projectId}' not found` });
+          requireProjectAccess(authCtx, project.owner);
+        }
+        let conditions: FilterCondition[] = [];
+        if (input.query.conditions) {
+          try {
+            conditions = JSON.parse(input.query.conditions) as FilterCondition[];
+          } catch {
+            conditions = [];
+          }
+        }
+        const total = await countEntities(context.db, workspace, authCtx, {
+          schemaId: input.query._schemaId ?? null,
+          owner: input.query.owner ?? null,
+          lifecycle: input.query.lifecycle ?? null,
+          q: input.query.q ?? '',
+          conditions,
+          projectId: input.query.projectId ?? null,
+          projectScope: input.query.projectScope ?? 'all'
+        });
+        return { total };
       } catch (error) {
         return toORPCError(error);
       }
@@ -309,7 +343,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
         const [schemas, allEntitiesRaw] = await Promise.all([
           context.db.catalog.listSchemas(workspace),
-          context.db.catalog.listEntities(workspace)
+          listAllCatalogEntities(context.db, workspace)
         ]);
 
         const allEntities = filterVisibleEntities(authCtx, allEntitiesRaw);
@@ -508,7 +542,7 @@ export const workspaceEntityORPCRouter = entityRouter.router({
 
             const [snapshots, entities] = await Promise.all([
               context.db.catalog.listSnapshotsByProject(workspace, project.id),
-              context.db.catalog.listEntities(workspace)
+              listAllCatalogEntities(context.db, workspace)
             ]);
             const visibleEntityIds = new Set(
               filterVisibleEntities(authCtx, entities).map(e => e.id)
