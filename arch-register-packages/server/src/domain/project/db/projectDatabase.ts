@@ -181,6 +181,7 @@ export type ProjectDatabase = {
   deleteProject(ws: string, id: string): Promise<void>;
 
   listContentNodes(ws: string, projectId: string): Promise<ContentNodeDbResult[]>;
+  listAllContentNodes(ws: string): Promise<ContentNodeDbResult[]>;
   listEntityContentNodes(ws: string, entityId: string): Promise<ContentNodeDbResult[]>;
   listWorkspaceContentNodes(ws: string): Promise<ContentNodeDbResult[]>;
   getContentNodeByPath(

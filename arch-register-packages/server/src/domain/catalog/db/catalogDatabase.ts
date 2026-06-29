@@ -172,6 +172,7 @@ export type CatalogDatabase = {
     filters?: EntityListDbFilters,
     pagination?: EntityListDbPagination
   ): Promise<EntityDbResult[]>;
+  listEntities(ws: string): Promise<EntityDbResult[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
   updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;

@@ -17,6 +17,7 @@ import { RolesPermissionsSubSection } from './sub-sections/RolesPermissionsSubSe
 import { MembersSubSection } from './sub-sections/MembersSubSection';
 import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
+import { ExportImportSubSection } from './sub-sections/ExportImportSubSection';
 import { WorkspaceAnalyticsScreen } from './WorkspaceAnalyticsScreen';
 import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
@@ -56,6 +57,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'ai': {
     title: 'AI',
     sub: 'Configure the AI provider, model, and system prompt for the Assistant and Extract features.'
+  },
+  'export-import': {
+    title: 'Export & Import',
+    sub: 'Export workspace data to ZIP archive or import data from another workspace.'
   },
   'analytics': {
     title: 'Analytics',
@@ -191,6 +196,7 @@ export const WorkspaceSettingsScreen = () => {
         />
       )}
       {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
+      {section === 'export-import' && <ExportImportSubSection />}
       {section === 'analytics' && <WorkspaceAnalyticsScreen />}
       {section === 'audit' && (
         <AuditLogSection workspace={workspace} workspaceSlug={workspaceSlug} />

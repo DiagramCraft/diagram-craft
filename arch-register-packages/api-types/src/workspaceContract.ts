@@ -28,6 +28,114 @@ const workspaceTemplateSchema = z.object({
   description: z.string()
 });
 
+// ── Export/Import schemas ─────────────────────────────────────
+
+const exportDataTypeSchema = z.enum(['config', 'schemas', 'entities', 'projects', 'content_nodes']);
+
+const exportRequestSchema = z.object({
+  include: z.array(exportDataTypeSchema),
+  options: z.object({
+    entity_filters: z.object({
+      schema_ids: z.array(z.string()).optional(),
+      owner_ids: z.array(z.string()).optional(),
+      lifecycle_ids: z.array(z.string()).optional(),
+      include_subtrees: z.boolean().optional()
+    }).optional(),
+    project_ids: z.array(z.string()).optional(),
+    include_grants: z.boolean().optional(),
+    include_content: z.boolean().optional()
+  }).optional()
+});
+
+const importParseResponseSchema = z.object({
+  valid: z.boolean(),
+  version: z.string(),
+  import_id: z.string(),
+  source_workspace: z.object({
+    id: z.string(),
+    name: z.string(),
+    url_slug: z.string()
+  }),
+  available_data_types: z.array(exportDataTypeSchema),
+  summary: z.object({
+    config: z.object({
+      lifecycle_states: z.number().int(),
+      teams: z.number().int(),
+      roles: z.number().int()
+    }).optional(),
+    schemas: z.object({
+      count: z.number().int(),
+      conflicts: z.number().int()
+    }).optional(),
+    entities: z.object({
+      count: z.number().int(),
+      conflicts: z.number().int()
+    }).optional(),
+    projects: z.object({
+      count: z.number().int(),
+      conflicts: z.number().int()
+    }).optional(),
+    content_nodes: z.object({
+      count: z.number().int(),
+      conflicts: z.number().int()
+    }).optional()
+  }),
+  conflicts: z.array(z.object({
+    type: exportDataTypeSchema,
+    item_id: z.string(),
+    item_name: z.string(),
+    conflict_reason: z.enum(['duplicate_name', 'duplicate_slug', 'missing_dependency', 'schema_mismatch']),
+    existing_item: z.record(z.string(), z.unknown()).optional(),
+    import_item: z.record(z.string(), z.unknown()),
+    suggested_resolution: z.enum(['skip', 'merge', 'overwrite', 'rename'])
+  })),
+  errors: z.array(z.string()),
+  warnings: z.array(z.string())
+});
+
+const importExecuteRequestSchema = z.object({
+  import_id: z.string(),
+  include: z.array(exportDataTypeSchema),
+  conflict_resolutions: z.record(z.string(), z.object({
+    action: z.enum(['skip', 'merge', 'overwrite', 'rename']),
+    new_name: z.string().optional()
+  })),
+  options: z.object({
+    preserve_ids: z.boolean().optional(),
+    update_references: z.boolean().optional()
+  }).optional()
+});
+
+const importExecuteResponseSchema = z.object({
+  success: z.boolean(),
+  imported: z.object({
+    config: z.object({
+      lifecycle_states: z.number().int(),
+      teams: z.number().int(),
+      roles: z.number().int()
+    }).optional(),
+    schemas: z.object({
+      created: z.number().int(),
+      updated: z.number().int()
+    }).optional(),
+    entities: z.object({
+      created: z.number().int(),
+      updated: z.number().int(),
+      skipped: z.number().int()
+    }).optional(),
+    projects: z.object({
+      created: z.number().int(),
+      updated: z.number().int()
+    }).optional(),
+    content_nodes: z.object({
+      created: z.number().int(),
+      updated: z.number().int()
+    }).optional()
+  }),
+  errors: z.array(z.string()),
+  warnings: z.array(z.string())
+});
+
 // ── Contract ──────────────────────────────────────────────────
 
 export const workspaceManagementContract = {
@@ -77,7 +185,41 @@ export const workspaceManagementContract = {
       .output(deleteWorkspaceResponseSchema),
     templates: oc
       .route({ method: 'GET', path: '/workspaces/templates', inputStructure: 'detailed' })
-      .output(z.array(workspaceTemplateSchema))
+      .output(z.array(workspaceTemplateSchema)),
+    export: oc
+      .route({ method: 'POST', path: '/{workspace}/export', inputStructure: 'detailed', outputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: ws,
+          body: exportRequestSchema
+        })
+      )
+      .output(
+        z.object({
+          headers: z.record(z.string(), z.string()),
+          body: z.instanceof(Blob)
+        })
+      ),
+    importParse: oc
+      .route({ method: 'POST', path: '/{workspace}/import/parse', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: ws,
+          body: z.object({
+            file: z.union([z.instanceof(File), z.instanceof(Blob)])
+          })
+        })
+      )
+      .output(importParseResponseSchema),
+    importExecute: oc
+      .route({ method: 'POST', path: '/{workspace}/import/execute', inputStructure: 'detailed' })
+      .input(
+        z.object({
+          params: ws,
+          body: importExecuteRequestSchema
+        })
+      )
+      .output(importExecuteResponseSchema)
   }
 };
 
@@ -153,3 +295,11 @@ export type WorkspaceUserInfo = {
   is_active: boolean;
   color?: string | null;
 };
+
+// ── Export/Import Types ───────────────────────────────────────
+
+export type ExportDataType = z.infer<typeof exportDataTypeSchema>;
+export type ExportRequest = z.infer<typeof exportRequestSchema>;
+export type ImportParseResponse = z.infer<typeof importParseResponseSchema>;
+export type ImportExecuteRequest = z.infer<typeof importExecuteRequestSchema>;
+export type ImportExecuteResponse = z.infer<typeof importExecuteResponseSchema>;

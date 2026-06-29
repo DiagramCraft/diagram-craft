@@ -21,7 +21,7 @@ const makeFetch =
   async (request: Request, init?: RequestInit): Promise<Response> => {
     const method = request.method;
     const body =
-      method === 'GET' || method === 'HEAD' ? undefined : await request.clone().text();
+      method === 'GET' || method === 'HEAD' ? undefined : await request.clone().arrayBuffer();
     const headers = new Headers(request.headers);
     if (auth) headers.set('Authorization', auth);
     return fetch(request.url, { ...init, method, headers, body });

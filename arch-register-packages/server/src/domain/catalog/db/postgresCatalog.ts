@@ -161,6 +161,24 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     }
   }
 
+  async listEntities(workspace: string) {
+    return this.sql.unsafe<EntityDbResult[]>(
+      `SELECT e.*,
+        wo.name   AS owner_name,
+        ls.label  AS lifecycle_label,
+        tls.label AS target_lifecycle_label,
+        es.name   AS schema_name
+       FROM entity e
+       LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
+       LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
+       LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
+       JOIN entity_schema es ON es.id = e.schema_id
+       WHERE e.workspace = $1 AND e.deleted_at IS NULL
+       ORDER BY e.name, e.id`,
+      [workspace]
+    );
+  }
+
   async listEntitiesPaginated(
     workspace: string,
     filters?: EntityListDbFilters,

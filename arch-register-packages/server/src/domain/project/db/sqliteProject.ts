@@ -130,6 +130,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async listAllContentNodes(workspace: string) {
+    return this.all(
+      `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? ORDER BY cn.path`,
+      [workspace],
+      sqliteMappers.contentNode
+    );
+  }
+
   async listEntityContentNodes(workspace: string, entityId: string) {
     return this.all(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.entity_id = ? ORDER BY cn.path`,

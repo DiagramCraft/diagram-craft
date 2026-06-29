@@ -1,0 +1,165 @@
+/* Checkbox group */
+.checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--base-fg);
+  user-select: none;
+}
+
+.checkboxRowNested {
+  margin-left: 24px;
+}
+
+.checkboxHint {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+/* File input */
+.fileDropArea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  max-width: 400px;
+}
+
+.fileDropIcon {
+  color: var(--cmp-fg-disabled);
+  flex-shrink: 0;
+}
+
+.fileName {
+  font-size: 12px;
+  color: var(--base-fg);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filePlaceholder {
+  font-size: 12px;
+  color: var(--cmp-fg-disabled);
+  flex: 1;
+}
+
+.fileSize {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  flex-shrink: 0;
+}
+
+.fileBrowse {
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--base-fg);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.1s;
+}
+
+.fileBrowse:hover {
+  background: var(--cmp-bg-hover);
+}
+
+.fileInputHidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Import preview summary */
+.summaryGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 8px 12px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  gap: 2px;
+}
+
+.summaryCount {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--base-fg);
+  line-height: 1;
+}
+
+.summaryLabel {
+  font-size: 10.5px;
+  color: var(--cmp-fg-disabled);
+  text-align: center;
+}
+
+/* Action row (bottom of section body) */
+.actionRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--panel-border);
+  margin-top: 4px;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Inline status messages */
+.inlineError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--error-fg);
+}
+
+.inlineSuccess {
+  font-size: 12px;
+  color: var(--success-fg, var(--green));
+}
+
+/* Warning note */
+.warningNote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--cmp-fg-disabled);
+}
