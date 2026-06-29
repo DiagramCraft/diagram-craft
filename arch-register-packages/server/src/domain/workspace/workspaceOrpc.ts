@@ -261,10 +261,12 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         // Execute import with conflict resolutions and cached data
         const result = await executeImport(
           context.db,
+          context.storage,
           authCtx,
           workspaceId,
           executeOptions,
-          cached.data
+          cached.data,
+          cached.contentFiles
         );
 
         // Clean up cache after successful import

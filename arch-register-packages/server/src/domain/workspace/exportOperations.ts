@@ -35,7 +35,7 @@ export const exportWorkspace = async (
 }> => {
   // Check export permission
   httpAssert.true(
-    checker.hasWorkspaceCapability(authCtx, 'export'),
+    checker.hasWorkspaceCapability(authCtx, 'ws.settings'),
     { status: 403, message: 'You do not have permission to export this workspace' }
   );
 
@@ -182,20 +182,66 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
 };
 
 const exportEntities = async (
-  _db: DatabaseAdapter,
+  db: DatabaseAdapter,
   _authCtx: AuthorizationContext,
-  _workspace: string,
-  _filters?: {
+  workspace: string,
+  filters?: {
     schema_ids?: string[];
     owner_ids?: string[];
     lifecycle_ids?: string[];
     include_subtrees?: boolean;
   },
-  _includeGrants = false
+  includeGrants = false
 ): Promise<ExportEntity[]> => {
-  // TODO: Implement when listEntities method is available
-  // For now, return empty array
-  return [];
+  let entities = await db.catalog.listEntities(workspace);
+
+  if (filters?.schema_ids?.length) {
+    entities = entities.filter(e => filters.schema_ids!.includes(e.schema_id));
+  }
+  if (filters?.owner_ids?.length) {
+    entities = entities.filter(e => e.owner !== null && filters.owner_ids!.includes(e.owner));
+  }
+  if (filters?.lifecycle_ids?.length) {
+    entities = entities.filter(
+      e => e.lifecycle !== null && filters.lifecycle_ids!.includes(e.lifecycle)
+    );
+  }
+
+  const grantsMap = new Map<string, Awaited<ReturnType<typeof db.catalog.getEntityGrants>>>();
+  if (includeGrants) {
+    await Promise.all(
+      entities.map(async e => {
+        grantsMap.set(e.id, await db.catalog.getEntityGrants(workspace, e.id));
+      })
+    );
+  }
+
+  return entities.map(e => ({
+    id: e.id,
+    public_id: e.public_id,
+    schema_id: e.schema_id,
+    name: e.name,
+    slug: e.slug,
+    namespace: e.namespace,
+    description: e.description,
+    owner: e.owner,
+    lifecycle: e.lifecycle,
+    target_lifecycle: e.target_lifecycle,
+    target_lifecycle_date: e.target_lifecycle_date,
+    tags: e.tags,
+    links: e.links,
+    data: e.data,
+    visibility_mode: e.visibility_mode as ExportEntity['visibility_mode'],
+    ...(includeGrants && {
+      grants: (grantsMap.get(e.id) ?? []).map(g => ({
+        id: g.id,
+        principal_type: g.principal_type,
+        principal_id: g.principal_id,
+        role: g.role,
+        applies_to: g.applies_to
+      }))
+    })
+  }));
 };
 
 const exportProjects = async (
