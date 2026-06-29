@@ -1,3 +1,5 @@
+import ThemedImage from '@theme/ThemedImage';
+
 # Arch Register Administration Guide
 
 Arch Register administration is workspace-scoped. The settings screens let you manage the parts of a workspace that affect structure, access, and operational hygiene:
@@ -15,7 +17,13 @@ If a section is missing from the sidebar, your current role does not expose that
 
 The main entry point is the workspace settings screen.
 
-![Workspace settings overview](/img/arch-register/settings/general.png)
+<ThemedImage
+  alt="Workspace settings overview"
+  sources={{
+    light: require('/img/arch-register/settings/general-light.png').default,
+    dark: require('/img/arch-register/settings/general-dark.png').default,
+  }}
+/>
 
 Use the settings sidebar to move between the workspace areas you can manage:
 
@@ -46,7 +54,13 @@ Lifecycle configuration is separate from access control. It shapes how records a
 
 Schemas define the entity types, fields, and relationships in the workspace.
 
-![Schema management](/img/arch-register/settings/schema-management.png)
+<ThemedImage
+  alt="Schema management"
+  sources={{
+    light: require('/img/arch-register/settings/schema-management-light.png').default,
+    dark: require('/img/arch-register/settings/schema-management-dark.png').default,
+  }}
+/>
 
 Use `Settings > Schemas` to:
 
@@ -61,7 +75,13 @@ Containment fields are the ones that drive parent-child hierarchy. Reference fie
 
 Teams are the ownership boundary for entities and projects.
 
-![Teams management](/img/arch-register/settings/teams.png)
+<ThemedImage
+  alt="Teams management"
+  sources={{
+    light: require('/img/arch-register/settings/teams-light.png').default,
+    dark: require('/img/arch-register/settings/teams-dark.png').default,
+  }}
+/>
 
 Use `Settings > Teams` to:
 
@@ -81,7 +101,13 @@ Use `Settings > Members` for the workspace-wide role assignment and `Settings > 
 
 Workspace access is split across workspace roles, team roles, and global permissions.
 
-![Roles and permissions](/img/arch-register/settings/roles-permissions.png)
+<ThemedImage
+  alt="Roles and permissions"
+  sources={{
+    light: require('/img/arch-register/settings/roles-permissions-light.png').default,
+    dark: require('/img/arch-register/settings/roles-permissions-dark.png').default,
+  }}
+/>
 
 Use `Settings > Roles & permissions` to review the built-in workspace roles and create custom roles when the defaults are too broad or too narrow.
 
@@ -119,7 +145,13 @@ Keep these concerns separate:
 
 The AI screen controls the workspace assistant configuration.
 
-![AI settings](/img/arch-register/settings/ai-settings.png)
+<ThemedImage
+  alt="AI settings"
+  sources={{
+    light: require('/img/arch-register/settings/ai-settings-light.png').default,
+    dark: require('/img/arch-register/settings/ai-settings-dark.png').default,
+  }}
+/>
 
 Use `Settings > AI` to configure:
 

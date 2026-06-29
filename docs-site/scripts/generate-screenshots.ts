@@ -41,6 +41,7 @@ export type ScreenshotConfig = {
   selector?: string;
   selectorGap?: number;
   fullPage?: boolean;
+  themes?: ('light' | 'dark')[]; // Optional: specify which themes to capture. Defaults to both.
   setup: (context: ScreenshotContext) => Promise<void>;
 };
 
@@ -852,8 +853,10 @@ const waitForHttp = async (url: string, label: string, timeoutMs = 120_000) => {
   throw new Error(`Timed out waiting for ${label} at ${url}: ${message}`);
 };
 
-const captureScreenshot = async (page: Page, config: ScreenshotConfig) => {
-  const screenshotPath = resolve(outputRoot, config.product, config.category, `${config.name}.png`);
+const captureScreenshot = async (page: Page, config: ScreenshotConfig, theme: 'light' | 'dark') => {
+  const themes = config.themes ?? ['light', 'dark'];
+  const themeSuffix = themes.length === 1 ? '' : `-${theme}`;
+  const screenshotPath = resolve(outputRoot, config.product, config.category, `${config.name}${themeSuffix}.png`);
   await mkdir(dirname(screenshotPath), { recursive: true });
 
   if (config.selector != null) {
@@ -931,6 +934,7 @@ const main = async () => {
       locale: 'en-US',
       viewport: defaultViewport
     });
+    
     const page = await context.newPage();
 
     const loginPage = new LoginPage(page);
@@ -956,13 +960,51 @@ const main = async () => {
     } satisfies ScreenshotContext;
 
     for (const config of screenshotConfigs) {
+      const themes = config.themes ?? ['light', 'dark'];
       const viewport = config.viewport ?? defaultViewport;
-      console.log(`Capturing ${config.category}/${config.name}...`);
-      await page.setViewportSize(viewport);
-      await config.setup(screenshotContext);
+      
+      for (const theme of themes) {
+        console.log(`Capturing ${config.category}/${config.name} (${theme})...`);
+        
+        // Set theme in localStorage
+        await page.evaluate((t) => {
+          localStorage.setItem('ar-theme', t);
+          localStorage.setItem('diagram-craft.user-state', JSON.stringify({ themeMode: t }));
+        }, theme);
+        
+        // Reload page to apply theme
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+        
+        // Wait for theme to be applied to DOM
+        await page.waitForFunction(
+          (expectedTheme) => {
+            const root = document.documentElement;
+            if (expectedTheme === 'light') {
+              return root.getAttribute('data-theme') === 'light' && !root.classList.contains('dark');
+            } else {
+              return !root.hasAttribute('data-theme') && root.classList.contains('dark');
+            }
+          },
+          theme,
+          { timeout: 5000 }
+        );
+        
+        // Check if we need to re-authenticate after reload
+        const isOnLoginPage = page.url().includes('/login');
+        if (isOnLoginPage) {
+          await loginPage.expectLoaded();
+          await loginPage.signInAsSeededUser();
+          await homePage.expectLoaded(defaultWorkspace.name);
+        }
+        
+        // Set viewport and run setup
+        await page.setViewportSize(viewport);
+        await config.setup(screenshotContext);
 
-      const screenshotPath = await captureScreenshot(page, config);
-      console.log(`Saved ${screenshotPath.replace(`${repoRoot}/`, '')}`);
+        const screenshotPath = await captureScreenshot(page, config, theme);
+        console.log(`Saved ${screenshotPath.replace(`${repoRoot}/`, '')}`);
+      }
     }
   } finally {
     if (browser != null) {

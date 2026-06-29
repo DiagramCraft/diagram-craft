@@ -1,3 +1,5 @@
+import ThemedImage from '@theme/ThemedImage';
+
 # Entities
 
 Entities are records created from schemas.
@@ -8,17 +10,35 @@ They carry the schema fields plus workspace metadata like name, owner, lifecycle
 The entity browser is the main way to inspect records.
 Use **Table** for side-by-side comparison, **Cards** for scanning, and **Tree** for containment hierarchies.
 
-![Entity browser table view](/img/arch-register/entities/browser-overview.png)
+<ThemedImage
+  alt="Entity browser table view"
+  sources={{
+    light: require('/img/arch-register/entities/browser-overview-light.png').default,
+    dark: require('/img/arch-register/entities/browser-overview-dark.png').default,
+  }}
+/>
 
 Table view is the default.
 It shows name, type, owner, lifecycle, namespace, and completeness in one grid.
 
-![Entity browser cards view](/img/arch-register/entities/browser-cards.png)
+<ThemedImage
+  alt="Entity browser cards view"
+  sources={{
+    light: require('/img/arch-register/entities/browser-cards-light.png').default,
+    dark: require('/img/arch-register/entities/browser-cards-dark.png').default,
+  }}
+/>
 
 Cards view is better for quick visual scanning.
 It keeps the same filters, search, and sort state as table view.
 
-![Entity browser tree view](/img/arch-register/entities/browser-tree.png)
+<ThemedImage
+  alt="Entity browser tree view"
+  sources={{
+    light: require('/img/arch-register/entities/browser-tree-light.png').default,
+    dark: require('/img/arch-register/entities/browser-tree-dark.png').default,
+  }}
+/>
 
 Tree view follows containment relationships.
 Use it when you want to verify a parent-child structure.
@@ -26,7 +46,13 @@ Use it when you want to verify a parent-child structure.
 The browser title shows the active slice and the result count.
 When you change filters, the count updates to match the current result set.
 
-![Entity browser actions menu](/img/arch-register/entities/browser-export-menu.png)
+<ThemedImage
+  alt="Entity browser actions menu"
+  sources={{
+    light: require('/img/arch-register/entities/browser-export-menu-light.png').default,
+    dark: require('/img/arch-register/entities/browser-export-menu-dark.png').default,
+  }}
+/>
 
 Open the actions menu for saved views, CSV export, and import.
 CSV export downloads the current browser slice.
@@ -45,7 +71,13 @@ Common patterns:
 - Filter by owner to review a team-owned slice.
 - Combine text search with a type filter to find one record in a large schema.
 
-![Filtered entity browser](/img/arch-register/entities/browser-filtered.png)
+<ThemedImage
+  alt="Filtered entity browser"
+  sources={{
+    light: require('/img/arch-register/entities/browser-filtered-light.png').default,
+    dark: require('/img/arch-register/entities/browser-filtered-dark.png').default,
+  }}
+/>
 
 ## Search the workspace
 
@@ -54,7 +86,13 @@ Use it when you do not know which section contains the item you need.
 
 Results are grouped by category and the matching text is highlighted.
 
-![Workspace search results](/img/arch-register/search/results.png)
+<ThemedImage
+  alt="Workspace search results"
+  sources={{
+    light: require('/img/arch-register/search/results-light.png').default,
+    dark: require('/img/arch-register/search/results-dark.png').default,
+  }}
+/>
 
 ## Create an entity
 
@@ -69,7 +107,13 @@ Use **Entities** when you want to add a new record to the catalog.
 
 The new record opens in its detail view after creation.
 
-![Create entity dialog](/img/arch-register/entities/create-dialog.png)
+<ThemedImage
+  alt="Create entity dialog"
+  sources={{
+    light: require('/img/arch-register/entities/create-dialog-light.png').default,
+    dark: require('/img/arch-register/entities/create-dialog-dark.png').default,
+  }}
+/>
 
 ## Edit an entity
 
@@ -78,9 +122,21 @@ The detail screen switches into inline edit mode for the built-in metadata and s
 
 When you save, you can add an optional note and mark the change as a significant version.
 
-![Entity detail overview](/img/arch-register/entities/detail-overview.png)
+<ThemedImage
+  alt="Entity detail overview"
+  sources={{
+    light: require('/img/arch-register/entities/detail-overview-light.png').default,
+    dark: require('/img/arch-register/entities/detail-overview-dark.png').default,
+  }}
+/>
 
-![Entity edit state](/img/arch-register/entities/detail-edit.png)
+<ThemedImage
+  alt="Entity edit state"
+  sources={{
+    light: require('/img/arch-register/entities/detail-edit-light.png').default,
+    dark: require('/img/arch-register/entities/detail-edit-dark.png').default,
+  }}
+/>
 
 ## Schema-driven fields
 

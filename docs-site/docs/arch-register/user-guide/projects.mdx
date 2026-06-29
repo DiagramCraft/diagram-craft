@@ -1,3 +1,5 @@
+import ThemedImage from '@theme/ThemedImage';
+
 # Projects and diagrams
 
 Projects group diagrams, files, and wiki pages inside a workspace.
@@ -15,9 +17,21 @@ They are separate from entities and schemas, but they can reference both when a 
 
 Use the project browser to review project metadata, navigate into folders, and open content.
 
-![Project browser overview](/img/arch-register/projects/list.png)
+<ThemedImage
+  alt="Project browser overview"
+  sources={{
+    light: require('/img/arch-register/projects/list-light.png').default,
+    dark: require('/img/arch-register/projects/list-dark.png').default,
+  }}
+/>
 
-![Project detail view](/img/arch-register/projects/auth-migration-detail.png)
+<ThemedImage
+  alt="Project detail view"
+  sources={{
+    light: require('/img/arch-register/projects/auth-migration-detail-light.png').default,
+    dark: require('/img/arch-register/projects/auth-migration-detail-dark.png').default,
+  }}
+/>
 
 ## Creating diagrams
 
@@ -30,7 +44,13 @@ Use the project browser to review project metadata, navigate into folders, and o
 
 Use the same dialog to create diagrams from templates when a project template or workspace template is available.
 
-![New diagram dialog](/img/arch-register/projects/add-diagram-dialog.png)
+<ThemedImage
+  alt="New diagram dialog"
+  sources={{
+    light: require('/img/arch-register/projects/add-diagram-dialog-light.png').default,
+    dark: require('/img/arch-register/projects/add-diagram-dialog-dark.png').default,
+  }}
+/>
 
 ## Diagram editor
 
@@ -38,7 +58,13 @@ The editor is where you add shapes, connectors, notes, and layout.
 Arch Register handles project context, saving, and collaboration around the editor.
 For canvas behavior, shortcuts, and advanced editor features, see the [Diagram Craft docs](/diagram-craft/diagram-craft/intro).
 
-![Blank diagram editor](/img/arch-register/projects/diagram-editor.png)
+<ThemedImage
+  alt="Blank diagram editor"
+  sources={{
+    light: require('/img/arch-register/projects/diagram-editor-light.png').default,
+    dark: require('/img/arch-register/projects/diagram-editor-dark.png').default,
+  }}
+/>
 
 ## Templates
 
@@ -48,7 +74,13 @@ Workspace templates are available wherever the template rules allow them.
 
 You can promote a diagram to a template from its card menu, then create future diagrams from that starting point.
 
-![Template selection in new diagram dialog](/img/arch-register/projects/template-dialog.png)
+<ThemedImage
+  alt="Template selection in new diagram dialog"
+  sources={{
+    light: require('/img/arch-register/projects/template-dialog-light.png').default,
+    dark: require('/img/arch-register/projects/template-dialog-dark.png').default,
+  }}
+/>
 
 ## Collaboration
 

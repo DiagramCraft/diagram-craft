@@ -2,6 +2,8 @@
 sidebar_position: 4
 ---
 
+import ThemedImage from '@theme/ThemedImage';
+
 # Wiki pages
 
 Arch Register wiki pages are the lightweight documentation layer for workspaces, projects, and entities.
@@ -19,11 +21,29 @@ Wiki pages appear in three places:
 All three use the same markdown editor and the same page layout. The difference is the parent scope and the
 permissions that apply to that scope.
 
-![Workspace wiki overview](/img/arch-register/wiki/workspace-overview.png)
+<ThemedImage
+  alt="Workspace wiki overview"
+  sources={{
+    light: require('/img/arch-register/wiki/workspace-overview-light.png').default,
+    dark: require('/img/arch-register/wiki/workspace-overview-dark.png').default,
+  }}
+/>
 
-![Project wiki page](/img/arch-register/wiki/project-page.png)
+<ThemedImage
+  alt="Project wiki page"
+  sources={{
+    light: require('/img/arch-register/wiki/project-page-light.png').default,
+    dark: require('/img/arch-register/wiki/project-page-dark.png').default,
+  }}
+/>
 
-![Entity wiki page](/img/arch-register/wiki/entity-page.png)
+<ThemedImage
+  alt="Entity wiki page"
+  sources={{
+    light: require('/img/arch-register/wiki/entity-page-light.png').default,
+    dark: require('/img/arch-register/wiki/entity-page-dark.png').default,
+  }}
+/>
 
 ## Creating and linking pages
 
@@ -73,7 +93,13 @@ Example entity card:
 
 Attachments show up below the preview, and entity cards render live catalog data that opens the linked record when clicked.
 
-![Markdown preview with embedded entity card](/img/arch-register/wiki/workspace-overview.png)
+<ThemedImage
+  alt="Markdown preview with embedded entity card"
+  sources={{
+    light: require('/img/arch-register/wiki/workspace-overview-light.png').default,
+    dark: require('/img/arch-register/wiki/workspace-overview-dark.png').default,
+  }}
+/>
 
 ## Editing and history
 
@@ -86,7 +112,13 @@ Use `Edit` to switch into edit mode. In edit mode, you can choose between:
 The `Versions` menu shows the page history. From there you can inspect previous revisions, compare them, and restore
 an older version if needed.
 
-![Markdown history panel](/img/arch-register/wiki/history.png)
+<ThemedImage
+  alt="Markdown history panel"
+  sources={{
+    light: require('/img/arch-register/wiki/history-light.png').default,
+    dark: require('/img/arch-register/wiki/history-dark.png').default,
+  }}
+/>
 
 ## Permissions and visibility
 

@@ -1,3 +1,5 @@
+import ThemedImage from '@theme/ThemedImage';
+
 # Create Your First Entity
 
 ## Before you start
@@ -16,7 +18,13 @@ The default bootstrap data includes schema types you can use for a first entity.
 
 The same dialog is available from the home screen when entity creation is enabled.
 
-![Create entity dialog](/img/arch-register/entities/create-dialog.png)
+<ThemedImage
+  alt="Create entity dialog"
+  sources={{
+    light: require('/img/arch-register/entities/create-dialog-light.png').default,
+    dark: require('/img/arch-register/entities/create-dialog-dark.png').default,
+  }}
+/>
 
 ## After creation
 

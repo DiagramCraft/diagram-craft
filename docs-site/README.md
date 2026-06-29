@@ -83,7 +83,8 @@ The command:
 1. Boots the Arch Register server and web app in dev mode.
 2. Seeds a temporary SQLite database with the standard demo data.
 3. Logs in as the seeded demo user.
-4. Writes PNG files into `static/img/arch-register/{category}/`.
+4. Captures screenshots in both light and dark themes (by default).
+5. Writes PNG files into `static/img/arch-register/{category}/`.
 
 By default the generator uses dedicated ports `5073` for the Arch Register server and `5074` for the web app.
 You can override them with `SCREENSHOT_SERVER_PORT` and `SCREENSHOT_WEB_PORT` if those ports are already in use.
@@ -91,14 +92,20 @@ You can override them with `SCREENSHOT_SERVER_PORT` and `SCREENSHOT_WEB_PORT` if
 Screenshots default to a `1280x800` viewport. Individual screenshots can override that size and can also target a
 specific element with a CSS selector when a cropped capture is more useful than a full-page image.
 
-Example screenshot config:
+#### Theme Support
+
+By default, each screenshot is captured in both light and dark themes, producing two files:
+- `{name}-light.png` - Light theme variant
+- `{name}-dark.png` - Dark theme variant
+
+To capture only a specific theme, add the `themes` property:
 
 ```ts
 {
   product: 'arch-register',
   category: 'entities',
   name: 'browser-filtered',
-  selector: '[data-testid="entity-browser-title"]',
+  themes: ['dark'], // Only capture dark theme
   setup: async ({ entitiesPage }) => {
     await entitiesPage.goto();
     await entitiesPage.expectLoaded();
@@ -106,12 +113,33 @@ Example screenshot config:
 }
 ```
 
+When only one theme is specified, the filename will not include a theme suffix (e.g., `browser-filtered.png`).
+
+#### Example Screenshot Config
+
+```ts
+{
+  product: 'arch-register',
+  category: 'entities',
+  name: 'browser-filtered',
+  selector: '[data-testid="entity-browser-title"]',
+  themes: ['light', 'dark'], // Optional: defaults to both if omitted
+  setup: async ({ entitiesPage }) => {
+    await entitiesPage.goto();
+    await entitiesPage.expectLoaded();
+  }
+}
+```
+
+#### Adding New Screenshots
+
 To add a new screenshot:
 
 1. Add a new config entry in `scripts/generate-screenshots.ts`.
 2. Reuse the existing page objects from `arch-register-packages/e2e/src/ui/pages/`.
 3. Choose an output category under `static/img/arch-register/`.
-4. Run `pnpm docs:screenshots` to regenerate the asset.
+4. Optionally specify which themes to capture with the `themes` property.
+5. Run `pnpm docs:screenshots` to regenerate the asset.
 
 ### Serve Built Site
 
