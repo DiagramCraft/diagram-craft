@@ -1,0 +1,49 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Data Modeling And Schemas
+
+Even if schema editing is an admin workflow, regular users still need to understand the model they work inside.
+
+## Read The Model Before You Create Data
+
+Use the model to answer:
+
+- which entity types exist
+- which fields are required
+- which relationships are references versus containment
+- which lifecycle and ownership expectations apply
+
+<ThemedImage
+  alt="Model overview in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/model-overview-light.png').default,
+    dark: require('/img/arch-register/admin/model-overview-dark.png').default,
+  }}
+/>
+
+## Schemas Define The Record Shape
+
+Schemas define the fields and relationships available when you create or edit an entity. That is why schema choices
+directly affect browsing, filtering, views, and reporting later.
+
+<ThemedImage
+  alt="Schema editor in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/schema-editor-light.png').default,
+    dark: require('/img/arch-register/admin/schema-editor-dark.png').default,
+  }}
+/>
+
+## Practical Guidance
+
+Use:
+
+- reference fields for cross-cutting links such as dependencies
+- containment fields for ownership hierarchy
+- enums and lifecycle states when consistency matters across the workspace
+
+## Related Pages
+
+- [Entities](entities)
+- [Entity Views](entity-views)
+- [Schemas and Model Overview](../admin/schemas-model-overview)

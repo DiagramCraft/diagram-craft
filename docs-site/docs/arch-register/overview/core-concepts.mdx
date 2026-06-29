@@ -1,0 +1,90 @@
+---
+sidebar_position: 2
+---
+
+# Core Concepts
+
+Arch Register is built around a few product boundaries. If these concepts are clear, the rest of the product makes
+more sense.
+
+## Workspace
+
+A workspace is the top-level boundary for data, configuration, and access.
+
+Each workspace has its own:
+
+- schemas and enums
+- entities
+- projects and workspace content
+- teams and members
+- settings, permissions, AI configuration, and audit history
+
+## Schema
+
+A schema defines an entity type and its fields.
+
+Schemas are where you decide:
+
+- which entity types exist
+- which fields are required
+- which fields are text, date, select, reference, or containment
+- which relationships are hierarchy vs cross-cutting links
+
+## Entity
+
+An entity is a record created from a schema.
+
+Entities combine schema-defined fields with built-in metadata such as:
+
+- name
+- owner team
+- lifecycle
+- tags and links
+- related entities
+- attached content
+
+## Project
+
+A project is a content boundary inside a workspace.
+
+Projects hold:
+
+- diagrams
+- wiki pages
+- uploaded files
+- folders
+- templates
+- collaborative editing sessions
+
+## Content Scope
+
+Arch Register has three content scopes:
+
+- **Workspace content** for shared documentation and diagrams
+- **Project content** for project-specific files and notes
+- **Entity content** for files and notes attached to one entity
+
+The editor experience is similar across scopes. The difference is what the content belongs to and which permissions
+apply.
+
+## Team
+
+A team is the ownership boundary for entities and projects.
+
+Teams answer "who is responsible?" while workspace membership answers "who can access the workspace?"
+
+## Roles And Permissions
+
+Access is layered:
+
+- global permissions for platform-wide administration
+- workspace roles for workspace-level capabilities
+- team roles for team-owned content
+
+These layers are related, but they are not interchangeable.
+
+## Where To Go Next
+
+- For setup, continue with [Getting Started](../getting-started/intro)
+- For day-to-day workflows, start with [Workspace Home and Navigation](../use/workspace-home-navigation)
+- For workspace governance, start with [Admin Overview](../admin/overview)

@@ -4,13 +4,15 @@ sidebar_position: 1
 
 # Arch Register
 
-Arch Register is a workspace-based application for storing architectural entities, defining schemas, and organizing related projects and documentation.
+Arch Register is a workspace-based application for storing architectural entities, defining schemas, and organizing
+projects, diagrams, and documentation around that catalog.
 
 ## Start here
 
 - [Getting started](getting-started/intro)
-- [Workspace guide](user-guide/workspaces)
-- [Administration](admin-guide)
+- [Core concepts](overview/core-concepts)
+- [Workspace home and navigation](use/workspace-home-navigation)
+- [Admin overview](admin/overview)
 
 ## Core concepts
 
@@ -25,6 +27,7 @@ Arch Register is a workspace-based application for storing architectural entitie
 - Local setup and bootstrap
 - Creating the first workspace
 - Adding the first entity
-- Reference material for workspaces, entities, and projects
-- Reference material for workspaces, entities, projects, and wiki pages
-- Project folders, diagrams, templates, and collaboration
+- Creating the first project and diagram
+- Day-to-day usage guides for entities, projects, content, search, and AI features
+- Workspace administration for model, permissions, AI, export/import, and operational controls
+- Reference pages for scope, permissions, and implemented product screens

@@ -1,0 +1,48 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Teams And Members
+
+Teams and members are related, but they are not the same administrative concern.
+
+## Teams
+
+Teams define ownership boundaries for entities and projects.
+
+Use teams to:
+
+- assign responsibility
+- control team-scoped access
+- keep ownership aligned with the people doing the work
+
+<ThemedImage
+  alt="Teams screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/teams-light.png').default,
+    dark: require('/img/arch-register/admin/teams-dark.png').default,
+  }}
+/>
+
+## Members
+
+Members are the users who belong to the workspace. Member management is where you assign workspace roles.
+
+<ThemedImage
+  alt="Members screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/members-light.png').default,
+    dark: require('/img/arch-register/admin/members-dark.png').default,
+  }}
+/>
+
+## Why They Are Separate
+
+Keep these mental models distinct:
+
+- a person can be a workspace member without owning content
+- a team can own content without replacing workspace roles
+- team-role assignment and workspace-role assignment solve different access problems
+
+## Related Pages
+
+- [Roles and Permissions](roles-permissions)
+- [Permission Model](../reference/permission-model)

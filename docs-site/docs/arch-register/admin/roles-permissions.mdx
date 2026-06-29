@@ -1,0 +1,47 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Roles And Permissions
+
+Permissions in Arch Register are layered rather than flat.
+
+<ThemedImage
+  alt="Roles and permissions screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/roles-light.png').default,
+    dark: require('/img/arch-register/admin/roles-dark.png').default,
+  }}
+/>
+
+## Permission Layers
+
+The main layers are:
+
+- global permissions
+- workspace roles
+- team roles
+
+## Workspace Roles
+
+Workspace roles govern capabilities across the workspace shell and settings screens.
+
+Typical concerns include:
+
+- access to settings
+- member and team administration
+- schema editing
+- audit visibility
+
+## Team Roles
+
+Team roles govern access to content owned by a team. They matter most for entities and projects where ownership is the
+main access boundary.
+
+## Global Permissions
+
+Global permissions sit outside one workspace and cover platform-wide administration such as global role assignment.
+
+## Related Pages
+
+- [Teams and Members](teams-members)
+- [Permission Model](../reference/permission-model)
+- [Scope Matrix](../reference/scope-matrix)

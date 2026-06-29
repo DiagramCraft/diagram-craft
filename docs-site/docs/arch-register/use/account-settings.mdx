@@ -1,0 +1,40 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Account Settings
+
+Account settings are personal, not workspace-governance settings.
+
+## Current Scope
+
+The implemented account area currently focuses on:
+
+- profile details
+- appearance
+
+## Profile
+
+Profile covers the identity data tied to the current sign-in, such as display name and sign-in provider details.
+
+<ThemedImage
+  alt="Account settings profile screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/account/profile-light.png').default,
+    dark: require('/img/arch-register/account/profile-dark.png').default,
+  }}
+/>
+
+## Appearance
+
+Appearance controls how your account is represented visually in the workspace, including avatar color choices.
+
+## Why This Is Separate
+
+Account settings should not be confused with workspace settings:
+
+- account settings belong to the signed-in user
+- workspace settings belong to the workspace and affect other users
+
+## Related Pages
+
+- [Workspace Settings](../admin/workspace-settings)
+- [Workspace Home and Navigation](workspace-home-navigation)
