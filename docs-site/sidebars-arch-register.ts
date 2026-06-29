@@ -21,6 +21,7 @@ const sidebars: SidebarsConfig = {
         'user-guide/workspaces',
         'user-guide/entities',
         'user-guide/projects',
+        'user-guide/wiki',
         { type: 'doc', id: 'admin-guide', label: 'Administration' }
       ]
     },

@@ -14,7 +14,7 @@ import { ProjectsPage } from '../../arch-register-packages/e2e/src/ui/pages/Proj
 import { SearchPage } from '../../arch-register-packages/e2e/src/ui/pages/SearchPage';
 import { SettingsPage } from '../../arch-register-packages/e2e/src/ui/pages/SettingsPage';
 import { authMigrationProject } from '../../arch-register-packages/e2e/src/ui/support/projects';
-import { frontendAppEntity } from '../../arch-register-packages/e2e/src/ui/support/entities';
+import { authApiEntity, authServiceEntity, frontendAppEntity } from '../../arch-register-packages/e2e/src/ui/support/entities';
 import { apiSchema, componentSchema } from '../../arch-register-packages/e2e/src/ui/support/schemas';
 import { defaultWorkspace } from '../../arch-register-packages/e2e/src/ui/support/workspaces';
 import { workspaceModelRoute } from '../../arch-register-packages/e2e/src/ui/support/routes';
@@ -258,6 +258,128 @@ const openDiagramEditorFromProject = async (page: Page, name: string) => {
   await expect(page.locator('#awareness')).toBeVisible();
 };
 
+const createWikiPage = async (
+  page: Page,
+  scope: 'workspace' | 'project' | 'entity',
+  name: string,
+  folder?: string
+) =>
+  await page.evaluate(
+    async ({ workspaceSlug, scope, name, folder, projectId, entityId }) => {
+      const payload = JSON.stringify({ name, ...(folder ? { folder } : {}) });
+      const endpoint =
+        scope === 'workspace'
+          ? `/api/${encodeURIComponent(workspaceSlug)}/content/markdown`
+          : scope === 'project'
+            ? `/api/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/markdown`
+            : `/api/${encodeURIComponent(workspaceSlug)}/entities/${encodeURIComponent(entityId)}/markdown`;
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: payload
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create markdown page: ${response.status}`);
+      }
+
+      return (await response.json()) as { id: string; name: string; path: string };
+    },
+    {
+      workspaceSlug: defaultWorkspace.slug,
+      scope,
+      name,
+      folder,
+      projectId: authMigrationProject.id,
+      entityId: frontendAppEntity.id
+    }
+  );
+
+const saveWikiContent = async (page: Page, nodeId: string, body: string) =>
+  await page.evaluate(
+    async ({ workspaceSlug, nodeId, body }) => {
+      const response = await fetch(
+        `/api/${encodeURIComponent(workspaceSlug)}/markdown/${encodeURIComponent(nodeId)}`,
+        {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ body })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to save markdown content: ${response.status}`);
+      }
+
+      return (await response.json()) as { id: string; path: string; name: string };
+    },
+    { workspaceSlug: defaultWorkspace.slug, nodeId, body }
+  );
+
+const seedWikiPage = async (
+  page: Page,
+  scope: 'workspace' | 'project' | 'entity',
+  options: {
+    name: string;
+    summary: string;
+    contextTitle: string;
+    contextBullets: string[];
+    nextSteps: string[];
+    entityId: string;
+    entityFields?: string;
+  }
+) => {
+  const created = await createWikiPage(page, scope, options.name);
+
+  const body = [
+    `# ${options.name}`,
+    '',
+    options.summary,
+    '',
+    '## Reference',
+    '',
+    `<EntityCard id="${options.entityId}" fields="${options.entityFields ?? 'owner,lifecycle,description'}" />`,
+    '',
+    `## ${options.contextTitle}`,
+    '',
+    ...options.contextBullets.map(bullet => `- ${bullet}`),
+    '',
+    '## Next steps',
+    '',
+    ...options.nextSteps.map((item, index) => `${index + 1}. ${item}`),
+    '',
+    '> Keep this page short and close to the work it describes.'
+  ].join('\n');
+
+  await saveWikiContent(page, created.id, body);
+  await page.goto(
+    scope === 'workspace'
+      ? `/${defaultWorkspace.slug}/content/wiki/${created.id}?mode=preview`
+      : scope === 'project'
+        ? `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/wiki/${created.id}?mode=preview`
+        : `/${defaultWorkspace.slug}/entities/${frontendAppEntity.id}/wiki/${created.id}?mode=preview`
+  );
+  await expect(page.getByText(options.summary)).toBeVisible();
+  return { nodeId: created.id };
+};
+
+const getLatestMarkdownRevisionId = async (page: Page, nodeId: string) =>
+  await page.evaluate(
+    async ({ workspaceSlug, nodeId }) => {
+      const response = await fetch(
+        `/api/${encodeURIComponent(workspaceSlug)}/markdown/${encodeURIComponent(nodeId)}/revisions`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to list markdown revisions: ${response.status}`);
+      }
+
+      const revisions = (await response.json()) as Array<{ id: string }>;
+      return revisions[0]?.id ?? null;
+    },
+    { workspaceSlug: defaultWorkspace.slug, nodeId }
+  );
+
 const env = {
   ...process.env,
   AUTH_MODE: 'local',
@@ -444,6 +566,135 @@ const screenshotConfigs: ScreenshotConfig[] = [
       await projectsPage.gotoProject(authMigrationProject.id);
       await projectsPage.expectProjectOpened(authMigrationProject.name);
       await openProjectNewDiagramDialog(projectsPage.page);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'wiki',
+    name: 'workspace-overview',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await seedWikiPage(projectsPage.page, 'workspace', {
+        name: 'Workspace wiki',
+        summary: 'Shared workspace notes live here, alongside links and supporting context.',
+        contextTitle: 'What belongs here',
+        contextBullets: [
+          'Workspace standards and onboarding notes',
+          'Cross-team decisions that are not tied to one project',
+          'A short reference card for the main platform entity'
+        ],
+        nextSteps: [
+          'Add a short owner list for the documentation set',
+          'Link out to the workspace handbook once it exists'
+        ],
+        entityId: frontendAppEntity.id,
+        entityFields: 'owner,lifecycle,description'
+      });
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'wiki',
+    name: 'project-page',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await projectsPage.gotoProject(authMigrationProject.id);
+      await projectsPage.expectProjectOpened(authMigrationProject.name);
+      await seedWikiPage(projectsPage.page, 'project', {
+        name: 'Project wiki',
+        summary: 'Project wiki pages stay with the project so plans and decisions stay with the files.',
+        contextTitle: 'Working notes',
+        contextBullets: [
+          'Migration notes and release-ready documentation',
+          'Meeting summaries that should stay with the project',
+          'Risks and decisions for the current delivery track'
+        ],
+        nextSteps: [
+          'Add a migration checklist for the next release',
+          'Link the rollout owner when the project is staffed'
+        ],
+        entityId: authApiEntity.id,
+        entityFields: 'owner,lifecycle,description'
+      });
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'wiki',
+    name: 'entity-page',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto();
+      await entitiesPage.expectLoaded();
+      await entitiesPage.openEntity(frontendAppEntity.name);
+      await seedWikiPage(entitiesPage.page, 'entity', {
+        name: 'Entity wiki',
+        summary: 'Entity wiki pages keep implementation notes next to the record they describe.',
+        contextTitle: 'Implementation notes',
+        contextBullets: [
+          'Ownership details and integration context',
+          'Links to the services and APIs the entity depends on',
+          'Small reminders that should not live in a separate tracker'
+        ],
+        nextSteps: [
+          'Confirm the lifecycle and owner are still current',
+          'Add one short paragraph for onboarding context'
+        ],
+        entityId: authServiceEntity.id,
+        entityFields: 'owner,lifecycle,description'
+      });
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'wiki',
+    name: 'history',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      const created = await seedWikiPage(projectsPage.page, 'workspace', {
+        name: 'Wiki history',
+        summary: 'Revision history makes it easy to review and restore older documentation.',
+        contextTitle: 'Draft notes',
+        contextBullets: [
+          'Start with a short summary, then add supporting context',
+          'Capture one real entity card so the page has a live reference',
+          'Keep the prose short enough that history changes are obvious'
+        ],
+        nextSteps: [
+          'Review the second draft before publishing it',
+          'Restore the first revision if the wording gets too noisy'
+        ],
+        entityId: frontendAppEntity.id,
+        entityFields: 'owner,lifecycle,description'
+      });
+
+      await saveWikiContent(
+        projectsPage.page,
+        created.nodeId,
+        [
+          '# Wiki history',
+          '',
+          'Revision two adds a short update for the history screenshot and keeps the reference card in place.',
+          '',
+          '<EntityCard id="' + frontendAppEntity.id + '" fields="owner,lifecycle,description" />',
+          '',
+          '## Notes',
+          '',
+          '- Revision history should show both versions.',
+          '- The latest version stays selected by default.',
+          '- The page should still read like a normal note after the update.'
+        ].join('\n')
+      );
+
+      const latestRevisionId = await getLatestMarkdownRevisionId(projectsPage.page, created.nodeId);
+      if (latestRevisionId == null) {
+        throw new Error('No markdown revision was created for the history screenshot');
+      }
+
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/content/wiki/${created.nodeId}?mode=preview&panel=history&revisionId=${encodeURIComponent(latestRevisionId)}`
+      );
+      await expect(projectsPage.page.getByRole('button', { name: 'Restore' })).toBeVisible();
     }
   },
   {
