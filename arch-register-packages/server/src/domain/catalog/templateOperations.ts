@@ -3,18 +3,88 @@ import type { AuthorizationContext } from '@arch-register/permissions';
 import { canAccessProject, requireProjectAccess } from '../auth/authorization';
 import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
+import { HTTPError } from 'h3';
 import {
   buildAllTemplatesResponse,
   buildProjectTemplatesResponse,
   type ProjectWithFiles
 } from './templateHelpers';
-import { SerializedDiagramDocument } from "@diagram-craft/model/serialization/serializedTypes";
+import type { SerializedDiagram, SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
     unique: 'Constraint violation',
     foreign: 'Foreign key constraint violation'
   });
+
+const invalidTemplateDocumentError = (templatePath: string) =>
+  new HTTPError({
+    status: 400,
+    statusText: 'Bad Request',
+    message: `Template file '${templatePath}' does not contain a valid diagram document`
+  });
+
+const assertValidSerializedDiagram: (
+  diagram: unknown,
+  templatePath: string
+) => asserts diagram is SerializedDiagram = (diagram, templatePath) => {
+  if (
+    !diagram ||
+    typeof diagram !== 'object' ||
+    !Array.isArray((diagram as { layers?: unknown }).layers) ||
+    !Array.isArray((diagram as { diagrams?: unknown }).diagrams)
+  ) {
+    throw invalidTemplateDocumentError(templatePath);
+  }
+
+  const comments = (diagram as { comments?: unknown }).comments;
+  if (comments !== undefined && !Array.isArray(comments)) {
+    throw invalidTemplateDocumentError(templatePath);
+  }
+
+  for (const child of (diagram as { diagrams: unknown[] }).diagrams) {
+    assertValidSerializedDiagram(child, templatePath);
+  }
+};
+
+const parseTemplateDiagramDocument = (
+  content: Buffer,
+  templatePath: string
+): SerializedDiagramDocument => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content.toString('utf8'));
+  } catch {
+    throw invalidTemplateDocumentError(templatePath);
+  }
+
+  if (
+    !parsed ||
+    typeof parsed !== 'object' ||
+    !Array.isArray((parsed as { diagrams?: unknown }).diagrams) ||
+    !Array.isArray((parsed as { customPalette?: unknown }).customPalette) ||
+    !Array.isArray((parsed as { schemas?: unknown }).schemas)
+  ) {
+    throw invalidTemplateDocumentError(templatePath);
+  }
+
+  const styles = (parsed as { styles?: unknown }).styles;
+  if (
+    !styles ||
+    typeof styles !== 'object' ||
+    !Array.isArray((styles as { edgeStyles?: unknown }).edgeStyles) ||
+    !Array.isArray((styles as { nodeStyles?: unknown }).nodeStyles) ||
+    !Array.isArray((styles as { textStyles?: unknown }).textStyles)
+  ) {
+    throw invalidTemplateDocumentError(templatePath);
+  }
+
+  for (const diagram of (parsed as { diagrams: unknown[] }).diagrams) {
+    assertValidSerializedDiagram(diagram, templatePath);
+  }
+
+  return parsed as SerializedDiagramDocument;
+};
 
 export const listAllTemplates = async (
   db: DatabaseAdapter,
@@ -155,9 +225,13 @@ export const createFromTemplate = async (
       status: 403,
       message: `File '${templatePath}' is not available as a template`
     });
+    httpAssert.true(templateFile.is_workspace_template || templateProjectId === projectId, {
+      status: 403,
+      message: `Project template '${templatePath}' can only be used inside its own project`
+    });
 
     const content = await storage.read(workspace, templateProjectId, templateFile.id);
-    const fileData = JSON.parse(content.toString('utf8'));
+    const fileData = parseTemplateDiagramDocument(content, templatePath);
 
     if (fileData && typeof fileData === 'object' && 'name' in fileData) {
       fileData.name = name;
@@ -175,8 +249,7 @@ export const createFromTemplate = async (
     const newContent = Buffer.from(JSON.stringify(fileData), 'utf8');
     const { getDiagramCommentCounts } = await import('../diagram/commentCounts');
 
-    // TODO: Need validation
-    const doc = fileData as unknown as SerializedDiagramDocument;
+    const doc = fileData;
     const commentCounts = getDiagramCommentCounts(doc);
 
     const row = await db.project.upsertContentNode({
@@ -191,7 +264,12 @@ export const createFromTemplate = async (
       updated_at: timestamp
     });
 
-    await storage.write(workspace, projectId, row.id, newContent);
+    try {
+      await storage.write(workspace, projectId, row.id, newContent);
+    } catch (error) {
+      await db.project.deleteContentNodeByPath(workspace, projectId, newPath).catch(() => {});
+      throw error;
+    }
 
     try {
       const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
