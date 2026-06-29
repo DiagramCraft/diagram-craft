@@ -30,7 +30,7 @@ const typedocPlugins = shouldGenerateTypedoc
             pretty: true
           },
           // Exclude test files
-          exclude: ['**/*.test.ts', '**/*.bench.ts', '**/*.fixtures.ts', '**/test-support/**'],
+          exclude: ['**/*.test.ts', '**/*.bench.ts', '**/*.fixtures.ts', '**/test-support/**', '**/node_modules/**'],
           // Documentation options
           excludePrivate: true,
           excludeInternal: true,
@@ -110,6 +110,7 @@ const config: Config = {
     ],
     ...typedocPlugins,
     ['./plugins/typedoc-mdx-sanitizer.cjs', {}],
+    ['./plugins/postcss-config-disable.cjs', {}],
   ],
 
   themeConfig: {
