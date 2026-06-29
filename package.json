@@ -30,7 +30,7 @@
   "author": "Magnus Johansson",
   "devDependencies": {
     "@biomejs/biome": "2.5.0",
-    "@codspeed/vitest-plugin": "^5.2.0",
+    "@codspeed/vitest-plugin": "^5.7.1",
     "@rollup/plugin-yaml": "^5.0.0",
     "@types/jsdom": "^28.0.1",
     "@vitest/coverage-v8": "^4.1.9",
