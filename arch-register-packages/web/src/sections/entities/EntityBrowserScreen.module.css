@@ -71,18 +71,12 @@
 }
 
 .pagination {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin-left: auto;
+  padding: 8px 0;
 }
-
-.pageSummary {
-  color: var(--base-fg-more-dim);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
 .dateFilters {
   display: inline-flex;
   align-items: center;

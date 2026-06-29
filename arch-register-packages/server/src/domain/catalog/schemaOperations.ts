@@ -3,6 +3,7 @@ import { logAudit, extractEntityFields, computeChanges } from '../audit/db/audit
 import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { countEntities } from './entityOperations';
+import { listAllCatalogEntities } from './entityLoader';
 import {
   toApiSchema,
   buildCreateSchemaInput,
@@ -21,18 +22,16 @@ export const listWorkspaceSchemas = async (
   workspace: string
 ): Promise<EntitySchema[]> => {
   try {
-    const [schemas, enums] = await Promise.all([
+    const [schemas, enums, allEntities] = await Promise.all([
       db.catalog.listSchemas(workspace),
-      db.catalog.listEnums(workspace)
+      db.catalog.listEnums(workspace),
+      listAllCatalogEntities(db, workspace)
     ]);
-    const counts = await Promise.all(
-      schemas.map(schema =>
-        countEntities(db, workspace, null, {
-          schemaId: schema.id
-        })
-      )
-    );
-    return schemas.map((schema, index) => toApiSchema(schema, counts[index] ?? 0, enums));
+    const countBySchema = new Map<string, number>();
+    for (const entity of allEntities) {
+      countBySchema.set(entity.schema_id, (countBySchema.get(entity.schema_id) ?? 0) + 1);
+    }
+    return schemas.map(schema => toApiSchema(schema, countBySchema.get(schema.id) ?? 0, enums));
   } catch (error) {
     return handleError(error, 'Failed to retrieve schemas');
   }

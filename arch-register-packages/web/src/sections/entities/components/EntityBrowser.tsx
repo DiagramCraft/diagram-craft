@@ -705,7 +705,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     if (!isPagedBrowse) return;
     setPageIndex(0);
     setSelectedIds(new Set());
-  }, [isPagedBrowse]);
+  }, [isPagedBrowse, q, conditions, typeFilter, ownerFilter, statusFilter, projectId, projectScope]);
 
   const handleSelectAll = useCallback(() => {
     if (selectedIds.size === filtered.length) setSelectedIds(new Set());
@@ -809,58 +809,6 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
             { value: 'explore', label: 'Explore' }
           ]}
         />
-        {isPagedBrowse && (
-          <div className={styles.pagination}>
-            <span className={styles.pageSummary}>
-              {totalCount === 0
-                ? 'No rows'
-                : `Showing ${pageIndex * pageSize + 1}-${Math.min(
-                    pageIndex * pageSize + filteredCount,
-                    totalCount
-                  )} of ${totalCount}`}
-            </span>
-            <Select.Root
-              value={String(pageSize)}
-              onChange={value => {
-                const next = Number(value ?? 50);
-                setPageSize(Number.isFinite(next) ? next : 50);
-                setPageIndex(0);
-                setSelectedIds(new Set());
-              }}
-              style={{ width: 88 }}
-            >
-              {[25, 50, 100, 200].map(size => (
-                <Select.Item key={size} value={String(size)}>
-                  {size}
-                </Select.Item>
-              ))}
-            </Select.Root>
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={<TbChevronLeft size={12} />}
-              disabled={pageIndex === 0}
-              onClick={() => {
-                setPageIndex(index => Math.max(index - 1, 0));
-                setSelectedIds(new Set());
-              }}
-            >
-              Prev
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={<TbChevronRight size={12} />}
-              disabled={pageIndex * pageSize + filteredCount >= totalCount}
-              onClick={() => {
-                setPageIndex(index => index + 1);
-                setSelectedIds(new Set());
-              }}
-            >
-              Next
-            </Button>
-          </div>
-        )}
       </div>
       {view === 'hierarchy' ? (
         <HierarchyView
@@ -1002,6 +950,50 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
             />
           )}
         </>
+      )}
+      {isPagedBrowse && (
+        <div className={styles.pagination}>
+          <Select.Root
+            value={String(pageSize)}
+            onChange={value => {
+              const next = Number(value ?? 50);
+              setPageSize(Number.isFinite(next) ? next : 50);
+              setPageIndex(0);
+              setSelectedIds(new Set());
+            }}
+            style={{ width: 88 }}
+          >
+            {[25, 50, 100, 200].map(size => (
+              <Select.Item key={size} value={String(size)}>
+                {size}
+              </Select.Item>
+            ))}
+          </Select.Root>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<TbChevronLeft size={12} />}
+            disabled={pageIndex === 0}
+            onClick={() => {
+              setPageIndex(index => Math.max(index - 1, 0));
+              setSelectedIds(new Set());
+            }}
+          >
+            Prev
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<TbChevronRight size={12} />}
+            disabled={filteredCount < pageSize}
+            onClick={() => {
+              setPageIndex(index => index + 1);
+              setSelectedIds(new Set());
+            }}
+          >
+            Next
+          </Button>
+        </div>
       )}
       <DeleteConfirmationDialog
         open={!!deleteTarget}
