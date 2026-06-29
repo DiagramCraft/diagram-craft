@@ -8,6 +8,16 @@ import { orpcClient } from '../../../lib/orpcClient';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import styles from './ExportImportSubSection.module.css';
 
+type ImportConflict = {
+  type: 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes';
+  item_id: string;
+  item_name: string;
+  conflict_reason: 'duplicate_name' | 'duplicate_slug' | 'missing_dependency' | 'schema_mismatch';
+  existing_item?: Record<string, unknown>;
+  import_item: Record<string, unknown>;
+  suggested_resolution: 'skip' | 'merge' | 'overwrite' | 'rename';
+};
+
 type ImportParseResult = {
   valid: boolean;
   version: string;
@@ -20,7 +30,7 @@ type ImportParseResult = {
     projects?: { count: number; conflicts: number };
     content_nodes?: { count: number; conflicts: number };
   };
-  conflicts: any[];
+  conflicts: ImportConflict[];
   errors: string[];
   warnings: string[];
   import_id?: string;

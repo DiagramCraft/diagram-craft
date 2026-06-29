@@ -73,7 +73,7 @@ export class ZipBuilder {
     if (this.finalized) {
       throw new Error('Cannot add directories to finalized archive');
     }
-    this.archive.append('', { name: dirname + '/' });
+    this.archive.append('', { name: `${dirname}/` });
   }
 
   /**
@@ -204,7 +204,7 @@ export class ZipExtractor {
     const directory = await unzipper.Open.buffer(zipBuffer);
     
     // Extract JSON metadata files
-    const files = await this.extractFiles(zipBuffer, [
+    const files = await ZipExtractor.extractFiles(zipBuffer, [
       'manifest.json',
       'config.json',
       'schemas.json',

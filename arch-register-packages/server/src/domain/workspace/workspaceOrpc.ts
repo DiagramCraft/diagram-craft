@@ -1,4 +1,4 @@
-import { defineHandler } from 'h3';
+import { defineHandler, HTTPError } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
@@ -19,6 +19,14 @@ import { buildApiAuthCtx } from '../auth/authorization';
 import { resolveWorkspace } from './resolveWorkspace';
 import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
+import type { 
+  ExportManifest, 
+  ExportConfig, 
+  ExportSchema, 
+  ExportEntity, 
+  ExportProject, 
+  ExportContentNode 
+} from './exportTypes';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -87,9 +95,6 @@ export const workspaceManagementORPCRouter = wsRouter.router({
 
         // Build ZIP archive
         const zipBuilder = new ZipBuilder();
-
-        // Add manifest
-        zipBuilder.addJson('manifest.json', manifest);
 
         // Add data files with checksums
         const checksums: Record<string, string> = {};
@@ -172,20 +177,19 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         // ORPC/OpenAPI may pass the file as Buffer, Blob, or File
         const file = input.body.file;
         let zipBuffer: Buffer;
-        
+
+        type FileWithArrayBuffer = { arrayBuffer: () => Promise<ArrayBuffer> };
+        type FileWithData = { data: Buffer };
+
         if (Buffer.isBuffer(file)) {
           zipBuffer = file;
-        } else if (file && typeof (file as any).arrayBuffer === 'function') {
-          const arrayBuffer = await (file as any).arrayBuffer();
+        } else if (file && typeof (file as FileWithArrayBuffer).arrayBuffer === 'function') {
+          const arrayBuffer = await (file as FileWithArrayBuffer).arrayBuffer();
           zipBuffer = Buffer.from(arrayBuffer);
-        } else if (file && typeof file === 'object' && 'data' in file && Buffer.isBuffer((file as any).data)) {
-          // Handle case where ORPC wraps buffer in an object
-          zipBuffer = (file as any).data;
+        } else if (file && typeof file === 'object' && 'data' in file && Buffer.isBuffer((file as FileWithData).data)) {
+          zipBuffer = (file as FileWithData).data;
         } else {
-          throw Object.assign(
-            new Error('Invalid file format - expected File, Blob, or Buffer'),
-            { status: 400 }
-          );
+          throw new HTTPError({ status: 400, message: 'Invalid file format - expected File, Blob, or Buffer' });
         }
         
         const extracted = await ZipExtractor.parseImportZip(zipBuffer);
@@ -195,13 +199,13 @@ export const workspaceManagementORPCRouter = wsRouter.router({
           context.db,
           authCtx,
           workspaceId,
-          extracted.manifest as any,
+          extracted.manifest as ExportManifest,
           {
-            config: extracted.config as any,
-            schemas: extracted.schemas as any,
-            entities: extracted.entities as any,
-            projects: extracted.projects as any,
-            content_nodes: extracted.content_nodes as any
+            config: extracted.config as ExportConfig | undefined,
+            schemas: extracted.schemas as ExportSchema[] | undefined,
+            entities: extracted.entities as ExportEntity[] | undefined,
+            projects: extracted.projects as ExportProject[] | undefined,
+            content_nodes: extracted.content_nodes as ExportContentNode[] | undefined
           }
         );
 
@@ -210,13 +214,13 @@ export const workspaceManagementORPCRouter = wsRouter.router({
           context.db,
           workspaceId,
           authCtx.userId,
-          extracted.manifest as any,
+          extracted.manifest as ExportManifest,
           {
-            config: extracted.config as any,
-            schemas: extracted.schemas as any,
-            entities: extracted.entities as any,
-            projects: extracted.projects as any,
-            content_nodes: extracted.content_nodes as any
+            config: extracted.config as ExportConfig | undefined,
+            schemas: extracted.schemas as ExportSchema[] | undefined,
+            entities: extracted.entities as ExportEntity[] | undefined,
+            projects: extracted.projects as ExportProject[] | undefined,
+            content_nodes: extracted.content_nodes as ExportContentNode[] | undefined
           },
           extracted.contentFiles
         );
@@ -243,10 +247,7 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         );
 
         if (!cached) {
-          throw Object.assign(
-            new Error('Import data not found or expired. Please upload the file again.'),
-            { status: 404 }
-          );
+          throw new HTTPError({ status: 404, message: 'Import data not found or expired. Please upload the file again.' });
         }
 
         const executeOptions = {
