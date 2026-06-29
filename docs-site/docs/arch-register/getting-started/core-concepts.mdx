@@ -1,3 +1,5 @@
+import ThemedImage from '@theme/ThemedImage';
+
 # Core Concepts
 
 ## Workspace
@@ -27,7 +29,13 @@ They are part of workspace configuration.
 
 ## Screen map
 
-![Entity browser overview](/img/arch-register/entities/browser-overview.png)
+<ThemedImage
+  alt="Entity browser overview"
+  sources={{
+    light: require('/img/arch-register/entities/browser-overview-light.png').default,
+    dark: require('/img/arch-register/entities/browser-overview-dark.png').default,
+  }}
+/>
 
 - Home shows the current workspace summary.
 - Entities shows the list, filters, and create flow.

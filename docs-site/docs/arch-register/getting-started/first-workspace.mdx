@@ -1,3 +1,5 @@
+import ThemedImage from '@theme/ThemedImage';
+
 # Your First Workspace
 
 ## What a workspace does
@@ -7,7 +9,13 @@ It is the main boundary for data in Arch Register.
 
 ## Create a workspace
 
-![Workspace selector in Arch Register](/img/arch-register/workspace/selector-open.png)
+<ThemedImage
+  alt="Workspace selector in Arch Register"
+  sources={{
+    light: require('/img/arch-register/workspace/selector-open-light.png').default,
+    dark: require('/img/arch-register/workspace/selector-open-dark.png').default,
+  }}
+/>
 
 1. Open the workspace selector in the top bar.
 2. Choose `New workspace...`.
@@ -15,7 +23,13 @@ It is the main boundary for data in Arch Register.
 4. Leave the mode on blank for a first workspace unless you need a template or a copy.
 5. Select `Create workspace`.
 
-![Create workspace dialog in Arch Register](/img/arch-register/workspace/create-dialog.png)
+<ThemedImage
+  alt="Create workspace dialog in Arch Register"
+  sources={{
+    light: require('/img/arch-register/workspace/create-dialog-light.png').default,
+    dark: require('/img/arch-register/workspace/create-dialog-dark.png').default,
+  }}
+/>
 
 ## What happens next
 
