@@ -24,10 +24,10 @@ const invalidTemplateDocumentError = (templatePath: string) =>
     message: `Template file '${templatePath}' does not contain a valid diagram document`
   });
 
-const assertValidSerializedDiagram = (
+const assertValidSerializedDiagram: (
   diagram: unknown,
   templatePath: string
-): asserts diagram is SerializedDiagram => {
+) => asserts diagram is SerializedDiagram = (diagram, templatePath) => {
   if (
     !diagram ||
     typeof diagram !== 'object' ||
