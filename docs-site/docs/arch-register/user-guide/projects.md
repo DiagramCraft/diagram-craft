@@ -62,7 +62,11 @@ The presence toolbar shows who is currently in the file, and edits sync in real 
 - Keep related diagrams in folders to make large projects easier to scan.
 - Open the same diagram with a teammate to review changes together.
 
+If you want to document the project itself, use [wiki pages](wiki) inside the project instead of keeping notes in a
+separate tool.
+
 ## Related pages
 
 - [Core concepts](../getting-started/core-concepts)
 - [Diagram Craft docs](/docs/diagram-craft/intro)
+- [Wiki pages](wiki)

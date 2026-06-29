@@ -147,6 +147,9 @@ Organize a domain hierarchy:
 2. Add the child entity through the containment field.
 3. Switch to **Tree** view to verify the hierarchy reads the way you expect.
 
+Use [entity wiki pages](wiki) when the entity needs notes, runbooks, or implementation context that should stay close
+to the record itself.
+
 ## Best practices
 
 - Define the schema before you start entering records.
@@ -161,3 +164,4 @@ Organize a domain hierarchy:
 - [Create your first entity](../getting-started/first-entity)
 - [Core concepts](../getting-started/core-concepts)
 - [Workspaces](workspaces)
+- [Wiki pages](wiki)
