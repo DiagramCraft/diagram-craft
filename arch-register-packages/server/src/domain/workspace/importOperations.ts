@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, ContentNodeDbUpsert, EntityDbCreate, SchemaDbCreate } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthorizationContext, WorkspaceCapability } from '@arch-register/permissions';
@@ -409,6 +409,17 @@ const hasSkipResolution = (
   id: string
 ) => resolutions[id]?.action === 'skip';
 
+const generateSchemaKeyPrefix = (seed: string) => {
+  const bytes = createHash('sha1').update(seed).digest();
+  let prefix = '';
+
+  for (let i = 0; prefix.length < 5 && i < bytes.length; i++) {
+    prefix += String.fromCharCode(65 + (bytes[i]! % 26));
+  }
+
+  return prefix.length >= 2 ? prefix : 'SCM';
+};
+
 const importConfig = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -507,11 +518,24 @@ const importSchemas = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
-  const existingSchemas = new Map((await db.catalog.listSchemas(workspace)).map(schema => [schema.id, schema]));
+  const existingSchemas = await db.catalog.listSchemas(workspace);
+  const existingSchemasById = new Map(existingSchemas.map(schema => [schema.id, schema]));
+  const existingSchemasByName = new Map(
+    existingSchemas.map(schema => [schema.name.toLowerCase(), schema])
+  );
+
+  for (const schema of schemas) {
+    if (hasSkipResolution(resolutions, schema.id)) continue;
+    const existing = preserveIds
+      ? existingSchemasById.get(schema.id) ?? existingSchemasByName.get(schema.name.toLowerCase())
+      : existingSchemasByName.get(schema.name.toLowerCase()) ?? existingSchemasById.get(schema.id);
+    const nextId = existing?.id ?? (preserveIds ? schema.id : randomUUID());
+    idMapping.schemas.set(schema.id, nextId);
+  }
+
   const mappedSchemas = schemas.flatMap(schema => {
     if (hasSkipResolution(resolutions, schema.id)) return [];
-    const nextId = preserveIds ? schema.id : randomUUID();
-    idMapping.schemas.set(schema.id, nextId);
+    const nextId = idMapping.schemas.get(schema.id) ?? schema.id;
     return [{ schema, nextId }];
   });
 
@@ -519,7 +543,7 @@ const importSchemas = async (
   let updated = 0;
 
   for (const { schema, nextId } of mappedSchemas) {
-    const existing = existingSchemas.get(nextId);
+    const existing = existingSchemasById.get(nextId) ?? existingSchemasByName.get(schema.name.toLowerCase());
     const fields = schema.fields.map(field => {
       if (
         field != null &&
@@ -546,7 +570,7 @@ const importSchemas = async (
       color: schema.color,
       icon: schema.icon,
       default_owner: resolveMappedId(idMapping.teams, schema.default_owner),
-      key_prefix: schema.key_prefix ?? '',
+      key_prefix: existing?.key_prefix ?? generateSchemaKeyPrefix(nextId),
       created_at: existing?.created_at ?? now,
       updated_at: now
     };
