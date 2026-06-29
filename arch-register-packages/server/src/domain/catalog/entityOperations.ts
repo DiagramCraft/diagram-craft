@@ -181,10 +181,10 @@ const collectEntities = async (
   // _completeness is computed post-fetch; all other conditions can be evaluated in SQL
   const sqlConditions = conditions.filter(c => c.fieldId !== '_completeness');
   const completenessConditions = conditions.filter(c => c.fieldId === '_completeness');
-    const [schemas, projectEntities] = await Promise.all([
-      db.catalog.listSchemas(workspace),
-      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
-    ]);
+  const [schemas, projectEntities] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
+  ]);
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   const rows: CollectedEntity[] = [];

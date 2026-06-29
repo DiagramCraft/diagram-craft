@@ -701,6 +701,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     }
   }, [filteredCount]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: extra deps intentionally trigger page reset when filters change
   useEffect(() => {
     if (!isPagedBrowse) return;
     setPageIndex(0);
