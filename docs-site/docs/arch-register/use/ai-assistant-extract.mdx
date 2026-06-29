@@ -1,0 +1,49 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# AI Assistant And Extract
+
+Arch Register exposes two AI-facing sections in the workspace shell: **Assistant** and **Extract**.
+
+## Assistant
+
+Assistant is the conversational workspace screen. Use it when you need:
+
+- help reasoning about workspace data
+- guided exploration across entities and projects
+- AI-supported drafting with workspace context
+
+Assistant behavior depends on workspace AI configuration, including provider, model, and optional system prompt.
+
+<ThemedImage
+  alt="AI Assistant in Arch Register"
+  sources={{
+    light: require('/img/arch-register/ai/assistant-overview-light.png').default,
+    dark: require('/img/arch-register/ai/assistant-overview-dark.png').default,
+  }}
+/>
+
+## Extract
+
+Extract is the structured AI flow for turning input material into more usable architecture data. Treat it as a focused
+workflow rather than a general chat interface.
+
+<ThemedImage
+  alt="AI Extract in Arch Register"
+  sources={{
+    light: require('/img/arch-register/ai/extract-overview-light.png').default,
+    dark: require('/img/arch-register/ai/extract-overview-dark.png').default,
+  }}
+/>
+
+## Availability
+
+These sections are workspace features, not guaranteed defaults. If they are missing, check:
+
+- whether AI is enabled for the workspace
+- whether your role exposes the feature
+- whether the workspace has valid provider configuration
+
+## Related Pages
+
+- [AI Configuration](../admin/ai-configuration)
+- [Workspace Home and Navigation](workspace-home-navigation)

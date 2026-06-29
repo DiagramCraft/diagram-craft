@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { chromium, expect, type Browser, type Page } from '@playwright/test';
+import { AccountSettingsPage } from '../../arch-register-packages/e2e/src/ui/pages/AccountSettingsPage';
 import { DataModelPage } from '../../arch-register-packages/e2e/src/ui/pages/DataModelPage';
 import { EntitiesPage } from '../../arch-register-packages/e2e/src/ui/pages/EntitiesPage';
 import { HomePage } from '../../arch-register-packages/e2e/src/ui/pages/HomePage';
@@ -25,6 +26,7 @@ type Viewport = {
 };
 
 type ScreenshotContext = {
+  accountSettingsPage: AccountSettingsPage;
   homePage: HomePage;
   entitiesPage: EntitiesPage;
   projectsPage: ProjectsPage;
@@ -54,6 +56,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const outputRoot = resolve(repoRoot, 'docs-site/static/img');
 const screenshotServerPort = Number(process.env['SCREENSHOT_SERVER_PORT'] ?? '5073');
 const screenshotWebPort = Number(process.env['SCREENSHOT_WEB_PORT'] ?? '5074');
+const screenshotOnly = process.env['SCREENSHOT_ONLY']?.split(',').map(part => part.trim()).filter(Boolean) ?? [];
 const webBaseUrl = `http://localhost:${screenshotWebPort}`;
 const serverBaseUrl = `http://localhost:${screenshotServerPort}`;
 const defaultViewport = { width: 1280, height: 800 } satisfies Viewport;
@@ -396,15 +399,6 @@ const screenshotConfigs: ScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'workspace',
-    name: 'home-overview',
-    setup: async ({ homePage }) => {
-      await homePage.goto();
-      await homePage.expectLoaded(defaultWorkspace.name);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'workspace',
     name: 'selector-open',
     fullPage: false,
     setup: async ({ homePage }) => {
@@ -422,6 +416,16 @@ const screenshotConfigs: ScreenshotConfig[] = [
       await homePage.goto();
       await homePage.expectLoaded(defaultWorkspace.name);
       await homePage.workspaceShell.topBar.openAddWorkspaceFromSwitcher();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'workspace',
+    name: 'home-overview',
+    fullPage: false,
+    setup: async ({ homePage }) => {
+      await homePage.goto();
+      await homePage.expectLoaded(defaultWorkspace.name);
     }
   },
   {
@@ -457,24 +461,24 @@ const screenshotConfigs: ScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'entities',
-    name: 'browser-filtered',
+    name: 'detail-overview',
+    fullPage: false,
     setup: async ({ entitiesPage }) => {
       await entitiesPage.goto();
       await entitiesPage.expectLoaded();
-      await entitiesPage.filterByType(apiSchema.name);
-      await entitiesPage.expectFilteredResultCount(2);
+      await entitiesPage.openEntity(frontendAppEntity.name);
+      await entitiesPage.expectEntityDetailLoaded(frontendAppEntity.name);
     }
   },
   {
     product: 'arch-register',
     category: 'entities',
-    name: 'browser-export-menu',
+    name: 'browser-radar',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto();
+      await entitiesPage.goto({ viewMode: 'radar' });
       await entitiesPage.expectLoaded();
-      await entitiesPage.openExportMenu();
-      await entitiesPage.page.getByRole('menuitem', { name: 'Export CSV' }).waitFor();
+      await expect(entitiesPage.browserTitle()).toBeVisible();
     }
   },
   {
@@ -491,32 +495,41 @@ const screenshotConfigs: ScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'entities',
-    name: 'detail-overview',
+    name: 'browser-timeline',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto();
+      await entitiesPage.goto({ viewMode: 'timeline' });
       await entitiesPage.expectLoaded();
-      await entitiesPage.openEntity(frontendAppEntity.name);
-      await entitiesPage.expectEntityDetailLoaded(frontendAppEntity.name);
+      await expect(entitiesPage.browserTitle()).toBeVisible();
     }
   },
   {
     product: 'arch-register',
     category: 'entities',
-    name: 'detail-edit',
+    name: 'browser-matrix',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto();
+      await entitiesPage.goto({ viewMode: 'matrix' });
       await entitiesPage.expectLoaded();
-      await entitiesPage.openEntity(frontendAppEntity.name);
-      await entitiesPage.expectEntityDetailLoaded(frontendAppEntity.name);
-      await entitiesPage.startEditingEntity();
+      await expect(entitiesPage.browserTitle()).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
+    name: 'browser-explore',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto({ viewMode: 'explore' });
+      await entitiesPage.expectLoaded();
+      await expect(entitiesPage.browserTitle()).toBeVisible();
     }
   },
   {
     product: 'arch-register',
     category: 'projects',
-    name: 'list',
+    name: 'list-overview',
+    fullPage: false,
     setup: async ({ projectsPage }) => {
       await projectsPage.goto();
       await projectsPage.expectLoaded();
@@ -525,7 +538,8 @@ const screenshotConfigs: ScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'projects',
-    name: 'auth-migration-detail',
+    name: 'detail-home',
+    fullPage: false,
     setup: async ({ projectsPage }) => {
       await projectsPage.gotoProject(authMigrationProject.id);
       await projectsPage.expectProjectOpened(authMigrationProject.name);
@@ -534,237 +548,157 @@ const screenshotConfigs: ScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'projects',
-    name: 'add-diagram-dialog',
+    name: 'new-diagram-dialog',
     selector: '[role="alertdialog"]',
     setup: async ({ projectsPage }) => {
       await projectsPage.gotoProject(authMigrationProject.id);
       await projectsPage.expectProjectOpened(authMigrationProject.name);
       await openProjectNewDiagramDialog(projectsPage.page);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'projects',
-    name: 'diagram-editor',
-    fullPage: false,
-    setup: async ({ projectsPage }) => {
-      await projectsPage.gotoProject(authMigrationProject.id);
-      await projectsPage.expectProjectOpened(authMigrationProject.name);
-      await createBlankProjectDiagram(projectsPage.page, projectDiagramName);
-      await openDiagramEditorFromProject(projectsPage.page, projectDiagramName);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'projects',
-    name: 'template-dialog',
-    selector: '[role="alertdialog"]',
-    setup: async ({ projectsPage }) => {
-      await projectsPage.gotoProject(authMigrationProject.id);
-      await projectsPage.expectProjectOpened(authMigrationProject.name);
-      await markProjectDiagramAsTemplate(projectsPage.page, projectDiagramName);
-      await sleep(500);
-      await projectsPage.gotoProject(authMigrationProject.id);
-      await projectsPage.expectProjectOpened(authMigrationProject.name);
-      await openProjectNewDiagramDialog(projectsPage.page);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'wiki',
-    name: 'workspace-overview',
-    fullPage: false,
-    setup: async ({ projectsPage }) => {
-      await seedWikiPage(projectsPage.page, 'workspace', {
-        name: 'Workspace wiki',
-        summary: 'Shared workspace notes live here, alongside links and supporting context.',
-        contextTitle: 'What belongs here',
-        contextBullets: [
-          'Workspace standards and onboarding notes',
-          'Cross-team decisions that are not tied to one project',
-          'A short reference card for the main platform entity'
-        ],
-        nextSteps: [
-          'Add a short owner list for the documentation set',
-          'Link out to the workspace handbook once it exists'
-        ],
-        entityId: frontendAppEntity.id,
-        entityFields: 'owner,lifecycle,description'
-      });
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'wiki',
-    name: 'project-page',
-    fullPage: false,
-    setup: async ({ projectsPage }) => {
-      await projectsPage.gotoProject(authMigrationProject.id);
-      await projectsPage.expectProjectOpened(authMigrationProject.name);
-      await seedWikiPage(projectsPage.page, 'project', {
-        name: 'Project wiki',
-        summary: 'Project wiki pages stay with the project so plans and decisions stay with the files.',
-        contextTitle: 'Working notes',
-        contextBullets: [
-          'Migration notes and release-ready documentation',
-          'Meeting summaries that should stay with the project',
-          'Risks and decisions for the current delivery track'
-        ],
-        nextSteps: [
-          'Add a migration checklist for the next release',
-          'Link the rollout owner when the project is staffed'
-        ],
-        entityId: authApiEntity.id,
-        entityFields: 'owner,lifecycle,description'
-      });
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'wiki',
-    name: 'entity-page',
-    fullPage: false,
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto();
-      await entitiesPage.expectLoaded();
-      await entitiesPage.openEntity(frontendAppEntity.name);
-      await seedWikiPage(entitiesPage.page, 'entity', {
-        name: 'Entity wiki',
-        summary: 'Entity wiki pages keep implementation notes next to the record they describe.',
-        contextTitle: 'Implementation notes',
-        contextBullets: [
-          'Ownership details and integration context',
-          'Links to the services and APIs the entity depends on',
-          'Small reminders that should not live in a separate tracker'
-        ],
-        nextSteps: [
-          'Confirm the lifecycle and owner are still current',
-          'Add one short paragraph for onboarding context'
-        ],
-        entityId: authServiceEntity.id,
-        entityFields: 'owner,lifecycle,description'
-      });
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'wiki',
-    name: 'history',
-    fullPage: false,
-    setup: async ({ projectsPage }) => {
-      const created = await seedWikiPage(projectsPage.page, 'workspace', {
-        name: 'Wiki history',
-        summary: 'Revision history makes it easy to review and restore older documentation.',
-        contextTitle: 'Draft notes',
-        contextBullets: [
-          'Start with a short summary, then add supporting context',
-          'Capture one real entity card so the page has a live reference',
-          'Keep the prose short enough that history changes are obvious'
-        ],
-        nextSteps: [
-          'Review the second draft before publishing it',
-          'Restore the first revision if the wording gets too noisy'
-        ],
-        entityId: frontendAppEntity.id,
-        entityFields: 'owner,lifecycle,description'
-      });
-
-      await saveWikiContent(
-        projectsPage.page,
-        created.nodeId,
-        [
-          '# Wiki history',
-          '',
-          'Revision two adds a short update for the history screenshot and keeps the reference card in place.',
-          '',
-          '<EntityCard id="' + frontendAppEntity.id + '" fields="owner,lifecycle,description" />',
-          '',
-          '## Notes',
-          '',
-          '- Revision history should show both versions.',
-          '- The latest version stays selected by default.',
-          '- The page should still read like a normal note after the update.'
-        ].join('\n')
-      );
-
-      const latestRevisionId = await getLatestMarkdownRevisionId(projectsPage.page, created.nodeId);
-      if (latestRevisionId == null) {
-        throw new Error('No markdown revision was created for the history screenshot');
-      }
-
-      await projectsPage.page.goto(
-        `/${defaultWorkspace.slug}/content/wiki/${created.nodeId}?mode=preview&panel=history&revisionId=${encodeURIComponent(latestRevisionId)}`
-      );
-      await expect(projectsPage.page.getByRole('button', { name: 'Restore' })).toBeVisible();
     }
   },
   {
     product: 'arch-register',
     category: 'search',
     name: 'results',
+    fullPage: false,
     setup: async ({ searchPage }) => {
       await searchPage.goto();
       await searchPage.expectLoaded();
-      await searchPage.search('API');
+      await searchPage.search('auth');
       await searchPage.expectEntityResultsFound();
-      await searchPage.expectResultVisible('Auth API');
     }
   },
   {
     product: 'arch-register',
-    category: 'settings',
-    name: 'general',
+    category: 'content',
+    name: 'workspace-overview',
+    fullPage: false,
+    setup: async ({ homePage }) => {
+      await createWikiPage(homePage.page, 'workspace', 'Architecture notes');
+      await homePage.page.goto(`/${defaultWorkspace.slug}/content`);
+      await expect(homePage.page.getByText('Architecture notes').first()).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'content',
+    name: 'project-diagram-editor',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await projectsPage.gotoProject(authMigrationProject.id);
+      await createBlankProjectDiagram(projectsPage.page, projectDiagramName);
+      await openDiagramEditorFromProject(projectsPage.page, projectDiagramName);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'ai',
+    name: 'assistant-overview',
+    fullPage: false,
+    setup: async ({ homePage }) => {
+      await homePage.page.goto(`/${defaultWorkspace.slug}/assistant`);
+      await expect(homePage.page.getByText('Ask about your model', { exact: true })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'ai',
+    name: 'extract-overview',
+    fullPage: false,
+    setup: async ({ homePage }) => {
+      await homePage.page.goto(`/${defaultWorkspace.slug}/extract`);
+      await expect(homePage.page.getByRole('button', { name: 'Extract entities' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'account',
+    name: 'profile',
+    fullPage: false,
+    setup: async ({ accountSettingsPage }) => {
+      await accountSettingsPage.goto('profile');
+      await accountSettingsPage.expectProfileLoaded();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'settings-general',
+    fullPage: false,
     setup: async ({ settingsPage }) => {
-      await settingsPage.goto();
+      await settingsPage.goto('general');
       await settingsPage.expectLoaded();
     }
   },
   {
     product: 'arch-register',
-    category: 'settings',
-    name: 'schema-management',
-    setup: async ({ settingsPage }) => {
-      await settingsPage.page.goto(
-        `${workspaceModelRoute(defaultWorkspace.slug)}?tab=types&schema=${componentSchema.id}`
-      );
-      await settingsPage.page.getByTestId('schema-editor-title').waitFor();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'settings',
-    name: 'teams',
-    setup: async ({ settingsPage }) => {
-      await settingsPage.goto('teams');
-      await settingsPage.page.getByRole('heading', { name: 'Teams' }).waitFor();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'settings',
-    name: 'roles-permissions',
-    setup: async ({ settingsPage }) => {
-      await settingsPage.goto('roles');
-      await settingsPage.page.getByRole('heading', { name: 'Roles & permissions' }).waitFor();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'settings',
-    name: 'ai-settings',
-    setup: async ({ settingsPage }) => {
-      await settingsPage.goto('ai');
-      await settingsPage.page.getByRole('heading', { name: 'AI' }).waitFor();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'data-model',
-    name: 'editor',
+    category: 'admin',
+    name: 'schema-editor',
+    fullPage: false,
     setup: async ({ dataModelPage }) => {
       await dataModelPage.goto();
       await dataModelPage.expectLoaded();
-      await dataModelPage.openSchemaType(componentSchema.name);
+      await dataModelPage.openSchemaType(apiSchema.name);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'model-overview',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.page.goto(`/${defaultWorkspace.slug}/settings/model-overview`);
+      await expect(settingsPage.page.getByText('Model Overview')).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'teams',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('teams');
+      await expect(settingsPage.page.getByRole('heading', { name: 'Teams' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'members',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('members');
+      await expect(settingsPage.page.getByRole('heading', { name: 'Members' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'roles',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('roles');
+      await expect(settingsPage.page.getByRole('heading', { name: 'Roles & permissions' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'ai',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('ai');
+      await expect(settingsPage.page.getByRole('heading', { name: 'AI' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'admin',
+    name: 'export-import',
+    fullPage: false,
+    setup: async ({ settingsPage }) => {
+      await settingsPage.goto('export-import');
+      await expect(settingsPage.page.getByRole('heading', { name: 'Export & Import' })).toBeVisible();
     }
   }
 ];
@@ -939,6 +873,7 @@ const main = async () => {
 
     const loginPage = new LoginPage(page);
     const homePage = new HomePage(page, defaultWorkspace.slug);
+    const accountSettingsPage = new AccountSettingsPage(page, defaultWorkspace.slug);
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
     const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
     const searchPage = new SearchPage(page, defaultWorkspace.slug);
@@ -951,6 +886,7 @@ const main = async () => {
     await homePage.expectLoaded(defaultWorkspace.name);
 
     const screenshotContext = {
+      accountSettingsPage,
       dataModelPage,
       entitiesPage,
       homePage,
@@ -959,7 +895,14 @@ const main = async () => {
       settingsPage
     } satisfies ScreenshotContext;
 
-    for (const config of screenshotConfigs) {
+    const filteredConfigs =
+      screenshotOnly.length === 0
+        ? screenshotConfigs
+        : screenshotConfigs.filter(config =>
+            screenshotOnly.some(filter => `${config.category}/${config.name}` === filter)
+          );
+
+    for (const config of filteredConfigs) {
       const themes = config.themes ?? ['light', 'dark'];
       const viewport = config.viewport ?? defaultViewport;
       

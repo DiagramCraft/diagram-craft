@@ -5,26 +5,60 @@ const sidebars: SidebarsConfig = {
     'intro',
     {
       type: 'category',
-      label: 'Getting started',
+      label: 'Overview',
+      items: ['overview/core-concepts']
+    },
+    {
+      type: 'category',
+      label: 'Getting Started',
       items: [
         'getting-started/intro',
         'getting-started/installation',
         'getting-started/first-workspace',
-        'getting-started/core-concepts',
-        'getting-started/first-entity'
+        'getting-started/first-entity',
+        'getting-started/first-project-diagram',
+        'getting-started/next-steps'
       ]
     },
     {
       type: 'category',
-      label: 'User guide',
+      label: 'Use Arch Register',
       items: [
-        'user-guide/workspaces',
-        'user-guide/entities',
-        'user-guide/projects',
-        'user-guide/wiki',
-        { type: 'doc', id: 'admin-guide', label: 'Administration' }
+        'use/workspace-home-navigation',
+        'use/search',
+        'use/data-modeling-schemas',
+        'use/entities',
+        'use/entity-views',
+        'use/projects',
+        'use/content',
+        'use/ai-assistant-extract',
+        'use/account-settings'
       ]
     },
+    {
+      type: 'category',
+      label: 'Workspace Administration',
+      items: [
+        'admin/overview',
+        'admin/workspace-settings',
+        'admin/schemas-model-overview',
+        'admin/teams-members',
+        'admin/roles-permissions',
+        'admin/ai-configuration',
+        'admin/export-import'
+      ]
+    },
+    {
+      type: 'category',
+      label: 'Reference',
+      items: [
+        'reference/scope-matrix',
+        'reference/permission-model',
+        'reference/entity-screen-reference',
+        'reference/project-content-screen-reference',
+        'reference/api-integrations'
+      ]
+    }
   ],
 };
 

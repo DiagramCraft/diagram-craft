@@ -1,0 +1,34 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# AI Configuration
+
+AI configuration is workspace-scoped and controls how Assistant and Extract behave.
+
+<ThemedImage
+  alt="AI settings in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/ai-light.png').default,
+    dark: require('/img/arch-register/admin/ai-dark.png').default,
+  }}
+/>
+
+## What You Configure
+
+The current UI exposes configuration for:
+
+- whether AI is enabled
+- provider selection
+- API key or equivalent credentials
+- model
+- temperature
+- optional system prompt
+
+## Operational Notes
+
+The workspace prompt is shared configuration, not a per-user preference. Treat it as a workspace behavior control and
+manage it accordingly.
+
+## Related Pages
+
+- [AI Assistant and Extract](../use/ai-assistant-extract)
+- [Workspace Settings](workspace-settings)

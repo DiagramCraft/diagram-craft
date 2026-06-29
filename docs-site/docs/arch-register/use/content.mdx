@@ -1,0 +1,54 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Content
+
+Arch Register has a shared content model across workspace, project, and entity scope. This is where wiki pages,
+diagrams, uploads, and folders live.
+
+## Workspace Content
+
+Use workspace content for shared diagrams and shared documentation.
+
+<ThemedImage
+  alt="Workspace content screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/content/workspace-overview-light.png').default,
+    dark: require('/img/arch-register/content/workspace-overview-dark.png').default,
+  }}
+/>
+
+## Project And Entity Content
+
+Project content stays with one initiative. Entity content stays with one record. The content capabilities are similar,
+but the parent boundary and permission context are different.
+
+## Diagrams
+
+Diagrams are part of the content model. They can live at workspace, project, or entity scope.
+
+<ThemedImage
+  alt="Project diagram editor opened from Arch Register"
+  sources={{
+    light: require('/img/arch-register/content/project-diagram-editor-light.png').default,
+    dark: require('/img/arch-register/content/project-diagram-editor-dark.png').default,
+  }}
+/>
+
+## Wiki Pages And Files
+
+Use wiki pages for lightweight documentation close to the thing it describes. Use uploaded files when the source
+material should stay intact rather than be rewritten into markdown.
+
+## Choosing The Right Scope
+
+Use:
+
+- workspace content for shared standards and shared diagrams
+- project content for initiative-specific documentation and files
+- entity content for notes and files attached to one record
+
+## Related Pages
+
+- [Projects](projects)
+- [Scope Matrix](../reference/scope-matrix)
+- [Project and Content Screen Reference](../reference/project-content-screen-reference)

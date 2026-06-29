@@ -1,0 +1,58 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Workspace Home And Navigation
+
+The workspace shell is the main frame for everyday work. It gives you the current workspace context, top-level
+navigation, and shortcuts into content and administration.
+
+## Main Sections
+
+The implemented workspace routes map to these user-facing sections:
+
+- **Home** for summary panels and recent activity
+- **Content** for workspace-level diagrams and wiki pages
+- **Entities** for the architecture catalog
+- **Projects** for project-scoped files and diagrams
+- **Search** for cross-workspace discovery inside the current workspace
+- **Settings** for governance and configuration
+- **Assistant** for AI conversations
+- **Extract** for AI-assisted extraction
+- **Account** for personal settings
+
+<ThemedImage
+  alt="Workspace home in Arch Register"
+  sources={{
+    light: require('/img/arch-register/workspace/home-overview-light.png').default,
+    dark: require('/img/arch-register/workspace/home-overview-dark.png').default,
+  }}
+/>
+
+## Workspace Home
+
+Workspace Home is the best place to re-enter a workspace. It summarizes:
+
+- active and pinned projects
+- data model coverage
+- recent activity
+
+Treat it as an orientation screen, not the place where deep editing happens.
+
+## Switching Workspaces
+
+Use the workspace selector in the shell header when you need a different boundary. Switching workspaces changes the
+active schemas, teams, projects, and settings context.
+
+## Navigation Guidance
+
+Use these rules to keep the product model clear:
+
+- go to **Entities** when the primary object is a record
+- go to **Projects** when the primary object is a file collection
+- go to **Content** when the material is shared across the workspace
+- go to **Settings** when changing model, access, or operational behavior
+
+## Related Pages
+
+- [Search](search)
+- [Projects](projects)
+- [Workspace Settings](../admin/workspace-settings)

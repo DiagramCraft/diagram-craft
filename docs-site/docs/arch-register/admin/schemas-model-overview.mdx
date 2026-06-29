@@ -1,0 +1,52 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Schemas And Model Overview
+
+This area defines the structure of the architecture catalog.
+
+## Schemas
+
+Schemas define:
+
+- entity types
+- fields
+- enums
+- references
+- containment relationships
+
+Supported field types include text, long text, boolean, date, select, reference, and containment.
+
+<ThemedImage
+  alt="Schema editor in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/schema-editor-light.png').default,
+    dark: require('/img/arch-register/admin/schema-editor-dark.png').default,
+  }}
+/>
+
+## Modeling Guidance
+
+Use:
+
+- reference fields for cross-cutting links
+- containment fields for parent-child hierarchy
+
+That distinction matters because containment drives hierarchical views while references drive relationship views.
+
+## Model Overview
+
+Model Overview is the visual companion to schema editing. Use it to inspect how entity types connect across the
+workspace rather than only reading form-based definitions.
+
+<ThemedImage
+  alt="Model overview in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/model-overview-light.png').default,
+    dark: require('/img/arch-register/admin/model-overview-dark.png').default,
+  }}
+/>
+
+## Related Pages
+
+- [Entities](../use/entities)
+- [Entity Views](../use/entity-views)

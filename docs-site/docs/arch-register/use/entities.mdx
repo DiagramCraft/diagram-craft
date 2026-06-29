@@ -1,0 +1,83 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Entities
+
+Entities are the catalog records in Arch Register. This page covers the core workflows: browse, create, edit, and
+understand relationships.
+
+## Browse Entities
+
+The entity browser is the main catalog screen. Use it to:
+
+- scan records by schema and lifecycle
+- filter by owner or field values
+- switch between saved working slices
+- open a record into its detail view
+
+<ThemedImage
+  alt="Entity browser in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/browser-overview-light.png').default,
+    dark: require('/img/arch-register/entities/browser-overview-dark.png').default,
+  }}
+/>
+
+## Create An Entity
+
+The normal flow is:
+
+1. open **Entities**
+2. select **New entity**
+3. choose the schema
+4. provide a name and required fields
+5. save the record
+
+The created record opens in the detail screen.
+
+## Edit An Entity
+
+The detail screen is where you edit:
+
+- built-in metadata
+- schema-driven fields
+- owner and lifecycle
+- target lifecycle and target date
+- links and tags
+
+<ThemedImage
+  alt="Entity detail screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/entities/detail-overview-light.png').default,
+    dark: require('/img/arch-register/entities/detail-overview-dark.png').default,
+  }}
+/>
+
+The entity detail screen also exposes related content and history rather than forcing those concerns back into the
+browser.
+
+## Relationships
+
+Entities can relate to each other in two main ways:
+
+- **reference** fields for directional links such as depends on or provides
+- **containment** fields for hierarchy such as parent-child structures
+
+Use containment when one parent should own the hierarchy. Use reference when the relationship cuts across ownership or
+structure.
+
+## Content And History
+
+Each entity can also carry content in its own scope:
+
+- wiki pages
+- diagrams
+- uploaded files
+
+Entity detail also exposes relationship views, change history, and timeline-oriented views. Those advanced screens
+are documented separately so this page stays focused on the common flow.
+
+## Related Pages
+
+- [Entity Views](entity-views)
+- [Content](content)
+- [Entity Screen Reference](../reference/entity-screen-reference)

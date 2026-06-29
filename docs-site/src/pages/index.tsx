@@ -108,7 +108,7 @@ export default function Home(): ReactElement {
             description="Map and document your system landscape. Register services, APIs, databases and teams — link them with typed relationships and visualise them in live diagrams."
             links={[
               {icon: <ClockIcon />, label: 'Quick Start', to: '/arch-register/getting-started/intro'},
-              {icon: <EntityIcon />, label: 'Entities', to: '/arch-register/user-guide/entities'},
+              {icon: <EntityIcon />, label: 'Entities', to: '/arch-register/use/entities'},
               {icon: <InfoIcon />, label: 'Overview', to: '/arch-register/intro'},
             ]}
           />

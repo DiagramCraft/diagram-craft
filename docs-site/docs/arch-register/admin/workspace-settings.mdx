@@ -1,0 +1,55 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Workspace Settings
+
+Workspace Settings is the main governance screen for a workspace.
+
+<ThemedImage
+  alt="Workspace settings general screen in Arch Register"
+  sources={{
+    light: require('/img/arch-register/admin/settings-general-light.png').default,
+    dark: require('/img/arch-register/admin/settings-general-dark.png').default,
+  }}
+/>
+
+## Covered Areas
+
+The implemented settings area includes:
+
+- general workspace identity
+- lifecycle
+- model overview
+- schemas
+- roles and permissions
+- teams
+- members
+- AI
+- export and import
+- analytics
+- audit log
+- danger zone
+
+## General
+
+Use general settings to manage the basic workspace identity such as name, slug, description, and visual identity.
+
+## Lifecycle
+
+Lifecycle settings define the allowed lifecycle states for entities in the workspace. They control classification and
+filtering, not access.
+
+## Analytics, Audit, And Danger Zone
+
+These three sections exist for different operational jobs:
+
+- **Analytics** for workspace-wide coverage and completeness views
+- **Audit log** for change inspection
+- **Danger zone** for irreversible operations
+
+Keep them conceptually separate. They solve different problems.
+
+## Related Pages
+
+- [Schemas and Model Overview](schemas-model-overview)
+- [Roles and Permissions](roles-permissions)
+- [Export and Import](export-import)
