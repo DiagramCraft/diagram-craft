@@ -24,6 +24,7 @@ import {
   normalizeEntityRelationFields
 } from './dataHelpers';
 import { formatPublicId } from '../../utils/publicIds';
+import { ENTITY_DEFAULTS } from '../../constants';
 import {
   EntityFacets,
   EntityRecord,
@@ -33,6 +34,11 @@ import {
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
 const checker = new PermissionChecker();
+
+type CollectedEntity = {
+  entity: EntityRecord;
+  completeness: number | null;
+};
 
 const attachProjectLink = (
   entity: EntityRecord,
@@ -98,65 +104,147 @@ export const listEntities = async (
     limit,
     offset = 0
   } = options;
+  const safeOffset = Math.max(Math.trunc(offset ?? 0), 0);
+  const safeLimit = limit == null ? null : Math.max(Math.trunc(limit), 1);
+  try {
+    const rows = await collectEntities(db, workspace, authCtx, {
+      schemaId,
+      owner,
+      lifecycle,
+      q,
+      conditions,
+      projectId,
+      projectScope,
+      view
+    });
+    const windowed =
+      safeLimit != null ? rows.slice(safeOffset, safeOffset + safeLimit) : rows.slice(safeOffset);
+    return windowed.map(row => row.entity);
+  } catch (error) {
+    return handleError(error, 'Failed to retrieve data');
+  }
+};
+
+export const countEntities = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext | null,
+  options: {
+    schemaId?: string | null;
+    owner?: string | null;
+    lifecycle?: string | null;
+    q?: string | null;
+    conditions?: FilterCondition[];
+    projectId?: string | null;
+    projectScope?: 'project' | 'all';
+  }
+): Promise<number> => {
+  const rows = await collectEntities(db, workspace, authCtx, {
+    schemaId: options.schemaId ?? null,
+    owner: options.owner ?? null,
+    lifecycle: options.lifecycle ?? null,
+    q: options.q ?? '',
+    conditions: options.conditions ?? [],
+    projectId: options.projectId ?? null,
+    projectScope: options.projectScope ?? 'all',
+    view: 'full'
+  });
+  return rows.length;
+};
+
+const collectEntities = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext | null,
+  options: {
+    schemaId?: string | null;
+    owner?: string | null;
+    lifecycle?: string | null;
+    q?: string | null;
+    conditions?: FilterCondition[];
+    projectId?: string | null;
+    projectScope?: 'project' | 'all';
+    view?: 'summary' | 'full';
+  }
+): Promise<CollectedEntity[]> => {
+  const {
+    schemaId = null,
+    owner = null,
+    lifecycle = null,
+    q = '',
+    conditions = [],
+    projectId = null,
+    projectScope = 'all',
+    view = 'full'
+  } = options;
   // _completeness is computed post-fetch; all other conditions can be evaluated in SQL
   const sqlConditions = conditions.filter(c => c.fieldId !== '_completeness');
   const completenessConditions = conditions.filter(c => c.fieldId === '_completeness');
+  const [schemas, projectEntities] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
+  ]);
+  const schemaMap = new Map(schemas.map(s => [s.id, s]));
+  const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
+  const rows: CollectedEntity[] = [];
+  const dbPageSize = ENTITY_DEFAULTS.PAGE_SIZE;
+  let dbOffset = 0;
 
-  try {
-    const [allEntities, schemas, projectEntities] = await Promise.all([
-      db.catalog.listEntities(workspace, {
+  while (true) {
+    const page = await db.catalog.listEntitiesPaginated(
+      workspace,
+      {
         schemaId,
         owner,
         lifecycle,
         q: q ?? '',
         conditions: sqlConditions
-      }),
-      db.catalog.listSchemas(workspace),
-      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
-    ]);
-    const schemaMap = new Map(schemas.map(s => [s.id, s]));
-    const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
-    const visibleEntities = allEntities.filter(
-      entity => !authCtx || checker.hasEntityPermission(authCtx, entity, 'view_entity')
+      },
+      {
+        limit: dbPageSize,
+        offset: dbOffset
+      }
     );
-    const scopedEntities =
-      projectId && projectScope === 'project'
-        ? visibleEntities.filter(entity => projectEntityMap.has(entity.id))
-        : visibleEntities;
-    const safeOffset = offset ?? 0;
 
-    const withCompleteness = scopedEntities.map(entity => ({
-      entity,
-      completeness:
-        schemaMap.get(entity.schema_id) != null
-          ? computeEntityCompleteness(entity, schemaMap.get(entity.schema_id)!)
-          : null
-    }));
-    const conditionFiltered =
-      completenessConditions.length === 0
-        ? withCompleteness
-        : withCompleteness.filter(({ entity, completeness }) =>
-            completenessConditions.every(c => matchesFilterCondition(entity, c, completeness))
-          );
-    const rows = conditionFiltered
-      .sort((a, b) => a.entity.name.localeCompare(b.entity.name))
-      .slice(safeOffset, limit != null ? safeOffset + limit : undefined);
+    if (page.length === 0) break;
 
-    return view === 'summary'
-      ? rows.map(({ entity: row, completeness }) =>
-          attachProjectLink(
-            toApiEntitySummary(row, authCtx, completeness) as EntityRecord,
-            row.id,
-            projectId,
-            projectEntityMap
-          )
-        )
-      : rows.map(({ entity: row, completeness }) =>
-          attachProjectLink(toApiEntity(row, authCtx, completeness), row.id, projectId, projectEntityMap)
-        );
-  } catch (error) {
-    return handleError(error, 'Failed to retrieve data');
+    for (const entity of page) {
+      if (authCtx && !checker.hasEntityPermission(authCtx, entity, 'view_entity')) continue;
+      if (projectId && projectScope === 'project' && !projectEntityMap.has(entity.id)) continue;
+
+      const schema = schemaMap.get(entity.schema_id);
+      const completeness = schema != null ? computeEntityCompleteness(entity, schema) : null;
+      if (
+        completenessConditions.length > 0 &&
+        !completenessConditions.every(c => matchesFilterCondition(entity, c, completeness))
+      ) {
+        continue;
+      }
+
+      rows.push({
+        entity:
+          view === 'summary'
+            ? (attachProjectLink(
+                toApiEntitySummary(entity, authCtx, completeness) as EntityRecord,
+                entity.id,
+                projectId,
+                projectEntityMap
+              ) as EntityRecord)
+            : attachProjectLink(
+                toApiEntity(entity, authCtx, completeness),
+                entity.id,
+                projectId,
+                projectEntityMap
+              ),
+        completeness
+      });
+    }
+
+    if (page.length < dbPageSize) break;
+    dbOffset += dbPageSize;
   }
+
+  return rows;
 };
 
 export const getEntityFacets = async (

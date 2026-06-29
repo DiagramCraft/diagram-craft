@@ -3,6 +3,7 @@ import type {
   EntityGrantDbCretae,
   EntityDbCreate,
   EntityListDbFilters,
+  EntityListDbPagination,
   WorkspaceEnumDbCreate,
   SchemaDbCreate,
   EntityDbUpdate,
@@ -12,6 +13,7 @@ import type {
   EntitySnapshotDbCreate
 } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import { ENTITY_DEFAULTS } from '../../../constants';
 import { isUuidLike } from '../../../utils/publicIds';
 import {
   ENTITY_BUILTIN_COLUMNS,
@@ -167,7 +169,13 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return row;
   }
 
-  async listEntities(workspace: string, filters?: EntityListDbFilters) {
+  async listEntitiesPaginated(
+    workspace: string,
+    filters?: EntityListDbFilters,
+    pagination?: EntityListDbPagination
+  ) {
+    const limit = pagination?.limit ?? ENTITY_DEFAULTS.PAGE_SIZE;
+    const offset = pagination?.offset ?? 0;
     const whereParts: string[] = ['e.workspace = ? AND e.deleted_at IS NULL'];
     const params: unknown[] = [workspace];
     const addParam = (v: unknown) => {
@@ -194,10 +202,28 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     }
 
     return this.all(
-      `${ENTITY_JOINS_SQL} WHERE ${whereParts.join(' AND ')} ORDER BY e.name`,
-      params,
+      `${ENTITY_JOINS_SQL} WHERE ${whereParts.join(' AND ')} ORDER BY e.name, e.id LIMIT ? OFFSET ?`,
+      [...params, limit, offset],
       sqliteMappers.enrichedEntity
     );
+  }
+
+  async listEntities(workspace: string, filters?: EntityListDbFilters) {
+    const pageSize = ENTITY_DEFAULTS.PAGE_SIZE;
+    const rows: Awaited<ReturnType<typeof this.listEntitiesPaginated>> = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await this.listEntitiesPaginated(workspace, filters, {
+        limit: pageSize,
+        offset
+      });
+      rows.push(...page);
+      if (page.length < pageSize) break;
+      offset += pageSize;
+    }
+
+    return rows;
   }
 
   async getEntity(workspace: string, identifier: string) {

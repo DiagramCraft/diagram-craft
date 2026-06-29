@@ -70,6 +70,19 @@
   border: 1px solid var(--panel-border);
 }
 
+.pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.pageSummary {
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .dateFilters {
   display: inline-flex;
   align-items: center;

@@ -4,6 +4,7 @@ import type {
   EntityDbCreate,
   EntityDbResult,
   EntityListDbFilters,
+  EntityListDbPagination,
   SchemaDbResult,
   EntityDbUpdate,
   WorkspaceEnumDbCreate,
@@ -18,6 +19,7 @@ import type {
   EntitySnapshotDbResult
 } from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import { ENTITY_DEFAULTS } from '../../../constants';
 import { isUuidLike } from '../../../utils/publicIds';
 import {
   ENTITY_BUILTIN_COLUMNS,
@@ -159,7 +161,13 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     }
   }
 
-  async listEntities(workspace: string, filters?: EntityListDbFilters) {
+  async listEntitiesPaginated(
+    workspace: string,
+    filters?: EntityListDbFilters,
+    pagination?: EntityListDbPagination
+  ) {
+    const limit = pagination?.limit ?? ENTITY_DEFAULTS.PAGE_SIZE;
+    const offset = pagination?.offset ?? 0;
     const whereParts: string[] = ['e.workspace = $1 AND e.deleted_at IS NULL'];
     const params: unknown[] = [workspace];
     const addParam = (v: unknown) => {
@@ -197,11 +205,31 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
        LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
        JOIN entity_schema es ON es.id = e.schema_id
        WHERE ${whereParts.join(' AND ')}
-       ORDER BY e.name`,
+       ORDER BY e.name, e.id
+       LIMIT ${limit}
+       OFFSET ${offset}`,
       // postgres.js accepts string | number | boolean | null | Date; cast from unknown[] is safe
       // because all values we push are those types
       params as Parameters<typeof this.sql.unsafe>[1]
     );
+  }
+
+  async listEntities(workspace: string, filters?: EntityListDbFilters) {
+    const pageSize = ENTITY_DEFAULTS.PAGE_SIZE;
+    const rows: EntityDbResult[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await this.listEntitiesPaginated(workspace, filters, {
+        limit: pageSize,
+        offset
+      });
+      rows.push(...page);
+      if (page.length < pageSize) break;
+      offset += pageSize;
+    }
+
+    return rows;
   }
 
   async getEntity(workspace: string, identifier: string) {

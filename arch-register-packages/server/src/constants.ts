@@ -38,6 +38,13 @@ export const SEARCH_DEFAULTS = {
 } as const;
 
 /**
+ * Entity catalog pagination defaults
+ */
+export const ENTITY_DEFAULTS = {
+  PAGE_SIZE: 200
+} as const;
+
+/**
  * Storage configuration
  */
 export const STORAGE_DEFAULTS = {
