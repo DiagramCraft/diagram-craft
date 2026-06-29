@@ -2,6 +2,52 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
+const typedocEnv = process.env.DOCS_SITE_TYPEDOC;
+const isDevServerCommand = process.argv.includes('start') || process.argv.includes('serve');
+const shouldGenerateTypedoc =
+  typedocEnv === '1' || (typedocEnv == null && !isDevServerCommand);
+
+const typedocPlugins = shouldGenerateTypedoc
+  ? [
+      [
+        'docusaurus-plugin-typedoc',
+        {
+          id: 'api-docs',
+          entryPoints: [
+            '../packages/geometry',
+            '../packages/utils'
+            /*          '../packages/model',
+          '../packages/canvas',
+          '../packages/canvas-app',
+          '../packages/canvas-react',
+          '../packages/collaboration',*/
+          ],
+          entryPointStrategy: 'packages',
+          tsconfig: '../tsconfig.json',
+          out: 'docs/diagram-craft/api',
+          sidebar: {
+            autoConfiguration: true,
+            pretty: true
+          },
+          // Exclude test files
+          exclude: ['**/*.test.ts', '**/*.bench.ts', '**/*.fixtures.ts', '**/test-support/**'],
+          // Documentation options
+          excludePrivate: true,
+          excludeInternal: true,
+          excludeProtected: false,
+          sanitizeComments: true,
+          useHTMLEncodedBrackets: true,
+          readme: 'none',
+          // Styling options for consistency
+          hideGenerator: true,
+          hideBreadcrumbs: false,
+          hidePageHeader: false,
+          hidePageTitle: false
+        }
+      ]
+    ]
+  : [];
+
 const config: Config = {
   title: 'Docs',
   tagline: 'Arch Register & Diagram Craft documentation',
@@ -62,40 +108,8 @@ const config: Config = {
         showLastUpdateAuthor: true
       }
     ],
-    [
-      'docusaurus-plugin-typedoc',
-      {
-        id: 'api-docs',
-        entryPoints: [
-          '../packages/geometry',
-          '../packages/utils'
-          /*          '../packages/model',
-          '../packages/canvas',
-          '../packages/canvas-app',
-          '../packages/canvas-react',
-          '../packages/collaboration',*/
-        ],
-        entryPointStrategy: 'packages',
-        tsconfig: '../tsconfig.json',
-        out: 'docs/api',
-        sidebar: {
-          autoConfiguration: true,
-          pretty: true
-        },
-        // Exclude test files
-        exclude: ['**/*.test.ts', '**/*.bench.ts', '**/*.fixtures.ts', '**/test-support/**'],
-        // Documentation options
-        excludePrivate: true,
-        excludeInternal: true,
-        excludeProtected: false,
-        readme: 'none',
-        // Styling options for consistency
-        hideGenerator: true,
-        hideBreadcrumbs: false,
-        hidePageHeader: false,
-        hidePageTitle: false
-      }
-    ]
+    ...typedocPlugins,
+    ['./plugins/typedoc-mdx-sanitizer.cjs', {}],
   ],
 
   themeConfig: {
@@ -117,11 +131,6 @@ const config: Config = {
           position: 'left',
           label: 'Diagram Craft',
           docsPluginId: 'diagram-craft'
-        },
-        {
-          to: '/diagram-craft/api',
-          label: 'API',
-          position: 'left'
         },
         {
           type: 'docSidebar',

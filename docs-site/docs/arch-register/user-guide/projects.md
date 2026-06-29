@@ -36,7 +36,7 @@ Use the same dialog to create diagrams from templates when a project template or
 
 The editor is where you add shapes, connectors, notes, and layout.
 Arch Register handles project context, saving, and collaboration around the editor.
-For canvas behavior, shortcuts, and advanced editor features, see the [Diagram Craft docs](/docs/diagram-craft/intro).
+For canvas behavior, shortcuts, and advanced editor features, see the [Diagram Craft docs](/diagram-craft/diagram-craft/intro).
 
 ![Blank diagram editor](/img/arch-register/projects/diagram-editor.png)
 
@@ -68,5 +68,5 @@ separate tool.
 ## Related pages
 
 - [Core concepts](../getting-started/core-concepts)
-- [Diagram Craft docs](/docs/diagram-craft/intro)
+- [Diagram Craft docs](/diagram-craft/diagram-craft/intro)
 - [Wiki pages](wiki)
