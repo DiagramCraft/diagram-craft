@@ -1,5 +1,5 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
+import { themes as prismThemes } from 'prism-react-renderer';
+import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
@@ -21,7 +21,7 @@ const config: Config = {
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en']
   },
 
   presets: [
@@ -31,10 +31,10 @@ const config: Config = {
         docs: false, // Disable default docs plugin, we'll use multiple instances
         blog: false, // Disable blog for now
         theme: {
-          customCss: './src/css/custom.css',
-        },
-      } satisfies Preset.Options,
-    ],
+          customCss: './src/css/custom.css'
+        }
+      } satisfies Preset.Options
+    ]
   ],
 
   plugins: [
@@ -47,8 +47,8 @@ const config: Config = {
         sidebarPath: './sidebars-diagram-craft.ts',
         editUrl: 'https://github.com/DiagramCraft/diagram-craft/tree/main/docs-site/',
         showLastUpdateTime: true,
-        showLastUpdateAuthor: true,
-      },
+        showLastUpdateAuthor: true
+      }
     ],
     [
       '@docusaurus/plugin-content-docs',
@@ -59,22 +59,56 @@ const config: Config = {
         sidebarPath: './sidebars-arch-register.ts',
         editUrl: 'https://github.com/DiagramCraft/diagram-craft/tree/main/docs-site/',
         showLastUpdateTime: true,
-        showLastUpdateAuthor: true,
-      },
+        showLastUpdateAuthor: true
+      }
     ],
+    [
+      'docusaurus-plugin-typedoc',
+      {
+        id: 'api-docs',
+        entryPoints: [
+          '../packages/geometry',
+          '../packages/utils'
+          /*          '../packages/model',
+          '../packages/canvas',
+          '../packages/canvas-app',
+          '../packages/canvas-react',
+          '../packages/collaboration',*/
+        ],
+        entryPointStrategy: 'packages',
+        tsconfig: '../tsconfig.json',
+        out: 'docs/api',
+        sidebar: {
+          autoConfiguration: true,
+          pretty: true
+        },
+        // Exclude test files
+        exclude: ['**/*.test.ts', '**/*.bench.ts', '**/*.fixtures.ts', '**/test-support/**'],
+        // Documentation options
+        excludePrivate: true,
+        excludeInternal: true,
+        excludeProtected: false,
+        readme: 'none',
+        // Styling options for consistency
+        hideGenerator: true,
+        hideBreadcrumbs: false,
+        hidePageHeader: false,
+        hidePageTitle: false
+      }
+    ]
   ],
 
   themeConfig: {
     colorMode: {
       defaultMode: 'dark',
-      respectPrefersColorScheme: true,
+      respectPrefersColorScheme: true
     },
     image: 'img/social-card.jpg',
     navbar: {
       title: 'Docs',
       logo: {
         alt: 'Arch Register & Diagram Craft',
-        src: 'img/logo.svg',
+        src: 'img/logo.svg'
       },
       items: [
         {
@@ -82,21 +116,26 @@ const config: Config = {
           sidebarId: 'tutorialSidebar',
           position: 'left',
           label: 'Diagram Craft',
-          docsPluginId: 'diagram-craft',
+          docsPluginId: 'diagram-craft'
+        },
+        {
+          to: '/diagram-craft/api',
+          label: 'API',
+          position: 'left'
         },
         {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
           label: 'Arch Register',
-          docsPluginId: 'arch-register',
+          docsPluginId: 'arch-register'
         },
         {
           href: 'https://github.com/DiagramCraft/diagram-craft',
           label: 'GitHub',
-          position: 'right',
-        },
-      ],
+          position: 'right'
+        }
+      ]
     },
     footer: {
       style: 'dark',
@@ -106,35 +145,35 @@ const config: Config = {
           items: [
             {
               label: 'Diagram Craft',
-              to: '/diagram-craft/diagram-craft/intro',
+              to: '/diagram-craft/diagram-craft/intro'
             },
             {
               label: 'Arch Register',
-              to: '/diagram-craft/arch-register/intro',
-            },
-          ],
+              to: '/diagram-craft/arch-register/intro'
+            }
+          ]
         },
         {
           title: 'Community',
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/DiagramCraft/diagram-craft',
+              href: 'https://github.com/DiagramCraft/diagram-craft'
             },
             {
               label: 'Issues',
-              href: 'https://github.com/DiagramCraft/diagram-craft/issues',
-            },
-          ],
-        },
+              href: 'https://github.com/DiagramCraft/diagram-craft/issues'
+            }
+          ]
+        }
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Diagram Craft. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Diagram Craft. Built with Docusaurus.`
     },
     prism: {
       theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
-    },
-  } satisfies Preset.ThemeConfig,
+      darkTheme: prismThemes.dracula
+    }
+  } satisfies Preset.ThemeConfig
 };
 
 export default config;
