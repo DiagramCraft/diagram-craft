@@ -5,498 +5,636 @@ import { ws, wsAndId, foreignKeySchema, UUID_REGEX } from '@arch-register/api-ty
 // ── Shared sub-schemas ────────────────────────────────────────
 
 const entityLinkSchema = z.object({
-  url: z.string(),
-  title: z.string(),
-  type: z.string().optional()
+  url: z.string().describe('Link URL'),
+  title: z.string().describe('Link title/label'),
+  type: z.string().optional().describe('Link type (e.g., "documentation", "repository")')
 });
 
 const projectLinkSchema = z.object({
-  linked: z.boolean(),
-  entityType: foreignKeySchema.nullable(),
-  isDone: z.boolean()
+  linked: z.boolean().describe('Whether the entity is linked to a project'),
+  entityType: foreignKeySchema.nullable().describe('Project entity type classification'),
+  isDone: z.boolean().describe('Whether the entity is marked as done in the project')
 });
 
 const entityCapabilitiesSchema = z.object({
-  canView: z.boolean(),
-  canEdit: z.boolean(),
-  canDelete: z.boolean(),
-  canAdmin: z.boolean(),
-  canCreateChild: z.boolean()
+  canView: z.boolean().describe('Whether the user can view this entity'),
+  canEdit: z.boolean().describe('Whether the user can edit this entity'),
+  canDelete: z.boolean().describe('Whether the user can delete this entity'),
+  canAdmin: z.boolean().describe('Whether the user can manage entity permissions'),
+  canCreateChild: z.boolean().describe('Whether the user can create child entities')
 });
 
-const visibilityModeSchema = z.enum(['public', 'restricted']);
+const visibilityModeSchema = z.enum(['public', 'restricted']).describe('Entity visibility mode');
 
 const entitySummarySchema = entityCapabilitiesSchema.extend({
-  _uid: z.string(),
-  _publicId: z.string(),
-  _schema: foreignKeySchema,
-  _name: z.string(),
-  _slug: z.string(),
-  _namespace: z.string(),
-  _description: z.string(),
-  _owner: foreignKeySchema.nullable(),
-  _lifecycle: foreignKeySchema.nullable(),
-  _targetLifecycle: foreignKeySchema.nullable(),
-  _targetLifecycleDate: z.string().nullable(),
-  _tags: z.array(z.string()),
-  _links: z.array(entityLinkSchema),
-  _visibilityMode: visibilityModeSchema.nullable(),
-  _completeness: z.number().nullable(),
-  _projectLink: projectLinkSchema.optional()
+  _uid: z.string().describe('Unique entity identifier'),
+  _publicId: z.string().describe('Public entity identifier (e.g., APP-001)'),
+  _schema: foreignKeySchema.describe('Entity schema reference'),
+  _name: z.string().describe('Entity name'),
+  _slug: z.string().describe('Entity URL slug'),
+  _namespace: z.string().describe('Entity namespace for organization'),
+  _description: z.string().describe('Entity description'),
+  _owner: foreignKeySchema.nullable().describe('Entity owner'),
+  _lifecycle: foreignKeySchema.nullable().describe('Current lifecycle state'),
+  _targetLifecycle: foreignKeySchema.nullable().describe('Target lifecycle state'),
+  _targetLifecycleDate: z.string().nullable().describe('Target date for lifecycle transition (ISO 8601)'),
+  _tags: z.array(z.string()).describe('Entity tags'),
+  _links: z.array(entityLinkSchema).describe('External links associated with the entity'),
+  _visibilityMode: visibilityModeSchema.nullable().describe('Entity visibility mode'),
+  _completeness: z.number().nullable().describe('Field completeness percentage (0-100)'),
+  _projectLink: projectLinkSchema.optional().describe('Project linkage information')
 });
 
 // EntityRecord = EntitySummary + dynamic schema fields
-const entityRecordSchema = entitySummarySchema.catchall(z.unknown());
+const entityRecordSchema = entitySummarySchema.catchall(z.unknown()).describe('Complete entity record with schema-specific fields');
 
 // ── Mutation input ────────────────────────────────────────────
 
 const ownerOrIdSchema = z
   .union([z.string(), z.object({ id: z.string() }).passthrough()])
   .nullable()
-  .optional();
+  .optional()
+  .describe('Owner reference (ID string or object with id)');
 
 const entityMutationBodySchema = z
   .object({
-    _schemaId: z.string().optional(),
-    _schema: z.object({ id: z.string(), name: z.string() }).optional(),
-    _name: z.string().optional(),
-    _slug: z.string().optional(),
-    _namespace: z.string().optional(),
-    _description: z.string().optional(),
-    _owner: ownerOrIdSchema,
-    _lifecycle: ownerOrIdSchema,
-    _targetLifecycle: ownerOrIdSchema,
-    _targetLifecycleDate: z.string().nullable().optional(),
-    _tags: z.array(z.string()).optional(),
-    _links: z.array(entityLinkSchema).optional(),
-    _visibilityMode: z.enum(['public', 'restricted']).nullable().optional()
+    _schemaId: z.string().optional().describe('Schema identifier'),
+    _schema: z.object({ id: z.string(), name: z.string() }).optional().describe('Schema reference'),
+    _name: z.string().optional().describe('Entity name'),
+    _slug: z.string().optional().describe('Entity URL slug'),
+    _namespace: z.string().optional().describe('Entity namespace'),
+    _description: z.string().optional().describe('Entity description'),
+    _owner: ownerOrIdSchema.describe('Entity owner'),
+    _lifecycle: ownerOrIdSchema.describe('Current lifecycle state'),
+    _targetLifecycle: ownerOrIdSchema.describe('Target lifecycle state'),
+    _targetLifecycleDate: z.string().nullable().optional().describe('Target date for lifecycle transition (ISO 8601)'),
+    _tags: z.array(z.string()).optional().describe('Entity tags'),
+    _links: z.array(entityLinkSchema).optional().describe('External links'),
+    _visibilityMode: z.enum(['public', 'restricted']).nullable().optional().describe('Entity visibility mode')
   })
-  .catchall(z.unknown());
+  .catchall(z.unknown())
+  .describe('Entity mutation data with schema-specific fields');
 
 // ── Query / filter input ──────────────────────────────────────
 
 const listFiltersSchema = z.object({
-  _schemaId: z.string().optional(),
-  owner: z.string().optional(),
-  lifecycle: z.string().optional(),
-  q: z.string().optional(),
-  conditions: z.string().optional(),
-  projectId: z.string().optional(),
-  projectScope: z.enum(['project', 'all']).optional()
+  _schemaId: z.string().optional().describe('Filter by schema identifier'),
+  owner: z.string().optional().describe('Filter by owner identifier'),
+  lifecycle: z.string().optional().describe('Filter by lifecycle state'),
+  q: z.string().optional().describe('Search query string'),
+  conditions: z.string().optional().describe('JSON-encoded filter conditions'),
+  projectId: z.string().optional().describe('Filter by project identifier'),
+  projectScope: z.enum(['project', 'all']).optional().describe('Project scope filter')
 });
 
 const deleteEntityResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string()
+  success: z.boolean().describe('Whether the deletion was successful'),
+  message: z.string().describe('Status message or error details')
 });
 
 const entityCountResponseSchema = z.object({
-  total: z.number().int()
+  total: z.number().int().describe('Total number of entities matching the filters')
 });
 
 // ── Facets ────────────────────────────────────────────────────
 
 const entityFacetBucketSchema = z.object({
-  label: z.string(),
-  value: z.string().nullable(),
-  count: z.number().int()
+  label: z.string().describe('Facet bucket label'),
+  value: z.string().nullable().describe('Facet bucket value'),
+  count: z.number().int().describe('Number of entities in this bucket')
 });
 
 const entityFacetsSchema = z.object({
-  total: z.number().int(),
-  lifecycle: z.array(entityFacetBucketSchema),
-  owner: z.array(entityFacetBucketSchema),
-  schema: z.array(z.object({ schemaId: z.string(), count: z.number().int() })),
+  total: z.number().int().describe('Total number of entities'),
+  lifecycle: z.array(entityFacetBucketSchema).describe('Lifecycle state distribution'),
+  owner: z.array(entityFacetBucketSchema).describe('Owner distribution'),
+  schema: z.array(z.object({
+    schemaId: z.string().describe('Schema identifier'),
+    count: z.number().int().describe('Number of entities')
+  })).describe('Schema distribution'),
   completeness: z.object({
-    below50: z.number().int(),
-    below80: z.number().int(),
-    above80: z.number().int()
-  })
+    below50: z.number().int().describe('Entities with <50% fields filled'),
+    below80: z.number().int().describe('Entities with 50-79% fields filled'),
+    above80: z.number().int().describe('Entities with ≥80% fields filled')
+  }).describe('Field completeness distribution')
 });
 
 // ── Tree ──────────────────────────────────────────────────────
 
 const treeResponseSchema = z.object({
-  nodes: z.array(entitySummarySchema.extend({ _isMatch: z.boolean() })),
-  edges: z.array(z.object({ childId: z.string(), parentId: z.string() }))
+  nodes: z.array(entitySummarySchema.extend({
+    _isMatch: z.boolean().describe('Whether this node matches the search criteria')
+  })).describe('Tree nodes'),
+  edges: z.array(z.object({
+    childId: z.string().describe('Child entity identifier'),
+    parentId: z.string().describe('Parent entity identifier')
+  })).describe('Parent-child relationships')
 });
 
 // ── Relations ─────────────────────────────────────────────────
 
 const entityRelationSchema = z.object({
-  entityId: z.string(),
-  publicId: z.string(),
-  entitySlug: z.string(),
-  entityName: z.string(),
-  entitySchemaId: z.string(),
-  fieldName: z.string(),
-  fieldPredicate: z.string().optional(),
-  kind: z.enum(['reference', 'containment'])
+  entityId: z.string().describe('Related entity identifier'),
+  publicId: z.string().describe('Related entity public identifier'),
+  entitySlug: z.string().describe('Related entity URL slug'),
+  entityName: z.string().describe('Related entity name'),
+  entitySchemaId: z.string().describe('Related entity schema identifier'),
+  fieldName: z.string().describe('Relationship field name'),
+  fieldPredicate: z.string().optional().describe('Relationship predicate/label'),
+  kind: z.enum(['reference', 'containment']).describe('Relationship type')
 });
 
 const entityRelationsSchema = z.object({
-  outgoing: z.array(entityRelationSchema),
-  incoming: z.array(entityRelationSchema)
+  outgoing: z.array(entityRelationSchema).describe('Outgoing relationships from this entity'),
+  incoming: z.array(entityRelationSchema).describe('Incoming relationships to this entity')
 });
 
 // ── Entity Access ─────────────────────────────────────────────
 
 const entityGrantSchema = z.object({
-  id: z.string(),
-  workspace: z.string(),
-  entity_id: z.string(),
-  principal_type: z.enum(['user', 'team']),
-  principal_id: z.string(),
-  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']),
-  applies_to: z.enum(['self', 'subtree']),
-  created_at: z.string()
+  id: z.string().describe('Grant identifier'),
+  workspace: z.string().describe('Workspace identifier'),
+  entity_id: z.string().describe('Entity identifier'),
+  principal_type: z.enum(['user', 'team']).describe('Principal type (user or team)'),
+  principal_id: z.string().describe('Principal identifier'),
+  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']).describe('Granted role'),
+  applies_to: z.enum(['self', 'subtree']).describe('Grant scope (entity only or including children)'),
+  created_at: z.string().describe('ISO 8601 creation timestamp')
 });
 
 const entityGrantInputSchema = z.object({
-  principal_type: z.enum(['user', 'team']),
-  principal_id: z.string(),
-  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']),
-  applies_to: z.enum(['self', 'subtree'])
+  principal_type: z.enum(['user', 'team']).describe('Principal type (user or team)'),
+  principal_id: z.string().describe('Principal identifier'),
+  role: z.enum(['viewer', 'editor', 'contributor', 'entity_admin']).describe('Role to grant'),
+  applies_to: z.enum(['self', 'subtree']).describe('Grant scope (entity only or including children)')
 });
 
 const entityAccessSchema = z.object({
-  owner: z.string().nullable(),
-  visibility_mode: z.enum(['public', 'restricted']).nullable(),
-  grants: z.array(entityGrantSchema)
+  owner: z.string().nullable().describe('Entity owner identifier'),
+  visibility_mode: z.enum(['public', 'restricted']).nullable().describe('Entity visibility mode'),
+  grants: z.array(entityGrantSchema).describe('Permission grants for this entity')
 });
 
 // ── Snapshots ─────────────────────────────────────────────────
 
 const entitySnapshotSchema = z.object({
-  id: z.string(),
-  workspace: z.string(),
-  entity_id: z.string(),
-  status: z.enum(['autosave', 'saved_version', 'future_update', 'applied']),
-  project_id: z.string().nullable(),
-  target_date: z.string().nullable(),
-  commit_message: z.string().nullable(),
-  created_at: z.string(),
-  created_by: z.string(),
-  created_by_name: z.string().nullable(),
-  base_state: z.record(z.string(), z.unknown()),
-  proposed_state: z.record(z.string(), z.unknown()).nullable()
+  id: z.string().describe('Snapshot identifier'),
+  workspace: z.string().describe('Workspace identifier'),
+  entity_id: z.string().describe('Entity identifier'),
+  status: z.enum(['autosave', 'saved_version', 'future_update', 'applied']).describe('Snapshot status'),
+  project_id: z.string().nullable().describe('Associated project identifier'),
+  target_date: z.string().nullable().describe('Target date for future update (ISO 8601)'),
+  commit_message: z.string().nullable().describe('Commit message describing the changes'),
+  created_at: z.string().describe('ISO 8601 creation timestamp'),
+  created_by: z.string().describe('User who created the snapshot'),
+  created_by_name: z.string().nullable().describe('Display name of creator'),
+  base_state: z.record(z.string(), z.unknown()).describe('Entity state at snapshot creation'),
+  proposed_state: z.record(z.string(), z.unknown()).nullable().describe('Proposed changes (for future updates)')
 });
 
 // ── Import ────────────────────────────────────────────────────
 
 const importNameMatchSchema = z.object({
-  id: z.string(),
-  publicId: z.string(),
-  name: z.string(),
-  slug: z.string(),
-  namespace: z.string()
+  id: z.string().describe('Matched entity identifier'),
+  publicId: z.string().describe('Matched entity public identifier'),
+  name: z.string().describe('Matched entity name'),
+  slug: z.string().describe('Matched entity slug'),
+  namespace: z.string().describe('Matched entity namespace')
 });
 
 const importConstraintViolationSchema = z.object({
-  type: z.enum(['duplicate_slug', 'wrong_workspace', 'wrong_schema']),
-  message: z.string()
+  type: z.enum(['duplicate_slug', 'wrong_workspace', 'wrong_schema']).describe('Violation type'),
+  message: z.string().describe('Violation description')
 });
 
 const importEntityRowSchema = z.object({
-  rowNumber: z.number(),
-  errors: z.array(z.string()),
-  entity: z.record(z.string(), z.unknown()).nullable(),
-  isUpdate: z.boolean(),
-  matchType: z.enum(['id', 'slug', 'name', 'none']),
-  nameMatches: z.array(importNameMatchSchema),
-  existingId: z.string().nullable().optional(),
-  existingEntity: z.record(z.string(), z.unknown()).nullable(),
-  constraintViolations: z.array(importConstraintViolationSchema).optional()
+  rowNumber: z.number().describe('CSV row number'),
+  errors: z.array(z.string()).describe('Validation errors for this row'),
+  entity: z.record(z.string(), z.unknown()).nullable().describe('Parsed entity data'),
+  isUpdate: z.boolean().describe('Whether this is an update to existing entity'),
+  matchType: z.enum(['id', 'slug', 'name', 'none']).describe('How the entity was matched'),
+  nameMatches: z.array(importNameMatchSchema).describe('Potential name matches'),
+  existingId: z.string().nullable().optional().describe('Existing entity identifier if matched'),
+  existingEntity: z.record(z.string(), z.unknown()).nullable().describe('Existing entity data if matched'),
+  constraintViolations: z.array(importConstraintViolationSchema).optional().describe('Constraint violations')
 });
 
 const importParseResponseSchema = z.object({
-  schemaId: z.string(),
-  schemaName: z.string(),
-  totalRows: z.number(),
-  validRows: z.number(),
-  entities: z.array(importEntityRowSchema)
+  schemaId: z.string().describe('Schema identifier'),
+  schemaName: z.string().describe('Schema name'),
+  totalRows: z.number().describe('Total number of rows in CSV'),
+  validRows: z.number().describe('Number of valid rows'),
+  entities: z.array(importEntityRowSchema).describe('Parsed entity rows')
 });
 
 const importCommitResponseSchema = z.object({
-  created: z.number(),
-  updated: z.number(),
-  ids: z.array(z.string())
+  created: z.number().describe('Number of entities created'),
+  updated: z.number().describe('Number of entities updated'),
+  ids: z.array(z.string()).describe('Identifiers of created/updated entities')
 });
 
 // ── Contract ──────────────────────────────────────────────────
 
-export const workspaceEntityContract = {
-  entities: {
-    list: oc
-      .route({ method: 'GET', path: '/{workspace}/data', inputStructure: 'detailed' })
-      .input(
-        z.object({
-          params: ws,
-          query: z.object({
-            ...listFiltersSchema.shape,
-            ...z.object({
-              limit: z.preprocess(
-                v => (v !== undefined ? Number(v) : undefined),
-                z.number().int().positive().optional()
-              ),
-              offset: z.preprocess(
-                v => (v !== undefined ? Number(v) : undefined),
-                z.number().int().min(0).optional()
-              )
-            }).shape,
-            view: z.enum(['summary', 'full']).optional()
-          })
-        })
-      )
-      .output(z.array(entityRecordSchema)),
-    count: oc
-      .route({ method: 'GET', path: '/{workspace}/data/count', inputStructure: 'detailed' })
-      .input(
-        z.object({
-          params: ws,
-          query: listFiltersSchema
-        })
-      )
-      .output(entityCountResponseSchema),
-    facets: oc
-      .route({ method: 'GET', path: '/{workspace}/data/facets', inputStructure: 'detailed' })
-      .input(z.object({ params: ws }))
-      .output(entityFacetsSchema),
-    tree: oc
-      .route({ method: 'GET', path: '/{workspace}/data/tree', inputStructure: 'detailed' })
-      .input(
-        z.object({
-          params: ws,
-          query: listFiltersSchema
-        })
-      )
-      .output(treeResponseSchema),
-    get: oc
-      .route({ method: 'GET', path: '/{workspace}/data/{id}', inputStructure: 'detailed' })
-      .input(z.object({ params: wsAndId }))
-      .output(entityRecordSchema),
-    relations: oc
-      .route({
-        method: 'GET',
-        path: '/{workspace}/data/{id}/relations',
-        inputStructure: 'detailed'
-      })
-      .input(z.object({ params: wsAndId }))
-      .output(entityRelationsSchema),
-    batchRelations: oc
-      .route({
-        method: 'POST',
-        path: '/{workspace}/data/batch-relations',
-        inputStructure: 'detailed'
-      })
-      .input(z.object({ params: ws, body: z.object({ ids: z.array(z.string()) }) }))
-      .output(z.record(z.string(), entityRelationsSchema)),
-    create: oc
-      .route({ method: 'POST', path: '/{workspace}/data', inputStructure: 'detailed' })
-      .input(
-        z.object({
-          params: ws,
-          body: entityMutationBodySchema
-        })
-      )
-      .output(entityRecordSchema),
-    update: oc
-      .route({ method: 'PUT', path: '/{workspace}/data/{id}', inputStructure: 'detailed' })
-      .input(
-        z.object({
-          params: wsAndId,
-          body: entityMutationBodySchema
-        })
-      )
-      .output(entityRecordSchema),
-    clone: oc
-      .route({ method: 'POST', path: '/{workspace}/data/{id}/clone', inputStructure: 'detailed' })
-      .input(z.object({ params: wsAndId }))
-      .output(entityRecordSchema),
-    remove: oc
-      .route({ method: 'DELETE', path: '/{workspace}/data/{id}', inputStructure: 'detailed' })
-      .input(z.object({ params: wsAndId }))
-      .output(deleteEntityResponseSchema),
-    getAccess: oc
-      .route({ method: 'GET', path: '/{workspace}/data/{id}/access', inputStructure: 'detailed' })
-      .input(z.object({ params: wsAndId }))
-      .output(entityAccessSchema),
-    updateAccess: oc
-      .route({ method: 'PUT', path: '/{workspace}/data/{id}/access', inputStructure: 'detailed' })
-      .input(
-        z.object({
-          params: wsAndId,
-          body: z.object({
-            grants: z.array(entityGrantInputSchema)
-          })
-        })
-      )
-      .output(entityAccessSchema),
-    importParse: oc
-      .route({ method: 'POST', path: '/{workspace}/data/import/parse', inputStructure: 'detailed' })
-      .input(
-        z.object({
-          params: ws,
-          body: z.object({
-            schemaId: z.string(),
-            csvContent: z.string()
-          })
-        })
-      )
-      .output(importParseResponseSchema),
-    importCommit: oc
-      .route({
-        method: 'POST',
-        path: '/{workspace}/data/import/commit',
-        inputStructure: 'detailed'
-      })
-      .input(
-        z.object({
-          params: ws,
-          body: z.object({
-            schemaId: z.string(),
-            entities: z.array(z.record(z.string(), z.unknown()))
-          })
-        })
-      )
-      .output(importCommitResponseSchema),
-    exportCsv: oc
-      .route({
-        method: 'GET',
-        path: '/{workspace}/data/export',
-        inputStructure: 'detailed',
-        outputStructure: 'detailed'
-      })
-      .input(
-        z.object({
-          params: ws,
-          query: listFiltersSchema
-        })
-      )
-      .output(
-        z.object({
-          headers: z.record(z.string(), z.string()),
-          body: z.instanceof(Blob)
-        })
-      ),
-    downloadTemplate: oc
-      .route({
-        method: 'GET',
-        path: '/{workspace}/data/import/template/{schemaId}',
-        inputStructure: 'detailed',
-        outputStructure: 'detailed'
-      })
-      .input(
-        z.object({
-          params: z.object({
-            workspace: z.string(),
-            schemaId: z.string()
-          })
-        })
-      )
-      .output(
-        z.object({
-          headers: z.record(z.string(), z.string()),
-          body: z.instanceof(Blob)
-        })
-      ),
-    snapshots: {
+export const workspaceEntityContract = oc
+  .tag('Entities')
+  .router({
+    entities: {
       list: oc
         .route({
           method: 'GET',
-          path: '/{workspace}/data/{id}/snapshots',
-          inputStructure: 'detailed'
+          path: '/{workspace}/data',
+          inputStructure: 'detailed',
+          summary: 'List entities',
+          description: 'Retrieves entities with optional filtering by schema, owner, lifecycle, and search query. Supports pagination and different view modes.',
+          tags: ['Entities']
         })
-        .input(z.object({ params: wsAndId }))
-        .output(z.array(entitySnapshotSchema)),
-      listByProject: oc
+        .input(
+          z.object({
+            params: ws,
+            query: z.object({
+              ...listFiltersSchema.shape,
+              ...z.object({
+                limit: z.preprocess(
+                  v => (v !== undefined ? Number(v) : undefined),
+                  z.number().int().positive().optional().describe('Maximum number of entities to return')
+                ),
+                offset: z.preprocess(
+                  v => (v !== undefined ? Number(v) : undefined),
+                  z.number().int().min(0).optional().describe('Number of entities to skip for pagination')
+                )
+              }).shape,
+              view: z.enum(['summary', 'full']).optional().describe('View mode (summary or full entity data)')
+            })
+          })
+        )
+        .output(z.array(entityRecordSchema)),
+      count: oc
         .route({
           method: 'GET',
-          path: '/{workspace}/data/snapshots/by-project/{projectId}',
-          inputStructure: 'detailed'
+          path: '/{workspace}/data/count',
+          inputStructure: 'detailed',
+          summary: 'Count entities',
+          description: 'Returns the total count of entities matching the specified filters.',
+          tags: ['Entities']
         })
-        .input(z.object({ params: z.object({ workspace: z.string(), projectId: z.string() }) }))
-        .output(z.array(entitySnapshotSchema)),
+        .input(
+          z.object({
+            params: ws,
+            query: listFiltersSchema
+          })
+        )
+        .output(entityCountResponseSchema),
+      facets: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/data/facets',
+          inputStructure: 'detailed',
+          summary: 'Get entity facets',
+          description: 'Retrieves faceted statistics about entities, including distribution by lifecycle, owner, schema, and completeness.',
+          tags: ['Entities']
+        })
+        .input(z.object({ params: ws }))
+        .output(entityFacetsSchema),
+      tree: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/data/tree',
+          inputStructure: 'detailed',
+          summary: 'Get entity tree',
+          description: 'Retrieves entities as a tree structure based on containment relationships, with optional filtering.',
+          tags: ['Entities']
+        })
+        .input(
+          z.object({
+            params: ws,
+            query: listFiltersSchema
+          })
+        )
+        .output(treeResponseSchema),
+      get: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/data/{id}',
+          inputStructure: 'detailed',
+          summary: 'Get entity details',
+          description: 'Retrieves complete details for a specific entity, including all schema-defined fields and metadata.',
+          tags: ['Entities']
+        })
+        .input(z.object({ params: wsAndId }))
+        .output(entityRecordSchema),
+      relations: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/data/{id}/relations',
+          inputStructure: 'detailed',
+          summary: 'Get entity relationships',
+          description: 'Retrieves all incoming and outgoing relationships for a specific entity.',
+          tags: ['Entities']
+        })
+        .input(z.object({ params: wsAndId }))
+        .output(entityRelationsSchema),
+      batchRelations: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/data/batch-relations',
+          inputStructure: 'detailed',
+          summary: 'Get relationships for multiple entities',
+          description: 'Retrieves relationships for multiple entities in a single request. Returns a map of entity ID to relationships.',
+          tags: ['Entities']
+        })
+        .input(z.object({
+          params: ws,
+          body: z.object({ ids: z.array(z.string()).describe('Entity identifiers') })
+        }))
+        .output(z.record(z.string(), entityRelationsSchema)),
       create: oc
         .route({
           method: 'POST',
-          path: '/{workspace}/data/{id}/snapshots',
-          inputStructure: 'detailed'
+          path: '/{workspace}/data',
+          inputStructure: 'detailed',
+          summary: 'Create entity',
+          description: 'Creates a new entity with the specified schema and field values.',
+          tags: ['Entities']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: entityMutationBodySchema
+          })
+        )
+        .output(entityRecordSchema),
+      update: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/data/{id}',
+          inputStructure: 'detailed',
+          summary: 'Update entity',
+          description: 'Updates an existing entity with new field values. Only provided fields will be updated.',
+          tags: ['Entities']
+        })
+        .input(
+          z.object({
+            params: wsAndId,
+            body: entityMutationBodySchema
+          })
+        )
+        .output(entityRecordSchema),
+      clone: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/data/{id}/clone',
+          inputStructure: 'detailed',
+          summary: 'Clone entity',
+          description: 'Creates a copy of an existing entity with a new identifier. Relationships are not cloned.',
+          tags: ['Entities']
+        })
+        .input(z.object({ params: wsAndId }))
+        .output(entityRecordSchema),
+      remove: oc
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/data/{id}',
+          inputStructure: 'detailed',
+          summary: 'Delete entity',
+          description: 'Permanently deletes an entity. This operation cannot be undone.',
+          tags: ['Entities']
+        })
+        .input(z.object({ params: wsAndId }))
+        .output(deleteEntityResponseSchema),
+      getAccess: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/data/{id}/access',
+          inputStructure: 'detailed',
+          summary: 'Get entity access control',
+          description: 'Retrieves the access control configuration for an entity, including visibility mode and permission grants.',
+          tags: ['Entities']
+        })
+        .input(z.object({ params: wsAndId }))
+        .output(entityAccessSchema),
+      updateAccess: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/data/{id}/access',
+          inputStructure: 'detailed',
+          summary: 'Update entity access control',
+          description: 'Updates the permission grants for an entity. This is a full replacement operation.',
+          tags: ['Entities']
         })
         .input(
           z.object({
             params: wsAndId,
             body: z.object({
-              projectId: z.string(),
-              targetDate: z.string().nullable().optional(),
-              commitMessage: z.string().nullable().optional(),
-              proposedState: z.record(z.string(), z.unknown())
+              grants: z.array(entityGrantInputSchema).describe('Complete list of permission grants')
             })
           })
         )
-        .output(entitySnapshotSchema),
-      update: oc
+        .output(entityAccessSchema),
+      importParse: oc
         .route({
-          method: 'PUT',
-          path: '/{workspace}/data/{id}/snapshots/{snapshotId}',
-          inputStructure: 'detailed'
+          method: 'POST',
+          path: '/{workspace}/data/import/parse',
+          inputStructure: 'detailed',
+          summary: 'Parse entity import CSV',
+          description: 'Validates and parses a CSV file for entity import, identifying potential matches and conflicts.',
+          tags: ['Entities']
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), id: z.string().regex(UUID_REGEX), snapshotId: z.string().regex(UUID_REGEX) }),
+            params: ws,
             body: z.object({
-              proposedState: z.record(z.string(), z.unknown()).optional(),
-              targetDate: z.string().nullable().optional(),
-              commitMessage: z.string().nullable().optional()
+              schemaId: z.string().describe('Schema identifier for the entities'),
+              csvContent: z.string().describe('CSV file content')
             })
           })
         )
-        .output(entitySnapshotSchema),
-      promote: oc
+        .output(importParseResponseSchema),
+      importCommit: oc
         .route({
           method: 'POST',
-          path: '/{workspace}/data/{id}/snapshots/{snapshotId}/promote',
-          inputStructure: 'detailed'
+          path: '/{workspace}/data/import/commit',
+          inputStructure: 'detailed',
+          summary: 'Commit entity import',
+          description: 'Executes the entity import, creating or updating entities based on the parsed data.',
+          tags: ['Entities']
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string().regex(UUID_REGEX) }),
-            body: z.object({ commitMessage: z.string().optional() })
-          })
-        )
-        .output(entitySnapshotSchema),
-      apply: oc
-        .route({
-          method: 'POST',
-          path: '/{workspace}/data/{id}/snapshots/{snapshotId}/apply',
-          inputStructure: 'detailed'
-        })
-        .input(
-          z.object({
-            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string().regex(UUID_REGEX) }),
+            params: ws,
             body: z.object({
-              resolvedEntityData: z.record(z.string(), z.unknown())
+              schemaId: z.string().describe('Schema identifier'),
+              entities: z.array(z.record(z.string(), z.unknown())).describe('Entity data to import')
             })
           })
         )
-        .output(entitySnapshotSchema),
-      restore: oc
+        .output(importCommitResponseSchema),
+      exportCsv: oc
         .route({
-          method: 'POST',
-          path: '/{workspace}/data/{id}/snapshots/{snapshotId}/restore',
-          inputStructure: 'detailed'
+          method: 'GET',
+          path: '/{workspace}/data/export',
+          inputStructure: 'detailed',
+          outputStructure: 'detailed',
+          summary: 'Export entities to CSV',
+          description: 'Exports entities matching the specified filters to a CSV file.',
+          tags: ['Entities']
         })
         .input(
           z.object({
-            params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string().regex(UUID_REGEX) }),
-            body: z.object({ commitMessage: z.string().optional() })
+            params: ws,
+            query: listFiltersSchema
           })
         )
-        .output(entitySnapshotSchema),
-
+        .output(
+          z.object({
+            headers: z.record(z.string(), z.string()).describe('Response headers including Content-Disposition'),
+            body: z.instanceof(Blob).describe('CSV file as binary blob')
+          })
+        ),
+      downloadTemplate: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/data/import/template/{schemaId}',
+          inputStructure: 'detailed',
+          outputStructure: 'detailed',
+          summary: 'Download import template',
+          description: 'Downloads a CSV template file for importing entities of a specific schema.',
+          tags: ['Entities']
+        })
+        .input(
+          z.object({
+            params: z.object({
+              workspace: z.string().describe('Workspace identifier'),
+              schemaId: z.string().describe('Schema identifier')
+            })
+          })
+        )
+        .output(
+          z.object({
+            headers: z.record(z.string(), z.string()).describe('Response headers including Content-Disposition'),
+            body: z.instanceof(Blob).describe('CSV template as binary blob')
+          })
+        ),
+      snapshots: {
+        list: oc
+          .route({
+            method: 'GET',
+            path: '/{workspace}/data/{id}/snapshots',
+            inputStructure: 'detailed',
+            summary: 'List entity snapshots',
+            description: 'Retrieves all snapshots for a specific entity, including autosaves, saved versions, and future updates.',
+            tags: ['Entities']
+          })
+          .input(z.object({ params: wsAndId }))
+          .output(z.array(entitySnapshotSchema)),
+        listByProject: oc
+          .route({
+            method: 'GET',
+            path: '/{workspace}/data/snapshots/by-project/{projectId}',
+            inputStructure: 'detailed',
+            summary: 'List snapshots by project',
+            description: 'Retrieves all entity snapshots associated with a specific project.',
+            tags: ['Entities']
+          })
+          .input(z.object({ params: z.object({ workspace: z.string(), projectId: z.string() }) }))
+          .output(z.array(entitySnapshotSchema)),
+        create: oc
+          .route({
+            method: 'POST',
+            path: '/{workspace}/data/{id}/snapshots',
+            inputStructure: 'detailed',
+            summary: 'Create entity snapshot',
+            description: 'Creates a new snapshot of an entity, optionally with proposed changes for future updates.',
+            tags: ['Entities']
+          })
+          .input(
+            z.object({
+              params: wsAndId,
+              body: z.object({
+                projectId: z.string().describe('Associated project identifier'),
+                targetDate: z.string().nullable().optional().describe('Target date for future update (ISO 8601)'),
+                commitMessage: z.string().nullable().optional().describe('Commit message'),
+                proposedState: z.record(z.string(), z.unknown()).describe('Proposed entity state')
+              })
+            })
+          )
+          .output(entitySnapshotSchema),
+        update: oc
+          .route({
+            method: 'PUT',
+            path: '/{workspace}/data/{id}/snapshots/{snapshotId}',
+            inputStructure: 'detailed',
+            summary: 'Update entity snapshot',
+            description: 'Updates an existing snapshot with new proposed changes or metadata.',
+            tags: ['Entities']
+          })
+          .input(
+            z.object({
+              params: z.object({
+                workspace: z.string(),
+                id: z.string().regex(UUID_REGEX),
+                snapshotId: z.string().regex(UUID_REGEX)
+              }),
+              body: z.object({
+                proposedState: z.record(z.string(), z.unknown()).optional().describe('Updated proposed state'),
+                targetDate: z.string().nullable().optional().describe('Updated target date (ISO 8601)'),
+                commitMessage: z.string().nullable().optional().describe('Updated commit message')
+              })
+            })
+          )
+          .output(entitySnapshotSchema),
+        promote: oc
+          .route({
+            method: 'POST',
+            path: '/{workspace}/data/{id}/snapshots/{snapshotId}/promote',
+            inputStructure: 'detailed',
+            summary: 'Promote snapshot to saved version',
+            description: 'Promotes an autosave snapshot to a saved version, making it permanent.',
+            tags: ['Entities']
+          })
+          .input(
+            z.object({
+              params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string().regex(UUID_REGEX) }),
+              body: z.object({ commitMessage: z.string().optional().describe('Commit message for the saved version') })
+            })
+          )
+          .output(entitySnapshotSchema),
+        apply: oc
+          .route({
+            method: 'POST',
+            path: '/{workspace}/data/{id}/snapshots/{snapshotId}/apply',
+            inputStructure: 'detailed',
+            summary: 'Apply snapshot changes',
+            description: 'Applies the proposed changes from a snapshot to the entity, updating its current state.',
+            tags: ['Entities']
+          })
+          .input(
+            z.object({
+              params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string().regex(UUID_REGEX) }),
+              body: z.object({
+                resolvedEntityData: z.record(z.string(), z.unknown()).describe('Resolved entity data to apply')
+              })
+            })
+          )
+          .output(entitySnapshotSchema),
+        restore: oc
+          .route({
+            method: 'POST',
+            path: '/{workspace}/data/{id}/snapshots/{snapshotId}/restore',
+            inputStructure: 'detailed',
+            summary: 'Restore entity from snapshot',
+            description: 'Restores an entity to a previous state from a snapshot, creating a new snapshot in the process.',
+            tags: ['Entities']
+          })
+          .input(
+            z.object({
+              params: z.object({ workspace: z.string(), id: z.string(), snapshotId: z.string().regex(UUID_REGEX) }),
+              body: z.object({ commitMessage: z.string().optional().describe('Commit message for the restore operation') })
+            })
+          )
+          .output(entitySnapshotSchema)
+      }
     }
-  }
-};
+  });
 
 export type EntityLink = z.infer<typeof entityLinkSchema>;
 export type VisibilityMode = z.infer<typeof visibilityModeSchema>;

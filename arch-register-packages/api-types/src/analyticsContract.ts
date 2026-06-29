@@ -3,68 +3,77 @@ import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
 
 const lifecycleBucketSchema = z.object({
-  lifecycleId: z.string().nullable(),
-  label: z.string(),
-  color: z.string().nullable(),
-  count: z.number().int(),
-  percent: z.number()
+  lifecycleId: z.string().nullable().describe('Lifecycle state identifier (null for entities without lifecycle)'),
+  label: z.string().describe('Lifecycle state label'),
+  color: z.string().nullable().describe('Lifecycle state color (hex format)'),
+  count: z.number().int().describe('Number of entities in this lifecycle state'),
+  percent: z.number().describe('Percentage of total entities in this lifecycle state')
 });
 
 const schemaLifecycleBucketSchema = lifecycleBucketSchema.extend({
-  schemaId: z.string()
+  schemaId: z.string().describe('Schema identifier')
 });
 
 const schemaCountSchema = z.object({
-  schemaId: z.string(),
-  schemaName: z.string(),
-  count: z.number().int()
+  schemaId: z.string().describe('Schema identifier'),
+  schemaName: z.string().describe('Schema name'),
+  count: z.number().int().describe('Number of entities using this schema')
 });
 
 const schemaOwnershipGapSchema = z.object({
-  schemaId: z.string(),
-  schemaName: z.string(),
-  totalCount: z.number().int(),
-  missingOwnerCount: z.number().int(),
-  missingOwnerPercent: z.number()
+  schemaId: z.string().describe('Schema identifier'),
+  schemaName: z.string().describe('Schema name'),
+  totalCount: z.number().int().describe('Total number of entities'),
+  missingOwnerCount: z.number().int().describe('Number of entities without an owner'),
+  missingOwnerPercent: z.number().describe('Percentage of entities without an owner')
 });
 
 const schemaCompletenessSchema = z.object({
-  schemaId: z.string(),
-  schemaName: z.string(),
-  totalCount: z.number().int(),
-  below50Count: z.number().int(),
-  between50And79Count: z.number().int(),
-  above80Count: z.number().int()
+  schemaId: z.string().describe('Schema identifier'),
+  schemaName: z.string().describe('Schema name'),
+  totalCount: z.number().int().describe('Total number of entities'),
+  below50Count: z.number().int().describe('Number of entities with less than 50% fields filled'),
+  between50And79Count: z.number().int().describe('Number of entities with 50-79% fields filled'),
+  above80Count: z.number().int().describe('Number of entities with 80% or more fields filled')
 });
 
 const schemaCoverageSchema = z.object({
-  schemaId: z.string(),
-  schemaName: z.string(),
-  totalCount: z.number().int(),
-  lifecycleBuckets: z.array(schemaLifecycleBucketSchema)
+  schemaId: z.string().describe('Schema identifier'),
+  schemaName: z.string().describe('Schema name'),
+  totalCount: z.number().int().describe('Total number of entities'),
+  lifecycleBuckets: z.array(schemaLifecycleBucketSchema).describe('Breakdown by lifecycle state')
 });
 
 const analyticsResponseSchema = z.object({
   summary: z.object({
-    totalEntities: z.number().int(),
-    percentWithOwner: z.number(),
-    percentCompleteness80Plus: z.number()
-  }),
-  lifecycleBreakdown: z.array(lifecycleBucketSchema),
-  coverage: z.array(schemaCoverageSchema),
-  ownershipGaps: z.array(schemaOwnershipGapSchema),
-  completeness: z.array(schemaCompletenessSchema),
-  schemaUtilization: z.array(schemaCountSchema)
+    totalEntities: z.number().int().describe('Total number of entities in the workspace'),
+    percentWithOwner: z.number().describe('Percentage of entities with an assigned owner'),
+    percentCompleteness80Plus: z.number().describe('Percentage of entities with 80% or more fields filled')
+  }).describe('High-level summary statistics'),
+  lifecycleBreakdown: z.array(lifecycleBucketSchema).describe('Distribution of entities across lifecycle states'),
+  coverage: z.array(schemaCoverageSchema).describe('Schema coverage analysis by lifecycle state'),
+  ownershipGaps: z.array(schemaOwnershipGapSchema).describe('Analysis of entities missing owners by schema'),
+  completeness: z.array(schemaCompletenessSchema).describe('Analysis of entity field completeness by schema'),
+  schemaUtilization: z.array(schemaCountSchema).describe('Number of entities per schema')
 });
 
-export const workspaceAnalyticsContract = {
-  analytics: {
-    get: oc
-      .route({ method: 'GET', path: '/{workspace}/analytics', inputStructure: 'detailed' })
-      .input(z.object({ params: ws }))
-      .output(analyticsResponseSchema)
-  }
-};
+export const workspaceAnalyticsContract = oc
+  .tag('Analytics')
+  .router({
+    analytics: {
+      get: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/analytics',
+          inputStructure: 'detailed',
+          summary: 'Get workspace analytics',
+          description: 'Retrieves comprehensive analytics about the workspace, including entity distribution, lifecycle coverage, ownership gaps, and field completeness metrics.',
+          tags: ['Analytics']
+        })
+        .input(z.object({ params: ws }))
+        .output(analyticsResponseSchema)
+    }
+  });
 
 export type LifecycleAnalyticsBucket = z.infer<typeof lifecycleBucketSchema>;
 export type SchemaLifecycleAnalyticsBucket = z.infer<typeof schemaLifecycleBucketSchema>;
