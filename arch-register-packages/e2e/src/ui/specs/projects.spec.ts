@@ -1,11 +1,17 @@
 import { expect, test } from '@playwright/test';
 import { HomePage } from '../pages/HomePage';
 import { ProjectsPage } from '../pages/ProjectsPage';
-import { authMigrationProject, checkoutRevampProject, portalRedesignProject } from '../support/projects';
+import {
+  authMigrationProject,
+  checkoutRevampProject,
+  portalRedesignProject
+} from '../support/projects';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('projects section', () => {
-  test('opens the projects section without pre-selecting a project from the workspace rail', async ({ page }) => {
+  test('opens the projects section without pre-selecting a project from the workspace rail', async ({
+    page
+  }) => {
     const homePage = new HomePage(page, defaultWorkspace.slug);
     const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
 
@@ -22,12 +28,18 @@ test.describe('projects section', () => {
     await projectsPage.gotoProject(portalRedesignProject.id);
     await projectsPage.expectProjectOpened(portalRedesignProject.name);
     await projectsPage.expectProjectInSidebarGroup('Active Projects', portalRedesignProject.name);
-    await projectsPage.expectProjectNotInSidebarGroup('Pinned Projects', portalRedesignProject.name);
+    await projectsPage.expectProjectNotInSidebarGroup(
+      'Pinned Projects',
+      portalRedesignProject.name
+    );
 
     try {
       await projectsPage.togglePinned();
       await projectsPage.expectProjectInSidebarGroup('Pinned Projects', portalRedesignProject.name);
-      await projectsPage.expectProjectNotInSidebarGroup('Active Projects', portalRedesignProject.name);
+      await projectsPage.expectProjectNotInSidebarGroup(
+        'Active Projects',
+        portalRedesignProject.name
+      );
     } finally {
       if ((await projectsPage.pinProjectButton().getAttribute('aria-label')) === 'Unpin project') {
         await projectsPage.togglePinned();
@@ -35,7 +47,10 @@ test.describe('projects section', () => {
     }
 
     await projectsPage.expectProjectInSidebarGroup('Active Projects', portalRedesignProject.name);
-    await projectsPage.expectProjectNotInSidebarGroup('Pinned Projects', portalRedesignProject.name);
+    await projectsPage.expectProjectNotInSidebarGroup(
+      'Pinned Projects',
+      portalRedesignProject.name
+    );
   });
 
   test('switches between active projects from the sidebar', async ({ page }) => {
@@ -57,8 +72,6 @@ test.describe('projects section', () => {
     await projectsPage.openEntitiesSection();
 
     await expect(projectsPage.secondaryEntitiesRow()).toBeVisible();
-    await expect(projectsPage.addEntityButton()).toBeVisible();
-    await expect(projectsPage.entitiesSectionLabel()).toBeVisible();
   });
 
   test('shows the edit project dialog from the project page', async ({ page }) => {

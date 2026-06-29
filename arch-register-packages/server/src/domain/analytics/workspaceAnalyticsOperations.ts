@@ -6,6 +6,7 @@ import { computeEntityCompleteness } from '../../utils/completeness';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
 
 const roundPercent = (count: number, total: number) =>
   total === 0 ? 0 : Math.round((count / total) * 1000) / 10;
@@ -179,7 +180,7 @@ export const getWorkspaceAnalytics = async (
   requireWorkspaceCapability(authCtx, 'ws.audit');
 
   const [entities, schemas, lifecycleStates] = await Promise.all([
-    db.catalog.listEntities(ws),
+    listAllCatalogEntities(db, ws),
     db.catalog.listSchemas(ws),
     db.workspace.listLifecycleStates(ws)
   ]);

@@ -14,6 +14,8 @@ export const entityKeys = {
   lists: () => [...entityKeys.all, 'list'] as const,
   list: (workspaceId: string, filters: Record<string, unknown>) =>
     [...entityKeys.lists(), workspaceId, filters] as const,
+  count: (workspaceId: string, filters: Record<string, unknown>) =>
+    [...entityKeys.all, 'count', workspaceId, filters] as const,
   details: () => [...entityKeys.all, 'detail'] as const,
   detail: (workspaceId: string, entityId: string) =>
     [...entityKeys.details(), workspaceId, entityId] as const,

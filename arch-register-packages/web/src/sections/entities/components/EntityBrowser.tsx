@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
   TbSearch,
+  TbChevronLeft,
   TbChevronDown,
   TbChevronRight,
   TbDots,
@@ -36,6 +37,7 @@ import {
 import {
   useEntities,
   useEntityFacets,
+  useEntityCount,
   useEntityTree,
   useDeleteEntity,
   useCloneEntity,
@@ -360,6 +362,8 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
   const [bulkConfirming, setBulkConfirming] = useState(false);
   const [bulkLifecycleValue, setBulkLifecycleValue] = useState('');
   const [bulkOwnerValue, setBulkOwnerValue] = useState('');
+  const [pageSize, setPageSize] = useState(200);
+  const [pageIndex, setPageIndex] = useState(0);
   const filterPopoverRef = useRef<PopoverActions | null>(null);
   const previousFilteredCountRef = useRef(0);
   const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
@@ -399,18 +403,57 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     search.exploreConfig
   ]);
 
-  const { data: entities = [] } = useEntities(workspaceId, {
-    schemaId: typeFilter,
-    owner: ownerFilter,
-    lifecycle: statusFilter,
-    q,
-    conditions,
-    projectId: projectId ?? undefined,
-    projectScope: projectId ? projectScope : undefined,
-    view: 'summary'
-  });
+  const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
+  const pagedOffset = pageIndex * pageSize;
+
+  const { data: pagedEntities = [] } = useEntities(
+    workspaceId,
+    {
+      schemaId: typeFilter,
+      owner: ownerFilter,
+      lifecycle: statusFilter,
+      q,
+      conditions,
+      projectId: projectId ?? undefined,
+      projectScope: projectId ? projectScope : undefined,
+      view: 'summary',
+      limit: isPagedBrowse ? pageSize : undefined,
+      offset: isPagedBrowse ? pagedOffset : undefined
+    },
+    { enabled: isPagedBrowse && !!workspaceId }
+  );
+
+  const { data: fullEntities = [] } = useEntities(
+    workspaceId,
+    {
+      schemaId: typeFilter,
+      owner: ownerFilter,
+      lifecycle: statusFilter,
+      q,
+      conditions,
+      projectId: projectId ?? undefined,
+      projectScope: projectId ? projectScope : undefined,
+      view: 'summary'
+    },
+    { enabled: !isPagedBrowse && !!workspaceId }
+  );
+
+  const entities = isPagedBrowse ? pagedEntities : fullEntities;
 
   const { data: facets } = useEntityFacets(workspaceId);
+  const { data: entityCount } = useEntityCount(
+    workspaceId,
+    {
+      schemaId: typeFilter,
+      owner: ownerFilter,
+      lifecycle: statusFilter,
+      q,
+      conditions,
+      projectId: projectId ?? undefined,
+      projectScope: projectId ? projectScope : undefined
+    },
+    { enabled: !!workspaceId }
+  );
   const { data: treeData } = useEntityTree(workspaceId, {
     schemaId: typeFilter,
     owner: ownerFilter,
@@ -645,10 +688,11 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     return result;
   }, [entities, sort, dateBrowserEnabled]);
   const filteredCount = filtered.length;
+  const totalCount = entityCount?.total ?? filteredCount;
 
   useEffect(() => {
-    onCountChange?.(filteredCount);
-  }, [filteredCount, onCountChange]);
+    onCountChange?.(totalCount);
+  }, [onCountChange, totalCount]);
 
   useEffect(() => {
     if (previousFilteredCountRef.current !== filteredCount) {
@@ -656,6 +700,13 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
       setSelectedIds(new Set());
     }
   }, [filteredCount]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: extra deps intentionally trigger page reset when filters change
+  useEffect(() => {
+    if (!isPagedBrowse) return;
+    setPageIndex(0);
+    setSelectedIds(new Set());
+  }, [isPagedBrowse, q, conditions, typeFilter, ownerFilter, statusFilter, projectId, projectScope]);
 
   const handleSelectAll = useCallback(() => {
     if (selectedIds.size === filtered.length) setSelectedIds(new Set());
@@ -900,6 +951,50 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
             />
           )}
         </>
+      )}
+      {isPagedBrowse && (
+        <div className={styles.pagination}>
+          <Select.Root
+            value={String(pageSize)}
+            onChange={value => {
+              const next = Number(value ?? 50);
+              setPageSize(Number.isFinite(next) ? next : 50);
+              setPageIndex(0);
+              setSelectedIds(new Set());
+            }}
+            style={{ width: 88 }}
+          >
+            {[25, 50, 100, 200].map(size => (
+              <Select.Item key={size} value={String(size)}>
+                {size}
+              </Select.Item>
+            ))}
+          </Select.Root>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<TbChevronLeft size={12} />}
+            disabled={pageIndex === 0}
+            onClick={() => {
+              setPageIndex(index => Math.max(index - 1, 0));
+              setSelectedIds(new Set());
+            }}
+          >
+            Prev
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<TbChevronRight size={12} />}
+            disabled={filteredCount < pageSize}
+            onClick={() => {
+              setPageIndex(index => index + 1);
+              setSelectedIds(new Set());
+            }}
+          >
+            Next
+          </Button>
+        </div>
       )}
       <DeleteConfirmationDialog
         open={!!deleteTarget}

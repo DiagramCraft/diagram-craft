@@ -9,6 +9,7 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import type { Entity } from '../catalog/db/catalogDatabase';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
 import {
   NotificationCount,
   NotificationItem,
@@ -88,7 +89,7 @@ export const listWatching = async (
   const userId = event.context.user.id;
   const [watches, entities] = await Promise.all([
     db.watch.listWatches(userId, ws),
-    db.catalog.listEntities(ws)
+    listAllCatalogEntities(db, ws)
   ]);
   const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 
@@ -159,7 +160,7 @@ export const listNotifications = async (
   const userId = event.context.user.id;
   const [notifications, entities] = await Promise.all([
     db.watch.listNotifications(userId, ws),
-    db.catalog.listEntities(ws)
+    listAllCatalogEntities(db, ws)
   ]);
   const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 
@@ -183,7 +184,7 @@ export const getNotificationCount = async (
   const userId = event.context.user.id;
   const [notifications, entities] = await Promise.all([
     db.watch.listNotifications(userId, ws),
-    db.catalog.listEntities(ws)
+    listAllCatalogEntities(db, ws)
   ]);
   const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 

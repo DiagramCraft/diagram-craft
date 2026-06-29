@@ -15,6 +15,7 @@ import type {
 import { PermissionChecker } from '@arch-register/permissions';
 import type { Entity, SavedViewDbResult } from './db/catalogDatabase';
 import { PinnedEntity } from '@arch-register/api-types/watchContract';
+import { listAllCatalogEntities } from './entityLoader';
 
 const checker = new PermissionChecker();
 
@@ -118,7 +119,7 @@ export const listPinnedEntities = async (
   const userId = event.context.user.id;
   const [pins, entities] = await Promise.all([
     db.catalog.listPinnedEntities(userId, workspace),
-    db.catalog.listEntities(workspace)
+    listAllCatalogEntities(db, workspace)
   ]);
   const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 

@@ -8,6 +8,8 @@ import {
   RadarViewConfig,
   TimelineViewConfig
 } from '@arch-register/api-types/viewContract';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
 
 export type EntityListDbFilters = {
   schemaId?: string | null;
@@ -16,8 +18,11 @@ export type EntityListDbFilters = {
   q?: string | null;
   conditions?: FilterCondition[];
 };
-import { SchemaField } from '@arch-register/api-types/schemaContract';
-import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
+
+export type EntityListDbPagination = {
+  limit?: number | null;
+  offset?: number | null;
+};
 
 // -- Entity Schema
 
@@ -162,7 +167,11 @@ export type CatalogDatabase = {
   ): Promise<WorkspaceEnumDbResult | null>;
   deleteEnum(ws: string, id: string): Promise<WorkspaceEnumDbResult | null>;
 
-  listEntities(ws: string, filters?: EntityListDbFilters): Promise<EntityDbResult[]>;
+  listEntitiesPaginated(
+    ws: string,
+    filters?: EntityListDbFilters,
+    pagination?: EntityListDbPagination
+  ): Promise<EntityDbResult[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
   updateEntity(ws: string, id: string, input: EntityDbUpdate): Promise<EntityDbResult | null>;

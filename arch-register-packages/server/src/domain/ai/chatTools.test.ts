@@ -178,6 +178,8 @@ const db = {
   catalog: {
     listSchemas: async () => schemas,
     listEntities: async () => entities,
+    listEntitiesPaginated: async (_ws: string, _filters: unknown, { limit, offset }: { limit: number; offset: number }) =>
+      entities.slice(offset, offset + limit),
     getSchema: async (_ws: string, schemaId: string) =>
       schemas.find(schema => schema.id === schemaId) ?? null,
     getEntity: async (_ws: string, entityId: string) =>

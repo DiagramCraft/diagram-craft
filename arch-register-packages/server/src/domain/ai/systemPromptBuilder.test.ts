@@ -24,6 +24,59 @@ describe('buildSystemPrompt', () => {
             updated_at: now
           }
         ],
+        listEntitiesPaginated: async (_ws: string, _filters: unknown, { limit, offset }: { limit: number; offset: number }) => {
+          const all = [
+            {
+              id: 'entity-public',
+              workspace: 'ws-1',
+              public_id: 'APP-1',
+              slug: 'public-app',
+              namespace: 'default',
+              name: 'Public App',
+              description: '',
+              owner: null,
+              lifecycle: null,
+              target_lifecycle: null,
+              target_lifecycle_date: null,
+              tags: [],
+              links: [],
+              schema_id: 'schema-1',
+              data: {},
+              visibility_mode: 'public' as const,
+              owner_name: null,
+              lifecycle_label: null,
+              target_lifecycle_label: null,
+              schema_name: 'Application',
+              created_at: now,
+              updated_at: now
+            },
+            {
+              id: 'entity-restricted',
+              workspace: 'ws-1',
+              public_id: 'APP-2',
+              slug: 'restricted-app',
+              namespace: 'default',
+              name: 'Restricted App',
+              description: '',
+              owner: null,
+              lifecycle: null,
+              target_lifecycle: null,
+              target_lifecycle_date: null,
+              tags: [],
+              links: [],
+              schema_id: 'schema-1',
+              data: {},
+              visibility_mode: 'restricted' as const,
+              owner_name: null,
+              lifecycle_label: null,
+              target_lifecycle_label: null,
+              schema_name: 'Application',
+              created_at: now,
+              updated_at: now
+            }
+          ];
+          return all.slice(offset, offset + limit);
+        },
         listEntities: async () => [
           {
             id: 'entity-public',

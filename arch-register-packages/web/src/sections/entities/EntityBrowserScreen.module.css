@@ -70,6 +70,13 @@
   border: 1px solid var(--panel-border);
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 0;
+}
 .dateFilters {
   display: inline-flex;
   align-items: center;
