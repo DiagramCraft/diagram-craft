@@ -690,7 +690,7 @@ const ResultRow = ({
                   onOpen();
                 }}
               >
-                <Hi s={f.name} q={q} />
+                <Hi s={f.content_metadata?.title ?? f.name} q={q} />
               </button>
               <Chip tone="ghost">Diagram</Chip>
             </div>

@@ -898,7 +898,7 @@ export const EntityDetailScreen = () => {
                         )}
                       </div>
                       <div className={styles.miniDiagramBody}>
-                        <div className={styles.miniDiagramName}>{file.name}</div>
+                        <div className={styles.miniDiagramName}>{file.content_metadata?.title ?? file.name}</div>
                         <div className={styles.miniDiagramSub}>{project.name}</div>
                       </div>
                     </a>

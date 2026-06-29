@@ -117,7 +117,7 @@ export const DiagramCard = ({
       </div>
       <div className={styles.diagramMeta}>
         <div className={styles.diagramName}>
-          <span>{file.name}</span>
+          <span>{file.content_metadata?.title ?? file.name}</span>
           <div className={styles.diagramNameBadges}>
             {file.is_workspace_template && (
               <span className={styles.templateBadge} title="Workspace template">
@@ -170,7 +170,7 @@ export const DiagramRow = ({
     >
       <div className={styles.diagramRowName}>
         {file.type === 'markdown' && <TbFileText size={13} style={{ flexShrink: 0, color: 'var(--base-fg-more-dim)' }} />}
-        <span>{file.name}</span>
+        <span>{file.content_metadata?.title ?? file.name}</span>
         {file.is_workspace_template && (
           <span className={styles.templateBadge} title="Workspace template">
             <TbStar size={10} /> Workspace
