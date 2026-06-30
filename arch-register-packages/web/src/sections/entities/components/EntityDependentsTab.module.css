@@ -1,0 +1,97 @@
+.page {
+  padding: 16px 24px 32px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--base-fg-dim);
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  cursor: pointer;
+  font-size: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.row:hover {
+  border-color: var(--base-fg-more-dim);
+}
+
+.rowIndent {
+  flex-shrink: 0;
+}
+
+.rowLead {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rowName {
+  color: var(--base-fg);
+  font-weight: 500;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 8px;
+  color: var(--base-fg-more-dim);
+}
+
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--base-fg-dim);
+}
+
+.truncatedNotice {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  padding: 8px 0 0;
+  text-align: center;
+}
+
+.dim {
+  color: var(--base-fg-more-dim);
+}

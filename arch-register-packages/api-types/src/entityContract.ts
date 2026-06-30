@@ -149,6 +149,23 @@ const entityRelationsSchema = z.object({
   incoming: z.array(entityRelationSchema).describe('Incoming relationships to this entity')
 });
 
+const viaNodeSchema = z.object({
+  entityId: z.string().describe('Entity identifier in the dependency chain'),
+  entityName: z.string().describe('Entity name in the dependency chain')
+});
+
+const entityDependentSchema = entityRelationSchema.extend({
+  schemaName: z.string().describe('Schema name of the dependent entity'),
+  lifecycleState: z.string().nullable().describe('Lifecycle state of the dependent entity'),
+  depth: z.number().int().min(1).describe('Dependency depth (1 = direct)'),
+  viaPath: z.array(viaNodeSchema).describe('Chain of intermediate entities from the root to this dependent')
+});
+
+const entityDependentsSchema = z.object({
+  dependents: z.array(entityDependentSchema).describe('Entities that depend on this entity'),
+  truncated: z.boolean().describe('True if results were cut off by maxDepth or a node limit')
+});
+
 // ── Entity Access ─────────────────────────────────────────────
 
 const entityGrantSchema = z.object({
@@ -347,6 +364,23 @@ export const workspaceEntityContract = oc
           body: z.object({ ids: z.array(z.string()).describe('Entity identifiers') })
         }))
         .output(z.record(z.string(), entityRelationsSchema)),
+      dependents: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/data/{id}/dependents',
+          inputStructure: 'detailed',
+          summary: 'Get entity dependents',
+          description: 'Retrieves entities that depend on this entity, optionally including transitive dependents.',
+          tags: ['Entities']
+        })
+        .input(z.object({
+          params: wsAndId,
+          query: z.object({
+            transitive: z.enum(['true', 'false']).optional().describe('Include transitive dependents'),
+            maxDepth: z.string().optional().describe('Maximum traversal depth (default 5)')
+          }).optional()
+        }))
+        .output(entityDependentsSchema),
       create: oc
         .route({
           method: 'POST',
@@ -642,5 +676,7 @@ export type EntitySummary = z.infer<typeof entitySummarySchema>;
 export type EntityRecord = z.infer<typeof entityRecordSchema>;
 export type EntityFacets = z.infer<typeof entityFacetsSchema>;
 export type EntityRelations = z.infer<typeof entityRelationsSchema>;
+export type EntityDependent = z.infer<typeof entityDependentSchema>;
+export type EntityDependents = z.infer<typeof entityDependentsSchema>;
 export type TreeResponse = z.infer<typeof treeResponseSchema>;
 export type EntitySnapshot = z.infer<typeof entitySnapshotSchema>;

@@ -120,6 +120,19 @@ export const useEntityRelations = (workspaceId: string, entityId: string) => {
   });
 };
 
+// Hook for fetching entity dependents (direct or transitive)
+export const useEntityDependents = (workspaceId: string, entityId: string, transitive: boolean) => {
+  return useQuery({
+    queryKey: entityKeys.dependents(workspaceId, entityId, transitive),
+    queryFn: () =>
+      orpcClient.entities.dependents({
+        params: { workspace: workspaceId, id: entityId },
+        query: { transitive: transitive ? 'true' : 'false' }
+      }),
+    enabled: !!workspaceId && !!entityId
+  });
+};
+
 // Hook for fetching entity tree
 export const useEntityTree = (
   workspaceId: string,
