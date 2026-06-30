@@ -15,21 +15,16 @@ import {
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
-import type { RadarConfig } from './components/RadarView';
-import type { TimelineConfig } from './components/TimelineView';
-import type { MatrixConfig } from './components/MatrixView';
-import type { HierarchyConfig } from './components/HierarchyView';
 import {
   EntityBrowser,
   SaveViewDialog
 } from './components/EntityBrowser';
-import { parseExploreConfigValue } from './components/ExploreView.helpers';
 import {
   type BrowserSearch,
   buildSavedViewPayload,
   getFilterValue,
   parseConditionsFromSearch,
-  parseJsonConfig,
+  parseViewConfigs,
   toSavedViewConfig
 } from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/api';
@@ -51,11 +46,7 @@ export const EntityBrowserScreen = () => {
   const view = search.viewMode ?? 'table';
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
-  const radarConfig = parseJsonConfig<RadarConfig>(search.radarConfig);
-  const timelineConfig = parseJsonConfig<TimelineConfig>(search.timelineConfig);
-  const matrixConfig = parseJsonConfig<MatrixConfig>(search.matrixConfig);
-  const hierarchyConfig = parseJsonConfig<HierarchyConfig>(search.hierarchyConfig);
-  const exploreConfig = parseExploreConfigValue(search.exploreConfig);
+  const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
   const activeSavedView = useMemo(
     () => savedViews.find(savedView => savedView.id === search.viewId) ?? null,
     [savedViews, search.viewId]
@@ -82,11 +73,7 @@ export const EntityBrowserScreen = () => {
           q,
           sort,
           conditions,
-          radarConfig,
-          timelineConfig,
-          matrixConfig,
-          hierarchyConfig,
-          exploreConfig
+          viewConfigs
         })
       );
     } catch {
@@ -110,14 +97,7 @@ export const EntityBrowserScreen = () => {
             sort,
             conditions
           },
-          config: toSavedViewConfig(
-            view as BrowserView,
-            radarConfig,
-            timelineConfig,
-            matrixConfig,
-            hierarchyConfig,
-            exploreConfig
-          )
+          config: toSavedViewConfig(view as BrowserView, viewConfigs)
         }
       });
     } catch {
@@ -126,19 +106,15 @@ export const EntityBrowserScreen = () => {
   }, [
     activeSavedView,
     conditions,
-    exploreConfig,
-    hierarchyConfig,
-    matrixConfig,
     ownerFilter,
     permissions.canManageViews,
     q,
-    radarConfig,
     sort,
     statusFilter,
-    timelineConfig,
     typeFilter,
     updateSavedViewMutation,
-    view
+    view,
+    viewConfigs
   ]);
 
   const handleExport = useCallback(async () => {

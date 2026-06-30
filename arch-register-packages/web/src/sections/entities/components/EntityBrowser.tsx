@@ -134,26 +134,18 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
   const projectId = projectContext?.project.id;
   const {
     conditions,
-    exploreConfig,
-    hierarchyConfig,
-    matrixConfig,
+    activeViewConfig,
     ownerFilter,
     projectScope,
     q,
-    radarConfig,
     setConditions,
-    setExploreConfig,
-    setHierarchyConfig,
-    setMatrixConfig,
+    setActiveViewConfig,
     setProjectScope,
     setQ,
-    setRadarConfig,
     setSort,
-    setTimelineConfig,
     setView,
     sort,
     statusFilter,
-    timelineConfig,
     typeFilter,
     view
   } = useEntityBrowserSearchState({
@@ -341,16 +333,16 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
           nodes={treeNodes}
           edges={treeEdges}
           onEntityClick={navigateToEntity}
-          config={hierarchyConfig}
-          onConfigChange={setHierarchyConfig}
+          config={activeViewConfig}
+          onConfigChange={setActiveViewConfig}
           linkedEntityIds={linkedEntityIds}
         />
       ) : view === 'explore' ? (
         <ExploreView
           rows={filtered}
           onEntityClick={navigateToEntity}
-          config={exploreConfig}
-          onConfigChange={setExploreConfig}
+          config={activeViewConfig}
+          onConfigChange={setActiveViewConfig}
           linkedEntityIds={linkedEntityIds}
         />
       ) : view === 'matrix' ? (
@@ -358,8 +350,8 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
           rows={filtered}
           schemaMap={schemaMap}
           onEntityClick={navigateToEntity}
-          config={matrixConfig}
-          onConfigChange={setMatrixConfig}
+          config={activeViewConfig}
+          onConfigChange={setActiveViewConfig}
           linkedEntityIds={linkedEntityIds}
         />
       ) : view === 'timeline' ? (
@@ -368,8 +360,8 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
           schemas={schemas}
           lifecycleStates={lifecycleStates}
           onEntityClick={navigateToEntity}
-          config={timelineConfig}
-          onConfigChange={setTimelineConfig}
+          config={activeViewConfig}
+          onConfigChange={setActiveViewConfig}
           workspaceId={workspaceId}
           projects={projects}
           linkedEntityIds={linkedEntityIds}
@@ -379,8 +371,8 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
           rows={filtered}
           linkedEntityIds={linkedEntityIds}
           onEntityClick={navigateToEntity}
-          config={radarConfig}
-          onConfigChange={setRadarConfig}
+          config={activeViewConfig}
+          onConfigChange={setActiveViewConfig}
         />
       ) : view === 'tree' ? (
         treeNodes.length === 0 ? (

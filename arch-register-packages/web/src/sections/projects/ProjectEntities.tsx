@@ -33,14 +33,9 @@ import {
   buildSavedViewPayload,
   getFilterValue,
   parseConditionsFromSearch,
-  parseJsonConfig,
+  parseViewConfigs,
   type BrowserSearch
 } from '../entities/components/entityBrowserState';
-import type { RadarConfig } from '../entities/components/RadarView';
-import type { TimelineConfig } from '../entities/components/TimelineView';
-import type { MatrixConfig } from '../entities/components/MatrixView';
-import type { HierarchyConfig } from '../entities/components/HierarchyView';
-import { parseExploreConfigValue } from '../entities/components/ExploreView.helpers';
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
 
 type ViewTab = 'entities' | 'project-entities' | 'future-changes' | 'timeline';
@@ -102,11 +97,7 @@ export const ProjectEntities = ({
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
   const projectScope = search.projectScope ?? 'project';
-  const radarConfig = parseJsonConfig<RadarConfig>(search.radarConfig);
-  const timelineConfig = parseJsonConfig<TimelineConfig>(search.timelineConfig);
-  const matrixConfig = parseJsonConfig<MatrixConfig>(search.matrixConfig);
-  const hierarchyConfig = parseJsonConfig<HierarchyConfig>(search.hierarchyConfig);
-  const exploreConfig = parseExploreConfigValue(search.exploreConfig);
+  const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
   const activeSavedView = useMemo(
     () => savedViews.find(savedView => savedView.id === search.viewId) ?? null,
     [savedViews, search.viewId]
@@ -143,11 +134,7 @@ export const ProjectEntities = ({
           q,
           sort,
           conditions,
-          radarConfig,
-          timelineConfig,
-          matrixConfig,
-          hierarchyConfig,
-          exploreConfig
+          viewConfigs
         })
       );
     } catch {
@@ -186,11 +173,7 @@ export const ProjectEntities = ({
             q,
             sort,
             conditions,
-            radarConfig,
-            timelineConfig,
-            matrixConfig,
-            hierarchyConfig,
-            exploreConfig
+            viewConfigs
           }).config
         }
       });

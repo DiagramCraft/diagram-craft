@@ -7,6 +7,7 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { FormSection } from '@diagram-craft/app-components/FormSection';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
@@ -237,14 +238,18 @@ export const RadarView = ({
   config: configProp,
   onConfigChange
 }: EntityBrowserRowViewProps & {
-  config?: RadarConfig | null;
+  config?: unknown;
   onConfigChange?: (config: RadarConfig) => void;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() =>
     loadConfig(workspaceSlug)
   );
-  const config = configProp ?? internalConfig;
+  const parsedConfig = useMemo(() => {
+    const result = radarViewConfigSchema.safeParse(configProp);
+    return result.success ? result.data : null;
+  }, [configProp]);
+  const config = parsedConfig ?? internalConfig;
 
   const [showSettings, setShowSettings] = useState(false);
   const [q, setQ] = useState('');

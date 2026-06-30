@@ -1,22 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import type { BrowserView, ExploreViewConfig, FilterCondition } from '@arch-register/api-types/viewContract';
+import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import {
   asProjectPublicId,
   projectDetailRoute
 } from '../../../routes/publicObjectRoutes';
-import type { BrowserSearch } from './entityBrowserState';
+import type { BrowserSearch, BrowserViewConfigMap } from './entityBrowserState';
 import {
   getFilterValue,
   parseConditionsFromSearch,
-  parseJsonConfig,
-  serializeConfig
+  parseViewConfigs,
+  serializeViewConfigs
 } from './entityBrowserState';
-import type { HierarchyConfig } from './HierarchyView';
-import type { MatrixConfig } from './MatrixView';
-import { parseExploreConfigValue } from './ExploreView.helpers';
-import type { RadarConfig } from './RadarView';
-import type { TimelineConfig } from './TimelineView';
 
 type UseEntityBrowserSearchStateProps = {
   workspaceSlug: string;
@@ -38,25 +33,14 @@ export const useEntityBrowserSearchState = ({
   );
   const [sort, setSort] = useState(search.sort ?? 'name');
   const [view, setView] = useState<BrowserView>(search.viewMode ?? 'table');
-  const [radarConfig, setRadarConfig] = useState<RadarConfig | null>(() =>
-    parseJsonConfig<RadarConfig>(search.radarConfig)
-  );
-  const [timelineConfig, setTimelineConfig] = useState<TimelineConfig | null>(() =>
-    parseJsonConfig<TimelineConfig>(search.timelineConfig)
-  );
-  const [matrixConfig, setMatrixConfig] = useState<MatrixConfig | null>(() =>
-    parseJsonConfig<MatrixConfig>(search.matrixConfig)
-  );
-  const [hierarchyConfig, setHierarchyConfig] = useState<HierarchyConfig | null>(() =>
-    parseJsonConfig<HierarchyConfig>(search.hierarchyConfig)
-  );
-  const [exploreConfig, setExploreConfig] = useState<ExploreViewConfig | null>(() =>
-    parseExploreConfigValue(search.exploreConfig)
+  const [viewConfigs, setViewConfigs] = useState<BrowserViewConfigMap>(() =>
+    parseViewConfigs(search.viewConfigs)
   );
 
   const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
   const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
   const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
+  const activeViewConfig = useMemo(() => viewConfigs[view] ?? null, [view, viewConfigs]);
 
   useEffect(() => {
     setQ(search.q ?? '');
@@ -71,27 +55,31 @@ export const useEntityBrowserSearchState = ({
     setProjectScope(projectId ? (search.projectScope ?? 'project') : 'all');
     setSort(search.sort ?? 'name');
     setView(search.viewMode ?? 'table');
-    setRadarConfig(parseJsonConfig<RadarConfig>(search.radarConfig));
-    setTimelineConfig(parseJsonConfig<TimelineConfig>(search.timelineConfig));
-    setMatrixConfig(parseJsonConfig<MatrixConfig>(search.matrixConfig));
-    setHierarchyConfig(parseJsonConfig<HierarchyConfig>(search.hierarchyConfig));
-    setExploreConfig(parseExploreConfigValue(search.exploreConfig));
+    setViewConfigs(parseViewConfigs(search.viewConfigs));
   }, [
     projectId,
-    search.exploreConfig,
     search.filters,
-    search.hierarchyConfig,
-    search.matrixConfig,
     search.owner,
     search.projectScope,
     search.q,
-    search.radarConfig,
     search.sort,
     search.status,
-    search.timelineConfig,
     search.type,
+    search.viewConfigs,
     search.viewMode
   ]);
+
+  const setActiveViewConfig = useCallback(
+    (config: unknown) => {
+      setViewConfigs(prev => {
+        const next = { ...prev };
+        if (config == null) delete next[view];
+        else next[view] = config;
+        return next;
+      });
+    },
+    [view]
+  );
 
   const navigateBrowser = useCallback(
     (replace: boolean) => {
@@ -103,11 +91,7 @@ export const useEntityBrowserSearchState = ({
         viewMode: view,
         sort,
         projectScope: projectId ? projectScope : undefined,
-        radarConfig: serializeConfig(radarConfig),
-        timelineConfig: serializeConfig(timelineConfig),
-        matrixConfig: serializeConfig(matrixConfig),
-        hierarchyConfig: serializeConfig(hierarchyConfig),
-        exploreConfig: serializeConfig(exploreConfig),
+        viewConfigs: serializeViewConfigs(viewConfigs),
         filters: conditions.length > 0 ? JSON.stringify(conditions) : undefined
       };
 
@@ -134,21 +118,7 @@ export const useEntityBrowserSearchState = ({
         replace
       });
     },
-    [
-      conditions,
-      exploreConfig,
-      hierarchyConfig,
-      matrixConfig,
-      navigate,
-      projectId,
-      projectScope,
-      q,
-      radarConfig,
-      sort,
-      timelineConfig,
-      view,
-      workspaceSlug
-    ]
+    [conditions, navigate, projectId, projectScope, q, sort, view, viewConfigs, workspaceSlug]
   );
 
   useEffect(() => {
@@ -160,63 +130,44 @@ export const useEntityBrowserSearchState = ({
       (projectId ? (search.projectScope ?? 'project') : undefined) !==
         (projectId ? projectScope : undefined) ||
       search.filters !== nextFilters ||
-      search.radarConfig !== serializeConfig(radarConfig) ||
-      search.timelineConfig !== serializeConfig(timelineConfig) ||
-      search.matrixConfig !== serializeConfig(matrixConfig) ||
-      search.hierarchyConfig !== serializeConfig(hierarchyConfig) ||
-      search.exploreConfig !== serializeConfig(exploreConfig)
+      search.viewConfigs !== serializeViewConfigs(viewConfigs)
     ) {
       navigateBrowser(true);
     }
   }, [
     conditions,
-    exploreConfig,
-    hierarchyConfig,
-    matrixConfig,
     navigateBrowser,
     projectId,
     projectScope,
     q,
-    radarConfig,
-    search.exploreConfig,
     search.filters,
-    search.hierarchyConfig,
-    search.matrixConfig,
     search.projectScope,
     search.q,
-    search.radarConfig,
     search.sort,
-    search.timelineConfig,
+    search.viewConfigs,
     search.viewMode,
     sort,
-    timelineConfig,
-    view
+    view,
+    viewConfigs
   ]);
 
   return {
+    activeViewConfig,
     conditions,
-    exploreConfig,
-    hierarchyConfig,
-    matrixConfig,
     ownerFilter,
     projectScope,
     q,
-    radarConfig,
     search,
     setConditions,
-    setExploreConfig,
-    setHierarchyConfig,
-    setMatrixConfig,
+    setActiveViewConfig,
     setProjectScope,
     setQ,
-    setRadarConfig,
     setSort,
-    setTimelineConfig,
     setView,
     sort,
     statusFilter,
-    timelineConfig,
     typeFilter,
-    view
+    view,
+    viewConfigs
   };
 };

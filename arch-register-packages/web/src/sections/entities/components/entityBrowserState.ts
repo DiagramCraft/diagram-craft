@@ -1,18 +1,12 @@
 import type {
   BrowserView,
   CreateSavedViewRequest,
-  ExploreViewConfig,
   FilterCondition,
   SavedView
 } from '@arch-register/api-types/viewContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
 import type { EntitySearchParams, ProjectSearchParams } from '../../../routes/searchParams';
-import type { RadarConfig } from './RadarView';
-import type { TimelineConfig } from './TimelineView';
-import type { MatrixConfig } from './MatrixView';
-import type { HierarchyConfig } from './HierarchyView';
-import { DEFAULT_EXPLORE_CONFIG } from './ExploreView.helpers';
 
 export type BrowserSearch = EntitySearchParams &
   ProjectSearchParams & {
@@ -37,6 +31,8 @@ export type ProjectBrowserContext = {
   onRemoveEntity: (entityId: string) => void;
   onPlanFutureChange: (entityId: string) => void;
 };
+
+export type BrowserViewConfigMap = Partial<Record<BrowserView, unknown>>;
 
 export const parseDateValue = (value: unknown) => {
   if (typeof value !== 'string' || value === '') return null;
@@ -76,6 +72,33 @@ export const parseJsonConfig = <T,>(value: string | undefined): T | null => {
 
 export const serializeConfig = <T,>(value: T | null) => (value ? JSON.stringify(value) : undefined);
 
+export const parseViewConfigs = (value: string | undefined): BrowserViewConfigMap => {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    return parsed as BrowserViewConfigMap;
+  } catch {
+    return {};
+  }
+};
+
+export const serializeViewConfigs = (value: BrowserViewConfigMap): string | undefined => {
+  const entries = Object.entries(value).filter(([, config]) => config != null);
+  if (entries.length === 0) return undefined;
+  return JSON.stringify(Object.fromEntries(entries));
+};
+
+const getSavedViewConfig = (view: SavedView): unknown | null => {
+  if (view.config == null) return null;
+  if (view.viewMode === 'radar') return view.config.radar ?? null;
+  if (view.viewMode === 'timeline') return view.config.timeline ?? null;
+  if (view.viewMode === 'matrix') return view.config.matrix ?? null;
+  if (view.viewMode === 'hierarchy') return view.config.hierarchy ?? null;
+  if (view.viewMode === 'explore') return view.config.explore ?? null;
+  return null;
+};
+
 export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
   type: view.filters.schemaId ?? undefined,
   status: view.filters.status ?? undefined,
@@ -85,11 +108,9 @@ export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
   viewMode: view.viewMode,
   sort: view.filters.sort ?? undefined,
   projectScope: view.projectScope ?? undefined,
-  radarConfig: view.config?.radar ? JSON.stringify(view.config.radar) : undefined,
-  timelineConfig: view.config?.timeline ? JSON.stringify(view.config.timeline) : undefined,
-  matrixConfig: view.config?.matrix ? JSON.stringify(view.config.matrix) : undefined,
-  hierarchyConfig: view.config?.hierarchy ? JSON.stringify(view.config.hierarchy) : undefined,
-  exploreConfig: view.config?.explore ? JSON.stringify(view.config.explore) : undefined,
+  viewConfigs: serializeViewConfigs(
+    getSavedViewConfig(view) == null ? {} : { [view.viewMode]: getSavedViewConfig(view) }
+  ),
   filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined
 });
 
@@ -98,17 +119,15 @@ export const getFilterValue = (conditions: FilterCondition[], fieldId: string) =
 
 export const toSavedViewConfig = (
   view: BrowserView,
-  radarConfig: RadarConfig | null,
-  timelineConfig: TimelineConfig | null,
-  matrixConfig: MatrixConfig | null,
-  hierarchyConfig: HierarchyConfig | null,
-  exploreConfig: ExploreViewConfig | null
-) => {
-  if (view === 'radar' && radarConfig) return { radar: radarConfig };
-  if (view === 'timeline' && timelineConfig) return { timeline: timelineConfig };
-  if (view === 'matrix' && matrixConfig) return { matrix: matrixConfig };
-  if (view === 'hierarchy' && hierarchyConfig) return { hierarchy: hierarchyConfig };
-  if (view === 'explore') return { explore: exploreConfig ?? DEFAULT_EXPLORE_CONFIG };
+  viewConfigs: BrowserViewConfigMap
+): CreateSavedViewRequest['config'] => {
+  const config = viewConfigs[view];
+  if (config == null) return null;
+  if (view === 'radar') return { radar: config as never };
+  if (view === 'timeline') return { timeline: config as never };
+  if (view === 'matrix') return { matrix: config as never };
+  if (view === 'hierarchy') return { hierarchy: config as never };
+  if (view === 'explore') return { explore: config as never };
   return null;
 };
 
@@ -125,11 +144,7 @@ export const buildSavedViewPayload = ({
   q,
   sort,
   conditions,
-  radarConfig,
-  timelineConfig,
-  matrixConfig,
-  hierarchyConfig,
-  exploreConfig
+  viewConfigs
 }: {
   scope: 'workspace' | 'project';
   projectId?: string;
@@ -143,11 +158,7 @@ export const buildSavedViewPayload = ({
   q: string;
   sort: string;
   conditions: FilterCondition[];
-  radarConfig: RadarConfig | null;
-  timelineConfig: TimelineConfig | null;
-  matrixConfig: MatrixConfig | null;
-  hierarchyConfig: HierarchyConfig | null;
-  exploreConfig: ExploreViewConfig | null;
+  viewConfigs: BrowserViewConfigMap;
 }): CreateSavedViewRequest => ({
   scope,
   projectId: scope === 'project' ? (projectId ?? null) : null,
@@ -163,12 +174,5 @@ export const buildSavedViewPayload = ({
     sort,
     conditions
   },
-  config: toSavedViewConfig(
-    view,
-    radarConfig,
-    timelineConfig,
-    matrixConfig,
-    hierarchyConfig,
-    exploreConfig
-  )
+  config: toSavedViewConfig(view, viewConfigs)
 });

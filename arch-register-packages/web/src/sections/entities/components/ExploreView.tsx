@@ -5,7 +5,7 @@ import { Chip } from '../../../components/Chip';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { ExploreViewConfig } from '@arch-register/api-types/viewContract';
+import { exploreViewConfigSchema, type ExploreViewConfig } from '@arch-register/api-types/viewContract';
 import styles from './ExploreView.module.css';
 import {
   buildDefaultRelationFieldNames,
@@ -19,7 +19,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 
 type ExploreViewProps = EntityBrowserRowViewProps & {
-  config: ExploreViewConfig | null;
+  config: unknown;
   onConfigChange: (cfg: ExploreViewConfig) => void;
 };
 
@@ -98,6 +98,10 @@ export const ExploreView = ({
   onConfigChange,
   linkedEntityIds
 }: ExploreViewProps) => {
+  const parsedConfig = useMemo(() => {
+    const result = exploreViewConfigSchema.safeParse(config);
+    return result.success ? result.data : null;
+  }, [config]);
   const { workspaceSlug, schemas } = useWorkspaceContext();
   const schemaMap = useMemo(() => {
     const map = new Map<string, { name: string; color: string; icon: string | null }>();
@@ -112,26 +116,26 @@ export const ExploreView = ({
   }, [schemas]);
 
   const [localConfig, setLocalConfig] = useState<ExploreViewConfig>(
-    normalizeExploreConfig(config ?? DEFAULT_EXPLORE_CONFIG)
+    normalizeExploreConfig(parsedConfig ?? DEFAULT_EXPLORE_CONFIG)
   );
   const defaultRelationFieldNames = useMemo(
     () => buildDefaultRelationFieldNames(schemas),
     [schemas]
   );
   const normalizedConfig = useMemo(
-    () => normalizeExploreConfig(config ?? localConfig),
-    [config, localConfig]
+    () => normalizeExploreConfig(parsedConfig ?? localConfig),
+    [parsedConfig, localConfig]
   );
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
   const [connectorTooltip, setConnectorTooltip] = useState<ConnectorTooltip>(null);
 
   useEffect(() => {
-    if (config == null) return;
-    setLocalConfig(normalizeExploreConfig(config));
-  }, [config]);
+    if (parsedConfig == null) return;
+    setLocalConfig(normalizeExploreConfig(parsedConfig));
+  }, [parsedConfig]);
 
   useEffect(() => {
-    if (config != null || defaultRelationFieldNames.length === 0) return;
+    if (parsedConfig != null || defaultRelationFieldNames.length === 0) return;
     if (localConfig.relationFieldNames.length > 0) return;
 
     const nextConfig = normalizeExploreConfig({
@@ -140,7 +144,7 @@ export const ExploreView = ({
     });
     setLocalConfig(nextConfig);
     onConfigChange(nextConfig);
-  }, [config, defaultRelationFieldNames, localConfig, onConfigChange]);
+  }, [parsedConfig, defaultRelationFieldNames, localConfig, onConfigChange]);
 
   const updateConfig = useCallback(
     (patch: Partial<ExploreViewConfig>) => {
