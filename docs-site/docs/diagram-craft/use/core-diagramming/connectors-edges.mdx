@@ -1,0 +1,62 @@
+---
+sidebar_position: 3
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Connectors and Edges
+
+Connectors turn a set of shapes into an actual diagram. They show direction, dependency, or flow, so the goal is to make each connection easy to follow before you think about visual decoration.
+
+<ThemedImage
+  alt="Diagram Craft connector selected with routing handles visible"
+  sources={{
+    light: require('/img/diagram-craft/core-diagramming/connectors-edges-light.png').default,
+    dark: require('/img/diagram-craft/core-diagramming/connectors-edges-dark.png').default,
+  }}
+/>
+
+## Create The Connection First
+
+When you connect two shapes, start with the simplest possible path:
+
+1. Select the connector tool or begin from an existing shape connection point.
+2. Connect the source shape to the target shape.
+3. Check that the direction reads correctly.
+4. Only then adjust routing or arrow style if the default result is unclear.
+
+This avoids spending time styling a connector before you know the relationship is right.
+
+## Let Anchor Points Do Most Of The Work
+
+Connectors attach to anchor points on the edge of a shape. In many cases the default anchor choice is already good enough, especially if the shapes are aligned cleanly.
+
+If a connector crosses another element or leaves the shape from an awkward side, reposition the connected shapes first. Layout fixes are usually better than forcing a complicated edge.
+
+## Adjust Routing When The Diagram Gets Denser
+
+As the diagram grows, a connector may need a clearer path. Use edge adjustments when you want to:
+
+- route around another shape
+- create a cleaner right-angle path
+- separate one connection from a nearby parallel line
+
+Treat routing changes as readability tools. The best connector is usually the one a reader barely notices because it is so easy to follow.
+
+## Keep Direction And Meaning Obvious
+
+When a connector carries flow or dependency information:
+
+- use arrowheads consistently
+- keep the path short when possible
+- avoid unnecessary bends
+- reduce line crossings before adding more styling
+
+If a connection still feels hard to read, simplify the surrounding layout instead of layering on more connector detail.
+
+## Related Reading
+
+- [Basic Shapes and Connectors](../../getting-started/basic-shapes-connectors)
+- [Selection and Manipulation](selection-manipulation)
+- [Alignment and Distribution](../advanced-editing/alignment-distribution)
+

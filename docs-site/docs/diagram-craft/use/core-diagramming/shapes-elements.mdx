@@ -1,0 +1,68 @@
+---
+sidebar_position: 2
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Shapes and Elements
+
+Shapes are the core building blocks of a diagram. The goal is not to use every available option, but to pick a small set of elements that communicates structure clearly and can be reused consistently.
+
+<ThemedImage
+  alt="Diagram Craft shape picker beside a diagram that uses a few simple shapes"
+  sources={{
+    light: require('/img/diagram-craft/core-diagramming/shapes-elements-light.png').default,
+    dark: require('/img/diagram-craft/core-diagramming/shapes-elements-dark.png').default,
+  }}
+/>
+
+## Start With A Small Shape Vocabulary
+
+For most early drafts, use only a few shapes:
+
+- one general-purpose box for most steps or components
+- one contrasting shape for a different kind of element, such as storage or a queue
+- text labels to explain meaning instead of relying on decorative shape changes
+
+This keeps the diagram readable while you are still deciding on layout and flow.
+
+## Place Shapes Before You Worry About Styling
+
+A practical workflow looks like this:
+
+1. Open the **Shape** tab in the left sidebar.
+2. Drag the first few shapes onto the canvas.
+3. Give each shape a short label as soon as it is placed.
+4. Move the shapes into a rough structure before you fine-tune size or color.
+
+By labeling and arranging early, you validate the diagram logic before spending time on polish.
+
+## Reuse Shapes Intentionally
+
+When two elements play a similar role, keep them visually similar. Reusing the same shape tells the reader that the items belong to the same category even before they read the labels.
+
+Use a different shape only when it adds meaning. A database cylinder or a queue-like form is useful because it changes the interpretation, not just the appearance.
+
+## When To Move Beyond The Default Shapes
+
+Stay with the default set when you are:
+
+- sketching an idea
+- documenting a simple workflow
+- aligning on structure before notation details matter
+
+Move to richer stencil packages when the diagram needs domain language, such as UML, BPMN, or architecture-specific notation.
+
+## Good Working Habits
+
+- Add only the shapes you need for the current step.
+- Keep similar elements aligned and sized consistently.
+- Prefer clear labels over unusual shapes.
+- Introduce specialized stencils only when they make the diagram easier to read.
+
+## Related Reading
+
+- [Basic Shapes and Connectors](../../getting-started/basic-shapes-connectors)
+- [Connectors and Edges](connectors-edges)
+- [Built-in Stencils](../../stencils-templates/built-in-stencils)
+

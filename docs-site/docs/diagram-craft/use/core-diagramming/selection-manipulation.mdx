@@ -1,0 +1,64 @@
+---
+sidebar_position: 5
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Selection and Manipulation
+
+Selection is the entry point to most editing work. Once the right shapes or connectors are selected, you can move them, resize them, duplicate them, or clean up a section of the diagram in a single pass.
+
+<ThemedImage
+  alt="Diagram Craft diagram with multiple shapes selected for editing"
+  sources={{
+    light: require('/img/diagram-craft/core-diagramming/selection-manipulation-light.png').default,
+    dark: require('/img/diagram-craft/core-diagramming/selection-manipulation-dark.png').default,
+  }}
+/>
+
+## Select The Smallest Useful Unit
+
+When you are making a change, start by selecting only what needs to move together:
+
+- a single shape for label or size adjustments
+- a small group when you want to preserve spacing between related items
+- one connector when the path itself needs refinement
+
+Selecting too much at once makes alignment harder and increases the chance of moving unrelated elements.
+
+## A Simple Refinement Workflow
+
+For most cleanup passes:
+
+1. Select one shape or a small group.
+2. Move the selection into a clearer position.
+3. Resize only if the label or spacing requires it.
+4. Recheck the nearby connectors after the move.
+
+This keeps the structure stable while you improve readability.
+
+## Use Multi-Selection For Related Edits
+
+Multi-selection is useful when several elements belong to the same local adjustment, such as:
+
+- nudging a small cluster to create more space
+- resizing a pair of related boxes to similar proportions
+- duplicating a repeated pattern before relabeling it
+
+The key is to select elements that truly belong together for that edit. If the group is too broad, break the work into smaller passes.
+
+## Treat Delete And Duplicate As Layout Tools
+
+Deleting and duplicating are not only structural actions. They are also part of fast iteration:
+
+- duplicate a shape cluster when a pattern repeats
+- remove placeholder items once the real structure is clear
+- copy before heavy edits when you want to try an alternative arrangement
+
+This is often faster than rebuilding common sections from scratch.
+
+## Related Reading
+
+- [Canvas Navigation](canvas-navigation)
+- [Connectors and Edges](connectors-edges)
+- [Alignment and Distribution](../advanced-editing/alignment-distribution)
