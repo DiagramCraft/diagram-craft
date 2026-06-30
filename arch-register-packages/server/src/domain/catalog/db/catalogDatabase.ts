@@ -230,6 +230,7 @@ export type SavedViewDbResult = {
   project_scope: 'project' | 'all' | null;
   name: string;
   description: string | null;
+  is_admin_view: boolean;
   view_mode: BrowserView;
   filters: EntityFilters;
   config: {

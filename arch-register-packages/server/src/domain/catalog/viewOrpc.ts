@@ -70,12 +70,16 @@ export const workspaceViewORPCRouter = viewRouter.router({
         } else {
           requireWorkspaceCapability(authCtx, 'ws.manage_views');
         }
+        if (input.body.isAdminView) {
+          requireWorkspaceCapability(authCtx, 'ws.settings');
+        }
         return await createSavedView(context.db, workspace, {
           scope: input.body.scope,
           projectId: input.body.projectId,
           projectScope: input.body.projectScope,
           name: input.body.name,
           description: input.body.description,
+          isAdminView: input.body.isAdminView,
           viewMode: input.body.viewMode,
           filters: input.body.filters,
           config: input.body.config
@@ -90,7 +94,9 @@ export const workspaceViewORPCRouter = viewRouter.router({
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         const existing = await context.db.view.getSavedView(workspace, input.params.id);
         httpAssert.present(existing, { status: 404, message: 'View not found' });
-        if (existing.project_id == null) {
+        if (existing.is_admin_view || input.body.isAdminView) {
+          requireWorkspaceCapability(authCtx, 'ws.settings');
+        } else if (existing.project_id == null) {
           requireWorkspaceCapability(authCtx, 'ws.manage_views');
         } else {
           const project = await context.db.project.getProject(workspace, existing.project_id);
@@ -104,6 +110,7 @@ export const workspaceViewORPCRouter = viewRouter.router({
           projectScope: input.body.projectScope,
           name: input.body.name,
           description: input.body.description,
+          isAdminView: input.body.isAdminView,
           viewMode: input.body.viewMode,
           filters: input.body.filters,
           config: input.body.config
@@ -118,7 +125,9 @@ export const workspaceViewORPCRouter = viewRouter.router({
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         const existing = await context.db.view.getSavedView(workspace, input.params.id);
         httpAssert.present(existing, { status: 404, message: 'View not found' });
-        if (existing.project_id == null) {
+        if (existing.is_admin_view) {
+          requireWorkspaceCapability(authCtx, 'ws.settings');
+        } else if (existing.project_id == null) {
           requireWorkspaceCapability(authCtx, 'ws.manage_views');
         } else {
           const project = await context.db.project.getProject(workspace, existing.project_id);

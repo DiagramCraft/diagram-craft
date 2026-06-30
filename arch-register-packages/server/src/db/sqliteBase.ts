@@ -382,6 +382,7 @@ export const sqliteMappers = {
       row['project_scope'] == null ? null : (String(row['project_scope']) as 'project' | 'all'),
     name: String(row['name']),
     description: row['description'] == null ? null : String(row['description']),
+    is_admin_view: Boolean(row['is_admin_view']),
     view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'],
     filters: parseJson(row['filters'], {}, 'saved_view.filters'),
     config: parseJson(row['config'], null, 'saved_view.config'),

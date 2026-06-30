@@ -104,6 +104,7 @@ export const savedViewSchema = z.object({
   projectScope: z.enum(['project', 'all']).nullable().describe('Project entity browser scope filter'),
   name: z.string().describe('View name'),
   description: z.string().nullable().describe('View description'),
+  isAdminView: z.boolean().describe('Whether this view was pinned by a workspace admin for all members'),
   viewMode: browserViewSchema.describe('View display mode'),
   filters: entityFiltersSchema.describe('Entity filters applied in this view'),
   config: viewConfigSchema.describe('View-specific configuration'),
@@ -128,6 +129,7 @@ export const createViewBodySchema = z.object({
   projectScope: z.enum(['project', 'all']).nullable().optional().describe('Saved project entity browser scope'),
   name: z.string().describe('View name'),
   description: z.string().nullable().optional().describe('View description'),
+  isAdminView: z.boolean().optional().describe('Pin this view as a workspace admin view visible to all members'),
   viewMode: browserViewSchema.describe('View display mode'),
   filters: entityFiltersSchema.describe('Entity filters to apply'),
   config: viewConfigSchema.optional().describe('View-specific configuration')
@@ -137,6 +139,7 @@ export const updateViewBodySchema = z.object({
   projectScope: z.enum(['project', 'all']).nullable().optional().describe('Saved project entity browser scope'),
   name: z.string().optional().describe('View name'),
   description: z.string().nullable().optional().describe('View description'),
+  isAdminView: z.boolean().optional().describe('Pin this view as a workspace admin view visible to all members'),
   viewMode: browserViewSchema.optional().describe('View display mode'),
   filters: entityFiltersSchema.optional().describe('Entity filters to apply'),
   config: viewConfigSchema.optional().describe('View-specific configuration')

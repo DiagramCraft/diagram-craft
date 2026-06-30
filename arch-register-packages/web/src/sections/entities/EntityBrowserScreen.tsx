@@ -58,7 +58,8 @@ export const EntityBrowserScreen = () => {
   const handleSaveView = async (
     name: string,
     description: string,
-    scope: 'workspace' | 'project'
+    scope: 'workspace' | 'project',
+    isAdminView: boolean
   ) => {
     try {
       await createSavedViewMutation.mutateAsync(
@@ -66,6 +67,7 @@ export const EntityBrowserScreen = () => {
           scope,
           name,
           description,
+          isAdminView,
           view: view as BrowserView,
           typeFilter,
           statusFilter,
@@ -225,6 +227,7 @@ export const EntityBrowserScreen = () => {
         open={isSavingView}
         onClose={() => setIsSavingView(false)}
         onSave={handleSaveView}
+        showAdminOption={permissions.canManageAdminViews}
       />
     </div>
   );

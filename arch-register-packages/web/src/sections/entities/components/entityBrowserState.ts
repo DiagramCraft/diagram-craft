@@ -137,6 +137,7 @@ export const buildSavedViewPayload = ({
   projectScope,
   name,
   description,
+  isAdminView,
   view,
   typeFilter,
   statusFilter,
@@ -151,6 +152,7 @@ export const buildSavedViewPayload = ({
   projectScope?: 'project' | 'all';
   name: string;
   description: string;
+  isAdminView?: boolean;
   view: BrowserView;
   typeFilter: string | null;
   statusFilter: string | null;
@@ -165,6 +167,7 @@ export const buildSavedViewPayload = ({
   projectScope: scope === 'project' ? (projectScope ?? null) : null,
   name,
   description: description || null,
+  isAdminView: isAdminView ?? false,
   viewMode: view,
   filters: {
     schemaId: typeFilter,
