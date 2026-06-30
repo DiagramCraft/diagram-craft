@@ -1,11 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import {
-  TbSearch,
-  TbChevronLeft,
-  TbChevronRight,
-  TbFilter,
-} from 'react-icons/tb';
+import { TbSearch, TbChevronLeft, TbChevronRight, TbFilter } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -19,10 +14,7 @@ import { FilterDropdown } from '../../../components/FilterDropdown';
 import type { WorkspaceTeam } from '../../../lib/api';
 import { type BrowserView } from '@arch-register/api-types/viewContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import {
-  asEntityPublicId,
-  entityDetailRoute
-} from '../../../routes/publicObjectRoutes';
+import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { RadarView } from '../components/RadarView';
 import { TimelineView } from '../components/TimelineView';
 import { MatrixView } from '../components/MatrixView';
@@ -32,9 +24,7 @@ import { BulkEditToolbar } from './BulkEditToolbar';
 import { CardsView } from './CardsView';
 import { TableView } from './TableView';
 import { TreeView } from './TreeView';
-import {
-  type ProjectBrowserContext,
-} from './entityBrowserState';
+import { type ProjectBrowserContext } from './entityBrowserState';
 import { useEntityBrowserData } from './useEntityBrowserData';
 import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
 import { useEntityBrowserPagination } from './useEntityBrowserPagination';
@@ -111,7 +101,12 @@ export const SaveViewDialog = ({
         </FormElement>
         {scopeOptions != null && scopeOptions.length > 1 && (
           <FormElement label="Save to">
-            <Select.Root value={scope} onChange={value => setScope((value as 'workspace' | 'project') ?? resolvedDefaultScope)}>
+            <Select.Root
+              value={scope}
+              onChange={value =>
+                setScope((value as 'workspace' | 'project') ?? resolvedDefaultScope)
+              }
+            >
               {scopeOptions.map(option => (
                 <Select.Item key={option.value} value={option.value}>
                   {option.label}
@@ -152,22 +147,17 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
   });
   const filterPopoverRef = useRef<PopoverActions | null>(null);
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
-  const {
-    goToNextPage,
-    goToPreviousPage,
-    handlePageSizeChange,
-    pageIndex,
-    pageSize
-  } = useEntityBrowserPagination({
-    isPagedBrowse,
-    q,
-    conditions,
-    typeFilter,
-    ownerFilter,
-    statusFilter,
-    projectId,
-    projectScope
-  });
+  const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
+    useEntityBrowserPagination({
+      isPagedBrowse,
+      q,
+      conditions,
+      typeFilter,
+      ownerFilter,
+      statusFilter,
+      projectId,
+      projectScope
+    });
   const {
     activeDateField,
     dateFields,
@@ -443,35 +433,38 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
       )}
       {isPagedBrowse && (
         <div className={styles.pagination}>
-          <Select.Root
+          <FilterDropdown
+            label="Page Size"
+            variant={'secondary'}
             value={String(pageSize)}
             onChange={handlePageSizeChange}
-            style={{ width: 88 }}
-          >
-            {[25, 50, 100, 200].map(size => (
-              <Select.Item key={size} value={String(size)}>
-                {size}
-              </Select.Item>
-            ))}
-          </Select.Root>
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<TbChevronLeft size={12} />}
-            disabled={pageIndex === 0}
-            onClick={goToPreviousPage}
-          >
-            Prev
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<TbChevronRight size={12} />}
-            disabled={filteredCount < pageSize}
-            onClick={goToNextPage}
-          >
-            Next
-          </Button>
+            options={[
+              { value: '25', label: '25' },
+              { value: '50', label: '50' },
+              { value: '100', label: '100' },
+              { value: '200', label: '200' }
+            ]}
+          />
+          <div style={{ marginLeft: 'auto' }}>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<TbChevronLeft size={12} />}
+              disabled={pageIndex === 0}
+              onClick={goToPreviousPage}
+            >
+              Prev
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<TbChevronRight size={12} />}
+              disabled={filteredCount < pageSize}
+              onClick={goToNextPage}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
       <DeleteConfirmationDialog
@@ -480,8 +473,8 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
         message={
           hookDeleteTarget ? (
             <>
-              The entity <b>{hookDeleteTarget._name || hookDeleteTarget._slug}</b> will be permanently
-              deleted.
+              The entity <b>{hookDeleteTarget._name || hookDeleteTarget._slug}</b> will be
+              permanently deleted.
             </>
           ) : (
             ''

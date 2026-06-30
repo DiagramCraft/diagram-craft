@@ -25,6 +25,16 @@
   padding: 8px 0;
   margin-bottom: 8px;
   flex-wrap: wrap;
+
+  button {
+    height: 24px !important;
+    border-radius: var(--r) !important;
+
+    &:not([data-variant="primary"]) {
+      background: var(--cmp-bg) !important;
+      border: 1px solid var(--panel-border) !important;
+    }
+  }
 }
 
 .searchInline {
@@ -74,9 +84,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 0;
+  padding: 10px 0 0 0;
 }
+
 .dateFilters {
   display: inline-flex;
   align-items: center;

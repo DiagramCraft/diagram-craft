@@ -19,6 +19,15 @@
   cursor: pointer;
   white-space: nowrap;
 
+  &[data-variant="secondary"] {
+    background: none;
+    border: none;
+
+    &:hover {
+      background: var(--cmp-bg);
+    }
+  }
+
   &:hover {
     border-color: var(--cmp-border-hover);
   }

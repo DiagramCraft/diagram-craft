@@ -8,10 +8,17 @@ type FilterDropdownProps = {
   value: string;
   onChange: (v: string) => void;
   options: Option[];
+  variant?: 'default' | 'secondary';
 };
 
-export const FilterDropdown = ({ label, value, onChange, options }: FilterDropdownProps) => (
-  <div className={styles.cFilterDropdown}>
+export const FilterDropdown = ({
+  label,
+  value,
+  onChange,
+  options,
+  variant
+}: FilterDropdownProps) => (
+  <div className={styles.cFilterDropdown} data-variant={variant ?? 'default'}>
     <span className={styles.eLabel}>{label}</span>
     <span className={styles.eValue}>{options.find(o => o.value === value)?.label ?? value}</span>
     <TbChevronDown size={10} />
