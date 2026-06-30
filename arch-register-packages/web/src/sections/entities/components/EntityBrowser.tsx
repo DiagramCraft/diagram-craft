@@ -28,12 +28,10 @@ import { TimelineView } from '../components/TimelineView';
 import { MatrixView } from '../components/MatrixView';
 import { HierarchyView } from '../components/HierarchyView';
 import { ExploreView } from '../components/ExploreView';
-import {
-  BulkEditToolbar,
-  CardsView,
-  TableView,
-  TreeView
-} from './EntityBrowserListViews';
+import { BulkEditToolbar } from './BulkEditToolbar';
+import { CardsView } from './CardsView';
+import { TableView } from './TableView';
+import { TreeView } from './TreeView';
 import {
   type ProjectBrowserContext,
 } from './entityBrowserState';
