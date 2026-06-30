@@ -242,12 +242,12 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     if (view !== 'table' || !dateFields.some(field => field.id === fieldId)) {
       setSort('name');
     }
-  }, [dateFields, sort, view]);
+  }, [dateFields, sort, view, setSort]);
   const dateBrowserEnabled = view === 'table' && selectedSchema != null && dateFields.length > 0;
 
   useEffect(() => {
     clearSelection();
-  }, [clearSelection, pageIndex, pageSize]);
+  }, [clearSelection]);
 
   const linkedEntityIds = useMemo(
     () =>

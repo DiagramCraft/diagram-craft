@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import {
@@ -142,7 +142,7 @@ export const ProjectEntities = ({
     }
   };
 
-  const handleUpdateSavedView = async () => {
+  const handleUpdateSavedView = useCallback(async () => {
     if (activeSavedView == null) return;
     if (activeSavedView.scope !== 'project' || !project.canEdit) return;
 
@@ -180,7 +180,21 @@ export const ProjectEntities = ({
     } catch {
       // Error handling is done by TanStack Query
     }
-  };
+  }, [
+    activeSavedView,
+    project.canEdit,
+    project.id,
+    projectScope,
+    view,
+    typeFilter,
+    statusFilter,
+    ownerFilter,
+    q,
+    sort,
+    conditions,
+    viewConfigs,
+    updateSavedViewMutation
+  ]);
 
   const viewMenuItems = useMemo<MenuItem[]>(() => {
     const items: MenuItem[] = [];
