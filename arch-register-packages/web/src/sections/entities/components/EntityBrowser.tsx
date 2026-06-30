@@ -7,6 +7,7 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { FilterBuilder } from '../../../components/FilterBuilder';
@@ -42,16 +43,19 @@ export const SaveViewDialog = ({
   onClose,
   onSave,
   scopeOptions,
-  defaultScope
+  defaultScope,
+  showAdminOption
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, description: string, scope: 'workspace' | 'project') => void;
+  onSave: (name: string, description: string, scope: 'workspace' | 'project', isAdminView: boolean) => void;
   scopeOptions?: Array<{ value: 'workspace' | 'project'; label: string }>;
   defaultScope?: 'workspace' | 'project';
+  showAdminOption?: boolean;
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [isAdminView, setIsAdminView] = useState(false);
   const resolvedDefaultScope =
     scopeOptions?.find(option => option.value === defaultScope)?.value ??
     scopeOptions?.[0]?.value ??
@@ -62,11 +66,12 @@ export const SaveViewDialog = ({
   useEffect(() => {
     if (open) {
       setScope(resolvedDefaultScope);
+      setIsAdminView(false);
     }
   }, [open, resolvedDefaultScope]);
 
   const handleSave = () => {
-    onSave(name, description, scope);
+    onSave(name, description, scope, isAdminView);
     setName('');
     setDescription('');
     onClose();
@@ -114,6 +119,15 @@ export const SaveViewDialog = ({
               ))}
             </Select.Root>
           </FormElement>
+        )}
+        {showAdminOption && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+            <Checkbox
+              value={isAdminView}
+              onChange={v => setIsAdminView(v ?? false)}
+            />
+            <span>Pin as workspace view (visible to all members)</span>
+          </label>
         )}
       </div>
     </Dialog>

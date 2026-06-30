@@ -62,6 +62,7 @@ import {
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { toSavedViewSearch } from '../entities/components/entityBrowserState';
 import type { SavedView } from '@arch-register/api-types/viewContract';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 
 type ProjectSection = 'home' | 'entities';
 type ProjectSidebarTab = 'content' | 'views';
@@ -113,6 +114,7 @@ export const ProjectContentSidebar = ({
   projectId: string;
 }) => {
   const navigate = useNavigate();
+  const { permissions } = useWorkspaceContext();
   const params = useParams({ strict: false }) as { diagramId?: string; nodeId?: string };
   const search = useSearch({ strict: false }) as {
     tab?: 'projects' | 'archive';
@@ -649,10 +651,30 @@ export const ProjectContentSidebar = ({
           </>
         ) : (
           <>
-            {projectViews.length > 0 && (
+            {projectViews.filter(v => v.isAdminView).length > 0 && (
+              <>
+                <SidebarGroupLabel>Workspace views</SidebarGroupLabel>
+                {projectViews.filter(v => v.isAdminView).map(view => (
+                  <TreeRow
+                    key={view.id}
+                    icon={getViewIcon(view.viewMode)}
+                    label={view.name}
+                    active={search.viewId === view.id}
+                    onClick={() => applySavedView(view)}
+                    onContextMenu={e => {
+                      if (!permissions.canManageAdminViews) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setViewMenu({ x: e.clientX, y: e.clientY, view });
+                    }}
+                  />
+                ))}
+              </>
+            )}
+            {projectViews.filter(v => !v.isAdminView).length > 0 && (
               <>
                 <SidebarGroupLabel>Views</SidebarGroupLabel>
-                {projectViews.map(view => (
+                {projectViews.filter(v => !v.isAdminView).map(view => (
                   <TreeRow
                     key={view.id}
                     icon={getViewIcon(view.viewMode)}

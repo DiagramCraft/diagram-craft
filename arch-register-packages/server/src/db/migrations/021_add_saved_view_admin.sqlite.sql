@@ -1,0 +1,1 @@
+ALTER TABLE saved_view ADD COLUMN is_admin_view INTEGER NOT NULL DEFAULT 0;

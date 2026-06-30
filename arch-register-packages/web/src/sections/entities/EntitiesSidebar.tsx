@@ -338,11 +338,31 @@ export const EntitiesSidebar = ({
           </>
         ) : sidebarTab === 'views' ? (
           <>
+            {savedViews.filter(v => v.isAdminView).length > 0 && (
+              <>
+                <SidebarGroupLabel>Workspace views</SidebarGroupLabel>
+                {savedViews.filter(v => v.isAdminView).map(view => (
+                  <TreeRow
+                    key={view.id}
+                    icon={getViewIcon(view.viewMode)}
+                    label={view.name}
+                    active={search.viewId === view.id}
+                    onClick={() => applySavedView(view)}
+                    onContextMenu={e => {
+                      if (!permissions.canManageAdminViews) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setViewMenu({ x: e.clientX, y: e.clientY, view });
+                    }}
+                  />
+                ))}
+              </>
+            )}
             <SidebarGroupLabel>Saved views</SidebarGroupLabel>
-            {savedViews.length === 0 && (
+            {savedViews.filter(v => !v.isAdminView).length === 0 && (
               <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
             )}
-            {savedViews.map(view => (
+            {savedViews.filter(v => !v.isAdminView).map(view => (
               <TreeRow
                 key={view.id}
                 icon={getViewIcon(view.viewMode)}

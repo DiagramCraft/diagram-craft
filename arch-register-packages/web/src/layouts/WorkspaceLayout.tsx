@@ -87,7 +87,8 @@ export const WorkspaceLayout = () => {
     canCreateProjects,
     canCreateEntities,
     canManageMembers,
-    canManageViews
+    canManageViews,
+    canManageAdminViews
   } = useWorkspacePermissions(ws?.id);
 
   // Get global permissions separately for the global settings link
@@ -183,7 +184,8 @@ export const WorkspaceLayout = () => {
         canCreateProjects,
         canCreateEntities,
         canManageMembers,
-        canManageViews
+        canManageViews,
+        canManageAdminViews
       },
       availableSettingsSections,
       defaultSettingsSection,
@@ -208,6 +210,7 @@ export const WorkspaceLayout = () => {
       canCreateEntities,
       canManageMembers,
       canManageViews,
+      canManageAdminViews,
       availableSettingsSections,
       defaultSettingsSection
     ]

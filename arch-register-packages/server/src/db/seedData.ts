@@ -999,6 +999,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
     project_scope: null,
     name: 'Production Systems',
     description: 'All systems currently in production',
+    is_admin_view: false,
     view_mode: 'table',
     filters: {
       status: LIFECYCLE_IDS.production,
@@ -1015,6 +1016,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
     project_scope: null,
     name: 'Security Radar',
     description: 'Radar view of security-related components',
+    is_admin_view: false,
     view_mode: 'radar',
     filters: {},
     config: {
@@ -1040,6 +1042,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
     project_scope: null,
     name: 'Platform Components',
     description: 'Components owned by Platform Engineering',
+    is_admin_view: false,
     view_mode: 'cards',
     filters: {
       owner: TEAM_IDS.platform,

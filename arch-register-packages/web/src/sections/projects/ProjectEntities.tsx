@@ -82,7 +82,7 @@ export const ProjectEntities = ({
 
   const pendingCount = futureSnapshots.length;
   const navigate = useNavigate();
-  const { workspaceSlug } = useWorkspaceContext();
+  const { workspaceSlug, permissions } = useWorkspaceContext();
   const search = useSearch({ strict: false }) as BrowserSearch;
   const { data: savedViews = [], isFetched: savedViewsFetched } = useSavedViews(workspaceSlug, {
     projectId: project.id
@@ -117,7 +117,8 @@ export const ProjectEntities = ({
   const handleSaveView = async (
     name: string,
     description: string,
-    _scope: 'workspace' | 'project'
+    _scope: 'workspace' | 'project',
+    isAdminView: boolean
   ) => {
     try {
       await createSavedViewMutation.mutateAsync(
@@ -127,6 +128,7 @@ export const ProjectEntities = ({
           projectScope,
           name,
           description,
+          isAdminView,
           view,
           typeFilter,
           statusFilter,
@@ -373,6 +375,7 @@ export const ProjectEntities = ({
         onClose={() => setIsSavingView(false)}
         onSave={handleSaveView}
         defaultScope="project"
+        showAdminOption={permissions.canManageAdminViews}
       />
     </ProjectScreenLayout>
   );

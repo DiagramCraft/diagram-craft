@@ -43,7 +43,7 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
 
   async createSavedView(input: SavedViewDbCreate) {
     this.run(
-      'INSERT INTO saved_view (id, workspace, project_id, project_scope, name, description, view_mode, filters, config, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO saved_view (id, workspace, project_id, project_scope, name, description, is_admin_view, view_mode, filters, config, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -51,6 +51,7 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
         input.project_scope,
         input.name,
         input.description,
+        input.is_admin_view ? 1 : 0,
         input.view_mode,
         JSON.stringify(input.filters),
         input.config ? JSON.stringify(input.config) : null,
@@ -69,6 +70,7 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
       `UPDATE saved_view
        SET name = ?,
            description = ?,
+           is_admin_view = ?,
            view_mode = ?,
            filters = ?,
            config = ?,
@@ -78,6 +80,7 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
       [
         input.name ?? existing.name,
         input.description === undefined ? existing.description : input.description,
+        (input.is_admin_view === undefined ? existing.is_admin_view : input.is_admin_view) ? 1 : 0,
         input.view_mode ?? existing.view_mode,
         input.filters ? JSON.stringify(input.filters) : JSON.stringify(existing.filters),
         input.config === undefined ? JSON.stringify(existing.config) : JSON.stringify(input.config),

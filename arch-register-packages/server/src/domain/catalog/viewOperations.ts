@@ -27,6 +27,7 @@ export const toApi = (view: SavedViewDbResult): ApiSavedView => ({
   projectScope: view.project_scope,
   name: view.name,
   description: view.description,
+  isAdminView: view.is_admin_view,
   viewMode: view.view_mode,
   filters: view.filters,
   config: view.config,
@@ -80,6 +81,7 @@ export const createSavedView = async (
     project_scope: body.projectScope ?? null,
     name: body.name,
     description: body.description ?? null,
+    is_admin_view: body.isAdminView ?? false,
     view_mode: body.viewMode,
     filters: body.filters,
     config: body.config ?? null,
@@ -104,6 +106,7 @@ export const updateSavedView = async (
   const updated = await db.view.updateSavedView(workspace, id, {
     name: body.name,
     description: body.description,
+    is_admin_view: body.isAdminView,
     view_mode: body.viewMode,
     filters: body.filters,
     config: body.config,

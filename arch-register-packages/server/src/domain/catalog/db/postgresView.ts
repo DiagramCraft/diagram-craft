@@ -46,8 +46,8 @@ export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDa
   async createSavedView(input: SavedViewDbCreate) {
     try {
       const [row] = await this.sql<SavedViewDbResult[]>`
-        INSERT INTO saved_view (id, workspace, project_id, project_scope, name, description, view_mode, filters, config, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.project_scope}, ${input.name}, ${input.description}, ${input.view_mode}, ${this.json(input.filters)}, ${this.json(input.config)}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO saved_view (id, workspace, project_id, project_scope, name, description, is_admin_view, view_mode, filters, config, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.project_scope}, ${input.name}, ${input.description}, ${input.is_admin_view}, ${input.view_mode}, ${this.json(input.filters)}, ${this.json(input.config)}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return row!;
@@ -62,6 +62,7 @@ export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDa
         UPDATE saved_view
         SET name = COALESCE(${input.name ?? null}, name),
             description = COALESCE(${input.description ?? null}, description),
+            is_admin_view = COALESCE(${input.is_admin_view ?? null}, is_admin_view),
             view_mode = COALESCE(${input.view_mode ?? null}, view_mode),
             filters = COALESCE(${input.filters ? this.json(input.filters) : null}, filters),
             config = COALESCE(${input.config === undefined ? null : this.json(input.config)}, config),
