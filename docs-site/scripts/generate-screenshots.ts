@@ -1,12 +1,12 @@
 import { execFile, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdtemp, mkdir, rm, rename, stat, unlink } from 'node:fs/promises';
+import { mkdir, mkdtemp, rename, rm, stat, unlink } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { chromium, expect, type Browser, type Page } from '@playwright/test';
+import { type Browser, chromium, type Page } from '@playwright/test';
 import { AccountSettingsPage } from '../../arch-register-packages/e2e/src/ui/pages/AccountSettingsPage';
 import { DataModelPage } from '../../arch-register-packages/e2e/src/ui/pages/DataModelPage';
 import { EntitiesPage } from '../../arch-register-packages/e2e/src/ui/pages/EntitiesPage';
@@ -15,52 +15,21 @@ import { LoginPage } from '../../arch-register-packages/e2e/src/ui/pages/LoginPa
 import { ProjectsPage } from '../../arch-register-packages/e2e/src/ui/pages/ProjectsPage';
 import { SearchPage } from '../../arch-register-packages/e2e/src/ui/pages/SearchPage';
 import { SettingsPage } from '../../arch-register-packages/e2e/src/ui/pages/SettingsPage';
-import { authMigrationProject } from '../../arch-register-packages/e2e/src/ui/support/projects';
-import { frontendAppEntity } from '../../arch-register-packages/e2e/src/ui/support/entities';
-import { apiSchema } from '../../arch-register-packages/e2e/src/ui/support/schemas';
 import { defaultWorkspace } from '../../arch-register-packages/e2e/src/ui/support/workspaces';
-
-type Viewport = {
-  width: number;
-  height: number;
-};
-
-type ScreenshotContext = {
-  accountSettingsPage: AccountSettingsPage;
-  homePage: HomePage;
-  entitiesPage: EntitiesPage;
-  projectsPage: ProjectsPage;
-  searchPage: SearchPage;
-  settingsPage: SettingsPage;
-  dataModelPage: DataModelPage;
-};
-
-type DiagramCraftScreenshotContext = {
-  page: Page;
-};
-
-type BaseScreenshotConfig = {
-  category: string;
-  name: string;
-  viewport?: Viewport;
-  clip?: { x: number; y: number; width: number; height: number };
-  selector?: string;
-  selectorGap?: number;
-  fullPage?: boolean;
-  themes?: ('light' | 'dark')[];
-};
-
-export type ArchRegisterScreenshotConfig = BaseScreenshotConfig & {
-  product: 'arch-register';
-  setup: (context: ScreenshotContext) => Promise<void>;
-};
-
-export type DiagramCraftScreenshotConfig = BaseScreenshotConfig & {
-  product: 'diagram-craft';
-  setup: (context: DiagramCraftScreenshotContext) => Promise<void>;
-};
-
-export type ScreenshotConfig = ArchRegisterScreenshotConfig | DiagramCraftScreenshotConfig;
+import type {
+  ArchRegisterScreenshotConfig,
+  DiagramCraftScreenshotConfig,
+  DiagramCraftScreenshotContext,
+  ScreenshotConfig,
+  ScreenshotContext,
+  Viewport
+} from './screenshot-types.js';
+import { discoverManifests } from './screenshot-manifest.js';
+import {
+  setDiagramCraftTheme,
+  setStoredThemes,
+  waitForThemeApplied
+} from './screenshot-helpers.js';
 
 type ChildProcessHandle = {
   name: string;
@@ -72,7 +41,11 @@ const outputRoot = resolve(repoRoot, 'docs-site/static/img');
 const screenshotServerPort = Number(process.env['SCREENSHOT_SERVER_PORT'] ?? '5073');
 const screenshotWebPort = Number(process.env['SCREENSHOT_WEB_PORT'] ?? '5074');
 const diagramCraftScreenshotPort = Number(process.env['SCREENSHOT_DIAGRAM_CRAFT_PORT'] ?? '5175');
-const screenshotOnly = process.env['SCREENSHOT_ONLY']?.split(',').map(part => part.trim()).filter(Boolean) ?? [];
+const screenshotOnly =
+  process.env['SCREENSHOT_ONLY']
+    ?.split(',')
+    .map(part => part.trim())
+    .filter(Boolean) ?? [];
 const webBaseUrl = `http://localhost:${screenshotWebPort}`;
 const serverBaseUrl = `http://localhost:${screenshotServerPort}`;
 const diagramCraftBaseUrl = `http://localhost:${diagramCraftScreenshotPort}`;
@@ -233,155 +206,6 @@ const createBlankDiagramDocument = (name: string) => {
   };
 };
 
-const openProjectNewDiagramDialog = async (page: Page) => {
-  await page.getByRole('main').getByRole('button', { name: 'New' }).click();
-  const newDiagramItem = page.getByRole('menuitem', { name: 'New diagram' });
-  await expect(newDiagramItem).toBeVisible();
-  await newDiagramItem.click();
-  await expect(page.getByText('Choose a starting point')).toBeVisible();
-};
-
-const createBlankProjectDiagram = async (page: Page, name: string) => {
-  await page.evaluate(
-    async ({ workspaceSlug, projectId, diagramName, diagramBody }) => {
-      const response = await fetch(
-        `/api/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/files?path=${encodeURIComponent(diagramName)}.json`,
-        {
-          method: 'PUT',
-          headers: {
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify(diagramBody)
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to create diagram: ${response.status}`);
-      }
-    },
-    {
-      workspaceSlug: defaultWorkspace.slug,
-      projectId: authMigrationProject.id,
-      diagramName: name,
-      diagramBody: createBlankDiagramDocument(name)
-    }
-  );
-
-  await page.reload();
-  await expect(page.getByRole('main').getByRole('button', { name: new RegExp(escapeRegExp(name)) })).toBeVisible();
-};
-
-const openDiagramEditorFromProject = async (page: Page, name: string) => {
-  await page.getByRole('main').getByRole('button', { name: new RegExp(escapeRegExp(name)) }).first().click();
-  await expect(page.locator('#awareness')).toBeVisible();
-};
-
-const createWikiPage = async (
-  page: Page,
-  scope: 'workspace' | 'project' | 'entity',
-  name: string,
-  folder?: string
-) =>
-  await page.evaluate(
-    async ({ workspaceSlug, scope, name, folder, projectId, entityId }) => {
-      const payload = JSON.stringify({ name, ...(folder ? { folder } : {}) });
-      const endpoint =
-        scope === 'workspace'
-          ? `/api/${encodeURIComponent(workspaceSlug)}/content/markdown`
-          : scope === 'project'
-            ? `/api/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/markdown`
-            : `/api/${encodeURIComponent(workspaceSlug)}/entities/${encodeURIComponent(entityId)}/markdown`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: payload
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to create markdown page: ${response.status}`);
-      }
-
-      return (await response.json()) as { id: string; name: string; path: string };
-    },
-    {
-      workspaceSlug: defaultWorkspace.slug,
-      scope,
-      name,
-      folder,
-      projectId: authMigrationProject.id,
-      entityId: frontendAppEntity.id
-    }
-  );
-
-const saveWikiContent = async (page: Page, nodeId: string, body: string) =>
-  await page.evaluate(
-    async ({ workspaceSlug, nodeId, body }) => {
-      const response = await fetch(
-        `/api/${encodeURIComponent(workspaceSlug)}/markdown/${encodeURIComponent(nodeId)}`,
-        {
-          method: 'PUT',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ body })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to save markdown content: ${response.status}`);
-      }
-
-      return (await response.json()) as { id: string; path: string; name: string };
-    },
-    { workspaceSlug: defaultWorkspace.slug, nodeId, body }
-  );
-
-const seedWikiPage = async (
-  page: Page,
-  scope: 'workspace' | 'project' | 'entity',
-  options: {
-    name: string;
-    summary: string;
-    contextTitle: string;
-    contextBullets: string[];
-    nextSteps: string[];
-    entityId: string;
-    entityFields?: string;
-  }
-) => {
-  const created = await createWikiPage(page, scope, options.name);
-
-  const body = [
-    `# ${options.name}`,
-    '',
-    options.summary,
-    '',
-    '## Reference',
-    '',
-    `<EntityCard id="${options.entityId}" fields="${options.entityFields ?? 'owner,lifecycle,description'}" />`,
-    '',
-    `## ${options.contextTitle}`,
-    '',
-    ...options.contextBullets.map(bullet => `- ${bullet}`),
-    '',
-    '## Next steps',
-    '',
-    ...options.nextSteps.map((item, index) => `${index + 1}. ${item}`),
-    '',
-    '> Keep this page short and close to the work it describes.'
-  ].join('\n');
-
-  await saveWikiContent(page, created.id, body);
-  await page.goto(
-    scope === 'workspace'
-      ? `/${defaultWorkspace.slug}/content/wiki/${created.id}?mode=preview`
-      : scope === 'project'
-        ? `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/wiki/${created.id}?mode=preview`
-        : `/${defaultWorkspace.slug}/entities/${frontendAppEntity.id}/wiki/${created.id}?mode=preview`
-  );
-  await expect(page.getByText(options.summary)).toBeVisible();
-  return { nodeId: created.id };
-};
-
 const env = {
   ...process.env,
   AUTH_MODE: 'local',
@@ -393,473 +217,8 @@ const env = {
   STORAGE_FS_BASE: ''
 };
 
-const archRegisterScreenshotConfigs: ArchRegisterScreenshotConfig[] = [
-  {
-    product: 'arch-register',
-    category: 'workspace',
-    name: 'selector-open',
-    fullPage: false,
-    setup: async ({ homePage }) => {
-      await homePage.goto();
-      await homePage.expectLoaded(defaultWorkspace.name);
-      await homePage.workspaceShell.topBar.openWorkspaceSwitcher();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'workspace',
-    name: 'create-dialog',
-    selector: '[role="alertdialog"]',
-    setup: async ({ homePage }) => {
-      await homePage.goto();
-      await homePage.expectLoaded(defaultWorkspace.name);
-      await homePage.workspaceShell.topBar.openAddWorkspaceFromSwitcher();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'workspace',
-    name: 'home-overview',
-    fullPage: false,
-    setup: async ({ homePage }) => {
-      await homePage.goto();
-      await homePage.expectLoaded(defaultWorkspace.name);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'entities',
-    name: 'browser-overview',
-    fullPage: false,
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto();
-      await entitiesPage.expectLoaded();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'entities',
-    name: 'browser-cards',
-    fullPage: false,
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'cards' });
-      await entitiesPage.expectLoaded();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'entities',
-    name: 'browser-tree',
-    fullPage: false,
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'tree' });
-      await entitiesPage.expectLoaded();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'entities',
-    name: 'detail-overview',
-    fullPage: false,
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto();
-      await entitiesPage.expectLoaded();
-      await entitiesPage.openEntity(frontendAppEntity.name);
-      await entitiesPage.expectEntityDetailLoaded(frontendAppEntity.name);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'entities',
-    name: 'browser-radar',
-    fullPage: false,
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'radar' });
-      await entitiesPage.expectLoaded();
-      await expect(entitiesPage.browserTitle()).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'entities',
-    name: 'create-dialog',
-    selector: '[role="alertdialog"]',
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto();
-      await entitiesPage.expectLoaded();
-      await entitiesPage.openNewEntityDialog();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'entities',
-    name: 'browser-timeline',
-    fullPage: false,
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'timeline' });
-      await entitiesPage.expectLoaded();
-      await expect(entitiesPage.browserTitle()).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'entities',
-    name: 'browser-matrix',
-    fullPage: false,
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'matrix' });
-      await entitiesPage.expectLoaded();
-      await expect(entitiesPage.browserTitle()).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'entities',
-    name: 'browser-explore',
-    fullPage: false,
-    setup: async ({ entitiesPage }) => {
-      await entitiesPage.goto({ viewMode: 'explore' });
-      await entitiesPage.expectLoaded();
-      await expect(entitiesPage.browserTitle()).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'projects',
-    name: 'list-overview',
-    fullPage: false,
-    setup: async ({ projectsPage }) => {
-      await projectsPage.goto();
-      await projectsPage.expectLoaded();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'projects',
-    name: 'detail-home',
-    fullPage: false,
-    setup: async ({ projectsPage }) => {
-      await projectsPage.gotoProject(authMigrationProject.id);
-      await projectsPage.expectProjectOpened(authMigrationProject.name);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'projects',
-    name: 'new-diagram-dialog',
-    selector: '[role="alertdialog"]',
-    setup: async ({ projectsPage }) => {
-      await projectsPage.gotoProject(authMigrationProject.id);
-      await projectsPage.expectProjectOpened(authMigrationProject.name);
-      await openProjectNewDiagramDialog(projectsPage.page);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'search',
-    name: 'results',
-    fullPage: false,
-    setup: async ({ searchPage }) => {
-      await searchPage.goto();
-      await searchPage.expectLoaded();
-      await searchPage.search('auth');
-      await searchPage.expectEntityResultsFound();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'content',
-    name: 'workspace-overview',
-    fullPage: false,
-    setup: async ({ homePage }) => {
-      await createWikiPage(homePage.page, 'workspace', 'Architecture notes');
-      await homePage.page.goto(`/${defaultWorkspace.slug}/content`);
-      await expect(homePage.page.getByText('Architecture notes').first()).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'content',
-    name: 'project-diagram-editor',
-    fullPage: false,
-    setup: async ({ projectsPage }) => {
-      await projectsPage.gotoProject(authMigrationProject.id);
-      await createBlankProjectDiagram(projectsPage.page, projectDiagramName);
-      await openDiagramEditorFromProject(projectsPage.page, projectDiagramName);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'ai',
-    name: 'assistant-overview',
-    fullPage: false,
-    setup: async ({ homePage }) => {
-      await homePage.page.goto(`/${defaultWorkspace.slug}/assistant`);
-      await expect(homePage.page.getByText('Ask about your model', { exact: true })).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'ai',
-    name: 'extract-overview',
-    fullPage: false,
-    setup: async ({ homePage }) => {
-      await homePage.page.goto(`/${defaultWorkspace.slug}/extract`);
-      await expect(homePage.page.getByRole('button', { name: 'Extract entities' })).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'account',
-    name: 'profile',
-    fullPage: false,
-    setup: async ({ accountSettingsPage }) => {
-      await accountSettingsPage.goto('profile');
-      await accountSettingsPage.expectProfileLoaded();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'admin',
-    name: 'settings-general',
-    fullPage: false,
-    setup: async ({ settingsPage }) => {
-      await settingsPage.goto('general');
-      await settingsPage.expectLoaded();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'admin',
-    name: 'schema-editor',
-    fullPage: false,
-    setup: async ({ dataModelPage }) => {
-      await dataModelPage.goto();
-      await dataModelPage.expectLoaded();
-      await dataModelPage.openSchemaType(apiSchema.name);
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'admin',
-    name: 'model-overview',
-    fullPage: false,
-    setup: async ({ settingsPage }) => {
-      await settingsPage.page.goto(`/${defaultWorkspace.slug}/settings/model-overview`);
-      await expect(settingsPage.page.getByText('Model Overview')).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'admin',
-    name: 'teams',
-    fullPage: false,
-    setup: async ({ settingsPage }) => {
-      await settingsPage.goto('teams');
-      await expect(settingsPage.page.getByRole('heading', { name: 'Teams' })).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'admin',
-    name: 'members',
-    fullPage: false,
-    setup: async ({ settingsPage }) => {
-      await settingsPage.goto('members');
-      await expect(settingsPage.page.getByRole('heading', { name: 'Members' })).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'admin',
-    name: 'roles',
-    fullPage: false,
-    setup: async ({ settingsPage }) => {
-      await settingsPage.goto('roles');
-      await expect(settingsPage.page.getByRole('heading', { name: 'Roles & permissions' })).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'admin',
-    name: 'ai',
-    fullPage: false,
-    setup: async ({ settingsPage }) => {
-      await settingsPage.goto('ai');
-      await expect(settingsPage.page.getByRole('heading', { name: 'AI' })).toBeVisible();
-    }
-  },
-  {
-    product: 'arch-register',
-    category: 'admin',
-    name: 'export-import',
-    fullPage: false,
-    setup: async ({ settingsPage }) => {
-      await settingsPage.goto('export-import');
-      await expect(settingsPage.page.getByRole('heading', { name: 'Export & Import' })).toBeVisible();
-    }
-  }
-];
-
-const waitForDiagramCraftLoaded = async (page: Page) => {
-  await page.getByRole('toolbar').first().waitFor();
-  await expect(page.locator('#left-sidebar')).toBeVisible();
-};
-
-const setStoredThemes = async (page: Page, theme: 'light' | 'dark') => {
-  await page.evaluate(
-    ({ requestedTheme, state }) => {
-      localStorage.setItem('ar-theme', requestedTheme);
-
-      const current = JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}');
-      localStorage.setItem(
-        'diagram-craft.user-state',
-        JSON.stringify({
-          ...current,
-          ...state,
-          themePreference: requestedTheme,
-          themeMode: requestedTheme
-        })
-      );
-    },
-    { requestedTheme: theme, state: diagramCraftUserState }
-  );
-};
-
-const waitForThemeApplied = async (page: Page, theme: 'light' | 'dark') => {
-  await page.waitForFunction(
-    expectedTheme => {
-      const root = document.documentElement;
-      const archRegisterMatches =
-        expectedTheme === 'light'
-          ? root.getAttribute('data-theme') === 'light' && !root.classList.contains('dark')
-          : !root.hasAttribute('data-theme') && root.classList.contains('dark');
-
-      const diagramCraftRoot = document.getElementById('app');
-      const diagramCraftClassName = expectedTheme === 'dark' ? 'dark-theme' : 'light-theme';
-      const diagramCraftMatches =
-        diagramCraftRoot == null
-          ? true
-          : diagramCraftRoot.classList.contains(diagramCraftClassName) ||
-            (diagramCraftRoot.getAttribute('data-theme') === expectedTheme &&
-              document.body.classList.contains(diagramCraftClassName));
-
-      if (diagramCraftRoot != null) {
-        return diagramCraftMatches;
-      }
-
-      return archRegisterMatches;
-    },
-    theme,
-    { timeout: 5000 }
-  );
-};
-
-const setDiagramCraftTheme = async (page: Page, theme: 'light' | 'dark') => {
-  await page.goto('/');
-  await setStoredThemes(page, theme);
-};
-
-const loadDiagramCraftSample = async (page: Page, sampleName: string) => {
-  await page.goto(`/?crdtClear=true#/sample/${sampleName}`);
-  await waitForDiagramCraftLoaded(page);
-};
-
-const selectDiagramCraftTool = async (page: Page, tool: 'TOOL_MOVE' | 'TOOL_EDGE' | 'TOOL_TEXT') => {
-  const button = page.getByLabel(tool);
-  await button.click();
-  await expect(button).toHaveAttribute('aria-pressed', 'true');
-};
-
-const clickDiagramCraftElement = async (
-  page: Page,
-  elementSelector: string,
-  options?: { clickCount?: number }
-) => {
-  const element = page.locator(elementSelector).first();
-  await element.waitFor({ state: 'attached' });
-  await element.click({ clickCount: options?.clickCount ?? 1, force: true });
-};
-
-const diagramCraftScreenshotConfigs: DiagramCraftScreenshotConfig[] = [
-  {
-    product: 'diagram-craft',
-    category: 'getting-started',
-    name: 'first-diagram-editor',
-    fullPage: false,
-    setup: async ({ page }) => {
-      await loadDiagramCraftSample(page, 'getting-started.json');
-    }
-  },
-  {
-    product: 'diagram-craft',
-    category: 'getting-started',
-    name: 'shape-palette-overview',
-    clip: { x: 0, y: 72, width: 430, height: 700 },
-    setup: async ({ page }) => {
-      await loadDiagramCraftSample(page, 'getting-started.json');
-      await expect(page.getByRole('tab', { name: 'Shape' })).toHaveAttribute('aria-selected', 'true');
-    }
-  },
-  {
-    product: 'diagram-craft',
-    category: 'core-diagramming',
-    name: 'canvas-navigation',
-    fullPage: false,
-    setup: async ({ page }) => {
-      await loadDiagramCraftSample(page, 'core-diagramming.json');
-    }
-  },
-  {
-    product: 'diagram-craft',
-    category: 'core-diagramming',
-    name: 'shapes-elements',
-    clip: { x: 0, y: 72, width: 1040, height: 520 },
-    setup: async ({ page }) => {
-      await loadDiagramCraftSample(page, 'core-diagramming.json');
-      await expect(page.getByRole('tab', { name: 'Shape' })).toHaveAttribute('aria-selected', 'true');
-    }
-  },
-  {
-    product: 'diagram-craft',
-    category: 'core-diagramming',
-    name: 'connectors-edges',
-    clip: { x: 360, y: 120, width: 520, height: 420 },
-    setup: async ({ page }) => {
-      await loadDiagramCraftSample(page, 'core-diagramming.json');
-      await selectDiagramCraftTool(page, 'TOOL_MOVE');
-      await clickDiagramCraftElement(page, '#edge-service-to-database .svg-edge');
-      await expect(page.locator('.svg-waypoint-handle')).toBeVisible();
-    }
-  },
-  {
-    product: 'diagram-craft',
-    category: 'core-diagramming',
-    name: 'text-labels',
-    clip: { x: 320, y: 96, width: 760, height: 420 },
-    setup: async ({ page }) => {
-      await loadDiagramCraftSample(page, 'core-diagramming.json');
-      await clickDiagramCraftElement(page, '#node-note-text', { clickCount: 2 });
-      await sleep(200);
-    }
-  },
-  {
-    product: 'diagram-craft',
-    category: 'core-diagramming',
-    name: 'selection-manipulation',
-    clip: { x: 360, y: 120, width: 520, height: 420 },
-    setup: async ({ page }) => {
-      await loadDiagramCraftSample(page, 'core-diagramming.json');
-      await clickDiagramCraftElement(page, '#node-service');
-      await expect(page.locator('.svg-selection__handle')).toHaveCount(8);
-    }
-  }
-];
-
-const screenshotConfigs: ScreenshotConfig[] = [
-  ...archRegisterScreenshotConfigs,
-  ...diagramCraftScreenshotConfigs
-];
+// All screenshot configs have been migrated to colocated manifests in docs/**/screenshots.ts
+const screenshotConfigs: ScreenshotConfig[] = [];
 
 const runCommand = async (command: string, args: string[], commandEnv: NodeJS.ProcessEnv) =>
   await new Promise<void>((resolvePromise, rejectPromise) => {
@@ -884,7 +243,12 @@ const runCommand = async (command: string, args: string[], commandEnv: NodeJS.Pr
     });
   });
 
-const startCommand = (name: string, command: string, args: string[], commandEnv: NodeJS.ProcessEnv) => {
+const startCommand = (
+  name: string,
+  command: string,
+  args: string[],
+  commandEnv: NodeJS.ProcessEnv
+) => {
   const child = spawn(command, args, {
     cwd: repoRoot,
     env: commandEnv,
@@ -941,12 +305,12 @@ const waitForHttp = async (url: string, label: string, timeoutMs = 120_000) => {
     await sleep(500);
   }
 
-  const message = lastError instanceof Error ? lastError.message : String(lastError ?? 'unknown error');
+  const message =
+    lastError instanceof Error ? lastError.message : String(lastError ?? 'unknown error');
   throw new Error(`Timed out waiting for ${label} at ${url}: ${message}`);
 };
 
-const getThemes = (config: ScreenshotConfig) =>
-  config.themes ?? ['light', 'dark'];
+const getThemes = (config: ScreenshotConfig) => config.themes ?? ['light', 'dark'];
 
 const matchesScreenshotFilter = (config: ScreenshotConfig, filter: string) =>
   [
@@ -958,12 +322,19 @@ const matchesScreenshotFilter = (config: ScreenshotConfig, filter: string) =>
 const getFilteredConfigs = <T extends ScreenshotConfig>(configs: T[]) =>
   screenshotOnly.length === 0
     ? configs
-    : configs.filter(config => screenshotOnly.some(filter => matchesScreenshotFilter(config, filter)));
+    : configs.filter(config =>
+        screenshotOnly.some(filter => matchesScreenshotFilter(config, filter))
+      );
 
 const captureScreenshot = async (page: Page, config: ScreenshotConfig, theme: 'light' | 'dark') => {
   const themes = getThemes(config);
   const themeSuffix = themes.length === 1 ? '' : `-${theme}`;
-  const screenshotPath = resolve(outputRoot, config.product, config.category, `${config.name}${themeSuffix}.png`);
+  const screenshotPath = resolve(
+    outputRoot,
+    config.product,
+    config.category,
+    `${config.name}${themeSuffix}.png`
+  );
   await mkdir(dirname(screenshotPath), { recursive: true });
   const tempPath = `${screenshotPath}.tmp.png`;
 
@@ -1044,11 +415,24 @@ const runArchRegisterScreenshots = async (configs: ArchRegisterScreenshotConfig[
     await runCommand('pnpm', ['--dir', 'arch-register-packages/server', 'bootstrap'], serverEnv);
 
     console.log('Starting Arch Register dev servers...');
-    startCommand('arch-register-server', 'pnpm', ['--dir', 'arch-register-packages/server', 'start'], serverEnv);
+    startCommand(
+      'arch-register-server',
+      'pnpm',
+      ['--dir', 'arch-register-packages/server', 'start'],
+      serverEnv
+    );
     startCommand(
       'arch-register-web',
       'pnpm',
-      ['--dir', 'arch-register-packages/web', 'dev', '--', '--strictPort', '--port', String(screenshotWebPort)],
+      [
+        '--dir',
+        'arch-register-packages/web',
+        'dev',
+        '--',
+        '--strictPort',
+        '--port',
+        String(screenshotWebPort)
+      ],
       webEnv
     );
 
@@ -1065,7 +449,7 @@ const runArchRegisterScreenshots = async (configs: ArchRegisterScreenshotConfig[
       locale: 'en-US',
       viewport: defaultViewport
     });
-    
+
     const page = await context.newPage();
 
     const loginPage = new LoginPage(page);
@@ -1095,9 +479,10 @@ const runArchRegisterScreenshots = async (configs: ArchRegisterScreenshotConfig[
     for (const config of configs) {
       const themes = getThemes(config);
       const viewport = config.viewport ?? defaultViewport;
-      
+
       for (const theme of themes) {
-        console.log(`Capturing ${config.category}/${config.name} (${theme})...`);
+        const manifestSource = '_manifestSource' in config ? ` [${config._manifestSource}]` : '';
+        console.log(`Capturing ${config.category}/${config.name} (${theme})...${manifestSource}`);
 
         await setStoredThemes(page, theme);
         await page.reload();
@@ -1111,7 +496,7 @@ const runArchRegisterScreenshots = async (configs: ArchRegisterScreenshotConfig[
           await loginPage.signInAsSeededUser();
           await homePage.expectLoaded(defaultWorkspace.name);
         }
-        
+
         await page.setViewportSize(viewport);
         await config.setup(screenshotContext);
         await waitForThemeApplied(page, theme);
@@ -1139,7 +524,15 @@ const runDiagramCraftScreenshots = async (configs: DiagramCraftScreenshotConfig[
     startCommand(
       'diagram-craft-web',
       'pnpm',
-      ['--dir', 'packages/main', 'dev', '--', '--strictPort', '--port', String(diagramCraftScreenshotPort)],
+      [
+        '--dir',
+        'packages/main',
+        'dev',
+        '--',
+        '--strictPort',
+        '--port',
+        String(diagramCraftScreenshotPort)
+      ],
       { ...process.env, PNPM_WORKSPACE_DIR: repoRoot }
     );
 
@@ -1173,7 +566,10 @@ const runDiagramCraftScreenshots = async (configs: DiagramCraftScreenshotConfig[
       const viewport = config.viewport ?? defaultViewport;
 
       for (const theme of themes) {
-        console.log(`Capturing ${config.product}/${config.category}/${config.name} (${theme})...`);
+        const manifestSource = '_manifestSource' in config ? ` [${config._manifestSource}]` : '';
+        console.log(
+          `Capturing ${config.product}/${config.category}/${config.name} (${theme})...${manifestSource}`
+        );
         await setDiagramCraftTheme(page, theme);
         await page.setViewportSize(viewport);
         await config.setup(screenshotContext);
@@ -1191,7 +587,14 @@ const runDiagramCraftScreenshots = async (configs: DiagramCraftScreenshotConfig[
 };
 
 const main = async () => {
-  const filteredConfigs = getFilteredConfigs(screenshotConfigs);
+  // Discover manifests from docs tree
+  const manifestConfigs = await discoverManifests();
+  console.log(`Discovered ${manifestConfigs.length} screenshot(s) from manifests`);
+
+  // Merge with existing hardcoded configs
+  const allConfigs = [...screenshotConfigs, ...manifestConfigs];
+
+  const filteredConfigs = getFilteredConfigs(allConfigs);
   const archRegisterConfigs = filteredConfigs.filter(
     config => config.product === 'arch-register'
   ) as ArchRegisterScreenshotConfig[];
@@ -1215,6 +618,6 @@ const main = async () => {
 };
 
 main().catch(error => {
-  console.error(error instanceof Error ? error.stack ?? error.message : error);
+  console.error(error instanceof Error ? (error.stack ?? error.message) : error);
   process.exitCode = 1;
 });
