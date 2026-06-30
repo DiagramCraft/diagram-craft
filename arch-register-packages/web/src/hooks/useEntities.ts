@@ -141,6 +141,7 @@ export const useEntityTree = (
     owner?: string | null;
     lifecycle?: string | null;
     q?: string | null;
+    conditions?: FilterCondition[];
     projectId?: string | null;
     projectScope?: 'project' | 'all';
   } = {}
@@ -155,6 +156,7 @@ export const useEntityTree = (
           owner: options.owner ?? undefined,
           lifecycle: options.lifecycle ?? undefined,
           q: options.q ?? undefined,
+          conditions: options.conditions?.length ? JSON.stringify(options.conditions) : undefined,
           projectId: options.projectId ?? undefined,
           projectScope: options.projectScope ?? undefined
         }

@@ -328,6 +328,7 @@ export const getEntityTree = async (
     q?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
+    conditions?: FilterCondition[];
   }
 ): Promise<TreeResponse> => {
   const {
@@ -336,7 +337,8 @@ export const getEntityTree = async (
     lifecycle = null,
     q = '',
     projectId = null,
-    projectScope = 'all'
+    projectScope = 'all',
+    conditions = []
   } = options;
   try {
     const [schemas, allEntitiesRaw, projectEntities] = await Promise.all([
@@ -364,12 +366,25 @@ export const getEntityTree = async (
       if (cFields.length > 0) containmentFieldsBySchema.set(schema.id, cFields);
     }
 
+    const schemaMap = new Map(schemas.map(s => [s.id, s]));
+    const hasCompletenessCondition = conditions.some(c => c.fieldId === '_completeness');
+
     const matchRows = filterEntities(scopedEntities, {
       schemaId,
       owner,
       lifecycle,
       q: q ?? ''
-    }).sort((a, b) => a.name.localeCompare(b.name));
+    })
+      .filter(entity => {
+        if (conditions.length === 0) return true;
+        const schema = schemaMap.get(entity.schema_id) ?? null;
+        const completeness =
+          hasCompletenessCondition && schema != null
+            ? computeEntityCompleteness(entity, schema)
+            : null;
+        return conditions.every(c => matchesFilterCondition(entity, c, completeness));
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
     const matchIds = new Set(matchRows.map(r => r.id));
     const entityById = new Map(scopedEntities.map(entity => [entity.id, entity]));
     const allIncluded = new Map(matchRows.map(entity => [entity.id, entity]));
