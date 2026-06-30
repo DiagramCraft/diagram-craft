@@ -13,10 +13,8 @@ describe('validateEntitySearch', () => {
         viewMode: 'explore',
         sort: 'owner',
         projectScope: 'all',
-        radarConfig: '{"schemaId":"application"}',
-        timelineConfig: '{"groupBy":"owner"}',
-        hierarchyConfig: '{"levels":2}',
-        exploreConfig: '{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}',
+        viewConfigs:
+          '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"hierarchy":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
         sidebarTab: 'views',
       })
     ).toEqual({
@@ -28,13 +26,10 @@ describe('validateEntitySearch', () => {
       viewMode: 'explore',
       sort: 'owner',
       projectScope: 'all',
-      radarConfig: '{"schemaId":"application"}',
-      timelineConfig: '{"groupBy":"owner"}',
-      hierarchyConfig: '{"levels":2}',
-      exploreConfig: '{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}',
+      viewConfigs:
+        '{"radar":{"schemaId":"application"},"timeline":{"groupBy":"owner"},"hierarchy":{"levels":2},"explore":{"leftDepth":2,"rightDepth":1,"relationFieldNames":["Depends On"]}}',
       sidebarTab: 'views',
       filters: undefined,
-      matrixConfig: undefined
     });
   });
 
@@ -54,13 +49,9 @@ describe('validateEntitySearch', () => {
       viewMode: undefined,
       sort: undefined,
       projectScope: undefined,
-      radarConfig: undefined,
-      timelineConfig: undefined,
-      matrixConfig: undefined,
-      hierarchyConfig: undefined,
-      exploreConfig: undefined,
+      viewConfigs: undefined,
       sidebarTab: undefined,
-      filters: undefined
+      filters: undefined,
     });
   });
 });
@@ -90,13 +81,9 @@ describe('validateProjectSearch', () => {
       viewMode: 'timeline',
       sort: 'date:goLive',
       projectScope: 'project',
-      radarConfig: undefined,
-      timelineConfig: undefined,
-      matrixConfig: undefined,
-      hierarchyConfig: undefined,
-      exploreConfig: undefined,
+      viewConfigs: undefined,
       sidebarTab: undefined,
-      filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]'
+      filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]',
     });
   });
 });

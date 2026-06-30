@@ -7,11 +7,7 @@ export type SharedEntityBrowserSearchParams = {
   viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix' | 'hierarchy' | 'explore';
   sort?: string;
   projectScope?: 'project' | 'all';
-  radarConfig?: string;
-  timelineConfig?: string;
-  matrixConfig?: string;
-  hierarchyConfig?: string;
-  exploreConfig?: string;
+  viewConfigs?: string;
   sidebarTab?: 'filters' | 'views' | 'pinned';
   filters?: string; // JSON string of FilterCondition[]
 };
@@ -37,11 +33,7 @@ const validateSharedEntityBrowserSearch = (
       : undefined,
   sort: typeof raw.sort === 'string' ? raw.sort : undefined,
   projectScope: raw.projectScope === 'project' || raw.projectScope === 'all' ? raw.projectScope : undefined,
-  radarConfig: typeof raw.radarConfig === 'string' ? raw.radarConfig : undefined,
-  timelineConfig: typeof raw.timelineConfig === 'string' ? raw.timelineConfig : undefined,
-  matrixConfig: typeof raw.matrixConfig === 'string' ? raw.matrixConfig : undefined,
-  hierarchyConfig: typeof raw.hierarchyConfig === 'string' ? raw.hierarchyConfig : undefined,
-  exploreConfig: typeof raw.exploreConfig === 'string' ? raw.exploreConfig : undefined,
+  viewConfigs: typeof raw.viewConfigs === 'string' ? raw.viewConfigs : undefined,
   sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'pinned' ? raw.sidebarTab : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
 });

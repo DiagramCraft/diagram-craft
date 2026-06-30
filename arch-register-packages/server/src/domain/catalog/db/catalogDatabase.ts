@@ -226,6 +226,8 @@ export type CatalogDatabase = {
 export type SavedViewDbResult = {
   id: string;
   workspace: string;
+  project_id: string | null;
+  project_scope: 'project' | 'all' | null;
   name: string;
   description: string | null;
   view_mode: BrowserView;
@@ -250,7 +252,13 @@ export type SavedViewDbUpdate = Partial<
 };
 
 export type ViewDatabase = {
-  listSavedViews(ws: string): Promise<SavedViewDbResult[]>;
+  listSavedViews(
+    ws: string,
+    options?: {
+      projectId?: string | null;
+      includeWorkspace?: boolean;
+    }
+  ): Promise<SavedViewDbResult[]>;
   getSavedView(ws: string, id: string): Promise<SavedViewDbResult | null>;
   createSavedView(input: SavedViewDbCreate): Promise<SavedViewDbResult>;
   updateSavedView(

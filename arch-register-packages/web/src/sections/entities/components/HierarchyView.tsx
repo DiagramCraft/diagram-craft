@@ -4,8 +4,10 @@ import { TbChevronDown } from 'react-icons/tb';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { TreeNode, TreeEdge } from '../../../lib/api';
+import type { TreeNode } from '../../../lib/api';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { hierarchyViewConfigSchema } from '@arch-register/api-types/viewContract';
+import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,10 +22,15 @@ export type HierarchyConfig = {
 };
 
 type HierarchyViewProps = {
-  nodes: TreeNode[];
-  edges: TreeEdge[];
+  workspaceId: string;
+  projectId?: string;
+  projectScope: 'project' | 'all';
+  q: string;
+  typeFilter: string | null;
+  ownerFilter: string | null;
+  statusFilter: string | null;
   onEntityClick: (entityId: string) => void;
-  config: HierarchyConfig | null;
+  config: unknown;
   onConfigChange: (cfg: HierarchyConfig) => void;
   linkedEntityIds?: string[];
 };
@@ -39,6 +46,29 @@ const DEFAULT_CONFIG: HierarchyConfig = {
   level3SchemaId: null,
   level3Columns: 3
 };
+
+const normalizeHierarchyConfig = (
+  config:
+    | {
+        levels: number;
+        level1SchemaId: string | null;
+        level1Columns: number;
+        level2SchemaId?: string | null;
+        level2Columns?: number;
+        level3SchemaId?: string | null;
+        level3Columns?: number;
+      }
+    | null
+    | undefined
+): HierarchyConfig => ({
+  levels: config?.levels ?? DEFAULT_CONFIG.levels,
+  level1SchemaId: config?.level1SchemaId ?? DEFAULT_CONFIG.level1SchemaId,
+  level1Columns: config?.level1Columns ?? DEFAULT_CONFIG.level1Columns,
+  level2SchemaId: config?.level2SchemaId ?? DEFAULT_CONFIG.level2SchemaId,
+  level2Columns: config?.level2Columns ?? DEFAULT_CONFIG.level2Columns,
+  level3SchemaId: config?.level3SchemaId ?? DEFAULT_CONFIG.level3SchemaId,
+  level3Columns: config?.level3Columns ?? DEFAULT_CONFIG.level3Columns
+});
 
 const OPEN_DELAY_MS = 250;
 const CLOSE_DELAY_MS = 120;
@@ -237,18 +267,36 @@ const ColsSelect = ({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export const HierarchyView = ({
-  nodes,
-  edges,
+  workspaceId,
+  projectId,
+  projectScope,
+  q,
+  typeFilter,
+  ownerFilter,
+  statusFilter,
   onEntityClick,
   config,
   onConfigChange,
   linkedEntityIds
 }: HierarchyViewProps) => {
   const { schemas } = useWorkspaceContext();
-  const [localConfig, setLocalConfig] = useState<HierarchyConfig>(config ?? DEFAULT_CONFIG);
+  const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
+    workspaceId,
+    projectId,
+    projectScope,
+    q,
+    typeFilter,
+    ownerFilter,
+    statusFilter
+  });
+  const parsedConfig = useMemo(() => {
+    const result = hierarchyViewConfigSchema.safeParse(config);
+    return result.success ? normalizeHierarchyConfig(result.data) : null;
+  }, [config]);
+  const [localConfig, setLocalConfig] = useState<HierarchyConfig>(parsedConfig ?? DEFAULT_CONFIG);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
-  const cfg = config ?? localConfig;
+  const cfg = parsedConfig ?? localConfig;
 
   const notify = useCallback(
     (patch: Partial<HierarchyConfig>) => {

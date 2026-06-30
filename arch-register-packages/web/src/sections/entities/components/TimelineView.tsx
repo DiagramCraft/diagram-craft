@@ -20,7 +20,9 @@ import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { Project } from '@arch-register/api-types/projectContract';
+import { timelineViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { useEntitySnapshots } from '../../../hooks/useEntities';
+import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -566,16 +568,13 @@ const DetailPanel = ({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-type TimelineViewProps = {
-  rows: EntityRecord[];
+type TimelineViewProps = EntityBrowserRowViewProps & {
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
-  onEntityClick: (entityId: string) => void;
-  config: TimelineConfig | null;
+  config: unknown;
   onConfigChange: (cfg: TimelineConfig) => void;
   workspaceId: string;
   projects: Project[];
-  linkedEntityIds?: string[];
 };
 
 export const TimelineView = ({
@@ -592,9 +591,13 @@ export const TimelineView = ({
   const dateFields = useDateFieldOptions(schemas);
   const TODAY = useMemo(() => new Date(), []);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
+  const parsedConfig = useMemo(() => {
+    const result = timelineViewConfigSchema.safeParse(config);
+    return result.success ? result.data : null;
+  }, [config]);
 
   // Derive effective config: use external config if provided, otherwise defaults
-  const cfg: TimelineConfig = config ?? {
+  const cfg: TimelineConfig = parsedConfig ?? {
     startFieldId: dateFields[0]?.id ?? null,
     endFieldId: dateFields[1]?.id ?? dateFields[0]?.id ?? null,
     groupBy: 'owner',

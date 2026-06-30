@@ -49,6 +49,39 @@ test.describe('Saved Views API', () => {
     expect(viewsAfter.find(v => v.id === viewId)).toBeUndefined();
   });
 
+  test('project-scoped views are isolated to their project and can be listed with workspace views', async ({
+    orpc
+  }) => {
+    const project = await orpc.projects.create({
+      params: { workspace: 'default' },
+      body: { name: 'Views Project Scope Test' }
+    });
+    const projectId = project.id;
+    const created = await orpc.views.create({
+      params: { workspace: 'default' },
+      body: {
+        ...viewData,
+        scope: 'project',
+        projectId,
+        projectScope: 'project'
+      }
+    });
+
+    expect(created.scope).toBe('project');
+    expect(created.projectId).toBe(projectId);
+    expect(created.projectScope).toBe('project');
+
+    const projectViews = await orpc.views.list({
+      params: { workspace: 'default' },
+      query: { projectId, includeWorkspace: true }
+    });
+    expect(projectViews.some(view => view.id === created.id)).toBe(true);
+    expect(projectViews.some(view => view.scope === 'workspace')).toBe(true);
+
+    const workspaceViews = await orpc.views.list({ params: { workspace: 'default' } });
+    expect(workspaceViews.some(view => view.id === created.id)).toBe(false);
+  });
+
   test('returns 401 without auth', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
     await expect(

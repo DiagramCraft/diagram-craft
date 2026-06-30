@@ -1,17 +1,24 @@
 import { useRef, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import {
   TbBinaryTree2,
+  TbCalendarWeek,
   TbCopy,
+  TbColumns3,
+  TbChartRadar,
   TbDownload,
   TbFileText,
   TbFolder,
   TbFolderOpen,
   TbHome,
+  TbLayoutBoard,
+  TbLayoutGrid,
+  TbList,
   TbPencil,
   TbPlus,
   TbTrash,
@@ -38,6 +45,7 @@ import {
   useRenameProjectFolder,
   useUploadProjectFile
 } from '../../hooks/useProjectFiles';
+import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useEntities';
 import { useProject, useProjectEntities } from '../../hooks/useProjects';
 import { RenameDialog } from '../../components/RenameDialog';
 import { TreeRow } from '../../components/TreeRow';
@@ -51,8 +59,12 @@ import {
   projectDiagramRoute,
   projectMarkdownRoute
 } from '../../routes/publicObjectRoutes';
+import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
+import { toSavedViewSearch } from '../entities/components/entityBrowserState';
+import type { SavedView } from '@arch-register/api-types/viewContract';
 
 type ProjectSection = 'home' | 'entities';
+type ProjectSidebarTab = 'content' | 'views';
 
 type FolderNode = {
   path: string;
@@ -107,14 +119,21 @@ export const ProjectContentSidebar = ({
     folder?: string;
     section?: ProjectSection;
     dialog?: 'add-entity';
+    viewId?: string;
   };
-  const section: ProjectSection = search.section === 'entities' ? 'entities' : 'home';
+  const isEntitiesSection = search.section === 'entities';
+  const section: ProjectSection = isEntitiesSection ? 'entities' : 'home';
   const folderFilter = search.folder ?? null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
   const isFileRoute = activeFileId !== null;
 
   const { data: project } = useProject(workspaceSlug, projectId);
   const { data: projectEntities = [] } = useProjectEntities(workspaceSlug, projectId);
+  const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
+    projectId
+  });
+  const deleteViewMutation = useDeleteSavedView(workspaceSlug);
+  const updateViewMutation = useUpdateSavedView(workspaceSlug);
   const deleteFileMutation = useDeleteProjectFile(workspaceSlug, projectId);
   const deleteFolderMutation = useDeleteProjectFolder(workspaceSlug, projectId);
   const renameFolderMutation = useRenameProjectFolder(workspaceSlug, projectId);
@@ -126,11 +145,15 @@ export const ProjectContentSidebar = ({
   const createMarkdownMutation = useCreateProjectMarkdown(workspaceSlug, projectId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadFolder, setUploadFolder] = useState<string | null>(null);
+  const [sidebarTab, setSidebarTab] = useState<ProjectSidebarTab>('content');
 
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
+  const [viewMenu, setViewMenu] = useState<{ x: number; y: number; view: SavedView } | null>(null);
   const [renameTarget, setRenameTarget] = useState<MenuTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MenuTarget | null>(null);
+  const [renameViewTarget, setRenameViewTarget] = useState<SavedView | null>(null);
+  const [deleteViewTarget, setDeleteViewTarget] = useState<SavedView | null>(null);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
@@ -138,6 +161,8 @@ export const ProjectContentSidebar = ({
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
   const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
   const folderTree = buildFolderTree(project?.files.folders ?? []);
+  const projectViews = savedViews.filter(view => view.scope === 'project');
+
 
   const navigateToProject = (next: { section?: ProjectSection; folder?: string }) => {
     navigate(
@@ -146,6 +171,39 @@ export const ProjectContentSidebar = ({
         section: next.section ?? section,
         folder: next.folder,
         dialog: search.dialog
+      })
+    );
+  };
+
+  const getViewIcon = (mode: SavedView['viewMode']) => {
+    switch (mode) {
+      case 'table':
+        return <TbList size={12} />;
+      case 'cards':
+        return <TbLayoutGrid size={12} />;
+      case 'tree':
+        return <TbBinaryTree2 size={12} />;
+      case 'radar':
+        return <TbChartRadar size={12} />;
+      case 'timeline':
+        return <TbCalendarWeek size={12} />;
+      case 'hierarchy':
+        return <TbLayoutBoard size={12} />;
+      case 'explore':
+        return <TbColumns3 size={12} />;
+      default:
+        return <TbHome size={12} />;
+    }
+  };
+
+  const applySavedView = (view: SavedView) => {
+    navigate(
+      projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+        tab: search.tab,
+        section: 'entities',
+        folder: undefined,
+        dialog: undefined,
+        ...toSavedViewSearch(view)
       })
     );
   };
@@ -472,126 +530,174 @@ export const ProjectContentSidebar = ({
 
   return (
     <>
-      <div className={`${styles.header} ${styles.tabHeader}`} style={{ paddingLeft: 8 }}>
-        <div
-          style={{
-            minWidth: 0,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            fontSize: 12.5,
-            fontWeight: 500
-          }}
-        >
-          {project?.name ?? 'Project'}
-        </div>
-        <div className={styles.headerActions}>
-          <MenuButton.Root>
-            <MenuButton.Trigger element={
-              <button type="button" className={styles.action} title="Add">
-                <TbPlus size={13} />
-              </button>
-            } />
-            <MenuButton.Menu>
-              <Menu.Item
-                leftSlot={<TbFolderOpen size={13} />}
-                disabled={!project?.canManageFiles}
-                onClick={() => {
-                  setAddFolderParent(section === 'home' ? folderFilter : null);
-                  setAddFolderOpen(true);
-                }}
-              >
-                New folder
-              </Menu.Item>
-              <Menu.Item
-                leftSlot={<TbPlus size={13} />}
-                disabled={!project?.canManageFiles}
-                onClick={() => {
-                  setAddDiagramFolder(section === 'home' ? folderFilter : null);
-                  setAddDiagramOpen(true);
-                }}
-              >
-                New diagram
-              </Menu.Item>
-              <Menu.Item
-                leftSlot={<TbUpload size={13} />}
-                disabled={!project?.canManageFiles}
-                onClick={() => openUploadPicker(section === 'home' ? folderFilter : null)}
-              >
-                Upload file
-              </Menu.Item>
-              <Menu.Item
-                leftSlot={<TbFileText size={13} />}
-                disabled={!project?.canManageFiles}
-                onClick={() => {
-                  setAddMarkdownFolder(section === 'home' ? folderFilter : null);
-                  setAddMarkdownOpen(true);
-                }}
-              >
-                New wiki page
-              </Menu.Item>
-              <Menu.Item
-                leftSlot={<TbBinaryTree2 size={13} />}
-                disabled={!project?.canEdit}
-                onClick={openAddEntity}
-              >
-                Add entity
-              </Menu.Item>
-            </MenuButton.Menu>
-          </MenuButton.Root>
-        </div>
-      </div>
+      <SidebarHeader
+        actions={
+          sidebarTab === 'content' ? (
+            <MenuButton.Root>
+              <MenuButton.Trigger element={
+                <button type="button" className={styles.action} title="Add">
+                  <TbPlus size={13} />
+                </button>
+              } />
+              <MenuButton.Menu>
+                <Menu.Item
+                  leftSlot={<TbFolderOpen size={13} />}
+                  disabled={!project?.canManageFiles}
+                  onClick={() => {
+                    setAddFolderParent(section === 'home' ? folderFilter : null);
+                    setAddFolderOpen(true);
+                  }}
+                >
+                  New folder
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbPlus size={13} />}
+                  disabled={!project?.canManageFiles}
+                  onClick={() => {
+                    setAddDiagramFolder(section === 'home' ? folderFilter : null);
+                    setAddDiagramOpen(true);
+                  }}
+                >
+                  New diagram
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbUpload size={13} />}
+                  disabled={!project?.canManageFiles}
+                  onClick={() => openUploadPicker(section === 'home' ? folderFilter : null)}
+                >
+                  Upload file
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbFileText size={13} />}
+                  disabled={!project?.canManageFiles}
+                  onClick={() => {
+                    setAddMarkdownFolder(section === 'home' ? folderFilter : null);
+                    setAddMarkdownOpen(true);
+                  }}
+                >
+                  New wiki page
+                </Menu.Item>
+                <Menu.Item
+                  leftSlot={<TbBinaryTree2 size={13} />}
+                  disabled={!project?.canEdit}
+                  onClick={openAddEntity}
+                >
+                  Add entity
+                </Menu.Item>
+              </MenuButton.Menu>
+            </MenuButton.Root>
+          ) : null
+        }
+      >
+        <Tabs.Root value={sidebarTab} onValueChange={value => setSidebarTab(value as ProjectSidebarTab)}>
+          <Tabs.List>
+            <Tabs.Trigger value="content">Content</Tabs.Trigger>
+            <Tabs.Trigger value="views">Views</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
+      </SidebarHeader>
       <div className={styles.scroll}>
-        <TreeRow
-          testId="project-secondary-home"
-          label="Home"
-          icon={<TbHome size={13} />}
-          active={section === 'home' && !folderFilter && !isFileRoute}
-          onClick={() => navigateToProject({ section: 'home', folder: undefined })}
-        />
-        <TreeRow
-          testId="project-secondary-entities"
-          label={`Entities (${projectEntities.length})`}
-          icon={<TbBinaryTree2 size={13} />}
-          active={section === 'entities'}
-          onClick={() => navigateToProject({ section: 'entities', folder: folderFilter ?? undefined })}
-        />
-        {project?.files.rootFiles.map(file => (
-          <TreeRow
-            key={file.id}
-            icon={getFileNodeIcon(file.type)}
-            label={file.original_filename ?? file.name}
-            active={file.id === activeFileId}
-            onClick={
-              file.type === 'file'
-                ? undefined
-                : () =>
-                    navigate(
-                      file.type === 'markdown'
-                        ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-                        : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-                    )
-            }
-            onContextMenu={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMenu({
-                x: e.clientX,
-                y: e.clientY,
-                target: {
-                  type: fileMenuTargetType(file.type),
-                  file
+        {sidebarTab === 'content' ? (
+          <>
+            <TreeRow
+              testId="project-secondary-home"
+              label="Home"
+              icon={<TbHome size={13} />}
+              active={section === 'home' && !folderFilter && !isFileRoute}
+              onClick={() => navigateToProject({ section: 'home', folder: undefined })}
+            />
+            <TreeRow
+              testId="project-secondary-entities"
+              label={`Entities (${projectEntities.length})`}
+              icon={<TbBinaryTree2 size={13} />}
+              active={isEntitiesSection}
+              onClick={() =>
+                navigateToProject({ section: 'entities', folder: folderFilter ?? undefined })
+              }
+            />
+            {project?.files.rootFiles.map(file => (
+              <TreeRow
+                key={file.id}
+                icon={getFileNodeIcon(file.type)}
+                label={file.original_filename ?? file.name}
+                active={file.id === activeFileId}
+                onClick={
+                  file.type === 'file'
+                    ? undefined
+                    : () =>
+                        navigate(
+                          file.type === 'markdown'
+                            ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+                            : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+                        )
                 }
-              });
-            }}
-          />
-        ))}
-        {folderTree.map(node => renderFolderNode(node))}
+                onContextMenu={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMenu({
+                    x: e.clientX,
+                    y: e.clientY,
+                    target: {
+                      type: fileMenuTargetType(file.type),
+                      file
+                    }
+                  });
+                }}
+              />
+            ))}
+            {folderTree.map(node => renderFolderNode(node))}
+          </>
+        ) : (
+          <>
+            {projectViews.length > 0 && (
+              <>
+                <SidebarGroupLabel>Views</SidebarGroupLabel>
+                {projectViews.map(view => (
+                  <TreeRow
+                    key={view.id}
+                    icon={getViewIcon(view.viewMode)}
+                    label={view.name}
+                    active={search.viewId === view.id}
+                    onClick={() => applySavedView(view)}
+                    onContextMenu={e => {
+                      if (!project?.canEdit) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setViewMenu({ x: e.clientX, y: e.clientY, view });
+                    }}
+                  />
+                ))}
+              </>
+            )}
+            {savedViews.length === 0 && (
+              <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
+            )}
+          </>
+        )}
       </div>
 
       {menu && (
         <ContextMenu.Imperative x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
           {renderMenu(menu.target)}
+        </ContextMenu.Imperative>
+      )}
+
+      {viewMenu && (
+        <ContextMenu.Imperative x={viewMenu.x} y={viewMenu.y} onClose={() => setViewMenu(null)}>
+          <Menu.Item
+            leftSlot={<TbPencil size={13} />}
+            onClick={() => setRenameViewTarget(viewMenu.view)}
+          >
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteViewTarget(viewMenu.view)}
+          >
+            Delete
+          </Menu.Item>
         </ContextMenu.Imperative>
       )}
 
@@ -618,6 +724,38 @@ export const ProjectContentSidebar = ({
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      <DeleteConfirmationDialog
+        open={!!deleteViewTarget}
+        title="Delete view?"
+        message={
+          <>
+            The view <b>{deleteViewTarget?.name}</b> will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete view"
+        onConfirm={() => {
+          if (deleteViewTarget) {
+            deleteViewMutation.mutate(deleteViewTarget.id);
+            setDeleteViewTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteViewTarget(null)}
+      />
+
+      {renameViewTarget && (
+        <RenameDialog
+          open={true}
+          currentName={renameViewTarget.name}
+          entityType="view"
+          onRename={newName => {
+            updateViewMutation.mutate({ id: renameViewTarget.id, body: { name: newName } });
+            setRenameViewTarget(null);
+          }}
+          onCancel={() => setRenameViewTarget(null)}
+        />
+      )}
 
       <input
         ref={fileInputRef}

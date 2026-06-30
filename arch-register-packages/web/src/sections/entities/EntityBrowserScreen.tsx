@@ -15,20 +15,18 @@ import {
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
-import type { RadarConfig } from './components/RadarView';
-import type { TimelineConfig } from './components/TimelineView';
-import type { MatrixConfig } from './components/MatrixView';
-import type { HierarchyConfig } from './components/HierarchyView';
 import {
   EntityBrowser,
-  SaveViewDialog,
-  BrowserSearch,
+  SaveViewDialog
+} from './components/EntityBrowser';
+import {
+  type BrowserSearch,
+  buildSavedViewPayload,
   getFilterValue,
   parseConditionsFromSearch,
-  parseJsonConfig,
+  parseViewConfigs,
   toSavedViewConfig
-} from './components/EntityBrowser';
-import { parseExploreConfigValue } from './components/ExploreView.helpers';
+} from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/api';
 
 export const EntityBrowserScreen = () => {
@@ -48,11 +46,7 @@ export const EntityBrowserScreen = () => {
   const view = search.viewMode ?? 'table';
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
-  const radarConfig = parseJsonConfig<RadarConfig>(search.radarConfig);
-  const timelineConfig = parseJsonConfig<TimelineConfig>(search.timelineConfig);
-  const matrixConfig = parseJsonConfig<MatrixConfig>(search.matrixConfig);
-  const hierarchyConfig = parseJsonConfig<HierarchyConfig>(search.hierarchyConfig);
-  const exploreConfig = parseExploreConfigValue(search.exploreConfig);
+  const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
   const activeSavedView = useMemo(
     () => savedViews.find(savedView => savedView.id === search.viewId) ?? null,
     [savedViews, search.viewId]
@@ -61,29 +55,27 @@ export const EntityBrowserScreen = () => {
     ? (schemas.find(schema => schema.id === typeFilter)?.name ?? 'Entities')
     : 'All entities';
 
-  const handleSaveView = async (name: string, description: string) => {
+  const handleSaveView = async (
+    name: string,
+    description: string,
+    scope: 'workspace' | 'project'
+  ) => {
     try {
-      await createSavedViewMutation.mutateAsync({
-        name,
-        description: description || null,
-        viewMode: view as BrowserView,
-        filters: {
-          schemaId: typeFilter,
-          status: statusFilter,
-          owner: ownerFilter,
+      await createSavedViewMutation.mutateAsync(
+        buildSavedViewPayload({
+          scope,
+          name,
+          description,
+          view: view as BrowserView,
+          typeFilter,
+          statusFilter,
+          ownerFilter,
           q,
           sort,
-          conditions
-        },
-        config: toSavedViewConfig(
-          view as BrowserView,
-          radarConfig,
-          timelineConfig,
-          matrixConfig,
-          hierarchyConfig,
-          exploreConfig
-        )
-      });
+          conditions,
+          viewConfigs
+        })
+      );
     } catch {
       // Error handling is done by TanStack Query
     }
@@ -95,6 +87,7 @@ export const EntityBrowserScreen = () => {
       await updateSavedViewMutation.mutateAsync({
         id: activeSavedView.id,
         body: {
+          projectScope: activeSavedView.projectScope,
           viewMode: view as BrowserView,
           filters: {
             schemaId: typeFilter,
@@ -104,14 +97,7 @@ export const EntityBrowserScreen = () => {
             sort,
             conditions
           },
-          config: toSavedViewConfig(
-            view as BrowserView,
-            radarConfig,
-            timelineConfig,
-            matrixConfig,
-            hierarchyConfig,
-            exploreConfig
-          )
+          config: toSavedViewConfig(view as BrowserView, viewConfigs)
         }
       });
     } catch {
@@ -120,19 +106,15 @@ export const EntityBrowserScreen = () => {
   }, [
     activeSavedView,
     conditions,
-    exploreConfig,
-    hierarchyConfig,
-    matrixConfig,
     ownerFilter,
     permissions.canManageViews,
     q,
-    radarConfig,
     sort,
     statusFilter,
-    timelineConfig,
     typeFilter,
     updateSavedViewMutation,
-    view
+    view,
+    viewConfigs
   ]);
 
   const handleExport = useCallback(async () => {
@@ -239,7 +221,11 @@ export const EntityBrowserScreen = () => {
 
       <EntityBrowser onCountChange={setCount} />
 
-      <SaveViewDialog open={isSavingView} onClose={() => setIsSavingView(false)} onSave={handleSaveView} />
+      <SaveViewDialog
+        open={isSavingView}
+        onClose={() => setIsSavingView(false)}
+        onSave={handleSaveView}
+      />
     </div>
   );
 };

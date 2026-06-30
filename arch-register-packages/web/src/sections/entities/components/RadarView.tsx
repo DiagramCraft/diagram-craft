@@ -7,10 +7,11 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { FormSection } from '@diagram-craft/app-components/FormSection';
 import { Select } from '@diagram-craft/app-components/Select';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { useEntities } from '../../../hooks/useEntities';
+import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -234,26 +235,21 @@ export const RadarView = ({
   rows,
   linkedEntityIds,
   onEntityClick,
-  owner,
-  lifecycle,
-  q: qProp,
   config: configProp,
   onConfigChange
-}: {
-  rows?: EntityRecord[];
-  linkedEntityIds?: string[];
-  onEntityClick: (entityId: string) => void;
-  owner?: string | null;
-  lifecycle?: string | null;
-  q?: string;
-  config?: RadarConfig | null;
+}: EntityBrowserRowViewProps & {
+  config?: unknown;
   onConfigChange?: (config: RadarConfig) => void;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() =>
     loadConfig(workspaceSlug)
   );
-  const config = configProp ?? internalConfig;
+  const parsedConfig = useMemo(() => {
+    const result = radarViewConfigSchema.safeParse(configProp);
+    return result.success ? result.data : null;
+  }, [configProp]);
+  const config = parsedConfig ?? internalConfig;
 
   const [showSettings, setShowSettings] = useState(false);
   const [q, setQ] = useState('');
@@ -264,14 +260,7 @@ export const RadarView = ({
   const [tipPos, setTipPos] = useState({ x: 0, y: 0 });
   const wrapRef = useRef<HTMLDivElement>(null);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
-
-  const { data: fetchedEntities = [] } = useEntities(workspaceSlug, {
-    schemaId: config?.schemaId ?? null,
-    owner: owner ?? null,
-    lifecycle: lifecycle ?? null,
-    view: 'full'
-  });
-  const entities = rows ?? fetchedEntities;
+  const entities = rows;
 
   const schema = config ? (schemas.find(s => s.id === config.schemaId) ?? null) : null;
 
@@ -304,15 +293,14 @@ export const RadarView = ({
     let xs = allBlips;
     if (quadFilter) xs = xs.filter(b => b.quadrantValue === quadFilter);
     if (ringFilter) xs = xs.filter(b => b.ringValue === ringFilter);
-    const search = [q, qProp].filter(Boolean).join(' ');
-    if (search)
+    if (q)
       xs = xs.filter(
         b =>
-          b.name.toLowerCase().includes(search.toLowerCase()) ||
-          b.description.toLowerCase().includes(search.toLowerCase())
+          b.name.toLowerCase().includes(q.toLowerCase()) ||
+          b.description.toLowerCase().includes(q.toLowerCase())
       );
     return xs;
-  }, [allBlips, quadFilter, ringFilter, q, qProp]);
+  }, [allBlips, quadFilter, ringFilter, q]);
 
   const activeId = pinned ?? hovered;
   const activeBlip = useMemo(
