@@ -1,0 +1,67 @@
+---
+sidebar_position: 4
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Basic Shapes and Connectors
+
+The left sidebar is your main entry point for building diagrams. It gives you access to the shape library, including both general-purpose shapes and richer stencil packages.
+
+<ThemedImage
+  alt="Shape picker and stencil library in Diagram Craft"
+  sources={{
+    light: require('/img/diagram-craft/getting-started/shape-palette-overview-light.png').default,
+    dark: require('/img/diagram-craft/getting-started/shape-palette-overview-dark.png').default,
+  }}
+/>
+
+## Shapes
+
+Shapes are the visual building blocks of the diagram. For a first diagram, start with the default package:
+
+- rectangles and rounded rectangles for general boxes
+- circles, diamonds, and polygons for simple flow structures
+- cylinders or other semantic shapes when you want clearer meaning
+
+Drag a shape from the picker onto the canvas to create a new node.
+
+## Connectors
+
+Connectors describe relationships or flow between shapes. In practice, they are the lines and arrows that link one node to another.
+
+When you create a connector:
+
+- it attaches to **anchor points** on the source and target shapes
+- it can use different routing styles such as straight or orthogonal
+- it can show arrowheads or other edge decorations to clarify direction
+
+For simple diagrams, use clear directional arrows and avoid unnecessary crossings.
+
+## Stencil Packages
+
+The default package is enough for early diagrams, but Diagram Craft can also load richer stencil sets for more specific notation. Use them when you want domain language instead of generic boxes and arrows.
+
+Examples include:
+
+- software architecture diagrams
+- process or workflow diagrams
+- UML-style modeling
+- data modeling
+
+You can stay with the default package while learning the editor, then add more specialized stencil packages later.
+
+## Good First Habits
+
+- Pick a small set of shapes and reuse them consistently.
+- Use connectors to show relationships, not decoration.
+- Keep labels short so the diagram remains scannable.
+- Add notation-specific stencils only when they improve clarity.
+
+## Related Reading
+
+- [Shapes and Elements](../use/core-diagramming/shapes-elements)
+- [Connectors and Edges](../use/core-diagramming/connectors-edges)
+- [Layers](../use/organization/layers)
+
+Next: [Styling Basics](styling-basics).
