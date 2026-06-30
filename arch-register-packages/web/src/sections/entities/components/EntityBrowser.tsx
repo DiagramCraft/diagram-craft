@@ -30,7 +30,7 @@ import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
 import { useEntityBrowserPagination } from './useEntityBrowserPagination';
 import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
-import styles from '../EntityBrowserScreen.module.css';
+import styles from './EntityBrowser.module.css';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;

@@ -17,76 +17,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Toolbar */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-
-  button {
-    height: 24px !important;
-    border-radius: var(--r) !important;
-
-    &:not([data-variant="primary"]) {
-      background: var(--cmp-bg) !important;
-      border: 1px solid var(--panel-border) !important;
-    }
-  }
-}
-
-.searchInline {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 26px;
-  max-width: 280px;
-  min-width: 260px;
-  padding: 0 10px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  color: var(--base-fg-more-dim);
-}
-
-.searchInline input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--base-fg);
-  font-size: 12px;
-  width: 100%;
-}
-
-.searchInline input::placeholder {
-  color: var(--cmp-fg-disabled);
-}
-
-.filterCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--base-bg-hover);
-  color: var(--base-fg);
-  font-size: 9px;
-  font-weight: bold;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 10px;
-  margin-left: 6px;
-  border: 1px solid var(--panel-border);
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 0 0 0;
-}
-
 .dateFilters {
   display: inline-flex;
   align-items: center;
@@ -532,27 +462,4 @@
   color: var(--base-fg-more-dim);
 }
 
-/* Empty state */
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  gap: 8px;
-  color: var(--base-fg-more-dim);
-}
 
-.emptyTitle {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--base-fg-dim);
-}
-
-/* Filter popup override — removes default popover padding and enforces correct width */
-.filterPopover {
-  padding: 0 !important;
-  width: auto !important;
-  border-radius: var(--r-md) !important;
-  overflow: hidden;
-}
