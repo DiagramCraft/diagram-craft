@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useEntities, useEntityCount, useEntityFacets, useEntityTree } from '../../../hooks/useEntities';
+import { useEntities, useEntityCount, useEntityFacets } from '../../../hooks/useEntities';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { BrowserEntityRecord } from './entityBrowserState';
@@ -88,15 +88,6 @@ export const useEntityBrowserData = ({
     },
     { enabled: !!workspaceId }
   );
-  const { data: treeData } = useEntityTree(workspaceId, {
-    schemaId: typeFilter,
-    owner: ownerFilter,
-    lifecycle: statusFilter,
-    q,
-    projectId: projectId ?? undefined,
-    projectScope: projectId ? projectScope : undefined
-  });
-
   const schemaMap = useMemo(() => {
     const map = new Map<string, { schema: EntitySchema; index: number }>();
     schemas.forEach((schema, index) => map.set(schema.id, { schema, index }));
@@ -202,8 +193,6 @@ export const useEntityBrowserData = ({
     owners,
     schemaMap,
     sortOptions,
-    totalCount,
-    treeEdges: treeData?.edges ?? [],
-    treeNodes: treeData?.nodes ?? []
+    totalCount
   };
 };

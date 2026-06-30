@@ -16,7 +16,7 @@ import { DropdownMenu, type MenuItem } from '../../../components/DropdownMenu';
 import { StatusChip } from '../../../components/StatusChip';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { TreeEdge, TreeNode, WorkspaceTeam } from '../../../lib/api';
+import type { TreeNode, WorkspaceTeam } from '../../../lib/api';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -26,6 +26,7 @@ import type {
   ProjectLinkState
 } from './entityBrowserState';
 import { formatDateValue } from './entityBrowserState';
+import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import styles from '../EntityBrowserScreen.module.css';
 
 type BaseViewProps = {
@@ -48,8 +49,13 @@ type TableViewProps = BaseViewProps & {
 };
 
 export type TreeViewProps = {
-  nodes: Array<TreeNode & { _projectLink?: ProjectLinkState }>;
-  edges: TreeEdge[];
+  workspaceId: string;
+  projectId?: string;
+  projectScope: 'project' | 'all';
+  q: string;
+  typeFilter: string | null;
+  ownerFilter: string | null;
+  statusFilter: string | null;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
@@ -469,8 +475,13 @@ export const CardsView = ({
 type TreeItem = (TreeNode & { _projectLink?: ProjectLinkState }) & { children: TreeItem[] };
 
 export const TreeView = ({
-  nodes,
-  edges,
+  workspaceId,
+  projectId,
+  projectScope,
+  q,
+  typeFilter,
+  ownerFilter,
+  statusFilter,
   schemaMap,
   onEntityClick,
   onDelete,
@@ -478,6 +489,16 @@ export const TreeView = ({
   lifecycleStates,
   projectContext
 }: TreeViewProps) => {
+  const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
+    workspaceId,
+    projectId,
+    projectScope,
+    q,
+    typeFilter,
+    ownerFilter,
+    statusFilter
+  });
+
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();
     for (const node of nodes) nodeMap.set(node._uid, { ...node, children: [] });
@@ -501,7 +522,14 @@ export const TreeView = ({
       .sort((a, b) => (a._name || a._slug).localeCompare(b._name || b._slug));
   }, [nodes, edges]);
 
-  if (nodes.length === 0) return null;
+  if (nodes.length === 0) {
+    return (
+      <div className={styles.empty}>
+        <div className={styles.emptyTitle}>No entities found</div>
+        <div>Try adjusting your search or filters.</div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.tableWrap}>

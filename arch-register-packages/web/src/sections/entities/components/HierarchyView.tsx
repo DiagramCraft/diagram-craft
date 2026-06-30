@@ -4,9 +4,10 @@ import { TbChevronDown } from 'react-icons/tb';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { TreeNode, TreeEdge } from '../../../lib/api';
+import type { TreeNode } from '../../../lib/api';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { hierarchyViewConfigSchema } from '@arch-register/api-types/viewContract';
+import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -21,8 +22,13 @@ export type HierarchyConfig = {
 };
 
 type HierarchyViewProps = {
-  nodes: TreeNode[];
-  edges: TreeEdge[];
+  workspaceId: string;
+  projectId?: string;
+  projectScope: 'project' | 'all';
+  q: string;
+  typeFilter: string | null;
+  ownerFilter: string | null;
+  statusFilter: string | null;
   onEntityClick: (entityId: string) => void;
   config: unknown;
   onConfigChange: (cfg: HierarchyConfig) => void;
@@ -261,14 +267,28 @@ const ColsSelect = ({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export const HierarchyView = ({
-  nodes,
-  edges,
+  workspaceId,
+  projectId,
+  projectScope,
+  q,
+  typeFilter,
+  ownerFilter,
+  statusFilter,
   onEntityClick,
   config,
   onConfigChange,
   linkedEntityIds
 }: HierarchyViewProps) => {
   const { schemas } = useWorkspaceContext();
+  const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
+    workspaceId,
+    projectId,
+    projectScope,
+    q,
+    typeFilter,
+    ownerFilter,
+    statusFilter
+  });
   const parsedConfig = useMemo(() => {
     const result = hierarchyViewConfigSchema.safeParse(config);
     return result.success ? normalizeHierarchyConfig(result.data) : null;

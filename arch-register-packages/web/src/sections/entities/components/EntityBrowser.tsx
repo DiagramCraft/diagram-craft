@@ -178,9 +178,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     filteredCount,
     owners,
     schemaMap,
-    sortOptions,
-    treeEdges,
-    treeNodes
+    sortOptions
   } = useEntityBrowserData({
     workspaceId,
     projectId,
@@ -330,8 +328,13 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
       </div>
       {view === 'hierarchy' ? (
         <HierarchyView
-          nodes={treeNodes}
-          edges={treeEdges}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          projectScope={projectScope}
+          q={q}
+          typeFilter={typeFilter}
+          ownerFilter={ownerFilter}
+          statusFilter={statusFilter}
           onEntityClick={navigateToEntity}
           config={activeViewConfig}
           onConfigChange={setActiveViewConfig}
@@ -375,23 +378,21 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
           onConfigChange={setActiveViewConfig}
         />
       ) : view === 'tree' ? (
-        treeNodes.length === 0 ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyTitle}>No entities found</div>
-            <div>Try adjusting your search or filters.</div>
-          </div>
-        ) : (
-          <TreeView
-            nodes={treeNodes}
-            edges={treeEdges}
-            schemaMap={schemaMap}
-            onEntityClick={navigateToEntity}
-            onDelete={handleDeleteEntity}
-            onClone={handleCloneEntity}
-            lifecycleStates={lifecycleStates}
-            projectContext={projectContext}
-          />
-        )
+        <TreeView
+          workspaceId={workspaceId}
+          projectId={projectId}
+          projectScope={projectScope}
+          q={q}
+          typeFilter={typeFilter}
+          ownerFilter={ownerFilter}
+          statusFilter={statusFilter}
+          schemaMap={schemaMap}
+          onEntityClick={navigateToEntity}
+          onDelete={handleDeleteEntity}
+          onClone={handleCloneEntity}
+          lifecycleStates={lifecycleStates}
+          projectContext={projectContext}
+        />
       ) : filtered.length === 0 ? (
         <div className={styles.empty}>
           <div className={styles.emptyTitle}>No entities found</div>
