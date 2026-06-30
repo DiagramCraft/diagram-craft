@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
@@ -145,9 +145,7 @@ export const ProjectContentSidebar = ({
   const createMarkdownMutation = useCreateProjectMarkdown(workspaceSlug, projectId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadFolder, setUploadFolder] = useState<string | null>(null);
-  const [sidebarTab, setSidebarTab] = useState<ProjectSidebarTab>(
-    isEntitiesSection ? 'views' : 'content'
-  );
+  const [sidebarTab, setSidebarTab] = useState<ProjectSidebarTab>('content');
 
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
@@ -165,9 +163,6 @@ export const ProjectContentSidebar = ({
   const folderTree = buildFolderTree(project?.files.folders ?? []);
   const projectViews = savedViews.filter(view => view.scope === 'project');
 
-  useEffect(() => {
-    setSidebarTab(isEntitiesSection ? 'views' : 'content');
-  }, [isEntitiesSection]);
 
   const navigateToProject = (next: { section?: ProjectSection; folder?: string }) => {
     navigate(
