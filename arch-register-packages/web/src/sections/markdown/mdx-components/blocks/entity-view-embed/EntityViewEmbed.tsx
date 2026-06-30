@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useEntities, useSavedViews } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
@@ -67,8 +67,10 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
     [schemas]
   );
 
-  const onEntityClick = (publicId: string) =>
-    navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(publicId)));
+  const onEntityClick = useCallback(
+    (publicId: string) => navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(publicId))),
+    [navigate, workspaceSlug]
+  );
 
   const isLoading = viewsLoading || (!isTreeBased && entitiesLoading);
 
@@ -80,7 +82,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
     );
   }
 
-  if (viewsLoading) {
+  if (isLoading) {
     return (
       <div className={styles.container}>
         {Array.from({ length: 3 }).map((_, i) => (
@@ -94,16 +96,6 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
     return (
       <div className={styles.container}>
         <p className={styles.error}>Saved view not found or was deleted.</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className={styles.container}>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className={styles.skeleton} />
-        ))}
       </div>
     );
   }

@@ -8,6 +8,7 @@ import { useSavedViews } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import type { EntityViewEmbedSlateElement } from './types';
+import styles from './EntityViewEmbedDialog.module.css';
 
 export const EntityViewEmbedDialog = ({
   element,
@@ -31,6 +32,7 @@ export const EntityViewEmbedDialog = ({
     workspaceSlug,
     projectId ? { projectId, includeWorkspace: true } : undefined
   );
+  // Only admin-flagged views can be embedded in wiki pages (prevents personal/draft views from appearing)
   const adminViews = savedViews.filter(v => v.isAdminView);
 
   const canSave = !!viewId;
@@ -74,7 +76,7 @@ export const EntityViewEmbedDialog = ({
       <DialogContent>
         <DialogSection label="View">
           {adminViews.length === 0 ? (
-            <p className="empty">No saved views available. Create an admin view in the entity browser first.</p>
+            <p className={styles.empty}>No saved views available. Create an admin view in the entity browser first.</p>
           ) : (
             <Select.Root value={viewId} onChange={value => setViewId(value ?? '')}>
               {adminViews.map(view => (
