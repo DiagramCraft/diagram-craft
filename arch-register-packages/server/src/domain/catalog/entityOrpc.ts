@@ -39,6 +39,7 @@ import {
   getEntity,
   getEntityRelations,
   getBatchEntityRelations,
+  getEntityDependents,
   createEntity,
   updateEntity,
   cloneEntity,
@@ -179,6 +180,18 @@ export const workspaceEntityORPCRouter = entityRouter.router({
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         return await getBatchEntityRelations(context.db, workspace, input.body.ids, authCtx);
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    dependents: entityRouter.entities.dependents.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        const transitive = input.query?.transitive === 'true';
+        const maxDepth = input.query?.maxDepth ? parseInt(input.query.maxDepth, 10) : undefined;
+        return await getEntityDependents(context.db, workspace, input.params.id, { transitive, maxDepth }, authCtx);
       } catch (error) {
         return toORPCError(error);
       }

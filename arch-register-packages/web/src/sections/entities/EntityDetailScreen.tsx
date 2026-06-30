@@ -69,8 +69,9 @@ import { EntityTimelineTab } from './EntityTimelineTab';
 import { Title } from '../../components/Title';
 import { DiagramMetadataPopover } from '../../components/DiagramMetadataPopover';
 import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
+import { EntityDependentsTab } from './components/EntityDependentsTab';
 
-type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'changes' | 'timeline';
+type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'dependents' | 'changes' | 'timeline';
 
 type Relation = {
   entityId: string;
@@ -524,6 +525,9 @@ export const EntityDetailScreen = () => {
               <Tabs.Trigger value="graph">Graph</Tabs.Trigger>
               <Tabs.Trigger value="relations">
                 Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
+              </Tabs.Trigger>
+              <Tabs.Trigger value="dependents">
+                Dependents{incoming.length > 0 ? ` (${incoming.length})` : ''}
               </Tabs.Trigger>
               {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
               <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
@@ -985,6 +989,17 @@ export const EntityDetailScreen = () => {
             </>
           )}
         </div>
+      )}
+
+      {/* Dependents (impact analysis) */}
+      {!contentFolder && tab === 'dependents' && (
+        <EntityDependentsTab
+          workspaceId={workspaceId}
+          entityId={entityId}
+          schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          onEntityClick={navigateToEntity}
+        />
       )}
 
       {/* Change history */}

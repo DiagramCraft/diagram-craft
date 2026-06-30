@@ -17,6 +17,7 @@ import {
   filterEntities,
   matchesFilterCondition,
   buildEntityRelations,
+  buildEntityDependents,
   resolveCreateOwner,
   getEntityParentsFromPayload,
   getLifecycleValues,
@@ -26,6 +27,7 @@ import {
 import { formatPublicId } from '../../utils/publicIds';
 import { ENTITY_DEFAULTS } from '../../constants';
 import {
+  EntityDependents,
   EntityFacets,
   EntityRecord,
   EntityRelations,
@@ -487,6 +489,36 @@ export const getBatchEntityRelations = async (
     return result;
   } catch (error) {
     return handleError(error, 'Failed to retrieve batch entity relations');
+  }
+};
+
+export const getEntityDependents = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  options: { transitive: boolean; maxDepth?: number },
+  authCtx: AuthorizationContext | null
+): Promise<EntityDependents> => {
+  try {
+    const [entity, schemas, entitiesRaw] = await Promise.all([
+      db.catalog.getEntity(workspace, id),
+      db.catalog.listSchemas(workspace),
+      listAllCatalogEntities(db, workspace)
+    ]);
+    httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
+    if (authCtx)
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to view this entity'
+      );
+    const entities = authCtx
+      ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
+      : entitiesRaw;
+    return buildEntityDependents(entity.id, entities, schemas, options);
+  } catch (error) {
+    return handleError(error, 'Failed to retrieve entity dependents');
   }
 };
 

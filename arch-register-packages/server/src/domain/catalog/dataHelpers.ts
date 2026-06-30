@@ -358,6 +358,97 @@ export const buildEntityRelations = (
   return { outgoing, incoming };
 };
 
+export type DependentRecord = RelationRecord & {
+  schemaName: string;
+  lifecycleState: string | null;
+  depth: number;
+  viaPath: Array<{ entityId: string; entityName: string }>;
+};
+
+export type DependentsResponse = {
+  dependents: DependentRecord[];
+  truncated: boolean;
+};
+
+const MAX_DEPENDENTS_NODES = 500;
+
+export const buildEntityDependents = (
+  entityId: string,
+  entities: Entity[],
+  schemas: InternalEntitySchema[],
+  options: { transitive: boolean; maxDepth?: number }
+): DependentsResponse => {
+  const maxDepth = options.maxDepth ?? 5;
+  const schemaMap = new Map(schemas.map(s => [s.id, s]));
+  const entityMap = new Map(entities.map(e => [e.id, e]));
+
+  // Build inverse index: for each entity id, which entities reference it
+  const incomingIndex = new Map<string, Array<{ entity: Entity; fieldName: string; fieldPredicate?: string; kind: 'reference' | 'containment' }>>();
+  for (const entity of entities) {
+    const schema = schemaMap.get(entity.schema_id);
+    if (!schema) continue;
+    for (const field of relationFields(schema.fields)) {
+      for (const refId of decodeRefs(entity.data[field.id])) {
+        if (!incomingIndex.has(refId)) incomingIndex.set(refId, []);
+        incomingIndex.get(refId)!.push({ entity, fieldName: field.name, fieldPredicate: field.predicate, kind: field.type });
+      }
+    }
+  }
+
+  const visited = new Set<string>([entityId]);
+  const dependents: DependentRecord[] = [];
+  let truncated = false;
+
+  // BFS queue entries: [id, depth, viaPath]
+  type QueueEntry = [string, number, Array<{ entityId: string; entityName: string }>];
+  const queue: QueueEntry[] = [[entityId, 0, []]];
+
+  while (queue.length > 0) {
+    const [currentId, depth, viaPath] = queue.shift()!;
+    if (depth >= maxDepth) {
+      truncated = true;
+      continue;
+    }
+
+    for (const { entity, fieldName, fieldPredicate, kind } of incomingIndex.get(currentId) ?? []) {
+      if (visited.has(entity.id)) continue;
+      visited.add(entity.id);
+
+      if (dependents.length >= MAX_DEPENDENTS_NODES) {
+        truncated = true;
+        continue;
+      }
+
+      const schema = schemaMap.get(entity.schema_id);
+      dependents.push({
+        entityId: entity.id,
+        publicId: entity.public_id ?? entity.id,
+        entitySlug: entity.slug ?? entity.id,
+        entityName: entity.name || entity.slug || entity.id,
+        entitySchemaId: entity.schema_id,
+        schemaName: schema?.name ?? entity.schema_id,
+        lifecycleState: entity.lifecycle ?? null,
+        fieldName,
+        fieldPredicate,
+        kind,
+        depth: depth + 1,
+        viaPath
+      });
+
+      if (options.transitive) {
+        const currentEntity = entityMap.get(currentId);
+        queue.push([
+          entity.id,
+          depth + 1,
+          [...viaPath, { entityId: currentId, entityName: currentEntity?.name || currentEntity?.slug || currentId }]
+        ]);
+      }
+    }
+  }
+
+  return { dependents, truncated };
+};
+
 export const buildEntityGrantInputs = (
   workspace: string,
   entityId: string,

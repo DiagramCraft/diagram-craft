@@ -24,6 +24,8 @@ export const entityKeys = {
     [...entityKeys.all, 'relations', workspaceId, entityId] as const,
   batchRelations: (workspaceId: string, ids: string[]) =>
     [...entityKeys.all, 'batch-relations', workspaceId, ids] as const,
+  dependents: (workspaceId: string, entityId: string, transitive: boolean) =>
+    [...entityKeys.all, 'dependents', workspaceId, entityId, transitive] as const,
   tree: (workspaceId: string, filters: Record<string, unknown>) =>
     [...entityKeys.all, 'tree', workspaceId, filters] as const,
 };
