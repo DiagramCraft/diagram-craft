@@ -142,13 +142,22 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           httpAssert.present(project, { status: 404, message: `Project '${input.query.projectId}' not found` });
           requireProjectAccess(authCtx, project.owner);
         }
+        let conditions: FilterCondition[] = [];
+        if (input.query.conditions) {
+          try {
+            conditions = JSON.parse(input.query.conditions) as FilterCondition[];
+          } catch {
+            conditions = [];
+          }
+        }
         return await getEntityTree(context.db, workspace, authCtx, {
           schemaId: input.query._schemaId ?? null,
           owner: input.query.owner ?? null,
           lifecycle: input.query.lifecycle ?? null,
           q: input.query.q ?? '',
           projectId: input.query.projectId ?? null,
-          projectScope: input.query.projectScope ?? 'all'
+          projectScope: input.query.projectScope ?? 'all',
+          conditions
         });
       } catch (error) {
         return toORPCError(error);
