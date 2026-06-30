@@ -39,6 +39,7 @@ import { getFileNodeIcon } from '../../lib/contentNode';
 import { newid } from '@diagram-craft/utils/id';
 import { orpcClient } from '../../lib/orpcClient';
 import styles from './MarkdownEditorScreen.module.css';
+import { MdxContext } from './MdxContext';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
 import { extractFirstHeadingTitle } from './preview/markdownTitle';
 import { MdxPreview } from './preview/MdxPreview';
@@ -789,6 +790,7 @@ export const MarkdownEditorScreen = () => {
   );
 
   return (
+    <MdxContext.Provider value={{ projectId }}>
     <MarkdownDiagramSessionContext.Provider
       value={{ sessionId: sessionIdRef.current, trackCreatedDiagram }}
     >
@@ -1039,5 +1041,6 @@ export const MarkdownEditorScreen = () => {
       />
     </div>
     </MarkdownDiagramSessionContext.Provider>
+    </MdxContext.Provider>
   );
 };
