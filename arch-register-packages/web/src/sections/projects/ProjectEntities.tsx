@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import {
   TbCalendarEvent,
@@ -8,8 +8,10 @@ import {
   TbCalendar,
   TbCheck,
   TbDots,
+  TbCopy,
   TbTrash
 } from 'react-icons/tb';
+import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type {
   ProjectDetail as ProjectDetailData,
   ProjectEntity
@@ -25,7 +27,22 @@ import styles from './ProjectDetailScreen.module.css';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { EntityBrowser } from '../entities/components/EntityBrowser';
+import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useEntities';
+import {
+  BrowserSearch,
+  buildSavedViewPayload,
+  EntityBrowser,
+  getFilterValue,
+  parseConditionsFromSearch,
+  parseJsonConfig,
+  SaveViewDialog
+} from '../entities/components/EntityBrowser';
+import type { RadarConfig } from '../entities/components/RadarView';
+import type { TimelineConfig } from '../entities/components/TimelineView';
+import type { MatrixConfig } from '../entities/components/MatrixView';
+import type { HierarchyConfig } from '../entities/components/HierarchyView';
+import { parseExploreConfigValue } from '../entities/components/ExploreView.helpers';
+import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
 
 type ViewTab = 'entities' | 'project-entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
@@ -67,10 +84,151 @@ export const ProjectEntities = ({
 }) => {
   const [activeTab, setActiveTab] = useState<ViewTab>('entities');
   const [groupBy, setGroupBy] = useState<GroupBy>('entity');
+  const [isSavingView, setIsSavingView] = useState(false);
 
   const pendingCount = futureSnapshots.length;
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
+  const search = useSearch({ strict: false }) as BrowserSearch;
+  const { data: savedViews = [], isFetched: savedViewsFetched } = useSavedViews(workspaceSlug, {
+    projectId: project.id
+  });
+  const createSavedViewMutation = useCreateSavedView(workspaceSlug);
+  const updateSavedViewMutation = useUpdateSavedView(workspaceSlug);
+  const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
+  const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
+  const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
+  const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
+  const view = (search.viewMode ?? 'table') as BrowserView;
+  const q = search.q ?? '';
+  const sort = search.sort ?? 'name';
+  const projectScope = search.projectScope ?? 'project';
+  const radarConfig = parseJsonConfig<RadarConfig>(search.radarConfig);
+  const timelineConfig = parseJsonConfig<TimelineConfig>(search.timelineConfig);
+  const matrixConfig = parseJsonConfig<MatrixConfig>(search.matrixConfig);
+  const hierarchyConfig = parseJsonConfig<HierarchyConfig>(search.hierarchyConfig);
+  const exploreConfig = parseExploreConfigValue(search.exploreConfig);
+  const activeSavedView = useMemo(
+    () => savedViews.find(savedView => savedView.id === search.viewId) ?? null,
+    [savedViews, search.viewId]
+  );
+  useEffect(() => {
+    if (!savedViewsFetched || search.viewId == null || activeSavedView != null) return;
+    navigate({
+      ...projectDetailRoute(workspaceSlug, asProjectPublicId(project.id)),
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        viewId: undefined
+      }),
+      replace: true
+    });
+  }, [activeSavedView, navigate, project.id, savedViewsFetched, search.viewId, workspaceSlug]);
+
+  const handleSaveView = async (
+    name: string,
+    description: string,
+    _scope: 'workspace' | 'project'
+  ) => {
+    try {
+      await createSavedViewMutation.mutateAsync(
+        buildSavedViewPayload({
+          scope: 'project',
+          projectId: project.id,
+          projectScope,
+          name,
+          description,
+          view,
+          typeFilter,
+          statusFilter,
+          ownerFilter,
+          q,
+          sort,
+          conditions,
+          radarConfig,
+          timelineConfig,
+          matrixConfig,
+          hierarchyConfig,
+          exploreConfig
+        })
+      );
+    } catch {
+      // Error handling is done by TanStack Query
+    }
+  };
+
+  const handleUpdateSavedView = async () => {
+    if (activeSavedView == null) return;
+    if (activeSavedView.scope !== 'project' || !project.canEdit) return;
+
+    try {
+      await updateSavedViewMutation.mutateAsync({
+        id: activeSavedView.id,
+        body: {
+          projectScope: activeSavedView.scope === 'project' ? projectScope : null,
+          viewMode: view,
+          filters: {
+            schemaId: typeFilter,
+            status: statusFilter,
+            owner: ownerFilter,
+            q,
+            sort,
+            conditions
+          },
+          config: buildSavedViewPayload({
+            scope: activeSavedView.scope,
+            projectId: project.id,
+            projectScope,
+            name: activeSavedView.name,
+            description: activeSavedView.description ?? '',
+            view,
+            typeFilter,
+            statusFilter,
+            ownerFilter,
+            q,
+            sort,
+            conditions,
+            radarConfig,
+            timelineConfig,
+            matrixConfig,
+            hierarchyConfig,
+            exploreConfig
+          }).config
+        }
+      });
+    } catch {
+      // Error handling is done by TanStack Query
+    }
+  };
+
+  const viewMenuItems = useMemo<MenuItem[]>(() => {
+    const items: MenuItem[] = [];
+
+    const hasActiveProjectView =
+      activeSavedView != null && activeSavedView.scope === 'project' && project.canEdit;
+    const canUseViewActions = activeTab === 'entities' && hasActiveProjectView;
+
+    items.push({
+      label: activeSavedView != null ? `Save View (${activeSavedView.name})` : 'Save View',
+      icon: <TbCheck size={14} />,
+      disabled: !canUseViewActions,
+      onClick: handleUpdateSavedView
+    });
+
+    items.push({
+      label: 'Save View As...',
+      icon: <TbCopy size={14} />,
+      disabled: !canUseViewActions,
+      onClick: () => setIsSavingView(true)
+    });
+
+    return items;
+  }, [
+    activeTab,
+    activeSavedView,
+    handleUpdateSavedView,
+    project.canEdit,
+    activeSavedView?.name
+  ]);
 
   return (
     <ProjectScreenLayout
@@ -83,6 +241,21 @@ export const ProjectEntities = ({
         { label: project.name, onClick: onNavigateProject }
       ]}
       title="Project Entities"
+      actions={
+        project.canEdit ? (
+          <Button variant="primary" icon={<TbPlus size={12} />} onClick={onAddEntity}>
+            Link
+          </Button>
+        ) : undefined
+      }
+      menu={
+        viewMenuItems.length > 0 ? (
+          <DropdownMenu
+            trigger={<Button aria-label="Project entity view actions" icon={<TbDots size={14} />} />}
+            items={viewMenuItems}
+          />
+        ) : undefined
+      }
       meta={
         <>
           <ProjectMetaItem
@@ -128,13 +301,6 @@ export const ProjectEntities = ({
               Timeline
             </button>
           </div>
-          {activeTab === 'project-entities' && project.canEdit && (
-            <div className={styles.tabBarRight}>
-              <Button icon={<TbPlus size={12} />} onClick={onAddEntity} size={'sm'}>
-                Link
-              </Button>
-            </div>
-          )}
           {activeTab === 'future-changes' && pendingCount > 0 && (
             <div className={styles.tabBarRight}>
               <button
@@ -206,6 +372,12 @@ export const ProjectEntities = ({
           />
         </div>
       )}
+      <SaveViewDialog
+        open={isSavingView}
+        onClose={() => setIsSavingView(false)}
+        onSave={handleSaveView}
+        defaultScope="project"
+      />
     </ProjectScreenLayout>
   );
 };

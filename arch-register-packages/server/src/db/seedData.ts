@@ -995,6 +995,8 @@ export const seedSavedViews: SavedViewDbResult[] = [
   {
     id: '00000000-0000-0000-0020-000000000001',
     workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
     name: 'Production Systems',
     description: 'All systems currently in production',
     view_mode: 'table',
@@ -1009,6 +1011,8 @@ export const seedSavedViews: SavedViewDbResult[] = [
   {
     id: '00000000-0000-0000-0020-000000000002',
     workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
     name: 'Security Radar',
     description: 'Radar view of security-related components',
     view_mode: 'radar',
@@ -1032,6 +1036,8 @@ export const seedSavedViews: SavedViewDbResult[] = [
   {
     id: '00000000-0000-0000-0020-000000000003',
     workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
     name: 'Platform Components',
     description: 'Components owned by Platform Engineering',
     view_mode: 'cards',

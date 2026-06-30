@@ -34,6 +34,7 @@ import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
+import { toSavedViewSearch } from './components/EntityBrowser';
 
 export const EntitiesSidebar = ({
   schemas,
@@ -187,22 +188,8 @@ export const EntitiesSidebar = ({
       to: '/$workspaceSlug/entities',
       params: { workspaceSlug },
       search: {
-        type: view.filters.schemaId ?? undefined,
-        status: view.filters.status ?? undefined,
-        owner: view.filters.owner ?? undefined,
-        q: view.filters.q ?? undefined,
-        viewId: view.id,
-        viewMode: view.viewMode,
-        sort: view.filters.sort ?? undefined,
-        radarConfig: view.config?.radar ? JSON.stringify(view.config.radar) : undefined,
-        timelineConfig: view.config?.timeline ? JSON.stringify(view.config.timeline) : undefined,
-        matrixConfig: view.config?.matrix ? JSON.stringify(view.config.matrix) : undefined,
-        hierarchyConfig: view.config?.hierarchy
-          ? JSON.stringify(view.config.hierarchy)
-          : undefined,
-        exploreConfig: view.config?.explore ? JSON.stringify(view.config.explore) : undefined,
+        ...toSavedViewSearch(view),
         sidebarTab: 'views',
-        filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined
         // biome-ignore lint/suspicious/noExplicitAny: bypass
       } as any
     });

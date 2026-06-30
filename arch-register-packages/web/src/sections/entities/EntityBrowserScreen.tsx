@@ -20,6 +20,7 @@ import type { TimelineConfig } from './components/TimelineView';
 import type { MatrixConfig } from './components/MatrixView';
 import type { HierarchyConfig } from './components/HierarchyView';
 import {
+  buildSavedViewPayload,
   EntityBrowser,
   SaveViewDialog,
   BrowserSearch,
@@ -61,29 +62,31 @@ export const EntityBrowserScreen = () => {
     ? (schemas.find(schema => schema.id === typeFilter)?.name ?? 'Entities')
     : 'All entities';
 
-  const handleSaveView = async (name: string, description: string) => {
+  const handleSaveView = async (
+    name: string,
+    description: string,
+    scope: 'workspace' | 'project'
+  ) => {
     try {
-      await createSavedViewMutation.mutateAsync({
-        name,
-        description: description || null,
-        viewMode: view as BrowserView,
-        filters: {
-          schemaId: typeFilter,
-          status: statusFilter,
-          owner: ownerFilter,
+      await createSavedViewMutation.mutateAsync(
+        buildSavedViewPayload({
+          scope,
+          name,
+          description,
+          view: view as BrowserView,
+          typeFilter,
+          statusFilter,
+          ownerFilter,
           q,
           sort,
-          conditions
-        },
-        config: toSavedViewConfig(
-          view as BrowserView,
+          conditions,
           radarConfig,
           timelineConfig,
           matrixConfig,
           hierarchyConfig,
           exploreConfig
-        )
-      });
+        })
+      );
     } catch {
       // Error handling is done by TanStack Query
     }
@@ -95,6 +98,7 @@ export const EntityBrowserScreen = () => {
       await updateSavedViewMutation.mutateAsync({
         id: activeSavedView.id,
         body: {
+          projectScope: activeSavedView.projectScope,
           viewMode: view as BrowserView,
           filters: {
             schemaId: typeFilter,
@@ -239,7 +243,11 @@ export const EntityBrowserScreen = () => {
 
       <EntityBrowser onCountChange={setCount} />
 
-      <SaveViewDialog open={isSavingView} onClose={() => setIsSavingView(false)} onSave={handleSaveView} />
+      <SaveViewDialog
+        open={isSavingView}
+        onClose={() => setIsSavingView(false)}
+        onSave={handleSaveView}
+      />
     </div>
   );
 };

@@ -52,6 +52,76 @@ test.describe('saved view permission routes', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
+  test('authorization: project editor can manage project-scoped views for accessible projects', async ({
+    personas,
+    resources
+  }) => {
+    const project = await personas.designTeamAdmin.orpc.projects.create({
+      params: { workspace: 'default' },
+      body: {
+        name: 'Design Team View Project',
+        owner: resources.teamIds.design
+      }
+    });
+
+    const created = await personas.designTeamAdmin.orpc.views.create({
+      params: { workspace: 'default' },
+      body: {
+        ...viewData,
+        scope: 'project',
+        projectId: project.id,
+        projectScope: 'project'
+      }
+    });
+
+    expect(created.scope).toBe('project');
+
+    const listed = await personas.designTeamAdmin.orpc.views.list({
+      params: { workspace: 'default' },
+      query: {
+        projectId: project.id,
+        includeWorkspace: true
+      }
+    });
+    expect(listed.some(view => view.id === created.id)).toBe(true);
+
+    const updated = await personas.designTeamAdmin.orpc.views.update({
+      params: { workspace: 'default', id: created.id },
+      body: { name: 'Project Scoped View Updated', projectScope: 'all' }
+    });
+    expect(updated.name).toBe('Project Scoped View Updated');
+    expect(updated.projectScope).toBe('all');
+
+    await expect(
+      personas.designTeamAdmin.orpc.views.remove({
+        params: { workspace: 'default', id: created.id }
+      })
+    ).resolves.toMatchObject({ success: true });
+  });
+
+  test('authorization: users without project access cannot list project-scoped views', async ({
+    personas,
+    resources
+  }) => {
+    const project = await personas.designTeamAdmin.orpc.projects.create({
+      params: { workspace: 'default' },
+      body: {
+        name: 'Hidden View Project',
+        owner: resources.teamIds.design
+      }
+    });
+
+    await expect(
+      personas.workspaceViewer.orpc.views.list({
+        params: { workspace: 'default' },
+        query: {
+          projectId: project.id,
+          includeWorkspace: true
+        }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+
   test('authorization: outsider cannot access views at all', async ({ personas }) => {
     await expect(
       personas.outsider.orpc.views.list({ params: { workspace: 'default' } })

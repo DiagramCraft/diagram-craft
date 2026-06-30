@@ -377,6 +377,9 @@ export const sqliteMappers = {
   savedView: (row: Record<string, unknown>): SavedViewDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
+    project_id: row['project_id'] == null ? null : String(row['project_id']),
+    project_scope:
+      row['project_scope'] == null ? null : (String(row['project_scope']) as 'project' | 'all'),
     name: String(row['name']),
     description: row['description'] == null ? null : String(row['description']),
     view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'],

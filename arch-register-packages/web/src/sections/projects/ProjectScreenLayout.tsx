@@ -9,6 +9,7 @@ type ProjectScreenLayoutProps = {
   description?: ReactNode;
   error?: ReactNode;
   actions?: ReactNode;
+  menu?: ReactNode;
   meta?: ReactNode;
   toolbar?: ReactNode;
   children: ReactNode;
@@ -21,6 +22,7 @@ export const ProjectScreenLayout = ({
   description,
   error,
   actions,
+  menu,
   meta,
   toolbar,
   children
@@ -34,6 +36,7 @@ export const ProjectScreenLayout = ({
           description={description}
           toggleButtons={titleSuffix}
           buttons={actions}
+          menu={menu}
         />
         {error}
       </div>

@@ -99,6 +99,9 @@ const viewConfigSchema = z
 export const savedViewSchema = z.object({
   id: z.string().describe('Unique view identifier'),
   workspaceId: z.string().describe('Parent workspace identifier'),
+  scope: z.enum(['workspace', 'project']).describe('Whether the view is workspace-scoped or project-scoped'),
+  projectId: z.string().nullable().describe('Project identifier for project-scoped views'),
+  projectScope: z.enum(['project', 'all']).nullable().describe('Project entity browser scope filter'),
   name: z.string().describe('View name'),
   description: z.string().nullable().describe('View description'),
   viewMode: browserViewSchema.describe('View display mode'),
@@ -120,6 +123,9 @@ export const pinnedEntitySchema = z.object({
 // ── Request schemas ───────────────────────────────────────────
 
 export const createViewBodySchema = z.object({
+  scope: z.enum(['workspace', 'project']).optional().describe('View storage scope'),
+  projectId: z.string().nullable().optional().describe('Project identifier for project-scoped views'),
+  projectScope: z.enum(['project', 'all']).nullable().optional().describe('Saved project entity browser scope'),
   name: z.string().describe('View name'),
   description: z.string().nullable().optional().describe('View description'),
   viewMode: browserViewSchema.describe('View display mode'),
@@ -128,6 +134,7 @@ export const createViewBodySchema = z.object({
 });
 
 export const updateViewBodySchema = z.object({
+  projectScope: z.enum(['project', 'all']).nullable().optional().describe('Saved project entity browser scope'),
   name: z.string().optional().describe('View name'),
   description: z.string().nullable().optional().describe('View description'),
   viewMode: browserViewSchema.optional().describe('View display mode'),
@@ -166,7 +173,17 @@ export const workspaceViewContract = oc
         })
         .input(
           z.object({
-            params: ws
+            params: ws,
+            query: z
+              .object({
+                projectId: z.string().optional().describe('Project identifier for project-scoped views'),
+                includeWorkspace: z
+                  .coerce
+                  .boolean()
+                  .optional()
+                  .describe('Include workspace-scoped views in project context')
+              })
+              .optional()
           })
         )
         .output(z.array(savedViewSchema)),

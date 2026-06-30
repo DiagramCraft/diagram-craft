@@ -377,10 +377,23 @@ export const useProjectFutureSnapshots = (workspaceId: string, projectId: string
 
 // ── Saved View Hooks ──────────────────────────────────────────
 
-export const useSavedViews = (workspaceId: string) => {
+export const useSavedViews = (
+  workspaceId: string,
+  options?: {
+    projectId?: string;
+    includeWorkspace?: boolean;
+  }
+) => {
   return useQuery({
-    queryKey: viewKeys.list(workspaceId),
-    queryFn: () => orpcClient.views.list({ params: { workspace: workspaceId } }),
+    queryKey: viewKeys.list(workspaceId, options),
+    queryFn: () =>
+      orpcClient.views.list({
+        params: { workspace: workspaceId },
+        query: {
+          projectId: options?.projectId,
+          includeWorkspace: options?.includeWorkspace
+        }
+      }),
     enabled: !!workspaceId
   });
 };
@@ -392,7 +405,7 @@ export const useCreateSavedView = (workspaceId: string) => {
     mutationFn: (body: CreateSavedViewRequest) =>
       orpcClient.views.create({ params: { workspace: workspaceId }, body }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: viewKeys.list(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: viewKeys.lists() });
     }
   });
 };
@@ -404,7 +417,7 @@ export const useUpdateSavedView = (workspaceId: string) => {
     mutationFn: ({ id, body }: { id: string; body: UpdateSavedViewRequest }) =>
       orpcClient.views.update({ params: { workspace: workspaceId, id }, body }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: viewKeys.list(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: viewKeys.lists() });
     }
   });
 };
@@ -416,7 +429,7 @@ export const useDeleteSavedView = (workspaceId: string) => {
     mutationFn: (id: string) =>
       orpcClient.views.remove({ params: { workspace: workspaceId, id } }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: viewKeys.list(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: viewKeys.lists() });
     }
   });
 };

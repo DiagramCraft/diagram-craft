@@ -22,6 +22,9 @@ const checker = new PermissionChecker();
 export const toApi = (view: SavedViewDbResult): ApiSavedView => ({
   id: view.id,
   workspaceId: view.workspace,
+  scope: view.project_id == null ? 'workspace' : 'project',
+  projectId: view.project_id,
+  projectScope: view.project_scope,
   name: view.name,
   description: view.description,
   viewMode: view.view_mode,
@@ -43,9 +46,13 @@ const canAccessPinnedEntity = (
 
 export const listSavedViews = async (
   db: DatabaseAdapter,
-  workspace: string
+  workspace: string,
+  options?: {
+    projectId?: string | null;
+    includeWorkspace?: boolean;
+  }
 ): Promise<ApiSavedView[]> => {
-  const views = await db.view.listSavedViews(workspace);
+  const views = await db.view.listSavedViews(workspace, options);
   return views.map(toApi);
 };
 
@@ -57,11 +64,20 @@ export const createSavedView = async (
   httpAssert.true(body.name, { status: 400, message: 'Name is required' });
   httpAssert.true(body.viewMode, { status: 400, message: 'viewMode is required' });
   httpAssert.true(body.filters, { status: 400, message: 'filters is required' });
+  const scope = body.scope ?? 'workspace';
+  const projectId = scope === 'project' ? body.projectId ?? null : null;
+
+  httpAssert.true(scope === 'workspace' || projectId != null, {
+    status: 400,
+    message: 'projectId is required for project-scoped views'
+  });
 
   const now = new Date();
   const view = await db.view.createSavedView({
     id: randomUUID(),
     workspace,
+    project_id: projectId,
+    project_scope: body.projectScope ?? null,
     name: body.name,
     description: body.description ?? null,
     view_mode: body.viewMode,
@@ -82,12 +98,16 @@ export const updateSavedView = async (
 ): Promise<ApiSavedView> => {
   httpAssert.true(id, { status: 400, message: 'ID is required' });
 
+  const existing = await db.view.getSavedView(workspace, id);
+  httpAssert.true(existing, { status: 404, message: 'View not found' });
+
   const updated = await db.view.updateSavedView(workspace, id, {
     name: body.name,
     description: body.description,
     view_mode: body.viewMode,
     filters: body.filters,
     config: body.config,
+    project_scope: body.projectScope,
     updated_at: new Date()
   });
 

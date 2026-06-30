@@ -31,8 +31,10 @@ import { resolveSchemaColor } from '../../../lib/api';
 import type { TreeNode, TreeEdge, WorkspaceTeam } from '../../../lib/api';
 import {
   type BrowserView,
+  type CreateSavedViewRequest,
   type ExploreViewConfig,
-  type FilterCondition
+  type FilterCondition,
+  type SavedView
 } from '@arch-register/api-types/viewContract';
 import {
   useEntities,
@@ -128,20 +130,114 @@ export const parseJsonConfig = <T,>(value: string | undefined): T | null => {
   }
 };
 
+export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
+  type: view.filters.schemaId ?? undefined,
+  status: view.filters.status ?? undefined,
+  owner: view.filters.owner ?? undefined,
+  q: view.filters.q ?? undefined,
+  viewId: view.id,
+  viewMode: view.viewMode,
+  sort: view.filters.sort ?? undefined,
+  projectScope: view.projectScope ?? undefined,
+  radarConfig: view.config?.radar ? JSON.stringify(view.config.radar) : undefined,
+  timelineConfig: view.config?.timeline ? JSON.stringify(view.config.timeline) : undefined,
+  matrixConfig: view.config?.matrix ? JSON.stringify(view.config.matrix) : undefined,
+  hierarchyConfig: view.config?.hierarchy ? JSON.stringify(view.config.hierarchy) : undefined,
+  exploreConfig: view.config?.explore ? JSON.stringify(view.config.explore) : undefined,
+  filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined
+});
+
+export const buildSavedViewPayload = ({
+  scope,
+  projectId,
+  projectScope,
+  name,
+  description,
+  view,
+  typeFilter,
+  statusFilter,
+  ownerFilter,
+  q,
+  sort,
+  conditions,
+  radarConfig,
+  timelineConfig,
+  matrixConfig,
+  hierarchyConfig,
+  exploreConfig
+}: {
+  scope: 'workspace' | 'project';
+  projectId?: string;
+  projectScope?: 'project' | 'all';
+  name: string;
+  description: string;
+  view: BrowserView;
+  typeFilter: string | null;
+  statusFilter: string | null;
+  ownerFilter: string | null;
+  q: string;
+  sort: string;
+  conditions: FilterCondition[];
+  radarConfig: RadarConfig | null;
+  timelineConfig: TimelineConfig | null;
+  matrixConfig: MatrixConfig | null;
+  hierarchyConfig: HierarchyConfig | null;
+  exploreConfig: ExploreViewConfig | null;
+}): CreateSavedViewRequest => ({
+  scope,
+  projectId: scope === 'project' ? (projectId ?? null) : null,
+  projectScope: scope === 'project' ? (projectScope ?? null) : null,
+  name,
+  description: description || null,
+  viewMode: view,
+  filters: {
+    schemaId: typeFilter,
+    status: statusFilter,
+    owner: ownerFilter,
+    q,
+    sort,
+    conditions
+  },
+  config: toSavedViewConfig(
+    view,
+    radarConfig,
+    timelineConfig,
+    matrixConfig,
+    hierarchyConfig,
+    exploreConfig
+  )
+});
+
 export const SaveViewDialog = ({
   open,
   onClose,
-  onSave
+  onSave,
+  scopeOptions,
+  defaultScope
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, description: string) => void;
+  onSave: (name: string, description: string, scope: 'workspace' | 'project') => void;
+  scopeOptions?: Array<{ value: 'workspace' | 'project'; label: string }>;
+  defaultScope?: 'workspace' | 'project';
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const resolvedDefaultScope =
+    scopeOptions?.find(option => option.value === defaultScope)?.value ??
+    scopeOptions?.[0]?.value ??
+    defaultScope ??
+    'workspace';
+  const [scope, setScope] = useState<'workspace' | 'project'>(resolvedDefaultScope);
+
+  useEffect(() => {
+    if (open) {
+      setScope(resolvedDefaultScope);
+    }
+  }, [open, resolvedDefaultScope]);
 
   const handleSave = () => {
-    onSave(name, description);
+    onSave(name, description, scope);
     setName('');
     setDescription('');
     onClose();
@@ -174,6 +270,17 @@ export const SaveViewDialog = ({
             placeholder="What this view shows…"
           />
         </FormElement>
+        {scopeOptions != null && scopeOptions.length > 1 && (
+          <FormElement label="Save to">
+            <Select.Root value={scope} onChange={value => setScope((value as 'workspace' | 'project') ?? resolvedDefaultScope)}>
+              {scopeOptions.map(option => (
+                <Select.Item key={option.value} value={option.value}>
+                  {option.label}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+        )}
       </div>
     </Dialog>
   );

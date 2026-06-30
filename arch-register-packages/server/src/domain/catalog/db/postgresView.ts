@@ -7,9 +7,32 @@ import type {
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 
 export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDatabase {
-  async listSavedViews(workspace: string) {
+  async listSavedViews(
+    workspace: string,
+    options?: {
+      projectId?: string | null;
+      includeWorkspace?: boolean;
+    }
+  ) {
+    const projectId = options?.projectId ?? null;
+    const includeWorkspace = options?.includeWorkspace ?? false;
+
+    if (projectId == null) {
+      return await this.sql<SavedViewDbResult[]>`
+        SELECT * FROM saved_view
+        WHERE workspace = ${workspace} AND project_id IS NULL
+        ORDER BY name
+      `;
+    }
+
     return await this.sql<SavedViewDbResult[]>`
-      SELECT * FROM saved_view WHERE workspace = ${workspace} ORDER BY name
+      SELECT * FROM saved_view
+      WHERE workspace = ${workspace}
+        AND (
+          project_id = ${projectId}
+          OR (${includeWorkspace} = true AND project_id IS NULL)
+        )
+      ORDER BY CASE WHEN project_id IS NULL THEN 1 ELSE 0 END, name
     `;
   }
 
@@ -23,8 +46,8 @@ export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDa
   async createSavedView(input: SavedViewDbCreate) {
     try {
       const [row] = await this.sql<SavedViewDbResult[]>`
-        INSERT INTO saved_view (id, workspace, name, description, view_mode, filters, config, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.view_mode}, ${this.json(input.filters)}, ${this.json(input.config)}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO saved_view (id, workspace, project_id, project_scope, name, description, view_mode, filters, config, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.project_scope}, ${input.name}, ${input.description}, ${input.view_mode}, ${this.json(input.filters)}, ${this.json(input.config)}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return row!;
@@ -41,7 +64,8 @@ export class PostgresViewDatabase extends PostgresDatabaseBase implements ViewDa
             description = COALESCE(${input.description ?? null}, description),
             view_mode = COALESCE(${input.view_mode ?? null}, view_mode),
             filters = COALESCE(${input.filters ? this.json(input.filters) : null}, filters),
-            config = COALESCE(${input.config ? this.json(input.config) : null}, config),
+            config = COALESCE(${input.config === undefined ? null : this.json(input.config)}, config),
+            project_scope = COALESCE(${input.project_scope ?? null}, project_scope),
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
