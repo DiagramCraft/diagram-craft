@@ -760,6 +760,27 @@ const setDiagramCraftTheme = async (page: Page, theme: 'light' | 'dark') => {
   await setStoredThemes(page, theme);
 };
 
+const loadDiagramCraftSample = async (page: Page, sampleName: string) => {
+  await page.goto(`/?crdtClear=true#/sample/${sampleName}`);
+  await waitForDiagramCraftLoaded(page);
+};
+
+const selectDiagramCraftTool = async (page: Page, tool: 'TOOL_MOVE' | 'TOOL_EDGE' | 'TOOL_TEXT') => {
+  const button = page.getByLabel(tool);
+  await button.click();
+  await expect(button).toHaveAttribute('aria-pressed', 'true');
+};
+
+const clickDiagramCraftElement = async (
+  page: Page,
+  elementSelector: string,
+  options?: { clickCount?: number }
+) => {
+  const element = page.locator(elementSelector).first();
+  await element.waitFor({ state: 'attached' });
+  await element.click({ clickCount: options?.clickCount ?? 1, force: true });
+};
+
 const diagramCraftScreenshotConfigs: DiagramCraftScreenshotConfig[] = [
   {
     product: 'diagram-craft',
@@ -767,8 +788,7 @@ const diagramCraftScreenshotConfigs: DiagramCraftScreenshotConfig[] = [
     name: 'first-diagram-editor',
     fullPage: false,
     setup: async ({ page }) => {
-      await page.goto('/?crdtClear=true#/sample/getting-started.json');
-      await waitForDiagramCraftLoaded(page);
+      await loadDiagramCraftSample(page, 'getting-started.json');
     }
   },
   {
@@ -777,9 +797,61 @@ const diagramCraftScreenshotConfigs: DiagramCraftScreenshotConfig[] = [
     name: 'shape-palette-overview',
     clip: { x: 0, y: 72, width: 430, height: 700 },
     setup: async ({ page }) => {
-      await page.goto('/?crdtClear=true#/sample/getting-started.json');
-      await waitForDiagramCraftLoaded(page);
+      await loadDiagramCraftSample(page, 'getting-started.json');
       await expect(page.getByRole('tab', { name: 'Shape' })).toHaveAttribute('aria-selected', 'true');
+    }
+  },
+  {
+    product: 'diagram-craft',
+    category: 'core-diagramming',
+    name: 'canvas-navigation',
+    fullPage: false,
+    setup: async ({ page }) => {
+      await loadDiagramCraftSample(page, 'core-diagramming.json');
+    }
+  },
+  {
+    product: 'diagram-craft',
+    category: 'core-diagramming',
+    name: 'shapes-elements',
+    clip: { x: 0, y: 72, width: 1040, height: 520 },
+    setup: async ({ page }) => {
+      await loadDiagramCraftSample(page, 'core-diagramming.json');
+      await expect(page.getByRole('tab', { name: 'Shape' })).toHaveAttribute('aria-selected', 'true');
+    }
+  },
+  {
+    product: 'diagram-craft',
+    category: 'core-diagramming',
+    name: 'connectors-edges',
+    clip: { x: 360, y: 120, width: 520, height: 420 },
+    setup: async ({ page }) => {
+      await loadDiagramCraftSample(page, 'core-diagramming.json');
+      await selectDiagramCraftTool(page, 'TOOL_MOVE');
+      await clickDiagramCraftElement(page, '#edge-service-to-database .svg-edge');
+      await expect(page.locator('.svg-waypoint-handle')).toBeVisible();
+    }
+  },
+  {
+    product: 'diagram-craft',
+    category: 'core-diagramming',
+    name: 'text-labels',
+    clip: { x: 320, y: 96, width: 760, height: 420 },
+    setup: async ({ page }) => {
+      await loadDiagramCraftSample(page, 'core-diagramming.json');
+      await clickDiagramCraftElement(page, '#node-note-text', { clickCount: 2 });
+      await sleep(200);
+    }
+  },
+  {
+    product: 'diagram-craft',
+    category: 'core-diagramming',
+    name: 'selection-manipulation',
+    clip: { x: 360, y: 120, width: 520, height: 420 },
+    setup: async ({ page }) => {
+      await loadDiagramCraftSample(page, 'core-diagramming.json');
+      await clickDiagramCraftElement(page, '#node-service');
+      await expect(page.locator('.svg-selection__handle')).toHaveCount(8);
     }
   }
 ];
