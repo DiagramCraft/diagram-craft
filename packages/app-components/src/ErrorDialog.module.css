@@ -1,0 +1,38 @@
+/**
+ *  ErrorDialog - .cErrorDialog
+ *  | Icon - .eIcon
+ *  | TextBlock - .eTextBlock
+ *  | | Message - .eMessage
+ */
+.cErrorDialog {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 18px 16px 16px;
+
+  .eIcon {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in oklch, var(--error-fg) 34%, var(--cmp-border));
+    border-radius: 8px;
+    background: color-mix(in oklch, var(--error-fg) 16%, transparent);
+    color: oklch(0.78 0.16 25);
+  }
+
+  .eTextBlock {
+    flex: 1;
+    min-width: 0;
+    padding-top: 1px;
+  }
+
+  .eMessage {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--base-fg-more-dim);
+  }
+}

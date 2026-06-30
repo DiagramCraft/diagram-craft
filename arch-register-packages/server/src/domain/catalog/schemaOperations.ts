@@ -7,7 +7,8 @@ import { listAllCatalogEntities } from './entityLoader';
 import {
   toApiSchema,
   buildCreateSchemaInput,
-  buildUpdateSchemaInput
+  buildUpdateSchemaInput,
+  findIncompatibleFieldChanges
 } from './schemaHelpers';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 
@@ -100,6 +101,18 @@ export const updateWorkspaceSchema = async (
 
     const teamIds = new Set((await db.workspace.listTeams(workspace)).map(owner => owner.id));
     const next = buildUpdateSchemaInput(body, oldRow, teamIds, new Date());
+
+    const entityCount = await countEntities(db, workspace, null, {
+      schemaId: id
+    });
+    if (entityCount > 0) {
+      const incompatibleChanges = findIncompatibleFieldChanges(oldRow.fields, next.fields);
+      httpAssert.true(incompatibleChanges.length === 0, {
+        status: 409,
+        message: `Cannot update schema: ${incompatibleChanges.join('; ')}`
+      });
+    }
+
     const row = await db.catalog.updateSchema(workspace, id, {
       name: next.name,
       key_prefix: next.key_prefix,
@@ -133,12 +146,7 @@ export const updateWorkspaceSchema = async (
       changes
     });
 
-    const [entityCount, enums] = await Promise.all([
-      countEntities(db, workspace, null, {
-        schemaId: id
-      }),
-      db.catalog.listEnums(workspace)
-    ]);
+    const enums = await db.catalog.listEnums(workspace);
     return toApiSchema(row, entityCount, enums);
   } catch (error) {
     return handleError(error, 'Failed to update schema');

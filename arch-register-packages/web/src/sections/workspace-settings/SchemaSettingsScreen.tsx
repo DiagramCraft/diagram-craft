@@ -15,6 +15,7 @@ import { ICON_MAP } from '../../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../../hooks/useSchemas';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { EnumEditorScreen } from './EnumEditorScreen';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
@@ -47,6 +48,7 @@ export const SchemaSettingsScreen = () => {
   const [icon, setIcon] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fieldKeysRef = useRef<Map<string, string>>(new Map());
 
   const createSchemaMutation = useCreateSchema(workspaceSlug);
@@ -88,8 +90,8 @@ export const SchemaSettingsScreen = () => {
         data: { name, key_prefix: keyPrefix, description, fields, color, icon }
       });
       setDirty(false);
-    } catch {
-      // TODO: surface error
+    } catch (e: unknown) {
+      setErrorMessage(e instanceof Error ? e.message : 'Failed to save entity type');
     }
   }, [selected, name, keyPrefix, description, fields, color, icon, dirty, updateSchemaMutation]);
 
@@ -118,8 +120,7 @@ export const SchemaSettingsScreen = () => {
       await deleteSchemaMutation.mutateAsync(selected.id);
       onSelectSchema(schemas.find(s => s.id !== selected.id)?.id ?? '');
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Failed to delete';
-      window.alert(msg);
+      setErrorMessage(e instanceof Error ? e.message : 'Failed to delete');
     }
   }, [selected, deleteSchemaMutation, onSelectSchema, schemas]);
 
@@ -406,6 +407,13 @@ export const SchemaSettingsScreen = () => {
         confirmLabel="Delete type"
         onConfirm={doDeleteType}
         onCancel={() => setConfirmDelete(false)}
+      />
+
+      <ErrorDialog
+        open={errorMessage !== null}
+        title="Something went wrong"
+        message={errorMessage}
+        onClose={() => setErrorMessage(null)}
       />
     </div>
   );
