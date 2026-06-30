@@ -72,7 +72,7 @@ pnpm docs:typedoc
 
 ### Screenshot Generation
 
-The docs site includes a Playwright-based screenshot generator for Arch Register UI assets.
+The docs site includes a Playwright-based screenshot generator for documentation UI assets.
 
 ```bash
 pnpm docs:screenshots
@@ -80,14 +80,18 @@ pnpm docs:screenshots
 
 The command:
 
-1. Boots the Arch Register server and web app in dev mode.
-2. Seeds a temporary SQLite database with the standard demo data.
-3. Logs in as the seeded demo user.
-4. Captures screenshots in both light and dark themes (by default).
-5. Writes PNG files into `static/img/arch-register/{category}/`.
+1. Boots the required local app or apps in dev mode.
+2. Seeds temporary demo data when the target product needs it.
+3. Captures screenshots for the configured product and category.
+4. Writes PNG files into `static/img/{product}/{category}/`.
 
-By default the generator uses dedicated ports `5073` for the Arch Register server and `5074` for the web app.
-You can override them with `SCREENSHOT_SERVER_PORT` and `SCREENSHOT_WEB_PORT` if those ports are already in use.
+Current products:
+
+- `arch-register`: captures both light and dark themes by default
+- `diagram-craft`: captures the getting-started screenshots in both light and dark themes
+
+By default the generator uses dedicated ports `5073` for the Arch Register server, `5074` for the Arch Register web app, and `5175` for the Diagram Craft web app.
+You can override them with `SCREENSHOT_SERVER_PORT`, `SCREENSHOT_WEB_PORT`, and `SCREENSHOT_DIAGRAM_CRAFT_PORT` if those ports are already in use.
 
 Screenshots default to a `1280x800` viewport. Individual screenshots can override that size and can also target a
 specific element with a CSS selector when a cropped capture is more useful than a full-page image.
@@ -136,8 +140,8 @@ When only one theme is specified, the filename will not include a theme suffix (
 To add a new screenshot:
 
 1. Add a new config entry in `scripts/generate-screenshots.ts`.
-2. Reuse the existing page objects from `arch-register-packages/e2e/src/ui/pages/`.
-3. Choose an output category under `static/img/arch-register/`.
+2. Reuse the existing Arch Register page objects for Arch Register captures, or the main app entrypoint for Diagram Craft captures.
+3. Choose an output category under `static/img/{product}/`.
 4. Optionally specify which themes to capture with the `themes` property.
 5. Run `pnpm docs:screenshots` to regenerate the asset.
 

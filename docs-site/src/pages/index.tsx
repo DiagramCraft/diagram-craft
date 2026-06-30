@@ -88,7 +88,7 @@ export default function Home(): ReactElement {
         <div className="doc-hub-hero">
           <h1 className="doc-hub-title">Documentation</h1>
           <p className="doc-hub-sub">
-            Everything you need to understand, build with, and extend your architecture registry.
+            Everything you need to understand, use, build with, and extend Arch Register and Diagram Craft.
             Choose a product to get started.
           </p>
         </div>
@@ -123,12 +123,13 @@ export default function Home(): ReactElement {
               </svg>
             }
             name="Diagram Craft"
-            badge={{label: 'Coming soon', warn: true}}
+            badge={{label: 'Available'}}
             description="The collaborative diagram editor at the heart of Arch Register. Build architecture diagrams with smart connectors, live entity data, and team annotations."
             links={[
-              {icon: <InfoIcon />, label: 'Documentation in progress', to: '/arch-register/intro'},
+              {icon: <ClockIcon />, label: 'Quick Start', to: '/diagram-craft/diagram-craft/getting-started/introduction'},
+              {icon: <EntityIcon />, label: 'Core Concepts', to: '/diagram-craft/diagram-craft/overview/core-concepts'},
+              {icon: <InfoIcon />, label: 'Overview', to: '/diagram-craft/diagram-craft/intro'},
             ]}
-            dim
           />
         </div>
       </div>

@@ -1,6 +1,7 @@
-import { spawn } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdtemp, mkdir, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, rename, stat, unlink } from 'node:fs/promises';
+import { promisify } from 'node:util';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -15,10 +16,9 @@ import { ProjectsPage } from '../../arch-register-packages/e2e/src/ui/pages/Proj
 import { SearchPage } from '../../arch-register-packages/e2e/src/ui/pages/SearchPage';
 import { SettingsPage } from '../../arch-register-packages/e2e/src/ui/pages/SettingsPage';
 import { authMigrationProject } from '../../arch-register-packages/e2e/src/ui/support/projects';
-import { authApiEntity, authServiceEntity, frontendAppEntity } from '../../arch-register-packages/e2e/src/ui/support/entities';
-import { apiSchema, componentSchema } from '../../arch-register-packages/e2e/src/ui/support/schemas';
+import { frontendAppEntity } from '../../arch-register-packages/e2e/src/ui/support/entities';
+import { apiSchema } from '../../arch-register-packages/e2e/src/ui/support/schemas';
 import { defaultWorkspace } from '../../arch-register-packages/e2e/src/ui/support/workspaces';
-import { workspaceModelRoute } from '../../arch-register-packages/e2e/src/ui/support/routes';
 
 type Viewport = {
   width: number;
@@ -35,17 +35,32 @@ type ScreenshotContext = {
   dataModelPage: DataModelPage;
 };
 
-export type ScreenshotConfig = {
-  product: 'arch-register';
+type DiagramCraftScreenshotContext = {
+  page: Page;
+};
+
+type BaseScreenshotConfig = {
   category: string;
   name: string;
   viewport?: Viewport;
+  clip?: { x: number; y: number; width: number; height: number };
   selector?: string;
   selectorGap?: number;
   fullPage?: boolean;
-  themes?: ('light' | 'dark')[]; // Optional: specify which themes to capture. Defaults to both.
+  themes?: ('light' | 'dark')[];
+};
+
+export type ArchRegisterScreenshotConfig = BaseScreenshotConfig & {
+  product: 'arch-register';
   setup: (context: ScreenshotContext) => Promise<void>;
 };
+
+export type DiagramCraftScreenshotConfig = BaseScreenshotConfig & {
+  product: 'diagram-craft';
+  setup: (context: DiagramCraftScreenshotContext) => Promise<void>;
+};
+
+export type ScreenshotConfig = ArchRegisterScreenshotConfig | DiagramCraftScreenshotConfig;
 
 type ChildProcessHandle = {
   name: string;
@@ -56,12 +71,40 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const outputRoot = resolve(repoRoot, 'docs-site/static/img');
 const screenshotServerPort = Number(process.env['SCREENSHOT_SERVER_PORT'] ?? '5073');
 const screenshotWebPort = Number(process.env['SCREENSHOT_WEB_PORT'] ?? '5074');
+const diagramCraftScreenshotPort = Number(process.env['SCREENSHOT_DIAGRAM_CRAFT_PORT'] ?? '5175');
 const screenshotOnly = process.env['SCREENSHOT_ONLY']?.split(',').map(part => part.trim()).filter(Boolean) ?? [];
 const webBaseUrl = `http://localhost:${screenshotWebPort}`;
 const serverBaseUrl = `http://localhost:${screenshotServerPort}`;
+const diagramCraftBaseUrl = `http://localhost:${diagramCraftScreenshotPort}`;
 const defaultViewport = { width: 1280, height: 800 } satisfies Viewport;
 const defaultDeviceScaleFactor = process.platform === 'darwin' ? 2 : 1;
 const projectDiagramName = 'Project overview draft';
+const diagramCraftUserState = {
+  panelLeft: 0,
+  panelLeftWidth: 320,
+  panelRight: -1,
+  showHelp: false,
+  stencilPickerViewMode: 'grid',
+  stencilSearchAllPackages: false,
+  stencils: [{ id: 'default', isOpen: true }],
+  toolWindowTabs: { picker: 'picker' }
+} as const;
+
+const execFileAsync = promisify(execFile);
+const pixelDiffThreshold = Number(process.env['SCREENSHOT_PIXEL_THRESHOLD'] ?? '5');
+
+const compareImages = async (existingPath: string, newPath: string): Promise<number | null> => {
+  try {
+    await execFileAsync('compare', ['-metric', 'AE', existingPath, newPath, '/dev/null']);
+    return 0;
+  } catch (err: unknown) {
+    if (err != null && typeof err === 'object' && 'stderr' in err) {
+      const match = String((err as { stderr: unknown }).stderr).match(/^(\d+)/);
+      if (match != null) return Number(match[1]);
+    }
+    return null;
+  }
+};
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -228,35 +271,6 @@ const createBlankProjectDiagram = async (page: Page, name: string) => {
   await expect(page.getByRole('main').getByRole('button', { name: new RegExp(escapeRegExp(name)) })).toBeVisible();
 };
 
-const markProjectDiagramAsTemplate = async (page: Page, name: string) => {
-  await page.evaluate(
-    async ({ workspaceSlug, projectId, diagramName }) => {
-      const response = await fetch(
-        `/api/${encodeURIComponent(workspaceSlug)}/projects/${encodeURIComponent(projectId)}/template-status?path=${encodeURIComponent(diagramName)}.json`,
-        {
-          method: 'PUT',
-          headers: {
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify({
-            is_template: true,
-            is_workspace_template: false
-          })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to promote diagram to template: ${response.status}`);
-      }
-    },
-    {
-      workspaceSlug: defaultWorkspace.slug,
-      projectId: authMigrationProject.id,
-      diagramName: name
-    }
-  );
-};
-
 const openDiagramEditorFromProject = async (page: Page, name: string) => {
   await page.getByRole('main').getByRole('button', { name: new RegExp(escapeRegExp(name)) }).first().click();
   await expect(page.locator('#awareness')).toBeVisible();
@@ -368,22 +382,6 @@ const seedWikiPage = async (
   return { nodeId: created.id };
 };
 
-const getLatestMarkdownRevisionId = async (page: Page, nodeId: string) =>
-  await page.evaluate(
-    async ({ workspaceSlug, nodeId }) => {
-      const response = await fetch(
-        `/api/${encodeURIComponent(workspaceSlug)}/markdown/${encodeURIComponent(nodeId)}/revisions`
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to list markdown revisions: ${response.status}`);
-      }
-
-      const revisions = (await response.json()) as Array<{ id: string }>;
-      return revisions[0]?.id ?? null;
-    },
-    { workspaceSlug: defaultWorkspace.slug, nodeId }
-  );
-
 const env = {
   ...process.env,
   AUTH_MODE: 'local',
@@ -395,7 +393,7 @@ const env = {
   STORAGE_FS_BASE: ''
 };
 
-const screenshotConfigs: ScreenshotConfig[] = [
+const archRegisterScreenshotConfigs: ArchRegisterScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'workspace',
@@ -703,6 +701,94 @@ const screenshotConfigs: ScreenshotConfig[] = [
   }
 ];
 
+const waitForDiagramCraftLoaded = async (page: Page) => {
+  await page.getByRole('toolbar').first().waitFor();
+  await expect(page.locator('#left-sidebar')).toBeVisible();
+};
+
+const setStoredThemes = async (page: Page, theme: 'light' | 'dark') => {
+  await page.evaluate(
+    ({ requestedTheme, state }) => {
+      localStorage.setItem('ar-theme', requestedTheme);
+
+      const current = JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}');
+      localStorage.setItem(
+        'diagram-craft.user-state',
+        JSON.stringify({
+          ...current,
+          ...state,
+          themePreference: requestedTheme,
+          themeMode: requestedTheme
+        })
+      );
+    },
+    { requestedTheme: theme, state: diagramCraftUserState }
+  );
+};
+
+const waitForThemeApplied = async (page: Page, theme: 'light' | 'dark') => {
+  await page.waitForFunction(
+    expectedTheme => {
+      const root = document.documentElement;
+      const archRegisterMatches =
+        expectedTheme === 'light'
+          ? root.getAttribute('data-theme') === 'light' && !root.classList.contains('dark')
+          : !root.hasAttribute('data-theme') && root.classList.contains('dark');
+
+      const diagramCraftRoot = document.getElementById('app');
+      const diagramCraftClassName = expectedTheme === 'dark' ? 'dark-theme' : 'light-theme';
+      const diagramCraftMatches =
+        diagramCraftRoot == null
+          ? true
+          : diagramCraftRoot.classList.contains(diagramCraftClassName) ||
+            (diagramCraftRoot.getAttribute('data-theme') === expectedTheme &&
+              document.body.classList.contains(diagramCraftClassName));
+
+      if (diagramCraftRoot != null) {
+        return diagramCraftMatches;
+      }
+
+      return archRegisterMatches;
+    },
+    theme,
+    { timeout: 5000 }
+  );
+};
+
+const setDiagramCraftTheme = async (page: Page, theme: 'light' | 'dark') => {
+  await page.goto('/');
+  await setStoredThemes(page, theme);
+};
+
+const diagramCraftScreenshotConfigs: DiagramCraftScreenshotConfig[] = [
+  {
+    product: 'diagram-craft',
+    category: 'getting-started',
+    name: 'first-diagram-editor',
+    fullPage: false,
+    setup: async ({ page }) => {
+      await page.goto('/?crdtClear=true#/sample/getting-started.json');
+      await waitForDiagramCraftLoaded(page);
+    }
+  },
+  {
+    product: 'diagram-craft',
+    category: 'getting-started',
+    name: 'shape-palette-overview',
+    clip: { x: 0, y: 72, width: 430, height: 700 },
+    setup: async ({ page }) => {
+      await page.goto('/?crdtClear=true#/sample/getting-started.json');
+      await waitForDiagramCraftLoaded(page);
+      await expect(page.getByRole('tab', { name: 'Shape' })).toHaveAttribute('aria-selected', 'true');
+    }
+  }
+];
+
+const screenshotConfigs: ScreenshotConfig[] = [
+  ...archRegisterScreenshotConfigs,
+  ...diagramCraftScreenshotConfigs
+];
+
 const runCommand = async (command: string, args: string[], commandEnv: NodeJS.ProcessEnv) =>
   await new Promise<void>((resolvePromise, rejectPromise) => {
     const child = spawn(command, args, {
@@ -787,13 +873,36 @@ const waitForHttp = async (url: string, label: string, timeoutMs = 120_000) => {
   throw new Error(`Timed out waiting for ${label} at ${url}: ${message}`);
 };
 
+const getThemes = (config: ScreenshotConfig) =>
+  config.themes ?? ['light', 'dark'];
+
+const matchesScreenshotFilter = (config: ScreenshotConfig, filter: string) =>
+  [
+    `${config.product}/${config.category}/${config.name}`,
+    `${config.category}/${config.name}`,
+    config.name
+  ].includes(filter);
+
+const getFilteredConfigs = <T extends ScreenshotConfig>(configs: T[]) =>
+  screenshotOnly.length === 0
+    ? configs
+    : configs.filter(config => screenshotOnly.some(filter => matchesScreenshotFilter(config, filter)));
+
 const captureScreenshot = async (page: Page, config: ScreenshotConfig, theme: 'light' | 'dark') => {
-  const themes = config.themes ?? ['light', 'dark'];
+  const themes = getThemes(config);
   const themeSuffix = themes.length === 1 ? '' : `-${theme}`;
   const screenshotPath = resolve(outputRoot, config.product, config.category, `${config.name}${themeSuffix}.png`);
   await mkdir(dirname(screenshotPath), { recursive: true });
+  const tempPath = `${screenshotPath}.tmp.png`;
 
-  if (config.selector != null) {
+  if (config.clip != null) {
+    await page.screenshot({
+      animations: 'disabled',
+      caret: 'hide',
+      clip: config.clip,
+      path: tempPath
+    });
+  } else if (config.selector != null) {
     const gap = config.selectorGap ?? 16;
     const element = page.locator(config.selector);
     const box = await element.boundingBox();
@@ -807,25 +916,41 @@ const captureScreenshot = async (page: Page, config: ScreenshotConfig, theme: 'l
           width: box.width + gap * 2,
           height: box.height + gap * 2
         },
-        path: screenshotPath
+        path: tempPath
       });
     } else {
-      await element.screenshot({ animations: 'disabled', caret: 'hide', path: screenshotPath });
+      await element.screenshot({ animations: 'disabled', caret: 'hide', path: tempPath });
     }
-    return screenshotPath;
+  } else {
+    await page.screenshot({
+      animations: 'disabled',
+      caret: 'hide',
+      fullPage: config.fullPage ?? true,
+      path: tempPath
+    });
   }
 
-  await page.screenshot({
-    animations: 'disabled',
-    caret: 'hide',
-    fullPage: config.fullPage ?? true,
-    path: screenshotPath
-  });
+  let pixelDiff: number | null = null;
+  try {
+    await stat(screenshotPath);
+    pixelDiff = await compareImages(screenshotPath, tempPath);
+  } catch {
+    // existing file absent — always write
+  }
+
+  if (pixelDiff === null || pixelDiff > pixelDiffThreshold) {
+    await rename(tempPath, screenshotPath);
+    const reason = pixelDiff === null ? 'new file or size mismatch' : `${pixelDiff} pixels changed`;
+    console.log(`  Written (${reason})`);
+  } else {
+    await unlink(tempPath);
+    console.log(`  Skipped (${pixelDiff} pixels changed, threshold ${pixelDiffThreshold})`);
+  }
 
   return screenshotPath;
 };
 
-const main = async () => {
+const runArchRegisterScreenshots = async (configs: ArchRegisterScreenshotConfig[]) => {
   let tempRoot: string | undefined;
   let browser: Browser | undefined;
   tempRoot = await mkdtemp(join(tmpdir(), 'diagram-craft-docs-screenshots-'));
@@ -895,45 +1020,19 @@ const main = async () => {
       settingsPage
     } satisfies ScreenshotContext;
 
-    const filteredConfigs =
-      screenshotOnly.length === 0
-        ? screenshotConfigs
-        : screenshotConfigs.filter(config =>
-            screenshotOnly.some(filter => `${config.category}/${config.name}` === filter)
-          );
-
-    for (const config of filteredConfigs) {
-      const themes = config.themes ?? ['light', 'dark'];
+    for (const config of configs) {
+      const themes = getThemes(config);
       const viewport = config.viewport ?? defaultViewport;
       
       for (const theme of themes) {
         console.log(`Capturing ${config.category}/${config.name} (${theme})...`);
-        
-        // Set theme in localStorage
-        await page.evaluate((t) => {
-          localStorage.setItem('ar-theme', t);
-          localStorage.setItem('diagram-craft.user-state', JSON.stringify({ themeMode: t }));
-        }, theme);
-        
-        // Reload page to apply theme
+
+        await setStoredThemes(page, theme);
         await page.reload();
         await page.waitForLoadState('networkidle');
-        
-        // Wait for theme to be applied to DOM
-        await page.waitForFunction(
-          (expectedTheme) => {
-            const root = document.documentElement;
-            if (expectedTheme === 'light') {
-              return root.getAttribute('data-theme') === 'light' && !root.classList.contains('dark');
-            } else {
-              return !root.hasAttribute('data-theme') && root.classList.contains('dark');
-            }
-          },
-          theme,
-          { timeout: 5000 }
-        );
-        
-        // Check if we need to re-authenticate after reload
+
+        await waitForThemeApplied(page, theme);
+
         const isOnLoginPage = page.url().includes('/login');
         if (isOnLoginPage) {
           await loginPage.expectLoaded();
@@ -941,9 +1040,9 @@ const main = async () => {
           await homePage.expectLoaded(defaultWorkspace.name);
         }
         
-        // Set viewport and run setup
         await page.setViewportSize(viewport);
         await config.setup(screenshotContext);
+        await waitForThemeApplied(page, theme);
 
         const screenshotPath = await captureScreenshot(page, config, theme);
         console.log(`Saved ${screenshotPath.replace(`${repoRoot}/`, '')}`);
@@ -954,12 +1053,91 @@ const main = async () => {
       await browser.close();
     }
 
-    for (const child of runningChildren.reverse()) {
-      await terminateChild(child);
-    }
-
     if (tempRoot != null) {
       await rm(tempRoot, { recursive: true, force: true });
+    }
+  }
+};
+
+const runDiagramCraftScreenshots = async (configs: DiagramCraftScreenshotConfig[]) => {
+  let browser: Browser | undefined;
+
+  try {
+    console.log('Starting Diagram Craft dev server...');
+    startCommand(
+      'diagram-craft-web',
+      'pnpm',
+      ['--dir', 'packages/main', 'dev', '--', '--strictPort', '--port', String(diagramCraftScreenshotPort)],
+      { ...process.env, PNPM_WORKSPACE_DIR: repoRoot }
+    );
+
+    await waitForHttp(diagramCraftBaseUrl, 'Diagram Craft web app');
+
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({
+      baseURL: diagramCraftBaseUrl,
+      colorScheme: 'light',
+      deviceScaleFactor: defaultDeviceScaleFactor,
+      locale: 'en-US',
+      viewport: defaultViewport
+    });
+
+    await context.addInitScript(state => {
+      const current = JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}');
+      localStorage.setItem(
+        'diagram-craft.user-state',
+        JSON.stringify({
+          ...current,
+          ...state
+        })
+      );
+    }, diagramCraftUserState);
+
+    const page = await context.newPage();
+    const screenshotContext = { page } satisfies DiagramCraftScreenshotContext;
+
+    for (const config of configs) {
+      const themes = getThemes(config);
+      const viewport = config.viewport ?? defaultViewport;
+
+      for (const theme of themes) {
+        console.log(`Capturing ${config.product}/${config.category}/${config.name} (${theme})...`);
+        await setDiagramCraftTheme(page, theme);
+        await page.setViewportSize(viewport);
+        await config.setup(screenshotContext);
+        await waitForThemeApplied(page, theme);
+
+        const screenshotPath = await captureScreenshot(page, config, theme);
+        console.log(`Saved ${screenshotPath.replace(`${repoRoot}/`, '')}`);
+      }
+    }
+  } finally {
+    if (browser != null) {
+      await browser.close();
+    }
+  }
+};
+
+const main = async () => {
+  const filteredConfigs = getFilteredConfigs(screenshotConfigs);
+  const archRegisterConfigs = filteredConfigs.filter(
+    config => config.product === 'arch-register'
+  ) as ArchRegisterScreenshotConfig[];
+  const diagramCraftConfigs = filteredConfigs.filter(
+    config => config.product === 'diagram-craft'
+  ) as DiagramCraftScreenshotConfig[];
+
+  try {
+    if (archRegisterConfigs.length > 0) {
+      await runArchRegisterScreenshots(archRegisterConfigs);
+    }
+
+    if (diagramCraftConfigs.length > 0) {
+      await runDiagramCraftScreenshots(diagramCraftConfigs);
+    }
+  } finally {
+    for (const child of runningChildren.reverse()) {
+      await terminateChild(child);
     }
   }
 };
