@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { WorkspaceEnumDbResult as InternalWorkspaceEnum } from './db/catalogDatabase';
 import { SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
 import { httpAssert } from '../../utils/httpAssert';
-import { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
 
@@ -111,6 +111,58 @@ export const isSchemaReferencedByEntities = (
   schemaId: string,
   entities: Array<{ schema_id: string }>
 ) => entities.some(entity => entity.schema_id === schemaId);
+
+const isRequired = (field: SchemaField) => field.requirementLevel === 'required';
+
+/**
+ * Detects schema field changes that would be incompatible with entity data that
+ * already exists for the schema (e.g. silently orphaning data stored under an old
+ * field id, or invalidating data for a field newly marked as required).
+ *
+ * Fields are matched primarily by id. An old field whose id disappears and a new
+ * field with the same name are treated as the same field having its id changed,
+ * since that's how the schema editor represents an in-place id edit.
+ */
+export const findIncompatibleFieldChanges = (oldFields: SchemaField[], newFields: SchemaField[]): string[] => {
+  const messages: string[] = [];
+  const newById = new Map(newFields.map(field => [field.id, field]));
+
+  const unmatchedOld: SchemaField[] = [];
+  for (const oldField of oldFields) {
+    const newField = newById.get(oldField.id);
+    if (!newField) {
+      unmatchedOld.push(oldField);
+      continue;
+    }
+    if (oldField.type !== newField.type) {
+      messages.push(`Field "${oldField.name}" cannot change type (${oldField.type} → ${newField.type})`);
+    }
+    if (!isRequired(oldField) && isRequired(newField)) {
+      messages.push(`Field "${oldField.name}" cannot be made required while entities exist`);
+    }
+  }
+
+  const matchedIds = new Set(oldFields.map(field => field.id).filter(id => newById.has(id)));
+  const unmatchedNew = newFields.filter(field => !matchedIds.has(field.id));
+
+  const renamedIds = new Set<string>();
+  for (const oldField of unmatchedOld) {
+    const renamedTo = unmatchedNew.find(field => field.name === oldField.name && !renamedIds.has(field.id));
+    if (renamedTo) {
+      renamedIds.add(renamedTo.id);
+      messages.push(`Field "${oldField.name}" cannot have its id changed (${oldField.id} → ${renamedTo.id})`);
+    }
+  }
+
+  for (const newField of unmatchedNew) {
+    if (renamedIds.has(newField.id)) continue;
+    if (isRequired(newField)) {
+      messages.push(`New field "${newField.name}" cannot be required while entities exist`);
+    }
+  }
+
+  return messages;
+};
 
 export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
   id: e.id,

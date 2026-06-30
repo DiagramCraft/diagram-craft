@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { toApiEnum, toApiSchema } from './schemaHelpers';
+import { findIncompatibleFieldChanges, toApiEnum, toApiSchema } from './schemaHelpers';
 import { SchemaDbResult, WorkspaceEnumDbResult } from './db/catalogDatabase';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -85,5 +86,86 @@ describe('toApiSchema', () => {
     const result = toApiSchema(schema, 42, []);
     expect(result.entity_count).toBe(42);
     expect(result.created_at).toBe(nowIso);
+  });
+});
+
+// ── findIncompatibleFieldChanges ────────────────────────────────
+
+describe('findIncompatibleFieldChanges', () => {
+  const text = (id: string, name: string, requirementLevel?: SchemaField['requirementLevel']): SchemaField => ({
+    id,
+    name,
+    type: 'text',
+    requirementLevel
+  });
+
+  it('allows adding a new optional field', () => {
+    const oldFields = [text('notes', 'Notes')];
+    const newFields = [text('notes', 'Notes'), text('owner', 'Owner', 'optional')];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
+  });
+
+  it('blocks adding a new required field', () => {
+    const oldFields = [text('notes', 'Notes')];
+    const newFields = [text('notes', 'Notes'), text('owner', 'Owner', 'required')];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
+      'New field "Owner" cannot be required while entities exist'
+    ]);
+  });
+
+  it('allows removing a field', () => {
+    const oldFields = [text('notes', 'Notes'), text('owner', 'Owner')];
+    const newFields = [text('notes', 'Notes')];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
+  });
+
+  it('blocks changing a field id (matched by name)', () => {
+    const oldFields = [text('notes', 'Notes')];
+    const newFields = [text('note', 'Notes')];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
+      'Field "Notes" cannot have its id changed (notes → note)'
+    ]);
+  });
+
+  it('blocks making an optional field required', () => {
+    const oldFields = [text('notes', 'Notes', 'optional')];
+    const newFields = [text('notes', 'Notes', 'required')];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
+      'Field "Notes" cannot be made required while entities exist'
+    ]);
+  });
+
+  it('blocks making an expected field required', () => {
+    const oldFields = [text('notes', 'Notes', 'expected')];
+    const newFields = [text('notes', 'Notes', 'required')];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
+      'Field "Notes" cannot be made required while entities exist'
+    ]);
+  });
+
+  it('allows a required field staying required', () => {
+    const oldFields = [text('notes', 'Notes', 'required')];
+    const newFields = [text('notes', 'Notes', 'required')];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
+  });
+
+  it('blocks changing a field type', () => {
+    const oldFields = [text('notes', 'Notes')];
+    const newFields: SchemaField[] = [{ id: 'notes', name: 'Notes', type: 'boolean' }];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([
+      'Field "Notes" cannot change type (text → boolean)'
+    ]);
+  });
+
+  it('allows renaming a field name while keeping its id', () => {
+    const oldFields = [text('notes', 'Notes')];
+    const newFields = [text('notes', 'Comments')];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
+  });
+
+  it('allows reordering fields with no other changes', () => {
+    const oldFields = [text('a', 'A'), text('b', 'B')];
+    const newFields = [text('b', 'B'), text('a', 'A')];
+    expect(findIncompatibleFieldChanges(oldFields, newFields)).toEqual([]);
   });
 });
