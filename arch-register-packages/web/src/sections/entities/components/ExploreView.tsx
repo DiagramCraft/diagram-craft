@@ -5,7 +5,6 @@ import { Chip } from '../../../components/Chip';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/api';
-import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { ExploreViewConfig } from '@arch-register/api-types/viewContract';
 import styles from './ExploreView.module.css';
 import {
@@ -17,13 +16,11 @@ import {
   type ExploreConnector
 } from './ExploreView.helpers';
 import { Button } from '@diagram-craft/app-components/Button';
+import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 
-type ExploreViewProps = {
-  rows: EntityRecord[];
-  onEntityClick: (entityPublicId: string) => void;
+type ExploreViewProps = EntityBrowserRowViewProps & {
   config: ExploreViewConfig | null;
   onConfigChange: (cfg: ExploreViewConfig) => void;
-  linkedEntityIds?: string[];
 };
 
 type ConnectorLine = ExploreConnector & {

@@ -28,15 +28,14 @@ import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useEntities';
+import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
-  BrowserSearch,
   buildSavedViewPayload,
-  EntityBrowser,
   getFilterValue,
   parseConditionsFromSearch,
   parseJsonConfig,
-  SaveViewDialog
-} from '../entities/components/EntityBrowser';
+  type BrowserSearch
+} from '../entities/components/entityBrowserState';
 import type { RadarConfig } from '../entities/components/RadarView';
 import type { TimelineConfig } from '../entities/components/TimelineView';
 import type { MatrixConfig } from '../entities/components/MatrixView';

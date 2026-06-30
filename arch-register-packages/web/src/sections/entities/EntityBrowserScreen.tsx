@@ -20,16 +20,18 @@ import type { TimelineConfig } from './components/TimelineView';
 import type { MatrixConfig } from './components/MatrixView';
 import type { HierarchyConfig } from './components/HierarchyView';
 import {
-  buildSavedViewPayload,
   EntityBrowser,
-  SaveViewDialog,
-  BrowserSearch,
+  SaveViewDialog
+} from './components/EntityBrowser';
+import { parseExploreConfigValue } from './components/ExploreView.helpers';
+import {
+  type BrowserSearch,
+  buildSavedViewPayload,
   getFilterValue,
   parseConditionsFromSearch,
   parseJsonConfig,
   toSavedViewConfig
-} from './components/EntityBrowser';
-import { parseExploreConfigValue } from './components/ExploreView.helpers';
+} from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/api';
 
 export const EntityBrowserScreen = () => {

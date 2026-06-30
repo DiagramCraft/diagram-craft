@@ -10,6 +10,7 @@ import { orpcClient } from '../../../lib/orpcClient';
 import { getRelationDisplayLabel, resolveSchemaColor } from '../../../lib/api';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -22,13 +23,10 @@ export type MatrixConfig = {
   hideEmptyCols: boolean;
 };
 
-type MatrixViewProps = {
-  rows: EntityRecord[];
+type MatrixViewProps = EntityBrowserRowViewProps & {
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
-  onEntityClick: (entityId: string) => void;
   config: MatrixConfig | null;
   onConfigChange: (cfg: MatrixConfig) => void;
-  linkedEntityIds?: string[];
 };
 
 type ColMode = 'entity' | 'attribute';

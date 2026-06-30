@@ -34,7 +34,7 @@ import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
-import { toSavedViewSearch } from './components/EntityBrowser';
+import { toSavedViewSearch } from './components/entityBrowserState';
 
 export const EntitiesSidebar = ({
   schemas,

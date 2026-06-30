@@ -60,7 +60,7 @@ import {
   projectMarkdownRoute
 } from '../../routes/publicObjectRoutes';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
-import { toSavedViewSearch } from '../entities/components/EntityBrowser';
+import { toSavedViewSearch } from '../entities/components/entityBrowserState';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 
 type ProjectSection = 'home' | 'entities';

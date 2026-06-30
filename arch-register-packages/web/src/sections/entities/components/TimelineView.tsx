@@ -21,6 +21,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import { useEntitySnapshots } from '../../../hooks/useEntities';
+import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -566,16 +567,13 @@ const DetailPanel = ({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-type TimelineViewProps = {
-  rows: EntityRecord[];
+type TimelineViewProps = EntityBrowserRowViewProps & {
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
-  onEntityClick: (entityId: string) => void;
   config: TimelineConfig | null;
   onConfigChange: (cfg: TimelineConfig) => void;
   workspaceId: string;
   projects: Project[];
-  linkedEntityIds?: string[];
 };
 
 export const TimelineView = ({
