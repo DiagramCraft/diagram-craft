@@ -29,7 +29,6 @@ import {
 import styles from './EntityBrowserEmbedDialog.module.css';
 
 const noop = () => {};
-const emptySet = new Set<string>();
 
 export const EntityBrowserEmbedDialog = ({
   element,
@@ -228,6 +227,7 @@ export const EntityBrowserEmbedDialog = ({
               onDelete={noop as (entity: EntityRecord) => void}
               onClone={noop as (entity: EntityRecord) => void}
               lifecycleStates={lifecycleStates}
+              readOnly
             />
           ) : view === 'cards' ? (
             <CardsView
@@ -237,6 +237,7 @@ export const EntityBrowserEmbedDialog = ({
               onDelete={noop as (entity: EntityRecord) => void}
               onClone={noop as (entity: EntityRecord) => void}
               lifecycleStates={lifecycleStates}
+              readOnly
             />
           ) : (
             <TableView
@@ -245,10 +246,8 @@ export const EntityBrowserEmbedDialog = ({
               onEntityClick={noop}
               onDelete={noop as (entity: EntityRecord) => void}
               onClone={noop as (entity: EntityRecord) => void}
-              selectedIds={emptySet}
-              onSelectAll={noop}
-              onSelectRow={noop}
               lifecycleStates={lifecycleStates}
+              readOnly
             />
           )}
         </div>

@@ -28,6 +28,7 @@ type MatrixViewProps = EntityBrowserRowViewProps & {
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   config: unknown;
   onConfigChange: (cfg: MatrixConfig) => void;
+  hideToolbar?: boolean;
 };
 
 type ColMode = 'entity' | 'attribute';
@@ -93,7 +94,8 @@ export const MatrixView = ({
   onEntityClick,
   config,
   onConfigChange,
-  linkedEntityIds
+  linkedEntityIds,
+  hideToolbar
 }: MatrixViewProps) => {
   const {
     workspaceSlug: workspaceId,
@@ -364,6 +366,7 @@ export const MatrixView = ({
   return (
     <div className={styles.wrap}>
       {/* Config bar */}
+      {!hideToolbar && (
       <div className={styles.config}>
         {/* Rows pill */}
         <div className={styles.axisPill}>
@@ -488,6 +491,7 @@ export const MatrixView = ({
           </button>
         </div>
       </div>
+      )}
 
       {/* Matrix or empty state */}
       {isEmpty ? (

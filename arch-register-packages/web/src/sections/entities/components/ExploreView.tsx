@@ -21,6 +21,7 @@ import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 type ExploreViewProps = EntityBrowserRowViewProps & {
   config: unknown;
   onConfigChange: (cfg: ExploreViewConfig) => void;
+  hideToolbar?: boolean;
 };
 
 type ConnectorLine = ExploreConnector & {
@@ -96,7 +97,8 @@ export const ExploreView = ({
   onEntityClick,
   config,
   onConfigChange,
-  linkedEntityIds
+  linkedEntityIds,
+  hideToolbar
 }: ExploreViewProps) => {
   const parsedConfig = useMemo(() => {
     const result = exploreViewConfigSchema.safeParse(config);
@@ -297,14 +299,16 @@ export const ExploreView = ({
   if (rows.length === 0) {
     return (
       <div className={styles.wrap}>
-        <div className={styles.toolbar}>
-          <div className={styles.toolbarBlock}>
-            <div className={styles.toolbarLabel}>Relation fields</div>
-            <div className={styles.toggleRow}>
-              <span className={styles.emptyToggle}>No relations available</span>
+        {!hideToolbar && (
+          <div className={styles.toolbar}>
+            <div className={styles.toolbarBlock}>
+              <div className={styles.toolbarLabel}>Relation fields</div>
+              <div className={styles.toggleRow}>
+                <span className={styles.emptyToggle}>No relations available</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
         <div className={styles.empty}>
           <div className={styles.emptyTitle}>No entities found</div>
           <div>Try adjusting your search or filters.</div>
@@ -315,32 +319,34 @@ export const ExploreView = ({
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.toolbar}>
-        <div className={styles.toolbarBlock}>
-          <div className={styles.toolbarLabel}>Relation fields</div>
-          <div className={styles.toggleRow}>
-            {relationFieldOptions.map(option => {
-              const active = normalizedConfig.relationFieldNames.includes(option.value);
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`${styles.toggleButton} ${active ? styles.toggleButtonActive : ''}`}
-                  aria-pressed={active}
-                  onClick={() => {
-                    const nextValues = active
-                      ? normalizedConfig.relationFieldNames.filter(value => value !== option.value)
-                      : [...normalizedConfig.relationFieldNames, option.value];
-                    updateConfig({ relationFieldNames: nextValues });
-                  }}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
+      {!hideToolbar && (
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarBlock}>
+            <div className={styles.toolbarLabel}>Relation fields</div>
+            <div className={styles.toggleRow}>
+              {relationFieldOptions.map(option => {
+                const active = normalizedConfig.relationFieldNames.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`${styles.toggleButton} ${active ? styles.toggleButtonActive : ''}`}
+                    aria-pressed={active}
+                    onClick={() => {
+                      const nextValues = active
+                        ? normalizedConfig.relationFieldNames.filter(value => value !== option.value)
+                        : [...normalizedConfig.relationFieldNames, option.value];
+                      updateConfig({ relationFieldNames: nextValues });
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div ref={scrollRef} className={styles.scroll}>
         <div

@@ -283,7 +283,8 @@
   color: var(--base-fg-dim);
 }
 
-.article :global(table) {
+.article :global(table),
+.article :global(.tableWrap) {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
@@ -291,6 +292,10 @@
   border-radius: var(--r-md);
   overflow: hidden;
   margin: 0 0 var(--article-block-gap);
+}
+
+.article :global(.tableWrap table) {
+  margin: 0;
 }
 
 .article :global(th) {

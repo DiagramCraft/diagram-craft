@@ -18,7 +18,6 @@ import { decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbed.module.css';
 
 const noop = () => {};
-const emptySet = new Set<string>();
 
 type Props = {
   config?: string;
@@ -94,9 +93,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
           onDelete={noop as (entity: EntityRecord) => void}
           onClone={noop as (entity: EntityRecord) => void}
           lifecycleStates={lifecycleStates}
-          selectedIds={emptySet}
-          onSelectAll={noop}
-          onSelectRow={noop}
+          readOnly
         />
       );
     case 'cards':
@@ -108,6 +105,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
           onDelete={noop as (entity: EntityRecord) => void}
           onClone={noop as (entity: EntityRecord) => void}
           lifecycleStates={lifecycleStates}
+          readOnly
         />
       );
     case 'tree':
@@ -125,11 +123,18 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
           onDelete={noop as (entity: EntityRecord) => void}
           onClone={noop as (entity: EntityRecord) => void}
           lifecycleStates={lifecycleStates}
+          readOnly
         />
       );
     case 'radar':
       return (
-        <RadarView rows={entities} onEntityClick={onEntityClick} config={viewConfig} onConfigChange={noop} />
+        <RadarView
+          rows={entities}
+          onEntityClick={onEntityClick}
+          config={viewConfig}
+          onConfigChange={noop}
+          hideToolbar
+        />
       );
     case 'timeline':
       return (
@@ -142,6 +147,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
           onConfigChange={noop}
           workspaceId={workspaceSlug}
           projects={projects}
+          hideToolbar
         />
       );
     case 'matrix':
@@ -152,6 +158,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
           onEntityClick={onEntityClick}
           config={viewConfig}
           onConfigChange={noop}
+          hideToolbar
         />
       );
     case 'hierarchy':
@@ -167,11 +174,18 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
           onEntityClick={onEntityClick}
           config={viewConfig}
           onConfigChange={noop}
+          hideToolbar
         />
       );
     case 'explore':
       return (
-        <ExploreView rows={entities} onEntityClick={onEntityClick} config={viewConfig} onConfigChange={noop} />
+        <ExploreView
+          rows={entities}
+          onEntityClick={onEntityClick}
+          config={viewConfig}
+          onConfigChange={noop}
+          hideToolbar
+        />
       );
     default:
       return (

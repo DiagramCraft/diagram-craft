@@ -18,9 +18,9 @@ type DateField = Extract<EntitySchema['fields'][number], { type: 'date' }>;
 
 export type TableViewProps = EntityBrowserBaseViewProps & {
   activeDateField?: DateField | null;
-  selectedIds: Set<string>;
-  onSelectAll: () => void;
-  onSelectRow: (uid: string) => void;
+  selectedIds?: Set<string>;
+  onSelectAll?: () => void;
+  onSelectRow?: (uid: string) => void;
 };
 
 const CompletenessCell = ({ value }: { value: number | null }) => {
@@ -61,27 +61,31 @@ export const TableView = ({
   projectContext,
   selectedIds,
   onSelectAll,
-  onSelectRow
+  onSelectRow,
+  readOnly
 }: TableViewProps) => {
-  const allSelected = rows.length > 0 && selectedIds.size === rows.length;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < rows.length;
+  const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
+  const someSelected =
+    !readOnly && (selectedIds?.size ?? 0) > 0 && (selectedIds?.size ?? 0) < rows.length;
 
   return (
     <div className={styles.tableWrap}>
       <table className={styles.table}>
         <thead>
           <tr>
-            <th style={{ width: 32 }}>
-              <input
-                type="checkbox"
-                className={styles.checkbox}
-                checked={allSelected}
-                ref={el => {
-                  if (el) el.indeterminate = someSelected;
-                }}
-                onChange={onSelectAll}
-              />
-            </th>
+            {!readOnly && (
+              <th style={{ width: 32 }}>
+                <input
+                  type="checkbox"
+                  className={styles.checkbox}
+                  checked={allSelected}
+                  ref={el => {
+                    if (el) el.indeterminate = someSelected;
+                  }}
+                  onChange={onSelectAll}
+                />
+              </th>
+            )}
             <th style={{ minWidth: 200 }}>Name</th>
             <th>Type</th>
             <th>Owner</th>
@@ -90,32 +94,36 @@ export const TableView = ({
             {activeDateField && <th>{activeDateField.name}</th>}
             <th style={{ width: 80 }}>NS</th>
             <th style={{ width: 80 }} />
-            <th style={{ width: 28 }} />
+            {!readOnly && <th style={{ width: 28 }} />}
           </tr>
         </thead>
         <tbody>
           {rows.map(entity => {
             const schemaEntry = schemaMap.get(entity._schema.id);
-            const menuItems = [
-              ...entityMenuItems(entity, onClone, onDelete),
-              ...projectEntityMenuItems(entity, projectContext)
-            ];
+            const menuItems = readOnly
+              ? []
+              : [
+                  ...entityMenuItems(entity, onClone, onDelete),
+                  ...projectEntityMenuItems(entity, projectContext)
+                ];
 
             return (
               <tr
                 key={entity._uid}
                 aria-label={`Entity row: ${entityName(entity)}`}
-                className={selectedIds.has(entity._uid) ? styles.tableRowSelected : undefined}
+                className={selectedIds?.has(entity._uid) ? styles.tableRowSelected : undefined}
                 onClick={() => onEntityClick(entity._publicId)}
               >
-                <td onClick={ev => ev.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    className={styles.checkbox}
-                    checked={selectedIds.has(entity._uid)}
-                    onChange={() => onSelectRow(entity._uid)}
-                  />
-                </td>
+                {!readOnly && (
+                  <td onClick={ev => ev.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className={styles.checkbox}
+                      checked={selectedIds?.has(entity._uid) ?? false}
+                      onChange={() => onSelectRow?.(entity._uid)}
+                    />
+                  </td>
+                )}
                 <td>
                   <div className={styles.tableName}>
                     {schemaEntry && (
@@ -181,18 +189,20 @@ export const TableView = ({
                 <td>
                   <CompletenessCell value={entity._completeness} />
                 </td>
-                <td onClick={ev => ev.stopPropagation()}>
-                  {menuItems.length > 0 && (
-                    <DropdownMenu
-                      trigger={
-                        <button type="button" className={styles.dotsBtn}>
-                          <TbDots size={14} />
-                        </button>
-                      }
-                      items={menuItems}
-                    />
-                  )}
-                </td>
+                {!readOnly && (
+                  <td onClick={ev => ev.stopPropagation()}>
+                    {menuItems.length > 0 && (
+                      <DropdownMenu
+                        trigger={
+                          <button type="button" className={styles.dotsBtn}>
+                            <TbDots size={14} />
+                          </button>
+                        }
+                        items={menuItems}
+                      />
+                    )}
+                  </td>
+                )}
               </tr>
             );
           })}

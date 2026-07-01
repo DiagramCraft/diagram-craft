@@ -19,7 +19,8 @@ export const CardsView = ({
   onDelete,
   onClone,
   lifecycleStates,
-  projectContext
+  projectContext,
+  readOnly
 }: EntityBrowserBaseViewProps) => (
   <div className={styles.cardGrid}>
     {rows.map(entity => {
@@ -27,10 +28,12 @@ export const CardsView = ({
       const color = schemaEntry
         ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index)
         : 'var(--accent-fg)';
-      const menuItems = [
-        ...entityMenuItems(entity, onClone, onDelete),
-        ...projectEntityMenuItems(entity, projectContext)
-      ];
+      const menuItems = readOnly
+        ? []
+        : [
+            ...entityMenuItems(entity, onClone, onDelete),
+            ...projectEntityMenuItems(entity, projectContext)
+          ];
 
       return (
         <div key={entity._uid} className={styles.card} onClick={() => onEntityClick(entity._publicId)}>

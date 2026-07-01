@@ -236,10 +236,12 @@ export const RadarView = ({
   linkedEntityIds,
   onEntityClick,
   config: configProp,
-  onConfigChange
+  onConfigChange,
+  hideToolbar
 }: EntityBrowserRowViewProps & {
   config?: unknown;
   onConfigChange?: (config: RadarConfig) => void;
+  hideToolbar?: boolean;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() =>
@@ -364,11 +366,13 @@ export const RadarView = ({
               : 'Visualise the technology landscape across entities.'}
           </div>
         </div>
-        <div className={styles.actions}>
-          <Button icon={<TbSettings size={12} />} onClick={() => setShowSettings(true)}>
-            Configure
-          </Button>
-        </div>
+        {!hideToolbar && (
+          <div className={styles.actions}>
+            <Button icon={<TbSettings size={12} />} onClick={() => setShowSettings(true)}>
+              Configure
+            </Button>
+          </div>
+        )}
       </div>
 
       {!config ? (
@@ -380,39 +384,41 @@ export const RadarView = ({
         </div>
       ) : (
         <>
-          <div className={styles.toolbar}>
-            <div className={styles.searchInline}>
-              <TbSearch size={12} />
-              <input placeholder="Find an entry…" value={q} onChange={e => setQ(e.target.value)} />
+          {!hideToolbar && (
+            <div className={styles.toolbar}>
+              <div className={styles.searchInline}>
+                <TbSearch size={12} />
+                <input placeholder="Find an entry…" value={q} onChange={e => setQ(e.target.value)} />
+              </div>
+              <div className={styles.pills}>
+                {rings.map(ring => (
+                  <button
+                    key={ring.value}
+                    type="button"
+                    className={`${styles.pill}${ringFilter === ring.value ? ` ${styles.pillActive}` : ''}`}
+                    onClick={() => setRingFilter(r => (r === ring.value ? null : ring.value))}
+                  >
+                    {ring.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ flex: 1 }} />
+              <span className={styles.pillsLabel}>Quadrant</span>
+              <div className={styles.pills}>
+                {quadrants.map(quad => (
+                  <button
+                    key={quad.value}
+                    type="button"
+                    className={`${styles.pill}${quadFilter === quad.value ? ` ${styles.pillActive}` : ''}`}
+                    onClick={() => setQuadFilter(p => (p === quad.value ? null : quad.value))}
+                  >
+                    <span className={styles.pillDot} style={{ background: quad.color }} />
+                    {quad.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className={styles.pills}>
-              {rings.map(ring => (
-                <button
-                  key={ring.value}
-                  type="button"
-                  className={`${styles.pill}${ringFilter === ring.value ? ` ${styles.pillActive}` : ''}`}
-                  onClick={() => setRingFilter(r => (r === ring.value ? null : ring.value))}
-                >
-                  {ring.label}
-                </button>
-              ))}
-            </div>
-            <div style={{ flex: 1 }} />
-            <span className={styles.pillsLabel}>Quadrant</span>
-            <div className={styles.pills}>
-              {quadrants.map(quad => (
-                <button
-                  key={quad.value}
-                  type="button"
-                  className={`${styles.pill}${quadFilter === quad.value ? ` ${styles.pillActive}` : ''}`}
-                  onClick={() => setQuadFilter(p => (p === quad.value ? null : quad.value))}
-                >
-                  <span className={styles.pillDot} style={{ background: quad.color }} />
-                  {quad.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
 
           <div className={styles.body}>
             <div className={styles.svgWrap} ref={wrapRef} onMouseMove={onSvgMouseMove}>

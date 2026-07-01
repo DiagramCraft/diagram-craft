@@ -575,6 +575,7 @@ type TimelineViewProps = EntityBrowserRowViewProps & {
   onConfigChange: (cfg: TimelineConfig) => void;
   workspaceId: string;
   projects: Project[];
+  hideToolbar?: boolean;
 };
 
 export const TimelineView = ({
@@ -586,7 +587,8 @@ export const TimelineView = ({
   onConfigChange,
   workspaceId,
   projects,
-  linkedEntityIds
+  linkedEntityIds,
+  hideToolbar
 }: TimelineViewProps) => {
   const dateFields = useDateFieldOptions(schemas);
   const TODAY = useMemo(() => new Date(), []);
@@ -725,13 +727,15 @@ export const TimelineView = ({
 
   return (
     <div className={styles.screen}>
-      <ConfigBar
-        cfg={cfg}
-        onChange={updateCfg}
-        dateFields={dateFields}
-        totalDated={totalDated}
-        totalRows={rows.length}
-      />
+      {!hideToolbar && (
+        <ConfigBar
+          cfg={cfg}
+          onChange={updateCfg}
+          dateFields={dateFields}
+          totalDated={totalDated}
+          totalRows={rows.length}
+        />
+      )}
 
       {isEmpty ? (
         <div className={styles.empty}>

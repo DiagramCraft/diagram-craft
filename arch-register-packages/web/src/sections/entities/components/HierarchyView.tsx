@@ -33,6 +33,7 @@ type HierarchyViewProps = {
   config: unknown;
   onConfigChange: (cfg: HierarchyConfig) => void;
   linkedEntityIds?: string[];
+  hideToolbar?: boolean;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -277,7 +278,8 @@ export const HierarchyView = ({
   onEntityClick,
   config,
   onConfigChange,
-  linkedEntityIds
+  linkedEntityIds,
+  hideToolbar
 }: HierarchyViewProps) => {
   const { schemas } = useWorkspaceContext();
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
@@ -371,6 +373,7 @@ export const HierarchyView = ({
   return (
     <div className={styles.wrap}>
       {/* Config bar */}
+      {!hideToolbar && (
       <div className={styles.config}>
         <div className={styles.axisPill}>
           <span className={styles.axisKicker}>Levels</span>
@@ -429,6 +432,7 @@ export const HierarchyView = ({
           </>
         )}
       </div>
+      )}
 
       {/* Content */}
       {isUnconfigured ? (
