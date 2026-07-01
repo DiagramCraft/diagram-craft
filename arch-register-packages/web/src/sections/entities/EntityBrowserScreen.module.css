@@ -78,7 +78,7 @@
 }
 
 /* Table view */
-.tableWrap {
+:global(.tableWrap) {
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   overflow: visible;

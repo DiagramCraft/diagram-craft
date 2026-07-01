@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbSearch, TbChevronLeft, TbChevronRight, TbFilter } from 'react-icons/tb';
+import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -9,11 +9,8 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
-import { FilterBuilder } from '../../../components/FilterBuilder';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import type { WorkspaceTeam } from '../../../lib/api';
-import { type BrowserView } from '@arch-register/api-types/viewContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { RadarView } from '../components/RadarView';
@@ -26,6 +23,7 @@ import { CardsView } from './CardsView';
 import { TableView } from './TableView';
 import { TreeView } from './TreeView';
 import { type ProjectBrowserContext } from './entityBrowserState';
+import { EntityBrowserToolbar } from './EntityBrowserToolbar';
 import { useEntityBrowserData } from './useEntityBrowserData';
 import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
 import { useEntityBrowserPagination } from './useEntityBrowserPagination';
@@ -159,7 +157,6 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     workspaceSlug,
     projectId
   });
-  const filterPopoverRef = useRef<PopoverActions | null>(null);
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
     useEntityBrowserPagination({
@@ -259,75 +256,25 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
 
   return (
     <>
-      <div className={styles.toolbar}>
-        <div className={styles.searchInline}>
-          <TbSearch size={12} />
-          <input
-            placeholder="Search by name, owner…"
-            value={q}
-            onChange={e => setQ(e.target.value)}
-          />
-        </div>
-        <Popover.Root actionsRef={filterPopoverRef}>
-          <Popover.Trigger
-            element={
-              <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
-                <TbFilter size={12} style={{ marginRight: 4 }} />
-                Filter
-                {conditions.length > 0 && (
-                  <span className={styles.filterCount}>{conditions.length}</span>
-                )}
-              </Button>
-            }
-          />
-          <Popover.Content
-            sideOffset={4}
-            align="start"
-            arrow={false}
-            closeButton={false}
-            className={styles.filterPopover}
-          >
-            <FilterBuilder
-              conditions={conditions}
-              onChange={setConditions}
-              onClose={() => filterPopoverRef.current?.close()}
-              schemas={schemas}
-              lifecycleStates={lifecycleStates}
-              owners={owners}
-              enums={enums}
-              selectedSchemaId={typeFilter}
-            />
-          </Popover.Content>
-        </Popover.Root>
-        {projectId && (
-          <FilterDropdown
-            label="Scope"
-            value={projectScope}
-            onChange={v => setProjectScope((v as 'project' | 'all') ?? 'project')}
-            options={[
-              { value: 'project', label: 'Project entities only' },
-              { value: 'all', label: 'All entities' }
-            ]}
-          />
-        )}
-        <div style={{ flex: 1 }} />
-        <FilterDropdown label="Sort" value={sort} onChange={setSort} options={sortOptions} />
-        <FilterDropdown
-          label="View"
-          value={view}
-          onChange={v => setView(v as BrowserView)}
-          options={[
-            { value: 'table', label: 'Table' },
-            { value: 'cards', label: 'Cards' },
-            { value: 'tree', label: 'Tree' },
-            { value: 'radar', label: 'Radar' },
-            { value: 'timeline', label: 'Timeline' },
-            { value: 'matrix', label: 'Matrix' },
-            { value: 'hierarchy', label: 'Hierarchy' },
-            { value: 'explore', label: 'Explore' }
-          ]}
-        />
-      </div>
+      <EntityBrowserToolbar
+        q={q}
+        setQ={setQ}
+        conditions={conditions}
+        setConditions={setConditions}
+        schemas={schemas}
+        lifecycleStates={lifecycleStates}
+        owners={owners}
+        enums={enums}
+        typeFilter={typeFilter}
+        projectId={projectId}
+        projectScope={projectScope}
+        setProjectScope={setProjectScope}
+        sort={sort}
+        setSort={setSort}
+        sortOptions={sortOptions}
+        view={view}
+        setView={setView}
+      />
       {view === 'hierarchy' ? (
         <HierarchyView
           workspaceId={workspaceId}

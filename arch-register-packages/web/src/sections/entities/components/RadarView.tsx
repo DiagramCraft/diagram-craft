@@ -1,12 +1,10 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import styles from './RadarView.module.css';
-import { TbSettings, TbSearch, TbChevronUp, TbChevronDown } from 'react-icons/tb';
+import { TbSearch, TbChevronUp, TbChevronDown } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { FormSection } from '@diagram-craft/app-components/FormSection';
-import { Select } from '@diagram-craft/app-components/Select';
+import { Popover } from '@diagram-craft/app-components/Popover';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { useEntities } from '../../../hooks/useEntities';
 import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -236,10 +234,12 @@ export const RadarView = ({
   linkedEntityIds,
   onEntityClick,
   config: configProp,
-  onConfigChange
+  onConfigChange,
+  hideToolbar
 }: EntityBrowserRowViewProps & {
   config?: unknown;
   onConfigChange?: (config: RadarConfig) => void;
+  hideToolbar?: boolean;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() =>
@@ -251,7 +251,7 @@ export const RadarView = ({
   }, [configProp]);
   const config = parsedConfig ?? internalConfig;
 
-  const [showSettings, setShowSettings] = useState(false);
+  const [ringOrderOpen, setRingOrderOpen] = useState(false);
   const [q, setQ] = useState('');
   const [quadFilter, setQuadFilter] = useState<string | null>(null);
   const [ringFilter, setRingFilter] = useState<string | null>(null);
@@ -260,9 +260,31 @@ export const RadarView = ({
   const [tipPos, setTipPos] = useState({ x: 0, y: 0 });
   const wrapRef = useRef<HTMLDivElement>(null);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
-  const entities = rows;
+
+  // Rows arrive in 'summary' view (no custom select field values), but the quadrant/ring
+  // axes are often custom Select fields — fetch the full-view records for the radar's
+  // schema and use those in place of the summary rows wherever available.
+  const { data: fullSchemaEntities = [] } = useEntities(
+    workspaceSlug,
+    { schemaId: config?.schemaId, view: 'full' },
+    { enabled: !!workspaceSlug && !!config?.schemaId }
+  );
+  const fullEntityMap = useMemo(() => {
+    const m = new Map<string, EntityRecord>();
+    fullSchemaEntities.forEach(e => m.set(e._uid, e));
+    return m;
+  }, [fullSchemaEntities]);
+  const entities = useMemo(
+    () => rows.map(r => fullEntityMap.get(r._uid) ?? r),
+    [rows, fullEntityMap]
+  );
 
   const schema = config ? (schemas.find(s => s.id === config.schemaId) ?? null) : null;
+
+  const fieldOptions = useMemo(
+    () => (schema ? getSelectableFields(schema, lifecycleStates) : []),
+    [schema, lifecycleStates]
+  );
 
   const quadrantValues = useMemo(() => {
     if (!config || !schema) return [];
@@ -329,14 +351,13 @@ export const RadarView = ({
 
   const onBlipClick = (id: string) => setPinned(p => (p === id ? null : id));
 
-  const handleSaveConfig = (newConfig: RadarConfig) => {
+  const applyConfig = (newConfig: RadarConfig) => {
     if (onConfigChange) {
       onConfigChange(newConfig);
     } else {
       saveConfig(workspaceSlug, newConfig);
       setInternalConfig(newConfig);
     }
-    setShowSettings(false);
     setQuadFilter(null);
     setRingFilter(null);
     setQ('');
@@ -344,177 +365,373 @@ export const RadarView = ({
     setHovered(null);
   };
 
+  const handleSchemaChange = (newSchemaId: string) => {
+    const newSchema = schemas.find(s => s.id === newSchemaId);
+    if (!newSchema) return;
+    const opts = getSelectableFields(newSchema, lifecycleStates);
+    const quadrantFieldId = opts[0]?.id ?? '';
+    const ringFieldId = opts[1]?.id ?? quadrantFieldId;
+    applyConfig({ schemaId: newSchemaId, quadrantFieldId, ringFieldId, ringOrder: [] });
+  };
+
+  const handleQuadrantFieldChange = (newQuadrantFieldId: string) => {
+    if (!config) return;
+    applyConfig({ ...config, quadrantFieldId: newQuadrantFieldId });
+  };
+
+  const handleRingFieldChange = (newRingFieldId: string) => {
+    if (!config) return;
+    applyConfig({ ...config, ringFieldId: newRingFieldId, ringOrder: [] });
+  };
+
+  const ringFieldAllValues = useMemo(() => {
+    if (!schema || !config) return [];
+    return getFieldValues(schema, config.ringFieldId, lifecycleStates);
+  }, [schema, config, lifecycleStates]);
+
+  const ringOrderDisplay = useMemo(() => {
+    const checkedSet = new Set(ringValues.map(v => v.value));
+    return [...ringValues, ...ringFieldAllValues.filter(v => !checkedSet.has(v.value))];
+  }, [ringValues, ringFieldAllValues]);
+
+  const toggleRing = (value: string) => {
+    if (!config) return;
+    const order = ringValues.map(v => v.value);
+    if (order.includes(value)) {
+      applyConfig({ ...config, ringOrder: order.filter(v => v !== value) });
+    } else if (order.length < 5) {
+      applyConfig({ ...config, ringOrder: [...order, value] });
+    }
+  };
+
+  const moveRing = (idx: number, dir: -1 | 1) => {
+    if (!config) return;
+    const order = ringValues.map(v => v.value);
+    const next = [...order];
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= next.length) return;
+    [next[idx], next[swapIdx]] = [next[swapIdx]!, next[idx]!];
+    applyConfig({ ...config, ringOrder: next });
+  };
+
   const now = new Date();
   const edition = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   return (
     <div className={styles.screen}>
-      <div className={styles.header}>
-        <div>
-          <div className={styles.eyebrow}>Technology Radar</div>
-          <div className={styles.titleRow}>
-            <div className={styles.title}>
-              {schema ? `${schema.name} Radar` : 'Technology Radar'}
-            </div>
-            <span className={styles.edition}>{edition}</span>
-          </div>
-          <div className={styles.sub}>
-            {config && allBlips.length > 0
-              ? `${allBlips.length} entries · ${rings.map(r => r.label).join(' · ')}`
-              : 'Visualise the technology landscape across entities.'}
-          </div>
-        </div>
-        <div className={styles.actions}>
-          <Button icon={<TbSettings size={12} />} onClick={() => setShowSettings(true)}>
-            Configure
-          </Button>
-        </div>
-      </div>
-
-      {!config ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>Radar not configured</div>
-          <div>
-            Click <b>Configure</b> to map a schema and fields to the radar axes.
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className={styles.toolbar}>
-            <div className={styles.searchInline}>
-              <TbSearch size={12} />
-              <input placeholder="Find an entry…" value={q} onChange={e => setQ(e.target.value)} />
-            </div>
-            <div className={styles.pills}>
-              {rings.map(ring => (
-                <button
-                  key={ring.value}
-                  type="button"
-                  className={`${styles.pill}${ringFilter === ring.value ? ` ${styles.pillActive}` : ''}`}
-                  onClick={() => setRingFilter(r => (r === ring.value ? null : ring.value))}
-                >
-                  {ring.label}
-                </button>
-              ))}
-            </div>
-            <div style={{ flex: 1 }} />
-            <span className={styles.pillsLabel}>Quadrant</span>
-            <div className={styles.pills}>
-              {quadrants.map(quad => (
-                <button
-                  key={quad.value}
-                  type="button"
-                  className={`${styles.pill}${quadFilter === quad.value ? ` ${styles.pillActive}` : ''}`}
-                  onClick={() => setQuadFilter(p => (p === quad.value ? null : quad.value))}
-                >
-                  <span className={styles.pillDot} style={{ background: quad.color }} />
-                  {quad.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.body}>
-            <div className={styles.svgWrap} ref={wrapRef} onMouseMove={onSvgMouseMove}>
-              <svg
-                className={styles.svg}
-                viewBox="0 0 840 840"
-                preserveAspectRatio="xMidYMid meet"
-                overflow="visible"
+      {!hideToolbar && (
+        <div className={styles.config}>
+          <div className={styles.axisPill}>
+            <span className={styles.axisKicker}>Schema</span>
+            <div className={styles.selectWrap}>
+              <select
+                className={styles.select}
+                value={config?.schemaId ?? ''}
+                onChange={e => handleSchemaChange(e.target.value)}
               >
-                <RadarGrid quadrants={quadrants} rings={rings} dimmedQuad={quadFilter} />
-                {blips.map(blip => {
-                  const quad = quadrants.find(qq => qq.value === blip.quadrantValue);
-                  return (
-                    <RadarBlip
-                      key={blip.id}
-                      blip={blip}
-                      color={quad?.color ?? 'var(--base-fg-more-dim)'}
-                      isHovered={activeId === blip.id}
-                      isDimmed={!!activeId && activeId !== blip.id}
-                      onClick={() => onBlipClick(blip.id)}
-                      onMouseEnter={() => {
-                        if (!pinned) setHovered(blip.id);
-                      }}
-                      onMouseLeave={() => {
-                        if (!pinned) setHovered(null);
-                      }}
-                    />
-                  );
-                })}
-              </svg>
-              {activeBlip && activeQuad && activeRing && (
-                <BlipTooltip
-                  blip={activeBlip}
-                  quad={activeQuad}
-                  ring={activeRing}
-                  isLinked={linkedEntityIds == null || linkedEntityIdSet.has(activeBlip.id)}
-                  x={tipPos.x}
-                  y={tipPos.y}
-                  pinned={pinned === activeBlip.id}
-                  onDismiss={() => {
-                    setPinned(null);
-                    setHovered(null);
-                  }}
-                  onOpen={() => onEntityClick(activeBlip.id)}
-                />
-              )}
-            </div>
-
-            <div className={styles.legend}>
-              <div className={styles.legendHead}>
-                <span>Blip index</span>
-                <span className={styles.legendCount}>{blips.length} shown</span>
-              </div>
-              <div className={styles.legendScroll}>
-                {quadrants.map(quad => {
-                  const qs = blips.filter(b => b.quadrantValue === quad.value);
-                  if (qs.length === 0) return null;
-                  return (
-                    <div key={quad.value} className={styles.legendSection}>
-                      <div className={styles.legendQuad}>
-                        <span className={styles.legendQuadDot} style={{ background: quad.color }} />
-                        {quad.label}
-                      </div>
-                      {qs.map(blip => {
-                        const ring = rings.find(r => r.value === blip.ringValue);
-                        return (
-                          <LegendRow
-                            key={blip.id}
-                            blip={blip}
-                            quadColor={quad.color}
-                            ringLabel={ring?.label ?? blip.ringValue}
-                            ringColor={ring?.color ?? 'var(--base-fg-more-dim)'}
-                            isLinked={linkedEntityIds == null || linkedEntityIdSet.has(blip.id)}
-                            active={activeId === blip.id}
-                            onMouseEnter={() => {
-                              if (!pinned) setHovered(blip.id);
-                            }}
-                            onMouseLeave={() => {
-                              if (!pinned) setHovered(null);
-                            }}
-                            onClick={() => onBlipClick(blip.id)}
-                          />
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
+                <option value="" disabled>
+                  — select —
+                </option>
+                {schemas.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <TbChevronDown size={11} />
             </div>
           </div>
-        </>
+
+          <div className={styles.axisPill}>
+            <span className={styles.axisKicker}>Quadrant</span>
+            <div className={styles.selectWrap}>
+              <select
+                className={styles.select}
+                value={config?.quadrantFieldId ?? ''}
+                disabled={!schema || fieldOptions.length === 0}
+                onChange={e => handleQuadrantFieldChange(e.target.value)}
+              >
+                {fieldOptions.length === 0 && <option value="">—</option>}
+                {fieldOptions.map(f => (
+                  <option key={f.id} value={f.id}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+              <TbChevronDown size={11} />
+            </div>
+          </div>
+
+          <div className={styles.axisPill}>
+            <span className={styles.axisKicker}>Ring</span>
+            <div className={styles.selectWrap}>
+              <select
+                className={styles.select}
+                value={config?.ringFieldId ?? ''}
+                disabled={!schema || fieldOptions.length === 0}
+                onChange={e => handleRingFieldChange(e.target.value)}
+              >
+                {fieldOptions.length === 0 && <option value="">—</option>}
+                {fieldOptions.map(f => (
+                  <option key={f.id} value={f.id}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+              <TbChevronDown size={11} />
+            </div>
+          </div>
+
+          {schema && fieldOptions.length === 0 && (
+            <span className={styles.noFields}>
+              No Select fields or lifecycle states on this schema.
+            </span>
+          )}
+
+          <div style={{ flex: 1 }} />
+
+          <Popover.Root open={ringOrderOpen} onOpenChange={setRingOrderOpen}>
+            <Popover.Trigger
+              element={
+                <Button size="sm" disabled={!config} iconRight={<TbChevronDown size={11} />}>
+                  Ring order
+                </Button>
+              }
+            />
+            <Popover.Content side="bottom" align="end" className={styles.ringOrderPopover}>
+              {ringOrderDisplay.length === 0 ? (
+                <div className={styles.settingsNote}>
+                  Select a ring field above to configure the ring order.
+                </div>
+              ) : (
+                <div className={styles.ringOrderList}>
+                  {ringOrderDisplay.map(rv => {
+                    const order = ringValues.map(v => v.value);
+                    const orderIdx = order.indexOf(rv.value);
+                    const checked = orderIdx !== -1;
+                    const disabledCheck = !checked && order.length >= 5;
+                    const color = checked ? RING_COLORS[orderIdx % RING_COLORS.length]! : undefined;
+                    return (
+                      <div
+                        key={rv.value}
+                        className={`${styles.ringOrderRow}${checked ? ` ${styles.ringOrderRowChecked}` : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className={styles.ringOrderCheck}
+                          checked={checked}
+                          disabled={disabledCheck}
+                          onChange={() => toggleRing(rv.value)}
+                        />
+                        <span
+                          className={styles.ringOrderDot}
+                          style={
+                            color
+                              ? { background: color }
+                              : { border: '1px solid var(--base-fg-more-dim)' }
+                          }
+                        />
+                        <span className={styles.ringOrderLabel}>{rv.label}</span>
+                        {checked && (
+                          <div className={styles.ringOrderBtns}>
+                            <button
+                              type="button"
+                              className={styles.ringOrderBtn}
+                              onClick={() => moveRing(orderIdx, -1)}
+                              disabled={orderIdx === 0}
+                              title="Move inward"
+                            >
+                              <TbChevronUp size={12} />
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.ringOrderBtn}
+                              onClick={() => moveRing(orderIdx, 1)}
+                              disabled={orderIdx >= order.length - 1}
+                              title="Move outward"
+                            >
+                              <TbChevronDown size={12} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {ringValues.length >= 5 &&
+                    ringFieldAllValues.some(
+                      rv => !ringValues.some(cv => cv.value === rv.value)
+                    ) && (
+                      <div className={styles.settingsNote}>
+                        Maximum 5 rings reached. Uncheck a value to select a different one.
+                      </div>
+                    )}
+                </div>
+              )}
+            </Popover.Content>
+          </Popover.Root>
+        </div>
       )}
 
-      {showSettings && (
-        <RadarSettings
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          initialConfig={config}
-          onSave={handleSaveConfig}
-          onClose={() => setShowSettings(false)}
-        />
-      )}
+      <div className={styles.content}>
+        <div className={styles.header}>
+          <div>
+            <div className={styles.eyebrow}>Technology Radar</div>
+            <div className={styles.titleRow}>
+              <div className={styles.title}>
+                {schema ? `${schema.name} Radar` : 'Technology Radar'}
+              </div>
+              <span className={styles.edition}>{edition}</span>
+            </div>
+            <div className={styles.sub}>
+              {config && allBlips.length > 0
+                ? `${allBlips.length} entries · ${rings.map(r => r.label).join(' · ')}`
+                : 'Visualise the technology landscape across entities.'}
+            </div>
+          </div>
+        </div>
+
+        {!config ? (
+          <div className={styles.empty}>
+            <div className={styles.emptyTitle}>Radar not configured</div>
+            <div>Choose a schema above to map a schema and fields to the radar axes.</div>
+          </div>
+        ) : (
+          <>
+            {!hideToolbar && (
+              <div className={styles.toolbar}>
+                <div className={styles.searchInline}>
+                  <TbSearch size={12} />
+                  <input
+                    placeholder="Find an entry…"
+                    value={q}
+                    onChange={e => setQ(e.target.value)}
+                  />
+                </div>
+                <div className={styles.pills}>
+                  {rings.map(ring => (
+                    <button
+                      key={ring.value}
+                      type="button"
+                      className={`${styles.pill}${ringFilter === ring.value ? ` ${styles.pillActive}` : ''}`}
+                      onClick={() => setRingFilter(r => (r === ring.value ? null : ring.value))}
+                    >
+                      {ring.label}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ flex: 1 }} />
+                <span className={styles.pillsLabel}>Quadrant</span>
+                <div className={styles.pills}>
+                  {quadrants.map(quad => (
+                    <button
+                      key={quad.value}
+                      type="button"
+                      className={`${styles.pill}${quadFilter === quad.value ? ` ${styles.pillActive}` : ''}`}
+                      onClick={() => setQuadFilter(p => (p === quad.value ? null : quad.value))}
+                    >
+                      <span className={styles.pillDot} style={{ background: quad.color }} />
+                      {quad.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className={styles.body}>
+              <div className={styles.svgWrap} ref={wrapRef} onMouseMove={onSvgMouseMove}>
+                <svg
+                  className={styles.svg}
+                  viewBox="0 0 840 840"
+                  preserveAspectRatio="xMidYMid meet"
+                  overflow="visible"
+                >
+                  <RadarGrid quadrants={quadrants} rings={rings} dimmedQuad={quadFilter} />
+                  {blips.map(blip => {
+                    const quad = quadrants.find(qq => qq.value === blip.quadrantValue);
+                    return (
+                      <RadarBlip
+                        key={blip.id}
+                        blip={blip}
+                        color={quad?.color ?? 'var(--base-fg-more-dim)'}
+                        isHovered={activeId === blip.id}
+                        isDimmed={!!activeId && activeId !== blip.id}
+                        onClick={() => onBlipClick(blip.id)}
+                        onMouseEnter={() => {
+                          if (!pinned) setHovered(blip.id);
+                        }}
+                        onMouseLeave={() => {
+                          if (!pinned) setHovered(null);
+                        }}
+                      />
+                    );
+                  })}
+                </svg>
+                {activeBlip && activeQuad && activeRing && (
+                  <BlipTooltip
+                    blip={activeBlip}
+                    quad={activeQuad}
+                    ring={activeRing}
+                    isLinked={linkedEntityIds == null || linkedEntityIdSet.has(activeBlip.id)}
+                    x={tipPos.x}
+                    y={tipPos.y}
+                    pinned={pinned === activeBlip.id}
+                    onDismiss={() => {
+                      setPinned(null);
+                      setHovered(null);
+                    }}
+                    onOpen={() => onEntityClick(activeBlip.id)}
+                  />
+                )}
+              </div>
+
+              <div className={styles.legend}>
+                <div className={styles.legendHead}>
+                  <span>Blip index</span>
+                  <span className={styles.legendCount}>{blips.length} shown</span>
+                </div>
+                <div className={styles.legendScroll}>
+                  {quadrants.map(quad => {
+                    const qs = blips.filter(b => b.quadrantValue === quad.value);
+                    if (qs.length === 0) return null;
+                    return (
+                      <div key={quad.value} className={styles.legendSection}>
+                        <div className={styles.legendQuad}>
+                          <span
+                            className={styles.legendQuadDot}
+                            style={{ background: quad.color }}
+                          />
+                          {quad.label}
+                        </div>
+                        {qs.map(blip => {
+                          const ring = rings.find(r => r.value === blip.ringValue);
+                          return (
+                            <LegendRow
+                              key={blip.id}
+                              blip={blip}
+                              quadColor={quad.color}
+                              ringLabel={ring?.label ?? blip.ringValue}
+                              ringColor={ring?.color ?? 'var(--base-fg-more-dim)'}
+                              isLinked={linkedEntityIds == null || linkedEntityIdSet.has(blip.id)}
+                              active={activeId === blip.id}
+                              onMouseEnter={() => {
+                                if (!pinned) setHovered(blip.id);
+                              }}
+                              onMouseLeave={() => {
+                                if (!pinned) setHovered(null);
+                              }}
+                              onClick={() => onBlipClick(blip.id)}
+                            />
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -813,264 +1030,5 @@ const LegendRow = ({
         {ringLabel}
       </span>
     </button>
-  );
-};
-
-// ── RadarSettings ─────────────────────────────────────────────────────────────
-
-const RadarSettings = ({
-  schemas,
-  lifecycleStates,
-  initialConfig,
-  onSave,
-  onClose
-}: {
-  schemas: EntitySchema[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  initialConfig: RadarConfig | null;
-  onSave: (config: RadarConfig) => void;
-  onClose: () => void;
-}) => {
-  const firstSchemaId = schemas[0]?.id ?? '';
-  const [schemaId, setSchemaId] = useState(initialConfig?.schemaId ?? firstSchemaId);
-  const [quadrantFieldId, setQuadrantFieldId] = useState(initialConfig?.quadrantFieldId ?? '');
-  const [ringFieldId, setRingFieldId] = useState(initialConfig?.ringFieldId ?? '');
-  const [ringOrder, setRingOrder] = useState<string[]>(initialConfig?.ringOrder ?? []);
-
-  const selectedSchema = schemas.find(s => s.id === schemaId) ?? null;
-
-  const fieldOptions = useMemo(
-    () => (selectedSchema ? getSelectableFields(selectedSchema, lifecycleStates) : []),
-    [selectedSchema, lifecycleStates]
-  );
-
-  // When schema changes, reset field selections if they're no longer valid
-  const handleSchemaChange = (newSchemaId: string) => {
-    const newSchema = schemas.find(s => s.id === newSchemaId);
-    if (!newSchema) return;
-    const opts = getSelectableFields(newSchema, lifecycleStates);
-    setSchemaId(newSchemaId);
-    const firstId = opts[0]?.id ?? '';
-    const secondId = opts[1]?.id ?? firstId;
-    setQuadrantFieldId(firstId);
-    setRingFieldId(secondId);
-    setRingOrder([]);
-  };
-
-  const handleRingFieldChange = (fieldId: string) => {
-    setRingFieldId(fieldId);
-    setRingOrder([]);
-  };
-
-  const ringFieldValues = useMemo(() => {
-    if (!selectedSchema || !ringFieldId) return [];
-    return getFieldValues(selectedSchema, ringFieldId, lifecycleStates);
-  }, [selectedSchema, ringFieldId, lifecycleStates]);
-
-  // Default to all values (up to 5) when ringOrder is empty so old configs still render
-  const effectiveOrder = useMemo(() => {
-    const valid = ringOrder.filter(v => ringFieldValues.some(rv => rv.value === v));
-    if (valid.length > 0) return valid;
-    return ringFieldValues.slice(0, 5).map(v => v.value);
-  }, [ringOrder, ringFieldValues]);
-
-  const moveRing = (idx: number, dir: -1 | 1) => {
-    const next = [...effectiveOrder];
-    const swapIdx = idx + dir;
-    if (swapIdx < 0 || swapIdx >= next.length) return;
-    [next[idx], next[swapIdx]] = [next[swapIdx]!, next[idx]!];
-    setRingOrder(next);
-  };
-
-  const toggleRing = (value: string) => {
-    if (effectiveOrder.includes(value)) {
-      setRingOrder(effectiveOrder.filter(v => v !== value));
-    } else if (effectiveOrder.length < 5) {
-      setRingOrder([...effectiveOrder, value]);
-    }
-  };
-
-  // Ensure field selections are valid (e.g. if fieldOptions changed but state has stale values)
-  const effectiveQuadrantFieldId = fieldOptions.some(f => f.id === quadrantFieldId)
-    ? quadrantFieldId
-    : (fieldOptions[0]?.id ?? '');
-  const effectiveRingFieldId = fieldOptions.some(f => f.id === ringFieldId)
-    ? ringFieldId
-    : (fieldOptions[1]?.id ?? fieldOptions[0]?.id ?? '');
-
-  const displayRings = useMemo(() => {
-    const checked = ringFieldValues
-      .filter(rv => effectiveOrder.includes(rv.value))
-      .sort((a, b) => effectiveOrder.indexOf(a.value) - effectiveOrder.indexOf(b.value));
-    const unchecked = ringFieldValues.filter(rv => !effectiveOrder.includes(rv.value));
-    return [...checked, ...unchecked];
-  }, [ringFieldValues, effectiveOrder]);
-
-  const canSave = !!schemaId && !!effectiveQuadrantFieldId && !!effectiveRingFieldId;
-
-  const handleSave = () => {
-    if (!canSave) return;
-    onSave({
-      schemaId,
-      quadrantFieldId: effectiveQuadrantFieldId,
-      ringFieldId: effectiveRingFieldId,
-      ringOrder: effectiveOrder
-    });
-  };
-
-  return (
-    <Dialog
-      open
-      onClose={onClose}
-      sup="Entity browser · Radar view"
-      title="Radar Configuration"
-      sub="Map an entity schema to the radar quadrants and rings. No schema changes required — the radar is a convention-based rendering of existing entities."
-      width="min(560px, calc(100vw - 48px))"
-      buttons={[
-        { label: 'Cancel', type: 'cancel', onClick: onClose },
-        { label: 'Save configuration', type: 'default', disabled: !canSave, onClick: handleSave }
-      ]}
-    >
-      <div className={styles.settingsBody}>
-        {/* Step 1: Data source */}
-        <FormSection step={1} title="Data source">
-          <div className={styles.settingsRow}>
-            <FormElement label="Entity schema" style={{ flex: 1 }}>
-              <Select.Root
-                value={schemaId || undefined}
-                onChange={value => handleSchemaChange(value ?? '')}
-                style={{ width: '100%' }}
-              >
-                {schemas.map(s => (
-                  <Select.Item key={s.id} value={s.id}>
-                    {s.name}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </FormElement>
-            <FormElement label="Quadrant field" style={{ flex: 1 }}>
-              <Select.Root
-                value={effectiveQuadrantFieldId || undefined}
-                onChange={value => setQuadrantFieldId(value ?? '')}
-                placeholder={
-                  fieldOptions.length === 0 ? 'No select or lifecycle fields' : undefined
-                }
-                style={{ width: '100%' }}
-                disabled={fieldOptions.length === 0}
-              >
-                {fieldOptions.map(f => (
-                  <Select.Item key={f.id} value={f.id}>
-                    {f.label}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </FormElement>
-          </div>
-          <div className={styles.settingsRow}>
-            <FormElement label="Ring field" style={{ flex: 1 }}>
-              <Select.Root
-                value={effectiveRingFieldId || undefined}
-                onChange={value => handleRingFieldChange(value ?? '')}
-                placeholder={
-                  fieldOptions.length === 0 ? 'No select or lifecycle fields' : undefined
-                }
-                style={{ width: '100%' }}
-                disabled={fieldOptions.length === 0}
-              >
-                {fieldOptions.map(f => (
-                  <Select.Item key={f.id} value={f.id}>
-                    {f.label}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-            </FormElement>
-          </div>
-          {fieldOptions.length === 0 && (
-            <div className={styles.settingsNote}>
-              The selected schema has no Select fields and there are no lifecycle states. Add a
-              Select field or configure lifecycle states to use the radar.
-            </div>
-          )}
-        </FormSection>
-
-        {/* Step 2: Ring ordering */}
-        <FormSection step={2} title="Ring order">
-          {ringFieldValues.length === 0 ? (
-            <div className={styles.settingsNote}>
-              Select a ring field above to configure the ring order.
-            </div>
-          ) : (
-            <div className={styles.ringOrderList}>
-              {displayRings.map(rv => {
-                const orderIdx = effectiveOrder.indexOf(rv.value);
-                const checked = orderIdx !== -1;
-                const disabledCheck = !checked && effectiveOrder.length >= 5;
-                const color = checked ? RING_COLORS[orderIdx % RING_COLORS.length]! : undefined;
-                return (
-                  <div
-                    key={rv.value}
-                    className={`${styles.ringOrderRow}${checked ? ` ${styles.ringOrderRowChecked}` : ''}`}
-                  >
-                    <input
-                      type="checkbox"
-                      className={styles.ringOrderCheck}
-                      checked={checked}
-                      disabled={disabledCheck}
-                      onChange={() => toggleRing(rv.value)}
-                    />
-                    <span
-                      className={styles.ringOrderDot}
-                      style={
-                        color
-                          ? { background: color }
-                          : { border: '1px solid var(--base-fg-more-dim)' }
-                      }
-                    />
-                    <span className={styles.ringOrderLabel}>{rv.label}</span>
-                    {checked && (
-                      <>
-                        <span className={styles.ringOrderIdx}>
-                          {orderIdx === 0
-                            ? 'innermost'
-                            : orderIdx === effectiveOrder.length - 1
-                              ? 'outermost'
-                              : ''}
-                        </span>
-                        <div className={styles.ringOrderBtns}>
-                          <button
-                            type="button"
-                            className={styles.ringOrderBtn}
-                            onClick={() => moveRing(orderIdx, -1)}
-                            disabled={orderIdx === 0}
-                            title="Move inward"
-                          >
-                            <TbChevronUp size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.ringOrderBtn}
-                            onClick={() => moveRing(orderIdx, 1)}
-                            disabled={orderIdx >= effectiveOrder.length - 1}
-                            title="Move outward"
-                          >
-                            <TbChevronDown size={12} />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-              {effectiveOrder.length >= 5 &&
-                ringFieldValues.some(rv => !effectiveOrder.includes(rv.value)) && (
-                  <div className={styles.settingsNote}>
-                    Maximum 5 rings reached. Uncheck a value to select a different one.
-                  </div>
-                )}
-            </div>
-          )}
-        </FormSection>
-      </div>
-    </Dialog>
   );
 };

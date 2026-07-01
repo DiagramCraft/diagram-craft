@@ -16,6 +16,7 @@ export type EntityBrowserBaseViewProps = {
   onClone: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
+  readOnly?: boolean;
 };
 
 export const entityName = (entity: EntityRecord) => entity._name || entity._slug;

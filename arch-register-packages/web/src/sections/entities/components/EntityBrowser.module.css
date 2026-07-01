@@ -85,10 +85,17 @@
   color: var(--base-fg-dim);
 }
 
-/* Filter popup override — removes default popover padding and enforces correct width */
+/* Filter popup override — removes default popover padding and enforces correct width.
+   position + z-index are set above Dialog's cDialogViewport (z-index: 1000) because both
+   portal into the same container div: the toolbar is also used inside EntityBrowserEmbedDialog,
+   and the popup itself is position: static (its Positioner ancestor handles placement), so
+   z-index has no effect without also giving it a position — without this override the dialog's
+   full-screen viewport intercepts pointer events over the popover. */
 .filterPopover {
   padding: 0 !important;
   width: auto !important;
   border-radius: var(--r-md) !important;
   overflow: hidden;
+  position: relative !important;
+  z-index: 1100 !important;
 }

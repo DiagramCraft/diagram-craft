@@ -264,10 +264,10 @@ export const MarkdownEditorScreen = () => {
   }, [requestedMode, requestedPanel]);
 
   useEffect(() => {
-    if (screenState.screenMode !== 'edit') return;
+    if (requestedMode !== 'edit') return;
     if (search.diagramSessionId === sessionIdRef.current) return;
     updateSearch({ diagramSessionId: sessionIdRef.current });
-  }, [screenState.screenMode, search.diagramSessionId, updateSearch]);
+  }, [requestedMode, search.diagramSessionId, updateSearch]);
 
   useEffect(() => {
     if (!data) return;

@@ -1,17 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
-import {
-  asProjectPublicId,
-  projectDetailRoute
-} from '../../../routes/publicObjectRoutes';
-import type { BrowserSearch, BrowserViewConfigMap } from './entityBrowserState';
-import {
-  getFilterValue,
-  parseConditionsFromSearch,
-  parseViewConfigs,
-  serializeViewConfigs
-} from './entityBrowserState';
+import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
+import type { BrowserSearch } from './entityBrowserState';
+import { parseConditionsFromSearch, parseViewConfigs, serializeViewConfigs } from './entityBrowserState';
+import { useEntityBrowserLocalState } from './useEntityBrowserLocalState';
 
 type UseEntityBrowserSearchStateProps = {
   workspaceSlug: string;
@@ -24,23 +16,36 @@ export const useEntityBrowserSearchState = ({
 }: UseEntityBrowserSearchStateProps) => {
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as BrowserSearch;
-  const [q, setQ] = useState(search.q ?? '');
-  const [conditions, setConditions] = useState<FilterCondition[]>(() =>
-    parseConditionsFromSearch(search)
-  );
-  const [projectScope, setProjectScope] = useState<'project' | 'all'>(
-    projectId ? (search.projectScope ?? 'project') : 'all'
-  );
-  const [sort, setSort] = useState(search.sort ?? 'name');
-  const [view, setView] = useState<BrowserView>(search.viewMode ?? 'table');
-  const [viewConfigs, setViewConfigs] = useState<BrowserViewConfigMap>(() =>
-    parseViewConfigs(search.viewConfigs)
-  );
 
-  const typeFilter = useMemo(() => getFilterValue(conditions, '_schemaId'), [conditions]);
-  const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
-  const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
-  const activeViewConfig = useMemo(() => viewConfigs[view] ?? null, [view, viewConfigs]);
+  const {
+    activeViewConfig,
+    conditions,
+    ownerFilter,
+    projectScope,
+    q,
+    setConditions,
+    setActiveViewConfig,
+    setProjectScope,
+    setQ,
+    setSort,
+    setView,
+    setViewConfigs,
+    sort,
+    statusFilter,
+    typeFilter,
+    view,
+    viewConfigs
+  } = useEntityBrowserLocalState({
+    projectId,
+    initial: {
+      q: search.q ?? '',
+      conditions: parseConditionsFromSearch(search),
+      projectScope: projectId ? (search.projectScope ?? 'project') : 'all',
+      sort: search.sort ?? 'name',
+      view: search.viewMode ?? 'table',
+      viewConfigs: parseViewConfigs(search.viewConfigs)
+    }
+  });
 
   useEffect(() => {
     setQ(search.q ?? '');
@@ -66,20 +71,14 @@ export const useEntityBrowserSearchState = ({
     search.status,
     search.type,
     search.viewConfigs,
-    search.viewMode
+    search.viewMode,
+    setConditions,
+    setProjectScope,
+    setQ,
+    setSort,
+    setView,
+    setViewConfigs
   ]);
-
-  const setActiveViewConfig = useCallback(
-    (config: unknown) => {
-      setViewConfigs(prev => {
-        const next = { ...prev };
-        if (config == null) delete next[view];
-        else next[view] = config;
-        return next;
-      });
-    },
-    [view]
-  );
 
   const navigateBrowser = useCallback(
     (replace: boolean) => {

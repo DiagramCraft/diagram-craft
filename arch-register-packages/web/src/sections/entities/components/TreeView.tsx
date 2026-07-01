@@ -34,6 +34,7 @@ export type TreeViewProps = {
   onClone: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
+  readOnly?: boolean;
 };
 
 type TreeItem = (TreeNode & { _projectLink?: ProjectLinkState }) & { children: TreeItem[] };
@@ -51,7 +52,8 @@ export const TreeView = ({
   onDelete,
   onClone,
   lifecycleStates,
-  projectContext
+  projectContext,
+  readOnly
 }: TreeViewProps) => {
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
@@ -105,7 +107,7 @@ export const TreeView = ({
             <th>Owner</th>
             <th>Status</th>
             <th style={{ width: 110 }}>Namespace</th>
-            <th style={{ width: 28 }} />
+            {!readOnly && <th style={{ width: 28 }} />}
           </tr>
         </thead>
         <tbody>
@@ -120,6 +122,7 @@ export const TreeView = ({
               onClone={onClone}
               lifecycleStates={lifecycleStates}
               projectContext={projectContext}
+              readOnly={readOnly}
             />
           ))}
         </tbody>
@@ -136,7 +139,8 @@ const TreeNodeRow = ({
   onDelete,
   onClone,
   lifecycleStates,
-  projectContext
+  projectContext,
+  readOnly
 }: {
   item: TreeItem;
   depth: number;
@@ -146,15 +150,18 @@ const TreeNodeRow = ({
   onClone: (entity: EntityRecord) => void;
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
+  readOnly?: boolean;
 }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = item.children.length > 0;
   const schemaEntry = schemaMap.get(item._schema.id);
   const isAncestor = !item._isMatch;
-  const menuItems = [
-    ...entityMenuItems(item as unknown as EntityRecord, onClone, onDelete),
-    ...projectEntityMenuItems(item, projectContext)
-  ];
+  const menuItems = readOnly
+    ? []
+    : [
+        ...entityMenuItems(item as unknown as EntityRecord, onClone, onDelete),
+        ...projectEntityMenuItems(item, projectContext)
+      ];
 
   return (
     <>
@@ -213,18 +220,20 @@ const TreeNodeRow = ({
         <td>
           <span className="dim">{item._namespace}</span>
         </td>
-        <td onClick={event => event.stopPropagation()}>
-          {menuItems.length > 0 && (
-            <DropdownMenu
-              trigger={
-                <button type="button" className={styles.dotsBtn}>
-                  <TbDots size={14} />
-                </button>
-              }
-              items={menuItems}
-            />
-          )}
-        </td>
+        {!readOnly && (
+          <td onClick={event => event.stopPropagation()}>
+            {menuItems.length > 0 && (
+              <DropdownMenu
+                trigger={
+                  <button type="button" className={styles.dotsBtn}>
+                    <TbDots size={14} />
+                  </button>
+                }
+                items={menuItems}
+              />
+            )}
+          </td>
+        )}
       </tr>
       {expanded &&
         item.children.map(child => (
@@ -238,6 +247,7 @@ const TreeNodeRow = ({
             onClone={onClone}
             lifecycleStates={lifecycleStates}
             projectContext={projectContext}
+            readOnly={readOnly}
           />
         ))}
     </>
