@@ -1,5 +1,7 @@
 import { DIAGRAM_EMBED_TYPE } from './blocks/diagram-embed/DiagramEmbedEditable';
 import { diagramEmbedSpec } from './blocks/diagram-embed/DiagramEmbedRegistration';
+import { ENTITY_BROWSER_EMBED_TYPE } from './blocks/entity-browser-embed/EntityBrowserEmbedEditable';
+import { entityBrowserEmbedSpec } from './blocks/entity-browser-embed/EntityBrowserEmbedRegistration';
 import { ENTITY_CARD_TYPE } from './blocks/entity-card/EntityCardEditable';
 import { entityCardSpec } from './blocks/entity-card/EntityCardRegistration';
 import { ENTITY_CHANGELOG_TYPE } from './blocks/entity-changelog/EntityChangelogEditable';
@@ -23,6 +25,7 @@ export type { SlashCommandDef, EditorSpec, MdxComponentSpec } from './types';
 
 export const MDX_COMPONENTS = {
   [DIAGRAM_EMBED_TYPE]: diagramEmbedSpec,
+  [ENTITY_BROWSER_EMBED_TYPE]: entityBrowserEmbedSpec,
   [ENTITY_CARD_TYPE]: entityCardSpec,
   [ENTITY_CHANGELOG_TYPE]: entityChangelogSpec,
   [ENTITY_CHART_TYPE]: entityChartSpec,

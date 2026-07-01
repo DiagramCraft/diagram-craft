@@ -1,0 +1,18 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.viewArea {
+  max-height: 65vh;
+  overflow: auto;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0 0 0;
+}
