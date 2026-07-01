@@ -8,17 +8,12 @@
 }
 
 .plateContent {
-  --article-block-gap: 14px;
-  --article-section-gap: 30px;
-  --article-heading-gap: calc(var(--article-block-gap) - 2px);
+  composes: articleTypography from '../articleTypography.module.css';
   flex: 1;
   width: 100%;
   padding: 28px 100px 80px 40px;
   outline: none;
   overflow-y: auto;
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--base-fg-dim);
   background: var(--base-bg);
   box-sizing: border-box;
   cursor: text;
@@ -147,170 +142,17 @@
   margin: 0 2px;
 }
 
-/* ── Article typography (mirrors MarkdownEditorScreen .article rules) ─────── */
-
-.plateContent :global(h1) {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--base-fg);
-  letter-spacing: -0.3px;
-  margin: 0 0 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--panel-border);
+/* th/td get their padding straight from the shared articleTypography rule —
+   no override needed. The context menu handler lives on the th/td element
+   itself (not this wrapper), so there's no need to zero the cell's own
+   padding for right-click hit-testing. Still reset the last paragraph's
+   bottom margin so it doesn't add extra space inside the cell's padding. */
+.plateContent :global(th) > div > div:last-of-type > p,
+.plateContent :global(td) > div > div:last-of-type > p {
+  margin: 0;
 }
 
-.plateContent :global(h2) {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--base-fg);
-  letter-spacing: -0.2px;
-  margin: var(--article-section-gap) 0 var(--article-heading-gap);
-  padding-bottom: 7px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.plateContent :global(h2:first-child) {
-  margin-top: 0;
-}
-
-.plateContent :global(h3) {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: var(--base-fg);
-  margin: 22px 0 8px;
-}
-
-.plateContent :global(p) {
-  margin: 0 0 var(--article-block-gap);
-  text-wrap: pretty;
-}
-
-.plateContent :global(ul),
-.plateContent :global(ol) {
-  margin: 0 0 var(--article-block-gap);
-  padding-left: 22px;
-}
-
-.plateContent :global(ul) {
-  list-style: none;
-  padding-left: 4px;
-}
-
-.plateContent :global(ul li) {
-  position: relative;
-  padding-left: 18px;
-  margin: 0 0 6px;
-  list-style: none;
-}
-
-.plateContent :global(ul li::before) {
-  content: '';
-  position: absolute;
-  left: 4px;
-  top: 9px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent-fg);
-  opacity: 0.7;
-}
-
-.plateContent :global(ol li) {
-  margin: 0 0 6px;
-}
-
-.plateContent :global(pre) {
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  padding: 13px 16px;
-  margin: 0 0 var(--article-block-gap);
-  overflow-x: auto;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--base-fg-dim);
-}
-
-.plateContent :global(pre code) {
-  background: none;
-  padding: 0;
-  font-size: inherit;
-  border: none;
-}
-
-.plateContent :global(code) {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  padding: 1px 5px;
-  color: var(--base-fg);
-}
-
-.plateContent :global(blockquote) {
-  padding: 12px 14px;
-  border-radius: var(--r-md);
-  margin: 0 0 var(--article-block-gap);
-  font-size: 13px;
-  line-height: 1.55;
-  border: 1px solid var(--panel-border);
-  border-left: 3px solid var(--accent-fg);
-  background: var(--panel-bg);
-  color: var(--base-fg-dim);
-}
-
-.plateContent :global(a) {
-  color: var(--accent-fg);
-  text-decoration: none;
-}
-
-.plateContent :global(a:hover) {
-  text-decoration: underline;
-}
-
-.plateContent :global(hr) {
-  border: none;
-  border-top: 1px solid var(--panel-border);
-  margin: 1.5em 0;
-}
-
-.plateContent :global(table) {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 13px;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  margin: 0 0 var(--article-block-gap);
-}
-
-.plateContent :global(th),
-.plateContent :global(td) {
-  border-bottom: 1px solid var(--panel-border);
-  padding: 0;
-  text-align: left;
-  vertical-align: top;
-
-  > div > div:last-of-type > p {
-    margin: 0;
-  }
-}
-
-.plateContent :global(th) {
-  background: var(--cmp-bg);
-  font-weight: 600;
-  color: var(--base-fg);
-}
-
-.plateContent :global(td) {
-  color: var(--base-fg-dim);
-}
-
-/* Inner cell wrapper — carries the padding so right-click works across the full cell area */
 .tableCellContent {
-  padding: 6px 12px;
   min-height: 20px;
 }
 
