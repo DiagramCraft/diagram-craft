@@ -213,22 +213,26 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     onNavigateToEntity: navigateToEntity
   });
   const {
-    bulkConfirming,
-    bulkLifecycleValue,
-    bulkOwnerValue,
+    addFieldRow,
+    availableFields,
     clearSelection,
-    doBulkUpdate,
+    fieldRows,
+    handleConfirm,
     handleSelectAll,
     handleSelectRow,
+    removeFieldRow,
+    result,
+    selectedEntities,
     selectedIds,
-    setBulkConfirming,
-    setBulkLifecycleValue,
-    setBulkOwnerValue
+    setStep,
+    step,
+    updateFieldRow
   } = useEntityBrowserSelection({
     workspaceId,
     entities,
     filtered,
-    filteredCount
+    filteredCount,
+    schemaMap
   });
 
   const selectedSchema = typeFilter != null ? (schemaMap.get(typeFilter)?.schema ?? null) : null;
@@ -351,17 +355,21 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
         <>
           {view === 'table' && selectedIds.size > 0 && (
             <BulkEditToolbar
-              selectedIds={selectedIds}
-              bulkConfirming={bulkConfirming}
-              setBulkConfirming={setBulkConfirming}
-              bulkLifecycleValue={bulkLifecycleValue}
-              setBulkLifecycleValue={setBulkLifecycleValue}
-              bulkOwnerValue={bulkOwnerValue}
-              setBulkOwnerValue={setBulkOwnerValue}
+              workspaceId={workspaceId}
+              count={selectedIds.size}
+              selectedEntities={selectedEntities}
+              fieldRows={fieldRows}
+              availableFields={availableFields}
+              step={step}
+              result={result}
               lifecycleStates={lifecycleStates}
               teams={teams as WorkspaceTeam[]}
+              addFieldRow={addFieldRow}
+              updateFieldRow={updateFieldRow}
+              removeFieldRow={removeFieldRow}
+              setStep={setStep}
               onClear={clearSelection}
-              onConfirm={doBulkUpdate}
+              onConfirm={handleConfirm}
             />
           )}
           {view === 'table' && (
