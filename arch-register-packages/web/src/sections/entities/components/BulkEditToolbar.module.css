@@ -1,0 +1,260 @@
+/* Bulk action bar */
+.bulkBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--cmp-bg);
+  border-bottom: 1px solid color-mix(in oklch, var(--accent-fg) 22%, var(--panel-border));
+  border-top: 2px solid var(--accent-fg);
+  flex-shrink: 0;
+  overflow: hidden;
+  animation: bulkBarIn 140ms ease;
+  margin-bottom: 1rem;
+}
+
+@keyframes bulkBarIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bulkBarConfirm {
+  background: color-mix(in oklch, var(--warning-fg) 7%, var(--panel-bg));
+  border-top-color: var(--warning-fg);
+  border-bottom-color: color-mix(in oklch, var(--warning-fg) 22%, var(--panel-border));
+}
+
+.bulkCount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.bulkCountPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--accent-fg);
+  color: var(--base-bg);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px 1px 5px;
+  border-radius: 999px;
+  line-height: 1;
+  height: 18px;
+}
+
+.bulkCountLabel {
+  font-size: 12px;
+  color: var(--base-fg-dim);
+  white-space: nowrap;
+}
+
+.bulkSep {
+  width: 1px;
+  height: 18px;
+  background: var(--panel-border);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.bulkField {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  cursor: default;
+  background-color: var(--panel-bg);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.bulkFieldLabel {
+  font-size: 11px;
+  color: var(--cmp-fg);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bulkConfirmMsg {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--base-fg-dim);
+}
+
+.bulkWarnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--warning-fg);
+  color: var(--base-bg);
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.bulkDim {
+  color: var(--base-fg-more-dim);
+}
+
+.bulkFields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulkRowClearBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: none;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.bulkRowClearBtn:hover {
+  color: var(--base-fg-dim);
+  background: var(--panel-border);
+}
+
+.bulkRowRm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: none;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.bulkRowRm:hover {
+  color: var(--warning-fg);
+  background: var(--panel-border);
+}
+
+.bulkAddField {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--cmp-fg);
+  cursor: pointer;
+  white-space: nowrap;
+
+  height: 34px;
+
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-bg);
+
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.bulkAddField:hover {
+  color: var(--accent-fg);
+  border-color: var(--accent-fg);
+}
+
+.bulkClearingTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--warning-fg);
+  white-space: nowrap;
+}
+
+.bulkUnclear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--warning-fg);
+  cursor: pointer;
+  padding: 0;
+}
+
+.bulkPermWarn {
+  color: var(--warning-fg);
+}
+
+.bulkDoneIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--success-fg, var(--accent-fg));
+  color: var(--base-bg);
+  flex-shrink: 0;
+}
+
+.bulkSkipInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  flex-wrap: wrap;
+}
+
+.bulkSkipItem {
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  border-bottom: 1px dotted var(--base-fg-more-dim);
+  cursor: default;
+}
+
+.bulkFieldPickerHeader {
+  padding: 4px 8px 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--base-fg-more-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.bulkFieldPickerItem {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  line-height: 1;
+  border-radius: 3px;
+  color: var(--cmp-fg);
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+}
+
+.bulkFieldPickerItem[data-highlighted] {
+  background-color: var(--accent-bg-selected);
+}
