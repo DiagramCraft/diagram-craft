@@ -1,0 +1,67 @@
+---
+sidebar_position: 1
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Automatic Layouts
+
+Automatic layout is best used as a drafting and restructuring tool. It gives you a readable starting point quickly, then you refine the result for communication quality.
+
+<ThemedImage
+  alt="Diagram Craft layout submenu open over a larger workflow diagram"
+  sources={{
+    light: require('/img/diagram-craft/layout/layout-workflow-light.png').default,
+    dark: require('/img/diagram-craft/layout/layout-workflow-dark.png').default,
+  }}
+/>
+
+## The Available Layout Approaches
+
+Diagram Craft currently exposes five graph layouts from the selection context menu:
+
+| Layout | Best for | What to select |
+| --- | --- | --- |
+| Tree | clear hierarchies, ownership trees, dependency trees | one root node |
+| Layered | directional flows, pipelines, step-by-step processes | the nodes you want arranged |
+| Orthogonal | process and systems diagrams where right-angle routing reads better | the nodes you want arranged |
+| Force-Directed | relationship maps and networks without one obvious top-to-bottom flow | the nodes in the connected area you want to explore |
+| Series-Parallel | structured branching flows that are mostly sequential with controlled splits | the nodes you want arranged |
+
+## Which One To Start With
+
+- Start with **Tree** when the diagram has one obvious root and levels matter.
+- Start with **Layered** when the diagram is mostly directional and should read left-to-right or top-to-bottom.
+- Start with **Orthogonal** when you want a blockier process-map feel with right-angle connectors.
+- Start with **Force-Directed** when you are still discovering the shape of a network.
+- Start with **Series-Parallel** when the flow is structured but has branches that still need to stay tidy.
+
+## Practical Constraints
+
+The tools are not interchangeable:
+
+- **Tree** expects a single selected root node.
+- **Layered**, **Orthogonal**, and **Series-Parallel** work from the selected node set.
+- **Force-Directed** starts from the selected nodes and expands across their connected component.
+
+That means selection is part of the workflow. Before invoking layout, decide whether you want to reorganize the whole working area or just one local region.
+
+## What Automatic Layout Is Good At
+
+- getting a messy draft into a readable baseline quickly
+- reworking one section after a major structural change
+- helping you compare alternate ways to present the same graph
+
+## What It Is Not Good At
+
+- producing final presentation-quality spacing every time
+- understanding your narrative priorities
+- replacing decomposition with tabs, layers, or grouping
+
+Use automatic layout to recover structure quickly, then finish with manual refinement.
+
+## Related Reading
+
+- [Layout Configuration](layout-configuration)
+- [Manual Refinement](manual-refinement)
+- [Alignment and Distribution](../advanced-editing/alignment-distribution)

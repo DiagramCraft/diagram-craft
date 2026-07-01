@@ -1,0 +1,58 @@
+---
+sidebar_position: 3
+---
+
+# Groups
+
+Groups are local organization tools. Use them when several elements should move, resize, or stay together as one working unit inside a larger diagram.
+
+## When To Group
+
+Grouping works best for small clusters that belong together structurally:
+
+- a repeated callout card with icons and labels
+- a local subprocess inside a larger flow
+- a boundary of shapes you want to move as one block during cleanup
+
+If the entire diagram is hard to understand, groups are not the first fix. Start with tabs, layers, or a better document structure instead.
+
+## Groups Vs Layers Vs Tabs
+
+- Use a **group** for one movable cluster inside a diagram.
+- Use a **layer** for visibility and lock control across the same diagram.
+- Use a **tab or subpage** when the content deserves its own viewpoint.
+
+That keeps groups from becoming a substitute for real decomposition.
+
+## A Practical Grouping Workflow
+
+1. Draft the local cluster normally.
+2. Group it once the internal relationships are stable.
+3. Move or align the grouped cluster as part of the larger composition.
+4. Ungroup only when you need to edit internals heavily again.
+
+This works especially well during manual refinement, where you want to clean up spacing without rebuilding the same cluster repeatedly.
+
+## Nested Groups
+
+Nested groups are useful when a large area contains smaller reusable chunks. Keep that nesting shallow enough that the document structure still reads clearly. If you need many levels just to keep the diagram workable, split the diagram into subpages instead.
+
+## What Groups Are Good At
+
+- preserving local composition during bigger layout changes
+- simplifying selection on crowded canvases
+- making alignment and distribution easier on repeated blocks
+
+## What Groups Are Bad At
+
+- replacing a proper document hierarchy
+- hiding or locking content for different audiences
+- carrying unrelated content just because it sits near each other
+
+Use groups to reduce handling friction, not to solve every scaling problem.
+
+## Related Reading
+
+- [Layers](layers)
+- [Manual Refinement](../layout/manual-refinement)
+- [Alignment and Distribution](../advanced-editing/alignment-distribution)

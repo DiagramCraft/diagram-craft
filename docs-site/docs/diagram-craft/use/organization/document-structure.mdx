@@ -1,0 +1,72 @@
+---
+sidebar_position: 4
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Document Structure
+
+The Structure Panel is the control surface for keeping a complex document tidy. Use it when the canvas alone is no longer enough for navigation, reordering, or understanding hierarchy.
+
+<ThemedImage
+  alt="Diagram Craft structure panel showing the document hierarchy for multiple diagrams and subpages"
+  sources={{
+    light: require('/img/diagram-craft/organization/document-structure-light.png').default,
+    dark: require('/img/diagram-craft/organization/document-structure-dark.png').default,
+  }}
+/>
+
+## Two Different Views
+
+The Structure Panel has two especially useful tabs for diagram scale:
+
+- **Layer** shows the active diagram's layer stack and element tree.
+- **Document** shows the hierarchy of diagrams and subpages across the document.
+
+Use the Layer tab when you are managing the current canvas. Use the Document tab when you are managing the document as a whole.
+
+## Why It Matters On Large Diagrams
+
+As diagrams grow, structure work shifts from drawing to navigation:
+
+- finding the right element quickly
+- checking whether content belongs in the current diagram
+- reordering diagrams or layers without panning around the canvas
+- understanding how nested content is organized
+
+The structure views make those maintenance tasks predictable.
+
+## Use The Document Tab To Keep Scope Clean
+
+The Document tab is especially useful when:
+
+- you need to move between overview and detail pages quickly
+- a review reveals that one diagram should become a subpage of another
+- tab names or ordering no longer match the story the document tells
+
+It gives you a tree view of the same document hierarchy that the tab strip only shows partially.
+
+## Use The Layer Tab To Keep The Current Canvas Clean
+
+The Layer tab helps when:
+
+- a crowded diagram makes direct selection difficult
+- you need to lock or hide one concern while editing another
+- you want to inspect nested elements or grouped content in context
+
+That is often faster than clicking around the canvas at high zoom levels.
+
+## A Reliable Maintenance Loop
+
+1. Use tabs and subpages to split the document by scope.
+2. Use the Document tab to keep that hierarchy understandable.
+3. Use layers and groups to manage complexity within each diagram.
+4. Use the Layer tab when direct canvas interaction becomes noisy.
+
+That combination scales much better than treating every feature as an isolated trick.
+
+## Related Reading
+
+- [Tabs and Documents](tabs-documents)
+- [Layers](layers)
+- [Groups](groups)
