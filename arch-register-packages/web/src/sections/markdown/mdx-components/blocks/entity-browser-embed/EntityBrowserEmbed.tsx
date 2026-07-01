@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useEntities } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publicObjectRoutes';
@@ -12,7 +11,11 @@ import { TimelineView } from '../../../../entities/components/TimelineView';
 import { MatrixView } from '../../../../entities/components/MatrixView';
 import { HierarchyView } from '../../../../entities/components/HierarchyView';
 import { ExploreView } from '../../../../entities/components/ExploreView';
-import { getFilterValue, type BrowserEntityRecord } from '../../../../entities/components/entityBrowserState';
+import {
+  getFilterValue,
+  type BrowserEntityRecord
+} from '../../../../entities/components/entityBrowserState';
+import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbed.module.css';
@@ -36,20 +39,6 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
   const ownerFilter = config ? getFilterValue(config.conditions, '_owner') : null;
   const statusFilter = config ? getFilterValue(config.conditions, '_lifecycle') : null;
 
-  const { data: entities = [], isLoading } = useEntities(
-    workspaceSlug,
-    {
-      schemaId: typeFilter ?? undefined,
-      owner: ownerFilter ?? undefined,
-      lifecycle: statusFilter ?? undefined,
-      q: config?.q ?? undefined,
-      conditions: config?.conditions ?? undefined,
-      view: 'full',
-      limit: 100
-    },
-    { enabled: !!workspaceSlug && !!config && !isTreeBased }
-  );
-
   const schemaMap = useMemo(
     () => new Map(schemas.map((s, i) => [s.id, { schema: s, index: i }])),
     [schemas]
@@ -59,6 +48,26 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     (publicId: string) => navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(publicId))),
     [navigate, workspaceSlug]
   );
+
+  const resolvedProjectId = projectId;
+  const projectScope = resolvedProjectId ? (config?.projectScope ?? 'project') : 'all';
+  const { filtered: rows, isLoading } = useEntityBrowserData({
+    workspaceId: workspaceSlug,
+    projectId: resolvedProjectId ?? undefined,
+    projectScope,
+    schemas,
+    q: config?.q ?? '',
+    conditions: config?.conditions ?? [],
+    typeFilter,
+    ownerFilter,
+    statusFilter,
+    sort: config?.sort ?? 'name',
+    view: config?.view ?? 'table',
+    pageIndex: 0,
+    pageSize: 0,
+    disablePaging: true,
+    enabled: !!workspaceSlug && !!config && !isTreeBased
+  });
 
   if (!config) {
     return (
@@ -78,16 +87,14 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     );
   }
 
-  const rows = entities as BrowserEntityRecord[];
   const viewConfig = config.viewConfigs[config.view] ?? null;
-  const resolvedProjectId = projectId;
-  const projectScope = config.projectScope ?? 'all';
+  const browserRows = rows as BrowserEntityRecord[];
 
   switch (config.view) {
     case 'table':
       return (
         <TableView
-          rows={rows}
+          rows={browserRows}
           schemaMap={schemaMap}
           onEntityClick={onEntityClick}
           onDelete={noop as (entity: EntityRecord) => void}
@@ -99,7 +106,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     case 'cards':
       return (
         <CardsView
-          rows={rows}
+          rows={browserRows}
           schemaMap={schemaMap}
           onEntityClick={onEntityClick}
           onDelete={noop as (entity: EntityRecord) => void}
@@ -129,7 +136,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     case 'radar':
       return (
         <RadarView
-          rows={entities}
+          rows={browserRows}
           onEntityClick={onEntityClick}
           config={viewConfig}
           onConfigChange={noop}
@@ -139,7 +146,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     case 'timeline':
       return (
         <TimelineView
-          rows={entities}
+          rows={browserRows}
           schemas={schemas}
           lifecycleStates={lifecycleStates}
           onEntityClick={onEntityClick}
@@ -153,7 +160,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     case 'matrix':
       return (
         <MatrixView
-          rows={entities}
+          rows={browserRows}
           schemaMap={schemaMap}
           onEntityClick={onEntityClick}
           config={viewConfig}
@@ -180,7 +187,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     case 'explore':
       return (
         <ExploreView
-          rows={entities}
+          rows={browserRows}
           onEntityClick={onEntityClick}
           config={viewConfig}
           onConfigChange={noop}

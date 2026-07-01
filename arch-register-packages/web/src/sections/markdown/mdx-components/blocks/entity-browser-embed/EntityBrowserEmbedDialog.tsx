@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
@@ -60,6 +60,7 @@ export const EntityBrowserEmbedDialog = ({
     setQ,
     setSort,
     setView,
+    setViewConfigs,
     sort,
     statusFilter,
     typeFilter,
@@ -78,6 +79,27 @@ export const EntityBrowserEmbedDialog = ({
         }
       : undefined
   });
+
+  useEffect(() => {
+    if (!open) return;
+
+    setQ(initialConfig?.q ?? '');
+    setConditions(initialConfig?.conditions ?? []);
+    setProjectScope(projectId ? (initialConfig?.projectScope ?? 'project') : 'all');
+    setSort(initialConfig?.sort ?? 'name');
+    setView(initialConfig?.view ?? 'table');
+    setViewConfigs(initialConfig?.viewConfigs ?? {});
+  }, [
+    initialConfig,
+    open,
+    projectId,
+    setConditions,
+    setProjectScope,
+    setQ,
+    setSort,
+    setView,
+    setViewConfigs
+  ]);
 
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
