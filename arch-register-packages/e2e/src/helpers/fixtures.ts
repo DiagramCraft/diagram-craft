@@ -3,6 +3,7 @@ import { startTestServer, type TestServer } from './serverHelper';
 import { seedMinimal, makeAuthHeader } from './seedHelper';
 import { createTestORPCClient, type TestORPCClient } from './orpcTestClient';
 import { seedBootstrapData } from '@arch-register/server/db/bootstrapSeed';
+import { createStorage } from '@arch-register/server/storage/storage';
 
 interface Fixtures {
   server: TestServer;
@@ -23,7 +24,7 @@ export const createApiTest = (options: CreateApiTestOptions = {}) =>
       async ({}, use) => {
         const server = await startTestServer({ appOptions: options.appOptions });
         if (options.seed === 'bootstrap') {
-          await seedBootstrapData(server.db);
+          await seedBootstrapData(server.db, createStorage());
         } else {
           await seedMinimal(server.db);
         }

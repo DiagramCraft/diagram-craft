@@ -222,18 +222,17 @@ const TableCellWrapper = ({
         as={as}
         element={element}
         {...props}
-        className={isFocused ? styles.tableCellActive : undefined}
-      >
-        <div
-          className={styles.tableCellContent}
-          onContextMenu={e => {
+        attributes={{
+          ...props.attributes,
+          onContextMenu: (e: React.MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
             setContextMenu({ x: e.clientX, y: e.clientY });
-          }}
-        >
-          {children}
-        </div>
+          }
+        }}
+        className={isFocused ? styles.tableCellActive : undefined}
+      >
+        <div className={styles.tableCellContent}>{children}</div>
       </PlateElement>
       {contextMenu &&
         createPortal(

@@ -1242,8 +1242,185 @@ const CONTENT_IDS = {
   wsArchitectureOverview: '00000000-0000-0000-0031-000000000001',
   wsStandardsFolder: '00000000-0000-0000-0031-000000000002',
   wsApiDesignGuide: '00000000-0000-0000-0031-000000000003',
-  wsDeploymentTopology: '00000000-0000-0000-0031-000000000004'
+  wsDeploymentTopology: '00000000-0000-0000-0031-000000000004',
+  wsWikiFolder: '00000000-0000-0000-0031-000000000005',
+  wsWikiHome: '00000000-0000-0000-0031-000000000006',
+  wsWikiMarkdownCheatsheet: '00000000-0000-0000-0031-000000000007',
+  wsWikiEntityWidgets: '00000000-0000-0000-0031-000000000008',
+  wsWikiDiagramsAndViews: '00000000-0000-0000-0031-000000000009'
 } as const;
+
+const encodeEntityBrowserEmbedConfig = (config: {
+  q: string;
+  conditions: Array<{ fieldId: string; op: string; value: string }>;
+  sort: string;
+  view: string;
+  viewConfigs: Record<string, unknown>;
+}): string => {
+  const payload = {
+    q: config.q,
+    conditions: config.conditions,
+    sort: config.sort,
+    view: config.view,
+    viewConfigs: Object.keys(config.viewConfigs).length === 0 ? undefined : JSON.stringify(config.viewConfigs)
+  };
+  return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+};
+
+export const seedWikiPageBodies: Record<string, string> = {
+  [CONTENT_IDS.wsWikiHome]: `# Example Corp Wiki
+
+Welcome to the **Example Corp** architecture wiki. This page collects the standards, guides and
+reference material that the platform, design, security and data teams maintain together.
+
+Use this space to document *why* a decision was made, not just *what* was decided — the catalog
+already tracks the "what".
+
+## What's here
+
+- [Markdown Cheatsheet](../standards/markdown-cheatsheet) — every markup element the editor supports
+- [Entity Widgets Showcase](../standards/entity-widgets) — live catalog data embedded in a page
+- [Diagrams & Views](../standards/diagrams-and-views) — embedding diagrams and saved views
+
+## Getting started checklist
+
+- [x] Read the [API Design Guide](../standards/api-design-guide)
+- [x] Review the [Deployment Topology](../standards/deployment-topology) diagram
+- [ ] Add your team's on-call runbook
+- [ ] Link your service's entity page from this wiki
+
+> Documentation that lives next to the catalog stays accurate longer than documentation that lives
+> somewhere else entirely.
+
+## Quick links
+
+| Area | Owner | Status |
+| --- | --- | --- |
+| Platform | Platform Engineering | Production |
+| Auth | Security & Compliance | Production |
+| Design system | Design Systems | Experimental |
+
+For raw markup examples (tables, code blocks, task lists, etc.) see the
+[Markdown Cheatsheet](../standards/markdown-cheatsheet).
+`,
+  [CONTENT_IDS.wsWikiMarkdownCheatsheet]: `# Markdown Cheatsheet
+
+A quick reference for the markup supported by the wiki editor.
+
+## Headings
+
+### Third level heading
+#### Fourth level heading
+
+## Emphasis
+
+Plain text, **bold text**, *italic text*, ***bold italic text***, and ~~strikethrough text~~.
+
+## Lists
+
+Unordered, with nesting:
+
+- Platform
+  - API Gateway
+  - Event Bus
+- Security
+  - Auth API
+  - Threat modeling
+
+Ordered:
+
+1. Propose the change
+2. Get review from the owning team
+3. Ship it
+
+Task list:
+
+- [x] Draft the page
+- [ ] Get it reviewed
+
+## Blockquote
+
+> A quote can span
+> multiple lines.
+
+## Code
+
+Inline \`code\` looks like this. A fenced block:
+
+\`\`\`ts
+export const greet = (name: string) => \`Hello, \${name}!\`;
+\`\`\`
+
+## Links and autolinks
+
+A regular [markdown link](https://example.com), and a bare autolink: https://example.com
+
+## Horizontal rule
+
+---
+
+## Tables
+
+| Column A | Column B | Column C |
+| --- | --- | --- |
+| one | two | three |
+| four | five | six |
+`,
+  [CONTENT_IDS.wsWikiEntityWidgets]: `# Entity Widgets Showcase
+
+This page demonstrates the custom MDX components that pull live data from the catalog.
+
+## Entity card
+
+<EntityCard id="${AUTH_API_ENTITY_ID}" fields="owner,lifecycle,tags" />
+
+## Entity table
+
+<EntityTable schema="00000000-0000-0000-0000-000000000004" owner="${TEAM_IDS.security}" limit="10" />
+
+## Entity changelog
+
+<EntityChangelog id="${AUTH_API_ENTITY_ID}" limit="5" />
+
+## Entity chart
+
+<EntityChart schema="00000000-0000-0000-0000-000000000003" groupBy="lifecycle" type="pie" />
+
+## Entity metric
+
+<EntityMetric schema="00000000-0000-0000-0000-000000000004" label="Total APIs" />
+
+## Entity browser embed
+
+<EntityBrowserEmbed config="${encodeEntityBrowserEmbedConfig({
+    q: '',
+    conditions: [{ fieldId: 'schemaId', op: 'equals', value: '00000000-0000-0000-0000-000000000002' }],
+    sort: 'name',
+    view: 'table',
+    viewConfigs: {}
+  })}" />
+
+## Inline components
+
+The Auth API entity can be mentioned inline like this: <EntityMention id="${AUTH_API_ENTITY_ID}" />.
+
+It can also be linked directly: <EntityLink id="00000000-0000-0000-0003-000000000001" /> (renders the entity's own name).
+
+A single field can be pulled inline — the Auth API type is <EntityField id="${AUTH_API_ENTITY_ID}" field="api_type" />.
+`,
+  [CONTENT_IDS.wsWikiDiagramsAndViews]: `# Diagrams & Views
+
+Diagrams and saved catalog views can be embedded directly in a wiki page.
+
+## Diagram embed
+
+<DiagramEmbed id="${CONTENT_IDS.wsArchitectureOverview}" caption="Architecture overview" />
+
+## Saved view embed
+
+<EntityViewEmbed viewId="00000000-0000-0000-0020-000000000001" />
+`
+};
 
 export const seedProjectFiles: ContentNodeDbResult[] = [
   {
@@ -1433,6 +1610,128 @@ export const seedProjectFiles: ContentNodeDbResult[] = [
     name: 'Deployment Topology',
     type: 'diagram',
     size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  },
+  {
+    id: CONTENT_IDS.wsWikiFolder,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: null,
+    parent_id: null,
+    path: 'wiki',
+    name: 'Wiki',
+    type: 'folder',
+    size_bytes: 0,
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  },
+  {
+    id: CONTENT_IDS.wsWikiHome,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: null,
+    parent_id: CONTENT_IDS.wsWikiFolder,
+    path: 'wiki/home',
+    name: 'Home',
+    type: 'markdown',
+    size_bytes: Buffer.byteLength(
+      JSON.stringify({ body: seedWikiPageBodies[CONTENT_IDS.wsWikiHome] }),
+      'utf8'
+    ),
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  },
+  {
+    id: CONTENT_IDS.wsWikiMarkdownCheatsheet,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: null,
+    parent_id: CONTENT_IDS.wsWikiFolder,
+    path: 'wiki/markdown-cheatsheet',
+    name: 'Markdown Cheatsheet',
+    type: 'markdown',
+    size_bytes: Buffer.byteLength(
+      JSON.stringify({ body: seedWikiPageBodies[CONTENT_IDS.wsWikiMarkdownCheatsheet] }),
+      'utf8'
+    ),
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  },
+  {
+    id: CONTENT_IDS.wsWikiEntityWidgets,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: null,
+    parent_id: CONTENT_IDS.wsWikiFolder,
+    path: 'wiki/entity-widgets',
+    name: 'Entity Widgets Showcase',
+    type: 'markdown',
+    size_bytes: Buffer.byteLength(
+      JSON.stringify({ body: seedWikiPageBodies[CONTENT_IDS.wsWikiEntityWidgets] }),
+      'utf8'
+    ),
+    comment_count: 0,
+    unresolved_comment_count: 0,
+    is_template: false,
+    is_workspace_template: false,
+    preview_svg: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    mime_type: null,
+    original_filename: null
+  },
+  {
+    id: CONTENT_IDS.wsWikiDiagramsAndViews,
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    entity_id: null,
+    parent_id: CONTENT_IDS.wsWikiFolder,
+    path: 'wiki/diagrams-and-views',
+    name: 'Diagrams & Views',
+    type: 'markdown',
+    size_bytes: Buffer.byteLength(
+      JSON.stringify({ body: seedWikiPageBodies[CONTENT_IDS.wsWikiDiagramsAndViews] }),
+      'utf8'
+    ),
     comment_count: 0,
     unresolved_comment_count: 0,
     is_template: false,
