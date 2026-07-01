@@ -528,7 +528,6 @@ const runDiagramCraftScreenshots = async (configs: DiagramCraftScreenshotConfig[
         '--dir',
         'packages/main',
         'dev',
-        '--',
         '--strictPort',
         '--port',
         String(diagramCraftScreenshotPort)

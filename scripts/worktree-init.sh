@@ -100,13 +100,14 @@ REGISTRY="${REGISTRY_DIR}/registry.json"
 mkdir -p "${REGISTRY_DIR}"
 
 if [ ! -f "${REGISTRY}" ]; then
-  echo '{"worktrees":[]}' > "${REGISTRY}"
+  echo '{"worktrees":[]}' >"${REGISTRY}"
 fi
 
 # ---------------------------------------------------------------------------
 # 5. Prune registry entries for worktrees that no longer exist on disk
 # ---------------------------------------------------------------------------
-PRUNED="$(python3 - <<PYEOF
+PRUNED="$(
+  python3 - <<PYEOF
 import json, os
 
 registry_path = '${REGISTRY}'
@@ -200,7 +201,7 @@ PYEOF
 BOOTSTRAP_DATA="${MAIN_TREE}/packages/main/public/data/dataset1/data.json"
 BOOTSTRAP_SCHEMAS="${MAIN_TREE}/packages/main/public/data/dataset1/schemas.json"
 
-cat > "${WORKTREE_ROOT}/mprocs.local.yaml" <<EOF
+cat >"${WORKTREE_ROOT}/mprocs.local.yaml" <<EOF
 procs:
   "DC web :${PORT_DC_WEB}":
     shell: |
@@ -250,7 +251,7 @@ procs:
 
   "Docs :${PORT_DOCS}":
     shell: |
-      pnpm docs:dev -- --port ${PORT_DOCS} --no-open
+      pnpm docs:dev --port ${PORT_DOCS} --no-open
     autostart: false
     stop: SIGKILL
     log:
@@ -266,7 +267,7 @@ EOF
 # ---------------------------------------------------------------------------
 DC_WEB_ENV="${WORKTREE_ROOT}/packages/main/.env"
 
-cat > "${DC_WEB_ENV}" <<EOF
+cat >"${DC_WEB_ENV}" <<EOF
 VITE_DC_SERVER_PORT=${PORT_DC_SERVER}
 EOF
 
@@ -275,7 +276,7 @@ EOF
 # ---------------------------------------------------------------------------
 AR_SERVER_ENV="${WORKTREE_ROOT}/arch-register-packages/server/.env"
 
-cat > "${AR_SERVER_ENV}" <<EOF
+cat >"${AR_SERVER_ENV}" <<EOF
 DB_DRIVER=sqlite
 SQLITE_PATH=./data/arch-register.sqlite
 AUTH_MODE=local
@@ -300,7 +301,7 @@ fi
 # ---------------------------------------------------------------------------
 AR_WEB_ENV="${WORKTREE_ROOT}/arch-register-packages/web/.env"
 
-cat > "${AR_WEB_ENV}" <<EOF
+cat >"${AR_WEB_ENV}" <<EOF
 VITE_AR_SERVER_PORT=${PORT_AR_SERVER}
 EOF
 
