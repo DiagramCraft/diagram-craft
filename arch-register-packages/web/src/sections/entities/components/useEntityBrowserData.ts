@@ -19,6 +19,8 @@ type UseEntityBrowserDataProps = {
   view: BrowserView;
   pageIndex: number;
   pageSize: number;
+  disablePaging?: boolean;
+  enabled?: boolean;
   onCountChange?: (count: number) => void;
 };
 
@@ -36,12 +38,18 @@ export const useEntityBrowserData = ({
   view,
   pageIndex,
   pageSize,
+  disablePaging = false,
+  enabled = true,
   onCountChange
 }: UseEntityBrowserDataProps) => {
-  const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
+  const isPagedBrowse = !disablePaging && (view === 'table' || view === 'cards') && sort === 'name';
   const pagedOffset = pageIndex * pageSize;
 
-  const { data: pagedEntities = [] } = useEntities(
+  const {
+    data: pagedEntities = [],
+    isLoading: isPagedLoading,
+    isFetching: isPagedFetching
+  } = useEntities(
     workspaceId,
     {
       schemaId: typeFilter,
@@ -55,10 +63,14 @@ export const useEntityBrowserData = ({
       limit: isPagedBrowse ? pageSize : undefined,
       offset: isPagedBrowse ? pagedOffset : undefined
     },
-    { enabled: isPagedBrowse && !!workspaceId }
+    { enabled: enabled && isPagedBrowse && !!workspaceId }
   );
 
-  const { data: fullEntities = [] } = useEntities(
+  const {
+    data: fullEntities = [],
+    isLoading: isFullLoading,
+    isFetching: isFullFetching
+  } = useEntities(
     workspaceId,
     {
       schemaId: typeFilter,
@@ -70,7 +82,7 @@ export const useEntityBrowserData = ({
       projectScope: projectId ? projectScope : undefined,
       view: 'summary'
     },
-    { enabled: !isPagedBrowse && !!workspaceId }
+    { enabled: enabled && !isPagedBrowse && !!workspaceId }
   );
 
   const entities = isPagedBrowse ? pagedEntities : fullEntities;
@@ -86,7 +98,7 @@ export const useEntityBrowserData = ({
       projectId: projectId ?? undefined,
       projectScope: projectId ? projectScope : undefined
     },
-    { enabled: !!workspaceId }
+    { enabled: enabled && !!workspaceId }
   );
   const schemaMap = useMemo(() => {
     const map = new Map<string, { schema: EntitySchema; index: number }>();
@@ -178,6 +190,7 @@ export const useEntityBrowserData = ({
 
   const filteredCount = filtered.length;
   const totalCount = entityCount?.total ?? filteredCount;
+  const isLoading = isPagedBrowse ? isPagedLoading || isPagedFetching : isFullLoading || isFullFetching;
 
   useEffect(() => {
     onCountChange?.(totalCount);
@@ -189,6 +202,7 @@ export const useEntityBrowserData = ({
     entities,
     filtered,
     filteredCount,
+    isLoading,
     isPagedBrowse,
     owners,
     schemaMap,
