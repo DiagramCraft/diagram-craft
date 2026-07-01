@@ -1,5 +1,6 @@
 -- Migration: Add import_cache table for temporary storage of import data
 -- This table stores parsed import data between the parse and execute phases
+-- @creates import_cache
 
 CREATE TABLE IF NOT EXISTS import_cache (
   import_id       UUID        PRIMARY KEY,
@@ -15,7 +16,7 @@ CREATE TABLE IF NOT EXISTS import_cache (
 );
 
 -- Index for cleanup of expired entries
-CREATE INDEX import_cache_expires_idx ON import_cache(expires_at);
+CREATE INDEX IF NOT EXISTS import_cache_expires_idx ON import_cache(expires_at);
 
 -- Index for user/workspace lookups
-CREATE INDEX import_cache_ws_user_idx ON import_cache(workspace_id, user_id);
+CREATE INDEX IF NOT EXISTS import_cache_ws_user_idx ON import_cache(workspace_id, user_id);

@@ -15,6 +15,7 @@ import {
   seedSchemas,
   seedTeamAssignments,
   seedUserWatches,
+  seedWikiPageBodies,
   seedWorkspaceMembers,
   seedWorkspaces
 } from './seedData';
@@ -24,6 +25,7 @@ import { hashPassword } from '../utils/password';
 import { UserDbCreate } from './database';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
 import { listAllCatalogEntities } from '../domain/catalog/entityLoader';
+import type { StorageAdapter } from '../storage/storage.types';
 
 type Database = Awaited<ReturnType<typeof createDatabase>>;
 
@@ -206,7 +208,7 @@ const seedBootstrapWatchesAndNotifications = async (db: Database) => {
   );
 };
 
-export const seedBootstrapData = async (db: Database) => {
+export const seedBootstrapData = async (db: Database, storage: StorageAdapter) => {
   const syncTimestamp = new Date();
   for (const workspace of seedWorkspaces) {
     await db.workspace.createWorkspace(workspace);
@@ -280,13 +282,23 @@ export const seedBootstrapData = async (db: Database) => {
       parent_id: file.parent_id,
       path: file.path,
       name: file.name,
-      type: file.type as 'diagram' | 'folder',
+      type: file.type as 'diagram' | 'folder' | 'markdown',
       size_bytes: file.size_bytes,
       comment_count: 0,
       unresolved_comment_count: 0,
       created_atIfNew: file.created_at,
       updated_at: file.updated_at
     });
+
+    const body = seedWikiPageBodies[file.id];
+    if (body !== undefined) {
+      await storage.write(
+        file.workspace,
+        file.workspace,
+        file.id,
+        Buffer.from(JSON.stringify({ body }), 'utf8')
+      );
+    }
   }
 
   await seedBootstrapUsers(db);

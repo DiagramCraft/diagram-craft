@@ -20,9 +20,10 @@ if (driver === 'sqlite') {
 
 const db = await createDatabase({ initialize: false });
 await db.core.reset();
-await seedBootstrapData(db);
 
 const storage = createStorage();
+await seedBootstrapData(db, storage);
+
 const app = createApp(db, storage);
 
 const server = createServer(toNodeHandler(app));
