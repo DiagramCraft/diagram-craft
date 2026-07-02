@@ -49,7 +49,12 @@ export const SaveViewDialog = ({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, description: string, scope: 'workspace' | 'project', isAdminView: boolean) => void;
+  onSave: (
+    name: string,
+    description: string,
+    scope: 'workspace' | 'project',
+    isAdminView: boolean
+  ) => void;
   scopeOptions?: Array<{ value: 'workspace' | 'project'; label: string }>;
   defaultScope?: 'workspace' | 'project';
   showAdminOption?: boolean;
@@ -122,11 +127,16 @@ export const SaveViewDialog = ({
           </FormElement>
         )}
         {showAdminOption && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
-            <Checkbox
-              value={isAdminView}
-              onChange={v => setIsAdminView(v ?? false)}
-            />
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            <Checkbox value={isAdminView} onChange={v => setIsAdminView(v ?? false)} />
             <span>Pin as workspace view (visible to all members)</span>
           </label>
         )}
@@ -310,16 +320,7 @@ export const EntityBrowser = ({
           onToggleIncludeProjectSnapshots={projectId ? undefined : setIncludeProjectSnapshots}
         />
       )}
-      {asOf && (
-        <AsOfBanner
-          asOf={asOf}
-          onExit={() => {
-            clearAsOf();
-            setTlOpen(false);
-          }}
-          markers={timelineMarkers}
-        />
-      )}
+
       {view === 'hierarchy' ? (
         <HierarchyView
           workspaceId={workspaceId}

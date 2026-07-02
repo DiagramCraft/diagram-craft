@@ -66,7 +66,11 @@ export const EntityBrowserToolbar = ({
     <div className={styles.toolbar}>
       <div className={styles.searchInline}>
         <TbSearch size={12} />
-        <input placeholder="Search by name, owner…" value={q} onChange={e => setQ(e.target.value)} />
+        <input
+          placeholder="Search by name, owner…"
+          value={q}
+          onChange={e => setQ(e.target.value)}
+        />
       </div>
       <Popover.Root actionsRef={filterPopoverRef}>
         <Popover.Trigger
@@ -74,7 +78,9 @@ export const EntityBrowserToolbar = ({
             <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
               <TbFilter size={12} style={{ marginRight: 4 }} />
               Filter
-              {conditions.length > 0 && <span className={styles.filterCount}>{conditions.length}</span>}
+              {conditions.length > 0 && (
+                <span className={styles.filterCount}>{conditions.length}</span>
+              )}
             </Button>
           }
         />
@@ -131,9 +137,7 @@ export const EntityBrowserToolbar = ({
           variant={tlOpen || asOf ? 'primary' : 'secondary'}
           icon={<TbHistory size={12} />}
           onClick={onToggleTimeline}
-        >
-          Time travel
-        </Button>
+        />
       )}
     </div>
   );

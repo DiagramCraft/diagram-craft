@@ -4,6 +4,7 @@ import { TbHistory, TbGitBranch, TbX } from 'react-icons/tb';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { formatTimelineDate } from './timelineUtils';
 import styles from './TimelineStrip.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 
 export type AsOfMarker = {
   date: string;
@@ -145,6 +146,7 @@ export const TimelineStrip = ({
     <div
       className={`${styles.panel} ${displayDate ? (isFuture ? styles.panelFuture : styles.panelPast) : ''}`}
     >
+      <div className={styles.panelArrow}></div>
       <div className={styles.panelHead}>
         <div className={styles.legend}>
           <span className={`${styles.leg} ${styles.legSv}`}>Version saved</span>
@@ -180,13 +182,11 @@ export const TimelineStrip = ({
             onChange={e => (e.target.value ? onSelect(e.target.value) : onClear())}
           />
           {selectedDate ? (
-            <button type="button" className={styles.exitBtn} onClick={onClear}>
-              Exit snapshot
-            </button>
+            <Button size="xs" onClick={onClear}>
+              &nbsp;Exit snapshot&nbsp;
+            </Button>
           ) : (
-            <button type="button" className={styles.ghostBtn} onClick={() => onSelect(todayIso)}>
-              View today
-            </button>
+            <></>
           )}
           <button
             type="button"

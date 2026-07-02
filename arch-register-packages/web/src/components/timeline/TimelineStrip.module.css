@@ -1,15 +1,40 @@
 /* ── Panel shell ─────────────────────────────────────────── */
 .panel {
-  border-top: 1px solid var(--panel-border);
-  border-bottom: 1px solid var(--panel-border);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
   background: var(--panel-bg);
   font-family: var(--font-sans);
+  margin-bottom: 16px;
+  margin-top: -8px;
+  position: relative;
 }
+
+.panelArrow {
+  border: 1px solid var(--panel-border);
+  background-color: var(--panel-bg);
+  width: 10px;
+  height: 10px;
+  position: absolute;
+  top: -5px;
+  right: 9px;
+  transform: rotate(135deg);
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+
 .panelPast {
   border-color: color-mix(in oklch, var(--accent-9) 25%, transparent);
+
+  .panelArrow {
+    border-color: color-mix(in oklch, var(--accent-9) 25%, transparent);
+  }
 }
+
 .panelFuture {
   border-color: color-mix(in oklch, var(--warning-fg) 25%, transparent);
+
+  .panelArrow {
+    border-color: color-mix(in oklch, var(--warning-fg) 25%, transparent);
+  }
 }
 
 /* ── Panel header ────────────────────────────────────────── */
@@ -20,6 +45,7 @@
   padding: 7px 16px;
   border-bottom: 1px solid var(--panel-border);
 }
+
 .panelHeadR {
   display: flex;
   align-items: center;
@@ -44,6 +70,7 @@
   align-items: center;
   gap: 10px;
 }
+
 .leg {
   display: flex;
   align-items: center;
@@ -51,6 +78,7 @@
   font-size: 10px;
   color: var(--cmp-fg-disabled);
 }
+
 .leg::before {
   content: '';
   width: 6px;
@@ -58,12 +86,15 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
+
 .legSv::before {
   background: var(--accent-9);
 }
+
 .legAp::before {
   background: var(--green);
 }
+
 .legFu::before {
   background: var(--warning-fg);
 }
@@ -80,10 +111,12 @@
   padding: 2px 7px;
   border-radius: var(--r-sm);
 }
+
 .modeChipPast {
   background: color-mix(in oklch, var(--accent-9) 12%, transparent);
   color: var(--accent-11);
 }
+
 .modeChipFuture {
   background: color-mix(in oklch, var(--warning-fg) 12%, transparent);
   color: var(--warning-fg);
@@ -102,25 +135,17 @@
   cursor: pointer;
   transition: border-color 80ms;
 }
+
 .dateInput:hover {
   border-color: var(--cmp-border-focus);
 }
+
 .dateInput:focus {
   outline: none;
   border-color: var(--accent-9);
 }
 
-.exitBtn {
-  font-size: 11px;
-  padding: 2px 9px;
-  height: 22px;
-  border-radius: var(--r);
-  background: var(--accent-9);
-  color: #fff;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: background 80ms;
-}
+
 .exitBtn:hover {
   background: var(--accent-11);
 }
@@ -136,6 +161,7 @@
   white-space: nowrap;
   transition: background 80ms, color 80ms;
 }
+
 .ghostBtn:hover {
   background: var(--cmp-bg);
   color: var(--cmp-fg);
@@ -151,6 +177,7 @@
   color: var(--cmp-fg-disabled);
   transition: background 80ms, color 80ms;
 }
+
 .closeBtn:hover {
   background: var(--cmp-bg-hover);
   color: var(--cmp-fg);
@@ -164,6 +191,7 @@
   cursor: crosshair;
   user-select: none;
 }
+
 .isDragging {
   cursor: ew-resize;
 }
@@ -174,10 +202,12 @@
   bottom: 22px;
   pointer-events: none;
 }
+
 .rgnPast {
   left: 0;
   background: linear-gradient(90deg, transparent 0%, color-mix(in oklch, var(--accent-9) 7%, transparent) 100%);
 }
+
 .rgnFuture {
   background: color-mix(in oklch, var(--warning-fg) 5%, transparent);
 }
@@ -199,12 +229,14 @@
   transform: translateX(-50%);
   pointer-events: none;
 }
+
 .yearTick {
   width: 1px;
   height: 10px;
   background: var(--panel-border);
   margin: 22px auto 0;
 }
+
 .yearLbl {
   font-size: 9px;
   font-family: var(--font-mono);
@@ -228,6 +260,7 @@
   border-radius: var(--r);
   transition: background 80ms;
 }
+
 .markerGroup:hover {
   background: var(--cmp-bg-hover);
   z-index: 10;
@@ -240,18 +273,23 @@
   border: 1.5px solid var(--panel-bg);
   transition: transform 100ms;
 }
+
 .markerGroup:hover .dot {
   transform: scale(1.4);
 }
+
 .dot-saved_version {
   background: var(--accent-9);
 }
+
 .dot-applied {
   background: var(--green);
 }
+
 .dot-future_update {
   background: var(--warning-fg);
 }
+
 .dotExtra {
   font-size: 8px;
   color: var(--cmp-fg-disabled);
@@ -265,6 +303,7 @@
   pointer-events: none;
   z-index: 3;
 }
+
 .nowLine {
   width: 2px;
   height: 34px;
@@ -272,6 +311,7 @@
   opacity: 0.4;
   margin: 0 auto;
 }
+
 .nowLbl {
   font-size: 9px;
   color: var(--cmp-fg-disabled);
@@ -289,14 +329,17 @@
   pointer-events: none;
   z-index: 4;
 }
+
 .scrubberLine {
   width: 2px;
   height: 38px;
   background: var(--accent-9);
 }
+
 .scrubberFuture .scrubberLine {
   background: var(--warning-fg);
 }
+
 .scrubberPip {
   position: absolute;
   top: 19px;
@@ -307,6 +350,7 @@
   background: var(--accent-9);
   border: 2px solid var(--panel-bg);
 }
+
 .scrubberFuture .scrubberPip {
   background: var(--warning-fg);
 }
@@ -325,12 +369,14 @@
   box-shadow: 0 6px 20px oklch(0 0 0 / 0.45);
   font-family: var(--font-sans);
 }
+
 .tipDate {
   font-size: 10px;
   font-family: var(--font-mono);
   color: var(--cmp-fg-disabled);
   margin-bottom: 6px;
 }
+
 .tipRow {
   display: flex;
   align-items: baseline;
@@ -338,6 +384,7 @@
   margin-bottom: 3px;
   line-height: 1.4;
 }
+
 .tipDot {
   width: 6px;
   height: 6px;
@@ -345,20 +392,25 @@
   flex-shrink: 0;
   margin-top: 2px;
 }
+
 .tipDot-saved_version {
   background: var(--accent-9);
 }
+
 .tipDot-applied {
   background: var(--green);
 }
+
 .tipDot-future_update {
   background: var(--warning-fg);
 }
+
 .tipLbl {
   font-size: 11px;
   flex: 1;
   color: var(--cmp-fg);
 }
+
 .tipHint {
   font-size: 10px;
   color: var(--cmp-fg-disabled);
