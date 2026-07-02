@@ -72,9 +72,9 @@ This is where the editor starts to feel more like a diagramming system than a si
 Diagram Craft is built with collaborative work in mind. The project supports workflows such as:
 
 - multi-user editing
-- comments and review discussion
-- awareness of other users in the same diagram
-- version-oriented collaboration features
+- comments and threaded review discussion
+- awareness of other users in the same live session
+- working history through undo/redo and the undo stack
 
 If your diagrams are shared artifacts rather than personal scratch work, these features matter as much as the drawing tools themselves.
 
