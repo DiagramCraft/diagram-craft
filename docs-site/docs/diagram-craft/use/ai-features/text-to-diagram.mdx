@@ -1,0 +1,70 @@
+---
+sidebar_position: 1
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Text-to-Diagram
+
+Use the text workflow when you want to draft or refactor a diagram faster than direct manipulation on the canvas. It is especially useful for simple flows, repeated structural edits, and cases where you want to inspect the diagram as a compact, editable text representation.
+
+<ThemedImage
+  alt="Diagram Craft text panel showing a diagram serialized as editable text"
+  sources={{
+    light: require('/img/diagram-craft/ai-features/text-workflow-light.png').default,
+    dark: require('/img/diagram-craft/ai-features/text-workflow-dark.png').default,
+  }}
+/>
+
+## What This Workflow Is Good For
+
+- drafting a small flow or structure from scratch
+- renaming several nodes or edges quickly
+- adjusting repeated patterns without clicking each element
+- understanding how a local diagram region is wired together
+
+## How It Works
+
+Diagram Craft currently exposes its own built-in text format through the `Text` panel. The panel serializes the active regular layer into text, validates edits as you type, and applies the result back into the diagram.
+
+A typical loop looks like this:
+
+1. Open the `Text` panel from the left sidebar.
+2. Start from the serialized diagram text already shown for the active layer.
+3. Edit node labels, edge definitions, or small structures directly.
+4. Fix any parse errors the panel reports.
+5. Apply the changes, then refine spacing and styling on the canvas.
+
+## A Good Starting Pattern
+
+For a quick draft, think in terms of named nodes and connections first:
+
+```text
+start: circle "Start"
+review: rect "Review request"
+decision: diamond "Approved?"
+done: rounded-rect "Finish"
+
+flow1: edge start --> review
+flow2: edge review --> decision
+flow3: edge decision --> done "Yes"
+```
+
+That gives you the structure quickly. After that, use the canvas for visual cleanup.
+
+## Practical Constraints
+
+- The current format is Diagram Craft specific. It is not Mermaid or PlantUML.
+- The panel works on the active regular layer, so layer choice is part of the workflow.
+- The text form is best for structure and bulk edits, not final presentation polish.
+- Complex layout intent is still easier to finish visually after applying the text changes.
+
+## When Not To Use It
+
+Skip the text workflow when you are making small visual adjustments such as spacing, alignment, edge routing, or style tweaks. Those are usually faster on the canvas.
+
+## Related Reading
+
+- [Diagram-to-Text](diagram-to-text)
+- [AI Assistant](ai-assistant)
+- [Automatic Layouts](../layout/automatic-layouts)
