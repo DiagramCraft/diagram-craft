@@ -92,7 +92,8 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           view: input.query.view ?? 'full',
           limit: input.query.limit ?? null,
           offset: input.query.offset ?? 0,
-          asOf: parseAsOf(input.query.asOf)
+          asOf: parseAsOf(input.query.asOf),
+          includeProjectSnapshots: input.query.includeProjectSnapshots !== 'false'
         });
       } catch (error) {
         return toORPCError(error);
@@ -124,7 +125,8 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           conditions,
           projectId: input.query.projectId ?? null,
           projectScope: input.query.projectScope ?? 'all',
-          asOf: parseAsOf(input.query.asOf)
+          asOf: parseAsOf(input.query.asOf),
+          includeProjectSnapshots: input.query.includeProjectSnapshots !== 'false'
         });
         return { total };
       } catch (error) {

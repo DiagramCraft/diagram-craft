@@ -55,7 +55,8 @@ export const reconstructEntitiesAsOf = async (
   workspace: string,
   asOf: Date,
   authCtx: AuthorizationContext | null,
-  candidateEntityIds?: string[]
+  candidateEntityIds?: string[],
+  includeProjectSnapshots = true
 ): Promise<EntityDbResult[]> => {
   const [snapshots, schemas, owners, lifecycles] = await Promise.all([
     db.catalog.listSnapshotsAsOf(workspace, asOf, candidateEntityIds),
@@ -72,14 +73,19 @@ export const reconstructEntitiesAsOf = async (
   // it here must not leak the contents of a project the requesting user can't otherwise see
   // (e.g. via the project's own "future changes"/timeline tabs, which gate on project access) —
   // so we resolve project access for every distinct project_id referenced by a future_update
-  // snapshot up front, and drop any snapshot from a project the user can't access.
-  const futureUpdateProjectIds = [
-    ...new Set(
-      snapshots
-        .filter(s => s.status === 'future_update' && s.project_id != null)
-        .map(s => s.project_id as string)
-    )
-  ];
+  // snapshot up front, and drop any snapshot from a project the user can't access. When the
+  // caller has opted out of project snapshots entirely (e.g. the workspace browser's "include
+  // project changes" toggle), skip this resolution altogether and treat future_update snapshots
+  // as absent.
+  const futureUpdateProjectIds = includeProjectSnapshots
+    ? [
+        ...new Set(
+          snapshots
+            .filter(s => s.status === 'future_update' && s.project_id != null)
+            .map(s => s.project_id as string)
+        )
+      ]
+    : [];
   const accessibleProjectIds = new Set(
     authCtx == null
       ? futureUpdateProjectIds
@@ -100,6 +106,7 @@ export const reconstructEntitiesAsOf = async (
 
   for (const snapshot of snapshots) {
     if (snapshot.status === 'future_update') {
+      if (!includeProjectSnapshots) continue;
       if (snapshot.project_id != null && !accessibleProjectIds.has(snapshot.project_id)) continue;
       const list = futureUpdatesByEntity.get(snapshot.entity_id) ?? [];
       list.push(snapshot);

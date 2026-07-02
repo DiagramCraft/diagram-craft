@@ -153,6 +153,7 @@ export const useEntityBrowserSearchState = ({
   return {
     activeViewConfig,
     asOf: search.asOf,
+    includeProjectSnapshots: search.asOfIncludeProjects !== 'false',
     conditions,
     ownerFilter,
     projectScope,

@@ -139,6 +139,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
   const projectId = projectContext?.project.id;
   const {
     asOf,
+    includeProjectSnapshots,
     conditions,
     activeViewConfig,
     ownerFilter,
@@ -195,6 +196,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     pageIndex,
     pageSize,
     asOf,
+    includeProjectSnapshots: projectId ? true : includeProjectSnapshots,
     onCountChange
   });
 

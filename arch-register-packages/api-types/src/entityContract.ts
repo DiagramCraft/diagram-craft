@@ -90,6 +90,12 @@ const listFiltersSchema = z.object({
     .optional()
     .describe(
       'ISO 8601 date/time — if set, return entities reconstructed as they existed/will exist at this point in time (read-only snapshot mode)'
+    ),
+  includeProjectSnapshots: z
+    .enum(['true', 'false'])
+    .optional()
+    .describe(
+      'When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true.'
     )
 });
 

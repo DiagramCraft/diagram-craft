@@ -54,6 +54,7 @@ export const EntityBrowserScreen = () => {
   const view = search.viewMode ?? 'table';
   const asOf = search.asOf;
   const readOnly = !!asOf;
+  const includeProjectSnapshots = search.asOfIncludeProjects !== 'false';
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
   const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
@@ -224,6 +225,21 @@ export const EntityBrowserScreen = () => {
     [navigate, workspaceSlug]
   );
 
+  const handleToggleIncludeProjectSnapshots = useCallback(
+    (include: boolean) => {
+      navigate({
+        to: '/$workspaceSlug/entities',
+        params: { workspaceSlug },
+        search: (prev: Record<string, unknown>) => ({
+          ...prev,
+          asOfIncludeProjects: include ? undefined : 'false'
+        }),
+        replace: true
+      });
+    },
+    [navigate, workspaceSlug]
+  );
+
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
@@ -238,16 +254,19 @@ export const EntityBrowserScreen = () => {
           }
           description="Search, filter, and inspect everything in the IT landscape."
           buttons={
-            !readOnly ? (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <AsOfTimelinePicker markers={timelineMarkers} onSelect={handleSelectAsOf} />
-                {permissions.canCreateEntities && (
-                  <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
-                    New entity
-                  </Button>
-                )}
-              </div>
-            ) : undefined
+            <div style={{ display: 'flex', gap: 8 }}>
+              <AsOfTimelinePicker
+                markers={timelineMarkers}
+                onSelect={handleSelectAsOf}
+                includeProjectSnapshots={includeProjectSnapshots}
+                onToggleIncludeProjectSnapshots={handleToggleIncludeProjectSnapshots}
+              />
+              {!readOnly && permissions.canCreateEntities && (
+                <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
+                  New entity
+                </Button>
+              )}
+            </div>
           }
           menu={
             <DropdownMenu

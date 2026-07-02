@@ -34,6 +34,7 @@ export const useEntities = (
     limit?: number | null;
     offset?: number | null;
     asOf?: string | null;
+    includeProjectSnapshots?: boolean | null;
   } = {},
   queryOptions?: { enabled?: boolean }
 ) => {
@@ -55,7 +56,9 @@ export const useEntities = (
           view: options.view,
           limit: options.limit ?? undefined,
           offset: options.offset ?? undefined,
-          asOf: options.asOf ?? undefined
+          asOf: options.asOf ?? undefined,
+          includeProjectSnapshots:
+            options.includeProjectSnapshots == null ? undefined : String(options.includeProjectSnapshots) as 'true' | 'false'
         }
       }),
     enabled: queryOptions?.enabled ?? !!workspaceId
@@ -101,6 +104,7 @@ export const useEntityCount = (
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     asOf?: string | null;
+    includeProjectSnapshots?: boolean | null;
   } = {},
   queryOptions?: { enabled?: boolean }
 ) => {
@@ -117,7 +121,9 @@ export const useEntityCount = (
           conditions: options.conditions?.length ? JSON.stringify(options.conditions) : undefined,
           projectId: options.projectId ?? undefined,
           projectScope: options.projectScope ?? undefined,
-          asOf: options.asOf ?? undefined
+          asOf: options.asOf ?? undefined,
+          includeProjectSnapshots:
+            options.includeProjectSnapshots == null ? undefined : String(options.includeProjectSnapshots) as 'true' | 'false'
         }
       }),
     enabled: queryOptions?.enabled ?? !!workspaceId

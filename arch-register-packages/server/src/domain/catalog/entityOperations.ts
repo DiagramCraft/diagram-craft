@@ -96,6 +96,7 @@ export const listEntities = async (
     limit?: number | null;
     offset?: number | null;
     asOf?: Date | null;
+    includeProjectSnapshots?: boolean;
   }
 ): Promise<EntityRecord[]> => {
   const {
@@ -109,7 +110,8 @@ export const listEntities = async (
     view = 'full',
     limit,
     offset = 0,
-    asOf = null
+    asOf = null,
+    includeProjectSnapshots = true
   } = options;
   const safeOffset = Math.max(Math.trunc(offset ?? 0), 0);
   const safeLimit = limit == null ? null : Math.max(Math.trunc(limit), 1);
@@ -123,7 +125,8 @@ export const listEntities = async (
       projectId,
       projectScope,
       view,
-      asOf
+      asOf,
+      includeProjectSnapshots
     });
     const windowed =
       safeLimit != null ? rows.slice(safeOffset, safeOffset + safeLimit) : rows.slice(safeOffset);
@@ -146,6 +149,7 @@ export const countEntities = async (
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     asOf?: Date | null;
+    includeProjectSnapshots?: boolean;
   }
 ): Promise<number> => {
   const rows = await collectEntities(db, workspace, authCtx, {
@@ -157,7 +161,8 @@ export const countEntities = async (
     projectId: options.projectId ?? null,
     projectScope: options.projectScope ?? 'all',
     view: 'full',
-    asOf: options.asOf ?? null
+    asOf: options.asOf ?? null,
+    includeProjectSnapshots: options.includeProjectSnapshots ?? true
   });
   return rows.length;
 };
@@ -176,6 +181,7 @@ const collectEntities = async (
     projectScope?: 'project' | 'all';
     view?: 'summary' | 'full';
     asOf?: Date | null;
+    includeProjectSnapshots?: boolean;
   }
 ): Promise<CollectedEntity[]> => {
   const {
@@ -187,7 +193,8 @@ const collectEntities = async (
     projectId = null,
     projectScope = 'all',
     view = 'full',
-    asOf = null
+    asOf = null,
+    includeProjectSnapshots = true
   } = options;
   // _completeness is computed post-fetch; all other conditions can be evaluated in SQL
   const sqlConditions = conditions.filter(c => c.fieldId !== '_completeness');
@@ -240,7 +247,14 @@ const collectEntities = async (
       const links = await db.project.listProjectEntityLinks(workspace, projectId);
       candidateEntityIds = links.filter(link => link.created_at <= asOf).map(link => link.entity_id);
     }
-    const reconstructed = await reconstructEntitiesAsOf(db, workspace, asOf, authCtx, candidateEntityIds);
+    const reconstructed = await reconstructEntitiesAsOf(
+      db,
+      workspace,
+      asOf,
+      authCtx,
+      candidateEntityIds,
+      includeProjectSnapshots
+    );
     const filtered = filterEntities(reconstructed, { schemaId, owner, lifecycle, q: q ?? '' });
     for (const entity of filtered) {
       processEntity(entity, conditions);

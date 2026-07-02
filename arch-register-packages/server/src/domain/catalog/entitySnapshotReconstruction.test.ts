@@ -325,6 +325,23 @@ describe('reconstructEntitiesAsOf', () => {
 
       expect(result[0]?.name).toBe('Leaked Planned Name');
     });
+
+    it('does not apply any future_update snapshot when includeProjectSnapshots is false, even for an accessible project', async () => {
+      const db = makeDb(makeFutureUpdateSnapshots(), [], [{ id: 'project-private', owner: 'team-private' }]);
+      const authCtx = makeAuthCtx(['team-private']);
+
+      const result = await reconstructEntitiesAsOf(
+        db,
+        'ws-1',
+        new Date('2026-07-01T00:00:00.000Z'),
+        authCtx,
+        undefined,
+        false
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.name).toBe('Current Name');
+    });
   });
 
   it('respects candidateEntityIds to scope reconstruction to a project-linked entity set', async () => {

@@ -11,6 +11,7 @@ export type SharedEntityBrowserSearchParams = {
   sidebarTab?: 'filters' | 'views' | 'pinned';
   filters?: string; // JSON string of FilterCondition[]
   asOf?: string; // ISO 8601 date — when set, browser enters read-only point-in-time snapshot mode
+  asOfIncludeProjects?: 'true' | 'false'; // whether asOf reconstruction applies project future_update snapshots; defaults to 'true'
 };
 
 const validateSharedEntityBrowserSearch = (
@@ -38,6 +39,10 @@ const validateSharedEntityBrowserSearch = (
   sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'pinned' ? raw.sidebarTab : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
   asOf: typeof raw.asOf === 'string' ? raw.asOf : undefined,
+  asOfIncludeProjects:
+    raw.asOfIncludeProjects === 'true' || raw.asOfIncludeProjects === 'false'
+      ? raw.asOfIncludeProjects
+      : undefined,
 });
 
 // Entity browser filters
