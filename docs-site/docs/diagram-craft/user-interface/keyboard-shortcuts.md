@@ -48,6 +48,16 @@ If you spend time in search, data binding, comments, or style editing, the sideb
 - The command palette is useful when you remember the action but not the shortcut.
 - Some windows expose their shortcut directly through the sidebar action tooltip.
 
+## Good Learning Order
+
+If you are adopting shortcuts gradually, learn them in this order:
+
+1. tool switching
+2. sidebar opening
+3. save, duplicate, and command palette
+4. zoom and preview
+5. alignment and precise movement
+
 ## Scope
 
 - This page is intentionally selective.

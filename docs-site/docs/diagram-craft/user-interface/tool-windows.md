@@ -2,9 +2,19 @@
 sidebar_position: 1
 ---
 
+import ThemedImage from '@theme/ThemedImage';
+
 # Tool Windows
 
 Tool windows are the main way Diagram Craft exposes editing, inspection, search, and document-management surfaces without forcing everything into modal dialogs. Use this page to understand the overall layout. For the full panel inventory and tab list, use [Tool Windows Reference](../reference/tool-windows-reference).
+
+<ThemedImage
+  alt="Diagram Craft editor layout with left and right tool windows around the canvas"
+  sources={{
+    light: require('/img/diagram-craft/user-interface/editor-layout-light.png').default,
+    dark: require('/img/diagram-craft/user-interface/editor-layout-dark.png').default,
+  }}
+/>
 
 ## Two Sidebar Model
 
@@ -20,6 +30,7 @@ That split is the fastest way to build a mental model of the UI.
 The left sidebar is where you typically:
 
 - pick shapes or icons
+- drag model-backed items and template previews onto the canvas
 - inspect document structure
 - review undo history
 - run search, advanced search, or DJQL queries
@@ -47,6 +58,7 @@ The right sidebar is where you typically:
 
 Most tool windows are tabbed. That matters because many features live one level deeper than the sidebar icon itself:
 
+- the objects window separates shapes, recents, model-backed items, and icons
 - the search window separates simple search, advanced search, and DJQL
 - the structure window separates layers, document structure, and tags
 - the style window changes tabs based on what is selected
