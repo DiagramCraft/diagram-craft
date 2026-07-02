@@ -1,0 +1,60 @@
+---
+sidebar_position: 1
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Drawio Import
+
+Draw.io import is the fastest way to move an existing diagram into Diagram Craft when redrawing would cost more than cleanup. Use it for migration, reuse of older assets, or as a starting point for a diagram you want to keep evolving in Diagram Craft.
+
+<ThemedImage
+  alt="Diagram Craft showing an imported process diagram that includes Draw.io-derived shapes"
+  sources={{
+    light: require('/img/diagram-craft/import-export/drawio-imported-workflow-light.png').default,
+    dark: require('/img/diagram-craft/import-export/drawio-imported-workflow-dark.png').default,
+  }}
+/>
+
+## What Usually Transfers Well
+
+Import is designed to preserve the working structure of the source diagram:
+
+- the overall node and edge structure
+- many common shapes
+- a large part of the existing layout
+- labels and a useful amount of styling
+
+That makes it a good migration starting point rather than a blank reimplementation.
+
+## Where To Expect Cleanup
+
+Treat the import as a conversion, not a pixel-perfect clone. After opening the file, review:
+
+- labels that may wrap differently
+- connectors that need rerouting or spacing cleanup
+- containers, swimlanes, or layout-driven regions
+- imported Draw.io stencil shapes that should be checked visually
+
+## A Good Migration Loop
+
+1. Import the `.drawio` file.
+2. Review the overall structure before changing styling.
+3. Fix any layout or labeling issues that affect readability.
+4. Convert the result into your normal Diagram Craft editing workflow.
+
+## When It Is A Good Fit
+
+- you want to keep the logical structure of an existing Draw.io diagram
+- the source diagram is large enough that redrawing it is wasteful
+- the imported file is a starting point for further editing, not the final deliverable
+
+## When It Is Not
+
+If the original diagram depends heavily on exact visual fidelity or very tool-specific behavior, expect more manual cleanup. In those cases, import still saves time, but it should be treated as assisted migration rather than a finished result.
+
+## Related Reading
+
+- [File Formats](file-formats)
+- [Image Export](image-export)
+- [SVG Export](svg-export)

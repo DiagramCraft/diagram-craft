@@ -1,0 +1,52 @@
+---
+sidebar_position: 2
+---
+
+import ThemedImage from '@theme/ThemedImage';
+
+# Diagram-to-Text
+
+Diagram-to-text is the reverse side of the same `Text` workflow. Instead of treating the panel only as an input surface, use it as a compact export of the active layer so you can inspect structure, make bulk edits, and reason about the diagram without scanning the whole canvas.
+
+<ThemedImage
+  alt="Diagram Craft text panel showing an editable text view of the active diagram layer"
+  sources={{
+    light: require('/img/diagram-craft/ai-features/text-workflow-light.png').default,
+    dark: require('/img/diagram-craft/ai-features/text-workflow-dark.png').default,
+  }}
+/>
+
+## When It Helps
+
+- a diagram area is dense and you want to inspect node and edge relationships directly
+- you need to rename a set of elements consistently
+- you want a lightweight review artifact for structure, not presentation
+- you plan to round-trip a diagram through the text panel for cleanup
+
+## What You Get
+
+The panel serializes the current regular layer into Diagram Craft text. That text captures the structure well enough for editing and reapplication, but it is still a Diagram Craft-specific representation rather than a general interchange format.
+
+## A Reliable Round-Trip Loop
+
+1. Open the `Text` panel.
+2. Review the generated text for the active layer.
+3. Make structural edits in text where that is faster than direct manipulation.
+4. Apply the changes.
+5. Return to the canvas for layout, spacing, and styling refinement.
+
+This is especially effective for straightforward flows and diagrams with many repeated labels or similar edges.
+
+## Limits To Keep In Mind
+
+- The exported text is not meant as a broad sharing format for other tools.
+- It is not a substitute for PNG or SVG when you need a presentation artifact.
+- It should not be treated as a stable external standard for long-term interoperability.
+
+Use it as an editing aid inside Diagram Craft, not as a publication target.
+
+## Related Reading
+
+- [Text-to-Diagram](text-to-diagram)
+- [File Formats](../import-export/file-formats)
+- [Image Export](../import-export/image-export)
