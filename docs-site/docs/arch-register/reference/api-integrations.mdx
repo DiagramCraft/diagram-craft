@@ -1,20 +1,40 @@
 # API And Integrations
 
-Arch Register has implementation-level API documentation outside the narrative docs pages. This section keeps the
-entry point visible without trying to duplicate the server contract here.
+Arch Register's HTTP API is defined as oRPC contracts and exported as an OpenAPI 3.1 specification. The full,
+generated endpoint-by-endpoint reference is published as a static [API Reference](pathname:///arch-register/api.html)
+page, rendered with [Redoc](https://github.com/Redocly/redoc) and grouped by domain via the spec's operation tags
+(Enums, Schemas, Entities, Projects, and so on). This page covers where that reference comes from and how to keep
+it up to date.
 
 ## Primary Sources
 
-- server OpenAPI specification in `arch-register-packages/server/openapi.yaml`
-- server package documentation in `arch-register-packages/server/README.md`
-- shared API types in `arch-register-packages/api-types`
+- server OpenAPI specification, generated to `arch-register-packages/server/openapi.json`
+- oRPC contract definitions in `arch-register-packages/api-types`
+- unified spec assembly in `arch-register-packages/server/src/openapi.ts`
+
+## Updating The API Reference
+
+The [API Reference](pathname:///arch-register/api.html) page is a static HTML file built from the committed
+`openapi.json` file, not derived live from source. After changing an oRPC contract in
+`arch-register-packages/api-types`:
+
+1. Regenerate the spec and commit the result:
+   ```bash
+   pnpm --filter @arch-register/server openapi:generate
+   ```
+2. That's it — the docs site rebuilds the static API reference page from the committed spec as part of
+   `pnpm docs:dev` and `pnpm docs:build` (a fast standalone bundling step, not a slow regeneration process, so it
+   doesn't meaningfully affect dev server startup time). A CI check
+   (`pnpm --filter @arch-register/server openapi:check`) fails the build if `openapi.json` is out of sync with the
+   contracts, so a forgotten regeneration step won't silently go stale.
 
 ## Use This Page For
 
 - finding the contract source of truth
 - understanding where integration-level docs live
-- separating product guides from implementation reference
+- the developer workflow for updating the generated API reference
 
 ## Related Pages
 
+- [API Reference](pathname:///arch-register/api.html)
 - [Export and Import](../admin/export-import)

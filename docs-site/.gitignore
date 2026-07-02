@@ -5,6 +5,7 @@
 /build
 /docs/api/
 /docs/diagram-craft/api/
+/static/arch-register/api.html
 
 # Generated files
 .docusaurus
