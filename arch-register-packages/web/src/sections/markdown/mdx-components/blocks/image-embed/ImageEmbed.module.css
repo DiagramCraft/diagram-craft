@@ -1,0 +1,71 @@
+.container {
+  display: block;
+  margin: 0 0 var(--article-block-gap) 0;
+  width: 100%;
+}
+
+.container.clickable {
+  cursor: pointer;
+}
+
+.loading {
+  color: var(--cmp-fg-disabled);
+  font-style: italic;
+  font-size: 13px;
+}
+
+.errorText {
+  color: var(--error-fg);
+  font-size: 12px;
+}
+
+.image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--r-sm);
+}
+
+.lightboxBackdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(2px);
+  z-index: 1100;
+}
+
+.lightboxSurface {
+  max-width: min(96vw, 1400px);
+  max-height: 96vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightboxClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(20, 20, 20, 0.75);
+  color: white;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lightboxImage {
+  display: block;
+  max-width: 100%;
+  max-height: 96vh;
+  width: auto;
+  height: auto;
+  border-radius: var(--r-sm);
+}

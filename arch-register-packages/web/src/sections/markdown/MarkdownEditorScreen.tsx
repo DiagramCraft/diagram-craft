@@ -503,7 +503,7 @@ export const MarkdownEditorScreen = () => {
   }
 
   return (
-    <MdxContext.Provider value={{ projectId }}>
+    <MdxContext.Provider value={{ workspaceSlug, projectId, entityId, nodeId }}>
     <MarkdownDiagramSessionContext.Provider value={{ sessionId, trackCreatedDiagram }}>
     <div className={styles.screen}>
       <input
