@@ -37,8 +37,7 @@ import {
   type BrowserSearch
 } from '../entities/components/entityBrowserState';
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
-import { AsOfBanner } from '../../components/AsOfBanner';
-import { AsOfTimelinePicker } from '../../components/timeline/AsOfTimelinePicker';
+import type { AsOfMarker } from '../../components/timeline/TimelineStrip';
 
 type ViewTab = 'entities' | 'project-entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
@@ -93,37 +92,19 @@ export const ProjectEntities = ({
     if (readOnly && activeTab !== 'entities') setActiveTab('entities');
   }, [readOnly, activeTab]);
 
-  const exitSnapshotMode = useCallback(() => {
-    navigate({
-      ...projectDetailRoute(workspaceSlug, asProjectPublicId(project.id)),
-      search: (prev: Record<string, unknown>) => ({ ...prev, asOf: undefined }),
-      replace: true
-    });
-  }, [navigate, project.id, workspaceSlug]);
-
-  const handleSelectAsOf = useCallback(
-    (date: string) => {
-      navigate({
-        ...projectDetailRoute(workspaceSlug, asProjectPublicId(project.id)),
-        search: (prev: Record<string, unknown>) => ({ ...prev, asOf: date }),
-        replace: true
-      });
-    },
-    [navigate, project.id, workspaceSlug]
-  );
-
-  const timelineMarkers = useMemo(() => {
+  const timelineMarkers = useMemo<AsOfMarker[]>(() => {
     const counts = new Map<string, number>();
-    for (const snapshot of futureSnapshots) {
+    for (const snapshot of projectSnapshots) {
       if (!snapshot.target_date) continue;
-      counts.set(snapshot.target_date, (counts.get(snapshot.target_date) ?? 0) + 1);
+      if (snapshot.status !== 'future_update' && snapshot.status !== 'applied') continue;
+      const key = `${snapshot.target_date}|${snapshot.status}`;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
-    return [...counts.entries()].map(([date, count]) => ({
-      date,
-      type: 'future_update' as const,
-      count
-    }));
-  }, [futureSnapshots]);
+    return [...counts.entries()].map(([key, count]) => {
+      const [date, type] = key.split('|') as [string, 'future_update' | 'applied'];
+      return { date, type, count };
+    });
+  }, [projectSnapshots]);
   const { data: savedViews = [], isFetched: savedViewsFetched } = useSavedViews(workspaceSlug, {
     projectId: project.id
   });
@@ -282,15 +263,10 @@ export const ProjectEntities = ({
       ]}
       title="Project Entities"
       actions={
-        !readOnly ? (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <AsOfTimelinePicker markers={timelineMarkers} onSelect={handleSelectAsOf} />
-            {project.canEdit && (
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={onAddEntity}>
-                Link
-              </Button>
-            )}
-          </div>
+        !readOnly && project.canEdit ? (
+          <Button variant="primary" icon={<TbPlus size={12} />} onClick={onAddEntity}>
+            Link
+          </Button>
         ) : undefined
       }
       menu={
@@ -377,7 +353,6 @@ export const ProjectEntities = ({
         </div>
       }
     >
-      {asOf && <AsOfBanner asOf={asOf} onExit={exitSnapshotMode} />}
       {activeTab === 'entities' ? (
         <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
           <EntityBrowser
@@ -389,6 +364,7 @@ export const ProjectEntities = ({
               onRemoveEntity,
               onPlanFutureChange
             }}
+            timelineMarkers={timelineMarkers}
           />
         </div>
       ) : activeTab === 'project-entities' ? (

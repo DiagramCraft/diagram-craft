@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { TbSearch, TbFilter } from 'react-icons/tb';
+import { TbSearch, TbFilter, TbHistory } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -32,6 +32,9 @@ type EntityBrowserToolbarProps = {
   view: BrowserView;
   setView: (view: BrowserView) => void;
   readOnly?: boolean;
+  tlOpen?: boolean;
+  onToggleTimeline?: () => void;
+  asOf?: string;
 };
 
 export const EntityBrowserToolbar = ({
@@ -52,7 +55,10 @@ export const EntityBrowserToolbar = ({
   sortOptions,
   view,
   setView,
-  readOnly
+  readOnly,
+  tlOpen,
+  onToggleTimeline,
+  asOf
 }: EntityBrowserToolbarProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
@@ -119,6 +125,16 @@ export const EntityBrowserToolbar = ({
           { value: 'explore', label: 'Explore' }
         ]}
       />
+      {onToggleTimeline && (
+        <Button
+          size="sm"
+          variant={tlOpen || asOf ? 'primary' : 'secondary'}
+          icon={<TbHistory size={12} />}
+          onClick={onToggleTimeline}
+        >
+          Time travel
+        </Button>
+      )}
     </div>
   );
 };

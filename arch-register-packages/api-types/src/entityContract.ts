@@ -118,7 +118,7 @@ const entityFacetBucketSchema = z.object({
 
 const timelineMarkerSchema = z.object({
   date: z.string().describe('ISO 8601 date (YYYY-MM-DD)'),
-  type: z.enum(['future_update', 'saved_version']).describe('Marker event type'),
+  type: z.enum(['future_update', 'saved_version', 'applied']).describe('Marker event type'),
   count: z.number().int().describe('Number of events on this date')
 });
 

@@ -154,7 +154,7 @@ export type EntitySnapshotDbCreate = EntitySnapshotDbResult;
 
 export type TimelineMarkerDbResult = {
   date: string;
-  type: 'future_update' | 'saved_version';
+  type: 'future_update' | 'saved_version' | 'applied';
   count: number;
 };
 

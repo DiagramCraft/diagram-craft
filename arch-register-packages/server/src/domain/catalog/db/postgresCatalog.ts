@@ -508,6 +508,10 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         SELECT created_at::date::text AS date, 'saved_version' AS type
         FROM entity_snapshot
         WHERE workspace = ${workspace} AND status = 'saved_version'
+        UNION ALL
+        SELECT target_date::text AS date, 'applied' AS type
+        FROM entity_snapshot
+        WHERE workspace = ${workspace} AND status = 'applied' AND target_date IS NOT NULL
       ) markers
       GROUP BY date, type
       ORDER BY date ASC

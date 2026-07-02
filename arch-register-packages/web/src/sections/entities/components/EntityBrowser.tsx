@@ -29,11 +29,14 @@ import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
 import { useEntityBrowserPagination } from './useEntityBrowserPagination';
 import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
+import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
+import { AsOfBanner } from '../../../components/AsOfBanner';
 import styles from './EntityBrowser.module.css';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
   onCountChange?: (count: number) => void;
+  timelineMarkers?: AsOfMarker[];
 };
 
 export const SaveViewDialog = ({
@@ -132,7 +135,11 @@ export const SaveViewDialog = ({
   );
 };
 
-export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserProps) => {
+export const EntityBrowser = ({
+  projectContext,
+  onCountChange,
+  timelineMarkers = []
+}: EntityBrowserProps) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas, enums, lifecycleStates, teams, projects } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
@@ -140,6 +147,9 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
   const {
     asOf,
     includeProjectSnapshots,
+    setAsOf,
+    clearAsOf,
+    setIncludeProjectSnapshots,
     conditions,
     activeViewConfig,
     ownerFilter,
@@ -160,6 +170,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     projectId
   });
   const readOnly = !!asOf;
+  const [tlOpen, setTlOpen] = useState(!!asOf);
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
     useEntityBrowserPagination({
@@ -284,7 +295,31 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
         view={view}
         setView={setView}
         readOnly={readOnly}
+        tlOpen={tlOpen}
+        onToggleTimeline={() => setTlOpen(o => !o)}
+        asOf={asOf}
       />
+      {tlOpen && (
+        <TimelineStrip
+          markers={timelineMarkers}
+          selectedDate={asOf}
+          onSelect={setAsOf}
+          onClear={clearAsOf}
+          onClose={() => setTlOpen(false)}
+          includeProjectSnapshots={projectId ? undefined : includeProjectSnapshots}
+          onToggleIncludeProjectSnapshots={projectId ? undefined : setIncludeProjectSnapshots}
+        />
+      )}
+      {asOf && (
+        <AsOfBanner
+          asOf={asOf}
+          onExit={() => {
+            clearAsOf();
+            setTlOpen(false);
+          }}
+          markers={timelineMarkers}
+        />
+      )}
       {view === 'hierarchy' ? (
         <HierarchyView
           workspaceId={workspaceId}

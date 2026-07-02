@@ -493,10 +493,14 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
          SELECT substr(created_at, 1, 10) AS date, 'saved_version' AS type
          FROM entity_snapshot
          WHERE workspace = ? AND status = 'saved_version'
+         UNION ALL
+         SELECT target_date AS date, 'applied' AS type
+         FROM entity_snapshot
+         WHERE workspace = ? AND status = 'applied' AND target_date IS NOT NULL
        ) markers
        GROUP BY date, type
        ORDER BY date ASC`,
-      [workspace, workspace],
+      [workspace, workspace, workspace],
       (row: Record<string, unknown>): TimelineMarkerDbResult => ({
         date: String(row['date']),
         type: row['type'] as TimelineMarkerDbResult['type'],

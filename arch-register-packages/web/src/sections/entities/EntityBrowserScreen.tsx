@@ -33,8 +33,6 @@ import {
   toSavedViewConfig
 } from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/api';
-import { AsOfBanner } from '../../components/AsOfBanner';
-import { AsOfTimelinePicker } from '../../components/timeline/AsOfTimelinePicker';
 
 export const EntityBrowserScreen = () => {
   const navigate = useNavigate();
@@ -54,7 +52,6 @@ export const EntityBrowserScreen = () => {
   const view = search.viewMode ?? 'table';
   const asOf = search.asOf;
   const readOnly = !!asOf;
-  const includeProjectSnapshots = search.asOfIncludeProjects !== 'false';
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
   const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
@@ -204,42 +201,6 @@ export const EntityBrowserScreen = () => {
     workspaceSlug
   ]);
 
-  const exitSnapshotMode = useCallback(() => {
-    navigate({
-      to: '/$workspaceSlug/entities',
-      params: { workspaceSlug },
-      search: (prev: Record<string, unknown>) => ({ ...prev, asOf: undefined }),
-      replace: true
-    });
-  }, [navigate, workspaceSlug]);
-
-  const handleSelectAsOf = useCallback(
-    (date: string) => {
-      navigate({
-        to: '/$workspaceSlug/entities',
-        params: { workspaceSlug },
-        search: (prev: Record<string, unknown>) => ({ ...prev, asOf: date }),
-        replace: true
-      });
-    },
-    [navigate, workspaceSlug]
-  );
-
-  const handleToggleIncludeProjectSnapshots = useCallback(
-    (include: boolean) => {
-      navigate({
-        to: '/$workspaceSlug/entities',
-        params: { workspaceSlug },
-        search: (prev: Record<string, unknown>) => ({
-          ...prev,
-          asOfIncludeProjects: include ? undefined : 'false'
-        }),
-        replace: true
-      });
-    },
-    [navigate, workspaceSlug]
-  );
-
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
@@ -254,19 +215,11 @@ export const EntityBrowserScreen = () => {
           }
           description="Search, filter, and inspect everything in the IT landscape."
           buttons={
-            <div style={{ display: 'flex', gap: 8 }}>
-              <AsOfTimelinePicker
-                markers={timelineMarkers}
-                onSelect={handleSelectAsOf}
-                includeProjectSnapshots={includeProjectSnapshots}
-                onToggleIncludeProjectSnapshots={handleToggleIncludeProjectSnapshots}
-              />
-              {!readOnly && permissions.canCreateEntities && (
-                <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
-                  New entity
-                </Button>
-              )}
-            </div>
+            !readOnly && permissions.canCreateEntities ? (
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
+                New entity
+              </Button>
+            ) : undefined
           }
           menu={
             <DropdownMenu
@@ -277,9 +230,7 @@ export const EntityBrowserScreen = () => {
         />
       </div>
 
-      {asOf && <AsOfBanner asOf={asOf} onExit={exitSnapshotMode} />}
-
-      <EntityBrowser onCountChange={setCount} />
+      <EntityBrowser onCountChange={setCount} timelineMarkers={timelineMarkers} />
 
       <SaveViewDialog
         open={isSavingView}

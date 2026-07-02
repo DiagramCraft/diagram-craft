@@ -150,10 +150,48 @@ export const useEntityBrowserSearchState = ({
     viewConfigs
   ]);
 
+  const navigateAsOfSearch = useCallback(
+    (patch: Record<string, unknown>) => {
+      if (projectId) {
+        navigate({
+          ...projectDetailRoute(workspaceSlug, asProjectPublicId(projectId)),
+          search: (prev: Record<string, unknown>) => ({ ...prev, ...patch }),
+          replace: true
+        });
+        return;
+      }
+
+      navigate({
+        to: '/$workspaceSlug/entities',
+        params: { workspaceSlug },
+        search: (prev: Record<string, unknown>) => ({ ...prev, ...patch }),
+        replace: true
+      });
+    },
+    [navigate, projectId, workspaceSlug]
+  );
+
+  const setAsOf = useCallback(
+    (date: string) => navigateAsOfSearch({ asOf: date }),
+    [navigateAsOfSearch]
+  );
+  const clearAsOf = useCallback(
+    () => navigateAsOfSearch({ asOf: undefined }),
+    [navigateAsOfSearch]
+  );
+  const setIncludeProjectSnapshots = useCallback(
+    (include: boolean) =>
+      navigateAsOfSearch({ asOfIncludeProjects: include ? undefined : 'false' }),
+    [navigateAsOfSearch]
+  );
+
   return {
     activeViewConfig,
     asOf: search.asOf,
     includeProjectSnapshots: search.asOfIncludeProjects !== 'false',
+    setAsOf,
+    clearAsOf,
+    setIncludeProjectSnapshots,
     conditions,
     ownerFilter,
     projectScope,
