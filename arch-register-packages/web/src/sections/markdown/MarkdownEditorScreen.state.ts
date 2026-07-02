@@ -63,3 +63,25 @@ export const openMarkdownHistory = (): MarkdownEditorScreenState => ({
   paneMode: 'preview',
   viewPanel: 'history'
 });
+
+export type MarkdownEditorTitleView = {
+  description: string;
+  isViewMode: boolean;
+  attachDisabled: boolean;
+};
+
+export const deriveMarkdownEditorTitleView = (
+  state: MarkdownEditorScreenState,
+  info: { revisionsCount: number; updatedLabel: string | null; readTime: number }
+): MarkdownEditorTitleView => ({
+  description:
+    state.screenMode === 'edit'
+      ? 'Editing now'
+      : state.viewPanel === 'history'
+        ? `Version history${info.revisionsCount > 0 ? ` · ${info.revisionsCount} saved` : ''}`
+        : [info.updatedLabel ? `Updated ${info.updatedLabel}` : null, `${info.readTime} min read`]
+            .filter(Boolean)
+            .join(' · '),
+  isViewMode: state.screenMode === 'preview' && state.viewPanel === 'preview',
+  attachDisabled: state.viewPanel === 'history'
+});

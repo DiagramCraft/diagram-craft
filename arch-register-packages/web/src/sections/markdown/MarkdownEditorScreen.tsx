@@ -28,6 +28,7 @@ import { extractFirstHeadingTitle } from './preview/markdownTitle';
 import { MarkdownEditorHeader } from './MarkdownEditorHeader';
 import { MarkdownEditorToolbar } from './MarkdownEditorToolbar';
 import { MarkdownEditorPane } from './MarkdownEditorPane';
+import { MarkdownHistoryPanel } from './MarkdownHistoryPanel';
 import {
   projectDetailRoute,
   entityDetailRoute,
@@ -39,6 +40,7 @@ import {
   entityMarkdownRoute
 } from '../../routes/publicObjectRoutes';
 import {
+  deriveMarkdownEditorTitleView,
   enterMarkdownEditMode,
   exitMarkdownEditMode,
   getInitialMarkdownEditorScreenState,
@@ -173,6 +175,15 @@ export const MarkdownEditorScreen = () => {
   const toc = useMemo(() => extractToc(body), [body]);
   const readTime = useMemo(() => calcReadTime(body), [body]);
   const updatedLabel = file?.updated_at ? relativeDate(file.updated_at) : null;
+  const titleView = useMemo(
+    () =>
+      deriveMarkdownEditorTitleView(screenState, {
+        revisionsCount: revisions.length,
+        updatedLabel,
+        readTime
+      }),
+    [screenState, revisions.length, updatedLabel, readTime]
+  );
 
   // navigate's function-update form for search means updateSearch only needs navigate as dep
   const updateSearch = useCallback(
@@ -670,17 +681,18 @@ export const MarkdownEditorScreen = () => {
         entityId={entityId}
         parentLabel={parentLabel}
         resolvedTitle={resolvedTitle}
-        screenState={screenState}
-        revisionsCount={revisions.length}
-        updatedLabel={updatedLabel}
-        readTime={readTime}
+        description={titleView.description}
+        isViewMode={titleView.isViewMode}
+        attachDisabled={titleView.attachDisabled}
         isUploadingAttachment={uploadAttachmentMutation.isPending}
         onNavigateBack={handleNavigateBack}
-        onAttachClick={() => fileInputRef.current?.click()}
-        onEnterEdit={handleEnterEdit}
-        onOpenHistory={handleOpenHistory}
-        onRenameRequest={() => setRenameOpen(true)}
-        onDeleteRequest={() => setDeleteOpen(true)}
+        actions={{
+          onAttachClick: () => fileInputRef.current?.click(),
+          onEnterEdit: handleEnterEdit,
+          onOpenHistory: handleOpenHistory,
+          onRenameRequest: () => setRenameOpen(true),
+          onDeleteRequest: () => setDeleteOpen(true)
+        }}
       />
 
       {screenState.screenMode === 'edit' && (
@@ -694,31 +706,41 @@ export const MarkdownEditorScreen = () => {
         />
       )}
 
-      <MarkdownEditorPane
-        screenState={screenState}
-        body={body}
-        onChange={handleChange}
-        toc={toc}
-        attachments={attachments}
-        updatedLabel={updatedLabel}
-        readTime={readTime}
-        onOpenAttachment={handleOpenAttachment}
-        onDeleteAttachmentRequest={setAttachmentDeleteTarget}
-        isDeletingAttachment={deleteAttachmentMutation.isPending}
-        workspaceSlug={workspaceSlug}
-        nodeId={nodeId}
-        revisions={revisions}
-        revisionsLoading={revisionsLoading}
-        selectedRevisionId={selectedRevisionId}
-        historyMode={historyMode}
-        compareMode={compareMode}
-        isRestoring={restoreMutation.isPending}
-        onSelectRevision={handleSelectRevision}
-        onViewVersion={handleViewVersion}
-        onEnterCompare={handleEnterCompare}
-        onRestore={handleRestore}
-        onClosePreview={handlePreview}
-      />
+      {/* viewPanel is only ever 'history' while screenMode is 'preview' (see MarkdownEditorScreen.state.ts) */}
+      {screenState.viewPanel === 'history' ? (
+        <MarkdownHistoryPanel
+          workspaceSlug={workspaceSlug}
+          nodeId={nodeId}
+          currentBody={body}
+          revisions={revisions}
+          revisionsLoading={revisionsLoading}
+          selectedRevisionId={selectedRevisionId}
+          historyMode={historyMode}
+          compareMode={compareMode}
+          isRestoring={restoreMutation.isPending}
+          onSelectRevision={handleSelectRevision}
+          onViewVersion={handleViewVersion}
+          onEnterCompare={handleEnterCompare}
+          onRestore={handleRestore}
+          onClose={handlePreview}
+        />
+      ) : (
+        <MarkdownEditorPane
+          screenMode={screenState.screenMode}
+          paneMode={screenState.paneMode}
+          body={body}
+          onChange={handleChange}
+          toc={toc}
+          updatedLabel={updatedLabel}
+          readTime={readTime}
+          attachments={{
+            items: attachments,
+            onOpen: handleOpenAttachment,
+            onDeleteRequest: setAttachmentDeleteTarget,
+            isDeleting: deleteAttachmentMutation.isPending
+          }}
+        />
+      )}
 
       <RenameDialog
         open={renameOpen}

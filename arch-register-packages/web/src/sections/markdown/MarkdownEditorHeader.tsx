@@ -3,8 +3,15 @@ import { TbDots, TbFileText, TbHistory, TbPencil, TbTrash, TbUpload } from 'reac
 import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../components/Title';
 import { DropdownMenu } from '../../components/DropdownMenu';
-import type { MarkdownEditorScreenState } from './MarkdownEditorScreen.state';
 import styles from './MarkdownEditorScreen.module.css';
+
+type MarkdownEditorHeaderActions = {
+  onAttachClick: () => void;
+  onEnterEdit: () => void;
+  onOpenHistory: () => void;
+  onRenameRequest: () => void;
+  onDeleteRequest: () => void;
+};
 
 export const MarkdownEditorHeader = (props: {
   workspaceSlug: string;
@@ -12,17 +19,12 @@ export const MarkdownEditorHeader = (props: {
   entityId?: string;
   parentLabel: string;
   resolvedTitle: string;
-  screenState: MarkdownEditorScreenState;
-  revisionsCount: number;
-  updatedLabel: string | null;
-  readTime: number;
+  description: string;
+  isViewMode: boolean;
   isUploadingAttachment: boolean;
+  attachDisabled: boolean;
   onNavigateBack: () => void;
-  onAttachClick: () => void;
-  onEnterEdit: () => void;
-  onOpenHistory: () => void;
-  onRenameRequest: () => void;
-  onDeleteRequest: () => void;
+  actions: MarkdownEditorHeaderActions;
 }) => {
   const {
     workspaceSlug,
@@ -30,17 +32,12 @@ export const MarkdownEditorHeader = (props: {
     entityId,
     parentLabel,
     resolvedTitle,
-    screenState,
-    revisionsCount,
-    updatedLabel,
-    readTime,
+    description,
+    isViewMode,
     isUploadingAttachment,
+    attachDisabled,
     onNavigateBack,
-    onAttachClick,
-    onEnterEdit,
-    onOpenHistory,
-    onRenameRequest,
-    onDeleteRequest
+    actions
   } = props;
   const navigate = useNavigate();
 
@@ -84,39 +81,28 @@ export const MarkdownEditorHeader = (props: {
     </div>
   );
 
-  const titleDescription =
-    screenState.screenMode === 'edit'
-      ? 'Editing now'
-      : screenState.viewPanel === 'history'
-        ? `Version history${revisionsCount > 0 ? ` · ${revisionsCount} saved` : ''}`
-        : [updatedLabel ? `Updated ${updatedLabel}` : null, `${readTime} min read`]
-            .filter(Boolean)
-            .join(' · ');
-
-  const isViewMode = screenState.screenMode === 'preview' && screenState.viewPanel === 'preview';
-
   const titleButtons = (
     <>
       <Button
         icon={<TbUpload size={13} />}
-        onClick={onAttachClick}
-        disabled={isUploadingAttachment || screenState.viewPanel === 'history'}
+        onClick={actions.onAttachClick}
+        disabled={isUploadingAttachment || attachDisabled}
       >
         {isUploadingAttachment ? 'Uploading…' : 'Attach file'}
       </Button>
-      <Button icon={<TbPencil size={13} />} onClick={onEnterEdit} disabled={!isViewMode}>
+      <Button icon={<TbPencil size={13} />} onClick={actions.onEnterEdit} disabled={!isViewMode}>
         Edit
       </Button>
       <DropdownMenu
         trigger={<Button icon={<TbDots size={13} />} disabled={!isViewMode} />}
         items={[
-          { label: 'Versions', icon: <TbHistory size={13} />, onClick: onOpenHistory },
-          { label: 'Rename', icon: <TbPencil size={13} />, onClick: onRenameRequest },
+          { label: 'Versions', icon: <TbHistory size={13} />, onClick: actions.onOpenHistory },
+          { label: 'Rename', icon: <TbPencil size={13} />, onClick: actions.onRenameRequest },
           {
             label: 'Delete',
             icon: <TbTrash size={13} />,
             danger: true,
-            onClick: onDeleteRequest
+            onClick: actions.onDeleteRequest
           }
         ]}
       />
@@ -129,7 +115,7 @@ export const MarkdownEditorHeader = (props: {
         breadcrumb={titleBreadcrumb}
         icon={titleIcon}
         title={resolvedTitle}
-        description={titleDescription}
+        description={description}
         buttons={titleButtons}
       />
     </div>
