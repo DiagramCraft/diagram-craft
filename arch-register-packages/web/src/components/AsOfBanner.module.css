@@ -1,0 +1,39 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: var(--r);
+  font-size: 12.5px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.banner.past {
+  background: color-mix(in oklch, var(--warning-fg) 10%, transparent);
+  border: 1px solid color-mix(in oklch, var(--warning-fg) 35%, transparent);
+  color: var(--warning-fg);
+}
+
+.banner.future {
+  background: color-mix(in oklch, var(--accent-9) 10%, transparent);
+  border: 1px solid color-mix(in oklch, var(--accent-9) 35%, transparent);
+  color: var(--accent-11);
+}
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.text {
+  flex: 1;
+}
+
+.text strong {
+  font-weight: 600;
+}
+
+.limitation {
+  opacity: 0.8;
+}

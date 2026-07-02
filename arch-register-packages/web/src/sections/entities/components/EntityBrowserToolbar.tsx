@@ -31,6 +31,7 @@ type EntityBrowserToolbarProps = {
   sortOptions: Array<{ value: string; label: string }>;
   view: BrowserView;
   setView: (view: BrowserView) => void;
+  readOnly?: boolean;
 };
 
 export const EntityBrowserToolbar = ({
@@ -50,7 +51,8 @@ export const EntityBrowserToolbar = ({
   setSort,
   sortOptions,
   view,
-  setView
+  setView,
+  readOnly
 }: EntityBrowserToolbarProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
@@ -89,7 +91,7 @@ export const EntityBrowserToolbar = ({
           />
         </Popover.Content>
       </Popover.Root>
-      {projectId && (
+      {projectId && !readOnly && (
         <FilterDropdown
           label="Scope"
           value={projectScope}

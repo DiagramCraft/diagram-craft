@@ -10,6 +10,7 @@ export type SharedEntityBrowserSearchParams = {
   viewConfigs?: string;
   sidebarTab?: 'filters' | 'views' | 'pinned';
   filters?: string; // JSON string of FilterCondition[]
+  asOf?: string; // ISO 8601 date — when set, browser enters read-only point-in-time snapshot mode
 };
 
 const validateSharedEntityBrowserSearch = (
@@ -36,6 +37,7 @@ const validateSharedEntityBrowserSearch = (
   viewConfigs: typeof raw.viewConfigs === 'string' ? raw.viewConfigs : undefined,
   sidebarTab: raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'pinned' ? raw.sidebarTab : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
+  asOf: typeof raw.asOf === 'string' ? raw.asOf : undefined,
 });
 
 // Entity browser filters

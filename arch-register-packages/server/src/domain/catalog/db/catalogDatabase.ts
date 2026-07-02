@@ -128,7 +128,12 @@ export type EntityDbUpdate = Omit<Entity, 'id' | 'workspace' | 'public_id' | 'cr
 
 // -- Entity Snapshot
 
-export type SnapshotStatus = 'autosave' | 'saved_version' | 'future_update' | 'applied';
+export type SnapshotStatus =
+  | 'autosave'
+  | 'saved_version'
+  | 'future_update'
+  | 'applied'
+  | 'deleted';
 
 export type EntitySnapshotDbResult = {
   id: string;
@@ -146,6 +151,12 @@ export type EntitySnapshotDbResult = {
 };
 
 export type EntitySnapshotDbCreate = EntitySnapshotDbResult;
+
+export type TimelineMarkerDbResult = {
+  date: string;
+  type: 'future_update' | 'saved_version';
+  count: number;
+};
 
 export type CatalogDatabase = {
   resolveWorkspaceSlug(slug: string): Promise<string | null>;
@@ -203,6 +214,13 @@ export type CatalogDatabase = {
   getSnapshot(ws: string, snapshotId: string): Promise<EntitySnapshotDbResult | null>;
   listSnapshots(ws: string, entityId: string): Promise<EntitySnapshotDbResult[]>;
   listSnapshotsByProject(ws: string, projectId: string): Promise<EntitySnapshotDbResult[]>;
+  listSnapshotsAsOf(
+    ws: string,
+    asOf: Date,
+    entityIds?: string[]
+  ): Promise<EntitySnapshotDbResult[]>;
+  listTimelineMarkers(ws: string): Promise<TimelineMarkerDbResult[]>;
+  listEntityIdsWithAnySnapshot(ws: string, entityIds?: string[]): Promise<string[]>;
   pruneAutosaveSnapshots(ws: string, entityId: string, keepCount: number): Promise<void>;
   promoteSnapshot(
     ws: string,

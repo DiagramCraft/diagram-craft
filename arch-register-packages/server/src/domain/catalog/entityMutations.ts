@@ -4,7 +4,7 @@ import { Entity } from './db/catalogDatabase';
 
 const AUTOSAVE_KEEP_COUNT = 50;
 
-const entityToBaseState = (row: Entity): Record<string, unknown> => ({
+export const entityToBaseState = (row: Entity): Record<string, unknown> => ({
   id: row.id,
   workspace: row.workspace,
   public_id: row.public_id,

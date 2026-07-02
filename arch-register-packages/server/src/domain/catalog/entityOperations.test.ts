@@ -144,3 +144,90 @@ describe('countEntities', () => {
     expect(total).toBe(47);
   });
 });
+
+describe('listEntities with asOf', () => {
+  const makeAsOfDb = (
+    snapshots: Array<{
+      entity_id: string;
+      status: 'autosave' | 'saved_version' | 'future_update' | 'applied' | 'deleted';
+      created_at: Date;
+      target_date?: string | null;
+      base_state: Record<string, unknown>;
+      proposed_state?: Record<string, unknown> | null;
+    }>,
+    projectLinks: Array<{ entity_id: string; created_at: Date }> = []
+  ) => {
+    const listSnapshotsAsOf = vi.fn(
+      async (_workspace: string, asOf: Date, entityIds?: string[]) =>
+        snapshots
+          .filter(s => (entityIds ? entityIds.includes(s.entity_id) : true))
+          .filter(s =>
+            s.status === 'future_update'
+              ? s.target_date != null && new Date(s.target_date) <= asOf && s.created_at <= asOf
+              : s.created_at <= asOf
+          )
+          .map((s, i) => ({
+            id: `snap-${i}`,
+            workspace: 'ws-1',
+            project_id: null,
+            commit_message: null,
+            created_by: 'user-1',
+            created_by_name: 'User',
+            target_date: s.target_date ?? null,
+            proposed_state: s.proposed_state ?? null,
+            ...s
+          }))
+          .sort(
+            (a, b) => a.entity_id.localeCompare(b.entity_id) || a.created_at.getTime() - b.created_at.getTime()
+          )
+    );
+
+    return {
+      catalog: {
+        listSchemas: vi.fn(async () => [schema]),
+        listSnapshotsAsOf,
+        listEntityIdsWithAnySnapshot: vi.fn(async () => []),
+        getEntity: vi.fn(async () => null)
+      },
+      project: {
+        listProjectEntities: vi.fn(async () => []),
+        listProjectEntityLinks: vi.fn(async () => projectLinks)
+      },
+      workspace: {
+        listTeams: vi.fn(async () => []),
+        listLifecycleStates: vi.fn(async () => [])
+      }
+    } as unknown as DatabaseAdapter;
+  };
+
+  it('excludes entities linked to the project after the selected asOf date', async () => {
+    const db = makeAsOfDb(
+      [
+        {
+          entity_id: 'entity-1',
+          status: 'autosave',
+          created_at: new Date('2026-01-01T00:00:00.000Z'),
+          base_state: { id: 'entity-1', name: 'Early Link', schema_id: 'schema-1', data: {} }
+        },
+        {
+          entity_id: 'entity-2',
+          status: 'autosave',
+          created_at: new Date('2026-01-01T00:00:00.000Z'),
+          base_state: { id: 'entity-2', name: 'Late Link', schema_id: 'schema-1', data: {} }
+        }
+      ],
+      [
+        { entity_id: 'entity-1', created_at: new Date('2026-01-05T00:00:00.000Z') },
+        { entity_id: 'entity-2', created_at: new Date('2026-03-01T00:00:00.000Z') }
+      ]
+    );
+
+    const result = await listEntities(db, 'ws-1', null, {
+      projectId: 'proj-1',
+      projectScope: 'project',
+      asOf: new Date('2026-02-01T00:00:00.000Z')
+    });
+
+    expect(result.map(r => r._uid)).toEqual(['entity-1']);
+  });
+});

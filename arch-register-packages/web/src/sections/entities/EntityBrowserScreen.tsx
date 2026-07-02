@@ -12,7 +12,12 @@ import {
   TbCheck,
   TbCopy
 } from 'react-icons/tb';
-import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useEntities';
+import {
+  useSavedViews,
+  useCreateSavedView,
+  useUpdateSavedView,
+  useTimelineMarkers
+} from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import {
@@ -28,6 +33,8 @@ import {
   toSavedViewConfig
 } from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/api';
+import { AsOfBanner } from '../../components/AsOfBanner';
+import { AsOfTimelinePicker } from '../../components/timeline/AsOfTimelinePicker';
 
 export const EntityBrowserScreen = () => {
   const navigate = useNavigate();
@@ -37,6 +44,7 @@ export const EntityBrowserScreen = () => {
   const [count, setCount] = useState(0);
   const [isSavingView, setIsSavingView] = useState(false);
   const { data: savedViews = [] } = useSavedViews(workspaceId);
+  const { data: timelineMarkers = [] } = useTimelineMarkers(workspaceId);
   const createSavedViewMutation = useCreateSavedView(workspaceId);
   const updateSavedViewMutation = useUpdateSavedView(workspaceId);
   const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
@@ -44,6 +52,8 @@ export const EntityBrowserScreen = () => {
   const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
   const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
   const view = search.viewMode ?? 'table';
+  const asOf = search.asOf;
+  const readOnly = !!asOf;
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
   const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
@@ -145,7 +155,7 @@ export const EntityBrowserScreen = () => {
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
 
-    if (permissions.canManageViews) {
+    if (permissions.canManageViews && !readOnly) {
       if (activeSavedView != null) {
         items.push({
           label: `Save View (${activeSavedView.name})`,
@@ -167,7 +177,7 @@ export const EntityBrowserScreen = () => {
       onClick: handleExport
     });
 
-    if (permissions.canCreateEntities) {
+    if (permissions.canCreateEntities && !readOnly) {
       items.push({
         label: 'Import CSV',
         icon: <TbUpload size={14} />,
@@ -188,9 +198,31 @@ export const EntityBrowserScreen = () => {
     navigate,
     permissions.canCreateEntities,
     permissions.canManageViews,
+    readOnly,
     typeFilter,
     workspaceSlug
   ]);
+
+  const exitSnapshotMode = useCallback(() => {
+    navigate({
+      to: '/$workspaceSlug/entities',
+      params: { workspaceSlug },
+      search: (prev: Record<string, unknown>) => ({ ...prev, asOf: undefined }),
+      replace: true
+    });
+  }, [navigate, workspaceSlug]);
+
+  const handleSelectAsOf = useCallback(
+    (date: string) => {
+      navigate({
+        to: '/$workspaceSlug/entities',
+        params: { workspaceSlug },
+        search: (prev: Record<string, unknown>) => ({ ...prev, asOf: date }),
+        replace: true
+      });
+    },
+    [navigate, workspaceSlug]
+  );
 
   return (
     <div className={styles.screen}>
@@ -206,10 +238,15 @@ export const EntityBrowserScreen = () => {
           }
           description="Search, filter, and inspect everything in the IT landscape."
           buttons={
-            permissions.canCreateEntities ? (
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
-                New entity
-              </Button>
+            !readOnly ? (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <AsOfTimelinePicker markers={timelineMarkers} onSelect={handleSelectAsOf} />
+                {permissions.canCreateEntities && (
+                  <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
+                    New entity
+                  </Button>
+                )}
+              </div>
             ) : undefined
           }
           menu={
@@ -220,6 +257,8 @@ export const EntityBrowserScreen = () => {
           }
         />
       </div>
+
+      {asOf && <AsOfBanner asOf={asOf} onExit={exitSnapshotMode} />}
 
       <EntityBrowser onCountChange={setCount} />
 

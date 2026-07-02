@@ -10,7 +10,8 @@ import type {
   WorkspaceEnumDbUpdate,
   SchemaDbUpdate,
   PinnedEntityDbCreate,
-  EntitySnapshotDbCreate
+  EntitySnapshotDbCreate,
+  TimelineMarkerDbResult
 } from './catalogDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 import { ENTITY_DEFAULTS } from '../../../constants';
@@ -443,6 +444,64 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
        ORDER BY CASE WHEN s.target_date IS NULL THEN 1 ELSE 0 END, s.target_date ASC, s.created_at DESC`,
       [workspace, workspace, projectId, projectId],
       sqliteMappers.entitySnapshot
+    );
+  }
+
+  async listSnapshotsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
+    if (entityIds != null && entityIds.length === 0) return [];
+    const asOfIso = asOf.toISOString();
+    const entityFilter =
+      entityIds != null ? `AND s.entity_id IN (${entityIds.map(() => '?').join(',')})` : '';
+    return this.all(
+      `SELECT s.*, u.display_name as created_by_name
+       FROM entity_snapshot s
+       LEFT JOIN users u ON u.id = s.created_by
+       WHERE s.workspace = ?
+         AND (
+           (s.status IN ('autosave', 'saved_version', 'deleted') AND s.created_at <= ?)
+           OR (s.status = 'future_update' AND s.target_date <= ? AND s.created_at <= ?)
+         )
+         ${entityFilter}
+       ORDER BY s.entity_id, s.created_at ASC`,
+      [workspace, asOfIso, asOfIso, asOfIso, ...(entityIds ?? [])],
+      sqliteMappers.entitySnapshot
+    );
+  }
+
+  async listEntityIdsWithAnySnapshot(workspace: string, entityIds?: string[]) {
+    if (entityIds != null && entityIds.length === 0) return [];
+    // Only 'autosave'/'saved_version'/'deleted' count as "own history" checkpoints — a
+    // 'future_update' snapshot alone doesn't give us any real baseline state to reconstruct
+    // from, so it must not suppress the live-state fallback.
+    const entityFilter =
+      entityIds != null ? `AND entity_id IN (${entityIds.map(() => '?').join(',')})` : '';
+    return this.all(
+      `SELECT DISTINCT entity_id FROM entity_snapshot
+       WHERE workspace = ? AND status IN ('autosave', 'saved_version', 'deleted') ${entityFilter}`,
+      [workspace, ...(entityIds ?? [])],
+      (row: Record<string, unknown>) => String(row['entity_id'])
+    );
+  }
+
+  async listTimelineMarkers(workspace: string) {
+    return this.all(
+      `SELECT date, type, COUNT(*) AS count FROM (
+         SELECT target_date AS date, 'future_update' AS type
+         FROM entity_snapshot
+         WHERE workspace = ? AND status = 'future_update' AND target_date IS NOT NULL
+         UNION ALL
+         SELECT substr(created_at, 1, 10) AS date, 'saved_version' AS type
+         FROM entity_snapshot
+         WHERE workspace = ? AND status = 'saved_version'
+       ) markers
+       GROUP BY date, type
+       ORDER BY date ASC`,
+      [workspace, workspace],
+      (row: Record<string, unknown>): TimelineMarkerDbResult => ({
+        date: String(row['date']),
+        type: row['type'] as TimelineMarkerDbResult['type'],
+        count: Number(row['count'])
+      })
     );
   }
 

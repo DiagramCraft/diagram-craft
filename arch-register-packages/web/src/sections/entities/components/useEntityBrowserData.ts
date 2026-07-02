@@ -21,6 +21,7 @@ type UseEntityBrowserDataProps = {
   pageSize: number;
   disablePaging?: boolean;
   enabled?: boolean;
+  asOf?: string;
   onCountChange?: (count: number) => void;
 };
 
@@ -40,10 +41,14 @@ export const useEntityBrowserData = ({
   pageSize,
   disablePaging = false,
   enabled = true,
+  asOf,
   onCountChange
 }: UseEntityBrowserDataProps) => {
   const isPagedBrowse = !disablePaging && (view === 'table' || view === 'cards') && sort === 'name';
   const pagedOffset = pageIndex * pageSize;
+  // While browsing a snapshot date, the "show all entities" toggle has no effect within a
+  // project — only project-linked entities are ever shown.
+  const effectiveProjectScope = asOf && projectId ? 'project' : projectScope;
 
   const {
     data: pagedEntities = [],
@@ -58,10 +63,11 @@ export const useEntityBrowserData = ({
       q,
       conditions,
       projectId: projectId ?? undefined,
-      projectScope: projectId ? projectScope : undefined,
+      projectScope: projectId ? effectiveProjectScope : undefined,
       view: 'summary',
       limit: isPagedBrowse ? pageSize : undefined,
-      offset: isPagedBrowse ? pagedOffset : undefined
+      offset: isPagedBrowse ? pagedOffset : undefined,
+      asOf
     },
     { enabled: enabled && isPagedBrowse && !!workspaceId }
   );
@@ -79,8 +85,9 @@ export const useEntityBrowserData = ({
       q,
       conditions,
       projectId: projectId ?? undefined,
-      projectScope: projectId ? projectScope : undefined,
-      view: 'summary'
+      projectScope: projectId ? effectiveProjectScope : undefined,
+      view: 'summary',
+      asOf
     },
     { enabled: enabled && !isPagedBrowse && !!workspaceId }
   );
@@ -96,7 +103,8 @@ export const useEntityBrowserData = ({
       q,
       conditions,
       projectId: projectId ?? undefined,
-      projectScope: projectId ? projectScope : undefined
+      projectScope: projectId ? effectiveProjectScope : undefined,
+      asOf
     },
     { enabled: enabled && !!workspaceId }
   );

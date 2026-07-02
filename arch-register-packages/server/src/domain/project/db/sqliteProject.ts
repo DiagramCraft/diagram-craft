@@ -3,6 +3,7 @@ import type {
   ProjectDbCreate,
   ProjectDatabase,
   ProjectEntityDbCreate,
+  ProjectEntityLinkDbResult,
   ProjectDbUpdate,
   ContentNodeDbUpsert,
   MarkdownRevisionDbCreate
@@ -741,6 +742,17 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? ORDER BY e.name`,
       [workspace, projectId],
       sqliteMappers.projectEntity
+    );
+  }
+
+  async listProjectEntityLinks(workspace: string, projectId: string) {
+    return this.all(
+      `SELECT entity_id, created_at FROM project_entity WHERE workspace = ? AND project_id = ?`,
+      [workspace, projectId],
+      (row: Record<string, unknown>): ProjectEntityLinkDbResult => ({
+        entity_id: String(row['entity_id']),
+        created_at: new Date(String(row['created_at']))
+      })
     );
   }
 

@@ -16,7 +16,8 @@ import type {
   PinnedEntityDbResult,
   PinnedEntityDbCreate,
   EntitySnapshotDbCreate,
-  EntitySnapshotDbResult
+  EntitySnapshotDbResult,
+  TimelineMarkerDbResult
 } from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { ENTITY_DEFAULTS } from '../../../constants';
@@ -464,6 +465,52 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         AND (p.id::text = ${projectId} OR p.public_id = ${projectId})
         AND s.status IN ('future_update', 'applied')
       ORDER BY s.target_date ASC NULLS LAST, s.created_at DESC
+    `;
+  }
+
+  async listSnapshotsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
+    if (entityIds != null && entityIds.length === 0) return [];
+    return await this.sql<EntitySnapshotDbResult[]>`
+      SELECT s.*, u.display_name as created_by_name
+      FROM entity_snapshot s
+      LEFT JOIN users u ON u.id = s.created_by
+      WHERE s.workspace = ${workspace}
+        AND (
+          (s.status IN ('autosave', 'saved_version', 'deleted') AND s.created_at <= ${asOf})
+          OR (s.status = 'future_update' AND s.target_date <= ${asOf} AND s.created_at <= ${asOf})
+        )
+        ${entityIds != null ? this.sql`AND s.entity_id = ANY(${entityIds})` : this.sql``}
+      ORDER BY s.entity_id, s.created_at ASC
+    `;
+  }
+
+  async listEntityIdsWithAnySnapshot(workspace: string, entityIds?: string[]) {
+    if (entityIds != null && entityIds.length === 0) return [];
+    // Only 'autosave'/'saved_version'/'deleted' count as "own history" checkpoints — a
+    // 'future_update' snapshot alone doesn't give us any real baseline state to reconstruct
+    // from, so it must not suppress the live-state fallback.
+    const rows = await this.sql<{ entity_id: string }[]>`
+      SELECT DISTINCT entity_id FROM entity_snapshot
+      WHERE workspace = ${workspace}
+        AND status IN ('autosave', 'saved_version', 'deleted')
+      ${entityIds != null ? this.sql`AND entity_id = ANY(${entityIds})` : this.sql``}
+    `;
+    return rows.map(r => r.entity_id);
+  }
+
+  async listTimelineMarkers(workspace: string) {
+    return await this.sql<TimelineMarkerDbResult[]>`
+      SELECT date, type, COUNT(*)::int AS count FROM (
+        SELECT target_date::text AS date, 'future_update' AS type
+        FROM entity_snapshot
+        WHERE workspace = ${workspace} AND status = 'future_update' AND target_date IS NOT NULL
+        UNION ALL
+        SELECT created_at::date::text AS date, 'saved_version' AS type
+        FROM entity_snapshot
+        WHERE workspace = ${workspace} AND status = 'saved_version'
+      ) markers
+      GROUP BY date, type
+      ORDER BY date ASC
     `;
   }
 

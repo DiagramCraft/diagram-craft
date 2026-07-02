@@ -37,6 +37,8 @@ import {
   type BrowserSearch
 } from '../entities/components/entityBrowserState';
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
+import { AsOfBanner } from '../../components/AsOfBanner';
+import { AsOfTimelinePicker } from '../../components/timeline/AsOfTimelinePicker';
 
 type ViewTab = 'entities' | 'project-entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
@@ -84,6 +86,44 @@ export const ProjectEntities = ({
   const navigate = useNavigate();
   const { workspaceSlug, permissions } = useWorkspaceContext();
   const search = useSearch({ strict: false }) as BrowserSearch;
+  const asOf = search.asOf;
+  const readOnly = !!asOf;
+
+  useEffect(() => {
+    if (readOnly && activeTab !== 'entities') setActiveTab('entities');
+  }, [readOnly, activeTab]);
+
+  const exitSnapshotMode = useCallback(() => {
+    navigate({
+      ...projectDetailRoute(workspaceSlug, asProjectPublicId(project.id)),
+      search: (prev: Record<string, unknown>) => ({ ...prev, asOf: undefined }),
+      replace: true
+    });
+  }, [navigate, project.id, workspaceSlug]);
+
+  const handleSelectAsOf = useCallback(
+    (date: string) => {
+      navigate({
+        ...projectDetailRoute(workspaceSlug, asProjectPublicId(project.id)),
+        search: (prev: Record<string, unknown>) => ({ ...prev, asOf: date }),
+        replace: true
+      });
+    },
+    [navigate, project.id, workspaceSlug]
+  );
+
+  const timelineMarkers = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const snapshot of futureSnapshots) {
+      if (!snapshot.target_date) continue;
+      counts.set(snapshot.target_date, (counts.get(snapshot.target_date) ?? 0) + 1);
+    }
+    return [...counts.entries()].map(([date, count]) => ({
+      date,
+      type: 'future_update' as const,
+      count
+    }));
+  }, [futureSnapshots]);
   const { data: savedViews = [], isFetched: savedViewsFetched } = useSavedViews(workspaceSlug, {
     projectId: project.id
   });
@@ -199,6 +239,7 @@ export const ProjectEntities = ({
   ]);
 
   const viewMenuItems = useMemo<MenuItem[]>(() => {
+    if (readOnly) return [];
     const items: MenuItem[] = [];
 
     const hasActiveProjectView =
@@ -225,7 +266,8 @@ export const ProjectEntities = ({
     activeSavedView,
     handleUpdateSavedView,
     project.canEdit,
-    activeSavedView?.name
+    activeSavedView?.name,
+    readOnly
   ]);
 
   return (
@@ -240,16 +282,23 @@ export const ProjectEntities = ({
       ]}
       title="Project Entities"
       actions={
-        project.canEdit ? (
-          <Button variant="primary" icon={<TbPlus size={12} />} onClick={onAddEntity}>
-            Link
-          </Button>
+        !readOnly ? (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <AsOfTimelinePicker markers={timelineMarkers} onSelect={handleSelectAsOf} />
+            {project.canEdit && (
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={onAddEntity}>
+                Link
+              </Button>
+            )}
+          </div>
         ) : undefined
       }
       menu={
         viewMenuItems.length > 0 ? (
           <DropdownMenu
-            trigger={<Button aria-label="Project entity view actions" icon={<TbDots size={14} />} />}
+            trigger={
+              <Button aria-label="Project entity view actions" icon={<TbDots size={14} />} />
+            }
             items={viewMenuItems}
           />
         ) : undefined
@@ -277,27 +326,33 @@ export const ProjectEntities = ({
             >
               Entities
             </button>
-            <button
-              type="button"
-              className={`${styles.entityTabBtn} ${activeTab === 'project-entities' ? styles.entityTabBtnActive : ''}`}
-              onClick={() => setActiveTab('project-entities')}
-            >
-              Project entities ({projectEntities.length})
-            </button>
-            <button
-              type="button"
-              className={`${styles.entityTabBtn} ${activeTab === 'future-changes' ? styles.entityTabBtnActive : ''}`}
-              onClick={() => setActiveTab('future-changes')}
-            >
-              Future changes{pendingCount > 0 ? ` (${pendingCount})` : ''}
-            </button>
-            <button
-              type="button"
-              className={`${styles.entityTabBtn} ${activeTab === 'timeline' ? styles.entityTabBtnActive : ''}`}
-              onClick={() => setActiveTab('timeline')}
-            >
-              Timeline
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                className={`${styles.entityTabBtn} ${activeTab === 'project-entities' ? styles.entityTabBtnActive : ''}`}
+                onClick={() => setActiveTab('project-entities')}
+              >
+                Project entities ({projectEntities.length})
+              </button>
+            )}
+            {!readOnly && (
+              <button
+                type="button"
+                className={`${styles.entityTabBtn} ${activeTab === 'future-changes' ? styles.entityTabBtnActive : ''}`}
+                onClick={() => setActiveTab('future-changes')}
+              >
+                Future changes{pendingCount > 0 ? ` (${pendingCount})` : ''}
+              </button>
+            )}
+            {!readOnly && (
+              <button
+                type="button"
+                className={`${styles.entityTabBtn} ${activeTab === 'timeline' ? styles.entityTabBtnActive : ''}`}
+                onClick={() => setActiveTab('timeline')}
+              >
+                Timeline
+              </button>
+            )}
           </div>
           {activeTab === 'future-changes' && pendingCount > 0 && (
             <div className={styles.tabBarRight}>
@@ -322,6 +377,7 @@ export const ProjectEntities = ({
         </div>
       }
     >
+      {asOf && <AsOfBanner asOf={asOf} onExit={exitSnapshotMode} />}
       {activeTab === 'entities' ? (
         <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
           <EntityBrowser

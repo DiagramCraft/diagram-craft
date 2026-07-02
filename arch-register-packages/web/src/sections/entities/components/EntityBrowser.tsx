@@ -138,6 +138,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
   const workspaceId = workspaceSlug;
   const projectId = projectContext?.project.id;
   const {
+    asOf,
     conditions,
     activeViewConfig,
     ownerFilter,
@@ -157,6 +158,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     workspaceSlug,
     projectId
   });
+  const readOnly = !!asOf;
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
     useEntityBrowserPagination({
@@ -192,6 +194,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     view,
     pageIndex,
     pageSize,
+    asOf,
     onCountChange
   });
 
@@ -278,6 +281,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
         sortOptions={sortOptions}
         view={view}
         setView={setView}
+        readOnly={readOnly}
       />
       {view === 'hierarchy' ? (
         <HierarchyView
@@ -345,6 +349,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
           onClone={handleCloneEntity}
           lifecycleStates={lifecycleStates}
           projectContext={projectContext}
+          readOnly={readOnly}
         />
       ) : filtered.length === 0 ? (
         <div className={styles.empty}>
@@ -353,7 +358,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
         </div>
       ) : (
         <>
-          {view === 'table' && selectedIds.size > 0 && (
+          {view === 'table' && !readOnly && selectedIds.size > 0 && (
             <BulkEditToolbar
               workspaceId={workspaceId}
               count={selectedIds.size}
@@ -385,6 +390,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
               onSelectRow={handleSelectRow}
               lifecycleStates={lifecycleStates}
               projectContext={projectContext}
+              readOnly={readOnly}
             />
           )}
           {view === 'cards' && (
@@ -396,6 +402,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
               onClone={handleCloneEntity}
               lifecycleStates={lifecycleStates}
               projectContext={projectContext}
+              readOnly={readOnly}
             />
           )}
         </>

@@ -35,6 +35,7 @@ import {
   listEntities,
   countEntities,
   getEntityFacets,
+  getTimelineMarkers,
   getEntityTree,
   getEntity,
   getEntityRelations,
@@ -54,6 +55,12 @@ type ORPCContext = {
 };
 
 const entityRouter = implement(workspaceEntityContract).$context<ORPCContext>();
+
+const parseAsOf = (value: string | undefined): Date | null => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
 
 export const workspaceEntityORPCRouter = entityRouter.router({
   entities: {
@@ -84,7 +91,8 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           projectScope: input.query.projectScope ?? 'all',
           view: input.query.view ?? 'full',
           limit: input.query.limit ?? null,
-          offset: input.query.offset ?? 0
+          offset: input.query.offset ?? 0,
+          asOf: parseAsOf(input.query.asOf)
         });
       } catch (error) {
         return toORPCError(error);
@@ -115,7 +123,8 @@ export const workspaceEntityORPCRouter = entityRouter.router({
           q: input.query.q ?? '',
           conditions,
           projectId: input.query.projectId ?? null,
-          projectScope: input.query.projectScope ?? 'all'
+          projectScope: input.query.projectScope ?? 'all',
+          asOf: parseAsOf(input.query.asOf)
         });
         return { total };
       } catch (error) {
@@ -128,6 +137,16 @@ export const workspaceEntityORPCRouter = entityRouter.router({
         const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
         const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         return await getEntityFacets(context.db, workspace, authCtx);
+      } catch (error) {
+        return toORPCError(error);
+      }
+    }),
+
+    timelineMarkers: entityRouter.entities.timelineMarkers.handler(async ({ input, context }) => {
+      try {
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        await buildApiAuthCtx(context.db, workspace, context.event);
+        return await getTimelineMarkers(context.db, workspace);
       } catch (error) {
         return toORPCError(error);
       }
