@@ -208,7 +208,7 @@ export const downloadCsvTemplate = async (
   return result.body;
 };
 
-export const parseCsvImport = (
+export const parseCsvImport = async (
   workspace: string,
   schemaId: string,
   csvContent: string
@@ -232,20 +232,36 @@ export const parseCsvImport = (
     }>;
   }>;
 }> => {
-  return apiFetch(`/api/${workspace}/data/import/parse`, {
-    method: 'POST',
-    body: JSON.stringify({ schemaId, csvContent })
+  const { orpcClient } = await import('./orpcClient');
+  const result = await orpcClient.entities.importParse({
+    params: { workspace },
+    body: { schemaId, csvContent }
   });
+
+  return {
+    ...result,
+    entities: result.entities.map(entity => ({
+      ...entity,
+      nameMatches: entity.nameMatches?.map(match => ({
+        id: match.id,
+        name: match.name,
+        slug: match.slug,
+        namespace: match.namespace
+      })),
+      existingId: entity.existingId ?? undefined
+    }))
+  };
 };
 
-export const commitCsvImport = (
+export const commitCsvImport = async (
   workspace: string,
   schemaId: string,
   entities: Array<Record<string, unknown>>
 ): Promise<{ created: number; updated: number; ids: string[] }> => {
-  return apiFetch(`/api/${workspace}/data/import/commit`, {
-    method: 'POST',
-    body: JSON.stringify({ schemaId, entities })
+  const { orpcClient } = await import('./orpcClient');
+  return orpcClient.entities.importCommit({
+    params: { workspace },
+    body: { schemaId, entities }
   });
 };
 
