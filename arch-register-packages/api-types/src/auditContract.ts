@@ -9,7 +9,7 @@ const auditLogEntrySchema = z.object({
   user_id: z.string().nullable().describe('User who performed the operation (null for system operations)'),
   user_display_name: z.string().nullable().describe('Display name of the user (null for system operations)'),
   operation: z.enum(['create', 'update', 'delete']).describe('Type of operation performed'),
-  entity_type: z.enum(['workspace', 'entity_schema', 'entity', 'project', 'content_node']).describe('Type of entity affected'),
+  entity_type: z.enum(['workspace', 'entity_schema', 'entity', 'project', 'content_node', 'assessment']).describe('Type of entity affected'),
   entity_id: z.string().describe('Identifier of the affected entity'),
   public_id: z.string().nullable().describe('Public identifier of the entity (if applicable)'),
   entity_name: z.string().describe('Name of the affected entity'),
@@ -57,7 +57,7 @@ export const auditContract = oc
           z.object({
             params: ws,
             query: z.object({
-              entityType: z.string().optional().describe('Filter by entity type (workspace, entity_schema, entity, project, content_node)'),
+              entityType: z.string().optional().describe('Filter by entity type (workspace, entity_schema, entity, project, content_node, assessment)'),
               entityId: z.string().optional().describe('Filter by specific entity ID'),
               schemaId: z.string().optional().describe('Filter by schema ID (for entity operations)'),
               owner: z.string().optional().describe('Filter by entity owner'),

@@ -6,7 +6,9 @@ import type {
   ProjectEntityLinkDbResult,
   ProjectDbUpdate,
   ContentNodeDbUpsert,
-  MarkdownRevisionDbCreate
+  MarkdownRevisionDbCreate,
+  AssessmentDbCreate,
+  AssessmentDbUpdate
 } from './projectDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 import { isUuidLike } from '../../../utils/publicIds';
@@ -878,5 +880,72 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         project_name: String(row['project_name'])
       })
     );
+  }
+
+  async listAssessments(workspace: string, projectId: string) {
+    return this.all(
+      'SELECT * FROM assessment WHERE workspace = ? AND project_id = ? ORDER BY name',
+      [workspace, projectId],
+      sqliteMappers.assessment
+    );
+  }
+
+  async getAssessment(workspace: string, projectId: string, id: string) {
+    return this.get(
+      'SELECT * FROM assessment WHERE workspace = ? AND project_id = ? AND id = ?',
+      [workspace, projectId, id],
+      sqliteMappers.assessment
+    );
+  }
+
+  async createAssessment(input: AssessmentDbCreate) {
+    this.run(
+      `INSERT INTO assessment (id, workspace, project_id, name, description, status, scope, fields, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        input.id,
+        input.workspace,
+        input.project_id,
+        input.name,
+        input.description,
+        input.status,
+        JSON.stringify(input.scope),
+        JSON.stringify(input.fields),
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getAssessment(input.workspace, input.project_id, input.id))!;
+  }
+
+  async updateAssessment(workspace: string, projectId: string, id: string, input: AssessmentDbUpdate) {
+    this.run(
+      `UPDATE assessment
+       SET name = ?, description = ?, status = ?, scope = ?, fields = ?, updated_at = ?
+       WHERE workspace = ? AND project_id = ? AND id = ?`,
+      [
+        input.name,
+        input.description,
+        input.status,
+        JSON.stringify(input.scope),
+        JSON.stringify(input.fields),
+        input.updated_at.toISOString(),
+        workspace,
+        projectId,
+        id
+      ]
+    );
+    return await this.getAssessment(workspace, projectId, id);
+  }
+
+  async deleteAssessment(workspace: string, projectId: string, id: string) {
+    const row = await this.getAssessment(workspace, projectId, id);
+    if (!row) return null;
+    this.run('DELETE FROM assessment WHERE workspace = ? AND project_id = ? AND id = ?', [
+      workspace,
+      projectId,
+      id
+    ]);
+    return row;
   }
 }

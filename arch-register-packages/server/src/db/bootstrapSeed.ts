@@ -2,6 +2,7 @@ import { createDatabase } from './factory';
 import {
   seedEntities,
   seedAiConfig,
+  seedAssessments,
   seedGlobalRoleAssignments,
   seedLifecycleStates,
   seedProjectEntityTypes,
@@ -255,6 +256,9 @@ export const seedBootstrapData = async (db: Database, storage: StorageAdapter) =
   }
   for (const project of seedProjects) {
     await db.project.createProject(project);
+  }
+  for (const assessment of seedAssessments) {
+    await db.project.createAssessment(assessment);
   }
 
   const maxByPrefix = new Map<string, number>();

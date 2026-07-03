@@ -53,6 +53,7 @@ import {
 import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
 import { ProjectEntities } from './ProjectEntities';
+import { ProjectAssessments } from './ProjectAssessments';
 import {
   deleteConfirmLabel,
   deleteMessage,
@@ -70,7 +71,7 @@ const PROJECT_STATUSES = [
   { value: 'cancelled', label: 'Cancelled' }
 ] as const;
 
-type ProjectSection = 'home' | 'entities';
+type ProjectSection = 'home' | 'entities' | 'assessments';
 
 export const ProjectDetailScreen = () => {
   const navigate = useNavigate();
@@ -86,7 +87,8 @@ export const ProjectDetailScreen = () => {
   const { workspaceSlug, teams, projectEntityTypes, schemas, lifecycleStates } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const folderFilter = search.folder ?? null;
-  const section: ProjectSection = search.section === 'entities' ? 'entities' : 'home';
+  const section: ProjectSection =
+    search.section === 'entities' ? 'entities' : search.section === 'assessments' ? 'assessments' : 'home';
   const pendingDialog = search.dialog;
   const contentFolderFilter = section === 'home' ? folderFilter : null;
   const filter = search.contentQuery ?? '';
@@ -624,7 +626,14 @@ export const ProjectDetailScreen = () => {
 
   return (
     <>
-      {section === 'entities' ? (
+      {section === 'assessments' ? (
+        <ProjectAssessments
+          project={project}
+          projectId={projectId}
+          onNavigateHome={handleNavigateHome}
+          onNavigateProject={handleNavigateProject}
+        />
+      ) : section === 'entities' ? (
         <ProjectEntities
           project={project}
           projectEntities={projectEntities}
