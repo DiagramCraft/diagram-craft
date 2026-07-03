@@ -8,7 +8,11 @@ import { WorkspaceSettingsSidebar } from '../../sections/workspace-settings/Work
 import { SchemaSettingsSidebar } from '../../sections/workspace-settings/SchemaSettingsSidebar';
 import { GlobalSettingsSidebar } from '../../sections/global-settings/GlobalSettingsSidebar';
 import { AccountSettingsSidebar } from '../../sections/account-settings/AccountSettingsSidebar';
-import { validateSettingsSearch, validateSchemaSettingsSearch } from '../searchParams';
+import {
+  validateModelOverviewSearch,
+  validateSettingsSearch,
+  validateSchemaSettingsSearch
+} from '../searchParams';
 import { buildSettingsBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
@@ -84,6 +88,7 @@ export const createSettingsWorkspaceRoutes = (
   const modelOverviewRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'settings/model-overview',
+    validateSearch: validateModelOverviewSearch,
     component: SchemaGraphView
   }), ctx => ({
     variant: 'standard',

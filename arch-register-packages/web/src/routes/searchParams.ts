@@ -185,6 +185,64 @@ export const validateSchemaSettingsSearch = (raw: Record<string, unknown>): Sche
   enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined,
 });
 
+export type ModelOverviewSearchParams = {
+  layout?: 'hierarchy' | 'layered' | 'force' | 'tree';
+  horizontalSpacing?: number;
+  verticalSpacing?: number;
+  crossingMinimizationIterations?: number;
+  iterations?: number;
+  springStrength?: number;
+  repulsionStrength?: number;
+  idealEdgeLength?: number;
+};
+
+const parseNumberInRange = (
+  value: unknown,
+  min: number,
+  max: number,
+  defaultValue: number,
+  integer = false
+): number | undefined => {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim() !== ''
+        ? Number(value)
+        : NaN;
+
+  if (!Number.isFinite(parsed)) return undefined;
+  if (integer && !Number.isInteger(parsed)) return undefined;
+  if (parsed < min || parsed > max) return undefined;
+  return parsed === defaultValue ? undefined : parsed;
+};
+
+export const validateModelOverviewSearch = (
+  raw: Record<string, unknown>
+): ModelOverviewSearchParams => ({
+  layout:
+    raw.layout === 'hierarchy' ||
+    raw.layout === 'layered' ||
+    raw.layout === 'force' ||
+    raw.layout === 'tree'
+      ? raw.layout === 'hierarchy'
+        ? undefined
+        : raw.layout
+      : undefined,
+  horizontalSpacing: parseNumberInRange(raw.horizontalSpacing, 50, 500, 200),
+  verticalSpacing: parseNumberInRange(raw.verticalSpacing, 50, 300, 108),
+  crossingMinimizationIterations: parseNumberInRange(
+    raw.crossingMinimizationIterations,
+    1,
+    50,
+    10,
+    true
+  ),
+  iterations: parseNumberInRange(raw.iterations, 50, 1000, 300, true),
+  springStrength: parseNumberInRange(raw.springStrength, 0.1, 2.0, 0.5),
+  repulsionStrength: parseNumberInRange(raw.repulsionStrength, 0.1, 3.0, 1.0),
+  idealEdgeLength: parseNumberInRange(raw.idealEdgeLength, 50, 500, 160),
+});
+
 // Assistant params
 export type AssistantSearchParams = {
   conversation?: string;

@@ -13,6 +13,9 @@ export const workspaceEntitiesRoute = (workspaceSlug: string) => `/${workspaceSl
 
 export const workspaceModelRoute = (workspaceSlug: string) => `/${workspaceSlug}/settings/schemas`;
 
+export const workspaceModelOverviewRoute = (workspaceSlug: string) =>
+  `/${workspaceSlug}/settings/model-overview`;
+
 export const workspaceSearchRoute = (workspaceSlug: string) => `/${workspaceSlug}/search`;
 
 export const workspaceSettingsRoute = (workspaceSlug: string) => `/${workspaceSlug}/settings`;
