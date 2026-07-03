@@ -54,10 +54,21 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
 // Entity detail params
 export type EntityDetailSearchParams = {
   contentFolder?: string;
+  tab?: 'overview' | 'topology' | 'graph' | 'relations' | 'dependents' | 'changes' | 'timeline';
 };
 
 export const validateEntityDetailSearch = (raw: Record<string, unknown>): EntityDetailSearchParams => ({
   contentFolder: typeof raw.contentFolder === 'string' ? raw.contentFolder : undefined,
+  tab:
+    raw.tab === 'overview' ||
+    raw.tab === 'topology' ||
+    raw.tab === 'graph' ||
+    raw.tab === 'relations' ||
+    raw.tab === 'dependents' ||
+    raw.tab === 'changes' ||
+    raw.tab === 'timeline'
+      ? raw.tab
+      : undefined,
 });
 
 export type MarkdownSearchParams = {
@@ -106,10 +117,19 @@ export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSe
 // Search params
 export type SearchRouteSearchParams = {
   q?: string;
+  category?: 'all' | 'entities' | 'projects' | 'files' | 'schemas';
 };
 
 export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteSearchParams => ({
   q: typeof raw.q === 'string' ? raw.q : undefined,
+  category:
+    raw.category === 'all' ||
+    raw.category === 'entities' ||
+    raw.category === 'projects' ||
+    raw.category === 'files' ||
+    raw.category === 'schemas'
+      ? raw.category
+      : undefined,
 });
 
 // Diagram params

@@ -1,5 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { validateEntitySearch, validateMarkdownSearch, validateProjectSearch } from './searchParams';
+import {
+  validateEntityDetailSearch,
+  validateEntitySearch,
+  validateMarkdownSearch,
+  validateProjectSearch,
+  validateSearchSearch
+} from './searchParams';
+
+describe('validateEntityDetailSearch', () => {
+  it('accepts reloadable entity tabs and rejects unknown tabs', () => {
+    expect(validateEntityDetailSearch({ tab: 'topology', contentFolder: 'Operations' })).toEqual({
+      tab: 'topology',
+      contentFolder: 'Operations'
+    });
+    expect(validateEntityDetailSearch({ tab: 'unknown' })).toEqual({
+      tab: undefined,
+      contentFolder: undefined
+    });
+  });
+});
+
+describe('validateSearchSearch', () => {
+  it('accepts search categories and rejects unknown categories', () => {
+    expect(validateSearchSearch({ q: 'api', category: 'entities' })).toEqual({
+      q: 'api',
+      category: 'entities'
+    });
+    expect(validateSearchSearch({ q: 'api', category: 'unknown' })).toEqual({
+      q: 'api',
+      category: undefined
+    });
+  });
+});
 
 describe('validateEntitySearch', () => {
   it('parses entity browser search params used by saved views', () => {

@@ -1,0 +1,9 @@
+.trigger {
+  display: inline-block;
+  cursor: zoom-in;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}

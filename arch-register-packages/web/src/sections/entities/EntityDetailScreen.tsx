@@ -111,7 +111,7 @@ const getRelationIds = (value: unknown): string[] =>
 export const EntityDetailScreen = () => {
   const navigate = useNavigate();
   const { entityId } = useParams({ strict: false }) as { entityId: string };
-  const search = useSearch({ strict: false }) as { contentFolder?: string };
+  const search = useSearch({ strict: false }) as { contentFolder?: string; tab?: TabId };
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const canViewAudit = permissions.canViewAudit;
@@ -127,7 +127,18 @@ export const EntityDetailScreen = () => {
   const navigateToEntities = useCallback(() => {
     navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } });
   }, [navigate, workspaceSlug]);
-  const [tab, setTab] = useState<TabId>('overview');
+  const tab = search.tab ?? 'overview';
+  const setTab = useCallback(
+    (nextTab: TabId) => {
+      navigate({
+        search: ((previous: Record<string, unknown>) => ({
+          ...previous,
+          tab: nextTab === 'overview' ? undefined : nextTab
+        })) as never
+      });
+    },
+    [navigate]
+  );
   const [editing, setEditing] = useState(false);
   const [editState, setEditState] = useState<Record<string, unknown>>({});
   const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);

@@ -1,0 +1,6 @@
+.tocTitle {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--ifm-toc-link-color);
+  margin-bottom: 0.5rem;
+}

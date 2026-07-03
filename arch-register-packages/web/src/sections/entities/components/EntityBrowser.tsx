@@ -266,7 +266,7 @@ export const EntityBrowser = ({
     if (!sort.startsWith('date:')) return;
     const fieldId = sort.slice(5);
     if (view !== 'table' || !dateFields.some(field => field.id === fieldId)) {
-      setSort('name');
+      setSort('name', true);
     }
   }, [dateFields, sort, view, setSort]);
   const dateBrowserEnabled = view === 'table' && selectedSchema != null && dateFields.length > 0;

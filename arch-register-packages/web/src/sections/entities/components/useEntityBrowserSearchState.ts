@@ -1,9 +1,14 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
-import type { BrowserSearch } from './entityBrowserState';
-import { parseConditionsFromSearch, parseViewConfigs, serializeViewConfigs } from './entityBrowserState';
-import { useEntityBrowserLocalState } from './useEntityBrowserLocalState';
+import type { BrowserSearch, BrowserViewConfigMap } from './entityBrowserState';
+import {
+  getFilterValue,
+  parseConditionsFromSearch,
+  parseViewConfigs,
+  serializeViewConfigs
+} from './entityBrowserState';
 
 type UseEntityBrowserSearchStateProps = {
   workspaceSlug: string;
@@ -17,89 +22,35 @@ export const useEntityBrowserSearchState = ({
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as BrowserSearch;
 
-  const {
-    activeViewConfig,
-    conditions,
-    ownerFilter,
-    projectScope,
-    q,
-    setConditions,
-    setActiveViewConfig,
-    setProjectScope,
-    setQ,
-    setSort,
-    setView,
-    setViewConfigs,
-    sort,
-    statusFilter,
-    typeFilter,
-    view,
-    viewConfigs
-  } = useEntityBrowserLocalState({
-    projectId,
-    initial: {
-      q: search.q ?? '',
-      conditions: parseConditionsFromSearch(search),
-      projectScope: projectId ? (search.projectScope ?? 'project') : 'all',
-      sort: search.sort ?? 'name',
-      view: search.viewMode ?? 'table',
-      viewConfigs: parseViewConfigs(search.viewConfigs)
-    }
-  });
-
-  useEffect(() => {
-    setQ(search.q ?? '');
-    setConditions(
+  const conditions = useMemo(
+    () =>
       parseConditionsFromSearch({
         filters: search.filters,
-        type: search.type,
+        owner: search.owner,
         status: search.status,
-        owner: search.owner
-      } as BrowserSearch)
-    );
-    setProjectScope(projectId ? (search.projectScope ?? 'project') : 'all');
-    setSort(search.sort ?? 'name');
-    setView(search.viewMode ?? 'table');
-    setViewConfigs(parseViewConfigs(search.viewConfigs));
-  }, [
-    projectId,
-    search.filters,
-    search.owner,
-    search.projectScope,
-    search.q,
-    search.sort,
-    search.status,
-    search.type,
-    search.viewConfigs,
-    search.viewMode,
-    setConditions,
-    setProjectScope,
-    setQ,
-    setSort,
-    setView,
-    setViewConfigs
-  ]);
+        type: search.type
+      } as BrowserSearch),
+    [search.filters, search.owner, search.status, search.type]
+  );
+  const projectScope = projectId ? (search.projectScope ?? 'project') : 'all';
+  const q = search.q ?? '';
+  const sort = search.sort ?? 'name';
+  const view = search.viewMode ?? 'table';
+  const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
+  const activeViewConfig = viewConfigs[view] ?? null;
 
   const navigateBrowser = useCallback(
-    (replace: boolean) => {
-      const nextSearch = {
-        q: q === '' ? undefined : q,
-        type: undefined,
-        status: undefined,
-        owner: undefined,
-        viewMode: view,
-        sort,
-        projectScope: projectId ? projectScope : undefined,
-        viewConfigs: serializeViewConfigs(viewConfigs),
-        filters: conditions.length > 0 ? JSON.stringify(conditions) : undefined
-      };
+    (patch: Partial<BrowserSearch>, replace = false) => {
+      const nextSearch = (previous: Record<string, unknown>) => ({
+        ...previous,
+        ...patch
+      });
 
       if (projectId) {
         navigate({
           ...projectDetailRoute(workspaceSlug, asProjectPublicId(projectId)),
-          search: (prev: Record<string, unknown>) => ({
-            ...prev,
-            ...nextSearch,
+          search: (previous: Record<string, unknown>) => ({
+            ...nextSearch(previous),
             section: 'entities'
           }),
           replace
@@ -110,79 +61,70 @@ export const useEntityBrowserSearchState = ({
       navigate({
         to: '/$workspaceSlug/entities',
         params: { workspaceSlug },
-        search: (prev: Record<string, unknown>) => ({
-          ...prev,
-          ...nextSearch
-        }),
+        search: nextSearch,
         replace
-      });
-    },
-    [conditions, navigate, projectId, projectScope, q, sort, view, viewConfigs, workspaceSlug]
-  );
-
-  useEffect(() => {
-    const nextFilters = conditions.length > 0 ? JSON.stringify(conditions) : undefined;
-    if (
-      (search.q ?? undefined) !== (q === '' ? undefined : q) ||
-      search.viewMode !== view ||
-      search.sort !== sort ||
-      (projectId ? (search.projectScope ?? 'project') : undefined) !==
-        (projectId ? projectScope : undefined) ||
-      search.filters !== nextFilters ||
-      search.viewConfigs !== serializeViewConfigs(viewConfigs)
-    ) {
-      navigateBrowser(true);
-    }
-  }, [
-    conditions,
-    navigateBrowser,
-    projectId,
-    projectScope,
-    q,
-    search.filters,
-    search.projectScope,
-    search.q,
-    search.sort,
-    search.viewConfigs,
-    search.viewMode,
-    sort,
-    view,
-    viewConfigs
-  ]);
-
-  const navigateAsOfSearch = useCallback(
-    (patch: Record<string, unknown>) => {
-      if (projectId) {
-        navigate({
-          ...projectDetailRoute(workspaceSlug, asProjectPublicId(projectId)),
-          search: (prev: Record<string, unknown>) => ({ ...prev, ...patch }),
-          replace: true
-        });
-        return;
-      }
-
-      navigate({
-        to: '/$workspaceSlug/entities',
-        params: { workspaceSlug },
-        search: (prev: Record<string, unknown>) => ({ ...prev, ...patch }),
-        replace: true
       });
     },
     [navigate, projectId, workspaceSlug]
   );
 
+  const setConditions = useCallback(
+    (next: FilterCondition[]) =>
+      navigateBrowser({
+        filters: next.length > 0 ? JSON.stringify(next) : undefined,
+        type: undefined,
+        status: undefined,
+        owner: undefined,
+        viewId: undefined
+      }),
+    [navigateBrowser]
+  );
+  const setProjectScope = useCallback(
+    (next: 'project' | 'all') =>
+      navigateBrowser({ projectScope: next === 'project' ? undefined : next, viewId: undefined }),
+    [navigateBrowser]
+  );
+  const setQ = useCallback(
+    (next: string) => navigateBrowser({ q: next === '' ? undefined : next, viewId: undefined }, true),
+    [navigateBrowser]
+  );
+  const setSort = useCallback(
+    (next: string, replace = false) =>
+      navigateBrowser({ sort: next === 'name' ? undefined : next, viewId: undefined }, replace),
+    [navigateBrowser]
+  );
+  const setView = useCallback(
+    (next: BrowserView) =>
+      navigateBrowser({ viewMode: next === 'table' ? undefined : next, viewId: undefined }),
+    [navigateBrowser]
+  );
+  const setViewConfigs = useCallback(
+    (next: BrowserViewConfigMap) =>
+      navigateBrowser({ viewConfigs: serializeViewConfigs(next), viewId: undefined }, true),
+    [navigateBrowser]
+  );
+  const setActiveViewConfig = useCallback(
+    (config: unknown) => {
+      const next = { ...viewConfigs };
+      if (config == null) delete next[view];
+      else next[view] = config;
+      setViewConfigs(next);
+    },
+    [setViewConfigs, view, viewConfigs]
+  );
+
   const setAsOf = useCallback(
-    (date: string) => navigateAsOfSearch({ asOf: date }),
-    [navigateAsOfSearch]
+    (date: string) => navigateBrowser({ asOf: date }),
+    [navigateBrowser]
   );
   const clearAsOf = useCallback(
-    () => navigateAsOfSearch({ asOf: undefined }),
-    [navigateAsOfSearch]
+    () => navigateBrowser({ asOf: undefined }),
+    [navigateBrowser]
   );
   const setIncludeProjectSnapshots = useCallback(
     (include: boolean) =>
-      navigateAsOfSearch({ asOfIncludeProjects: include ? undefined : 'false' }),
-    [navigateAsOfSearch]
+      navigateBrowser({ asOfIncludeProjects: include ? undefined : 'false' }),
+    [navigateBrowser]
   );
 
   return {
@@ -193,7 +135,7 @@ export const useEntityBrowserSearchState = ({
     clearAsOf,
     setIncludeProjectSnapshots,
     conditions,
-    ownerFilter,
+    ownerFilter: getFilterValue(conditions, '_owner'),
     projectScope,
     q,
     search,
@@ -204,8 +146,8 @@ export const useEntityBrowserSearchState = ({
     setSort,
     setView,
     sort,
-    statusFilter,
-    typeFilter,
+    statusFilter: getFilterValue(conditions, '_lifecycle'),
+    typeFilter: getFilterValue(conditions, '_schemaId'),
     view,
     viewConfigs
   };
