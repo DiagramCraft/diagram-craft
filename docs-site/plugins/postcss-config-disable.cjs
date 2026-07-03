@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('path');
+
 // Prevents postcss-loader from using cosmiconfig to search for config files,
 // which triggers thousands of open() syscalls (one per candidate filename per
 // CSS file in the pnpm virtual store), causing ENFILE on macOS.
@@ -10,7 +12,24 @@ module.exports = function postcssConfigDisablePlugin() {
     name: 'webpack-fd-optimize',
     configureWebpack(config) {
       patchRules(config.module?.rules ?? []);
-      return { resolve: { symlinks: false } };
+      return {
+        resolve: {
+          symlinks: false,
+          // With symlinks:false above, webpack treats a package reached via two
+          // different symlink paths (e.g. docs-site's own node_modules vs. a
+          // dependency's nested copy) as two separate module instances. For
+          // @docusaurus/plugin-content-docs/client this breaks React Context
+          // (DocProvider/useDoc end up as different objects), throwing
+          // "Hook useDoc is called outside the <DocProvider>". Force every
+          // importer to the same resolved file so there's only one instance.
+          alias: {
+            '@docusaurus/plugin-content-docs/client': require.resolve(
+              '@docusaurus/plugin-content-docs/client',
+              { paths: [path.dirname(require.resolve('@docusaurus/theme-classic/package.json'))] }
+            )
+          }
+        }
+      };
     }
   };
 };

@@ -1,0 +1,22 @@
+.relatedReading {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ifm-toc-border-color);
+  font-size: 0.8rem;
+}
+
+.relatedReadingTitle {
+  font-weight: 600;
+  color: var(--ifm-toc-link-color);
+  margin-bottom: 0.5rem;
+}
+
+.relatedReadingList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.relatedReadingList li {
+  margin-top: 0.4rem;
+}
