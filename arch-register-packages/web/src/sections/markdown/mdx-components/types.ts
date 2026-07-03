@@ -28,6 +28,12 @@ export type EditorSpec = {
   mdxRule: Record<string, any>;
   /** Slash command registration; omit to hide from the slash menu */
   slashCommand?: SlashCommandDef;
+  /**
+   * Only meaningful when the owning spec has acceptsChildren: true. Builds a
+   * wrapper node around an existing node being promoted into it (used by the
+   * block context menu's "Wrap with" action).
+   */
+  createWrapper?: (child: TElement) => TElement;
 };
 
 export type MdxComponentSpec = {

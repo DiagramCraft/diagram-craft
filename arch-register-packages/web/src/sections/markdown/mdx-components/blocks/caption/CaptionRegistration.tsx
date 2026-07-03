@@ -37,6 +37,13 @@ export const captionSpec = {
           children: [{ type: 'p', children: [{ text: '' }] }]
         });
       }
-    }
+    },
+    createWrapper: (child: TElement) => ({
+      type: CAPTION_TYPE,
+      caption: '',
+      align: '',
+      numbered: false,
+      children: [child]
+    })
   }
 } satisfies MdxComponentSpec;

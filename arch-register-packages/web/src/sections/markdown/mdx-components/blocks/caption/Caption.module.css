@@ -46,21 +46,28 @@
 .captionText {
   display: block;
   width: 100%;
-  border: none;
   outline: none;
   resize: none;
   overflow: hidden;
   background: transparent;
-  padding: 0;
+  padding: 4px;
   margin: 0;
   font: inherit;
   color: inherit;
   text-align: inherit;
+  border: 1px solid transparent;
 }
 
 .captionText::placeholder {
   font-style: italic;
   color: var(--cmp-fg-disabled);
+}
+
+textarea.captionText:focus {
+  border-radius: var(--r-md);
+  background: var(--cmp-bg);
+  color: var(--cmp-fg);
+  box-shadow: var(--cmp-border-shadow-focus) !important;
 }
 
 .figureLabel {

@@ -5,6 +5,7 @@ import { useDraggable, useDropLine } from '@platejs/dnd';
 import { TbChevronDown, TbChevronUp, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { useMdxBlockRegistry } from './MdxBlockRegistryContext';
 import styles from './EditorBlock.module.css';
 
 // ── Utilities ────────────────────────────────────────────────────────────────
@@ -30,6 +31,28 @@ export const createListParagraph = (text: string, listStyleType: 'disc' | 'decim
   listStyleType,
   children: [{ text }]
 });
+
+// biome-ignore lint/suspicious/noExplicitAny: Plate editor ref type is generic over its plugins
+type PlateEditorRef = any;
+
+export const unnestBlock = (editor: PlateEditorRef, idx: number) => {
+  const node = editor.children[idx] as TElement | undefined;
+  const child = node?.children?.[0] as TElement | undefined;
+  if (!child) return;
+  editor.tf.removeNodes({ at: [idx] });
+  editor.tf.insertNodes(child, { at: [idx] });
+};
+
+export const wrapBlock = (
+  editor: PlateEditorRef,
+  idx: number,
+  createWrapper: (child: TElement) => TElement
+) => {
+  const node = editor.children[idx] as TElement | undefined;
+  if (!node) return;
+  editor.tf.removeNodes({ at: [idx] });
+  editor.tf.insertNodes(createWrapper(node), { at: [idx] });
+};
 
 // ── Drag handle ───────────────────────────────────────────────────────────────
 
@@ -126,12 +149,15 @@ const CONVERT_OPTIONS = [
   { type: 'h3', label: 'Heading 3' },
   { type: 'blockquote', label: 'Quote' },
   { type: 'list-disc', label: 'Bullet list' },
-  { type: 'list-decimal', label: 'Numbered list' },
+  { type: 'list-decimal', label: 'Numbered list' }
 ] as const;
 
 type ConvertType = (typeof CONVERT_OPTIONS)[number]['type'];
 
-const createConvertedBlock = (type: Exclude<ConvertType, 'list-disc' | 'list-decimal'>, text: string) => ({
+const createConvertedBlock = (
+  type: Exclude<ConvertType, 'list-disc' | 'list-decimal'>,
+  text: string
+) => ({
   type,
   children: [{ text }]
 });
@@ -140,7 +166,7 @@ const BlockContextMenu = ({
   element,
   position,
   onClose,
-  extraItems,
+  extraItems
 }: {
   element: TElement;
   position: { x: number; y: number };
@@ -148,6 +174,7 @@ const BlockContextMenu = ({
   extraItems?: (onClose: () => void) => React.ReactNode;
 }) => {
   const editor = useEditorRef();
+  const mdxRegistry = useMdxBlockRegistry();
 
   const currentIdx = () => {
     const p = editor.api.findPath(element);
@@ -156,6 +183,14 @@ const BlockContextMenu = ({
 
   const blockType = element.type as string;
   const isConvertible = CONVERTIBLE_TYPES.has(blockType);
+
+  const currentSpec = mdxRegistry[blockType];
+  const isWrapperBlock = !!currentSpec?.acceptsChildren;
+  const isNonWrapperMdxBlock =
+    !!currentSpec && currentSpec.mode === 'block' && !currentSpec.acceptsChildren;
+  const wrapperOptions = Object.entries(mdxRegistry)
+    .filter(([, spec]) => spec.acceptsChildren)
+    .map(([type, spec]) => ({ type, label: spec.editorSpec?.slashCommand?.label ?? type }));
 
   const handleRemove = () => {
     const idx = currentIdx();
@@ -172,9 +207,68 @@ const BlockContextMenu = ({
     onClose();
   };
 
+  const handleAddBefore = () => {
+    const idx = currentIdx();
+    if (idx !== null) {
+      editor.tf.insertNodes({ type: 'p', children: [{ text: '' }] }, { at: [idx] });
+      const path = [idx, 0];
+      // The context menu closing (and stealing focus back) races with Plate
+      // mounting the new node's DOM — deferring lets both settle first.
+      setTimeout(() => {
+        editor.tf.select({ path, offset: 0 });
+        editor.tf.focus();
+      }, 50);
+    }
+    onClose();
+  };
+
+  const handleAddAfter = () => {
+    const idx = currentIdx();
+    if (idx !== null) {
+      editor.tf.insertNodes({ type: 'p', children: [{ text: '' }] }, { at: [idx + 1] });
+      const path = [idx + 1, 0];
+      setTimeout(() => {
+        editor.tf.select({ path, offset: 0 });
+        editor.tf.focus();
+      }, 50);
+    }
+    onClose();
+  };
+
+  const handleUnnest = () => {
+    const idx = currentIdx();
+    if (idx !== null) {
+      unnestBlock(editor, idx);
+      setTimeout(() => {
+        editor.tf.select([idx]);
+        editor.tf.focus();
+      }, 50);
+    }
+    onClose();
+  };
+
+  const handleWrapWith = (wrapperType: string) => {
+    const idx = currentIdx();
+    if (idx !== null) {
+      const wrapperSpec = mdxRegistry[wrapperType];
+      const createWrapper =
+        wrapperSpec?.editorSpec?.createWrapper ??
+        ((child: TElement) => ({ type: wrapperType, children: [child] }));
+      wrapBlock(editor, idx, createWrapper);
+      setTimeout(() => {
+        editor.tf.select([idx]);
+        editor.tf.focus();
+      }, 50);
+    }
+    onClose();
+  };
+
   const handleConvert = (toType: ConvertType) => {
     const idx = currentIdx();
-    if (idx === null) { onClose(); return; }
+    if (idx === null) {
+      onClose();
+      return;
+    }
     const node = editor.children[idx] as TElement | undefined;
     const text = node ? getNodeText(node as Record<string, unknown>) : '';
 
@@ -197,8 +291,31 @@ const BlockContextMenu = ({
     <ContextMenu.Imperative x={position.x} y={position.y} onClose={onClose}>
       {extraItems?.(onClose)}
       {extraItems && <Menu.Separator />}
+      <Menu.Item onClick={handleAddBefore}>Add block before</Menu.Item>
+      <Menu.Item onClick={handleAddAfter}>Add block after</Menu.Item>
+      <Menu.Separator />
       <Menu.Item onClick={handleDuplicate}>Duplicate block</Menu.Item>
-      <Menu.Item type="danger" onClick={handleRemove}>Remove block</Menu.Item>
+      <Menu.Item type="danger" onClick={handleRemove}>
+        Remove block
+      </Menu.Item>
+      {isWrapperBlock && (
+        <>
+          <Menu.Separator />
+          <Menu.Item onClick={handleUnnest}>Unwrap</Menu.Item>
+        </>
+      )}
+      {isNonWrapperMdxBlock && wrapperOptions.length > 0 && (
+        <>
+          <Menu.Separator />
+          <Menu.SubMenu label="Wrap with">
+            {wrapperOptions.map(opt => (
+              <Menu.Item key={opt.type} onClick={() => handleWrapWith(opt.type)}>
+                {opt.label}
+              </Menu.Item>
+            ))}
+          </Menu.SubMenu>
+        </>
+      )}
       {isConvertible && (
         <>
           <Menu.Separator />
@@ -241,10 +358,14 @@ export const EditorBlock = ({
     <div
       ref={nodeRef}
       className={`${styles.draggableBlock} ${isDragging ? styles.dragging : ''} ${suppressCellHover ? styles.suppressCellHover : ''} ${!isTopLevel ? styles.nestedBlock : ''}`}
-      onContextMenu={isTopLevel ? e => {
-        e.preventDefault();
-        setContextMenu({ x: e.clientX, y: e.clientY });
-      } : undefined}
+      onContextMenu={
+        isTopLevel
+          ? e => {
+              e.preventDefault();
+              setContextMenu({ x: e.clientX, y: e.clientY });
+            }
+          : undefined
+      }
     >
       {isTopLevel && dropLine === 'top' && (
         <div className={styles.dropLine} contentEditable={false} />

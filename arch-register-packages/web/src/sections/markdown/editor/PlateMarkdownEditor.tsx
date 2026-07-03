@@ -33,6 +33,7 @@ import {
 import type { TElement, Value } from 'platejs';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
+import { MdxBlockRegistryProvider } from './MdxBlockRegistryContext';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
@@ -902,19 +903,21 @@ export const PlateMarkdownEditor = ({ value, onChange }: PlateMarkdownEditorProp
   );
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className={styles.editor}>
-        <Plate editor={editor} onChange={handleChange}>
-          <PlateContent
-            className={styles.plateContent}
-            placeholder="Start writing, or type / for commands…"
-            spellCheck
-            onKeyDown={handleKeyDown}
-          />
-          <FloatingToolbar />
-          <DndScroller />
-        </Plate>
-      </div>
-    </DndProvider>
+    <MdxBlockRegistryProvider value={MDX_COMPONENTS}>
+      <DndProvider backend={HTML5Backend}>
+        <div className={styles.editor}>
+          <Plate editor={editor} onChange={handleChange}>
+            <PlateContent
+              className={styles.plateContent}
+              placeholder="Start writing, or type / for commands…"
+              spellCheck
+              onKeyDown={handleKeyDown}
+            />
+            <FloatingToolbar />
+            <DndScroller />
+          </Plate>
+        </div>
+      </DndProvider>
+    </MdxBlockRegistryProvider>
   );
 };
