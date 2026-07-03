@@ -2070,8 +2070,10 @@ export const createWorkspaceMarkdownDoc = async (
   }
 };
 
-const storageScope = (ws: string, node: { project_id: string | null; entity_id: string | null }) =>
-  node.project_id ?? node.entity_id ?? ws;
+export const storageScope = (
+  ws: string,
+  node: { project_id: string | null; entity_id: string | null }
+) => node.project_id ?? node.entity_id ?? ws;
 
 const getAttachmentContainerPath = (markdownPath: string) =>
   `${markdownPath.endsWith('.md') ? markdownPath.slice(0, -3) : markdownPath}/${ATTACHMENT_CONTAINER_NAME}`;
