@@ -316,6 +316,25 @@ div[class*='sidebarViewport'] {
   opacity: 0.75;
 }
 
+.menu > .menu__list > .theme-doc-sidebar-item-link > .menu__link {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--fg-0);
+  padding: 7px 14px;
+}
+
+.menu > .menu__list > .theme-doc-sidebar-item-link > .menu__link:hover {
+  background: none;
+  color: var(--fg-0);
+  opacity: 0.75;
+}
+
+.menu > .menu__list > .theme-doc-sidebar-item-link > .menu__link.menu__link--active {
+  background: none;
+  color: var(--fg-0);
+  font-weight: 500;
+}
+
 .menu__list-item-collapsible:hover,
 .menu__list-item-collapsible--active {
   background: none;

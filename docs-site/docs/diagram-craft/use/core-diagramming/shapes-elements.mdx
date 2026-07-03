@@ -1,12 +1,19 @@
 ---
 sidebar_position: 2
+related_reading:
+  - label: Basic Shapes and Connectors
+    to: /diagram-craft/diagram-craft/getting-started/basic-shapes-connectors
+  - label: Connectors and Edges
+    to: /diagram-craft/diagram-craft/use/core-diagramming/connectors-edges
+  - label: Built-in Stencils
+    to: /diagram-craft/diagram-craft/stencils-templates/built-in-stencils
 ---
 
 import ThemedImage from '@theme/ThemedImage';
 
 # Shapes and Elements
 
-Shapes are the core building blocks of a diagram. The goal is not to use every available option, but to pick a small set of elements that communicates structure clearly and can be reused consistently.
+Shapes are the core building blocks of a diagram. In practice, you will usually add them from the left sidebar, where you can browse shape libraries, drag shapes onto the canvas, search enabled packages, and switch to icon browsing when needed.
 
 <ThemedImage
   alt="Diagram Craft shape picker beside a diagram that uses a few simple shapes"
@@ -16,53 +23,50 @@ Shapes are the core building blocks of a diagram. The goal is not to use every a
   }}
 />
 
-## Start With A Small Shape Vocabulary
+## Use The Shape Tab
 
-For most early drafts, use only a few shapes:
+The **Shape** tab in the left sidebar is the main place to add diagram elements.
 
-- one general-purpose box for most steps or components
-- one contrasting shape for a different kind of element, such as storage or a queue
-- text labels to explain meaning instead of relying on decorative shape changes
+- open the **Shape** tab to browse the active shape libraries for the current document
+- drag a shape from the picker onto the canvas to create a new node
+- keep the picker open while building out a diagram so you can add several elements in sequence
 
-This keeps the diagram readable while you are still deciding on layout and flow.
+This is the fastest way to build up the first structure of a diagram before you start refining labels, connectors, and styling.
 
-## Place Shapes Before You Worry About Styling
+## Use The Insert Shape Toolbar Action
 
-A practical workflow looks like this:
+The main toolbar also includes an **Insert Shape** action that opens a dialog with **Recent**, **Search**, and **Icons** tabs.
 
-1. Open the **Shape** tab in the left sidebar.
-2. Drag the first few shapes onto the canvas.
-3. Give each shape a short label as soon as it is placed.
-4. Move the shapes into a rough structure before you fine-tune size or color.
+Use this when you want to insert an element from a centered picker instead of working from the left sidebar.
 
-By labeling and arranging early, you validate the diagram logic before spending time on polish.
+## Search And Browse The Picker
 
-## Reuse Shapes Intentionally
+The picker supports a few different ways to find the element you need:
 
-When two elements play a similar role, keep them visually similar. Reusing the same shape tells the reader that the items belong to the same category even before they read the labels.
+- browse visually through the active packages when you are exploring available shapes
+- use the picker search when you know roughly what you want and do not want to scan the whole list
+- switch between list and grid browsing from the picker settings menu, depending on whether names or thumbnails are more useful for the current package
 
-Use a different shape only when it adds meaning. A database cylinder or a queue-like form is useful because it changes the interpretation, not just the appearance.
+The search works across the enabled packages, and the settings menu can expand that search behavior when you need a wider search surface.
 
-## When To Move Beyond The Default Shapes
+## Choose Which Shape Libraries Are Active
 
-Stay with the default set when you are:
+The shape picker is only as useful as the package set behind it, so it is worth keeping the active libraries focused.
 
-- sketching an idea
-- documenting a simple workflow
-- aligning on structure before notation details matter
+- use the picker settings menu to manage which packages are active for the current document
+- keep only the libraries you need for the diagram you are working on, so the picker stays easier to scan
+- add notation-specific packages when the diagram needs a formal shape language such as UML, BPMN, or C4
 
-Move to richer stencil packages when the diagram needs domain language, such as UML, BPMN, or architecture-specific notation.
+Active packages are document-scoped, so the package set travels with the document instead of being only a local preference.
 
-## Good Working Habits
+For package guidance and the available built-in libraries, see [Built-in Stencils](../../stencils-templates/built-in-stencils).
 
-- Add only the shapes you need for the current step.
-- Keep similar elements aligned and sized consistently.
-- Prefer clear labels over unusual shapes.
-- Introduce specialized stencils only when they make the diagram easier to read.
+## Use Recent, Model, And Icon Tabs
 
-## Related Reading
+The same left sidebar window also exposes other tabs that are useful while adding elements:
 
-- [Basic Shapes and Connectors](../../getting-started/basic-shapes-connectors)
-- [Connectors and Edges](connectors-edges)
-- [Built-in Stencils](../../stencils-templates/built-in-stencils)
+- **Recent** lets you quickly reuse shapes you added earlier in the same editing session
+- **Model** is for model-backed objects and provider-backed workflows; see [Data Sources](../data-integration/data-sources) in the **Data and Integration** section
+- **Icon** lets you search and insert icons when a small symbol is more appropriate than a full diagram shape
 
+If you enable optional icon libraries or vendor packages, the **Icon** tab is where those assets become most useful.
