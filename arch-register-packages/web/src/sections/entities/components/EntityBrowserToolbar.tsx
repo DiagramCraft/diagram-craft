@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { TbSearch, TbFilter } from 'react-icons/tb';
+import { TbSearch, TbFilter, TbHistory } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -31,6 +31,10 @@ type EntityBrowserToolbarProps = {
   sortOptions: Array<{ value: string; label: string }>;
   view: BrowserView;
   setView: (view: BrowserView) => void;
+  readOnly?: boolean;
+  tlOpen?: boolean;
+  onToggleTimeline?: () => void;
+  asOf?: string;
 };
 
 export const EntityBrowserToolbar = ({
@@ -50,7 +54,11 @@ export const EntityBrowserToolbar = ({
   setSort,
   sortOptions,
   view,
-  setView
+  setView,
+  readOnly,
+  tlOpen,
+  onToggleTimeline,
+  asOf
 }: EntityBrowserToolbarProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
@@ -58,7 +66,11 @@ export const EntityBrowserToolbar = ({
     <div className={styles.toolbar}>
       <div className={styles.searchInline}>
         <TbSearch size={12} />
-        <input placeholder="Search by name, owner…" value={q} onChange={e => setQ(e.target.value)} />
+        <input
+          placeholder="Search by name, owner…"
+          value={q}
+          onChange={e => setQ(e.target.value)}
+        />
       </div>
       <Popover.Root actionsRef={filterPopoverRef}>
         <Popover.Trigger
@@ -66,7 +78,9 @@ export const EntityBrowserToolbar = ({
             <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
               <TbFilter size={12} style={{ marginRight: 4 }} />
               Filter
-              {conditions.length > 0 && <span className={styles.filterCount}>{conditions.length}</span>}
+              {conditions.length > 0 && (
+                <span className={styles.filterCount}>{conditions.length}</span>
+              )}
             </Button>
           }
         />
@@ -89,7 +103,7 @@ export const EntityBrowserToolbar = ({
           />
         </Popover.Content>
       </Popover.Root>
-      {projectId && (
+      {projectId && !readOnly && (
         <FilterDropdown
           label="Scope"
           value={projectScope}
@@ -117,6 +131,14 @@ export const EntityBrowserToolbar = ({
           { value: 'explore', label: 'Explore' }
         ]}
       />
+      {onToggleTimeline && (
+        <Button
+          size="sm"
+          variant={tlOpen || asOf ? 'primary' : 'secondary'}
+          icon={<TbHistory size={12} />}
+          onClick={onToggleTimeline}
+        />
+      )}
     </div>
   );
 };

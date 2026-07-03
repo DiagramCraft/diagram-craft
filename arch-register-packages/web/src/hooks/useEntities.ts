@@ -33,6 +33,8 @@ export const useEntities = (
     view?: 'summary' | 'full';
     limit?: number | null;
     offset?: number | null;
+    asOf?: string | null;
+    includeProjectSnapshots?: boolean | null;
   } = {},
   queryOptions?: { enabled?: boolean }
 ) => {
@@ -53,7 +55,10 @@ export const useEntities = (
           projectScope: options.projectScope ?? undefined,
           view: options.view,
           limit: options.limit ?? undefined,
-          offset: options.offset ?? undefined
+          offset: options.offset ?? undefined,
+          asOf: options.asOf ?? undefined,
+          includeProjectSnapshots:
+            options.includeProjectSnapshots == null ? undefined : String(options.includeProjectSnapshots) as 'true' | 'false'
         }
       }),
     enabled: queryOptions?.enabled ?? !!workspaceId
@@ -78,6 +83,16 @@ export const useEntityFacets = (workspaceId: string) => {
   });
 };
 
+// Hook for fetching timeline markers (future_update target dates, saved_version promotions)
+// used to plot event markers in the "browse as of date" picker.
+export const useTimelineMarkers = (workspaceId: string, enabled = true) => {
+  return useQuery({
+    queryKey: entityKeys.timelineMarkers(workspaceId),
+    queryFn: () => orpcClient.entities.timelineMarkers({ params: { workspace: workspaceId } }),
+    enabled: enabled && !!workspaceId
+  });
+};
+
 export const useEntityCount = (
   workspaceId: string,
   options: {
@@ -88,6 +103,8 @@ export const useEntityCount = (
     conditions?: FilterCondition[];
     projectId?: string | null;
     projectScope?: 'project' | 'all';
+    asOf?: string | null;
+    includeProjectSnapshots?: boolean | null;
   } = {},
   queryOptions?: { enabled?: boolean }
 ) => {
@@ -103,7 +120,10 @@ export const useEntityCount = (
           q: options.q ?? undefined,
           conditions: options.conditions?.length ? JSON.stringify(options.conditions) : undefined,
           projectId: options.projectId ?? undefined,
-          projectScope: options.projectScope ?? undefined
+          projectScope: options.projectScope ?? undefined,
+          asOf: options.asOf ?? undefined,
+          includeProjectSnapshots:
+            options.includeProjectSnapshots == null ? undefined : String(options.includeProjectSnapshots) as 'true' | 'false'
         }
       }),
     enabled: queryOptions?.enabled ?? !!workspaceId

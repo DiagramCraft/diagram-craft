@@ -7,7 +7,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { requireEntityAction, requireCanCreateTopLevelEntity } from '../auth/authorization';
 import type { EntityMutationActor } from './entityMutations';
-import { createEntityWithAudit, updateEntityWithAudit } from './entityMutations';
+import { createEntityWithAudit, updateEntityWithAudit, entityToBaseState } from './entityMutations';
 import { logAudit, flattenEntityAuditFields } from '../audit/db/auditLogging';
 import { toApiEntity, toApiEntitySummary } from './entityHelpers';
 import { decodeRefs } from '../../types';
@@ -35,6 +35,8 @@ import {
 } from '@arch-register/api-types/entityContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { listAllCatalogEntities } from './entityLoader';
+import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
+import type { EntityDbResult } from './db/catalogDatabase';
 
 const checker = new PermissionChecker();
 
@@ -93,6 +95,8 @@ export const listEntities = async (
     view?: 'summary' | 'full';
     limit?: number | null;
     offset?: number | null;
+    asOf?: Date | null;
+    includeProjectSnapshots?: boolean;
   }
 ): Promise<EntityRecord[]> => {
   const {
@@ -105,7 +109,9 @@ export const listEntities = async (
     projectScope = 'all',
     view = 'full',
     limit,
-    offset = 0
+    offset = 0,
+    asOf = null,
+    includeProjectSnapshots = true
   } = options;
   const safeOffset = Math.max(Math.trunc(offset ?? 0), 0);
   const safeLimit = limit == null ? null : Math.max(Math.trunc(limit), 1);
@@ -118,7 +124,9 @@ export const listEntities = async (
       conditions,
       projectId,
       projectScope,
-      view
+      view,
+      asOf,
+      includeProjectSnapshots
     });
     const windowed =
       safeLimit != null ? rows.slice(safeOffset, safeOffset + safeLimit) : rows.slice(safeOffset);
@@ -140,6 +148,8 @@ export const countEntities = async (
     conditions?: FilterCondition[];
     projectId?: string | null;
     projectScope?: 'project' | 'all';
+    asOf?: Date | null;
+    includeProjectSnapshots?: boolean;
   }
 ): Promise<number> => {
   const rows = await collectEntities(db, workspace, authCtx, {
@@ -150,7 +160,9 @@ export const countEntities = async (
     conditions: options.conditions ?? [],
     projectId: options.projectId ?? null,
     projectScope: options.projectScope ?? 'all',
-    view: 'full'
+    view: 'full',
+    asOf: options.asOf ?? null,
+    includeProjectSnapshots: options.includeProjectSnapshots ?? true
   });
   return rows.length;
 };
@@ -168,6 +180,8 @@ const collectEntities = async (
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     view?: 'summary' | 'full';
+    asOf?: Date | null;
+    includeProjectSnapshots?: boolean;
   }
 ): Promise<CollectedEntity[]> => {
   const {
@@ -178,7 +192,9 @@ const collectEntities = async (
     conditions = [],
     projectId = null,
     projectScope = 'all',
-    view = 'full'
+    view = 'full',
+    asOf = null,
+    includeProjectSnapshots = true
   } = options;
   // _completeness is computed post-fetch; all other conditions can be evaluated in SQL
   const sqlConditions = conditions.filter(c => c.fieldId !== '_completeness');
@@ -190,6 +206,62 @@ const collectEntities = async (
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   const rows: CollectedEntity[] = [];
+
+  const processEntity = (entity: EntityDbResult, extraConditions: FilterCondition[]) => {
+    if (authCtx && !checker.hasEntityPermission(authCtx, entity, 'view_entity')) return;
+    // In asOf mode, candidateEntityIds passed to reconstructEntitiesAsOf already scopes to
+    // project-linked entities as of that date; the live projectEntityMap doesn't apply here.
+    if (!asOf && projectId && projectScope === 'project' && !projectEntityMap.has(entity.id)) return;
+
+    const schema = schemaMap.get(entity.schema_id);
+    const completeness = schema != null ? computeEntityCompleteness(entity, schema) : null;
+    if (
+      extraConditions.length > 0 &&
+      !extraConditions.every(c => matchesFilterCondition(entity, c, completeness))
+    ) {
+      return;
+    }
+
+    rows.push({
+      entity:
+        view === 'summary'
+          ? (attachProjectLink(
+              toApiEntitySummary(entity, authCtx, completeness) as EntityRecord,
+              entity.id,
+              projectId,
+              projectEntityMap
+            ) as EntityRecord)
+          : attachProjectLink(
+              toApiEntity(entity, authCtx, completeness),
+              entity.id,
+              projectId,
+              projectEntityMap
+            ),
+      completeness
+    });
+  };
+
+  if (asOf) {
+    let candidateEntityIds: string[] | undefined;
+    if (projectId && projectScope === 'project') {
+      const links = await db.project.listProjectEntityLinks(workspace, projectId);
+      candidateEntityIds = links.filter(link => link.created_at <= asOf).map(link => link.entity_id);
+    }
+    const reconstructed = await reconstructEntitiesAsOf(
+      db,
+      workspace,
+      asOf,
+      authCtx,
+      candidateEntityIds,
+      includeProjectSnapshots
+    );
+    const filtered = filterEntities(reconstructed, { schemaId, owner, lifecycle, q: q ?? '' });
+    for (const entity of filtered) {
+      processEntity(entity, conditions);
+    }
+    return rows;
+  }
+
   const dbPageSize = ENTITY_DEFAULTS.PAGE_SIZE;
   let dbOffset = 0;
 
@@ -212,35 +284,7 @@ const collectEntities = async (
     if (page.length === 0) break;
 
     for (const entity of page) {
-      if (authCtx && !checker.hasEntityPermission(authCtx, entity, 'view_entity')) continue;
-      if (projectId && projectScope === 'project' && !projectEntityMap.has(entity.id)) continue;
-
-      const schema = schemaMap.get(entity.schema_id);
-      const completeness = schema != null ? computeEntityCompleteness(entity, schema) : null;
-      if (
-        completenessConditions.length > 0 &&
-        !completenessConditions.every(c => matchesFilterCondition(entity, c, completeness))
-      ) {
-        continue;
-      }
-
-      rows.push({
-        entity:
-          view === 'summary'
-            ? (attachProjectLink(
-                toApiEntitySummary(entity, authCtx, completeness) as EntityRecord,
-                entity.id,
-                projectId,
-                projectEntityMap
-              ) as EntityRecord)
-            : attachProjectLink(
-                toApiEntity(entity, authCtx, completeness),
-                entity.id,
-                projectId,
-                projectEntityMap
-              ),
-        completeness
-      });
+      processEntity(entity, completenessConditions);
     }
 
     if (page.length < dbPageSize) break;
@@ -248,6 +292,14 @@ const collectEntities = async (
   }
 
   return rows;
+};
+
+export const getTimelineMarkers = async (db: DatabaseAdapter, workspace: string) => {
+  try {
+    return await db.catalog.listTimelineMarkers(workspace);
+  } catch (error) {
+    return handleError(error, 'Failed to retrieve timeline markers');
+  }
 };
 
 export const getEntityFacets = async (
@@ -802,6 +854,21 @@ export const deleteEntity = async (
 
     const watcherUserIds = await db.watch.listWatcherUserIds(workspace, row.id);
     await db.catalog.deleteEntity(workspace, row.id);
+
+    await db.catalog.createSnapshot({
+      id: randomUUID(),
+      workspace,
+      entity_id: row.id,
+      status: 'deleted',
+      project_id: null,
+      target_date: null,
+      commit_message: null,
+      created_at: new Date(),
+      created_by: actor.id,
+      created_by_name: actor.displayName,
+      base_state: entityToBaseState(row),
+      proposed_state: null
+    });
 
     await logAudit(db, {
       workspace,

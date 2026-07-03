@@ -4,6 +4,7 @@ import type {
   ProjectDatabase,
   ProjectEntityDbCreate,
   ProjectEntityDbResult,
+  ProjectEntityLinkDbResult,
   ContentNodeDbResult,
   ProjectDbUpdate,
   ContentNodeDbUpsert,
@@ -701,6 +702,14 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
       WHERE pe.workspace = ${workspace} AND pe.project_id = ${projectId}
       ORDER BY e.name
+    `;
+  }
+
+  async listProjectEntityLinks(workspace: string, projectId: string) {
+    return await this.sql<ProjectEntityLinkDbResult[]>`
+      SELECT entity_id, created_at
+      FROM project_entity
+      WHERE workspace = ${workspace} AND project_id = ${projectId}
     `;
   }
 

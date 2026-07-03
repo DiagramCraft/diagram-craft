@@ -84,7 +84,19 @@ const listFiltersSchema = z.object({
   q: z.string().optional().describe('Search query string'),
   conditions: z.string().optional().describe('JSON-encoded filter conditions'),
   projectId: z.string().optional().describe('Filter by project identifier'),
-  projectScope: z.enum(['project', 'all']).optional().describe('Project scope filter')
+  projectScope: z.enum(['project', 'all']).optional().describe('Project scope filter'),
+  asOf: z
+    .string()
+    .optional()
+    .describe(
+      'ISO 8601 date/time — if set, return entities reconstructed as they existed/will exist at this point in time (read-only snapshot mode)'
+    ),
+  includeProjectSnapshots: z
+    .enum(['true', 'false'])
+    .optional()
+    .describe(
+      'When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true.'
+    )
 });
 
 const deleteEntityResponseSchema = z.object({
@@ -102,6 +114,12 @@ const entityFacetBucketSchema = z.object({
   label: z.string().describe('Facet bucket label'),
   value: z.string().nullable().describe('Facet bucket value'),
   count: z.number().int().describe('Number of entities in this bucket')
+});
+
+const timelineMarkerSchema = z.object({
+  date: z.string().describe('ISO 8601 date (YYYY-MM-DD)'),
+  type: z.enum(['future_update', 'saved_version', 'applied']).describe('Marker event type'),
+  count: z.number().int().describe('Number of events on this date')
 });
 
 const entityFacetsSchema = z.object({
@@ -198,7 +216,9 @@ const entitySnapshotSchema = z.object({
   id: z.string().describe('Snapshot identifier'),
   workspace: z.string().describe('Workspace identifier'),
   entity_id: z.string().describe('Entity identifier'),
-  status: z.enum(['autosave', 'saved_version', 'future_update', 'applied']).describe('Snapshot status'),
+  status: z
+    .enum(['autosave', 'saved_version', 'future_update', 'applied', 'deleted'])
+    .describe('Snapshot status'),
   project_id: z.string().nullable().describe('Associated project identifier'),
   target_date: z.string().nullable().describe('Target date for future update (ISO 8601)'),
   commit_message: z.string().nullable().describe('Commit message describing the changes'),
@@ -312,6 +332,17 @@ export const workspaceEntityContract = oc
         })
         .input(z.object({ params: ws }))
         .output(entityFacetsSchema),
+      timelineMarkers: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/data/timeline-markers',
+          inputStructure: 'detailed',
+          summary: 'Get timeline markers for point-in-time browsing',
+          description: 'Retrieves distinct dates with future_update target dates and saved_version promotions, for use as markers in the point-in-time snapshot date picker.',
+          tags: ['Entities']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(timelineMarkerSchema)),
       tree: oc
         .route({
           method: 'GET',
@@ -680,3 +711,4 @@ export type EntityDependent = z.infer<typeof entityDependentSchema>;
 export type EntityDependents = z.infer<typeof entityDependentsSchema>;
 export type TreeResponse = z.infer<typeof treeResponseSchema>;
 export type EntitySnapshot = z.infer<typeof entitySnapshotSchema>;
+export type TimelineMarker = z.infer<typeof timelineMarkerSchema>;

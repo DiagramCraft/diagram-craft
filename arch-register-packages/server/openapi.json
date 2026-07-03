@@ -3365,6 +3365,30 @@
             "allowReserved": true
           },
           {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "ISO 8601 date/time — if set, return entities reconstructed as they existed/will exist at this point in time (read-only snapshot mode)"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "includeProjectSnapshots",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string",
+              "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "limit",
             "in": "query",
             "schema": {
@@ -4266,6 +4290,30 @@
             },
             "allowEmptyValue": true,
             "allowReserved": true
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "ISO 8601 date/time — if set, return entities reconstructed as they existed/will exist at this point in time (read-only snapshot mode)"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "includeProjectSnapshots",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string",
+              "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -4463,6 +4511,68 @@
         }
       }
     },
+    "/{workspace}/data/timeline-markers": {
+      "get": {
+        "operationId": "entities.timelineMarkers",
+        "summary": "Get timeline markers for point-in-time browsing",
+        "description": "Retrieves distinct dates with future_update target dates and saved_version promotions, for use as markers in the point-in-time snapshot date picker.",
+        "tags": [
+          "Entities",
+          "Entities"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "date": {
+                        "type": "string",
+                        "description": "ISO 8601 date (YYYY-MM-DD)"
+                      },
+                      "type": {
+                        "enum": [
+                          "future_update",
+                          "saved_version",
+                          "applied"
+                        ],
+                        "type": "string",
+                        "description": "Marker event type"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Number of events on this date"
+                      }
+                    },
+                    "required": [
+                      "date",
+                      "type",
+                      "count"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/data/tree": {
       "get": {
         "operationId": "entities.tree",
@@ -4551,6 +4661,30 @@
               ],
               "type": "string",
               "description": "Project scope filter"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "ISO 8601 date/time — if set, return entities reconstructed as they existed/will exist at this point in time (read-only snapshot mode)"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "includeProjectSnapshots",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string",
+              "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -7284,6 +7418,30 @@
             },
             "allowEmptyValue": true,
             "allowReserved": true
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "ISO 8601 date/time — if set, return entities reconstructed as they existed/will exist at this point in time (read-only snapshot mode)"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "includeProjectSnapshots",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string",
+              "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -7385,7 +7543,8 @@
                           "autosave",
                           "saved_version",
                           "future_update",
-                          "applied"
+                          "applied",
+                          "deleted"
                         ],
                         "type": "string",
                         "description": "Snapshot status"
@@ -7588,7 +7747,8 @@
                         "autosave",
                         "saved_version",
                         "future_update",
-                        "applied"
+                        "applied",
+                        "deleted"
                       ],
                       "type": "string",
                       "description": "Snapshot status"
@@ -7744,7 +7904,8 @@
                           "autosave",
                           "saved_version",
                           "future_update",
-                          "applied"
+                          "applied",
+                          "deleted"
                         ],
                         "type": "string",
                         "description": "Snapshot status"
@@ -7951,7 +8112,8 @@
                         "autosave",
                         "saved_version",
                         "future_update",
-                        "applied"
+                        "applied",
+                        "deleted"
                       ],
                       "type": "string",
                       "description": "Snapshot status"
@@ -8130,7 +8292,8 @@
                         "autosave",
                         "saved_version",
                         "future_update",
-                        "applied"
+                        "applied",
+                        "deleted"
                       ],
                       "type": "string",
                       "description": "Snapshot status"
@@ -8316,7 +8479,8 @@
                         "autosave",
                         "saved_version",
                         "future_update",
-                        "applied"
+                        "applied",
+                        "deleted"
                       ],
                       "type": "string",
                       "description": "Snapshot status"
@@ -8495,7 +8659,8 @@
                         "autosave",
                         "saved_version",
                         "future_update",
-                        "applied"
+                        "applied",
+                        "deleted"
                       ],
                       "type": "string",
                       "description": "Snapshot status"

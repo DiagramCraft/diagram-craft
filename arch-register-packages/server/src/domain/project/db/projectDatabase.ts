@@ -139,6 +139,11 @@ export type ProjectEntityDbResult = {
   is_done: boolean;
 };
 
+export type ProjectEntityLinkDbResult = {
+  entity_id: string;
+  created_at: Date;
+};
+
 export type ProjectEntityDbCreate = {
   workspace: string;
   project_id: string;
@@ -291,6 +296,7 @@ export type ProjectDatabase = {
   ): Promise<ContentNodeDbResult[]>;
 
   listProjectEntities(ws: string, projectId: string): Promise<ProjectEntityDbResult[]>;
+  listProjectEntityLinks(ws: string, projectId: string): Promise<ProjectEntityLinkDbResult[]>;
   addProjectEntity(input: ProjectEntityDbCreate): Promise<ProjectEntityDbResult>;
   updateProjectEntity(
     ws: string,

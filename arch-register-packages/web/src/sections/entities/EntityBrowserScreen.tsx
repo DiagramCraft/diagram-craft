@@ -12,7 +12,12 @@ import {
   TbCheck,
   TbCopy
 } from 'react-icons/tb';
-import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useEntities';
+import {
+  useSavedViews,
+  useCreateSavedView,
+  useUpdateSavedView,
+  useTimelineMarkers
+} from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import {
@@ -37,6 +42,7 @@ export const EntityBrowserScreen = () => {
   const [count, setCount] = useState(0);
   const [isSavingView, setIsSavingView] = useState(false);
   const { data: savedViews = [] } = useSavedViews(workspaceId);
+  const { data: timelineMarkers = [] } = useTimelineMarkers(workspaceId);
   const createSavedViewMutation = useCreateSavedView(workspaceId);
   const updateSavedViewMutation = useUpdateSavedView(workspaceId);
   const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
@@ -44,6 +50,8 @@ export const EntityBrowserScreen = () => {
   const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
   const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
   const view = search.viewMode ?? 'table';
+  const asOf = search.asOf;
+  const readOnly = !!asOf;
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
   const viewConfigs = useMemo(() => parseViewConfigs(search.viewConfigs), [search.viewConfigs]);
@@ -145,7 +153,7 @@ export const EntityBrowserScreen = () => {
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
 
-    if (permissions.canManageViews) {
+    if (permissions.canManageViews && !readOnly) {
       if (activeSavedView != null) {
         items.push({
           label: `Save View (${activeSavedView.name})`,
@@ -167,7 +175,7 @@ export const EntityBrowserScreen = () => {
       onClick: handleExport
     });
 
-    if (permissions.canCreateEntities) {
+    if (permissions.canCreateEntities && !readOnly) {
       items.push({
         label: 'Import CSV',
         icon: <TbUpload size={14} />,
@@ -188,6 +196,7 @@ export const EntityBrowserScreen = () => {
     navigate,
     permissions.canCreateEntities,
     permissions.canManageViews,
+    readOnly,
     typeFilter,
     workspaceSlug
   ]);
@@ -206,7 +215,7 @@ export const EntityBrowserScreen = () => {
           }
           description="Search, filter, and inspect everything in the IT landscape."
           buttons={
-            permissions.canCreateEntities ? (
+            !readOnly && permissions.canCreateEntities ? (
               <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
                 New entity
               </Button>
@@ -221,7 +230,7 @@ export const EntityBrowserScreen = () => {
         />
       </div>
 
-      <EntityBrowser onCountChange={setCount} />
+      <EntityBrowser onCountChange={setCount} timelineMarkers={timelineMarkers} />
 
       <SaveViewDialog
         open={isSavingView}

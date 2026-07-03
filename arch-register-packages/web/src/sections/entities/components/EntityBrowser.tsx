@@ -29,11 +29,13 @@ import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
 import { useEntityBrowserPagination } from './useEntityBrowserPagination';
 import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
+import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
 import styles from './EntityBrowser.module.css';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
   onCountChange?: (count: number) => void;
+  timelineMarkers?: AsOfMarker[];
 };
 
 export const SaveViewDialog = ({
@@ -46,7 +48,12 @@ export const SaveViewDialog = ({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, description: string, scope: 'workspace' | 'project', isAdminView: boolean) => void;
+  onSave: (
+    name: string,
+    description: string,
+    scope: 'workspace' | 'project',
+    isAdminView: boolean
+  ) => void;
   scopeOptions?: Array<{ value: 'workspace' | 'project'; label: string }>;
   defaultScope?: 'workspace' | 'project';
   showAdminOption?: boolean;
@@ -119,11 +126,16 @@ export const SaveViewDialog = ({
           </FormElement>
         )}
         {showAdminOption && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
-            <Checkbox
-              value={isAdminView}
-              onChange={v => setIsAdminView(v ?? false)}
-            />
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            <Checkbox value={isAdminView} onChange={v => setIsAdminView(v ?? false)} />
             <span>Pin as workspace view (visible to all members)</span>
           </label>
         )}
@@ -132,12 +144,21 @@ export const SaveViewDialog = ({
   );
 };
 
-export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserProps) => {
+export const EntityBrowser = ({
+  projectContext,
+  onCountChange,
+  timelineMarkers = []
+}: EntityBrowserProps) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas, enums, lifecycleStates, teams, projects } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const projectId = projectContext?.project.id;
   const {
+    asOf,
+    includeProjectSnapshots,
+    setAsOf,
+    clearAsOf,
+    setIncludeProjectSnapshots,
     conditions,
     activeViewConfig,
     ownerFilter,
@@ -157,6 +178,8 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     workspaceSlug,
     projectId
   });
+  const readOnly = !!asOf;
+  const [tlOpen, setTlOpen] = useState(!!asOf);
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
     useEntityBrowserPagination({
@@ -192,6 +215,8 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
     view,
     pageIndex,
     pageSize,
+    asOf,
+    includeProjectSnapshots: projectId ? true : includeProjectSnapshots,
     onCountChange
   });
 
@@ -278,7 +303,23 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
         sortOptions={sortOptions}
         view={view}
         setView={setView}
+        readOnly={readOnly}
+        tlOpen={tlOpen}
+        onToggleTimeline={() => setTlOpen(o => !o)}
+        asOf={asOf}
       />
+      {tlOpen && (
+        <TimelineStrip
+          markers={timelineMarkers}
+          selectedDate={asOf}
+          onSelect={setAsOf}
+          onClear={clearAsOf}
+          onClose={() => setTlOpen(false)}
+          includeProjectSnapshots={projectId ? undefined : includeProjectSnapshots}
+          onToggleIncludeProjectSnapshots={projectId ? undefined : setIncludeProjectSnapshots}
+        />
+      )}
+
       {view === 'hierarchy' ? (
         <HierarchyView
           workspaceId={workspaceId}
@@ -345,6 +386,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
           onClone={handleCloneEntity}
           lifecycleStates={lifecycleStates}
           projectContext={projectContext}
+          readOnly={readOnly}
         />
       ) : filtered.length === 0 ? (
         <div className={styles.empty}>
@@ -353,7 +395,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
         </div>
       ) : (
         <>
-          {view === 'table' && selectedIds.size > 0 && (
+          {view === 'table' && !readOnly && selectedIds.size > 0 && (
             <BulkEditToolbar
               workspaceId={workspaceId}
               count={selectedIds.size}
@@ -385,6 +427,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
               onSelectRow={handleSelectRow}
               lifecycleStates={lifecycleStates}
               projectContext={projectContext}
+              readOnly={readOnly}
             />
           )}
           {view === 'cards' && (
@@ -396,6 +439,7 @@ export const EntityBrowser = ({ projectContext, onCountChange }: EntityBrowserPr
               onClone={handleCloneEntity}
               lifecycleStates={lifecycleStates}
               projectContext={projectContext}
+              readOnly={readOnly}
             />
           )}
         </>
