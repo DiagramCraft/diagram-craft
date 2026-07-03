@@ -25117,7 +25117,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "description": "Filter by entity type (workspace, entity_schema, entity, project, content_node)"
+              "description": "Filter by entity type (workspace, entity_schema, entity, project, content_node, assessment)"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -25277,7 +25277,8 @@
                           "entity_schema",
                           "entity",
                           "project",
-                          "content_node"
+                          "content_node",
+                          "assessment"
                         ],
                         "type": "string",
                         "description": "Type of entity affected"
