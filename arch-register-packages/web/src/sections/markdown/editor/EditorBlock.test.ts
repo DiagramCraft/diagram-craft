@@ -113,10 +113,17 @@ describe('copyBlockToClipboard', () => {
   it('returns false and does not throw when writeText rejects', async () => {
     const editor = makeFakeEditor([{ type: 'p', children: [{ text: '' }] }]);
     const writeText = vi.fn().mockRejectedValue(new Error('permission denied'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const result = await copyBlockToClipboard(editor, 0, { writeText });
 
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to copy block to clipboard',
+      expect.any(Error)
+    );
     expect(result).toBe(false);
+
+    consoleError.mockRestore();
   });
 
   it('is a no-op returning false when there is no node at the given index', async () => {
@@ -158,11 +165,18 @@ describe('pasteBlockFromClipboard', () => {
   it('no-ops without throwing when readText rejects', async () => {
     const editor = makeFakeEditor([{ type: 'p', children: [{ text: '' }] }]);
     const readText = vi.fn().mockRejectedValue(new Error('permission denied'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const result = await pasteBlockFromClipboard(editor, 0, { readText });
 
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to paste block from clipboard',
+      expect.any(Error)
+    );
     expect(editor.tf.insertNodes).not.toHaveBeenCalled();
     expect(result).toBe(false);
+
+    consoleError.mockRestore();
   });
 });
 

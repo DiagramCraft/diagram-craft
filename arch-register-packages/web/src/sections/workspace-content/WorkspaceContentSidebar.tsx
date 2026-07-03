@@ -73,7 +73,11 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const [uploadFolder, setUploadFolder] = useState<string | null>(null);
   const navigate = useNavigate();
   const params = useParams({ strict: false }) as { diagramId?: string; nodeId?: string };
-  const search = useSearch({ strict: false }) as { contentFolder?: string };
+  const search = useSearch({ strict: false }) as {
+    contentFolder?: string;
+    contentQuery?: string;
+    contentView?: 'grid' | 'list';
+  };
   const contentFolder = search.contentFolder;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
   const isFileRoute = activeFileId !== null;
@@ -388,7 +392,11 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
             navigate({
               to: '/$workspaceSlug/content',
               params: { workspaceSlug },
-              search: { contentFolder: node.path }
+              search: {
+                contentFolder: node.path,
+                contentQuery: search.contentQuery,
+                contentView: search.contentView
+              }
             })
           }
           onContextMenu={e => {
@@ -492,7 +500,12 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
           onClick={() =>
             navigate({
               to: '/$workspaceSlug/content',
-              params: { workspaceSlug }
+              params: { workspaceSlug },
+              search: {
+                contentFolder: undefined,
+                contentQuery: search.contentQuery,
+                contentView: search.contentView
+              }
             })
           }
         />

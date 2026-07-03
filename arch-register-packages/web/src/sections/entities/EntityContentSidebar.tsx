@@ -114,7 +114,12 @@ export const EntityContentSidebar = ({
   const ctx = useWorkspaceContext();
   const navigate = useNavigate();
   const params = useParams({ strict: false }) as { diagramId?: string; nodeId?: string };
-  const search = useSearch({ strict: false }) as { contentFolder?: string };
+  const search = useSearch({ strict: false }) as {
+    contentFolder?: string;
+    contentQuery?: string;
+    contentView?: 'grid' | 'list';
+    tab?: string;
+  };
   const contentFolder = search.contentFolder;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
   const isFileRoute = activeFileId !== null;
@@ -420,7 +425,10 @@ export const EntityContentSidebar = ({
           onClick={() => {
             navigate(
               entityDetailRoute(workspaceSlug, asEntityPublicId(entityId), {
-                contentFolder: node.path
+                contentFolder: node.path,
+                contentQuery: search.contentQuery,
+                contentView: search.contentView,
+                tab: search.tab
               })
             );
           }}
@@ -545,7 +553,12 @@ export const EntityContentSidebar = ({
           icon={<TbHome size={13} />}
           active={!contentFolder && !isFileRoute}
           onClick={() => {
-            navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
+            navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId), {
+              contentFolder: undefined,
+              contentQuery: search.contentQuery,
+              contentView: search.contentView,
+              tab: search.tab
+            }));
           }}
         />
         {data?.rootFiles.map(file => (
