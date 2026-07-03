@@ -45,5 +45,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Check OpenAPI spec is up to date
+        run: pnpm --filter @arch-register/server openapi:check
+
       - name: Run API tests
         run: pnpm --filter @arch-register/e2e test:api

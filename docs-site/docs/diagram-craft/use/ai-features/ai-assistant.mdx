@@ -1,0 +1,60 @@
+---
+sidebar_position: 3
+---
+
+# AI Assistant
+
+The AI Assistant is best used as a drafting and restructuring tool. Give it a concrete prompt, let it produce a first pass, then review and refine the result like any other generated content.
+
+## What It Can Help With
+
+- creating a first-pass diagram from a short description
+- extending an existing diagram with more steps or systems
+- restructuring a rough diagram into something clearer
+- suggesting a cleaner breakdown before you do manual polish
+
+## How The Workflow Fits Normal Use
+
+The assistant sees the current diagram context and can generate changes against it. In practice, that means you can use it in two modes:
+
+- start from a blank or simple draft and ask for a new structure
+- start from an existing diagram and ask for additions or targeted changes
+
+After the result lands on the canvas, treat it as a draft. Check labels, shape choices, edge directions, and overall layout before you keep going.
+
+## Prompt Patterns That Work Well
+
+Be specific about scope, not just topic. Good prompts usually include the diagram type, the main steps or systems, and any important constraints.
+
+```text
+Create a simple incident response flow with triage, escalation, containment, recovery, and review.
+```
+
+```text
+Add a database, a background worker, and an audit trail to the current order-processing diagram.
+```
+
+```text
+Restructure this flow so approvals are clearer and label the decision branches.
+```
+
+## Realistic Expectations
+
+- Results are draft quality, not final communication design.
+- Broad prompts can create broad changes.
+- The quality of the result depends on the configured AI backend.
+- You still need human review for correctness, tone, and fidelity to your domain.
+
+## Privacy And Data Flow
+
+The current diagram context is sent to the configured AI endpoint so the assistant can create or modify content in place. Use that workflow only when your deployment and data-handling setup are appropriate for the material in the diagram.
+
+## When To Prefer Other Tools
+
+Use the `Text` panel when you already know the exact structural edits you want. Use manual editing when the remaining work is mostly visual polish.
+
+## Related Reading
+
+- [Text-to-Diagram](text-to-diagram)
+- [Diagram-to-Text](diagram-to-text)
+- [Manual Refinement](../layout/manual-refinement)

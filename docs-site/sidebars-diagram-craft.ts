@@ -163,7 +163,6 @@ const sidebars: SidebarsConfig = {
       label: 'Stencils and Templates',
       items: [
         'stencils-templates/built-in-stencils',
-        'stencils-templates/custom-stencils',
         'stencils-templates/diagram-templates'
       ]
     },

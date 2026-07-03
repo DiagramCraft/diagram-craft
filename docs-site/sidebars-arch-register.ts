@@ -58,6 +58,11 @@ const sidebars: SidebarsConfig = {
         'reference/project-content-screen-reference',
         'reference/api-integrations'
       ]
+    },
+    {
+      type: 'link',
+      label: 'API Reference',
+      href: 'pathname:///arch-register/api.html'
     }
   ],
 };
