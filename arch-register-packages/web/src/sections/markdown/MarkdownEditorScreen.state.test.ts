@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  enterMarkdownEditMode,
-  exitMarkdownEditMode,
-  getInitialMarkdownEditorScreenState,
-  openMarkdownHistory,
-  selectMarkdownEditPane,
-  syncMarkdownEditorScreenState
-} from './MarkdownEditorScreen.state';
+import { getInitialMarkdownEditorScreenState } from './MarkdownEditorScreen.state';
 
 describe('MarkdownEditorScreen state', () => {
   it('starts an edit session in edit pane when the route requests edit mode', () => {
@@ -17,24 +10,8 @@ describe('MarkdownEditorScreen state', () => {
     });
   });
 
-  it('keeps preview as a pane inside the editing session', () => {
-    expect(selectMarkdownEditPane('preview')).toEqual({
-      screenMode: 'edit',
-      paneMode: 'preview',
-      viewPanel: 'preview'
-    });
-  });
-
-  it('allows switching between edit panes without leaving edit mode', () => {
-    expect(selectMarkdownEditPane('raw')).toEqual({
-      screenMode: 'edit',
-      paneMode: 'raw',
-      viewPanel: 'preview'
-    });
-  });
-
-  it('exits editing when saving and closing', () => {
-    expect(exitMarkdownEditMode()).toEqual({
+  it('derives preview mode directly from the route', () => {
+    expect(getInitialMarkdownEditorScreenState('preview', 'preview')).toEqual({
       screenMode: 'preview',
       paneMode: 'preview',
       viewPanel: 'preview'
@@ -42,17 +19,7 @@ describe('MarkdownEditorScreen state', () => {
   });
 
   it('opens history outside the editing session', () => {
-    expect(openMarkdownHistory()).toEqual({
-      screenMode: 'preview',
-      paneMode: 'preview',
-      viewPanel: 'history'
-    });
-  });
-
-  it('syncs local state from preview route state', () => {
-    expect(
-      syncMarkdownEditorScreenState(enterMarkdownEditMode(), 'preview', 'history')
-    ).toEqual({
+    expect(getInitialMarkdownEditorScreenState('preview', 'history')).toEqual({
       screenMode: 'preview',
       paneMode: 'preview',
       viewPanel: 'history'

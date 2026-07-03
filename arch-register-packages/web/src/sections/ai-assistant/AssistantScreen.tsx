@@ -443,6 +443,7 @@ const ChatHistory = ({
               <div
                 key={c.id}
                 className={`${styles.historyItem} ${c.id === activeId ? styles.historyItemActive : ''}`}
+                aria-current={c.id === activeId ? 'page' : undefined}
                 onClick={() => onSelect(c.id)}
               >
                 <span
@@ -532,12 +533,6 @@ export const AssistantScreen = () => {
 
   const conversationId = search.conversation;
 
-  // chatSessionId is the stable identity passed to useChat as its `id` prop.
-  // It only changes on explicit user actions (sidebar click, new-chat button, delete).
-  // Auto-navigation inside sendMessage updates the URL but NOT chatSessionId, so
-  // the hook never reinitializes mid-stream.
-  const [chatSessionId, setChatSessionId] = useState<string>(() => conversationId ?? 'new');
-
   // Conversations
   const { data: conversations = [] } = useAiConversations(workspaceSlug);
   const createConversation = useCreateConversation(workspaceSlug);
@@ -550,7 +545,7 @@ export const AssistantScreen = () => {
 
   // conversationId (from URL) is passed so the connection factory can include it
   // in the x-ar-conversation-id header on every request.
-  const chat = useAiChat(workspaceSlug, chatSessionId, conversationId);
+  const chat = useAiChat(workspaceSlug, conversationId ?? 'new', conversationId);
 
   // Invalidate sidebar and messages queries when a streaming response finishes.
   const wasLoadingRef = useRef(false);
@@ -594,10 +589,8 @@ export const AssistantScreen = () => {
     if (el) el.scrollTop = el.scrollHeight;
   }, [visibleMessages.length, chat.isLoading]);
 
-  // Explicit navigation — reinitializes the chat session for the new conversation.
   const selectConversation = useCallback(
     (id: string) => {
-      setChatSessionId(id);
       navigate({
         to: '/$workspaceSlug/assistant',
         params: { workspaceSlug },
@@ -623,7 +616,6 @@ export const AssistantScreen = () => {
 
   const handleNew = useCallback(async () => {
     const conv = await createConversation.mutateAsync(undefined);
-    setChatSessionId(conv.id);
     navigate({
       to: '/$workspaceSlug/assistant',
       params: { workspaceSlug },
@@ -644,7 +636,6 @@ export const AssistantScreen = () => {
     (id: string) => {
       deleteConversation.mutate(id);
       if (id === conversationId) {
-        setChatSessionId('new');
         navigate({
           to: '/$workspaceSlug/assistant',
           params: { workspaceSlug }

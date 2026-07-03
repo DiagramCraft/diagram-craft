@@ -31,12 +31,7 @@ import {
 } from '../../routes/publicObjectRoutes';
 import {
   deriveMarkdownEditorTitleView,
-  enterMarkdownEditMode,
-  exitMarkdownEditMode,
   getInitialMarkdownEditorScreenState,
-  openMarkdownHistory,
-  selectMarkdownEditPane,
-  syncMarkdownEditorScreenState,
   type MarkdownPaneMode,
   type MarkdownScreenMode,
   type MarkdownViewPanel
@@ -115,8 +110,12 @@ export const MarkdownEditorScreen = () => {
   });
 
   const [body, setBody] = useState('');
-  const [screenState, setScreenState] = useState(() =>
-    getInitialMarkdownEditorScreenState(requestedMode, requestedPanel)
+  const [paneMode, setPaneMode] = useState<MarkdownPaneMode>(
+    requestedMode === 'edit' ? 'edit' : 'preview'
+  );
+  const screenState = useMemo(
+    () => ({ ...getInitialMarkdownEditorScreenState(requestedMode, requestedPanel), paneMode }),
+    [paneMode, requestedMode, requestedPanel]
   );
   const [dirty, setDirty] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -155,19 +154,16 @@ export const MarkdownEditorScreen = () => {
         historyMode: 'preview' | 'compare' | undefined;
         compareMode: 'to-current' | 'changes-in-version' | undefined;
         diagramSessionId: string | undefined;
-      }>
+      }>,
+      replace = false
     ) => {
       navigate({
         search: (prev: Record<string, unknown>) =>
           ({
             ...prev,
-            mode: next.mode,
-            panel: next.panel,
-            revisionId: next.revisionId,
-            historyMode: next.historyMode,
-            compareMode: next.compareMode,
-            diagramSessionId: next.diagramSessionId
-          }) as never
+            ...next
+          }) as never,
+        replace
       });
     },
     [navigate]
@@ -189,18 +185,18 @@ export const MarkdownEditorScreen = () => {
     projectId,
     entityId,
     initialSessionId: search.diagramSessionId ?? newid(),
-    onSessionIdChange: sid => updateSearch({ diagramSessionId: sid })
+    onSessionIdChange: sid => updateSearch({ diagramSessionId: sid }, true)
   });
 
   const hasUnsavedChanges = dirty || hasPendingDiagramChanges;
 
   const exitMarkdownEditor = useCallback(() => {
-    setScreenState(exitMarkdownEditMode());
     updateSearch({
       mode: 'preview',
       panel: 'preview',
       revisionId: undefined,
       historyMode: undefined,
+      compareMode: undefined,
       diagramSessionId: undefined
     });
   }, [updateSearch]);
@@ -260,13 +256,13 @@ export const MarkdownEditorScreen = () => {
   }, [nodeId, resetForNewDocument, handleCancelClose, clearCloseSummary]);
 
   useEffect(() => {
-    setScreenState(current => syncMarkdownEditorScreenState(current, requestedMode, requestedPanel));
-  }, [requestedMode, requestedPanel]);
+    setPaneMode(requestedMode === 'edit' ? 'edit' : 'preview');
+  }, [requestedMode]);
 
   useEffect(() => {
     if (requestedMode !== 'edit') return;
     if (search.diagramSessionId === sessionId) return;
-    updateSearch({ diagramSessionId: sessionId });
+    updateSearch({ diagramSessionId: sessionId }, true);
   }, [requestedMode, search.diagramSessionId, sessionId, updateSearch]);
 
   useEffect(() => {
@@ -285,11 +281,14 @@ export const MarkdownEditorScreen = () => {
   useEffect(() => {
     if (screenState.viewPanel !== 'history' || revisions.length === 0) return;
     if (selectedRevisionId) return;
-    updateSearch({
-      mode: 'preview',
-      panel: 'history',
-      revisionId: revisions[0]!.id
-    });
+    updateSearch(
+      {
+        mode: 'preview',
+        panel: 'history',
+        revisionId: revisions[0]!.id
+      },
+      true
+    );
   }, [revisions, screenState.viewPanel, selectedRevisionId, updateSearch]);
 
   const handleChange = useCallback((value: string) => {
@@ -324,38 +323,41 @@ export const MarkdownEditorScreen = () => {
   }, [body, dirty, headingTitle, saveMutation, clearDiagramSessionState, clearCloseSummary, exitMarkdownEditor]);
 
   const handleEnterEdit = useCallback(() => {
-    setScreenState(enterMarkdownEditMode());
+    setPaneMode('edit');
     updateSearch({
       mode: 'edit',
       panel: undefined,
       revisionId: undefined,
+      historyMode: undefined,
+      compareMode: undefined,
       diagramSessionId: sessionId
     });
   }, [sessionId, updateSearch]);
 
   const handlePreview = useCallback(() => {
-    setScreenState(exitMarkdownEditMode());
     updateSearch({
       mode: 'preview',
       panel: 'preview',
       revisionId: undefined,
       historyMode: undefined,
+      compareMode: undefined,
       diagramSessionId: undefined
     });
   }, [updateSearch]);
 
   const handleOpenHistory = useCallback(() => {
-    setScreenState(openMarkdownHistory());
     updateSearch({
       mode: 'preview',
       panel: 'history',
       revisionId: revisions[0]?.id,
+      historyMode: undefined,
+      compareMode: undefined,
       diagramSessionId: undefined
     });
   }, [revisions, updateSearch]);
 
   const handleSelectPane = useCallback((paneMode: MarkdownPaneMode) => {
-    setScreenState(selectMarkdownEditPane(paneMode));
+    setPaneMode(paneMode);
   }, []);
 
   const handleRenameConfirm = useCallback(
