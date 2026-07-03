@@ -185,9 +185,7 @@ export const TimelineStrip = ({
             <Button size="xs" onClick={onClear}>
               &nbsp;Exit snapshot&nbsp;
             </Button>
-          ) : (
-            <></>
-          )}
+          ) : null}
           <button
             type="button"
             className={styles.closeBtn}

@@ -30,7 +30,6 @@ import { useEntityBrowserPagination } from './useEntityBrowserPagination';
 import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
 import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
-import { AsOfBanner } from '../../../components/AsOfBanner';
 import styles from './EntityBrowser.module.css';
 
 type EntityBrowserProps = {
