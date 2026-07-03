@@ -122,6 +122,8 @@ export const ProjectContentSidebar = ({
     section?: ProjectSection;
     dialog?: 'add-entity';
     viewId?: string;
+    contentQuery?: string;
+    contentView?: 'grid' | 'list';
   };
   const isEntitiesSection = search.section === 'entities';
   const section: ProjectSection = isEntitiesSection ? 'entities' : 'home';
@@ -172,7 +174,9 @@ export const ProjectContentSidebar = ({
         tab: search.tab,
         section: next.section ?? section,
         folder: next.folder,
-        dialog: search.dialog
+        dialog: search.dialog,
+        contentQuery: search.contentQuery,
+        contentView: search.contentView
       })
     );
   };
@@ -205,6 +209,8 @@ export const ProjectContentSidebar = ({
         section: 'entities',
         folder: undefined,
         dialog: undefined,
+        contentQuery: search.contentQuery,
+        contentView: search.contentView,
         ...toSavedViewSearch(view)
       })
     );
@@ -216,7 +222,9 @@ export const ProjectContentSidebar = ({
         tab: search.tab,
         section: 'entities',
         folder: folderFilter ?? undefined,
-        dialog: 'add-entity'
+        dialog: 'add-entity',
+        contentQuery: search.contentQuery,
+        contentView: search.contentView
       })
     );
   };

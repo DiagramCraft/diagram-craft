@@ -80,6 +80,8 @@ export const ProjectDetailScreen = () => {
     folder?: string;
     section?: ProjectSection;
     dialog?: 'add-entity';
+    contentQuery?: string;
+    contentView?: 'grid' | 'list';
   };
   const { workspaceSlug, teams, projectEntityTypes, schemas, lifecycleStates } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
@@ -87,10 +89,10 @@ export const ProjectDetailScreen = () => {
   const section: ProjectSection = search.section === 'entities' ? 'entities' : 'home';
   const pendingDialog = search.dialog;
   const contentFolderFilter = section === 'home' ? folderFilter : null;
+  const filter = search.contentQuery ?? '';
+  const viewMode = search.contentView ?? 'grid';
 
   const [editing, setEditing] = useState(false);
-  const [filter, setFilter] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
@@ -218,9 +220,30 @@ export const ProjectDetailScreen = () => {
       projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
         tab: search.tab as 'projects' | 'archive' | undefined,
         section: 'home',
-        dialog: undefined
+        dialog: undefined,
+        contentQuery: search.contentQuery,
+        contentView: search.contentView
       })
     );
+  };
+
+  const setFilter = (value: string) => {
+    navigate({
+      search: ((previous: Record<string, unknown>) => ({
+        ...previous,
+        contentQuery: value === '' ? undefined : value
+      })) as never,
+      replace: true
+    });
+  };
+
+  const setViewMode = (value: 'grid' | 'list') => {
+    navigate({
+      search: ((previous: Record<string, unknown>) => ({
+        ...previous,
+        contentView: value === 'grid' ? undefined : value
+      })) as never
+    });
   };
 
   const handleNavigateDiagram = (diagramId: string) => {
@@ -239,7 +262,9 @@ export const ProjectDetailScreen = () => {
         tab: search.tab as 'projects' | 'archive' | undefined,
         folder: folderFilter ?? undefined,
         section,
-        dialog: undefined
+        dialog: undefined,
+        contentQuery: search.contentQuery,
+        contentView: search.contentView
       }),
       replace: true
     });

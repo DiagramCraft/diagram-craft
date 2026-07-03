@@ -93,4 +93,34 @@ test.describe('projects section', () => {
     await projectsPage.expectProjectOpened(projectName);
     await projectsPage.expectProjectInSidebarGroup('Active Projects', projectName);
   });
+
+  test('restores project content filter and view mode without colliding with entity browser params', async ({ page }) => {
+    await page.goto(
+      `/${defaultWorkspace.slug}/projects/${authMigrationProject.id}?tab=projects&section=home&q=auth&viewMode=timeline`
+    );
+
+    const filterInput = page.getByPlaceholder('Filter diagrams…');
+    const listViewButton = page.locator('button[title="List view"]');
+    const gridViewButton = page.locator('button[title="Grid view"]');
+
+    await filterInput.fill('migration');
+    await listViewButton.click();
+
+    await expect(page).toHaveURL(/q=auth/);
+    await expect(page).toHaveURL(/viewMode=timeline/);
+    await expect(page).toHaveURL(/contentQuery=migration/);
+    await expect(page).toHaveURL(/contentView=list/);
+
+    await page.reload();
+    await expect(filterInput).toHaveValue('migration');
+    await expect(listViewButton).toHaveClass(/iconBtnActive/);
+    await expect(gridViewButton).not.toHaveClass(/iconBtnActive/);
+
+    await page.goBack();
+    await expect(filterInput).toHaveValue('migration');
+    await expect(page).not.toHaveURL(/contentView=list/);
+    await expect(page).toHaveURL(/q=auth/);
+    await expect(page).toHaveURL(/viewMode=timeline/);
+    await expect(gridViewButton).toHaveClass(/iconBtnActive/);
+  });
 });

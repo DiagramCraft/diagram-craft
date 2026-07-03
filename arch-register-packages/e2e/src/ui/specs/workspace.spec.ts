@@ -16,3 +16,34 @@ test('navigates to entity list', async ({ page }) => {
   await entitiesPage.goto();
   await entitiesPage.workspaceShell.expectMainVisible();
 });
+
+test('restores workspace content filter and view mode through reload and browser history', async ({ page }) => {
+  await page.goto(`/${defaultWorkspace.slug}/content`);
+
+  const filterInput = page.getByPlaceholder('Filter diagrams…');
+  const listViewButton = page.locator('button[title="List view"]');
+
+  await filterInput.fill('Arch');
+  await expect(page).toHaveURL(/contentQuery=Arch/);
+
+  await listViewButton.click();
+  await expect(page).toHaveURL(/contentView=list/);
+  await expect(page.getByText('Name')).toBeVisible();
+
+  await filterInput.fill('Architecture');
+  await expect(page).toHaveURL(/contentQuery=Architecture/);
+
+  await page.reload();
+  await expect(filterInput).toHaveValue('Architecture');
+  await expect(page.getByText('Name')).toBeVisible();
+
+  await page.goBack();
+  await expect(filterInput).toHaveValue('Arch');
+  await expect(page).not.toHaveURL(/contentView=list/);
+  await expect(page.getByText('Name')).toHaveCount(0);
+
+  await page.goForward();
+  await expect(filterInput).toHaveValue('Architecture');
+  await expect(page).toHaveURL(/contentView=list/);
+  await expect(page.getByText('Name')).toBeVisible();
+});

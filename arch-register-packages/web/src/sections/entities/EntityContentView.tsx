@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { useEntityContentNodes } from '../../hooks/useProjects';
@@ -31,15 +31,40 @@ type EntityContentViewProps = {
 
 export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
   const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as {
+    contentFolder?: string;
+    contentQuery?: string;
+    contentView?: 'grid' | 'list';
+    tab?: string;
+  };
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
   const uploadFileMutation = useUploadEntityFile(workspaceSlug, entityId);
   const createMarkdownMutation = useCreateEntityMarkdown(workspaceSlug, entityId);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [filter, setFilter] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const filter = search.contentQuery ?? '';
+  const viewMode = search.contentView ?? 'grid';
+
+  const setFilter = (value: string) => {
+    navigate({
+      search: ((previous: Record<string, unknown>) => ({
+        ...previous,
+        contentQuery: value === '' ? undefined : value
+      })) as never,
+      replace: true
+    });
+  };
+
+  const setViewMode = (value: 'grid' | 'list') => {
+    navigate({
+      search: ((previous: Record<string, unknown>) => ({
+        ...previous,
+        contentView: value === 'grid' ? undefined : value
+      })) as never
+    });
+  };
 
   const handleDiagramClick = (fileId: string, projectId: string | null) => {
     if (projectId) {

@@ -54,10 +54,25 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
 // Entity detail params
 export type EntityDetailSearchParams = {
   contentFolder?: string;
+  contentQuery?: string;
+  contentView?: 'grid' | 'list';
   tab?: 'overview' | 'topology' | 'graph' | 'relations' | 'dependents' | 'changes' | 'timeline';
 };
 
+export type SharedContentBrowserSearchParams = {
+  contentQuery?: string;
+  contentView?: 'grid' | 'list';
+};
+
+const validateSharedContentBrowserSearch = (
+  raw: Record<string, unknown>
+): SharedContentBrowserSearchParams => ({
+  contentQuery: typeof raw.contentQuery === 'string' ? raw.contentQuery : undefined,
+  contentView: raw.contentView === 'grid' || raw.contentView === 'list' ? raw.contentView : undefined,
+});
+
 export const validateEntityDetailSearch = (raw: Record<string, unknown>): EntityDetailSearchParams => ({
+  ...validateSharedContentBrowserSearch(raw),
   contentFolder: typeof raw.contentFolder === 'string' ? raw.contentFolder : undefined,
   tab:
     raw.tab === 'overview' ||
@@ -95,10 +110,11 @@ export type ProjectSearchParams = {
   folder?: string;
   section?: 'home' | 'entities';
   dialog?: 'add-entity';
-} & SharedEntityBrowserSearchParams;
+} & SharedEntityBrowserSearchParams & SharedContentBrowserSearchParams;
 
 export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSearchParams => ({
   ...validateSharedEntityBrowserSearch(raw),
+  ...validateSharedContentBrowserSearch(raw),
   tab: raw.tab === 'projects' || raw.tab === 'archive' ? raw.tab : undefined,
   folder: typeof raw.folder === 'string' ? raw.folder : undefined,
   section: raw.section === 'home' || raw.section === 'entities' ? raw.section : undefined,

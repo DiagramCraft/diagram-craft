@@ -9,13 +9,22 @@ import {
 
 describe('validateEntityDetailSearch', () => {
   it('accepts reloadable entity tabs and rejects unknown tabs', () => {
-    expect(validateEntityDetailSearch({ tab: 'topology', contentFolder: 'Operations' })).toEqual({
+    expect(validateEntityDetailSearch({
       tab: 'topology',
-      contentFolder: 'Operations'
+      contentFolder: 'Operations',
+      contentQuery: 'guide',
+      contentView: 'list'
+    })).toEqual({
+      tab: 'topology',
+      contentFolder: 'Operations',
+      contentQuery: 'guide',
+      contentView: 'list'
     });
-    expect(validateEntityDetailSearch({ tab: 'unknown' })).toEqual({
+    expect(validateEntityDetailSearch({ tab: 'unknown', contentView: 'kanban' })).toEqual({
       tab: undefined,
-      contentFolder: undefined
+      contentFolder: undefined,
+      contentQuery: undefined,
+      contentView: undefined
     });
   });
 });
@@ -98,7 +107,9 @@ describe('validateProjectSearch', () => {
         viewMode: 'timeline',
         sort: 'date:goLive',
         projectScope: 'project',
-        filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]'
+        filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]',
+        contentQuery: 'diagram',
+        contentView: 'list'
       })
     ).toEqual({
       tab: 'projects',
@@ -116,6 +127,8 @@ describe('validateProjectSearch', () => {
       viewConfigs: undefined,
       sidebarTab: undefined,
       filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]',
+      contentQuery: 'diagram',
+      contentView: 'list',
     });
   });
 });
