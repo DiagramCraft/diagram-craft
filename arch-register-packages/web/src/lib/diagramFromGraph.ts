@@ -4,7 +4,11 @@ import { layoutLayered } from '@diagram-craft/graph/layout/layeredLayout';
 import { layoutForceDirected } from '@diagram-craft/graph/layout/forceDirectedLayout';
 import { layoutTree } from '@diagram-craft/graph/layout/treeLayout';
 import type { Point } from '@diagram-craft/geometry/point';
-import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
+import type {
+  SerializedDiagramDocument,
+  SerializedRegularEdge,
+  SerializedRegularNode
+} from '@diagram-craft/model/serialization/serializedTypes';
 import { emptyDiagram } from './api';
 
 export type GraphNodeInput = { id: string; label: string };
@@ -26,6 +30,44 @@ export type GraphLayoutOptions = {
 const PADDING = 60;
 
 const randomId = () => Math.random().toString(36).substring(2, 9);
+
+const hasPoint = (point: Point | undefined): point is Point => point !== undefined;
+
+const pickTreeRootId = (
+  componentVertexIds: Set<string>,
+  inputEdges: GraphEdgeInput[]
+): string | undefined => {
+  const incomingCounts = new Map<string, number>();
+  const outgoingCounts = new Map<string, number>();
+
+  for (const id of componentVertexIds) {
+    incomingCounts.set(id, 0);
+    outgoingCounts.set(id, 0);
+  }
+
+  for (const edge of inputEdges) {
+    if (
+      !componentVertexIds.has(edge.from) ||
+      !componentVertexIds.has(edge.to) ||
+      edge.from === edge.to
+    ) {
+      continue;
+    }
+    outgoingCounts.set(edge.from, (outgoingCounts.get(edge.from) ?? 0) + 1);
+    incomingCounts.set(edge.to, (incomingCounts.get(edge.to) ?? 0) + 1);
+  }
+
+  const orderedIds = Array.from(componentVertexIds).sort();
+  return orderedIds.sort((a, b) => {
+    const incomingDiff = (incomingCounts.get(a) ?? 0) - (incomingCounts.get(b) ?? 0);
+    if (incomingDiff !== 0) return incomingDiff;
+
+    const outgoingDiff = (outgoingCounts.get(b) ?? 0) - (outgoingCounts.get(a) ?? 0);
+    if (outgoingDiff !== 0) return outgoingDiff;
+
+    return a.localeCompare(b);
+  })[0];
+};
 
 const computePositions = (
   inputNodes: GraphNodeInput[],
@@ -62,7 +104,11 @@ const computePositions = (
 
   for (const component of components) {
     if (component.vertices.length === 0) continue;
-    const startId = component.vertices[0]!.id;
+    const componentVertexIds = new Set(component.vertices.map(vertex => vertex.id));
+    const startId =
+      layout === 'tree'
+        ? pickTreeRootId(componentVertexIds, layoutEdges) ?? component.vertices[0]!.id
+        : component.vertices[0]!.id;
 
     let componentPositions: Map<string, Point>;
 
@@ -126,7 +172,8 @@ const buildLabelChild = (label: string, midX: number, midY: number) => {
       id: labelId,
       type: 'horizontal' as const,
       offset: { x: 0, y: -10 },
-      timeOffset: 0.5
+      timeOffset: 0.5,
+      offsetType: 'absolute' as const
     },
     child: {
       id: labelId,
@@ -145,6 +192,26 @@ const buildLabelChild = (label: string, midX: number, midY: number) => {
   };
 };
 
+const extendBoundsWithPoint = (
+  bounds: { minX: number; minY: number; maxX: number; maxY: number },
+  point: Point
+) => {
+  bounds.minX = Math.min(bounds.minX, point.x);
+  bounds.minY = Math.min(bounds.minY, point.y);
+  bounds.maxX = Math.max(bounds.maxX, point.x);
+  bounds.maxY = Math.max(bounds.maxY, point.y);
+};
+
+const extendBoundsWithRect = (
+  bounds: { minX: number; minY: number; maxX: number; maxY: number },
+  rect: { x: number; y: number; w: number; h: number }
+) => {
+  bounds.minX = Math.min(bounds.minX, rect.x);
+  bounds.minY = Math.min(bounds.minY, rect.y);
+  bounds.maxX = Math.max(bounds.maxX, rect.x + rect.w);
+  bounds.maxY = Math.max(bounds.maxY, rect.y + rect.h);
+};
+
 export const createDiagramFromGraph = (
   name: string,
   inputNodes: GraphNodeInput[],
@@ -157,7 +224,7 @@ export const createDiagramFromGraph = (
 
   const positions = computePositions(inputNodes, inputEdges, options);
 
-  const serializedNodes = inputNodes.map(n => {
+  const serializedNodes: SerializedRegularNode[] = inputNodes.map(n => {
     const pos = positions.get(n.id) ?? { x: 0, y: 0 };
     return {
       type: 'node' as const,
@@ -177,9 +244,12 @@ export const createDiagramFromGraph = (
     };
   });
 
-  const serializedEdges = inputEdges.map(e => {
-    const fromPos = positions.get(e.from) ?? { x: 0, y: 0 };
-    const toPos = positions.get(e.to) ?? { x: 0, y: 0 };
+  const serializedEdges: SerializedRegularEdge[] = [];
+  for (const e of inputEdges) {
+    const fromPos = positions.get(e.from);
+    const toPos = positions.get(e.to);
+
+    if (!fromPos || !toPos) continue;
 
     const isContainment = e.kind === 'containment';
     const isSelfLoop = e.from === e.to;
@@ -201,7 +271,7 @@ export const createDiagramFromGraph = (
 
       const label = e.label ? buildLabelChild(e.label, midX, midY) : null;
 
-      return {
+      serializedEdges.push({
         type: 'edge' as const,
         id: e.id,
         start: { position: { x: sx, y: sy } },
@@ -210,7 +280,8 @@ export const createDiagramFromGraph = (
         metadata: {},
         waypoints: [{ point: { x: fromPos.x + loopSize, y: fromPos.y + loopSize } }],
         ...(label ? { labelNodes: [label.labelNode], children: [label.child] } : {})
-      };
+      });
+      continue;
     }
 
     if (isArcEdge) {
@@ -225,7 +296,7 @@ export const createDiagramFromGraph = (
 
       const label = e.label ? buildLabelChild(e.label, midX, midY) : null;
 
-      return {
+      serializedEdges.push({
         type: 'edge' as const,
         id: e.id,
         start: { anchor: 'c', node: { id: e.from }, position: fromPos, offset: { x: 0, y: 0 } },
@@ -234,7 +305,8 @@ export const createDiagramFromGraph = (
         metadata: {},
         waypoints: [{ point: { x: cx, y: cy } }],
         ...(label ? { labelNodes: [label.labelNode], children: [label.child] } : {})
-      };
+      });
+      continue;
     }
 
     // Straight edge
@@ -242,7 +314,7 @@ export const createDiagramFromGraph = (
     const midY = (fromPos.y + toPos.y) / 2;
     const label = e.label ? buildLabelChild(e.label, midX, midY) : null;
 
-    return {
+    serializedEdges.push({
       type: 'edge' as const,
       id: e.id,
       start: { anchor: 'c', node: { id: e.from }, position: fromPos, offset: { x: 0, y: 0 } },
@@ -251,18 +323,47 @@ export const createDiagramFromGraph = (
       metadata: {},
       waypoints: [],
       ...(label ? { labelNodes: [label.labelNode], children: [label.child] } : {})
-    };
-  });
+    });
+  }
 
-  // Compute canvas bounds from node center positions
+  // Compute canvas bounds from generated geometry, including edge curves and labels.
   let minX = 0, minY = 0, maxX = 800, maxY = 600;
-  if (positions.size > 0) {
-    const xs = Array.from(positions.values()).map(p => p.x);
-    const ys = Array.from(positions.values()).map(p => p.y);
-    minX = Math.min(...xs) - nodeWidth / 2 - PADDING;
-    minY = Math.min(...ys) - nodeHeight / 2 - PADDING;
-    maxX = Math.max(...xs) + nodeWidth / 2 + PADDING;
-    maxY = Math.max(...ys) + nodeHeight / 2 + PADDING;
+  if (serializedNodes.length > 0) {
+    const bounds = {
+      minX: Number.POSITIVE_INFINITY,
+      minY: Number.POSITIVE_INFINITY,
+      maxX: Number.NEGATIVE_INFINITY,
+      maxY: Number.NEGATIVE_INFINITY
+    };
+
+    for (const node of serializedNodes) {
+      extendBoundsWithRect(bounds, node.bounds);
+    }
+
+    for (const edge of serializedEdges) {
+      if (hasPoint(edge.start.position)) {
+        extendBoundsWithPoint(bounds, edge.start.position);
+      }
+
+      if (hasPoint(edge.end.position)) {
+        extendBoundsWithPoint(bounds, edge.end.position);
+      }
+
+      for (const waypoint of edge.waypoints ?? []) {
+        extendBoundsWithPoint(bounds, waypoint.point);
+      }
+
+      for (const child of edge.children ?? []) {
+        if (child.type === 'node') {
+          extendBoundsWithRect(bounds, child.bounds);
+        }
+      }
+    }
+
+    minX = bounds.minX - PADDING;
+    minY = bounds.minY - PADDING;
+    maxX = bounds.maxX + PADDING;
+    maxY = bounds.maxY + PADDING;
   }
 
   const base = emptyDiagram(name);
