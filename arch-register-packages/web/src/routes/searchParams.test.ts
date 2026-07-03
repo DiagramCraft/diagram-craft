@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   validateEntityDetailSearch,
   validateEntitySearch,
+  validateModelOverviewSearch,
   validateMarkdownSearch,
   validateProjectSearch,
   validateSearchSearch
@@ -196,6 +197,69 @@ describe('validateMarkdownSearch', () => {
       revisionId: undefined,
       historyMode: undefined,
       compareMode: undefined,
+    });
+  });
+});
+
+describe('validateModelOverviewSearch', () => {
+  it('parses valid model overview params and omits defaults', () => {
+    expect(
+      validateModelOverviewSearch({
+        layout: 'force',
+        horizontalSpacing: '240',
+        verticalSpacing: '120',
+        iterations: '450',
+        springStrength: '0.8',
+        repulsionStrength: '1.6',
+        idealEdgeLength: '220',
+        crossingMinimizationIterations: '10'
+      })
+    ).toEqual({
+      layout: 'force',
+      horizontalSpacing: 240,
+      verticalSpacing: 120,
+      iterations: 450,
+      springStrength: 0.8,
+      repulsionStrength: 1.6,
+      idealEdgeLength: 220,
+      crossingMinimizationIterations: undefined
+    });
+  });
+
+  it('drops invalid model overview params', () => {
+    expect(
+      validateModelOverviewSearch({
+        layout: 'grid',
+        horizontalSpacing: '49',
+        verticalSpacing: 'wide',
+        iterations: '55.5',
+        springStrength: '0.05',
+        repulsionStrength: '8',
+        idealEdgeLength: '40',
+        crossingMinimizationIterations: '0'
+      })
+    ).toEqual({
+      layout: undefined,
+      horizontalSpacing: undefined,
+      verticalSpacing: undefined,
+      iterations: undefined,
+      springStrength: undefined,
+      repulsionStrength: undefined,
+      idealEdgeLength: undefined,
+      crossingMinimizationIterations: undefined
+    });
+  });
+
+  it('drops the default hierarchy layout marker', () => {
+    expect(validateModelOverviewSearch({ layout: 'hierarchy' })).toEqual({
+      layout: undefined,
+      horizontalSpacing: undefined,
+      verticalSpacing: undefined,
+      iterations: undefined,
+      springStrength: undefined,
+      repulsionStrength: undefined,
+      idealEdgeLength: undefined,
+      crossingMinimizationIterations: undefined
     });
   });
 });
