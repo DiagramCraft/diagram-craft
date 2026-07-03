@@ -410,7 +410,7 @@ article code {
 article img {
   display: block;
   max-width: 100%;
-  width: auto;
+  zoom: 0.25;
   border: 1px solid var(--border-subtle);
   box-shadow: 0 2px 12px oklch(0 0 0 / 0.18);
 }

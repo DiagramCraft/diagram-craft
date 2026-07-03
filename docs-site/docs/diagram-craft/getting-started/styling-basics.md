@@ -2,9 +2,19 @@
 sidebar_position: 5
 ---
 
+import ThemedImage from '@theme/ThemedImage';
+
 # Styling Basics
 
 Once the structure of the diagram is in place, styling helps communicate meaning and make the diagram easier to scan.
+
+<ThemedImage
+  alt="Diagram Craft style panel showing fill, stroke, and text styling controls"
+  sources={{
+    light: require('/img/diagram-craft/styling/style-controls-light.png').default,
+    dark: require('/img/diagram-craft/styling/style-controls-dark.png').default,
+  }}
+/>
 
 ## Start With The Basics
 
@@ -27,18 +37,8 @@ These changes are usually enough to move from a rough draft to a presentable dia
 
 Consistency matters more than variety. A small, repeated style system reads better than many one-off visual tweaks.
 
-## When To Add Effects
-
-Effects such as shadows can help separate elements from the background, but they are best used lightly. For early diagrams:
-
-- use one subtle shadow style if it improves depth
-- avoid stacking multiple effects on the same element
-- keep the diagram readable in export formats
-
 ## Related Reading
 
 - [Styling System](../use/styling/styling-system)
 - [Colors and Gradients](../use/styling/colors-gradients)
 - [Effects](../use/styling/effects)
-
-Next: [Saving and Exporting](saving-exporting).

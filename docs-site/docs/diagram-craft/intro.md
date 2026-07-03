@@ -8,7 +8,7 @@ Diagram Craft is an interactive diagramming tool that allows you to create profe
 
 ## What is Diagram Craft?
 
-Diagram Craft is a powerful, browser-based diagramming application that provides:
+Diagram Craft is a powerful diagramming application for both the browser and Electron that provides:
 
 - **Intuitive Drawing Tools**: Create shapes, connectors, and complex diagrams
 - **Real-time Collaboration**: Work together with your team in real-time
@@ -21,7 +21,6 @@ To get started with Diagram Craft, read the [Getting Started guide](./getting-st
 
 ## Key Features
 
-- Canvas-based drawing
 - Rich shape library
 - Flexible styling options
 - Collaboration support

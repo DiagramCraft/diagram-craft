@@ -35,5 +35,3 @@ If you are working with a saved document, reopen that document rather than rebui
 - [File Formats](../use/import-export/file-formats)
 - [Image Export](../use/import-export/image-export)
 - [SVG Export](../use/import-export/svg-export)
-
-Next: [Next Steps](next-steps).

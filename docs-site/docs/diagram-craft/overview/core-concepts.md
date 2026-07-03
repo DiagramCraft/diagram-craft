@@ -10,9 +10,9 @@ Diagram Craft is easiest to learn if you start with its mental model instead of 
 
 There are a few levels of structure in the editor:
 
-- A **diagram** is the visual content you are building: shapes, connectors, text, styling, and layout.
 - A **document** is the file or workspace that stores your work.
-- A **tab** is a separate diagram inside the same document.
+- A **tab** is a separate diagram inside the same document. Tabs can also be nested when you need a more advanced document structure.
+- A **diagram** is the visual content you are building inside a tab: shapes, connectors, text, styling, and layout.
 
 This matters because you do not need a new file every time you want to separate views. For example, you might keep a system context diagram in one tab and a deployment diagram in another tab within the same document.
 
@@ -70,6 +70,8 @@ As diagrams grow, organization becomes as important as drawing.
 - lock parts of a diagram while working on others
 - hide content temporarily without deleting it
 
+Diagram Craft also supports advanced **rule layers** when visibility or styling should respond to diagram data or query results instead of being adjusted manually.
+
 Diagram Craft also supports grouping and document structure tools so you can manage complexity without flattening everything into one large canvas.
 
 ## Data, Automation, and Collaboration
@@ -81,18 +83,5 @@ Diagram Craft is not limited to static drawing. Depending on how you use it, a d
 - **collaborative**, with multiple people editing and reviewing together
 
 You do not need these features to get started, but they explain why the editor includes more structure than a basic shape-and-line tool.
-
-## A Practical Way to Think About the Editor
-
-If you are new to Diagram Craft, this simplified model is enough:
-
-1. Open a document.
-2. Work inside a tab.
-3. Place nodes on the canvas.
-4. Connect them with edges.
-5. Organize them with layers, groups, or additional tabs.
-6. Refine layout and styling as the diagram becomes more complete.
-
-That model will carry through the rest of the documentation, from the getting-started guides to the more advanced sections on layout, data integration, and collaboration.
 
 Next, read [Key Features](key-features) for a high-level tour of what the editor can do, or continue to [Getting Started](../getting-started/introduction) if you want to build something immediately.
