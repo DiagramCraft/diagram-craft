@@ -8,7 +8,8 @@
     "ignoreDeprecations": "6.0",
     "paths": {
       "@arch-register/server/*": ["../arch-register-packages/server/src/*"],
-      "@arch-register/api-types/*": ["../arch-register-packages/api-types/src/*"]
+      "@arch-register/api-types/*": ["../arch-register-packages/api-types/src/*"],
+      "@site/*": ["./*"]
     },
     "types": ["node"],
     "strict": true
