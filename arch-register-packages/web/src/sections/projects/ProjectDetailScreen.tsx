@@ -629,6 +629,7 @@ export const ProjectDetailScreen = () => {
       {section === 'assessments' ? (
         <ProjectAssessments
           project={project}
+          projectId={projectId}
           onNavigateHome={handleNavigateHome}
           onNavigateProject={handleNavigateProject}
         />

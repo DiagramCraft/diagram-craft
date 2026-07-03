@@ -61,6 +61,7 @@ export const useUpdateAssessmentStatus = (workspaceId: string, projectId: string
         queryKey: assessmentKeys.detail(workspaceId, projectId, variables.assessmentId)
       });
       await queryClient.invalidateQueries({ queryKey: assessmentKeys.list(workspaceId, projectId) });
+      await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
 };

@@ -45,21 +45,26 @@ const FIELD_TYPE_META: Record<AssessmentField['type'], { icon: typeof TbStar; hi
 
 export const ProjectAssessments = ({
   project,
+  projectId,
   onNavigateHome,
   onNavigateProject
 }: {
   project: ProjectDetailData;
+  // The raw project route param (may be the public id) — kept distinct from
+  // project.id (the resolved internal id) so the query key here matches the
+  // one ProjectContentSidebar uses, keeping their caches in sync.
+  projectId: string;
   onNavigateHome: () => void;
   onNavigateProject: () => void;
 }) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
 
-  const { data: assessments = [] } = useAssessments(workspaceSlug, project.id);
-  const createMutation = useCreateAssessment(workspaceSlug, project.id);
-  const updateMutation = useUpdateAssessment(workspaceSlug, project.id);
-  const statusMutation = useUpdateAssessmentStatus(workspaceSlug, project.id);
-  const deleteMutation = useDeleteAssessment(workspaceSlug, project.id);
+  const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
+  const createMutation = useCreateAssessment(workspaceSlug, projectId);
+  const updateMutation = useUpdateAssessment(workspaceSlug, projectId);
+  const statusMutation = useUpdateAssessmentStatus(workspaceSlug, projectId);
+  const deleteMutation = useDeleteAssessment(workspaceSlug, projectId);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
   const [editing, setEditing] = useState<'new' | string | null>(null);
