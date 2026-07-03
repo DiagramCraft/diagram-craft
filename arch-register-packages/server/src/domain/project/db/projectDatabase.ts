@@ -1,3 +1,5 @@
+import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
+
 // -- Content Node
 
 export type ContentNodeDbResult = {
@@ -176,6 +178,28 @@ export type DiagramEntityFileDbResult = {
   file_metadata_keywords: string[];
 };
 
+// -- Assessment
+
+export type AssessmentDbResult = {
+  id: string;
+  workspace: string;
+  project_id: string;
+  name: string;
+  description: string;
+  status: 'active' | 'archived';
+  scope: string[];
+  fields: AssessmentField[];
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type AssessmentDbCreate = AssessmentDbResult;
+
+export type AssessmentDbUpdate = Omit<
+  AssessmentDbResult,
+  'id' | 'workspace' | 'project_id' | 'created_at'
+>;
+
 // --
 
 export type ProjectDatabase = {
@@ -310,4 +334,15 @@ export type ProjectDatabase = {
 
   syncDiagramEntityRefs(ws: string, fileId: string, entityIds: string[]): Promise<void>;
   getEntityDiagramFiles(ws: string, entityId: string): Promise<DiagramEntityFileDbResult[]>;
+
+  listAssessments(ws: string, projectId: string): Promise<AssessmentDbResult[]>;
+  getAssessment(ws: string, projectId: string, id: string): Promise<AssessmentDbResult | null>;
+  createAssessment(input: AssessmentDbCreate): Promise<AssessmentDbResult>;
+  updateAssessment(
+    ws: string,
+    projectId: string,
+    id: string,
+    input: AssessmentDbUpdate
+  ): Promise<AssessmentDbResult | null>;
+  deleteAssessment(ws: string, projectId: string, id: string): Promise<AssessmentDbResult | null>;
 };

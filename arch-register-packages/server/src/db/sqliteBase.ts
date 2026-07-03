@@ -13,7 +13,8 @@ import type {
   ProjectDbResult,
   ProjectEntityDbResult,
   ContentNodeDbResult,
-  MarkdownRevisionDbResult
+  MarkdownRevisionDbResult,
+  AssessmentDbResult
 } from '../domain/project/db/projectDatabase';
 import { DatabaseError } from './database';
 
@@ -154,6 +155,18 @@ export const sqliteMappers = {
     name: String(row['name']),
     options: parseJson(row['options'], [], 'workspace_enum.options'),
     sort_order: Number(row['sort_order'] ?? 0),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at'])
+  }),
+  assessment: (row: Record<string, unknown>): AssessmentDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    project_id: String(row['project_id']),
+    name: String(row['name']),
+    description: String(row['description'] ?? ''),
+    status: row['status'] === 'archived' ? 'archived' : 'active',
+    scope: parseJson(row['scope'], [], 'assessment.scope'),
+    fields: parseJson(row['fields'], [], 'assessment.fields'),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),

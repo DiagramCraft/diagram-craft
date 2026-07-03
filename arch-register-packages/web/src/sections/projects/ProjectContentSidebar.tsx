@@ -8,6 +8,7 @@ import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import {
   TbBinaryTree2,
   TbCalendarWeek,
+  TbClipboardList,
   TbCopy,
   TbColumns3,
   TbChartRadar,
@@ -47,6 +48,7 @@ import {
 } from '../../hooks/useProjectFiles';
 import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useEntities';
 import { useProject, useProjectEntities } from '../../hooks/useProjects';
+import { useAssessments } from '../../hooks/useAssessments';
 import { RenameDialog } from '../../components/RenameDialog';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
@@ -64,7 +66,7 @@ import { toSavedViewSearch } from '../entities/components/entityBrowserState';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 
-type ProjectSection = 'home' | 'entities';
+type ProjectSection = 'home' | 'entities' | 'assessments';
 type ProjectSidebarTab = 'content' | 'views';
 
 type FolderNode = {
@@ -126,13 +128,19 @@ export const ProjectContentSidebar = ({
     contentView?: 'grid' | 'list';
   };
   const isEntitiesSection = search.section === 'entities';
-  const section: ProjectSection = isEntitiesSection ? 'entities' : 'home';
+  const isAssessmentsSection = search.section === 'assessments';
+  const section: ProjectSection = isEntitiesSection
+    ? 'entities'
+    : isAssessmentsSection
+      ? 'assessments'
+      : 'home';
   const folderFilter = search.folder ?? null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
   const isFileRoute = activeFileId !== null;
 
   const { data: project } = useProject(workspaceSlug, projectId);
   const { data: projectEntities = [] } = useProjectEntities(workspaceSlug, projectId);
+  const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
     projectId
   });
@@ -623,6 +631,15 @@ export const ProjectContentSidebar = ({
               active={isEntitiesSection}
               onClick={() =>
                 navigateToProject({ section: 'entities', folder: folderFilter ?? undefined })
+              }
+            />
+            <TreeRow
+              testId="project-secondary-assessments"
+              label={`Assessments (${assessments.length})`}
+              icon={<TbClipboardList size={13} />}
+              active={isAssessmentsSection}
+              onClick={() =>
+                navigateToProject({ section: 'assessments', folder: folderFilter ?? undefined })
               }
             />
             {project?.files.rootFiles.map(file => (

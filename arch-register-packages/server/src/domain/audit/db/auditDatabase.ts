@@ -21,7 +21,13 @@ export type AuditLogDbCreate = Omit<AuditLogDbResult, 'id' | 'user_display_name'
 
 export type AuditOperation = 'create' | 'update' | 'delete';
 
-export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'content_node';
+export type AuditEntityType =
+  | 'workspace'
+  | 'entity_schema'
+  | 'entity'
+  | 'project'
+  | 'content_node'
+  | 'assessment';
 
 export type AuditDatabase = {
   listAuditLogs(ws: string): Promise<AuditLogDbResult[]>;

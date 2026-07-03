@@ -70,6 +70,16 @@ export const projectEntityKeys = {
     ['entity-diagram-files', workspaceId, entityId] as const,
 };
 
+export const assessmentKeys = {
+  all: ['assessments'] as const,
+  lists: () => [...assessmentKeys.all, 'list'] as const,
+  list: (workspaceId: string, projectId: string) =>
+    [...assessmentKeys.lists(), workspaceId, projectId] as const,
+  details: () => [...assessmentKeys.all, 'detail'] as const,
+  detail: (workspaceId: string, projectId: string, assessmentId: string) =>
+    [...assessmentKeys.details(), workspaceId, projectId, assessmentId] as const,
+};
+
 export const entityContentKeys = {
   all: (workspaceId: string, entityId: string) =>
     ['entity-content', workspaceId, entityId] as const,

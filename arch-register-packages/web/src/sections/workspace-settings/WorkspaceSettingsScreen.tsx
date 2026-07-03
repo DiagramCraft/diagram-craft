@@ -482,7 +482,8 @@ const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> 
   { value: 'entity_schema', label: 'Schema' },
   { value: 'entity', label: 'Entity' },
   { value: 'project', label: 'Project' },
-  { value: 'content_node', label: 'Diagram / folder' }
+  { value: 'content_node', label: 'Diagram / folder' },
+  { value: 'assessment', label: 'Assessment' }
 ];
 
 const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
@@ -503,7 +504,8 @@ const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   project: 'project',
   content_node: 'diagram',
   entity_schema: 'schema',
-  workspace: 'workspace'
+  workspace: 'workspace',
+  assessment: 'assessment'
 };
 
 const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
@@ -511,7 +513,8 @@ const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
   entity_schema: styles.typeSchema ?? '',
   entity: styles.typeEntity ?? '',
   project: styles.typeProject ?? '',
-  content_node: styles.typeFile ?? ''
+  content_node: styles.typeFile ?? '',
+  assessment: styles.typeAssessment ?? ''
 };
 
 const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABELS[operation];

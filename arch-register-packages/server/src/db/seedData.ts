@@ -22,11 +22,21 @@ import {
   SavedViewDbResult,
   WorkspaceEnumDbResult
 } from '../domain/catalog/db/catalogDatabase';
-import { ProjectDbCreate, ContentNodeDbResult } from '../domain/project/db/projectDatabase';
+import {
+  ProjectDbCreate,
+  ContentNodeDbResult,
+  AssessmentDbCreate
+} from '../domain/project/db/projectDatabase';
 import { AuditOperation } from '../domain/audit/db/auditDatabase';
 import { GlobalRoleAssignmentDbResult } from '../domain/auth/db/authDatabase';
 import { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
-import { seededProjects, seededUsers, seededWorkspaces } from './seedFixtures';
+import {
+  seededAssessments,
+  seededProjects,
+  seededSchemas,
+  seededUsers,
+  seededWorkspaces
+} from './seedFixtures';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -986,6 +996,47 @@ export const seedProjects: ProjectDbCreate[] = [
     color: AR_COLOR_GREEN,
     target_date: null,
     pinned: false,
+    created_at: now,
+    updated_at: now
+  }
+];
+
+export const seedAssessments: AssessmentDbCreate[] = [
+  {
+    id: seededAssessments.checkoutRevamp.securityReadiness.id,
+    workspace: WORKSPACE_ID,
+    project_id: seededAssessments.checkoutRevamp.securityReadiness.projectId,
+    name: seededAssessments.checkoutRevamp.securityReadiness.name,
+    description: "Assess each component's security posture ahead of the checkout launch.",
+    status: 'active',
+    scope: [seededSchemas.default.component.id],
+    fields: [
+      { id: 'f1', label: 'Secrets management', type: 'rating', requirementLevel: 'required' },
+      { id: 'f2', label: 'Last pen-test date', type: 'text', requirementLevel: 'optional' },
+      { id: 'f3', label: 'Known vulnerabilities', type: 'text', requirementLevel: 'optional' }
+    ],
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: seededAssessments.checkoutRevamp.apiFitness.id,
+    workspace: WORKSPACE_ID,
+    project_id: seededAssessments.checkoutRevamp.apiFitness.projectId,
+    name: seededAssessments.checkoutRevamp.apiFitness.name,
+    description: 'Rate the fitness of each API for the new checkout flow.',
+    status: 'active',
+    scope: [seededSchemas.default.api.id],
+    fields: [
+      { id: 'f1', label: 'Versioning quality', type: 'rating', requirementLevel: 'required' },
+      {
+        id: 'f2',
+        label: 'API type',
+        type: 'enum',
+        enumId: '00000000-0000-0000-0000-e00000000001',
+        requirementLevel: 'required'
+      },
+      { id: 'f3', label: 'Notes', type: 'text', requirementLevel: 'optional' }
+    ],
     created_at: now,
     updated_at: now
   }

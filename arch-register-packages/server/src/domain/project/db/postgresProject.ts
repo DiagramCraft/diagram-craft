@@ -10,7 +10,10 @@ import type {
   ContentNodeDbUpsert,
   DiagramEntityFileDbResult,
   MarkdownRevisionDbCreate,
-  MarkdownRevisionDbResult
+  MarkdownRevisionDbResult,
+  AssessmentDbResult,
+  AssessmentDbCreate,
+  AssessmentDbUpdate
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { randomUUID } from 'node:crypto';
@@ -865,5 +868,59 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       WHERE der.workspace = ${workspace} AND der.entity_id = ${entityId}
       ORDER BY COALESCE(p.name, ''), pf.name
     `;
+  }
+
+  async listAssessments(workspace: string, projectId: string) {
+    return await this.sql<AssessmentDbResult[]>`
+      SELECT * FROM assessment WHERE workspace = ${workspace} AND project_id = ${projectId} ORDER BY name
+    `;
+  }
+
+  async getAssessment(workspace: string, projectId: string, id: string) {
+    const [row] = await this.sql<AssessmentDbResult[]>`
+      SELECT * FROM assessment WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+    `;
+    return row ?? null;
+  }
+
+  async createAssessment(input: AssessmentDbCreate) {
+    try {
+      const [row] = await this.sql<AssessmentDbResult[]>`
+        INSERT INTO assessment (id, workspace, project_id, name, description, status, scope, fields, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.name}, ${input.description}, ${input.status}, ${this.json(input.scope)}, ${this.json(input.fields)}, ${input.created_at}, ${input.updated_at})
+        RETURNING *
+      `;
+      return row!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateAssessment(workspace: string, projectId: string, id: string, input: AssessmentDbUpdate) {
+    try {
+      const [row] = await this.sql<AssessmentDbResult[]>`
+        UPDATE assessment
+        SET name = ${input.name},
+            description = ${input.description},
+            status = ${input.status},
+            scope = ${this.json(input.scope)},
+            fields = ${this.json(input.fields)},
+            updated_at = ${input.updated_at}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteAssessment(workspace: string, projectId: string, id: string) {
+    const row = await this.getAssessment(workspace, projectId, id);
+    if (!row) return null;
+    await this.sql`
+      DELETE FROM assessment WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+    `;
+    return row;
   }
 }
