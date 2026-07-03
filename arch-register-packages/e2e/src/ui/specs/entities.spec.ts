@@ -22,6 +22,39 @@ test.describe('entities section', () => {
     await entitiesPage.expectFilteredResultCount(2);
   });
 
+  test('restores entity tabs through reload and browser history', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.openEntity(authApiEntity.name);
+    await page.getByRole('tab', { name: 'Topology' }).click();
+    await expect(page).toHaveURL(/tab=topology/);
+
+    await page.reload();
+    await expect(page.getByRole('tab', { name: 'Topology' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await page.goBack();
+    await expect(page.getByRole('tab', { name: 'Overview' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  });
+
+  test('restores entity filters through reload and browser history', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.filterByType(apiSchema.name);
+    await page.reload();
+    await entitiesPage.expectFilteredResultCount(2);
+
+    await page.goBack();
+    await expect(entitiesPage.browserTitle()).toHaveText('All entities');
+  });
+
   test('exports filtered entities to CSV', async ({ page }, testInfo) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 

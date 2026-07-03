@@ -112,13 +112,16 @@ const getFileContextLabel = (file: ProjectFileSearchResult) => {
 
 export const SearchScreen = () => {
   const routerNavigate = useNavigate();
-  const routerSearch = useRouterSearch({ strict: false }) as { q?: string };
+  const routerSearch = useRouterSearch({ strict: false }) as {
+    q?: string;
+    category?: SearchFilter;
+  };
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const query = routerSearch.q ?? '';
 
   const [localQ, setLocalQ] = useState(query);
-  const [filter, setFilter] = useState<SearchFilter>('all');
+  const filter = routerSearch.category ?? 'all';
   const [selected, setSelected] = useState<RowId | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -242,7 +245,26 @@ export const SearchScreen = () => {
 
   const navigateToSearch = useCallback(
     (q: string) => {
-      routerNavigate({ to: '/$workspaceSlug/search', params: { workspaceSlug }, search: { q } });
+      routerNavigate({
+        to: '/$workspaceSlug/search',
+        params: { workspaceSlug },
+        search: (previous: Record<string, unknown>) => ({ ...previous, q })
+      });
+    },
+    [routerNavigate, workspaceSlug]
+  );
+
+  const setFilter = useCallback(
+    (category: SearchFilter) => {
+      setSelected(null);
+      routerNavigate({
+        to: '/$workspaceSlug/search',
+        params: { workspaceSlug },
+        search: (previous: Record<string, unknown>) => ({
+          ...previous,
+          category: category === 'all' ? undefined : category
+        })
+      });
     },
     [routerNavigate, workspaceSlug]
   );
@@ -445,6 +467,7 @@ export const SearchScreen = () => {
               type="button"
               key={c.value}
               data-testid={`search-category-${c.label}`}
+              aria-pressed={filter === c.value}
               className={`${styles.cat} ${filter === c.value ? styles.catActive : ''}`}
               onClick={() => setFilter(c.value)}
             >

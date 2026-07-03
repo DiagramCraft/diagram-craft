@@ -25,45 +25,6 @@ export const getInitialMarkdownEditorScreenState = (
   };
 };
 
-export const syncMarkdownEditorScreenState = (
-  current: MarkdownEditorScreenState,
-  searchMode: SearchMode,
-  searchPanel: SearchPanel
-): MarkdownEditorScreenState => {
-  const next = getInitialMarkdownEditorScreenState(searchMode, searchPanel);
-  return current.screenMode === next.screenMode &&
-    current.paneMode === next.paneMode &&
-    current.viewPanel === next.viewPanel
-    ? current
-    : next;
-};
-
-export const enterMarkdownEditMode = (): MarkdownEditorScreenState => ({
-  screenMode: 'edit',
-  paneMode: 'edit',
-  viewPanel: 'preview'
-});
-
-export const selectMarkdownEditPane = (
-  paneMode: MarkdownPaneMode
-): MarkdownEditorScreenState => ({
-  screenMode: 'edit',
-  paneMode,
-  viewPanel: 'preview'
-});
-
-export const exitMarkdownEditMode = (): MarkdownEditorScreenState => ({
-  screenMode: 'preview',
-  paneMode: 'preview',
-  viewPanel: 'preview'
-});
-
-export const openMarkdownHistory = (): MarkdownEditorScreenState => ({
-  screenMode: 'preview',
-  paneMode: 'preview',
-  viewPanel: 'history'
-});
-
 export type MarkdownEditorTitleView = {
   description: string;
   isViewMode: boolean;
