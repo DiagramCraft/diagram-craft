@@ -1,6 +1,6 @@
-import React, {type ReactNode} from 'react';
+import React, { type ReactNode } from 'react';
 import Link from '@docusaurus/Link';
-import {useDoc} from '@docusaurus/plugin-content-docs/client';
+import { useDoc } from '@docusaurus/plugin-content-docs/client';
 import styles from './styles.module.css';
 
 type RelatedReadingItem = {
@@ -13,7 +13,7 @@ type RelatedReadingFrontMatter = {
 };
 
 export default function RelatedReading(): ReactNode {
-  const {frontMatter} = useDoc();
+  const { frontMatter } = useDoc();
   const items = (frontMatter as RelatedReadingFrontMatter).related_reading;
 
   if (!items || items.length === 0) {
@@ -22,7 +22,7 @@ export default function RelatedReading(): ReactNode {
 
   return (
     <div className={styles.relatedReading}>
-      <div className={styles.relatedReadingTitle}>Related Reading</div>
+      <div className={styles.relatedReadingTitle}>Related Topics</div>
       <ul className={styles.relatedReadingList}>
         {items.map(item => (
           <li key={item.to}>

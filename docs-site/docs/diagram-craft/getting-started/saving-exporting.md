@@ -1,5 +1,12 @@
 ---
 sidebar_position: 6
+related_reading:
+  - label: File Formats
+    to: /diagram-craft/diagram-craft/use/import-export/file-formats
+  - label: Image Export
+    to: /diagram-craft/diagram-craft/use/import-export/image-export
+  - label: SVG Export
+    to: /diagram-craft/diagram-craft/use/import-export/svg-export
 ---
 
 # Saving and Exporting
@@ -30,8 +37,3 @@ Export after checking that the diagram is framed well on the canvas and that lab
 
 If you are working with a saved document, reopen that document rather than rebuilding the diagram from an exported image. The export is a presentation artifact, not the editable source of truth.
 
-## Related Reading
-
-- [File Formats](../use/import-export/file-formats)
-- [Image Export](../use/import-export/image-export)
-- [SVG Export](../use/import-export/svg-export)

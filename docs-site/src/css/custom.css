@@ -2,6 +2,8 @@
    Design tokens — light (Docusaurus default)
    ══════════════════════════════════════════════ */
 :root {
+  --ifm-spacing-horizontal: 2rem;
+
   --bg-0: oklch(0.928 0.004 260);
   --bg-1: oklch(0.978 0.003 260);
   --bg-2: oklch(0.958 0.004 260);
@@ -70,7 +72,6 @@
   --ifm-navbar-item-padding-horizontal: 11px;
   --ifm-navbar-item-padding-vertical: 0;
 
-  --ifm-toc-border-color: var(--border-subtle);
   --ifm-toc-link-color: var(--fg-2);
 
   --ifm-code-background: var(--bg-2);
@@ -427,6 +428,18 @@ div[class*='codeBlock'] {
 }
 
 /* ── TOC ── */
+.table-of-contents {
+  padding: 0;
+
+  > li {
+    margin-left: 0;
+  }
+
+  > ul {
+    padding: 0;
+  }
+}
+
 .table-of-contents__link {
   font-size: 12.5px;
   color: var(--fg-2);
@@ -440,7 +453,8 @@ div[class*='codeBlock'] {
 }
 
 .table-of-contents__left-border {
-  border-left-color: var(--border-subtle);
+  border-left-color: transparent;
+  border-width: 0;
 }
 
 /* ── Breadcrumbs ── */
@@ -456,6 +470,22 @@ div[class*='codeBlock'] {
 
 .breadcrumbs__link:hover {
   color: var(--fg-1);
+}
+
+.breadcrumbs {
+  .breadcrumbs__item:nth-child(1) {
+    & > a {
+      padding-left: 0;
+
+      &:hover {
+        background: none;
+      }
+
+      > svg {
+        margin-top: 2px;
+      }
+    }
+  }
 }
 
 /* ── Pagination ── */
