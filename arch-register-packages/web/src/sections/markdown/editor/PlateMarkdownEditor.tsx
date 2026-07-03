@@ -36,6 +36,7 @@ import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
+import { CaptionNormalizePlugin } from '../mdx-components/blocks/caption/CaptionEditable';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
@@ -762,10 +763,7 @@ const HeadingBreakPlugin = createPlatePlugin({
         // For void blocks, always insert a paragraph immediately after and move cursor there.
         if (block && topIndex !== undefined && editor.api.isVoid(block)) {
           const nextIndex = topIndex + 1;
-          editor.tf.insertNodes(
-            { type: 'p', children: [{ text: '' }] },
-            { at: [nextIndex] }
-          );
+          editor.tf.insertNodes({ type: 'p', children: [{ text: '' }] }, { at: [nextIndex] });
           editor.tf.select({ path: [nextIndex, 0], offset: 0 });
           return;
         }
@@ -837,6 +835,7 @@ const editorPlugins = [
   createPlatePlugin({ key: 'td', node: { isElement: true } }).withComponent(TableCellElement),
   createPlatePlugin({ key: 'th', node: { isElement: true } }).withComponent(TableHeaderCellElement),
   ...mdxElementPlugins,
+  CaptionNormalizePlugin,
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
   createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(ItalicLeaf),
   createPlatePlugin({ key: 'code', node: { isLeaf: true } }).withComponent(InlineCodeLeaf),

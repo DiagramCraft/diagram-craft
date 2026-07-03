@@ -21,7 +21,7 @@ export type EditorSpec = {
   editableComponent: React.ComponentType<Record<string, unknown>>;
   /** Plate plugin node options */
   nodeOptions: {
-    isVoid: true;
+    isVoid?: true;
     isInline?: true;
   };
   // biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing
@@ -35,6 +35,12 @@ export type MdxComponentSpec = {
   component: React.ComponentType<Record<string, string>>;
   mode: 'block' | 'inline';
   allowedProps: ReadonlyArray<string>;
+  /**
+   * Marks a block-level component as a wrapper that accepts exactly one other
+   * block-level (non-wrapper) MDX component as its child, e.g. Caption. Depth is
+   * capped at 1 — a wrapper cannot be nested inside another wrapper.
+   */
+  acceptsChildren?: boolean;
   /** Editor-mode registration; present for all components that support rich editing */
   editorSpec?: EditorSpec;
 };

@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
 import { type ASTNode } from '@diagram-craft/markdown';
-import { MDX_COMPONENTS, type MdxComponentName } from '../mdx-components/mdxRegistry';
+import { getMdxSpec, type MdxComponentName } from '../mdx-components/mdxRegistry';
 
 export const renderNodes = (nodes: ASTNode[], keyPrefix: string): ReactNode[] => {
   return nodes.flatMap((node, index) => renderNode(node, `${keyPrefix}-${index}`));
@@ -22,10 +22,17 @@ const renderNode = (node: ASTNode, key: string): ReactNode[] => {
       return [node.value];
 
     case 'component': {
-      const spec = MDX_COMPONENTS[node.name as MdxComponentName];
+      const spec = getMdxSpec(node.name as MdxComponentName);
       if (!spec) return [];
-      const Component = spec.component;
-      return [<Component key={key} {...node.props} />];
+      const Component = spec.component as unknown as React.ComponentType<
+        Record<string, unknown> & { children?: ReactNode }
+      >;
+      const kids = node.children?.length ? renderNodes(node.children, key) : undefined;
+      return [
+        <Component key={key} {...node.props}>
+          {kids}
+        </Component>
+      ];
     }
 
     case 'heading': {
@@ -107,8 +114,12 @@ const renderNode = (node: ASTNode, key: string): ReactNode[] => {
 
     case 'table': {
       const rows = node.children ?? [];
-      const headerRows = rows.filter(r => r.type === 'table-row' && (r as { header?: boolean }).header);
-      const bodyRows = rows.filter(r => r.type === 'table-row' && !(r as { header?: boolean }).header);
+      const headerRows = rows.filter(
+        r => r.type === 'table-row' && (r as { header?: boolean }).header
+      );
+      const bodyRows = rows.filter(
+        r => r.type === 'table-row' && !(r as { header?: boolean }).header
+      );
       return [
         <table key={key}>
           {headerRows.length > 0 && (

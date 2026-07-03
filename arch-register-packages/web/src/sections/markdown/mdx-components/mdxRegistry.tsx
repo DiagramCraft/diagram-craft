@@ -22,6 +22,8 @@ import { ENTITY_MENTION_TYPE } from './inlines/entity-mention/EntityMentionEdita
 import { entityMentionSpec } from './inlines/entity-mention/EntityMentionRegistration';
 import { ENTITY_LINK_TYPE } from './inlines/entity-link/EntityLinkEditable';
 import { entityLinkSpec } from './inlines/entity-link/EntityLinkRegistration';
+import { CAPTION_TYPE } from './blocks/caption/CaptionEditable';
+import { captionSpec } from './blocks/caption/CaptionRegistration';
 import type { MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec } from './types';
 
@@ -37,7 +39,16 @@ export const MDX_COMPONENTS = {
   [ENTITY_VIEW_EMBED_TYPE]: entityViewEmbedSpec,
   [ENTITY_FIELD_TYPE]: entityFieldSpec,
   [ENTITY_MENTION_TYPE]: entityMentionSpec,
-  [ENTITY_LINK_TYPE]: entityLinkSpec
+  [ENTITY_LINK_TYPE]: entityLinkSpec,
+  [CAPTION_TYPE]: captionSpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;
+
+/**
+ * Typed accessor for a registry entry. `MDX_COMPONENTS[name]` alone resolves to
+ * the union of each component's own literal spec type (since `satisfies` doesn't
+ * widen), so optional fields not present on every entry (e.g. `acceptsChildren`)
+ * aren't visible without this cast.
+ */
+export const getMdxSpec = (name: MdxComponentName): MdxComponentSpec => MDX_COMPONENTS[name];
