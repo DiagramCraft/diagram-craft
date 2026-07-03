@@ -42,7 +42,8 @@
       "!.*",
       "!**/*.html",
       "!**/vite.config.ts",
-      "!**/vitest.config.ts"
+      "!**/vitest.config.ts",
+      "!arch-register-packages/server/openapi.json"
     ]
   },
   "linter": {

@@ -127,6 +127,31 @@ pnpm start    # single run
 
 The server listens on `http://localhost:3010` by default. Set `PORT` in `.env` to use a different port.
 
+## Maintenance
+
+### Cleaning up orphaned files
+
+File content (diagrams, markdown, uploaded files) is stored on disk separately from the database
+row that references it. If a delete or move operation fails partway through, a file can be left on
+disk with no corresponding `content_node` row. `cleanup:orphaned-files` finds and (optionally)
+removes these orphans:
+
+```bash
+pnpm cleanup:orphaned-files                            # dry run — reports only, deletes nothing
+pnpm cleanup:orphaned-files -- --max-age-days 14        # dry run with a custom age threshold
+pnpm cleanup:orphaned-files -- --apply                  # actually delete orphaned files
+```
+
+By default, only files untouched for at least 30 days are considered — this leaves a safety margin
+around in-flight operations. Run without `--apply` first to review what would be deleted before
+committing to it.
+
+This is not run automatically. To schedule it, add an external cron entry, e.g. nightly at 3am:
+
+```cron
+0 3 * * * cd /path/to/arch-register-packages/server && pnpm cleanup:orphaned-files -- --apply >> /var/log/arch-register-cleanup.log 2>&1
+```
+
 ## OpenAPI
 
 The OpenAPI 3.1 spec for this server lives at [openapi.yaml](./openapi.yaml) and is served by the running server at `GET /openapi.yaml`.
