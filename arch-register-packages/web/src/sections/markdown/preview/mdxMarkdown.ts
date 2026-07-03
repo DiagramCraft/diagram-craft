@@ -1,15 +1,18 @@
 import {
   type ASTNode,
+  type ASTNodeOfType,
   type BlockParser,
   InlineParser,
   type Parser,
   type ParserState
 } from '@diagram-craft/markdown';
 import { markdownEngine } from './markdownAstUtils';
-import { MDX_COMPONENTS, type MdxComponentName } from '../mdx-components/mdxRegistry';
+import { MDX_COMPONENTS, getMdxSpec, type MdxComponentName } from '../mdx-components/mdxRegistry';
 
 const JSX_BLOCK_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>\s*$/;
 const INLINE_JSX_RE = /<([A-Z][A-Za-z0-9]*)(\s[^>]*)?\s*\/>/g;
+const JSX_OPEN_RE = /^\s*<([A-Z][A-Za-z0-9]*)(\s[^>]*)?>\s*$/;
+const jsxCloseRe = (name: string) => new RegExp(`^\\s*</${name}>\\s*$`);
 const SAFE_PROP_NAME = /^[a-zA-Z0-9_-]+$/;
 const SAFE_PROP_VALUE = /^[a-zA-Z0-9_\-.,\s]*$/;
 
@@ -55,14 +58,85 @@ const makeComponentNode = (
   subtype: 'inline' | 'block',
   name: MdxComponentName,
   rawProps: string | undefined,
-  source: string
+  source: string,
+  children?: ASTNode[]
 ): ASTNode => ({
   type: 'component',
   subtype,
   name,
   props: validateProps(name, parseJsxProps(rawProps ?? '', parser)),
-  source
+  source,
+  ...(children ? { children } : {})
 });
+
+/**
+ * Handles wrapper components (e.g. Caption) that accept exactly one other
+ * block-level, non-wrapper MDX component as their child, using an open/close
+ * tag pair rather than a self-closing tag. Registered ahead of
+ * MdxComponentBlockHandler so it gets first refusal on non-self-closing tags.
+ */
+class MdxComponentWrapperBlockHandler implements BlockParser {
+  parse(parser: Parser, stream: Parameters<BlockParser['parse']>[1], ast: ASTNode[]): boolean {
+    const openLine = stream.peek().text ?? '';
+    const match = openLine.match(JSX_OPEN_RE);
+    if (!match) return false;
+
+    const name = match[1];
+    if (!name || !isKnownComponent(name)) return false;
+    const spec = getMdxSpec(name);
+    if (spec.mode !== 'block' || !spec.acceptsChildren) return false;
+
+    stream.consume();
+
+    const closeRe = jsxCloseRe(name);
+    const innerLines: string[] = [];
+    let foundClose = false;
+    while (!stream.peek().isEOS()) {
+      if (stream.peek().match(closeRe)) {
+        foundClose = true;
+        break;
+      }
+      innerLines.push(stream.consume().text ?? '');
+    }
+
+    if (!foundClose) {
+      // Unclosed tag: degrade to literal text rather than hanging or dropping content.
+      ast.push({ type: 'literal', value: parser.unescape(openLine) });
+      return true;
+    }
+    stream.consume(); // consume the closing tag line
+
+    const innerAst = parseMarkdownWithComponents(innerLines.join('\n'));
+    const isComponentNode = (n: ASTNode): n is ASTNodeOfType<'component'> => n.type === 'component';
+    const componentChildren = innerAst.filter(isComponentNode);
+    const otherContent = innerAst.filter(
+      n => n.type !== 'component' && !(n.type === 'literal' && n.value.trim() === '')
+    );
+
+    const child = componentChildren[0];
+    const isValidChild =
+      componentChildren.length === 1 &&
+      otherContent.length === 0 &&
+      !!child &&
+      isKnownComponent(child.name) &&
+      getMdxSpec(child.name).mode === 'block' &&
+      !getMdxSpec(child.name).acceptsChildren;
+
+    if (!isValidChild || !child) {
+      ast.push({ type: 'literal', value: parser.unescape(openLine) });
+      return true;
+    }
+
+    ast.push(
+      makeComponentNode(parser, 'block', name, match[2], parser.unescape(openLine), [child])
+    );
+    return true;
+  }
+
+  excludeFromSubparse(context: string[]): boolean {
+    return context.includes('paragraph');
+  }
+}
 
 class MdxComponentBlockHandler implements BlockParser {
   parse(parser: Parser, stream: Parameters<BlockParser['parse']>[1], ast: ASTNode[]): boolean {
@@ -101,7 +175,7 @@ class MdxComponentInlineHandler extends InlineParser {
 export const parseMarkdownWithComponents = (body: string): ASTNode[] => {
   return markdownEngine
     .parser('gfm', {
-      block: [new MdxComponentBlockHandler()],
+      block: [new MdxComponentWrapperBlockHandler(), new MdxComponentBlockHandler()],
       inline: [new MdxComponentInlineHandler()]
     })
     .parse(body);

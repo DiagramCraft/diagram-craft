@@ -33,9 +33,11 @@ import {
 import type { TElement, Value } from 'platejs';
 import { Toolbar } from '@diagram-craft/app-components/src/Toolbar';
 import { EditorBlock, isListParagraph, getNodeText } from './EditorBlock';
+import { MdxBlockRegistryProvider } from './MdxBlockRegistryContext';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MDX_COMPONENTS } from '../mdx-components/mdxRegistry';
+import { CaptionNormalizePlugin } from '../mdx-components/blocks/caption/CaptionEditable';
 import styles from './PlateMarkdownEditor.module.css';
 
 // ─── Block element components ───────────────────────────────────────────────
@@ -762,10 +764,7 @@ const HeadingBreakPlugin = createPlatePlugin({
         // For void blocks, always insert a paragraph immediately after and move cursor there.
         if (block && topIndex !== undefined && editor.api.isVoid(block)) {
           const nextIndex = topIndex + 1;
-          editor.tf.insertNodes(
-            { type: 'p', children: [{ text: '' }] },
-            { at: [nextIndex] }
-          );
+          editor.tf.insertNodes({ type: 'p', children: [{ text: '' }] }, { at: [nextIndex] });
           editor.tf.select({ path: [nextIndex, 0], offset: 0 });
           return;
         }
@@ -837,6 +836,7 @@ const editorPlugins = [
   createPlatePlugin({ key: 'td', node: { isElement: true } }).withComponent(TableCellElement),
   createPlatePlugin({ key: 'th', node: { isElement: true } }).withComponent(TableHeaderCellElement),
   ...mdxElementPlugins,
+  CaptionNormalizePlugin,
   createPlatePlugin({ key: 'bold', node: { isLeaf: true } }).withComponent(BoldLeaf),
   createPlatePlugin({ key: 'italic', node: { isLeaf: true } }).withComponent(ItalicLeaf),
   createPlatePlugin({ key: 'code', node: { isLeaf: true } }).withComponent(InlineCodeLeaf),
@@ -903,19 +903,21 @@ export const PlateMarkdownEditor = ({ value, onChange }: PlateMarkdownEditorProp
   );
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className={styles.editor}>
-        <Plate editor={editor} onChange={handleChange}>
-          <PlateContent
-            className={styles.plateContent}
-            placeholder="Start writing, or type / for commands…"
-            spellCheck
-            onKeyDown={handleKeyDown}
-          />
-          <FloatingToolbar />
-          <DndScroller />
-        </Plate>
-      </div>
-    </DndProvider>
+    <MdxBlockRegistryProvider value={MDX_COMPONENTS}>
+      <DndProvider backend={HTML5Backend}>
+        <div className={styles.editor}>
+          <Plate editor={editor} onChange={handleChange}>
+            <PlateContent
+              className={styles.plateContent}
+              placeholder="Start writing, or type / for commands…"
+              spellCheck
+              onKeyDown={handleKeyDown}
+            />
+            <FloatingToolbar />
+            <DndScroller />
+          </Plate>
+        </div>
+      </DndProvider>
+    </MdxBlockRegistryProvider>
   );
 };

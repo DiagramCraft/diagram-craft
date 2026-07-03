@@ -1,0 +1,75 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 var(--article-block-gap) 0;
+  width: 100%;
+}
+
+.container.alignLeft {
+  align-items: flex-start;
+}
+
+.container.alignCenter {
+  align-items: center;
+}
+
+.container.alignRight {
+  align-items: flex-end;
+}
+
+.body {
+  width: 100%;
+}
+
+.editorContainer {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 8px;
+  background-color: var(--panel-bg);
+
+  > div {
+    border: 1px solid var(--panel-border);
+    border-radius: var(--r-md);
+    padding: 10px;
+    background-color: var(--base-bg);
+  }
+}
+
+.caption {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--cmp-fg-disabled);
+  text-align: center;
+}
+
+.captionText {
+  display: block;
+  width: 100%;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  padding: 4px;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  border: 1px solid transparent;
+}
+
+.captionText::placeholder {
+  font-style: italic;
+  color: var(--cmp-fg-disabled);
+}
+
+textarea.captionText:focus {
+  border-radius: var(--r-md);
+  background: var(--cmp-bg);
+  color: var(--cmp-fg);
+  box-shadow: var(--cmp-border-shadow-focus) !important;
+}
+
+.figureLabel {
+  font-weight: 600;
+}
