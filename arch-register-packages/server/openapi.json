@@ -25278,7 +25278,8 @@
                           "entity",
                           "project",
                           "content_node",
-                          "assessment"
+                          "assessment",
+                          "assessment_response"
                         ],
                         "type": "string",
                         "description": "Type of entity affected"
