@@ -14,7 +14,8 @@ import type {
   ProjectEntityDbResult,
   ContentNodeDbResult,
   MarkdownRevisionDbResult,
-  AssessmentDbResult
+  AssessmentDbResult,
+  AssessmentResponseDbResult
 } from '../domain/project/db/projectDatabase';
 import { DatabaseError } from './database';
 
@@ -169,6 +170,16 @@ export const sqliteMappers = {
     fields: parseJson(row['fields'], [], 'assessment.fields'),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
+  }),
+  assessmentResponse: (row: Record<string, unknown>): AssessmentResponseDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    assessment_id: String(row['assessment_id']),
+    entity_id: String(row['entity_id']),
+    values: parseJson(row['values'], {}, 'assessment_response.values'),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at']),
+    updated_by: row['updated_by'] != null ? String(row['updated_by']) : null
   }),
   entity: (row: Record<string, unknown>): Entity => ({
     id: String(row['id']),

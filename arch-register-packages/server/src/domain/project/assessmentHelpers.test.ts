@@ -86,12 +86,13 @@ describe('buildUpdateAssessmentInput', () => {
 
 describe('toApiAssessment', () => {
   it('maps a db row to the API shape and serializes dates to ISO strings', () => {
-    const result = toApiAssessment(makeRow());
+    const result = toApiAssessment(makeRow(), { response_count: 3, completed_entity_count: 1 });
     expect(result.id).toBe('asmnt-1');
     expect(result.project_id).toBe('proj-1');
     expect(result.scope).toEqual(['schema-service']);
     expect(result.fields).toHaveLength(1);
-    expect(result.response_count).toBe(0);
+    expect(result.response_count).toBe(3);
+    expect(result.completed_entity_count).toBe(1);
     expect(result.created_at).toBe(nowIso);
     expect(result.updated_at).toBe(nowIso);
   });

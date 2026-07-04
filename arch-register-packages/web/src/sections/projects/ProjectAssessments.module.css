@@ -9,15 +9,19 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  width: 100%;
   padding: 14px 16px;
   background: var(--panel-bg);
   border: 1px solid var(--cmp-border);
   border-radius: var(--r-md);
-  transition: border-color 120ms;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
 }
 
 .card:hover {
   border-color: var(--cmp-border-strong, var(--cmp-border));
+  background: var(--cmp-bg-hover, var(--cmp-bg));
 }
 
 .cardArchived {
@@ -95,12 +99,41 @@
   gap: 5px;
 }
 
-.cardActions {
+.completion {
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  padding-top: 1px;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.completionLabel {
+  font-size: 11.5px;
+  font-family: var(--font-mono, monospace);
+  color: var(--cmp-fg-disabled);
+}
+
+.completionBar {
+  flex: 1;
+  max-width: 120px;
+  height: 3px;
+  background: var(--cmp-bg);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.completionFill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+  transition: width 300ms;
+}
+
+.completionPct {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--cmp-fg-disabled);
+  min-width: 30px;
+  text-align: right;
 }
 
 /* Editor dialog */

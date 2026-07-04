@@ -8,7 +8,8 @@ import type {
   ContentNodeDbUpsert,
   MarkdownRevisionDbCreate,
   AssessmentDbCreate,
-  AssessmentDbUpdate
+  AssessmentDbUpdate,
+  AssessmentResponseDbUpsert
 } from './projectDatabase';
 import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
 import { isUuidLike } from '../../../utils/publicIds';
@@ -947,5 +948,58 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       id
     ]);
     return row;
+  }
+
+  async listAssessmentResponses(workspace: string, assessmentId: string) {
+    return this.all(
+      'SELECT * FROM assessment_response WHERE workspace = ? AND assessment_id = ?',
+      [workspace, assessmentId],
+      sqliteMappers.assessmentResponse
+    );
+  }
+
+  async getAssessmentResponse(workspace: string, assessmentId: string, entityId: string) {
+    return this.get(
+      'SELECT * FROM assessment_response WHERE workspace = ? AND assessment_id = ? AND entity_id = ?',
+      [workspace, assessmentId, entityId],
+      sqliteMappers.assessmentResponse
+    );
+  }
+
+  async upsertAssessmentResponse(input: AssessmentResponseDbUpsert) {
+    const now = new Date().toISOString();
+    const existing = await this.getAssessmentResponse(
+      input.workspace,
+      input.assessment_id,
+      input.entity_id
+    );
+    const id = existing?.id ?? newid();
+    this.run(
+      `INSERT INTO assessment_response (id, workspace, assessment_id, entity_id, "values", created_at, updated_at, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (workspace, assessment_id, entity_id)
+       DO UPDATE SET "values" = excluded."values", updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+      [
+        id,
+        input.workspace,
+        input.assessment_id,
+        input.entity_id,
+        JSON.stringify(input.values),
+        now,
+        now,
+        input.updated_by
+      ]
+    );
+    return (await this.getAssessmentResponse(input.workspace, input.assessment_id, input.entity_id))!;
+  }
+
+  async countAssessmentResponses(workspace: string, assessmentId: string) {
+    return (
+      this.get(
+        'SELECT COUNT(*) AS count FROM assessment_response WHERE workspace = ? AND assessment_id = ?',
+        [workspace, assessmentId],
+        (r: Record<string, unknown>) => Number(r['count'] ?? 0)
+      ) ?? 0
+    );
   }
 }

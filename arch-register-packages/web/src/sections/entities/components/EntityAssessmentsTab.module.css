@@ -1,0 +1,147 @@
+.list {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.card {
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  width: 100%;
+  text-align: left;
+  border-bottom: 1px solid transparent;
+  transition: background 120ms;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--cmp-fg-disabled);
+  transition: transform 150ms;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.head:hover {
+  background: var(--cmp-bg);
+}
+
+.headOpen {
+  border-bottom-color: var(--cmp-border);
+}
+
+.headBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.proj {
+  font-size: 11.5px;
+  color: var(--cmp-fg-disabled);
+  margin-top: 1px;
+}
+
+.body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.viewLinkRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
+.viewLink {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--cmp-fg-dim);
+}
+
+.viewLink:hover {
+  color: var(--accent-fg);
+  text-decoration: underline;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--cmp-fg-dim);
+  width: 180px;
+  flex-shrink: 0;
+  padding-top: 7px;
+}
+
+.req {
+  color: var(--danger, red);
+}
+
+.value {
+  flex: 1;
+  min-width: 0;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 2px;
+}
+
+.st-not_started {
+  background: var(--cmp-fg-disabled);
+}
+
+.st-in_progress {
+  background: var(--yellow, orange);
+}
+
+.st-complete {
+  background: var(--green);
+}
+
+.empty {
+  margin-top: 32px;
+  text-align: center;
+  color: var(--cmp-fg-disabled);
+}
+
+.emptyTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--base-fg);
+}
+
+.emptySub {
+  font-size: 12px;
+  margin-top: 4px;
+}

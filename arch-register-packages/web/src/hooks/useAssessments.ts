@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { assessmentKeys, invalidateAuditQueries } from './queryKeys';
 import type {
   CreateAssessmentRequest,
@@ -12,6 +12,17 @@ export const useAssessments = (workspaceId: string, projectId: string, enabled =
     queryFn: async () =>
       await orpcClient.assessments.list({ params: { workspace: workspaceId, id: projectId } }),
     enabled: enabled && !!workspaceId && !!projectId
+  });
+};
+
+export const useAssessmentsForProjects = (workspaceId: string, projectIds: string[]) => {
+  return useQueries({
+    queries: projectIds.map(projectId => ({
+      queryKey: assessmentKeys.list(workspaceId, projectId),
+      queryFn: async () =>
+        await orpcClient.assessments.list({ params: { workspace: workspaceId, id: projectId } }),
+      enabled: !!workspaceId && !!projectId
+    }))
   });
 };
 

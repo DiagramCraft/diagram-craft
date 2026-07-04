@@ -200,6 +200,24 @@ export type AssessmentDbUpdate = Omit<
   'id' | 'workspace' | 'project_id' | 'created_at'
 >;
 
+// -- Assessment response
+
+export type AssessmentResponseDbResult = {
+  id: string;
+  workspace: string;
+  assessment_id: string;
+  entity_id: string;
+  values: Record<string, string | number>;
+  created_at: Date;
+  updated_at: Date;
+  updated_by: string | null;
+};
+
+export type AssessmentResponseDbUpsert = Omit<
+  AssessmentResponseDbResult,
+  'id' | 'created_at' | 'updated_at'
+>;
+
 // --
 
 export type ProjectDatabase = {
@@ -345,4 +363,13 @@ export type ProjectDatabase = {
     input: AssessmentDbUpdate
   ): Promise<AssessmentDbResult | null>;
   deleteAssessment(ws: string, projectId: string, id: string): Promise<AssessmentDbResult | null>;
+
+  listAssessmentResponses(ws: string, assessmentId: string): Promise<AssessmentResponseDbResult[]>;
+  getAssessmentResponse(
+    ws: string,
+    assessmentId: string,
+    entityId: string
+  ): Promise<AssessmentResponseDbResult | null>;
+  upsertAssessmentResponse(input: AssessmentResponseDbUpsert): Promise<AssessmentResponseDbResult>;
+  countAssessmentResponses(ws: string, assessmentId: string): Promise<number>;
 };

@@ -575,7 +575,8 @@ export type AuditEntityType =
   | 'entity'
   | 'project'
   | 'content_node'
-  | 'assessment';
+  | 'assessment'
+  | 'assessment_response';
 
 // ── Workspace Config API ─────────────────────────────────────
 // Note: Lifecycle states, teams, team assignments, members, users, and roles now use ORPC client via hooks

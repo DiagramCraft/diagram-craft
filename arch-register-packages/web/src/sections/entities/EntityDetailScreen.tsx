@@ -70,8 +70,17 @@ import { Title } from '../../components/Title';
 import { DiagramMetadataPopover } from '../../components/DiagramMetadataPopover';
 import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
 import { EntityDependentsTab } from './components/EntityDependentsTab';
+import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
 
-type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'dependents' | 'changes' | 'timeline';
+type TabId =
+  | 'overview'
+  | 'topology'
+  | 'graph'
+  | 'relations'
+  | 'dependents'
+  | 'assessments'
+  | 'changes'
+  | 'timeline';
 
 type Relation = {
   entityId: string;
@@ -540,6 +549,7 @@ export const EntityDetailScreen = () => {
               <Tabs.Trigger value="dependents">
                 Dependents{incoming.length > 0 ? ` (${incoming.length})` : ''}
               </Tabs.Trigger>
+              <Tabs.Trigger value="assessments">Assessments</Tabs.Trigger>
               {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
               <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
             </Tabs.List>
@@ -1011,6 +1021,11 @@ export const EntityDetailScreen = () => {
           lifecycleStates={lifecycleStates}
           onEntityClick={navigateToEntity}
         />
+      )}
+
+      {/* Assessments */}
+      {!contentFolder && tab === 'assessments' && (
+        <EntityAssessmentsTab workspaceId={workspaceId} entity={entity} schema={schema} />
       )}
 
       {/* Change history */}

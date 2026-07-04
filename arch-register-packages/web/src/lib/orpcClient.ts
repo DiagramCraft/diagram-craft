@@ -4,6 +4,7 @@ import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { aiContract } from '@arch-register/api-types/aiContract';
 import { assessmentContract } from '@arch-register/api-types/assessmentContract';
+import { assessmentResponseContract } from '@arch-register/api-types/assessmentResponseContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
@@ -50,6 +51,7 @@ const webContracts = {
   ...workspaceConfigContract,
   ...projectContract,
   ...assessmentContract,
+  ...assessmentResponseContract,
   ...auditContract,
   ...watchContract,
   ...searchContract,
