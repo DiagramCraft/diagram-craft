@@ -4,10 +4,8 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import {
   TbPlus,
-  TbEdit,
   TbTrash,
   TbClipboardList,
   TbDatabase,
@@ -27,13 +25,8 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
-import {
-  useAssessments,
-  useCreateAssessment,
-  useUpdateAssessment,
-  useUpdateAssessmentStatus,
-  useDeleteAssessment
-} from '../../hooks/useAssessments';
+import { useAssessments, useCreateAssessment } from '../../hooks/useAssessments';
+import { useEntitiesBySchema } from '../../hooks/useEntities';
 
 type StatusFilter = 'active' | 'archived' | 'all';
 
@@ -62,13 +55,9 @@ export const ProjectAssessments = ({
 
   const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
   const createMutation = useCreateAssessment(workspaceSlug, projectId);
-  const updateMutation = useUpdateAssessment(workspaceSlug, projectId);
-  const statusMutation = useUpdateAssessmentStatus(workspaceSlug, projectId);
-  const deleteMutation = useDeleteAssessment(workspaceSlug, projectId);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
-  const [editing, setEditing] = useState<'new' | string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Assessment | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const schemaColorMap = useMemo(() => {
     const m = new Map<string, { color: string; icon: string | null }>();
@@ -83,15 +72,10 @@ export const ProjectAssessments = ({
   };
 
   const filtered = assessments.filter(a => statusFilter === 'all' || a.status === statusFilter);
-  const editingAssessment = editing && editing !== 'new' ? (assessments.find(a => a.id === editing) ?? null) : null;
 
   const handleSave = async (data: CreateAssessmentRequest) => {
-    if (editing === 'new') {
-      await createMutation.mutateAsync(data);
-    } else if (editing) {
-      await updateMutation.mutateAsync({ assessmentId: editing, data });
-    }
-    setEditing(null);
+    await createMutation.mutateAsync(data);
+    setCreating(false);
   };
 
   return (
@@ -105,7 +89,7 @@ export const ProjectAssessments = ({
         title="Assessments"
         actions={
           project.canEdit ? (
-            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setEditing('new')}>
+            <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setCreating(true)}>
               New assessment
             </Button>
           ) : undefined
@@ -148,7 +132,7 @@ export const ProjectAssessments = ({
                 Assessments collect structured scores and notes on entities in this project.
               </div>
               {project.canEdit && statusFilter !== 'archived' && (
-                <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setEditing('new')}>
+                <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setCreating(true)}>
                   New assessment
                 </Button>
               )}
@@ -162,51 +146,29 @@ export const ProjectAssessments = ({
                 assessment={assessment}
                 schemaColorMap={schemaColorMap}
                 schemas={schemas}
-                canEdit={project.canEdit}
-                onEdit={() => setEditing(assessment.id)}
-                onToggleStatus={() =>
-                  statusMutation.mutate({
-                    assessmentId: assessment.id,
-                    status: assessment.status === 'active' ? 'archived' : 'active'
+                onOpen={() =>
+                  navigate({
+                    search: ((previous: Record<string, unknown>) => ({
+                      ...previous,
+                      assessmentId: assessment.id
+                    })) as never
                   })
                 }
-                onDelete={() => setDeleteTarget(assessment)}
               />
             ))}
           </div>
         )}
       </ProjectScreenLayout>
 
-      {editing !== null && (
+      {creating && (
         <AssessmentEditorDialog
-          assessment={editingAssessment}
+          assessment={null}
           schemas={schemas}
-          isSaving={createMutation.isPending || updateMutation.isPending}
+          isSaving={createMutation.isPending}
           onSave={handleSave}
-          onCancel={() => setEditing(null)}
+          onCancel={() => setCreating(false)}
         />
       )}
-
-      <DeleteConfirmationDialog
-        open={!!deleteTarget}
-        title="Delete assessment?"
-        message={
-          deleteTarget ? (
-            <>
-              <b>{deleteTarget.name}</b> will be permanently deleted.
-            </>
-          ) : (
-            ''
-          )
-        }
-        detail="This can't be undone."
-        confirmLabel="Delete assessment"
-        onConfirm={() => {
-          if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
-          setDeleteTarget(null);
-        }}
-        onCancel={() => setDeleteTarget(null)}
-      />
     </>
   );
 };
@@ -215,27 +177,29 @@ const AssessmentCard = ({
   assessment,
   schemaColorMap,
   schemas,
-  canEdit,
-  onEdit,
-  onToggleStatus,
-  onDelete
+  onOpen
 }: {
   assessment: Assessment;
   schemaColorMap: Map<string, { color: string; icon: string | null }>;
   schemas: { id: string; name: string }[];
-  canEdit: boolean;
-  onEdit: () => void;
-  onToggleStatus: () => void;
-  onDelete: () => void;
+  onOpen: () => void;
 }) => {
   const isArchived = assessment.status === 'archived';
-  const hasResponses = assessment.response_count > 0;
   const scopeSchemas = assessment.scope
     .map(id => schemas.find(s => s.id === id))
     .filter((s): s is { id: string; name: string } => !!s);
 
+  const { workspaceSlug } = useWorkspaceContext();
+  const scopeQueries = useEntitiesBySchema(workspaceSlug, assessment.scope);
+  const inScopeCount = scopeQueries.reduce((sum, q) => sum + (q.data?.length ?? 0), 0);
+  const pct = inScopeCount > 0 ? Math.round((assessment.completed_entity_count / inScopeCount) * 100) : 0;
+
   return (
-    <div className={`${styles.card} ${isArchived ? styles.cardArchived : ''}`}>
+    <button
+      type="button"
+      className={`${styles.card} ${isArchived ? styles.cardArchived : ''}`}
+      onClick={onOpen}
+    >
       <div className={styles.cardBody}>
         <div className={styles.cardHead}>
           <div className={styles.cardName}>{assessment.name}</div>
@@ -266,33 +230,24 @@ const AssessmentCard = ({
               </span>
             </span>
           )}
-          <span className={styles.metaItem}>
-            {assessment.response_count} response{assessment.response_count !== 1 ? 's' : ''}
-          </span>
         </div>
+        {!isArchived && inScopeCount > 0 && (
+          <div className={styles.completion}>
+            <span className={styles.completionLabel}>
+              {assessment.completed_entity_count} / {inScopeCount}
+            </span>
+            <div className={styles.completionBar}>
+              <div className={styles.completionFill} style={{ width: `${pct}%` }} />
+            </div>
+            <span className={styles.completionPct}>{pct}%</span>
+          </div>
+        )}
       </div>
-      {canEdit && (
-        <div className={styles.cardActions}>
-          {!isArchived && (
-            <Button icon={<TbEdit size={12} />} onClick={onEdit}>
-              Edit
-            </Button>
-          )}
-          <Button onClick={onToggleStatus}>{isArchived ? 'Restore' : 'Archive'}</Button>
-          <Button
-            variant="ghost"
-            icon={<TbTrash size={13} />}
-            disabled={hasResponses}
-            onClick={onDelete}
-            title={hasResponses ? `Cannot delete — ${assessment.response_count} responses exist` : 'Delete assessment'}
-          />
-        </div>
-      )}
-    </div>
+    </button>
   );
 };
 
-const AssessmentEditorDialog = ({
+export const AssessmentEditorDialog = ({
   assessment,
   schemas,
   isSaving,

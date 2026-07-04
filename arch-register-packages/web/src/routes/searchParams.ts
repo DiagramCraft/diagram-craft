@@ -56,7 +56,15 @@ export type EntityDetailSearchParams = {
   contentFolder?: string;
   contentQuery?: string;
   contentView?: 'grid' | 'list';
-  tab?: 'overview' | 'topology' | 'graph' | 'relations' | 'dependents' | 'changes' | 'timeline';
+  tab?:
+    | 'overview'
+    | 'topology'
+    | 'graph'
+    | 'relations'
+    | 'dependents'
+    | 'assessments'
+    | 'changes'
+    | 'timeline';
 };
 
 export type SharedContentBrowserSearchParams = {
@@ -80,6 +88,7 @@ export const validateEntityDetailSearch = (raw: Record<string, unknown>): Entity
     raw.tab === 'graph' ||
     raw.tab === 'relations' ||
     raw.tab === 'dependents' ||
+    raw.tab === 'assessments' ||
     raw.tab === 'changes' ||
     raw.tab === 'timeline'
       ? raw.tab
@@ -109,6 +118,7 @@ export type ProjectSearchParams = {
   tab?: 'projects' | 'archive';
   folder?: string;
   section?: 'home' | 'entities' | 'assessments';
+  assessmentId?: string;
   dialog?: 'add-entity';
 } & SharedEntityBrowserSearchParams & SharedContentBrowserSearchParams;
 
@@ -121,6 +131,7 @@ export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSear
     raw.section === 'home' || raw.section === 'entities' || raw.section === 'assessments'
       ? raw.section
       : undefined,
+  assessmentId: typeof raw.assessmentId === 'string' ? raw.assessmentId : undefined,
   dialog: raw.dialog === 'add-entity' ? raw.dialog : undefined,
 });
 

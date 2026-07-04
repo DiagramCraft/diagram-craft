@@ -27,7 +27,8 @@ export type AuditEntityType =
   | 'entity'
   | 'project'
   | 'content_node'
-  | 'assessment';
+  | 'assessment'
+  | 'assessment_response';
 
 export type AuditDatabase = {
   listAuditLogs(ws: string): Promise<AuditLogDbResult[]>;

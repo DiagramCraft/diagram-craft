@@ -46,7 +46,12 @@ const assessmentSchema = z.object({
   status: z.enum(['active', 'archived']).describe('Assessment status'),
   scope: z.array(z.string()).describe('Entity schema ids this assessment applies to'),
   fields: z.array(assessmentFieldSchema).describe('Assessment field definitions'),
-  response_count: z.number().int().min(0).describe('Number of responses recorded for this assessment'),
+  response_count: z.number().int().min(0).describe('Number of entities with a recorded response'),
+  completed_entity_count: z
+    .number()
+    .int()
+    .min(0)
+    .describe('Number of entities whose response has all required fields filled in'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });

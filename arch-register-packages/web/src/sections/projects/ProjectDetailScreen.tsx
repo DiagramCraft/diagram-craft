@@ -54,6 +54,7 @@ import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
 import { ProjectEntities } from './ProjectEntities';
 import { ProjectAssessments } from './ProjectAssessments';
+import { AssessmentFillScreen } from './AssessmentFillScreen';
 import {
   deleteConfirmLabel,
   deleteMessage,
@@ -80,6 +81,7 @@ export const ProjectDetailScreen = () => {
     tab?: string;
     folder?: string;
     section?: ProjectSection;
+    assessmentId?: string;
     dialog?: 'add-entity';
     contentQuery?: string;
     contentView?: 'grid' | 'list';
@@ -626,7 +628,23 @@ export const ProjectDetailScreen = () => {
 
   return (
     <>
-      {section === 'assessments' ? (
+      {section === 'assessments' && search.assessmentId ? (
+        <AssessmentFillScreen
+          project={project}
+          projectId={projectId}
+          assessmentId={search.assessmentId}
+          onNavigateHome={handleNavigateHome}
+          onNavigateProject={handleNavigateProject}
+          onBack={() =>
+            navigate({
+              search: ((previous: Record<string, unknown>) => ({
+                ...previous,
+                assessmentId: undefined
+              })) as never
+            })
+          }
+        />
+      ) : section === 'assessments' ? (
         <ProjectAssessments
           project={project}
           projectId={projectId}

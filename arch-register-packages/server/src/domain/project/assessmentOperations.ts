@@ -6,12 +6,22 @@ import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { buildCreateAssessmentInput, buildUpdateAssessmentInput, toApiAssessment } from './assessmentHelpers';
+import { countCompletedEntities } from './assessmentResponseHelpers';
+import type { AssessmentDbResult } from './db/projectDatabase';
 import {
   Assessment,
   CreateAssessmentRequest,
   UpdateAssessmentRequest,
   UpdateAssessmentStatusRequest
 } from '@arch-register/api-types/assessmentContract';
+
+const getAssessmentStats = async (db: DatabaseAdapter, ws: string, row: AssessmentDbResult) => {
+  const responses = await db.project.listAssessmentResponses(ws, row.id);
+  return {
+    response_count: responses.length,
+    completed_entity_count: countCompletedEntities(responses, row)
+  };
+};
 
 const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
@@ -37,7 +47,7 @@ export const listAssessments = async (
     requireProjectAccess(authCtx, project.owner);
 
     const rows = await db.project.listAssessments(ws, project.id);
-    return rows.map(toApiAssessment);
+    return await Promise.all(rows.map(async row => toApiAssessment(row, await getAssessmentStats(db, ws, row))));
   } catch (error) {
     return handleError(error, 'Failed to retrieve assessments');
   }
@@ -58,7 +68,7 @@ export const getAssessment = async (
 
     const row = await db.project.getAssessment(ws, project.id, id);
     httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
-    return toApiAssessment(row);
+    return toApiAssessment(row, await getAssessmentStats(db, ws, row));
   } catch (error) {
     return handleError(error, 'Failed to retrieve assessment');
   }
@@ -97,7 +107,7 @@ export const createAssessment = async (
       changes: { new: extractEntityFields(row) }
     });
 
-    return toApiAssessment(row);
+    return toApiAssessment(row, { response_count: 0, completed_entity_count: 0 });
   } catch (error) {
     return handleError(error, 'Failed to create assessment');
   }
@@ -144,7 +154,7 @@ export const updateAssessment = async (
       changes
     });
 
-    return toApiAssessment(row);
+    return toApiAssessment(row, await getAssessmentStats(db, ws, row));
   } catch (error) {
     return handleError(error, 'Failed to update assessment');
   }
@@ -192,7 +202,7 @@ export const updateAssessmentStatus = async (
       changes: computeChanges(extractEntityFields(oldRow), extractEntityFields(row))
     });
 
-    return toApiAssessment(row);
+    return toApiAssessment(row, await getAssessmentStats(db, ws, row));
   } catch (error) {
     return handleError(error, 'Failed to update assessment status');
   }
@@ -219,8 +229,6 @@ export const deleteAssessment = async (
     const row = await db.project.getAssessment(ws, project.id, id);
     httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
 
-    // No responses table exists yet (out of scope for this feature); once it does, gate
-    // deletion on response_count === 0 here, per the "no responses yet" requirement.
     await db.project.deleteAssessment(ws, project.id, id);
 
     await logAudit(db, {

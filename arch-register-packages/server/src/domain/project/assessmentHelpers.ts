@@ -50,7 +50,10 @@ export const buildUpdateAssessmentInput = (
   };
 };
 
-export const toApiAssessment = (row: AssessmentDbResult): Assessment => ({
+export const toApiAssessment = (
+  row: AssessmentDbResult,
+  stats: { response_count: number; completed_entity_count: number }
+): Assessment => ({
   id: row.id,
   workspace: row.workspace,
   project_id: row.project_id,
@@ -59,8 +62,8 @@ export const toApiAssessment = (row: AssessmentDbResult): Assessment => ({
   status: row.status,
   scope: row.scope,
   fields: row.fields,
-  // Response recording isn't implemented yet (tracked separately); always 0 until it lands.
-  response_count: 0,
+  response_count: stats.response_count,
+  completed_entity_count: stats.completed_entity_count,
   created_at: row.created_at.toISOString(),
   updated_at: row.updated_at.toISOString()
 });

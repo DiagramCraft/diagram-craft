@@ -13,7 +13,9 @@ import type {
   MarkdownRevisionDbResult,
   AssessmentDbResult,
   AssessmentDbCreate,
-  AssessmentDbUpdate
+  AssessmentDbUpdate,
+  AssessmentResponseDbResult,
+  AssessmentResponseDbUpsert
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { randomUUID } from 'node:crypto';
@@ -922,5 +924,42 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       DELETE FROM assessment WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
     `;
     return row;
+  }
+
+  async listAssessmentResponses(workspace: string, assessmentId: string) {
+    return await this.sql<AssessmentResponseDbResult[]>`
+      SELECT * FROM assessment_response WHERE workspace = ${workspace} AND assessment_id = ${assessmentId}
+    `;
+  }
+
+  async getAssessmentResponse(workspace: string, assessmentId: string, entityId: string) {
+    const [row] = await this.sql<AssessmentResponseDbResult[]>`
+      SELECT * FROM assessment_response
+      WHERE workspace = ${workspace} AND assessment_id = ${assessmentId} AND entity_id = ${entityId}
+    `;
+    return row ?? null;
+  }
+
+  async upsertAssessmentResponse(input: AssessmentResponseDbUpsert) {
+    try {
+      const [row] = await this.sql<AssessmentResponseDbResult[]>`
+        INSERT INTO assessment_response (id, workspace, assessment_id, entity_id, "values", created_at, updated_at, updated_by)
+        VALUES (${randomUUID()}, ${input.workspace}, ${input.assessment_id}, ${input.entity_id}, ${this.json(input.values)}, now(), now(), ${input.updated_by})
+        ON CONFLICT (workspace, assessment_id, entity_id)
+        DO UPDATE SET "values" = ${this.json(input.values)}, updated_at = now(), updated_by = ${input.updated_by}
+        RETURNING *
+      `;
+      return row!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async countAssessmentResponses(workspace: string, assessmentId: string) {
+    const [row] = await this.sql<{ count: string }[]>`
+      SELECT COUNT(*) AS count FROM assessment_response
+      WHERE workspace = ${workspace} AND assessment_id = ${assessmentId}
+    `;
+    return Number(row?.count ?? 0);
   }
 }
