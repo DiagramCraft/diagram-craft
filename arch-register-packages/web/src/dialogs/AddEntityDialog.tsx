@@ -138,6 +138,8 @@ export const AddEntityDialog = ({
         if (val !== undefined && val !== '' && !isEmptyArray) {
           if (f.type === 'boolean') {
             dataFields[f.id] = val === 'true';
+          } else if (f.type === 'number') {
+            dataFields[f.id] = Number(val);
           } else {
             dataFields[f.id] = val;
           }
@@ -433,6 +435,22 @@ const FieldInput = ({
       <FormElement label={field.name}>
         <input
           type="date"
+          value={typeof value === 'string' ? value : ''}
+          onChange={e => onChange(e.target.value)}
+          style={{ width: '100%' }}
+        />
+      </FormElement>
+    );
+  }
+
+  if (field.type === 'number') {
+    return (
+      <FormElement label={field.name}>
+        <input
+          type="number"
+          step="1"
+          min={field.min}
+          max={field.max}
           value={typeof value === 'string' ? value : ''}
           onChange={e => onChange(e.target.value)}
           style={{ width: '100%' }}

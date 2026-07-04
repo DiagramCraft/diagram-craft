@@ -1257,6 +1257,21 @@ const PropertyRow = ({
         />
       );
     }
+    if (field.type === 'number') {
+      return (
+        <input
+          className={styles.inputInline}
+          type="number"
+          step="1"
+          min={field.min}
+          max={field.max}
+          value={editValue === undefined || editValue === null ? '' : (editValue as number)}
+          onChange={e =>
+            onChange(e.target.value === '' ? undefined : Math.trunc(e.target.valueAsNumber))
+          }
+        />
+      );
+    }
     return (
       <input
         className={styles.inputInline}

@@ -770,6 +770,56 @@
                                   "description": "Whether the field is required, expected, or optional"
                                 },
                                 "type": {
+                                  "const": "number",
+                                  "description": "Integer number field"
+                                },
+                                "min": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum allowed value"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Maximum allowed value"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "type": {
                                   "const": "select",
                                   "description": "Single-select dropdown field"
                                 },
@@ -1226,6 +1276,56 @@
                               "description": "Whether the field is required, expected, or optional"
                             },
                             "type": {
+                              "const": "number",
+                              "description": "Integer number field"
+                            },
+                            "min": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Minimum allowed value"
+                            },
+                            "max": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Maximum allowed value"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "type"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique field identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Field name"
+                            },
+                            "requirementLevel": {
+                              "anyOf": [
+                                {
+                                  "enum": [
+                                    "required",
+                                    "expected",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Whether the field is required, expected, or optional"
+                            },
+                            "type": {
                               "const": "select",
                               "description": "Single-select dropdown field"
                             },
@@ -1599,6 +1699,56 @@
                               "type": {
                                 "const": "date",
                                 "description": "Date field"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "type": {
+                                "const": "number",
+                                "description": "Integer number field"
+                              },
+                              "min": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum allowed value"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Maximum allowed value"
                               }
                             },
                             "required": [
@@ -2110,6 +2260,56 @@
                                 "description": "Whether the field is required, expected, or optional"
                               },
                               "type": {
+                                "const": "number",
+                                "description": "Integer number field"
+                              },
+                              "min": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum allowed value"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Maximum allowed value"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "type": {
                                 "const": "select",
                                 "description": "Single-select dropdown field"
                               },
@@ -2574,6 +2774,56 @@
                               "description": "Whether the field is required, expected, or optional"
                             },
                             "type": {
+                              "const": "number",
+                              "description": "Integer number field"
+                            },
+                            "min": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Minimum allowed value"
+                            },
+                            "max": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Maximum allowed value"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "type"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique field identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Field name"
+                            },
+                            "requirementLevel": {
+                              "anyOf": [
+                                {
+                                  "enum": [
+                                    "required",
+                                    "expected",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Whether the field is required, expected, or optional"
+                            },
+                            "type": {
                               "const": "select",
                               "description": "Single-select dropdown field"
                             },
@@ -2947,6 +3197,56 @@
                               "type": {
                                 "const": "date",
                                 "description": "Date field"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "type": {
+                                "const": "number",
+                                "description": "Integer number field"
+                              },
+                              "min": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum allowed value"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Maximum allowed value"
                               }
                             },
                             "required": [

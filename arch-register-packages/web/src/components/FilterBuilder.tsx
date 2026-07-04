@@ -37,10 +37,19 @@ const SELECT_OPERATORS = [
   { value: 'not_empty', label: 'Is not empty' }
 ];
 
+const NUMBER_OPERATORS = [
+  { value: 'equals', label: 'Equals' },
+  { value: 'not_equals', label: 'Not equals' },
+  { value: 'gt', label: 'Greater than' },
+  { value: 'lt', label: 'Less than' },
+  { value: 'empty', label: 'Is empty' },
+  { value: 'not_empty', label: 'Is not empty' }
+];
+
 type FieldDef = {
   id: string;
   name: string;
-  type: 'text' | 'date' | 'select' | 'boolean';
+  type: 'text' | 'date' | 'select' | 'boolean' | 'number';
   options?: { value: string; label: string }[];
 };
 
@@ -105,6 +114,7 @@ export const FilterBuilder = ({
             const en = enums.find(e => e.id === f.enumId);
             options = en?.options ?? [];
           } else if (f.type === 'boolean') type = 'boolean';
+          else if (f.type === 'number') type = 'number';
 
           return { id: f.id, name: f.name, type, options };
         });
@@ -146,7 +156,7 @@ export const FilterBuilder = ({
       const field = fields.find(f => f.id === updates.fieldId);
       if (field) {
         if (field.type === 'date') updated.op = 'on';
-        else if (field.type === 'select') updated.op = 'equals';
+        else if (field.type === 'select' || field.type === 'number') updated.op = 'equals';
         else updated.op = 'contains';
         updated.value = '';
       }
@@ -217,6 +227,7 @@ const FilterRow = ({
   const operators = React.useMemo(() => {
     if (field.type === 'date') return DATE_OPERATORS;
     if (field.type === 'select') return SELECT_OPERATORS;
+    if (field.type === 'number') return NUMBER_OPERATORS;
     return TEXT_OPERATORS;
   }, [field.type]);
 
@@ -269,6 +280,13 @@ const FilterRow = ({
             <DateInput
               value={(condition.value as string) || ''}
               onChange={v => onUpdate({ value: v })}
+            />
+          ) : field.type === 'number' ? (
+            <input
+              type="number"
+              step="1"
+              value={(condition.value as string) ?? ''}
+              onChange={e => onUpdate({ value: e.target.value })}
             />
           ) : (
             <TextInput

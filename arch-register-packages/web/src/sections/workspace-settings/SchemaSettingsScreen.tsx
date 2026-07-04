@@ -159,6 +159,8 @@ export const SchemaSettingsScreen = () => {
           case 'longtext':
           case 'date':
             return { ...base, type: newType };
+          case 'number':
+            return { ...base, type: 'number' };
           case 'boolean':
             return { ...base, type: 'boolean' };
           case 'select':
@@ -528,6 +530,56 @@ const FieldRow = ({
               </div>
             </div>
           ) : null}
+        </div>
+      );
+    }
+    if (field.type === 'number') {
+      return (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gap: 4 }}>
+            <span className="dim" style={{ fontSize: 11 }}>
+              Min
+            </span>
+            <TextInput
+              value={field.min === undefined ? '' : String(field.min)}
+              disabled={!canEdit}
+              onChange={value => {
+                const raw = value ?? '';
+                if (raw.trim() === '') {
+                  onUpdate({ min: undefined } as Partial<SchemaField>);
+                  return;
+                }
+                const next = Number(raw);
+                if (!Number.isNaN(next)) {
+                  onUpdate({ min: Math.trunc(next) } as Partial<SchemaField>);
+                }
+              }}
+              style={{ width: '100%' }}
+              placeholder="Unbounded"
+            />
+          </div>
+          <div style={{ display: 'grid', gap: 4 }}>
+            <span className="dim" style={{ fontSize: 11 }}>
+              Max
+            </span>
+            <TextInput
+              value={field.max === undefined ? '' : String(field.max)}
+              disabled={!canEdit}
+              onChange={value => {
+                const raw = value ?? '';
+                if (raw.trim() === '') {
+                  onUpdate({ max: undefined } as Partial<SchemaField>);
+                  return;
+                }
+                const next = Number(raw);
+                if (!Number.isNaN(next)) {
+                  onUpdate({ max: Math.trunc(next) } as Partial<SchemaField>);
+                }
+              }}
+              style={{ width: '100%' }}
+              placeholder="Unbounded"
+            />
+          </div>
         </div>
       );
     }
