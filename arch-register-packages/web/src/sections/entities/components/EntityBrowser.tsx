@@ -13,16 +13,9 @@ import { FilterDropdown } from '../../../components/FilterDropdown';
 import type { WorkspaceTeam } from '../../../lib/api';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
-import { RadarView } from '../components/RadarView';
-import { TimelineView } from '../components/TimelineView';
-import { MatrixView } from '../components/MatrixView';
-import { HierarchyView } from '../components/HierarchyView';
-import { ExploreView } from '../components/ExploreView';
 import { BulkEditToolbar } from './BulkEditToolbar';
-import { CardsView } from './CardsView';
-import { TableView } from './TableView';
-import { TreeView } from './TreeView';
 import { type ProjectBrowserContext } from './entityBrowserState';
+import { EntityBrowserView } from './EntityBrowserView';
 import { EntityBrowserToolbar } from './EntityBrowserToolbar';
 import { useEntityBrowserData } from './useEntityBrowserData';
 import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
@@ -320,75 +313,7 @@ export const EntityBrowser = ({
         />
       )}
 
-      {view === 'hierarchy' ? (
-        <HierarchyView
-          workspaceId={workspaceId}
-          projectId={projectId}
-          projectScope={projectScope}
-          q={q}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
-          statusFilter={statusFilter}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-          linkedEntityIds={linkedEntityIds}
-        />
-      ) : view === 'explore' ? (
-        <ExploreView
-          rows={filtered}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-          linkedEntityIds={linkedEntityIds}
-        />
-      ) : view === 'matrix' ? (
-        <MatrixView
-          rows={filtered}
-          schemaMap={schemaMap}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-          linkedEntityIds={linkedEntityIds}
-        />
-      ) : view === 'timeline' ? (
-        <TimelineView
-          rows={filtered}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-          workspaceId={workspaceId}
-          projects={projects}
-          linkedEntityIds={linkedEntityIds}
-        />
-      ) : view === 'radar' ? (
-        <RadarView
-          rows={filtered}
-          linkedEntityIds={linkedEntityIds}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-        />
-      ) : view === 'tree' ? (
-        <TreeView
-          workspaceId={workspaceId}
-          projectId={projectId}
-          projectScope={projectScope}
-          q={q}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
-          statusFilter={statusFilter}
-          schemaMap={schemaMap}
-          onEntityClick={navigateToEntity}
-          onDelete={handleDeleteEntity}
-          onClone={handleCloneEntity}
-          lifecycleStates={lifecycleStates}
-          projectContext={projectContext}
-          readOnly={readOnly}
-        />
-      ) : filtered.length === 0 ? (
+      {(view === 'table' || view === 'cards') && filtered.length === 0 ? (
         <div className={styles.empty}>
           <div className={styles.emptyTitle}>No entities found</div>
           <div>Try adjusting your search or filters.</div>
@@ -414,34 +339,33 @@ export const EntityBrowser = ({
               onConfirm={handleConfirm}
             />
           )}
-          {view === 'table' && (
-            <TableView
-              rows={filtered}
-              schemaMap={schemaMap}
-              activeDateField={dateBrowserEnabled ? activeDateField : null}
-              onEntityClick={navigateToEntity}
-              onDelete={handleDeleteEntity}
-              onClone={handleCloneEntity}
-              selectedIds={selectedIds}
-              onSelectAll={handleSelectAll}
-              onSelectRow={handleSelectRow}
-              lifecycleStates={lifecycleStates}
-              projectContext={projectContext}
-              readOnly={readOnly}
-            />
-          )}
-          {view === 'cards' && (
-            <CardsView
-              rows={filtered}
-              schemaMap={schemaMap}
-              onEntityClick={navigateToEntity}
-              onDelete={handleDeleteEntity}
-              onClone={handleCloneEntity}
-              lifecycleStates={lifecycleStates}
-              projectContext={projectContext}
-              readOnly={readOnly}
-            />
-          )}
+          <EntityBrowserView
+            view={view}
+            rows={filtered}
+            schemaMap={schemaMap}
+            schemas={schemas}
+            lifecycleStates={lifecycleStates}
+            projects={projects}
+            workspaceId={workspaceId}
+            projectId={projectId}
+            projectScope={projectScope}
+            q={q}
+            typeFilter={typeFilter}
+            ownerFilter={ownerFilter}
+            statusFilter={statusFilter}
+            activeViewConfig={activeViewConfig}
+            onConfigChange={setActiveViewConfig}
+            onEntityClick={navigateToEntity}
+            onDelete={handleDeleteEntity}
+            onClone={handleCloneEntity}
+            projectContext={projectContext}
+            linkedEntityIds={linkedEntityIds}
+            readOnly={readOnly}
+            activeDateField={dateBrowserEnabled ? activeDateField : null}
+            selectedIds={selectedIds}
+            onSelectAll={handleSelectAll}
+            onSelectRow={handleSelectRow}
+          />
         </>
       )}
       {isPagedBrowse && (

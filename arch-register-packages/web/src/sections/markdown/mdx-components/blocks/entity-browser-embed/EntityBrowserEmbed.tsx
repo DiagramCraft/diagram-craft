@@ -3,24 +3,14 @@ import { useNavigate } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publicObjectRoutes';
-import { TableView } from '../../../../entities/components/TableView';
-import { CardsView } from '../../../../entities/components/CardsView';
-import { TreeView } from '../../../../entities/components/TreeView';
-import { RadarView } from '../../../../entities/components/RadarView';
-import { TimelineView } from '../../../../entities/components/TimelineView';
-import { MatrixView } from '../../../../entities/components/MatrixView';
-import { HierarchyView } from '../../../../entities/components/HierarchyView';
-import { ExploreView } from '../../../../entities/components/ExploreView';
+import { EntityBrowserView } from '../../../../entities/components/EntityBrowserView';
 import {
   getFilterValue,
   type BrowserEntityRecord
 } from '../../../../entities/components/entityBrowserState';
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
-import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import { decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbed.module.css';
-
-const noop = () => {};
 
 type Props = {
   config?: string;
@@ -90,115 +80,30 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
   const viewConfig = config.viewConfigs[config.view] ?? null;
   const browserRows = rows as BrowserEntityRecord[];
 
-  switch (config.view) {
-    case 'table':
-      return (
-        <TableView
-          rows={browserRows}
-          schemaMap={schemaMap}
-          onEntityClick={onEntityClick}
-          onDelete={noop as (entity: EntityRecord) => void}
-          onClone={noop as (entity: EntityRecord) => void}
-          lifecycleStates={lifecycleStates}
-          readOnly
-        />
-      );
-    case 'cards':
-      return (
-        <CardsView
-          rows={browserRows}
-          schemaMap={schemaMap}
-          onEntityClick={onEntityClick}
-          onDelete={noop as (entity: EntityRecord) => void}
-          onClone={noop as (entity: EntityRecord) => void}
-          lifecycleStates={lifecycleStates}
-          readOnly
-        />
-      );
-    case 'tree':
-      return (
-        <TreeView
-          workspaceId={workspaceSlug}
-          projectId={resolvedProjectId ?? undefined}
-          projectScope={projectScope}
-          q={config.q}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
-          statusFilter={statusFilter}
-          schemaMap={schemaMap}
-          onEntityClick={onEntityClick}
-          onDelete={noop as (entity: EntityRecord) => void}
-          onClone={noop as (entity: EntityRecord) => void}
-          lifecycleStates={lifecycleStates}
-          readOnly
-        />
-      );
-    case 'radar':
-      return (
-        <RadarView
-          rows={browserRows}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-          hideToolbar
-        />
-      );
-    case 'timeline':
-      return (
-        <TimelineView
-          rows={browserRows}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-          workspaceId={workspaceSlug}
-          projects={projects}
-          hideToolbar
-        />
-      );
-    case 'matrix':
-      return (
-        <MatrixView
-          rows={browserRows}
-          schemaMap={schemaMap}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-          hideToolbar
-        />
-      );
-    case 'hierarchy':
-      return (
-        <HierarchyView
-          workspaceId={workspaceSlug}
-          projectId={resolvedProjectId ?? undefined}
-          projectScope={projectScope}
-          q={config.q}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
-          statusFilter={statusFilter}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-          hideToolbar
-        />
-      );
-    case 'explore':
-      return (
-        <ExploreView
-          rows={browserRows}
-          onEntityClick={onEntityClick}
-          config={viewConfig}
-          onConfigChange={noop}
-          hideToolbar
-        />
-      );
-    default:
-      return (
+  return (
+    <EntityBrowserView
+      view={config.view}
+      rows={browserRows}
+      schemaMap={schemaMap}
+      schemas={schemas}
+      lifecycleStates={lifecycleStates}
+      projects={projects}
+      workspaceId={workspaceSlug}
+      projectId={resolvedProjectId ?? undefined}
+      projectScope={projectScope}
+      q={config.q}
+      typeFilter={typeFilter}
+      ownerFilter={ownerFilter}
+      statusFilter={statusFilter}
+      activeViewConfig={viewConfig}
+      onEntityClick={onEntityClick}
+      readOnly
+      hideToolbar
+      unsupportedView={
         <div className={styles.container}>
           <p className={styles.empty}>Unsupported view mode.</p>
         </div>
-      );
-  }
+      }
+    />
+  );
 };
