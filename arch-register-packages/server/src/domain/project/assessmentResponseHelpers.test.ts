@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { toApiAssessmentResponse, countCompletedEntities } from './assessmentResponseHelpers';
+import {
+  toApiAssessmentResponse,
+  countCompletedEntities,
+  buildAssessmentResultsCsvData
+} from './assessmentResponseHelpers';
 import type { AssessmentDbResult, AssessmentResponseDbResult } from './db/projectDatabase';
+import type { EntityDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
@@ -69,5 +74,96 @@ describe('countCompletedEntities', () => {
       makeResponse({ entity_id: 'e3', values: { f1: 'Defined', f2: 'note' } })
     ];
     expect(countCompletedEntities(responses, assessment)).toBe(2);
+  });
+});
+
+const makeEntity = (overrides: Partial<EntityDbResult> = {}): EntityDbResult => ({
+  id: 'entity-1',
+  workspace: 'ws-1',
+  public_id: 'SVC-001',
+  slug: 'entity-1',
+  namespace: '',
+  name: 'Payments Service',
+  description: '',
+  owner: 'owner-1',
+  lifecycle: null,
+  target_lifecycle: null,
+  target_lifecycle_date: null,
+  tags: [],
+  links: [],
+  schema_id: 'schema-service',
+  data: {},
+  visibility_mode: null,
+  created_at: now,
+  updated_at: now,
+  owner_name: 'Jane Doe',
+  lifecycle_label: null,
+  target_lifecycle_label: null,
+  schema_name: 'Service',
+  ...overrides
+});
+
+const enumDef: WorkspaceEnumDbResult = {
+  id: 'enum-maturity',
+  workspace: 'ws-1',
+  name: 'Maturity',
+  options: [
+    { value: 'Managed', label: 'Managed' },
+    { value: 'Defined', label: 'Defined' }
+  ],
+  sort_order: 0,
+  created_at: now,
+  updated_at: now
+};
+
+describe('buildAssessmentResultsCsvData', () => {
+  it('includes all in-scope entities, blank cells for unanswered fields', () => {
+    const assessment = makeAssessment();
+    const entities = [
+      makeEntity({ id: 'e1', name: 'Alpha' }),
+      makeEntity({ id: 'e2', name: 'Beta', owner: null, owner_name: null })
+    ];
+    const responses = [makeResponse({ entity_id: 'e1', values: { f1: 'Managed', f2: 'note' } })];
+
+    const { columns, rows } = buildAssessmentResultsCsvData(entities, responses, assessment, [enumDef]);
+
+    expect(columns).toEqual(['Entity', 'Owner', 'Schema Type', 'Auth maturity', 'Notes', 'Status']);
+    expect(rows).toEqual([
+      {
+        Entity: 'Alpha',
+        Owner: 'Jane Doe',
+        'Schema Type': 'Service',
+        'Auth maturity': 'Managed',
+        Notes: 'note',
+        Status: 'complete'
+      },
+      {
+        Entity: 'Beta',
+        Owner: '',
+        'Schema Type': 'Service',
+        'Auth maturity': '',
+        Notes: '',
+        Status: 'not_started'
+      }
+    ]);
+  });
+
+  it('excludes entities outside the assessment scope', () => {
+    const assessment = makeAssessment();
+    const entities = [makeEntity({ id: 'e1' }), makeEntity({ id: 'e2', schema_id: 'schema-other' })];
+
+    const { rows } = buildAssessmentResultsCsvData(entities, [], assessment, []);
+
+    expect(rows).toHaveLength(1);
+  });
+
+  it('resolves enum values to their labels', () => {
+    const assessment = makeAssessment();
+    const entities = [makeEntity({ id: 'e1' })];
+    const responses = [makeResponse({ entity_id: 'e1', values: { f1: 'Defined' } })];
+
+    const { rows } = buildAssessmentResultsCsvData(entities, responses, assessment, [enumDef]);
+
+    expect(rows[0]!['Auth maturity']).toBe('Defined');
   });
 });

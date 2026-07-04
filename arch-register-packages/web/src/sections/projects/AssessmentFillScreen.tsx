@@ -1,9 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbEdit, TbDots, TbArchive, TbTrash } from 'react-icons/tb';
+import {
+  TbEdit,
+  TbDots,
+  TbArchive,
+  TbTrash,
+  TbFilter,
+  TbDownload,
+  TbChevronUp,
+  TbChevronDown
+} from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type { AssessmentEntityStatus } from '@arch-register/api-types/assessmentStatus';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
@@ -11,6 +22,7 @@ import type { CreateAssessmentRequest } from '@arch-register/api-types/assessmen
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import { exportAssessmentResponsesToCSV } from '../../lib/assessmentCsv';
 import { TypeBadge } from '../../components/TypeBadge';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import {
@@ -28,15 +40,52 @@ import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRo
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { AssessmentEditorDialog } from './ProjectAssessments';
 import { AssessmentFieldCell } from './components/AssessmentFieldCells';
+import {
+  AssessmentFilterBuilder,
+  matchesAssessmentFilterConditions,
+  type AssessmentFilterCondition
+} from './components/AssessmentFilterBuilder';
+import { AssessmentSummaryTab } from './components/AssessmentSummaryTab';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './AssessmentFillScreen.module.css';
 
 type StatusFilter = 'all' | AssessmentEntityStatus;
+type SortState = { key: string; dir: 'asc' | 'desc' };
 
 const STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
   not_started: 'Not started',
   in_progress: 'In progress',
   complete: 'Complete'
+};
+
+const SortableHeader = ({
+  label,
+  sortKey,
+  sort,
+  onSort,
+  className
+}: {
+  label: ReactNode;
+  sortKey: string;
+  sort: SortState | null;
+  onSort: (key: string) => void;
+  className?: string;
+}) => {
+  const active = sort?.key === sortKey;
+  return (
+    <th className={className}>
+      <button type="button" className={styles.sortHeader} onClick={() => onSort(sortKey)}>
+        {label}
+        {active && sort ? (
+          sort.dir === 'asc' ? (
+            <TbChevronUp size={11} />
+          ) : (
+            <TbChevronDown size={11} />
+          )
+        ) : null}
+      </button>
+    </th>
+  );
 };
 
 export const AssessmentFillScreen = ({
@@ -55,7 +104,7 @@ export const AssessmentFillScreen = ({
   onBack: () => void;
 }) => {
   const navigate = useNavigate();
-  const { workspaceSlug, schemas } = useWorkspaceContext();
+  const { workspaceSlug, schemas, enums } = useWorkspaceContext();
 
   const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
   const assessment = assessments.find(a => a.id === assessmentId);
@@ -81,6 +130,10 @@ export const AssessmentFillScreen = ({
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
+  const [conditions, setConditions] = useState<AssessmentFilterCondition[]>([]);
+  const [sort, setSort] = useState<SortState | null>(null);
+  const [tab, setTab] = useState<'details' | 'summary'>('details');
+  const filterPopoverRef = useRef<PopoverActions | null>(null);
 
   const responseByEntity = useMemo(
     () => new Map(responses.map(r => [r.entity_id, r])),
@@ -110,8 +163,67 @@ export const AssessmentFillScreen = ({
   const filtered = entities.filter(e => {
     if (statusFilter !== 'all' && statusFor(e._uid) !== statusFilter) return false;
     if (search && !e._name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (
+      conditions.length > 0 &&
+      !matchesAssessmentFilterConditions(e, responseByEntity.get(e._uid)?.values ?? {}, conditions)
+    )
+      return false;
     return true;
   });
+
+  const schemaNameFor = (entity: EntitySummary): string =>
+    schemas.find(s => s.id === entity._schema.id)?.name ?? entity._schema.id;
+
+  const compareBySort = (a: EntitySummary, b: EntitySummary, sortState: SortState): number => {
+    const { key } = sortState;
+    if (key === '_name') return a._name.localeCompare(b._name);
+    if (key === '_owner') return (a._owner?.name ?? '').localeCompare(b._owner?.name ?? '');
+    if (key === '_schema') return schemaNameFor(a).localeCompare(schemaNameFor(b));
+
+    const field = assessment?.fields.find(f => f.id === key);
+    const aValue = responseByEntity.get(a._uid)?.values[key];
+    const bValue = responseByEntity.get(b._uid)?.values[key];
+    if (aValue === undefined && bValue === undefined) return 0;
+    if (aValue === undefined) return 1;
+    if (bValue === undefined) return -1;
+
+    if (field && field.type === 'rating') return (aValue as number) - (bValue as number);
+    if (field && field.type === 'enum') {
+      const enumDef = enums.find(e => e.id === field.enumId);
+      const aLabel = enumDef?.options.find(o => o.value === aValue)?.label ?? String(aValue);
+      const bLabel = enumDef?.options.find(o => o.value === bValue)?.label ?? String(bValue);
+      return aLabel.localeCompare(bLabel);
+    }
+    return String(aValue).localeCompare(String(bValue));
+  };
+
+  const sorted = sort
+    ? [...filtered].sort((a, b) => compareBySort(a, b, sort) * (sort.dir === 'asc' ? 1 : -1))
+    : filtered;
+
+  const toggleSort = (key: string) => {
+    setSort(prev => {
+      if (prev?.key === key) return { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' };
+      return { key, dir: 'asc' };
+    });
+  };
+
+  const handleExport = async () => {
+    try {
+      const blob = await exportAssessmentResponsesToCSV(workspaceSlug, projectId, assessmentId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${assessment?.name ?? 'assessment'}-results-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export assessment results. Please try again.');
+    }
+  };
 
   const baseBreadcrumbs = [
     {
@@ -153,27 +265,34 @@ export const AssessmentFillScreen = ({
     setEditing(false);
   };
 
-  const menuItems: MenuItem[] = project.canEdit
-    ? [
-        {
-          label: assessment.status === 'archived' ? 'Restore' : 'Archive',
-          icon: <TbArchive size={14} />,
-          onClick: () => {
-            statusMutation.mutate({
-              assessmentId: assessment.id,
-              status: assessment.status === 'archived' ? 'active' : 'archived'
-            });
-            onBack();
+  const menuItems: MenuItem[] = [
+    {
+      label: 'Export CSV',
+      icon: <TbDownload size={14} />,
+      onClick: handleExport
+    },
+    ...(project.canEdit
+      ? [
+          {
+            label: assessment.status === 'archived' ? 'Restore' : 'Archive',
+            icon: <TbArchive size={14} />,
+            onClick: () => {
+              statusMutation.mutate({
+                assessmentId: assessment.id,
+                status: assessment.status === 'archived' ? 'active' : 'archived'
+              });
+              onBack();
+            }
+          },
+          {
+            label: 'Delete',
+            icon: <TbTrash size={14} />,
+            danger: true,
+            onClick: () => setDeleting(true)
           }
-        },
-        {
-          label: 'Delete',
-          icon: <TbTrash size={14} />,
-          danger: true,
-          onClick: () => setDeleting(true)
-        }
-      ]
-    : [];
+        ]
+      : [])
+  ];
 
   return (
     <>
@@ -211,113 +330,166 @@ export const AssessmentFillScreen = ({
           </div>
         }
       >
-        <div className={styles.panel}>
-          <div className={styles.toolbar}>
-            <div className={styles.filterGroup}>
-              {FILTERS.map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={`${styles.filterPill} ${statusFilter === key ? styles.filterPillActive : ''}`}
-                  onClick={() => setStatusFilter(key)}
-                >
-                  {label} ({counts[key]})
-                </button>
-              ))}
-            </div>
-            <div style={{ flex: 1 }} />
-            <TextInput
-              value={search}
-              onChange={v => setSearch(v ?? '')}
-              placeholder="Search entities…"
-              style={{ width: 220 }}
-            />
-          </div>
-
-          <div className={styles.gridWrap}>
-            <table className={styles.grid}>
-              <thead>
-                <tr>
-                  <th className={styles.entCol}>Entity</th>
-                  {assessment.fields.map(f => (
-                    <th key={f.id}>
-                      {f.label}
-                      {f.requirementLevel === 'required' && <span className={styles.req}> *</span>}
-                    </th>
+        <Tabs.Root value={tab} onValueChange={v => setTab(v as 'details' | 'summary')}>
+          <Tabs.List>
+            <Tabs.Trigger value="details">Details</Tabs.Trigger>
+            <Tabs.Trigger value="summary">Summary</Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Content value="details">
+            <div className={styles.panel}>
+              <div className={styles.toolbar}>
+                <div className={styles.filterGroup}>
+                  {FILTERS.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`${styles.filterPill} ${statusFilter === key ? styles.filterPillActive : ''}`}
+                      onClick={() => setStatusFilter(key)}
+                    >
+                      {label} ({counts[key]})
+                    </button>
                   ))}
-                  <th className={styles.statusCol}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td className={styles.emptyRow} colSpan={assessment.fields.length + 2}>
-                      <div className={`${sharedStyles.empty} ${styles.emptyRowInner}`}>
-                        <div className={sharedStyles.emptyTitle}>No entities match this filter</div>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map(entity => {
-                    const meta = schemas.find(s => s.id === entity._schema.id);
-                    const idx = meta ? schemas.indexOf(meta) : -1;
-                    const color = meta ? resolveSchemaColor(meta, idx) : '#888';
-                    const values = responseByEntity.get(entity._uid)?.values ?? {};
-                    const status = statusFor(entity._uid);
+                </div>
+                <Popover.Root actionsRef={filterPopoverRef}>
+                  <Popover.Trigger
+                    element={
+                      <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
+                        <TbFilter size={12} style={{ marginRight: 4 }} />
+                        Filter
+                        {conditions.length > 0 && (
+                          <span className={styles.filterCount}>{conditions.length}</span>
+                        )}
+                      </Button>
+                    }
+                  />
+                  <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false}>
+                    <AssessmentFilterBuilder
+                      conditions={conditions}
+                      onChange={setConditions}
+                      onClose={() => filterPopoverRef.current?.close()}
+                      fields={assessment.fields}
+                      entities={entities}
+                      schemas={schemas}
+                      scope={assessment.scope}
+                      enums={enums}
+                    />
+                  </Popover.Content>
+                </Popover.Root>
+                <div style={{ flex: 1 }} />
+                <TextInput
+                  value={search}
+                  onChange={v => setSearch(v ?? '')}
+                  placeholder="Search entities…"
+                  style={{ width: 220 }}
+                />
+              </div>
 
-                    return (
-                      <tr key={entity._uid}>
-                        <td className={styles.entCol}>
-                          <div className={styles.entName}>
-                            <TypeBadge
-                              color={color}
-                              name={meta?.name}
-                              icon={meta?.icon}
-                              size={16}
-                            />
-                            <button
-                              type="button"
-                              className={styles.entNameBtn}
-                              title={entity._name}
-                              onClick={() =>
-                                navigate(
-                                  entityDetailRoute(
-                                    workspaceSlug,
-                                    asEntityPublicId(entity._publicId)
-                                  )
-                                )
-                              }
-                            >
-                              {entity._name || entity._slug}
-                            </button>
+              <div className={styles.gridWrap}>
+                <table className={styles.grid}>
+                  <thead>
+                    <tr>
+                      <SortableHeader label="Entity" sortKey="_name" sort={sort} onSort={toggleSort} className={styles.entCol} />
+                      <SortableHeader label="Owner" sortKey="_owner" sort={sort} onSort={toggleSort} />
+                      <SortableHeader label="Schema Type" sortKey="_schema" sort={sort} onSort={toggleSort} />
+                      {assessment.fields.map(f => (
+                        <SortableHeader
+                          key={f.id}
+                          sortKey={f.id}
+                          sort={sort}
+                          onSort={toggleSort}
+                          label={
+                            <>
+                              {f.label}
+                              {f.requirementLevel === 'required' && <span className={styles.req}> *</span>}
+                            </>
+                          }
+                        />
+                      ))}
+                      <th className={styles.statusCol}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.length === 0 ? (
+                      <tr>
+                        <td className={styles.emptyRow} colSpan={assessment.fields.length + 4}>
+                          <div className={`${sharedStyles.empty} ${styles.emptyRowInner}`}>
+                            <div className={sharedStyles.emptyTitle}>No entities match this filter</div>
                           </div>
                         </td>
-                        {assessment.fields.map(field => (
-                          <td key={field.id} className={styles.cell}>
-                            <AssessmentFieldCell
-                              field={field}
-                              value={values[field.id]}
-                              onChange={value =>
-                                upsertResponse.mutate({
-                                  entityId: entity._uid,
-                                  values: { [field.id]: value }
-                                })
-                              }
-                            />
-                          </td>
-                        ))}
-                        <td className={styles.statusCol}>
-                          <span className={`${styles.statusDot} ${styles[`st-${status}`]}`} />
-                          {STATUS_LABEL[status]}
-                        </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    ) : (
+                      sorted.map(entity => {
+                        const meta = schemas.find(s => s.id === entity._schema.id);
+                        const idx = meta ? schemas.indexOf(meta) : -1;
+                        const color = meta ? resolveSchemaColor(meta, idx) : '#888';
+                        const values = responseByEntity.get(entity._uid)?.values ?? {};
+                        const status = statusFor(entity._uid);
+
+                        return (
+                          <tr key={entity._uid}>
+                            <td className={styles.entCol}>
+                              <div className={styles.entName}>
+                                <TypeBadge
+                                  color={color}
+                                  name={meta?.name}
+                                  icon={meta?.icon}
+                                  size={16}
+                                />
+                                <button
+                                  type="button"
+                                  className={styles.entNameBtn}
+                                  title={entity._name}
+                                  onClick={() =>
+                                    navigate(
+                                      entityDetailRoute(
+                                        workspaceSlug,
+                                        asEntityPublicId(entity._publicId)
+                                      )
+                                    )
+                                  }
+                                >
+                                  {entity._name || entity._slug}
+                                </button>
+                              </div>
+                            </td>
+                            <td className={styles.cell}>{entity._owner?.name ?? '—'}</td>
+                            <td className={styles.cell}>{meta?.name ?? entity._schema.id}</td>
+                            {assessment.fields.map(field => (
+                              <td key={field.id} className={styles.cell}>
+                                <AssessmentFieldCell
+                                  field={field}
+                                  value={values[field.id]}
+                                  onChange={value =>
+                                    upsertResponse.mutate({
+                                      entityId: entity._uid,
+                                      values: { [field.id]: value }
+                                    })
+                                  }
+                                />
+                              </td>
+                            ))}
+                            <td className={styles.statusCol}>
+                              <span className={`${styles.statusDot} ${styles[`st-${status}`]}`} />
+                              {STATUS_LABEL[status]}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </Tabs.Content>
+          <Tabs.Content value="summary">
+            <AssessmentSummaryTab
+              assessment={assessment}
+              responses={responses}
+              entityCount={entities.length}
+              enums={enums}
+            />
+          </Tabs.Content>
+        </Tabs.Root>
       </ProjectScreenLayout>
 
       {editing && (
