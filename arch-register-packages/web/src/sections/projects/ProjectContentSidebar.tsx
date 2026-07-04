@@ -25,7 +25,7 @@ import {
   TbTrash,
   TbUpload
 } from 'react-icons/tb';
-import type { FileEntry } from '../../lib/api';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import {
   deleteConfirmLabel,
   deleteMessage,
@@ -72,12 +72,12 @@ type ProjectSidebarTab = 'content' | 'views';
 type FolderNode = {
   path: string;
   name: string;
-  files: FileEntry[];
+  files: ProjectFile[];
   children: FolderNode[];
 };
 
 const buildFolderTree = (
-  folders: Array<{ path: string; name: string; files: FileEntry[] }>
+  folders: Array<{ path: string; name: string; files: ProjectFile[] }>
 ): FolderNode[] => {
   const root: FolderNode[] = [];
   const map = new Map<string, FolderNode>();
@@ -241,7 +241,7 @@ export const ProjectContentSidebar = ({
     setExpandedFolders(prev => ({ ...prev, [path]: !(prev[path] ?? true) }));
   };
 
-  const renderMoveToSubmenu = (file: FileEntry, folders: string[], currentFolder: string | null) => {
+  const renderMoveToSubmenu = (file: ProjectFile, folders: string[], currentFolder: string | null) => {
     type MoveFolderNode = {
       path: string;
       name: string;
@@ -447,7 +447,7 @@ export const ProjectContentSidebar = ({
     setRenameTarget(null);
   };
 
-  const triggerDownload = (file: FileEntry) => {
+  const triggerDownload = (file: ProjectFile) => {
     const a = document.createElement('a');
     a.href = `/api/${workspaceSlug}/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`;
     a.download = file.original_filename ?? file.name;

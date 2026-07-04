@@ -1,5 +1,5 @@
 import type { ErrorComponentProps } from '@tanstack/react-router';
-import { ApiError } from '../lib/api';
+import { ApiError } from '../lib/http';
 import { AppErrorState } from '../components/AppErrorState';
 
 const getMessage = (error: unknown) => {

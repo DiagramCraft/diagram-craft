@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { ApiError } from '../lib/api';
+import { ApiError } from '../lib/http';
 import styles from '../dialogs/AddEntityDialog.module.css';
 
 type ContentFolderDialogProps = {

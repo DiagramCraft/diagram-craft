@@ -7,7 +7,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { orpcClient } from '../lib/orpcClient';
-import { ApiError } from '../lib/api';
+import { ApiError } from '../lib/http';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';

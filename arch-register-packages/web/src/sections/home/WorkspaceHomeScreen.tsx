@@ -14,7 +14,7 @@ import {
   TbChevronRight,
   TbChartBar
 } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { useAuditLog } from '../../hooks/useAudit';
 import { useEntityFacets } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';

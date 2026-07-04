@@ -10,7 +10,7 @@ import {
   TbUsers
 } from 'react-icons/tb';
 import type { IconType } from 'react-icons';
-import { ApiError } from '../../../lib/api';
+import { ApiError } from '../../../lib/http';
 import { useAuth } from '../../../auth/AuthContext';
 import { ColorPicker } from '../../../components/ColorPicker';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';

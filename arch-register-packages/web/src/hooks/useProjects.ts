@@ -9,7 +9,7 @@ import {
 } from './queryKeys';
 import { Project, ProjectDetail, ProjectEntity, ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
-import { emptyDiagram, createEntityDiagramFromTemplate } from '../lib/api';
+import { emptyDiagram, createEntityDiagramFromTemplate } from '../lib/diagramDocuments';
 
 // Hook for fetching project list
 export const useProjects = (workspaceId: string) => {

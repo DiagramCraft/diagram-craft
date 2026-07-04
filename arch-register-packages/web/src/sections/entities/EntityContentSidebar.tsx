@@ -20,7 +20,7 @@ import {
   getFileNodeIcon,
   type MenuTarget
 } from '../../lib/contentNode';
-import type { FileEntry } from '../../lib/api';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
@@ -28,7 +28,7 @@ import localStyles from './EntityContentSidebar.module.css';
 import { useEntityContentNodes } from '../../hooks/useProjects';
 import { useEntity } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TypeBadge } from '../../components/TypeBadge';
 import { AddEntityFolderDialog } from './AddEntityFolderDialog';
 import {
@@ -90,7 +90,7 @@ export const EntityContentSidebar = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadFolder, setUploadFolder] = useState<string | null>(null);
 
-  const triggerDownload = (file: FileEntry) => {
+  const triggerDownload = (file: ProjectFile) => {
     const a = document.createElement('a');
     a.href = `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(file.path)}`;
     a.download = file.original_filename ?? file.name;
@@ -144,7 +144,7 @@ export const EntityContentSidebar = ({
   type FolderNode = {
     path: string;
     name: string;
-    files: FileEntry[];
+    files: ProjectFile[];
     children: FolderNode[];
   };
 
@@ -152,7 +152,7 @@ export const EntityContentSidebar = ({
     folders: Array<{
       path: string;
       name: string;
-      files: FileEntry[];
+      files: ProjectFile[];
     }>
   ): FolderNode[] => {
     const root: FolderNode[] = [];
@@ -186,14 +186,14 @@ export const EntityContentSidebar = ({
     return root;
   };
 
-  const folderTree = data ? buildFolderTree(data.folders as unknown as Array<{ path: string; name: string; files: FileEntry[] }>) : [];
+  const folderTree = data ? buildFolderTree(data.folders as unknown as Array<{ path: string; name: string; files: ProjectFile[] }>) : [];
   const activeFilePath = data
     ? [...data.rootFiles, ...data.folders.flatMap(folder => folder.files)].find(file => file.id === activeFileId)?.path ?? null
     : null;
 
   const allFolderPaths = data?.folders.map(f => f.path) ?? [];
 
-  const renderMoveToSubmenu = (file: FileEntry, folders: string[], currentFolder: string | null) => {
+  const renderMoveToSubmenu = (file: ProjectFile, folders: string[], currentFolder: string | null) => {
     type MoveFolderNode = {
       path: string;
       name: string;
@@ -565,11 +565,11 @@ export const EntityContentSidebar = ({
           <TreeRow
             key={file.id}
             icon={getFileNodeIcon(file.type)}
-            label={(file as FileEntry).original_filename ?? file.name}
+            label={(file as ProjectFile).original_filename ?? file.name}
             active={file.id === activeFileId}
             onClick={
               file.type === 'file'
-                ? () => triggerDownload(file as FileEntry)
+                ? () => triggerDownload(file as ProjectFile)
                 : file.project_public_id ?? file.project_id
                   ? () => {
                       const projectId = asProjectPublicId(
@@ -595,7 +595,7 @@ export const EntityContentSidebar = ({
               setMenu({
                 x: e.clientX,
                 y: e.clientY,
-                target: { type: fileMenuTargetType(file.type), file: file as FileEntry }
+                target: { type: fileMenuTargetType(file.type), file: file as ProjectFile }
               });
             }}
           />

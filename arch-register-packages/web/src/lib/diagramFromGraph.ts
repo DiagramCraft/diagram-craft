@@ -9,7 +9,7 @@ import type {
   SerializedRegularEdge,
   SerializedRegularNode
 } from '@diagram-craft/model/serialization/serializedTypes';
-import { emptyDiagram } from './api';
+import { emptyDiagram } from './diagramDocuments';
 
 export type GraphNodeInput = { id: string; label: string };
 export type GraphEdgeInput = { id: string; from: string; to: string; label?: string; kind?: string };

@@ -7,7 +7,7 @@ import { LIFECYCLE_COLOR_PRESETS, SCHEMA_COLORS } from '@arch-register/api-types
 import { ColorPicker } from '../../components/ColorPicker';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import type { AuditEntityType, AuditOperation } from '../../lib/api';
+import type { AuditEntityType, AuditOperation } from '@arch-register/api-types/auditContract';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Title } from '../../components/Title';
 import { useAuditLog } from '../../hooks/useAudit';

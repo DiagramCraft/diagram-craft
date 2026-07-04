@@ -4,7 +4,7 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { resolveSchemaColor } from '../../../lib/api';
+import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { exploreViewConfigSchema, type ExploreViewConfig } from '@arch-register/api-types/viewContract';
 import styles from './ExploreView.module.css';
 import {

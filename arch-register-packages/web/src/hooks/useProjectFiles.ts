@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createDiagramFromTemplate, emptyDiagram } from '../lib/api';
+import { createDiagramFromTemplate, emptyDiagram } from '../lib/diagramDocuments';
 import {
   projectFileKeys,
   invalidateProjectQueries,

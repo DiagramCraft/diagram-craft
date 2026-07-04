@@ -3,8 +3,7 @@ import { TbCheck } from 'react-icons/tb';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { ApiError } from '../../lib/api';
-import type { FileEntry } from '../../lib/api';
+import { ApiError } from '../../lib/http';
 import {
   useCreateDiagramFile,
   useProjectTemplates,
@@ -22,7 +21,7 @@ import { ProjectFile } from '@arch-register/api-types/projectContract';
 type AddDiagramDialogProps = {
   open: boolean;
   onClose: () => void;
-  onCreated: (file: FileEntry) => void;
+  onCreated: (file: ProjectFile) => void;
   workspaceId: string;
   folder?: string | null;
 } & (
@@ -185,7 +184,7 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
     setError('');
 
     try {
-      let file: FileEntry;
+      let file: ProjectFile;
       if (props.context === 'project') {
         if (selected !== 'blank') {
           file = await createFromTemplateMutation.mutateAsync({

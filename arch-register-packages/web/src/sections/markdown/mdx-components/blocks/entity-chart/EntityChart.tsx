@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { TbArrowRight } from 'react-icons/tb';
 import { useEntities } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { resolveSchemaColor, schemaColor } from '../../../../../lib/api';
+import { resolveSchemaColor, schemaColor } from '../../../../../lib/schemaPresentation';
 import styles from './EntityChart.module.css';
 
 type ChartGroup = { key: string; label: string; count: number; color: string };

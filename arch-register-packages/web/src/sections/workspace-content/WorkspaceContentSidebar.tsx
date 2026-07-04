@@ -20,7 +20,7 @@ import {
   getFileNodeIcon,
   type MenuTarget
 } from '../../lib/contentNode';
-import type { FileEntry } from '../../lib/api';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
@@ -82,7 +82,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
   const isFileRoute = activeFileId !== null;
 
-  const triggerDownload = (file: FileEntry) => {
+  const triggerDownload = (file: ProjectFile) => {
     const a = document.createElement('a');
     a.href = `/api/${workspaceSlug}/content/files/download?path=${encodeURIComponent(file.path)}`;
     a.download = file.original_filename ?? file.name;
@@ -119,7 +119,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   type FolderNode = {
     path: string;
     name: string;
-    files: FileEntry[];
+    files: ProjectFile[];
     children: FolderNode[];
   };
 
@@ -127,7 +127,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
     folders: Array<{
       path: string;
       name: string;
-      files: FileEntry[];
+      files: ProjectFile[];
     }>
   ): FolderNode[] => {
     const root: FolderNode[] = [];
@@ -152,14 +152,14 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
     return root;
   };
 
-  const folderTree = data ? buildFolderTree(data.folders as unknown as Array<{ path: string; name: string; files: FileEntry[] }>) : [];
+  const folderTree = data ? buildFolderTree(data.folders as unknown as Array<{ path: string; name: string; files: ProjectFile[] }>) : [];
   const activeFilePath = data
     ? [...data.rootFiles, ...data.folders.flatMap(folder => folder.files)].find(file => file.id === activeFileId)?.path ?? null
     : null;
 
   const allFolderPaths = data?.folders.map(f => f.path) ?? [];
 
-  const renderMoveToSubmenu = (file: FileEntry, folders: string[], currentFolder: string | null) => {
+  const renderMoveToSubmenu = (file: ProjectFile, folders: string[], currentFolder: string | null) => {
     type MoveFolderNode = {
       path: string;
       name: string;
@@ -513,11 +513,11 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
           <TreeRow
             key={file.id}
             icon={getFileNodeIcon(file.type)}
-            label={(file as unknown as FileEntry).original_filename ?? file.name}
+            label={(file as unknown as ProjectFile).original_filename ?? file.name}
             active={file.id === activeFileId}
             onClick={
               file.type === 'file'
-                ? () => triggerDownload(file as unknown as FileEntry)
+                ? () => triggerDownload(file as unknown as ProjectFile)
                 : () =>
                     navigate(
                       file.type === 'markdown'
@@ -537,7 +537,7 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
               setMenu({
                 x: e.clientX,
                 y: e.clientY,
-                target: { type: fileMenuTargetType(file.type), file: file as unknown as FileEntry }
+                target: { type: fileMenuTargetType(file.type), file: file as unknown as ProjectFile }
               });
             }}
           />

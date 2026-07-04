@@ -12,7 +12,7 @@ import {
   useWorkspaceContentNodes,
   useCreateMarkdownDiagramAttachment
 } from '../../../../../hooks/useProjectFiles';
-import { emptyDiagram } from '../../../../../lib/api';
+import { emptyDiagram } from '../../../../../lib/diagramDocuments';
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
 import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';

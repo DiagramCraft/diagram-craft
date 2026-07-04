@@ -20,7 +20,9 @@ import {
   TbBell,
   TbPinned
 } from 'react-icons/tb';
-import { getRelationDisplayLabel, resolveSchemaColor, WorkspaceTeam } from '../../lib/api';
+import { getRelationDisplayLabel } from '../../lib/entityRelations';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';

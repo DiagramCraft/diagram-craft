@@ -21,7 +21,10 @@ import {
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand
 } from 'react-icons/tb';
-import { EntityFacets, fetchEntityFacets, resolveSchemaColor, SavedView } from '../../lib/api';
+import type { EntityFacets } from '@arch-register/api-types/entityContract';
+import { fetchEntityFacets } from '../../lib/entityOperations';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import type { SavedView } from '@arch-register/api-types/viewContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useEntities';
 import { usePinnedEntities } from '../../hooks/useNotifications';

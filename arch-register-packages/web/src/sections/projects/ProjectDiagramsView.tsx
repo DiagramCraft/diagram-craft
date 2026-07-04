@@ -4,7 +4,7 @@ import {
   DiagramBrowserView
 } from '../../components/diagram-browser/DiagramBrowserView';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
-import type { FileEntry } from '../../lib/api';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { fileMenuTargetType, type MenuTarget } from '../../lib/contentNode';
 
 export type { MenuTarget as ProjectMenuTarget };
@@ -22,13 +22,13 @@ export const ProjectDiagramsView = ({
   onContextMenu
 }: {
   project: ProjectDetailData;
-  visibleFiles: FileEntry[];
+  visibleFiles: ProjectFile[];
   folderFilter: string | null;
   filter: string;
   viewMode: 'grid' | 'list';
   onOpenDiagram: (diagramId: string) => void;
   onOpenMarkdown?: (nodeId: string) => void;
-  onDownloadFile?: (file: FileEntry) => void;
+  onDownloadFile?: (file: ProjectFile) => void;
   onNewDiagram?: () => void;
   onContextMenu?: (e: React.MouseEvent, target: MenuTarget) => void;
 }) => {
@@ -36,7 +36,7 @@ export const ProjectDiagramsView = ({
   const filtered = lc ? visibleFiles.filter(f => f.name.toLowerCase().includes(lc)) : visibleFiles;
 
   if (viewMode === 'list') {
-    const allItems: Array<{ file: FileEntry; folder?: string }> = folderFilter
+    const allItems: Array<{ file: ProjectFile; folder?: string }> = folderFilter
       ? filtered.map(file => ({ file }))
       : [
           ...project.files.rootFiles

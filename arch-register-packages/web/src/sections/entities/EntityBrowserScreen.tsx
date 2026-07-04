@@ -32,7 +32,7 @@ import {
   parseViewConfigs,
   toSavedViewConfig
 } from './components/entityBrowserState';
-import { exportEntitiesToCSV } from '../../lib/api';
+import { exportEntitiesToCSV } from '../../lib/entityCsv';
 
 export const EntityBrowserScreen = () => {
   const navigate = useNavigate();

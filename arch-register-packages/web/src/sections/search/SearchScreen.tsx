@@ -12,14 +12,8 @@ import {
 } from 'react-icons/tb';
 import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { resolveSchemaColor } from '../../lib/api';
-import type {
-  EntitySearchResult,
-  ProjectFileSearchResult,
-  ProjectSearchResult,
-  SchemaSearchResult,
-  SearchResponse
-} from '../../lib/api';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import type { EntitySearchResult, ProjectFileSearchResult, ProjectSearchResult, SchemaSearchResult, SearchResponse } from '@arch-register/api-types/searchContract';
 import { TypeBadge } from '../../components/TypeBadge';
 import { Chip } from '../../components/Chip';
 import { StatusChip } from '../../components/StatusChip';

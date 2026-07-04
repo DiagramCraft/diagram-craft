@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { EntityRelation } from '../lib/api';
+import type { EntityRelation } from '@arch-register/api-types/entityContract';
 import type {
   CreateSavedViewRequest,
   FilterCondition,
