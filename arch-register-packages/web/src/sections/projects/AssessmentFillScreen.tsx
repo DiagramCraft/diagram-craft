@@ -246,10 +246,6 @@ export const AssessmentFillScreen = ({
   }
 
   const pct = entities.length > 0 ? Math.round((counts.complete / entities.length) * 100) : 0;
-  const scopeNames = assessment.scope
-    .map(id => schemas.find(s => s.id === id)?.name)
-    .filter(Boolean)
-    .join(', ');
 
   const FILTERS: { key: StatusFilter; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -299,7 +295,7 @@ export const AssessmentFillScreen = ({
       <ProjectScreenLayout
         breadcrumbs={breadcrumbs}
         title={assessment.name}
-        description={scopeNames}
+        description={assessment.description}
         actions={
           project.canEdit ? (
             <Button icon={<TbEdit size={12} />} onClick={() => setEditing(true)}>
@@ -330,7 +326,8 @@ export const AssessmentFillScreen = ({
           </div>
         }
       >
-        <Tabs.Root value={tab} onValueChange={v => setTab(v as 'details' | 'summary')}>
+        <div className={styles.tabs}>
+          <Tabs.Root value={tab} onValueChange={v => setTab(v as 'details' | 'summary')}>
           <Tabs.List>
             <Tabs.Trigger value="details">Details</Tabs.Trigger>
             <Tabs.Trigger value="summary">Summary</Tabs.Trigger>
@@ -489,7 +486,8 @@ export const AssessmentFillScreen = ({
               enums={enums}
             />
           </Tabs.Content>
-        </Tabs.Root>
+          </Tabs.Root>
+        </div>
       </ProjectScreenLayout>
 
       {editing && (
