@@ -72,6 +72,7 @@ describe('parseCsv', () => {
 describe('validateCsvData', () => {
   const boolField: SchemaField = { id: 'active', name: 'Active', type: 'boolean' };
   const dateField: SchemaField = { id: 'go_live', name: 'Go Live', type: 'date' };
+  const numberField: SchemaField = { id: 'headcount', name: 'Headcount', type: 'number' };
 
   it('passes through rows with no schema fields', () => {
     const rows = [{ rowNumber: 2, data: { Name: 'Foo' }, errors: [] }];
@@ -146,6 +147,30 @@ describe('validateCsvData', () => {
     const rows = [{ rowNumber: 2, data: { Name: '' }, errors: ['Name is required'] }];
     const result = validateCsvData(rows, []);
     expect(result[0]!.errors).toContain('Name is required');
+  });
+
+  it('accepts valid whole number values', () => {
+    const rows = [{ rowNumber: 2, data: { Headcount: '42' }, errors: [] }];
+    const result = validateCsvData(rows, [numberField]);
+    expect(result[0]!.errors).toHaveLength(0);
+  });
+
+  it('rejects non-integer number value', () => {
+    const rows = [{ rowNumber: 2, data: { Headcount: '4.5' }, errors: [] }];
+    const result = validateCsvData(rows, [numberField]);
+    expect(result[0]!.errors).toContain('Headcount must be a whole number');
+  });
+
+  it('rejects non-numeric value for number field', () => {
+    const rows = [{ rowNumber: 2, data: { Headcount: 'many' }, errors: [] }];
+    const result = validateCsvData(rows, [numberField]);
+    expect(result[0]!.errors).toContain('Headcount must be a whole number');
+  });
+
+  it('skips number validation when value is empty', () => {
+    const rows = [{ rowNumber: 2, data: { Headcount: '' }, errors: [] }];
+    const result = validateCsvData(rows, [numberField]);
+    expect(result[0]!.errors).toHaveLength(0);
   });
 });
 
@@ -244,5 +269,11 @@ describe('csvRowToEntity', () => {
     const textField: SchemaField = { id: 'note', name: 'Note', type: 'text' };
     const result = csvRowToEntity({ Name: 'X', Note: '' }, [textField]);
     expect(result).not.toHaveProperty('note');
+  });
+
+  it('converts number fields to numbers', () => {
+    const numberField: SchemaField = { id: 'headcount', name: 'Headcount', type: 'number' };
+    const result = csvRowToEntity({ Name: 'X', Headcount: '42' }, [numberField]);
+    expect(result.headcount).toBe(42);
   });
 });

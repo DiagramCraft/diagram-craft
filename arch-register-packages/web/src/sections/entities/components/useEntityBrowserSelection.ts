@@ -77,6 +77,10 @@ const applyFieldRowToBody = (
     body[field.id] = row.clearing ? null : row.value === 'true';
     return;
   }
+  if (field.field.type === 'number') {
+    body[field.id] = row.clearing ? null : Number(row.value);
+    return;
+  }
   body[field.id] = row.clearing ? null : row.value;
 };
 

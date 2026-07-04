@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { findIncompatibleFieldChanges, toApiEnum, toApiSchema } from './schemaHelpers';
+import {
+  buildCreateSchemaInput,
+  findIncompatibleFieldChanges,
+  toApiEnum,
+  toApiSchema
+} from './schemaHelpers';
 import { SchemaDbResult, WorkspaceEnumDbResult } from './db/catalogDatabase';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 
@@ -48,7 +53,8 @@ describe('toApiSchema', () => {
     fields: [
       { id: 'env', name: 'Env', type: 'select', enumId: 'enum-env' },
       { id: 'notes', name: 'Notes', type: 'text' },
-      { id: 'go_live', name: 'Go Live', type: 'date' }
+      { id: 'go_live', name: 'Go Live', type: 'date' },
+      { id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }
     ],
     color: null,
     icon: null,
@@ -82,10 +88,53 @@ describe('toApiSchema', () => {
     expect(dateField).toEqual({ id: 'go_live', name: 'Go Live', type: 'date' });
   });
 
+  it('passes through number fields unchanged', () => {
+    const result = toApiSchema(schema, 5, []);
+    const numberField = result.fields.find(f => f.id === 'headcount');
+    expect(numberField).toEqual({
+      id: 'headcount',
+      name: 'Headcount',
+      type: 'number',
+      min: 0,
+      max: 100
+    });
+  });
+
   it('includes entity count and serializes dates', () => {
     const result = toApiSchema(schema, 42, []);
     expect(result.entity_count).toBe(42);
     expect(result.created_at).toBe(nowIso);
+  });
+});
+
+// ── buildCreateSchemaInput (number field validation) ────────────
+
+describe('buildCreateSchemaInput', () => {
+  it('accepts a number field with min <= max', () => {
+    const result = buildCreateSchemaInput(
+      'ws-1',
+      {
+        name: 'Application',
+        fields: [{ id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }]
+      },
+      new Set(),
+      now
+    );
+    expect(result.fields).toEqual([{ id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }]);
+  });
+
+  it('rejects a number field with min > max', () => {
+    expect(() =>
+      buildCreateSchemaInput(
+        'ws-1',
+        {
+          name: 'Application',
+          fields: [{ id: 'headcount', name: 'Headcount', type: 'number', min: 100, max: 0 }]
+        },
+        new Set(),
+        now
+      )
+    ).toThrow('Number field min must be less than or equal to max');
   });
 });
 

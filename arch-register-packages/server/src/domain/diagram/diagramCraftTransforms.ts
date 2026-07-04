@@ -3,7 +3,7 @@ import { Entity, SchemaDbResult, WorkspaceEnumDbResult } from '../catalog/db/cat
 import { ReferenceField, SchemaField } from '@arch-register/api-types/schemaContract';
 
 export type DiagramCraftSchemaField =
-  | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' }>
+  | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' | 'number' }>
   | (Extract<SchemaField, { type: 'select' }> & {
       options: Array<{ value: string; label: string }>;
     })
@@ -30,6 +30,7 @@ export const toDiagramCraftField = (
     case 'longtext':
     case 'boolean':
     case 'date':
+    case 'number':
       return field;
     case 'select': {
       const e = enums.find(e => e.id === field.enumId);

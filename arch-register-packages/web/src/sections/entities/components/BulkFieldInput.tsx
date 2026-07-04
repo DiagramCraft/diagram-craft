@@ -114,6 +114,20 @@ export const BulkFieldInput = ({
     return <DateInput value={value} onChange={v => onValue(v ?? '')} />;
   }
 
+  if (schemaField.type === 'number') {
+    return (
+      <input
+        type="number"
+        step="1"
+        min={schemaField.min}
+        max={schemaField.max}
+        value={value}
+        onChange={e => onValue(e.target.value)}
+        placeholder="New value…"
+      />
+    );
+  }
+
   if (schemaField.type === 'longtext') {
     return <TextArea value={value} onChange={v => onValue(v ?? '')} placeholder="New value…" />;
   }

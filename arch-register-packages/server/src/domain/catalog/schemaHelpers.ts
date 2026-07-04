@@ -43,6 +43,12 @@ const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] 
       });
     }
 
+    if (field.type === 'number' && field.min !== undefined && field.max !== undefined) {
+      httpAssert.true(field.min <= field.max, {
+        message: 'Number field min must be less than or equal to max'
+      });
+    }
+
     return field as InternalEntitySchema['fields'][number];
   });
 };
