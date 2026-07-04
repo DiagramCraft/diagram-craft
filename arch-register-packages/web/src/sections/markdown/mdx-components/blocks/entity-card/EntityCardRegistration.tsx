@@ -1,18 +1,20 @@
-import type React from 'react';
 import { TbId } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityCard } from './EntityCard';
 import { ENTITY_CARD_TYPE, EntityCardEditable, entityCardMdxRule } from './EntityCardEditable';
+import type { EntityCardSlateElement } from './types';
 
-export const entityCardSpec = {
-  component: EntityCard as unknown as React.ComponentType<Record<string, string>>,
+export const entityCardSpec = defineMdxComponent<
+  EntityCardSlateElement,
+  { id: string; fields?: string },
+  'block'
+>({
+  component: EntityCard,
   mode: 'block',
   allowedProps: ['id', 'fields'],
   editorSpec: {
-    editableComponent: EntityCardEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const },
+    editableComponent: EntityCardEditable,
+    nodeOptions: { isVoid: true },
     mdxRule: entityCardMdxRule,
     slashCommand: {
       key: 'entity-card',
@@ -29,4 +31,4 @@ export const entityCardSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

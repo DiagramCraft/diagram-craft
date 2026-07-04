@@ -1,22 +1,24 @@
-import type React from 'react';
 import { TbListSearch } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
 import {
   ENTITY_BROWSER_EMBED_TYPE,
   EntityBrowserEmbedEditable,
   entityBrowserEmbedMdxRule
 } from './EntityBrowserEmbedEditable';
+import type { EntityBrowserEmbedSlateElement } from './types';
 
-export const entityBrowserEmbedSpec = {
-  component: EntityBrowserEmbed as unknown as React.ComponentType<Record<string, string>>,
+export const entityBrowserEmbedSpec = defineMdxComponent<
+  EntityBrowserEmbedSlateElement,
+  { config?: string },
+  'block'
+>({
+  component: EntityBrowserEmbed,
   mode: 'block',
   allowedProps: ['config'],
   editorSpec: {
-    editableComponent: EntityBrowserEmbedEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const },
+    editableComponent: EntityBrowserEmbedEditable,
+    nodeOptions: { isVoid: true },
     mdxRule: entityBrowserEmbedMdxRule,
     slashCommand: {
       key: 'entity-browser-embed',
@@ -33,4 +35,4 @@ export const entityBrowserEmbedSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

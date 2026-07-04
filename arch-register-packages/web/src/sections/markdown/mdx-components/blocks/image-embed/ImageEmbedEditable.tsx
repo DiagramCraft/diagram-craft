@@ -2,6 +2,7 @@ import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbPhoto } from 'react-icons/tb';
+import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { ImageEmbed } from './ImageEmbed';
 import { ImageEmbedDialog } from './ImageEmbedDialog';
@@ -11,22 +12,19 @@ export const IMAGE_EMBED_TYPE = 'ImageEmbed' as const;
 
 const stringProp = (value: unknown) => (value == null ? '' : String(value));
 
-// biome-ignore lint/suspicious/noExplicitAny: ok
-export const imageEmbedMdxRule: Record<string, any> = {
-  // biome-ignore lint/suspicious/noExplicitAny: ok
-  deserialize: (mdastNode: any, _deco: unknown, options: any) => {
+export const imageEmbedMdxRule: MdxRuleDef<ImageEmbedSlateElement, 'block'> = {
+  deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, IMAGE_EMBED_TYPE),
+      type: getPluginType(options.editor!, IMAGE_EMBED_TYPE),
       fileId: stringProp(attrs['id']),
       alt: stringProp(attrs['alt']),
       size: stringProp(attrs['size']),
       align: stringProp(attrs['align'])
     };
   },
-  // biome-ignore lint/suspicious/noExplicitAny: ok
-  serialize: (slateNode: any) => ({
+  serialize: slateNode => ({
     attributes: propsToAttributes({
       id: slateNode.fileId ?? '',
       ...(slateNode.alt ? { alt: slateNode.alt } : {}),
@@ -39,12 +37,15 @@ export const imageEmbedMdxRule: Record<string, any> = {
   })
 };
 
-export const ImageEmbedEditable = ({ element, children, ...props }: PlateElementProps) => {
-  const el = element as ImageEmbedSlateElement;
-  const fileId = el.fileId ?? '';
-  const alt = el.alt ?? '';
-  const size = el.size ?? '';
-  const align = el.align ?? 'center';
+export const ImageEmbedEditable = ({
+  element,
+  children,
+  ...props
+}: PlateElementProps<ImageEmbedSlateElement>) => {
+  const fileId = element.fileId ?? '';
+  const alt = element.alt ?? '';
+  const size = element.size ?? '';
+  const align = element.align ?? 'center';
   const isNew = !fileId;
 
   return (

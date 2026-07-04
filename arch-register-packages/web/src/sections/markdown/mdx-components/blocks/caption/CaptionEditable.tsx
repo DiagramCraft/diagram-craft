@@ -5,8 +5,10 @@ import {
   convertChildrenDeserialize,
   convertNodesSerialize,
   parseAttributes,
-  propsToAttributes
+  propsToAttributes,
+  type MdMdxJsxFlowElement
 } from '@platejs/markdown';
+import type { MdxRuleDef } from '../../defineMdxComponent';
 import { EditorBlock, getNodeText } from '../../../editor/EditorBlock';
 import type { CaptionSlateElement } from './types';
 import styles from './Caption.module.css';
@@ -19,10 +21,8 @@ const alignClass = (align?: string) => {
   return styles.alignCenter;
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing
-export const captionMdxRule: Record<string, any> = {
-  // biome-ignore lint/suspicious/noExplicitAny: ok
-  deserialize: (mdastNode: any, deco: any, options: any) => {
+export const captionMdxRule: MdxRuleDef<CaptionSlateElement, 'block'> = {
+  deserialize: (mdastNode, deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     const deserializedChildren = convertChildrenDeserialize(
       mdastNode.children ?? [],
@@ -30,31 +30,41 @@ export const captionMdxRule: Record<string, any> = {
       options
     );
     const hasValidChild = deserializedChildren.some(
-      (child: unknown) =>
+      child =>
         typeof child === 'object' &&
         child !== null &&
         'type' in child &&
-        (child as { type?: unknown }).type !== getPluginType(options.editor, 'p')
+        (child as { type?: unknown }).type !== getPluginType(options.editor!, 'p')
     );
 
     return {
       children: hasValidChild
         ? deserializedChildren
-        : [{ type: getPluginType(options.editor, 'p'), children: [{ text: '' }] }],
-      type: getPluginType(options.editor, CAPTION_TYPE),
+        : [{ type: getPluginType(options.editor!, 'p'), children: [{ text: '' }] }],
+      type: getPluginType(options.editor!, CAPTION_TYPE),
       caption: typeof attrs['caption'] === 'string' ? attrs['caption'] : '',
       align: typeof attrs['align'] === 'string' ? attrs['align'] : '',
+      // `numbered` is a boolean on the Slate element (internal editor state)
+      // but always a string on the wire (`numbered="true"`), since MDX/JSX
+      // attributes are string-only — see the matching split in `serialize`
+      // below and on `Caption`'s own `numbered?: string` preview prop.
       numbered: attrs['numbered'] === true || attrs['numbered'] === 'true'
     };
   },
-  // biome-ignore lint/suspicious/noExplicitAny: ok
-  serialize: (slateNode: any, options: any) => ({
+  serialize: (slateNode, options) => ({
     attributes: propsToAttributes({
       caption: slateNode.caption ?? '',
       ...(slateNode.align ? { align: slateNode.align } : {}),
       ...(slateNode.numbered ? { numbered: 'true' } : {})
     }),
-    children: convertNodesSerialize(slateNode.children ?? [], options),
+    // convertNodesSerialize returns generic unist nodes; the mdast-mdx typings
+    // don't narrow that to MdxJsxFlowElement's own child union, so this cast
+    // is the one framework-seam assertion this rule needs (see AllowedPropKey
+    // design notes in defineMdxComponent.ts).
+    children: convertNodesSerialize(
+      slateNode.children ?? [],
+      options
+    ) as MdMdxJsxFlowElement['children'],
     name: CAPTION_TYPE,
     type: 'mdxJsxFlowElement'
   })
@@ -65,9 +75,12 @@ const autoGrow = (node: HTMLTextAreaElement) => {
   node.style.height = `${node.scrollHeight}px`;
 };
 
-export const CaptionEditable = ({ element, children, ...props }: PlateElementProps) => {
+export const CaptionEditable = ({
+  element,
+  children,
+  ...props
+}: PlateElementProps<CaptionSlateElement>) => {
   const editor = useEditorRef();
-  const el = element as CaptionSlateElement;
   const captionRef = useRef<HTMLTextAreaElement>(null);
 
   // Uncontrolled: only resync the DOM when the caption changed externally
@@ -76,12 +89,12 @@ export const CaptionEditable = ({ element, children, ...props }: PlateElementPro
   useLayoutEffect(() => {
     const node = captionRef.current;
     if (!node) return;
-    const elText = el.caption ?? '';
+    const elText = element.caption ?? '';
     if (node.value !== elText) {
       node.value = elText;
     }
     autoGrow(node);
-  }, [el.caption]);
+  }, [element.caption]);
 
   const commitCaption = () => {
     const path = editor.api.findPath(element);
@@ -91,7 +104,9 @@ export const CaptionEditable = ({ element, children, ...props }: PlateElementPro
 
   return (
     <EditorBlock element={element} {...props}>
-      <figure className={`${styles.container} ${styles.editorContainer} ${alignClass(el.align)}`}>
+      <figure
+        className={`${styles.container} ${styles.editorContainer} ${alignClass(element.align)}`}
+      >
         <div className={styles.body}>{children}</div>
         <figcaption contentEditable={false} className={styles.caption}>
           {/*
@@ -108,7 +123,7 @@ export const CaptionEditable = ({ element, children, ...props }: PlateElementPro
             rows={1}
             className={styles.captionText}
             placeholder="Click here to edit the caption…"
-            defaultValue={el.caption ?? ''}
+            defaultValue={element.caption ?? ''}
             onInput={event => autoGrow(event.currentTarget)}
             onBlur={commitCaption}
           />

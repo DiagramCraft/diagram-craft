@@ -1,18 +1,20 @@
-import type React from 'react';
 import { TbAt } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityMention } from './EntityMention';
 import { ENTITY_MENTION_TYPE, EntityMentionEditable, entityMentionMdxRule } from './EntityMentionEditable';
+import type { EntityMentionSlateElement } from './types';
 
-export const entityMentionSpec = {
-  component: EntityMention as unknown as React.ComponentType<Record<string, string>>,
+export const entityMentionSpec = defineMdxComponent<
+  EntityMentionSlateElement,
+  { id: string },
+  'inline'
+>({
+  component: EntityMention,
   mode: 'inline',
   allowedProps: ['id'],
   editorSpec: {
-    editableComponent: EntityMentionEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const, isInline: true as const },
+    editableComponent: EntityMentionEditable,
+    nodeOptions: { isVoid: true, isInline: true },
     mdxRule: entityMentionMdxRule,
     slashCommand: {
       key: 'entity-mention',
@@ -29,4 +31,4 @@ export const entityMentionSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

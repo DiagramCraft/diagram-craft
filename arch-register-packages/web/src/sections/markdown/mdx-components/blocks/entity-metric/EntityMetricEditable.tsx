@@ -2,6 +2,7 @@ import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbHash } from 'react-icons/tb';
+import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { EntityMetric } from './EntityMetric';
 import { EntityMetricDialog } from './EntityMetricDialog';
@@ -14,22 +15,19 @@ const readAttr = (attrs: Record<string, unknown>, key: string) => {
   return value == null ? '' : String(value);
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: Plate mdx rule shape
-export const entityMetricMdxRule: Record<string, any> = {
-  // biome-ignore lint/suspicious/noExplicitAny: Plate mdx rule shape
-  deserialize: (mdastNode: any, _deco: unknown, options: any) => {
+export const entityMetricMdxRule: MdxRuleDef<EntityMetricSlateElement, 'block'> = {
+  deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, ENTITY_METRIC_TYPE),
+      type: getPluginType(options.editor!, ENTITY_METRIC_TYPE),
       schema: readAttr(attrs, 'schema'),
       owner: readAttr(attrs, 'owner'),
       lifecycle: readAttr(attrs, 'lifecycle'),
       label: readAttr(attrs, 'label')
     };
   },
-  // biome-ignore lint/suspicious/noExplicitAny: Plate mdx rule shape
-  serialize: (slateNode: any) => ({
+  serialize: slateNode => ({
     attributes: propsToAttributes({
       ...(slateNode.schema ? { schema: slateNode.schema } : {}),
       ...(slateNode.owner ? { owner: slateNode.owner } : {}),
@@ -42,12 +40,15 @@ export const entityMetricMdxRule: Record<string, any> = {
   })
 };
 
-export const EntityMetricEditable = ({ element, children, ...props }: PlateElementProps) => {
-  const el = element as EntityMetricSlateElement;
-  const schema = el.schema ?? '';
-  const owner = el.owner ?? '';
-  const lifecycle = el.lifecycle ?? '';
-  const label = el.label ?? '';
+export const EntityMetricEditable = ({
+  element,
+  children,
+  ...props
+}: PlateElementProps<EntityMetricSlateElement>) => {
+  const schema = element.schema ?? '';
+  const owner = element.owner ?? '';
+  const lifecycle = element.lifecycle ?? '';
+  const label = element.label ?? '';
   const hasValue = !!(schema || owner || lifecycle);
 
   return (

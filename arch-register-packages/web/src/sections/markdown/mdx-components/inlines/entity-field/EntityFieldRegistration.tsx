@@ -1,18 +1,20 @@
-import type React from 'react';
 import { TbHash } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityField } from './EntityField';
 import { ENTITY_FIELD_TYPE, EntityFieldEditable, entityFieldMdxRule } from './EntityFieldEditable';
+import type { EntityFieldSlateElement } from './types';
 
-export const entityFieldSpec = {
-  component: EntityField as unknown as React.ComponentType<Record<string, string>>,
+export const entityFieldSpec = defineMdxComponent<
+  EntityFieldSlateElement,
+  { id: string; field: string },
+  'inline'
+>({
+  component: EntityField,
   mode: 'inline',
   allowedProps: ['id', 'field'],
   editorSpec: {
-    editableComponent: EntityFieldEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const, isInline: true as const },
+    editableComponent: EntityFieldEditable,
+    nodeOptions: { isVoid: true, isInline: true },
     mdxRule: entityFieldMdxRule,
     slashCommand: {
       key: 'entity-field',
@@ -30,4 +32,4 @@ export const entityFieldSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

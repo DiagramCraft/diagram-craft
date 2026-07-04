@@ -5,6 +5,9 @@ describe('ImageEmbedEditable', () => {
   it('deserializes mdx props into the slate node shape', () => {
     const node = imageEmbedMdxRule.deserialize(
       {
+        type: 'mdxJsxFlowElement',
+        name: 'ImageEmbed',
+        children: [],
         attributes: [
           { type: 'mdxJsxAttribute', name: 'id', value: 'file-1' },
           { type: 'mdxJsxAttribute', name: 'alt', value: 'Architecture image' },
@@ -12,12 +15,12 @@ describe('ImageEmbedEditable', () => {
           { type: 'mdxJsxAttribute', name: 'align', value: 'right' }
         ]
       },
-      undefined,
+      {},
       {
         editor: {
           getPlugin: () => ({ node: { type: 'ImageEmbed' } })
         }
-      }
+      } as unknown as Parameters<typeof imageEmbedMdxRule.deserialize>[2]
     );
 
     expect(node).toEqual({
@@ -32,12 +35,17 @@ describe('ImageEmbedEditable', () => {
 
   it('serializes optional props only when present', () => {
     expect(
-      imageEmbedMdxRule.serialize({
-        fileId: 'file-1',
-        alt: 'Architecture image',
-        size: '75',
-        align: 'right'
-      })
+      imageEmbedMdxRule.serialize(
+        {
+          type: 'ImageEmbed',
+          children: [{ text: '' }],
+          fileId: 'file-1',
+          alt: 'Architecture image',
+          size: '75',
+          align: 'right'
+        },
+        {}
+      )
     ).toEqual({
       type: 'mdxJsxFlowElement',
       name: 'ImageEmbed',

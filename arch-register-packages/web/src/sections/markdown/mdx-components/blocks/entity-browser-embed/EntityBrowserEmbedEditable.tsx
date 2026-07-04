@@ -2,6 +2,7 @@ import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbListSearch } from 'react-icons/tb';
+import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { EntityBrowserEmbed } from './EntityBrowserEmbed';
 import { EntityBrowserEmbedDialog } from './EntityBrowserEmbedDialog';
@@ -14,19 +15,16 @@ const readAttr = (attrs: Record<string, unknown>, key: string) => {
   return value == null ? '' : String(value);
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: Plate mdx rule shape
-export const entityBrowserEmbedMdxRule: Record<string, any> = {
-  // biome-ignore lint/suspicious/noExplicitAny: Plate mdx rule shape
-  deserialize: (mdastNode: any, _deco: unknown, options: any) => {
+export const entityBrowserEmbedMdxRule: MdxRuleDef<EntityBrowserEmbedSlateElement, 'block'> = {
+  deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, ENTITY_BROWSER_EMBED_TYPE),
+      type: getPluginType(options.editor!, ENTITY_BROWSER_EMBED_TYPE),
       config: readAttr(attrs, 'config')
     };
   },
-  // biome-ignore lint/suspicious/noExplicitAny: Plate mdx rule shape
-  serialize: (slateNode: any) => ({
+  serialize: slateNode => ({
     attributes: propsToAttributes({
       ...(slateNode.config ? { config: slateNode.config } : {})
     }),
@@ -36,9 +34,12 @@ export const entityBrowserEmbedMdxRule: Record<string, any> = {
   })
 };
 
-export const EntityBrowserEmbedEditable = ({ element, children, ...props }: PlateElementProps) => {
-  const el = element as EntityBrowserEmbedSlateElement;
-  const config = el.config ?? '';
+export const EntityBrowserEmbedEditable = ({
+  element,
+  children,
+  ...props
+}: PlateElementProps<EntityBrowserEmbedSlateElement>) => {
+  const config = element.config ?? '';
   const hasValue = !!config;
 
   return (
