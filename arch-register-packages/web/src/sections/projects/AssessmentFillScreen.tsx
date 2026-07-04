@@ -58,6 +58,12 @@ const STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
   complete: 'Complete'
 };
 
+const STATUS_ORDER: Record<AssessmentEntityStatus, number> = {
+  not_started: 0,
+  in_progress: 1,
+  complete: 2
+};
+
 const SortableHeader = ({
   label,
   sortKey,
@@ -179,6 +185,7 @@ export const AssessmentFillScreen = ({
     if (key === '_name') return a._name.localeCompare(b._name);
     if (key === '_owner') return (a._owner?.name ?? '').localeCompare(b._owner?.name ?? '');
     if (key === '_schema') return schemaNameFor(a).localeCompare(schemaNameFor(b));
+    if (key === '_status') return STATUS_ORDER[statusFor(a._uid)] - STATUS_ORDER[statusFor(b._uid)];
 
     const field = assessment?.fields.find(f => f.id === key);
     const aValue = responseByEntity.get(a._uid)?.values[key];
@@ -402,7 +409,7 @@ export const AssessmentFillScreen = ({
                           }
                         />
                       ))}
-                      <th className={styles.statusCol}>Status</th>
+                      <SortableHeader label="Status" sortKey="_status" sort={sort} onSort={toggleSort} className={styles.statusCol} />
                     </tr>
                   </thead>
                   <tbody>
