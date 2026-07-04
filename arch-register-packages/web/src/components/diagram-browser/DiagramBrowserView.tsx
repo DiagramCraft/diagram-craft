@@ -2,14 +2,14 @@ import type React from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbFolder, TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
-import type { FileEntry } from '../../lib/api';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { DiagramCard, DiagramRow } from '../DiagramCard';
 import styles from '../../sections/projects/ProjectDetailScreen.module.css';
 
 export type DiagramViewMode = 'grid' | 'list';
 
 export type DiagramBrowserItem = {
-  file: FileEntry;
+  file: ProjectFile;
   folder?: string;
 };
 
@@ -116,10 +116,10 @@ export const DiagramBrowserView = ({
   viewMode: DiagramViewMode;
   listItems: DiagramBrowserItem[];
   gridSections: DiagramBrowserGridSection[];
-  onOpenDiagram: (file: FileEntry) => void;
-  onOpenMarkdown?: (file: FileEntry) => void;
-  onDownloadFile?: (file: FileEntry) => void;
-  onContextMenu?: (event: React.MouseEvent, file: FileEntry) => void;
+  onOpenDiagram: (file: ProjectFile) => void;
+  onOpenMarkdown?: (file: ProjectFile) => void;
+  onDownloadFile?: (file: ProjectFile) => void;
+  onContextMenu?: (event: React.MouseEvent, file: ProjectFile) => void;
   onNewDiagram?: () => void;
   emptyState: { title: string; sub: string };
   noMatchState: { title: string; sub: string };

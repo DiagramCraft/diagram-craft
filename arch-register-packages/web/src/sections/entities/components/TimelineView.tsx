@@ -14,7 +14,7 @@ import {
   parseTimelineDate,
   type TimelineColumnWidths
 } from '../../../components/timeline/timelineUtils';
-import { resolveSchemaColor } from '../../../lib/api';
+import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';

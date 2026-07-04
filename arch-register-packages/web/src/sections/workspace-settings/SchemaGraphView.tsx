@@ -11,7 +11,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TbFileExport, TbVectorTriangle } from 'react-icons/tb';
 import styles from './SchemaGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';

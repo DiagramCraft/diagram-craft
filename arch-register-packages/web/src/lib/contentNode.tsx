@@ -1,13 +1,13 @@
 import type React from 'react';
 import { TbFile, TbFileText } from 'react-icons/tb';
-import type { FileEntry } from './api';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 
-export type ContentNodeType = FileEntry['type']; // 'diagram' | 'folder' | 'markdown' | 'file'
+export type ContentNodeType = ProjectFile['type']; // 'diagram' | 'folder' | 'markdown' | 'file'
 
 export type MenuTarget =
-  | { type: 'diagram'; file: FileEntry }
-  | { type: 'markdown'; file: FileEntry }
-  | { type: 'file'; file: FileEntry }
+  | { type: 'diagram'; file: ProjectFile }
+  | { type: 'markdown'; file: ProjectFile }
+  | { type: 'file'; file: ProjectFile }
   | { type: 'folder'; path: string };
 
 /** Convert a file's type to its non-folder MenuTarget discriminant */

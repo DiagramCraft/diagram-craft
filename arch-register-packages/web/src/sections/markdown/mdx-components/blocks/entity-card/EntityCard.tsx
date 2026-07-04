@@ -3,7 +3,7 @@ import type { ApiSelectField, EntitySchema } from '@arch-register/api-types/sche
 import { TypeBadge } from '../../../../../components/TypeBadge';
 import { StatusChip } from '../../../../../components/StatusChip';
 import { useEntity } from '../../../../../hooks/useEntities';
-import { resolveSchemaColor } from '../../../../../lib/api';
+import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
 import styles from './EntityCard.module.css';

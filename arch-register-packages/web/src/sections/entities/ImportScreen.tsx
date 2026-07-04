@@ -16,7 +16,7 @@ import { Chip } from '../../components/Chip';
 import { DropdownMenu } from '../../components/DropdownMenu';
 import styles from './ImportScreen.module.css';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { downloadCsvTemplate, parseCsvImport, commitCsvImport } from '../../lib/api';
+import { downloadCsvTemplate, parseCsvImport, commitCsvImport } from '../../lib/entityCsv';
 import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
 
 type Phase = 'upload' | 'parsing' | 'review' | 'done';

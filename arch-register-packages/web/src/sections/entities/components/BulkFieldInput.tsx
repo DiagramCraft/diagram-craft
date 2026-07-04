@@ -4,7 +4,7 @@ import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '../../../lib/api';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import type { BulkEditableField } from './bulkEditFields';
 import styles from './BulkEditToolbar.module.css';

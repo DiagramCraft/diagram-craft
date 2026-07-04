@@ -15,11 +15,13 @@ import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ColorPicker } from '../../components/ColorPicker';
 import { TbPlus, TbFileText, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil, TbDownload } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { ApiError, FileEntry, WorkspaceTeam } from '../../lib/api';
+import { ApiError } from '../../lib/http';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import {
   useProject,
   useUpdateProject,
@@ -280,7 +282,7 @@ export const ProjectDetailScreen = () => {
     setMenu({ x: e.clientX, y: e.clientY, target });
   };
 
-  const handleToggleTemplate = (file: FileEntry, isWorkspaceTemplate: boolean = false) => {
+  const handleToggleTemplate = (file: ProjectFile, isWorkspaceTemplate: boolean = false) => {
     if (isWorkspaceTemplate) {
       // Toggle workspace template status
       const newIsWorkspaceTemplate = !file.is_workspace_template;
@@ -348,7 +350,7 @@ export const ProjectDetailScreen = () => {
   };
 
   const renderMoveToSubmenu = (
-    file: FileEntry,
+    file: ProjectFile,
     folders: string[],
     currentFolder: string | null
   ) => {
@@ -398,7 +400,7 @@ export const ProjectDetailScreen = () => {
     );
   };
 
-  const renderDiagramMenu = (file: FileEntry) => {
+  const renderDiagramMenu = (file: ProjectFile) => {
     const currentFolder = file.path.includes('/')
       ? file.path.substring(0, file.path.lastIndexOf('/'))
       : null;
@@ -461,7 +463,7 @@ export const ProjectDetailScreen = () => {
     );
   };
 
-  const renderMarkdownMenu = (file: FileEntry) => {
+  const renderMarkdownMenu = (file: ProjectFile) => {
     const currentFolder = file.path.includes('/')
       ? file.path.substring(0, file.path.lastIndexOf('/'))
       : null;
@@ -494,7 +496,7 @@ export const ProjectDetailScreen = () => {
     );
   };
 
-  const triggerDownload = (file: FileEntry) => {
+  const triggerDownload = (file: ProjectFile) => {
     const a = document.createElement('a');
     a.href = `/api/${workspaceId}/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`;
     a.download = file.original_filename ?? file.name;
@@ -503,7 +505,7 @@ export const ProjectDetailScreen = () => {
     document.body.removeChild(a);
   };
 
-  const renderFileMenu = (file: FileEntry) => {
+  const renderFileMenu = (file: ProjectFile) => {
     const currentFolder = file.path.includes('/')
       ? file.path.substring(0, file.path.lastIndexOf('/'))
       : null;

@@ -356,3 +356,6 @@ export const workspaceConfigContract = oc
 
 export type WorkspaceMemberInfo = z.infer<typeof memberInfoSchema>;
 export type WorkspaceRoleCapability = z.infer<typeof workspaceCapabilitySchema>;
+export type WorkspaceTeam = z.infer<typeof teamSchema>;
+export type WorkspaceTeamInput = z.infer<typeof teamInputSchema>;
+export type TeamAssignmentInfo = z.infer<typeof teamAssignmentSchema>;

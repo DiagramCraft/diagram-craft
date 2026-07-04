@@ -97,3 +97,5 @@ export const auditContract = oc
 
 export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
 export type AuditStats = z.infer<typeof auditStatsSchema>;
+export type AuditOperation = AuditLogEntry['operation'];
+export type AuditEntityType = AuditLogEntry['entity_type'];

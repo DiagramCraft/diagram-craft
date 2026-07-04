@@ -2,7 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbFileText, TbFolderOpen, TbPencil, TbPlus, TbStar, TbUpload } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
-import type { FileEntry } from '../../lib/api';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import styles from './ProjectDetailScreen.module.css';
 import { DiagramBrowserToolbar } from '../../components/diagram-browser/DiagramBrowserView';
 import { ProjectDiagramsView, type ProjectMenuTarget } from './ProjectDiagramsView';
@@ -36,7 +36,7 @@ export const ProjectDetails = ({
   onContextMenu
 }: {
   project: ProjectDetailData;
-  visibleFiles: FileEntry[];
+  visibleFiles: ProjectFile[];
   allFilesCount: number;
   folderCount: number;
   filter: string;
@@ -51,7 +51,7 @@ export const ProjectDetails = ({
   onSetViewMode: (value: 'grid' | 'list') => void;
   onOpenDiagram: (diagramId: string) => void;
   onOpenMarkdown?: (nodeId: string) => void;
-  onDownloadFile?: (file: FileEntry) => void;
+  onDownloadFile?: (file: ProjectFile) => void;
   onAddFolder: () => void;
   onAddDiagram: () => void;
   onAddMarkdown?: () => void;

@@ -8,7 +8,7 @@ import {
   asEntityPublicId,
   entityDetailRoute
 } from '../../../../../routes/publicObjectRoutes';
-import { resolveSchemaColor } from '../../../../../lib/api';
+import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import styles from './EntityTable.module.css';
 
 const DEFAULT_LIMIT = 10;

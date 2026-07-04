@@ -14,7 +14,7 @@ import {
 import styles from './ExtractScreen.module.css';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { orpcClient } from '../../lib/orpcClient';
-import { createEntity } from '../../lib/api';
+import { createEntity } from '../../lib/entityOperations';
 import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
 
 type Phase = 'input' | 'scanning' | 'review' | 'done';

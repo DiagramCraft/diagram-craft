@@ -11,7 +11,11 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { getUserLabel } from '../../../utils/userLabel';
-import type { TeamAssignmentInfo, WorkspaceTeam } from '../../../lib/api';
+import type {
+  TeamAssignmentInfo,
+  WorkspaceTeam,
+  WorkspaceTeamInput
+} from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceUsers } from '../../../hooks/useWorkspaceMembers';
 import {
   useTeamAssignments,
@@ -80,7 +84,7 @@ const buildTeamDrafts = (teams: WorkspaceTeam[], assignments: TeamAssignmentInfo
     )
   }));
 
-const toOwnerPayload = (teams: TeamDraft[]): WorkspaceTeam[] =>
+const toOwnerPayload = (teams: TeamDraft[]): WorkspaceTeamInput[] =>
   teams.map((team, index) => ({
     id: team.id,
     name: team.name.trim(),
@@ -413,7 +417,7 @@ export const TeamsSubSection = ({
 
 const persistTeams = async (
   teams: TeamDraft[],
-  saveOwners: (owners: WorkspaceTeam[]) => Promise<unknown>,
+  saveOwners: (owners: WorkspaceTeamInput[]) => Promise<unknown>,
   saveMemberships: (
     memberships: Array<{ team_id: string; user_id: string; role: TeamRole }>
   ) => Promise<unknown>

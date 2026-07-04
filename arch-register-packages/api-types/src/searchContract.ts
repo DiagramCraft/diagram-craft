@@ -93,3 +93,9 @@ export const searchContract = oc
         .output(searchResponseSchema)
     }
   });
+
+export type ProjectSearchResult = z.infer<typeof projectSearchResultSchema>;
+export type ProjectFileSearchResult = z.infer<typeof fileSearchResultSchema>;
+export type EntitySearchResult = z.infer<typeof entitySearchResultSchema>;
+export type SchemaSearchResult = z.infer<typeof schemaSearchResultSchema>;
+export type SearchResponse = z.infer<typeof searchResponseSchema>;

@@ -5,7 +5,8 @@ import {
   type ExploreViewConfig
 } from '@arch-register/api-types/viewContract';
 import type { EntityRelationData } from '../../../hooks/useEntities';
-import { getRelationDisplayLabel, type EntityRelation } from '../../../lib/api';
+import { getRelationDisplayLabel } from '../../../lib/entityRelations';
+import type { EntityRelation } from '@arch-register/api-types/entityContract';
 
 export type ExploreEntity = {
   entityId: string;

@@ -20,7 +20,7 @@ import type {
   CreateAssessmentRequest
 } from '@arch-register/api-types/assessmentContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TypeBadge } from '../../components/TypeBadge';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';

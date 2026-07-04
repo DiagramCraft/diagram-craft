@@ -16,7 +16,7 @@ import {
   useConversationMessages,
   aiKeys
 } from '../../hooks/useAiConversations';
-import type { WorkspaceTeam } from '../../lib/api';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { AiConversation } from '@arch-register/api-types/aiContract';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 

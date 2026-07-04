@@ -10,7 +10,7 @@ import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStat
 import type { CreateAssessmentRequest } from '@arch-register/api-types/assessmentContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TypeBadge } from '../../components/TypeBadge';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import {
