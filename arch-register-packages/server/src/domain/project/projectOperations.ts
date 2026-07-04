@@ -18,7 +18,6 @@ import { fileNameFromPath, displayNameFromBody, folderFromPath, stripJsonExtensi
 import {
   ATTACHMENT_CONTAINER_NAME,
   collectDescendantNodes,
-  collectHiddenAttachmentNodeIds,
   CONTENT_NODE_ROLE_ATTACHMENT_CONTAINER,
   getAttachmentContainerForMarkdownNode,
   getMarkdownAttachmentNodes
@@ -33,6 +32,8 @@ import type { ContentNodeDbResult } from './db/projectDatabase';
 import { HTTPError } from 'h3';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
+import { buildFileTree, deleteContentFolder, renameContentFolder } from './contentTreeOperations';
+import { ENTITY_SCOPE, PROJECT_SCOPE, WORKSPACE_SCOPE } from './contentScope';
 import {
   DiagramEntityFile,
   FileTree,
@@ -143,24 +144,7 @@ const reloadContentNode = async (db: DatabaseAdapter, workspace: string, nodeId:
   return row;
 };
 
-export const buildFileTree = (files: ContentNodeDbResult[]): FileTree => {
-  const hiddenAttachmentNodeIds = collectHiddenAttachmentNodeIds(files);
-  const visibleFiles = files.filter(file => !hiddenAttachmentNodeIds.has(file.id));
-  const folderNodes = visibleFiles.filter(f => f.type === 'folder');
-  const nonFolderNodes = visibleFiles.filter(f => f.type !== 'folder');
-
-  const rootFiles = nonFolderNodes.filter(f => f.parent_id === null).map(toApiProjectFile);
-
-  const folders = folderNodes
-    .sort((a, b) => a.path.localeCompare(b.path))
-    .map(folder => ({
-      path: folder.path,
-      name: folder.name,
-      files: nonFolderNodes.filter(f => f.parent_id === folder.id).map(toApiProjectFile)
-    }));
-
-  return { folders, rootFiles };
-};
+export { buildFileTree };
 
 const getNodeExtension = (node: Pick<ContentNodeDbResult, 'type'>) => {
   switch (node.type) {
@@ -840,36 +824,15 @@ export const createEntityFile = async (
   }
 };
 
-export const renameFolder = async (
+export const renameFolder = (
   db: DatabaseAdapter,
   workspace: string,
   id: string,
   oldPath: string,
   newPath: string,
   event: AuthenticatedEvent
-): Promise<{ success: boolean; message: string; count: number }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const project = await db.project.getProject(ws, id);
-    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-    const projectUuid = project.id;
-    requireProjectAction(
-      authCtx,
-      project.owner,
-      'edit_project',
-      'You do not have permission to modify this project'
-    );
-    const result = await db.project.renameContentNodeFolder(ws, projectUuid, oldPath, newPath, new Date());
-    httpAssert.true(result.length > 0, {
-      status: 404,
-      message: `No files found under folder '${oldPath}'`
-    });
-    return { success: true, message: `Renamed ${result.length} file(s)`, count: result.length };
-  } catch (e) {
-    return handleError(e, 'Failed to rename folder');
-  }
-};
+): Promise<{ success: boolean; message: string; count: number }> =>
+  renameContentFolder(PROJECT_SCOPE, db, workspace, id, oldPath, newPath, event);
 
 export const getFileContent = async (
   db: DatabaseAdapter,
@@ -1424,42 +1387,15 @@ export const relocateFile = async (
   }
 };
 
-export const deleteFolder = async (
+export const deleteFolder = (
   db: DatabaseAdapter,
   storage: StorageAdapter,
   workspace: string,
   id: string,
   folderPath: string,
   event: AuthenticatedEvent
-): Promise<{ success: boolean; count: number }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const project = await db.project.getProject(ws, id);
-    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-    const projectUuid = project.id;
-
-    requireProjectAction(
-      authCtx,
-      project.owner,
-      'edit_project',
-      'You do not have permission to modify this project'
-    );
-
-    const result = await db.project.deleteContentNodeFolder(ws, projectUuid, folderPath);
-
-    httpAssert.true(result.length > 0, {
-      status: 404,
-      message: `No files found under folder '${folderPath}'`
-    });
-
-    await Promise.all(result.map(file => storage.delete(ws, projectUuid, file.id).catch(() => {})));
-
-    return { success: true, count: result.length };
-  } catch (e) {
-    return handleError(e, 'Failed to delete folder');
-  }
-};
+): Promise<{ success: boolean; count: number }> =>
+  deleteContentFolder(PROJECT_SCOPE, db, storage, workspace, id, folderPath, event);
 
 export const updateTemplateStatus = async (
   db: DatabaseAdapter,
@@ -2909,84 +2845,25 @@ export const deleteEntityFile = async (
   }
 };
 
-export const deleteEntityFolder = async (
+export const deleteEntityFolder = (
   db: DatabaseAdapter,
   storage: StorageAdapter,
   workspace: string,
   entityId: string,
   folderPath: string,
   event: AuthenticatedEvent
-): Promise<{ success: boolean; count: number }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const entity = await db.catalog.getEntity(ws, entityId);
-    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-    const entityUuid = entity.id;
+): Promise<{ success: boolean; count: number }> =>
+  deleteContentFolder(ENTITY_SCOPE, db, storage, workspace, entityId, folderPath, event);
 
-    const result = await db.project.deleteEntityContentNodeFolder(ws, entityUuid, folderPath);
-
-    httpAssert.true(result.length > 0, {
-      status: 404,
-      message: `No files found under folder '${folderPath}'`
-    });
-
-    await Promise.all(result.map(file => storage.delete(ws, entityUuid, file.id).catch(() => {})));
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'delete',
-      entityType: 'content_node',
-      entityId: entityUuid,
-      entityName: folderPath,
-      changes: { old: { path: folderPath, type: 'folder' } },
-      metadata: { entity_id: entityUuid, path: folderPath, is_folder: true }
-    });
-
-    return { success: true, count: result.length };
-  } catch (e) {
-    return handleError(e, 'Failed to delete entity folder');
-  }
-};
-
-export const renameEntityFolder = async (
+export const renameEntityFolder = (
   db: DatabaseAdapter,
   workspace: string,
   entityId: string,
   oldPath: string,
   newPath: string,
   event: AuthenticatedEvent
-): Promise<{ success: boolean; message: string; count: number }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const entity = await db.catalog.getEntity(ws, entityId);
-    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-    const entityUuid = entity.id;
-
-    const result = await db.project.renameEntityContentNodeFolder(ws, entityUuid, oldPath, newPath, new Date());
-    httpAssert.true(result.length > 0, {
-      status: 404,
-      message: `No files found under folder '${oldPath}'`
-    });
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'update',
-      entityType: 'content_node',
-      entityId: entityUuid,
-      entityName: newPath,
-      changes: { old: { path: oldPath }, new: { path: newPath } },
-      metadata: { entity_id: entityUuid, operation: 'rename_folder' }
-    });
-
-    return { success: true, message: `Renamed ${result.length} file(s)`, count: result.length };
-  } catch (e) {
-    return handleError(e, 'Failed to rename entity folder');
-  }
-};
+): Promise<{ success: boolean; message: string; count: number }> =>
+  renameContentFolder(ENTITY_SCOPE, db, workspace, entityId, oldPath, newPath, event);
 
 export const cloneEntityFile = async (
   db: DatabaseAdapter,
@@ -3313,76 +3190,23 @@ export const deleteWorkspaceFile = async (
   }
 };
 
-export const deleteWorkspaceFolder = async (
+export const deleteWorkspaceFolder = (
   db: DatabaseAdapter,
   storage: StorageAdapter,
   workspace: string,
   folderPath: string,
   event: AuthenticatedEvent
-): Promise<{ success: boolean; count: number }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
+): Promise<{ success: boolean; count: number }> =>
+  deleteContentFolder(WORKSPACE_SCOPE, db, storage, workspace, undefined, folderPath, event);
 
-    const result = await db.project.deleteWorkspaceContentNodeFolder(ws, folderPath);
-
-    httpAssert.true(result.length > 0, {
-      status: 404,
-      message: `No files found under folder '${folderPath}'`
-    });
-
-    await Promise.all(result.map(file => storage.delete(ws, ws, file.id).catch(() => {})));
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'delete',
-      entityType: 'content_node',
-      entityId: ws,
-      entityName: folderPath,
-      changes: { old: { path: folderPath, type: 'folder' } },
-      metadata: { path: folderPath, is_folder: true }
-    });
-
-    return { success: true, count: result.length };
-  } catch (e) {
-    return handleError(e, 'Failed to delete workspace folder');
-  }
-};
-
-export const renameWorkspaceFolder = async (
+export const renameWorkspaceFolder = (
   db: DatabaseAdapter,
   workspace: string,
   oldPath: string,
   newPath: string,
   event: AuthenticatedEvent
-): Promise<{ success: boolean; message: string; count: number }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-
-    const result = await db.project.renameWorkspaceContentNodeFolder(ws, oldPath, newPath, new Date());
-    httpAssert.true(result.length > 0, {
-      status: 404,
-      message: `No files found under folder '${oldPath}'`
-    });
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'update',
-      entityType: 'content_node',
-      entityId: ws,
-      entityName: newPath,
-      changes: { old: { path: oldPath }, new: { path: newPath } },
-      metadata: { operation: 'rename_folder' }
-    });
-
-    return { success: true, message: `Renamed ${result.length} file(s)`, count: result.length };
-  } catch (e) {
-    return handleError(e, 'Failed to rename workspace folder');
-  }
-};
+): Promise<{ success: boolean; message: string; count: number }> =>
+  renameContentFolder(WORKSPACE_SCOPE, db, workspace, undefined, oldPath, newPath, event);
 
 export const cloneWorkspaceFile = async (
   db: DatabaseAdapter,
