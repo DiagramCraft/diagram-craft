@@ -5,8 +5,10 @@ import { logAudit, extractEntityFields, computeChanges } from '../audit/db/audit
 import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { toApiAssessmentResponse } from './assessmentResponseHelpers';
+import { toApiAssessmentResponse, buildAssessmentResultsCsvData } from './assessmentResponseHelpers';
 import { AssessmentResponse, UpsertAssessmentResponseRequest } from '@arch-register/api-types/assessmentResponseContract';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
+import { generateCsv } from '../../utils/csv';
 
 const handleError = (error: unknown, fallback: string): never => handleDbError(error, fallback);
 
@@ -101,5 +103,42 @@ export const upsertAssessmentResponse = async (
     return toApiAssessmentResponse(row, assessment);
   } catch (error) {
     return handleError(error, 'Failed to record assessment response');
+  }
+};
+
+export const exportAssessmentResponsesCsv = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  assessmentId: string,
+  event: AuthenticatedEvent
+): Promise<{ headers: Record<string, string>; body: Blob }> => {
+  const ws = await resolveWorkspace(db.catalog, workspace);
+  try {
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    const project = await getProjectOrThrow(db, ws, projectId);
+    requireProjectAccess(authCtx, project.owner);
+
+    const assessment = await getAssessmentOrThrow(db, ws, project.id, assessmentId);
+    const [allEntities, responses, enums] = await Promise.all([
+      listAllCatalogEntities(db, ws),
+      db.project.listAssessmentResponses(ws, assessmentId),
+      db.catalog.listEnums(ws)
+    ]);
+
+    const { columns, rows } = buildAssessmentResultsCsvData(allEntities, responses, assessment, enums);
+    const csvContent = generateCsv(rows, columns, ';');
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${assessment.name.toLowerCase().replace(/\s+/g, '-')}-results-${timestamp}.csv`;
+
+    return {
+      headers: {
+        'content-type': 'text/csv; charset=utf-8',
+        'content-disposition': `attachment; filename="${filename}"`
+      },
+      body: new Blob([csvContent], { type: 'text/csv; charset=utf-8' })
+    };
+  } catch (error) {
+    return handleError(error, 'Failed to export assessment results');
   }
 };

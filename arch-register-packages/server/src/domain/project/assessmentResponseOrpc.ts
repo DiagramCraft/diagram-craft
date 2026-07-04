@@ -4,7 +4,11 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
-import { listAssessmentResponses, upsertAssessmentResponse } from './assessmentResponseOperations';
+import {
+  listAssessmentResponses,
+  upsertAssessmentResponse,
+  exportAssessmentResponsesCsv
+} from './assessmentResponseOperations';
 import { assessmentResponseContract } from '@arch-register/api-types/assessmentResponseContract';
 
 type ORPCContext = {
@@ -43,7 +47,22 @@ export const assessmentResponseORPCRouter = assessmentResponseRouter.router({
       } catch (error) {
         return toORPCError(error);
       }
-    })
+    }),
+    exportCsv: assessmentResponseRouter.assessmentResponses.exportCsv.handler(
+      async ({ input, context }) => {
+        try {
+          return await exportAssessmentResponsesCsv(
+            context.db,
+            input.params.workspace,
+            input.params.id,
+            input.params.assessmentId,
+            context.event
+          );
+        } catch (error) {
+          return toORPCError(error);
+        }
+      }
+    )
   }
 });
 

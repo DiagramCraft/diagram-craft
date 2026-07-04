@@ -55,7 +55,25 @@ export const assessmentResponseContract = oc.tag('Assessments').router({
       .input(
         z.object({ params: wsProjectAssessmentAndEntityId, body: upsertAssessmentResponseBodySchema })
       )
-      .output(assessmentResponseSchema)
+      .output(assessmentResponseSchema),
+    exportCsv: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/projects/{id}/assessments/{assessmentId}/responses/export',
+        inputStructure: 'detailed',
+        outputStructure: 'detailed',
+        summary: 'Export assessment results to CSV',
+        description:
+          'Exports the full results table for the assessment to a CSV file: one row per in-scope entity, one column per assessment field, plus standard entity columns.',
+        tags: ['Assessments']
+      })
+      .input(z.object({ params: wsProjectAndAssessmentId }))
+      .output(
+        z.object({
+          headers: z.record(z.string(), z.string()).describe('Response headers including Content-Disposition'),
+          body: z.instanceof(Blob).describe('CSV file as binary blob')
+        })
+      )
   }
 });
 
