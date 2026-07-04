@@ -1,18 +1,21 @@
 import type React from 'react';
 import { TbFrame } from 'react-icons/tb';
-import type { useEditorRef } from 'platejs/react';
-import type { TElement } from 'platejs';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { Caption } from './Caption';
 import { CAPTION_TYPE, CaptionEditable, captionMdxRule } from './CaptionEditable';
+import type { CaptionSlateElement } from './types';
 
-export const captionSpec = {
-  component: Caption as unknown as React.ComponentType<Record<string, string>>,
+export const captionSpec = defineMdxComponent<
+  CaptionSlateElement,
+  { caption?: string; align?: string; numbered?: string; children?: React.ReactNode },
+  'block'
+>({
+  component: Caption,
   mode: 'block',
   allowedProps: ['caption', 'align', 'numbered'],
   acceptsChildren: true,
   editorSpec: {
-    editableComponent: CaptionEditable as unknown as React.ComponentType<Record<string, unknown>>,
+    editableComponent: CaptionEditable,
     nodeOptions: {},
     mdxRule: captionMdxRule,
     slashCommand: {
@@ -21,14 +24,7 @@ export const captionSpec = {
       description: 'Wrap a block with a figure caption',
       icon: <TbFrame size={14} />,
       keywords: ['caption', 'figure', 'figcaption'],
-      onSelect: (
-        editor: ReturnType<typeof useEditorRef>,
-        {
-          insertOrReplaceBlock
-        }: {
-          insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: TElement) => void;
-        }
-      ) => {
+      onSelect: (editor, { insertOrReplaceBlock }) => {
         insertOrReplaceBlock(editor, {
           type: CAPTION_TYPE,
           caption: '',
@@ -38,7 +34,7 @@ export const captionSpec = {
         });
       }
     },
-    createWrapper: (child: TElement) => ({
+    createWrapper: child => ({
       type: CAPTION_TYPE,
       caption: '',
       align: '',
@@ -46,4 +42,4 @@ export const captionSpec = {
       children: [child]
     })
   }
-} satisfies MdxComponentSpec;
+});

@@ -1,18 +1,16 @@
-import type React from 'react';
 import { TbLink } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityLink } from './EntityLink';
 import { ENTITY_LINK_TYPE, EntityLinkEditable, entityLinkMdxRule } from './EntityLinkEditable';
+import type { EntityLinkSlateElement } from './types';
 
-export const entityLinkSpec = {
-  component: EntityLink as unknown as React.ComponentType<Record<string, string>>,
+export const entityLinkSpec = defineMdxComponent<EntityLinkSlateElement, { id: string }, 'inline'>({
+  component: EntityLink,
   mode: 'inline',
   allowedProps: ['id'],
   editorSpec: {
-    editableComponent: EntityLinkEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const, isInline: true as const },
+    editableComponent: EntityLinkEditable,
+    nodeOptions: { isVoid: true, isInline: true },
     mdxRule: entityLinkMdxRule,
     slashCommand: {
       key: 'entity-link',
@@ -29,4 +27,4 @@ export const entityLinkSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

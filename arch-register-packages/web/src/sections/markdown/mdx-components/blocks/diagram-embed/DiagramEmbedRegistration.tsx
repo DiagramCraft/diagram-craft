@@ -1,24 +1,24 @@
-import type React from 'react';
 import { TbChartLine } from 'react-icons/tb';
-import type { useEditorRef } from 'platejs/react';
-import type { TElement } from 'platejs';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { DiagramEmbed } from './DiagramEmbed';
 import {
   DIAGRAM_EMBED_TYPE,
   DiagramEmbedEditable,
   diagramEmbedMdxRule
 } from './DiagramEmbedEditable';
+import type { DiagramEmbedSlateElement } from './types';
 
-export const diagramEmbedSpec = {
-  component: DiagramEmbed as unknown as React.ComponentType<Record<string, string>>,
+export const diagramEmbedSpec = defineMdxComponent<
+  DiagramEmbedSlateElement,
+  { id: string; caption?: string },
+  'block'
+>({
+  component: DiagramEmbed,
   mode: 'block',
   allowedProps: ['id', 'caption'],
   editorSpec: {
-    editableComponent: DiagramEmbedEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const },
+    editableComponent: DiagramEmbedEditable,
+    nodeOptions: { isVoid: true },
     mdxRule: diagramEmbedMdxRule,
     slashCommand: {
       key: 'diagram-embed',
@@ -26,10 +26,7 @@ export const diagramEmbedSpec = {
       description: 'Embed a read-only diagram preview',
       icon: <TbChartLine size={14} />,
       keywords: ['diagram', 'embed', 'preview', 'svg', 'flow'],
-      onSelect: (
-        editor: ReturnType<typeof useEditorRef>,
-        { insertOrReplaceBlock }: { insertOrReplaceBlock: (editor: ReturnType<typeof useEditorRef>, node: TElement) => void }
-      ) => {
+      onSelect: (editor, { insertOrReplaceBlock }) => {
         insertOrReplaceBlock(editor, {
           type: DIAGRAM_EMBED_TYPE,
           fileId: '',
@@ -39,4 +36,4 @@ export const diagramEmbedSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

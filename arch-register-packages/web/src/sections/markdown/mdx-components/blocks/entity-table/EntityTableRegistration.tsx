@@ -1,22 +1,24 @@
-import type React from 'react';
 import { TbTable } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityTable } from './EntityTable';
 import {
   ENTITY_TABLE_TYPE,
   EntityTableEditable,
   entityTableMdxRule
 } from './EntityTableEditable';
+import type { EntityTableSlateElement } from './types';
 
-export const entityTableSpec = {
-  component: EntityTable as unknown as React.ComponentType<Record<string, string>>,
+export const entityTableSpec = defineMdxComponent<
+  EntityTableSlateElement,
+  { schema?: string; owner?: string; lifecycle?: string; limit?: string },
+  'block'
+>({
+  component: EntityTable,
   mode: 'block',
   allowedProps: ['schema', 'owner', 'lifecycle', 'limit'],
   editorSpec: {
-    editableComponent: EntityTableEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const },
+    editableComponent: EntityTableEditable,
+    nodeOptions: { isVoid: true },
     mdxRule: entityTableMdxRule,
     slashCommand: {
       key: 'entity-table',
@@ -36,4 +38,4 @@ export const entityTableSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

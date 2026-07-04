@@ -2,6 +2,7 @@ import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbChartLine } from 'react-icons/tb';
+import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { DiagramEmbed } from './DiagramEmbed';
 import { DiagramEmbedDialog } from './DiagramEmbedDialog';
@@ -9,20 +10,19 @@ import type { DiagramEmbedSlateElement } from './types';
 
 export const DIAGRAM_EMBED_TYPE = 'DiagramEmbed' as const;
 
-// biome-ignore lint/suspicious/noExplicitAny: ok
-export const diagramEmbedMdxRule: Record<string, any> = {
-  // biome-ignore lint/suspicious/noExplicitAny: ok
-  deserialize: (mdastNode: any, _deco: unknown, options: any) => {
+const stringProp = (value: unknown) => (value == null ? '' : String(value));
+
+export const diagramEmbedMdxRule: MdxRuleDef<DiagramEmbedSlateElement, 'block'> = {
+  deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, DIAGRAM_EMBED_TYPE),
-      fileId: attrs['id'] ?? '',
-      caption: attrs['caption'] ?? ''
+      type: getPluginType(options.editor!, DIAGRAM_EMBED_TYPE),
+      fileId: stringProp(attrs['id']),
+      caption: stringProp(attrs['caption'])
     };
   },
-  // biome-ignore lint/suspicious/noExplicitAny: ok
-  serialize: (slateNode: any) => ({
+  serialize: slateNode => ({
     attributes: propsToAttributes({
       id: slateNode.fileId ?? '',
       ...(slateNode.caption ? { caption: slateNode.caption } : {})
@@ -33,10 +33,13 @@ export const diagramEmbedMdxRule: Record<string, any> = {
   })
 };
 
-export const DiagramEmbedEditable = ({ element, children, ...props }: PlateElementProps) => {
-  const el = element as DiagramEmbedSlateElement;
-  const fileId = el.fileId ?? '';
-  const caption = el.caption ?? '';
+export const DiagramEmbedEditable = ({
+  element,
+  children,
+  ...props
+}: PlateElementProps<DiagramEmbedSlateElement>) => {
+  const fileId = element.fileId ?? '';
+  const caption = element.caption ?? '';
   const isNew = !fileId;
 
   return (

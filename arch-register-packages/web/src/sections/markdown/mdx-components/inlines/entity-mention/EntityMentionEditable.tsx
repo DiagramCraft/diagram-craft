@@ -2,6 +2,7 @@ import { PlateElement, type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbAt } from 'react-icons/tb';
+import type { MdxRuleDef } from '../../defineMdxComponent';
 import { EntityMention } from './EntityMention';
 import { EntityMentionDialog } from './EntityMentionDialog';
 import { BaseInlineEditable } from '../BaseInlineEditable';
@@ -9,21 +10,20 @@ import type { EntityMentionSlateElement } from './types';
 
 export const ENTITY_MENTION_TYPE = 'EntityMention' as const;
 
+const stringProp = (value: unknown) => (value == null ? '' : String(value));
+
 // ── MDX serialization rule ────────────────────────────────────────────────────
 
-// biome-ignore lint/suspicious/noExplicitAny: MDX plugin API requires flexible typing
-export const entityMentionMdxRule: Record<string, any> = {
-  // biome-ignore lint/suspicious/noExplicitAny: Plate.js internal types are not exported
-  deserialize: (mdastNode: any, _deco: unknown, options: any) => {
+export const entityMentionMdxRule: MdxRuleDef<EntityMentionSlateElement, 'inline'> = {
+  deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, ENTITY_MENTION_TYPE),
-      entityId: attrs['id'] ?? ''
+      type: getPluginType(options.editor!, ENTITY_MENTION_TYPE),
+      entityId: stringProp(attrs['id'])
     };
   },
-  // biome-ignore lint/suspicious/noExplicitAny: Slate node structure is dynamic
-  serialize: (slateNode: any) => ({
+  serialize: slateNode => ({
     attributes: propsToAttributes({
       id: slateNode.entityId ?? ''
     }),
@@ -35,8 +35,12 @@ export const entityMentionMdxRule: Record<string, any> = {
 
 // ── Plate element ─────────────────────────────────────────────────────────────
 
-export const EntityMentionEditable = ({ element, children, ...props }: PlateElementProps) => {
-  const entityId = (element as EntityMentionSlateElement).entityId ?? '';
+export const EntityMentionEditable = ({
+  element,
+  children,
+  ...props
+}: PlateElementProps<EntityMentionSlateElement>) => {
+  const entityId = element.entityId ?? '';
   const isNew = !entityId;
 
   return (

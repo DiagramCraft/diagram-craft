@@ -15,6 +15,8 @@ export const Caption = ({
 }: {
   caption?: string;
   align?: string;
+  /** Always a string here (MDX/JSX attributes are string-only); the Slate
+   * element's equivalent field is a `boolean`. See captionMdxRule. */
   numbered?: string;
   children?: ReactNode;
 }) => {

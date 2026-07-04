@@ -2,6 +2,7 @@ import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbHistory } from 'react-icons/tb';
+import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { EntityChangelog } from './EntityChangelog';
 import { EntityChangelogDialog } from './EntityChangelogDialog';
@@ -9,24 +10,23 @@ import type { EntityChangelogSlateElement } from './types';
 
 export const ENTITY_CHANGELOG_TYPE = 'EntityChangelog' as const;
 
-// biome-ignore lint/suspicious/noExplicitAny: ok
-export const entityChangelogMdxRule: Record<string, any> = {
-  // biome-ignore lint/suspicious/noExplicitAny: ok
-  deserialize: (mdastNode: any, _deco: unknown, options: any) => {
+const stringProp = (value: unknown) => (value == null ? '' : String(value));
+
+export const entityChangelogMdxRule: MdxRuleDef<EntityChangelogSlateElement, 'block'> = {
+  deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, ENTITY_CHANGELOG_TYPE),
-      entityId: attrs['id'] ?? '',
-      schema: attrs['schema'] ?? '',
-      owner: attrs['owner'] ?? '',
-      lifecycle: attrs['lifecycle'] ?? '',
-      limit: attrs['limit'] ?? '',
-      since: attrs['since'] ?? ''
+      type: getPluginType(options.editor!, ENTITY_CHANGELOG_TYPE),
+      entityId: stringProp(attrs['id']),
+      schema: stringProp(attrs['schema']),
+      owner: stringProp(attrs['owner']),
+      lifecycle: stringProp(attrs['lifecycle']),
+      limit: stringProp(attrs['limit']),
+      since: stringProp(attrs['since'])
     };
   },
-  // biome-ignore lint/suspicious/noExplicitAny: ok
-  serialize: (slateNode: any) => ({
+  serialize: slateNode => ({
     attributes: propsToAttributes({
       ...(slateNode.entityId ? { id: slateNode.entityId } : {}),
       ...(slateNode.schema ? { schema: slateNode.schema } : {}),
@@ -41,14 +41,17 @@ export const entityChangelogMdxRule: Record<string, any> = {
   })
 };
 
-export const EntityChangelogEditable = ({ element, children, ...props }: PlateElementProps) => {
-  const el = element as EntityChangelogSlateElement;
-  const entityId = el.entityId ?? '';
-  const schema = el.schema ?? '';
-  const owner = el.owner ?? '';
-  const lifecycle = el.lifecycle ?? '';
-  const limit = el.limit ?? '';
-  const since = el.since ?? '';
+export const EntityChangelogEditable = ({
+  element,
+  children,
+  ...props
+}: PlateElementProps<EntityChangelogSlateElement>) => {
+  const entityId = element.entityId ?? '';
+  const schema = element.schema ?? '';
+  const owner = element.owner ?? '';
+  const lifecycle = element.lifecycle ?? '';
+  const limit = element.limit ?? '';
+  const since = element.since ?? '';
 
   const hasValue = !!(entityId || schema || owner || lifecycle);
   const isNew = !hasValue;

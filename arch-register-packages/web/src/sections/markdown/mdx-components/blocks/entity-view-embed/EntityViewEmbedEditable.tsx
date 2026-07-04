@@ -2,6 +2,7 @@ import { type PlateElementProps } from 'platejs/react';
 import { getPluginType } from 'platejs';
 import { parseAttributes, propsToAttributes } from '@platejs/markdown';
 import { TbLayoutGrid } from 'react-icons/tb';
+import type { MdxRuleDef } from '../../defineMdxComponent';
 import { BaseBlockEditable } from '../BaseBlockEditable';
 import { EntityViewEmbed } from './EntityViewEmbed';
 import { EntityViewEmbedDialog } from './EntityViewEmbedDialog';
@@ -14,19 +15,16 @@ const readAttr = (attrs: Record<string, unknown>, key: string) => {
   return value == null ? '' : String(value);
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: Plate mdx rule shape
-export const entityViewEmbedMdxRule: Record<string, any> = {
-  // biome-ignore lint/suspicious/noExplicitAny: Plate mdx rule shape
-  deserialize: (mdastNode: any, _deco: unknown, options: any) => {
+export const entityViewEmbedMdxRule: MdxRuleDef<EntityViewEmbedSlateElement, 'block'> = {
+  deserialize: (mdastNode, _deco, options) => {
     const attrs = parseAttributes(mdastNode.attributes ?? []) as Record<string, unknown>;
     return {
       children: [{ text: '' }],
-      type: getPluginType(options.editor, ENTITY_VIEW_EMBED_TYPE),
+      type: getPluginType(options.editor!, ENTITY_VIEW_EMBED_TYPE),
       viewId: readAttr(attrs, 'viewId')
     };
   },
-  // biome-ignore lint/suspicious/noExplicitAny: Plate mdx rule shape
-  serialize: (slateNode: any) => ({
+  serialize: slateNode => ({
     attributes: propsToAttributes({
       ...(slateNode.viewId ? { viewId: slateNode.viewId } : {})
     }),
@@ -36,9 +34,12 @@ export const entityViewEmbedMdxRule: Record<string, any> = {
   })
 };
 
-export const EntityViewEmbedEditable = ({ element, children, ...props }: PlateElementProps) => {
-  const el = element as EntityViewEmbedSlateElement;
-  const viewId = el.viewId ?? '';
+export const EntityViewEmbedEditable = ({
+  element,
+  children,
+  ...props
+}: PlateElementProps<EntityViewEmbedSlateElement>) => {
+  const viewId = element.viewId ?? '';
   const hasValue = !!viewId;
 
   return (
