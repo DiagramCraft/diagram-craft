@@ -176,7 +176,7 @@ export const updateAssessmentStatus = async (
       authCtx,
       project.owner,
       'edit_project',
-      'You do not have permission to archive assessments in this project'
+      'You do not have permission to change assessment status in this project'
     );
 
     const oldRow = await db.project.getAssessment(ws, project.id, id);

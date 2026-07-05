@@ -6,6 +6,7 @@ type ProjectScreenLayoutProps = {
   breadcrumbs: TitleBreadcrumbItem[];
   title: string;
   titleSuffix?: ReactNode;
+  chips?: ReactNode;
   description?: ReactNode;
   error?: ReactNode;
   actions?: ReactNode;
@@ -19,6 +20,7 @@ export const ProjectScreenLayout = ({
   breadcrumbs,
   title,
   titleSuffix,
+  chips,
   description,
   error,
   actions,
@@ -33,6 +35,7 @@ export const ProjectScreenLayout = ({
         <Title
           breadcrumb={breadcrumbs}
           title={title}
+          chips={chips}
           description={description}
           toggleButtons={titleSuffix}
           buttons={actions}

@@ -47,7 +47,10 @@ export const EntityAssessmentsTab = ({
       const projectName = projects[i]?.name ?? '';
       const projectPublicId = projects[i]?.public_id ?? '';
       (q.data ?? []).forEach(assessment => {
-        if (assessment.status === 'active' && assessment.scope.includes(schema.id)) {
+        if (
+          (assessment.status === 'open' || assessment.status === 'closed') &&
+          assessment.scope.includes(schema.id)
+        ) {
           result.push({ assessment, projectId: projectId!, projectName, projectPublicId });
         }
       });
@@ -58,9 +61,9 @@ export const EntityAssessmentsTab = ({
   if (relevant.length === 0) {
     return (
       <div className={styles.empty}>
-        <div className={styles.emptyTitle}>No active assessments</div>
+        <div className={styles.emptyTitle}>No open assessments</div>
         <div className={styles.emptySub}>
-          {schema?.name ?? 'This entity type'} isn't in scope for any active assessment.
+          {schema?.name ?? 'This entity type'} isn't in scope for any open or closed assessment.
         </div>
       </div>
     );
@@ -144,6 +147,7 @@ const AssessmentFillCard = ({
                 <AssessmentFieldCell
                   field={field}
                   value={response?.values[field.id]}
+                  disabled={assessment.status !== 'open'}
                   onChange={value =>
                     upsertResponse.mutate({ entityId, values: { [field.id]: value } })
                   }

@@ -1,6 +1,7 @@
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { assessmentKeys, invalidateAuditQueries } from './queryKeys';
 import type {
+  Assessment,
   CreateAssessmentRequest,
   UpdateAssessmentRequest
 } from '@arch-register/api-types/assessmentContract';
@@ -62,7 +63,7 @@ export const useUpdateAssessmentStatus = (workspaceId: string, projectId: string
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ assessmentId, status }: { assessmentId: string; status: 'active' | 'archived' }) =>
+    mutationFn: ({ assessmentId, status }: { assessmentId: string; status: Assessment['status'] }) =>
       orpcClient.assessments.updateStatus({
         params: { workspace: workspaceId, id: projectId, assessmentId },
         body: { status }

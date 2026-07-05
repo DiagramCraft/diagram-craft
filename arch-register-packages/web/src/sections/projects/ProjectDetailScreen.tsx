@@ -56,7 +56,7 @@ import { ProjectContent } from './ProjectContent';
 import { ProjectDetails } from './ProjectDetails';
 import { ProjectEntities } from './ProjectEntities';
 import { ProjectAssessments } from './ProjectAssessments';
-import { AssessmentFillScreen } from './AssessmentFillScreen';
+import { AssessmentDetailsScreen } from './AssessmentDetailsScreen';
 import {
   deleteConfirmLabel,
   deleteMessage,
@@ -631,7 +631,7 @@ export const ProjectDetailScreen = () => {
   return (
     <>
       {section === 'assessments' && search.assessmentId ? (
-        <AssessmentFillScreen
+        <AssessmentDetailsScreen
           project={project}
           projectId={projectId}
           assessmentId={search.assessmentId}

@@ -1008,7 +1008,7 @@ export const seedAssessments: AssessmentDbCreate[] = [
     project_id: seededAssessments.checkoutRevamp.securityReadiness.projectId,
     name: seededAssessments.checkoutRevamp.securityReadiness.name,
     description: "Assess each component's security posture ahead of the checkout launch.",
-    status: 'active',
+    status: 'open',
     scope: [seededSchemas.default.component.id],
     fields: [
       { id: 'f1', label: 'Secrets management', type: 'rating', requirementLevel: 'required' },
@@ -1024,7 +1024,7 @@ export const seedAssessments: AssessmentDbCreate[] = [
     project_id: seededAssessments.checkoutRevamp.apiFitness.projectId,
     name: seededAssessments.checkoutRevamp.apiFitness.name,
     description: 'Rate the fitness of each API for the new checkout flow.',
-    status: 'active',
+    status: 'closed',
     scope: [seededSchemas.default.api.id],
     fields: [
       { id: 'f1', label: 'Versioning quality', type: 'rating', requirementLevel: 'required' },
