@@ -1,6 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthorizationContext } from '@arch-register/permissions';
-import { requireProjectAction } from '../auth/authorization';
+import { requireProjectAction, requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import type { ContentNodeDbResult } from './db/projectDatabase';
 
@@ -44,10 +44,8 @@ export interface ContentScopeResolver {
    * Resolves the scope identifier (project/entity lookup, or a no-op for workspace)
    * and enforces authorization for the given action.
    *
-   * NOTE: today only the project scope enforces an explicit ownership/permission
-   * check (via requireProjectAction); entity and workspace scopes perform no
-   * equivalent check. This is a known gap tracked in issue #1966 and preserved
-   * here as-is rather than silently unified.
+   * Project content uses project authorization. Entity and workspace content
+   * use the dedicated workspace-level content capabilities.
    */
   resolve(
     db: DatabaseAdapter,
@@ -92,7 +90,8 @@ export const PROJECT_SCOPE: ContentScopeResolver = {
 
 export const ENTITY_SCOPE: ContentScopeResolver = {
   kind: 'entity',
-  resolve: async (db, ws, identifier, _authCtx, _action) => {
+  resolve: async (db, ws, identifier, authCtx, action) => {
+    requireWorkspaceCapability(authCtx, action === 'read' ? 'content.view' : 'content.edit');
     const entity = await db.catalog.getEntity(ws, identifier!);
     httpAssert.present(entity, { status: 404, message: `Entity '${identifier}' not found` });
 
@@ -118,7 +117,8 @@ export const ENTITY_SCOPE: ContentScopeResolver = {
 
 export const WORKSPACE_SCOPE: ContentScopeResolver = {
   kind: 'workspace',
-  resolve: async (_db, ws, _identifier, _authCtx, _action) => {
+  resolve: async (_db, ws, _identifier, authCtx, action) => {
+    requireWorkspaceCapability(authCtx, action === 'read' ? 'content.view' : 'content.edit');
     return {
       kind: 'workspace',
       storageId: ws,

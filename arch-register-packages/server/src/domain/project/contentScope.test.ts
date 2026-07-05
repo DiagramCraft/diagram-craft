@@ -116,10 +116,20 @@ describe('ENTITY_SCOPE.resolve', () => {
     ).rejects.toThrow(HTTPError);
   });
 
-  it('does not enforce a permission check on edit (known gap, tracked in issue #1966)', async () => {
+  it('requires content.edit for edit actions', async () => {
     const db = makeDb({ id: 'entity-1' });
     await expect(
       ENTITY_SCOPE.resolve(db, 'ws-1', 'entity-1', deniedAuthCtx, 'edit')
+    ).rejects.toThrow(HTTPError);
+  });
+
+  it('requires content.view for read actions', async () => {
+    const db = makeDb({ id: 'entity-1' });
+    await expect(
+      ENTITY_SCOPE.resolve(db, 'ws-1', 'entity-1', deniedAuthCtx, 'read')
+    ).rejects.toThrow(HTTPError);
+    await expect(
+      ENTITY_SCOPE.resolve(db, 'ws-1', 'entity-1', allowedAuthCtx, 'read')
     ).resolves.toBeDefined();
   });
 
@@ -179,10 +189,20 @@ describe('WORKSPACE_SCOPE.resolve', () => {
       }
     }) as unknown as DatabaseAdapter;
 
-  it('does not enforce a permission check on edit (known gap, tracked in issue #1966)', async () => {
+  it('requires content.edit for edit actions', async () => {
     const db = makeDb();
     await expect(
       WORKSPACE_SCOPE.resolve(db, 'ws-1', undefined, deniedAuthCtx, 'edit')
+    ).rejects.toThrow(HTTPError);
+  });
+
+  it('requires content.view for read actions', async () => {
+    const db = makeDb();
+    await expect(
+      WORKSPACE_SCOPE.resolve(db, 'ws-1', undefined, deniedAuthCtx, 'read')
+    ).rejects.toThrow(HTTPError);
+    await expect(
+      WORKSPACE_SCOPE.resolve(db, 'ws-1', undefined, allowedAuthCtx, 'read')
     ).resolves.toBeDefined();
   });
 

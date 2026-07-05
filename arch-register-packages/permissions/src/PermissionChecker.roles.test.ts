@@ -18,7 +18,7 @@ const ALL_WORKSPACE_ROLES: BuiltinWorkspaceRole[] = ['owner', 'admin', 'editor',
 const ALL_CAPABILITIES: WorkspaceCapability[] = [
   'ws.view', 'ws.settings', 'ws.delete', 'ws.audit',
   'people.invite', 'people.role', 'people.remove', 'people.teams',
-  'proj.create', 'proj.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
+  'proj.create', 'proj.edit', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
   'schema.edit', 'schema.publish',
 ];
 
