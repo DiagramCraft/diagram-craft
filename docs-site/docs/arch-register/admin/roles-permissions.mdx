@@ -22,7 +22,7 @@ The main layers are:
 
 ## Workspace Roles
 
-Workspace roles govern capabilities across the workspace shell and settings screens.
+Workspace roles govern capabilities across the workspace, including entity- and workspace-scoped content.
 
 Typical concerns include:
 
@@ -30,11 +30,20 @@ Typical concerns include:
 - member and team administration
 - schema editing
 - audit visibility
+- viewing and editing entity/workspace content
+
+The dedicated content capabilities are:
+
+- `content.view` — view and download entity- and workspace-scoped content
+- `content.edit` — create, update, move, and delete entity- and workspace-scoped content
+
+By default, every built-in workspace role can view content. Owners, administrators, and editors can also edit it.
+These capabilities do not control project-scoped content; projects retain their project and owner-team authorization.
 
 ## Team Roles
 
-Team roles govern access to content owned by a team. They matter most for entities and projects where ownership is the
-main access boundary.
+Team roles govern access to owned entities and projects. Project content follows project authorization, while content
+attached directly to an entity follows the workspace role's `content.view` and `content.edit` capabilities.
 
 ## Global Permissions
 

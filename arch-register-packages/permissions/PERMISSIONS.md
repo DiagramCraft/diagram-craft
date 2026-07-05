@@ -49,6 +49,19 @@ This intentional separation provides:
 
 ## Permission Types
 
+### Workspace Capabilities
+
+Workspace capabilities are bundled into workspace roles. Content stored directly on an entity or workspace uses two
+dedicated capabilities:
+
+| Capability | Description | Built-in roles |
+|------------|-------------|----------------|
+| `content.view` | List, view, and download entity/workspace content | `owner`, `admin`, `editor`, `reviewer`, `viewer` |
+| `content.edit` | Create, update, move, and delete entity/workspace content | `owner`, `admin`, `editor` |
+
+These capabilities do not grant access to project-scoped content. Project content continues to use project permission
+checks, including workspace `proj.edit` and owner-team project permissions.
+
 ### Global Permissions
 
 Global permissions are granted through **global roles** and control platform-wide operations.
