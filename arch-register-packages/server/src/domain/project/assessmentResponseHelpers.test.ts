@@ -15,7 +15,7 @@ const makeAssessment = (overrides: Partial<AssessmentDbResult> = {}): Assessment
   project_id: 'proj-1',
   name: 'Security Readiness',
   description: '',
-  status: 'active',
+  status: 'open',
   scope: ['schema-service'],
   fields: [
     { id: 'f1', label: 'Auth maturity', type: 'enum', enumId: 'enum-maturity', requirementLevel: 'required' },

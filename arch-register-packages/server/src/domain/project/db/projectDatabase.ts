@@ -186,7 +186,7 @@ export type AssessmentDbResult = {
   project_id: string;
   name: string;
   description: string;
-  status: 'active' | 'archived';
+  status: 'draft' | 'open' | 'closed' | 'archived';
   scope: string[];
   fields: AssessmentField[];
   created_at: Date;

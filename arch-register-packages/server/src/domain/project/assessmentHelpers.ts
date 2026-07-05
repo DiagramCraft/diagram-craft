@@ -24,7 +24,7 @@ export const buildCreateAssessmentInput = (
     project_id: projectId,
     name,
     description: typeof description === 'string' ? description : '',
-    status: 'active',
+    status: 'draft',
     scope: toScope(scope, []),
     fields: toAssessmentFields(fields, []),
     created_at: timestamp,

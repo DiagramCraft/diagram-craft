@@ -3,7 +3,6 @@ import { useNavigate } from '@tanstack/react-router';
 import {
   TbEdit,
   TbDots,
-  TbArchive,
   TbTrash,
   TbFilter,
   TbDownload,
@@ -18,12 +17,13 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type { AssessmentEntityStatus } from '@arch-register/api-types/assessmentStatus';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
-import type { CreateAssessmentRequest } from '@arch-register/api-types/assessmentContract';
+import type { Assessment, CreateAssessmentRequest } from '@arch-register/api-types/assessmentContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { exportAssessmentResponsesToCSV } from '../../lib/assessmentCsv';
 import { TypeBadge } from '../../components/TypeBadge';
+import { Chip } from '../../components/Chip';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import {
   useAssessments,
@@ -47,7 +47,7 @@ import {
 } from './components/AssessmentFilterBuilder';
 import { AssessmentSummaryTab } from './components/AssessmentSummaryTab';
 import sharedStyles from './ProjectDetailScreen.module.css';
-import styles from './AssessmentFillScreen.module.css';
+import styles from './AssessmentDetailsScreen.module.css';
 
 type StatusFilter = 'all' | AssessmentEntityStatus;
 type SortState = { key: string; dir: 'asc' | 'desc' };
@@ -56,6 +56,20 @@ const STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
   not_started: 'Not started',
   in_progress: 'In progress',
   complete: 'Complete'
+};
+
+const ASSESSMENT_STATUS_LABEL: Record<Assessment['status'], string> = {
+  draft: 'Draft',
+  open: 'Open',
+  closed: 'Closed',
+  archived: 'Archived'
+};
+
+const ASSESSMENT_STATUS_COLOR: Record<Assessment['status'], string> = {
+  draft: 'var(--cmp-fg-dim)',
+  open: 'var(--green)',
+  closed: 'var(--warn, orange)',
+  archived: 'var(--cmp-fg-disabled)'
 };
 
 const STATUS_ORDER: Record<AssessmentEntityStatus, number> = {
@@ -94,7 +108,7 @@ const SortableHeader = ({
   );
 };
 
-export const AssessmentFillScreen = ({
+export const AssessmentDetailsScreen = ({
   project,
   projectId,
   assessmentId,
@@ -263,8 +277,11 @@ export const AssessmentFillScreen = ({
 
   const breadcrumbs = [...baseBreadcrumbs, { label: assessment.name }];
 
-  const handleSave = async (data: CreateAssessmentRequest) => {
+  const handleSave = async (data: CreateAssessmentRequest, status: Assessment['status']) => {
     await updateMutation.mutateAsync({ assessmentId: assessment.id, data });
+    if (status !== assessment.status) {
+      await statusMutation.mutateAsync({ assessmentId: assessment.id, status });
+    }
     setEditing(false);
   };
 
@@ -276,17 +293,6 @@ export const AssessmentFillScreen = ({
     },
     ...(project.canEdit
       ? [
-          {
-            label: assessment.status === 'archived' ? 'Restore' : 'Archive',
-            icon: <TbArchive size={14} />,
-            onClick: () => {
-              statusMutation.mutate({
-                assessmentId: assessment.id,
-                status: assessment.status === 'archived' ? 'active' : 'archived'
-              });
-              onBack();
-            }
-          },
           {
             label: 'Delete',
             icon: <TbTrash size={14} />,
@@ -302,6 +308,11 @@ export const AssessmentFillScreen = ({
       <ProjectScreenLayout
         breadcrumbs={breadcrumbs}
         title={assessment.name}
+        chips={
+          <Chip dot={ASSESSMENT_STATUS_COLOR[assessment.status]} tone="ghost">
+            {ASSESSMENT_STATUS_LABEL[assessment.status]}
+          </Chip>
+        }
         description={assessment.description}
         actions={
           project.canEdit ? (
@@ -463,6 +474,7 @@ export const AssessmentFillScreen = ({
                                 <AssessmentFieldCell
                                   field={field}
                                   value={values[field.id]}
+                                  disabled={assessment.status !== 'open'}
                                   onChange={value =>
                                     upsertResponse.mutate({
                                       entityId: entity._uid,

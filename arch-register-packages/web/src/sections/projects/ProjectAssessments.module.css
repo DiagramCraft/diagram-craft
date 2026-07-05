@@ -28,6 +28,10 @@
   opacity: 0.6;
 }
 
+.cardDraft {
+  opacity: 0.8;
+}
+
 .cardBody {
   flex: 1;
   min-width: 0;
@@ -60,10 +64,22 @@
   letter-spacing: 0.04em;
 }
 
-.statusActive {
+.statusOpen {
   color: var(--green);
   border-color: color-mix(in oklch, var(--green) 35%, transparent);
   background: color-mix(in oklch, var(--green) 10%, transparent);
+}
+
+.statusDraft {
+  color: var(--cmp-fg-dim);
+  border-color: var(--cmp-border-strong, var(--cmp-border));
+  background: transparent;
+}
+
+.statusClosed {
+  color: var(--warn, orange);
+  border-color: color-mix(in oklch, var(--warn, orange) 35%, transparent);
+  background: color-mix(in oklch, var(--warn, orange) 10%, transparent);
 }
 
 .statusArchived {

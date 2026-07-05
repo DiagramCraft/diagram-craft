@@ -43,7 +43,7 @@ const assessmentSchema = z.object({
   project_id: z.string().describe('Parent project identifier'),
   name: z.string().describe('Assessment name (must be unique within the project)'),
   description: z.string().describe('Assessment description'),
-  status: z.enum(['active', 'archived']).describe('Assessment status'),
+  status: z.enum(['draft', 'open', 'closed', 'archived']).describe('Assessment status'),
   scope: z.array(z.string()).describe('Entity schema ids this assessment applies to'),
   fields: z.array(assessmentFieldSchema).describe('Assessment field definitions'),
   response_count: z.number().int().min(0).describe('Number of entities with a recorded response'),
@@ -73,7 +73,7 @@ const assessmentBodySchema = z.object({
 });
 
 const updateAssessmentStatusBodySchema = z.object({
-  status: z.enum(['active', 'archived']).describe('New assessment status')
+  status: z.enum(['draft', 'open', 'closed', 'archived']).describe('New assessment status')
 });
 
 export const assessmentContract = oc.tag('Assessments').router({
@@ -127,8 +127,8 @@ export const assessmentContract = oc.tag('Assessments').router({
         method: 'PUT',
         path: '/{workspace}/projects/{id}/assessments/{assessmentId}/status',
         inputStructure: 'detailed',
-        summary: 'Archive or restore assessment',
-        description: 'Sets the assessment status to active or archived without deleting its data.',
+        summary: 'Update assessment status',
+        description: 'Sets the assessment status to draft, open, closed, or archived without deleting its data.',
         tags: ['Assessments']
       })
       .input(z.object({ params: wsProjectAndAssessmentId, body: updateAssessmentStatusBodySchema }))

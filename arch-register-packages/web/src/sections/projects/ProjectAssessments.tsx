@@ -25,10 +25,17 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
-import { useAssessments, useCreateAssessment } from '../../hooks/useAssessments';
+import { useAssessments, useCreateAssessment, useUpdateAssessmentStatus } from '../../hooks/useAssessments';
 import { useEntitiesBySchema } from '../../hooks/useEntities';
 
-type StatusFilter = 'active' | 'archived' | 'all';
+type StatusFilter = 'default' | 'draft' | 'archived' | 'all';
+
+const STATUS_LABEL: Record<Assessment['status'], string> = {
+  draft: 'Draft',
+  open: 'Open',
+  closed: 'Closed',
+  archived: 'Archived'
+};
 
 const FIELD_TYPE_META: Record<AssessmentField['type'], { icon: typeof TbStar; hint: string | null }> = {
   rating: { icon: TbStar, hint: '1 – 5' },
@@ -55,8 +62,9 @@ export const ProjectAssessments = ({
 
   const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
   const createMutation = useCreateAssessment(workspaceSlug, projectId);
+  const statusMutation = useUpdateAssessmentStatus(workspaceSlug, projectId);
 
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('default');
   const [creating, setCreating] = useState(false);
 
   const schemaColorMap = useMemo(() => {
@@ -66,15 +74,23 @@ export const ProjectAssessments = ({
   }, [schemas]);
 
   const counts = {
-    active: assessments.filter(a => a.status === 'active').length,
+    default: assessments.filter(a => a.status === 'open' || a.status === 'closed').length,
+    draft: assessments.filter(a => a.status === 'draft').length,
     archived: assessments.filter(a => a.status === 'archived').length,
     all: assessments.length
   };
 
-  const filtered = assessments.filter(a => statusFilter === 'all' || a.status === statusFilter);
+  const filtered = assessments.filter(a => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'default') return a.status === 'open' || a.status === 'closed';
+    return a.status === statusFilter;
+  });
 
-  const handleSave = async (data: CreateAssessmentRequest) => {
-    await createMutation.mutateAsync(data);
+  const handleSave = async (data: CreateAssessmentRequest, status: Assessment['status']) => {
+    const created = await createMutation.mutateAsync(data);
+    if (status !== created.status) {
+      await statusMutation.mutateAsync({ assessmentId: created.id, status });
+    }
     setCreating(false);
   };
 
@@ -98,7 +114,8 @@ export const ProjectAssessments = ({
           <div className={sharedStyles.entityTabNav}>
             {(
               [
-                ['active', `Active (${counts.active})`],
+                ['default', `Open / Closed (${counts.default})`],
+                ['draft', `Draft (${counts.draft})`],
                 ['archived', `Archived (${counts.archived})`],
                 ['all', `All (${counts.all})`]
               ] as [StatusFilter, string][]
@@ -122,11 +139,13 @@ export const ProjectAssessments = ({
                 <TbClipboardList size={20} />
               </div>
               <div className={sharedStyles.emptyTitle}>
-                {statusFilter === 'active'
-                  ? 'No active assessments'
-                  : statusFilter === 'archived'
-                    ? 'No archived assessments'
-                    : 'No assessments yet'}
+                {statusFilter === 'default'
+                  ? 'No open or closed assessments'
+                  : statusFilter === 'draft'
+                    ? 'No draft assessments'
+                    : statusFilter === 'archived'
+                      ? 'No archived assessments'
+                      : 'No assessments yet'}
               </div>
               <div className={sharedStyles.emptySub}>
                 Assessments collect structured scores and notes on entities in this project.
@@ -185,6 +204,16 @@ const AssessmentCard = ({
   onOpen: () => void;
 }) => {
   const isArchived = assessment.status === 'archived';
+  const isDraft = assessment.status === 'draft';
+  const showProgress = assessment.status === 'open' || assessment.status === 'closed';
+  const badgeClass =
+    assessment.status === 'draft'
+      ? styles.statusDraft
+      : assessment.status === 'open'
+        ? styles.statusOpen
+        : assessment.status === 'closed'
+          ? styles.statusClosed
+          : styles.statusArchived;
   const scopeSchemas = assessment.scope
     .map(id => schemas.find(s => s.id === id))
     .filter((s): s is { id: string; name: string } => !!s);
@@ -197,15 +226,13 @@ const AssessmentCard = ({
   return (
     <button
       type="button"
-      className={`${styles.card} ${isArchived ? styles.cardArchived : ''}`}
+      className={`${styles.card} ${isArchived ? styles.cardArchived : ''} ${isDraft ? styles.cardDraft : ''}`}
       onClick={onOpen}
     >
       <div className={styles.cardBody}>
         <div className={styles.cardHead}>
           <div className={styles.cardName}>{assessment.name}</div>
-          <span className={`${styles.status} ${isArchived ? styles.statusArchived : styles.statusActive}`}>
-            {assessment.status}
-          </span>
+          <span className={`${styles.status} ${badgeClass}`}>{STATUS_LABEL[assessment.status]}</span>
         </div>
         {assessment.description && <div className={styles.cardDesc}>{assessment.description}</div>}
         <div className={styles.cardMeta}>
@@ -231,7 +258,7 @@ const AssessmentCard = ({
             </span>
           )}
         </div>
-        {!isArchived && inScopeCount > 0 && (
+        {showProgress && inScopeCount > 0 && (
           <div className={styles.completion}>
             <span className={styles.completionLabel}>
               {assessment.completed_entity_count} / {inScopeCount}
@@ -257,7 +284,7 @@ export const AssessmentEditorDialog = ({
   assessment: Assessment | null;
   schemas: { id: string; name: string; color: string | null; icon: string | null }[];
   isSaving: boolean;
-  onSave: (data: CreateAssessmentRequest) => void;
+  onSave: (data: CreateAssessmentRequest, status: Assessment['status']) => void;
   onCancel: () => void;
 }) => {
   const isNew = !assessment;
@@ -265,6 +292,7 @@ export const AssessmentEditorDialog = ({
   const [description, setDescription] = useState(assessment?.description ?? '');
   const [scope, setScope] = useState<string[]>(assessment?.scope ?? []);
   const [fields, setFields] = useState<AssessmentField[]>(assessment?.fields.map(f => ({ ...f })) ?? []);
+  const [status, setStatus] = useState<Assessment['status']>(assessment?.status ?? 'draft');
 
   const toggleScope = (id: string) =>
     setScope(prev => (prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]));
@@ -297,12 +325,15 @@ export const AssessmentEditorDialog = ({
           type: 'default',
           disabled: !canSave || isSaving,
           onClick: () =>
-            onSave({
-              name: name.trim(),
-              description: description.trim(),
-              scope,
-              fields
-            })
+            onSave(
+              {
+                name: name.trim(),
+                description: description.trim(),
+                scope,
+                fields
+              },
+              status
+            )
         }
       ]}
     >
@@ -315,6 +346,22 @@ export const AssessmentEditorDialog = ({
           placeholder="Optional — explain the purpose of this assessment"
           style={{ width: '100%' }}
         />
+      </div>
+
+      <div className={styles.section}>
+        <div className={styles.sectionLabel}>Status</div>
+        <div style={{ width: 160 }}>
+          <Select.Root
+            value={status}
+            onChange={v => setStatus((v ?? 'draft') as Assessment['status'])}
+          >
+            {(Object.keys(STATUS_LABEL) as Assessment['status'][]).map(s => (
+              <Select.Item key={s} value={s}>
+                {STATUS_LABEL[s]}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </div>
       </div>
 
       <div className={styles.section}>

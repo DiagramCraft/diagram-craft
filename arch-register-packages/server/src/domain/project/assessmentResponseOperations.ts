@@ -71,6 +71,10 @@ export const upsertAssessmentResponse = async (
     );
 
     const assessment = await getAssessmentOrThrow(db, ws, project.id, assessmentId);
+    httpAssert.true(assessment.status === 'open', {
+      status: 409,
+      message: 'Cannot record responses: assessment is not open'
+    });
     const existing = await db.project.getAssessmentResponse(ws, assessmentId, entityId);
     const existingValues = existing?.values ?? {};
 

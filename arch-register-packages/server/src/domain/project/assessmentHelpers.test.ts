@@ -15,7 +15,7 @@ const makeRow = (overrides: Partial<AssessmentDbResult> = {}): AssessmentDbResul
   project_id: 'proj-1',
   name: 'Security Readiness',
   description: 'Assess security posture',
-  status: 'active',
+  status: 'open',
   scope: ['schema-service'],
   fields: [{ id: 'f1', label: 'Auth maturity', type: 'enum', enumId: 'enum-maturity', requirementLevel: 'required' }],
   created_at: now,
@@ -30,7 +30,7 @@ describe('buildCreateAssessmentInput', () => {
     expect(input.project_id).toBe('proj-1');
     expect(input.name).toBe('New assessment');
     expect(input.description).toBe('');
-    expect(input.status).toBe('active');
+    expect(input.status).toBe('draft');
     expect(input.scope).toEqual([]);
     expect(input.fields).toEqual([]);
     expect(input.created_at).toBe(now);
