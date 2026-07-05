@@ -3641,6 +3641,16 @@
             "allowReserved": true
           },
           {
+            "name": "assessmentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Joined assessment identifier — required when conditions reference assessment fields"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "projectId",
             "in": "query",
             "schema": {
@@ -4568,6 +4578,16 @@
             "allowReserved": true
           },
           {
+            "name": "assessmentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Joined assessment identifier — required when conditions reference assessment fields"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "projectId",
             "in": "query",
             "schema": {
@@ -4937,6 +4957,16 @@
             "schema": {
               "type": "string",
               "description": "JSON-encoded filter conditions"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "assessmentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Joined assessment identifier — required when conditions reference assessment fields"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -7697,6 +7727,16 @@
             "allowReserved": true
           },
           {
+            "name": "assessmentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Joined assessment identifier — required when conditions reference assessment fields"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "projectId",
             "in": "query",
             "schema": {
@@ -9271,7 +9311,9 @@
                                     "after",
                                     "on",
                                     "gt",
-                                    "lt"
+                                    "lt",
+                                    "gte",
+                                    "lte"
                                   ],
                                   "type": "string",
                                   "description": "Filter operation"
@@ -9286,6 +9328,17 @@
                               ]
                             },
                             "description": "Additional filter conditions"
+                          },
+                          "assessmentId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Joined assessment identifier for display, filtering, and view attributes"
                           }
                         },
                         "description": "Entity filters applied in this view"
@@ -9803,7 +9856,9 @@
                                 "after",
                                 "on",
                                 "gt",
-                                "lt"
+                                "lt",
+                                "gte",
+                                "lte"
                               ],
                               "type": "string",
                               "description": "Filter operation"
@@ -9818,6 +9873,17 @@
                           ]
                         },
                         "description": "Additional filter conditions"
+                      },
+                      "assessmentId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Joined assessment identifier for display, filtering, and view attributes"
                       }
                     },
                     "description": "Entity filters to apply"
@@ -10305,7 +10371,9 @@
                                   "after",
                                   "on",
                                   "gt",
-                                  "lt"
+                                  "lt",
+                                  "gte",
+                                  "lte"
                                 ],
                                 "type": "string",
                                 "description": "Filter operation"
@@ -10320,6 +10388,17 @@
                             ]
                           },
                           "description": "Additional filter conditions"
+                        },
+                        "assessmentId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Joined assessment identifier for display, filtering, and view attributes"
                         }
                       },
                       "description": "Entity filters applied in this view"
@@ -10828,7 +10907,9 @@
                                 "after",
                                 "on",
                                 "gt",
-                                "lt"
+                                "lt",
+                                "gte",
+                                "lte"
                               ],
                               "type": "string",
                               "description": "Filter operation"
@@ -10843,6 +10924,17 @@
                           ]
                         },
                         "description": "Additional filter conditions"
+                      },
+                      "assessmentId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Joined assessment identifier for display, filtering, and view attributes"
                       }
                     },
                     "description": "Entity filters to apply"
@@ -11325,7 +11417,9 @@
                                   "after",
                                   "on",
                                   "gt",
-                                  "lt"
+                                  "lt",
+                                  "gte",
+                                  "lte"
                                 ],
                                 "type": "string",
                                 "description": "Filter operation"
@@ -11340,6 +11434,17 @@
                             ]
                           },
                           "description": "Additional filter conditions"
+                        },
+                        "assessmentId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Joined assessment identifier for display, filtering, and view attributes"
                         }
                       },
                       "description": "Entity filters applied in this view"
