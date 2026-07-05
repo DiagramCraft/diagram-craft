@@ -27,6 +27,19 @@ type AuditLogParams = {
  * Records an audit log entry for a mutation operation.
  */
 export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Promise<void> => {
+  try {
+    await writeAudit(db, params);
+  } catch (error) {
+    // Log error but don't fail the main operation
+    logger.error(
+      'Failed to write audit log',
+      error instanceof Error ? error : new Error(String(error))
+    );
+  }
+};
+
+/** Writes an audit entry and surfaces failures to coordinators that can report them with context. */
+export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): Promise<void> => {
   const {
     workspace,
     userId = null,
@@ -42,34 +55,26 @@ export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Pro
     metadata = {}
   } = params;
 
-  try {
-    const auditLog = await db.audit.createAuditLog({
-      workspace,
-      timestamp: new Date(),
-      user_id: userId,
-      operation,
-      entity_type: entityType,
-      entity_id: entityId,
-      entity_name: entityName,
-      entity_slug: entitySlug,
-      schema_id: schemaId,
-      changes,
-      metadata
-    });
+  const auditLog = await db.audit.createAuditLog({
+    workspace,
+    timestamp: new Date(),
+    user_id: userId,
+    operation,
+    entity_type: entityType,
+    entity_id: entityId,
+    entity_name: entityName,
+    entity_slug: entitySlug,
+    schema_id: schemaId,
+    changes,
+    metadata
+  });
 
-    if (entityType === 'entity') {
-      await db.watch.createNotificationsFromAudit({
-        auditLog,
-        changedByDisplayName: userDisplayName ?? userId ?? 'system',
-        watcherUserIds
-      });
-    }
-  } catch (error) {
-    // Log error but don't fail the main operation
-    logger.error(
-      'Failed to write audit log',
-      error instanceof Error ? error : new Error(String(error))
-    );
+  if (entityType === 'entity') {
+    await db.watch.createNotificationsFromAudit({
+      auditLog,
+      changedByDisplayName: userDisplayName ?? userId ?? 'system',
+      watcherUserIds
+    });
   }
 };
 

@@ -26,6 +26,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly watch;
   readonly auth;
   readonly ai;
+  private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
     this.filePath = filePath;
@@ -58,6 +59,27 @@ export class SqliteDatabase implements DatabaseAdapter {
         const schemaSql = await readFile(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
         this.db.exec(schemaSql);
         runSqliteMigrations(this.db);
+      },
+      transaction: async <T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T> => {
+        const previous = this.transactionTail;
+        let release!: () => void;
+        this.transactionTail = new Promise<void>(resolve => {
+          release = resolve;
+        });
+        await previous;
+        try {
+          this.db.exec('BEGIN IMMEDIATE');
+          try {
+            const result = await callback(this);
+            this.db.exec('COMMIT');
+            return result;
+          } catch (error) {
+            this.db.exec('ROLLBACK');
+            throw error;
+          }
+        } finally {
+          release();
+        }
       }
     };
   }
