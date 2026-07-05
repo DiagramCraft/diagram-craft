@@ -32,6 +32,32 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly ai: PostgresAiDatabase;
   readonly core;
 
+  private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
+    const adapter = {
+      workspace: new PostgresWorkspaceDatabase(sql),
+      catalog: new PostgresCatalogDatabase(sql),
+      view: new PostgresViewDatabase(sql),
+      project: new PostgresProjectDatabase(sql),
+      audit: new PostgresAuditDatabase(sql),
+      watch: new PostgresWatchDatabase(sql),
+      auth: new PostgresAuthDatabase(sql),
+      ai: new PostgresAiDatabase(sql)
+    };
+    let bound!: DatabaseAdapter;
+    bound = {
+      ...adapter,
+      core: {
+        driver: 'postgres',
+        close: async () => {},
+        reset: async () => {
+          throw new Error('Cannot reset a transaction-bound database adapter');
+        },
+        transaction: async callback => callback(bound)
+      }
+    };
+    return bound;
+  }
+
   constructor(connectionString: string, schema?: string) {
     this.sql = postgres(connectionString, {
       max: SERVER_DEFAULTS.MAX_DB_CONNECTIONS,
@@ -97,7 +123,11 @@ export class PostgresDatabase implements DatabaseAdapter {
         } catch (error) {
           throw normalizePostgresError(error);
         }
-      }
+      },
+      transaction: async <T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T> =>
+        (await this.sql.begin(async sql =>
+          callback(this.adapterFor(sql as unknown as PostgresSqlClient))
+        )) as unknown as T
     };
   }
 

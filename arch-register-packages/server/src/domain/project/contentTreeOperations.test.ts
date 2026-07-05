@@ -24,15 +24,27 @@ vi.mock('../workspace/resolveWorkspace', () => ({
   resolveWorkspace: vi.fn(async () => 'ws-1')
 }));
 
+vi.mock('../../utils/logger', () => ({
+  createLogger: () => ({
+    trace: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
+  })
+}));
+
 vi.mock('../audit/db/auditLogging', () => ({
-  logAudit: vi.fn(async () => {})
+  logAudit: vi.fn(async () => {}),
+  writeAudit: vi.fn(async () => {}),
+  extractEntityFields: vi.fn((value: unknown) => value)
 }));
 
 const event = { context: { user: { id: 'user-1' } } } as unknown as AuthenticatedEvent;
 
 const nodes = [
-  { id: 'node-1', name: 'docs' },
-  { id: 'node-2', name: 'page.md' }
+  { id: 'node-1', name: 'docs', path: '/docs', type: 'folder' },
+  { id: 'node-2', name: 'page.md', path: '/docs/page.md', type: 'markdown' }
 ];
 
 type ScopeCase = {
@@ -53,6 +65,7 @@ const cases: ScopeCase[] = [
       ({
         project: {
           getProject: vi.fn(async () => ({ id: 'project-1', owner: null })),
+          listContentNodes: vi.fn(async () => nodes),
           deleteContentNodeFolder: vi.fn(async () => nodes)
         }
       }) as unknown as DatabaseAdapter,
@@ -69,7 +82,8 @@ const cases: ScopeCase[] = [
           getEntity: vi.fn(async () => ({ id: 'entity-1' }))
         },
         project: {
-          deleteEntityContentNodeFolder: vi.fn(async () => nodes)
+          deleteEntityContentNodeFolder: vi.fn(async () => nodes),
+          listEntityContentNodes: vi.fn(async () => nodes)
         }
       }) as unknown as DatabaseAdapter,
     deleteFolderMock: db => db.project.deleteEntityContentNodeFolder as ReturnType<typeof vi.fn>,
@@ -82,6 +96,7 @@ const cases: ScopeCase[] = [
     makeDb: () =>
       ({
         project: {
+          listWorkspaceContentNodes: vi.fn(async () => nodes),
           deleteWorkspaceContentNodeFolder: vi.fn(async () => nodes)
         }
       }) as unknown as DatabaseAdapter,
@@ -90,44 +105,55 @@ const cases: ScopeCase[] = [
   }
 ];
 
-describe.each(cases)(
-  'deleteContentFolder ($name scope)',
-  ({ scope, identifier, makeDb, deleteFolderMock, expectedDeleteFolderArgs }) => {
-    it('deletes matching content nodes, their storage blobs, and logs an audit entry', async () => {
-      const db = makeDb();
-      const storage = {
-        delete: vi.fn(async () => {})
-      } as unknown as StorageAdapter;
+describe.each(cases)('deleteContentFolder ($name scope)', ({
+  scope,
+  identifier,
+  makeDb,
+  deleteFolderMock,
+  expectedDeleteFolderArgs
+}) => {
+  it('deletes matching content nodes, their storage blobs, and logs an audit entry', async () => {
+    const db = makeDb();
+    const storage = {
+      delete: vi.fn(async () => {})
+    } as unknown as StorageAdapter;
 
-      const result = await deleteContentFolder(scope, db, storage, 'ws-1', identifier, '/docs', event);
+    const result = await deleteContentFolder(
+      scope,
+      db,
+      storage,
+      'ws-1',
+      identifier,
+      '/docs',
+      event
+    );
 
-      expect(result).toEqual({ success: true, count: 2 });
-      expect(deleteFolderMock(db)).toHaveBeenCalledWith(...expectedDeleteFolderArgs);
-      expect(storage.delete).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ success: true, count: 2 });
+    expect(deleteFolderMock(db)).toHaveBeenCalledWith(...expectedDeleteFolderArgs);
+    expect(storage.delete).toHaveBeenCalledTimes(1);
 
-      const { logAudit } = await import('../audit/db/auditLogging');
-      expect(logAudit).toHaveBeenCalledWith(
-        db,
-        expect.objectContaining({
-          operation: 'delete',
-          entityType: 'content_node',
-          entityName: '/docs',
-          changes: { old: { path: '/docs', type: 'folder' } }
-        })
-      );
-    });
+    const { writeAudit } = await import('../audit/db/auditLogging');
+    expect(writeAudit).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        operation: 'delete',
+        entityType: 'content_node',
+        entityName: '/docs',
+        changes: { old: { path: '/docs', type: 'folder' } }
+      })
+    );
+  });
 
-    it('returns a 404 when no content nodes are found under the folder', async () => {
-      const db = makeDb();
-      (deleteFolderMock(db) as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
-      const storage = { delete: vi.fn(async () => {}) } as unknown as StorageAdapter;
+  it('returns a 404 when no content nodes are found under the folder', async () => {
+    const db = makeDb();
+    (deleteFolderMock(db) as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
+    const storage = { delete: vi.fn(async () => {}) } as unknown as StorageAdapter;
 
-      await expect(
-        deleteContentFolder(scope, db, storage, 'ws-1', identifier, '/missing', event)
-      ).rejects.toThrow(/No files found under folder/);
-    });
-  }
-);
+    await expect(
+      deleteContentFolder(scope, db, storage, 'ws-1', identifier, '/missing', event)
+    ).rejects.toThrow(/No files found under folder/);
+  });
+});
 
 type RenameScopeCase = {
   name: string;
@@ -184,40 +210,43 @@ const renameCases: RenameScopeCase[] = [
   }
 ];
 
-describe.each(renameCases)(
-  'renameContentFolder ($name scope)',
-  ({ scope, identifier, makeDb, renameFolderMock, expectedRenameFolderArgs }) => {
-    it('renames matching content nodes and logs an audit entry', async () => {
-      const db = makeDb();
+describe.each(renameCases)('renameContentFolder ($name scope)', ({
+  scope,
+  identifier,
+  makeDb,
+  renameFolderMock,
+  expectedRenameFolderArgs
+}) => {
+  it('renames matching content nodes and logs an audit entry', async () => {
+    const db = makeDb();
 
-      const result = await renameContentFolder(scope, db, 'ws-1', identifier, '/old', '/new', event);
+    const result = await renameContentFolder(scope, db, 'ws-1', identifier, '/old', '/new', event);
 
-      expect(result).toEqual({ success: true, message: 'Renamed 2 file(s)', count: 2 });
-      expect(renameFolderMock(db)).toHaveBeenCalledWith(
-        ...expectedRenameFolderArgs,
-        expect.any(Date)
-      );
+    expect(result).toEqual({ success: true, message: 'Renamed 2 file(s)', count: 2 });
+    expect(renameFolderMock(db)).toHaveBeenCalledWith(
+      ...expectedRenameFolderArgs,
+      expect.any(Date)
+    );
 
-      const { logAudit } = await import('../audit/db/auditLogging');
-      expect(logAudit).toHaveBeenCalledWith(
-        db,
-        expect.objectContaining({
-          operation: 'update',
-          entityType: 'content_node',
-          entityName: '/new',
-          changes: { old: { path: '/old' }, new: { path: '/new' } },
-          metadata: expect.objectContaining({ operation: 'rename_folder' })
-        })
-      );
-    });
+    const { writeAudit } = await import('../audit/db/auditLogging');
+    expect(writeAudit).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        operation: 'update',
+        entityType: 'content_node',
+        entityName: '/new',
+        changes: { old: { path: '/old' }, new: { path: '/new' } },
+        metadata: expect.objectContaining({ operation: 'rename_folder' })
+      })
+    );
+  });
 
-    it('returns a 404 when no content nodes are found under the old path', async () => {
-      const db = makeDb();
-      (renameFolderMock(db) as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
+  it('returns a 404 when no content nodes are found under the old path', async () => {
+    const db = makeDb();
+    (renameFolderMock(db) as ReturnType<typeof vi.fn>).mockResolvedValueOnce([]);
 
-      await expect(
-        renameContentFolder(scope, db, 'ws-1', identifier, '/missing', '/new', event)
-      ).rejects.toThrow(/No files found under folder/);
-    });
-  }
-);
+    await expect(
+      renameContentFolder(scope, db, 'ws-1', identifier, '/missing', '/new', event)
+    ).rejects.toThrow(/No files found under folder/);
+  });
+});
