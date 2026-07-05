@@ -16,7 +16,8 @@ vi.mock('../auth/authorization', () => ({
     entities: new Map(),
     grants: []
   })),
-  requireProjectAction: vi.fn()
+  requireProjectAction: vi.fn(),
+  requireWorkspaceCapability: vi.fn()
 }));
 
 vi.mock('../workspace/resolveWorkspace', () => ({

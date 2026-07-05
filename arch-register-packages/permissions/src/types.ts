@@ -36,6 +36,8 @@ export type WorkspaceCapability =
   | 'people.teams'
   | 'proj.create'
   | 'proj.edit'
+  | 'content.view'
+  | 'content.edit'
   | 'ent.edit'
   | 'ent.propose'
   | 'comments'

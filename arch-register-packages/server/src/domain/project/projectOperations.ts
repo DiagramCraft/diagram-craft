@@ -10,7 +10,8 @@ import {
   requireCanCreateProject,
   requireProjectAccess,
   requireProjectAction,
-  requireWorkspaceAdmin
+  requireWorkspaceAdmin,
+  requireWorkspaceCapability
 } from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { handleDbError } from '../../utils/http';
@@ -654,6 +655,7 @@ export const createEntityFolder = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
     const entity = await db.catalog.getEntity(ws, entityId);
     httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
     const entityUuid = entity.id;
@@ -719,6 +721,7 @@ export const createEntityFile = async (
 
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
     const entity = await db.catalog.getEntity(ws, entityId);
     httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
     const entityUuid = entity.id;
@@ -1577,7 +1580,8 @@ export const listEntityContentNodes = async (
   event: AuthenticatedEvent
 ): Promise<FileTree> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  requireNonProjectContentAccess(authCtx, 'read');
   try {
     const entity = await db.catalog.getEntity(ws, entityId);
     httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
@@ -1645,7 +1649,8 @@ export const listWorkspaceContentNodes = async (
   event: AuthenticatedEvent
 ): Promise<FileTree> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
-  await buildApiAuthCtx(db, ws, event);
+  const authCtx = await buildApiAuthCtx(db, ws, event);
+  requireNonProjectContentAccess(authCtx, 'read');
   try {
     const files = await db.project.listWorkspaceContentNodes(ws);
     return buildFileTree(files);
@@ -1663,6 +1668,7 @@ export const createWorkspaceFolder = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
 
     const lastSlash = folderPath.lastIndexOf('/');
     const folderName = lastSlash !== -1 ? folderPath.substring(lastSlash + 1) : folderPath;
@@ -1723,6 +1729,7 @@ export const createWorkspaceFile = async (
 
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
 
     const existingFile = await db.project.listWorkspaceContentNodes(ws).then(nodes =>
       nodes.find(n => n.path === filePath && n.type === 'diagram')
@@ -1804,7 +1811,8 @@ export const getWorkspaceFileContent = async (
 ): Promise<Record<string, unknown>> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
-    await buildApiAuthCtx(db, ws, event);
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'read');
     const wsNodes = await db.project.listWorkspaceContentNodes(ws);
     const file = wsNodes.find(n => n.path === filePath && n.type === 'diagram') ?? null;
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
@@ -1906,6 +1914,7 @@ export const createEntityMarkdownDoc = async (
 
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
     const entity = await db.catalog.getEntity(ws, entityId);
     httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
     const entityUuid = entity.id;
@@ -1965,6 +1974,7 @@ export const createWorkspaceMarkdownDoc = async (
 
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
 
     let fileParentId: string | null = null;
     if (folder) {
@@ -2010,6 +2020,16 @@ export const storageScope = (
   ws: string,
   node: { project_id: string | null; entity_id: string | null }
 ) => node.project_id ?? node.entity_id ?? ws;
+
+const requireNonProjectContentAccess = (
+  authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
+  action: 'read' | 'edit'
+) =>
+  requireWorkspaceCapability(
+    authCtx,
+    action === 'read' ? 'content.view' : 'content.edit',
+    `You do not have permission to ${action === 'read' ? 'view' : 'modify'} workspace content`
+  );
 
 const getAttachmentContainerPath = (markdownPath: string) =>
   `${markdownPath.endsWith('.md') ? markdownPath.slice(0, -3) : markdownPath}/${ATTACHMENT_CONTAINER_NAME}`;
@@ -2078,7 +2098,10 @@ const requireMarkdownNodeAccess = async (
   node: { project_id: string | null },
   action: 'read' | 'edit'
 ) => {
-  if (!node.project_id) return;
+  if (!node.project_id) {
+    requireNonProjectContentAccess(authCtx, action);
+    return;
+  }
 
   const project = await db.project.getProject(ws, node.project_id);
   httpAssert.present(project, { status: 404, message: `Project '${node.project_id}' not found` });
@@ -2107,6 +2130,8 @@ export const getProjectFile = async (
       httpAssert.present(project, { status: 404, message: 'Project not found' });
       requireProjectAccess(authCtx, project.owner);
       node.project_public_id = project.public_id;
+    } else {
+      requireNonProjectContentAccess(authCtx, 'read');
     }
     return toApiProjectFile(node);
   } catch (e) {
@@ -2134,8 +2159,10 @@ export const getFileContentById = async (
       requireProjectAccess(authCtx, project.owner);
       storageId = node.project_id;
     } else if (node.entity_id) {
+      requireNonProjectContentAccess(authCtx, 'read');
       storageId = node.entity_id;
     } else {
+      requireNonProjectContentAccess(authCtx, 'read');
       storageId = ws;
     }
 
@@ -2625,6 +2652,7 @@ export const uploadEntityFile = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
     const entity = await db.catalog.getEntity(ws, entityId);
     httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
     const entityUuid = entity.id;
@@ -2693,7 +2721,8 @@ export const downloadEntityFile = async (
 ): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
-    await buildApiAuthCtx(db, ws, event);
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'read');
     const entity = await db.catalog.getEntity(ws, entityId);
     httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
     const entityUuid = entity.id;
@@ -2723,6 +2752,7 @@ export const uploadWorkspaceFile = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
 
     const existingFile = await db.project.listWorkspaceContentNodes(ws).then(nodes =>
       nodes.find(n => n.path === filePath && n.type === 'file')
@@ -2787,7 +2817,8 @@ export const downloadWorkspaceFile = async (
 ): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
-    await buildApiAuthCtx(db, ws, event);
+    const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'read');
     const wsNodes = await db.project.listWorkspaceContentNodes(ws);
     const file = wsNodes.find(n => n.path === filePath) ?? null;
     httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
@@ -2813,6 +2844,7 @@ export const deleteEntityFile = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
     const entity = await db.catalog.getEntity(ws, entityId);
     httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
     const entityUuid = entity.id;
@@ -2876,6 +2908,7 @@ export const cloneEntityFile = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
     const entity = await db.catalog.getEntity(ws, entityId);
     httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
     const entityUuid = entity.id;
@@ -3013,6 +3046,7 @@ export const relocateEntityFile = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
     const entity = await db.catalog.getEntity(ws, entityId);
     httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
     const entityUuid = entity.id;
@@ -3161,6 +3195,7 @@ export const deleteWorkspaceFile = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
 
     const wsNodes = await db.project.listWorkspaceContentNodes(ws);
     const file = wsNodes.find(n => n.path === filePath) ?? null;
@@ -3218,6 +3253,7 @@ export const cloneWorkspaceFile = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
 
     const wsNodes = await db.project.listWorkspaceContentNodes(ws);
     const sourceFile = wsNodes.find(n => n.path === filePath) ?? null;
@@ -3350,6 +3386,7 @@ export const relocateWorkspaceFile = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   try {
     const authCtx = await buildApiAuthCtx(db, ws, event);
+    requireNonProjectContentAccess(authCtx, 'edit');
 
     const wsNodes = await db.project.listWorkspaceContentNodes(ws);
     const existingFile = wsNodes.find(n => n.path === filePath) ?? null;

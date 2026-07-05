@@ -317,6 +317,8 @@ export type WorkspaceRoleCapability =
   | 'people.teams'
   | 'proj.create'
   | 'proj.edit'
+  | 'content.view'
+  | 'content.edit'
   | 'ent.edit'
   | 'ent.propose'
   | 'comments'

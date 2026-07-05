@@ -101,25 +101,25 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
   owner: [
     'ws.view', 'ws.settings', 'ws.delete', 'ws.audit', 'ws.manage_views',
     'people.invite', 'people.role', 'people.remove', 'people.teams',
-    'proj.create', 'proj.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
+    'proj.create', 'proj.edit', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
     'schema.edit', 'schema.publish',
   ],
   admin: [
     'ws.view', 'ws.settings', 'ws.audit', 'ws.manage_views',
     'people.invite', 'people.role', 'people.remove', 'people.teams',
-    'proj.create', 'proj.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
+    'proj.create', 'proj.edit', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
     'schema.edit', 'schema.publish',
   ],
   editor: [
     'ws.view', 'ws.manage_views',
-    'proj.create', 'proj.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
+    'proj.create', 'proj.edit', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
   ],
   reviewer: [
-    'ws.view',
+    'ws.view', 'content.view',
     'ent.propose', 'comments', 'export',
   ],
   viewer: [
-    'ws.view',
+    'ws.view', 'content.view',
     'export',
   ],
 };
@@ -205,6 +205,8 @@ export const WORKSPACE_CAPABILITY_GROUPS: Array<{
     caps: [
       { id: 'proj.create', name: 'Create projects' },
       { id: 'proj.edit', name: 'Edit projects & diagrams' },
+      { id: 'content.view', name: 'View entity & workspace content' },
+      { id: 'content.edit', name: 'Edit entity & workspace content' },
       { id: 'ent.edit', name: 'Edit entities' },
       { id: 'ws.manage_views', name: 'Manage views' },
       { id: 'ent.propose', name: 'Propose entity changes' },
