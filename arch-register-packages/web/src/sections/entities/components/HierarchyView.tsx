@@ -4,10 +4,11 @@ import { TbChevronDown } from 'react-icons/tb';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import type { TreeNode } from '@arch-register/api-types/entityContract';
+import type { EntityRecord, TreeNode } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { hierarchyViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
+import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -19,6 +20,7 @@ export type HierarchyConfig = {
   level2Columns: number;
   level3SchemaId: string | null;
   level3Columns: number;
+  fieldIds?: string[];
 };
 
 type HierarchyViewProps = {
@@ -34,6 +36,7 @@ type HierarchyViewProps = {
   onConfigChange: (cfg: HierarchyConfig) => void;
   linkedEntityIds?: string[];
   hideToolbar?: boolean;
+  displayFields: EntityDisplayField[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -58,6 +61,7 @@ const normalizeHierarchyConfig = (
         level2Columns?: number;
         level3SchemaId?: string | null;
         level3Columns?: number;
+        fieldIds?: string[];
       }
     | null
     | undefined
@@ -68,7 +72,8 @@ const normalizeHierarchyConfig = (
   level2SchemaId: config?.level2SchemaId ?? DEFAULT_CONFIG.level2SchemaId,
   level2Columns: config?.level2Columns ?? DEFAULT_CONFIG.level2Columns,
   level3SchemaId: config?.level3SchemaId ?? DEFAULT_CONFIG.level3SchemaId,
-  level3Columns: config?.level3Columns ?? DEFAULT_CONFIG.level3Columns
+  level3Columns: config?.level3Columns ?? DEFAULT_CONFIG.level3Columns,
+  fieldIds: config?.fieldIds
 });
 
 const OPEN_DELAY_MS = 250;
@@ -95,13 +100,15 @@ const EntityTooltip = ({
   color,
   schemaName,
   isLinked,
-  children
+  children, displayFields, schemaMap
 }: {
   node: TreeNode;
   color: string;
   schemaName: string;
   isLinked: boolean;
   children: React.ReactNode;
+  displayFields: EntityDisplayField[];
+  schemaMap: Map<string, { schema: EntitySchema; index: number }>;
 }) => {
   const anchorRef = useRef<HTMLSpanElement | null>(null);
   const openTimerRef = useRef<number | null>(null);
@@ -167,7 +174,7 @@ const EntityTooltip = ({
               {nodeName(node)}
             </h4>
 
-            {node._description && (
+            {displayFields.some(f => f.id === '_description') && node._description && (
               <p className={styles.tooltipDesc}>{node._description}</p>
             )}
 
@@ -179,21 +186,14 @@ const EntityTooltip = ({
                   {schemaName}
                 </span>
               </div>
-              {node._lifecycle && (
-                <div className={styles.tooltipRow}>
-                  <span className={styles.tooltipLabel}>Status</span>
-                  <span className={styles.tooltipValue}>{node._lifecycle.name}</span>
-                </div>
-              )}
-              {node._owner && (
-                <div className={styles.tooltipRow}>
-                  <span className={styles.tooltipLabel}>Owner</span>
-                  <span className={styles.tooltipValue}>{node._owner.name}</span>
-                </div>
-              )}
+              {displayFields.filter(f => f.id !== '_description' && f.id !== '_tags').map(option => {
+                const field = findEntityDisplayField(option.id, node, schemaMap, displayFields);
+                const value = field ? formatEntityDisplayValue(node as EntityRecord, field) : null;
+                return value == null ? null : <div key={option.id} className={styles.tooltipRow}><span className={styles.tooltipLabel}>{field!.label}</span><span className={styles.tooltipValue}>{value}</span></div>;
+              })}
             </div>
 
-            {node._tags.length > 0 && (
+            {displayFields.some(f => f.id === '_tags') && node._tags.length > 0 && (
               <div className={styles.tooltipTags}>
                 {node._tags.map(tag => (
                   <span key={tag} className={styles.tooltipTag}>
@@ -279,7 +279,7 @@ export const HierarchyView = ({
   config,
   onConfigChange,
   linkedEntityIds,
-  hideToolbar
+  hideToolbar, displayFields
 }: HierarchyViewProps) => {
   const { schemas } = useWorkspaceContext();
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
@@ -299,6 +299,7 @@ export const HierarchyView = ({
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
   const cfg = parsedConfig ?? localConfig;
+  const selectedDisplayFields = getDisplayFieldIds('hierarchy', cfg).map(id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' });
 
   const notify = useCallback(
     (patch: Partial<HierarchyConfig>) => {
@@ -464,6 +465,8 @@ export const HierarchyView = ({
                       color={color}
                       schemaName={schemaEntry?.schema.name ?? l1._schema.name}
                       isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l1._uid)}
+                      displayFields={selectedDisplayFields}
+                      schemaMap={schemaMap}
                     >
                       <button
                         type="button"
@@ -501,6 +504,8 @@ export const HierarchyView = ({
                                 color={l2Color}
                                 schemaName={l2SchemaEntry?.schema.name ?? l2._schema.name}
                                 isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l2._uid)}
+                                displayFields={selectedDisplayFields}
+                                schemaMap={schemaMap}
                               >
                                 <button
                                   type="button"
@@ -541,6 +546,8 @@ export const HierarchyView = ({
                                         color={l3Color}
                                         schemaName={l3SchemaEntry?.schema.name ?? l3._schema.name}
                                         isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l3._uid)}
+                                        displayFields={selectedDisplayFields}
+                                        schemaMap={schemaMap}
                                       >
                                         <button
                                           type="button"

@@ -13,6 +13,7 @@ import { TableView, type TableViewProps } from './TableView';
 import { TimelineView } from './TimelineView';
 import { TreeView } from './TreeView';
 import type { BrowserEntityRecord, ProjectBrowserContext } from './entityBrowserState';
+import type { EntityDisplayField } from './entityDisplayFields';
 
 const noopEntityAction = (_entity: EntityRecord) => {};
 const noopConfigChange = (_config: unknown) => {};
@@ -32,6 +33,7 @@ type EntityBrowserViewProps = {
   ownerFilter: string | null;
   statusFilter: string | null;
   activeViewConfig: unknown;
+  displayFields: EntityDisplayField[];
   onConfigChange?: (config: unknown) => void;
   onEntityClick: (entityId: string) => void;
   onDelete?: (entity: EntityRecord) => void;
@@ -62,6 +64,7 @@ export const EntityBrowserView = ({
   ownerFilter,
   statusFilter,
   activeViewConfig,
+  displayFields,
   onConfigChange = noopConfigChange,
   onEntityClick,
   onDelete = noopEntityAction,
@@ -92,6 +95,7 @@ export const EntityBrowserView = ({
           onConfigChange={onConfigChange}
           linkedEntityIds={linkedEntityIds}
           hideToolbar={hideToolbar}
+          displayFields={displayFields}
         />
       );
     case 'explore':
@@ -103,6 +107,7 @@ export const EntityBrowserView = ({
           onConfigChange={onConfigChange}
           linkedEntityIds={linkedEntityIds}
           hideToolbar={hideToolbar}
+          displayFields={displayFields}
         />
       );
     case 'matrix':
@@ -160,6 +165,8 @@ export const EntityBrowserView = ({
           lifecycleStates={lifecycleStates}
           projectContext={projectContext}
           readOnly={readOnly}
+          config={activeViewConfig}
+          displayFields={displayFields}
         />
       );
     case 'cards':
@@ -173,6 +180,8 @@ export const EntityBrowserView = ({
           lifecycleStates={lifecycleStates}
           projectContext={projectContext}
           readOnly={readOnly}
+          config={activeViewConfig}
+          displayFields={displayFields}
         />
       );
     case 'table':
@@ -190,6 +199,8 @@ export const EntityBrowserView = ({
           lifecycleStates={lifecycleStates}
           projectContext={projectContext}
           readOnly={readOnly}
+          config={activeViewConfig}
+          displayFields={displayFields}
         />
       );
     default:

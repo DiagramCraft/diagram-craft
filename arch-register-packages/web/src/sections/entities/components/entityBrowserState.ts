@@ -96,6 +96,9 @@ const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.viewMode === 'matrix') return view.config.matrix ?? null;
   if (view.viewMode === 'hierarchy') return view.config.hierarchy ?? null;
   if (view.viewMode === 'explore') return view.config.explore ?? null;
+  if (view.viewMode === 'table') return view.config.table ?? null;
+  if (view.viewMode === 'cards') return view.config.cards ?? null;
+  if (view.viewMode === 'tree') return view.config.tree ?? null;
   return null;
 };
 
@@ -128,6 +131,9 @@ export const toSavedViewConfig = (
   if (view === 'matrix') return { matrix: config as never };
   if (view === 'hierarchy') return { hierarchy: config as never };
   if (view === 'explore') return { explore: config as never };
+  if (view === 'table') return { table: config as never };
+  if (view === 'cards') return { cards: config as never };
+  if (view === 'tree') return { tree: config as never };
   return null;
 };
 

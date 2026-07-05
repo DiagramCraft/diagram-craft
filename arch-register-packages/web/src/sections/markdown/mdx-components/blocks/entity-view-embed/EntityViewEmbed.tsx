@@ -15,17 +15,21 @@ import { ExploreView } from '../../../../entities/components/ExploreView';
 import type { BrowserEntityRecord } from '../../../../entities/components/entityBrowserState';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import styles from './EntityViewEmbed.module.css';
+import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
 
 const noop = () => {};
 const emptySet = new Set<string>();
 
-const getViewConfig = (savedView: { viewMode: string; config: { radar?: unknown; timeline?: unknown; matrix?: unknown; hierarchy?: unknown; explore?: unknown } | null }): unknown => {
+const getViewConfig = (savedView: { viewMode: string; config: { table?: unknown; cards?: unknown; tree?: unknown; radar?: unknown; timeline?: unknown; matrix?: unknown; hierarchy?: unknown; explore?: unknown } | null }): unknown => {
   if (!savedView.config) return null;
   if (savedView.viewMode === 'radar') return savedView.config.radar ?? null;
   if (savedView.viewMode === 'timeline') return savedView.config.timeline ?? null;
   if (savedView.viewMode === 'matrix') return savedView.config.matrix ?? null;
   if (savedView.viewMode === 'hierarchy') return savedView.config.hierarchy ?? null;
   if (savedView.viewMode === 'explore') return savedView.config.explore ?? null;
+  if (savedView.viewMode === 'table') return savedView.config.table ?? null;
+  if (savedView.viewMode === 'cards') return savedView.config.cards ?? null;
+  if (savedView.viewMode === 'tree') return savedView.config.tree ?? null;
   return null;
 };
 
@@ -108,6 +112,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   const q = savedView.filters.q ?? '';
   const resolvedProjectId = savedView.projectId ?? projectId;
   const projectScope = savedView.projectScope ?? 'all';
+  const displayFields = buildEntityDisplayFields(typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas, !!resolvedProjectId);
 
   switch (savedView.viewMode) {
     case 'table':
@@ -122,6 +127,8 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
           selectedIds={emptySet}
           onSelectAll={noop}
           onSelectRow={noop}
+          config={viewConfig}
+          displayFields={displayFields}
         />
       );
     case 'cards':
@@ -133,6 +140,8 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
           onDelete={noop as (entity: EntityRecord) => void}
           onClone={noop as (entity: EntityRecord) => void}
           lifecycleStates={lifecycleStates}
+          config={viewConfig}
+          displayFields={displayFields}
         />
       );
     case 'tree':
@@ -150,6 +159,8 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
           onDelete={noop as (entity: EntityRecord) => void}
           onClone={noop as (entity: EntityRecord) => void}
           lifecycleStates={lifecycleStates}
+          config={viewConfig}
+          displayFields={displayFields}
         />
       );
     case 'radar':
@@ -197,6 +208,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
           onEntityClick={onEntityClick}
           config={viewConfig}
           onConfigChange={noop}
+          displayFields={displayFields}
         />
       );
     case 'explore':
@@ -206,6 +218,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
           onEntityClick={onEntityClick}
           config={viewConfig}
           onConfigChange={noop}
+          displayFields={displayFields}
         />
       );
     default:

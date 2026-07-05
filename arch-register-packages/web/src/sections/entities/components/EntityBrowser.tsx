@@ -24,6 +24,7 @@ import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
 import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
 import styles from './EntityBrowser.module.css';
+import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds } from './entityDisplayFields';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
@@ -275,6 +276,10 @@ export const EntityBrowser = ({
         : undefined,
     [filtered, projectContext]
   );
+  const displayFieldSchemas = useMemo(() => typeFilter ? schemas.filter(schema => schema.id === typeFilter) : schemas, [schemas, typeFilter]);
+  const displayFields = useMemo(() => buildEntityDisplayFields(displayFieldSchemas, !!projectContext), [displayFieldSchemas, projectContext]);
+  const displayView = DISPLAY_FIELD_VIEWS.has(view) ? view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore' : null;
+  const selectedDisplayFieldIds = displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined;
 
   return (
     <>
@@ -300,6 +305,9 @@ export const EntityBrowser = ({
         tlOpen={tlOpen}
         onToggleTimeline={() => setTlOpen(o => !o)}
         asOf={asOf}
+        displayFields={displayView && !readOnly ? displayFields : undefined}
+        selectedDisplayFieldIds={!readOnly ? selectedDisplayFieldIds : undefined}
+        onDisplayFieldsChange={displayView && !readOnly ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds)) : undefined}
       />
       {tlOpen && (
         <TimelineStrip
@@ -354,6 +362,7 @@ export const EntityBrowser = ({
             ownerFilter={ownerFilter}
             statusFilter={statusFilter}
             activeViewConfig={activeViewConfig}
+            displayFields={displayFields}
             onConfigChange={setActiveViewConfig}
             onEntityClick={navigateToEntity}
             onDelete={handleDeleteEntity}

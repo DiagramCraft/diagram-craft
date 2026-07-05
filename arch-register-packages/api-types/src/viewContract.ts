@@ -69,10 +69,18 @@ export const matrixViewConfigSchema = z.object({
   hideEmptyCols: z.boolean().describe('Whether to hide columns with no relationships')
 });
 
+const fieldDisplayConfigShape = {
+  fieldIds: z.array(z.string()).optional().describe('Ordered fields displayed for each entity')
+};
+export const tableViewConfigSchema = z.object(fieldDisplayConfigShape);
+export const cardsViewConfigSchema = z.object(fieldDisplayConfigShape);
+export const treeViewConfigSchema = z.object(fieldDisplayConfigShape);
+
 export const hierarchyViewConfigSchema = z.object({
-  levels: z.number().int().min(1).max(3).describe('Number of hierarchy levels (1-3)'),
-  level1SchemaId: z.string().nullable().describe('Schema identifier for level 1'),
-  level1Columns: z.number().int().min(1).max(4).describe('Number of columns for level 1 (1-4)'),
+  ...fieldDisplayConfigShape,
+  levels: z.number().int().min(1).max(3).default(2).describe('Number of hierarchy levels (1-3)'),
+  level1SchemaId: z.string().nullable().default(null).describe('Schema identifier for level 1'),
+  level1Columns: z.number().int().min(1).max(4).default(3).describe('Number of columns for level 1 (1-4)'),
   level2SchemaId: z.string().nullable().optional().describe('Schema identifier for level 2'),
   level2Columns: z.number().int().min(1).max(4).optional().describe('Number of columns for level 2 (1-4)'),
   level3SchemaId: z.string().nullable().optional().describe('Schema identifier for level 3'),
@@ -80,13 +88,17 @@ export const hierarchyViewConfigSchema = z.object({
 });
 
 export const exploreViewConfigSchema = z.object({
-  leftDepth: z.number().int().min(0).describe('Depth of relationships to explore on the left'),
-  rightDepth: z.number().int().min(0).describe('Depth of relationships to explore on the right'),
-  relationFieldNames: z.array(z.string()).describe('Relationship field names to include')
+  ...fieldDisplayConfigShape,
+  leftDepth: z.number().int().min(0).default(1).describe('Depth of relationships to explore on the left'),
+  rightDepth: z.number().int().min(0).default(1).describe('Depth of relationships to explore on the right'),
+  relationFieldNames: z.array(z.string()).default([]).describe('Relationship field names to include')
 });
 
 const viewConfigSchema = z
   .object({
+    table: tableViewConfigSchema.optional().describe('Configuration for table view'),
+    cards: cardsViewConfigSchema.optional().describe('Configuration for cards view'),
+    tree: treeViewConfigSchema.optional().describe('Configuration for tree view'),
     radar: radarViewConfigSchema.optional().describe('Configuration for radar view'),
     timeline: timelineViewConfigSchema.optional().describe('Configuration for timeline view'),
     matrix: matrixViewConfigSchema.optional().describe('Configuration for matrix view'),
@@ -299,6 +311,9 @@ export type RadarViewConfig = z.infer<typeof radarViewConfigSchema>;
 export type TimelineViewConfig = z.infer<typeof timelineViewConfigSchema>;
 
 export type MatrixViewConfig = z.infer<typeof matrixViewConfigSchema>;
+export type TableViewConfig = z.infer<typeof tableViewConfigSchema>;
+export type CardsViewConfig = z.infer<typeof cardsViewConfigSchema>;
+export type TreeViewConfig = z.infer<typeof treeViewConfigSchema>;
 
 export type HierarchyViewConfig = z.infer<typeof hierarchyViewConfigSchema>;
 

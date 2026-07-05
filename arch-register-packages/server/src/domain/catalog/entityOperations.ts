@@ -463,7 +463,7 @@ export const getEntityTree = async (
 
     return {
       nodes: [...allIncluded.values()].map(row => ({
-        ...attachProjectLink(toApiEntitySummary(row, authCtx) as EntityRecord, row.id, projectId, projectEntityMap),
+        ...attachProjectLink(toApiEntity(row, authCtx), row.id, projectId, projectEntityMap),
         _isMatch: matchIds.has(row.id)
       })),
       edges

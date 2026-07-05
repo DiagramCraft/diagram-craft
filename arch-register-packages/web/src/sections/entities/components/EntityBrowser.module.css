@@ -99,3 +99,7 @@
   position: relative !important;
   z-index: 1100 !important;
 }
+.fieldsPopover { width: 260px; max-height: min(480px, 70vh); overflow: auto; padding: 10px; font-family: var(--font-sans); }
+.fieldsGroup + .fieldsGroup { margin-top: 12px; }
+.fieldsGroupLabel { color: var(--base-fg-dim); font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+.fieldsOption { display: flex; align-items: center; gap: 7px; padding: 4px; font-size: 12px; cursor: pointer; }
