@@ -5,7 +5,9 @@ import { PermissionChecker } from '@arch-register/permissions';
 import { slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { computeEntityCompleteness } from '../../utils/completeness';
-import { requireEntityAction, requireCanCreateTopLevelEntity } from '../auth/authorization';
+import { requireEntityAction, requireCanCreateTopLevelEntity, requireProjectAccess } from '../auth/authorization';
+import { splitAssessmentConditions, matchesAssessmentConditions } from '@arch-register/api-types/assessmentFilter';
+import type { AssessmentDbResult } from '../project/db/projectDatabase';
 import type { EntityMutationActor } from './entityMutations';
 import { createEntityWithAudit, updateEntityWithAudit, entityToBaseState } from './entityMutations';
 import { logAudit, flattenEntityAuditFields } from '../audit/db/auditLogging';
@@ -67,6 +69,34 @@ const attachProjectLink = (
   };
 };
 
+/**
+ * Resolves the joined assessment's bulk response map when the query includes assessment
+ * conditions. Exactly one `listAssessmentResponses` call per request — never per-entity.
+ */
+const resolveJoinedAssessment = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext | null,
+  assessmentId: string | null,
+  hasAssessmentConditions: boolean
+): Promise<{ assessment: AssessmentDbResult; responsesByEntity: Map<string, Record<string, string | number>> } | null> => {
+  if (!hasAssessmentConditions) return null;
+  httpAssert.present(assessmentId, {
+    status: 400,
+    message: 'Assessment filter conditions require assessmentId'
+  });
+  const assessment = await db.project.getAssessmentById(workspace, assessmentId);
+  httpAssert.present(assessment, { status: 404, message: `Assessment '${assessmentId}' not found` });
+  if (authCtx) {
+    const project = await db.project.getProject(workspace, assessment.project_id);
+    httpAssert.present(project, { status: 404, message: `Project '${assessment.project_id}' not found` });
+    requireProjectAccess(authCtx, project.owner);
+  }
+  const responses = await db.project.listAssessmentResponses(workspace, assessmentId);
+  const responsesByEntity = new Map(responses.map(r => [r.entity_id, r.values]));
+  return { assessment, responsesByEntity };
+};
+
 const allocateEntityPublicId = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -90,6 +120,7 @@ export const listEntities = async (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     view?: 'summary' | 'full';
@@ -105,6 +136,7 @@ export const listEntities = async (
     lifecycle = null,
     q = '',
     conditions = [],
+    assessmentId = null,
     projectId = null,
     projectScope = 'all',
     view = 'full',
@@ -122,6 +154,7 @@ export const listEntities = async (
       lifecycle,
       q,
       conditions,
+      assessmentId,
       projectId,
       projectScope,
       view,
@@ -146,6 +179,7 @@ export const countEntities = async (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     asOf?: Date | null;
@@ -158,6 +192,7 @@ export const countEntities = async (
     lifecycle: options.lifecycle ?? null,
     q: options.q ?? '',
     conditions: options.conditions ?? [],
+    assessmentId: options.assessmentId ?? null,
     projectId: options.projectId ?? null,
     projectScope: options.projectScope ?? 'all',
     view: 'full',
@@ -177,6 +212,7 @@ const collectEntities = async (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     view?: 'summary' | 'full';
@@ -190,18 +226,22 @@ const collectEntities = async (
     lifecycle = null,
     q = '',
     conditions = [],
+    assessmentId = null,
     projectId = null,
     projectScope = 'all',
     view = 'full',
     asOf = null,
     includeProjectSnapshots = true
   } = options;
-  // _completeness is computed post-fetch; all other conditions can be evaluated in SQL
-  const sqlConditions = conditions.filter(c => c.fieldId !== '_completeness');
-  const completenessConditions = conditions.filter(c => c.fieldId === '_completeness');
-  const [schemas, projectEntities] = await Promise.all([
+  // _completeness is computed post-fetch; assessment conditions are evaluated against the
+  // joined assessment's bulk response map; all remaining conditions can be evaluated in SQL
+  const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
+  const sqlConditions = otherConditions.filter(c => c.fieldId !== '_completeness');
+  const completenessConditions = otherConditions.filter(c => c.fieldId === '_completeness');
+  const [schemas, projectEntities, joinedAssessment] = await Promise.all([
     db.catalog.listSchemas(workspace),
-    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
+    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+    resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0)
   ]);
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
@@ -218,6 +258,16 @@ const collectEntities = async (
     if (
       extraConditions.length > 0 &&
       !extraConditions.every(c => matchesFilterCondition(entity, c, completeness))
+    ) {
+      return;
+    }
+    if (
+      joinedAssessment &&
+      !matchesAssessmentConditions(
+        joinedAssessment.responsesByEntity.get(entity.id),
+        assessmentConditions,
+        joinedAssessment.assessment.fields
+      )
     ) {
       return;
     }
@@ -381,6 +431,7 @@ export const getEntityTree = async (
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
   }
 ): Promise<TreeResponse> => {
   const {
@@ -390,13 +441,16 @@ export const getEntityTree = async (
     q = '',
     projectId = null,
     projectScope = 'all',
-    conditions = []
+    conditions = [],
+    assessmentId = null
   } = options;
   try {
-    const [schemas, allEntitiesRaw, projectEntities] = await Promise.all([
+    const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
+    const [schemas, allEntitiesRaw, projectEntities, joinedAssessment] = await Promise.all([
       db.catalog.listSchemas(workspace),
       listAllCatalogEntities(db, workspace),
-      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
+      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+      resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0)
     ]);
     const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
     const allEntities = allEntitiesRaw.filter(
@@ -419,7 +473,7 @@ export const getEntityTree = async (
     }
 
     const schemaMap = new Map(schemas.map(s => [s.id, s]));
-    const hasCompletenessCondition = conditions.some(c => c.fieldId === '_completeness');
+    const hasCompletenessCondition = otherConditions.some(c => c.fieldId === '_completeness');
 
     const matchRows = filterEntities(scopedEntities, {
       schemaId,
@@ -428,13 +482,24 @@ export const getEntityTree = async (
       q: q ?? ''
     })
       .filter(entity => {
-        if (conditions.length === 0) return true;
+        if (otherConditions.length === 0 && !joinedAssessment) return true;
         const schema = schemaMap.get(entity.schema_id) ?? null;
         const completeness =
           hasCompletenessCondition && schema != null
             ? computeEntityCompleteness(entity, schema)
             : null;
-        return conditions.every(c => matchesFilterCondition(entity, c, completeness));
+        if (!otherConditions.every(c => matchesFilterCondition(entity, c, completeness))) return false;
+        if (
+          joinedAssessment &&
+          !matchesAssessmentConditions(
+            joinedAssessment.responsesByEntity.get(entity.id),
+            assessmentConditions,
+            joinedAssessment.assessment.fields
+          )
+        ) {
+          return false;
+        }
+        return true;
       })
       .sort((a, b) => a.name.localeCompare(b.name));
     const matchIds = new Set(matchRows.map(r => r.id));

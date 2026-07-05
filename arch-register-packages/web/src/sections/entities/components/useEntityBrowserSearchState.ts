@@ -7,6 +7,7 @@ import {
   getFilterValue,
   parseConditionsFromSearch,
   parseViewConfigs,
+  pruneAssessmentReferences,
   serializeViewConfigs
 } from './entityBrowserState';
 
@@ -127,6 +128,22 @@ export const useEntityBrowserSearchState = ({
     [navigateBrowser]
   );
 
+  const setJoinAssessmentId = useCallback(
+    (next: string | null) => {
+      const { conditions: prunedConditions, viewConfigs: prunedViewConfigs } = pruneAssessmentReferences(
+        conditions,
+        viewConfigs
+      );
+      navigateBrowser({
+        joinAssessmentId: next ?? undefined,
+        filters: prunedConditions.length > 0 ? JSON.stringify(prunedConditions) : undefined,
+        viewConfigs: serializeViewConfigs(prunedViewConfigs),
+        viewId: undefined
+      });
+    },
+    [conditions, navigateBrowser, viewConfigs]
+  );
+
   return {
     activeViewConfig,
     asOf: search.asOf,
@@ -135,12 +152,14 @@ export const useEntityBrowserSearchState = ({
     clearAsOf,
     setIncludeProjectSnapshots,
     conditions,
+    joinAssessmentId: search.joinAssessmentId ?? null,
     ownerFilter: getFilterValue(conditions, '_owner'),
     projectScope,
     q,
     search,
     setConditions,
     setActiveViewConfig,
+    setJoinAssessmentId,
     setProjectScope,
     setQ,
     setSort,

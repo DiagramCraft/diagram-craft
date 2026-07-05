@@ -37,9 +37,13 @@ export type TreeViewProps = {
   readOnly?: boolean;
   config: unknown;
   displayFields: EntityDisplayField[];
+  joinAssessmentId?: string | null;
+  responsesByEntity?: Map<string, Record<string, string | number>>;
 };
 
-type TreeItem = (TreeNode & { _projectLink?: ProjectLinkState }) & { children: TreeItem[] };
+type TreeItem = (TreeNode & { _projectLink?: ProjectLinkState; _assessment?: Record<string, string | number> | null }) & {
+  children: TreeItem[];
+};
 
 export const TreeView = ({
   workspaceId,
@@ -55,7 +59,9 @@ export const TreeView = ({
   onClone,
   lifecycleStates,
   projectContext,
-  readOnly, config, displayFields
+  readOnly, config, displayFields,
+  joinAssessmentId,
+  responsesByEntity
 }: TreeViewProps) => {
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
@@ -64,12 +70,19 @@ export const TreeView = ({
     q,
     typeFilter,
     ownerFilter,
-    statusFilter
+    statusFilter,
+    joinAssessmentId
   });
 
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();
-    for (const node of nodes) nodeMap.set(node._uid, { ...node, children: [] });
+    for (const node of nodes) {
+      nodeMap.set(node._uid, {
+        ...node,
+        _assessment: responsesByEntity?.get(node._uid) ?? null,
+        children: []
+      });
+    }
 
     const childIds = new Set<string>();
     for (const { childId, parentId } of edges) {
@@ -88,7 +101,7 @@ export const TreeView = ({
     return [...nodeMap.values()]
       .filter(node => !childIds.has(node._uid))
       .sort((a, b) => (a._name || a._slug).localeCompare(b._name || b._slug));
-  }, [nodes, edges]);
+  }, [nodes, edges, responsesByEntity]);
   const columns = getDisplayFieldIds('tree', config).map(id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' });
 
   if (nodes.length === 0) {

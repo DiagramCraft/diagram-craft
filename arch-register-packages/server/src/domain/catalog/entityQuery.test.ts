@@ -9,6 +9,7 @@ describe('parseEntityQuery', () => {
       lifecycle: null,
       q: '',
       conditions: [],
+      assessmentId: null,
       projectId: null,
       projectScope: 'all',
       view: 'full',

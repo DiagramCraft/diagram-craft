@@ -28,6 +28,7 @@ export const useEntities = (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     view?: 'summary' | 'full';
@@ -51,6 +52,7 @@ export const useEntities = (
           conditions: options.conditions?.length
             ? JSON.stringify(options.conditions)
             : undefined,
+          assessmentId: options.assessmentId ?? undefined,
           projectId: options.projectId ?? undefined,
           projectScope: options.projectScope ?? undefined,
           view: options.view,
@@ -101,6 +103,7 @@ export const useEntityCount = (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     asOf?: string | null;
@@ -119,6 +122,7 @@ export const useEntityCount = (
           lifecycle: options.lifecycle ?? undefined,
           q: options.q ?? undefined,
           conditions: options.conditions?.length ? JSON.stringify(options.conditions) : undefined,
+          assessmentId: options.assessmentId ?? undefined,
           projectId: options.projectId ?? undefined,
           projectScope: options.projectScope ?? undefined,
           asOf: options.asOf ?? undefined,
@@ -162,6 +166,7 @@ export const useEntityTree = (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
   } = {}
@@ -177,6 +182,7 @@ export const useEntityTree = (
           lifecycle: options.lifecycle ?? undefined,
           q: options.q ?? undefined,
           conditions: options.conditions?.length ? JSON.stringify(options.conditions) : undefined,
+          assessmentId: options.assessmentId ?? undefined,
           projectId: options.projectId ?? undefined,
           projectScope: options.projectScope ?? undefined
         }

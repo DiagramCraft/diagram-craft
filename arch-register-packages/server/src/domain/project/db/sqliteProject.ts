@@ -899,6 +899,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     );
   }
 
+  async getAssessmentById(workspace: string, id: string) {
+    return this.get(
+      'SELECT * FROM assessment WHERE workspace = ? AND id = ?',
+      [workspace, id],
+      sqliteMappers.assessment
+    );
+  }
+
   async createAssessment(input: AssessmentDbCreate) {
     this.run(
       `INSERT INTO assessment (id, workspace, project_id, name, description, status, scope, fields, created_at, updated_at)

@@ -12,6 +12,7 @@ export type SharedEntityBrowserSearchParams = {
   filters?: string; // JSON string of FilterCondition[]
   asOf?: string; // ISO 8601 date — when set, browser enters read-only point-in-time snapshot mode
   asOfIncludeProjects?: 'true' | 'false'; // whether asOf reconstruction applies project future_update snapshots; defaults to 'true'
+  joinAssessmentId?: string; // joined assessment identifier for display, filtering, and view attributes
 };
 
 const validateSharedEntityBrowserSearch = (
@@ -43,6 +44,7 @@ const validateSharedEntityBrowserSearch = (
     raw.asOfIncludeProjects === 'true' || raw.asOfIncludeProjects === 'false'
       ? raw.asOfIncludeProjects
       : undefined,
+  joinAssessmentId: typeof raw.joinAssessmentId === 'string' ? raw.joinAssessmentId : undefined,
 });
 
 // Entity browser filters

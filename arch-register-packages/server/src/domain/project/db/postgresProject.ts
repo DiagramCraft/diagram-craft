@@ -885,6 +885,13 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
     return row ?? null;
   }
 
+  async getAssessmentById(workspace: string, id: string) {
+    const [row] = await this.sql<AssessmentDbResult[]>`
+      SELECT * FROM assessment WHERE workspace = ${workspace} AND id = ${id}
+    `;
+    return row ?? null;
+  }
+
   async createAssessment(input: AssessmentDbCreate) {
     try {
       const [row] = await this.sql<AssessmentDbResult[]>`

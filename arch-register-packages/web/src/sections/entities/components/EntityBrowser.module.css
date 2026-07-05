@@ -104,3 +104,32 @@
 .fieldsGroupLabel { color: var(--base-fg-dim); font-size: 11px; font-weight: 600; margin-bottom: 4px; }
 .fieldsOption { display: flex; align-items: center; gap: 7px; padding: 4px; font-size: 12px; cursor: pointer; }
 .fieldsFooter { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--panel-border); }
+.assessmentList {
+  padding: 8px 12px;
+  max-height: min(360px, 60vh);
+  overflow: auto;
+}
+.assessmentOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  padding: 5px 6px;
+  font-size: 12px;
+  border-radius: var(--r);
+  border: none;
+  background: transparent;
+  color: var(--base-fg);
+  cursor: pointer;
+}
+.assessmentOption:hover { background: var(--cmp-bg-hover); }
+.assessmentOptionActive { background: var(--base-bg-hover); color: var(--accent-fg); font-weight: 600; }
+.assessmentOptionCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  flex-shrink: 0;
+  color: var(--accent-fg);
+}

@@ -6,6 +6,7 @@ import type {
 } from '@arch-register/api-types/viewContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
+import { isAssessmentCondition, ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
 import type { EntitySearchParams, ProjectSearchParams } from '../../../routes/searchParams';
 
 export type BrowserSearch = EntitySearchParams &
@@ -21,6 +22,7 @@ export type ProjectLinkState = {
 
 export type BrowserEntityRecord = EntityRecord & {
   _projectLink?: ProjectLinkState;
+  _assessment?: Record<string, string | number> | null;
 };
 
 export type ProjectBrowserContext = {
@@ -89,6 +91,39 @@ export const serializeViewConfigs = (value: BrowserViewConfigMap): string | unde
   return JSON.stringify(Object.fromEntries(entries));
 };
 
+const isAssessmentFieldId = (value: unknown): value is string =>
+  typeof value === 'string' && value.startsWith(ASSESSMENT_FIELD_PREFIX);
+
+/**
+ * Strips references to the joined assessment's fields from filter conditions and view
+ * configs. Called whenever the join is cleared or switched to a different assessment, so
+ * stale `_assessment*` field ids never linger in the URL or a saved view.
+ */
+export const pruneAssessmentReferences = (
+  conditions: FilterCondition[],
+  viewConfigs: BrowserViewConfigMap
+): { conditions: FilterCondition[]; viewConfigs: BrowserViewConfigMap } => {
+  const prunedConditions = conditions.filter(c => !isAssessmentCondition(c));
+
+  const prunedViewConfigs: BrowserViewConfigMap = {};
+  for (const [view, config] of Object.entries(viewConfigs)) {
+    if (config == null || typeof config !== 'object') {
+      prunedViewConfigs[view as BrowserView] = config;
+      continue;
+    }
+    const next: Record<string, unknown> = { ...(config as Record<string, unknown>) };
+    if (Array.isArray(next.fieldIds)) {
+      next.fieldIds = (next.fieldIds as unknown[]).filter(id => !isAssessmentFieldId(id));
+    }
+    if (isAssessmentFieldId(next.quadrantFieldId)) next.quadrantFieldId = '';
+    if (isAssessmentFieldId(next.ringFieldId)) next.ringFieldId = '';
+    if (isAssessmentFieldId(next.colEnumFieldId)) next.colEnumFieldId = null;
+    prunedViewConfigs[view as BrowserView] = next;
+  }
+
+  return { conditions: prunedConditions, viewConfigs: prunedViewConfigs };
+};
+
 const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.config == null) return null;
   if (view.viewMode === 'radar') return view.config.radar ?? null;
@@ -114,7 +149,8 @@ export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
   viewConfigs: serializeViewConfigs(
     getSavedViewConfig(view) == null ? {} : { [view.viewMode]: getSavedViewConfig(view) }
   ),
-  filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined
+  filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined,
+  joinAssessmentId: view.filters.assessmentId ?? undefined
 });
 
 export const getFilterValue = (conditions: FilterCondition[], fieldId: string) =>
@@ -151,7 +187,8 @@ export const buildSavedViewPayload = ({
   q,
   sort,
   conditions,
-  viewConfigs
+  viewConfigs,
+  joinAssessmentId
 }: {
   scope: 'workspace' | 'project';
   projectId?: string;
@@ -167,6 +204,7 @@ export const buildSavedViewPayload = ({
   sort: string;
   conditions: FilterCondition[];
   viewConfigs: BrowserViewConfigMap;
+  joinAssessmentId?: string | null;
 }): CreateSavedViewRequest => ({
   scope,
   projectId: scope === 'project' ? (projectId ?? null) : null,
@@ -181,7 +219,8 @@ export const buildSavedViewPayload = ({
     owner: ownerFilter,
     q,
     sort,
-    conditions
+    conditions,
+    assessmentId: joinAssessmentId ?? null
   },
   config: toSavedViewConfig(view, viewConfigs)
 });

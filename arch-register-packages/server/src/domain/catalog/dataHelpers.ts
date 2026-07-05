@@ -72,6 +72,8 @@ export const matchesFilterCondition = (
     case 'ends_with': return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
     case 'gt': return Number(value) > Number(expected);
     case 'lt': return Number(value) < Number(expected);
+    case 'gte': return Number(value) >= Number(expected);
+    case 'lte': return Number(value) <= Number(expected);
     default: return true;
   }
 };

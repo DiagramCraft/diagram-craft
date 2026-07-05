@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { BrowserEntityRecord } from './entityBrowserState';
 import {
   buildEntityDisplayFields,
   formatEntityDisplayValue,
@@ -78,5 +81,63 @@ describe('entity display fields', () => {
     expect(formatEntityDisplayValue(entity, fields.find(field => field.id === 'phase')!)).toBe(
       'Production'
     );
+  });
+});
+
+describe('joined assessment display fields', () => {
+  const assessment: Assessment = {
+    id: 'assessment-1',
+    workspace: 'ws-1',
+    project_id: 'proj-1',
+    name: 'Security review',
+    description: '',
+    status: 'open',
+    scope: ['service'],
+    fields: [
+      { id: 'rating1', label: 'Rating', requirementLevel: 'required', type: 'rating' },
+      { id: 'enum1', label: 'Risk', requirementLevel: 'optional', type: 'enum', enumId: 'risk-enum' }
+    ],
+    response_count: 0,
+    completed_entity_count: 0,
+    created_at: '',
+    updated_at: ''
+  };
+
+  const enums: WorkspaceEnum[] = [
+    {
+      id: 'risk-enum',
+      workspace: 'ws-1',
+      name: 'Risk',
+      options: [
+        { value: 'low', label: 'Low' },
+        { value: 'high', label: 'High' }
+      ],
+      sort_order: 0,
+      created_at: '',
+      updated_at: ''
+    }
+  ];
+
+  it('appends joined assessment fields under a dedicated group', () => {
+    const fields = buildEntityDisplayFields([schema], false, { assessment, enums });
+    const ratingField = fields.find(f => f.id === '_assessment:rating1');
+    const enumField = fields.find(f => f.id === '_assessment:enum1');
+    expect(ratingField).toMatchObject({ label: 'Rating', group: 'Assessment: Security review' });
+    expect(enumField?.assessmentField?.options).toEqual(enums[0]!.options);
+  });
+
+  it('formats missing responses as blank and resolves enum labels', () => {
+    const fields = buildEntityDisplayFields([schema], false, { assessment, enums });
+    const ratingField = fields.find(f => f.id === '_assessment:rating1')!;
+    const enumField = fields.find(f => f.id === '_assessment:enum1')!;
+
+    const withoutResponse = { _assessment: null } as unknown as EntityRecord;
+    expect(formatEntityDisplayValue(withoutResponse, ratingField)).toBeNull();
+
+    const withResponse = {
+      _assessment: { rating1: 4, enum1: 'high' }
+    } as unknown as BrowserEntityRecord as EntityRecord;
+    expect(formatEntityDisplayValue(withResponse, ratingField)).toBe('4');
+    expect(formatEntityDisplayValue(withResponse, enumField)).toBe('High');
   });
 });

@@ -29,7 +29,9 @@ export const filterConditionSchema = z.object({
     'after',
     'on',
     'gt',
-    'lt'
+    'lt',
+    'gte',
+    'lte'
   ]).describe('Filter operation'),
   value: z.unknown().describe('Filter value (type depends on field and operation)')
 });
@@ -43,7 +45,8 @@ export const entityFiltersSchema = z.object({
   dateFilterOperator: z.enum(['on', 'before', 'after', 'empty']).optional().describe('Date filter operation'),
   dateFilterValue: z.string().optional().describe('Date filter value (ISO 8601)'),
   sort: z.string().optional().describe('Sort field and direction (e.g., "name:asc")'),
-  conditions: z.array(filterConditionSchema).optional().describe('Additional filter conditions')
+  conditions: z.array(filterConditionSchema).optional().describe('Additional filter conditions'),
+  assessmentId: z.string().nullable().optional().describe('Joined assessment identifier for display, filtering, and view attributes')
 });
 
 export const radarViewConfigSchema = z.object({

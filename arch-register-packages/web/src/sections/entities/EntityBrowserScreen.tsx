@@ -83,7 +83,8 @@ export const EntityBrowserScreen = () => {
           q,
           sort,
           conditions,
-          viewConfigs
+          viewConfigs,
+          joinAssessmentId: search.joinAssessmentId ?? null
         })
       );
     } catch {
@@ -105,7 +106,8 @@ export const EntityBrowserScreen = () => {
             owner: ownerFilter,
             q,
             sort,
-            conditions
+            conditions,
+            assessmentId: search.joinAssessmentId ?? null
           },
           config: toSavedViewConfig(view as BrowserView, viewConfigs)
         }
@@ -119,6 +121,7 @@ export const EntityBrowserScreen = () => {
     ownerFilter,
     permissions.canManageViews,
     q,
+    search.joinAssessmentId,
     sort,
     statusFilter,
     typeFilter,

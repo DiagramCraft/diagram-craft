@@ -157,7 +157,8 @@ export const ProjectEntities = ({
           q,
           sort,
           conditions,
-          viewConfigs
+          viewConfigs,
+          joinAssessmentId: search.joinAssessmentId ?? null
         })
       );
     } catch {
@@ -181,7 +182,8 @@ export const ProjectEntities = ({
             owner: ownerFilter,
             q,
             sort,
-            conditions
+            conditions,
+            assessmentId: search.joinAssessmentId ?? null
           },
           config: buildSavedViewPayload({
             scope: activeSavedView.scope,
@@ -196,7 +198,8 @@ export const ProjectEntities = ({
             q,
             sort,
             conditions,
-            viewConfigs
+            viewConfigs,
+            joinAssessmentId: search.joinAssessmentId ?? null
           }).config
         }
       });
@@ -216,6 +219,7 @@ export const ProjectEntities = ({
     sort,
     conditions,
     viewConfigs,
+    search.joinAssessmentId,
     updateSavedViewMutation
   ]);
 

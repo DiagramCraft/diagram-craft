@@ -9,11 +9,14 @@ import type {
 } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { FilterBuilder } from '../../../components/FilterBuilder';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import styles from './EntityBrowser.module.css';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
+import { AssessmentJoinPicker } from './AssessmentJoinPicker';
 import type { EntityDisplayField } from './entityDisplayFields';
+import type { AssessmentJoinOption } from './useJoinedAssessment';
 
 type EntityBrowserToolbarProps = {
   q: string;
@@ -41,6 +44,10 @@ type EntityBrowserToolbarProps = {
   selectedDisplayFieldIds?: string[];
   onDisplayFieldsChange?: (fieldIds: string[]) => void;
   onDisplayFieldsReset?: () => void;
+  joinOptions?: AssessmentJoinOption[];
+  joinAssessmentId?: string | null;
+  onJoinAssessmentChange?: (assessmentId: string | null) => void;
+  joinedAssessment?: Assessment | null;
 };
 
 export const EntityBrowserToolbar = ({
@@ -68,7 +75,11 @@ export const EntityBrowserToolbar = ({
   displayFields,
   selectedDisplayFieldIds,
   onDisplayFieldsChange,
-  onDisplayFieldsReset
+  onDisplayFieldsReset,
+  joinOptions,
+  joinAssessmentId,
+  onJoinAssessmentChange,
+  joinedAssessment
 }: EntityBrowserToolbarProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
@@ -110,9 +121,17 @@ export const EntityBrowserToolbar = ({
             owners={owners}
             enums={enums}
             selectedSchemaId={typeFilter}
+            joinedAssessment={joinedAssessment}
           />
         </Popover.Content>
       </Popover.Root>
+      {joinOptions && onJoinAssessmentChange && !readOnly && (
+        <AssessmentJoinPicker
+          options={joinOptions}
+          value={joinAssessmentId ?? null}
+          onChange={onJoinAssessmentChange}
+        />
+      )}
       {projectId && !readOnly && (
         <FilterDropdown
           label="Scope"

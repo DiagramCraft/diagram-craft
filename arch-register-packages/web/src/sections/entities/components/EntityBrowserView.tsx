@@ -14,6 +14,7 @@ import { TimelineView } from './TimelineView';
 import { TreeView } from './TreeView';
 import type { BrowserEntityRecord, ProjectBrowserContext } from './entityBrowserState';
 import type { EntityDisplayField } from './entityDisplayFields';
+import type { JoinedAssessmentContext } from './RadarView';
 
 const noopEntityAction = (_entity: EntityRecord) => {};
 const noopConfigChange = (_config: unknown) => {};
@@ -47,6 +48,9 @@ type EntityBrowserViewProps = {
   onSelectAll?: () => void;
   onSelectRow?: (uid: string) => void;
   unsupportedView?: ReactNode;
+  joinAssessmentId?: string | null;
+  joinedAssessment?: JoinedAssessmentContext | null;
+  responsesByEntity?: Map<string, Record<string, string | number>>;
 };
 
 export const EntityBrowserView = ({
@@ -77,7 +81,10 @@ export const EntityBrowserView = ({
   selectedIds,
   onSelectAll,
   onSelectRow,
-  unsupportedView = null
+  unsupportedView = null,
+  joinAssessmentId,
+  joinedAssessment,
+  responsesByEntity
 }: EntityBrowserViewProps) => {
   switch (view) {
     case 'hierarchy':
@@ -120,6 +127,7 @@ export const EntityBrowserView = ({
           onConfigChange={onConfigChange}
           linkedEntityIds={linkedEntityIds}
           hideToolbar={hideToolbar}
+          joinedAssessment={joinedAssessment}
         />
       );
     case 'timeline':
@@ -146,6 +154,7 @@ export const EntityBrowserView = ({
           config={activeViewConfig}
           onConfigChange={onConfigChange}
           hideToolbar={hideToolbar}
+          joinedAssessment={joinedAssessment}
         />
       );
     case 'tree':
@@ -167,6 +176,8 @@ export const EntityBrowserView = ({
           readOnly={readOnly}
           config={activeViewConfig}
           displayFields={displayFields}
+          joinAssessmentId={joinAssessmentId}
+          responsesByEntity={responsesByEntity}
         />
       );
     case 'cards':
