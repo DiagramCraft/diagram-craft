@@ -9,7 +9,7 @@ import {
 } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
-import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
+import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listWorkspaceSchemas,
   getWorkspaceSchema,
@@ -24,65 +24,47 @@ type ORPCContext = {
   event: AuthenticatedEvent;
 };
 
-const schemaRouter = implement(workspaceSchemaContract).$context<ORPCContext>();
+const schemaRouter = implement(workspaceSchemaContract)
+  .$context<ORPCContext>()
+  .use(orpcErrorMiddleware);
 
 export const workspaceSchemaORPCRouter = schemaRouter.router({
   schemas: {
     list: schemaRouter.schemas.list.handler(async ({ input, context }) => {
-      try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        requireSchemaRead(authCtx);
-        return await listWorkspaceSchemas(context.db, workspace);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      requireSchemaRead(authCtx);
+      return await listWorkspaceSchemas(context.db, workspace);
     }),
     get: schemaRouter.schemas.get.handler(async ({ input, context }) => {
-      try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        requireSchemaRead(authCtx);
-        return await getWorkspaceSchema(context.db, workspace, input.params.id);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      requireSchemaRead(authCtx);
+      return await getWorkspaceSchema(context.db, workspace, input.params.id);
     }),
     create: schemaRouter.schemas.create.handler(async ({ input, context }) => {
-      try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        requireWorkspaceCapability(authCtx, 'schema.edit');
-        return await createWorkspaceSchema(context.db, workspace, input.body, authCtx.userId);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      requireWorkspaceCapability(authCtx, 'schema.edit');
+      return await createWorkspaceSchema(context.db, workspace, input.body, authCtx.userId);
     }),
     update: schemaRouter.schemas.update.handler(async ({ input, context }) => {
-      try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        requireWorkspaceCapability(authCtx, 'schema.edit');
-        return await updateWorkspaceSchema(
-          context.db,
-          workspace,
-          input.params.id,
-          input.body,
-          authCtx.userId
-        );
-      } catch (error) {
-        return toORPCError(error);
-      }
+      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      requireWorkspaceCapability(authCtx, 'schema.edit');
+      return await updateWorkspaceSchema(
+        context.db,
+        workspace,
+        input.params.id,
+        input.body,
+        authCtx.userId
+      );
     }),
     remove: schemaRouter.schemas.remove.handler(async ({ input, context }) => {
-      try {
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-        requireWorkspaceCapability(authCtx, 'schema.edit');
-        return await deleteWorkspaceSchema(context.db, workspace, input.params.id, authCtx.userId);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+      requireWorkspaceCapability(authCtx, 'schema.edit');
+      return await deleteWorkspaceSchema(context.db, workspace, input.params.id, authCtx.userId);
     })
   }
 });

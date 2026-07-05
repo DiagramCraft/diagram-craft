@@ -1,0 +1,49 @@
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
+
+type EntityQuery = {
+  _schemaId?: string;
+  owner?: string;
+  lifecycle?: string;
+  q?: string;
+  conditions?: string;
+  projectId?: string;
+  projectScope?: 'project' | 'all';
+  view?: 'summary' | 'full';
+  limit?: number;
+  offset?: number;
+  asOf?: string;
+  includeProjectSnapshots?: 'true' | 'false';
+};
+
+const parseConditions = (value: string | undefined): FilterCondition[] => {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? (parsed as FilterCondition[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const parseAsOf = (value: string | undefined): Date | null => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+export const parseEntityQuery = (query: EntityQuery) => ({
+  schemaId: query._schemaId ?? null,
+  owner: query.owner ?? null,
+  lifecycle: query.lifecycle ?? null,
+  q: query.q ?? '',
+  conditions: parseConditions(query.conditions),
+  projectId: query.projectId ?? null,
+  projectScope: query.projectScope ?? 'all',
+  view: query.view ?? 'full',
+  limit: query.limit ?? null,
+  offset: query.offset ?? 0,
+  asOf: parseAsOf(query.asOf),
+  includeProjectSnapshots: query.includeProjectSnapshots !== 'false'
+});
+
+export type ParsedEntityQuery = ReturnType<typeof parseEntityQuery>;

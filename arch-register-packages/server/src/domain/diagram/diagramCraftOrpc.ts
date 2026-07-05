@@ -4,7 +4,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
+import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import {
   buildApiAuthCtx,
@@ -22,96 +22,86 @@ type ORPCContext = {
   event: AuthenticatedEvent;
 };
 
-const diagramCraftRouter = implement(diagramCraftContract).$context<ORPCContext>();
+const diagramCraftRouter = implement(diagramCraftContract)
+  .$context<ORPCContext>()
+  .use(orpcErrorMiddleware);
 
 export const createDiagramCraftORPCRouter = () => {
   return diagramCraftRouter.router({
     diagramCraft: {
       getSchemas: diagramCraftRouter.diagramCraft.getSchemas.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-          requireWorkspaceCapability(authCtx, 'ws.view');
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        requireWorkspaceCapability(authCtx, 'ws.view');
 
-          const [schemas, enums] = await Promise.all([
-            context.db.catalog.listSchemas(workspace),
-            context.db.catalog.listEnums(workspace)
-          ]);
-          return schemas.map(schema => toDiagramCraftSchema(schema, enums));
-        } catch (error) {
-          throw toORPCError(error);
-        }
+        const [schemas, enums] = await Promise.all([
+          context.db.catalog.listSchemas(workspace),
+          context.db.catalog.listEnums(workspace)
+        ]);
+        return schemas.map(schema => toDiagramCraftSchema(schema, enums));
       }),
 
       getData: diagramCraftRouter.diagramCraft.getData.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-          requireWorkspaceCapability(authCtx, 'ws.view');
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        requireWorkspaceCapability(authCtx, 'ws.view');
 
-          const entities = filterVisibleEntities(
-            authCtx,
-            await listAllCatalogEntities(context.db, workspace)
-          );
-          return entities.map(entity => toDiagramCraftData(entity));
-        } catch (error) {
-          throw toORPCError(error);
-        }
+        const entities = filterVisibleEntities(
+          authCtx,
+          await listAllCatalogEntities(context.db, workspace)
+        );
+        return entities.map(entity => toDiagramCraftData(entity));
       }),
 
       generate: diagramCraftRouter.diagramCraft.generate.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-          requireWorkspaceCapability(authCtx, 'ws.view');
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+        requireWorkspaceCapability(authCtx, 'ws.view');
 
-          const aiConfig = await resolveAiConfig(context.db, workspace);
-          if (!aiConfig) {
-            throw new ORPCError('SERVICE_UNAVAILABLE', {
-              message: 'AI is not configured for this workspace'
-            });
-          }
+        const aiConfig = await resolveAiConfig(context.db, workspace);
+        if (!aiConfig) {
+          throw new ORPCError('SERVICE_UNAVAILABLE', {
+            message: 'AI is not configured for this workspace'
+          });
+        }
 
-          const aiServer = new ConfiguredAIServer(aiConfig);
-          const result = await aiServer.generate(input.body as AIGenerateRequest);
+        const aiServer = new ConfiguredAIServer(aiConfig);
+        const result = await aiServer.generate(input.body as AIGenerateRequest);
 
-          if (result.type === 'stream') {
-            const reader = result.body.getReader();
-            return (async function* () {
-              const decoder = new TextDecoder();
-              let buffer = '';
-              try {
-                while (true) {
-                  const chunk = await reader.read();
-                  if (chunk.done) return;
+        if (result.type === 'stream') {
+          const reader = result.body.getReader();
+          return (async function* () {
+            const decoder = new TextDecoder();
+            let buffer = '';
+            try {
+              while (true) {
+                const chunk = await reader.read();
+                if (chunk.done) return;
 
-                  buffer += decoder.decode(chunk.value, { stream: true });
-                  const lines = buffer.split('\n');
-                  buffer = lines.pop() ?? '';
+                buffer += decoder.decode(chunk.value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() ?? '';
 
-                  for (const line of lines) {
-                    if (!line.trim() || !line.startsWith('data: ')) continue;
-                    const data = line.slice(6);
-                    if (data === '[DONE]') return;
-                    try {
-                      yield JSON.parse(data);
-                    } catch {
-                      // skip malformed lines
-                    }
+                for (const line of lines) {
+                  if (!line.trim() || !line.startsWith('data: ')) continue;
+                  const data = line.slice(6);
+                  if (data === '[DONE]') return;
+                  try {
+                    yield JSON.parse(data);
+                  } catch {
+                    // skip malformed lines
                   }
                 }
-              } finally {
-                reader.releaseLock();
               }
-            })();
-          }
-
-          return (async function* () {
-            yield result.body;
+            } finally {
+              reader.releaseLock();
+            }
           })();
-        } catch (error) {
-          throw toORPCError(error);
         }
+
+        return (async function* () {
+          yield result.body;
+        })();
       })
     }
   });

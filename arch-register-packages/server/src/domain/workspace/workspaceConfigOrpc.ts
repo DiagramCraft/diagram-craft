@@ -4,7 +4,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { resolveWorkspace } from './resolveWorkspace';
-import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
+import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listLifecycleStates,
   replaceLifecycleStates,
@@ -30,178 +30,110 @@ type ORPCContext = {
   event: AuthenticatedEvent;
 };
 
-const configRouter = implement(workspaceConfigContract).$context<ORPCContext>();
+const configRouter = implement(workspaceConfigContract)
+  .$context<ORPCContext>()
+  .use(orpcErrorMiddleware);
 
 export const workspaceConfigORPCRouter = configRouter.router({
   config: {
     lifecycleStates: {
       list: configRouter.config.lifecycleStates.list.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await listLifecycleStates(context.db, workspace, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await listLifecycleStates(context.db, workspace, context.event);
       }),
       replace: configRouter.config.lifecycleStates.replace.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await replaceLifecycleStates(
-            context.db,
-            workspace,
-            input.body.states,
-            context.event
-          );
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await replaceLifecycleStates(
+          context.db,
+          workspace,
+          input.body.states,
+          context.event
+        );
       })
     },
     teams: {
       list: configRouter.config.teams.list.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await listTeams(context.db, workspace, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await listTeams(context.db, workspace, context.event);
       }),
       replace: configRouter.config.teams.replace.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await replaceTeams(context.db, workspace, input.body.teams, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await replaceTeams(context.db, workspace, input.body.teams, context.event);
       })
     },
     teamAssignments: {
       list: configRouter.config.teamAssignments.list.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await listTeamAssignments(context.db, workspace, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await listTeamAssignments(context.db, workspace, context.event);
       }),
       replace: configRouter.config.teamAssignments.replace.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await replaceTeamAssignments(
-            context.db,
-            workspace,
-            input.body.assignments,
-            context.event
-          );
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await replaceTeamAssignments(
+          context.db,
+          workspace,
+          input.body.assignments,
+          context.event
+        );
       })
     },
     roles: {
       list: configRouter.config.roles.list.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await listRoles(context.db, workspace, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await listRoles(context.db, workspace, context.event);
       }),
       create: configRouter.config.roles.create.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await createRole(context.db, workspace, input.body, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await createRole(context.db, workspace, input.body, context.event);
       }),
       update: configRouter.config.roles.update.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await updateRole(
-            context.db,
-            workspace,
-            input.params.id,
-            input.body,
-            context.event
-          );
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await updateRole(context.db, workspace, input.params.id, input.body, context.event);
       }),
       remove: configRouter.config.roles.remove.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await deleteRole(context.db, workspace, input.params.id, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await deleteRole(context.db, workspace, input.params.id, context.event);
       })
     },
     members: {
       list: configRouter.config.members.list.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await listMembers(context.db, workspace, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await listMembers(context.db, workspace, context.event);
       }),
       updateRole: configRouter.config.members.updateRole.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await updateMemberRole(
-            context.db,
-            workspace,
-            input.params.id,
-            input.body.roleId,
-            context.event
-          );
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await updateMemberRole(
+          context.db,
+          workspace,
+          input.params.id,
+          input.body.roleId,
+          context.event
+        );
       }),
       remove: configRouter.config.members.remove.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await removeMember(context.db, workspace, input.params.id, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await removeMember(context.db, workspace, input.params.id, context.event);
       })
     },
     users: {
       list: configRouter.config.users.list.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await listUsers(context.db, workspace, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await listUsers(context.db, workspace, context.event);
       })
     },
     projectEntityTypes: {
       list: configRouter.config.projectEntityTypes.list.handler(async ({ input, context }) => {
-        try {
-          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-          return await listProjectEntityTypes(context.db, workspace, context.event);
-        } catch (error) {
-          return toORPCError(error);
-        }
+        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+        return await listProjectEntityTypes(context.db, workspace, context.event);
       }),
       replace: configRouter.config.projectEntityTypes.replace.handler(
         async ({ input, context }) => {
-          try {
-            const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-            return await replaceProjectEntityTypes(
-              context.db,
-              workspace,
-              input.body.types,
-              context.event
-            );
-          } catch (error) {
-            return toORPCError(error);
-          }
+          const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+          return await replaceProjectEntityTypes(
+            context.db,
+            workspace,
+            input.body.types,
+            context.event
+          );
         }
       )
     }
