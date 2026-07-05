@@ -83,6 +83,7 @@ const listFiltersSchema = z.object({
   lifecycle: z.string().optional().describe('Filter by lifecycle state'),
   q: z.string().optional().describe('Search query string'),
   conditions: z.string().optional().describe('JSON-encoded filter conditions'),
+  assessmentId: z.string().optional().describe('Joined assessment identifier — required when conditions reference assessment fields'),
   projectId: z.string().optional().describe('Filter by project identifier'),
   projectScope: z.enum(['project', 'all']).optional().describe('Project scope filter'),
   asOf: z

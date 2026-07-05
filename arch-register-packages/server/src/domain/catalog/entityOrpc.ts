@@ -112,7 +112,8 @@ const entityHandlers = {
       q: query.q,
       projectId: query.projectId,
       projectScope: query.projectScope,
-      conditions: query.conditions
+      conditions: query.conditions,
+      assessmentId: query.assessmentId
     });
   }),
 

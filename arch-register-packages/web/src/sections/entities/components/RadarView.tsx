@@ -9,7 +9,13 @@ import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
+import type { BrowserEntityRecord } from './entityBrowserState';
+
+export type JoinedAssessmentContext = { assessment: Assessment; enums: WorkspaceEnum[] };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -104,25 +110,43 @@ const saveConfig = (workspaceSlug: string, config: RadarConfig) => {
 
 type FieldOption = { id: string; label: string };
 
+const RATING_VALUES = ['1', '2', '3', '4', '5'].map(v => ({ value: v, label: v }));
+
 const getSelectableFields = (
   schema: EntitySchema,
-  lifecycleStates: WorkspaceLifecycleState[]
+  lifecycleStates: WorkspaceLifecycleState[],
+  joinedAssessment?: JoinedAssessmentContext | null
 ): FieldOption[] => [
   ...schema.fields
     .filter((f): f is Extract<typeof f, { type: 'select' }> => f.type === 'select')
     .map(f => ({ id: f.id, label: f.name })),
-  ...(lifecycleStates.length > 0 ? [{ id: LIFECYCLE_FIELD_ID, label: 'Lifecycle' }] : [])
+  ...(lifecycleStates.length > 0 ? [{ id: LIFECYCLE_FIELD_ID, label: 'Lifecycle' }] : []),
+  ...(joinedAssessment
+    ? joinedAssessment.assessment.fields
+        .filter(f => f.type === 'rating' || f.type === 'enum')
+        .map(f => ({ id: `${ASSESSMENT_FIELD_PREFIX}${f.id}`, label: f.label }))
+    : [])
 ];
 
 const getFieldValues = (
   schema: EntitySchema,
   fieldId: string,
-  lifecycleStates: WorkspaceLifecycleState[]
+  lifecycleStates: WorkspaceLifecycleState[],
+  joinedAssessment?: JoinedAssessmentContext | null
 ): Array<{ value: string; label: string }> => {
   if (fieldId === LIFECYCLE_FIELD_ID) {
     return [...lifecycleStates]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(s => ({ value: s.id, label: s.label }));
+  }
+  if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) && joinedAssessment) {
+    const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
+    const field = joinedAssessment.assessment.fields.find(f => f.id === assessmentFieldId);
+    if (field?.type === 'rating') return RATING_VALUES;
+    if (field?.type === 'enum') {
+      return joinedAssessment.enums.find(e => e.id === field.enumId)?.options ?? [];
+    }
+    return [];
   }
   const field = schema.fields.find(f => f.id === fieldId);
   if (field?.type !== 'select') return [];
@@ -131,6 +155,11 @@ const getFieldValues = (
 
 const getEntityFieldValue = (entity: EntityRecord, fieldId: string): string | null => {
   if (fieldId === LIFECYCLE_FIELD_ID) return entity._lifecycle?.id ?? null;
+  if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
+    const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
+    const value = (entity as BrowserEntityRecord)._assessment?.[assessmentFieldId];
+    return value == null ? null : String(value);
+  }
   const val = entity[fieldId];
   return typeof val === 'string' ? val : null;
 };
@@ -235,11 +264,13 @@ export const RadarView = ({
   onEntityClick,
   config: configProp,
   onConfigChange,
-  hideToolbar
+  hideToolbar,
+  joinedAssessment
 }: EntityBrowserRowViewProps & {
   config?: unknown;
   onConfigChange?: (config: RadarConfig) => void;
   hideToolbar?: boolean;
+  joinedAssessment?: JoinedAssessmentContext | null;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() =>
@@ -275,25 +306,29 @@ export const RadarView = ({
     return m;
   }, [fullSchemaEntities]);
   const entities = useMemo(
-    () => rows.map(r => fullEntityMap.get(r._uid) ?? r),
+    () =>
+      rows.map(r => {
+        const full = fullEntityMap.get(r._uid);
+        return full ? ({ ...full, _assessment: r._assessment } as BrowserEntityRecord) : r;
+      }),
     [rows, fullEntityMap]
   );
 
   const schema = config ? (schemas.find(s => s.id === config.schemaId) ?? null) : null;
 
   const fieldOptions = useMemo(
-    () => (schema ? getSelectableFields(schema, lifecycleStates) : []),
-    [schema, lifecycleStates]
+    () => (schema ? getSelectableFields(schema, lifecycleStates, joinedAssessment) : []),
+    [schema, lifecycleStates, joinedAssessment]
   );
 
   const quadrantValues = useMemo(() => {
     if (!config || !schema) return [];
-    return getFieldValues(schema, config.quadrantFieldId, lifecycleStates);
-  }, [config, schema, lifecycleStates]);
+    return getFieldValues(schema, config.quadrantFieldId, lifecycleStates, joinedAssessment);
+  }, [config, schema, lifecycleStates, joinedAssessment]);
 
   const ringValues = useMemo(() => {
     if (!config || !schema) return [];
-    const all = getFieldValues(schema, config.ringFieldId, lifecycleStates);
+    const all = getFieldValues(schema, config.ringFieldId, lifecycleStates, joinedAssessment);
     if (config.ringOrder.length === 0) return all.slice(0, 5);
     const ordered: Array<{ value: string; label: string }> = [];
     for (const v of config.ringOrder) {
@@ -301,7 +336,7 @@ export const RadarView = ({
       if (found) ordered.push(found);
     }
     return ordered;
-  }, [config, schema, lifecycleStates]);
+  }, [config, schema, lifecycleStates, joinedAssessment]);
 
   const quadrants = useMemo(() => buildQuadrants(quadrantValues), [quadrantValues]);
   const rings = useMemo(() => buildRings(ringValues), [ringValues]);
@@ -368,7 +403,7 @@ export const RadarView = ({
   const handleSchemaChange = (newSchemaId: string) => {
     const newSchema = schemas.find(s => s.id === newSchemaId);
     if (!newSchema) return;
-    const opts = getSelectableFields(newSchema, lifecycleStates);
+    const opts = getSelectableFields(newSchema, lifecycleStates, joinedAssessment);
     const quadrantFieldId = opts[0]?.id ?? '';
     const ringFieldId = opts[1]?.id ?? quadrantFieldId;
     applyConfig({ schemaId: newSchemaId, quadrantFieldId, ringFieldId, ringOrder: [] });
@@ -386,8 +421,8 @@ export const RadarView = ({
 
   const ringFieldAllValues = useMemo(() => {
     if (!schema || !config) return [];
-    return getFieldValues(schema, config.ringFieldId, lifecycleStates);
-  }, [schema, config, lifecycleStates]);
+    return getFieldValues(schema, config.ringFieldId, lifecycleStates, joinedAssessment);
+  }, [schema, config, lifecycleStates, joinedAssessment]);
 
   const ringOrderDisplay = useMemo(() => {
     const checkedSet = new Set(ringValues.map(v => v.value));

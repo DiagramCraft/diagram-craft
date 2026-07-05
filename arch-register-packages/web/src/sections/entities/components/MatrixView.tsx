@@ -12,7 +12,10 @@ import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { matrixViewConfigSchema } from '@arch-register/api-types/viewContract';
+import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
+import type { BrowserEntityRecord } from './entityBrowserState';
+import type { JoinedAssessmentContext } from './RadarView';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -30,6 +33,7 @@ type MatrixViewProps = EntityBrowserRowViewProps & {
   config: unknown;
   onConfigChange: (cfg: MatrixConfig) => void;
   hideToolbar?: boolean;
+  joinedAssessment?: JoinedAssessmentContext | null;
 };
 
 type ColMode = 'entity' | 'attribute';
@@ -96,7 +100,8 @@ export const MatrixView = ({
   config,
   onConfigChange,
   linkedEntityIds,
-  hideToolbar
+  hideToolbar,
+  joinedAssessment
 }: MatrixViewProps) => {
   const {
     workspaceSlug: workspaceId,
@@ -225,8 +230,26 @@ export const MatrixView = ({
       });
     });
 
+    if (joinedAssessment) {
+      for (const f of joinedAssessment.assessment.fields) {
+        if (f.type === 'rating') {
+          out.push({
+            fieldId: `${ASSESSMENT_FIELD_PREFIX}${f.id}`,
+            label: f.label,
+            options: ['1', '2', '3', '4', '5'].map(v => ({ value: v, label: v })),
+            isMetadata: false
+          });
+        } else if (f.type === 'enum') {
+          const options = joinedAssessment.enums.find(e => e.id === f.enumId)?.options ?? [];
+          if (options.length > 0) {
+            out.push({ fieldId: `${ASSESSMENT_FIELD_PREFIX}${f.id}`, label: f.label, options, isMetadata: false });
+          }
+        }
+      }
+    }
+
     return out;
-  }, [lifecycleStates, teams, rowSchemaIds, schemaMap, enums]);
+  }, [lifecycleStates, teams, rowSchemaIds, schemaMap, enums, joinedAssessment]);
 
   const effColFieldId = colEnumFieldId ?? attrFields[0]?.fieldId ?? null;
   const effAttrField = attrFields.find(f => f.fieldId === effColFieldId) ?? null;
@@ -300,7 +323,11 @@ export const MatrixView = ({
           } else {
             if (!effColFieldId || !effAttrField) return false;
             let val: unknown;
-            if (effAttrField.isMetadata) {
+            if (effColFieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
+              const assessmentFieldId = effColFieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
+              val = (row as BrowserEntityRecord)._assessment?.[assessmentFieldId];
+              val = val == null ? undefined : String(val);
+            } else if (effAttrField.isMetadata) {
               val = getMetadataValue(row, effColFieldId);
             } else {
               // Use full-view entity if available for custom select fields

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { parseViewConfigs, serializeViewConfigs, toSavedViewConfig } from './entityBrowserState';
+import {
+  parseViewConfigs,
+  pruneAssessmentReferences,
+  serializeViewConfigs,
+  toSavedViewConfig
+} from './entityBrowserState';
 
 describe('entity browser view field persistence', () => {
   it.each(['table', 'cards', 'tree'] as const)('saves %s field configuration', view => {
@@ -11,5 +16,48 @@ describe('entity browser view field persistence', () => {
   it('round trips independent selections through the URL payload', () => {
     const configs = { table: { fieldIds: ['a'] }, cards: { fieldIds: ['b'] } };
     expect(parseViewConfigs(serializeViewConfigs(configs))).toEqual(configs);
+  });
+});
+
+describe('pruneAssessmentReferences', () => {
+  it('strips assessment presence and field conditions', () => {
+    const { conditions } = pruneAssessmentReferences(
+      [
+        { fieldId: '_schemaId', op: 'equals', value: 'x' },
+        { fieldId: '_assessment', op: 'not_empty', value: undefined },
+        { fieldId: '_assessment:rating1', op: 'gte', value: 3 }
+      ],
+      {}
+    );
+    expect(conditions).toEqual([{ fieldId: '_schemaId', op: 'equals', value: 'x' }]);
+  });
+
+  it('strips assessment field ids from table/cards/tree fieldIds arrays', () => {
+    const { viewConfigs } = pruneAssessmentReferences([], {
+      table: { fieldIds: ['_owner', '_assessment:rating1', 'technology'] }
+    });
+    expect(viewConfigs.table).toEqual({ fieldIds: ['_owner', 'technology'] });
+  });
+
+  it('clears radar quadrant/ring fields and matrix colEnumFieldId when they reference the assessment', () => {
+    const { viewConfigs } = pruneAssessmentReferences([], {
+      radar: { schemaId: 's', quadrantFieldId: '_assessment:enum1', ringFieldId: 'severity', ringOrder: [] },
+      matrix: {
+        colMode: 'attribute',
+        colSchemaId: null,
+        colEnumFieldId: '_assessment:enum1',
+        filterFieldName: null,
+        hideEmptyRows: false,
+        hideEmptyCols: false
+      }
+    });
+    expect(viewConfigs.radar).toMatchObject({ quadrantFieldId: '', ringFieldId: 'severity' });
+    expect(viewConfigs.matrix).toMatchObject({ colEnumFieldId: null });
+  });
+
+  it('leaves configs without assessment references untouched', () => {
+    const configs = { table: { fieldIds: ['_owner', 'technology'] } };
+    const { viewConfigs } = pruneAssessmentReferences([], configs);
+    expect(viewConfigs).toEqual(configs);
   });
 });

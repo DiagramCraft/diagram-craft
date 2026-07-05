@@ -11,6 +11,8 @@ import {
   WorkspaceOwnerOption
 } from '@arch-register/api-types/workspaceContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import { ASSESSMENT_FIELD_PREFIX, ASSESSMENT_PRESENCE_FIELD_ID } from '@arch-register/api-types/assessmentFilter';
 
 const TEXT_OPERATORS = [
   { value: 'equals', label: 'Equals' },
@@ -46,10 +48,22 @@ const NUMBER_OPERATORS = [
   { value: 'not_empty', label: 'Is not empty' }
 ];
 
+const RATING_OPERATORS = [
+  { value: 'gte', label: 'At least' },
+  { value: 'lte', label: 'At most' },
+  { value: 'empty', label: 'Is empty' },
+  { value: 'not_empty', label: 'Is not empty' }
+];
+
+const PRESENCE_OPERATORS = [
+  { value: 'not_empty', label: 'Has response' },
+  { value: 'empty', label: 'No response' }
+];
+
 type FieldDef = {
   id: string;
   name: string;
-  type: 'text' | 'date' | 'select' | 'boolean' | 'number';
+  type: 'text' | 'date' | 'select' | 'boolean' | 'number' | 'rating' | 'presence';
   options?: { value: string; label: string }[];
 };
 
@@ -62,6 +76,7 @@ type Props = {
   owners: WorkspaceOwnerOption[];
   enums: WorkspaceEnum[];
   selectedSchemaId?: string | null;
+  joinedAssessment?: Assessment | null;
 };
 
 export const FilterBuilder = ({
@@ -72,7 +87,8 @@ export const FilterBuilder = ({
   lifecycleStates,
   owners,
   enums,
-  selectedSchemaId
+  selectedSchemaId,
+  joinedAssessment
 }: Props) => {
   const fields = React.useMemo(() => {
     const builtIn: FieldDef[] = [
@@ -121,8 +137,27 @@ export const FilterBuilder = ({
       }
     }
 
-    return [...builtIn, ...schemaFields];
-  }, [schemas, lifecycleStates, owners, enums, selectedSchemaId]);
+    const assessmentFields: FieldDef[] = joinedAssessment
+      ? [
+          { id: ASSESSMENT_PRESENCE_FIELD_ID, name: 'Assessment response', type: 'presence' },
+          ...joinedAssessment.fields.map((f): FieldDef => {
+            const id = `${ASSESSMENT_FIELD_PREFIX}${f.id}`;
+            if (f.type === 'rating') return { id, name: f.label, type: 'rating' };
+            if (f.type === 'enum') {
+              return {
+                id,
+                name: f.label,
+                type: 'select',
+                options: enums.find(e => e.id === f.enumId)?.options ?? []
+              };
+            }
+            return { id, name: f.label, type: 'text' };
+          })
+        ]
+      : [];
+
+    return [...builtIn, ...schemaFields, ...assessmentFields];
+  }, [schemas, lifecycleStates, owners, enums, selectedSchemaId, joinedAssessment]);
 
   const addCondition = () => {
     onChange([...conditions, { fieldId: '_name', op: 'contains', value: '' }]);
@@ -157,6 +192,8 @@ export const FilterBuilder = ({
       if (field) {
         if (field.type === 'date') updated.op = 'on';
         else if (field.type === 'select' || field.type === 'number') updated.op = 'equals';
+        else if (field.type === 'rating') updated.op = 'gte';
+        else if (field.type === 'presence') updated.op = 'not_empty';
         else updated.op = 'contains';
         updated.value = '';
       }
@@ -228,6 +265,8 @@ const FilterRow = ({
     if (field.type === 'date') return DATE_OPERATORS;
     if (field.type === 'select') return SELECT_OPERATORS;
     if (field.type === 'number') return NUMBER_OPERATORS;
+    if (field.type === 'rating') return RATING_OPERATORS;
+    if (field.type === 'presence') return PRESENCE_OPERATORS;
     return TEXT_OPERATORS;
   }, [field.type]);
 
@@ -287,6 +326,15 @@ const FilterRow = ({
               step="1"
               value={(condition.value as string) ?? ''}
               onChange={e => onUpdate({ value: e.target.value })}
+            />
+          ) : field.type === 'rating' ? (
+            <input
+              type="number"
+              step="1"
+              min={1}
+              max={5}
+              value={(condition.value as string) ?? ''}
+              onChange={e => onUpdate({ value: e.target.value ? Number(e.target.value) : '' })}
             />
           ) : (
             <TextInput

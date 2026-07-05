@@ -1,6 +1,10 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
+import type { BrowserEntityRecord } from './entityBrowserState';
 
 export const DISPLAY_FIELD_VIEWS = new Set<BrowserView>([
   'table',
@@ -15,6 +19,10 @@ export type EntityDisplayField = {
   label: string;
   group: string;
   schemaField?: EntitySchema['fields'][number];
+  assessmentField?: {
+    type: 'rating' | 'enum' | 'text';
+    options?: { value: string; label: string }[];
+  };
 };
 
 const STANDARD_FIELDS: EntityDisplayField[] = [
@@ -44,7 +52,8 @@ const SCALAR_TYPES = new Set(['text', 'longtext', 'boolean', 'date', 'number', '
 
 export const buildEntityDisplayFields = (
   schemas: EntitySchema[],
-  projectContext: boolean
+  projectContext: boolean,
+  joined?: { assessment: Assessment; enums: WorkspaceEnum[] } | null
 ): EntityDisplayField[] => {
   const fields = STANDARD_FIELDS.filter(field => projectContext || field.group !== 'Project');
   const seen = new Set(fields.map(field => field.id));
@@ -53,6 +62,17 @@ export const buildEntityDisplayFields = (
       if (!SCALAR_TYPES.has(field.type) || seen.has(field.id)) continue;
       seen.add(field.id);
       fields.push({ id: field.id, label: field.name, group: schema.name, schemaField: field });
+    }
+  }
+  if (joined) {
+    const group = `Assessment: ${joined.assessment.name}`;
+    for (const field of joined.assessment.fields) {
+      const id = `${ASSESSMENT_FIELD_PREFIX}${field.id}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const options =
+        field.type === 'enum' ? joined.enums.find(e => e.id === field.enumId)?.options : undefined;
+      fields.push({ id, label: field.label, group, assessmentField: { type: field.type, options } });
     }
   }
   return fields;
@@ -105,6 +125,15 @@ export const formatEntityDisplayValue = (
   entity: EntityRecord,
   field: EntityDisplayField
 ): string | null => {
+  if (field.assessmentField) {
+    const fieldId = field.id.slice(ASSESSMENT_FIELD_PREFIX.length);
+    const value = (entity as BrowserEntityRecord)._assessment?.[fieldId];
+    if (value == null) return null;
+    if (field.assessmentField.type === 'enum') {
+      return field.assessmentField.options?.find(o => o.value === String(value))?.label ?? String(value);
+    }
+    return String(value);
+  }
   if (field.id === '_description') return entity._description || null;
   if (field.id === '_owner') return entity._owner?.name ?? null;
   if (field.id === '_lifecycle') return entity._lifecycle?.name ?? null;

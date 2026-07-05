@@ -22,9 +22,11 @@ import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
 import { useEntityBrowserPagination } from './useEntityBrowserPagination';
 import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
+import { useJoinedAssessment } from './useJoinedAssessment';
 import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
 import styles from './EntityBrowser.module.css';
 import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from './entityDisplayFields';
+import type { BrowserEntityRecord } from './entityBrowserState';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
@@ -155,11 +157,13 @@ export const EntityBrowser = ({
     setIncludeProjectSnapshots,
     conditions,
     activeViewConfig,
+    joinAssessmentId,
     ownerFilter,
     projectScope,
     q,
     setConditions,
     setActiveViewConfig,
+    setJoinAssessmentId,
     setProjectScope,
     setQ,
     setSort,
@@ -172,6 +176,10 @@ export const EntityBrowser = ({
     workspaceSlug,
     projectId
   });
+  const { options: joinOptions, joined, responsesByEntity } = useJoinedAssessment(
+    workspaceId,
+    joinAssessmentId
+  );
   const readOnly = !!asOf;
   const [tlOpen, setTlOpen] = useState(!!asOf);
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
@@ -202,6 +210,7 @@ export const EntityBrowser = ({
     schemas,
     q,
     conditions,
+    joinAssessmentId,
     typeFilter,
     ownerFilter,
     statusFilter,
@@ -277,9 +286,20 @@ export const EntityBrowser = ({
     [filtered, projectContext]
   );
   const displayFieldSchemas = useMemo(() => typeFilter ? schemas.filter(schema => schema.id === typeFilter) : schemas, [schemas, typeFilter]);
-  const displayFields = useMemo(() => buildEntityDisplayFields(displayFieldSchemas, !!projectContext), [displayFieldSchemas, projectContext]);
+  const joinedAssessmentContext = useMemo(
+    () => (joined ? { assessment: joined.assessment, enums } : null),
+    [joined, enums]
+  );
+  const displayFields = useMemo(
+    () => buildEntityDisplayFields(displayFieldSchemas, !!projectContext, joinedAssessmentContext),
+    [displayFieldSchemas, projectContext, joinedAssessmentContext]
+  );
   const displayView = DISPLAY_FIELD_VIEWS.has(view) ? view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore' : null;
   const selectedDisplayFieldIds = displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined;
+  const joinedRows = useMemo<BrowserEntityRecord[]>(() => {
+    if (!joined) return filtered;
+    return filtered.map(row => ({ ...row, _assessment: responsesByEntity.get(row._uid) ?? null }));
+  }, [filtered, joined, responsesByEntity]);
 
   return (
     <>
@@ -309,6 +329,10 @@ export const EntityBrowser = ({
         selectedDisplayFieldIds={!readOnly ? selectedDisplayFieldIds : undefined}
         onDisplayFieldsChange={displayView && !readOnly ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds)) : undefined}
         onDisplayFieldsReset={displayView && !readOnly ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig)) : undefined}
+        joinOptions={joinOptions}
+        joinAssessmentId={joinAssessmentId}
+        onJoinAssessmentChange={setJoinAssessmentId}
+        joinedAssessment={joined?.assessment}
       />
       {tlOpen && (
         <TimelineStrip
@@ -350,7 +374,7 @@ export const EntityBrowser = ({
           )}
           <EntityBrowserView
             view={view}
-            rows={filtered}
+            rows={joinedRows}
             schemaMap={schemaMap}
             schemas={schemas}
             lifecycleStates={lifecycleStates}
@@ -375,6 +399,9 @@ export const EntityBrowser = ({
             selectedIds={selectedIds}
             onSelectAll={handleSelectAll}
             onSelectRow={handleSelectRow}
+            joinAssessmentId={joinAssessmentId}
+            joinedAssessment={joinedAssessmentContext}
+            responsesByEntity={responsesByEntity}
           />
         </>
       )}

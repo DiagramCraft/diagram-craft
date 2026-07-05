@@ -355,6 +355,7 @@ export type ProjectDatabase = {
 
   listAssessments(ws: string, projectId: string): Promise<AssessmentDbResult[]>;
   getAssessment(ws: string, projectId: string, id: string): Promise<AssessmentDbResult | null>;
+  getAssessmentById(ws: string, id: string): Promise<AssessmentDbResult | null>;
   createAssessment(input: AssessmentDbCreate): Promise<AssessmentDbResult>;
   updateAssessment(
     ws: string,

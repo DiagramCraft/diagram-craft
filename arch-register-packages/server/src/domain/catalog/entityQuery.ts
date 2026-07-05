@@ -6,6 +6,7 @@ type EntityQuery = {
   lifecycle?: string;
   q?: string;
   conditions?: string;
+  assessmentId?: string;
   projectId?: string;
   projectScope?: 'project' | 'all';
   view?: 'summary' | 'full';
@@ -37,6 +38,7 @@ export const parseEntityQuery = (query: EntityQuery) => ({
   lifecycle: query.lifecycle ?? null,
   q: query.q ?? '',
   conditions: parseConditions(query.conditions),
+  assessmentId: query.assessmentId ?? null,
   projectId: query.projectId ?? null,
   projectScope: query.projectScope ?? 'all',
   view: query.view ?? 'full',
