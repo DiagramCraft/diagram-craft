@@ -3,7 +3,7 @@ import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
+import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listAssessmentResponses,
   upsertAssessmentResponse,
@@ -16,25 +16,23 @@ type ORPCContext = {
   event: AuthenticatedEvent;
 };
 
-const assessmentResponseRouter = implement(assessmentResponseContract).$context<ORPCContext>();
+const assessmentResponseRouter = implement(assessmentResponseContract)
+  .$context<ORPCContext>()
+  .use(orpcErrorMiddleware);
 
 export const assessmentResponseORPCRouter = assessmentResponseRouter.router({
   assessmentResponses: {
     list: assessmentResponseRouter.assessmentResponses.list.handler(async ({ input, context }) => {
-      try {
-        return await listAssessmentResponses(
-          context.db,
-          input.params.workspace,
-          input.params.id,
-          input.params.assessmentId,
-          context.event
-        );
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await listAssessmentResponses(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        input.params.assessmentId,
+        context.event
+      );
     }),
-    upsert: assessmentResponseRouter.assessmentResponses.upsert.handler(async ({ input, context }) => {
-      try {
+    upsert: assessmentResponseRouter.assessmentResponses.upsert.handler(
+      async ({ input, context }) => {
         return await upsertAssessmentResponse(
           context.db,
           input.params.workspace,
@@ -44,23 +42,17 @@ export const assessmentResponseORPCRouter = assessmentResponseRouter.router({
           input.body,
           context.event
         );
-      } catch (error) {
-        return toORPCError(error);
       }
-    }),
+    ),
     exportCsv: assessmentResponseRouter.assessmentResponses.exportCsv.handler(
       async ({ input, context }) => {
-        try {
-          return await exportAssessmentResponsesCsv(
-            context.db,
-            input.params.workspace,
-            input.params.id,
-            input.params.assessmentId,
-            context.event
-          );
-        } catch (error) {
-          return toORPCError(error);
-        }
+        return await exportAssessmentResponsesCsv(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.params.assessmentId,
+          context.event
+        );
       }
     )
   }

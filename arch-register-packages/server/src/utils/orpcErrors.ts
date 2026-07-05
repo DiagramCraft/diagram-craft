@@ -1,5 +1,5 @@
 import { HTTPError } from 'h3';
-import { ORPCError, ValidationError, onError } from '@orpc/server';
+import { ORPCError, ValidationError, onError, os } from '@orpc/server';
 import { z } from 'zod';
 import { createLogger } from './logger';
 import { OpenAPIHandlerOptions } from '@orpc/openapi/fetch';
@@ -44,6 +44,19 @@ export const toORPCError = (error: unknown): never => {
   throw new ORPCError('INTERNAL_SERVER_ERROR', { message: 'Internal Server Error' });
 };
 
+/**
+ * Converts errors from domain operations at the router boundary. Applying this
+ * middleware to a contract implementer keeps individual handlers focused on
+ * mapping transport input to domain operations.
+ */
+export const orpcErrorMiddleware = os.middleware(async ({ next }) => {
+  try {
+    return await next();
+  } catch (error) {
+    return toORPCError(error);
+  }
+});
+
 // Shared clientInterceptors for all OpenAPIHandler instances.
 // Catches framework-level errors (e.g. output validation failures) that bypass
 // the per-handler try-catch and would otherwise go unlogged.
@@ -63,7 +76,11 @@ export const orpcErrorInterceptors = [
       } else if (error.code === 'UNAUTHORIZED' || error.code === 'NOT_FOUND') {
         // Expected auth errors - log at info without stack trace
         orpcLogger.info(`ORPC client error [${error.code}]: ${error.message}`);
-      } else if (error.code === 'FORBIDDEN' || error.code === 'BAD_REQUEST' || error.code === 'CONFLICT') {
+      } else if (
+        error.code === 'FORBIDDEN' ||
+        error.code === 'BAD_REQUEST' ||
+        error.code === 'CONFLICT'
+      ) {
         // Client errors that may indicate misuse - log at warn without stack trace
         orpcLogger.warn(`ORPC client error [${error.code}]: ${error.message}`);
       } else {

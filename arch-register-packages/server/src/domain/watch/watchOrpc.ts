@@ -3,7 +3,7 @@ import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
+import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listWatching,
   createWatch,
@@ -20,75 +20,42 @@ type ORPCContext = {
   event: AuthenticatedEvent;
 };
 
-const watchRouter = implement(watchContract).$context<ORPCContext>();
+const watchRouter = implement(watchContract).$context<ORPCContext>().use(orpcErrorMiddleware);
 
 export const watchORPCRouter = watchRouter.router({
   watching: {
     list: watchRouter.watching.list.handler(async ({ input, context }) => {
-      try {
-        return await listWatching(context.db, input.params.workspace, context.event);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await listWatching(context.db, input.params.workspace, context.event);
     }),
     create: watchRouter.watching.create.handler(async ({ input, context }) => {
-      try {
-        return await createWatch(
-          context.db,
-          input.params.workspace,
-          input.body.entity_id,
-          context.event
-        );
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await createWatch(
+        context.db,
+        input.params.workspace,
+        input.body.entity_id,
+        context.event
+      );
     }),
     remove: watchRouter.watching.remove.handler(async ({ input, context }) => {
-      try {
-        return await deleteWatch(
-          context.db,
-          input.params.workspace,
-          input.params.id,
-          context.event
-        );
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await deleteWatch(context.db, input.params.workspace, input.params.id, context.event);
     })
   },
   notifications: {
     list: watchRouter.notifications.list.handler(async ({ input, context }) => {
-      try {
-        return await listNotifications(context.db, input.params.workspace, context.event);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await listNotifications(context.db, input.params.workspace, context.event);
     }),
     count: watchRouter.notifications.count.handler(async ({ input, context }) => {
-      try {
-        return await getNotificationCount(context.db, input.params.workspace, context.event);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await getNotificationCount(context.db, input.params.workspace, context.event);
     }),
     clear: watchRouter.notifications.clear.handler(async ({ input, context }) => {
-      try {
-        return await clearNotifications(context.db, input.params.workspace, context.event);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await clearNotifications(context.db, input.params.workspace, context.event);
     }),
     remove: watchRouter.notifications.remove.handler(async ({ input, context }) => {
-      try {
-        return await deleteNotification(
-          context.db,
-          input.params.workspace,
-          input.params.id,
-          context.event
-        );
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await deleteNotification(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        context.event
+      );
     })
   }
 });
