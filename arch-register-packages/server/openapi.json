@@ -5271,7 +5271,8 @@
                           "_visibilityMode",
                           "_completeness",
                           "_isMatch"
-                        ]
+                        ],
+                        "additionalProperties": {}
                       },
                       "description": "Tree nodes"
                     },
@@ -9294,6 +9295,45 @@
                           {
                             "type": "object",
                             "properties": {
+                              "table": {
+                                "type": "object",
+                                "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  }
+                                },
+                                "description": "Configuration for table view"
+                              },
+                              "cards": {
+                                "type": "object",
+                                "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  }
+                                },
+                                "description": "Configuration for cards view"
+                              },
+                              "tree": {
+                                "type": "object",
+                                "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  }
+                                },
+                                "description": "Configuration for tree view"
+                              },
                               "radar": {
                                 "type": "object",
                                 "properties": {
@@ -9443,10 +9483,18 @@
                               "hierarchy": {
                                 "type": "object",
                                 "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  },
                                   "levels": {
                                     "type": "integer",
                                     "minimum": 1,
                                     "maximum": 3,
+                                    "default": 2,
                                     "description": "Number of hierarchy levels (1-3)"
                                   },
                                   "level1SchemaId": {
@@ -9458,12 +9506,14 @@
                                         "type": "null"
                                       }
                                     ],
+                                    "default": null,
                                     "description": "Schema identifier for level 1"
                                   },
                                   "level1Columns": {
                                     "type": "integer",
                                     "minimum": 1,
                                     "maximum": 4,
+                                    "default": 3,
                                     "description": "Number of columns for level 1 (1-4)"
                                   },
                                   "level2SchemaId": {
@@ -9501,26 +9551,30 @@
                                     "description": "Number of columns for level 3 (1-4)"
                                   }
                                 },
-                                "required": [
-                                  "levels",
-                                  "level1SchemaId",
-                                  "level1Columns"
-                                ],
                                 "description": "Configuration for hierarchy view"
                               },
                               "explore": {
                                 "type": "object",
                                 "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  },
                                   "leftDepth": {
                                     "type": "integer",
                                     "minimum": 0,
                                     "maximum": 9007199254740991,
+                                    "default": 1,
                                     "description": "Depth of relationships to explore on the left"
                                   },
                                   "rightDepth": {
                                     "type": "integer",
                                     "minimum": 0,
                                     "maximum": 9007199254740991,
+                                    "default": 1,
                                     "description": "Depth of relationships to explore on the right"
                                   },
                                   "relationFieldNames": {
@@ -9528,14 +9582,10 @@
                                     "items": {
                                       "type": "string"
                                     },
+                                    "default": [],
                                     "description": "Relationship field names to include"
                                   }
                                 },
-                                "required": [
-                                  "leftDepth",
-                                  "rightDepth",
-                                  "relationFieldNames"
-                                ],
                                 "description": "Configuration for explore view"
                               }
                             }
@@ -9777,6 +9827,45 @@
                       {
                         "type": "object",
                         "properties": {
+                          "table": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for table view"
+                          },
+                          "cards": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for cards view"
+                          },
+                          "tree": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for tree view"
+                          },
                           "radar": {
                             "type": "object",
                             "properties": {
@@ -9926,10 +10015,18 @@
                           "hierarchy": {
                             "type": "object",
                             "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
                               "levels": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 3,
+                                "default": 2,
                                 "description": "Number of hierarchy levels (1-3)"
                               },
                               "level1SchemaId": {
@@ -9941,12 +10038,14 @@
                                     "type": "null"
                                   }
                                 ],
+                                "default": null,
                                 "description": "Schema identifier for level 1"
                               },
                               "level1Columns": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 4,
+                                "default": 3,
                                 "description": "Number of columns for level 1 (1-4)"
                               },
                               "level2SchemaId": {
@@ -9984,26 +10083,30 @@
                                 "description": "Number of columns for level 3 (1-4)"
                               }
                             },
-                            "required": [
-                              "levels",
-                              "level1SchemaId",
-                              "level1Columns"
-                            ],
                             "description": "Configuration for hierarchy view"
                           },
                           "explore": {
                             "type": "object",
                             "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
                               "leftDepth": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 9007199254740991,
+                                "default": 1,
                                 "description": "Depth of relationships to explore on the left"
                               },
                               "rightDepth": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 9007199254740991,
+                                "default": 1,
                                 "description": "Depth of relationships to explore on the right"
                               },
                               "relationFieldNames": {
@@ -10011,14 +10114,10 @@
                                 "items": {
                                   "type": "string"
                                 },
+                                "default": [],
                                 "description": "Relationship field names to include"
                               }
                             },
-                            "required": [
-                              "leftDepth",
-                              "rightDepth",
-                              "relationFieldNames"
-                            ],
                             "description": "Configuration for explore view"
                           }
                         }
@@ -10230,6 +10329,45 @@
                         {
                           "type": "object",
                           "properties": {
+                            "table": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for table view"
+                            },
+                            "cards": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for cards view"
+                            },
+                            "tree": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for tree view"
+                            },
                             "radar": {
                               "type": "object",
                               "properties": {
@@ -10379,10 +10517,18 @@
                             "hierarchy": {
                               "type": "object",
                               "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
                                 "levels": {
                                   "type": "integer",
                                   "minimum": 1,
                                   "maximum": 3,
+                                  "default": 2,
                                   "description": "Number of hierarchy levels (1-3)"
                                 },
                                 "level1SchemaId": {
@@ -10394,12 +10540,14 @@
                                       "type": "null"
                                     }
                                   ],
+                                  "default": null,
                                   "description": "Schema identifier for level 1"
                                 },
                                 "level1Columns": {
                                   "type": "integer",
                                   "minimum": 1,
                                   "maximum": 4,
+                                  "default": 3,
                                   "description": "Number of columns for level 1 (1-4)"
                                 },
                                 "level2SchemaId": {
@@ -10437,26 +10585,30 @@
                                   "description": "Number of columns for level 3 (1-4)"
                                 }
                               },
-                              "required": [
-                                "levels",
-                                "level1SchemaId",
-                                "level1Columns"
-                              ],
                               "description": "Configuration for hierarchy view"
                             },
                             "explore": {
                               "type": "object",
                               "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
                                 "leftDepth": {
                                   "type": "integer",
                                   "minimum": 0,
                                   "maximum": 9007199254740991,
+                                  "default": 1,
                                   "description": "Depth of relationships to explore on the left"
                                 },
                                 "rightDepth": {
                                   "type": "integer",
                                   "minimum": 0,
                                   "maximum": 9007199254740991,
+                                  "default": 1,
                                   "description": "Depth of relationships to explore on the right"
                                 },
                                 "relationFieldNames": {
@@ -10464,14 +10616,10 @@
                                   "items": {
                                     "type": "string"
                                   },
+                                  "default": [],
                                   "description": "Relationship field names to include"
                                 }
                               },
-                              "required": [
-                                "leftDepth",
-                                "rightDepth",
-                                "relationFieldNames"
-                              ],
                               "description": "Configuration for explore view"
                             }
                           }
@@ -10704,6 +10852,45 @@
                       {
                         "type": "object",
                         "properties": {
+                          "table": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for table view"
+                          },
+                          "cards": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for cards view"
+                          },
+                          "tree": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for tree view"
+                          },
                           "radar": {
                             "type": "object",
                             "properties": {
@@ -10853,10 +11040,18 @@
                           "hierarchy": {
                             "type": "object",
                             "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
                               "levels": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 3,
+                                "default": 2,
                                 "description": "Number of hierarchy levels (1-3)"
                               },
                               "level1SchemaId": {
@@ -10868,12 +11063,14 @@
                                     "type": "null"
                                   }
                                 ],
+                                "default": null,
                                 "description": "Schema identifier for level 1"
                               },
                               "level1Columns": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 4,
+                                "default": 3,
                                 "description": "Number of columns for level 1 (1-4)"
                               },
                               "level2SchemaId": {
@@ -10911,26 +11108,30 @@
                                 "description": "Number of columns for level 3 (1-4)"
                               }
                             },
-                            "required": [
-                              "levels",
-                              "level1SchemaId",
-                              "level1Columns"
-                            ],
                             "description": "Configuration for hierarchy view"
                           },
                           "explore": {
                             "type": "object",
                             "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
                               "leftDepth": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 9007199254740991,
+                                "default": 1,
                                 "description": "Depth of relationships to explore on the left"
                               },
                               "rightDepth": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 9007199254740991,
+                                "default": 1,
                                 "description": "Depth of relationships to explore on the right"
                               },
                               "relationFieldNames": {
@@ -10938,14 +11139,10 @@
                                 "items": {
                                   "type": "string"
                                 },
+                                "default": [],
                                 "description": "Relationship field names to include"
                               }
                             },
-                            "required": [
-                              "leftDepth",
-                              "rightDepth",
-                              "relationFieldNames"
-                            ],
                             "description": "Configuration for explore view"
                           }
                         }
@@ -11152,6 +11349,45 @@
                         {
                           "type": "object",
                           "properties": {
+                            "table": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for table view"
+                            },
+                            "cards": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for cards view"
+                            },
+                            "tree": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for tree view"
+                            },
                             "radar": {
                               "type": "object",
                               "properties": {
@@ -11301,10 +11537,18 @@
                             "hierarchy": {
                               "type": "object",
                               "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
                                 "levels": {
                                   "type": "integer",
                                   "minimum": 1,
                                   "maximum": 3,
+                                  "default": 2,
                                   "description": "Number of hierarchy levels (1-3)"
                                 },
                                 "level1SchemaId": {
@@ -11316,12 +11560,14 @@
                                       "type": "null"
                                     }
                                   ],
+                                  "default": null,
                                   "description": "Schema identifier for level 1"
                                 },
                                 "level1Columns": {
                                   "type": "integer",
                                   "minimum": 1,
                                   "maximum": 4,
+                                  "default": 3,
                                   "description": "Number of columns for level 1 (1-4)"
                                 },
                                 "level2SchemaId": {
@@ -11359,26 +11605,30 @@
                                   "description": "Number of columns for level 3 (1-4)"
                                 }
                               },
-                              "required": [
-                                "levels",
-                                "level1SchemaId",
-                                "level1Columns"
-                              ],
                               "description": "Configuration for hierarchy view"
                             },
                             "explore": {
                               "type": "object",
                               "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
                                 "leftDepth": {
                                   "type": "integer",
                                   "minimum": 0,
                                   "maximum": 9007199254740991,
+                                  "default": 1,
                                   "description": "Depth of relationships to explore on the left"
                                 },
                                 "rightDepth": {
                                   "type": "integer",
                                   "minimum": 0,
                                   "maximum": 9007199254740991,
+                                  "default": 1,
                                   "description": "Depth of relationships to explore on the right"
                                 },
                                 "relationFieldNames": {
@@ -11386,14 +11636,10 @@
                                   "items": {
                                     "type": "string"
                                   },
+                                  "default": [],
                                   "description": "Relationship field names to include"
                                 }
                               },
-                              "required": [
-                                "leftDepth",
-                                "rightDepth",
-                                "relationFieldNames"
-                              ],
                               "description": "Configuration for explore view"
                             }
                           }
