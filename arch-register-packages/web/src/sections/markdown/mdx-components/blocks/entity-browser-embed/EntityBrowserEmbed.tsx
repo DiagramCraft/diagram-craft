@@ -11,6 +11,7 @@ import {
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
 import { decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbed.module.css';
+import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
 
 type Props = {
   config?: string;
@@ -79,6 +80,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
 
   const viewConfig = config.viewConfigs[config.view] ?? null;
   const browserRows = rows as BrowserEntityRecord[];
+  const displayFields = buildEntityDisplayFields(typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas, !!resolvedProjectId);
 
   return (
     <EntityBrowserView
@@ -96,6 +98,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
       ownerFilter={ownerFilter}
       statusFilter={statusFilter}
       activeViewConfig={viewConfig}
+      displayFields={displayFields}
       onEntityClick={onEntityClick}
       readOnly
       hideToolbar

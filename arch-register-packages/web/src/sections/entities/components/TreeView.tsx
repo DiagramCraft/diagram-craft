@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { TbChevronDown, TbChevronRight, TbDots } from 'react-icons/tb';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
-import { StatusChip } from '../../../components/StatusChip';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { TreeNode } from '@arch-register/api-types/entityContract';
@@ -19,6 +18,7 @@ import type {
 } from './entityBrowserState';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import styles from '../EntityBrowserScreen.module.css';
+import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 
 export type TreeViewProps = {
   workspaceId: string;
@@ -35,6 +35,8 @@ export type TreeViewProps = {
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
   readOnly?: boolean;
+  config: unknown;
+  displayFields: EntityDisplayField[];
 };
 
 type TreeItem = (TreeNode & { _projectLink?: ProjectLinkState }) & { children: TreeItem[] };
@@ -53,7 +55,7 @@ export const TreeView = ({
   onClone,
   lifecycleStates,
   projectContext,
-  readOnly
+  readOnly, config, displayFields
 }: TreeViewProps) => {
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
@@ -87,6 +89,7 @@ export const TreeView = ({
       .filter(node => !childIds.has(node._uid))
       .sort((a, b) => (a._name || a._slug).localeCompare(b._name || b._slug));
   }, [nodes, edges]);
+  const columns = getDisplayFieldIds('tree', config).map(id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' });
 
   if (nodes.length === 0) {
     return (
@@ -104,9 +107,7 @@ export const TreeView = ({
           <tr>
             <th style={{ minWidth: 240 }}>Name</th>
             <th>Type</th>
-            <th>Owner</th>
-            <th>Status</th>
-            <th style={{ width: 110 }}>Namespace</th>
+            {columns.filter(c => c.id !== '_description').map(c => <th key={c.id}>{c.label}</th>)}
             {!readOnly && <th style={{ width: 28 }} />}
           </tr>
         </thead>
@@ -123,6 +124,8 @@ export const TreeView = ({
               lifecycleStates={lifecycleStates}
               projectContext={projectContext}
               readOnly={readOnly}
+              columns={columns}
+              displayFields={displayFields}
             />
           ))}
         </tbody>
@@ -140,7 +143,7 @@ const TreeNodeRow = ({
   onClone,
   lifecycleStates,
   projectContext,
-  readOnly
+  readOnly, columns, displayFields
 }: {
   item: TreeItem;
   depth: number;
@@ -151,6 +154,8 @@ const TreeNodeRow = ({
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
   readOnly?: boolean;
+  columns: EntityDisplayField[];
+  displayFields: EntityDisplayField[];
 }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = item.children.length > 0;
@@ -204,22 +209,15 @@ const TreeNodeRow = ({
               >
                 {item._name || item._slug}
               </div>
-              {item._description && <div className={styles.tableNameSub}>{item._description}</div>}
+              {columns.some(c => c.id === '_description') && item._description && <div className={styles.tableNameSub}>{item._description}</div>}
             </div>
           </div>
         </td>
         <td>{schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}</td>
-        <td>
-          <span className="dim">{item._owner?.name ?? '—'}</span>
-        </td>
-        <td>
-          {item._lifecycle && (
-            <StatusChip value={item._lifecycle.id} lifecycleStates={lifecycleStates} />
-          )}
-        </td>
-        <td>
-          <span className="dim">{item._namespace}</span>
-        </td>
+        {columns.filter(c => c.id !== '_description').map(column => {
+          const field = findEntityDisplayField(column.id, item, schemaMap, displayFields) ?? column;
+          return <td key={column.id}><span className="dim">{formatEntityDisplayValue(item, field) ?? '—'}</span></td>;
+        })}
         {!readOnly && (
           <td onClick={event => event.stopPropagation()}>
             {menuItems.length > 0 && (
@@ -248,6 +246,8 @@ const TreeNodeRow = ({
             lifecycleStates={lifecycleStates}
             projectContext={projectContext}
             readOnly={readOnly}
+            columns={columns}
+            displayFields={displayFields}
           />
         ))}
     </>

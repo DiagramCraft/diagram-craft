@@ -66,7 +66,7 @@ export const useEntityBrowserData = ({
       conditions,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
-      view: 'summary',
+      view: 'full',
       limit: isPagedBrowse ? pageSize : undefined,
       offset: isPagedBrowse ? pagedOffset : undefined,
       asOf,
@@ -89,7 +89,7 @@ export const useEntityBrowserData = ({
       conditions,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
-      view: 'summary',
+      view: 'full',
       asOf,
       includeProjectSnapshots
     },

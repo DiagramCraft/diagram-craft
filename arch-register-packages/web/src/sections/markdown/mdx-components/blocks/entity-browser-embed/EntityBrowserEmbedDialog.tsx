@@ -19,6 +19,7 @@ import {
   type EntityBrowserEmbedConfig
 } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbedDialog.module.css';
+import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from '../../../../entities/components/entityDisplayFields';
 
 const noop = () => {};
 
@@ -71,6 +72,8 @@ export const EntityBrowserEmbedDialog = ({
         }
       : undefined
   });
+  const displayFields = useMemo(() => buildEntityDisplayFields(typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas, !!projectId), [schemas, typeFilter, projectId]);
+  const displayView = DISPLAY_FIELD_VIEWS.has(view) ? view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore' : null;
 
   useEffect(() => {
     if (!open) return;
@@ -179,6 +182,10 @@ export const EntityBrowserEmbedDialog = ({
           sortOptions={sortOptions}
           view={view}
           setView={setView}
+          displayFields={displayView ? displayFields : undefined}
+          selectedDisplayFieldIds={displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined}
+          onDisplayFieldsChange={displayView ? ids => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, ids)) : undefined}
+          onDisplayFieldsReset={displayView ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig)) : undefined}
         />
         <div className={styles.viewArea}>
           <EntityBrowserView
@@ -196,6 +203,7 @@ export const EntityBrowserEmbedDialog = ({
             ownerFilter={ownerFilter}
             statusFilter={statusFilter}
             activeViewConfig={activeViewConfig}
+            displayFields={displayFields}
             onConfigChange={setActiveViewConfig}
             onEntityClick={noop}
             readOnly

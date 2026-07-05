@@ -12,6 +12,8 @@ import type { BrowserView, FilterCondition } from '@arch-register/api-types/view
 import { FilterBuilder } from '../../../components/FilterBuilder';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import styles from './EntityBrowser.module.css';
+import { ManageFieldsPopover } from './ManageFieldsPopover';
+import type { EntityDisplayField } from './entityDisplayFields';
 
 type EntityBrowserToolbarProps = {
   q: string;
@@ -35,6 +37,10 @@ type EntityBrowserToolbarProps = {
   tlOpen?: boolean;
   onToggleTimeline?: () => void;
   asOf?: string;
+  displayFields?: EntityDisplayField[];
+  selectedDisplayFieldIds?: string[];
+  onDisplayFieldsChange?: (fieldIds: string[]) => void;
+  onDisplayFieldsReset?: () => void;
 };
 
 export const EntityBrowserToolbar = ({
@@ -58,7 +64,11 @@ export const EntityBrowserToolbar = ({
   readOnly,
   tlOpen,
   onToggleTimeline,
-  asOf
+  asOf,
+  displayFields,
+  selectedDisplayFieldIds,
+  onDisplayFieldsChange,
+  onDisplayFieldsReset
 }: EntityBrowserToolbarProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
@@ -130,6 +140,13 @@ export const EntityBrowserToolbar = ({
           { value: 'hierarchy', label: 'Hierarchy' },
           { value: 'explore', label: 'Explore' }
         ]}
+      />
+      <ManageFieldsPopover
+        fields={displayFields ?? []}
+        selectedIds={selectedDisplayFieldIds ?? []}
+        onChange={onDisplayFieldsChange ?? (() => {})}
+        onReset={onDisplayFieldsReset}
+        disabled={!displayFields || !selectedDisplayFieldIds || !onDisplayFieldsChange}
       />
       {onToggleTimeline && (
         <Button

@@ -17,11 +17,13 @@ import {
 } from './ExploreView.helpers';
 import { Button } from '@diagram-craft/app-components/Button';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
+import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 
 type ExploreViewProps = EntityBrowserRowViewProps & {
   config: unknown;
   onConfigChange: (cfg: ExploreViewConfig) => void;
   hideToolbar?: boolean;
+  displayFields: EntityDisplayField[];
 };
 
 type ConnectorLine = ExploreConnector & {
@@ -98,7 +100,7 @@ export const ExploreView = ({
   config,
   onConfigChange,
   linkedEntityIds,
-  hideToolbar
+  hideToolbar, displayFields
 }: ExploreViewProps) => {
   const parsedConfig = useMemo(() => {
     const result = exploreViewConfigSchema.safeParse(config);
@@ -116,6 +118,7 @@ export const ExploreView = ({
     });
     return map;
   }, [schemas]);
+  const fullSchemaMap = useMemo(() => new Map(schemas.map((schema, index) => [schema.id, { schema, index }])), [schemas]);
 
   const [localConfig, setLocalConfig] = useState<ExploreViewConfig>(
     normalizeExploreConfig(parsedConfig ?? DEFAULT_EXPLORE_CONFIG)
@@ -128,6 +131,7 @@ export const ExploreView = ({
     () => normalizeExploreConfig(parsedConfig ?? localConfig),
     [parsedConfig, localConfig]
   );
+  const selectedDisplayFields = getDisplayFieldIds('explore', normalizedConfig);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
   const [connectorTooltip, setConnectorTooltip] = useState<ConnectorTooltip>(null);
 
@@ -543,7 +547,7 @@ export const ExploreView = ({
                                 >
                                   {entity.name || entity.slug}
                                 </div>
-                                <div className={styles.entitySlug}>{entity.slug}</div>
+                                {selectedDisplayFields.includes('_slug') && <div className={styles.entitySlug}>{entity.slug}</div>}
                               </div>
                             </div>
                             {isDuplicate && (
@@ -552,9 +556,13 @@ export const ExploreView = ({
                           </div>
 
                           <div className={styles.entityMeta}>
-                            {schema && <Chip tone="ghost">{schema.name}</Chip>}
-                            {entity.ownerName && <Chip tone="ghost">{entity.ownerName}</Chip>}
+                            {entity.record && selectedDisplayFields.filter(id => id !== '_slug' && id !== '_description').map(id => {
+                              const field = findEntityDisplayField(id, entity.record!, fullSchemaMap, displayFields);
+                              const value = field ? formatEntityDisplayValue(entity.record!, field) : null;
+                              return value == null ? null : <Chip key={id} tone="ghost">{field!.label}: {value}</Chip>;
+                            })}
                           </div>
+                          {entity.record && selectedDisplayFields.includes('_description') && entity.record._description && <div className={styles.entitySlug}>{entity.record._description}</div>}
                         </button>
                       );
                     })

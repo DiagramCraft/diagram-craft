@@ -140,7 +140,7 @@ const entityFacetsSchema = z.object({
 // ── Tree ──────────────────────────────────────────────────────
 
 const treeResponseSchema = z.object({
-  nodes: z.array(entitySummarySchema.extend({
+  nodes: z.array(entityRecordSchema.extend({
     _isMatch: z.boolean().describe('Whether this node matches the search criteria')
   })).describe('Tree nodes'),
   edges: z.array(z.object({
