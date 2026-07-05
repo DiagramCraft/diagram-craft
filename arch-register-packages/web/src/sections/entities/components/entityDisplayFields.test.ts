@@ -5,7 +5,8 @@ import {
   buildEntityDisplayFields,
   formatEntityDisplayValue,
   getDisplayFieldIds,
-  withDisplayFieldIds
+  withDisplayFieldIds,
+  withoutDisplayFieldIds
 } from './entityDisplayFields';
 
 const schema = {
@@ -48,6 +49,10 @@ describe('entity display fields', () => {
       leftDepth: 2,
       fieldIds: ['active']
     });
+    expect(withoutDisplayFieldIds({ leftDepth: 2, fieldIds: ['active'] })).toEqual({
+      leftDepth: 2
+    });
+    expect(withoutDisplayFieldIds({ fieldIds: ['active'] })).toBeNull();
   });
 
   it('formats standard, boolean, and select values', () => {

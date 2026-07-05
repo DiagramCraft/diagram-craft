@@ -24,7 +24,7 @@ import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
 import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
 import styles from './EntityBrowser.module.css';
-import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds } from './entityDisplayFields';
+import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from './entityDisplayFields';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
@@ -308,6 +308,7 @@ export const EntityBrowser = ({
         displayFields={displayView && !readOnly ? displayFields : undefined}
         selectedDisplayFieldIds={!readOnly ? selectedDisplayFieldIds : undefined}
         onDisplayFieldsChange={displayView && !readOnly ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds)) : undefined}
+        onDisplayFieldsReset={displayView && !readOnly ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig)) : undefined}
       />
       {tlOpen && (
         <TimelineStrip

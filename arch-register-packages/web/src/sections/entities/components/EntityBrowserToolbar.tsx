@@ -40,6 +40,7 @@ type EntityBrowserToolbarProps = {
   displayFields?: EntityDisplayField[];
   selectedDisplayFieldIds?: string[];
   onDisplayFieldsChange?: (fieldIds: string[]) => void;
+  onDisplayFieldsReset?: () => void;
 };
 
 export const EntityBrowserToolbar = ({
@@ -66,7 +67,8 @@ export const EntityBrowserToolbar = ({
   asOf,
   displayFields,
   selectedDisplayFieldIds,
-  onDisplayFieldsChange
+  onDisplayFieldsChange,
+  onDisplayFieldsReset
 }: EntityBrowserToolbarProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
@@ -143,6 +145,7 @@ export const EntityBrowserToolbar = ({
         fields={displayFields ?? []}
         selectedIds={selectedDisplayFieldIds ?? []}
         onChange={onDisplayFieldsChange ?? (() => {})}
+        onReset={onDisplayFieldsReset}
         disabled={!displayFields || !selectedDisplayFieldIds || !onDisplayFieldsChange}
       />
       {onToggleTimeline && (

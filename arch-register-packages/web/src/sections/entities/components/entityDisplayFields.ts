@@ -83,6 +83,12 @@ export const withDisplayFieldIds = (config: unknown, fieldIds: string[]) => ({
   fieldIds
 });
 
+export const withoutDisplayFieldIds = (config: unknown): unknown => {
+  if (config == null || typeof config !== 'object') return null;
+  const { fieldIds: _fieldIds, ...rest } = config as { fieldIds?: unknown } & Record<string, unknown>;
+  return Object.keys(rest).length === 0 ? null : rest;
+};
+
 export const findEntityDisplayField = (
   id: string,
   entity: Pick<EntityRecord, '_schema'>,

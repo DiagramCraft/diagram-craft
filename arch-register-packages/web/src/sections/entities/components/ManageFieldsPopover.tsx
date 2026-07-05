@@ -9,11 +9,13 @@ export const ManageFieldsPopover = ({
   fields,
   selectedIds,
   onChange,
+  onReset,
   disabled = false
 }: {
   fields: EntityDisplayField[];
   selectedIds: string[];
   onChange: (fieldIds: string[]) => void;
+  onReset?: () => void;
   disabled?: boolean;
 }) => {
   const actionsRef = useRef<PopoverActions | null>(null);
@@ -61,6 +63,20 @@ export const ManageFieldsPopover = ({
             ))}
           </div>
         ))}
+        {onReset && (
+          <div className={styles.fieldsFooter}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                onReset();
+                actionsRef.current?.close();
+              }}
+            >
+              Reset to defaults
+            </Button>
+          </div>
+        )}
       </Popover.Content>
     </Popover.Root>
   );

@@ -19,7 +19,7 @@ import {
   type EntityBrowserEmbedConfig
 } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbedDialog.module.css';
-import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds } from '../../../../entities/components/entityDisplayFields';
+import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from '../../../../entities/components/entityDisplayFields';
 
 const noop = () => {};
 
@@ -185,6 +185,7 @@ export const EntityBrowserEmbedDialog = ({
           displayFields={displayView ? displayFields : undefined}
           selectedDisplayFieldIds={displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined}
           onDisplayFieldsChange={displayView ? ids => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, ids)) : undefined}
+          onDisplayFieldsReset={displayView ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig)) : undefined}
         />
         <div className={styles.viewArea}>
           <EntityBrowserView
