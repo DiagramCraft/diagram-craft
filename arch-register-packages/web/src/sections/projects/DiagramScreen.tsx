@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearch, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from './DiagramScreen.module.css';
+import '@diagram-craft/main/embed/embed.css';
 import { TbArrowLeft } from 'react-icons/tb';
-import { initializeDiagramCraft, getIncludedPackages } from '../../diagramcraft-initial-config';
+import { initializeDiagramCraft } from '../../diagramcraft-initial-config';
 import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
-import { DefaultDataProvider } from '@diagram-craft/model/data-providers/dataProviderDefault';
+import { loadDocument } from '@diagram-craft/main/embed/loadDocument';
+import { registerDocumentStencils } from '@diagram-craft/main/embed/registerStencils';
 import {
   UrlDataProvider,
   UrlDataProviderId
@@ -17,7 +19,6 @@ import type {
   SerializedOverride
 } from '@diagram-craft/model/serialization/serializedTypes';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
-import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../../auth/AuthContext';
@@ -260,64 +261,17 @@ export const DiagramScreen = () => {
   ]);
 
   useEffect(() => {
-    let releaseDataChange = () => {};
+    let disconnect = () => {};
     let releaseAwarenessChange = () => {};
+    let cancelled = false;
 
     const loadDiagram = async () => {
       try {
         setLoading(true);
         sawCollaboratorsRef.current = false;
 
-        const suppressDefaultProvider = async (document: DiagramDocument) => {
-          const defaultProvider = document.data.providers.find(
-            provider => provider instanceof DefaultDataProvider
-          );
-
-          if (!defaultProvider) return;
-
-          for (const schema of [...defaultProvider.schemas]) {
-            await defaultProvider.deleteSchema(schema);
-          }
-        };
-
-        let reconcileInFlight = false;
-
-        const reconcilePublicProvider = async (
-          document: DiagramDocument,
-          publicSchemas: PublicSchema[]
-        ) => {
-          if (reconcileInFlight) return;
-          reconcileInFlight = true;
-
-          try {
-            document.data.setProviders([makePublicProvider(publicSchemas)]);
-            await suppressDefaultProvider(document);
-          } finally {
-            reconcileInFlight = false;
-          }
-        };
-
-        const hasExpectedSchemas = (document: DiagramDocument, publicSchemas: PublicSchema[]) => {
-          const currentSchemaIds = document.data.db.schemas.map(schema => schema.id).sort();
-          const expectedSchemaIds = publicSchemas.map(schema => schema.id).sort();
-
-          return (
-            currentSchemaIds.length === expectedSchemaIds.length &&
-            currentSchemaIds.every((schemaId, index) => schemaId === expectedSchemaIds[index])
-          );
-        };
-
-        const enforcePublicProvider = async (
-          document: DiagramDocument,
-          publicSchemas: PublicSchema[]
-        ) => {
-          if (hasExpectedSchemas(document, publicSchemas)) return;
-
-          await reconcilePublicProvider(document, publicSchemas);
-        };
-
-        const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);
-        const includedPackages = getIncludedPackages();
+        const { documentFactory, diagramFactory, includedPackages, stencilConfig } =
+          initializeDiagramCraft(workspaceId);
 
         // biome-ignore lint/suspicious/noExplicitAny: API response
         const findFileInFolders = (folders: any[], rootFiles?: any[]) => {
@@ -411,40 +365,52 @@ export const DiagramScreen = () => {
                 avatar: config.awareness.avatar()
               };
 
-        const root = await documentFactory.loadCRDT(roomName, userState, () => {});
-        const document = await documentFactory.createDocument(root, roomName, () => {});
-
         const publicSchemasResponse = await fetch(`/api/public/${workspaceId}/schemas`);
         if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
         const publicSchemas = (await publicSchemasResponse.json()) as PublicSchema[];
 
-        // If the CRDT already has state (another client is connected), use it directly.
-        // Otherwise, this is the first client — load from REST and deserialize.
-        if (document.diagrams.length === 0) {
-          const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas);
+        const { doc: document, disconnect: docDisconnect, awareness } = await loadDocument({
+          url: roomName,
+          userState,
+          documentFactory,
+          diagramFactory,
+          // roomName is a CRDT identifier, not a fetchable file URL — always create the
+          // document straight from the CRDT root rather than falling back to the
+          // autosave/file-URL loading path (which is standalone-only).
+          forceLoadFromServer: true,
+          // Only the first client to connect sees an empty CRDT — subsequent
+          // clients sync existing collaborative state instead of re-seeding it.
+          seedContent: async doc => {
+            const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas);
+            await deserializeDiagramDocument(diagramData, doc, diagramFactory, {
+              includedPackages
+            });
+          },
+          dataProviders: {
+            providers: () => [makePublicProvider(publicSchemas)],
+            includeDefaultProvider: false
+          }
+        });
 
-          await deserializeDiagramDocument(diagramData, document, diagramFactory, {
-            includedPackages
-          });
+        // The effect was cleaned up (unmount/navigation/dep change) while loadDocument
+        // was still pending — the cleanup below already ran with the no-op `disconnect`,
+        // so it never closed the connection loadDocument just opened. Close it now
+        // instead of wiring it up for a component that's already gone.
+        if (cancelled) {
+          docDisconnect();
+          document.release();
+          return;
         }
+        disconnect = docDisconnect;
 
-        await document.load();
-        await reconcilePublicProvider(document, publicSchemas);
-
-        const handleDataChange = () => {
-          void enforcePublicProvider(document, publicSchemas);
-        };
-        releaseDataChange = document.data.on('change', handleDataChange);
+        registerDocumentStencils(document, stencilConfig);
 
         const handleAwarenessChange = () => {
-          if ((CollaborationConfig.Backend.awareness?.getUserStates().length ?? 0) > 1) {
+          if ((awareness?.getUserStates().length ?? 0) > 1) {
             sawCollaboratorsRef.current = true;
           }
         };
-        releaseAwarenessChange = CollaborationConfig.Backend.awareness?.on(
-          'changeUser',
-          handleAwarenessChange
-        ) ?? (() => {});
+        releaseAwarenessChange = awareness?.on('changeUser', handleAwarenessChange) ?? (() => {});
         handleAwarenessChange();
 
         if (document.diagrams.length === 0) {
@@ -455,6 +421,7 @@ export const DiagramScreen = () => {
         setDoc(document);
         setLoading(false);
       } catch (err) {
+        console.error('Failed to load diagram:', err);
         setError(err instanceof Error ? err.message : 'Failed to load diagram');
         setLoading(false);
       }
@@ -463,9 +430,9 @@ export const DiagramScreen = () => {
     loadDiagram();
 
     return () => {
-      CollaborationConfig.Backend.disconnect(() => {});
+      cancelled = true;
+      disconnect();
       releaseAwarenessChange();
-      releaseDataChange();
       if (docRef.current) {
         docRef.current.deactivate(() => {});
         docRef.current.release();

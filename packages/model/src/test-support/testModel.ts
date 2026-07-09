@@ -13,6 +13,7 @@ import { ElementFactory } from '../elementFactory';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { Point } from '@diagram-craft/geometry/point';
 import type { NodeProps } from '../diagramProps';
+import type { DataProviderPolicy } from '../diagramDocumentData';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
@@ -22,8 +23,8 @@ export class TestModel {
     return db;
   }
 
-  static newDocument(root?: CRDTRoot) {
-    return new DiagramDocument(defaultRegistry(), false, root);
+  static newDocument(root?: CRDTRoot, dataProviderPolicy?: DataProviderPolicy) {
+    return new DiagramDocument(defaultRegistry(), false, root, dataProviderPolicy);
   }
 
   static newDiagramWithLayer(opts?: { root?: CRDTRoot; nodes?: Array<NodeCreateOptions> }) {
