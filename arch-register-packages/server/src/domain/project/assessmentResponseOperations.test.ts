@@ -61,7 +61,8 @@ const makeDb = (assessment: AssessmentDbResult): DatabaseAdapter =>
         values: { f1: 5 },
         created_at: now,
         updated_at: now,
-        updated_by: 'user-1'
+        updated_by: 'user-1',
+        updated_by_name: 'User One'
       }))
     }
   }) as unknown as DatabaseAdapter;
@@ -94,6 +95,9 @@ describe('upsertAssessmentResponse', () => {
     );
 
     expect(result.entity_id).toBe('entity-1');
+    expect(result.id).toBe('resp-1');
+    expect(result.updated_by).toBe('user-1');
+    expect(result.updated_by_name).toBe('User One');
     expect(db.project.upsertAssessmentResponse).toHaveBeenCalledTimes(1);
   });
 });

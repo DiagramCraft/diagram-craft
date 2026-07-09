@@ -9,10 +9,13 @@ export const toApiAssessmentResponse = (
   row: AssessmentResponseDbResult,
   assessment: AssessmentDbResult
 ): AssessmentResponse => ({
+  id: row.id,
   entity_id: row.entity_id,
   values: row.values,
   status: computeAssessmentStatus(assessment.fields, row.values),
-  updated_at: row.updated_at.toISOString()
+  updated_at: row.updated_at.toISOString(),
+  updated_by: row.updated_by,
+  updated_by_name: row.updated_by_name
 });
 
 export const countCompletedEntities = (

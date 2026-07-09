@@ -4,6 +4,7 @@ import type { AssessmentField } from '@arch-register/api-types/assessmentContrac
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
 import { orpcClient } from '../lib/orpcClient';
+import { useAuth } from '../auth/AuthContext';
 
 export const useAssessmentResponses = (workspaceId: string, projectId: string, assessmentId: string) => {
   return useQuery({
@@ -23,6 +24,7 @@ export const useUpsertAssessmentResponse = (
   fields: AssessmentField[]
 ) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const listKey = assessmentResponseKeys.list(workspaceId, projectId, assessmentId);
 
   return useMutation({
@@ -49,10 +51,13 @@ export const useUpsertAssessmentResponse = (
           else mergedValues[fieldId] = value;
         }
         const nextEntry: AssessmentResponse = {
+          id: existing?.id ?? entityId,
           entity_id: entityId,
           values: mergedValues,
           status: computeAssessmentStatus(fields, mergedValues),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          updated_by: user?.id ?? existing?.updated_by ?? null,
+          updated_by_name: user?.display_name ?? existing?.updated_by_name ?? null
         };
         const rest = (current ?? []).filter(r => r.entity_id !== entityId);
         return [...rest, nextEntry];

@@ -300,7 +300,7 @@ describe('listEntities / countEntities with joined assessment', () => {
 
   it('never narrows the entity list when joined without assessment conditions', async () => {
     const entities = [makeEntity(1), makeEntity(2)];
-    const db = makeAssessmentDb(entities, [{ id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null }]);
+    const db = makeAssessmentDb(entities, [{ id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null }]);
 
     const result = await listEntities(db, 'ws-1', null, { assessmentId: 'assessment-1' });
 
@@ -311,7 +311,7 @@ describe('listEntities / countEntities with joined assessment', () => {
   it('matches presence has/has-not conditions', async () => {
     const entities = [makeEntity(1), makeEntity(2)];
     const responses: AssessmentResponseDbResult[] = [
-      { id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null }
+      { id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null }
     ];
     const db = makeAssessmentDb(entities, responses);
 
@@ -333,8 +333,8 @@ describe('listEntities / countEntities with joined assessment', () => {
   it('matches rating conditions with inclusive gte/lte bounds and fails entities without a response', async () => {
     const entities = [makeEntity(1), makeEntity(2), makeEntity(3)];
     const responses: AssessmentResponseDbResult[] = [
-      { id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 3 }, created_at: now, updated_at: now, updated_by: null },
-      { id: 'r2', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-2', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null }
+      { id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 3 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null },
+      { id: 'r2', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-2', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null }
     ];
     const db = makeAssessmentDb(entities, responses);
 
@@ -361,7 +361,7 @@ describe('listEntities / countEntities with joined assessment', () => {
         values: { rating1: 5 },
         created_at: now,
         updated_at: now,
-        updated_by: null
+        updated_by: null, updated_by_name: null
       }));
     const conditions = [{ fieldId: '_assessment', op: 'not_empty' as const, value: undefined }];
 
@@ -409,7 +409,7 @@ describe('listEntities / countEntities with joined assessment', () => {
   it('allows the join when the caller can access the assessment project', async () => {
     const entities = [makeEntity(1)];
     const responses: AssessmentResponseDbResult[] = [
-      { id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null }
+      { id: 'r1', workspace: 'ws-1', assessment_id: 'assessment-1', entity_id: 'entity-1', values: { rating1: 5 }, created_at: now, updated_at: now, updated_by: null, updated_by_name: null }
     ];
     const db = makeAssessmentDb(entities, responses);
     const result = await listEntities(db, 'ws-1', permissiveAuthCtx, {

@@ -936,28 +936,32 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async listAssessmentResponses(workspace: string, assessmentId: string) {
     return await this.sql<AssessmentResponseDbResult[]>`
-      SELECT * FROM assessment_response WHERE workspace = ${workspace} AND assessment_id = ${assessmentId}
+      SELECT ar.*, u.display_name as updated_by_name
+      FROM assessment_response ar
+      LEFT JOIN users u ON u.id = ar.updated_by
+      WHERE ar.workspace = ${workspace} AND ar.assessment_id = ${assessmentId}
     `;
   }
 
   async getAssessmentResponse(workspace: string, assessmentId: string, entityId: string) {
     const [row] = await this.sql<AssessmentResponseDbResult[]>`
-      SELECT * FROM assessment_response
-      WHERE workspace = ${workspace} AND assessment_id = ${assessmentId} AND entity_id = ${entityId}
+      SELECT ar.*, u.display_name as updated_by_name
+      FROM assessment_response ar
+      LEFT JOIN users u ON u.id = ar.updated_by
+      WHERE ar.workspace = ${workspace} AND ar.assessment_id = ${assessmentId} AND ar.entity_id = ${entityId}
     `;
     return row ?? null;
   }
 
   async upsertAssessmentResponse(input: AssessmentResponseDbUpsert) {
     try {
-      const [row] = await this.sql<AssessmentResponseDbResult[]>`
+      await this.sql`
         INSERT INTO assessment_response (id, workspace, assessment_id, entity_id, "values", created_at, updated_at, updated_by)
         VALUES (${randomUUID()}, ${input.workspace}, ${input.assessment_id}, ${input.entity_id}, ${this.json(input.values)}, now(), now(), ${input.updated_by})
         ON CONFLICT (workspace, assessment_id, entity_id)
         DO UPDATE SET "values" = ${this.json(input.values)}, updated_at = now(), updated_by = ${input.updated_by}
-        RETURNING *
       `;
-      return row!;
+      return (await this.getAssessmentResponse(input.workspace, input.assessment_id, input.entity_id))!;
     } catch (error) {
       return normalizePostgresError(error);
     }

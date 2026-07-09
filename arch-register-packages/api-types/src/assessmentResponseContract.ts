@@ -15,12 +15,15 @@ const assessmentResponseStatusSchema = z
   .describe('Completion status derived from the assessment\'s required fields');
 
 const assessmentResponseSchema = z.object({
+  id: z.string().describe('Response identifier'),
   entity_id: z.string().describe('Entity this response belongs to'),
   values: z
     .record(z.string(), z.union([z.string(), z.number()]))
     .describe('Recorded field values, keyed by assessment field id'),
   status: assessmentResponseStatusSchema,
-  updated_at: z.string().describe('ISO 8601 last update timestamp')
+  updated_at: z.string().describe('ISO 8601 last update timestamp'),
+  updated_by: z.string().nullable().describe('User who last updated this response'),
+  updated_by_name: z.string().nullable().describe('Display name of the user who last updated this response')
 });
 
 const upsertAssessmentResponseBodySchema = z.object({
