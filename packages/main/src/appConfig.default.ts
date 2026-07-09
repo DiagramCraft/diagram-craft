@@ -1,30 +1,27 @@
-import { AppConfig, stencilEntry } from './appConfig';
+import { AppConfig } from './appConfig';
 import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
 import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
-import { fileLoaderDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
-import {
-  embedElementDefinitions,
-  embedStencilConfig,
-  embedStencilLoaders,
-  makeJsonFileLoaders
-} from './embed/defaults';
+import { embedElementDefinitions, embedStencilConfig, embedStencilLoaders, makeEmbedFileLoaders } from './embed/defaults';
 
 const random = new Random(Date.now());
+
+// Stencil packs whose asset URLs resolve against this (see embedStencilConfig in
+// embed/defaults.ts) — kept separate from the `/api/fs/` remote-filesystem routing below,
+// since these are static assets, not project files.
+const stencilRoot = import.meta.env.VITE_STENCIL_ROOT ?? '';
+const isStencilAssetUrl = (url: string) => url.startsWith(`${stencilRoot}/stencils/`);
 
 if (!window.electronAPI) {
   FileSystem.loadFromUrl = async (url: string) => {
     let resolvedUrl: string;
-    if (url.includes('$STENCIL_ROOT')) {
-      resolvedUrl = url.replace('$STENCIL_ROOT', import.meta.env.VITE_STENCIL_ROOT ?? '');
+    if (isStencilAssetUrl(url)) {
+      resolvedUrl = url;
     } else {
       const fsConfig = AppConfig.get().filesystem;
-      if (fsConfig.provider === 'remote') {
-        resolvedUrl = `${AppConfig.get().filesystem.endpoint}/api/fs/${url}`;
-      } else {
-        resolvedUrl = url;
-      }
+      resolvedUrl =
+        fsConfig.provider === 'remote' ? `${fsConfig.endpoint}/api/fs/${url}` : url;
     }
     const response = await fetch(resolvedUrl);
     if (!response.ok) {
@@ -39,198 +36,15 @@ export const defaultAppConfig: AppConfig = {
     registry: embedElementDefinitions
   },
   stencils: {
-    loaders: {
-      ...embedStencilLoaders,
-
-      drawioXml: () =>
-        import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioXml)
-    },
-    registry: [
-      ...embedStencilConfig,
-      stencilEntry({
-        id: 'drawioUml',
-        name: 'UML (DrawIO)',
-        description: 'DrawIO-compatible UML stencil set',
-        icon: 'TbBox',
-        group: 'Modelling',
-        includedByDefault: false,
-        loader: 'basic',
-        opts: {
-          stencils: () =>
-            import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
-              m => m.loadUMLStencils
-            )
-        }
-      }),
-      stencilEntry({
-        id: 'GCP',
-        name: 'GCP',
-        description: 'Google Cloud Platform service icons',
-        icon: 'TbCloud',
-        group: 'Cloud & infra',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/gcp2.xml`,
-          foreground: '#3b8df1',
-          background: '#3b8df1'
-        }
-      }),
-      stencilEntry({
-        id: 'AWS',
-        name: 'AWS',
-        description: 'Amazon Web Services icon library',
-        icon: 'TbCloud',
-        group: 'Cloud & infra',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/aws3.xml`,
-          foreground: '#ff9900',
-          background: '#ff9900'
-        }
-      }),
-      stencilEntry({
-        id: 'Azure',
-        name: 'Azure',
-        description: 'Microsoft Azure service icons',
-        icon: 'TbCloud',
-        group: 'Cloud & infra',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/azure.xml`,
-          foreground: '#00abf0',
-          background: '#00abf0'
-        }
-      }),
-      stencilEntry({
-        id: 'Fluid Power',
-        name: 'Fluid Power',
-        description: 'Hydraulic and pneumatic circuit symbols',
-        icon: 'TbCircuitResistor',
-        group: 'Engineering',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/fluid_power.xml`,
-          foreground: 'var(--canvas-fg)',
-          background: 'var(--canvas-fg)'
-        }
-      }),
-      stencilEntry({
-        id: 'IBM',
-        name: 'IBM',
-        description: 'IBM service icons',
-        icon: 'TbCloud',
-        group: 'Cloud & infra',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/ibm.xml`,
-          foreground: 'var(--canvas-fg)',
-          background: 'transparent'
-        }
-      }),
-      stencilEntry({
-        id: 'Web Logos',
-        name: 'Web Logos',
-        description: 'Brand and product logos',
-        icon: 'TbBrandChrome',
-        group: 'Web',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/weblogos.xml`,
-          foreground: 'blue',
-          background: '#ffffff'
-        }
-      }),
-      stencilEntry({
-        id: 'Web Icons',
-        name: 'Web Icons',
-        description: 'General web and UI icons',
-        icon: 'TbGlobe',
-        group: 'Web',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/webicons.xml`,
-          foreground: 'blue',
-          background: '#000000'
-        }
-      }),
-      stencilEntry({
-        id: 'EIP',
-        name: 'EIP',
-        description: 'Enterprise integration patterns',
-        icon: 'TbRoute',
-        group: 'Modelling',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/eip.xml`,
-          foreground: 'black',
-          background: '#c0f5a9'
-        }
-      }),
-      stencilEntry({
-        id: 'Arrows',
-        name: 'Arrows',
-        description: 'Extended arrow and connector shapes',
-        icon: 'TbArrowsRandom',
-        group: 'General',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/arrows.xml`,
-          foreground: 'var(--canvas-fg)',
-          background: 'var(--canvas-bg2)'
-        }
-      }),
-      stencilEntry({
-        id: 'Basic',
-        name: 'Basic',
-        description: 'Basic DrawIO shape set',
-        icon: 'TbSquare',
-        group: 'General',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/basic.xml`,
-          foreground: 'var(--canvas-fg)',
-          background: 'var(--canvas-bg2)'
-        }
-      }),
-      stencilEntry({
-        id: 'BPMN',
-        name: 'BPMN',
-        description: 'DrawIO-compatible BPMN stencil set',
-        icon: 'TbGitFork',
-        group: 'Modelling',
-        includedByDefault: false,
-        loader: 'drawioXml',
-        opts: {
-          url: `$STENCIL_ROOT/stencils/bpmn.xml`,
-          foreground: 'var(--canvas-fg)',
-          background: 'var(--canvas-bg2)'
-        }
-      })
-    ]
+    loaders: embedStencilLoaders,
+    registry: embedStencilConfig({ stencilRoot })
   },
   file: {
-    loaders: {
-      '.drawio': () =>
-        import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio),
-
-      ...makeJsonFileLoaders(() =>
-        defaultAppConfig.stencils.registry
-          .filter(entry => entry.includedByDefault)
-          .map(entry => entry.id)
-      ),
-
-      '.diagramCraft.svg': fileLoaderDiagramCraftSvg
-    }
+    loaders: makeEmbedFileLoaders(() =>
+      defaultAppConfig.stencils.registry
+        .filter(entry => entry.includedByDefault)
+        .map(entry => entry.id)
+    )
   },
   state: {
     store: true,

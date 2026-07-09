@@ -23,7 +23,7 @@ import {
   embedElementDefinitions,
   embedStencilConfig,
   embedStencilLoaders,
-  makeJsonFileLoaders,
+  makeEmbedFileLoaders,
   markdownTextHandlers,
   noopAutosave
 } from './defaults';
@@ -77,7 +77,7 @@ const pickImmutableFields = (config: DiagramCraftConfig): ImmutableConfigFields 
 });
 
 const buildAppConfig = (config: DiagramCraftConfig): AppConfig => {
-  const stencilConfig = config.stencils ?? embedStencilConfig;
+  const stencilConfig = config.stencils ?? embedStencilConfig();
   const includedPackages = stencilConfig.filter(e => e.includedByDefault).map(e => e.id);
 
   return {
@@ -106,7 +106,7 @@ const buildAppConfig = (config: DiagramCraftConfig): AppConfig => {
       registry: stencilConfig
     },
     file: {
-      loaders: config.fileLoaders ?? makeJsonFileLoaders(() => includedPackages)
+      loaders: config.fileLoaders ?? makeEmbedFileLoaders(() => includedPackages)
     },
     autosave: config.autosave ?? noopAutosave,
     filesystem: config.filesystem ?? { provider: 'none', endpoint: '' },
