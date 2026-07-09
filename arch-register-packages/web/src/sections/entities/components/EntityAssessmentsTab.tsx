@@ -10,6 +10,7 @@ import { useAssessmentsForProjects } from '../../../hooks/useAssessments';
 import { useAssessmentResponses, useUpsertAssessmentResponse } from '../../../hooks/useAssessmentResponses';
 import { AssessmentFieldCell } from '../../projects/components/AssessmentFieldCells';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
+import { MemberAvatar } from '../../../components/MemberAvatar';
 import styles from './EntityAssessmentsTab.module.css';
 
 const STATUS_LABEL = {
@@ -128,6 +129,14 @@ const AssessmentFillCard = ({
         </div>
         <span className={`${styles.statusDot} ${styles[`st-${status}`]}`} />
         {STATUS_LABEL[status]}
+        {response?.updated_by && (
+          <MemberAvatar
+            userId={response.updated_by}
+            name={response.updated_by_name}
+            email={null}
+            size={16}
+          />
+        )}
         <TbChevronRight size={12} className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} />
       </button>
       {open && (

@@ -13,6 +13,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
+import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type { AssessmentEntityStatus } from '@arch-register/api-types/assessmentStatus';
@@ -25,6 +26,8 @@ import { exportAssessmentResponsesToCSV } from '../../lib/assessmentCsv';
 import { TypeBadge } from '../../components/TypeBadge';
 import { Chip } from '../../components/Chip';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
+import { MemberAvatar } from '../../components/MemberAvatar';
+import { AssessmentResponseHistory } from './components/AssessmentResponseHistory';
 import {
   useAssessments,
   useUpdateAssessment,
@@ -36,6 +39,7 @@ import {
   useAssessmentResponses,
   useUpsertAssessmentResponse
 } from '../../hooks/useAssessmentResponses';
+import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import { AssessmentEditorDialog } from './ProjectAssessments';
@@ -124,7 +128,7 @@ export const AssessmentDetailsScreen = ({
   onBack: () => void;
 }) => {
   const navigate = useNavigate();
-  const { workspaceSlug, schemas, enums } = useWorkspaceContext();
+  const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();
 
   const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
   const assessment = assessments.find(a => a.id === assessmentId);
@@ -167,6 +171,16 @@ export const AssessmentDetailsScreen = ({
     const entityIds = new Set(entities.map(entity => entity._uid));
     return responses.filter(response => entityIds.has(response.entity_id));
   }, [responses, entities]);
+
+  const assessors = useMemo(() => {
+    const byId = new Map<string, string | null>();
+    for (const response of inScopeResponses) {
+      if (response.updated_by) byId.set(response.updated_by, response.updated_by_name);
+    }
+    return [...byId.entries()].map(([userId, name]) => ({ userId, name }));
+  }, [inScopeResponses]);
+
+  const [historyFor, setHistoryFor] = useState<AssessmentResponse | null>(null);
 
   const statusFor = (entityId: string): AssessmentEntityStatus =>
     responseByEntity.get(entityId)?.status ??
@@ -342,12 +356,21 @@ export const AssessmentDetailsScreen = ({
           ) : undefined
         }
         meta={
-          <div className={styles.progress}>
-            <span className={styles.progressLabel}>
-              {counts.complete} / {entities.length} complete
-            </span>
-            <div className={styles.progressBar}>
-              <div className={styles.progressFill} style={{ width: `${pct}%` }} />
+          <div className={styles.metaGroup}>
+            {assessors.length > 0 && (
+              <div className={styles.assessors}>
+                {assessors.map(a => (
+                  <MemberAvatar key={a.userId} userId={a.userId} name={a.name} email={null} size={20} />
+                ))}
+              </div>
+            )}
+            <div className={styles.progress}>
+              <span className={styles.progressLabel}>
+                {counts.complete} / {entities.length} complete
+              </span>
+              <div className={styles.progressBar}>
+                <div className={styles.progressFill} style={{ width: `${pct}%` }} />
+              </div>
             </div>
           </div>
         }
@@ -429,12 +452,13 @@ export const AssessmentDetailsScreen = ({
                         />
                       ))}
                       <SortableHeader label="Status" sortKey="_status" sort={sort} onSort={toggleSort} className={styles.statusCol} />
+                      <th className={styles.avatarCol} />
                     </tr>
                   </thead>
                   <tbody>
                     {sorted.length === 0 ? (
                       <tr>
-                        <td className={styles.emptyRow} colSpan={assessment.fields.length + 4}>
+                        <td className={styles.emptyRow} colSpan={assessment.fields.length + 5}>
                           <div className={`${sharedStyles.empty} ${styles.emptyRowInner}`}>
                             <div className={sharedStyles.emptyTitle}>No entities match this filter</div>
                           </div>
@@ -445,7 +469,8 @@ export const AssessmentDetailsScreen = ({
                         const meta = schemas.find(s => s.id === entity._schema.id);
                         const idx = meta ? schemas.indexOf(meta) : -1;
                         const color = meta ? resolveSchemaColor(meta, idx) : '#888';
-                        const values = responseByEntity.get(entity._uid)?.values ?? {};
+                        const response = responseByEntity.get(entity._uid);
+                        const values = response?.values ?? {};
                         const status = statusFor(entity._uid);
 
                         return (
@@ -495,6 +520,40 @@ export const AssessmentDetailsScreen = ({
                             <td className={styles.statusCol}>
                               <span className={`${styles.statusDot} ${styles[`st-${status}`]}`} />
                               {STATUS_LABEL[status]}
+                            </td>
+                            <td className={styles.avatarCol}>
+                              {response?.updated_by && (
+                                <Tooltip
+                                  element={
+                                    permissions.canViewAudit ? (
+                                      <button
+                                        type="button"
+                                        className={styles.avatarBtn}
+                                        onClick={() => setHistoryFor(response)}
+                                      >
+                                        <MemberAvatar
+                                          userId={response.updated_by}
+                                          name={response.updated_by_name}
+                                          email={null}
+                                          size={18}
+                                          hideTooltip
+                                        />
+                                      </button>
+                                    ) : (
+                                      <span>
+                                        <MemberAvatar
+                                          userId={response.updated_by}
+                                          name={response.updated_by_name}
+                                          email={null}
+                                          size={18}
+                                          hideTooltip
+                                        />
+                                      </span>
+                                    )
+                                  }
+                                  message={response.updated_by_name ?? response.updated_by}
+                                />
+                              )}
                             </td>
                           </tr>
                         );
@@ -547,6 +606,15 @@ export const AssessmentDetailsScreen = ({
         }}
         onCancel={() => setDeleting(false)}
       />
+
+      {historyFor && (
+        <AssessmentResponseHistory
+          workspaceSlug={workspaceSlug}
+          response={historyFor}
+          assessment={assessment}
+          onClose={() => setHistoryFor(null)}
+        />
+      )}
     </>
   );
 };

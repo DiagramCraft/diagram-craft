@@ -962,7 +962,10 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async listAssessmentResponses(workspace: string, assessmentId: string) {
     return this.all(
-      'SELECT * FROM assessment_response WHERE workspace = ? AND assessment_id = ?',
+      `SELECT ar.*, u.display_name as updated_by_name
+       FROM assessment_response ar
+       LEFT JOIN users u ON u.id = ar.updated_by
+       WHERE ar.workspace = ? AND ar.assessment_id = ?`,
       [workspace, assessmentId],
       sqliteMappers.assessmentResponse
     );
@@ -970,7 +973,10 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async getAssessmentResponse(workspace: string, assessmentId: string, entityId: string) {
     return this.get(
-      'SELECT * FROM assessment_response WHERE workspace = ? AND assessment_id = ? AND entity_id = ?',
+      `SELECT ar.*, u.display_name as updated_by_name
+       FROM assessment_response ar
+       LEFT JOIN users u ON u.id = ar.updated_by
+       WHERE ar.workspace = ? AND ar.assessment_id = ? AND ar.entity_id = ?`,
       [workspace, assessmentId, entityId],
       sqliteMappers.assessmentResponse
     );

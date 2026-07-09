@@ -32,12 +32,14 @@ export const MemberAvatar = ({
   userId,
   color,
   size = 28,
+  hideTooltip = false,
 }: {
   name: string | null;
   email: string | null;
   userId: string;
   color?: string | null;
   size?: number;
+  hideTooltip?: boolean;
 }) => {
   const initials = getInitials(name ?? '', email);
   const background = resolveAvatarBackground(userId, color);
@@ -55,11 +57,13 @@ export const MemberAvatar = ({
       >
         {initials}
       </span>
-      <span className={styles.tooltip}>
-        {name && <span className={styles.tooltipName}>{name}</span>}
-        {email && <span className={styles.tooltipEmail}>{email}</span>}
-        <span className={styles.tooltipId}>{userId}</span>
-      </span>
+      {!hideTooltip && (
+        <span className={styles.tooltip}>
+          {name && <span className={styles.tooltipName}>{name}</span>}
+          {email && <span className={styles.tooltipEmail}>{email}</span>}
+          <span className={styles.tooltipId}>{userId}</span>
+        </span>
+      )}
     </span>
   );
 };

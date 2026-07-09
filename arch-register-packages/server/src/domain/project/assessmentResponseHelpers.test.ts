@@ -38,6 +38,7 @@ const makeResponse = (
   created_at: now,
   updated_at: now,
   updated_by: null,
+  updated_by_name: null,
   ...overrides
 });
 

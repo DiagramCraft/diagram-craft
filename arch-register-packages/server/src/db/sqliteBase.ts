@@ -180,7 +180,8 @@ export const sqliteMappers = {
     values: parseJson(row['values'], {}, 'assessment_response.values'),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at']),
-    updated_by: row['updated_by'] != null ? String(row['updated_by']) : null
+    updated_by: row['updated_by'] != null ? String(row['updated_by']) : null,
+    updated_by_name: row['updated_by_name'] != null ? String(row['updated_by_name']) : null
   }),
   entity: (row: Record<string, unknown>): Entity => ({
     id: String(row['id']),

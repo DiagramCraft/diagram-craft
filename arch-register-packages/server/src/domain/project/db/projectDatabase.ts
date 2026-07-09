@@ -213,11 +213,12 @@ export type AssessmentResponseDbResult = {
   created_at: Date;
   updated_at: Date;
   updated_by: string | null;
+  updated_by_name: string | null;
 };
 
 export type AssessmentResponseDbUpsert = Omit<
   AssessmentResponseDbResult,
-  'id' | 'created_at' | 'updated_at'
+  'id' | 'created_at' | 'updated_at' | 'updated_by_name'
 >;
 
 // --
