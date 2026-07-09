@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -19,6 +19,8 @@ import type {
   AssessmentField,
   CreateAssessmentRequest
 } from '@arch-register/api-types/assessmentContract';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -26,7 +28,8 @@ import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
 import { useAssessments, useCreateAssessment, useUpdateAssessmentStatus } from '../../hooks/useAssessments';
-import { useEntitiesBySchema } from '../../hooks/useEntities';
+import { useEntitiesBySchema, useEntityCountsBySchema } from '../../hooks/useEntities';
+import { AssessmentScopeFilterBuilder } from './components/AssessmentScopeFilterBuilder';
 
 type StatusFilter = 'default' | 'draft' | 'archived' | 'all';
 
@@ -219,7 +222,11 @@ const AssessmentCard = ({
     .filter((s): s is { id: string; name: string } => !!s);
 
   const { workspaceSlug } = useWorkspaceContext();
-  const scopeQueries = useEntitiesBySchema(workspaceSlug, assessment.scope);
+  const scopeQueries = useEntitiesBySchema(
+    workspaceSlug,
+    assessment.scope,
+    assessment.scope_conditions
+  );
   const inScopeCount = scopeQueries.reduce((sum, q) => sum + (q.data?.length ?? 0), 0);
   const pct = inScopeCount > 0 ? Math.round((assessment.completed_entity_count / inScopeCount) * 100) : 0;
 
@@ -282,20 +289,47 @@ export const AssessmentEditorDialog = ({
   onCancel
 }: {
   assessment: Assessment | null;
-  schemas: { id: string; name: string; color: string | null; icon: string | null }[];
+  schemas: EntitySchema[];
   isSaving: boolean;
   onSave: (data: CreateAssessmentRequest, status: Assessment['status']) => void;
   onCancel: () => void;
 }) => {
+  const { workspaceSlug, lifecycleStates, teams } = useWorkspaceContext();
   const isNew = !assessment;
   const [name, setName] = useState(assessment?.name ?? '');
   const [description, setDescription] = useState(assessment?.description ?? '');
   const [scope, setScope] = useState<string[]>(assessment?.scope ?? []);
+  const [scopeConditions, setScopeConditions] = useState<FilterCondition[]>(
+    assessment?.scope_conditions.map(condition => ({ ...condition })) ?? []
+  );
   const [fields, setFields] = useState<AssessmentField[]>(assessment?.fields.map(f => ({ ...f })) ?? []);
   const [status, setStatus] = useState<Assessment['status']>(assessment?.status ?? 'draft');
 
   const toggleScope = (id: string) =>
     setScope(prev => (prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]));
+
+  const allowedScopeConditionFields = useMemo(() => {
+    const result = new Set(['_owner', '_lifecycle', '_namespace']);
+    for (const schema of schemas.filter(schema => scope.includes(schema.id))) {
+      for (const field of schema.fields) {
+        if (field.type !== 'reference' && field.type !== 'containment') result.add(field.id);
+      }
+    }
+    return result;
+  }, [schemas, scope]);
+
+  useEffect(() => {
+    setScopeConditions(prev => prev.filter(condition => allowedScopeConditionFields.has(condition.fieldId)));
+  }, [allowedScopeConditionFields]);
+
+  const scopeCountQueries = useEntityCountsBySchema(workspaceSlug, scope, scopeConditions);
+  const previewCount = scopeCountQueries.reduce((sum, query) => sum + (query.data?.total ?? 0), 0);
+  const previewLoading = scopeCountQueries.some(query => query.isLoading || query.isFetching);
+  const hasScopeChanged =
+    !!assessment &&
+    (JSON.stringify([...assessment.scope].sort()) !== JSON.stringify([...scope].sort()) ||
+      JSON.stringify(assessment.scope_conditions) !== JSON.stringify(scopeConditions));
+  const showScopeWarning = !!assessment && assessment.response_count > 0 && hasScopeChanged;
 
   const addField = (type: AssessmentField['type']) => {
     const base = { id: `f${Date.now()}`, label: '', requirementLevel: 'required' as const };
@@ -330,6 +364,7 @@ export const AssessmentEditorDialog = ({
                 name: name.trim(),
                 description: description.trim(),
                 scope,
+                scope_conditions: scopeConditions,
                 fields
               },
               status
@@ -383,6 +418,26 @@ export const AssessmentEditorDialog = ({
             );
           })}
         </div>
+        <AssessmentScopeFilterBuilder
+          conditions={scopeConditions}
+          onChange={setScopeConditions}
+          schemas={schemas}
+          scope={scope}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
+        />
+        <div className={styles.scopePreview}>
+          {scope.length === 0
+            ? 'No entity types selected.'
+            : previewLoading
+              ? 'Counting matching entities...'
+              : `${previewCount} matching entit${previewCount === 1 ? 'y' : 'ies'}`}
+        </div>
+        {showScopeWarning && (
+          <div className={styles.scopeWarning}>
+            Changing scope may add or remove entities from this assessment. Existing responses are kept.
+          </div>
+        )}
       </div>
 
       <div className={styles.section}>

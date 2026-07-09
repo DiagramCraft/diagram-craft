@@ -1,6 +1,7 @@
 import type { AssessmentDbResult, AssessmentResponseDbResult } from './db/projectDatabase';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
 import type { WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
+import { matchesFilterCondition } from '../catalog/dataHelpers';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
 import { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 
@@ -23,6 +24,13 @@ export const countCompletedEntities = (
 const CSV_COLUMNS_STATIC_HEAD = ['Entity', 'Owner', 'Schema Type'];
 const CSV_COLUMNS_STATIC_TAIL = ['Status'];
 
+export const isEntityInAssessmentScope = (
+  entity: EntityDbResult,
+  assessment: AssessmentDbResult
+): boolean =>
+  assessment.scope.includes(entity.schema_id) &&
+  assessment.scope_conditions.every(condition => matchesFilterCondition(entity, condition, null));
+
 export const buildAssessmentResultsCsvData = (
   entities: EntityDbResult[],
   responses: AssessmentResponseDbResult[],
@@ -40,7 +48,7 @@ export const buildAssessmentResultsCsvData = (
   ];
 
   const rows = entities
-    .filter(entity => assessment.scope.includes(entity.schema_id))
+    .filter(entity => isEntityInAssessmentScope(entity, assessment))
     .sort((a, b) => a.name.localeCompare(b.name))
     .map(entity => {
       const response = responseByEntity.get(entity.id);

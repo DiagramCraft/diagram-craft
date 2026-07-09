@@ -1010,6 +1010,7 @@ export const seedAssessments: AssessmentDbCreate[] = [
     description: "Assess each component's security posture ahead of the checkout launch.",
     status: 'open',
     scope: [seededSchemas.default.component.id],
+    scope_conditions: [],
     fields: [
       { id: 'f1', label: 'Secrets management', type: 'rating', requirementLevel: 'required' },
       { id: 'f2', label: 'Last pen-test date', type: 'text', requirementLevel: 'optional' },
@@ -1026,6 +1027,7 @@ export const seedAssessments: AssessmentDbCreate[] = [
     description: 'Rate the fitness of each API for the new checkout flow.',
     status: 'closed',
     scope: [seededSchemas.default.api.id],
+    scope_conditions: [],
     fields: [
       { id: 'f1', label: 'Versioning quality', type: 'rating', requirementLevel: 'required' },
       {

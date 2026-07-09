@@ -39,6 +39,7 @@ const makeAssessment = (status: AssessmentDbResult['status']): AssessmentDbResul
   description: '',
   status,
   scope: ['schema-service'],
+  scope_conditions: [],
   fields: [{ id: 'f1', label: 'Rating', type: 'rating', requirementLevel: 'required' }],
   created_at: now,
   updated_at: now

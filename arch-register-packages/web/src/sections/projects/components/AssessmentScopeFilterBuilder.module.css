@@ -1,0 +1,29 @@
+.panel {
+  width: 100%;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--cmp-border);
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--base-fg);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}

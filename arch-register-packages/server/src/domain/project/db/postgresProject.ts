@@ -895,8 +895,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   async createAssessment(input: AssessmentDbCreate) {
     try {
       const [row] = await this.sql<AssessmentDbResult[]>`
-        INSERT INTO assessment (id, workspace, project_id, name, description, status, scope, fields, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.name}, ${input.description}, ${input.status}, ${this.json(input.scope)}, ${this.json(input.fields)}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO assessment (id, workspace, project_id, name, description, status, scope, scope_conditions, fields, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.name}, ${input.description}, ${input.status}, ${this.json(input.scope)}, ${this.json(input.scope_conditions)}, ${this.json(input.fields)}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return row!;
@@ -913,6 +913,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             description = ${input.description},
             status = ${input.status},
             scope = ${this.json(input.scope)},
+            scope_conditions = ${this.json(input.scope_conditions)},
             fields = ${this.json(input.fields)},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}

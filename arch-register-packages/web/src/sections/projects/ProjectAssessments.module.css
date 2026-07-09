@@ -219,6 +219,20 @@
   color: var(--base-fg);
 }
 
+.scopePreview {
+  font-size: 12px;
+  color: var(--cmp-fg-dim);
+}
+
+.scopeWarning {
+  padding: 8px 10px;
+  border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
+  border-radius: var(--r);
+  background: color-mix(in oklch, var(--warn, orange) 10%, transparent);
+  color: var(--base-fg);
+  font-size: 12px;
+}
+
 .fieldsEmpty {
   font-size: 12px;
   color: var(--cmp-fg-disabled);
