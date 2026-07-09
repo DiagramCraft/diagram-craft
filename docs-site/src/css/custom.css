@@ -25,6 +25,7 @@
   --accent-strong: #0d74ce;
   --accent-dim: #acd8fc;
   --accent-bg: #d5efff;
+  --nav-active-bg: oklch(0.55 0.16 258 / 0.12);
 
   --tag-component: oklch(0.52 0.14 145);
   --tag-api: oklch(0.52 0.17 258);
@@ -135,6 +136,7 @@
   --accent-strong: #70b8ff;
   --accent-dim: #104d87;
   --accent-bg: #003362;
+  --nav-active-bg: oklch(0.30 0.08 258 / 0.30);
 
   --tag-component: oklch(0.62 0.13 145);
   --tag-api: oklch(0.66 0.16 258);
@@ -238,7 +240,7 @@
 }
 
 .navbar__item.navbar__link.navbar__link--active {
-  background: var(--accent-bg);
+  background: var(--nav-active-bg);
   color: var(--fg-0);
 }
 
@@ -277,7 +279,7 @@ main[class*='docMainContainer'] {
 }
 
 .menu {
-  background: var(--bg-2);
+  background: none !important;
   padding: 8px 0 32px;
   font-weight: 400;
 }
@@ -296,13 +298,13 @@ main[class*='docMainContainer'] {
 }
 
 .menu__link:hover {
-  background: var(--bg-3);
+  background: none;
   color: var(--fg-0);
   text-decoration: none;
 }
 
 .menu__link--active:not(.menu__link--sublist) {
-  background: var(--accent-bg);
+  background: none;
   color: var(--accent-strong);
   font-weight: 500;
 }
@@ -311,7 +313,7 @@ main[class*='docMainContainer'] {
   font-size: 13.5px;
   font-weight: 500;
   color: var(--fg-0);
-  padding: 7px 14px;
+  padding: 7px 4px;
 }
 
 .menu__link--sublist:hover {
@@ -344,18 +346,61 @@ main[class*='docMainContainer'] {
   background: none;
 }
 
+.menu__list-item-collapsible {
+  flex-direction: row-reverse;
+}
+
+.menu__caret {
+  padding: 7px 1px 7px 10px;
+}
+
+.menu__list .menu__list .menu__caret {
+  padding-left: 4px;
+}
+
 .menu__caret::before {
   border-color: var(--fg-3);
+  background-size: 1.4rem 1.4rem;
+}
+
+.menu__caret:hover {
+  background: none;
 }
 
 .menu__caret:hover::before {
   border-color: var(--fg-0);
 }
 
+/* Categories that link directly to a page (have their own href) draw their
+   chevron as a pseudo-element inside the link itself, pushed to the right
+   via `margin-left: auto` — a different mechanism than the .menu__caret
+   button used by non-linked categories. Reorder + resize to match. */
+.menu__link--sublist-caret::after {
+  order: -1;
+  margin-left: 0;
+  margin-right: 0.4em;
+  background-size: 1.4rem 1.4rem;
+}
+
 /* Nested items indentation */
 .menu__list .menu__list .menu__link {
-  padding-left: 28px;
+  padding-left: 22px;
   font-size: 13px;
+}
+
+.menu__list .menu__list .menu__list .menu__link {
+  padding-left: 32px;
+}
+
+/* Sublist links sit next to a reversed chevron — indent the row via the
+   container instead, so the extra nesting indent doesn't widen the gap
+   between the chevron and the label text. */
+.menu__list .menu__list .menu__link--sublist {
+  padding-left: 0;
+}
+
+.menu__list .menu__list .menu__list-item-collapsible {
+  padding-left: 14px;
 }
 
 /* ══════════════════════════════════════════════
