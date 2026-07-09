@@ -1,0 +1,121 @@
+import ThemedImage from '@theme/ThemedImage';
+
+# Assessments
+
+Assessments collect structured review data for the entities in a project. Use them when a project needs a repeatable
+checklist, scorecard, or review pass across a defined set of catalog records.
+
+## Assessment List
+
+Open a project, then select **Assessments** in the project sidebar. The list groups assessments by status:
+
+- **Draft** for assessments that are still being configured
+- **Open** for assessments that can collect responses
+- **Closed** for completed assessments that remain available for review
+- **Archived** for assessments that should be hidden from the main open/closed list
+
+<ThemedImage
+  alt="Project assessment list in Arch Register"
+  sources={{
+    light: require('/img/arch-register/projects/assessments-list-light.png').default,
+    dark: require('/img/arch-register/projects/assessments-list-dark.png').default,
+  }}
+/>
+
+Open and closed assessments show completion progress on the list. Progress is based on in-scope entities whose
+required assessment fields are complete.
+
+## Create Or Edit An Assessment
+
+An assessment definition contains basic information, status, scope, and fields.
+
+<ThemedImage
+  alt="Assessment editor in Arch Register"
+  sources={{
+    light: require('/img/arch-register/projects/assessment-editor-light.png').default,
+    dark: require('/img/arch-register/projects/assessment-editor-dark.png').default,
+  }}
+/>
+
+Use **Scope** to choose the entity types the assessment applies to. You can also add scope filters, such as owner,
+lifecycle, namespace, or schema fields. Scope filters are combined with AND logic, and the editor shows how many
+entities currently match.
+
+Use fields to define what reviewers fill in for each entity:
+
+- **Rating** stores a numeric 1-5 value.
+- **Select** stores one value from a workspace enum.
+- **Notes** stores free text.
+
+Each field can be **Required** or **Optional**. Only required fields control the entity status inside the assessment.
+
+If you change scope after responses exist, entities may be added to or removed from the assessment view. Existing
+responses are kept.
+
+## Fill In Responses
+
+Open an assessment to review every in-scope entity in one grid. The assessment must be **Open** before responses can
+be recorded.
+
+<ThemedImage
+  alt="Assessment details grid in Arch Register"
+  sources={{
+    light: require('/img/arch-register/projects/assessment-details-light.png').default,
+    dark: require('/img/arch-register/projects/assessment-details-dark.png').default,
+  }}
+/>
+
+The Details tab includes:
+
+- status filters for all, not started, in progress, and complete
+- entity search
+- field filters
+- sortable entity, owner, schema, assessment field, and status columns
+- inline editing for assessment fields
+- CSV export from the assessment menu
+
+Entity status is derived from required fields:
+
+- **Not started** means no required fields are filled in.
+- **In progress** means some required fields are filled in.
+- **Complete** means all required fields are filled in.
+
+Assessments with no required fields are complete by definition.
+
+## Review Results
+
+Use the Summary tab to inspect aggregate results for the assessment.
+
+<ThemedImage
+  alt="Assessment summary in Arch Register"
+  sources={{
+    light: require('/img/arch-register/projects/assessment-summary-light.png').default,
+    dark: require('/img/arch-register/projects/assessment-summary-dark.png').default,
+  }}
+/>
+
+The summary shows how many in-scope entities have a recorded response. Rating fields show averages, select fields show
+value distributions, and notes fields show fill rate.
+
+CSV export includes one row per in-scope entity, standard entity columns, and one column for each assessment field.
+Entities without answers are included with blank assessment cells.
+
+## Assess From An Entity
+
+The entity detail screen includes an **Assessments** tab. It lists open project assessments that apply to that entity
+and lets reviewers fill in the same fields without leaving the entity. Use **View in Assessments** to jump from the
+entity back to the project assessment grid.
+
+## Use Assessment Data In Entity Views
+
+The entity browser can join one assessment at a time. Joined assessment fields appear alongside normal entity fields,
+so you can sort, filter, or configure analysis views using assessment answers.
+
+Joined fields are scoped to the selected assessment. If you change or clear the joined assessment, filters and view
+configuration that referenced the old assessment fields are removed.
+
+## Related Pages
+
+- [Projects](projects)
+- [Entity Views](entity-views)
+- [Project and Content Screen Reference](../reference/project-content-screen-reference)

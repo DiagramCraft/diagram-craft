@@ -2,7 +2,11 @@ import { expect } from '@playwright/test';
 import type { ArchRegisterScreenshotConfig } from '../../../scripts/screenshot-types.js';
 import { defaultWorkspace } from '../../../../arch-register-packages/e2e/src/ui/support/workspaces';
 import { frontendAppEntity } from '../../../../arch-register-packages/e2e/src/ui/support/entities';
-import { authMigrationProject } from '../../../../arch-register-packages/e2e/src/ui/support/projects';
+import {
+  authMigrationProject,
+  checkoutRevampProject
+} from '../../../../arch-register-packages/e2e/src/ui/support/projects';
+import { seededAssessments } from '../../../../arch-register-packages/server/src/db/seedFixtures';
 import {
   openProjectNewDiagramDialog,
   createBlankProjectDiagram,
@@ -139,6 +143,74 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
       await projectsPage.gotoProject(authMigrationProject.id);
       await projectsPage.expectProjectOpened(authMigrationProject.name);
       await openProjectNewDiagramDialog(projectsPage.page);
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'assessments-list',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/projects/${checkoutRevampProject.id}?tab=projects&section=assessments`
+      );
+      await expect(projectsPage.page.getByRole('heading', { name: 'Assessments' })).toBeVisible();
+      await expect(
+        projectsPage.page.getByText(seededAssessments.checkoutRevamp.securityReadiness.name)
+      ).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'assessment-editor',
+    selector: '[role="alertdialog"]',
+    setup: async ({ projectsPage }) => {
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/projects/${checkoutRevampProject.id}?tab=projects&section=assessments&assessmentId=${seededAssessments.checkoutRevamp.securityReadiness.id}`
+      );
+      await expect(
+        projectsPage.page.getByRole('heading', {
+          name: seededAssessments.checkoutRevamp.securityReadiness.name
+        })
+      ).toBeVisible();
+      await projectsPage.page.getByRole('button', { name: 'Edit' }).click();
+      await expect(projectsPage.page.getByRole('alertdialog', { name: 'Edit assessment' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'assessment-details',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/projects/${checkoutRevampProject.id}?tab=projects&section=assessments&assessmentId=${seededAssessments.checkoutRevamp.securityReadiness.id}`
+      );
+      await expect(
+        projectsPage.page.getByRole('heading', {
+          name: seededAssessments.checkoutRevamp.securityReadiness.name
+        })
+      ).toBeVisible();
+      await expect(projectsPage.page.getByRole('tab', { name: 'Details' })).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'projects',
+    name: 'assessment-summary',
+    fullPage: false,
+    setup: async ({ projectsPage }) => {
+      await projectsPage.page.goto(
+        `/${defaultWorkspace.slug}/projects/${checkoutRevampProject.id}?tab=projects&section=assessments&assessmentId=${seededAssessments.checkoutRevamp.securityReadiness.id}`
+      );
+      await expect(
+        projectsPage.page.getByRole('heading', {
+          name: seededAssessments.checkoutRevamp.securityReadiness.name
+        })
+      ).toBeVisible();
+      await projectsPage.page.getByRole('tab', { name: 'Summary' }).click();
+      await expect(projectsPage.page.getByText('Entities assessed')).toBeVisible();
     }
   },
   {
