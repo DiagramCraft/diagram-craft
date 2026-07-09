@@ -263,6 +263,7 @@ export const DiagramScreen = () => {
   useEffect(() => {
     let disconnect = () => {};
     let releaseAwarenessChange = () => {};
+    let cancelled = false;
 
     const loadDiagram = async () => {
       try {
@@ -390,6 +391,16 @@ export const DiagramScreen = () => {
             includeDefaultProvider: false
           }
         });
+
+        // The effect was cleaned up (unmount/navigation/dep change) while loadDocument
+        // was still pending — the cleanup below already ran with the no-op `disconnect`,
+        // so it never closed the connection loadDocument just opened. Close it now
+        // instead of wiring it up for a component that's already gone.
+        if (cancelled) {
+          docDisconnect();
+          document.release();
+          return;
+        }
         disconnect = docDisconnect;
 
         registerDocumentStencils(document, stencilConfig);
@@ -419,6 +430,7 @@ export const DiagramScreen = () => {
     loadDiagram();
 
     return () => {
+      cancelled = true;
       disconnect();
       releaseAwarenessChange();
       if (docRef.current) {

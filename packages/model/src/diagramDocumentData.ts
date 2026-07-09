@@ -254,6 +254,14 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> implemen
   }
 
   setProviders(dataProviders: Array<DataProvider>, initial = false) {
+    // A policy owns provider selection — callers that don't know about it (e.g.
+    // deserializeDiagramDocument, which sets providers from serialized document data)
+    // must not be able to override it or write it into the CRDT.
+    if (this.#policy) {
+      this.applyPolicy(this.#policy);
+      return;
+    }
+
     if (dataProviders[0]?.providerId !== DefaultDataProviderId) {
       dataProviders.unshift(
         new DefaultDataProvider(`{ "schemas": ${JSON.stringify(DEFAULT_SCHEMA)} }`)

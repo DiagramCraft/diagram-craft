@@ -185,6 +185,29 @@ describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
       expect(docDataWith.providers[0]).toBeInstanceOf(DefaultDataProvider);
       expect(docDataWith.providers[1]).toBe(policyProvider2);
     });
+
+    it('setProviders() defers to an active policy instead of applying its argument', () => {
+      // Regression test: deserializeDiagramDocument calls doc.data.setProviders(...)
+      // directly with providers parsed from serialized document data, unaware of any
+      // policy. That call must not be able to override the policy or write the CRDT.
+      const [root1] = backend.syncedDocs();
+
+      const policyProvider = makePolicyProvider();
+      const docData = TestModel.newDocument(root1, {
+        providers: () => [policyProvider],
+        includeDefaultProvider: false
+      }).data;
+
+      const seededProvider = new UrlDataProvider(
+        `{ "dataUrl": "https://seeded.example.com/data", "schemaUrl": "https://seeded.example.com/schema" }`,
+        false
+      );
+      docData.setProviders([seededProvider]);
+
+      expect(docData.providers).toHaveLength(1);
+      expect(docData.providers[0]).toBe(policyProvider);
+      expect(root1.getMap('documentData').get('provider')).toBeUndefined();
+    });
   });
 });
 
