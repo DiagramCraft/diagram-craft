@@ -1,11 +1,15 @@
 import { AppConfig, stencilEntry } from './appConfig';
-import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
 import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 import { fileLoaderDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
-import { stencilLoaderBasic } from '@diagram-craft/model/stencilRegistry';
+import {
+  embedElementDefinitions,
+  embedStencilConfig,
+  embedStencilLoaders,
+  makeJsonFileLoaders
+} from './embed/defaults';
 
 const random = new Random(Date.now());
 
@@ -32,144 +36,17 @@ if (!window.electronAPI) {
 
 export const defaultAppConfig: AppConfig = {
   elementDefinitions: {
-    registry: [
-      {
-        shapes: /^(bpmn[A-Z][a-zA-Z]+)$/,
-        nodeDefinitionLoader: () =>
-          import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNNodes),
-        edgeDefinitionLoader: () =>
-          import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNEdges)
-      },
-      {
-        shapes: /^(dataModelling[A-Z][a-zA-Z0-9]+)$/,
-        nodeDefinitionLoader: () =>
-          import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
-            m => m.registerDataModellingNodes
-          ),
-        edgeDefinitionLoader: () =>
-          import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
-            m => m.registerDataModellingEdges
-          )
-      },
-      {
-        shapes: /^(c4[A-Z][a-zA-Z0-9]+)$/,
-        nodeDefinitionLoader: () =>
-          import('@diagram-craft/stencil-c4/stencil-c4-loader').then(m => m.registerC4Nodes)
-      },
-      {
-        shapes: /^(uml[A-Z][a-zA-Z0-9]+)$/,
-        nodeDefinitionLoader: () =>
-          import('@diagram-craft/stencil-uml/stencil-uml-loader').then(m => m.registerUMLNodes)
-      }
-    ]
+    registry: embedElementDefinitions
   },
   stencils: {
     loaders: {
-      basic: () => Promise.resolve(stencilLoaderBasic),
+      ...embedStencilLoaders,
 
       drawioXml: () =>
         import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioXml)
     },
     registry: [
-      stencilEntry({
-        id: 'default',
-        name: 'Basic shapes',
-        description: 'Rectangles, ellipses, lines and connectors',
-        icon: 'TbShape',
-        group: 'General',
-        includedByDefault: true,
-        loader: 'basic',
-        opts: {
-          stencils: () =>
-            Promise.resolve(async registry => {
-              return registry.stencils.get('default');
-            })
-        }
-      }),
-      stencilEntry({
-        id: 'arrow',
-        name: 'Arrow',
-        description: 'Directional arrows and flow markers',
-        icon: 'TbArrowRight',
-        group: 'General',
-        includedByDefault: true,
-        loader: 'basic',
-        opts: {
-          stencils: () =>
-            Promise.resolve(async registry => {
-              return registry.stencils.get('arrow');
-            })
-        }
-      }),
-      stencilEntry({
-        id: 'bpmn2',
-        name: 'BPMN 2.0',
-        description: 'Business process model & notation',
-        icon: 'TbBinaryTree',
-        group: 'Modelling',
-        includedByDefault: true,
-        loader: 'basic',
-        opts: {
-          stencils: () =>
-            import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.loadBPMNStencils)
-        }
-      }),
-      stencilEntry({
-        id: 'uml',
-        name: 'UML',
-        description: 'Class, sequence, activity and state diagrams',
-        icon: 'TbBox',
-        group: 'Modelling',
-        includedByDefault: true,
-        loader: 'basic',
-        opts: {
-          stencils: () =>
-            import('@diagram-craft/stencil-uml/stencil-uml-loader').then(m => m.loadUMLStencils)
-        }
-      }),
-      stencilEntry({
-        id: 'data-modelling',
-        name: 'Data Modelling',
-        description: 'Entities, relationships and tables',
-        icon: 'TbDatabase',
-        group: 'Modelling',
-        includedByDefault: true,
-        loader: 'basic',
-        opts: {
-          stencils: () =>
-            import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
-              m => m.loadDataModellingStencils
-            )
-        }
-      }),
-      stencilEntry({
-        id: 'c4',
-        name: 'C4',
-        description: 'Context, container and component views',
-        icon: 'TbStack2',
-        group: 'Modelling',
-        includedByDefault: true,
-        loader: 'basic',
-        opts: {
-          stencils: () =>
-            import('@diagram-craft/stencil-c4/stencil-c4-loader').then(m => m.loadC4Stencils)
-        }
-      }),
-      stencilEntry({
-        id: 'archimate',
-        name: 'ArchiMate',
-        description: 'Enterprise architecture notation',
-        icon: 'TbNetwork',
-        group: 'Modelling',
-        includedByDefault: true,
-        loader: 'basic',
-        opts: {
-          stencils: () =>
-            import('@diagram-craft/stencil-archimate/stencil-archimate-loader').then(
-              m => m.loadArchimateStencils
-            )
-        }
-      }),
+      ...embedStencilConfig,
       stencilEntry({
         id: 'drawioUml',
         name: 'UML (DrawIO)',
@@ -346,19 +223,11 @@ export const defaultAppConfig: AppConfig = {
       '.drawio': () =>
         import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio),
 
-      '.json': async () => (content, doc, diagramFactory) =>
-        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory, {
-          includedPackages: defaultAppConfig.stencils.registry
-            .filter(entry => entry.includedByDefault)
-            .map(entry => entry.id)
-        }),
-
-      '.dcd': async () => (content, doc, diagramFactory) =>
-        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory, {
-          includedPackages: defaultAppConfig.stencils.registry
-            .filter(entry => entry.includedByDefault)
-            .map(entry => entry.id)
-        }),
+      ...makeJsonFileLoaders(() =>
+        defaultAppConfig.stencils.registry
+          .filter(entry => entry.includedByDefault)
+          .map(entry => entry.id)
+      ),
 
       '.diagramCraft.svg': fileLoaderDiagramCraftSvg
     }

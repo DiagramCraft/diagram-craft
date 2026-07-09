@@ -12,7 +12,7 @@ import { UrlDataProvider, UrlDataProviderId } from './data-providers/dataProvide
 import { RESTDataProvider, RestDataProviderId } from './data-providers/dataProviderRest';
 import { Generators } from '@diagram-craft/utils/generator';
 import { SerializedElement } from './serialization/serializedTypes';
-import { DiagramDocumentData } from './diagramDocumentData';
+import { DataProviderPolicy, DiagramDocumentData } from './diagramDocumentData';
 import { DocumentProps } from './documentProps';
 import { DocumentTags } from './documentTags';
 import { DocumentStories } from './documentStories';
@@ -77,12 +77,13 @@ export class DiagramDocument
   constructor(
     readonly registry: Registry,
     isStencil?: boolean,
-    crdtRoot?: CRDTRoot
+    crdtRoot?: CRDTRoot,
+    dataProviderPolicy?: DataProviderPolicy
   ) {
     super();
 
     this.root = crdtRoot ?? CRDT.makeRoot();
-    this.data = new DiagramDocumentData(this.root, this);
+    this.data = new DiagramDocumentData(this.root, this, dataProviderPolicy);
     this.customPalette = new DiagramPalette(this.root, isStencil ? 0 : 14);
     this.styles = new DiagramStyles(this.root, this, !isStencil);
     this.attachments = new AttachmentManager(this.root, this);

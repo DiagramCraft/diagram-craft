@@ -7,6 +7,11 @@ import type { ProgressCallback } from '@diagram-craft/utils/progress';
 import { CRDT, type CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import type { DataProviderPolicy } from './diagramDocumentData';
+
+export type CreateDocumentOpts = {
+  dataProviders?: DataProviderPolicy;
+};
 
 export type DocumentFactory = {
   loadCRDT: (
@@ -17,7 +22,8 @@ export type DocumentFactory = {
   createDocument: (
     root: CRDTRoot,
     url: string | undefined,
-    callback: ProgressCallback
+    callback: ProgressCallback,
+    opts?: CreateDocumentOpts
   ) => Promise<DiagramDocument>;
 };
 
@@ -62,9 +68,10 @@ export const makeDefaultDocumentFactory = (registry: Registry): DocumentFactory 
     createDocument: async (
       root: CRDTRoot,
       url: string | undefined,
-      _statusCallback: ProgressCallback
+      _statusCallback: ProgressCallback,
+      opts?: CreateDocumentOpts
     ) => {
-      const doc = new DiagramDocument(registry, false, root);
+      const doc = new DiagramDocument(registry, false, root, opts?.dataProviders);
       if (url) doc.url = url;
       return doc;
     }

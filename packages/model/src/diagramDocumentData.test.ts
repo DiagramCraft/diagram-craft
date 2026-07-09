@@ -94,6 +94,98 @@ describe.each(Backends.all())('DiagramDocumentData [%s]', (_name, backend) => {
       expect(onChange).not.toHaveBeenCalled();
     });
   });
+
+  describe('setProviderPolicy', () => {
+    const makePolicyProvider = () =>
+      new UrlDataProvider(
+        `{ "dataUrl": "https://example.com/data", "schemaUrl": "https://example.com/schema" }`,
+        false
+      );
+
+    it('applies the policy on construction without writing the CRDT provider key', () => {
+      // Use a fresh root directly (not standardTestModel, which already constructs
+      // an unrelated document/diagram on root1, writing the CRDT provider key as a
+      // side effect before this test's document is even created).
+      const [root1] = backend.syncedDocs();
+
+      const policyProvider = makePolicyProvider();
+      const docData = TestModel.newDocument(root1, {
+        providers: () => [policyProvider],
+        includeDefaultProvider: false
+      }).data;
+
+      expect(docData.providers).toHaveLength(1);
+      expect(docData.providers[0]).toBe(policyProvider);
+
+      // Constructor must not fall through to the unconditional setProviders([])
+      // that would unshift a DefaultDataProvider and write it into the CRDT.
+      expect(root1.getMap('documentData').get('provider')).toBeUndefined();
+    });
+
+    it('does not apply a remote provider write while a policy is active', () => {
+      const { root1, root2 } = standardTestModel(backend);
+      if (!root2) return;
+
+      const policyProvider = makePolicyProvider();
+      const docData1 = TestModel.newDocument(root1, {
+        providers: () => [policyProvider],
+        includeDefaultProvider: false
+      }).data;
+      const docData2 = TestModel.newDocument(root2).data;
+
+      // docData2 has no policy, so its own write goes through and reaches the CRDT.
+      const remoteProvider = new DefaultDataProvider('{}');
+      docData2.setProviders([remoteProvider]);
+
+      // docData1 must be unaffected by the remote write — it re-derives from its policy.
+      expect(docData1.providers).toHaveLength(1);
+      expect(docData1.providers[0]).toBe(policyProvider);
+
+      // docData2, with no policy, does update normally.
+      expect(docData2.providers[0]).toBeInstanceOf(DefaultDataProvider);
+    });
+
+    it('suppresses a DefaultDataProvider already present in the CRDT when a policy is applied', () => {
+      const { root1, root2 } = standardTestModel(backend);
+      if (!root2) return;
+
+      // A first client (no policy) writes a DefaultDataProvider into the CRDT.
+      const docData1 = TestModel.newDocument(root1).data;
+      docData1.setProviders([]);
+      expect(root1.getMap('documentData').get('provider')).toBeDefined();
+
+      // A second client applies a policy on top of that existing CRDT state.
+      const policyProvider = makePolicyProvider();
+      const docData2 = TestModel.newDocument(root2, {
+        providers: () => [policyProvider],
+        includeDefaultProvider: false
+      }).data;
+
+      expect(docData2.providers).toHaveLength(1);
+      expect(docData2.providers[0]).toBe(policyProvider);
+    });
+
+    it('includeDefaultProvider: false skips the DefaultDataProvider unshift', () => {
+      const { root1 } = standardTestModel(backend);
+
+      const policyProvider = makePolicyProvider();
+      const docDataWithout = TestModel.newDocument(root1, {
+        providers: () => [policyProvider],
+        includeDefaultProvider: false
+      }).data;
+      expect(docDataWithout.providers).toHaveLength(1);
+      expect(docDataWithout.providers.some(p => p instanceof DefaultDataProvider)).toBe(false);
+
+      const { root1: root1b } = standardTestModel(backend);
+      const policyProvider2 = makePolicyProvider();
+      const docDataWith = TestModel.newDocument(root1b, {
+        providers: () => [policyProvider2]
+      }).data;
+      expect(docDataWith.providers).toHaveLength(2);
+      expect(docDataWith.providers[0]).toBeInstanceOf(DefaultDataProvider);
+      expect(docDataWith.providers[1]).toBe(policyProvider2);
+    });
+  });
 });
 
 describe.each(Backends.all())('DataManager [%s]', (_name, backend) => {
