@@ -1,4 +1,5 @@
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
 // -- Content Node
 
@@ -188,6 +189,7 @@ export type AssessmentDbResult = {
   description: string;
   status: 'draft' | 'open' | 'closed' | 'archived';
   scope: string[];
+  scope_conditions: FilterCondition[];
   fields: AssessmentField[];
   created_at: Date;
   updated_at: Date;

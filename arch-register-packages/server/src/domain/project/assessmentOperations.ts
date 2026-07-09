@@ -6,8 +6,10 @@ import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { buildCreateAssessmentInput, buildUpdateAssessmentInput, toApiAssessment } from './assessmentHelpers';
-import { countCompletedEntities } from './assessmentResponseHelpers';
+import { countCompletedEntities, isEntityInAssessmentScope } from './assessmentResponseHelpers';
 import type { AssessmentDbResult } from './db/projectDatabase';
+import type { EntityDbResult } from '../catalog/db/catalogDatabase';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
 import {
   Assessment,
   CreateAssessmentRequest,
@@ -15,11 +17,23 @@ import {
   UpdateAssessmentStatusRequest
 } from '@arch-register/api-types/assessmentContract';
 
-const getAssessmentStats = async (db: DatabaseAdapter, ws: string, row: AssessmentDbResult) => {
-  const responses = await db.project.listAssessmentResponses(ws, row.id);
+const getAssessmentStats = async (
+  db: DatabaseAdapter,
+  ws: string,
+  row: AssessmentDbResult,
+  entities?: EntityDbResult[]
+) => {
+  const [responses, scopedEntities] = await Promise.all([
+    db.project.listAssessmentResponses(ws, row.id),
+    entities ? Promise.resolve(entities) : listAllCatalogEntities(db, ws)
+  ]);
+  const scopedEntityIds = new Set(
+    scopedEntities.filter(entity => isEntityInAssessmentScope(entity, row)).map(entity => entity.id)
+  );
+  const scopedResponses = responses.filter(response => scopedEntityIds.has(response.entity_id));
   return {
     response_count: responses.length,
-    completed_entity_count: countCompletedEntities(responses, row)
+    completed_entity_count: countCompletedEntities(scopedResponses, row)
   };
 };
 
@@ -46,8 +60,13 @@ export const listAssessments = async (
     const project = await getProjectOrThrow(db, ws, projectId);
     requireProjectAccess(authCtx, project.owner);
 
-    const rows = await db.project.listAssessments(ws, project.id);
-    return await Promise.all(rows.map(async row => toApiAssessment(row, await getAssessmentStats(db, ws, row))));
+    const [rows, entities] = await Promise.all([
+      db.project.listAssessments(ws, project.id),
+      listAllCatalogEntities(db, ws)
+    ]);
+    return await Promise.all(
+      rows.map(async row => toApiAssessment(row, await getAssessmentStats(db, ws, row, entities)))
+    );
   } catch (error) {
     return handleError(error, 'Failed to retrieve assessments');
   }
@@ -187,6 +206,7 @@ export const updateAssessmentStatus = async (
       description: oldRow.description,
       status: body.status,
       scope: oldRow.scope,
+      scope_conditions: oldRow.scope_conditions,
       fields: oldRow.fields,
       updated_at: new Date()
     });

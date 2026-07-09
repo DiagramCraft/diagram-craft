@@ -17,6 +17,7 @@ const makeAssessment = (overrides: Partial<AssessmentDbResult> = {}): Assessment
   description: '',
   status: 'open',
   scope: ['schema-service'],
+  scope_conditions: [],
   fields: [
     { id: 'f1', label: 'Auth maturity', type: 'enum', enumId: 'enum-maturity', requirementLevel: 'required' },
     { id: 'f2', label: 'Notes', type: 'text', requirementLevel: 'optional' }
@@ -155,6 +156,21 @@ describe('buildAssessmentResultsCsvData', () => {
     const { rows } = buildAssessmentResultsCsvData(entities, [], assessment, []);
 
     expect(rows).toHaveLength(1);
+  });
+
+  it('excludes entities that do not match assessment scope conditions', () => {
+    const assessment = makeAssessment({
+      scope_conditions: [{ fieldId: '_owner', op: 'equals', value: 'owner-1' }]
+    });
+    const entities = [
+      makeEntity({ id: 'e1', owner: 'owner-1' }),
+      makeEntity({ id: 'e2', owner: 'owner-2' })
+    ];
+
+    const { rows } = buildAssessmentResultsCsvData(entities, [], assessment, []);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.Entity).toBe('Payments Service');
   });
 
   it('resolves enum values to their labels', () => {

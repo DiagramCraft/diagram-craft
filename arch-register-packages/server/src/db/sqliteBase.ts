@@ -167,6 +167,7 @@ export const sqliteMappers = {
     description: String(row['description'] ?? ''),
     status: row['status'] as AssessmentDbResult['status'],
     scope: parseJson(row['scope'], [], 'assessment.scope'),
+    scope_conditions: parseJson(row['scope_conditions'], [], 'assessment.scope_conditions'),
     fields: parseJson(row['fields'], [], 'assessment.fields'),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])

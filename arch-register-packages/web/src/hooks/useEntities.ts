@@ -277,14 +277,43 @@ export const useMultipleEntityRelations = (
 };
 
 // Hook for fetching entities by multiple schema IDs
-export const useEntitiesBySchema = (workspaceId: string, schemaIds: string[]) => {
+export const useEntitiesBySchema = (
+  workspaceId: string,
+  schemaIds: string[],
+  conditions: FilterCondition[] = []
+) => {
   return useQueries({
     queries: schemaIds.map(schemaId => ({
-      queryKey: entityKeys.list(workspaceId, { schemaId, view: 'summary' }),
+      queryKey: entityKeys.list(workspaceId, { schemaId, view: 'summary', conditions }),
       queryFn: () =>
         orpcClient.entities.list({
           params: { workspace: workspaceId },
-          query: { _schemaId: schemaId, view: 'summary' }
+          query: {
+            _schemaId: schemaId,
+            view: 'summary',
+            conditions: conditions.length ? JSON.stringify(conditions) : undefined
+          }
+        }),
+      enabled: !!workspaceId && !!schemaId
+    }))
+  });
+};
+
+export const useEntityCountsBySchema = (
+  workspaceId: string,
+  schemaIds: string[],
+  conditions: FilterCondition[] = []
+) => {
+  return useQueries({
+    queries: schemaIds.map(schemaId => ({
+      queryKey: entityKeys.count(workspaceId, { schemaId, conditions }),
+      queryFn: () =>
+        orpcClient.entities.count({
+          params: { workspace: workspaceId },
+          query: {
+            _schemaId: schemaId,
+            conditions: conditions.length ? JSON.stringify(conditions) : undefined
+          }
         }),
       enabled: !!workspaceId && !!schemaId
     }))

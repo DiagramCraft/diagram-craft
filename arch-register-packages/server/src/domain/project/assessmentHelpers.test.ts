@@ -17,6 +17,7 @@ const makeRow = (overrides: Partial<AssessmentDbResult> = {}): AssessmentDbResul
   description: 'Assess security posture',
   status: 'open',
   scope: ['schema-service'],
+  scope_conditions: [],
   fields: [{ id: 'f1', label: 'Auth maturity', type: 'enum', enumId: 'enum-maturity', requirementLevel: 'required' }],
   created_at: now,
   updated_at: now,
@@ -32,6 +33,7 @@ describe('buildCreateAssessmentInput', () => {
     expect(input.description).toBe('');
     expect(input.status).toBe('draft');
     expect(input.scope).toEqual([]);
+    expect(input.scope_conditions).toEqual([]);
     expect(input.fields).toEqual([]);
     expect(input.created_at).toBe(now);
     expect(input.id).toEqual(expect.any(String));
@@ -39,14 +41,16 @@ describe('buildCreateAssessmentInput', () => {
 
   it('carries through provided description, scope, and fields', () => {
     const fields = [{ id: 'f1', label: 'Notes', type: 'text', requirementLevel: 'optional' }];
+    const scope_conditions = [{ fieldId: '_owner', op: 'equals' as const, value: 'team-a' }];
     const input = buildCreateAssessmentInput(
       'ws-1',
       'proj-1',
-      { name: 'API Fitness', description: 'Rate APIs', scope: ['schema-api'], fields },
+      { name: 'API Fitness', description: 'Rate APIs', scope: ['schema-api'], scope_conditions, fields },
       now
     );
     expect(input.description).toBe('Rate APIs');
     expect(input.scope).toEqual(['schema-api']);
+    expect(input.scope_conditions).toEqual(scope_conditions);
     expect(input.fields).toEqual(fields);
   });
 
@@ -63,19 +67,22 @@ describe('buildUpdateAssessmentInput', () => {
     expect(input.description).toBe(existing.description);
     expect(input.status).toBe(existing.status);
     expect(input.scope).toEqual(existing.scope);
+    expect(input.scope_conditions).toEqual(existing.scope_conditions);
     expect(input.fields).toEqual(existing.fields);
     expect(input.updated_at).toBe(now);
   });
 
   it('overrides provided fields', () => {
     const existing = makeRow();
+    const scope_conditions = [{ fieldId: '_lifecycle', op: 'not_equals' as const, value: 'deprecated' }];
     const input = buildUpdateAssessmentInput(
-      { name: 'Renamed', description: 'New desc', scope: [], fields: [] },
+      { name: 'Renamed', description: 'New desc', scope: [], scope_conditions, fields: [] },
       existing,
       now
     );
     expect(input.description).toBe('New desc');
     expect(input.scope).toEqual([]);
+    expect(input.scope_conditions).toEqual(scope_conditions);
     expect(input.fields).toEqual([]);
   });
 
@@ -90,6 +97,7 @@ describe('toApiAssessment', () => {
     expect(result.id).toBe('asmnt-1');
     expect(result.project_id).toBe('proj-1');
     expect(result.scope).toEqual(['schema-service']);
+    expect(result.scope_conditions).toEqual([]);
     expect(result.fields).toHaveLength(1);
     expect(result.response_count).toBe(3);
     expect(result.completed_entity_count).toBe(1);

@@ -134,7 +134,11 @@ export const AssessmentDetailsScreen = ({
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const scopeQueries = useEntitiesBySchema(workspaceSlug, assessment?.scope ?? []);
+  const scopeQueries = useEntitiesBySchema(
+    workspaceSlug,
+    assessment?.scope ?? [],
+    assessment?.scope_conditions ?? []
+  );
   const entities = useMemo(
     () => scopeQueries.flatMap(q => q.data ?? []) as EntitySummary[],
     [scopeQueries]
@@ -159,6 +163,10 @@ export const AssessmentDetailsScreen = ({
     () => new Map(responses.map(r => [r.entity_id, r])),
     [responses]
   );
+  const inScopeResponses = useMemo(() => {
+    const entityIds = new Set(entities.map(entity => entity._uid));
+    return responses.filter(response => entityIds.has(response.entity_id));
+  }, [responses, entities]);
 
   const statusFor = (entityId: string): AssessmentEntityStatus =>
     responseByEntity.get(entityId)?.status ??
@@ -500,7 +508,7 @@ export const AssessmentDetailsScreen = ({
           <Tabs.Content value="summary">
             <AssessmentSummaryTab
               assessment={assessment}
-              responses={responses}
+              responses={inScopeResponses}
               entityCount={entities.length}
               enums={enums}
             />

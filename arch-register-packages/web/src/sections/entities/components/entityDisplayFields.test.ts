@@ -93,6 +93,7 @@ describe('joined assessment display fields', () => {
     description: '',
     status: 'open',
     scope: ['service'],
+    scope_conditions: [],
     fields: [
       { id: 'rating1', label: 'Rating', requirementLevel: 'required', type: 'rating' },
       { id: 'enum1', label: 'Risk', requirementLevel: 'optional', type: 'enum', enumId: 'risk-enum' }

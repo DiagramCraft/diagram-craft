@@ -243,6 +243,7 @@ describe('listEntities / countEntities with joined assessment', () => {
     description: '',
     status: 'open',
     scope: ['schema-1'],
+    scope_conditions: [],
     fields: [
       { id: 'rating1', label: 'Rating', requirementLevel: 'required', type: 'rating' },
       { id: 'enum1', label: 'Enum', requirementLevel: 'optional', type: 'enum', enumId: 'e1' }

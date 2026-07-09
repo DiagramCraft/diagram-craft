@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { wsAndId } from '@arch-register/api-types/common';
+import { filterConditionSchema } from '@arch-register/api-types/viewContract';
 
 const wsProjectAndAssessmentId = wsAndId.extend({
   assessmentId: z.string().describe('Assessment identifier')
@@ -45,6 +46,9 @@ const assessmentSchema = z.object({
   description: z.string().describe('Assessment description'),
   status: z.enum(['draft', 'open', 'closed', 'archived']).describe('Assessment status'),
   scope: z.array(z.string()).describe('Entity schema ids this assessment applies to'),
+  scope_conditions: z
+    .array(filterConditionSchema)
+    .describe('Additional AND-combined entity filters this assessment scope applies'),
   fields: z.array(assessmentFieldSchema).describe('Assessment field definitions'),
   response_count: z.number().int().min(0).describe('Number of entities with a recorded response'),
   completed_entity_count: z
@@ -65,6 +69,13 @@ const assessmentBodySchema = z.object({
   scope: z.preprocess(
     value => (Array.isArray(value) ? value : undefined),
     z.array(z.string()).optional().describe('Entity schema ids this assessment applies to')
+  ),
+  scope_conditions: z.preprocess(
+    value => (Array.isArray(value) ? value : undefined),
+    z
+      .array(filterConditionSchema)
+      .optional()
+      .describe('Additional AND-combined entity filters this assessment scope applies')
   ),
   fields: z.preprocess(
     value => (Array.isArray(value) ? value : undefined),
