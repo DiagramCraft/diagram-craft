@@ -373,6 +373,10 @@ export const DiagramScreen = () => {
           userState,
           documentFactory,
           diagramFactory,
+          // roomName is a CRDT identifier, not a fetchable file URL — always create the
+          // document straight from the CRDT root rather than falling back to the
+          // autosave/file-URL loading path (which is standalone-only).
+          forceLoadFromServer: true,
           // Only the first client to connect sees an empty CRDT — subsequent
           // clients sync existing collaborative state instead of re-seeding it.
           seedContent: async doc => {
@@ -406,6 +410,7 @@ export const DiagramScreen = () => {
         setDoc(document);
         setLoading(false);
       } catch (err) {
+        console.error('Failed to load diagram:', err);
         setError(err instanceof Error ? err.message : 'Failed to load diagram');
         setLoading(false);
       }

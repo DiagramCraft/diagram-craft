@@ -13,7 +13,7 @@ There is no barrel `index.ts`; import each entry point from its specific file.
 
 ## Entry points
 
-- `@diagram-craft/main/embed/createDiagramCraft` — the init facade. Builds the global
+- `@diagram-craft/main/embed/bootstrapDiagramCraft` — the init facade. Builds the global
   config (`AppConfig`, `CollaborationConfig`, `Autosave`, stencil/file loader registries)
   and returns the factories/registries needed to load and render documents.
 - `@diagram-craft/main/embed/loadDocument` — document-loading orchestration (CRDT
@@ -29,7 +29,7 @@ There is no barrel `index.ts`; import each entry point from its specific file.
 
 **Only one editor configuration is supported per page.** `AppConfig`, `CollaborationConfig`,
 `Autosave`, and the stencil/file loader registries are module-scope globals
-(`packages/main/src/appConfig.ts`) — there is no per-instance scoping. `createDiagramCraft()`
+(`packages/main/src/appConfig.ts`) — there is no per-instance scoping. `bootstrapDiagramCraft()`
 enforces this: calling it again with a different `collaboration` / `autosave` / `stencils` /
 `fileLoaders` / `elementDefinitions` / `textHandlers` config throws, since a second
 `AppConfig.set()` would otherwise silently clobber config out from under an already-mounted
@@ -44,7 +44,7 @@ canvas modelState, `CollaborationConfig`, `AppConfig.get()` used across 15+ reac
 ## Basic usage
 
 ```ts
-const instance = createDiagramCraft({
+const instance = bootstrapDiagramCraft({
   collaboration: { backend: 'yjs', url: wsUrl },
   ai: { provider: 'remote', endpoint: `/api/${workspaceId}` }
 });
@@ -72,16 +72,42 @@ hosts do not need to import `CollaborationConfig` directly.
 
 ## Config reference
 
-See the `DiagramCraftConfig` type in `embed/createDiagramCraft.ts` for the full set of
+See the `DiagramCraftConfig` type in `embed/bootstrapDiagramCraft.ts` for the full set of
 options (collaboration backend, autosave, awareness, AI, filesystem, stencils, file loaders,
 element definitions, text handlers). Standalone additionally has an escape hatch —
-`createDiagramCraft({ appConfig })` — to install a fully-built `AppConfig` as-is; this is how
+`bootstrapDiagramCraft({ appConfig })` — to install a fully-built `AppConfig` as-is; this is how
 `initial-loader.ts` keeps `appConfig.default.ts` and the `@diagram-craft/config` vite-alias
 mechanism without a lossy mapping through `DiagramCraftConfig`.
 
 `DiagramCraftConfig.state` (a custom localStorage key for `UserState`) is intentionally not
 part of the current API — `UserState.ts` hardcodes its storage key today and nothing reads a
 configurable one. Add it if a host needs it.
+
+### Extending the default stencils / file loaders
+
+`stencils` and `fileLoaders` are a **full replace, not a merge** — passing either entirely
+replaces the built-in defaults rather than extending them. `embed/defaults.ts` exports the
+pieces used to build those defaults so hosts can compose on top of them instead:
+
+- `embedStencilConfig(opts?: { stencilRoot?: string })` — the `basic`-loader stencil packs
+  (always included) plus, when `stencilRoot` is passed, the Draw.io XML-based packs
+  (GCP/AWS/Azure/etc.), whose asset URLs are resolved as `` `${stencilRoot}/stencils/*.xml` ``.
+  Omit `stencilRoot` entirely to skip the Draw.io packs (there's nowhere to fetch their
+  assets from otherwise). `bootstrapDiagramCraft`'s own default calls this with no `stencilRoot`.
+- `makeEmbedFileLoaders(getIncludedPackages: () => string[])` — `.json`, `.dcd`, `.drawio`,
+  and `.diagramCraft.svg` file loaders.
+
+```ts
+bootstrapDiagramCraft({
+  stencils: [...embedStencilConfig({ stencilRoot: 'https://cdn.example.com/stencils' }), ...myExtras],
+  fileLoaders: makeEmbedFileLoaders(() => myIncludedPackages)
+});
+```
+
+A host resolving `stencilRoot` to a value that isn't already fully addressable by `fetch()`
+(e.g. a relative path proxied through a backend) needs its own `FileSystem.loadFromUrl`
+override — see `appConfig.default.ts`'s `isStencilAssetUrl` check for the pattern standalone
+uses to route stencil-asset URLs around its `/api/fs/` remote-filesystem proxying.
 
 ## Data-provider seam
 
@@ -132,6 +158,6 @@ seam existed.
 ## Deferred / out of scope
 
 - `registerDrawioBaseNodeTypes` — after this refactor the manual call lives in exactly one
-  place (`createDiagramCraft`); further lazy-loading investigation is orthogonal.
+  place (`bootstrapDiagramCraft`); further lazy-loading investigation is orthogonal.
 - Multi-instance / de-globalization (see above).
 - npm publishing / package exports maps.

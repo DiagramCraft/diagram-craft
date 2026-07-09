@@ -168,7 +168,7 @@ const finishInit = (appConfig: AppConfig, textHandlers: TextHandlers | false | u
 };
 
 /**
- * Init facade for embedding diagram-craft into a host application. Builds and installs
+ * Bootstraps diagram-craft for embedding into a host application. Builds and installs
  * the module-scope AppConfig/CollaborationConfig/Autosave/loader-registry globals from a
  * typed config, and returns the factories/registries needed to render EmbeddableEditor.
  *
@@ -181,13 +181,16 @@ const finishInit = (appConfig: AppConfig, textHandlers: TextHandlers | false | u
  * Pass `{ appConfig }` to install a fully-built AppConfig as-is (the standalone path,
  * which keeps appConfig.default.ts + the `@diagram-craft/config` vite-alias mechanism).
  */
-export const createDiagramCraft = (config: DiagramCraftConfigInput = {}): DiagramCraftInstance => {
+export const bootstrapDiagramCraft = (
+  config: DiagramCraftConfigInput = {}
+): DiagramCraftInstance => {
   if (isFullAppConfigInput(config)) {
     if (initialized) {
       if (_lastImmutableFields !== 'full-app-config') {
         throw new Error(
-          'createDiagramCraft({ appConfig }) was called after createDiagramCraft() had already ' +
-            'been initialized with a shorthand config. Only one editor config is supported per page.'
+          'bootstrapDiagramCraft({ appConfig }) was called after bootstrapDiagramCraft() had ' +
+            'already been initialized with a shorthand config. Only one editor config is ' +
+            'supported per page.'
         );
       }
       return _instance;
@@ -205,7 +208,7 @@ export const createDiagramCraft = (config: DiagramCraftConfigInput = {}): Diagra
       !deepEquals(immutableFields, _lastImmutableFields)
     ) {
       throw new Error(
-        'createDiagramCraft() was called again with a different collaboration/autosave/' +
+        'bootstrapDiagramCraft() was called again with a different collaboration/autosave/' +
           'stencils/fileLoaders/elementDefinitions/textHandlers config. Only one editor ' +
           'config is supported per page — use updateConfig() to change ai/awareness/filesystem.'
       );

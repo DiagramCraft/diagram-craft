@@ -10,7 +10,7 @@ import type { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 
 /**
  * Env-free shared fragments used to build both the standalone default config
- * (appConfig.default.ts) and the embedding facade (embed/createDiagramCraft.ts).
+ * (appConfig.default.ts) and the embedding facade (embed/bootstrapDiagramCraft.ts).
  * Must not touch import.meta.env or window.electronAPI.
  */
 

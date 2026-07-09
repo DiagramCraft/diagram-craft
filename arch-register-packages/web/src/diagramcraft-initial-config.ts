@@ -1,4 +1,4 @@
-import { createDiagramCraft } from '@diagram-craft/main/embed/createDiagramCraft';
+import { bootstrapDiagramCraft } from '@diagram-craft/main/embed/bootstrapDiagramCraft';
 
 let _currentWorkspaceId: string | undefined;
 
@@ -6,7 +6,7 @@ export const initializeDiagramCraft = (workspaceId: string) => {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
 
-  const instance = createDiagramCraft({
+  const instance = bootstrapDiagramCraft({
     collaboration: { backend: 'yjs', url: wsUrl }
   });
 
