@@ -106,6 +106,17 @@ export const screenshots: ArchRegisterScreenshotConfig[] = [
   {
     product: 'arch-register',
     category: 'entities',
+    name: 'browser-bubble',
+    fullPage: false,
+    setup: async ({ entitiesPage }) => {
+      await entitiesPage.goto({ viewMode: 'bubble' });
+      await entitiesPage.expectLoaded();
+      await expect(entitiesPage.browserTitle()).toBeVisible();
+    }
+  },
+  {
+    product: 'arch-register',
+    category: 'entities',
     name: 'browser-explore',
     fullPage: false,
     setup: async ({ entitiesPage }) => {
