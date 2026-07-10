@@ -1,6 +1,19 @@
 import { test, expect } from '../helpers/fixtures';
 import { NONEXISTENT_UUID } from '../helpers/testIds';
 
+const suggestedResolutions = (parseResult: {
+  conflicts: Array<{
+    item_id: string;
+    suggested_resolution: 'skip' | 'merge' | 'overwrite' | 'rename';
+  }>;
+}) =>
+  Object.fromEntries(
+    parseResult.conflicts.map(conflict => [
+      conflict.item_id,
+      { action: conflict.suggested_resolution }
+    ])
+  );
+
 test.describe('workspace export/import', () => {
   test.describe('export', () => {
     test('POST /api/:workspace/export exports workspace with all data types', async ({ orpc }) => {
@@ -189,7 +202,7 @@ test.describe('workspace export/import', () => {
         body: {
           import_id: (parseResult as any).import_id!,
           include: ['config', 'schemas'],
-          conflict_resolutions: {},
+          conflict_resolutions: suggestedResolutions(parseResult),
           options: {
             preserve_ids: false,
             update_references: true
@@ -290,7 +303,7 @@ test.describe('workspace export/import', () => {
         body: {
           import_id: (parseResult as any).import_id!,
           include: ['config', 'schemas', 'entities', 'projects'],
-          conflict_resolutions: {},
+          conflict_resolutions: suggestedResolutions(parseResult),
           options: {
             preserve_ids: false,
             update_references: true

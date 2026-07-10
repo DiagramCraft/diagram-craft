@@ -141,6 +141,28 @@ export type ImportConflict = {
   suggested_resolution: 'skip' | 'merge' | 'overwrite' | 'rename';
 };
 
+export type ImportDiagnostic = {
+  code:
+    | 'invalid_archive'
+    | 'invalid_manifest'
+    | 'checksum_mismatch'
+    | 'duplicate_import_item'
+    | 'missing_reference'
+    | 'missing_content_file'
+    | 'unresolved_conflict';
+  item_type?: ExportDataType;
+  item_id?: string;
+  message: string;
+};
+
+export type ImportFailureReport = {
+  stage: 'validation' | 'planning' | 'storage' | 'persistence';
+  message: string;
+  affected_items: string[];
+  compensation: 'not_required' | 'completed' | 'failed';
+  recovery: 'reupload_archive';
+};
+
 export type ImportParseResult = {
   valid: boolean;
   version: string;
@@ -176,6 +198,7 @@ export type ImportParseResult = {
   conflicts: ImportConflict[];
   errors: string[];
   warnings: string[];
+  diagnostics?: ImportDiagnostic[];
 };
 
 export type ConflictResolution = {
@@ -219,6 +242,7 @@ export type ImportExecuteResult = {
   };
   errors: string[];
   warnings: string[];
+  failure?: ImportFailureReport;
 };
 
 export type IdMapping = {
@@ -228,4 +252,17 @@ export type IdMapping = {
   lifecycle_states: Map<string, string>;
   projects: Map<string, string>;
   content_nodes: Map<string, string>;
+};
+
+export type WorkspaceImportPlan = {
+  include: ExportDataType[];
+  id_mapping: Record<keyof IdMapping, Record<string, string>>;
+  storage_writes: Array<{
+    workspace: string;
+    storage_id: string;
+    node_id: string;
+    source_path: string;
+  }>;
+  conflicts: ImportConflict[];
+  diagnostics: ImportDiagnostic[];
 };
