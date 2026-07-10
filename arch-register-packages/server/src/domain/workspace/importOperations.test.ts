@@ -11,6 +11,16 @@ vi.mock('@arch-register/permissions', () => ({
   }
 }));
 
+vi.mock('../../utils/logger', () => ({
+  createLogger: () => ({
+    trace: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
+  })
+}));
+
 import { exportWorkspace } from './exportOperations';
 import { executeImport, parseImport } from './importOperations';
 
