@@ -87,6 +87,30 @@ DB_DRIVER=sqlite
 SQLITE_PATH=./data/arch-register.sqlite
 ```
 
+## Database contract tests
+
+Cross-driver contract tests verify that the SQLite and PostgreSQL adapters behave identically (type
+normalization, constraint/transaction semantics, error codes) for a given domain. They are separate from the
+regular unit test suite (`pnpm test`) so they aren't run on every `vitest run`.
+
+All domains with a dual-driver adapter are covered: `project`, `catalog` (including saved views), `workspace`,
+`auth`, `ai`, `watch`, and `audit` (see issue #1957). Domains without their own DB adapter (`analytics`,
+`collaboration`, `diagram`, `search`) call into the domains above and don't need separate suites.
+
+Run with SQLite only (no setup required):
+
+```bash
+pnpm --filter @arch-register/server test:db-contract
+```
+
+To also exercise the PostgreSQL suite, point `DATABASE_URL` at a local scratch Postgres (see "Local PostgreSQL
+setup" above) before running the same command — a random schema is created and dropped per run:
+
+```bash
+export DATABASE_URL=postgresql://arch_register:yourpassword@localhost:5432/arch_register
+pnpm --filter @arch-register/server test:db-contract
+```
+
 ## Installation
 
 From the repo root or this directory:

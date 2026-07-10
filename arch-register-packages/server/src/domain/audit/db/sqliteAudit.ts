@@ -36,6 +36,15 @@ export class SqliteAuditDatabase extends SqliteDatabaseBase implements AuditData
         JSON.stringify(input.metadata)
       ]
     );
-    return (await this.get('SELECT * FROM audit_log WHERE id = ?', [id], sqliteMappers.auditLog))!;
+    return (await this.get(
+      `SELECT
+        audit_log.*,
+        users.display_name as user_display_name
+      FROM audit_log
+      LEFT JOIN users ON audit_log.user_id = users.id
+      WHERE audit_log.id = ?`,
+      [id],
+      sqliteMappers.auditLog
+    ))!;
   }
 }

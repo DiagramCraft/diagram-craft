@@ -108,7 +108,7 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
           auditLog.id,
           auditLog.operation,
           auditLog.entity_name,
-          auditLog.entity_slug,
+          auditLog.entity_slug ?? auditLog.entity_id,
           auditLog.schema_id,
           auditLog.user_id,
           changedByDisplayName,
