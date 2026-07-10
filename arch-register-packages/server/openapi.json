@@ -9222,7 +9222,8 @@
                           "timeline",
                           "matrix",
                           "hierarchy",
-                          "explore"
+                          "explore",
+                          "bubble"
                         ],
                         "type": "string",
                         "description": "View display mode"
@@ -9640,6 +9641,48 @@
                                   }
                                 },
                                 "description": "Configuration for explore view"
+                              },
+                              "bubble": {
+                                "type": "object",
+                                "properties": {
+                                  "xFieldId": {
+                                    "type": "string",
+                                    "description": "Field identifier mapped to the X axis"
+                                  },
+                                  "yFieldId": {
+                                    "type": "string",
+                                    "description": "Field identifier mapped to the Y axis"
+                                  },
+                                  "sizeFieldId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Field identifier mapped to bubble size (null for uniform size)"
+                                  },
+                                  "colorFieldId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Field identifier mapped to bubble color (null for uniform color)"
+                                  }
+                                },
+                                "required": [
+                                  "xFieldId",
+                                  "yFieldId",
+                                  "sizeFieldId",
+                                  "colorFieldId"
+                                ],
+                                "description": "Configuration for bubble view"
                               }
                             }
                           },
@@ -9767,7 +9810,8 @@
                       "timeline",
                       "matrix",
                       "hierarchy",
-                      "explore"
+                      "explore",
+                      "bubble"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -10185,6 +10229,48 @@
                               }
                             },
                             "description": "Configuration for explore view"
+                          },
+                          "bubble": {
+                            "type": "object",
+                            "properties": {
+                              "xFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the X axis"
+                              },
+                              "yFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the Y axis"
+                              },
+                              "sizeFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Field identifier mapped to bubble size (null for uniform size)"
+                              },
+                              "colorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Field identifier mapped to bubble color (null for uniform color)"
+                              }
+                            },
+                            "required": [
+                              "xFieldId",
+                              "yFieldId",
+                              "sizeFieldId",
+                              "colorFieldId"
+                            ],
+                            "description": "Configuration for bubble view"
                           }
                         }
                       },
@@ -10282,7 +10368,8 @@
                         "timeline",
                         "matrix",
                         "hierarchy",
-                        "explore"
+                        "explore",
+                        "bubble"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -10700,6 +10787,48 @@
                                 }
                               },
                               "description": "Configuration for explore view"
+                            },
+                            "bubble": {
+                              "type": "object",
+                              "properties": {
+                                "xFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the X axis"
+                                },
+                                "yFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the Y axis"
+                                },
+                                "sizeFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Field identifier mapped to bubble size (null for uniform size)"
+                                },
+                                "colorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Field identifier mapped to bubble color (null for uniform color)"
+                                }
+                              },
+                              "required": [
+                                "xFieldId",
+                                "yFieldId",
+                                "sizeFieldId",
+                                "colorFieldId"
+                              ],
+                              "description": "Configuration for bubble view"
                             }
                           }
                         },
@@ -10818,7 +10947,8 @@
                       "timeline",
                       "matrix",
                       "hierarchy",
-                      "explore"
+                      "explore",
+                      "bubble"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -11236,6 +11366,48 @@
                               }
                             },
                             "description": "Configuration for explore view"
+                          },
+                          "bubble": {
+                            "type": "object",
+                            "properties": {
+                              "xFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the X axis"
+                              },
+                              "yFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the Y axis"
+                              },
+                              "sizeFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Field identifier mapped to bubble size (null for uniform size)"
+                              },
+                              "colorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Field identifier mapped to bubble color (null for uniform color)"
+                              }
+                            },
+                            "required": [
+                              "xFieldId",
+                              "yFieldId",
+                              "sizeFieldId",
+                              "colorFieldId"
+                            ],
+                            "description": "Configuration for bubble view"
                           }
                         }
                       },
@@ -11328,7 +11500,8 @@
                         "timeline",
                         "matrix",
                         "hierarchy",
-                        "explore"
+                        "explore",
+                        "bubble"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -11746,6 +11919,48 @@
                                 }
                               },
                               "description": "Configuration for explore view"
+                            },
+                            "bubble": {
+                              "type": "object",
+                              "properties": {
+                                "xFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the X axis"
+                                },
+                                "yFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the Y axis"
+                                },
+                                "sizeFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Field identifier mapped to bubble size (null for uniform size)"
+                                },
+                                "colorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Field identifier mapped to bubble color (null for uniform color)"
+                                }
+                              },
+                              "required": [
+                                "xFieldId",
+                                "yFieldId",
+                                "sizeFieldId",
+                                "colorFieldId"
+                              ],
+                              "description": "Configuration for bubble view"
                             }
                           }
                         },
