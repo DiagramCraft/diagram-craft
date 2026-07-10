@@ -66,6 +66,8 @@ import {
 } from '../../lib/contentNode';
 import { RenameDialog } from '../../components/RenameDialog';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
+import { findSnapshotConflicts, resolveSnapshotEntityData } from './projectSnapshotState';
+import { buildFolderTree, type FolderTreeNode } from '../../lib/folderTree';
 
 const PROJECT_STATUSES = [
   { value: 'draft', label: 'Draft' },
@@ -314,49 +316,14 @@ export const ProjectDetailScreen = () => {
     }
   };
 
-  type FolderNode = {
-    path: string;
-    name: string;
-    children: FolderNode[];
-  };
-
-  const buildFolderTree = (folders: string[]): FolderNode[] => {
-    const root: FolderNode[] = [];
-    const map = new Map<string, FolderNode>();
-
-    // Sort folders to ensure parents come before children
-    const sorted = [...folders].sort();
-
-    for (const path of sorted) {
-      const parts = path.split('/');
-      const name = parts[parts.length - 1] ?? path;
-      const node: FolderNode = { path, name, children: [] };
-      map.set(path, node);
-
-      if (parts.length === 1) {
-        // Top-level folder
-        root.push(node);
-      } else {
-        // Nested folder - find parent
-        const parentPath = parts.slice(0, -1).join('/');
-        const parent = map.get(parentPath);
-        if (parent) {
-          parent.children.push(node);
-        }
-      }
-    }
-
-    return root;
-  };
-
   const renderMoveToSubmenu = (
     file: ProjectFile,
     folders: string[],
     currentFolder: string | null
   ) => {
-    const folderTree = buildFolderTree(folders);
+    const folderTree = buildFolderTree(folders.map(path => ({ path })));
 
-    const renderFolderNodes = (nodes: FolderNode[]): React.ReactNode => {
+    const renderFolderNodes = (nodes: FolderTreeNode[]): React.ReactNode => {
       return nodes.map(node => {
         const isCurrentFolder = node.path === currentFolder;
         if (node.children.length > 0) {
@@ -1234,7 +1201,7 @@ const PlanFutureChangeDialog = ({
   const { data: entity } = useEntity(workspaceId, entityId);
   const createFutureUpdate = useCreateFutureUpdate(workspaceId, entityId);
 
-  const schema = entity ? schemas.find(s => s.id === entity._schema.id) : null;
+  const schema = entity ? schemas.find(s => s.id === entity._schema.id) ?? null : null;
 
   const [targetDate, setTargetDate] = useState('');
   const [commitMessage, setCommitMessage] = useState('');
@@ -1438,47 +1405,11 @@ const ApplySnapshotDialog = ({
     setTargetDate(snapshot.target_date ?? '');
   }, [open, snapshot.target_date]);
 
-  const schema = entity ? schemas.find(s => s.id === entity._schema.id) : null;
+  const schema = entity ? schemas.find(s => s.id === entity._schema.id) ?? null : null;
 
   const proposed = snapshot.proposed_state as Record<string, unknown> | null;
   const base = snapshot.base_state as Record<string, unknown>;
-  const proposedData = (proposed?.data as Record<string, unknown>) ?? {};
-  const baseData = (base.data as Record<string, unknown>) ?? {};
-
-  type ConflictItem = { key: string; label: string; proposedVal: unknown; currentVal: unknown };
-  const conflicts: ConflictItem[] = [];
-
-  if (entity && proposed) {
-    const metaFields: Array<[string, string, unknown, unknown]> = [
-      ['name', 'Name', proposed.name, entity._name],
-      ['description', 'Description', proposed.description, entity._description],
-      ['owner', 'Owner', proposed.owner, entity._owner?.id ?? null],
-      ['lifecycle', 'Lifecycle', proposed.lifecycle, entity._lifecycle?.id ?? null],
-      ['target_lifecycle', 'Target Lifecycle', proposed.target_lifecycle, entity._targetLifecycle?.id ?? null],
-      ['target_lifecycle_date', 'Target Date', proposed.target_lifecycle_date, entity._targetLifecycleDate ?? null]
-    ];
-    for (const [key, label, proposedVal, currentVal] of metaFields) {
-      if (
-        JSON.stringify(proposedVal) !== JSON.stringify(base[key]) &&
-        JSON.stringify(currentVal) !== JSON.stringify(base[key])
-      ) {
-        conflicts.push({ key, label, proposedVal, currentVal });
-      }
-    }
-    if (schema) {
-      for (const f of schema.fields) {
-        const proposedVal = proposedData[f.id];
-        const baseVal = baseData[f.id];
-        const currentVal = entity[f.id];
-        if (
-          JSON.stringify(proposedVal) !== JSON.stringify(baseVal) &&
-          JSON.stringify(currentVal) !== JSON.stringify(baseVal)
-        ) {
-          conflicts.push({ key: `data.${f.id}`, label: f.name, proposedVal, currentVal });
-        }
-      }
-    }
-  }
+  const conflicts = findSnapshotConflicts(entity, schema, proposed, base);
 
   const formatVal = (v: unknown) => {
     if (v == null || v === '') return '—';
@@ -1489,47 +1420,7 @@ const ApplySnapshotDialog = ({
   const doApply = async () => {
     if (!entity || !proposed) return;
 
-    const resolved: Record<string, unknown> = {
-      _schemaId: proposed.schema_id ?? entity._schema.id,
-      _name: conflictChoices['name'] === 'current' ? entity._name : (proposed.name ?? entity._name),
-      _slug: entity._slug,
-      _namespace: entity._namespace,
-      _description: conflictChoices['description'] === 'current'
-        ? entity._description
-        : (proposed.description ?? entity._description),
-      _owner: conflictChoices['owner'] === 'current'
-        ? (entity._owner?.id ?? null)
-        : ((proposed.owner as string) ?? null),
-      _lifecycle: conflictChoices['lifecycle'] === 'current'
-        ? (entity._lifecycle?.id ?? null)
-        : ((proposed.lifecycle as string) ?? null),
-      _targetLifecycle: conflictChoices['target_lifecycle'] === 'current'
-        ? (entity._targetLifecycle?.id ?? null)
-        : ((proposed.target_lifecycle as string) ?? null),
-      _targetLifecycleDate: conflictChoices['target_lifecycle_date'] === 'current'
-        ? (entity._targetLifecycleDate ?? null)
-        : ((proposed.target_lifecycle_date as string) ?? null),
-      _tags: conflictChoices['tags'] === 'current'
-        ? entity._tags
-        : ((proposed.tags as string[]) ?? entity._tags),
-      _links: entity._links,
-      _visibilityMode: entity._visibilityMode ?? null
-    };
-
-    if (schema) {
-      for (const f of schema.fields) {
-        const proposedVal = proposedData[f.id];
-        const baseVal = baseData[f.id];
-        const currentVal = entity[f.id];
-        const hasPlannedChange = JSON.stringify(proposedVal) !== JSON.stringify(baseVal);
-        const hasDrift = JSON.stringify(currentVal) !== JSON.stringify(baseVal);
-        if (hasPlannedChange && hasDrift && conflictChoices[`data.${f.id}`] === 'current') {
-          resolved[f.id] = currentVal;
-        } else {
-          resolved[f.id] = hasPlannedChange ? proposedVal : currentVal;
-        }
-      }
-    }
+    const resolved = resolveSnapshotEntityData({ entity, schema, proposed, base, conflictChoices });
 
     try {
       if ((snapshot.target_date ?? '') !== targetDate) {

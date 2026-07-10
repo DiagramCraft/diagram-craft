@@ -2,39 +2,7 @@ import { useState } from 'react';
 import { TbFolder, TbFolderOpen, TbHome } from 'react-icons/tb';
 import { TreeRow } from './TreeRow';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
-
-type FolderNode = {
-  path: string;
-  name: string;
-  children: FolderNode[];
-};
-
-const buildFolderTree = (
-  folders: Array<{ path: string; name: string; files: ProjectFile[] }>
-): FolderNode[] => {
-  const root: FolderNode[] = [];
-  const map = new Map<string, FolderNode>();
-
-  for (const folder of [...folders].sort((a, b) => a.path.localeCompare(b.path))) {
-    const parts = folder.path.split('/');
-    const node: FolderNode = { path: folder.path, name: folder.name, children: [] };
-    map.set(folder.path, node);
-
-    if (parts.length === 1) {
-      root.push(node);
-    } else {
-      const parentPath = parts.slice(0, -1).join('/');
-      const parent = map.get(parentPath);
-      if (parent) {
-        parent.children.push(node);
-      } else {
-        root.push(node);
-      }
-    }
-  }
-
-  return root;
-};
+import { buildFolderTree, type FolderTreeNode } from '../lib/folderTree';
 
 type FolderPickerTreeProps = {
   folders: Array<{ path: string; name: string; files: ProjectFile[] }>;
@@ -50,7 +18,7 @@ const FolderRow = ({
   onToggle,
   onSelect
 }: {
-  node: FolderNode;
+  node: FolderTreeNode;
   depth: number;
   selected: string | null;
   expanded: Set<string>;
