@@ -12597,7 +12597,7 @@
                     },
                     "import_id": {
                       "type": "string",
-                      "description": "Unique identifier for this import session"
+                      "description": "Unique identifier for a valid import session"
                     },
                     "source_workspace": {
                       "type": "object",
@@ -12845,12 +12845,52 @@
                         "type": "string"
                       },
                       "description": "Import validation warnings"
+                    },
+                    "diagnostics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "invalid_archive",
+                              "invalid_manifest",
+                              "checksum_mismatch",
+                              "duplicate_import_item",
+                              "missing_reference",
+                              "missing_content_file",
+                              "unresolved_conflict"
+                            ],
+                            "type": "string"
+                          },
+                          "item_type": {
+                            "enum": [
+                              "config",
+                              "schemas",
+                              "entities",
+                              "projects",
+                              "content_nodes"
+                            ],
+                            "type": "string",
+                            "description": "Type of data to export/import"
+                          },
+                          "item_id": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ]
+                      }
                     }
                   },
                   "required": [
                     "valid",
                     "version",
-                    "import_id",
                     "source_workspace",
                     "available_data_types",
                     "summary",
@@ -13118,6 +13158,47 @@
                         "type": "string"
                       },
                       "description": "Import execution warnings"
+                    },
+                    "failure": {
+                      "type": "object",
+                      "properties": {
+                        "stage": {
+                          "enum": [
+                            "validation",
+                            "planning",
+                            "storage",
+                            "persistence"
+                          ],
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "affected_items": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "compensation": {
+                          "enum": [
+                            "not_required",
+                            "completed",
+                            "failed"
+                          ],
+                          "type": "string"
+                        },
+                        "recovery": {
+                          "const": "reupload_archive"
+                        }
+                      },
+                      "required": [
+                        "stage",
+                        "message",
+                        "affected_items",
+                        "compensation",
+                        "recovery"
+                      ]
                     }
                   },
                   "required": [
