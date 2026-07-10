@@ -73,6 +73,13 @@ import { DiagramMetadataPopover } from '../../components/DiagramMetadataPopover'
 import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
 import { EntityDependentsTab } from './components/EntityDependentsTab';
 import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
+import {
+  createEntityEditState,
+  createEntityUpdateBody,
+  relationIds,
+  requiredEntityFieldIds,
+  slugifyEntityName
+} from './entityDetailEditState';
 
 type TabId =
   | 'overview'
@@ -103,21 +110,12 @@ type RelationGroup = {
 
 type RefLookup = Map<string, EntitySummary>;
 
-const slugify = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
 const formatDateValue = (value: unknown) => {
   if (typeof value !== 'string' || value === '') return '—';
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString();
 };
-
-const getRelationIds = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 
 export const EntityDetailScreen = () => {
   const navigate = useNavigate();
@@ -276,24 +274,7 @@ export const EntityDetailScreen = () => {
 
   const startEdit = () => {
     if (!entity || !schema) return;
-    const state: Record<string, unknown> = {
-      _name: entity._name ?? '',
-      _slug: entity._slug ?? '',
-      _description: entity._description ?? '',
-      _owner: entity._owner?.id ?? '',
-      _lifecycle: entity._lifecycle?.id ?? '',
-      _targetLifecycle: entity._targetLifecycle?.id ?? '',
-      _targetLifecycleDate: entity._targetLifecycleDate ?? '',
-      _namespace: entity._namespace ?? '',
-      _tags: (entity._tags ?? []).join(', ')
-    };
-    for (const f of schema.fields) {
-      state[f.id] =
-        f.type === 'reference' || f.type === 'containment'
-          ? getRelationIds(entity[f.id])
-          : (entity[f.id] ?? '');
-    }
-    setEditState(state);
+    setEditState(createEntityEditState(entity, schema));
     setEditLinks(entity._links.map(l => ({ ...l })));
     setEditing(true);
   };
@@ -308,51 +289,14 @@ export const EntityDetailScreen = () => {
   const saveEdit = async () => {
     if (!entity || !schema) return;
 
-    const errors = new Set<string>();
-    for (const f of schema.fields) {
-      if (f.requirementLevel === 'required') {
-        const val = editState[f.id];
-        const isEmpty =
-          val == null ||
-          (typeof val === 'string' && val.trim() === '') ||
-          (Array.isArray(val) && val.length === 0);
-        if (isEmpty) errors.add(f.id);
-      }
-    }
+    const errors = requiredEntityFieldIds(editState, schema);
     if (errors.size > 0) {
       setValidationErrors(errors);
       return;
     }
     setValidationErrors(new Set());
 
-    const dataFields: Record<string, unknown> = {};
-    for (const f of schema.fields) {
-      dataFields[f.id] =
-        f.type === 'reference' || f.type === 'containment'
-          ? getRelationIds(editState[f.id])
-          : (editState[f.id] ?? '');
-    }
-
-    const tagsStr = (editState['_tags'] as string) ?? '';
-    const tags = tagsStr
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
-    const body = {
-      _schemaId: entity._schema.id,
-      _name: (editState['_name'] as string) ?? '',
-      _slug: (editState['_slug'] as string) || entity._slug,
-      _namespace: (editState['_namespace'] as string) || entity._namespace,
-      _description: (editState['_description'] as string) ?? '',
-      _owner: (editState['_owner'] as string) || null,
-      _lifecycle: (editState['_lifecycle'] as string) || null,
-      _targetLifecycle: (editState['_targetLifecycle'] as string) || null,
-      _targetLifecycleDate: (editState['_targetLifecycleDate'] as string) || null,
-      _tags: tags,
-      _links: editLinks.filter(l => l.url.trim() !== ''),
-      ...dataFields
-    };
+    const body = createEntityUpdateBody(entity, schema, editState, editLinks);
 
     setPendingSaveBody(body);
     setSaveConfirmMessage('');
@@ -620,7 +564,7 @@ export const EntityDetailScreen = () => {
               value={entity._name || '—'}
               editing={editing}
               editValue={editState['_name'] as string}
-              onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugify(v) }))}
+              onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugifyEntityName(v) }))}
             />
             <MetaPropRow
               label="Slug"
@@ -1192,7 +1136,7 @@ const PropertyRow = ({
       }));
       return (
         <MultiSelect
-          selectedValues={getRelationIds(editValue)}
+          selectedValues={relationIds(editValue)}
           availableItems={availableItems}
           onSelectionChange={onChange}
           placeholder={`Search ${field.name.toLowerCase()}...`}
@@ -1205,7 +1149,7 @@ const PropertyRow = ({
       return (
         <select
           className={styles.selectInline}
-          value={getRelationIds(editValue)[0] ?? ''}
+          value={relationIds(editValue)[0] ?? ''}
           onChange={e => onChange(e.target.value ? [e.target.value] : [])}
         >
           <option value="">—</option>
@@ -1289,7 +1233,7 @@ const PropertyRow = ({
       return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
     }
     if (field.type === 'reference' || field.type === 'containment') {
-      const ids = getRelationIds(value);
+      const ids = relationIds(value);
       if (ids.length === 0) return <span className={styles.dim}>—</span>;
       return (
         <>
