@@ -17,7 +17,8 @@ const fullConfig: EntityBrowserEmbedConfig = {
   view: 'radar',
   viewConfigs: {
     radar: { xAxis: 'impact', yAxis: 'effort' },
-    explore: { relationFields: ['dependsOn', 'ownedBy'] }
+    explore: { relationFields: ['dependsOn', 'ownedBy'] },
+    bubble: { xFieldId: 'cost', yFieldId: 'headcount', sizeFieldId: null, colorFieldId: 'status' }
   },
   projectScope: 'project'
 };
