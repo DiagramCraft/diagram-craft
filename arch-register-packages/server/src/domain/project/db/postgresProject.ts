@@ -376,9 +376,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       const id = input.id ?? randomUUID();
       const isWorkspaceOwned = input.project_id == null && input.entity_id == null;
       // Partial unique indexes require ON CONFLICT (cols) WHERE condition, not ON CONSTRAINT
-      let row: ContentNodeDbResult | undefined;
       if (input.entity_id != null) {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        await this.sql`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, entity_id, path) WHERE entity_id IS NOT NULL
@@ -393,10 +392,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
             original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename)
-          RETURNING *
         `;
       } else if (isWorkspaceOwned) {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        await this.sql`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, null, null, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, path) WHERE project_id IS NULL AND entity_id IS NULL
@@ -411,10 +409,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
             original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename)
-          RETURNING *
         `;
       } else {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        await this.sql`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, project_id, path) WHERE project_id IS NOT NULL
@@ -429,10 +426,19 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
             original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename)
-          RETURNING *
         `;
       }
-      return row!;
+      if (input.project_id != null) {
+        return (await this.getContentNodeByPath(input.workspace, input.project_id, input.path))!;
+      }
+      if (input.entity_id != null) {
+        return (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
+          n => n.path === input.path
+        )!;
+      }
+      return (await this.listWorkspaceContentNodes(input.workspace)).find(
+        n => n.path === input.path
+      )!;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -445,30 +451,44 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       const id = input.id ?? randomUUID();
       const isWorkspaceOwned = input.project_id == null && input.entity_id == null;
       // Partial unique indexes require ON CONFLICT (cols) WHERE condition, not ON CONSTRAINT
-      let row: ContentNodeDbResult | undefined;
+      let inserted: { id: string } | undefined;
       if (input.entity_id != null) {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        [inserted] = await this.sql<{ id: string }[]>`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, entity_id, path) WHERE entity_id IS NOT NULL DO NOTHING
-          RETURNING *
+          RETURNING id
         `;
       } else if (isWorkspaceOwned) {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        [inserted] = await this.sql<{ id: string }[]>`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, null, null, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, path) WHERE project_id IS NULL AND entity_id IS NULL DO NOTHING
-          RETURNING *
+          RETURNING id
         `;
       } else {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        [inserted] = await this.sql<{ id: string }[]>`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, project_id, path) WHERE project_id IS NOT NULL DO NOTHING
-          RETURNING *
+          RETURNING id
         `;
       }
-      return row ?? null;
+      if (!inserted) return null;
+      if (input.project_id != null) {
+        return await this.getContentNodeByPath(input.workspace, input.project_id, input.path);
+      }
+      if (input.entity_id != null) {
+        return (
+          (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
+            n => n.path === input.path
+          ) ?? null
+        );
+      }
+      return (
+        (await this.listWorkspaceContentNodes(input.workspace)).find(n => n.path === input.path) ??
+        null
+      );
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -504,7 +524,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       `;
       const childRows = await this.sql<{ id: string }[]>`
         UPDATE content_node
-        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+        SET path = ${newPath} || substring(path from (${oldPath.length + 1})::int),
             updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${oldPath}/%`}
         RETURNING id
@@ -575,7 +595,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       `;
       const childRows = await this.sql<{ id: string }[]>`
         UPDATE content_node
-        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+        SET path = ${newPath} || substring(path from (${oldPath.length + 1})::int),
             updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND entity_id = ${entityId} AND path LIKE ${`${oldPath}/%`}
         RETURNING id
@@ -645,7 +665,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       `;
       const childRows = await this.sql<{ id: string }[]>`
         UPDATE content_node
-        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+        SET path = ${newPath} || substring(path from (${oldPath.length + 1})::int),
             updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
           AND path LIKE ${`${oldPath}/%`}
