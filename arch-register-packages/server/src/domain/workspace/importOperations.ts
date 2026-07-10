@@ -509,6 +509,9 @@ const buildImportPlan = async (
   return { plan: { include: options.include, id_mapping: toSerializableMapping(mapping), storage_writes, conflicts: parsed.conflicts, diagnostics }, mapping };
 };
 
+const resolvedName = (id: string, fallback: string, resolutions: Record<string, ImportResolution>) =>
+  resolutions[id]?.action === 'rename' ? resolutions[id]?.new_name?.trim() || fallback : fallback;
+
 const applyConflictRenames = <T extends {
   config?: ExportConfig;
   schemas?: ExportSchema[];
@@ -519,14 +522,14 @@ const applyConflictRenames = <T extends {
   ...data,
   config: data.config && {
     ...data.config,
-    lifecycle_states: data.config.lifecycle_states.map(item => ({ ...item, label: resolutions[item.id]?.action === 'rename' ? resolutions[item.id]?.new_name!.trim() : item.label })),
-    teams: data.config.teams.map(item => ({ ...item, name: resolutions[item.id]?.action === 'rename' ? resolutions[item.id]?.new_name!.trim() : item.name })),
-    roles: data.config.roles.map(item => ({ ...item, name: resolutions[item.id]?.action === 'rename' ? resolutions[item.id]?.new_name!.trim() : item.name }))
+    lifecycle_states: data.config.lifecycle_states.map(item => ({ ...item, label: resolvedName(item.id, item.label, resolutions) })),
+    teams: data.config.teams.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) })),
+    roles: data.config.roles.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) }))
   },
-  schemas: data.schemas?.map(item => ({ ...item, name: resolutions[item.id]?.action === 'rename' ? resolutions[item.id]?.new_name!.trim() : item.name })),
-  entities: data.entities?.map(item => ({ ...item, name: resolutions[item.id]?.action === 'rename' ? resolutions[item.id]?.new_name!.trim() : item.name })),
-  projects: data.projects?.map(item => ({ ...item, name: resolutions[item.id]?.action === 'rename' ? resolutions[item.id]?.new_name!.trim() : item.name })),
-  content_nodes: data.content_nodes?.map(item => ({ ...item, name: resolutions[item.id]?.action === 'rename' ? resolutions[item.id]?.new_name!.trim() : item.name }))
+  schemas: data.schemas?.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) })),
+  entities: data.entities?.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) })),
+  projects: data.projects?.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) })),
+  content_nodes: data.content_nodes?.map(item => ({ ...item, name: resolvedName(item.id, item.name, resolutions) }))
 });
 
 export const executeImport = async (
