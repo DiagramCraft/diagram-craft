@@ -506,9 +506,9 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
   }
 
   async cleanupExpiredImportCache(): Promise<number> {
-    const result = this.run(
-      'DELETE FROM import_cache WHERE expires_at < datetime("now")'
-    );
+    const result = this.run('DELETE FROM import_cache WHERE expires_at < ?', [
+      new Date().toISOString()
+    ]);
     return result.changes ?? 0;
   }
 }

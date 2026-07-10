@@ -93,8 +93,9 @@ Cross-driver contract tests verify that the SQLite and PostgreSQL adapters behav
 normalization, constraint/transaction semantics, error codes) for a given domain. They are separate from the
 regular unit test suite (`pnpm test`) so they aren't run on every `vitest run`.
 
-Currently only the `project` domain (`src/domain/project/db/`) is covered; other domains are follow-up work
-(see issue #1957).
+All domains with a dual-driver adapter are covered: `project`, `catalog` (including saved views), `workspace`,
+`auth`, `ai`, `watch`, and `audit` (see issue #1957). Domains without their own DB adapter (`analytics`,
+`collaboration`, `diagram`, `search`) call into the domains above and don't need separate suites.
 
 Run with SQLite only (no setup required):
 

@@ -17,7 +17,7 @@ export class PostgresAuditDatabase extends PostgresDatabaseBase implements Audit
 
   async createAuditLog(input: AuditLogDbCreate) {
     try {
-      const [row] = await this.sql<AuditLogDbResult[]>`
+      const [inserted] = await this.sql<{ id: string }[]>`
         INSERT INTO audit_log (id, workspace, timestamp, user_id, operation, entity_type, entity_id, entity_name, entity_slug, schema_id, changes, metadata)
         VALUES (
           gen_random_uuid(),
@@ -33,7 +33,15 @@ export class PostgresAuditDatabase extends PostgresDatabaseBase implements Audit
           ${this.json(input.changes)},
           ${this.json(input.metadata)}
         )
-        RETURNING *
+        RETURNING id
+      `;
+      const [row] = await this.sql<AuditLogDbResult[]>`
+        SELECT
+          audit_log.*,
+          users.display_name as user_display_name
+        FROM audit_log
+        LEFT JOIN users ON audit_log.user_id = users.id
+        WHERE audit_log.id = ${inserted!.id}
       `;
       return row!;
     } catch (error) {
