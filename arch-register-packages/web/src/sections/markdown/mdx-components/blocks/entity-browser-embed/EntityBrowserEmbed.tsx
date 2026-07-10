@@ -99,9 +99,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
       statusFilter={statusFilter}
       activeViewConfig={viewConfig}
       displayFields={displayFields}
-      onEntityClick={onEntityClick}
-      readOnly
-      hideToolbar
+      mode={{ kind: 'published', onEntityClick }}
       unsupportedView={
         <div className={styles.container}>
           <p className={styles.empty}>Unsupported view mode.</p>

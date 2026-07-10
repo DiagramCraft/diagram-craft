@@ -19,8 +19,9 @@ import type { JoinedAssessmentContext } from './RadarView';
 
 const noopEntityAction = (_entity: EntityRecord) => {};
 const noopConfigChange = (_config: unknown) => {};
+const noopEntityClick = (_entityId: string) => {};
 
-type EntityBrowserViewProps = {
+type EntityBrowserViewData = {
   view: BrowserView;
   rows: BrowserEntityRecord[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
@@ -36,22 +37,42 @@ type EntityBrowserViewProps = {
   statusFilter: string | null;
   activeViewConfig: unknown;
   displayFields: EntityDisplayField[];
-  onConfigChange?: (config: unknown) => void;
-  onEntityClick: (entityId: string) => void;
-  onDelete?: (entity: EntityRecord) => void;
-  onClone?: (entity: EntityRecord) => void;
   projectContext?: ProjectBrowserContext;
   linkedEntityIds?: string[];
-  readOnly?: boolean;
-  hideToolbar?: boolean;
   activeDateField?: TableViewProps['activeDateField'];
-  selectedIds?: Set<string>;
-  onSelectAll?: () => void;
-  onSelectRow?: (uid: string) => void;
   unsupportedView?: ReactNode;
   joinAssessmentId?: string | null;
   joinedAssessment?: JoinedAssessmentContext | null;
   responsesByEntity?: Map<string, Record<string, string | number>>;
+};
+
+type EntityBrowserViewMode =
+  | {
+      kind: 'interactive';
+      onConfigChange: (config: unknown) => void;
+      onEntityClick: (entityId: string) => void;
+      onDelete: (entity: EntityRecord) => void;
+      onClone: (entity: EntityRecord) => void;
+      selectedIds?: Set<string>;
+      onSelectAll?: () => void;
+      onSelectRow?: (uid: string) => void;
+    }
+  | {
+      kind: 'configure';
+      onConfigChange: (config: unknown) => void;
+    }
+  | {
+      kind: 'published';
+      onEntityClick: (entityId: string) => void;
+    }
+  | {
+      kind: 'snapshot';
+      onConfigChange: (config: unknown) => void;
+      onEntityClick: (entityId: string) => void;
+    };
+
+export type EntityBrowserViewProps = EntityBrowserViewData & {
+  mode: EntityBrowserViewMode;
 };
 
 export const EntityBrowserView = ({
@@ -70,23 +91,24 @@ export const EntityBrowserView = ({
   statusFilter,
   activeViewConfig,
   displayFields,
-  onConfigChange = noopConfigChange,
-  onEntityClick,
-  onDelete = noopEntityAction,
-  onClone = noopEntityAction,
   projectContext,
   linkedEntityIds,
-  readOnly,
-  hideToolbar,
   activeDateField,
-  selectedIds,
-  onSelectAll,
-  onSelectRow,
   unsupportedView = null,
   joinAssessmentId,
   joinedAssessment,
-  responsesByEntity
+  responsesByEntity,
+  mode
 }: EntityBrowserViewProps) => {
+  const readOnly = mode.kind !== 'interactive';
+  const hideToolbar = mode.kind === 'published';
+  const onConfigChange = mode.kind === 'published' ? noopConfigChange : mode.onConfigChange;
+  const onEntityClick = mode.kind === 'configure' ? noopEntityClick : mode.onEntityClick;
+  const onDelete = mode.kind === 'interactive' ? mode.onDelete : noopEntityAction;
+  const onClone = mode.kind === 'interactive' ? mode.onClone : noopEntityAction;
+  const selectedIds = mode.kind === 'interactive' ? mode.selectedIds : undefined;
+  const onSelectAll = mode.kind === 'interactive' ? mode.onSelectAll : undefined;
+  const onSelectRow = mode.kind === 'interactive' ? mode.onSelectRow : undefined;
   switch (view) {
     case 'hierarchy':
       return (

@@ -388,20 +388,30 @@ export const EntityBrowser = ({
             statusFilter={statusFilter}
             activeViewConfig={activeViewConfig}
             displayFields={displayFields}
-            onConfigChange={setActiveViewConfig}
-            onEntityClick={navigateToEntity}
-            onDelete={handleDeleteEntity}
-            onClone={handleCloneEntity}
             projectContext={projectContext}
             linkedEntityIds={linkedEntityIds}
-            readOnly={readOnly}
             activeDateField={dateBrowserEnabled ? activeDateField : null}
-            selectedIds={selectedIds}
-            onSelectAll={handleSelectAll}
-            onSelectRow={handleSelectRow}
             joinAssessmentId={joinAssessmentId}
             joinedAssessment={joinedAssessmentContext}
             responsesByEntity={responsesByEntity}
+            mode={
+              readOnly
+                ? {
+                    kind: 'snapshot',
+                    onConfigChange: setActiveViewConfig,
+                    onEntityClick: navigateToEntity
+                  }
+                : {
+                    kind: 'interactive',
+                    onConfigChange: setActiveViewConfig,
+                    onEntityClick: navigateToEntity,
+                    onDelete: handleDeleteEntity,
+                    onClone: handleCloneEntity,
+                    selectedIds,
+                    onSelectAll: handleSelectAll,
+                    onSelectRow: handleSelectRow
+                  }
+            }
           />
         </>
       )}

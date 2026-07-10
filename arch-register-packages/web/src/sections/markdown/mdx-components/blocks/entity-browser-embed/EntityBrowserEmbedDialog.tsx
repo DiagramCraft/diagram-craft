@@ -21,8 +21,6 @@ import {
 import styles from './EntityBrowserEmbedDialog.module.css';
 import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from '../../../../entities/components/entityDisplayFields';
 
-const noop = () => {};
-
 export const EntityBrowserEmbedDialog = ({
   element,
   open,
@@ -204,9 +202,7 @@ export const EntityBrowserEmbedDialog = ({
             statusFilter={statusFilter}
             activeViewConfig={activeViewConfig}
             displayFields={displayFields}
-            onConfigChange={setActiveViewConfig}
-            onEntityClick={noop}
-            readOnly
+            mode={{ kind: 'configure', onConfigChange: setActiveViewConfig }}
           />
         </div>
         {isPagedBrowse && (
