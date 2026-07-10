@@ -236,4 +236,55 @@ describe('workspace export/import guards', () => {
     expect(db.project.createProject).toHaveBeenCalledTimes(1);
     expect(storage.write).toHaveBeenCalledTimes(1);
   });
+
+  it('requires explicit resolutions before mutating conflicting imports', async () => {
+    hasWorkspaceCapability.mockReturnValue(true);
+    const db = makeDb();
+    db.catalog.listSchemas.mockResolvedValueOnce([
+      { id: 'existing-schema', name: 'Service', description: '', fields: [], color: null, icon: null, default_owner: null, key_prefix: 'SVC', created_at: new Date(), updated_at: new Date() }
+    ]);
+
+    const result = await executeImport(
+      db,
+      undefined,
+      makeAuthCtx(),
+      'workspace-1',
+      { import_id: 'import-1', include: ['schemas'], conflict_resolutions: {}, preserve_ids: false },
+      { schemas: [{ id: 'source-schema', name: 'Service', fields: [], color: null, icon: null, default_owner: null, key_prefix: null }] }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.failure?.stage).toBe('planning');
+    expect(db.catalog.createSchema).not.toHaveBeenCalled();
+    expect(db.catalog.updateSchema).not.toHaveBeenCalled();
+  });
+
+  it('compensates staged storage when the database transaction fails', async () => {
+    hasWorkspaceCapability.mockReturnValue(true);
+    const db = makeDb();
+    const staged = { commit: vi.fn(async () => {}), rollback: vi.fn(async () => {}), finalize: vi.fn(async () => {}) };
+    db.core = {
+      transaction: vi.fn(async () => { throw new Error('database failed'); })
+    };
+    const storage = { write: vi.fn(), read: vi.fn(), delete: vi.fn(), deleteAll: vi.fn(), stageWrite: vi.fn(async () => staged) };
+
+    const result = await executeImport(
+      db,
+      storage as any,
+      makeAuthCtx(),
+      'workspace-1',
+      { import_id: 'import-1', include: ['projects', 'content_nodes'], conflict_resolutions: {}, preserve_ids: false },
+      {
+        projects: [{ id: 'project-old', name: 'Imported project', description: '', owner: null, status: 'active', color: null }],
+        content_nodes: [{ id: 'node-old', project_id: 'project-old', entity_id: null, parent_id: null, path: 'diagram.json', name: 'diagram', type: 'diagram', size_bytes: 1, is_template: false, is_workspace_template: false, content_file: 'content/diagrams/node-old.json' }]
+      },
+      new Map([['content/diagrams/node-old.json', Buffer.from('x')]])
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.failure?.compensation).toBe('completed');
+    expect(staged.commit).toHaveBeenCalledOnce();
+    expect(staged.rollback).toHaveBeenCalledOnce();
+    expect(db.project.createProject).not.toHaveBeenCalled();
+  });
 });

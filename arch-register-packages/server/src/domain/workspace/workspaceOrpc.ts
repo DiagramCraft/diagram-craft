@@ -178,13 +178,20 @@ export const workspaceManagementORPCRouter = wsRouter.router({
       }
 
       const extracted = await ZipExtractor.parseImportZip(zipBuffer);
+      const manifest = extracted.manifest as ExportManifest;
+      for (const [path, checksum] of Object.entries(manifest.checksums ?? {})) {
+        const content = extracted.jsonFiles.get(path);
+        if (!content || calculateChecksum(content) !== checksum) {
+          throw new HTTPError({ status: 400, message: `Import archive checksum mismatch: ${path}` });
+        }
+      }
 
       // Parse and validate the import data
       const result = await parseImport(
         context.db,
         authCtx,
         workspaceId,
-        extracted.manifest as ExportManifest,
+        manifest,
         {
           config: extracted.config as ExportConfig | undefined,
           schemas: extracted.schemas as ExportSchema[] | undefined,
@@ -194,12 +201,14 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         }
       );
 
-      // Store parsed data in cache for later execution
+      if (!result.valid) return result;
+
+      // Only validated archives become executable sessions.
       const importId = await storeImportCache(
         context.db,
         workspaceId,
         authCtx.userId,
-        extracted.manifest as ExportManifest,
+        manifest,
         {
           config: extracted.config as ExportConfig | undefined,
           schemas: extracted.schemas as ExportSchema[] | undefined,
@@ -210,10 +219,7 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         extracted.contentFiles
       );
 
-      return {
-        ...result,
-        import_id: importId
-      };
+      return { ...result, import_id: importId };
     }),
     importExecute: wsRouter.workspaces.importExecute.handler(async ({ input, context }) => {
       const workspaceId = await resolveWorkspace(context.db.catalog, input.params.workspace);

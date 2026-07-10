@@ -46,6 +46,7 @@ type ExportOptions = {
 };
 
 type ImportStatus = 'idle' | 'uploading' | 'parsing' | 'executing' | 'success' | 'error';
+type ConflictResolution = { action: 'skip' | 'merge' | 'overwrite' | 'rename'; new_name?: string };
 
 export const ExportImportSubSection = () => {
   const { workspace } = useWorkspaceContext();
@@ -67,6 +68,7 @@ export const ExportImportSubSection = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importSummary, setImportSummary] = useState<ImportParseResult | null>(null);
   const [importId, setImportId] = useState<string | null>(null);
+  const [conflictResolutions, setConflictResolutions] = useState<Record<string, ConflictResolution>>({});
 
   const handleExport = async () => {
     if (!workspace) return;
@@ -137,6 +139,7 @@ export const ExportImportSubSection = () => {
       setImportSummary(null);
       setImportStatus('idle');
       setImportId(null);
+      setConflictResolutions({});
     }
   };
 
@@ -171,6 +174,7 @@ export const ExportImportSubSection = () => {
       }
 
       setImportSummary(result);
+      setConflictResolutions({});
       setImportStatus('idle');
     } catch (error) {
       console.error('Import parse failed:', error);
@@ -198,7 +202,7 @@ export const ExportImportSubSection = () => {
         body: {
           import_id: importId,
           include: ['config', 'schemas', 'entities', 'projects', 'content_nodes'],
-          conflict_resolutions: {},
+          conflict_resolutions: conflictResolutions,
           options: { preserve_ids: false, update_references: true }
         }
       });
@@ -221,6 +225,7 @@ export const ExportImportSubSection = () => {
       setImportFile(null);
       setImportSummary(null);
       setImportId(null);
+      setConflictResolutions({});
 
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
@@ -235,6 +240,10 @@ export const ExportImportSubSection = () => {
   };
 
   const busy = importStatus === 'parsing' || importStatus === 'executing';
+  const unresolvedConflicts = importSummary?.conflicts.filter(conflict => {
+    const resolution = conflictResolutions[conflict.item_id];
+    return !resolution || (resolution.action === 'rename' && !resolution.new_name?.trim());
+  }) ?? [];
 
   return (
     <div className={styles.blockList}>
@@ -432,6 +441,52 @@ export const ExportImportSubSection = () => {
               </div>
             )}
 
+            {importSummary && importSummary.conflicts.length > 0 && (
+              <div className={styles.field}>
+                <div className={styles.fieldLeft}>
+                  <div className={styles.fieldLabel}>Conflicts</div>
+                  <div className={styles.fieldHint}>Choose how each matching item should be handled.</div>
+                </div>
+                <div className={styles.fieldRight}>
+                  <div className={localStyles.checkboxGroup}>
+                    {importSummary.conflicts.map(conflict => (
+                      <label key={conflict.item_id} className={localStyles.checkboxRow}>
+                        <span>{conflict.item_name}</span>
+                        <select
+                          value={conflictResolutions[conflict.item_id]?.action ?? ''}
+                          onChange={event => setConflictResolutions(previous => ({
+                            ...previous,
+                            [conflict.item_id]: { action: event.target.value as ConflictResolution['action'] }
+                          }))}
+                          disabled={busy}
+                        >
+                          <option value="" disabled>Choose resolution</option>
+                          <option value="skip">Skip</option>
+                          <option value="merge">Merge</option>
+                          <option value="overwrite">Overwrite</option>
+                          <option value="rename">Rename</option>
+                        </select>
+                        {conflictResolutions[conflict.item_id]?.action === 'rename' && (
+                          <input
+                            value={conflictResolutions[conflict.item_id]?.new_name ?? ''}
+                            onChange={event => setConflictResolutions(previous => ({
+                              ...previous,
+                              [conflict.item_id]: {
+                                action: 'rename',
+                                new_name: event.target.value
+                              }
+                            }))}
+                            placeholder="New name"
+                            disabled={busy}
+                          />
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className={localStyles.actionRow}>
               {importError && (
                 <div className={localStyles.inlineError}>
@@ -455,7 +510,7 @@ export const ExportImportSubSection = () => {
                 {importSummary && (
                   <Button
                     onClick={handleImportExecute}
-                    disabled={importStatus === 'executing'}
+                    disabled={importStatus === 'executing' || unresolvedConflicts.length > 0}
                     variant="primary"
                     icon={<TbUpload size={13} />}
                   >
