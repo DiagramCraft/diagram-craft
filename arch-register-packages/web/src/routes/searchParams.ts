@@ -4,7 +4,7 @@ export type SharedEntityBrowserSearchParams = {
   owner?: string;
   q?: string;
   viewId?: string;
-  viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix' | 'hierarchy' | 'explore';
+  viewMode?: 'table' | 'cards' | 'tree' | 'radar' | 'timeline' | 'matrix' | 'hierarchy' | 'explore' | 'bubble';
   sort?: string;
   projectScope?: 'project' | 'all';
   viewConfigs?: string;
@@ -31,7 +31,8 @@ const validateSharedEntityBrowserSearch = (
     raw.viewMode === 'timeline' ||
     raw.viewMode === 'matrix' ||
     raw.viewMode === 'hierarchy' ||
-    raw.viewMode === 'explore'
+    raw.viewMode === 'explore' ||
+    raw.viewMode === 'bubble'
       ? raw.viewMode
       : undefined,
   sort: typeof raw.sort === 'string' ? raw.sort : undefined,

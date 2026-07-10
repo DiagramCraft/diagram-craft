@@ -6,7 +6,10 @@ import type {
 } from '@arch-register/api-types/viewContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
-import { isAssessmentCondition, ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
+import {
+  isAssessmentCondition,
+  ASSESSMENT_FIELD_PREFIX
+} from '@arch-register/api-types/assessmentFilter';
 import type { EntitySearchParams, ProjectSearchParams } from '../../../routes/searchParams';
 
 export type BrowserSearch = EntitySearchParams &
@@ -63,7 +66,7 @@ export const parseConditionsFromSearch = (search: BrowserSearch): FilterConditio
   return initial;
 };
 
-export const parseJsonConfig = <T,>(value: string | undefined): T | null => {
+export const parseJsonConfig = <T>(value: string | undefined): T | null => {
   if (!value) return null;
   try {
     return JSON.parse(value) as T;
@@ -72,7 +75,7 @@ export const parseJsonConfig = <T,>(value: string | undefined): T | null => {
   }
 };
 
-export const serializeConfig = <T,>(value: T | null) => (value ? JSON.stringify(value) : undefined);
+export const serializeConfig = <T>(value: T | null) => (value ? JSON.stringify(value) : undefined);
 
 export const parseViewConfigs = (value: string | undefined): BrowserViewConfigMap => {
   if (!value) return {};
@@ -118,6 +121,10 @@ export const pruneAssessmentReferences = (
     if (isAssessmentFieldId(next.quadrantFieldId)) next.quadrantFieldId = '';
     if (isAssessmentFieldId(next.ringFieldId)) next.ringFieldId = '';
     if (isAssessmentFieldId(next.colEnumFieldId)) next.colEnumFieldId = null;
+    if (isAssessmentFieldId(next.xFieldId)) next.xFieldId = '';
+    if (isAssessmentFieldId(next.yFieldId)) next.yFieldId = '';
+    if (isAssessmentFieldId(next.sizeFieldId)) next.sizeFieldId = null;
+    if (isAssessmentFieldId(next.colorFieldId)) next.colorFieldId = null;
     prunedViewConfigs[view as BrowserView] = next;
   }
 
@@ -131,6 +138,7 @@ const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.viewMode === 'matrix') return view.config.matrix ?? null;
   if (view.viewMode === 'hierarchy') return view.config.hierarchy ?? null;
   if (view.viewMode === 'explore') return view.config.explore ?? null;
+  if (view.viewMode === 'bubble') return view.config.bubble ?? null;
   if (view.viewMode === 'table') return view.config.table ?? null;
   if (view.viewMode === 'cards') return view.config.cards ?? null;
   if (view.viewMode === 'tree') return view.config.tree ?? null;
@@ -167,6 +175,7 @@ export const toSavedViewConfig = (
   if (view === 'matrix') return { matrix: config as never };
   if (view === 'hierarchy') return { hierarchy: config as never };
   if (view === 'explore') return { explore: config as never };
+  if (view === 'bubble') return { bubble: config as never };
   if (view === 'table') return { table: config as never };
   if (view === 'cards') return { cards: config as never };
   if (view === 'tree') return { tree: config as never };

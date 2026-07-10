@@ -4,6 +4,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { ReactNode } from 'react';
+import { BubbleView } from './BubbleView';
 import { CardsView } from './CardsView';
 import { ExploreView } from './ExploreView';
 import { HierarchyView } from './HierarchyView';
@@ -148,6 +149,18 @@ export const EntityBrowserView = ({
     case 'radar':
       return (
         <RadarView
+          rows={rows}
+          linkedEntityIds={linkedEntityIds}
+          onEntityClick={onEntityClick}
+          config={activeViewConfig}
+          onConfigChange={onConfigChange}
+          hideToolbar={hideToolbar}
+          joinedAssessment={joinedAssessment}
+        />
+      );
+    case 'bubble':
+      return (
+        <BubbleView
           rows={rows}
           linkedEntityIds={linkedEntityIds}
           onEntityClick={onEntityClick}
