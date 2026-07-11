@@ -148,10 +148,12 @@ export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSear
 // Settings params
 export type SettingsSearchParams = {
   section?: string;
+  analyticsView?: 'stale';
 };
 
 export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSearchParams => ({
   section: typeof raw.section === 'string' ? raw.section : undefined,
+  analyticsView: raw.analyticsView === 'stale' ? raw.analyticsView : undefined
 });
 
 // Search params

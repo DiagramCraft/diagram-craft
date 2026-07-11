@@ -47,3 +47,9 @@ export const completenessSearch = (schemaId: string, bucket: 'below50' | 'betwee
             { fieldId: '_completeness', op: 'lt', value: 80 }
           ]
   });
+
+export const staleSearch = (cutoffAt: string, schemaId?: string) =>
+  analyticsEntitySearch({
+    type: schemaId,
+    filters: [{ fieldId: '_updatedAt', op: 'before', value: cutoffAt }]
+  });

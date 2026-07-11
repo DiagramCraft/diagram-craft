@@ -50,6 +50,7 @@ export const toApiEntity = (
   _targetLifecycleDate: entity.target_lifecycle_date,
   _tags: entity.tags,
   _links: entity.links,
+  _updatedAt: entity.updated_at.toISOString(),
   _visibilityMode: entity.visibility_mode,
   _completeness: completeness,
   ...getEntityCapabilities(authCtx, entity),
@@ -81,6 +82,7 @@ export const toApiEntitySummary = (
   _targetLifecycleDate: entity.target_lifecycle_date,
   _tags: entity.tags,
   _links: entity.links,
+  _updatedAt: entity.updated_at.toISOString(),
   _visibilityMode: entity.visibility_mode,
   _completeness: completeness,
   ...getEntityCapabilities(authCtx, entity)
