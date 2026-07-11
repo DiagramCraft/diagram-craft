@@ -225,4 +225,50 @@ describe('computeWorkspaceAnalytics', () => {
       }
     ]);
   });
+
+  it('reports stale entities by schema using a strict updated-at cutoff', () => {
+    const analytics = computeWorkspaceAnalytics(
+      [
+        makeEntity({ id: 'old-service', updated_at: new Date('2025-09-30T00:00:00.000Z') }),
+        makeEntity({
+          id: 'at-cutoff-service',
+          updated_at: new Date('2025-10-03T00:00:00.000Z')
+        }),
+        makeEntity({
+          id: 'old-team',
+          schema_id: 'schema-team',
+          schema_name: 'Team',
+          updated_at: new Date('2025-09-01T00:00:00.000Z')
+        })
+      ],
+      schemas,
+      lifecycleStates,
+      90,
+      [],
+      new Date('2026-01-01T00:00:00.000Z')
+    );
+
+    expect(analytics.stale).toEqual({
+      thresholdDays: 90,
+      cutoffAt: '2025-10-03T00:00:00.000Z',
+      totalCount: 2,
+      percent: 66.7,
+      schemas: [
+        {
+          schemaId: 'schema-service',
+          schemaName: 'Service',
+          totalCount: 2,
+          staleCount: 1,
+          stalePercent: 50
+        },
+        {
+          schemaId: 'schema-team',
+          schemaName: 'Team',
+          totalCount: 1,
+          staleCount: 1,
+          stalePercent: 100
+        }
+      ]
+    });
+  });
 });

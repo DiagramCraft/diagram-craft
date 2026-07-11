@@ -145,6 +145,7 @@ export type SettingsSearchParams = {
   auditOperation?: 'create' | 'update' | 'delete';
   auditStartDate?: string;
   auditEndDate?: string;
+  analyticsView?: 'stale';
 };
 
 export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSearchParams => ({
@@ -156,6 +157,7 @@ export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSe
       : undefined,
   auditStartDate: typeof raw.auditStartDate === 'string' ? raw.auditStartDate : undefined,
   auditEndDate: typeof raw.auditEndDate === 'string' ? raw.auditEndDate : undefined,
+  analyticsView: raw.analyticsView === 'stale' ? raw.analyticsView : undefined
 });
 
 // Search params

@@ -7,8 +7,38 @@
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.tab,
+.tabActive {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+.tab:hover {
+  color: var(--base-fg);
+}
+
+.tabActive {
+  border-bottom-color: var(--accent-fg);
+  color: var(--base-fg);
+  font-weight: 500;
 }
 
 .sideBySide {
@@ -25,6 +55,17 @@
   padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
+}
+
+.cardButton {
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.cardButton:hover {
+  background: var(--cmp-bg-hover);
 }
 
 .section {
@@ -339,4 +380,95 @@
     gap: 1px;
     padding-inline: 12px;
   }
+}
+
+.staleControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.staleReportControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.staleReportControls .reportSub {
+  margin-right: auto;
+}
+
+.staleLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+}
+
+.thresholdInput {
+  width: 70px;
+  padding: 5px 7px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  background: var(--base-bg);
+  color: var(--base-fg);
+  font: inherit;
+}
+
+.applyButton,
+.staleTotal {
+  appearance: none;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 9px;
+}
+
+.staleTotal {
+  margin-left: auto;
+}
+
+.staleTotal:disabled {
+  cursor: default;
+  color: var(--base-fg-more-dim);
+}
+
+.reportSub {
+  color: var(--base-fg-more-dim);
+  font-size: 12px;
+}
+
+.entityTableWrap {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+  overflow: hidden;
+}
+
+.entityRow {
+  cursor: pointer;
+}
+
+.entityRow:hover {
+  background: var(--cmp-bg-hover);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--base-fg-more-dim);
+  font-size: 12px;
+}
+
+.pagination > div {
+  display: flex;
+  gap: 6px;
 }

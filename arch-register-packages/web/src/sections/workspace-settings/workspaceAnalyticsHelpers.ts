@@ -59,3 +59,9 @@ export const activityAuditSearch = (
   auditStartDate: startDate,
   auditEndDate: endDate
 });
+
+export const staleSearch = (cutoffAt: string, schemaId?: string) =>
+  analyticsEntitySearch({
+    type: schemaId,
+    filters: [{ fieldId: '_updatedAt', op: 'before', value: cutoffAt }]
+  });

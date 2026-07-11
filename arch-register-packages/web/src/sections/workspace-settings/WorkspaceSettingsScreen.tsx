@@ -112,6 +112,7 @@ export const WorkspaceSettingsScreen = () => {
     auditOperation?: AuditOperation;
     auditStartDate?: string;
     auditEndDate?: string;
+    analyticsView?: 'stale';
   };
   const ctx = useWorkspaceContext();
   const workspace = ctx.workspace;
@@ -203,7 +204,7 @@ export const WorkspaceSettingsScreen = () => {
       )}
       {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
       {section === 'export-import' && <ExportImportSubSection />}
-      {section === 'analytics' && <WorkspaceAnalyticsScreen />}
+      {section === 'analytics' && <WorkspaceAnalyticsScreen analyticsView={search.analyticsView} />}
       {section === 'audit' && (
         <AuditLogSection
           key={`${search.auditEntityType ?? ''}:${search.auditOperation ?? ''}:${search.auditStartDate ?? ''}:${search.auditEndDate ?? ''}`}

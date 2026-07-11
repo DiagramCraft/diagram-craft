@@ -52,6 +52,22 @@ const activityTrendBucketSchema = z.object({
   updated: z.number().int().describe('Number of entities updated during this bucket')
 });
 
+const staleSchemaSchema = z.object({
+  schemaId: z.string().describe('Schema identifier'),
+  schemaName: z.string().describe('Schema name'),
+  totalCount: z.number().int().describe('Total number of entities using this schema'),
+  staleCount: z.number().int().describe('Number of entities updated before the stale cutoff'),
+  stalePercent: z.number().describe('Percentage of this schema\'s entities that are stale')
+});
+
+const staleAnalyticsSchema = z.object({
+  thresholdDays: z.number().int().describe('Age in days used to classify stale entities'),
+  cutoffAt: z.string().describe('ISO 8601 cutoff; entities updated before this time are stale'),
+  totalCount: z.number().int().describe('Number of stale entities in the workspace'),
+  percent: z.number().describe('Percentage of workspace entities that are stale'),
+  schemas: z.array(staleSchemaSchema).describe('Stale-entity breakdown by schema')
+});
+
 const analyticsResponseSchema = z.object({
   summary: z.object({
     totalEntities: z.number().int().describe('Total number of entities in the workspace'),
@@ -66,7 +82,8 @@ const analyticsResponseSchema = z.object({
   activityTrends: z.object({
     days30: z.array(activityTrendBucketSchema).describe('Daily entity create/update activity for the last 30 days'),
     days90: z.array(activityTrendBucketSchema).describe('Daily entity create/update activity for the last 90 days')
-  }).describe('Entity activity trends derived from audit history')
+  }).describe('Entity activity trends derived from audit history'),
+  stale: staleAnalyticsSchema.describe('Entities whose last update predates the selected cutoff')
 });
 
 export const workspaceAnalyticsContract = oc
@@ -82,7 +99,14 @@ export const workspaceAnalyticsContract = oc
           description: 'Retrieves comprehensive analytics about the workspace, including entity distribution, lifecycle coverage, ownership gaps, and field completeness metrics.',
           tags: ['Analytics']
         })
-        .input(z.object({ params: ws }))
+        .input(
+          z.object({
+            params: ws,
+            query: z.object({
+              staleAfterDays: z.coerce.number().int().min(1).max(3650).default(90)
+            })
+          })
+        )
         .output(analyticsResponseSchema)
     }
   });
@@ -94,4 +118,6 @@ export type SchemaOwnershipGapAnalytics = z.infer<typeof schemaOwnershipGapSchem
 export type SchemaCompletenessAnalytics = z.infer<typeof schemaCompletenessSchema>;
 export type SchemaCoverageAnalytics = z.infer<typeof schemaCoverageSchema>;
 export type ActivityTrendBucket = z.infer<typeof activityTrendBucketSchema>;
+export type StaleSchemaAnalytics = z.infer<typeof staleSchemaSchema>;
+export type StaleAnalytics = z.infer<typeof staleAnalyticsSchema>;
 export type WorkspaceAnalytics = z.infer<typeof analyticsResponseSchema>;

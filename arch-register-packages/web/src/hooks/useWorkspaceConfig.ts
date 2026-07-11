@@ -57,7 +57,7 @@ export const useUpdateLifecycleStates = (workspaceId: string) => {
     onSuccess: updatedStates => {
       // Update the cache with the new states
       queryClient.setQueryData(workspaceConfigKeys.lifecycleStates(workspaceId), updatedStates);
-      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) });
+      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) });
     }
   });
 };
@@ -73,7 +73,7 @@ export const useUpdateTeams = (workspaceId: string) => {
       }),
     onSuccess: updatedTeams => {
       queryClient.setQueryData(workspaceConfigKeys.teams(workspaceId), updatedTeams);
-      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) });
+      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) });
     }
   });
 };

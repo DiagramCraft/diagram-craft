@@ -1,9 +1,11 @@
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import type { WorkspaceAnalytics } from '@arch-register/api-types/analyticsContract';
+import { useEntities } from '../../hooks/useEntities';
 import { useWorkspaceAnalytics } from '../../hooks/useWorkspaceAnalytics';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import type { EntitySearchParams } from '../../routes/searchParams';
+import type { EntitySearchParams, SettingsSearchParams } from '../../routes/searchParams';
+import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 import styles from './WorkspaceAnalyticsScreen.module.css';
 import {
   completenessSearch,
@@ -230,10 +232,11 @@ const ActivityTrendsSection = ({
   );
 };
 
-export const WorkspaceAnalyticsScreen = () => {
+export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 'stale' }) => {
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
-  const { data: analytics, isLoading, isError } = useWorkspaceAnalytics(workspaceSlug);
+  const search = useSearch({ strict: false }) as SettingsSearchParams;
+  const { data: analytics, isLoading, isError } = useWorkspaceAnalytics(workspaceSlug, 90);
 
   const navigateToEntities = (search: EntitySearchParams) =>
     navigate({
@@ -252,8 +255,24 @@ export const WorkspaceAnalyticsScreen = () => {
   if (isLoading) return <EmptyState text="Loading analytics…" />;
   if (isError || analytics == null) return <EmptyState text="Analytics could not be loaded." />;
 
+  const selectView = (view: 'overview' | 'stale') =>
+    navigate({
+      to: '/$workspaceSlug/settings',
+      params: { workspaceSlug },
+      search: {
+        ...search,
+        section: 'analytics',
+        analyticsView: view === 'stale' ? 'stale' : undefined
+      }
+    });
+
+  if (analyticsView === 'stale') {
+    return <StaleEntityReport workspaceSlug={workspaceSlug} onSelectView={selectView} />;
+  }
+
   return (
     <div className={styles.stack}>
+      <AnalyticsTabs active="overview" onSelect={selectView} />
       <div className={styles.stats}>
         <StatCard
           label="Total entities"
@@ -270,6 +289,17 @@ export const WorkspaceAnalyticsScreen = () => {
           value={formatPercent(analytics.summary.percentCompleteness80Plus)}
           sub="Using the existing completeness score"
         />
+        <button
+          type="button"
+          className={`${styles.card} ${styles.cardButton}`}
+          onClick={() => selectView('stale')}
+        >
+          <div className={styles.cardLabel}>Stale entities</div>
+          <div className={styles.cardValue}>{analytics.stale.totalCount}</div>
+          <div className={styles.cardSub}>
+            {formatPercent(analytics.stale.percent)} not changed in the last 90 days
+          </div>
+        </button>
       </div>
 
       <ActivityTrendsSection analytics={analytics} onNavigate={navigateToActivity} />
@@ -450,6 +480,161 @@ export const WorkspaceAnalyticsScreen = () => {
           </table>
         </Section>
       </div>
+    </div>
+  );
+};
+
+const AnalyticsTabs = ({
+  active,
+  onSelect
+}: {
+  active: 'overview' | 'stale';
+  onSelect: (view: 'overview' | 'stale') => void;
+}) => (
+  <div className={styles.tabs} role="tablist" aria-label="Analytics views">
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active === 'overview'}
+      className={active === 'overview' ? styles.tabActive : styles.tab}
+      onClick={() => onSelect('overview')}
+    >
+      Overview
+    </button>
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active === 'stale'}
+      className={active === 'stale' ? styles.tabActive : styles.tab}
+      onClick={() => onSelect('stale')}
+    >
+      Stale entities
+    </button>
+  </div>
+);
+
+const StaleEntityReport = ({
+  workspaceSlug,
+  onSelectView
+}: {
+  workspaceSlug: string;
+  onSelectView: (view: 'overview' | 'stale') => void;
+}) => {
+  const navigate = useNavigate();
+  const [thresholdInput, setThresholdInput] = useState('90');
+  const [staleAfterDays, setStaleAfterDays] = useState(90);
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 25;
+  const { data: analytics, isLoading, isError } = useWorkspaceAnalytics(workspaceSlug, staleAfterDays);
+  const conditions = analytics
+    ? [{ fieldId: '_updatedAt', op: 'before' as const, value: analytics.stale.cutoffAt }]
+    : [];
+  const { data: entities = [], isLoading: isLoadingEntities } = useEntities(
+    workspaceSlug,
+    { conditions, view: 'summary', limit: pageSize, offset: pageIndex * pageSize },
+    { enabled: analytics != null }
+  );
+
+  const applyThreshold = () => {
+    const value = Number(thresholdInput);
+    if (Number.isInteger(value) && value >= 1 && value <= 3650) {
+      setStaleAfterDays(value);
+      setThresholdInput(String(value));
+      setPageIndex(0);
+    }
+  };
+
+  if (isLoading) return <EmptyState text="Loading stale entities…" />;
+  if (isError || analytics == null) return <EmptyState text="Stale entities could not be loaded." />;
+
+  return (
+    <div className={styles.stack}>
+      <AnalyticsTabs active="stale" onSelect={onSelectView} />
+
+      <div className={styles.staleReportControls}>
+        <div className={styles.reportSub}>
+          {analytics.stale.totalCount} entities not changed in the last {analytics.stale.thresholdDays} days.
+        </div>
+        <label className={styles.staleLabel}>
+          Not changed in
+          <input
+            className={styles.thresholdInput}
+            type="number"
+            min={1}
+            max={3650}
+            step={1}
+            value={thresholdInput}
+            onChange={event => setThresholdInput(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === 'Enter') applyThreshold();
+            }}
+          />
+          days
+        </label>
+        <button type="button" className={styles.applyButton} onClick={applyThreshold}>
+          Apply
+        </button>
+      </div>
+
+      <div className={styles.entityTableWrap}>
+        {isLoadingEntities ? (
+          <EmptyState text="Loading entities…" />
+        ) : entities.length === 0 ? (
+          <EmptyState text="No entities match this age threshold." />
+        ) : (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Last updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entities.map(entity => (
+                <tr
+                  key={entity._uid}
+                  className={styles.entityRow}
+                  onClick={() =>
+                    navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
+                  }
+                >
+                  <td>{entity._name}</td>
+                  <td>{entity._schema.name}</td>
+                  <td>{entity._updatedAt ? new Date(entity._updatedAt).toLocaleDateString() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {analytics.stale.totalCount > pageSize && (
+        <div className={styles.pagination}>
+          <span>
+            {pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, analytics.stale.totalCount)} of{' '}
+            {analytics.stale.totalCount}
+          </span>
+          <div>
+            <button
+              type="button"
+              className={styles.applyButton}
+              disabled={pageIndex === 0}
+              onClick={() => setPageIndex(index => index - 1)}
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              className={styles.applyButton}
+              disabled={(pageIndex + 1) * pageSize >= analytics.stale.totalCount}
+              onClick={() => setPageIndex(index => index + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

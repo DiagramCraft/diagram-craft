@@ -23,6 +23,18 @@ import type {
 
 const checker = new PermissionChecker();
 
+const describeImportPersistenceError = (error: unknown) => {
+  if (!(error instanceof Error)) return 'Unknown error during import';
+  const cause =
+    error.cause != null && typeof error.cause === 'object' && 'message' in error.cause
+      ? error.cause
+      : null;
+  const databaseMessage = cause != null && typeof cause.message === 'string' ? cause.message : null;
+  return databaseMessage && databaseMessage !== error.message
+    ? `${error.message}: ${databaseMessage}`
+    : error.message;
+};
+
 export const parseImport = async (
   db: DatabaseAdapter,
   authCtx: AuthorizationContext,
@@ -584,7 +596,7 @@ export const executeImport = async (
     });
   } catch (error) {
     result.success = false;
-    result.errors.push(error instanceof Error ? error.message : 'Unknown error during import');
+    result.errors.push(describeImportPersistenceError(error));
     result.failure = {
       stage: 'persistence',
       message: result.errors[0]!,
