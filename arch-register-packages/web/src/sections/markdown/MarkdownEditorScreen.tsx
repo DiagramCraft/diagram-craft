@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useParams, useSearch, useNavigate } from '@tanstack/react-router';
+import type { MarkdownSearchParams } from '../../routes/searchParams';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import {
   useMarkdownContent,
@@ -63,21 +64,13 @@ const relativeDate = (iso: string): string => {
 };
 
 export const MarkdownEditorScreen = () => {
-  const params = useParams({ strict: false }) as {
-    workspaceSlug: string;
-    nodeId: string;
-    projectId?: string;
-    entityId?: string;
-  };
-  const search = useSearch({ strict: false }) as {
-    mode?: MarkdownScreenMode;
-    panel?: MarkdownViewPanel;
-    revisionId?: string;
-    historyMode?: 'preview' | 'compare';
-    compareMode?: 'to-current' | 'changes-in-version';
-    diagramSessionId?: string;
-  };
-  const { workspaceSlug, nodeId, projectId, entityId } = params;
+  const params = useParams({ strict: false });
+  const search = useSearch({ strict: false });
+  // workspaceSlug/nodeId are always present: this screen only mounts under
+  // the entity/project/content wiki routes, all of which define both params.
+  const workspaceSlug = params.workspaceSlug!;
+  const nodeId = params.nodeId!;
+  const { projectId, entityId } = params;
   const navigate = useNavigate();
   const requestedMode = search.mode;
   const requestedPanel = search.panel;
@@ -157,12 +150,14 @@ export const MarkdownEditorScreen = () => {
       }>,
       replace = false
     ) => {
+      // This screen is shared across three sibling wiki routes with identical
+      // search schemas; there's no single static route to scope `navigate` to,
+      // so the search-updater type can't be inferred and needs a manual cast.
       navigate({
-        search: (prev: Record<string, unknown>) =>
-          ({
-            ...prev,
-            ...next
-          }) as never,
+        search: ((prev: MarkdownSearchParams) => ({
+          ...prev,
+          ...next
+        })) as never,
         replace
       });
     },

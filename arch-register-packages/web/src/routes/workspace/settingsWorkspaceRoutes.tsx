@@ -1,4 +1,4 @@
-import { createRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { createRoute, useNavigate, useSearch, type AnyRoute } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { WorkspaceSettingsScreen } from '../../sections/workspace-settings/WorkspaceSettingsScreen';
 import { SchemaSettingsScreen } from '../../sections/workspace-settings/SchemaSettingsScreen';
@@ -65,10 +65,9 @@ const AccountSettingsRedirect = () => {
   return null;
 };
 
-export const createSettingsWorkspaceRoutes = (
-  // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
-  workspaceRoute: any
-): object[] => {
+export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
+  workspaceRoute: TParentRoute
+) => {
   const settingsRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'settings',
@@ -212,5 +211,5 @@ export const createSettingsWorkspaceRoutes = (
     globalSettingsRoute,
     accountSettingsRoute,
     accountSectionRoute
-  ];
+  ] as const;
 };

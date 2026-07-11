@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import {
   TbCalendarEvent,
@@ -33,12 +33,13 @@ import {
   buildSavedViewPayload,
   getFilterValue,
   parseConditionsFromSearch,
-  parseViewConfigs,
-  type BrowserSearch
+  parseViewConfigs
 } from '../entities/components/entityBrowserState';
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
 import type { AsOfMarker } from '../../components/timeline/TimelineStrip';
 import { formatDate } from '../../utils/dateFormat';
+
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
 type ViewTab = 'entities' | 'project-entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
@@ -83,9 +84,9 @@ export const ProjectEntities = ({
   const [isSavingView, setIsSavingView] = useState(false);
 
   const pendingCount = futureSnapshots.length;
-  const navigate = useNavigate();
+  const navigate = routeApi.useNavigate();
   const { workspaceSlug, permissions } = useWorkspaceContext();
-  const search = useSearch({ strict: false }) as BrowserSearch;
+  const search = routeApi.useSearch();
   const asOf = search.asOf;
   const readOnly = !!asOf;
 

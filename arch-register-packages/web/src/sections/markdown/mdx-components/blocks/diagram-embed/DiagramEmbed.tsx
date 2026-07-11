@@ -50,7 +50,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   const [diagram, setDiagram] = useState<Diagram | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const params = useParams({ strict: false }) as { projectId?: string; entityId?: string };
+  const params = useParams({ strict: false });
   const { sessionId } = useMarkdownDiagramSession();
 
   useEffect(() => {

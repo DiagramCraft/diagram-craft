@@ -53,25 +53,9 @@ export const EntitiesSidebar = ({
   onExpand?: () => void;
 }) => {
   const navigate = useNavigate();
-  const { entityId: routeEntityId } = useParams({ strict: false }) as { entityId?: string };
+  const { entityId: routeEntityId } = useParams({ strict: false });
   const { permissions } = useWorkspaceContext();
-  const search = useSearch({ strict: false }) as {
-    type?: string;
-    status?: string;
-    owner?: string;
-    q?: string;
-    viewId?: string;
-    viewMode?: string;
-    sort?: string;
-    radarConfig?: string;
-    timelineConfig?: string;
-    matrixConfig?: string;
-    hierarchyConfig?: string;
-    exploreConfig?: string;
-    sidebarTab?: 'filters' | 'views' | 'pinned';
-    filters?: string;
-    entityId?: string;
-  };
+  const search = useSearch({ strict: false });
   const sidebarTab = search.sidebarTab ?? 'filters';
 
   // Parse active filters from the filters JSON string

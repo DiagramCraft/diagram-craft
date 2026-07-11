@@ -1,4 +1,4 @@
-import { createRoute } from '@tanstack/react-router';
+import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { EntityBrowserScreen } from '../../sections/entities/EntityBrowserScreen';
 import { EntityDetailScreen } from '../../sections/entities/EntityDetailScreen';
 import { DiagramScreen } from '../../sections/projects/DiagramScreen';
@@ -18,10 +18,9 @@ import {
 } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
-export const createEntityWorkspaceRoutes = (
-  // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
-  workspaceRoute: any
-): object[] => {
+export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
+  workspaceRoute: TParentRoute
+) => {
   const entityBrowserRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'entities',
@@ -121,5 +120,5 @@ export const createEntityWorkspaceRoutes = (
     };
   });
 
-  return [entityBrowserRoute, importRoute, entityDetailRoute, entityDiagramRoute, entityMarkdownRoute];
+  return [entityBrowserRoute, importRoute, entityDetailRoute, entityDiagramRoute, entityMarkdownRoute] as const;
 };

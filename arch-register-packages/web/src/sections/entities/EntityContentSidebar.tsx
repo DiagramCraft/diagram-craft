@@ -35,8 +35,8 @@ export const EntityContentSidebar = ({ workspaceSlug, entityId }: { workspaceSlu
   const [diagramFolder, setDiagramFolder] = useState<string | null | undefined>(undefined);
   const [markdownFolder, setMarkdownFolder] = useState<string | null | undefined>(undefined);
   const navigate = useNavigate();
-  const params = useParams({ strict: false }) as { diagramId?: string; nodeId?: string };
-  const search = useSearch({ strict: false }) as { contentFolder?: string; contentQuery?: string; contentView?: 'grid' | 'list'; tab?: string };
+  const params = useParams({ strict: false });
+  const search = useSearch({ strict: false });
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
 
   const navigateHome = (contentFolder?: string) => navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId), {

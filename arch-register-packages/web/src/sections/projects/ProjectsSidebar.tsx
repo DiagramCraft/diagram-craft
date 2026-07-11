@@ -40,11 +40,7 @@ export const ProjectsSidebar = ({
 }) => {
   const { openAddProjectDialog, permissions } = useWorkspaceContext();
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as {
-    tab?: string;
-    folder?: string;
-    section?: string;
-  };
+  const search = useSearch({ strict: false });
   const matches = useMatches();
   const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
   const projectId = allParams.projectId ?? null;

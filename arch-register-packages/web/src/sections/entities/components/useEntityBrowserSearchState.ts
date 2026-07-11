@@ -21,7 +21,7 @@ export const useEntityBrowserSearchState = ({
   projectId
 }: UseEntityBrowserSearchStateProps) => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as BrowserSearch;
+  const search = useSearch({ strict: false });
 
   const conditions = useMemo(
     () =>
@@ -52,7 +52,7 @@ export const useEntityBrowserSearchState = ({
           ...projectDetailRoute(workspaceSlug, asProjectPublicId(projectId)),
           search: (previous: Record<string, unknown>) => ({
             ...nextSearch(previous),
-            section: 'entities'
+            section: 'entities' as const
           }),
           replace
         });
