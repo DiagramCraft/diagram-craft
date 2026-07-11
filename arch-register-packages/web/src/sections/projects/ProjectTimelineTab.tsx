@@ -16,7 +16,7 @@ import {
   type TimelineZoom
 } from '../../components/timeline/timelineUtils';
 import { TypeBadge } from '../../components/TypeBadge';
-import { diffSnapshotState } from '../entities/EntityTimelineTab';
+import { diffSnapshotState } from '../entities/components/entityTimelineHelpers';
 import styles from './ProjectDetailScreen.module.css';
 
 type SchemaInfo = { color: string; icon: string | null };

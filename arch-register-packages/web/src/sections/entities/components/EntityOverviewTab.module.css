@@ -1,0 +1,327 @@
+/* Overview grid */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+  padding: 16px 24px 32px;
+}
+
+.propsPanel,
+.sidePanel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  padding: 12px 14px 16px;
+}
+
+/* Property rows */
+.propList {
+  display: flex;
+  flex-direction: column;
+}
+
+.propRow {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.propRow:last-child {
+  border-bottom: 0;
+}
+
+.propLabel {
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.propReq {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: color-mix(in oklch, var(--error-fg) 12%, transparent);
+  color: var(--error-fg);
+  font-weight: 500;
+}
+
+.propExpected {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--cmp-fg-disabled);
+}
+
+.propRowError .propLabel {
+  color: var(--error-fg);
+}
+
+.propRowError .propValue {
+  outline: 1px solid var(--error-fg);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.propErrorMsg {
+  font-size: 11px;
+  color: var(--error-fg);
+}
+
+.propType {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--cmp-fg-disabled);
+  font-family: var(--font-mono);
+}
+
+.propValue {
+  font-size: 12.5px;
+  color: var(--base-fg);
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.propLink {
+  color: var(--accent-fg);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.propLink:hover {
+  text-decoration: underline;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.metaPropRow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.metaPropLabel {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.metaPropValue {
+  color: var(--base-fg-dim);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Mini diagram list (entity detail "Diagrams" section) */
+.miniDiagramList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 2px;
+}
+
+.miniDiagramRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 6px;
+  border-radius: var(--r);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 80ms;
+}
+
+.miniDiagramRow:hover {
+  background: var(--cmp-bg);
+}
+
+.miniDiagramThumb {
+  position: relative;
+  width: 60px;
+  height: 30px;
+  flex-shrink: 0;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.miniDiagramThumbGrid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, var(--panel-border) 1px, transparent 1px),
+  linear-gradient(to bottom, var(--panel-border) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.miniDiagramThumbPreview {
+  position: absolute;
+  inset: 0;
+}
+
+.miniDiagramThumbPreview svg,
+.miniDiagramThumbSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.miniDiagramBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.miniDiagramName {
+  font-size: 12px;
+  color: var(--base-fg);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.miniDiagramRow:hover .miniDiagramName {
+  text-decoration: underline;
+}
+
+.miniDiagramSub {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin-top: 1px;
+}
+
+/* Divider */
+.divider {
+  border: none;
+  border-top: 1px solid var(--panel-border);
+  margin: 8px 0;
+}
+
+/* Link editing */
+.linksEdit {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.linkRow .inputInline {
+  flex: 1;
+  min-width: 0;
+}
+
+.addLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--accent-fg-hover);
+  background: none;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.addLinkBtn:hover {
+  text-decoration: underline;
+}
+
+/* Inline input for edit mode */
+.inputInline {
+  height: 24px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg);
+  border-radius: var(--r);
+  outline: none;
+  width: 100%;
+  font-family: var(--font-sans);
+}
+
+.inputInline:focus {
+  border-color: var(--accent-fg);
+}
+
+.selectInline {
+  composes: inputInline;
+  appearance: none;
+  padding-right: 22px;
+  cursor: pointer;
+}
+
+.textareaInline {
+  composes: inputInline;
+  height: auto;
+  padding: 6px 8px;
+  min-height: 48px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Future plans */
+.futurePlan {
+  padding: 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.futurePlanMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.futurePlanProject {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cmp-fg);
+}
+
+.futurePlanDate {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+}
+
+.futurePlanNote {
+  font-size: 11px;
+  color: var(--cmp-fg-disabled);
+  margin-bottom: 6px;
+}
