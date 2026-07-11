@@ -5,7 +5,7 @@ type EntityQuery = {
   owner?: string;
   lifecycle?: string;
   q?: string;
-  conditions?: string;
+  conditions?: FilterCondition[];
   assessmentId?: string;
   projectId?: string;
   projectScope?: 'project' | 'all';
@@ -13,17 +13,7 @@ type EntityQuery = {
   limit?: number;
   offset?: number;
   asOf?: string;
-  includeProjectSnapshots?: 'true' | 'false';
-};
-
-const parseConditions = (value: string | undefined): FilterCondition[] => {
-  if (!value) return [];
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed) ? (parsed as FilterCondition[]) : [];
-  } catch {
-    return [];
-  }
+  includeProjectSnapshots?: boolean;
 };
 
 const parseAsOf = (value: string | undefined): Date | null => {
@@ -37,7 +27,7 @@ export const parseEntityQuery = (query: EntityQuery) => ({
   owner: query.owner ?? null,
   lifecycle: query.lifecycle ?? null,
   q: query.q ?? '',
-  conditions: parseConditions(query.conditions),
+  conditions: query.conditions ?? [],
   assessmentId: query.assessmentId ?? null,
   projectId: query.projectId ?? null,
   projectScope: query.projectScope ?? 'all',
@@ -45,7 +35,7 @@ export const parseEntityQuery = (query: EntityQuery) => ({
   limit: query.limit ?? null,
   offset: query.offset ?? 0,
   asOf: parseAsOf(query.asOf),
-  includeProjectSnapshots: query.includeProjectSnapshots !== 'false'
+  includeProjectSnapshots: query.includeProjectSnapshots ?? true
 });
 
 export type ParsedEntityQuery = ReturnType<typeof parseEntityQuery>;

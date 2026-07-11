@@ -27,7 +27,7 @@ import styles from './ProjectDetailScreen.module.css';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useEntities';
+import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,

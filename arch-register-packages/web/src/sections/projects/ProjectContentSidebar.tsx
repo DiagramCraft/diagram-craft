@@ -17,7 +17,7 @@ import { RenameDialog } from '../../components/RenameDialog';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { useAssessments } from '../../hooks/useAssessments';
-import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useEntities';
+import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { contentDownloadUrl, useContentScopeOperations, type ContentScope } from '../../hooks/useContentScope';
 import { useProject, useProjectEntities } from '../../hooks/useProjects';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
