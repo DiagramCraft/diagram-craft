@@ -64,17 +64,18 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   }
 };
 
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings');
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/$section');
 
 export const WorkspaceSettingsScreen = () => {
   const navigate = routeApi.useNavigate();
+  const params = routeApi.useParams();
   const search = routeApi.useSearch();
   const ctx = useWorkspaceContext();
   const workspace = ctx.workspace;
   const workspaceSlug = ctx.workspaceSlug;
   const lifecycleStates = ctx.lifecycleStates;
   const availableSections = ctx.availableSettingsSections;
-  const section = search.section ?? 'general';
+  const section = params.section ?? 'general';
   const sectionIsValid = availableSections.includes(section);
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);

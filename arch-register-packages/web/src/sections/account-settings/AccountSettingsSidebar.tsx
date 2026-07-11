@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getRouteApi } from '@tanstack/react-router';
+import { useNavigate, useLocation } from '@tanstack/react-router';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
 import { TbPalette, TbUser } from 'react-icons/tb';
@@ -21,14 +21,12 @@ const ACCOUNT_SETTINGS_SECTIONS: AccountSettingsNavItem[] = [
   { id: 'appearance', label: 'Appearance', icon: <TbPalette size={12} />, group: 'Account' },
 ];
 
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/account');
-
 export const AccountSettingsSidebar = () => {
-  const navigate = routeApi.useNavigate();
-  const search = routeApi.useSearch();
+  const navigate = useNavigate();
+  const location = useLocation();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;
-  const section = search.section ?? 'profile';
+  const section = location.pathname.split('/').pop() || 'profile';
 
   const groups = useMemo(() => {
     const g: Record<string, AccountSettingsNavItem[]> = {};

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getRouteApi } from '@tanstack/react-router';
+import { useNavigate, useLocation } from '@tanstack/react-router';
 import {
   TbChartBar,
   TbSettings,
@@ -63,8 +63,6 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   }
 ];
 
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings');
-
 export const WorkspaceSettingsSidebar = ({
   workspace,
   workspaceSlug,
@@ -82,9 +80,9 @@ export const WorkspaceSettingsSidebar = ({
   onCollapse?: () => void;
   onExpand?: () => void;
 }) => {
-  const navigate = routeApi.useNavigate();
-  const search = routeApi.useSearch();
-  const section = search.section ?? 'general';
+  const navigate = useNavigate();
+  const location = useLocation();
+  const section = location.pathname.split('/').pop() || 'general';
 
   const groups = useMemo(() => {
     const g: Record<string, SettingsNavItem[]> = {};
