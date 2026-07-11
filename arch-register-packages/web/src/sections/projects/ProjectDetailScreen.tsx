@@ -600,6 +600,7 @@ export const ProjectDetailScreen = () => {
     <>
       {section === 'assessments' && search.assessmentId ? (
         <AssessmentDetailsScreen
+          key={search.assessmentId}
           project={project}
           projectId={projectId}
           assessmentId={search.assessmentId}

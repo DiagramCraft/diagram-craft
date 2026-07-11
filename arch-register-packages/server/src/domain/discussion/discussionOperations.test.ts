@@ -110,9 +110,26 @@ describe('listDiscussionPosts', () => {
     expect(result[0]!.authorId).toBe('user-1');
   });
 
-  it('checks content.view for content_node objects', async () => {
+  it('checks project access for content_node objects that belong to a project', async () => {
     const db = makeDb();
     await listDiscussionPosts(db, 'ws-1', 'content_node', 'node-1', event);
+    expect(requireProjectAccess).toHaveBeenCalledWith(authCtxMock, null, expect.any(String));
+  });
+
+  it('checks content.view for content_node objects with no owning project', async () => {
+    const db = makeDb({
+      project: {
+        getAnyContentNodeById: vi.fn(async () => ({
+          id: 'node-2',
+          workspace: 'ws-1',
+          name: 'Workspace page',
+          project_id: null,
+          project_public_id: null,
+          entity_id: null
+        }))
+      }
+    });
+    await listDiscussionPosts(db, 'ws-1', 'content_node', 'node-2', event);
     expect(requireWorkspaceCapability).toHaveBeenCalledWith(
       authCtxMock,
       'content.view',
@@ -187,6 +204,24 @@ describe('createDiscussionPost', () => {
         event
       )
     ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects a reply whose parent is itself a reply', async () => {
+    const db = makeDb({
+      discussion: {
+        getPost: vi.fn(async () => makePost({ id: 'reply-1', parent_post_id: 'root-1' }))
+      }
+    });
+
+    await expect(
+      createDiscussionPost(
+        db,
+        'ws-1',
+        { objectType: 'entity', objectId: 'entity-1', parentPostId: 'reply-1', body: 'Reply' },
+        event
+      )
+    ).rejects.toMatchObject({ status: 400 });
+    expect(db.discussion.createPost).not.toHaveBeenCalled();
   });
 
   it('404s when replying to a post that does not exist', async () => {

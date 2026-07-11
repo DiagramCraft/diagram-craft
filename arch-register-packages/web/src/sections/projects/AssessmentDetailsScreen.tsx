@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
   TbEdit,
@@ -164,13 +164,6 @@ export const AssessmentDetailsScreen = ({
   const [conditions, setConditions] = useState<AssessmentFilterCondition[]>([]);
   const [sort, setSort] = useState<SortState | null>(null);
   const [tab, setTab] = useState<'details' | 'summary' | 'discussion'>(initialTab ?? 'details');
-
-  // The screen stays mounted when switching assessments (e.g. via the global discussions
-  // menu), so useState's initializer alone won't pick up a changed assessmentId/initialTab.
-  useEffect(() => {
-    setTab(initialTab ?? 'details');
-    // biome-ignore lint/correctness/useExhaustiveDependencies: only re-run when switching assessments
-  }, [assessmentId]);
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
   const responseByEntity = useMemo(
