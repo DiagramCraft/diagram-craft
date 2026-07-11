@@ -209,7 +209,8 @@ describe('createDiscussionPost', () => {
   it('rejects a reply whose parent is itself a reply', async () => {
     const db = makeDb({
       discussion: {
-        getPost: vi.fn(async () => makePost({ id: 'reply-1', parent_post_id: 'root-1' }))
+        getPost: vi.fn(async () => makePost({ id: 'reply-1', parent_post_id: 'root-1' })),
+        createPost: vi.fn()
       }
     });
 
