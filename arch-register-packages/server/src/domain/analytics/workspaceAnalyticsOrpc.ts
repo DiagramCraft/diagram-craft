@@ -19,7 +19,12 @@ const analyticsRouter = implement(workspaceAnalyticsContract)
 export const workspaceAnalyticsORPCRouter = analyticsRouter.router({
   analytics: {
     get: analyticsRouter.analytics.get.handler(async ({ input, context }) => {
-      return await getWorkspaceAnalytics(context.db, input.params.workspace, context.event);
+      return await getWorkspaceAnalytics(
+        context.db,
+        input.params.workspace,
+        context.event,
+        input.query.staleAfterDays
+      );
     })
   }
 });
