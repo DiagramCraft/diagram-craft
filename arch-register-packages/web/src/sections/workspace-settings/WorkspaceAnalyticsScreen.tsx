@@ -1,10 +1,10 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import type { WorkspaceAnalytics } from '@arch-register/api-types/analyticsContract';
 import { useEntities } from '../../hooks/useEntities';
 import { useWorkspaceAnalytics } from '../../hooks/useWorkspaceAnalytics';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import type { EntitySearchParams, SettingsSearchParams } from '../../routes/searchParams';
+import type { EntitySearchParams } from '../../routes/searchParams';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 import styles from './WorkspaceAnalyticsScreen.module.css';
 import {
@@ -234,10 +234,12 @@ const ActivityTrendsSection = ({
   );
 };
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings');
+
 export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 'stale' }) => {
-  const navigate = useNavigate();
+  const navigate = routeApi.useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
-  const search = useSearch({ strict: false }) as SettingsSearchParams;
+  const search = routeApi.useSearch();
   const { data: analytics, isLoading, isError } = useWorkspaceAnalytics(workspaceSlug, 90);
 
   const navigateToEntities = (search: EntitySearchParams) =>
