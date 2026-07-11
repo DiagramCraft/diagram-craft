@@ -36,7 +36,14 @@ const resolveObjectContext = async (
   if (objectType === 'content_node') {
     const node = await db.project.getAnyContentNodeById(ws, objectId);
     httpAssert.present(node, { status: 404, message: `Content node '${objectId}' not found` });
-    requireWorkspaceCapability(authCtx, 'content.view', 'You do not have permission to view this page');
+
+    if (node.project_id) {
+      const project = await db.project.getProject(ws, node.project_id);
+      httpAssert.present(project, { status: 404, message: `Project '${node.project_id}' not found` });
+      requireProjectAccess(authCtx, project.owner, 'You do not have permission to view this page');
+    } else {
+      requireWorkspaceCapability(authCtx, 'content.view', 'You do not have permission to view this page');
+    }
 
     const entity = node.entity_id ? await db.catalog.getEntity(ws, node.entity_id) : null;
     return {
@@ -167,6 +174,10 @@ export const createDiscussionPost = async (
     httpAssert.true(parent.object_type === body.objectType && parent.object_id === body.objectId, {
       status: 400,
       message: 'Reply must target a post on the same object'
+    });
+    httpAssert.true(parent.parent_post_id === null, {
+      status: 400,
+      message: 'Reply must target a root post, not another reply'
     });
   }
 
