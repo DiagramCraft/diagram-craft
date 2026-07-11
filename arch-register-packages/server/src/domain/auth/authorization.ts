@@ -201,20 +201,38 @@ export const buildApiAuthCtx = async (
     message: 'Authentication required'
   });
 
-  const dataProvider = new ServerDataProvider(db);
+  const cache = (event.context.authorizationContextCache ??= new Map<
+    string,
+    Promise<AuthorizationContext>
+  >());
+  const cached = cache.get(workspace);
+  if (cached) return cached;
 
-  if (workspace === GLOBAL_WS) {
-    const globalRoles = await dataProvider.getGlobalRoles(userId);
-    return buildAuthorizationContext({
-      userId,
-      globalRoles,
-      workspaceRole: null,
-      schemas: [],
-      entities: [],
-      grants: []
-    });
+  const contextPromise = (async () => {
+    const dataProvider = new ServerDataProvider(db);
+
+    if (workspace === GLOBAL_WS) {
+      const globalRoles = await dataProvider.getGlobalRoles(userId);
+      return buildAuthorizationContext({
+        userId,
+        globalRoles,
+        workspaceRole: null,
+        schemas: [],
+        entities: [],
+        grants: []
+      });
+    }
+
+    const contextData = await fetchAuthorizationContextData(dataProvider, workspace, userId);
+    return buildAuthorizationContext(contextData);
+  })();
+
+  cache.set(workspace, contextPromise);
+
+  try {
+    return await contextPromise;
+  } catch (error) {
+    if (cache.get(workspace) === contextPromise) cache.delete(workspace);
+    throw error;
   }
-
-  const contextData = await fetchAuthorizationContextData(dataProvider, workspace, userId);
-  return buildAuthorizationContext(contextData);
 };
