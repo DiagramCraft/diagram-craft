@@ -15,7 +15,8 @@ import {
   validateModelOverviewSearch,
   validateSettingsSearch,
   validateLegacySettingsSearch,
-  validateSchemaSettingsSearch
+  validateSchemaSettingsSearch,
+  validateAccountSettingsSearch
 } from '../searchParams';
 import { buildSettingsBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
@@ -176,6 +177,7 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   const accountSettingsRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'account',
+    validateSearch: validateLegacySettingsSearch,
     component: AccountSettingsRedirect
   }), ctx => ({
     variant: 'standard',
@@ -191,6 +193,7 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   const accountSectionRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'account/$section',
+    validateSearch: validateAccountSettingsSearch,
     component: AccountSettingsScreen
   }), ctx => ({
     variant: 'standard',

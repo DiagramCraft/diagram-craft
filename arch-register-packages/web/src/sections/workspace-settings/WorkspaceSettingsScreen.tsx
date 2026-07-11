@@ -3,7 +3,6 @@ import styles from './WorkspaceSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import type { AuditOperation } from '@arch-register/api-types/auditContract';
 import { TbPlus } from 'react-icons/tb';
 import { Title } from '../../components/Title';
 import { GeneralSubSection } from './sub-sections/GeneralSubSection';

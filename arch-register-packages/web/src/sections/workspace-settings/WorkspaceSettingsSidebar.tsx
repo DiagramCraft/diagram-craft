@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate, useLocation } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import {
   TbChartBar,
   TbSettings,
