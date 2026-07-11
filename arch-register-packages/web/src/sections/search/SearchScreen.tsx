@@ -1,19 +1,9 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  TbArrowRight,
-  TbChevronRight,
-  TbCode,
-  TbDatabase,
-  TbFolder,
-  TbFolders,
-  TbHome,
-  TbSearch,
-  TbX
-} from 'react-icons/tb';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { TbArrowRight, TbCode, TbDatabase, TbFolder, TbFolders, TbSearch, TbX } from 'react-icons/tb';
 import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
-import type { EntitySearchResult, ProjectFileSearchResult, ProjectSearchResult, SchemaSearchResult } from '@arch-register/api-types/searchContract';
+import type { ProjectFileSearchResult } from '@arch-register/api-types/searchContract';
 import { TypeBadge } from '../../components/TypeBadge';
 import { Chip } from '../../components/Chip';
 import { StatusChip } from '../../components/StatusChip';
@@ -21,7 +11,6 @@ import { useSearch } from '../../hooks/useSearch';
 import styles from './SearchScreen.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { DiagramMetadataPopover } from '../../components/DiagramMetadataPopover';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -33,32 +22,12 @@ import {
   EMPTY_RESULTS,
   getFileContextLabel,
   getFileFolder,
-  getFileMetadataSummary,
-  snippetAround,
   type RowId,
   type SearchFilter,
   type SearchPreview
 } from './searchScreenHelpers';
-
-// ── Match highlighting ───────────────────────────────────────
-
-const Hi = ({ s, q }: { s: string; q: string }) => {
-  if (!q) return <>{s}</>;
-  const text = String(s ?? '');
-  const needle = q.toLowerCase();
-  const lower = text.toLowerCase();
-  const parts: ReactNode[] = [];
-  let cur = 0;
-  let idx = lower.indexOf(needle, 0);
-  while (idx >= 0) {
-    if (idx > cur) parts.push(<span key={`t${cur}`}>{text.slice(cur, idx)}</span>);
-    parts.push(<mark key={`m${idx}`}>{text.slice(idx, idx + needle.length)}</mark>);
-    cur = idx + needle.length;
-    idx = lower.indexOf(needle, cur);
-  }
-  if (cur < text.length) parts.push(<span key="tail">{text.slice(cur)}</span>);
-  return parts.length ? parts : text;
-};
+import { ResultRow } from './components/ResultRow';
+import { Hi } from './components/Hi';
 
 // ── Screen ───────────────────────────────────────────────────
 
@@ -507,270 +476,6 @@ export const SearchScreen = () => {
     </div>
   );
 };
-
-// ── Result row ───────────────────────────────────────────────
-
-const ResultRow = ({
-  row,
-  q,
-  isSelected,
-  onSelect,
-  onOpen,
-  schemaMap,
-  lifecycleStates
-}: {
-  row: { kind: string; id: string; data: unknown };
-  q: string;
-  isSelected: boolean;
-  onSelect: () => void;
-  onOpen: () => void;
-  schemaMap: Map<string, { schema: EntitySchema; index: number }>;
-  lifecycleStates: WorkspaceLifecycleState[];
-}) => {
-  if (row.kind === 'entity') {
-    const e = row.data as EntitySearchResult;
-    const schemaMeta = schemaMap.get(e.schemaId);
-    return (
-      <div
-        className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
-        onMouseEnter={onSelect}
-        onClick={onSelect}
-        onDoubleClick={onOpen}
-      >
-        {schemaMeta ? (
-          <TypeBadge
-            color={resolveSchemaColor(schemaMeta.schema, schemaMeta.index)}
-            name={e.schemaName}
-            icon={schemaMeta.schema.icon}
-            size={22}
-          />
-        ) : (
-          <span className={styles.rowIcon}>
-            <TbDatabase size={14} />
-          </span>
-        )}
-        <div className={styles.rowBody}>
-          <div className={styles.rowTitle}>
-            <button
-              type="button"
-              className={styles.rowName}
-              aria-label={`Search result: ${e._name || e._slug}`}
-              onClick={ev => {
-                ev.stopPropagation();
-                onOpen();
-              }}
-            >
-              <Hi s={e._name || e._slug} q={q} />
-            </button>
-            <Chip tone="ghost">{e.schemaName}</Chip>
-            {e._lifecycle && (
-              <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
-            )}
-          </div>
-          {e._description && (
-            <div className={styles.rowSnippet}>
-              <Hi s={snippetAround(e._description, q)} q={q} />
-            </div>
-          )}
-          <div className={styles.rowMeta}>
-            <span className={styles.rowPath}>
-              <TbHome size={10} /> Entities
-              <span className={styles.dim}>/</span>
-              <Hi s={e.schemaName} q={q} />
-              <span className={styles.dim}>/</span>
-              <Hi s={e._slug} q={q} />
-            </span>
-            {e._owner && <Chip tone="ghost">{e._owner.name}</Chip>}
-            {e.matchedFields.slice(0, 3).map(f => (
-              <Chip key={f} tone="ghost">
-                field:{f}
-              </Chip>
-            ))}
-          </div>
-        </div>
-        <RowGo onOpen={onOpen} />
-      </div>
-    );
-  }
-
-  if (row.kind === 'project') {
-    const p = row.data as ProjectSearchResult;
-    return (
-      <div
-        className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
-        onMouseEnter={onSelect}
-        onClick={onSelect}
-        onDoubleClick={onOpen}
-      >
-        <span className={styles.rowIcon}>
-          <TbFolders size={14} />
-        </span>
-        <div className={styles.rowBody}>
-          <div className={styles.rowTitle}>
-            <button
-              type="button"
-              className={styles.rowName}
-              onClick={ev => {
-                ev.stopPropagation();
-                onOpen();
-              }}
-            >
-              <Hi s={p.name} q={q} />
-            </button>
-            <StatusChip value={p.status} />
-          </div>
-          {p.description && (
-            <div className={styles.rowSnippet}>
-              <Hi s={snippetAround(p.description, q)} q={q} />
-            </div>
-          )}
-          <div className={styles.rowMeta}>
-            <span className={styles.rowPath}>
-              <TbHome size={10} /> Projects
-            </span>
-          </div>
-        </div>
-        <RowGo onOpen={onOpen} />
-      </div>
-    );
-  }
-
-  if (row.kind === 'file') {
-    const f = row.data as ProjectFileSearchResult;
-    const metadataSummary = getFileMetadataSummary(f, q);
-    return (
-      <DiagramMetadataPopover
-        type="diagram"
-        fallbackTitle={f.name}
-        contentMetadata={f.content_metadata}
-        commentCount={f.comment_count}
-        unresolvedCommentCount={f.unresolved_comment_count}
-      >
-        <div
-          className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
-          onMouseEnter={onSelect}
-          onClick={onSelect}
-          onDoubleClick={onOpen}
-        >
-          <span className={styles.rowIcon}>
-            <TbFolder size={14} />
-          </span>
-          <div className={styles.rowBody}>
-            <div className={styles.rowTitle}>
-              <button
-                type="button"
-                className={styles.rowName}
-                onClick={ev => {
-                  ev.stopPropagation();
-                  onOpen();
-                }}
-              >
-                <Hi s={f.content_metadata?.title ?? f.name} q={q} />
-              </button>
-              <Chip tone="ghost">Diagram</Chip>
-            </div>
-            {metadataSummary && (
-              <div className={styles.rowSnippet}>
-                <Hi s={metadataSummary} q={q} />
-              </div>
-            )}
-            <div className={styles.rowMeta}>
-              <span className={styles.rowPath}>
-                <TbHome size={10} /> <Hi s={getFileContextLabel(f)} q={q} />
-                {f.path.includes('/') && (
-                  <>
-                    <span className={styles.dim}>/</span>
-                    {f.path.slice(0, f.path.lastIndexOf('/'))}
-                  </>
-                )}
-              </span>
-              {f.content_metadata?.keywords.slice(0, 4).map(keyword => (
-                <Chip key={keyword} tone="ghost">
-                  <Hi s={keyword} q={q} />
-                </Chip>
-              ))}
-            </div>
-          </div>
-          <RowGo onOpen={onOpen} />
-        </div>
-      </DiagramMetadataPopover>
-    );
-  }
-
-  if (row.kind === 'schema') {
-    const s = row.data as SchemaSearchResult;
-    const schemaMeta = schemaMap.get(s.schemaId);
-    return (
-      <div
-        className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
-        onMouseEnter={onSelect}
-        onClick={onSelect}
-        onDoubleClick={onOpen}
-      >
-        {schemaMeta ? (
-          <TypeBadge
-            color={resolveSchemaColor(schemaMeta.schema, schemaMeta.index)}
-            name={s.name}
-            icon={schemaMeta.schema.icon}
-            size={22}
-          />
-        ) : (
-          <span className={styles.rowIcon}>
-            <TbCode size={14} />
-          </span>
-        )}
-        <div className={styles.rowBody}>
-          <div className={styles.rowTitle}>
-            <button
-              type="button"
-              className={styles.rowName}
-              onClick={ev => {
-                ev.stopPropagation();
-                onOpen();
-              }}
-            >
-              <Hi s={s.name} q={q} />
-            </button>
-            <Chip tone="ghost">{s.fieldMatches.length} field matches</Chip>
-          </div>
-          {s.fieldMatches.length > 0 && (
-            <div className={styles.rowSnippet}>
-              Fields: {s.fieldMatches.map(f => f.fieldName).join(', ')}
-            </div>
-          )}
-          <div className={styles.rowMeta}>
-            <span className={styles.rowPath}>
-              <TbCode size={10} /> Data model
-              <span className={styles.dim}>/</span>
-              <Hi s={s.name} q={q} />
-              <span className={styles.dim}>/</span>
-              fields
-            </span>
-          </div>
-        </div>
-        <RowGo onOpen={onOpen} />
-      </div>
-    );
-  }
-
-  return null;
-};
-
-const RowGo = ({ onOpen }: { onOpen: () => void }) => (
-  <button
-    type="button"
-    className={styles.rowGo}
-    onClick={e => {
-      e.stopPropagation();
-      onOpen();
-    }}
-    title="Open"
-  >
-    <TbChevronRight size={12} />
-  </button>
-);
-
-// ── Preview pane ─────────────────────────────────────────────
 
 const PreviewPane = ({
   preview,
