@@ -1,0 +1,17 @@
+.inlineSelect {
+  height: 28px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  color: var(--base-fg);
+  outline: none;
+  font-family: var(--font-sans);
+  appearance: none;
+  cursor: pointer;
+}
+
+.inlineSelect:focus {
+  border-color: var(--accent-fg);
+}
