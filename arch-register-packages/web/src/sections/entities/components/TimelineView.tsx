@@ -21,7 +21,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import { timelineViewConfigSchema } from '@arch-register/api-types/viewContract';
-import { useEntitySnapshots } from '../../../hooks/useEntities';
+import { useEntitySnapshots } from '../../../hooks/useSnapshots';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

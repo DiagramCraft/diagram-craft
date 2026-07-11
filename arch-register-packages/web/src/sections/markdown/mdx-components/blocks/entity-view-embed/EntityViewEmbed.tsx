@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useEntities, useSavedViews } from '../../../../../hooks/useEntities';
+import { useEntities } from '../../../../../hooks/useEntities';
+import { useSavedViews } from '../../../../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../../../routes/publicObjectRoutes';

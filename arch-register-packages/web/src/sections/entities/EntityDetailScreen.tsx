@@ -35,11 +35,9 @@ import {
   useUpdateEntity,
   useDeleteEntity,
   useCloneEntity,
-  useEntitiesBySchema,
-  useEntitySnapshots,
-  usePromoteSnapshot,
-  useRestoreSnapshot
+  useEntitiesBySchema
 } from '../../hooks/useEntities';
+import { useEntitySnapshots, usePromoteSnapshot, useRestoreSnapshot } from '../../hooks/useSnapshots';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
 import { useAuditLog } from '../../hooks/useAudit';
 import {

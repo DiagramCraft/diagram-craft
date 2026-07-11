@@ -566,7 +566,7 @@ test.describe('data routes', () => {
     orpc,
     seeded: _
   }) => {
-    const conditions = JSON.stringify([{ fieldId: '_name', op: 'contains', value: 'Auth' }]);
+    const conditions = [{ fieldId: '_name', op: 'contains', value: 'Auth' }];
     const body = await orpc.entities.list({
       params: { workspace: 'default' },
       query: { conditions }

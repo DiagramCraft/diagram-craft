@@ -13,11 +13,9 @@ import {
   TbCopy
 } from 'react-icons/tb';
 import {
-  useSavedViews,
-  useCreateSavedView,
-  useUpdateSavedView,
   useTimelineMarkers
 } from '../../hooks/useEntities';
+import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import {

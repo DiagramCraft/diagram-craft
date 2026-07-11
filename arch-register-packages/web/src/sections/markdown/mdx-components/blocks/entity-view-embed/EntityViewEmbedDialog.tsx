@@ -4,7 +4,7 @@ import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
-import { useSavedViews } from '../../../../../hooks/useEntities';
+import { useSavedViews } from '../../../../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import type { EntityViewEmbedSlateElement } from './types';
