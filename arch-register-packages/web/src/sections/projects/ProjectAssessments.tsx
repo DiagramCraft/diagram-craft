@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -31,6 +31,8 @@ import { useAssessments, useCreateAssessment, useUpdateAssessmentStatus } from '
 import { useEntitiesBySchema, useEntityCountsBySchema } from '../../hooks/useEntities';
 import { AssessmentScopeFilterBuilder } from './components/AssessmentScopeFilterBuilder';
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
+
 type StatusFilter = 'default' | 'draft' | 'archived' | 'all';
 
 const STATUS_LABEL: Record<Assessment['status'], string> = {
@@ -60,7 +62,7 @@ export const ProjectAssessments = ({
   onNavigateHome: () => void;
   onNavigateProject: () => void;
 }) => {
-  const navigate = useNavigate();
+  const navigate = routeApi.useNavigate();
   const { workspaceSlug, schemas } = useWorkspaceContext();
 
   const { data: assessments = [] } = useAssessments(workspaceSlug, projectId);
@@ -170,10 +172,10 @@ export const ProjectAssessments = ({
                 schemas={schemas}
                 onOpen={() =>
                   navigate({
-                    search: ((previous: Record<string, unknown>) => ({
+                    search: previous => ({
                       ...previous,
                       assessmentId: assessment.id
-                    })) as never
+                    })
                   })
                 }
               />

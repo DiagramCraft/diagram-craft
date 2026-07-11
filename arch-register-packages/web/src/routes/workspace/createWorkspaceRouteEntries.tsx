@@ -1,3 +1,4 @@
+import type { AnyRoute } from '@tanstack/react-router';
 import { createHomeWorkspaceRoute } from './homeWorkspaceRoute';
 import { createContentWorkspaceRoutes } from './contentWorkspaceRoutes';
 import { createProjectWorkspaceRoutes } from './projectWorkspaceRoutes';
@@ -6,10 +7,9 @@ import { createSearchWorkspaceRoute } from './searchWorkspaceRoute';
 import { createSettingsWorkspaceRoutes } from './settingsWorkspaceRoutes';
 import { createAssistantWorkspaceRoutes } from './assistantWorkspaceRoutes';
 
-export const createWorkspaceRouteEntries = (
-  // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
-  workspaceRoute: any
-): object[] => [
+export const createWorkspaceRouteEntries = <TParentRoute extends AnyRoute>(
+  workspaceRoute: TParentRoute
+) => [
   ...createHomeWorkspaceRoute(workspaceRoute),
   ...createContentWorkspaceRoutes(workspaceRoute),
   ...createProjectWorkspaceRoutes(workspaceRoute),
@@ -17,4 +17,4 @@ export const createWorkspaceRouteEntries = (
   ...createSearchWorkspaceRoute(workspaceRoute),
   ...createSettingsWorkspaceRoutes(workspaceRoute),
   ...createAssistantWorkspaceRoutes(workspaceRoute)
-];
+] as const;

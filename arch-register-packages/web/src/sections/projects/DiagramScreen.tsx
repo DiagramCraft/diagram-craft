@@ -49,13 +49,11 @@ type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
 type SerializedOverrides = Record<string, Record<string, SerializedOverride>>;
 
 export const DiagramScreen = () => {
-  const params = useParams({ strict: false }) as {
-    workspaceSlug: string;
-    projectId?: string;
-    entityId?: string;
-    diagramId: string;
-  };
-  const { workspaceSlug, diagramId } = params;
+  const params = useParams({ strict: false });
+  // workspaceSlug/diagramId are always present: this screen only mounts under
+  // the entity/project/content diagram routes, all of which define both params.
+  const workspaceSlug = params.workspaceSlug!;
+  const diagramId = params.diagramId!;
   const workspaceId = workspaceSlug;
   const isEntityDiagram = !!params.entityId;
   const isWorkspaceContent = !params.projectId && !params.entityId;
@@ -63,10 +61,7 @@ export const DiagramScreen = () => {
 
   const navigate = useNavigate();
   const router = useRouter();
-  const search = useSearch({ strict: false }) as {
-    returnTo?: string;
-    markdownSessionId?: string;
-  };
+  const search = useSearch({ strict: false });
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const userId = user?.id;

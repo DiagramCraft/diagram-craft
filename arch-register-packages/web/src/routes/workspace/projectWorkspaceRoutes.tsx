@@ -1,4 +1,4 @@
-import { createRoute } from '@tanstack/react-router';
+import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { ProjectsScreen } from '../../sections/projects/ProjectsScreen';
 import { ProjectDetailScreen } from '../../sections/projects/ProjectDetailScreen';
 import { DiagramScreen } from '../../sections/projects/DiagramScreen';
@@ -9,10 +9,9 @@ import { validateDiagramSearch, validateMarkdownSearch, validateProjectSearch } 
 import { buildProjectBreadcrumbs, getAllParams } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
-export const createProjectWorkspaceRoutes = (
-  // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
-  workspaceRoute: any
-): object[] => {
+export const createProjectWorkspaceRoutes = <TParentRoute extends AnyRoute>(
+  workspaceRoute: TParentRoute
+) => {
   const projectsRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'projects',
@@ -88,5 +87,5 @@ export const createProjectWorkspaceRoutes = (
     };
   });
 
-  return [projectsRoute, projectDetailRoute, diagramRoute, markdownRoute];
+  return [projectsRoute, projectDetailRoute, diagramRoute, markdownRoute] as const;
 };

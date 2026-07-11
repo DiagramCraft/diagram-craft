@@ -43,7 +43,7 @@ export const MarkdownEditorHeader = (props: {
 
   const homeItem = {
     label: 'Home',
-    onClick: () => navigate({ to: '/$workspaceSlug/', params: { workspaceSlug } })
+    onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
   };
 
   const titleBreadcrumb = projectId

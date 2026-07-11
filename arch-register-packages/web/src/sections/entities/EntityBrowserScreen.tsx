@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import styles from './EntityBrowserScreen.module.css';
 import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -25,7 +25,6 @@ import {
   SaveViewDialog
 } from './components/EntityBrowser';
 import {
-  type BrowserSearch,
   buildSavedViewPayload,
   getFilterValue,
   parseConditionsFromSearch,
@@ -34,10 +33,12 @@ import {
 } from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/entityCsv';
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities');
+
 export const EntityBrowserScreen = () => {
-  const navigate = useNavigate();
+  const navigate = routeApi.useNavigate();
   const { workspaceSlug, schemas, permissions, openAddEntityDialog } = useWorkspaceContext();
-  const search = useSearch({ strict: false }) as BrowserSearch;
+  const search = routeApi.useSearch();
   const workspaceId = workspaceSlug;
   const [count, setCount] = useState(0);
   const [isSavingView, setIsSavingView] = useState(false);

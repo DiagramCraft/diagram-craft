@@ -1,13 +1,12 @@
-import { createRoute } from '@tanstack/react-router';
+import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { SearchScreen } from '../../sections/search/SearchScreen';
 import { validateSearchSearch } from '../searchParams';
 import { buildSearchBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
-export const createSearchWorkspaceRoute = (
-  // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
-  workspaceRoute: any
-): object[] => {
+export const createSearchWorkspaceRoute = <TParentRoute extends AnyRoute>(
+  workspaceRoute: TParentRoute
+) => {
   const route = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'search',
@@ -19,5 +18,5 @@ export const createSearchWorkspaceRoute = (
     breadcrumbs: buildSearchBreadcrumbs(ctx)
   }));
 
-  return [route];
+  return [route] as const;
 };

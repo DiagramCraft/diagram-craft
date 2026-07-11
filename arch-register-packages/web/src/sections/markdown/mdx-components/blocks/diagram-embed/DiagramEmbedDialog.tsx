@@ -40,11 +40,7 @@ export const DiagramEmbedDialog = ({
   const editor = useEditorRef();
   const { workspaceSlug } = useWorkspaceContext();
   const { trackCreatedDiagram } = useMarkdownDiagramSession();
-  const params = useParams({ strict: false }) as {
-    projectId?: string;
-    entityId?: string;
-    nodeId?: string;
-  };
+  const params = useParams({ strict: false });
   const { projectId, entityId, nodeId } = params;
 
   const el = element as DiagramEmbedSlateElement;

@@ -52,11 +52,8 @@ export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceS
   const [renameView, setRenameView] = useState<SavedView | null>(null);
   const [deleteViewTarget, setDeleteViewTarget] = useState<SavedView | null>(null);
   const navigate = useNavigate();
-  const params = useParams({ strict: false }) as { diagramId?: string; nodeId?: string };
-  const search = useSearch({ strict: false }) as {
-    tab?: 'projects' | 'archive'; folder?: string; section?: ProjectSection; dialog?: 'add-entity';
-    viewId?: string; contentQuery?: string; contentView?: 'grid' | 'list'
-  };
+  const params = useParams({ strict: false });
+  const search = useSearch({ strict: false });
   const section: ProjectSection = search.section === 'entities' || search.section === 'assessments' ? search.section : 'home';
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
 
