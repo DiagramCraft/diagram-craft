@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -111,10 +111,12 @@ type RelationGroup = {
 
 type RefLookup = Map<string, EntitySummary>;
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities/$entityId');
+
 export const EntityDetailScreen = () => {
-  const navigate = useNavigate();
-  const { entityId } = useParams({ strict: false }) as { entityId: string };
-  const search = useSearch({ strict: false }) as { contentFolder?: string; tab?: TabId };
+  const navigate = routeApi.useNavigate();
+  const { entityId } = routeApi.useParams();
+  const search = routeApi.useSearch();
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const canViewAudit = permissions.canViewAudit;
@@ -134,10 +136,10 @@ export const EntityDetailScreen = () => {
   const setTab = useCallback(
     (nextTab: TabId) => {
       navigate({
-        search: ((previous: Record<string, unknown>) => ({
+        search: previous => ({
           ...previous,
           tab: nextTab === 'overview' ? undefined : nextTab
-        })) as never
+        })
       });
     },
     [navigate]

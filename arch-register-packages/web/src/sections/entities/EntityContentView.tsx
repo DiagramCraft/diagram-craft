@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { useEntityContentNodes } from '../../hooks/useProjects';
@@ -29,14 +29,11 @@ type EntityContentViewProps = {
   folder: string;
 };
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities/$entityId');
+
 export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as {
-    contentFolder?: string;
-    contentQuery?: string;
-    contentView?: 'grid' | 'list';
-    tab?: string;
-  };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
   const uploadFileMutation = useUploadEntityFile(workspaceSlug, entityId);
   const createMarkdownMutation = useCreateEntityMarkdown(workspaceSlug, entityId);
@@ -49,20 +46,20 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
 
   const setFilter = (value: string) => {
     navigate({
-      search: ((previous: Record<string, unknown>) => ({
+      search: previous => ({
         ...previous,
         contentQuery: value === '' ? undefined : value
-      })) as never,
+      }),
       replace: true
     });
   };
 
   const setViewMode = (value: 'grid' | 'list') => {
     navigate({
-      search: ((previous: Record<string, unknown>) => ({
+      search: previous => ({
         ...previous,
         contentView: value === 'grid' ? undefined : value
-      })) as never
+      })
     });
   };
 

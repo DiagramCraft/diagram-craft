@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   TbFileImport,
@@ -244,11 +244,13 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
   );
 };
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities/import');
+
 export const ImportScreen = () => {
   const { workspaceSlug, schemas } = useWorkspaceContext();
-  const navigate = useNavigate();
+  const navigate = routeApi.useNavigate();
   const queryClient = useQueryClient();
-  const search = useSearch({ strict: false }) as { type?: string };
+  const search = routeApi.useSearch();
 
   const [phase, setPhase] = useState<Phase>('upload');
   const [selectedSchemaId, setSelectedSchemaId] = useState<string>(search.type ?? '');

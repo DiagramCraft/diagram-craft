@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { Title } from '../../components/Title';
@@ -21,14 +21,11 @@ type WorkspaceContentScreenProps = {
   folder: string;
 };
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/content');
+
 export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceContentScreenProps) => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as {
-    contentFolder?: string;
-    contentQuery?: string;
-    contentView?: 'grid' | 'list';
-    tab?: string;
-  };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const { workspace } = useWorkspaceContext();
   const { data } = useWorkspaceContentNodes(workspaceSlug);
   const createFolderMutation = useCreateWorkspaceFolder(workspaceSlug);
@@ -43,20 +40,20 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
 
   const setFilter = (value: string) => {
     navigate({
-      search: ((previous: Record<string, unknown>) => ({
+      search: previous => ({
         ...previous,
         contentQuery: value === '' ? undefined : value
-      })) as never,
+      }),
       replace: true
     });
   };
 
   const setViewMode = (value: 'grid' | 'list') => {
     navigate({
-      search: ((previous: Record<string, unknown>) => ({
+      search: previous => ({
         ...previous,
         contentView: value === 'grid' ? undefined : value
-      })) as never
+      })
     });
   };
 

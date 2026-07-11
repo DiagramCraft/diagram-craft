@@ -26,10 +26,7 @@ export const AccountSettingsSidebar = () => {
   const location = useLocation();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;
-  const activeSegment = location.pathname.split('/').pop();
-  const section = ACCOUNT_SETTINGS_SECTIONS.some(item => item.id === activeSegment)
-    ? activeSegment
-    : 'profile';
+  const section = location.pathname.split('/').pop() || 'profile';
 
   const groups = useMemo(() => {
     const g: Record<string, AccountSettingsNavItem[]> = {};

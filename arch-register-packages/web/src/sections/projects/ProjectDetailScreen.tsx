@@ -18,7 +18,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { TbPlus, TbFileText, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil, TbDownload } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { ApiError } from '../../lib/http';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
@@ -79,19 +79,12 @@ const PROJECT_STATUSES = [
 
 type ProjectSection = 'home' | 'entities' | 'assessments';
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
+
 export const ProjectDetailScreen = () => {
-  const navigate = useNavigate();
-  const { projectId } = useParams({ strict: false }) as { projectId: string };
-  const search = useSearch({ strict: false }) as {
-    tab?: string;
-    folder?: string;
-    section?: ProjectSection;
-    assessmentId?: string;
-    assessmentTab?: 'details' | 'summary' | 'discussion';
-    dialog?: 'add-entity';
-    contentQuery?: string;
-    contentView?: 'grid' | 'list';
-  };
+  const navigate = routeApi.useNavigate();
+  const { projectId } = routeApi.useParams();
+  const search = routeApi.useSearch();
   const { workspaceSlug, teams, projectEntityTypes, schemas, lifecycleStates } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const folderFilter = search.folder ?? null;
@@ -228,7 +221,7 @@ export const ProjectDetailScreen = () => {
   const handleNavigateProject = () => {
     navigate(
       projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-        tab: search.tab as 'projects' | 'archive' | undefined,
+        tab: search.tab,
         section: 'home',
         dialog: undefined,
         contentQuery: search.contentQuery,
@@ -239,20 +232,20 @@ export const ProjectDetailScreen = () => {
 
   const setFilter = (value: string) => {
     navigate({
-      search: ((previous: Record<string, unknown>) => ({
+      search: previous => ({
         ...previous,
         contentQuery: value === '' ? undefined : value
-      })) as never,
+      }),
       replace: true
     });
   };
 
   const setViewMode = (value: 'grid' | 'list') => {
     navigate({
-      search: ((previous: Record<string, unknown>) => ({
+      search: previous => ({
         ...previous,
         contentView: value === 'grid' ? undefined : value
-      })) as never
+      })
     });
   };
 
@@ -269,7 +262,7 @@ export const ProjectDetailScreen = () => {
     if (pendingDialog !== 'add-entity') return;
     navigate({
       ...projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-        tab: search.tab as 'projects' | 'archive' | undefined,
+        tab: search.tab,
         folder: folderFilter ?? undefined,
         section,
         dialog: undefined,
@@ -610,10 +603,10 @@ export const ProjectDetailScreen = () => {
           onNavigateProject={handleNavigateProject}
           onBack={() =>
             navigate({
-              search: ((previous: Record<string, unknown>) => ({
+              search: previous => ({
                 ...previous,
                 assessmentId: undefined
-              })) as never
+              })
             })
           }
         />

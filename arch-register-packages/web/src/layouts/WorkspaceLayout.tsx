@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Outlet, useParams, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
+import { Outlet, getRouteApi, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from './WorkspaceLayout.module.css';
 import sidePanelStyles from '../shell/SidePanel.module.css';
@@ -51,8 +51,10 @@ const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' }
 ];
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug');
+
 export const WorkspaceLayout = () => {
-  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
+  const { workspaceSlug } = routeApi.useParams();
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();

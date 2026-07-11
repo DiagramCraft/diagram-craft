@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -29,13 +29,11 @@ const deriveKeyPrefix = (value: string) =>
     .toUpperCase()
     .slice(0, 5);
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
+
 export const SchemaSettingsScreen = () => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as {
-    tab?: 'types' | 'enums';
-    schema?: string;
-    enumId?: string;
-  };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const selectedSchemaId = search.schema;
   const activeTab = search.tab ?? 'types';
   const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();

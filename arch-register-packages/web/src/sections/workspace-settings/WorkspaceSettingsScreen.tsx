@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import styles from './WorkspaceSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import type { AuditOperation } from '@arch-register/api-types/auditContract';
 import { TbPlus } from 'react-icons/tb';
 import { Title } from '../../components/Title';
 import { GeneralSubSection } from './sub-sections/GeneralSubSection';
@@ -65,21 +64,18 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   }
 };
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/$section');
+
 export const WorkspaceSettingsScreen = () => {
-  const navigate = useNavigate();
-  const { section } = useParams({ strict: false }) as { section: string };
-  const search = useSearch({ strict: false }) as {
-    auditEntityType?: string;
-    auditOperation?: AuditOperation;
-    auditStartDate?: string;
-    auditEndDate?: string;
-    analyticsView?: 'stale';
-  };
+  const navigate = routeApi.useNavigate();
+  const params = routeApi.useParams();
+  const search = routeApi.useSearch();
   const ctx = useWorkspaceContext();
   const workspace = ctx.workspace;
   const workspaceSlug = ctx.workspaceSlug;
   const lifecycleStates = ctx.lifecycleStates;
   const availableSections = ctx.availableSettingsSections;
+  const section = params.section ?? 'general';
   const sectionIsValid = availableSections.includes(section);
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -8,9 +8,11 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../../hooks/useEnums';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
+
 export const EnumEditorScreen = () => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { tab?: string; enumId?: string };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const selectedEnumId = search.enumId ?? null;
   const { workspaceSlug, enums, permissions } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;

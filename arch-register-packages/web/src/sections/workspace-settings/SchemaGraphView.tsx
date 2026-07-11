@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { DependencyGraph } from '../../components/DependencyGraph';
 import type {
@@ -121,10 +121,12 @@ const serializeSearch = (
   return search;
 };
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/model-overview');
+
 export const SchemaGraphView = () => {
   const { schemas, workspaceSlug, workspace } = useWorkspaceContext();
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as ModelOverviewSearchParams;
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const layout = search.layout ?? DEFAULT_LAYOUT;
   const [saveDiagramOpen, setSaveDiagramOpen] = useState(false);
   const [pendingDiagramContent, setPendingDiagramContent] =

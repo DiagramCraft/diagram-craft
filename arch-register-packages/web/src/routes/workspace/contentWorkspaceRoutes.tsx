@@ -1,5 +1,4 @@
-import { createRoute } from '@tanstack/react-router';
-import { useParams, useSearch } from '@tanstack/react-router';
+import { createRoute, getRouteApi, type AnyRoute } from '@tanstack/react-router';
 import { DiagramScreen } from '../../sections/projects/DiagramScreen';
 import { MarkdownEditorScreen } from '../../sections/markdown/MarkdownEditorScreen';
 import { WorkspaceContentSidebar } from '../../sections/workspace-content/WorkspaceContentSidebar';
@@ -8,9 +7,11 @@ import { validateDiagramSearch, validateEntityDetailSearch, validateMarkdownSear
 import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
 
+const contentRouteApi = getRouteApi('/authenticated/$workspaceSlug/content');
+
 const WorkspaceContentRoute = () => {
-  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
-  const search = useSearch({ strict: false }) as { contentFolder?: string };
+  const { workspaceSlug } = contentRouteApi.useParams();
+  const search = contentRouteApi.useSearch();
   return (
     <WorkspaceContentScreen
       workspaceSlug={workspaceSlug}
@@ -19,10 +20,9 @@ const WorkspaceContentRoute = () => {
   );
 };
 
-export const createContentWorkspaceRoutes = (
-  // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
-  workspaceRoute: any
-): object[] => {
+export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
+  workspaceRoute: TParentRoute
+) => {
   const contentRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -63,5 +63,5 @@ export const createContentWorkspaceRoutes = (
     })
   );
 
-  return [contentRoute, contentDiagramRoute, contentMarkdownRoute];
+  return [contentRoute, contentDiagramRoute, contentMarkdownRoute] as const;
 };
