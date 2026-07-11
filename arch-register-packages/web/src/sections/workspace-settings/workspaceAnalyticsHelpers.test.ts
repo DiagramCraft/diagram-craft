@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  activityAuditSearch,
   completenessSearch,
   lifecycleSearch,
   ownershipGapSearch,
@@ -49,6 +50,18 @@ describe('workspaceAnalyticsHelpers', () => {
         { fieldId: '_completeness', op: 'gt', value: 49 },
         { fieldId: '_completeness', op: 'lt', value: 80 }
       ])
+    });
+  });
+
+  it('builds an audit-log drill-down for an activity bucket', () => {
+    expect(
+      activityAuditSearch('update', '2026-01-01T00:00:00.000Z', '2026-01-01T23:59:59.999Z')
+    ).toEqual({
+      section: 'audit',
+      auditEntityType: 'entity',
+      auditOperation: 'update',
+      auditStartDate: '2026-01-01T00:00:00.000Z',
+      auditEndDate: '2026-01-01T23:59:59.999Z'
     });
   });
 });

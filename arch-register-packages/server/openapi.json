@@ -31406,6 +31406,96 @@
                       },
                       "description": "Number of entities per schema"
                     },
+                    "activityTrends": {
+                      "type": "object",
+                      "properties": {
+                        "days30": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "date": {
+                                "type": "string",
+                                "description": "UTC calendar date for this activity bucket (YYYY-MM-DD)"
+                              },
+                              "startDate": {
+                                "type": "string",
+                                "description": "Inclusive ISO 8601 start timestamp for this bucket"
+                              },
+                              "endDate": {
+                                "type": "string",
+                                "description": "Inclusive ISO 8601 end timestamp for this bucket"
+                              },
+                              "created": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities created during this bucket"
+                              },
+                              "updated": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities updated during this bucket"
+                              }
+                            },
+                            "required": [
+                              "date",
+                              "startDate",
+                              "endDate",
+                              "created",
+                              "updated"
+                            ]
+                          },
+                          "description": "Daily entity create/update activity for the last 30 days"
+                        },
+                        "days90": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "date": {
+                                "type": "string",
+                                "description": "UTC calendar date for this activity bucket (YYYY-MM-DD)"
+                              },
+                              "startDate": {
+                                "type": "string",
+                                "description": "Inclusive ISO 8601 start timestamp for this bucket"
+                              },
+                              "endDate": {
+                                "type": "string",
+                                "description": "Inclusive ISO 8601 end timestamp for this bucket"
+                              },
+                              "created": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities created during this bucket"
+                              },
+                              "updated": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities updated during this bucket"
+                              }
+                            },
+                            "required": [
+                              "date",
+                              "startDate",
+                              "endDate",
+                              "created",
+                              "updated"
+                            ]
+                          },
+                          "description": "Daily entity create/update activity for the last 90 days"
+                        }
+                      },
+                      "required": [
+                        "days30",
+                        "days90"
+                      ],
+                      "description": "Entity activity trends derived from audit history"
+                    },
                     "stale": {
                       "type": "object",
                       "properties": {
@@ -31487,6 +31577,7 @@
                     "ownershipGaps",
                     "completeness",
                     "schemaUtilization",
+                    "activityTrends",
                     "stale"
                   ]
                 }

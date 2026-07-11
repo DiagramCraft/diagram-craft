@@ -106,7 +106,14 @@ const ModelOverviewRedirectSection = ({ workspaceSlug }: { workspaceSlug: string
 
 export const WorkspaceSettingsScreen = () => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { section?: string; analyticsView?: 'stale' };
+  const search = useSearch({ strict: false }) as {
+    section?: string;
+    auditEntityType?: string;
+    auditOperation?: AuditOperation;
+    auditStartDate?: string;
+    auditEndDate?: string;
+    analyticsView?: 'stale';
+  };
   const ctx = useWorkspaceContext();
   const workspace = ctx.workspace;
   const workspaceSlug = ctx.workspaceSlug;
@@ -199,7 +206,17 @@ export const WorkspaceSettingsScreen = () => {
       {section === 'export-import' && <ExportImportSubSection />}
       {section === 'analytics' && <WorkspaceAnalyticsScreen analyticsView={search.analyticsView} />}
       {section === 'audit' && (
-        <AuditLogSection workspace={workspace} workspaceSlug={workspaceSlug} />
+        <AuditLogSection
+          key={`${search.auditEntityType ?? ''}:${search.auditOperation ?? ''}:${search.auditStartDate ?? ''}:${search.auditEndDate ?? ''}`}
+          workspace={workspace}
+          workspaceSlug={workspaceSlug}
+          initialFilters={{
+            entityType: search.auditEntityType,
+            operation: search.auditOperation,
+            startDate: search.auditStartDate,
+            endDate: search.auditEndDate
+          }}
+        />
       )}
       {section === 'danger' && <DangerSection workspace={workspace} />}
     </div>
@@ -541,21 +558,31 @@ const formatRelativeTime = (timestamp: string): string => {
   return then.toLocaleDateString();
 };
 
-const toStartOfDay = (date: string) => new Date(`${date}T00:00:00`).toISOString();
-const toEndOfDay = (date: string) => new Date(`${date}T23:59:59.999`).toISOString();
+const toInputDate = (value: string | undefined) => value?.slice(0, 10) ?? '';
+const toStartOfDay = (date: string) => new Date(`${date}T00:00:00.000Z`).toISOString();
+const toEndOfDay = (date: string) => new Date(`${date}T23:59:59.999Z`).toISOString();
 
 const AuditLogSection = ({
   workspace,
-  workspaceSlug
+  workspaceSlug,
+  initialFilters
 }: {
   workspace: Workspace;
   workspaceSlug: string;
+  initialFilters: {
+    entityType?: string;
+    operation?: AuditOperation;
+    startDate?: string;
+    endDate?: string;
+  };
 }) => {
   const navigate = useNavigate();
-  const [entityType, setEntityType] = useState<'' | AuditEntityType>('');
-  const [operation, setOperation] = useState<'' | AuditOperation>('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [entityType, setEntityType] = useState<'' | AuditEntityType>(
+    (initialFilters.entityType as AuditEntityType | undefined) ?? ''
+  );
+  const [operation, setOperation] = useState<'' | AuditOperation>(initialFilters.operation ?? '');
+  const [startDate, setStartDate] = useState(toInputDate(initialFilters.startDate));
+  const [endDate, setEndDate] = useState(toInputDate(initialFilters.endDate));
 
   // Use TanStack Query for audit log fetching
   const { data: entries = [], isLoading: loading } = useAuditLog(workspace.url_slug, {

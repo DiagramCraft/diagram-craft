@@ -48,6 +48,18 @@ export const completenessSearch = (schemaId: string, bucket: 'below50' | 'betwee
           ]
   });
 
+export const activityAuditSearch = (
+  operation: 'create' | 'update',
+  startDate: string,
+  endDate: string
+) => ({
+  section: 'audit',
+  auditEntityType: 'entity',
+  auditOperation: operation,
+  auditStartDate: startDate,
+  auditEndDate: endDate
+});
+
 export const staleSearch = (cutoffAt: string, schemaId?: string) =>
   analyticsEntitySearch({
     type: schemaId,
