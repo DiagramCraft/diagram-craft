@@ -6,7 +6,7 @@ import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { getFileContextLabel, getFileFolder, type SearchPreview } from '../searchScreenHelpers';
-import { Hi } from './Hi';
+import { Hi } from './Highlight';
 import styles from './PreviewPane.module.css';
 import sharedStyles from '../SearchScreen.module.css';
 

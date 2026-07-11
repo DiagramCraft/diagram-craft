@@ -7,24 +7,22 @@ import { useAddProjectEntity } from '../../../hooks/useProjects';
 import { ApiError } from '../../../lib/http';
 import styles from './AddEntityToProjectDialog.module.css';
 
-type AddEntityMutation = ReturnType<typeof useAddProjectEntity>;
-
 type Props = {
   open: boolean;
   onClose: () => void;
   workspaceId: string;
   projectId: string;
   projectEntityTypes: { id: string; label: string }[];
-  addEntityMutation: AddEntityMutation;
 };
 
 export const AddEntityToProjectDialog = ({
   open,
   onClose,
   workspaceId,
-  projectEntityTypes,
-  addEntityMutation
+  projectId,
+  projectEntityTypes
 }: Props) => {
+  const addEntityMutation = useAddProjectEntity(workspaceId, projectId);
   const [q, setQ] = useState('');
   const [selectedId, setSelectedId] = useState('');
   const [entityType, setEntityType] = useState('');

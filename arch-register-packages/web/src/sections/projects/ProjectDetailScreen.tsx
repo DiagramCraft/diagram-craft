@@ -18,7 +18,6 @@ import {
   useProject,
   useUpdateProject,
   useProjectEntities,
-  useAddProjectEntity,
   useUpdateProjectEntity,
   useRemoveProjectEntity
 } from '../../hooks/useProjects';
@@ -118,7 +117,6 @@ export const ProjectDetailScreen = () => {
 
   // Entity hooks
   const { data: projectEntities = [] } = useProjectEntities(workspaceId, projectId);
-  const addEntityMutation = useAddProjectEntity(workspaceId, projectId);
   const updateEntityMutation = useUpdateProjectEntity(workspaceId, projectId);
   const removeEntityMutation = useRemoveProjectEntity(workspaceId, projectId);
   const { data: projectSnapshots = [] } = useProjectFutureSnapshots(workspaceId, projectId);
@@ -764,7 +762,6 @@ export const ProjectDetailScreen = () => {
           workspaceId={workspaceId}
           projectId={projectId}
           projectEntityTypes={projectEntityTypes}
-          addEntityMutation={addEntityMutation}
         />
       )}
 
