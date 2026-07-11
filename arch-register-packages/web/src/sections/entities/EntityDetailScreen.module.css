@@ -466,94 +466,6 @@
   color: var(--base-fg);
 }
 
-/* Change history */
-.changeHistory {
-  padding: 16px 24px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.chSectionLabel {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--cmp-fg-disabled);
-  margin-bottom: 6px;
-}
-
-.chTableWrap {
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  background: var(--panel-bg);
-}
-
-.chTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.chTable thead th {
-  text-align: left;
-  font-weight: 500;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
-  background: var(--base-bg);
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--cmp-border);
-  white-space: nowrap;
-
-  &:first-child {
-    border-radius: 4px 0 0 0;
-  }
-
-  &:last-child {
-    border-radius: 0 4px 0 0;
-  }
-}
-
-.chTable tbody tr {
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.chTable tbody tr:last-child {
-  border-bottom: 0;
-}
-
-.chTable tbody tr:hover {
-  background: var(--cmp-bg);
-}
-
-.chTable td {
-  padding: 8px 10px;
-  vertical-align: middle;
-}
-
-.chDim {
-  color: var(--cmp-fg-disabled);
-  white-space: nowrap;
-  font-size: 11px;
-}
-
-.chMono {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--base-fg-dim);
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chActionsCell {
-  width: 80px;
-  text-align: right;
-}
-
 /* Relations */
 .relationsPage {
   padding: 16px 24px 32px;
@@ -565,24 +477,6 @@
   gap: 4px;
 }
 
-
-.snapshotTypeBadge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 500;
-  padding: 1px 5px;
-  border-radius: 3px;
-  text-transform: capitalize;
-  background: var(--base-bg);
-  border: 1px solid var(--panel-border);
-  color: var(--cmp-fg-disabled);
-}
-
-.snapshotTypeBadgeSaved {
-  background: color-mix(in oklch, var(--accent-fg) 12%, transparent);
-  border-color: color-mix(in oklch, var(--accent-fg) 35%, transparent);
-  color: var(--accent-fg);
-}
 
 .relation {
   display: flex;
