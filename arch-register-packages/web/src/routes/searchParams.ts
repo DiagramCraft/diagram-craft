@@ -147,7 +147,6 @@ export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSear
 
 // Settings params
 export type SettingsSearchParams = {
-  section?: string;
   auditEntityType?: string;
   auditOperation?: 'create' | 'update' | 'delete';
   auditStartDate?: string;
@@ -156,7 +155,6 @@ export type SettingsSearchParams = {
 };
 
 export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSearchParams => ({
-  section: typeof raw.section === 'string' ? raw.section : undefined,
   auditEntityType: typeof raw.auditEntityType === 'string' ? raw.auditEntityType : undefined,
   auditOperation:
     raw.auditOperation === 'create' || raw.auditOperation === 'update' || raw.auditOperation === 'delete'
@@ -165,6 +163,16 @@ export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSe
   auditStartDate: typeof raw.auditStartDate === 'string' ? raw.auditStartDate : undefined,
   auditEndDate: typeof raw.auditEndDate === 'string' ? raw.auditEndDate : undefined,
   analyticsView: raw.analyticsView === 'stale' ? raw.analyticsView : undefined
+});
+
+// Legacy `?section=` support for the bare `/settings` redirect route
+export type LegacySettingsSearchParams = SettingsSearchParams & { section?: string };
+
+export const validateLegacySettingsSearch = (
+  raw: Record<string, unknown>
+): LegacySettingsSearchParams => ({
+  ...validateSettingsSearch(raw),
+  section: typeof raw.section === 'string' ? raw.section : undefined
 });
 
 // Search params

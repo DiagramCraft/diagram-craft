@@ -5,8 +5,7 @@ import { WorkspacePage } from './WorkspacePage';
 export class SettingsPage extends WorkspacePage {
 
   goto = async (section?: string) => {
-    const route = workspaceSettingsRoute(this.workspaceSlug);
-    await this.page.goto(section == null ? route : `${route}?section=${section}`);
+    await this.page.goto(workspaceSettingsRoute(this.workspaceSlug, section));
   };
 
   expectLoaded = async () => {

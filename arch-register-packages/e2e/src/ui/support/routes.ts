@@ -18,7 +18,8 @@ export const workspaceModelOverviewRoute = (workspaceSlug: string) =>
 
 export const workspaceSearchRoute = (workspaceSlug: string) => `/${workspaceSlug}/search`;
 
-export const workspaceSettingsRoute = (workspaceSlug: string) => `/${workspaceSlug}/settings`;
+export const workspaceSettingsRoute = (workspaceSlug: string, section?: string) =>
+  section == null ? `/${workspaceSlug}/settings` : `/${workspaceSlug}/settings/${section}`;
 
 export const accountSettingsRoute = (workspaceSlug: string, section?: 'profile' | 'appearance') =>
-  section == null ? `/${workspaceSlug}/account` : `/${workspaceSlug}/account?section=${section}`;
+  section == null ? `/${workspaceSlug}/account` : `/${workspaceSlug}/account/${section}`;

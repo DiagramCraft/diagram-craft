@@ -53,7 +53,6 @@ export const activityAuditSearch = (
   startDate: string,
   endDate: string
 ) => ({
-  section: 'audit',
   auditEntityType: 'entity',
   auditOperation: operation,
   auditStartDate: startDate,

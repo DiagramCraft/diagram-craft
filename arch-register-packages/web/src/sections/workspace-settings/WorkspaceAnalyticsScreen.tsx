@@ -249,8 +249,8 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
 
   const navigateToActivity = (operation: 'create' | 'update', startDate: string, endDate: string) =>
     navigate({
-      to: '/$workspaceSlug/settings',
-      params: { workspaceSlug },
+      to: '/$workspaceSlug/settings/$section',
+      params: { workspaceSlug, section: 'audit' },
       search: activityAuditSearch(operation, startDate, endDate)
     });
 
@@ -259,11 +259,10 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
 
   const selectView = (view: 'overview' | 'stale') =>
     navigate({
-      to: '/$workspaceSlug/settings',
-      params: { workspaceSlug },
+      to: '/$workspaceSlug/settings/$section',
+      params: { workspaceSlug, section: 'analytics' },
       search: {
         ...search,
-        section: 'analytics',
         analyticsView: view === 'stale' ? 'stale' : undefined
       }
     });

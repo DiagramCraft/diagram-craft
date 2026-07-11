@@ -5,7 +5,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { LIFECYCLE_COLOR_PRESETS, SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../../components/ColorPicker';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { AuditEntityType, AuditOperation } from '@arch-register/api-types/auditContract';
 import { TbPlus, TbTrash } from 'react-icons/tb';
@@ -76,38 +76,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   }
 };
 
-const SchemasRedirectSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    navigate({
-      to: '/$workspaceSlug/settings/schemas',
-      params: { workspaceSlug },
-      replace: true
-    });
-  }, [navigate, workspaceSlug]);
-
-  return null;
-};
-
-const ModelOverviewRedirectSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    navigate({
-      to: '/$workspaceSlug/settings/model-overview',
-      params: { workspaceSlug },
-      replace: true
-    });
-  }, [navigate, workspaceSlug]);
-
-  return null;
-};
-
 export const WorkspaceSettingsScreen = () => {
   const navigate = useNavigate();
+  const { section } = useParams({ strict: false }) as { section: string };
   const search = useSearch({ strict: false }) as {
-    section?: string;
     auditEntityType?: string;
     auditOperation?: AuditOperation;
     auditStartDate?: string;
@@ -119,12 +91,19 @@ export const WorkspaceSettingsScreen = () => {
   const workspaceSlug = ctx.workspaceSlug;
   const lifecycleStates = ctx.lifecycleStates;
   const availableSections = ctx.availableSettingsSections;
-  const section = availableSections.includes(search.section ?? '')
-    ? (search.section ?? 'general')
-    : (ctx.defaultSettingsSection ?? 'general');
+  const sectionIsValid = availableSections.includes(section);
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
   const [rolesAddDialogOpen, setRolesAddDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (sectionIsValid || !ctx.defaultSettingsSection) return;
+    navigate({
+      to: '/$workspaceSlug/settings/$section',
+      params: { workspaceSlug, section: ctx.defaultSettingsSection },
+      replace: true
+    });
+  }, [sectionIsValid, ctx.defaultSettingsSection, navigate, workspaceSlug]);
 
   const meta = SECTION_META[section] ?? SECTION_META['general']!;
 
@@ -135,7 +114,9 @@ export const WorkspaceSettingsScreen = () => {
     { label: 'Settings' }
   ];
 
-  if (!availableSections.includes(section)) {
+  if (!sectionIsValid) {
+    if (ctx.defaultSettingsSection) return null;
+
     return (
       <div className={styles.screen}>
         <div className={styles.head}>
@@ -179,8 +160,6 @@ export const WorkspaceSettingsScreen = () => {
       {section === 'lifecycle-owners' && (
         <LifecycleOwnersSection workspace={workspace} lifecycleStates={lifecycleStates} />
       )}
-      {section === 'model-overview' && <ModelOverviewRedirectSection workspaceSlug={workspaceSlug} />}
-      {section === 'schemas' && <SchemasRedirectSection workspaceSlug={workspaceSlug} />}
       {section === 'roles' && (
         <RolesPermissionsSubSection
           workspaceSlug={workspaceSlug}
