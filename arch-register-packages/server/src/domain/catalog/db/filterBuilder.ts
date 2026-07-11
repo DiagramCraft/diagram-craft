@@ -9,7 +9,8 @@ export const ENTITY_BUILTIN_COLUMNS: Record<string, string> = {
   _namespace: 'e.namespace',
   _schemaId: 'e.schema_id',
   _lifecycle: 'e.lifecycle',
-  _owner: 'e.owner'
+  _owner: 'e.owner',
+  _updatedAt: 'e.updated_at'
 };
 
 // Ensures custom fieldIds can only contain characters safe for JSON path interpolation.
@@ -61,6 +62,8 @@ export const buildConditionClause = (
       return `CAST(${col} AS NUMERIC) > CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
     case 'lt':
       return `CAST(${col} AS NUMERIC) < CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
+    case 'before':
+      return `${col} < ${addParam(cond.value ?? '')}`;
     default:
       return null;
   }

@@ -40,6 +40,7 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
   _targetLifecycleDate: z.string().nullable().describe('Target date for lifecycle transition (ISO 8601)'),
   _tags: z.array(z.string()).describe('Entity tags'),
   _links: z.array(entityLinkSchema).describe('External links associated with the entity'),
+  _updatedAt: z.string().optional().describe('ISO 8601 timestamp of the entity\'s most recent update'),
   _visibilityMode: visibilityModeSchema.nullable().describe('Entity visibility mode'),
   _completeness: z.number().nullable().describe('Field completeness percentage (0-100)'),
   _projectLink: projectLinkSchema.optional().describe('Project linkage information')

@@ -106,7 +106,7 @@ const ModelOverviewRedirectSection = ({ workspaceSlug }: { workspaceSlug: string
 
 export const WorkspaceSettingsScreen = () => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { section?: string };
+  const search = useSearch({ strict: false }) as { section?: string; analyticsView?: 'stale' };
   const ctx = useWorkspaceContext();
   const workspace = ctx.workspace;
   const workspaceSlug = ctx.workspaceSlug;
@@ -197,7 +197,7 @@ export const WorkspaceSettingsScreen = () => {
       )}
       {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
       {section === 'export-import' && <ExportImportSubSection />}
-      {section === 'analytics' && <WorkspaceAnalyticsScreen />}
+      {section === 'analytics' && <WorkspaceAnalyticsScreen analyticsView={search.analyticsView} />}
       {section === 'audit' && (
         <AuditLogSection workspace={workspace} workspaceSlug={workspaceSlug} />
       )}

@@ -45,7 +45,9 @@ const summarizeCompleteness = (entities: EntityDbResult[], schemaMap: Map<string
 export const computeWorkspaceAnalytics = (
   entities: EntityDbResult[],
   schemas: SchemaDbResult[],
-  lifecycleStates: LifecycleStateDbResult[]
+  lifecycleStates: LifecycleStateDbResult[],
+  staleAfterDays = 90,
+  now = new Date()
 ): WorkspaceAnalytics => {
   const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
   const totalEntities = entities.length;
@@ -156,6 +158,30 @@ export const computeWorkspaceAnalytics = (
     }))
     .sort((a, b) => b.count - a.count || a.schemaName.localeCompare(b.schemaName));
 
+  const cutoffAt = new Date(now.getTime() - staleAfterDays * 24 * 60 * 60 * 1000);
+  const staleEntityIds = new Set(
+    entities.filter(entity => entity.updated_at < cutoffAt).map(entity => entity.id)
+  );
+  const stale = {
+    thresholdDays: staleAfterDays,
+    cutoffAt: cutoffAt.toISOString(),
+    totalCount: staleEntityIds.size,
+    percent: roundPercent(staleEntityIds.size, totalEntities),
+    schemas: schemas
+      .map(schema => {
+        const schemaEntities = entitiesBySchema.get(schema.id) ?? [];
+        const staleCount = schemaEntities.filter(entity => staleEntityIds.has(entity.id)).length;
+        return {
+          schemaId: schema.id,
+          schemaName: schema.name,
+          totalCount: schemaEntities.length,
+          staleCount,
+          stalePercent: roundPercent(staleCount, schemaEntities.length)
+        };
+      })
+      .sort((a, b) => b.staleCount - a.staleCount || a.schemaName.localeCompare(b.schemaName))
+  };
+
   return {
     summary: {
       totalEntities,
@@ -166,14 +192,16 @@ export const computeWorkspaceAnalytics = (
     coverage,
     ownershipGaps,
     completeness,
-    schemaUtilization
+    schemaUtilization,
+    stale
   };
 };
 
 export const getWorkspaceAnalytics = async (
   db: DatabaseAdapter,
   workspace: string,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  staleAfterDays = 90
 ): Promise<WorkspaceAnalytics> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   const authCtx = await buildApiAuthCtx(db, ws, event);
@@ -185,5 +213,10 @@ export const getWorkspaceAnalytics = async (
     db.workspace.listLifecycleStates(ws)
   ]);
 
-  return computeWorkspaceAnalytics(filterVisibleEntities(authCtx, entities), schemas, lifecycleStates);
+  return computeWorkspaceAnalytics(
+    filterVisibleEntities(authCtx, entities),
+    schemas,
+    lifecycleStates,
+    staleAfterDays
+  );
 };

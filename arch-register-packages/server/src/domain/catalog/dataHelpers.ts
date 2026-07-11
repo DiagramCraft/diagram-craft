@@ -56,6 +56,7 @@ export const matchesFilterCondition = (
     case '_description': value = entity.description; break;
     case '_namespace': value = entity.namespace; break;
     case '_completeness': value = completeness; break;
+    case '_updatedAt': value = entity.updated_at; break;
     default: value = entity.data[condition.fieldId];
   }
 
@@ -74,6 +75,11 @@ export const matchesFilterCondition = (
     case 'lt': return Number(value) < Number(expected);
     case 'gte': return Number(value) >= Number(expected);
     case 'lte': return Number(value) <= Number(expected);
+    case 'before': {
+      const valueTime = value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
+      const expectedTime = new Date(String(expected)).getTime();
+      return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime < expectedTime;
+    }
     default: return true;
   }
 };
