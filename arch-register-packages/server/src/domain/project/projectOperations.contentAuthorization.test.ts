@@ -57,11 +57,7 @@ describe('entity/workspace content authorization', () => {
     await expect(
       uploadEntityFile(db, storage, 'ws-1', 'entity-1', 'file.txt', Buffer.from('x'), 'text/plain', 'file.txt', event)
     ).rejects.toThrow();
-    expect(requireWorkspaceCapability).toHaveBeenCalledWith(
-      expect.anything(),
-      'content.edit',
-      expect.any(String)
-    );
+    expect(requireWorkspaceCapability).toHaveBeenCalledWith(expect.anything(), 'content.edit');
     expect(getEntity).not.toHaveBeenCalled();
     expect(write).not.toHaveBeenCalled();
   });

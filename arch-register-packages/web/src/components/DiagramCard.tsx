@@ -2,6 +2,7 @@ import { TbCheck, TbFolder, TbFileText, TbMessageCircle, TbStar } from 'react-ic
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import styles from '../sections/projects/ProjectDetailScreen.module.css';
 import { DiagramMetadataPopover } from './DiagramMetadataPopover';
+import { formatDate } from '../utils/dateFormat';
 
 const CommentPill = ({ file }: { file: ProjectFile }) => {
   const total = file.comment_count ?? 0;
@@ -137,7 +138,7 @@ export const DiagramCard = ({
               <TbFolder size={10} /> {folder} &middot;{' '}
             </>
           )}
-          {new Date(file.updated_at).toLocaleDateString()}
+          {formatDate(file.updated_at)}
         </div>
       </div>
     </button>
@@ -189,7 +190,7 @@ export const DiagramRow = ({
           </>
         )}
       </div>
-      <div className={styles.diagramRowDate}>{new Date(file.updated_at).toLocaleDateString()}</div>
+      <div className={styles.diagramRowDate}>{formatDate(file.updated_at)}</div>
     </button>
   </DiagramMetadataPopover>
 );

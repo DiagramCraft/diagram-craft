@@ -37,6 +37,7 @@ import {
   useWatchedEntities
 } from '../hooks/useNotifications';
 import { useDiscussionSummary } from '../hooks/useDiscussions';
+import { formatRelativeTime } from '../utils/dateFormat';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { NotificationItem, WatchedEntity } from '@arch-register/api-types/watchContract';
 import type { DiscussionSummaryEntry } from '@arch-register/api-types/discussionContract';
@@ -508,7 +509,7 @@ const DiscussionsMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
                       </div>
                     </div>
                     <div className={styles.notificationWhen}>
-                      {formatRelativeTimestamp(entry.lastPost.createdAt)}
+                      {formatRelativeTime(entry.lastPost.createdAt)}
                     </div>
                   </button>
                 ))}
@@ -667,7 +668,7 @@ const NotificationList = ({
               <span className={styles.notificationOp}>{item.operation}</span>
             </div>
           </div>
-          <div className={styles.notificationWhen}>{formatRelativeTimestamp(item.timestamp)}</div>
+          <div className={styles.notificationWhen}>{formatRelativeTime(item.timestamp)}</div>
           <button
             type="button"
             className={styles.notificationClear}
@@ -745,18 +746,6 @@ const WatchingList = ({
       ))}
     </div>
   );
-};
-
-const formatRelativeTimestamp = (timestamp: string) => {
-  const date = new Date(timestamp);
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.max(1, Math.round(diffMs / 60000));
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.round(diffHours / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
 };
 
 const ThemeToggle = ({ theme, onSetTheme }: { theme: Theme; onSetTheme: (t: Theme) => void }) => {

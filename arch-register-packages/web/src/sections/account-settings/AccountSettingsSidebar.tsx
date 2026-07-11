@@ -28,9 +28,7 @@ export const AccountSettingsSidebar = () => {
   const search = routeApi.useSearch();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;
-  const section = ACCOUNT_SETTINGS_SECTIONS.some(item => item.id === search.section)
-    ? search.section ?? 'profile'
-    : 'profile';
+  const section = search.section ?? 'profile';
 
   const groups = useMemo(() => {
     const g: Record<string, AccountSettingsNavItem[]> = {};
@@ -55,9 +53,8 @@ export const AccountSettingsSidebar = () => {
                 active={section === s.id}
                 onClick={() =>
                   navigate({
-                    to: '/$workspaceSlug/account',
-                    params: { workspaceSlug },
-                    search: { section: s.id },
+                    to: '/$workspaceSlug/account/$section',
+                    params: { workspaceSlug, section: s.id },
                   })
                 }
               />

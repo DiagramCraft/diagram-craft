@@ -44,13 +44,6 @@ export const parseDateValue = (value: unknown) => {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
 };
 
-export const formatDateValue = (value: unknown) => {
-  const parsed = parseDateValue(value);
-  if (parsed == null) return '—';
-  const date = new Date(`${parsed}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? parsed : date.toLocaleDateString();
-};
-
 export const parseConditionsFromSearch = (search: BrowserSearch): FilterCondition[] => {
   if (search.filters) {
     try {

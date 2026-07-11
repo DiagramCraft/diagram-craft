@@ -205,85 +205,6 @@ const buildRelocatedAttachmentPath = (
   return `${nextRootPath}/${suffix}`;
 };
 
-const cloneMarkdownAttachmentSubtree = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  ws: string,
-  storageId: string,
-  sourceMarkdownNode: ContentNodeDbResult,
-  targetMarkdownNode: ContentNodeDbResult,
-  siblingNodes: readonly ContentNodeDbResult[],
-  authCtx: { userId: string | null },
-  timestamp: Date
-) => {
-  const container = getAttachmentContainerForMarkdownNode(siblingNodes, sourceMarkdownNode.id);
-  if (!container) return;
-
-  const descendants = collectDescendantNodes(siblingNodes, container.id);
-  const previousRootPath = sourceMarkdownNode.path.endsWith('.md')
-    ? sourceMarkdownNode.path.slice(0, -3)
-    : sourceMarkdownNode.path;
-  const nextRootPath = targetMarkdownNode.path.endsWith('.md')
-    ? targetMarkdownNode.path.slice(0, -3)
-    : targetMarkdownNode.path;
-
-  const createdByOldId = new Map<string, ContentNodeDbResult>();
-  createdByOldId.set(sourceMarkdownNode.id, targetMarkdownNode);
-
-  const sourceNodes = [container, ...descendants];
-  for (const sourceNode of sourceNodes) {
-    const newPath = buildRelocatedAttachmentPath(previousRootPath, nextRootPath, sourceNode.path);
-    const parentId =
-      sourceNode.parent_id === sourceMarkdownNode.id
-        ? targetMarkdownNode.id
-        : (createdByOldId.get(sourceNode.parent_id ?? '')?.id ?? null);
-
-    const createdNode = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: targetMarkdownNode.project_id,
-      entity_id: targetMarkdownNode.entity_id,
-      parent_id: parentId,
-      path: newPath,
-      name: sourceNode.name,
-      role: sourceNode.role,
-      type: sourceNode.type,
-      size_bytes: sourceNode.size_bytes,
-      comment_count: sourceNode.comment_count,
-      unresolved_comment_count: sourceNode.unresolved_comment_count,
-      created_atIfNew: timestamp,
-      updated_at: timestamp,
-      created_byIfNew: authCtx.userId,
-      updated_by: authCtx.userId,
-      mime_type: sourceNode.mime_type,
-      original_filename: sourceNode.original_filename
-    });
-    createdByOldId.set(sourceNode.id, createdNode);
-
-    if (sourceNode.type !== 'folder') {
-      const content = await storage.read(ws, storageId, sourceNode.id);
-      await storage.write(ws, storageId, createdNode.id, content);
-    }
-  }
-};
-
-const deleteMarkdownAttachmentSubtree = async (
-  storage: StorageAdapter,
-  ws: string,
-  storageId: string,
-  siblingNodes: readonly ContentNodeDbResult[],
-  markdownNodeId: string
-) => {
-  const container = getAttachmentContainerForMarkdownNode(siblingNodes, markdownNodeId);
-  if (!container) return;
-
-  const subtree = [container, ...collectDescendantNodes(siblingNodes, container.id)];
-  await Promise.all(
-    subtree
-      .filter(node => node.type !== 'folder')
-      .map(node => storage.delete(ws, storageId, node.id).catch(() => {}))
-  );
-};
-
 const toApiMarkdownRevisionSummary = (
   revision: MarkdownRevisionDbResult
 ): MarkdownRevisionSummary => ({
@@ -838,131 +759,7 @@ export const createEntityFile = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite) {
-    return writeScopedDiagram(
-      ENTITY_SCOPE,
-      db,
-      storage,
-      workspace,
-      entityId,
-      filePath,
-      body,
-      event
-    );
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const content = Buffer.from(JSON.stringify(body), 'utf8');
-  const displayName = displayNameFromBody(body, filePath);
-
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-    const entity = await db.catalog.getEntity(ws, entityId);
-    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-    const entityUuid = entity.id;
-
-    const existingFile = await db.project
-      .listEntityContentNodes(ws, entityUuid)
-      .then(nodes => nodes.find(n => n.path === filePath && n.type === 'diagram'));
-    const isUpdate = !!existingFile;
-
-    let fileParentId: string | null = null;
-    const folderPath = folderFromPath(filePath);
-    if (folderPath) {
-      const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
-      const parentFolder = entityNodes.find(n => n.path === folderPath && n.type === 'folder');
-      fileParentId = parentFolder?.id ?? null;
-    }
-
-    const doc = body as unknown as SerializedDiagramDocument;
-
-    const timestamp = new Date();
-    const commentCounts = getDiagramCommentCounts(doc);
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: entityUuid,
-      parent_id: fileParentId,
-      path: filePath,
-      name: String(displayName),
-      size_bytes: content.length,
-      comment_count: commentCounts.commentCount,
-      unresolved_comment_count: commentCounts.unresolvedCommentCount,
-      created_atIfNew: existingFile?.created_at ?? timestamp,
-      updated_at: timestamp,
-      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
-      updated_by: authCtx.userId
-    });
-
-    await storage.write(ws, entityUuid, row.id, content);
-
-    try {
-      const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-      const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-      const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-      await db.project.updateContentNodeDerivedData(
-        ws,
-        entityUuid,
-        row.id,
-        content.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        previewSvg ?? null,
-        timestamp
-      );
-    } catch {
-      await db.project.updateContentNodeDerivedData(
-        ws,
-        entityUuid,
-        row.id,
-        content.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        null,
-        timestamp
-      );
-    }
-
-    const entityRefs = getDiagramEntityRefs(doc);
-    await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
-    await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
-    const savedRow = await reloadContentNode(db, ws, row.id);
-
-    if (isUpdate) {
-      const changes = computeChanges(
-        extractEntityFields(existingFile),
-        extractEntityFields(savedRow)
-      );
-      await logAudit(db, {
-        userId: authCtx.userId,
-        workspace: ws,
-        operation: 'update',
-        entityType: 'content_node',
-        entityId: row.id,
-        entityName: savedRow.name,
-        changes,
-        metadata: { entity_id: entityUuid, path: filePath }
-      });
-    } else {
-      await logAudit(db, {
-        userId: authCtx.userId,
-        workspace: ws,
-        operation: 'create',
-        entityType: 'content_node',
-        entityId: row.id,
-        entityName: savedRow.name,
-        changes: {
-          new: extractEntityFields(savedRow)
-        },
-        metadata: { entity_id: entityUuid, path: filePath }
-      });
-    }
-
-    return toApiProjectFile(savedRow);
-  } catch (e) {
-    console.error('Error in createEntityFile:', e);
-    return handleError(e, 'Failed to create entity diagram');
-  }
+  return writeScopedDiagram(ENTITY_SCOPE, db, storage, workspace, entityId, filePath, body, event);
 };
 
 export const renameFolder = (
@@ -1425,143 +1222,7 @@ export const cloneFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite) {
-    return cloneScopedContentFile(PROJECT_SCOPE, db, storage, workspace, id, filePath, event);
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const project = await db.project.getProject(ws, id);
-    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-    const projectUuid = project.id;
-
-    requireProjectAction(
-      authCtx,
-      project.owner,
-      'edit_project',
-      'You do not have permission to modify this project'
-    );
-
-    const sourceFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
-    httpAssert.present(sourceFile, { status: 404, message: `File '${filePath}' not found` });
-
-    const baseName = fileNameFromPath(filePath);
-    const folder = folderFromPath(filePath);
-    const extension = getNodeExtension(sourceFile);
-    const baseNameWithoutExt =
-      sourceFile.type === 'file'
-        ? baseName
-        : sourceFile.type === 'markdown' && baseName.endsWith('.md')
-          ? baseName.slice(0, -3)
-          : stripJsonExtension(baseName);
-
-    let cloneNumber = 1;
-    let clonePath: string;
-    let cloneName: string;
-    do {
-      cloneName = `${baseNameWithoutExt} (${cloneNumber})`;
-      clonePath = folder ? `${folder}/${cloneName}${extension}` : `${cloneName}${extension}`;
-      const existing = await db.project.getContentNodeByPath(ws, projectUuid, clonePath);
-      if (!existing) break;
-      cloneNumber++;
-    } while (cloneNumber < 1000);
-    const timestamp = new Date();
-    const content = await storage.read(ws, projectUuid, sourceFile.id);
-    let clonedContent = content;
-    let commentCounts = {
-      commentCount: sourceFile.comment_count,
-      unresolvedCommentCount: sourceFile.unresolved_comment_count
-    };
-    let previewSvg = sourceFile.preview_svg;
-
-    if (sourceFile.type === 'diagram') {
-      const fileData = JSON.parse(content.toString('utf8'));
-      if (fileData && typeof fileData === 'object' && 'name' in fileData) {
-        fileData.name = cloneName;
-      }
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      commentCounts = getDiagramCommentCounts(doc);
-
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
-      } catch {
-        previewSvg = null;
-      }
-    }
-
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: projectUuid,
-      path: clonePath,
-      name: cloneName,
-      role: sourceFile.role,
-      type: sourceFile.type,
-      size_bytes: clonedContent.length,
-      comment_count: commentCounts.commentCount,
-      unresolved_comment_count: commentCounts.unresolvedCommentCount,
-      created_atIfNew: timestamp,
-      updated_at: timestamp,
-      created_byIfNew: authCtx.userId,
-      updated_by: authCtx.userId,
-      mime_type: sourceFile.mime_type,
-      original_filename: sourceFile.type === 'file' ? cloneName : sourceFile.original_filename
-    });
-
-    await storage.write(ws, projectUuid, row.id, clonedContent);
-
-    if (sourceFile.type === 'diagram') {
-      await db.project.updateContentNodeDerivedData(
-        ws,
-        projectUuid,
-        row.id,
-        clonedContent.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        previewSvg ?? null,
-        timestamp
-      );
-
-      const fileData = JSON.parse(clonedContent.toString('utf8'));
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      const entityRefs = getDiagramEntityRefs(doc);
-      await db.project.syncDiagramEntityRefs(ws, row.id, entityRefs).catch(() => {});
-      await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
-    } else if (sourceFile.type === 'markdown') {
-      const siblingNodes = await db.project.listContentNodes(ws, projectUuid);
-      await cloneMarkdownAttachmentSubtree(
-        db,
-        storage,
-        ws,
-        projectUuid,
-        sourceFile,
-        row,
-        siblingNodes,
-        authCtx,
-        timestamp
-      );
-    }
-    const savedRow = await reloadContentNode(db, ws, row.id);
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: savedRow.name,
-      changes: {
-        new: extractEntityFields(savedRow)
-      },
-      metadata: { project_id: projectUuid, path: clonePath, cloned_from: filePath }
-    });
-
-    return toApiProjectFile(savedRow);
-  } catch (e) {
-    return handleError(e, 'Failed to clone file');
-  }
+  return cloneScopedContentFile(PROJECT_SCOPE, db, storage, workspace, id, filePath, event);
 };
 
 const relocateScopedContentFile = async (
@@ -1780,181 +1441,7 @@ export const relocateFile = async (
   newPath: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite && storage.stageDelete) {
-    return relocateScopedContentFile(
-      PROJECT_SCOPE,
-      db,
-      storage,
-      workspace,
-      id,
-      filePath,
-      newPath,
-      event
-    );
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const project = await db.project.getProject(ws, id);
-    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-    const projectUuid = project.id;
-
-    requireProjectAction(
-      authCtx,
-      project.owner,
-      'edit_project',
-      'You do not have permission to modify this project'
-    );
-
-    const existingFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
-    httpAssert.present(existingFile, { status: 404, message: `File '${filePath}' not found` });
-
-    if (filePath === newPath) {
-      return toApiProjectFile(existingFile);
-    }
-
-    const targetExists = await db.project.getContentNodeByPath(ws, projectUuid, newPath);
-    httpAssert.true(!targetExists, {
-      status: 409,
-      message: `A file already exists at '${newPath}'`
-    });
-    const attachmentSourceNodes =
-      existingFile.type === 'markdown' ? await db.project.listContentNodes(ws, projectUuid) : [];
-
-    const displayName = getDisplayNameForPath(existingFile, newPath);
-
-    const timestamp = new Date();
-    const content = await storage.read(ws, projectUuid, existingFile.id);
-    let updatedContent = content;
-    let commentCounts = {
-      commentCount: existingFile.comment_count,
-      unresolvedCommentCount: existingFile.unresolved_comment_count
-    };
-    let previewSvg = existingFile.preview_svg;
-
-    if (existingFile.type === 'diagram') {
-      const fileData = JSON.parse(content.toString('utf8'));
-
-      if (fileData && typeof fileData === 'object' && 'name' in fileData) {
-        fileData.name = displayName;
-      }
-
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      commentCounts = getDiagramCommentCounts(doc);
-
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
-      } catch {
-        previewSvg = null;
-      }
-    }
-
-    const newLastSlash = newPath.lastIndexOf('/');
-    let newParentId: string | null = null;
-    if (newLastSlash !== -1) {
-      const newFolderPath = newPath.substring(0, newLastSlash);
-      const parentFolder = await db.project.getContentNodeByPath(ws, projectUuid, newFolderPath);
-      newParentId = parentFolder?.id ?? null;
-    }
-
-    const newFile = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: projectUuid,
-      parent_id: newParentId,
-      path: newPath,
-      name: displayName,
-      role: existingFile.role,
-      type: existingFile.type,
-      size_bytes: updatedContent.length,
-      comment_count: commentCounts.commentCount,
-      unresolved_comment_count: commentCounts.unresolvedCommentCount,
-      created_atIfNew: existingFile.created_at,
-      updated_at: timestamp,
-      created_byIfNew: existingFile.created_by,
-      updated_by: authCtx.userId,
-      mime_type: existingFile.mime_type,
-      original_filename: existingFile.type === 'file' ? displayName : existingFile.original_filename
-    });
-
-    if (existingFile.is_template || existingFile.is_workspace_template) {
-      await db.project.updateContentNodeTemplateStatus(
-        ws,
-        projectUuid,
-        newFile.id,
-        existingFile.is_template ?? false,
-        existingFile.is_workspace_template ?? false,
-        timestamp
-      );
-    }
-
-    await storage.write(ws, projectUuid, newFile.id, updatedContent);
-
-    if (existingFile.type === 'diagram') {
-      await db.project.updateContentNodeDerivedData(
-        ws,
-        projectUuid,
-        newFile.id,
-        updatedContent.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        previewSvg,
-        timestamp
-      );
-
-      const fileData = JSON.parse(updatedContent.toString('utf8'));
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
-    } else if (existingFile.type === 'markdown') {
-      await cloneMarkdownAttachmentSubtree(
-        db,
-        storage,
-        ws,
-        projectUuid,
-        existingFile,
-        newFile,
-        attachmentSourceNodes,
-        authCtx,
-        timestamp
-      );
-    }
-    const savedFile = await reloadContentNode(db, ws, newFile.id);
-
-    await db.project.deleteContentNodeByPath(ws, projectUuid, filePath);
-    if (existingFile.type === 'markdown') {
-      await deleteMarkdownAttachmentSubtree(
-        storage,
-        ws,
-        projectUuid,
-        attachmentSourceNodes,
-        existingFile.id
-      );
-    }
-    await storage.delete(ws, projectUuid, existingFile.id).catch(() => {});
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'update',
-      entityType: 'content_node',
-      entityId: savedFile.id,
-      entityName: displayName,
-      changes: {
-        old: { path: filePath, name: existingFile.name },
-        new: { path: newPath, name: displayName }
-      },
-      metadata: {
-        project_id: projectUuid,
-        operation: 'relocate'
-      }
-    });
-
-    return toApiProjectFile(savedFile);
-  } catch (e) {
-    return handleError(e, 'Failed to relocate file');
-  }
+  return relocateScopedContentFile(PROJECT_SCOPE, db, storage, workspace, id, filePath, newPath, event);
 };
 
 export const deleteFolder = (
@@ -2290,105 +1777,16 @@ export const createWorkspaceFile = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite) {
-    return writeScopedDiagram(
-      WORKSPACE_SCOPE,
-      db,
-      storage,
-      workspace,
-      undefined,
-      filePath,
-      body,
-      event
-    );
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const content = Buffer.from(JSON.stringify(body), 'utf8');
-  const displayName = displayNameFromBody(body, filePath);
-
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-
-    const existingFile = await db.project
-      .listWorkspaceContentNodes(ws)
-      .then(nodes => nodes.find(n => n.path === filePath && n.type === 'diagram'));
-    const isUpdate = !!existingFile;
-
-    let fileParentId: string | null = null;
-    const folderPath = folderFromPath(filePath);
-    if (folderPath) {
-      const wsNodes = await db.project.listWorkspaceContentNodes(ws);
-      const parentFolder = wsNodes.find(n => n.path === folderPath && n.type === 'folder');
-      fileParentId = parentFolder?.id ?? null;
-    }
-
-    const doc = body as unknown as SerializedDiagramDocument;
-    const timestamp = new Date();
-    const commentCounts = getDiagramCommentCounts(doc);
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: null,
-      parent_id: fileParentId,
-      path: filePath,
-      name: displayName,
-      size_bytes: content.length,
-      comment_count: commentCounts.commentCount,
-      unresolved_comment_count: commentCounts.unresolvedCommentCount,
-      created_atIfNew: existingFile?.created_at ?? timestamp,
-      updated_at: timestamp,
-      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
-      updated_by: authCtx.userId
-    });
-
-    await storage.write(ws, ws, row.id, content);
-
-    try {
-      const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-      const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-      const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-      await db.project.updateWorkspaceContentNodeDerivedData(
-        ws,
-        row.id,
-        content.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        previewSvg ?? null,
-        timestamp
-      );
-    } catch {
-      await db.project.updateWorkspaceContentNodeDerivedData(
-        ws,
-        row.id,
-        content.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        null,
-        timestamp
-      );
-    }
-
-    await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
-    const savedRow = await reloadContentNode(db, ws, row.id);
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: isUpdate ? 'update' : 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: savedRow.name,
-      changes: isUpdate
-        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(savedRow))
-        : { new: extractEntityFields(savedRow) },
-      metadata: { path: filePath }
-    });
-
-    return toApiProjectFile(savedRow);
-  } catch (e) {
-    return handleError(e, 'Failed to create workspace diagram');
-  }
+  return writeScopedDiagram(
+    WORKSPACE_SCOPE,
+    db,
+    storage,
+    workspace,
+    undefined,
+    filePath,
+    body,
+    event
+  );
 };
 
 export const getWorkspaceFileContent = async (
@@ -2512,72 +1910,7 @@ export const createProjectMarkdownDoc = async (
   folder: string | undefined,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite) {
-    return createScopedMarkdownDoc(
-      PROJECT_SCOPE,
-      db,
-      storage,
-      workspace,
-      projectId,
-      name,
-      folder,
-      event
-    );
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
-  const content = Buffer.from(EMPTY_MARKDOWN_BODY, 'utf8');
-  const timestamp = new Date();
-
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const project = await db.project.getProject(ws, projectId);
-    httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
-    const projectUuid = project.id;
-    requireProjectAction(
-      authCtx,
-      project.owner,
-      'edit_project',
-      'You do not have permission to modify this project'
-    );
-
-    let fileParentId: string | null = null;
-    if (folder) {
-      const parentFolder = await db.project.getContentNodeByPath(ws, projectUuid, folder);
-      fileParentId = parentFolder?.id ?? null;
-    }
-
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: projectUuid,
-      entity_id: null,
-      parent_id: fileParentId,
-      path: filePath,
-      name,
-      type: 'markdown',
-      size_bytes: content.length,
-      comment_count: 0,
-      unresolved_comment_count: 0,
-      created_atIfNew: timestamp,
-      updated_at: timestamp,
-      created_byIfNew: authCtx.userId,
-      updated_by: authCtx.userId
-    });
-    await storage.write(ws, projectUuid, row.id, content);
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: row.name,
-      changes: { new: extractEntityFields(row) },
-      metadata: { project_id: projectUuid, path: filePath }
-    });
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to create markdown document');
-  }
+  return createScopedMarkdownDoc(PROJECT_SCOPE, db, storage, workspace, projectId, name, folder, event);
 };
 
 export const createEntityMarkdownDoc = async (
@@ -2589,68 +1922,7 @@ export const createEntityMarkdownDoc = async (
   folder: string | undefined,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite) {
-    return createScopedMarkdownDoc(
-      ENTITY_SCOPE,
-      db,
-      storage,
-      workspace,
-      entityId,
-      name,
-      folder,
-      event
-    );
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
-  const content = Buffer.from(EMPTY_MARKDOWN_BODY, 'utf8');
-  const timestamp = new Date();
-
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-    const entity = await db.catalog.getEntity(ws, entityId);
-    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-    const entityUuid = entity.id;
-
-    let fileParentId: string | null = null;
-    if (folder) {
-      const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
-      const parentFolder = entityNodes.find(n => n.path === folder && n.type === 'folder');
-      fileParentId = parentFolder?.id ?? null;
-    }
-
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: entityUuid,
-      parent_id: fileParentId,
-      path: filePath,
-      name,
-      type: 'markdown',
-      size_bytes: content.length,
-      comment_count: 0,
-      unresolved_comment_count: 0,
-      created_atIfNew: timestamp,
-      updated_at: timestamp,
-      created_byIfNew: authCtx.userId,
-      updated_by: authCtx.userId
-    });
-    await storage.write(ws, entityUuid, row.id, content);
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: row.name,
-      changes: { new: extractEntityFields(row) },
-      metadata: { entity_id: entityUuid, path: filePath }
-    });
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to create markdown document');
-  }
+  return createScopedMarkdownDoc(ENTITY_SCOPE, db, storage, workspace, entityId, name, folder, event);
 };
 
 export const createWorkspaceMarkdownDoc = async (
@@ -2661,65 +1933,16 @@ export const createWorkspaceMarkdownDoc = async (
   folder: string | undefined,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite) {
-    return createScopedMarkdownDoc(
-      WORKSPACE_SCOPE,
-      db,
-      storage,
-      workspace,
-      undefined,
-      name,
-      folder,
-      event
-    );
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
-  const content = Buffer.from(EMPTY_MARKDOWN_BODY, 'utf8');
-  const timestamp = new Date();
-
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-
-    let fileParentId: string | null = null;
-    if (folder) {
-      const wsNodes = await db.project.listWorkspaceContentNodes(ws);
-      const parentFolder = wsNodes.find(n => n.path === folder && n.type === 'folder');
-      fileParentId = parentFolder?.id ?? null;
-    }
-
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: null,
-      parent_id: fileParentId,
-      path: filePath,
-      name,
-      type: 'markdown',
-      size_bytes: content.length,
-      comment_count: 0,
-      unresolved_comment_count: 0,
-      created_atIfNew: timestamp,
-      updated_at: timestamp,
-      created_byIfNew: authCtx.userId,
-      updated_by: authCtx.userId
-    });
-    await storage.write(ws, ws, row.id, content);
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: row.name,
-      changes: { new: extractEntityFields(row) },
-      metadata: { path: filePath }
-    });
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to create markdown document');
-  }
+  return createScopedMarkdownDoc(
+    WORKSPACE_SCOPE,
+    db,
+    storage,
+    workspace,
+    undefined,
+    name,
+    folder,
+    event
+  );
 };
 
 export const storageScope = (
@@ -3481,82 +2704,18 @@ export const uploadProjectFile = async (
   originalFilename: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite)
-    return uploadScopedFile(
-      PROJECT_SCOPE,
-      db,
-      storage,
-      workspace,
-      id,
-      filePath,
-      buffer,
-      mimeType,
-      originalFilename,
-      event
-    );
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const project = await db.project.getProject(ws, id);
-    httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-    const projectUuid = project.id;
-
-    requireProjectAction(
-      authCtx,
-      project.owner,
-      'edit_project',
-      'You do not have permission to modify this project'
-    );
-
-    const existingFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
-    const isUpdate = !!existingFile;
-
-    const fileLastSlash = filePath.lastIndexOf('/');
-    let fileParentId: string | null = null;
-    if (fileLastSlash !== -1) {
-      const folderPath = filePath.substring(0, fileLastSlash);
-      const parentFolder = await db.project.getContentNodeByPath(ws, projectUuid, folderPath);
-      fileParentId = parentFolder?.id ?? null;
-    }
-
-    const timestamp = new Date();
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: projectUuid,
-      parent_id: fileParentId,
-      path: filePath,
-      name: originalFilename,
-      type: 'file',
-      size_bytes: buffer.length,
-      comment_count: 0,
-      unresolved_comment_count: 0,
-      created_atIfNew: existingFile?.created_at ?? timestamp,
-      updated_at: timestamp,
-      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
-      updated_by: authCtx.userId,
-      mime_type: mimeType,
-      original_filename: originalFilename
-    });
-
-    await storage.write(ws, projectUuid, row.id, buffer);
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: isUpdate ? 'update' : 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: row.name,
-      changes: isUpdate
-        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
-        : { new: extractEntityFields(row) },
-      metadata: { project_id: projectUuid, path: filePath }
-    });
-
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to upload file');
-  }
+  return uploadScopedFile(
+    PROJECT_SCOPE,
+    db,
+    storage,
+    workspace,
+    id,
+    filePath,
+    buffer,
+    mimeType,
+    originalFilename,
+    event
+  );
 };
 
 export const downloadProjectFile = async (
@@ -3597,79 +2756,18 @@ export const uploadEntityFile = async (
   originalFilename: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite)
-    return uploadScopedFile(
-      ENTITY_SCOPE,
-      db,
-      storage,
-      workspace,
-      entityId,
-      filePath,
-      buffer,
-      mimeType,
-      originalFilename,
-      event
-    );
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-    const entity = await db.catalog.getEntity(ws, entityId);
-    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-    const entityUuid = entity.id;
-
-    const existingFile = await db.project
-      .listEntityContentNodes(ws, entityUuid)
-      .then(nodes => nodes.find(n => n.path === filePath && n.type === 'file'));
-    const isUpdate = !!existingFile;
-
-    let fileParentId: string | null = null;
-    const folderPath = folderFromPath(filePath);
-    if (folderPath) {
-      const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
-      const parentFolder = entityNodes.find(n => n.path === folderPath && n.type === 'folder');
-      fileParentId = parentFolder?.id ?? null;
-    }
-
-    const timestamp = new Date();
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: entityUuid,
-      parent_id: fileParentId,
-      path: filePath,
-      name: originalFilename,
-      type: 'file',
-      size_bytes: buffer.length,
-      comment_count: 0,
-      unresolved_comment_count: 0,
-      created_atIfNew: existingFile?.created_at ?? timestamp,
-      updated_at: timestamp,
-      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
-      updated_by: authCtx.userId,
-      mime_type: mimeType,
-      original_filename: originalFilename
-    });
-
-    await storage.write(ws, entityUuid, row.id, buffer);
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: isUpdate ? 'update' : 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: row.name,
-      changes: isUpdate
-        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
-        : { new: extractEntityFields(row) },
-      metadata: { entity_id: entityUuid, path: filePath }
-    });
-
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to upload entity file');
-  }
+  return uploadScopedFile(
+    ENTITY_SCOPE,
+    db,
+    storage,
+    workspace,
+    entityId,
+    filePath,
+    buffer,
+    mimeType,
+    originalFilename,
+    event
+  );
 };
 
 export const downloadEntityFile = async (
@@ -3710,76 +2808,18 @@ export const uploadWorkspaceFile = async (
   originalFilename: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite)
-    return uploadScopedFile(
-      WORKSPACE_SCOPE,
-      db,
-      storage,
-      workspace,
-      undefined,
-      filePath,
-      buffer,
-      mimeType,
-      originalFilename,
-      event
-    );
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-
-    const existingFile = await db.project
-      .listWorkspaceContentNodes(ws)
-      .then(nodes => nodes.find(n => n.path === filePath && n.type === 'file'));
-    const isUpdate = !!existingFile;
-
-    let fileParentId: string | null = null;
-    const folderPath = folderFromPath(filePath);
-    if (folderPath) {
-      const wsNodes = await db.project.listWorkspaceContentNodes(ws);
-      const parentFolder = wsNodes.find(n => n.path === folderPath && n.type === 'folder');
-      fileParentId = parentFolder?.id ?? null;
-    }
-
-    const timestamp = new Date();
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: null,
-      parent_id: fileParentId,
-      path: filePath,
-      name: originalFilename,
-      type: 'file',
-      size_bytes: buffer.length,
-      comment_count: 0,
-      unresolved_comment_count: 0,
-      created_atIfNew: existingFile?.created_at ?? timestamp,
-      updated_at: timestamp,
-      created_byIfNew: existingFile?.created_by ?? authCtx.userId,
-      updated_by: authCtx.userId,
-      mime_type: mimeType,
-      original_filename: originalFilename
-    });
-
-    await storage.write(ws, ws, row.id, buffer);
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: isUpdate ? 'update' : 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: row.name,
-      changes: isUpdate
-        ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
-        : { new: extractEntityFields(row) },
-      metadata: { path: filePath }
-    });
-
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to upload workspace file');
-  }
+  return uploadScopedFile(
+    WORKSPACE_SCOPE,
+    db,
+    storage,
+    workspace,
+    undefined,
+    filePath,
+    buffer,
+    mimeType,
+    originalFilename,
+    event
+  );
 };
 
 export const downloadWorkspaceFile = async (
@@ -3846,136 +2886,7 @@ export const cloneEntityFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite) {
-    return cloneScopedContentFile(ENTITY_SCOPE, db, storage, workspace, entityId, filePath, event);
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-    const entity = await db.catalog.getEntity(ws, entityId);
-    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-    const entityUuid = entity.id;
-
-    const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
-    const sourceFile = entityNodes.find(n => n.path === filePath) ?? null;
-    httpAssert.present(sourceFile, { status: 404, message: `File '${filePath}' not found` });
-
-    const baseName = fileNameFromPath(filePath);
-    const folder = folderFromPath(filePath);
-    const extension = getNodeExtension(sourceFile);
-    const isBinary = sourceFile.type === 'file';
-    const baseNameWithoutExt =
-      sourceFile.type === 'file'
-        ? baseName
-        : sourceFile.type === 'markdown' && baseName.endsWith('.md')
-          ? baseName.slice(0, -3)
-          : stripJsonExtension(baseName);
-
-    let cloneNumber = 1;
-    let clonePath: string;
-    let cloneName: string;
-    do {
-      cloneName = `${baseNameWithoutExt} (${cloneNumber})`;
-      clonePath = folder ? `${folder}/${cloneName}${extension}` : `${cloneName}${extension}`;
-      const existing = entityNodes.find(n => n.path === clonePath);
-      if (!existing) break;
-      cloneNumber++;
-    } while (cloneNumber < 1000);
-
-    const timestamp = new Date();
-    const content = await storage.read(ws, entityUuid, sourceFile.id);
-    let clonedContent = content;
-    let commentCounts = {
-      commentCount: sourceFile.comment_count,
-      unresolvedCommentCount: sourceFile.unresolved_comment_count
-    };
-    let previewSvg = sourceFile.preview_svg;
-
-    if (sourceFile.type === 'diagram') {
-      const fileData = JSON.parse(content.toString('utf8'));
-      if (fileData && typeof fileData === 'object' && 'name' in fileData) {
-        fileData.name = cloneName;
-      }
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      commentCounts = getDiagramCommentCounts(doc);
-
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
-      } catch {
-        previewSvg = null;
-      }
-    }
-
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: entityUuid,
-      path: clonePath,
-      name: cloneName,
-      role: sourceFile.role,
-      type: sourceFile.type,
-      size_bytes: clonedContent.length,
-      comment_count: commentCounts.commentCount,
-      unresolved_comment_count: commentCounts.unresolvedCommentCount,
-      created_atIfNew: timestamp,
-      updated_at: timestamp,
-      created_byIfNew: authCtx.userId,
-      updated_by: authCtx.userId,
-      mime_type: sourceFile.mime_type,
-      original_filename: sourceFile.type === 'file' ? cloneName : sourceFile.original_filename
-    });
-
-    await storage.write(ws, entityUuid, row.id, clonedContent);
-
-    if (!isBinary && sourceFile.type === 'diagram') {
-      await db.project.updateContentNodeDerivedData(
-        ws,
-        entityUuid,
-        row.id,
-        clonedContent.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        previewSvg ?? null,
-        timestamp
-      );
-      const fileData = JSON.parse(clonedContent.toString('utf8'));
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
-    } else if (sourceFile.type === 'markdown') {
-      await cloneMarkdownAttachmentSubtree(
-        db,
-        storage,
-        ws,
-        entityUuid,
-        sourceFile,
-        row,
-        entityNodes,
-        authCtx,
-        timestamp
-      );
-    }
-
-    const savedRow = await reloadContentNode(db, ws, row.id);
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: savedRow.name,
-      changes: { new: extractEntityFields(savedRow) },
-      metadata: { entity_id: entityUuid, path: clonePath, cloned_from: filePath }
-    });
-
-    return toApiProjectFile(savedRow);
-  } catch (e) {
-    return handleError(e, 'Failed to clone entity file');
-  }
+  return cloneScopedContentFile(ENTITY_SCOPE, db, storage, workspace, entityId, filePath, event);
 };
 
 export const relocateEntityFile = async (
@@ -3987,159 +2898,16 @@ export const relocateEntityFile = async (
   newPath: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite && storage.stageDelete) {
-    return relocateScopedContentFile(
-      ENTITY_SCOPE,
-      db,
-      storage,
-      workspace,
-      entityId,
-      filePath,
-      newPath,
-      event
-    );
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-    const entity = await db.catalog.getEntity(ws, entityId);
-    httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-    const entityUuid = entity.id;
-
-    const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
-    const existingFile = entityNodes.find(n => n.path === filePath) ?? null;
-    httpAssert.present(existingFile, { status: 404, message: `File '${filePath}' not found` });
-
-    if (filePath === newPath) {
-      return toApiProjectFile(existingFile);
-    }
-
-    const targetExists = entityNodes.find(n => n.path === newPath);
-    httpAssert.true(!targetExists, {
-      status: 409,
-      message: `A file already exists at '${newPath}'`
-    });
-
-    const isBinary = existingFile.type === 'file';
-    const displayName = getDisplayNameForPath(existingFile, newPath);
-    const content = await storage.read(ws, entityUuid, existingFile.id);
-    let updatedContent = content;
-    let commentCounts = {
-      commentCount: existingFile.comment_count,
-      unresolvedCommentCount: existingFile.unresolved_comment_count
-    };
-    let previewSvg = existingFile.preview_svg;
-
-    if (existingFile.type === 'diagram') {
-      const fileData = JSON.parse(content.toString('utf8'));
-      if (fileData && typeof fileData === 'object' && 'name' in fileData) {
-        fileData.name = displayName;
-      }
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      commentCounts = getDiagramCommentCounts(doc);
-
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
-      } catch {
-        previewSvg = null;
-      }
-    }
-
-    const newLastSlash = newPath.lastIndexOf('/');
-    let newParentId: string | null = null;
-    if (newLastSlash !== -1) {
-      const newFolderPath = newPath.substring(0, newLastSlash);
-      const parentFolder = entityNodes.find(n => n.path === newFolderPath && n.type === 'folder');
-      newParentId = parentFolder?.id ?? null;
-    }
-
-    const timestamp = new Date();
-    const newFile = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: entityUuid,
-      parent_id: newParentId,
-      path: newPath,
-      name: displayName,
-      role: existingFile.role,
-      type: existingFile.type,
-      size_bytes: updatedContent.length,
-      comment_count: commentCounts.commentCount,
-      unresolved_comment_count: commentCounts.unresolvedCommentCount,
-      created_atIfNew: existingFile.created_at,
-      updated_at: timestamp,
-      created_byIfNew: existingFile.created_by,
-      updated_by: authCtx.userId,
-      mime_type: existingFile.mime_type,
-      original_filename: existingFile.type === 'file' ? displayName : existingFile.original_filename
-    });
-
-    const attachmentSourceNodes = existingFile.type === 'markdown' ? entityNodes : [];
-
-    if (!isBinary && existingFile.type === 'diagram') {
-      await db.project.updateContentNodeDerivedData(
-        ws,
-        entityUuid,
-        newFile.id,
-        updatedContent.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        previewSvg,
-        timestamp
-      );
-      const fileData = JSON.parse(updatedContent.toString('utf8'));
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
-    } else if (existingFile.type === 'markdown') {
-      await cloneMarkdownAttachmentSubtree(
-        db,
-        storage,
-        ws,
-        entityUuid,
-        existingFile,
-        newFile,
-        attachmentSourceNodes,
-        authCtx,
-        timestamp
-      );
-    }
-
-    await storage.write(ws, entityUuid, newFile.id, updatedContent);
-    const savedFile = await reloadContentNode(db, ws, newFile.id);
-    await db.project.deleteEntityContentNodeByPath(ws, entityUuid, filePath);
-    if (existingFile.type === 'markdown') {
-      await deleteMarkdownAttachmentSubtree(
-        storage,
-        ws,
-        entityUuid,
-        attachmentSourceNodes,
-        existingFile.id
-      );
-    }
-    await storage.delete(ws, entityUuid, existingFile.id).catch(() => {});
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'update',
-      entityType: 'content_node',
-      entityId: newFile.id,
-      entityName: displayName,
-      changes: {
-        old: { path: filePath, name: existingFile.name },
-        new: { path: newPath, name: displayName }
-      },
-      metadata: { entity_id: entityUuid, operation: 'relocate' }
-    });
-
-    return toApiProjectFile(savedFile);
-  } catch (e) {
-    return handleError(e, 'Failed to relocate entity file');
-  }
+  return relocateScopedContentFile(
+    ENTITY_SCOPE,
+    db,
+    storage,
+    workspace,
+    entityId,
+    filePath,
+    newPath,
+    event
+  );
 };
 
 // ── Workspace content operations ───────────────────────────────
@@ -4179,140 +2947,7 @@ export const cloneWorkspaceFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite) {
-    return cloneScopedContentFile(
-      WORKSPACE_SCOPE,
-      db,
-      storage,
-      workspace,
-      undefined,
-      filePath,
-      event
-    );
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-
-    const wsNodes = await db.project.listWorkspaceContentNodes(ws);
-    const sourceFile = wsNodes.find(n => n.path === filePath) ?? null;
-    httpAssert.present(sourceFile, { status: 404, message: `File '${filePath}' not found` });
-
-    const baseName = fileNameFromPath(filePath);
-    const folder = folderFromPath(filePath);
-    const isBinary = sourceFile.type === 'file';
-    const extension = getNodeExtension(sourceFile);
-    const baseNameWithoutExt =
-      sourceFile.type === 'file'
-        ? baseName
-        : sourceFile.type === 'markdown' && baseName.endsWith('.md')
-          ? baseName.slice(0, -3)
-          : stripJsonExtension(baseName);
-
-    let cloneNumber = 1;
-    let clonePath: string;
-    let cloneName: string;
-    do {
-      cloneName = `${baseNameWithoutExt} (${cloneNumber})`;
-      clonePath = folder ? `${folder}/${cloneName}${extension}` : `${cloneName}${extension}`;
-      const existing = wsNodes.find(n => n.path === clonePath);
-      if (!existing) break;
-      cloneNumber++;
-    } while (cloneNumber < 1000);
-
-    const timestamp = new Date();
-    const content = await storage.read(ws, ws, sourceFile.id);
-    let clonedContent = content;
-    let commentCounts = {
-      commentCount: sourceFile.comment_count,
-      unresolvedCommentCount: sourceFile.unresolved_comment_count
-    };
-    let previewSvg = sourceFile.preview_svg;
-
-    if (sourceFile.type === 'diagram') {
-      const fileData = JSON.parse(content.toString('utf8'));
-      if (fileData && typeof fileData === 'object' && 'name' in fileData) {
-        fileData.name = cloneName;
-      }
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      clonedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      commentCounts = getDiagramCommentCounts(doc);
-
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
-      } catch {
-        previewSvg = null;
-      }
-    }
-
-    const row = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: null,
-      path: clonePath,
-      name: cloneName,
-      role: sourceFile.role,
-      type: sourceFile.type,
-      size_bytes: clonedContent.length,
-      comment_count: commentCounts.commentCount,
-      unresolved_comment_count: commentCounts.unresolvedCommentCount,
-      created_atIfNew: timestamp,
-      updated_at: timestamp,
-      created_byIfNew: authCtx.userId,
-      updated_by: authCtx.userId,
-      mime_type: sourceFile.mime_type,
-      original_filename: sourceFile.type === 'file' ? cloneName : sourceFile.original_filename
-    });
-
-    await storage.write(ws, ws, row.id, clonedContent);
-
-    if (!isBinary && sourceFile.type === 'diagram') {
-      await db.project.updateWorkspaceContentNodeDerivedData(
-        ws,
-        row.id,
-        clonedContent.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        previewSvg ?? null,
-        timestamp
-      );
-      const fileData = JSON.parse(clonedContent.toString('utf8'));
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      await syncDiagramContentMetadata(db, ws, row.id, doc, timestamp);
-    } else if (sourceFile.type === 'markdown') {
-      await cloneMarkdownAttachmentSubtree(
-        db,
-        storage,
-        ws,
-        ws,
-        sourceFile,
-        row,
-        wsNodes,
-        authCtx,
-        timestamp
-      );
-    }
-
-    const savedRow = await reloadContentNode(db, ws, row.id);
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'create',
-      entityType: 'content_node',
-      entityId: row.id,
-      entityName: savedRow.name,
-      changes: { new: extractEntityFields(savedRow) },
-      metadata: { path: clonePath, cloned_from: filePath }
-    });
-
-    return toApiProjectFile(savedRow);
-  } catch (e) {
-    return handleError(e, 'Failed to clone workspace file');
-  }
+  return cloneScopedContentFile(WORKSPACE_SCOPE, db, storage, workspace, undefined, filePath, event);
 };
 
 export const relocateWorkspaceFile = async (
@@ -4323,153 +2958,14 @@ export const relocateWorkspaceFile = async (
   newPath: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  if (storage.stageWrite && storage.stageDelete) {
-    return relocateScopedContentFile(
-      WORKSPACE_SCOPE,
-      db,
-      storage,
-      workspace,
-      undefined,
-      filePath,
-      newPath,
-      event
-    );
-  }
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    requireNonProjectContentAccess(authCtx, 'edit');
-
-    const wsNodes = await db.project.listWorkspaceContentNodes(ws);
-    const existingFile = wsNodes.find(n => n.path === filePath) ?? null;
-    httpAssert.present(existingFile, { status: 404, message: `File '${filePath}' not found` });
-
-    if (filePath === newPath) {
-      return toApiProjectFile(existingFile);
-    }
-
-    const targetExists = wsNodes.find(n => n.path === newPath);
-    httpAssert.true(!targetExists, {
-      status: 409,
-      message: `A file already exists at '${newPath}'`
-    });
-
-    const isBinary = existingFile.type === 'file';
-    const displayName = getDisplayNameForPath(existingFile, newPath);
-    const content = await storage.read(ws, ws, existingFile.id);
-    let updatedContent = content;
-    let commentCounts = {
-      commentCount: existingFile.comment_count,
-      unresolvedCommentCount: existingFile.unresolved_comment_count
-    };
-    let previewSvg = existingFile.preview_svg;
-
-    if (existingFile.type === 'diagram') {
-      const fileData = JSON.parse(content.toString('utf8'));
-      if (fileData && typeof fileData === 'object' && 'name' in fileData) {
-        fileData.name = displayName;
-      }
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      updatedContent = Buffer.from(JSON.stringify(fileData), 'utf8');
-      commentCounts = getDiagramCommentCounts(doc);
-
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc) ?? null;
-      } catch {
-        previewSvg = null;
-      }
-    }
-
-    const newLastSlash = newPath.lastIndexOf('/');
-    let newParentId: string | null = null;
-    if (newLastSlash !== -1) {
-      const newFolderPath = newPath.substring(0, newLastSlash);
-      const parentFolder = wsNodes.find(n => n.path === newFolderPath && n.type === 'folder');
-      newParentId = parentFolder?.id ?? null;
-    }
-
-    const timestamp = new Date();
-    const newFile = await db.project.upsertContentNode({
-      workspace: ws,
-      project_id: null,
-      entity_id: null,
-      parent_id: newParentId,
-      path: newPath,
-      name: displayName,
-      role: existingFile.role,
-      type: existingFile.type,
-      size_bytes: updatedContent.length,
-      comment_count: commentCounts.commentCount,
-      unresolved_comment_count: commentCounts.unresolvedCommentCount,
-      created_atIfNew: existingFile.created_at,
-      updated_at: timestamp,
-      created_byIfNew: existingFile.created_by,
-      updated_by: authCtx.userId,
-      mime_type: existingFile.mime_type,
-      original_filename: existingFile.type === 'file' ? displayName : existingFile.original_filename
-    });
-
-    const attachmentSourceNodes = existingFile.type === 'markdown' ? wsNodes : [];
-
-    if (!isBinary && existingFile.type === 'diagram') {
-      await db.project.updateWorkspaceContentNodeDerivedData(
-        ws,
-        newFile.id,
-        updatedContent.length,
-        commentCounts.commentCount,
-        commentCounts.unresolvedCommentCount,
-        previewSvg,
-        timestamp
-      );
-      const fileData = JSON.parse(updatedContent.toString('utf8'));
-      const doc = fileData as unknown as SerializedDiagramDocument;
-      await syncDiagramContentMetadata(db, ws, newFile.id, doc, timestamp);
-    } else if (existingFile.type === 'markdown') {
-      await cloneMarkdownAttachmentSubtree(
-        db,
-        storage,
-        ws,
-        ws,
-        existingFile,
-        newFile,
-        attachmentSourceNodes,
-        authCtx,
-        timestamp
-      );
-    }
-
-    await storage.write(ws, ws, newFile.id, updatedContent);
-    const savedFile = await reloadContentNode(db, ws, newFile.id);
-    await db.project.deleteWorkspaceContentNodeByPath(ws, filePath);
-    if (existingFile.type === 'markdown') {
-      await deleteMarkdownAttachmentSubtree(
-        storage,
-        ws,
-        ws,
-        attachmentSourceNodes,
-        existingFile.id
-      );
-    }
-    await storage.delete(ws, ws, existingFile.id).catch(() => {});
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: ws,
-      operation: 'update',
-      entityType: 'content_node',
-      entityId: newFile.id,
-      entityName: displayName,
-      changes: {
-        old: { path: filePath, name: existingFile.name },
-        new: { path: newPath, name: displayName }
-      },
-      metadata: { operation: 'relocate' }
-    });
-
-    return toApiProjectFile(savedFile);
-  } catch (e) {
-    return handleError(e, 'Failed to relocate workspace file');
-  }
+  return relocateScopedContentFile(
+    WORKSPACE_SCOPE,
+    db,
+    storage,
+    workspace,
+    undefined,
+    filePath,
+    newPath,
+    event
+  );
 };

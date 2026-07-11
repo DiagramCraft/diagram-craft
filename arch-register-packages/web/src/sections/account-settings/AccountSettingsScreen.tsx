@@ -36,6 +36,8 @@ export const AccountSettingsScreen = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  const section = search.section === 'appearance' ? 'appearance' : 'profile';
+
   useEffect(() => {
     if (user) {
       setSelectedColor(user.color ?? null);
@@ -45,7 +47,6 @@ export const AccountSettingsScreen = () => {
 
   if (!user) return null;
 
-  const section = search.section === 'appearance' ? 'appearance' : 'profile';
   const meta = SECTION_META[section] ?? SECTION_META['profile']!;
 
   const handleSave = async () => {

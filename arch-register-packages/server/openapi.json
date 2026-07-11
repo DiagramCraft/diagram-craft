@@ -3634,9 +3634,47 @@
             "name": "conditions",
             "in": "query",
             "schema": {
-              "type": "string",
-              "description": "JSON-encoded filter conditions"
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fieldId": {
+                    "type": "string",
+                    "description": "Field identifier to filter on"
+                  },
+                  "op": {
+                    "enum": [
+                      "equals",
+                      "not_equals",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "empty",
+                      "not_empty",
+                      "before",
+                      "after",
+                      "on",
+                      "gt",
+                      "lt",
+                      "gte",
+                      "lte"
+                    ],
+                    "type": "string",
+                    "description": "Filter operation"
+                  },
+                  "value": {
+                    "description": "Filter value (type depends on field and operation)"
+                  }
+                },
+                "required": [
+                  "fieldId",
+                  "op"
+                ]
+              },
+              "description": "Additional filter conditions"
             },
+            "style": "deepObject",
+            "explode": true,
             "allowEmptyValue": true,
             "allowReserved": true
           },
@@ -3688,11 +3726,7 @@
             "name": "includeProjectSnapshots",
             "in": "query",
             "schema": {
-              "enum": [
-                "true",
-                "false"
-              ],
-              "type": "string",
+              "type": "boolean",
               "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
@@ -4579,9 +4613,47 @@
             "name": "conditions",
             "in": "query",
             "schema": {
-              "type": "string",
-              "description": "JSON-encoded filter conditions"
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fieldId": {
+                    "type": "string",
+                    "description": "Field identifier to filter on"
+                  },
+                  "op": {
+                    "enum": [
+                      "equals",
+                      "not_equals",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "empty",
+                      "not_empty",
+                      "before",
+                      "after",
+                      "on",
+                      "gt",
+                      "lt",
+                      "gte",
+                      "lte"
+                    ],
+                    "type": "string",
+                    "description": "Filter operation"
+                  },
+                  "value": {
+                    "description": "Filter value (type depends on field and operation)"
+                  }
+                },
+                "required": [
+                  "fieldId",
+                  "op"
+                ]
+              },
+              "description": "Additional filter conditions"
             },
+            "style": "deepObject",
+            "explode": true,
             "allowEmptyValue": true,
             "allowReserved": true
           },
@@ -4633,11 +4705,7 @@
             "name": "includeProjectSnapshots",
             "in": "query",
             "schema": {
-              "enum": [
-                "true",
-                "false"
-              ],
-              "type": "string",
+              "type": "boolean",
               "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
@@ -4963,9 +5031,47 @@
             "name": "conditions",
             "in": "query",
             "schema": {
-              "type": "string",
-              "description": "JSON-encoded filter conditions"
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fieldId": {
+                    "type": "string",
+                    "description": "Field identifier to filter on"
+                  },
+                  "op": {
+                    "enum": [
+                      "equals",
+                      "not_equals",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "empty",
+                      "not_empty",
+                      "before",
+                      "after",
+                      "on",
+                      "gt",
+                      "lt",
+                      "gte",
+                      "lte"
+                    ],
+                    "type": "string",
+                    "description": "Filter operation"
+                  },
+                  "value": {
+                    "description": "Filter value (type depends on field and operation)"
+                  }
+                },
+                "required": [
+                  "fieldId",
+                  "op"
+                ]
+              },
+              "description": "Additional filter conditions"
             },
+            "style": "deepObject",
+            "explode": true,
             "allowEmptyValue": true,
             "allowReserved": true
           },
@@ -5017,11 +5123,7 @@
             "name": "includeProjectSnapshots",
             "in": "query",
             "schema": {
-              "enum": [
-                "true",
-                "false"
-              ],
-              "type": "string",
+              "type": "boolean",
               "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
@@ -7744,9 +7846,47 @@
             "name": "conditions",
             "in": "query",
             "schema": {
-              "type": "string",
-              "description": "JSON-encoded filter conditions"
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fieldId": {
+                    "type": "string",
+                    "description": "Field identifier to filter on"
+                  },
+                  "op": {
+                    "enum": [
+                      "equals",
+                      "not_equals",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "empty",
+                      "not_empty",
+                      "before",
+                      "after",
+                      "on",
+                      "gt",
+                      "lt",
+                      "gte",
+                      "lte"
+                    ],
+                    "type": "string",
+                    "description": "Filter operation"
+                  },
+                  "value": {
+                    "description": "Filter value (type depends on field and operation)"
+                  }
+                },
+                "required": [
+                  "fieldId",
+                  "op"
+                ]
+              },
+              "description": "Additional filter conditions"
             },
+            "style": "deepObject",
+            "explode": true,
             "allowEmptyValue": true,
             "allowReserved": true
           },
@@ -7798,11 +7938,7 @@
             "name": "includeProjectSnapshots",
             "in": "query",
             "schema": {
-              "enum": [
-                "true",
-                "false"
-              ],
-              "type": "string",
+              "type": "boolean",
               "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,

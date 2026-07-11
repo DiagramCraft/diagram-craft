@@ -13,31 +13,7 @@ import { renderMarkdownPreview } from './preview/mdxRenderNode';
 import { diffMarkdown } from './diff/markdownDiff';
 import type { DiffRow } from './diff/markdownDiff';
 import styles from './MarkdownEditorScreen.module.css';
-
-// ── Date helpers ──────────────────────────────────────────────────────────────
-
-const relativeDate = (iso: string): string => {
-  const ms = Date.now() - new Date(iso).getTime();
-  const days = Math.floor(ms / 86400000);
-  if (days === 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 7) return `${days} days ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks === 1) return '1 week ago';
-  if (weeks < 5) return `${weeks} weeks ago`;
-  const months = Math.floor(days / 30);
-  if (months === 1) return '1 month ago';
-  return `${months} months ago`;
-};
-
-export const formatRevisionDate = (iso: string): string =>
-  new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit'
-  }).format(new Date(iso));
+import { formatDateTime, formatRelativeTime } from '../../utils/dateFormat';
 
 // ── RevisionListItem ──────────────────────────────────────────────────────────
 
@@ -63,7 +39,7 @@ const RevisionListItem = (props: {
         </div>
       </div>
       <div className={styles.revisionMeta}>
-        {revision.created_by_name ?? 'Unknown author'} · {relativeDate(revision.created_at)}
+        {revision.created_by_name ?? 'Unknown author'} · {formatRelativeTime(revision.created_at)}
       </div>
     </button>
   );
@@ -244,7 +220,7 @@ export const MarkdownHistoryPanel = ({
               {' · '}
               {selectedRevisionSummary.created_by_name ?? 'Unknown author'}
               {' · '}
-              {formatRevisionDate(selectedRevisionSummary.created_at)}
+              {formatDateTime(selectedRevisionSummary.created_at)}
             </span>
           ) : (
             <span className={styles.toolbarMeta}>No version selected</span>
@@ -308,7 +284,7 @@ export const MarkdownHistoryPanel = ({
                 <>
                   <MdxPreview body={selectedRevision.body ?? ''} withoutFirstHeading />
                   <div className={styles.articleFooter}>
-                    Saved {formatRevisionDate(selectedRevision.created_at)}
+                    Saved {formatDateTime(selectedRevision.created_at)}
                   </div>
                 </>
               ) : (

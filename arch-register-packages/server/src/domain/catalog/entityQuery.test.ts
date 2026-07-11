@@ -20,11 +20,11 @@ describe('parseEntityQuery', () => {
     });
   });
 
-  it('parses conditions and dates', () => {
+  it('normalizes conditions and dates', () => {
     const result = parseEntityQuery({
-      conditions: '[{"field":"name","operator":"equals","value":"API"}]',
+      conditions: [{ fieldId: 'name', op: 'equals', value: 'API' }],
       asOf: '2026-07-05T12:00:00Z',
-      includeProjectSnapshots: 'false'
+      includeProjectSnapshots: false
     });
 
     expect(result.conditions).toHaveLength(1);
@@ -32,11 +32,10 @@ describe('parseEntityQuery', () => {
     expect(result.includeProjectSnapshots).toBe(false);
   });
 
-  it('treats malformed filters and dates as absent', () => {
-    expect(parseEntityQuery({ conditions: '{bad', asOf: 'invalid' })).toMatchObject({
+  it('treats absent filters and malformed dates as absent', () => {
+    expect(parseEntityQuery({ asOf: 'invalid' })).toMatchObject({
       conditions: [],
       asOf: null
     });
-    expect(parseEntityQuery({ conditions: '{}' }).conditions).toEqual([]);
   });
 });

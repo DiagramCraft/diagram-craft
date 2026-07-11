@@ -9,6 +9,7 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { diffSnapshotState } from '../EntityTimelineTab';
 import styles from './RestoreSnapshotDialog.module.css';
+import { formatDateTime } from '../../../utils/dateFormat';
 
 type RestoreSnapshotDialogProps = {
   isOpen: boolean;
@@ -47,16 +48,6 @@ export const RestoreSnapshotDialog = ({
     onConfirm(commitMessage || undefined);
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   return (
     <Dialog
       open={isOpen}
@@ -72,7 +63,7 @@ export const RestoreSnapshotDialog = ({
         <div className={styles.snapshotInfo}>
           <div className={styles.infoRow}>
             <span className={styles.label}>Snapshot Date:</span>
-            <span>{formatDate(snapshot.created_at)}</span>
+            <span>{formatDateTime(snapshot.created_at)}</span>
           </div>
           {snapshot.created_by_name && (
             <div className={styles.infoRow}>

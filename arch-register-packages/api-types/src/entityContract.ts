@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId, foreignKeySchema, UUID_REGEX } from '@arch-register/api-types/common';
+import { filterConditionSchema } from '@arch-register/api-types/viewContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -78,12 +79,31 @@ const entityMutationBodySchema = z
 
 // ── Query / filter input ──────────────────────────────────────
 
-const listFiltersSchema = z.object({
+const conditionsQuerySchema = z.preprocess(value => {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return undefined;
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}, z.array(filterConditionSchema).optional());
+
+const booleanQuerySchema = z.preprocess(value => {
+  if (typeof value === 'boolean') return value;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+}, z.boolean().optional());
+
+export const entityListFiltersSchema = z.object({
   _schemaId: z.string().optional().describe('Filter by schema identifier'),
   owner: z.string().optional().describe('Filter by owner identifier'),
   lifecycle: z.string().optional().describe('Filter by lifecycle state'),
   q: z.string().optional().describe('Search query string'),
-  conditions: z.string().optional().describe('JSON-encoded filter conditions'),
+  conditions: conditionsQuerySchema.describe('Additional filter conditions'),
   assessmentId: z.string().optional().describe('Joined assessment identifier — required when conditions reference assessment fields'),
   projectId: z.string().optional().describe('Filter by project identifier'),
   projectScope: z.enum(['project', 'all']).optional().describe('Project scope filter'),
@@ -93,8 +113,7 @@ const listFiltersSchema = z.object({
     .describe(
       'ISO 8601 date/time — if set, return entities reconstructed as they existed/will exist at this point in time (read-only snapshot mode)'
     ),
-  includeProjectSnapshots: z
-    .enum(['true', 'false'])
+  includeProjectSnapshots: booleanQuerySchema
     .optional()
     .describe(
       'When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true.'
@@ -291,7 +310,7 @@ export const workspaceEntityContract = oc
           z.object({
             params: ws,
             query: z.object({
-              ...listFiltersSchema.shape,
+              ...entityListFiltersSchema.shape,
               ...z.object({
                 limit: z.preprocess(
                   v => (v !== undefined ? Number(v) : undefined),
@@ -319,7 +338,7 @@ export const workspaceEntityContract = oc
         .input(
           z.object({
             params: ws,
-            query: listFiltersSchema
+            query: entityListFiltersSchema
           })
         )
         .output(entityCountResponseSchema),
@@ -357,7 +376,7 @@ export const workspaceEntityContract = oc
         .input(
           z.object({
             params: ws,
-            query: listFiltersSchema
+            query: entityListFiltersSchema
           })
         )
         .output(treeResponseSchema),
@@ -548,7 +567,7 @@ export const workspaceEntityContract = oc
         .input(
           z.object({
             params: ws,
-            query: listFiltersSchema
+            query: entityListFiltersSchema
           })
         )
         .output(

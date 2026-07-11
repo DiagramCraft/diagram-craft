@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate, useSearch, useLocation } from '@tanstack/react-router';
+import { useNavigate, useLocation } from '@tanstack/react-router';
 import {
   TbChartBar,
   TbSettings,
@@ -21,6 +21,7 @@ import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { Project } from '@arch-register/api-types/projectContract';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
+import { settingsSectionTarget } from '../../routes/settingsNavigation';
 
 type SettingsNavItem = {
   id: string;
@@ -62,6 +63,8 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   }
 ];
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings');
+
 export const WorkspaceSettingsSidebar = ({
   workspace,
   workspaceSlug,
@@ -79,16 +82,9 @@ export const WorkspaceSettingsSidebar = ({
   onCollapse?: () => void;
   onExpand?: () => void;
 }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const search = useSearch({ strict: false });
-  const isOnModelOverviewRoute = location.pathname.includes('/settings/model-overview');
-  const isOnSchemasRoute = location.pathname.includes('/settings/schemas');
-  const section = isOnModelOverviewRoute
-    ? 'model-overview'
-    : isOnSchemasRoute
-      ? 'schemas'
-      : (search.section ?? 'general');
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
+  const section = search.section ?? 'general';
 
   const groups = useMemo(() => {
     const g: Record<string, SettingsNavItem[]> = {};
@@ -155,29 +151,7 @@ export const WorkspaceSettingsSidebar = ({
                 icon={s.icon}
                 label={s.label}
                 active={section === s.id}
-                onClick={() => {
-                  if (s.id === 'model-overview') {
-                    navigate({
-                      to: '/$workspaceSlug/settings/model-overview',
-                      params: { workspaceSlug }
-                    });
-                    return;
-                  }
-
-                  if (s.id === 'schemas') {
-                    navigate({
-                      to: '/$workspaceSlug/settings/schemas',
-                      params: { workspaceSlug }
-                    });
-                    return;
-                  }
-
-                  navigate({
-                    to: '/$workspaceSlug/settings',
-                    params: { workspaceSlug },
-                    search: { section: s.id }
-                  });
-                }}
+                onClick={() => navigate(settingsSectionTarget(workspaceSlug, s.id))}
                 className={s.tone === 'danger' ? styles.dangerRow : undefined}
               />
             ))}

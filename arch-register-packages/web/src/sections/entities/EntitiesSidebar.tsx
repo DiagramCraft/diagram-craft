@@ -26,7 +26,7 @@ import { fetchEntityFacets } from '../../lib/entityOperations';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
-import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useEntities';
+import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { usePinnedEntities } from '../../hooks/useNotifications';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { RenameDialog } from '../../components/RenameDialog';

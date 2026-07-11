@@ -26,6 +26,7 @@ import {
   entityDetailRoute,
   projectDetailRoute
 } from '../../routes/publicObjectRoutes';
+import { formatRelativeTime } from '../../utils/dateFormat';
 
 const PROJECT_STATUS_META = {
   draft: { label: 'Draft' },
@@ -70,21 +71,6 @@ export const WorkspaceHomeScreen = () => {
   );
 
   if (!workspace) return null;
-
-  const formatRelativeTime = (timestamp: string): string => {
-    const now = new Date();
-    const then = new Date(timestamp);
-    const diffMs = now.getTime() - then.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return then.toLocaleDateString();
-  };
 
   const handleActivityClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
@@ -292,9 +278,8 @@ export const WorkspaceHomeScreen = () => {
                     className={styles.link}
                     onClick={() =>
                       navigate({
-                        to: '/$workspaceSlug/settings',
-                        params: { workspaceSlug },
-                        search: { section: 'audit' }
+                        to: '/$workspaceSlug/settings/$section',
+                        params: { workspaceSlug, section: 'audit' }
                       })
                     }
                   >

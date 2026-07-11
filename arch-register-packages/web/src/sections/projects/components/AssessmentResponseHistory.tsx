@@ -4,6 +4,7 @@ import type { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 import styles from './AssessmentResponseHistory.module.css';
+import { formatDateTime } from '../../../utils/dateFormat';
 
 const OPERATION_LABEL: Record<AuditLogEntry['operation'], string> = {
   create: 'recorded',
@@ -11,14 +12,6 @@ const OPERATION_LABEL: Record<AuditLogEntry['operation'], string> = {
   delete: 'deleted'
 };
 
-const formatTimestamp = (iso: string) =>
-  new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit'
-  }).format(new Date(iso));
 
 const changedFieldLabels = (entry: AuditLogEntry, assessment: Assessment): string[] => {
   if (entry.operation === 'create') return [];
@@ -67,7 +60,7 @@ export const AssessmentResponseHistory = ({
                   {entry.user_display_name ?? 'Unknown user'}
                 </span>
                 <span className={styles.entryOp}>{OPERATION_LABEL[entry.operation]}</span>
-                <span className={styles.entryTime}>{formatTimestamp(entry.timestamp)}</span>
+                <span className={styles.entryTime}>{formatDateTime(entry.timestamp)}</span>
               </div>
               <div className={styles.entryFields}>
                 {changedFieldLabels(entry, assessment).join(', ') || '—'}

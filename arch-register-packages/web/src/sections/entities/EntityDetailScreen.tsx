@@ -35,11 +35,9 @@ import {
   useUpdateEntity,
   useDeleteEntity,
   useCloneEntity,
-  useEntitiesBySchema,
-  useEntitySnapshots,
-  usePromoteSnapshot,
-  useRestoreSnapshot
+  useEntitiesBySchema
 } from '../../hooks/useEntities';
+import { useEntitySnapshots, usePromoteSnapshot, useRestoreSnapshot } from '../../hooks/useSnapshots';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
 import { useAuditLog } from '../../hooks/useAudit';
 import {
@@ -81,6 +79,7 @@ import {
   requiredEntityFieldIds,
   slugifyEntityName
 } from './entityDetailEditState';
+import { formatDate, formatDateTime } from '../../utils/dateFormat';
 
 type TabId =
   | 'overview'
@@ -111,13 +110,6 @@ type RelationGroup = {
 };
 
 type RefLookup = Map<string, EntitySummary>;
-
-const formatDateValue = (value: unknown) => {
-  if (typeof value !== 'string' || value === '') return '—';
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
-};
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities/$entityId');
 
@@ -769,9 +761,7 @@ export const EntityDetailScreen = () => {
                       <div className={styles.futurePlanMeta}>
                         <span className={styles.futurePlanProject}>{projectName}</span>
                         {snap.target_date && (
-                          <span className={styles.futurePlanDate}>
-                            {new Date(`${snap.target_date}T00:00:00`).toLocaleDateString()}
-                          </span>
+                          <span className={styles.futurePlanDate}>{formatDate(snap.target_date)}</span>
                         )}
                       </div>
                       {snap.commit_message && (
@@ -1268,7 +1258,7 @@ const PropertyRow = ({
         </>
       );
     }
-    if (field.type === 'date') return <span>{formatDateValue(value)}</span>;
+    if (field.type === 'date') return <span>{formatDate(value)}</span>;
     return <span>{String(value)}</span>;
   };
 
@@ -1426,15 +1416,7 @@ const ChangeHistory = ({
                 <tbody>
                   {savedSnapshots.map(snapshot => (
                     <tr key={snapshot.id}>
-                      <td className={styles.chDim}>
-                        {new Date(snapshot.created_at).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </td>
+                      <td className={styles.chDim}>{formatDateTime(snapshot.created_at)}</td>
                       <td>
                         <span
                           className={`${styles.snapshotTypeBadge} ${snapshot.status !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}
