@@ -5,7 +5,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { LIFECYCLE_COLOR_PRESETS, SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ColorPicker } from '../../components/ColorPicker';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi, useNavigate } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { AuditEntityType, AuditOperation } from '@arch-register/api-types/auditContract';
 import { TbPlus, TbTrash } from 'react-icons/tb';
@@ -104,16 +104,11 @@ const ModelOverviewRedirectSection = ({ workspaceSlug }: { workspaceSlug: string
   return null;
 };
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings');
+
 export const WorkspaceSettingsScreen = () => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as {
-    section?: string;
-    auditEntityType?: string;
-    auditOperation?: AuditOperation;
-    auditStartDate?: string;
-    auditEndDate?: string;
-    analyticsView?: 'stale';
-  };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const ctx = useWorkspaceContext();
   const workspace = ctx.workspace;
   const workspaceSlug = ctx.workspaceSlug;
