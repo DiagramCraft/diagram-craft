@@ -6,13 +6,13 @@ import { Chip } from '../../../components/Chip';
 import { DiagramMetadataPopover } from '../../../components/DiagramMetadataPopover';
 import { asProjectPublicId, projectDiagramHref } from '../../../routes/publicObjectRoutes';
 import { formatDate } from '../../../utils/dateFormat';
-import { slugifyEntityName, relationIds } from '../entityDetailEditState';
+import { slugifyEntityName, relationIds } from '../../../lib/entityEditState';
 import type { EntityRecord, EntitySnapshot, EntitySummary } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { Project, ProjectEntity, DiagramEntityFile } from '@arch-register/api-types/projectContract';
-import type { RefLookup } from '../EntityDetailScreen';
+import type { RefLookup } from '../types/entityDetailTypes';
 import styles from './EntityOverviewTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 

@@ -7,7 +7,7 @@ import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { Relation, RelationGroup } from '../EntityDetailScreen';
+import type { Relation, RelationGroup } from '../types/entityDetailTypes';
 import styles from './EntityTopologyTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 

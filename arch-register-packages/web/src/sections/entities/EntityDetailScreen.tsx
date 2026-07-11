@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
@@ -12,15 +12,9 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
-import {
-  useEntity,
-  useEntityRelations,
-  useUpdateEntity,
-  useDeleteEntity,
-  useCloneEntity,
-  useEntitiesBySchema
-} from '../../hooks/useEntities';
-import { useEntitySnapshots, usePromoteSnapshot } from '../../hooks/useSnapshots';
+import { useEntity, useEntityRelations, useCloneEntity, useEntitiesBySchema } from '../../hooks/useEntities';
+import { useEntitySnapshots } from '../../hooks/useSnapshots';
+import { useEntityEditController } from '../../hooks/useEntityEditController';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
 import {
   useCreatePinnedEntity,
@@ -45,37 +39,7 @@ import { Title } from '../../components/Title';
 import { EntityDependentsTab } from './components/EntityDependentsTab';
 import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
 import { DiscussionThread } from '../discussions/DiscussionThread';
-import { createEntityEditState, createEntityUpdateBody, requiredEntityFieldIds } from './entityDetailEditState';
-
-type TabId =
-  | 'overview'
-  | 'topology'
-  | 'graph'
-  | 'relations'
-  | 'dependents'
-  | 'assessments'
-  | 'discussions'
-  | 'changes'
-  | 'timeline';
-
-export type Relation = {
-  entityId: string;
-  publicId: string;
-  entitySlug: string;
-  entityName: string;
-  entitySchemaId: string;
-  fieldName: string;
-  fieldPredicate?: string;
-  kind: 'reference' | 'containment';
-};
-
-export type RelationGroup = {
-  key: string;
-  label: string;
-  relations: Relation[];
-};
-
-export type RefLookup = Map<string, EntitySummary>;
+import type { TabId, Relation, RefLookup } from './types/entityDetailTypes';
 
 export const EntityDetailScreen = () => {
   const navigate = useNavigate();
@@ -108,16 +72,6 @@ export const EntityDetailScreen = () => {
     },
     [navigate]
   );
-  const [editing, setEditing] = useState(false);
-  const [editState, setEditState] = useState<Record<string, unknown>>({});
-  const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
-  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
-  const [saveConfirmMessage, setSaveConfirmMessage] = useState('');
-  const [saveConfirmSignificant, setSaveConfirmSignificant] = useState(false);
-  const [pendingSaveBody, setPendingSaveBody] = useState<Record<string, unknown> | null>(null);
-
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
   const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(
@@ -130,10 +84,7 @@ export const EntityDetailScreen = () => {
   const { data: entityDiagramFiles = [] } = useEntityDiagramFiles(workspaceId, entityId);
 
   // Mutation hooks
-  const updateEntity = useUpdateEntity(workspaceId);
-  const deleteEntity = useDeleteEntity(workspaceId);
   const cloneEntity = useCloneEntity(workspaceId);
-  const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);
   const { data: allSnapshots = [] } = useEntitySnapshots(workspaceId, entityId, true);
   const futureSnapshots = allSnapshots.filter(s => s.status === 'future_update');
   const createWatch = useCreateWatch(workspaceId);
@@ -225,67 +176,36 @@ export const EntityDetailScreen = () => {
   const incoming: Relation[] = relations.incoming;
   const relationCount = outgoing.length + incoming.length;
 
-  const startEdit = () => {
-    if (!entity || !schema) return;
-    setEditState(createEntityEditState(entity, schema));
-    setEditLinks(entity._links.map(l => ({ ...l })));
-    setEditing(true);
-  };
-
-  const cancelEdit = () => {
-    setEditing(false);
-    setEditState({});
-    setEditLinks([]);
-    setValidationErrors(new Set());
-  };
-
-  const saveEdit = async () => {
-    if (!entity || !schema) return;
-
-    const errors = requiredEntityFieldIds(editState, schema);
-    if (errors.size > 0) {
-      setValidationErrors(errors);
-      return;
-    }
-    setValidationErrors(new Set());
-
-    const body = createEntityUpdateBody(entity, schema, editState, editLinks);
-
-    setPendingSaveBody(body);
-    setSaveConfirmMessage('');
-    setSaveConfirmSignificant(false);
-    setSaveConfirmOpen(true);
-  };
-
-  const executeSave = () => {
-    if (!pendingSaveBody) return;
-    setSaveConfirmOpen(false);
-    updateEntity.mutate(
-      { entityId, data: pendingSaveBody },
-      {
-        onSuccess: () => {
-          if (saveConfirmSignificant) {
-            promoteSnapshot.mutate({ commitMessage: saveConfirmMessage || undefined });
-          }
-          setEditing(false);
-          setEditState({});
-          setEditLinks([]);
-          setPendingSaveBody(null);
-        }
-      }
-    );
-  };
-
-  const handleDelete = () => {
-    setConfirmDelete(true);
-  };
-
-  const doDelete = () => {
-    setConfirmDelete(false);
-    deleteEntity.mutate(entityId, {
-      onSuccess: () => navigateToEntities()
-    });
-  };
+  const {
+    editing,
+    editState,
+    setEditState,
+    editLinks,
+    setEditLinks,
+    validationErrors,
+    setValidationErrors,
+    startEdit,
+    cancelEdit,
+    saveEdit,
+    isSaving,
+    saveConfirmOpen,
+    setSaveConfirmOpen,
+    saveConfirmMessage,
+    setSaveConfirmMessage,
+    saveConfirmSignificant,
+    setSaveConfirmSignificant,
+    executeSave,
+    confirmDelete,
+    setConfirmDelete,
+    handleDelete,
+    doDelete
+  } = useEntityEditController({
+    workspaceId,
+    entityId,
+    entity,
+    schema,
+    onDeleted: navigateToEntities
+  });
 
   const handleClone = async () => {
     cloneEntity.mutate(entityId, {
@@ -411,9 +331,9 @@ export const EntityDetailScreen = () => {
                   <Button
                     variant="primary"
                     onClick={saveEdit}
-                    disabled={updateEntity.isPending || saveConfirmOpen}
+                    disabled={isSaving || saveConfirmOpen}
                   >
-                    {updateEntity.isPending ? 'Saving...' : 'Save'}
+                    {isSaving ? 'Saving...' : 'Save'}
                   </Button>
                 </>
               )
@@ -583,9 +503,9 @@ export const EntityDetailScreen = () => {
         buttons={[
           { label: 'Cancel', type: 'cancel', onClick: () => setSaveConfirmOpen(false) },
           {
-            label: updateEntity.isPending ? 'Saving...' : 'Save',
+            label: isSaving ? 'Saving...' : 'Save',
             type: 'default',
-            disabled: updateEntity.isPending,
+            disabled: isSaving,
             onClick: executeSave
           }
         ]}

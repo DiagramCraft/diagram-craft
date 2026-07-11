@@ -4,7 +4,7 @@ import { Chip } from '../../../components/Chip';
 import { getRelationDisplayLabel } from '../../../lib/entityRelations';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { Relation } from '../EntityDetailScreen';
+import type { Relation } from '../types/entityDetailTypes';
 import styles from './EntityRelationsTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 

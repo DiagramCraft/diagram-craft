@@ -4,7 +4,7 @@ import {
   createEntityUpdateBody,
   requiredEntityFieldIds,
   slugifyEntityName
-} from './entityDetailEditState';
+} from './entityEditState';
 
 const schema = {
   id: 'service',
