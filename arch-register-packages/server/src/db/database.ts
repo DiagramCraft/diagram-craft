@@ -4,6 +4,7 @@ import type { AuthDatabase } from '../domain/auth/db/authDatabase';
 import type { CatalogDatabase, ViewDatabase } from '../domain/catalog/db/catalogDatabase';
 import type { ProjectDatabase } from '../domain/project/db/projectDatabase';
 import type { WatchDatabase } from '../domain/watch/db/watchDatabase';
+import type { DiscussionDatabase } from '../domain/discussion/db/discussionDatabase';
 import type { WorkspaceDatabase } from '../domain/workspace/db/workspaceDatabase';
 
 export type DbDriver = 'postgres' | 'sqlite';
@@ -49,6 +50,7 @@ export type DatabaseAdapter = {
   watch: WatchDatabase;
   auth: AuthDatabase;
   ai: AiDatabase;
+  discussion: DiscussionDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -61,6 +63,12 @@ export type {
 export type { AuditDatabase, AuditLogDbCreate } from '../domain/audit/db/auditDatabase';
 export type { AuthDatabase, UserDbCreate, UserDbUpdate } from '../domain/auth/db/authDatabase';
 export type { WatchDatabase, WatchDbCreate } from '../domain/watch/db/watchDatabase';
+export type {
+  DiscussionDatabase,
+  DiscussionObjectType,
+  DiscussionPostDbCreate,
+  DiscussionPostDbResult
+} from '../domain/discussion/db/discussionDatabase';
 export type {
   CatalogDatabase,
   ViewDatabase,

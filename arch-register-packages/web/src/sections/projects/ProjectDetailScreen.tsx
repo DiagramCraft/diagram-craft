@@ -86,6 +86,7 @@ export const ProjectDetailScreen = () => {
     folder?: string;
     section?: ProjectSection;
     assessmentId?: string;
+    assessmentTab?: 'details' | 'summary' | 'discussion';
     dialog?: 'add-entity';
     contentQuery?: string;
     contentView?: 'grid' | 'list';
@@ -599,9 +600,11 @@ export const ProjectDetailScreen = () => {
     <>
       {section === 'assessments' && search.assessmentId ? (
         <AssessmentDetailsScreen
+          key={search.assessmentId}
           project={project}
           projectId={projectId}
           assessmentId={search.assessmentId}
+          initialTab={search.assessmentTab}
           onNavigateHome={handleNavigateHome}
           onNavigateProject={handleNavigateProject}
           onBack={() =>

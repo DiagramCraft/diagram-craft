@@ -73,6 +73,7 @@ import { DiagramMetadataPopover } from '../../components/DiagramMetadataPopover'
 import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
 import { EntityDependentsTab } from './components/EntityDependentsTab';
 import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
+import { DiscussionThread } from '../discussions/DiscussionThread';
 import {
   createEntityEditState,
   createEntityUpdateBody,
@@ -88,6 +89,7 @@ type TabId =
   | 'relations'
   | 'dependents'
   | 'assessments'
+  | 'discussions'
   | 'changes'
   | 'timeline';
 
@@ -496,6 +498,7 @@ export const EntityDetailScreen = () => {
                 Dependents{incoming.length > 0 ? ` (${incoming.length})` : ''}
               </Tabs.Trigger>
               <Tabs.Trigger value="assessments">Assessments</Tabs.Trigger>
+              <Tabs.Trigger value="discussions">Discussions</Tabs.Trigger>
               {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
               <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
             </Tabs.List>
@@ -972,6 +975,13 @@ export const EntityDetailScreen = () => {
       {/* Assessments */}
       {!contentFolder && tab === 'assessments' && (
         <EntityAssessmentsTab workspaceId={workspaceId} entity={entity} schema={schema} />
+      )}
+
+      {/* Discussions */}
+      {!contentFolder && tab === 'discussions' && (
+        <div className={styles.tabPane}>
+          <DiscussionThread workspaceId={workspaceId} objectType="entity" objectId={entity._uid} />
+        </div>
       )}
 
       {/* Change history */}

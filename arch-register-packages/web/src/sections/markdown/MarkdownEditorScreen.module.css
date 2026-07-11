@@ -180,6 +180,10 @@
   border-top: 1px solid var(--panel-border);
 }
 
+.discussionSection {
+  margin-top: 36px;
+}
+
 .attachmentsHeader {
   display: flex;
   align-items: baseline;

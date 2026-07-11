@@ -51,6 +51,19 @@ export const projectMarkdownRoute = <TSearch = undefined>(
     params: { workspaceSlug, projectId, nodeId }
   }, search);
 
+export const workspaceMarkdownRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  nodeId: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/content/wiki/$nodeId' as const,
+      params: { workspaceSlug, nodeId }
+    },
+    search
+  );
+
 export const entityMarkdownRoute = <TSearch = undefined>(
   workspaceSlug: string,
   entityId: EntityPublicId,

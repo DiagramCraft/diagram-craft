@@ -2,6 +2,7 @@ import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';
 import { MdxPreview } from './preview/MdxPreview';
 import { MarkdownAttachmentManager } from './MarkdownAttachmentManager';
+import { DiscussionThread } from '../discussions/DiscussionThread';
 import type { MarkdownPaneMode, MarkdownScreenMode } from './MarkdownEditorScreen.state';
 import styles from './MarkdownEditorScreen.module.css';
 
@@ -22,8 +23,11 @@ export const MarkdownEditorPane = (props: {
   updatedLabel: string | null;
   readTime: number;
   attachments: MarkdownEditorPaneAttachments;
+  workspaceId: string;
+  nodeId: string;
 }) => {
-  const { screenMode, paneMode, body, onChange, toc, updatedLabel, readTime, attachments } = props;
+  const { screenMode, paneMode, body, onChange, toc, updatedLabel, readTime, attachments, workspaceId, nodeId } =
+    props;
 
   const showPlateEditor = screenMode === 'edit' && paneMode === 'edit';
   const showRawEditor = screenMode === 'edit' && paneMode === 'raw';
@@ -86,6 +90,15 @@ export const MarkdownEditorPane = (props: {
               {updatedLabel && <>Last edited {updatedLabel} · </>}
               {readTime} min read
             </div>
+            <section className={styles.discussionSection}>
+              <h2 className={styles.attachmentsTitle}>Discussion</h2>
+              <DiscussionThread
+                workspaceId={workspaceId}
+                objectType="content_node"
+                objectId={nodeId}
+                showEmptyState={false}
+              />
+            </section>
           </>
         ) : (
           <div className={styles.previewEmpty}>Preview will appear here as you type.</div>

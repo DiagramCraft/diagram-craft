@@ -10,6 +10,10 @@
   overflow: hidden;
 }
 
+.tabPane {
+  padding: 20px 24px;
+}
+
 .graphPanel {
   flex: 1;
   min-height: 0;

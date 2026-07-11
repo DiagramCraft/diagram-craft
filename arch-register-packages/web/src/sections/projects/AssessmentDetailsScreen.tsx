@@ -28,6 +28,7 @@ import { Chip } from '../../components/Chip';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { AssessmentResponseHistory } from './components/AssessmentResponseHistory';
+import { DiscussionThread } from '../discussions/DiscussionThread';
 import {
   useAssessments,
   useUpdateAssessment,
@@ -116,6 +117,7 @@ export const AssessmentDetailsScreen = ({
   project,
   projectId,
   assessmentId,
+  initialTab,
   onNavigateHome,
   onNavigateProject,
   onBack
@@ -123,6 +125,7 @@ export const AssessmentDetailsScreen = ({
   project: ProjectDetailData;
   projectId: string;
   assessmentId: string;
+  initialTab?: 'details' | 'summary' | 'discussion';
   onNavigateHome: () => void;
   onNavigateProject: () => void;
   onBack: () => void;
@@ -160,7 +163,7 @@ export const AssessmentDetailsScreen = ({
   const [search, setSearch] = useState('');
   const [conditions, setConditions] = useState<AssessmentFilterCondition[]>([]);
   const [sort, setSort] = useState<SortState | null>(null);
-  const [tab, setTab] = useState<'details' | 'summary'>('details');
+  const [tab, setTab] = useState<'details' | 'summary' | 'discussion'>(initialTab ?? 'details');
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
   const responseByEntity = useMemo(
@@ -376,10 +379,11 @@ export const AssessmentDetailsScreen = ({
         }
       >
         <div className={styles.tabs}>
-          <Tabs.Root value={tab} onValueChange={v => setTab(v as 'details' | 'summary')}>
+          <Tabs.Root value={tab} onValueChange={v => setTab(v as 'details' | 'summary' | 'discussion')}>
           <Tabs.List>
             <Tabs.Trigger value="details">Details</Tabs.Trigger>
             <Tabs.Trigger value="summary">Summary</Tabs.Trigger>
+            <Tabs.Trigger value="discussion">Discussion</Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="details">
             <div className={styles.panel}>
@@ -571,6 +575,11 @@ export const AssessmentDetailsScreen = ({
               entityCount={entities.length}
               enums={enums}
             />
+          </Tabs.Content>
+          <Tabs.Content value="discussion">
+            <div className={styles.discussionPanel}>
+              <DiscussionThread workspaceId={workspaceSlug} objectType="assessment" objectId={assessment.id} />
+            </div>
           </Tabs.Content>
           </Tabs.Root>
         </div>
