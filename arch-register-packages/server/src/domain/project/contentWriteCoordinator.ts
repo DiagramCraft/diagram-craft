@@ -42,23 +42,9 @@ const stageStorageChange = async (
   change: ContentStorageChange
 ): Promise<StagedStorageMutation> => {
   if (change.type === 'write') {
-    if (storage.stageWrite)
-      return storage.stageWrite(change.workspace, change.storageId, change.nodeId, change.content);
-    return {
-      commit: () =>
-        storage.write(change.workspace, change.storageId, change.nodeId, change.content),
-      rollback: async () => {},
-      finalize: async () => {}
-    };
+    return storage.stageWrite(change.workspace, change.storageId, change.nodeId, change.content);
   }
-  if (storage.stageDelete) {
-    return storage.stageDelete(change.workspace, change.storageId, change.nodeId);
-  }
-  return {
-    commit: () => storage.delete(change.workspace, change.storageId, change.nodeId),
-    rollback: async () => {},
-    finalize: async () => {}
-  };
+  return storage.stageDelete(change.workspace, change.storageId, change.nodeId);
 };
 
 export const coordinateContentWrite = async <T>(options: ContentWriteOptions<T>): Promise<T> => {

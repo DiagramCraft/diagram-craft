@@ -185,11 +185,17 @@ describe('workspace export/import guards', () => {
 
   it('persists imported projects and content files during executeImport', async () => {
     const db = makeDb();
+    const write = vi.fn(async (_workspace: string, _storageId: string, _nodeId: string, _content: Buffer) => {});
     const storage = {
-      write: vi.fn(async () => {}),
+      write,
       read: vi.fn(),
       delete: vi.fn(),
-      deleteAll: vi.fn()
+      deleteAll: vi.fn(),
+      stageWrite: vi.fn(async (workspace: string, storageId: string, nodeId: string, content: Buffer) => ({
+        commit: () => write(workspace, storageId, nodeId, content),
+        rollback: async () => {},
+        finalize: async () => {}
+      }))
     };
 
     const contentBuffer = Buffer.from('diagram payload', 'utf8');
