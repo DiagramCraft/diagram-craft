@@ -14,6 +14,7 @@ import { PostgresAiDatabase } from '../domain/ai/db/postgresAi';
 import { SERVER_DEFAULTS } from '../constants';
 import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
 import { PostgresWatchDatabase } from '../domain/watch/db/postgresWatch';
+import { PostgresDiscussionDatabase } from '../domain/discussion/db/postgresDiscussion';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
@@ -30,6 +31,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly watch: PostgresWatchDatabase;
   readonly auth: PostgresAuthDatabase;
   readonly ai: PostgresAiDatabase;
+  readonly discussion: PostgresDiscussionDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -41,7 +43,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       audit: new PostgresAuditDatabase(sql),
       watch: new PostgresWatchDatabase(sql),
       auth: new PostgresAuthDatabase(sql),
-      ai: new PostgresAiDatabase(sql)
+      ai: new PostgresAiDatabase(sql),
+      discussion: new PostgresDiscussionDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -80,6 +83,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.watch = new PostgresWatchDatabase(this.sql);
     this.auth = new PostgresAuthDatabase(this.sql);
     this.ai = new PostgresAiDatabase(this.sql);
+    this.discussion = new PostgresDiscussionDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

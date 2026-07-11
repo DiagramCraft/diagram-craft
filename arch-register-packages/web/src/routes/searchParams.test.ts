@@ -27,6 +27,12 @@ describe('validateEntityDetailSearch', () => {
       contentQuery: undefined,
       contentView: undefined
     });
+    expect(validateEntityDetailSearch({ tab: 'discussions' })).toEqual({
+      tab: 'discussions',
+      contentFolder: undefined,
+      contentQuery: undefined,
+      contentView: undefined
+    });
   });
 });
 
@@ -130,6 +136,16 @@ describe('validateProjectSearch', () => {
       filters: '[{"fieldId":"_schemaId","op":"equals","value":"application"}]',
       contentQuery: 'diagram',
       contentView: 'list',
+    });
+  });
+
+  it('accepts a valid assessmentTab and rejects unknown ones', () => {
+    expect(validateProjectSearch({ assessmentId: 'a1', assessmentTab: 'discussion' })).toMatchObject({
+      assessmentId: 'a1',
+      assessmentTab: 'discussion'
+    });
+    expect(validateProjectSearch({ assessmentTab: 'bogus' })).toMatchObject({
+      assessmentTab: undefined
     });
   });
 });

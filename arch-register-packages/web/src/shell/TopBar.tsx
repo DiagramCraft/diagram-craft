@@ -20,6 +20,7 @@ import {
   TbMoon,
   TbUser,
   TbBell,
+  TbMessageCircle,
   TbX
 } from 'react-icons/tb';
 import { useNavigate } from '@tanstack/react-router';
@@ -35,10 +36,20 @@ import {
   useNotifications,
   useWatchedEntities
 } from '../hooks/useNotifications';
+import { useDiscussionSummary } from '../hooks/useDiscussions';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { NotificationItem, WatchedEntity } from '@arch-register/api-types/watchContract';
+import type { DiscussionSummaryEntry } from '@arch-register/api-types/discussionContract';
 import type { BreadcrumbItem } from './shellTypes';
-import { asEntityPublicId, entityDetailRoute } from '../routes/publicObjectRoutes';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  entityMarkdownRoute,
+  projectDetailRoute,
+  projectMarkdownRoute,
+  workspaceMarkdownRoute
+} from '../routes/publicObjectRoutes';
 
 type TopBarProps = {
   workspaces: Workspace[];
@@ -150,6 +161,7 @@ export const TopBar = ({
         )}
       </div>
       <div className={styles.right}>
+        <DiscussionsMenu workspaceSlug={workspaceSlug} />
         <NotificationMenu workspaceSlug={workspaceSlug} />
         <AccountMenu />
       </div>
@@ -405,6 +417,107 @@ const AccountMenu = () => {
         </div>
       </MenuButton.Menu>
     </MenuButton.Root>
+  );
+};
+
+const DiscussionsMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { data: entries = [] } = useDiscussionSummary(workspaceSlug, !!workspaceSlug);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open]);
+
+  const openEntry = (entry: DiscussionSummaryEntry) => {
+    setOpen(false);
+    const { nav } = entry;
+    if (nav.type === 'entity') {
+      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(nav.entityPublicId), { tab: 'discussions' }));
+    } else if (nav.type === 'assessment') {
+      navigate(
+        projectDetailRoute(workspaceSlug, asProjectPublicId(nav.projectPublicId), {
+          section: 'assessments',
+          assessmentId: entry.objectId,
+          assessmentTab: 'discussion'
+        })
+      );
+    } else if (nav.entityPublicId) {
+      navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(nav.entityPublicId), entry.objectId));
+    } else if (nav.projectPublicId) {
+      navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(nav.projectPublicId), entry.objectId));
+    } else {
+      navigate(workspaceMarkdownRoute(workspaceSlug, entry.objectId));
+    }
+  };
+
+  return (
+    <div className={styles.notificationMenu} ref={ref}>
+      <button
+        type="button"
+        className={styles.notificationTrigger}
+        aria-label="Discussions"
+        title="Discussions"
+        onClick={() => setOpen(value => !value)}
+      >
+        <TbMessageCircle size={15} />
+        {entries.length > 0 && <span className={styles.notificationBadge}>{entries.length}</span>}
+      </button>
+      {open && (
+        <div className={styles.notificationDrop}>
+          <div className={styles.discussionsHeader}>
+            <span>Discussions</span>
+          </div>
+          <div className={styles.notificationPanel}>
+            {entries.length === 0 ? (
+              <div className={styles.notificationEmpty}>
+                <span>No discussions yet</span>
+                <span>Threads on entities, assessments, and pages show up here.</span>
+              </div>
+            ) : (
+              <div className={styles.notificationList}>
+                {entries.map(entry => (
+                  <button
+                    key={`${entry.objectType}:${entry.objectId}`}
+                    type="button"
+                    className={styles.notificationRow}
+                    aria-label={`Discussion: ${entry.objectTitle}`}
+                    onClick={() => openEntry(entry)}
+                  >
+                    <div className={styles.notificationRowMain}>
+                      <div className={styles.notificationEntity}>{entry.objectTitle}</div>
+                      <div className={styles.notificationMeta}>
+                        <span>{entry.lastPost.authorName}</span>
+                        <span className={styles.notificationSep}>·</span>
+                        <span>
+                          {entry.postCount} post{entry.postCount !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.notificationWhen}>
+                      {formatRelativeTimestamp(entry.lastPost.createdAt)}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

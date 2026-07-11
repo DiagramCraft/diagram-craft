@@ -80,6 +80,14 @@ export const assessmentKeys = {
     [...assessmentKeys.details(), workspaceId, projectId, assessmentId] as const,
 };
 
+export const discussionKeys = {
+  all: ['discussions'] as const,
+  lists: () => [...discussionKeys.all, 'list'] as const,
+  list: (workspaceId: string, objectType: string, objectId: string) =>
+    [...discussionKeys.lists(), workspaceId, objectType, objectId] as const,
+  summary: (workspaceId: string) => [...discussionKeys.all, 'summary', workspaceId] as const,
+};
+
 export const assessmentResponseKeys = {
   all: ['assessment-responses'] as const,
   lists: () => [...assessmentResponseKeys.all, 'list'] as const,

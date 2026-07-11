@@ -574,6 +574,8 @@ export const MarkdownEditorScreen = () => {
           toc={toc}
           updatedLabel={updatedLabel}
           readTime={readTime}
+          workspaceId={workspaceSlug}
+          nodeId={nodeId}
           attachments={{
             items: attachments,
             onOpen: handleOpenAttachment,

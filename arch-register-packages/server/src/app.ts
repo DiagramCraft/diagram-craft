@@ -21,6 +21,7 @@ import { createAssessmentORPCHandler } from './domain/project/assessmentOrpc';
 import { createAssessmentResponseORPCHandler } from './domain/project/assessmentResponseOrpc';
 import { createAuditORPCHandler } from './domain/audit/auditOrpc';
 import { createWatchORPCHandler } from './domain/watch/watchOrpc';
+import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
 import {
   createPublicAuthORPCHandler,
@@ -125,6 +126,7 @@ export const createApp = (
   app.use(createAssessmentResponseORPCHandler(db));
   app.use(createAuditORPCHandler(db));
   app.use(createWatchORPCHandler(db));
+  app.use(createDiscussionORPCHandler(db));
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
   app.use(createDiagramCraftORPCHandler(db));

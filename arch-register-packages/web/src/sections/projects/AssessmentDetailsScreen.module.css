@@ -67,6 +67,14 @@
   overflow: hidden;
 }
 
+.discussionPanel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .toolbar {
   display: flex;
   align-items: center;

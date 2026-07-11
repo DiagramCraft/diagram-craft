@@ -66,6 +66,7 @@ export type EntityDetailSearchParams = {
     | 'relations'
     | 'dependents'
     | 'assessments'
+    | 'discussions'
     | 'changes'
     | 'timeline';
 };
@@ -92,6 +93,7 @@ export const validateEntityDetailSearch = (raw: Record<string, unknown>): Entity
     raw.tab === 'relations' ||
     raw.tab === 'dependents' ||
     raw.tab === 'assessments' ||
+    raw.tab === 'discussions' ||
     raw.tab === 'changes' ||
     raw.tab === 'timeline'
       ? raw.tab
@@ -122,6 +124,7 @@ export type ProjectSearchParams = {
   folder?: string;
   section?: 'home' | 'entities' | 'assessments';
   assessmentId?: string;
+  assessmentTab?: 'details' | 'summary' | 'discussion';
   dialog?: 'add-entity';
 } & SharedEntityBrowserSearchParams & SharedContentBrowserSearchParams;
 
@@ -135,6 +138,10 @@ export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSear
       ? raw.section
       : undefined,
   assessmentId: typeof raw.assessmentId === 'string' ? raw.assessmentId : undefined,
+  assessmentTab:
+    raw.assessmentTab === 'details' || raw.assessmentTab === 'summary' || raw.assessmentTab === 'discussion'
+      ? raw.assessmentTab
+      : undefined,
   dialog: raw.dialog === 'add-entity' ? raw.dialog : undefined,
 });
 

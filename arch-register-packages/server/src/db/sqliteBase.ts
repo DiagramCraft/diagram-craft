@@ -38,6 +38,7 @@ import {
 } from '../domain/workspace/db/workspaceDatabase';
 import { AuditLogDbResult } from '../domain/audit/db/auditDatabase';
 import { NotificationDbResult, WatchDbResult } from '../domain/watch/db/watchDatabase';
+import { DiscussionPostDbResult } from '../domain/discussion/db/discussionDatabase';
 import { GlobalRoleAssignmentDbResult, UserDbResult } from '../domain/auth/db/authDatabase';
 import {
   AiConversationDbResult,
@@ -320,6 +321,18 @@ export const sqliteMappers = {
     schema_id: row['schema_id'] == null ? null : String(row['schema_id']),
     changes: parseJson(row['changes'], {}, 'audit_log.changes'),
     metadata: parseJson(row['metadata'], {}, 'audit_log.metadata')
+  }),
+  discussionPost: (row: Record<string, unknown>): DiscussionPostDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    object_type: row['object_type'] as DiscussionPostDbResult['object_type'],
+    object_id: String(row['object_id']),
+    parent_post_id: row['parent_post_id'] == null ? null : String(row['parent_post_id']),
+    author_id: row['author_id'] == null ? null : String(row['author_id']),
+    body: String(row['body']),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at']),
+    edited_at: row['edited_at'] == null ? null : toDate(row['edited_at'])
   }),
   userWatch: (row: Record<string, unknown>): WatchDbResult => ({
     user_id: String(row['user_id']),
