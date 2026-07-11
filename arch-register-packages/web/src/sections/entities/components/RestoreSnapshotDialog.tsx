@@ -7,7 +7,7 @@ import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import { diffSnapshotState } from '../EntityTimelineTab';
+import { diffSnapshotState } from './entityTimelineHelpers';
 import styles from './RestoreSnapshotDialog.module.css';
 import { formatDateTime } from '../../../utils/dateFormat';
 

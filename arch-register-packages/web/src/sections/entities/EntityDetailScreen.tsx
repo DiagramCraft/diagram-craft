@@ -65,7 +65,7 @@ import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContra
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import { EntityContentView } from './EntityContentView';
-import { EntityTimelineTab } from './EntityTimelineTab';
+import { EntityTimelineTab } from './components/EntityTimelineTab';
 import { Title } from '../../components/Title';
 import { DiagramMetadataPopover } from '../../components/DiagramMetadataPopover';
 import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
