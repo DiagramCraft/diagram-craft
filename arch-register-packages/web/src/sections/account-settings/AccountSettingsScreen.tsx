@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from '../workspace-settings/WorkspaceSettingsScreen.module.css';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck } from 'react-icons/tb';
 import { Title } from '../../components/Title';
@@ -23,7 +23,7 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
 
 export const AccountSettingsScreen = () => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { section?: string };
+  const { section: rawSection } = useParams({ strict: false }) as { section: string };
   const { user, reloadUser } = useAuth();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;
@@ -34,6 +34,8 @@ export const AccountSettingsScreen = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  const section = rawSection === 'appearance' ? 'appearance' : 'profile';
+
   useEffect(() => {
     if (user) {
       setSelectedColor(user.color ?? null);
@@ -41,9 +43,18 @@ export const AccountSettingsScreen = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (rawSection !== section) {
+      navigate({
+        to: '/$workspaceSlug/account/$section',
+        params: { workspaceSlug, section },
+        replace: true
+      });
+    }
+  }, [rawSection, section, navigate, workspaceSlug]);
+
   if (!user) return null;
 
-  const section = search.section === 'appearance' ? 'appearance' : 'profile';
   const meta = SECTION_META[section] ?? SECTION_META['profile']!;
 
   const handleSave = async () => {

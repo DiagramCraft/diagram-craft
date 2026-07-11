@@ -1,3 +1,59 @@
+/* Block list */
+.blockList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 24px 32px;
+}
+
+/* Section (Block) */
+.section {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.sectionBody {
+  padding: 8px 16px 14px;
+}
+
+/* Field row */
+.field {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--panel-border);
+  align-items: flex-start;
+}
+
+.field:last-child {
+  border-bottom: 0;
+}
+
+.fieldLeft {
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--base-fg);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.fieldHint {
+  font-size: 11px;
+  margin-top: 4px;
+  line-height: 1.5;
+  max-width: 200px;
+  color: var(--cmp-fg-disabled);
+}
+
+.fieldRight {
+  min-width: 0;
+}
+
 /* Checkbox group */
 .checkboxGroup {
   display: flex;

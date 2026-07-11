@@ -1,0 +1,56 @@
+/* Block list */
+.blockList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 24px 32px;
+}
+
+.fieldLabel {
+  color: var(--base-fg);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* Danger card */
+.dangerCard {
+  background: var(--panel-bg);
+  border: 1px solid color-mix(in oklch, var(--error-fg) 30%, var(--panel-border));
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+}
+
+.dangerCardBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.dangerCardTitle {
+  color: oklch(0.72 0.16 25);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.dangerCardText {
+  color: var(--cmp-fg-disabled);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.dangerCardControls {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dangerCardActions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
