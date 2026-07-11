@@ -9,6 +9,7 @@ import { SchemaSettingsSidebar } from '../../sections/workspace-settings/SchemaS
 import { GlobalSettingsSidebar } from '../../sections/global-settings/GlobalSettingsSidebar';
 import { AccountSettingsSidebar } from '../../sections/account-settings/AccountSettingsSidebar';
 import {
+  validateAccountSettingsSearch,
   validateModelOverviewSearch,
   validateSettingsSearch,
   validateSchemaSettingsSearch
@@ -107,6 +108,7 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   const accountSettingsRoute = withWorkspaceShell(createRoute({
     getParentRoute: () => workspaceRoute,
     path: 'account',
+    validateSearch: validateAccountSettingsSearch,
     component: AccountSettingsScreen
   }), ctx => ({
     variant: 'standard',

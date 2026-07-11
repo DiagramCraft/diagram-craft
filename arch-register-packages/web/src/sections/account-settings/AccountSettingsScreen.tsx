@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from '../workspace-settings/WorkspaceSettingsScreen.module.css';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCheck } from 'react-icons/tb';
 import { Title } from '../../components/Title';
@@ -21,9 +21,11 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   },
 };
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/account');
+
 export const AccountSettingsScreen = () => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { section?: string };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const { user, reloadUser } = useAuth();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;

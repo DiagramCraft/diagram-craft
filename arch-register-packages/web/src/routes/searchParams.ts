@@ -167,6 +167,17 @@ export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSe
   analyticsView: raw.analyticsView === 'stale' ? raw.analyticsView : undefined
 });
 
+// Account settings params
+export type AccountSettingsSearchParams = {
+  section?: string;
+};
+
+export const validateAccountSettingsSearch = (
+  raw: Record<string, unknown>
+): AccountSettingsSearchParams => ({
+  section: typeof raw.section === 'string' ? raw.section : undefined
+});
+
 // Search params
 export type SearchRouteSearchParams = {
   q?: string;
