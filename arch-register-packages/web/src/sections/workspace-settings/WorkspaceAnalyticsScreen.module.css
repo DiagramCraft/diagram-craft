@@ -296,6 +296,9 @@
 
 .windowToggle {
   display: inline-flex;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
   border: 1px solid var(--panel-border);
   border-radius: var(--r-sm);
   overflow: hidden;
@@ -329,6 +332,25 @@
   gap: 2px;
   height: 84px;
   padding: 10px 16px 2px;
+}
+
+.activityChartGroup {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .activityDay,

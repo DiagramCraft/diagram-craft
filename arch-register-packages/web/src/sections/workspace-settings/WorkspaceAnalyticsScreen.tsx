@@ -178,7 +178,8 @@ const ActivityTrendsSection = ({
           <span><i className={styles.createdSwatch} />Created</span>
           <span><i className={styles.updatedSwatch} />Updated</span>
         </div>
-        <div className={styles.windowToggle} aria-label="Activity trend window">
+        <fieldset className={styles.windowToggle}>
+          <legend className={styles.visuallyHidden}>Activity trend window</legend>
           {[30, 90].map(days => (
             <button
               key={days}
@@ -190,43 +191,44 @@ const ActivityTrendsSection = ({
               {days} days
             </button>
           ))}
-        </div>
+        </fieldset>
       </div>
-      <div
-        className={styles.activityChart}
-        style={{ gridTemplateColumns: `repeat(${buckets.length}, minmax(2px, 1fr))` }}
-        role="group"
-        aria-label={`${windowDays}-day entity activity trend`}
-      >
-        {buckets.map(bucket => {
-          const total = bucket.created + bucket.updated;
-          return (
-            <div key={bucket.date} className={styles.activityDay} title={`${bucket.date}: ${bucket.created} created, ${bucket.updated} updated`}>
-              <div className={styles.activityBars}>
-                {bucket.created > 0 && (
-                  <button
-                    type="button"
-                    className={`${styles.activitySegment} ${styles.createdSegment}`}
-                    style={{ height: `${(bucket.created / maximum) * 100}%` }}
-                    aria-label={`${bucket.date}: ${bucket.created} entities created; view audit log`}
-                    onClick={() => onNavigate('create', bucket.startDate, bucket.endDate)}
-                  />
-                )}
-                {bucket.updated > 0 && (
-                  <button
-                    type="button"
-                    className={`${styles.activitySegment} ${styles.updatedSegment}`}
-                    style={{ height: `${(bucket.updated / maximum) * 100}%` }}
-                    aria-label={`${bucket.date}: ${bucket.updated} entities updated; view audit log`}
-                    onClick={() => onNavigate('update', bucket.startDate, bucket.endDate)}
-                  />
-                )}
-                {total === 0 && <span className={styles.activityEmpty} />}
+      <fieldset className={styles.activityChartGroup}>
+        <legend className={styles.visuallyHidden}>{windowDays}-day entity activity trend</legend>
+        <div
+          className={styles.activityChart}
+          style={{ gridTemplateColumns: `repeat(${buckets.length}, minmax(2px, 1fr))` }}
+        >
+          {buckets.map(bucket => {
+            const total = bucket.created + bucket.updated;
+            return (
+              <div key={bucket.date} className={styles.activityDay} title={`${bucket.date}: ${bucket.created} created, ${bucket.updated} updated`}>
+                <div className={styles.activityBars}>
+                  {bucket.created > 0 && (
+                    <button
+                      type="button"
+                      className={`${styles.activitySegment} ${styles.createdSegment}`}
+                      style={{ height: `${(bucket.created / maximum) * 100}%` }}
+                      aria-label={`${bucket.date}: ${bucket.created} entities created; view audit log`}
+                      onClick={() => onNavigate('create', bucket.startDate, bucket.endDate)}
+                    />
+                  )}
+                  {bucket.updated > 0 && (
+                    <button
+                      type="button"
+                      className={`${styles.activitySegment} ${styles.updatedSegment}`}
+                      style={{ height: `${(bucket.updated / maximum) * 100}%` }}
+                      aria-label={`${bucket.date}: ${bucket.updated} entities updated; view audit log`}
+                      onClick={() => onNavigate('update', bucket.startDate, bucket.endDate)}
+                    />
+                  )}
+                  {total === 0 && <span className={styles.activityEmpty} />}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      </fieldset>
       <div className={styles.trendRange}>{buckets[0]?.date} – {buckets.at(-1)?.date}</div>
     </Section>
   );
