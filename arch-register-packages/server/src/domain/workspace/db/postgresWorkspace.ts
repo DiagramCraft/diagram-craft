@@ -17,7 +17,19 @@ import {
   ProjectEntityTypeDbCreate
 } from './workspaceDatabase';
 import type { ImportCacheEntry } from '../importCache';
-import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  type PostgresSqlClient
+} from '../../../db/postgresBase';
+
+const withTransaction = async <T>(
+  sql: PostgresSqlClient,
+  callback: (tx: PostgresSqlClient) => Promise<T>
+) => {
+  const begin = (sql as unknown as { begin?: (fn: typeof callback) => Promise<T> }).begin;
+  return typeof begin === 'function' ? await begin.call(sql, callback) : await callback(sql);
+};
 
 export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements WorkspaceDatabase {
   async listWorkspaces() {
@@ -74,7 +86,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         SELECT id FROM project WHERE workspace = ${id}
       `;
 
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         await tx`DELETE FROM public_id_prefix WHERE owner_type = 'schema' AND owner_id IN (SELECT id FROM entity_schema WHERE workspace = ${id})`;
         await tx`DELETE FROM public_id_prefix WHERE owner_type = 'workspace' AND owner_id = ${id}`;
         await tx`DELETE FROM content_node WHERE workspace = ${id}`;
@@ -108,7 +120,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async replaceLifecycleStates(workspace: string, states: LifecycleStateDbCreate[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         const stateIds = states.map(state => state.id);
 
         if (stateIds.length === 0) {
@@ -170,7 +182,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async replaceProjectEntityTypes(workspace: string, types: ProjectEntityTypeDbCreate[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         await tx`DELETE FROM project_entity_type WHERE workspace = ${workspace}`;
         for (const type of types) {
           await tx`
@@ -196,7 +208,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async replaceTeams(workspace: string, owners: OwnerDbCreate[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         const ownerIds = owners.map(owner => owner.id);
 
         if (ownerIds.length === 0) {
@@ -244,7 +256,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async replaceTeamAssignments(workspace: string, memberships: TeamMembershipDbCreate[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         await tx`DELETE FROM team_membership WHERE workspace = ${workspace}`;
         for (const membership of memberships) {
           await tx`
