@@ -10,8 +10,8 @@ import {
   type EntityBrowserBaseViewProps,
   projectEntityMenuItems
 } from './entityBrowserViewShared';
-import { formatDateValue } from './entityBrowserState';
 import styles from '../EntityBrowserScreen.module.css';
+import { formatDate } from '../../../utils/dateFormat';
 import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 
 type DateField = Extract<EntitySchema['fields'][number], { type: 'date' }>;
@@ -130,7 +130,7 @@ export const TableView = ({
                 })}
                 {activeDateField && !fieldIds.includes(activeDateField.id) && (
                   <td>
-                    <span className="dim">{formatDateValue(entity[activeDateField.id])}</span>
+                    <span className="dim">{formatDate(entity[activeDateField.id])}</span>
                   </td>
                 )}
                 {!readOnly && (

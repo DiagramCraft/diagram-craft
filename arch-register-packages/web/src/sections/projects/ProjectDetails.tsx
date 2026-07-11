@@ -10,6 +10,7 @@ import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { formatDate } from '../../utils/dateFormat';
 
 export const ProjectDetails = ({
   project,
@@ -121,7 +122,7 @@ export const ProjectDetails = ({
           <ProjectMetaItem label="Diagrams" value={<span className="mono tabular">{allFilesCount}</span>} />
           <ProjectMetaItem label="Folders" value={<span className="mono tabular">{folderCount}</span>} />
           <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
-          <ProjectMetaItem label="Last edit" value={new Date(project.updated_at).toLocaleDateString()} />
+          <ProjectMetaItem label="Last edit" value={formatDate(project.updated_at)} />
         </>
       }
       toolbar={

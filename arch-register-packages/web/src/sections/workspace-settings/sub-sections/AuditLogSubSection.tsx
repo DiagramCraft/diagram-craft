@@ -11,6 +11,7 @@ import {
   entityDetailRoute,
   projectDetailRoute
 } from '../../../routes/publicObjectRoutes';
+import { formatRelativeTime } from '../../../utils/dateFormat';
 
 const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> = [
   { value: '', label: 'All object types' },
@@ -61,21 +62,6 @@ const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABEL
 const getEntityTypeLabel = (entityType: AuditEntityType): string => ENTITY_TYPE_LABELS[entityType];
 
 const getEntityTypeTone = (entityType: AuditEntityType): string => ENTITY_TYPE_TONES[entityType];
-
-const formatRelativeTime = (timestamp: string): string => {
-  const now = new Date();
-  const then = new Date(timestamp);
-  const diffMs = now.getTime() - then.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return then.toLocaleDateString();
-};
 
 const toInputDate = (value: string | undefined) => value?.slice(0, 10) ?? '';
 const toStartOfDay = (date: string) => new Date(`${date}T00:00:00.000Z`).toISOString();

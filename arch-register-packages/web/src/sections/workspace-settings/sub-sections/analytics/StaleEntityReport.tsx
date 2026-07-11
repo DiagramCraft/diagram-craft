@@ -6,6 +6,7 @@ import { asEntityPublicId, entityDetailRoute } from '../../../../routes/publicOb
 import styles from './WorkspaceAnalyticsScreen.module.css';
 import { EmptyState } from './analyticsPrimitives';
 import { AnalyticsTabs } from './AnalyticsTabs';
+import { formatDate } from '../../../../utils/dateFormat';
 
 export const StaleEntityReport = ({
   workspaceSlug,
@@ -95,7 +96,7 @@ export const StaleEntityReport = ({
                 >
                   <td>{entity._name}</td>
                   <td>{entity._schema.name}</td>
-                  <td>{entity._updatedAt ? new Date(entity._updatedAt).toLocaleDateString() : '—'}</td>
+                  <td>{formatDate(entity._updatedAt)}</td>
                 </tr>
               ))}
             </tbody>

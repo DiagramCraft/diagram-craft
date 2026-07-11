@@ -12,14 +12,7 @@ import {
   useUpdateDiscussionPost
 } from '../../hooks/useDiscussions';
 import styles from './DiscussionThread.module.css';
-
-const formatTimestamp = (iso: string) => {
-  const date = new Date(iso);
-  return date.toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  });
-};
+import { formatDateTime } from '../../utils/dateFormat';
 
 type ComposerProps = {
   placeholder: string;
@@ -99,8 +92,8 @@ const DiscussionPostItem = ({ post, reply, currentUserId, replying, onReply, onE
       <div className={styles.postBody}>
         <div className={styles.postHead}>
           <span className={styles.postAuthor}>{post.authorName}</span>
-          <span className={styles.postWhen}>{formatTimestamp(post.createdAt)}</span>
-          {post.editedAt && <span className={styles.postEdited}>edited {formatTimestamp(post.editedAt)}</span>}
+          <span className={styles.postWhen}>{formatDateTime(post.createdAt)}</span>
+          {post.editedAt && <span className={styles.postEdited}>edited {formatDateTime(post.editedAt)}</span>}
         </div>
 
         {editing ? (

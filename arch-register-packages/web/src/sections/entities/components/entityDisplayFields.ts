@@ -5,6 +5,7 @@ import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
 import type { BrowserEntityRecord } from './entityBrowserState';
+import { formatDate } from '../../../utils/dateFormat';
 
 export const DISPLAY_FIELD_VIEWS = new Set<BrowserView>([
   'table',
@@ -154,9 +155,6 @@ export const formatEntityDisplayValue = (
       String(value)
     );
   }
-  if (field.schemaField?.type === 'date') {
-    const date = new Date(`${String(value)}T00:00:00`);
-    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString();
-  }
+  if (field.schemaField?.type === 'date') return formatDate(value, String(value));
   return String(value);
 };

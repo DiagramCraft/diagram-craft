@@ -38,6 +38,7 @@ import {
 } from '../entities/components/entityBrowserState';
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
 import type { AsOfMarker } from '../../components/timeline/TimelineStrip';
+import { formatDate } from '../../utils/dateFormat';
 
 type ViewTab = 'entities' | 'project-entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
@@ -290,10 +291,7 @@ export const ProjectEntities = ({
             value={<span className="mono tabular">{projectEntities.length}</span>}
           />
           <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
-          <ProjectMetaItem
-            label="Last edit"
-            value={new Date(project.updated_at).toLocaleDateString()}
-          />
+          <ProjectMetaItem label="Last edit" value={formatDate(project.updated_at)} />
         </>
       }
       toolbar={
@@ -559,11 +557,6 @@ const ProjectEntitiesTab = ({
   );
 };
 
-const formatDate = (dateStr: string | null) => {
-  if (!dateStr) return null;
-  return new Date(`${dateStr}T00:00:00`).toLocaleDateString();
-};
-
 const FutureChangesTab = ({
   project,
   futureSnapshots,
@@ -657,7 +650,7 @@ const FutureChangesTab = ({
       <div className={styles.futureChangesGroups}>
         {sortedKeys.map(key => {
           const snaps = groups.get(key)!;
-          const label = key === '__no-date__' ? 'No target date' : (formatDate(key) ?? key);
+          const label = key === '__no-date__' ? 'No target date' : formatDate(key, key);
           return (
             <div key={key} className={styles.futureGroup}>
               <div className={styles.futureGroupHead}>

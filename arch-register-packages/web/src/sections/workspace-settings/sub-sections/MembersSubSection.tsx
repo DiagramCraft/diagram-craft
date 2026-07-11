@@ -8,6 +8,7 @@ import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { useAuth } from '../../../auth/AuthContext';
 import { getUserLabel } from '../../../utils/userLabel';
+import { formatDate } from '../../../utils/dateFormat';
 import {
   useWorkspaceMembers,
   useWorkspaceUsers,
@@ -253,7 +254,7 @@ export const MembersSubSection = ({
                       )}
                     </td>
                     <td className={styles.dim}>
-                      {new Date(member.created_at).toLocaleDateString()}
+                      {formatDate(member.created_at)}
                     </td>
                   </tr>
                 );
