@@ -9,13 +9,13 @@ export interface StorageAdapter {
   write(workspace: string, projectId: string, fileId: string, content: Buffer): Promise<void>;
   delete(workspace: string, projectId: string, fileId: string): Promise<void>;
   deleteAll(workspace: string, projectId: string): Promise<void>;
-  stageWrite?(
+  stageWrite(
     workspace: string,
     projectId: string,
     fileId: string,
     content: Buffer
   ): Promise<StagedStorageMutation>;
-  stageDelete?(
+  stageDelete(
     workspace: string,
     projectId: string,
     fileId: string

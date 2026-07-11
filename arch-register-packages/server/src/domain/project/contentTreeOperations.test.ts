@@ -115,7 +115,12 @@ describe.each(cases)('deleteContentFolder ($name scope)', ({
   it('deletes matching content nodes, their storage blobs, and logs an audit entry', async () => {
     const db = makeDb();
     const storage = {
-      delete: vi.fn(async () => {})
+      delete: vi.fn(async () => {}),
+      stageDelete: vi.fn(async (workspace: string, storageId: string, nodeId: string) => ({
+        commit: () => storage.delete(workspace, storageId, nodeId),
+        rollback: async () => {},
+        finalize: async () => {}
+      }))
     } as unknown as StorageAdapter;
 
     const result = await deleteContentFolder(
