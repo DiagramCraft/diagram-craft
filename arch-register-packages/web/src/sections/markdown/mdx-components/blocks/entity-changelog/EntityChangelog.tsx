@@ -5,6 +5,7 @@ import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
 import type { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import styles from './EntityChangelog.module.css';
+import { formatRelativeTime } from '../../../../../utils/dateFormat';
 
 const OPERATION_LABELS: Record<string, string> = {
   create: 'created',
@@ -23,18 +24,6 @@ const parseSince = (since: string | undefined): string | undefined => {
 const parseLimit = (limit: string | undefined): number => {
   const n = limit ? parseInt(limit, 10) : 10;
   return Math.min(Math.max(Number.isFinite(n) ? n : 10, 1), 50);
-};
-
-const formatRelative = (isoDate: string) => {
-  const diffMs = Date.now() - new Date(isoDate).getTime();
-  const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  return new Date(isoDate).toLocaleDateString();
 };
 
 const changedFields = (entry: AuditLogEntry): string[] => {
@@ -123,7 +112,7 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
             return (
               <tr key={entry.id}>
                 <td className={styles.td}>
-                  <span title={entry.timestamp}>{formatRelative(entry.timestamp)}</span>
+                  <span title={entry.timestamp}>{formatRelativeTime(entry.timestamp)}</span>
                 </td>
                 <td className={styles.td}>
                   {entry.public_id ? (
