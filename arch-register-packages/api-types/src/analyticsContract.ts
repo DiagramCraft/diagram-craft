@@ -44,6 +44,14 @@ const schemaCoverageSchema = z.object({
   lifecycleBuckets: z.array(schemaLifecycleBucketSchema).describe('Breakdown by lifecycle state')
 });
 
+const activityTrendBucketSchema = z.object({
+  date: z.string().describe('UTC calendar date for this activity bucket (YYYY-MM-DD)'),
+  startDate: z.string().describe('Inclusive ISO 8601 start timestamp for this bucket'),
+  endDate: z.string().describe('Inclusive ISO 8601 end timestamp for this bucket'),
+  created: z.number().int().describe('Number of entities created during this bucket'),
+  updated: z.number().int().describe('Number of entities updated during this bucket')
+});
+
 const analyticsResponseSchema = z.object({
   summary: z.object({
     totalEntities: z.number().int().describe('Total number of entities in the workspace'),
@@ -54,7 +62,11 @@ const analyticsResponseSchema = z.object({
   coverage: z.array(schemaCoverageSchema).describe('Schema coverage analysis by lifecycle state'),
   ownershipGaps: z.array(schemaOwnershipGapSchema).describe('Analysis of entities missing owners by schema'),
   completeness: z.array(schemaCompletenessSchema).describe('Analysis of entity field completeness by schema'),
-  schemaUtilization: z.array(schemaCountSchema).describe('Number of entities per schema')
+  schemaUtilization: z.array(schemaCountSchema).describe('Number of entities per schema'),
+  activityTrends: z.object({
+    days30: z.array(activityTrendBucketSchema).describe('Daily entity create/update activity for the last 30 days'),
+    days90: z.array(activityTrendBucketSchema).describe('Daily entity create/update activity for the last 90 days')
+  }).describe('Entity activity trends derived from audit history')
 });
 
 export const workspaceAnalyticsContract = oc
@@ -81,4 +93,5 @@ export type SchemaCountAnalytics = z.infer<typeof schemaCountSchema>;
 export type SchemaOwnershipGapAnalytics = z.infer<typeof schemaOwnershipGapSchema>;
 export type SchemaCompletenessAnalytics = z.infer<typeof schemaCompletenessSchema>;
 export type SchemaCoverageAnalytics = z.infer<typeof schemaCoverageSchema>;
+export type ActivityTrendBucket = z.infer<typeof activityTrendBucketSchema>;
 export type WorkspaceAnalytics = z.infer<typeof analyticsResponseSchema>;

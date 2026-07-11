@@ -47,3 +47,15 @@ export const completenessSearch = (schemaId: string, bucket: 'below50' | 'betwee
             { fieldId: '_completeness', op: 'lt', value: 80 }
           ]
   });
+
+export const activityAuditSearch = (
+  operation: 'create' | 'update',
+  startDate: string,
+  endDate: string
+) => ({
+  section: 'audit',
+  auditEntityType: 'entity',
+  auditOperation: operation,
+  auditStartDate: startDate,
+  auditEndDate: endDate
+});

@@ -141,10 +141,21 @@ export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSear
 // Settings params
 export type SettingsSearchParams = {
   section?: string;
+  auditEntityType?: string;
+  auditOperation?: 'create' | 'update' | 'delete';
+  auditStartDate?: string;
+  auditEndDate?: string;
 };
 
 export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSearchParams => ({
   section: typeof raw.section === 'string' ? raw.section : undefined,
+  auditEntityType: typeof raw.auditEntityType === 'string' ? raw.auditEntityType : undefined,
+  auditOperation:
+    raw.auditOperation === 'create' || raw.auditOperation === 'update' || raw.auditOperation === 'delete'
+      ? raw.auditOperation
+      : undefined,
+  auditStartDate: typeof raw.auditStartDate === 'string' ? raw.auditStartDate : undefined,
+  auditEndDate: typeof raw.auditEndDate === 'string' ? raw.auditEndDate : undefined,
 });
 
 // Search params

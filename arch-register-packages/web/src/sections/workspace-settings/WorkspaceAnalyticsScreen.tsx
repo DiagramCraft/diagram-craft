@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import type { WorkspaceAnalytics } from '@arch-register/api-types/analyticsContract';
 import { useWorkspaceAnalytics } from '../../hooks/useWorkspaceAnalytics';
@@ -6,6 +7,7 @@ import type { EntitySearchParams } from '../../routes/searchParams';
 import styles from './WorkspaceAnalyticsScreen.module.css';
 import {
   completenessSearch,
+  activityAuditSearch,
   lifecycleSearch,
   ownershipGapSearch,
   schemaLifecycleSearch
@@ -156,6 +158,78 @@ const LifecycleSection = ({
   </Section>
 );
 
+const ActivityTrendsSection = ({
+  analytics,
+  onNavigate
+}: {
+  analytics: WorkspaceAnalytics;
+  onNavigate: (operation: 'create' | 'update', startDate: string, endDate: string) => void;
+}) => {
+  const [windowDays, setWindowDays] = useState<30 | 90>(30);
+  const buckets = windowDays === 30 ? analytics.activityTrends.days30 : analytics.activityTrends.days90;
+  const maximum = Math.max(1, ...buckets.map(bucket => bucket.created + bucket.updated));
+
+  return (
+    <Section title="Activity trends" sub="Entity create and update activity from audit history.">
+      <div className={styles.trendControls}>
+        <div className={styles.trendLegend}>
+          <span><i className={styles.createdSwatch} />Created</span>
+          <span><i className={styles.updatedSwatch} />Updated</span>
+        </div>
+        <div className={styles.windowToggle} aria-label="Activity trend window">
+          {[30, 90].map(days => (
+            <button
+              key={days}
+              type="button"
+              className={windowDays === days ? styles.windowToggleActive : undefined}
+              aria-pressed={windowDays === days}
+              onClick={() => setWindowDays(days as 30 | 90)}
+            >
+              {days} days
+            </button>
+          ))}
+        </div>
+      </div>
+      <div
+        className={styles.activityChart}
+        style={{ gridTemplateColumns: `repeat(${buckets.length}, minmax(2px, 1fr))` }}
+        role="group"
+        aria-label={`${windowDays}-day entity activity trend`}
+      >
+        {buckets.map(bucket => {
+          const total = bucket.created + bucket.updated;
+          return (
+            <div key={bucket.date} className={styles.activityDay} title={`${bucket.date}: ${bucket.created} created, ${bucket.updated} updated`}>
+              <div className={styles.activityBars}>
+                {bucket.created > 0 && (
+                  <button
+                    type="button"
+                    className={`${styles.activitySegment} ${styles.createdSegment}`}
+                    style={{ height: `${(bucket.created / maximum) * 100}%` }}
+                    aria-label={`${bucket.date}: ${bucket.created} entities created; view audit log`}
+                    onClick={() => onNavigate('create', bucket.startDate, bucket.endDate)}
+                  />
+                )}
+                {bucket.updated > 0 && (
+                  <button
+                    type="button"
+                    className={`${styles.activitySegment} ${styles.updatedSegment}`}
+                    style={{ height: `${(bucket.updated / maximum) * 100}%` }}
+                    aria-label={`${bucket.date}: ${bucket.updated} entities updated; view audit log`}
+                    onClick={() => onNavigate('update', bucket.startDate, bucket.endDate)}
+                  />
+                )}
+                {total === 0 && <span className={styles.activityEmpty} />}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className={styles.trendRange}>{buckets[0]?.date} – {buckets.at(-1)?.date}</div>
+    </Section>
+  );
+};
+
 export const WorkspaceAnalyticsScreen = () => {
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
@@ -166,6 +240,13 @@ export const WorkspaceAnalyticsScreen = () => {
       to: '/$workspaceSlug/entities',
       params: { workspaceSlug },
       search
+    });
+
+  const navigateToActivity = (operation: 'create' | 'update', startDate: string, endDate: string) =>
+    navigate({
+      to: '/$workspaceSlug/settings',
+      params: { workspaceSlug },
+      search: activityAuditSearch(operation, startDate, endDate)
     });
 
   if (isLoading) return <EmptyState text="Loading analytics…" />;
@@ -190,6 +271,8 @@ export const WorkspaceAnalyticsScreen = () => {
           sub="Using the existing completeness score"
         />
       </div>
+
+      <ActivityTrendsSection analytics={analytics} onNavigate={navigateToActivity} />
 
       <LifecycleSection analytics={analytics} onNavigate={navigateToEntities} />
 
