@@ -5,11 +5,13 @@ import type { AuthDatabase } from '../db/database';
 import type { JWTPayload } from '../types';
 import { httpAssert } from '../utils/httpAssert';
 import { UserDbResult } from '../domain/auth/db/authDatabase';
+import type { AuthorizationContext } from '@arch-register/permissions';
 
 export type AuthenticatedEvent = H3Event & {
   context: {
     user: UserDbResult;
     token: JWTPayload;
+    authorizationContextCache?: Map<string, Promise<AuthorizationContext>>;
   };
 };
 
