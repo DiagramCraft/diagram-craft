@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbSparkles, TbPlus, TbMessageCircle, TbDots, TbPencil, TbTrash } from 'react-icons/tb';
@@ -521,11 +521,13 @@ const ChatHistory = ({
 
 // ── Main Screen ──
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/assistant');
+
 export const AssistantScreen = () => {
   const { workspaceSlug, teams } = useWorkspaceContext();
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { conversation?: string };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const queryClient = useQueryClient();
 
   const [draft, setDraft] = useState('');
