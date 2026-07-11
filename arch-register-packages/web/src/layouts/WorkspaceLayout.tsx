@@ -33,6 +33,7 @@ import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { navigateFromRailItem, resolveWorkspaceShellDescriptor } from './workspaceShellDescriptors';
 import type { WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
+import { settingsSectionTarget } from '../routes/settingsNavigation';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -143,11 +144,7 @@ export const WorkspaceLayout = () => {
 
   const handleOpenSettings = useCallback(() => {
     if (defaultSettingsSection) {
-      navigate({
-        to: '/$workspaceSlug/settings',
-        params: { workspaceSlug },
-        search: { section: defaultSettingsSection }
-      });
+      navigate(settingsSectionTarget(workspaceSlug, defaultSettingsSection));
     }
   }, [defaultSettingsSection, navigate, workspaceSlug]);
 

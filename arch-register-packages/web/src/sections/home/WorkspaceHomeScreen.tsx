@@ -292,9 +292,8 @@ export const WorkspaceHomeScreen = () => {
                     className={styles.link}
                     onClick={() =>
                       navigate({
-                        to: '/$workspaceSlug/settings',
-                        params: { workspaceSlug },
-                        search: { section: 'audit' }
+                        to: '/$workspaceSlug/settings/$section',
+                        params: { workspaceSlug, section: 'audit' }
                       })
                     }
                   >
