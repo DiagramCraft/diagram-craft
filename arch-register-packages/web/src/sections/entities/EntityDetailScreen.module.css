@@ -169,51 +169,6 @@
   color: var(--base-fg);
 }
 
-/* Relations */
-.relationsPage {
-  padding: 16px 24px 32px;
-}
-
-.relationsList {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-
-.relation {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: var(--r);
-  text-align: left;
-  color: var(--base-fg-dim);
-  background: var(--base-bg);
-  border: 1px solid var(--panel-border);
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.relation:hover {
-  border-color: var(--base-fg-more-dim);
-}
-
-.relationLead {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.relationName {
-  color: var(--base-fg);
-  font-weight: 500;
-  min-width: 0;
-}
-
-
 /* Empty state */
 .empty {
   display: flex;

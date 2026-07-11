@@ -6,16 +6,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../components/TypeBadge';
 import { StatusChip } from '../../components/StatusChip';
 import { Chip } from '../../components/Chip';
-import {
-  TbChevronLeft,
-  TbChevronRight,
-  TbEdit,
-  TbDots,
-  TbTrash,
-  TbCopy,
-  TbBell,
-  TbPinned
-} from 'react-icons/tb';
+import { TbChevronLeft, TbEdit, TbDots, TbTrash, TbCopy, TbBell, TbPinned } from 'react-icons/tb';
 import { getRelationDisplayLabel } from '../../lib/entityRelations';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
@@ -49,6 +40,7 @@ import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContra
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntityContentView } from './EntityContentView';
 import { EntityOverviewTab } from './components/EntityOverviewTab';
+import { EntityRelationsTab } from './components/EntityRelationsTab';
 import { EntityTimelineTab } from './components/EntityTimelineTab';
 import { EntityChangeHistoryTab } from './components/EntityChangeHistoryTab';
 import { Title } from '../../components/Title';
@@ -530,51 +522,12 @@ export const EntityDetailScreen = () => {
 
       {/* Relationships */}
       {!contentFolder && tab === 'relations' && (
-        <div className={styles.relationsPage}>
-          {relationCount === 0 ? (
-            <div className={styles.empty}>
-              <div className={styles.emptyTitle}>No relationships</div>
-              <div>Add reference or containment fields to connect entities.</div>
-            </div>
-          ) : (
-            <>
-              <div className={styles.sectionLabel}>Outgoing ({outgoing.length})</div>
-              <div className={styles.relationsList}>
-                {outgoing.map((r, i) => (
-                  <RelationRow
-                    key={`o-${i}`}
-                    relation={r}
-                    direction="outgoing"
-                    schemas={schemas}
-                    onEntityClick={navigateToEntity}
-                  />
-                ))}
-                {outgoing.length === 0 && (
-                  <div className={styles.dim} style={{ padding: 8 }}>
-                    None
-                  </div>
-                )}
-              </div>
-              <div className={styles.sectionLabel}>Incoming ({incoming.length})</div>
-              <div className={styles.relationsList}>
-                {incoming.map((r, i) => (
-                  <RelationRow
-                    key={`i-${i}`}
-                    relation={r}
-                    direction="incoming"
-                    schemas={schemas}
-                    onEntityClick={navigateToEntity}
-                  />
-                ))}
-                {incoming.length === 0 && (
-                  <div className={styles.dim} style={{ padding: 8 }}>
-                    None
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+        <EntityRelationsTab
+          outgoing={outgoing}
+          incoming={incoming}
+          schemas={schemas}
+          onEntityClick={navigateToEntity}
+        />
       )}
 
       {/* Dependents (impact analysis) */}
@@ -673,63 +626,6 @@ export const EntityDetailScreen = () => {
         onCancel={() => setConfirmDelete(false)}
       />
     </div>
-  );
-};
-
-const RelationRow = ({
-  relation,
-  direction,
-  schemas,
-  onEntityClick
-}: {
-  relation: Relation;
-  direction: 'outgoing' | 'incoming';
-  schemas: EntitySchema[];
-  onEntityClick: (entityId: string) => void;
-}) => {
-  const targetSchemaId =
-    direction === 'outgoing' ? relation.entitySchemaId : relation.entitySchemaId;
-  const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
-  const targetSchema = schemaIdx >= 0 ? schemas[schemaIdx] : null;
-  const targetColor = targetSchema
-    ? resolveSchemaColor(targetSchema, schemaIdx)
-    : 'var(--accent-fg)';
-
-  return (
-    <button
-      type="button"
-      className={styles.relation}
-      onClick={() => onEntityClick(relation.publicId)}
-    >
-      <span className={styles.relationLead}>
-        {direction === 'incoming' ? (
-          <>
-            <TypeBadge
-              color={targetColor}
-              name={targetSchema?.name}
-              icon={targetSchema?.icon}
-              size={16}
-            />
-            <span className={styles.relationName}>{relation.entityName}</span>
-            <TbChevronRight size={10} className={styles.dim} />
-            <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
-          </>
-        ) : (
-          <>
-            <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
-            <TbChevronRight size={10} className={styles.dim} />
-            <TypeBadge
-              color={targetColor}
-              name={targetSchema?.name}
-              icon={targetSchema?.icon}
-              size={16}
-            />
-            <span className={styles.relationName}>{relation.entityName}</span>
-          </>
-        )}
-      </span>
-      <span className={styles.dim}>{relation.entitySlug}</span>
-    </button>
   );
 };
 
