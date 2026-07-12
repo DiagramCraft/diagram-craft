@@ -11,7 +11,6 @@ import {
   dateToTimelinePx,
   formatTimelineDate,
   getTodayTimelinePx,
-  parseTimelineDate,
   type TimelineColumnWidths
 } from '../../../components/timeline/timelineUtils';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
@@ -25,14 +24,9 @@ import { useEntitySnapshots } from '../../../hooks/useSnapshots';
 import { EmptyState } from '../../../components/EmptyState';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import { normalizeViewConfig } from './entityViewConfig';
+import { getDateFields, getDateValue as sharedGetDateValue, getRawDateValue as sharedGetRawDateValue, type FieldOption } from './entityFieldSources';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
-type TimelineDateField = {
-  id: string;
-  name: string;
-  isMetadata: boolean;
-};
 
 export type TimelineConfig = {
   startFieldId: string | null;
@@ -46,40 +40,24 @@ export type TimelineConfig = {
 const TL_LABEL_W = 252;
 const TL_COL_W: TimelineColumnWidths = { month: 76, quarter: 106, year: 142 };
 
-const METADATA_DATE_FIELDS: TimelineDateField[] = [
-  { id: '_targetLifecycleDate', name: 'Target Lifecycle Date', isMetadata: true }
-];
+const METADATA_DATE_FIELDS: FieldOption[] = [{ id: '_targetLifecycleDate', label: 'Target Lifecycle Date' }];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+//
+// entityFieldSources.ts's date helpers already resolve `_targetLifecycleDate` correctly via
+// plain bracket access (it's a real EntityRecord field), so these wrappers only need to handle
+// the nullable fieldId that TimelineConfig allows.
 
-const getDateValue = (entity: EntityRecord, fieldId: string | null): Date | null => {
-  if (!fieldId) return null;
-  if (fieldId === '_targetLifecycleDate') return parseTimelineDate(entity._targetLifecycleDate);
-  return parseTimelineDate(entity[fieldId]);
-};
+const getDateValue = (entity: EntityRecord, fieldId: string | null): Date | null =>
+  fieldId ? sharedGetDateValue(entity, fieldId) : null;
 
-const getRawDateValue = (entity: EntityRecord, fieldId: string | null): unknown => {
-  if (!fieldId) return null;
-  if (fieldId === '_targetLifecycleDate') return entity._targetLifecycleDate;
-  return entity[fieldId];
-};
+const getRawDateValue = (entity: EntityRecord, fieldId: string | null): unknown =>
+  fieldId ? sharedGetRawDateValue(entity, fieldId) : null;
 
 // ── Date field collection ─────────────────────────────────────────────────────
 
-const useDateFieldOptions = (schemas: EntitySchema[]): TimelineDateField[] =>
-  useMemo(() => {
-    const seen = new Set<string>();
-    const schemaFields: TimelineDateField[] = [];
-    for (const schema of schemas) {
-      for (const field of schema.fields) {
-        if (field.type === 'date' && !seen.has(field.id)) {
-          seen.add(field.id);
-          schemaFields.push({ id: field.id, name: field.name, isMetadata: false });
-        }
-      }
-    }
-    return [...schemaFields, ...METADATA_DATE_FIELDS];
-  }, [schemas]);
+const useDateFieldOptions = (schemas: EntitySchema[]): FieldOption[] =>
+  useMemo(() => getDateFields(schemas, METADATA_DATE_FIELDS), [schemas]);
 
 // ── Snap status badge ─────────────────────────────────────────────────────────
 
@@ -421,7 +399,7 @@ const ConfigBar = ({
 }: {
   cfg: TimelineConfig;
   onChange: (update: Partial<TimelineConfig>) => void;
-  dateFields: TimelineDateField[];
+  dateFields: FieldOption[];
   totalDated: number;
   totalRows: number;
 }) => (
@@ -434,7 +412,7 @@ const ConfigBar = ({
       onChange={v => onChange({ startFieldId: v || null })}
       options={[
         { value: '', label: '— none —' },
-        ...dateFields.map(f => ({ value: f.id, label: f.name }))
+        ...dateFields.map(f => ({ value: f.id, label: f.label }))
       ]}
     />
 
@@ -446,7 +424,7 @@ const ConfigBar = ({
       onChange={v => onChange({ endFieldId: v || null })}
       options={[
         { value: '', label: '— none —' },
-        ...dateFields.map(f => ({ value: f.id, label: f.name }))
+        ...dateFields.map(f => ({ value: f.id, label: f.label }))
       ]}
     />
 
@@ -501,7 +479,7 @@ const DetailPanel = ({
   entity: EntityRecord | null;
   isLinked: boolean;
   cfg: TimelineConfig;
-  dateFields: TimelineDateField[];
+  dateFields: FieldOption[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   onOpen: () => void;
   onClose: () => void;
@@ -543,14 +521,14 @@ const DetailPanel = ({
           <div className={styles.detailBody}>
             {!isMilestone && startField && !!startVal && (
               <div className={styles.detailField}>
-                <div className={styles.detailFieldLabel}>{startField.name}</div>
+                <div className={styles.detailFieldLabel}>{startField.label}</div>
                 <div className={styles.detailFieldValue}>{formatTimelineDate(startVal)}</div>
               </div>
             )}
             {endField && !!endVal && (
               <div className={styles.detailField}>
                 <div className={styles.detailFieldLabel}>
-                  {isMilestone ? `Target (${endField.name})` : endField.name}
+                  {isMilestone ? `Target (${endField.label})` : endField.label}
                 </div>
                 <div className={styles.detailFieldValue}>{formatTimelineDate(endVal)}</div>
               </div>

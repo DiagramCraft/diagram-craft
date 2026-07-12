@@ -9,9 +9,12 @@ import {
   getCategoricalFields,
   getCategoricalFieldValues,
   getCategoricalValue,
+  getDateFields,
+  getDateValue,
   getNumericFields,
   getNumericValue,
   getNumericFieldRange,
+  getRawDateValue,
   LIFECYCLE_FIELD_ID,
   OWNER_FIELD_ID
 } from './entityFieldSources';
@@ -31,7 +34,8 @@ const schema = {
         { value: 'dev', label: 'Development' }
       ]
     },
-    { id: 'score', name: 'Score', type: 'number', min: 0, max: 10 }
+    { id: 'score', name: 'Score', type: 'number', min: 0, max: 10 },
+    { id: 'launched', name: 'Launched', type: 'date' }
   ]
 } as EntitySchema;
 
@@ -198,5 +202,35 @@ describe('getNumericFieldRange', () => {
     const entities = [{ unscored: 3 }, { unscored: 7 }] as unknown as EntityRecord[];
     const range = getNumericFieldRange([], 'unscored', undefined, entities);
     expect(range).toEqual({ min: 3, max: 7 });
+  });
+});
+
+describe('getDateFields', () => {
+  it('unions date-typed fields across schemas and appends extra pseudo-fields', () => {
+    const duplicate = { ...schema, id: 'app', name: 'Application' };
+    const fields = getDateFields([schema, duplicate], [{ id: '_targetLifecycleDate', label: 'Target Lifecycle Date' }]);
+    expect(fields).toEqual([
+      { id: 'launched', label: 'Launched' },
+      { id: '_targetLifecycleDate', label: 'Target Lifecycle Date' }
+    ]);
+  });
+});
+
+describe('getDateValue / getRawDateValue', () => {
+  it('parses a schema-field date value', () => {
+    const entity = { launched: '2024-01-15' } as unknown as EntityRecord;
+    expect(getRawDateValue(entity, 'launched')).toBe('2024-01-15');
+    expect(getDateValue(entity, 'launched')).toEqual(new Date('2024-01-15T00:00:00'));
+  });
+
+  it('resolves the target lifecycle date pseudo-field via plain property access', () => {
+    const entity = { _targetLifecycleDate: '2025-06-01' } as unknown as EntityRecord;
+    expect(getRawDateValue(entity, '_targetLifecycleDate')).toBe('2025-06-01');
+    expect(getDateValue(entity, '_targetLifecycleDate')).toEqual(new Date('2025-06-01T00:00:00'));
+  });
+
+  it('returns null for a missing or unparseable value', () => {
+    const entity = { launched: null } as unknown as EntityRecord;
+    expect(getDateValue(entity, 'launched')).toBeNull();
   });
 });

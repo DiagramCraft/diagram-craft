@@ -6,6 +6,7 @@ import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserEntityRecord } from './entityBrowserState';
+import { parseTimelineDate } from '../../../components/timeline/timelineUtils';
 
 export const LIFECYCLE_FIELD_ID = '_lifecycle';
 export const OWNER_FIELD_ID = '_owner';
@@ -144,6 +145,30 @@ export const getNumericValue = (entity: EntityRecord, fieldId: string): number |
   const val = entity[fieldId];
   return typeof val === 'number' ? val : null;
 };
+
+/**
+ * Date-typed fields selectable for a date mapping. `extraFields` lets callers append
+ * view-specific pseudo-fields (e.g. TimelineView's "Target Lifecycle Date") that aren't a
+ * declared schema field.
+ */
+export const getDateFields = (schemas: EntitySchema[], extraFields: FieldOption[] = []): FieldOption[] => {
+  const seen = new Set<string>();
+  const dateFields: FieldOption[] = [];
+  schemas.forEach(schema => {
+    schema.fields.forEach(f => {
+      if (f.type === 'date' && !seen.has(f.id)) {
+        seen.add(f.id);
+        dateFields.push({ id: f.id, label: f.name });
+      }
+    });
+  });
+  return [...dateFields, ...extraFields];
+};
+
+export const getRawDateValue = (entity: EntityRecord, fieldId: string): unknown => entity[fieldId];
+
+export const getDateValue = (entity: EntityRecord, fieldId: string): Date | null =>
+  parseTimelineDate(getRawDateValue(entity, fieldId));
 
 export const getNumericFieldRange = (
   schemas: EntitySchema[],
