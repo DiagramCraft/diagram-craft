@@ -7,11 +7,8 @@ import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntityContentNodes } from '../../../../../hooks/useProjects';
-import {
-  useProjectFiles,
-  useWorkspaceContentNodes,
-  useCreateMarkdownDiagramAttachment
-} from '../../../../../hooks/useProjectFiles';
+import { useFiles } from '../../../../../hooks/useFileOperations';
+import { useCreateMarkdownDiagramAttachment } from '../../../../../hooks/useAttachments';
 import { emptyDiagram } from '../../../../../lib/diagramDocuments';
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
@@ -53,11 +50,16 @@ export const DiagramEmbedDialog = ({
   const { data: entityFiles } = useEntityContentNodes(workspaceSlug, entityId ?? '', {
     enabled: !!entityId
   });
-  // useProjectFiles is naturally disabled when projectId is '' (its own enabled guard)
-  const { data: projectFiles } = useProjectFiles(workspaceSlug, projectId ?? '');
-  const { data: workspaceFiles } = useWorkspaceContentNodes(workspaceSlug, {
-    enabled: !projectId && !entityId
+  // useFiles is naturally disabled when projectId is '' (its own enabled guard)
+  const { data: projectFiles } = useFiles({
+    kind: 'project',
+    workspaceId: workspaceSlug,
+    projectId: projectId ?? ''
   });
+  const { data: workspaceFiles } = useFiles(
+    { kind: 'workspace', workspaceId: workspaceSlug },
+    { enabled: !projectId && !entityId }
+  );
   const createDiagramAttachment = useCreateMarkdownDiagramAttachment(
     workspaceSlug,
     nodeId ?? '',

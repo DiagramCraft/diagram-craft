@@ -22,17 +22,18 @@ import {
   useRemoveProjectEntity
 } from '../../hooks/useProjects';
 import {
-  useDeleteProjectFile,
-  useDeleteProjectFolder,
-  useRenameProjectFolder,
-  useCloneProjectFile,
-  useRenameProjectFile,
-  useRenameProjectBinaryFile,
-  useMoveProjectFile,
-  useToggleTemplateStatus,
-  useCreateProjectMarkdown,
-  useUploadProjectFile
-} from '../../hooks/useProjectFiles';
+  useDeleteFile,
+  useDeleteFolder,
+  useRenameFolder,
+  useCloneFile,
+  useRenameFile,
+  useRenameBinaryFile,
+  useMoveFile,
+  useUploadFile
+} from '../../hooks/useFileOperations';
+import { useToggleTemplateStatus } from '../../hooks/useTemplates';
+import { useCreateMarkdown } from '../../hooks/useMarkdownContent';
+import type { ContentScope } from '../../hooks/contentScope';
 import {
   asProjectPublicId,
   projectDetailRoute,
@@ -104,16 +105,20 @@ export const ProjectDetailScreen = () => {
   const updateProject = useUpdateProject(workspaceId);
 
   // File mutation hooks
-  const deleteFileMutation = useDeleteProjectFile(workspaceId, projectId);
-  const deleteFolderMutation = useDeleteProjectFolder(workspaceId, projectId);
-  const renameFolderMutation = useRenameProjectFolder(workspaceId, projectId);
-  const cloneFileMutation = useCloneProjectFile(workspaceId, projectId);
-  const renameFileMutation = useRenameProjectFile(workspaceId, projectId);
-  const renameBinaryFileMutation = useRenameProjectBinaryFile(workspaceId, projectId);
-  const moveFileMutation = useMoveProjectFile(workspaceId, projectId);
+  const scope: ContentScope = useMemo(
+    () => ({ kind: 'project', workspaceId, projectId }),
+    [workspaceId, projectId]
+  );
+  const deleteFileMutation = useDeleteFile(scope);
+  const deleteFolderMutation = useDeleteFolder(scope);
+  const renameFolderMutation = useRenameFolder(scope);
+  const cloneFileMutation = useCloneFile(scope);
+  const renameFileMutation = useRenameFile(scope);
+  const renameBinaryFileMutation = useRenameBinaryFile(scope);
+  const moveFileMutation = useMoveFile(scope);
   const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
-  const createMarkdownMutation = useCreateProjectMarkdown(workspaceId, projectId);
-  const uploadFileMutation = useUploadProjectFile(workspaceId, projectId);
+  const createMarkdownMutation = useCreateMarkdown(scope);
+  const uploadFileMutation = useUploadFile(scope);
   const mainAreaFileInputRef = useRef<HTMLInputElement>(null);
 
   // Entity hooks

@@ -4,13 +4,8 @@ import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../../lib/http';
-import {
-  useCreateDiagramFile,
-  useProjectTemplates,
-  useCreateDiagramFromTemplate,
-  useWorkspaceOnlyTemplates,
-  useCreateWorkspaceDiagram
-} from '../../hooks/useProjectFiles';
+import { useCreateDiagram, useCreateDiagramFromTemplate } from '../../hooks/useFileOperations';
+import { useProjectTemplates, useWorkspaceOnlyTemplates } from '../../hooks/useTemplates';
 import {
   useCreateEntityDiagram,
   useCreateEntityDiagramFromTemplate
@@ -125,7 +120,7 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
     useWorkspaceOnlyTemplates(workspaceId);
 
   // Project creation mutations (no-ops when projectId is empty due to enabled checks)
-  const createDiagramMutation = useCreateDiagramFile(workspaceId, projectId);
+  const createDiagramMutation = useCreateDiagram({ kind: 'project', workspaceId, projectId });
   const createFromTemplateMutation = useCreateDiagramFromTemplate(workspaceId, projectId);
 
   // Entity creation mutations (unused when entityId is empty)
@@ -133,7 +128,7 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
   const createEntityFromTemplateMutation = useCreateEntityDiagramFromTemplate(workspaceId, entityId);
 
   // Workspace creation mutation
-  const createWorkspaceDiagramMutation = useCreateWorkspaceDiagram(workspaceId);
+  const createWorkspaceDiagramMutation = useCreateDiagram({ kind: 'workspace', workspaceId });
 
   const allTemplates =
     props.context === 'project'

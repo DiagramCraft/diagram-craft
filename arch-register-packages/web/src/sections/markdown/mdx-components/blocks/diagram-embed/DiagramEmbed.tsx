@@ -13,7 +13,7 @@ import { Marquee } from '@diagram-craft/canvas/marquee';
 import type { Context } from '@diagram-craft/canvas/context';
 import type { ToolType } from '@diagram-craft/canvas/tool';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { useProjectFile, useProjectFileContent } from '../../../../../hooks/useProjectFiles';
+import { useProjectFile, useProjectFileContent } from '../../../../../hooks/useFileOperations';
 import { initializeDiagramCraft } from '../../../../../diagramcraft-initial-config';
 import {
   asEntityPublicId,

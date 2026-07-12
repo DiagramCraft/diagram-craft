@@ -5,14 +5,8 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { FolderPickerTree } from '../../../components/FolderPickerTree';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { useProjectFiles } from '../../../hooks/useProjectFiles';
-import { useEntityContentNodes } from '../../../hooks/useProjects';
-import {
-  useWorkspaceContentNodes,
-  useCreateWorkspaceDiagramWithContent,
-  useCreateProjectDiagramWithContent
-} from '../../../hooks/useProjectFiles';
-import { useCreateEntityDiagramWithContent } from '../../../hooks/useProjects';
+import { useFiles, useCreateDiagram } from '../../../hooks/useFileOperations';
+import { useEntityContentNodes, useCreateEntityDiagramWithContent } from '../../../hooks/useProjects';
 import { useEntities } from '../../../hooks/useEntities';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
@@ -88,10 +82,15 @@ export const SaveDiagramFromGraphDialog = ({
   const effectiveProjectId = selectedProjectId;
 
   // Fetch folders for the active destination
-  const { data: workspaceContent } = useWorkspaceContentNodes(workspaceId, {
-    enabled: destType === 'workspace'
+  const { data: workspaceContent } = useFiles(
+    { kind: 'workspace', workspaceId },
+    { enabled: destType === 'workspace' }
+  );
+  const { data: projectContent } = useFiles({
+    kind: 'project',
+    workspaceId,
+    projectId: effectiveProjectId
   });
-  const { data: projectContent } = useProjectFiles(workspaceId, effectiveProjectId);
   const { data: entityContent } = useEntityContentNodes(workspaceId, effectiveEntityId, {
     enabled: destType === 'entity' && !!effectiveEntityId
   });
@@ -104,8 +103,8 @@ export const SaveDiagramFromGraphDialog = ({
         : (entityContent?.folders ?? []);
 
   // Mutations
-  const createWorkspace = useCreateWorkspaceDiagramWithContent(workspaceId);
-  const createProject = useCreateProjectDiagramWithContent(workspaceId, effectiveProjectId);
+  const createWorkspace = useCreateDiagram({ kind: 'workspace', workspaceId });
+  const createProject = useCreateDiagram({ kind: 'project', workspaceId, projectId: effectiveProjectId });
   const createEntity = useCreateEntityDiagramWithContent(workspaceId, effectiveEntityId);
 
   const isPending =

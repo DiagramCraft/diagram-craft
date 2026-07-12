@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { fetchWithAuthResponse } from '../../../../../auth/authClient';
 import { Banner } from '../../../../../components/Banner';
-import { useProjectFile } from '../../../../../hooks/useProjectFiles';
+import { useProjectFile } from '../../../../../hooks/useFileOperations';
 import { useMdxContext } from '../../../MdxContext';
 import { getMarkdownAttachmentDownloadUrl, isImageMimeType } from './imageEmbedUtils';
 import styles from './ImageEmbed.module.css';
