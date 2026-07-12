@@ -15,7 +15,14 @@ import { matrixViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import type { JoinedAssessmentContext } from './entityFieldSources';
+import {
+  getCategoricalFields,
+  getCategoricalFieldValues,
+  getCategoricalValue,
+  LIFECYCLE_FIELD_ID,
+  OWNER_FIELD_ID,
+  type JoinedAssessmentContext
+} from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
 import { EmptyState } from '../../../components/EmptyState';
 
@@ -61,11 +68,6 @@ type RelationFieldOption = {
   label: string;
 };
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const LIFECYCLE_FIELD_ID = '_lifecycle';
-const OWNER_FIELD_ID = '_owner';
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const autoPickColSchemaId = (
@@ -96,12 +98,6 @@ const autoPickColSchemaId = (
   return fallback ?? allSchemaIds[0] ?? null;
 };
 
-const getMetadataValue = (row: EntityRecord, fieldId: string): string | null => {
-  if (fieldId === LIFECYCLE_FIELD_ID) return row._lifecycle?.id ?? null;
-  if (fieldId === OWNER_FIELD_ID) return row._owner?.id ?? null;
-  return null;
-};
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export const MatrixView = ({
@@ -117,7 +113,6 @@ export const MatrixView = ({
   const {
     workspaceSlug: workspaceId,
     schemas,
-    enums,
     lifecycleStates,
     teams
   } = useWorkspaceContext();
@@ -197,70 +192,38 @@ export const MatrixView = ({
     colMode === 'entity' && effColSchemaId ? { schemaId: effColSchemaId } : {}
   );
 
-  // Attribute fields: metadata first, then custom select fields from row schemas
+  const rowSchemas = useMemo(
+    () =>
+      [...rowSchemaIds]
+        .map(schemaId => schemaMap.get(schemaId)?.schema)
+        .filter((s): s is EntitySchema => !!s),
+    [rowSchemaIds, schemaMap]
+  );
+
+  // Attribute fields: metadata first, then custom select fields from row schemas, then
+  // rating/enum assessment fields - same relative order as before the entityFieldSources.ts
+  // migration (getCategoricalFields itself orders select fields before Lifecycle/Owner, so its
+  // output is reordered here to put the two metadata fields first).
   const attrFields = useMemo((): AttrField[] => {
-    const out: AttrField[] = [];
+    const fieldOptions = getCategoricalFields(rowSchemas, lifecycleStates, teams, joinedAssessment, true);
+    const metadataIds = new Set([LIFECYCLE_FIELD_ID, OWNER_FIELD_ID]);
+    const ordered = [
+      ...fieldOptions.filter(f => metadataIds.has(f.id)),
+      ...fieldOptions.filter(f => !metadataIds.has(f.id))
+    ];
 
-    if (lifecycleStates.length > 0) {
-      out.push({
-        fieldId: LIFECYCLE_FIELD_ID,
-        label: 'Lifecycle',
-        options: [...lifecycleStates]
-          .sort((a, b) => a.sort_order - b.sort_order)
-          .map(s => ({ value: s.id, label: s.label })),
-        isMetadata: true
-      });
-    }
-
-    if (teams.length > 0) {
-      out.push({
-        fieldId: OWNER_FIELD_ID,
-        label: 'Owner',
-        options: [...teams]
-          .sort((a, b) => a.sort_order - b.sort_order)
-          .map(t => ({ value: t.id, label: t.name })),
-        isMetadata: true
-      });
-    }
-
-    const seen = new Set<string>();
-    rowSchemaIds.forEach(schemaId => {
-      const entry = schemaMap.get(schemaId);
-      if (!entry) return;
-      entry.schema.fields.forEach(f => {
-        if (f.type === 'select' && !seen.has(f.id)) {
-          seen.add(f.id);
-          const enumDef = enums.find(e => e.id === f.enumId);
-          const options =
-            enumDef?.options ??
-            ('options' in f ? (f as { options: { value: string; label: string }[] }).options : []);
-          if (options.length > 0) {
-            out.push({ fieldId: f.id, label: f.name, options, isMetadata: false });
-          }
-        }
-      });
-    });
-
-    if (joinedAssessment) {
-      for (const f of joinedAssessment.assessment.fields) {
-        if (f.type === 'rating') {
-          out.push({
-            fieldId: `${ASSESSMENT_FIELD_PREFIX}${f.id}`,
-            label: f.label,
-            options: ['1', '2', '3', '4', '5'].map(v => ({ value: v, label: v })),
-            isMetadata: false
-          });
-        } else if (f.type === 'enum') {
-          const options = joinedAssessment.enums.find(e => e.id === f.enumId)?.options ?? [];
-          if (options.length > 0) {
-            out.push({ fieldId: `${ASSESSMENT_FIELD_PREFIX}${f.id}`, label: f.label, options, isMetadata: false });
-          }
-        }
-      }
-    }
-
-    return out;
-  }, [lifecycleStates, teams, rowSchemaIds, schemaMap, enums, joinedAssessment]);
+    return ordered
+      .map(f => ({
+        fieldId: f.id,
+        label: f.label,
+        options: getCategoricalFieldValues(rowSchemas, f.id, lifecycleStates, teams, joinedAssessment).map(o => ({
+          value: o.id,
+          label: o.label
+        })),
+        isMetadata: metadataIds.has(f.id)
+      }))
+      .filter(f => f.isMetadata || f.options.length > 0);
+  }, [lifecycleStates, teams, rowSchemas, joinedAssessment]);
 
   const effColFieldId = colEnumFieldId ?? attrFields[0]?.fieldId ?? null;
   const effAttrField = attrFields.find(f => f.fieldId === effColFieldId) ?? null;
@@ -338,7 +301,7 @@ export const MatrixView = ({
               const assessmentVal = resolveAssessmentValue(row as BrowserEntityRecord, effColFieldId);
               val = assessmentVal == null ? undefined : String(assessmentVal);
             } else if (effAttrField.isMetadata) {
-              val = getMetadataValue(row, effColFieldId);
+              val = getCategoricalValue(row, effColFieldId);
             } else {
               // Use full-view entity if available for custom select fields
               const fullRow = fullRowsMap.get(row._uid) ?? row;
