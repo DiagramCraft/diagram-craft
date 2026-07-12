@@ -18,6 +18,7 @@ import { useTeamAssignments, useTeams } from '../../../hooks/useWorkspaceConfig'
 import { useWorkspaceRoles } from '../../../hooks/useWorkspaceRoles';
 import { Table } from '../../../components/table/Table';
 import styles from './MembersSubSection.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 import { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaceContract';
 
 const TeamChip = ({ teamId, label }: { teamId: string; label: string }) => {
@@ -168,9 +169,9 @@ export const MembersSubSection = ({
         </div>
       )}
       {isLoading ? (
-        <div className={styles.empty}>Loading members…</div>
+        <EmptyState compact title="Loading members…" />
       ) : members.length === 0 ? (
-        <div className={styles.empty}>No members have been added to this workspace.</div>
+        <EmptyState compact title="No members have been added to this workspace." />
       ) : (
         <Table.Root>
           <Table.Head>
@@ -308,11 +309,9 @@ const AddMemberDialog = ({
     <Dialog open={open} onClose={onClose} title="Add workspace member">
       <div className={styles.dialogBody}>
         {loading ? (
-          <div className={styles.empty}>Loading users…</div>
+          <EmptyState compact title="Loading users…" />
         ) : users.length === 0 ? (
-          <div className={styles.empty}>
-            All existing users are already members of this workspace.
-          </div>
+          <EmptyState compact title="All existing users are already members of this workspace." />
         ) : (
           <>
             <div className={styles.field}>

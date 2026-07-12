@@ -5,6 +5,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { ProjectFileSearchResult } from '@arch-register/api-types/searchContract';
 import { useSearch } from '../../hooks/useSearch';
 import styles from './SearchScreen.module.css';
+import { EmptyState } from '../../components/EmptyState';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   asEntityPublicId,
@@ -403,18 +404,21 @@ export const SearchScreen = () => {
         <div className={styles.resultsList}>
           {trimmed === '' ? (
             <EmptyState
+              icon={<TbSearch size={18} />}
               title="Start searching"
-              sub="Search across entities, projects, diagrams, and schemas."
+              subtitle="Search across entities, projects, diagrams, and schemas."
             />
           ) : loading ? (
             <EmptyState
+              icon={<TbSearch size={18} />}
               title="Searching…"
-              sub="Looking through projects, files, entities, and schemas."
+              subtitle="Looking through projects, files, entities, and schemas."
             />
           ) : totalResults === 0 ? (
             <EmptyState
+              icon={<TbSearch size={18} />}
               title={`No results for "${trimmed}"`}
-              sub="Try a different keyword or remove filters."
+              subtitle="Try a different keyword or remove filters."
             />
           ) : (
             groups.map(g => (
@@ -469,15 +473,3 @@ export const SearchScreen = () => {
     </div>
   );
 };
-
-// ── Empty states ─────────────────────────────────────────────
-
-const EmptyState = ({ title, sub }: { title: string; sub: string }) => (
-  <div className={styles.empty}>
-    <div className={styles.emptyIcon}>
-      <TbSearch size={18} />
-    </div>
-    <div className={styles.emptyTitle}>{title}</div>
-    <div className={styles.emptySub}>{sub}</div>
-  </div>
-);

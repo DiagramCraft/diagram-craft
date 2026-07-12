@@ -169,23 +169,6 @@
   color: var(--base-fg);
 }
 
-/* Empty state */
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  gap: 8px;
-  color: var(--base-fg-more-dim);
-}
-
-.emptyTitle {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--base-fg-dim);
-}
-
 /* Loading */
 .loading {
   display: flex;

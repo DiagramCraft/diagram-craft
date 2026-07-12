@@ -4,6 +4,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbFolder, TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { DiagramCard, DiagramRow } from '../DiagramCard';
+import { EmptyState } from '../EmptyState';
 import styles from '../../sections/projects/ProjectDetailScreen.module.css';
 
 export type DiagramViewMode = 'grid' | 'list';
@@ -31,18 +32,19 @@ const DiagramBrowserEmptyState = ({
   actionLabel?: string;
   onAction?: () => void;
 }) => (
-  <div className={styles.empty}>
-    <div className={styles.emptyIcon}>
-      <TbPlus size={18} />
-    </div>
-    <div className={styles.emptyTitle}>{title}</div>
-    <div className={styles.emptySub}>{sub}</div>
-    {actionLabel ? (
-      <Button variant="primary" onClick={onAction}>
-        {actionLabel}
-      </Button>
-    ) : null}
-  </div>
+  <EmptyState
+    framed
+    icon={<TbPlus size={18} />}
+    title={title}
+    subtitle={sub}
+    action={
+      actionLabel ? (
+        <Button variant="primary" onClick={onAction}>
+          {actionLabel}
+        </Button>
+      ) : null
+    }
+  />
 );
 
 const AddDiagramCard = ({ onClick }: { onClick: () => void }) => (

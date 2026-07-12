@@ -9,12 +9,13 @@ import {
   ownershipGapSearch,
   schemaLifecycleSearch
 } from './workspaceAnalyticsHelpers';
-import { EmptyState, StatCard, StackedBar, Section, formatPercent } from './analyticsPrimitives';
+import { StatCard, StackedBar, Section, formatPercent } from './analyticsPrimitives';
 import { AnalyticsTabs } from './AnalyticsTabs';
 import { ActivityTrendsSection } from './ActivityTrendsSection';
 import { LifecycleSection } from './LifecycleSection';
 import { StaleEntityReport } from './StaleEntityReport';
 import { Table } from '../../../../components/table/Table';
+import { EmptyState } from '../../../../components/EmptyState';
 
 export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 'stale' }) => {
   const navigate = useNavigate();
@@ -36,8 +37,8 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
       search: activityAuditSearch(operation, startDate, endDate)
     });
 
-  if (isLoading) return <EmptyState text="Loading analytics…" />;
-  if (isError || analytics == null) return <EmptyState text="Analytics could not be loaded." />;
+  if (isLoading) return <EmptyState compact title="Loading analytics…" />;
+  if (isError || analytics == null) return <EmptyState compact title="Analytics could not be loaded." />;
 
   const selectView = (view: 'overview' | 'stale') =>
     navigate({
@@ -91,7 +92,7 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
 
       <Section title="Coverage" sub="Distribution by schema and lifecycle.">
         {analytics.coverage.length === 0 ? (
-          <EmptyState text="No schemas are available for this workspace." />
+          <EmptyState compact title="No schemas are available for this workspace." />
         ) : (
           <Table.Root layout="fixed" bordered={false}>
             <Table.Head>

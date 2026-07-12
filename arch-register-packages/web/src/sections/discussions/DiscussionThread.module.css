@@ -5,31 +5,6 @@
   padding: 4px 0 24px;
 }
 
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 32px 16px;
-  color: var(--cmp-fg-dim);
-}
-
-.emptyIcon {
-  color: var(--cmp-fg-disabled);
-}
-
-.emptyTitle {
-  margin-top: 10px;
-  font-weight: 600;
-  color: var(--base-fg);
-}
-
-.emptySub {
-  margin-top: 4px;
-  font-size: 12.5px;
-  color: var(--cmp-fg-dim);
-}
-
 .root {
   display: flex;
   flex-direction: column;

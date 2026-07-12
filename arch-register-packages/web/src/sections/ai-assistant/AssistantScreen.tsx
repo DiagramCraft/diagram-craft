@@ -19,6 +19,7 @@ import {
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { AiConversation } from '@arch-register/api-types/aiContract';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
+import { EmptyState } from '../../components/EmptyState';
 
 // ── Markdown renderer ──
 
@@ -716,14 +717,14 @@ export const AssistantScreen = () => {
         <div className={styles.chatScroll} ref={scrollRef}>
           <div className={styles.chatThread}>
             {isEmpty && !chat.isLoading && (
-              <div className={styles.emptyState}>
-                <TbSparkles size={32} className={styles.emptyIcon} />
-                <div>
-                  {conversationId
+              <EmptyState
+                icon={<TbSparkles size={32} />}
+                title={
+                  conversationId
                     ? 'Ask about entities, relationships, schemas, and the overall model.'
-                    : 'Start a new chat to ask about your model.'}
-                </div>
-              </div>
+                    : 'Start a new chat to ask about your model.'
+                }
+              />
             )}
             {visibleMessages.map(m => (
               <div key={m.id} className={styles.msg}>

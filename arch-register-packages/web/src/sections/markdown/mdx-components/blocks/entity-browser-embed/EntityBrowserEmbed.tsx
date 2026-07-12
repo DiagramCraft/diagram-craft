@@ -11,6 +11,7 @@ import {
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
 import { decodeEntityBrowserEmbedConfig } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbed.module.css';
+import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
 
 type Props = {
@@ -63,7 +64,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
   if (!config) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No view configured.</p>
+        <EmptyState compact title="No view configured." />
       </div>
     );
   }
@@ -102,7 +103,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
       mode={{ kind: 'published', onEntityClick }}
       unsupportedView={
         <div className={styles.container}>
-          <p className={styles.empty}>Unsupported view mode.</p>
+          <EmptyState compact title="Unsupported view mode." />
         </div>
       }
     />

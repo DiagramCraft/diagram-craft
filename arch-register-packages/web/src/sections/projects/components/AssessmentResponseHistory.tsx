@@ -5,6 +5,7 @@ import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 import styles from './AssessmentResponseHistory.module.css';
 import { formatDateTime } from '../../../utils/dateFormat';
+import { EmptyState } from '../../../components/EmptyState';
 
 const OPERATION_LABEL: Record<AuditLogEntry['operation'], string> = {
   create: 'recorded',
@@ -48,9 +49,9 @@ export const AssessmentResponseHistory = ({
       buttons={[{ type: 'cancel', label: 'Close', onClick: onClose }]}
     >
       {isLoading ? (
-        <div className={styles.empty}>Loading history...</div>
+        <EmptyState compact title="Loading history..." />
       ) : entries.length === 0 ? (
-        <div className={styles.empty}>No history recorded yet.</div>
+        <EmptyState compact title="No history recorded yet." />
       ) : (
         <div className={styles.list}>
           {entries.map(entry => (

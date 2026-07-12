@@ -22,6 +22,7 @@ import {
   projectDiagramRoute
 } from '../../../../../routes/publicObjectRoutes';
 import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
+import { EmptyState } from '../../../../../components/EmptyState';
 import styles from './DiagramEmbed.module.css';
 
 const boundsViewbox = (diagram: Diagram): string => {
@@ -138,7 +139,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
 
   return (
     <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
-      <span className={styles.empty}>No preview available</span>
+      <EmptyState compact title="No preview available" />
       {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
     </figure>
   );

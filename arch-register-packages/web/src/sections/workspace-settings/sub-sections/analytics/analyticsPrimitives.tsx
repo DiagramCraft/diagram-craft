@@ -106,5 +106,3 @@ export const Section = ({
     {children}
   </section>
 );
-
-export const EmptyState = ({ text }: { text: string }) => <div className={styles.empty}>{text}</div>;

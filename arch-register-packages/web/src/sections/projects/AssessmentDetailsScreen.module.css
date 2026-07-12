@@ -114,11 +114,6 @@
   color: var(--base-fg);
 }
 
-.emptyRowInner {
-  border: none;
-  background: none;
-}
-
 .entCol {
   min-width: 210px;
 }

@@ -6,8 +6,6 @@
 
 .empty {
   grid-column: 1 / -1;
-  font-size: 12.5px;
-  color: var(--cmp-fg-disabled);
 }
 
 .grid {

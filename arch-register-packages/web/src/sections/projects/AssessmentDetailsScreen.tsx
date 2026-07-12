@@ -48,6 +48,7 @@ import {
 import { AssessmentSummaryTab } from './components/AssessmentSummaryTab';
 import { Table } from '../../components/table/Table';
 import { useTableSort } from '../../components/table/useTableSort';
+import { EmptyState } from '../../components/EmptyState';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './AssessmentDetailsScreen.module.css';
 
@@ -245,9 +246,7 @@ export const AssessmentDetailsScreen = ({
   if (!assessment) {
     return (
       <ProjectScreenLayout breadcrumbs={baseBreadcrumbs} title="Assessment">
-        <div className={sharedStyles.empty}>
-          <div className={sharedStyles.emptyTitle}>Assessment not found</div>
-        </div>
+        <EmptyState framed title="Assessment not found" />
       </ProjectScreenLayout>
     );
   }
@@ -450,11 +449,7 @@ export const AssessmentDetailsScreen = ({
                   <Table.Body>
                     {sorted.length === 0 ? (
                       <Table.EmptyRow colSpan={assessment.fields.length + 5}>
-                        <div className={`${sharedStyles.empty} ${styles.emptyRowInner}`}>
-                          <div className={sharedStyles.emptyTitle}>
-                            No entities match this filter
-                          </div>
-                        </div>
+                        <EmptyState title="No entities match this filter" />
                       </Table.EmptyRow>
                     ) : (
                       sorted.map(entity => {

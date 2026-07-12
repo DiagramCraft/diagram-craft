@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import styles from './BubbleView.module.css';
 import { TbChevronDown } from 'react-icons/tb';
+import { EmptyState } from '../../../components/EmptyState';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { entityKeys } from '../../../hooks/queryKeys';
 import { orpcClient } from '../../../lib/orpcClient';
@@ -589,10 +590,10 @@ export const BubbleView = ({
 
       <div className={styles.content}>
         {!config ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyTitle}>Bubble chart not configured</div>
-            <div>Map fields to the X, Y, size and colour axes above.</div>
-          </div>
+          <EmptyState
+            title="Bubble chart not configured"
+            subtitle="Map fields to the X, Y, size and colour axes above."
+          />
         ) : (
           <div className={styles.body}>
             <div className={styles.svgWrap} ref={wrapRef} onMouseMove={onSvgMouseMove}>

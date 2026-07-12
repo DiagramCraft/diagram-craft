@@ -68,23 +68,6 @@
   padding: 10px 0 0 0;
 }
 
-/* Empty state */
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  gap: 8px;
-  color: var(--base-fg-more-dim);
-}
-
-.emptyTitle {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--base-fg-dim);
-}
-
 /* Filter popup override — removes default popover padding and enforces correct width.
    position + z-index are set above Dialog's cDialogViewport (z-index: 1000) because both
    portal into the same container div: the toolbar is also used inside EntityBrowserEmbedDialog,

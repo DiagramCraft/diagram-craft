@@ -289,20 +289,3 @@
   letter-spacing: 0.4px;
 }
 
-.empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 40px;
-  color: var(--base-fg-more-dim);
-  text-align: center;
-}
-
-.emptyTitle {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--base-fg);
-}

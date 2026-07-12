@@ -7,6 +7,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import styles from '../../../components/FilterBuilder.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 
 export type AssessmentFilterCondition =
   | { fieldId: string; kind: 'rating'; min?: number; max?: number }
@@ -103,7 +104,7 @@ export const AssessmentFilterBuilder = ({
       </div>
 
       <div className={styles.rows}>
-        {conditions.length === 0 && <div className={styles.emptyState}>No filters applied.</div>}
+        {conditions.length === 0 && <EmptyState compact title="No filters applied." />}
         {conditions.map((c, i) => (
           <AssessmentFilterRow
             key={i}

@@ -240,12 +240,6 @@
 }
 
 /* ============= States ============= */
-.empty {
-  padding: 18px 16px;
-  color: var(--cmp-fg-disabled);
-  font-size: 12px;
-}
-
 .error {
   color: var(--error-fg);
   font-size: 12px;

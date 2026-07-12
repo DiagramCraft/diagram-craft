@@ -19,9 +19,3 @@
 .optionControl {
   min-width: 180px;
 }
-
-.empty {
-  font-size: 13px;
-  color: var(--base-fg-more-dim);
-  padding: 4px 0;
-}

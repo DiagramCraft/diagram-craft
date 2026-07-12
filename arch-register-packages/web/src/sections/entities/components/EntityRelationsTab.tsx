@@ -7,6 +7,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Relation } from '../types/entityDetailTypes';
 import styles from './EntityRelationsTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 
 type Props = {
   outgoing: Relation[];
@@ -21,10 +22,10 @@ export const EntityRelationsTab = ({ outgoing, incoming, schemas, onEntityClick 
   if (relationCount === 0) {
     return (
       <div className={styles.relationsPage}>
-        <div className={sharedStyles.empty}>
-          <div className={sharedStyles.emptyTitle}>No relationships</div>
-          <div>Add reference or containment fields to connect entities.</div>
-        </div>
+        <EmptyState
+          title="No relationships"
+          subtitle="Add reference or containment fields to connect entities."
+        />
       </div>
     );
   }

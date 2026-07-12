@@ -8,6 +8,7 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import styles from '../../../components/FilterBuilder.module.css';
 import scopeStyles from './AssessmentScopeFilterBuilder.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 
 type ScopeField = {
   id: string;
@@ -164,7 +165,7 @@ export const AssessmentScopeFilterBuilder = ({
       </div>
 
       <div className={styles.rows}>
-        {conditions.length === 0 && <div className={styles.emptyState}>No filter conditions.</div>}
+        {conditions.length === 0 && <EmptyState compact title="No filter conditions." />}
         {conditions.map((condition, index) => (
           <AssessmentScopeFilterRow
             key={index}

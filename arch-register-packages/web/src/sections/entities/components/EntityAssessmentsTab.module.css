@@ -129,19 +129,3 @@
   background: var(--green);
 }
 
-.empty {
-  margin-top: 32px;
-  text-align: center;
-  color: var(--cmp-fg-disabled);
-}
-
-.emptyTitle {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--base-fg);
-}
-
-.emptySub {
-  font-size: 12px;
-  margin-top: 4px;
-}

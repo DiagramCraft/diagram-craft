@@ -58,6 +58,7 @@ import { AddEntityToProjectDialog } from './components/AddEntityToProjectDialog'
 import { ProjectSettingsForm } from './components/ProjectSettingsForm';
 import { PlanFutureChangeDialog } from './components/PlanFutureChangeDialog';
 import { buildFolderTree, type FolderTreeNode } from '../../lib/folderTree';
+import { EmptyState } from '../../components/EmptyState';
 
 type ProjectSection = 'home' | 'entities' | 'assessments';
 
@@ -147,9 +148,7 @@ export const ProjectDetailScreen = () => {
   if (isLoading) {
     return (
       <div className={styles.screen}>
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>Loading project...</div>
-        </div>
+        <EmptyState framed title="Loading project..." />
       </div>
     );
   }
@@ -157,9 +156,7 @@ export const ProjectDetailScreen = () => {
   if (!project) {
     return (
       <div className={styles.screen}>
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>Project not found</div>
-        </div>
+        <EmptyState framed title="Project not found" />
       </div>
     );
   }

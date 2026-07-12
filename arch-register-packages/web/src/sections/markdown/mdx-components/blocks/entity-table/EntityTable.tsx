@@ -11,6 +11,7 @@ import {
 import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { Table } from '../../../../../components/table/Table';
 import styles from './EntityTable.module.css';
+import { EmptyState } from '../../../../../components/EmptyState';
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -61,7 +62,7 @@ export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
   if (!hasFilter) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No filters configured.</p>
+        <EmptyState compact title="No filters configured." />
       </div>
     );
   }
@@ -79,7 +80,7 @@ export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
   if (entities.length === 0) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No entities match the current filters.</p>
+        <EmptyState compact title="No entities match the current filters." />
       </div>
     );
   }

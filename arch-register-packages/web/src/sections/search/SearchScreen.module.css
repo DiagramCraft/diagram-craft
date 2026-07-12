@@ -283,38 +283,6 @@
   color: var(--cmp-fg-disabled);
 }
 
-/* ── Empty / no-results ── */
-
-.empty {
-  display: grid;
-  place-items: center;
-  text-align: center;
-  padding: 48px 32px;
-}
-
-.emptyIcon {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--r-md);
-  display: grid;
-  place-items: center;
-  background: var(--cmp-bg);
-  color: var(--base-fg-more-dim);
-  margin-bottom: 12px;
-}
-
-.emptyTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--base-fg-dim);
-}
-
-.emptySub {
-  margin-top: 6px;
-  color: var(--cmp-fg-disabled);
-  font-size: 12px;
-}
-
 /* ── Responsive ── */
 
 @media (max-width: 900px) {

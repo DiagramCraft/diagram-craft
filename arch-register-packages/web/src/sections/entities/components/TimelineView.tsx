@@ -22,6 +22,7 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { Project } from '@arch-register/api-types/projectContract';
 import { timelineViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { useEntitySnapshots } from '../../../hooks/useSnapshots';
+import { EmptyState } from '../../../components/EmptyState';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -738,21 +739,17 @@ export const TimelineView = ({
       )}
 
       {isEmpty ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon}>
-            <TbCalendarWeek size={26} />
-          </div>
-          <div className={styles.emptyTitle}>
-            {isSnapshotMode
-              ? 'No entities in this view'
-              : 'No entities with dates in this view'}
-          </div>
-          <span>
-            {isSnapshotMode
+        <EmptyState
+          icon={<TbCalendarWeek size={26} />}
+          title={
+            isSnapshotMode ? 'No entities in this view' : 'No entities with dates in this view'
+          }
+          subtitle={
+            isSnapshotMode
               ? 'Add entities to see their snapshot history and planned project changes.'
-              : 'Select a date field above, or add dates to entities.'}
-          </span>
-        </div>
+              : 'Select a date field above, or add dates to entities.'
+          }
+        />
       ) : (
         <TimelineScaffold
           scrollClassName={styles.scrollWrap}

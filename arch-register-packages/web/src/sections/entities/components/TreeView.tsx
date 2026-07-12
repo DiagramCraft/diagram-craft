@@ -20,6 +20,7 @@ import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import styles from '../EntityBrowserScreen.module.css';
 import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 import { Table } from '../../../components/table/Table';
+import { EmptyState } from '../../../components/EmptyState';
 
 export type TreeViewProps = {
   workspaceId: string;
@@ -107,10 +108,7 @@ export const TreeView = ({
 
   if (nodes.length === 0) {
     return (
-      <div className={styles.empty}>
-        <div className={styles.emptyTitle}>No entities found</div>
-        <div>Try adjusting your search or filters.</div>
-      </div>
+      <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
     );
   }
 

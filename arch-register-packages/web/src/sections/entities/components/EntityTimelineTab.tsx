@@ -16,6 +16,7 @@ import {
 } from '../../../components/timeline/timelineUtils';
 import styles from '../EntityDetailScreen.module.css';
 import { detectConflicts, diffSnapshotState, type SnapshotState } from './entityTimelineHelpers';
+import { EmptyState } from '../../../components/EmptyState';
 
 type EntityProject = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -100,10 +101,10 @@ export const EntityTimelineTab = ({
 
   if (!hasData) {
     return (
-      <div className={styles.empty}>
-        <div className={styles.emptyTitle}>No snapshot history yet</div>
-        <div>Snapshots are created automatically when the entity is saved.</div>
-      </div>
+      <EmptyState
+        title="No snapshot history yet"
+        subtitle="Snapshots are created automatically when the entity is saved."
+      />
     );
   }
 

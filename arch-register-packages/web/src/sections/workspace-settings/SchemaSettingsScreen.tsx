@@ -19,6 +19,7 @@ import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { EnumEditorScreen } from './EnumEditorScreen';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import { EmptyState } from '../../components/EmptyState';
 
 const toFieldId = (name: string) =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
@@ -374,21 +375,18 @@ export const SchemaSettingsScreen = () => {
           </div>
         </div>
       ) : (
-        <div className={styles.empty}>
-          <TbCode size={22} />
-          <div className={styles.emptyTitle}>No type selected</div>
-          <div>Select an entity type from the sidebar to edit its schema.</div>
-          {canEdit && (
-            <Button 
-              variant="primary" 
-              icon={<TbPlus size={12} />} 
-              onClick={handleCreateType}
-              style={{ marginTop: 16 }}
-            >
-              New entity type
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={<TbCode size={22} />}
+          title="No type selected"
+          subtitle="Select an entity type from the sidebar to edit its schema."
+          action={
+            canEdit && (
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateType}>
+                New entity type
+              </Button>
+            )
+          }
+        />
       )}
 
       <DeleteConfirmationDialog
