@@ -24,6 +24,7 @@ import { timelineViewConfigSchema } from '@arch-register/api-types/viewContract'
 import { useEntitySnapshots } from '../../../hooks/useSnapshots';
 import { EmptyState } from '../../../components/EmptyState';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
+import { normalizeViewConfig } from './entityViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -594,18 +595,15 @@ export const TimelineView = ({
   const dateFields = useDateFieldOptions(schemas);
   const TODAY = useMemo(() => new Date(), []);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
-  const parsedConfig = useMemo(() => {
-    const result = timelineViewConfigSchema.safeParse(config);
-    return result.success ? result.data : null;
-  }, [config]);
-
-  // Derive effective config: use external config if provided, otherwise defaults
-  const cfg: TimelineConfig = parsedConfig ?? {
-    startFieldId: dateFields[0]?.id ?? null,
-    endFieldId: dateFields[1]?.id ?? dateFields[0]?.id ?? null,
-    groupBy: 'owner',
-    zoom: 'quarter'
-  };
+  const cfg: TimelineConfig = useMemo(() => {
+    const defaults: TimelineConfig = {
+      startFieldId: dateFields[0]?.id ?? null,
+      endFieldId: dateFields[1]?.id ?? dateFields[0]?.id ?? null,
+      groupBy: 'owner',
+      zoom: 'quarter'
+    };
+    return normalizeViewConfig(timelineViewConfigSchema, config, defaults);
+  }, [config, dateFields]);
 
   const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
   const [snapDetail, setSnapDetail] = useState<{

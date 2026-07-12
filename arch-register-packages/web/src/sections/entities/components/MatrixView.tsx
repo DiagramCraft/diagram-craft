@@ -16,6 +16,7 @@ import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import type { JoinedAssessmentContext } from './entityFieldSources';
+import { normalizeViewConfig } from './entityViewConfig';
 import { EmptyState } from '../../../components/EmptyState';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -27,6 +28,15 @@ export type MatrixConfig = {
   filterFieldName: string | null;
   hideEmptyRows: boolean;
   hideEmptyCols: boolean;
+};
+
+const DEFAULT_MATRIX_CONFIG: MatrixConfig = {
+  colMode: 'entity',
+  colSchemaId: null,
+  colEnumFieldId: null,
+  filterFieldName: null,
+  hideEmptyRows: false,
+  hideEmptyCols: false
 };
 
 type MatrixViewProps = EntityBrowserRowViewProps & {
@@ -111,17 +121,17 @@ export const MatrixView = ({
     lifecycleStates,
     teams
   } = useWorkspaceContext();
-  const parsedConfig = useMemo(() => {
-    const result = matrixViewConfigSchema.safeParse(config);
-    return result.success ? result.data : null;
-  }, [config]);
+  const parsedConfig = useMemo(
+    () => normalizeViewConfig(matrixViewConfigSchema, config, DEFAULT_MATRIX_CONFIG),
+    [config]
+  );
 
-  const [colMode, setColMode] = useState<ColMode>(parsedConfig?.colMode ?? 'entity');
-  const [colSchemaId, setColSchemaId] = useState<string | null>(parsedConfig?.colSchemaId ?? null);
-  const [colEnumFieldId, setColEnumFieldId] = useState<string | null>(parsedConfig?.colEnumFieldId ?? null);
-  const [filterFieldName, setFilterFieldName] = useState<string | null>(parsedConfig?.filterFieldName ?? null);
-  const [hideEmptyRows, setHideEmptyRows] = useState(parsedConfig?.hideEmptyRows ?? false);
-  const [hideEmptyCols, setHideEmptyCols] = useState(parsedConfig?.hideEmptyCols ?? false);
+  const [colMode, setColMode] = useState<ColMode>(parsedConfig.colMode);
+  const [colSchemaId, setColSchemaId] = useState<string | null>(parsedConfig.colSchemaId);
+  const [colEnumFieldId, setColEnumFieldId] = useState<string | null>(parsedConfig.colEnumFieldId);
+  const [filterFieldName, setFilterFieldName] = useState<string | null>(parsedConfig.filterFieldName);
+  const [hideEmptyRows, setHideEmptyRows] = useState(parsedConfig.hideEmptyRows);
+  const [hideEmptyCols, setHideEmptyCols] = useState(parsedConfig.hideEmptyCols);
 
   const notifyConfigChange = useCallback((patch: Partial<MatrixConfig>) => {
     onConfigChange({
