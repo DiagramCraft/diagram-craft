@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ContentNodeDbResult } from './db/projectDatabase';
-import { buildFileTree } from './projectOperations';
+import { buildFileTree } from './contentTreeOperations';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 
