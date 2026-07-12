@@ -62,9 +62,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  overflow: hidden;
+  gap: 8px;
 }
 
 .discussionPanel {
@@ -79,8 +77,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--panel-border);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -118,97 +114,30 @@
   color: var(--base-fg);
 }
 
-.gridWrap {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  overflow-anchor: none;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.gridWrap::-webkit-scrollbar {
-  display: none;
-}
-
-.grid {
-  border-collapse: separate;
-  border-spacing: 0;
-  min-width: 100%;
-}
-
-.grid thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--panel-bg);
-  border-bottom: 1px solid var(--cmp-border);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--cmp-fg-disabled);
-  padding: 6px 10px;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.grid thead th.entCol {
-  position: sticky;
-  left: 0;
-  z-index: 3;
-  min-width: 210px;
-  padding-left: 24px;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-.grid thead th.statusCol {
-  min-width: 128px;
-  text-align: right;
-  padding-right: 24px;
-}
-
-.grid tbody td {
-  border-bottom: 1px solid var(--cmp-border);
-  vertical-align: middle;
-}
-
-.emptyRow {
-  border-bottom: none;
-}
-
 .emptyRowInner {
   border: none;
   background: none;
 }
 
 .entCol {
-  position: sticky;
-  left: 0;
-  background: var(--base-bg);
   min-width: 210px;
-  z-index: 1;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
+}
+
+/* Table.Cell's own padding would stack with .entName's own padding below; this column's
+   visual padding comes entirely from .entName, so the cell itself gets none. */
+.entNameCell {
+  padding: 0 !important;
 }
 
 .statusCol {
   min-width: 150px;
-  text-align: right;
-  padding-right: 24px;
-  font-size: 12px;
-  white-space: nowrap;
 }
 
 .entName {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 10px 7px 24px;
+  padding: 7px 10px 7px 10px;
 }
 
 .entNameBtn {
@@ -230,7 +159,9 @@
 .cell {
   min-width: 148px;
   max-width: 220px;
-  padding: 3px 10px;
+  /* Keeps the editable-field grid compact; Table.module.css's shared .table .td padding
+     is more specific (0,2,0) than this single class, so !important is needed to win. */
+  padding: 3px 10px !important;
 }
 
 .req {
@@ -248,7 +179,6 @@
 .avatarCol {
   min-width: 40px;
   width: 40px;
-  padding-right: 16px;
 }
 
 .avatarBtn {
@@ -285,22 +215,4 @@
   background: var(--accent-bg, rgba(255, 255, 255, 0.25));
   font-size: 10px;
   font-weight: 600;
-}
-
-.sortHeader {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  text-transform: inherit;
-  letter-spacing: inherit;
-  cursor: pointer;
-}
-
-.sortHeader:hover {
-  color: var(--base-fg);
 }

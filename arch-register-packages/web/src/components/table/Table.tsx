@@ -227,7 +227,9 @@ type NameCellProps = {
   titleMuted?: boolean;
   sticky?: boolean;
   width?: number | string;
-} & Omit<ComponentPropsWithoutRef<'td'>, 'title'>;
+  // 'prefix' is also a global RDFa HTML attribute (typed as string) that ComponentPropsWithoutRef<'td'>
+  // would otherwise contribute, colliding with our ReactNode-typed prop of the same name.
+} & Omit<ComponentPropsWithoutRef<'td'>, 'title' | 'prefix'>;
 
 const NameCell = ({
   icon,

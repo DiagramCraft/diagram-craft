@@ -15,6 +15,7 @@ import {
   globalRolesKeys
 } from '../../../hooks/useGlobalRoles';
 import { orpcClient } from '../../../lib/orpcClient';
+import { Table } from '../../../components/table/Table';
 import styles from './GlobalPermissionsSubSection.module.css';
 
 type AuthUserInfo = {
@@ -143,70 +144,64 @@ export const GlobalPermissionsSubSection = ({
 
   return (
     <div className={styles.container}>
-      <div className={styles.tableWrap}>
-        {isLoadingUsers || isLoadingRoles ? (
-          <div className={styles.empty}>Loading global role assignments…</div>
-        ) : assignedUsers.length === 0 ? (
-          <div className={styles.empty}>No users currently have global roles.</div>
-        ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th style={{ minWidth: 240 }}>User</th>
-                <th>Global roles</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignedUsers.map(assignedUser => {
-                const assignedRoles = roleMap[assignedUser.id] ?? [];
-                return (
-                  <tr key={assignedUser.id}>
-                    <td>
-                      <div className={styles.memberName}>
-                        <MemberAvatar
-                          name={assignedUser.display_name}
-                          email={assignedUser.email}
-                          userId={assignedUser.id}
-                        />
-                        <div>
-                          <div className={styles.memberNameMain}>{assignedUser.display_name}</div>
-                          <div className={styles.memberNameSub}>
-                            {assignedUser.email ?? assignedUser.id}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <RolesMenu
-                        currentRoles={assignedRoles}
-                        onToggle={role => {
-                          const next = assignedRoles.includes(role)
-                            ? assignedRoles.filter(r => r !== role)
-                            : [...assignedRoles, role];
-                          void updateMutation
-                            .mutateAsync({ userId: assignedUser.id, roles: next })
-                            .then(() => {
-                              if (assignedUser.id === user?.id) void reloadUser();
-                            });
-                        }}
+      {isLoadingUsers || isLoadingRoles ? (
+        <div className={styles.empty}>Loading global role assignments…</div>
+      ) : assignedUsers.length === 0 ? (
+        <div className={styles.empty}>No users currently have global roles.</div>
+      ) : (
+        <Table.Root>
+          <Table.Head>
+            <tr>
+              <Table.HeaderCell style={{ minWidth: 240 }}>User</Table.HeaderCell>
+              <Table.HeaderCell>Global roles</Table.HeaderCell>
+              <Table.HeaderCell>Status</Table.HeaderCell>
+            </tr>
+          </Table.Head>
+          <Table.Body>
+            {assignedUsers.map(assignedUser => {
+              const assignedRoles = roleMap[assignedUser.id] ?? [];
+              return (
+                <Table.Row key={assignedUser.id}>
+                  <Table.NameCell
+                    icon={
+                      <MemberAvatar
+                        name={assignedUser.display_name}
+                        email={assignedUser.email}
+                        userId={assignedUser.id}
                       />
-                    </td>
-                    <td>
-                      <Chip
-                        tone="ghost"
-                        dot={assignedUser.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                      >
-                        {assignedUser.is_active ? 'Active' : 'Inactive'}
-                      </Chip>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+                    }
+                    title={assignedUser.display_name}
+                    subtitle={assignedUser.email ?? assignedUser.id}
+                  />
+                  <Table.Cell>
+                    <RolesMenu
+                      currentRoles={assignedRoles}
+                      onToggle={role => {
+                        const next = assignedRoles.includes(role)
+                          ? assignedRoles.filter(r => r !== role)
+                          : [...assignedRoles, role];
+                        void updateMutation
+                          .mutateAsync({ userId: assignedUser.id, roles: next })
+                          .then(() => {
+                            if (assignedUser.id === user?.id) void reloadUser();
+                          });
+                      }}
+                    />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Chip
+                      tone="ghost"
+                      dot={assignedUser.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                    >
+                      {assignedUser.is_active ? 'Active' : 'Inactive'}
+                    </Chip>
+                  </Table.Cell>
+                </Table.Row>
+              );
+            })}
+          </Table.Body>
+        </Table.Root>
+      )}
 
       <RoleAssignmentDialog
         key={selectedUser?.id ?? 'empty'}

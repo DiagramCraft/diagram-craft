@@ -51,41 +51,6 @@
   color: var(--cmp-fg-disabled);
 }
 
-.changesTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-
-.changesTable thead th {
-  text-align: left;
-  font-weight: 500;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
-  background: var(--base-bg);
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.changesTable tbody tr {
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.changesTable tbody tr:last-child {
-  border-bottom: 0;
-}
-
-.changesTable td {
-  padding: 7px 10px;
-  vertical-align: middle;
-  color: var(--base-fg-dim);
-}
-
 .fieldName {
   color: var(--base-fg-more-dim);
   font-size: 11px;

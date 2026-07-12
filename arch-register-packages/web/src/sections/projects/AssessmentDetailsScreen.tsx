@@ -1,14 +1,6 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import {
-  TbEdit,
-  TbDots,
-  TbTrash,
-  TbFilter,
-  TbDownload,
-  TbChevronUp,
-  TbChevronDown
-} from 'react-icons/tb';
+import { TbEdit, TbDots, TbTrash, TbFilter, TbDownload } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -18,7 +10,10 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type { AssessmentEntityStatus } from '@arch-register/api-types/assessmentStatus';
 import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
-import type { Assessment, CreateAssessmentRequest } from '@arch-register/api-types/assessmentContract';
+import type {
+  Assessment,
+  CreateAssessmentRequest
+} from '@arch-register/api-types/assessmentContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
@@ -51,11 +46,12 @@ import {
   type AssessmentFilterCondition
 } from './components/AssessmentFilterBuilder';
 import { AssessmentSummaryTab } from './components/AssessmentSummaryTab';
+import { Table } from '../../components/table/Table';
+import { useTableSort } from '../../components/table/useTableSort';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './AssessmentDetailsScreen.module.css';
 
 type StatusFilter = 'all' | AssessmentEntityStatus;
-type SortState = { key: string; dir: 'asc' | 'desc' };
 
 const STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
   not_started: 'Not started',
@@ -81,36 +77,6 @@ const STATUS_ORDER: Record<AssessmentEntityStatus, number> = {
   not_started: 0,
   in_progress: 1,
   complete: 2
-};
-
-const SortableHeader = ({
-  label,
-  sortKey,
-  sort,
-  onSort,
-  className
-}: {
-  label: ReactNode;
-  sortKey: string;
-  sort: SortState | null;
-  onSort: (key: string) => void;
-  className?: string;
-}) => {
-  const active = sort?.key === sortKey;
-  return (
-    <th className={className}>
-      <button type="button" className={styles.sortHeader} onClick={() => onSort(sortKey)}>
-        {label}
-        {active && sort ? (
-          sort.dir === 'asc' ? (
-            <TbChevronUp size={11} />
-          ) : (
-            <TbChevronDown size={11} />
-          )
-        ) : null}
-      </button>
-    </th>
-  );
 };
 
 export const AssessmentDetailsScreen = ({
@@ -162,7 +128,6 @@ export const AssessmentDetailsScreen = ({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const [conditions, setConditions] = useState<AssessmentFilterCondition[]>([]);
-  const [sort, setSort] = useState<SortState | null>(null);
   const [tab, setTab] = useState<'details' | 'summary' | 'discussion'>(initialTab ?? 'details');
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
@@ -219,40 +184,36 @@ export const AssessmentDetailsScreen = ({
   const schemaNameFor = (entity: EntitySummary): string =>
     schemas.find(s => s.id === entity._schema.id)?.name ?? entity._schema.id;
 
-  const compareBySort = (a: EntitySummary, b: EntitySummary, sortState: SortState): number => {
-    const { key } = sortState;
-    if (key === '_name') return a._name.localeCompare(b._name);
-    if (key === '_owner') return (a._owner?.name ?? '').localeCompare(b._owner?.name ?? '');
-    if (key === '_schema') return schemaNameFor(a).localeCompare(schemaNameFor(b));
-    if (key === '_status') return STATUS_ORDER[statusFor(a._uid)] - STATUS_ORDER[statusFor(b._uid)];
+  const fieldComparator =
+    (field: Assessment['fields'][number]) =>
+    (a: EntitySummary, b: EntitySummary): number => {
+      const aValue = responseByEntity.get(a._uid)?.values[field.id];
+      const bValue = responseByEntity.get(b._uid)?.values[field.id];
+      if (aValue === undefined && bValue === undefined) return 0;
+      if (aValue === undefined) return 1;
+      if (bValue === undefined) return -1;
 
-    const field = assessment?.fields.find(f => f.id === key);
-    const aValue = responseByEntity.get(a._uid)?.values[key];
-    const bValue = responseByEntity.get(b._uid)?.values[key];
-    if (aValue === undefined && bValue === undefined) return 0;
-    if (aValue === undefined) return 1;
-    if (bValue === undefined) return -1;
+      if (field.type === 'rating') return (aValue as number) - (bValue as number);
+      if (field.type === 'enum') {
+        const enumDef = enums.find(e => e.id === field.enumId);
+        const aLabel = enumDef?.options.find(o => o.value === aValue)?.label ?? String(aValue);
+        const bLabel = enumDef?.options.find(o => o.value === bValue)?.label ?? String(bValue);
+        return aLabel.localeCompare(bLabel);
+      }
+      return String(aValue).localeCompare(String(bValue));
+    };
 
-    if (field && field.type === 'rating') return (aValue as number) - (bValue as number);
-    if (field && field.type === 'enum') {
-      const enumDef = enums.find(e => e.id === field.enumId);
-      const aLabel = enumDef?.options.find(o => o.value === aValue)?.label ?? String(aValue);
-      const bLabel = enumDef?.options.find(o => o.value === bValue)?.label ?? String(bValue);
-      return aLabel.localeCompare(bLabel);
-    }
-    return String(aValue).localeCompare(String(bValue));
+  const comparators: Record<string, (a: EntitySummary, b: EntitySummary) => number> = {
+    _name: (a, b) => a._name.localeCompare(b._name),
+    _owner: (a, b) => (a._owner?.name ?? '').localeCompare(b._owner?.name ?? ''),
+    _schema: (a, b) => schemaNameFor(a).localeCompare(schemaNameFor(b)),
+    _status: (a, b) => STATUS_ORDER[statusFor(a._uid)] - STATUS_ORDER[statusFor(b._uid)]
   };
+  for (const field of assessment?.fields ?? []) {
+    comparators[field.id] = fieldComparator(field);
+  }
 
-  const sorted = sort
-    ? [...filtered].sort((a, b) => compareBySort(a, b, sort) * (sort.dir === 'asc' ? 1 : -1))
-    : filtered;
-
-  const toggleSort = (key: string) => {
-    setSort(prev => {
-      if (prev?.key === key) return { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' };
-      return { key, dir: 'asc' };
-    });
-  };
+  const { sorted, sort, toggleSort } = useTableSort(filtered, comparators);
 
   const handleExport = async () => {
     try {
@@ -363,7 +324,13 @@ export const AssessmentDetailsScreen = ({
             {assessors.length > 0 && (
               <div className={styles.assessors}>
                 {assessors.map(a => (
-                  <MemberAvatar key={a.userId} userId={a.userId} name={a.name} email={null} size={20} />
+                  <MemberAvatar
+                    key={a.userId}
+                    userId={a.userId}
+                    name={a.name}
+                    email={null}
+                    size={20}
+                  />
                 ))}
               </div>
             )}
@@ -379,95 +346,116 @@ export const AssessmentDetailsScreen = ({
         }
       >
         <div className={styles.tabs}>
-          <Tabs.Root value={tab} onValueChange={v => setTab(v as 'details' | 'summary' | 'discussion')}>
-          <Tabs.List>
-            <Tabs.Trigger value="details">Details</Tabs.Trigger>
-            <Tabs.Trigger value="summary">Summary</Tabs.Trigger>
-            <Tabs.Trigger value="discussion">Discussion</Tabs.Trigger>
-          </Tabs.List>
-          <Tabs.Content value="details">
-            <div className={styles.panel}>
-              <div className={styles.toolbar}>
-                <div className={styles.filterGroup}>
-                  {FILTERS.map(({ key, label }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`${styles.filterPill} ${statusFilter === key ? styles.filterPillActive : ''}`}
-                      onClick={() => setStatusFilter(key)}
-                    >
-                      {label} ({counts[key]})
-                    </button>
-                  ))}
-                </div>
-                <Popover.Root actionsRef={filterPopoverRef}>
-                  <Popover.Trigger
-                    element={
-                      <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
-                        <TbFilter size={12} style={{ marginRight: 4 }} />
-                        Filter
-                        {conditions.length > 0 && (
-                          <span className={styles.filterCount}>{conditions.length}</span>
-                        )}
-                      </Button>
-                    }
-                  />
-                  <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false}>
-                    <AssessmentFilterBuilder
-                      conditions={conditions}
-                      onChange={setConditions}
-                      onClose={() => filterPopoverRef.current?.close()}
-                      fields={assessment.fields}
-                      entities={entities}
-                      schemas={schemas}
-                      scope={assessment.scope}
-                      enums={enums}
+          <Tabs.Root
+            value={tab}
+            onValueChange={v => setTab(v as 'details' | 'summary' | 'discussion')}
+          >
+            <Tabs.List>
+              <Tabs.Trigger value="details">Details</Tabs.Trigger>
+              <Tabs.Trigger value="summary">Summary</Tabs.Trigger>
+              <Tabs.Trigger value="discussion">Discussion</Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content value="details">
+              <div className={styles.panel}>
+                <div className={styles.toolbar}>
+                  <div className={styles.filterGroup}>
+                    {FILTERS.map(({ key, label }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        className={`${styles.filterPill} ${statusFilter === key ? styles.filterPillActive : ''}`}
+                        onClick={() => setStatusFilter(key)}
+                      >
+                        {label} ({counts[key]})
+                      </button>
+                    ))}
+                  </div>
+                  <Popover.Root actionsRef={filterPopoverRef}>
+                    <Popover.Trigger
+                      element={
+                        <Button size="sm" variant={conditions.length > 0 ? 'primary' : 'secondary'}>
+                          <TbFilter size={12} style={{ marginRight: 4 }} />
+                          Filter
+                          {conditions.length > 0 && (
+                            <span className={styles.filterCount}>{conditions.length}</span>
+                          )}
+                        </Button>
+                      }
                     />
-                  </Popover.Content>
-                </Popover.Root>
-                <div style={{ flex: 1 }} />
-                <TextInput
-                  value={search}
-                  onChange={v => setSearch(v ?? '')}
-                  placeholder="Search entities…"
-                  style={{ width: 220 }}
-                />
-              </div>
+                    <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false}>
+                      <AssessmentFilterBuilder
+                        conditions={conditions}
+                        onChange={setConditions}
+                        onClose={() => filterPopoverRef.current?.close()}
+                        fields={assessment.fields}
+                        entities={entities}
+                        schemas={schemas}
+                        scope={assessment.scope}
+                        enums={enums}
+                      />
+                    </Popover.Content>
+                  </Popover.Root>
+                  <div style={{ flex: 1 }} />
+                  <TextInput
+                    value={search}
+                    onChange={v => setSearch(v ?? '')}
+                    placeholder="Search entities…"
+                    style={{ width: 220 }}
+                  />
+                </div>
 
-              <div className={styles.gridWrap}>
-                <table className={styles.grid}>
-                  <thead>
-                    <tr>
-                      <SortableHeader label="Entity" sortKey="_name" sort={sort} onSort={toggleSort} className={styles.entCol} />
-                      <SortableHeader label="Owner" sortKey="_owner" sort={sort} onSort={toggleSort} />
-                      <SortableHeader label="Schema Type" sortKey="_schema" sort={sort} onSort={toggleSort} />
+                <Table.Root scroll stickyHeader>
+                  <Table.Head>
+                    <Table.Row>
+                      <Table.SortableHeaderCell
+                        sortKey="_name"
+                        sort={sort}
+                        onSort={toggleSort}
+                        sticky
+                        width={210}
+                      >
+                        Entity
+                      </Table.SortableHeaderCell>
+                      <Table.SortableHeaderCell sortKey="_owner" sort={sort} onSort={toggleSort}>
+                        Owner
+                      </Table.SortableHeaderCell>
+                      <Table.SortableHeaderCell sortKey="_schema" sort={sort} onSort={toggleSort}>
+                        Schema Type
+                      </Table.SortableHeaderCell>
                       {assessment.fields.map(f => (
-                        <SortableHeader
+                        <Table.SortableHeaderCell
                           key={f.id}
                           sortKey={f.id}
                           sort={sort}
                           onSort={toggleSort}
-                          label={
-                            <>
-                              {f.label}
-                              {f.requirementLevel === 'required' && <span className={styles.req}> *</span>}
-                            </>
-                          }
-                        />
+                        >
+                          {f.label}
+                          {f.requirementLevel === 'required' && (
+                            <span className={styles.req}> *</span>
+                          )}
+                        </Table.SortableHeaderCell>
                       ))}
-                      <SortableHeader label="Status" sortKey="_status" sort={sort} onSort={toggleSort} className={styles.statusCol} />
-                      <th className={styles.avatarCol} />
-                    </tr>
-                  </thead>
-                  <tbody>
+                      <Table.SortableHeaderCell
+                        sortKey="_status"
+                        sort={sort}
+                        onSort={toggleSort}
+                        align="right"
+                        className={styles.statusCol}
+                      >
+                        Status
+                      </Table.SortableHeaderCell>
+                      <Table.HeaderCell className={styles.avatarCol} />
+                    </Table.Row>
+                  </Table.Head>
+                  <Table.Body>
                     {sorted.length === 0 ? (
-                      <tr>
-                        <td className={styles.emptyRow} colSpan={assessment.fields.length + 5}>
-                          <div className={`${sharedStyles.empty} ${styles.emptyRowInner}`}>
-                            <div className={sharedStyles.emptyTitle}>No entities match this filter</div>
+                      <Table.EmptyRow colSpan={assessment.fields.length + 5}>
+                        <div className={`${sharedStyles.empty} ${styles.emptyRowInner}`}>
+                          <div className={sharedStyles.emptyTitle}>
+                            No entities match this filter
                           </div>
-                        </td>
-                      </tr>
+                        </div>
+                      </Table.EmptyRow>
                     ) : (
                       sorted.map(entity => {
                         const meta = schemas.find(s => s.id === entity._schema.id);
@@ -478,8 +466,12 @@ export const AssessmentDetailsScreen = ({
                         const status = statusFor(entity._uid);
 
                         return (
-                          <tr key={entity._uid}>
-                            <td className={styles.entCol}>
+                          <Table.Row key={entity._uid}>
+                            <Table.Cell
+                              sticky
+                              className={`${styles.entCol} ${styles.entNameCell}`}
+                              width={210}
+                            >
                               <div className={styles.entName}>
                                 <TypeBadge
                                   color={color}
@@ -503,11 +495,15 @@ export const AssessmentDetailsScreen = ({
                                   {entity._name || entity._slug}
                                 </button>
                               </div>
-                            </td>
-                            <td className={styles.cell}>{entity._owner?.name ?? '—'}</td>
-                            <td className={styles.cell}>{meta?.name ?? entity._schema.id}</td>
+                            </Table.Cell>
+                            <Table.Cell className={styles.cell}>
+                              {entity._owner?.name ?? '—'}
+                            </Table.Cell>
+                            <Table.Cell className={styles.cell}>
+                              {meta?.name ?? entity._schema.id}
+                            </Table.Cell>
                             {assessment.fields.map(field => (
-                              <td key={field.id} className={styles.cell}>
+                              <Table.Cell key={field.id} className={styles.cell}>
                                 <AssessmentFieldCell
                                   field={field}
                                   value={values[field.id]}
@@ -519,13 +515,13 @@ export const AssessmentDetailsScreen = ({
                                     })
                                   }
                                 />
-                              </td>
+                              </Table.Cell>
                             ))}
-                            <td className={styles.statusCol}>
+                            <Table.Cell align="right" className={styles.statusCol}>
                               <span className={`${styles.statusDot} ${styles[`st-${status}`]}`} />
                               {STATUS_LABEL[status]}
-                            </td>
-                            <td className={styles.avatarCol}>
+                            </Table.Cell>
+                            <Table.Cell className={styles.avatarCol}>
                               {response?.updated_by && (
                                 <Tooltip
                                   element={
@@ -558,29 +554,32 @@ export const AssessmentDetailsScreen = ({
                                   message={response.updated_by_name ?? response.updated_by}
                                 />
                               )}
-                            </td>
-                          </tr>
+                            </Table.Cell>
+                          </Table.Row>
                         );
                       })
                     )}
-                  </tbody>
-                </table>
+                  </Table.Body>
+                </Table.Root>
               </div>
-            </div>
-          </Tabs.Content>
-          <Tabs.Content value="summary">
-            <AssessmentSummaryTab
-              assessment={assessment}
-              responses={inScopeResponses}
-              entityCount={entities.length}
-              enums={enums}
-            />
-          </Tabs.Content>
-          <Tabs.Content value="discussion">
-            <div className={styles.discussionPanel}>
-              <DiscussionThread workspaceId={workspaceSlug} objectType="assessment" objectId={assessment.id} />
-            </div>
-          </Tabs.Content>
+            </Tabs.Content>
+            <Tabs.Content value="summary">
+              <AssessmentSummaryTab
+                assessment={assessment}
+                responses={inScopeResponses}
+                entityCount={entities.length}
+                enums={enums}
+              />
+            </Tabs.Content>
+            <Tabs.Content value="discussion">
+              <div className={styles.discussionPanel}>
+                <DiscussionThread
+                  workspaceId={workspaceSlug}
+                  objectType="assessment"
+                  objectId={assessment.id}
+                />
+              </div>
+            </Tabs.Content>
           </Tabs.Root>
         </div>
       </ProjectScreenLayout>

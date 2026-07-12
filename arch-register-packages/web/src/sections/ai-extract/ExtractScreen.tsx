@@ -16,6 +16,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { orpcClient } from '../../lib/orpcClient';
 import { createEntity } from '../../lib/entityOperations';
 import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
+import { Table } from '../../components/table/Table';
 
 type Phase = 'input' | 'scanning' | 'review' | 'done';
 type InputTab = 'paste' | 'upload';
@@ -413,97 +414,92 @@ export const ExtractScreen = () => {
           </div>
 
           <div className={styles.tableScroll}>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th className={styles.thExp} />
-                    <th className={styles.thCheck} />
-                    <th>Name</th>
-                    <th>Change</th>
-                    <th>Type</th>
-                    <th>Confidence</th>
-                    <th>Source</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(r => (
-                    <React.Fragment key={r.id}>
-                      <tr
-                        className={`${r.accepted ? '' : styles.rowRejected} ${r.expanded ? styles.rowExpanded : ''}`}
-                      >
-                        <td className={styles.tdExp}>
-                          <button
-                            type="button"
-                            className={`${styles.expBtn} ${r.expanded ? styles.expBtnOpen : ''}`}
-                            title={r.expanded ? 'Collapse' : 'Expand fields'}
-                            onClick={() => toggleExpand(r.id)}
-                          >
-                            <TbChevronRight size={12} />
-                          </button>
-                        </td>
-                        <td className={styles.tdCheck}>
-                          <input
-                            type="checkbox"
-                            checked={r.accepted}
-                            onChange={() => toggleRow(r.id)}
+            <Table.Root scroll stickyHeader wrapClassName={styles.tableWrap}>
+              <Table.Head>
+                <Table.Row>
+                  <Table.HeaderCell className={styles.thExp} />
+                  <Table.HeaderCell />
+                  <Table.HeaderCell>Name</Table.HeaderCell>
+                  <Table.HeaderCell>Change</Table.HeaderCell>
+                  <Table.HeaderCell>Type</Table.HeaderCell>
+                  <Table.HeaderCell>Confidence</Table.HeaderCell>
+                  <Table.HeaderCell>Source</Table.HeaderCell>
+                  <Table.HeaderCell />
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
+                {rows.map(r => (
+                  <React.Fragment key={r.id}>
+                    <Table.Row
+                      muted={!r.accepted}
+                      className={r.expanded ? styles.rowExpanded : undefined}
+                    >
+                      <Table.Cell className={styles.tdExp}>
+                        <button
+                          type="button"
+                          className={`${styles.expBtn} ${r.expanded ? styles.expBtnOpen : ''}`}
+                          title={r.expanded ? 'Collapse' : 'Expand fields'}
+                          onClick={() => toggleExpand(r.id)}
+                        >
+                          <TbChevronRight size={12} />
+                        </button>
+                      </Table.Cell>
+                      <Table.CheckboxCell
+                        aria-label={`Include ${r.name || 'entity'}`}
+                        checked={r.accepted}
+                        onChange={() => toggleRow(r.id)}
+                      />
+                      <Table.Cell>
+                        <input
+                          className={`${styles.cellInput} ${styles.cellInputName}`}
+                          value={r.name}
+                          onChange={e => updateRowName(r.id, e.target.value)}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className={`${styles.actionPill} ${styles.actionAdd}`}>
+                          <TbPlus size={10} /> Add
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className={styles.typeTag}>
+                          {schemaMap.get(r.schema_id)?.name ?? r.schema_id}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <div className={styles.conf}>
+                          <div
+                            className={`${styles.confBar} ${r.confidence > 0.85 ? styles.confHi : r.confidence > 0.7 ? styles.confMid : styles.confLo}`}
+                            style={{ width: `${Math.round(r.confidence * 100)}%` }}
                           />
-                        </td>
-                        <td>
-                          <input
-                            className={`${styles.cellInput} ${styles.cellInputName}`}
-                            value={r.name}
-                            onChange={e => updateRowName(r.id, e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <span className={`${styles.actionPill} ${styles.actionAdd}`}>
-                            <TbPlus size={10} /> Add
-                          </span>
-                        </td>
-                        <td>
-                          <span className={styles.typeTag}>
-                            {schemaMap.get(r.schema_id)?.name ?? r.schema_id}
-                          </span>
-                        </td>
-                        <td>
-                          <div className={styles.conf}>
-                            <div
-                              className={`${styles.confBar} ${r.confidence > 0.85 ? styles.confHi : r.confidence > 0.7 ? styles.confMid : styles.confLo}`}
-                              style={{ width: `${Math.round(r.confidence * 100)}%` }}
-                            />
-                            <span className={styles.confNum}>
-                              {Math.round(r.confidence * 100)}%
-                            </span>
-                          </div>
-                        </td>
-                        <td className={styles.tdSource} title={r.source}>
-                          {r.source}
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className={styles.rejectBtn}
-                            title={r.accepted ? 'Reject' : 'Accept'}
-                            onClick={() => toggleRow(r.id)}
-                          >
-                            {r.accepted ? <TbX size={12} /> : <TbPlus size={12} />}
-                          </button>
+                          <span className={styles.confNum}>{Math.round(r.confidence * 100)}%</span>
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className={styles.tdSource} title={r.source}>
+                        {r.source}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <button
+                          type="button"
+                          className={styles.rejectBtn}
+                          title={r.accepted ? 'Reject' : 'Accept'}
+                          onClick={() => toggleRow(r.id)}
+                        >
+                          {r.accepted ? <TbX size={12} /> : <TbPlus size={12} />}
+                        </button>
+                      </Table.Cell>
+                    </Table.Row>
+                    {r.expanded && (
+                      <tr className={styles.detailRow}>
+                        <td colSpan={8}>
+                          <ExpandedDetail row={r} />
                         </td>
                       </tr>
-                      {r.expanded && (
-                        <tr className={styles.detailRow}>
-                          <td colSpan={8}>
-                            <ExpandedDetail row={r} />
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </Table.Body>
+            </Table.Root>
           </div>
 
           <div className={styles.reviewFoot}>
