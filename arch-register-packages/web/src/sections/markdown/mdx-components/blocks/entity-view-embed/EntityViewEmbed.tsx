@@ -16,6 +16,7 @@ import { ExploreView } from '../../../../entities/components/ExploreView';
 import type { BrowserEntityRecord } from '../../../../entities/components/entityBrowserState';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import styles from './EntityViewEmbed.module.css';
+import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
 
 const noop = () => {};
@@ -82,7 +83,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   if (!viewId) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No view configured.</p>
+        <EmptyState compact title="No view configured." />
       </div>
     );
   }
@@ -225,7 +226,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
     default:
       return (
         <div className={styles.container}>
-          <p className={styles.empty}>Unsupported view mode.</p>
+          <EmptyState compact title="Unsupported view mode." />
         </div>
       );
   }

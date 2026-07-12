@@ -24,6 +24,7 @@ import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
 import { useJoinedAssessment } from './useJoinedAssessment';
 import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
+import { EmptyState } from '../../../components/EmptyState';
 import styles from './EntityBrowser.module.css';
 import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from './entityDisplayFields';
 import type { BrowserEntityRecord } from './entityBrowserState';
@@ -347,10 +348,10 @@ export const EntityBrowser = ({
       )}
 
       {(view === 'table' || view === 'cards') && filtered.length === 0 ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No entities found</div>
-          <div>Try adjusting your search or filters.</div>
-        </div>
+        <EmptyState
+          title="No entities found"
+          subtitle="Try adjusting your search or filters."
+        />
       ) : (
         <>
           {view === 'table' && !readOnly && selectedIds.size > 0 && (

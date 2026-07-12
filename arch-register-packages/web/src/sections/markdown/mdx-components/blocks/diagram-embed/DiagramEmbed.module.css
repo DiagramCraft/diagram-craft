@@ -34,11 +34,6 @@
   font-size: 12px;
 }
 
-.empty {
-  color: var(--base-fg-more-dim);
-  font-size: 13px;
-}
-
 .svgWrapper {
   display: flex;
   align-items: center;

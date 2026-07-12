@@ -13,6 +13,7 @@ import {
 } from '../../hooks/useDiscussions';
 import styles from './DiscussionThread.module.css';
 import { formatDateTime } from '../../utils/dateFormat';
+import { EmptyState } from '../../components/EmptyState';
 
 type ComposerProps = {
   placeholder: string;
@@ -170,13 +171,11 @@ export const DiscussionThread = ({
   return (
     <div className={styles.thread}>
       {posts.length === 0 && showEmptyState && (
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon}>
-            <TbMessage size={18} />
-          </div>
-          <div className={styles.emptyTitle}>No discussion yet</div>
-          <div className={styles.emptySub}>Start a thread to capture questions or decisions.</div>
-        </div>
+        <EmptyState
+          icon={<TbMessage size={18} />}
+          title="No discussion yet"
+          subtitle="Start a thread to capture questions or decisions."
+        />
       )}
 
       {roots.map(post => {

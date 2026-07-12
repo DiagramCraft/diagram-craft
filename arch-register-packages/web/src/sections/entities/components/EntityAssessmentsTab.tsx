@@ -11,6 +11,7 @@ import { useAssessmentResponses, useUpsertAssessmentResponse } from '../../../ho
 import { AssessmentFieldCell } from '../../projects/components/AssessmentFieldCells';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import { MemberAvatar } from '../../../components/MemberAvatar';
+import { EmptyState } from '../../../components/EmptyState';
 import styles from './EntityAssessmentsTab.module.css';
 
 const STATUS_LABEL = {
@@ -61,12 +62,10 @@ export const EntityAssessmentsTab = ({
 
   if (relevant.length === 0) {
     return (
-      <div className={styles.empty}>
-        <div className={styles.emptyTitle}>No open assessments</div>
-        <div className={styles.emptySub}>
-          {schema?.name ?? 'This entity type'} isn't in scope for any open or closed assessment.
-        </div>
-      </div>
+      <EmptyState
+        title="No open assessments"
+        subtitle={`${schema?.name ?? 'This entity type'} isn't in scope for any open or closed assessment.`}
+      />
     );
   }
 

@@ -6,12 +6,6 @@
   padding: 16px 24px 32px;
 }
 
-.emptyState {
-  color: var(--cmp-fg-disabled);
-  font-size: 12px;
-  padding: 8px 0;
-}
-
 .auditFilters {
   display: flex;
   flex-direction: column;

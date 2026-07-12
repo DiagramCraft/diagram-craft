@@ -417,30 +417,6 @@
   flex-shrink: 0;
 }
 
-/* Empty state */
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  padding: 64px 24px;
-  gap: 8px;
-  color: var(--base-fg-more-dim);
-  text-align: center;
-}
-
-.emptyTitle {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--base-fg-dim);
-}
-
-.emptyIcon {
-  margin-bottom: 4px;
-  opacity: 0.4;
-}
-
 /* ── Snapshot block ──────────────────────────────────────────────────────────── */
 
 .snapBlock {

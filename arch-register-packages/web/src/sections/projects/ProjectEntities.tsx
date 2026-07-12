@@ -24,6 +24,7 @@ import { Chip } from '../../components/Chip';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { TypeBadge } from '../../components/TypeBadge';
 import { Table } from '../../components/table/Table';
+import { EmptyState } from '../../components/EmptyState';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
@@ -470,12 +471,11 @@ const ProjectEntitiesTab = ({
   if (projectEntities.length === 0) {
     return (
       <div className={styles.entityTab}>
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No entities in project</div>
-          <div className={styles.emptySub}>
-            Add entities from the Entities tab to see them here.
-          </div>
-        </div>
+        <EmptyState
+          framed
+          title="No entities in project"
+          subtitle="Add entities from the Entities tab to see them here."
+        />
       </div>
     );
   }
@@ -560,15 +560,12 @@ const FutureChangesTab = ({
   if (futureSnapshots.length === 0) {
     return (
       <div className={styles.entityTab}>
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon}>
-            <TbCalendarEvent size={22} />
-          </div>
-          <div className={styles.emptyTitle}>No future changes planned</div>
-          <div className={styles.emptySub}>
-            Use the entity menu to plan future changes for entities in this project.
-          </div>
-        </div>
+        <EmptyState
+          framed
+          icon={<TbCalendarEvent size={22} />}
+          title="No future changes planned"
+          subtitle="Use the entity menu to plan future changes for entities in this project."
+        />
       </div>
     );
   }

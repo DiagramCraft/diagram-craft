@@ -3,6 +3,7 @@ import styles from './RadarView.module.css';
 import { TbSearch, TbChevronUp, TbChevronDown } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover } from '@diagram-craft/app-components/Popover';
+import { EmptyState } from '../../../components/EmptyState';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities } from '../../../hooks/useEntities';
 import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
@@ -626,10 +627,10 @@ export const RadarView = ({
         </div>
 
         {!config ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyTitle}>Radar not configured</div>
-            <div>Choose a schema above to map a schema and fields to the radar axes.</div>
-          </div>
+          <EmptyState
+            title="Radar not configured"
+            subtitle="Choose a schema above to map a schema and fields to the radar axes."
+          />
         ) : (
           <>
             {!hideToolbar && (

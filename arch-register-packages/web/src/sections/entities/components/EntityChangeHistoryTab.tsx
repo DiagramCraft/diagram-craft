@@ -11,6 +11,7 @@ import styles from './EntityChangeHistoryTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu } from '../../../components/DropdownMenu';
+import { EmptyState } from '../../../components/EmptyState';
 
 type Props = {
   workspaceId: string;
@@ -68,10 +69,10 @@ export const EntityChangeHistoryTab = ({
 
   if (auditLog.length === 0 && savedSnapshots.length === 0) {
     return (
-      <div className={sharedStyles.empty}>
-        <div className={sharedStyles.emptyTitle}>No change history yet</div>
-        <div>Changes will appear here as properties are edited.</div>
-      </div>
+      <EmptyState
+        title="No change history yet"
+        subtitle="Changes will appear here as properties are edited."
+      />
     );
   }
 

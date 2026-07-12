@@ -39,6 +39,7 @@ import { Title } from '../../components/Title';
 import { EntityDependentsTab } from './components/EntityDependentsTab';
 import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
 import { DiscussionThread } from '../discussions/DiscussionThread';
+import { EmptyState } from '../../components/EmptyState';
 import type { TabId, Relation, RefLookup } from './types/entityDetailTypes';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities/$entityId');
@@ -221,13 +222,15 @@ export const EntityDetailScreen = () => {
 
   if (!entity) {
     return (
-      <div className={styles.empty}>
-        <div className={styles.emptyTitle}>Entity not found</div>
-        <div>The entity may have been deleted.</div>
-        <Button icon={<TbChevronLeft size={12} />} onClick={() => navigateToEntities()}>
-          Back to entities
-        </Button>
-      </div>
+      <EmptyState
+        title="Entity not found"
+        subtitle="The entity may have been deleted."
+        action={
+          <Button icon={<TbChevronLeft size={12} />} onClick={() => navigateToEntities()}>
+            Back to entities
+          </Button>
+        }
+      />
     );
   }
 

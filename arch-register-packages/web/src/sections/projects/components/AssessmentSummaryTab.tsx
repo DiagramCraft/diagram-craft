@@ -2,6 +2,7 @@ import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { AssessmentResponse } from '@arch-register/api-types/assessmentResponseContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import styles from './AssessmentSummaryTab.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 
 type Props = {
   assessment: Assessment;
@@ -33,7 +34,9 @@ export const AssessmentSummaryTab = ({ assessment, responses, entityCount, enums
         </div>
 
         {total === 0 ? (
-          <div className={styles.empty}>No responses recorded yet.</div>
+          <div className={styles.empty}>
+            <EmptyState compact title="No responses recorded yet." />
+          </div>
         ) : (
           assessment.fields.map(field => {
             if (field.type === 'rating') {

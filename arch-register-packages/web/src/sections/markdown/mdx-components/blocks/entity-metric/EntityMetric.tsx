@@ -3,6 +3,7 @@ import { TbArrowRight } from 'react-icons/tb';
 import { useEntities } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import styles from './EntityMetric.module.css';
+import { EmptyState } from '../../../../../components/EmptyState';
 
 export const hasEntityMetricFilter = (props: {
   schema?: string;
@@ -38,7 +39,7 @@ export const EntityMetric = ({ schema, owner, lifecycle, label }: Props) => {
   if (!hasFilter) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No filters configured.</p>
+        <EmptyState compact title="No filters configured." />
       </div>
     );
   }

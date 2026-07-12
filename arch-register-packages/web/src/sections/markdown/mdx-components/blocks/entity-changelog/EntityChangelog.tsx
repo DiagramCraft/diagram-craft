@@ -7,6 +7,7 @@ import type { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import styles from './EntityChangelog.module.css';
 import { formatRelativeTime } from '../../../../../utils/dateFormat';
 import { Table } from '../../../../../components/table/Table';
+import { EmptyState } from '../../../../../components/EmptyState';
 
 const OPERATION_LABELS: Record<string, string> = {
   create: 'created',
@@ -72,7 +73,7 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
   if (!hasFilter) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No entity or filter configured.</p>
+        <EmptyState compact title="No entity or filter configured." />
       </div>
     );
   }
@@ -90,7 +91,7 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
   if (!entries || entries.length === 0) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No recent changes.</p>
+        <EmptyState compact title="No recent changes." />
       </div>
     );
   }

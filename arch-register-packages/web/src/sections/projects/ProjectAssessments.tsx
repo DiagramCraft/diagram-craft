@@ -30,6 +30,7 @@ import styles from './ProjectAssessments.module.css';
 import { useAssessments, useCreateAssessment, useUpdateAssessmentStatus } from '../../hooks/useAssessments';
 import { useEntitiesBySchema, useEntityCountsBySchema } from '../../hooks/useEntities';
 import { AssessmentScopeFilterBuilder } from './components/AssessmentScopeFilterBuilder';
+import { EmptyState } from '../../components/EmptyState';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
@@ -139,28 +140,28 @@ export const ProjectAssessments = ({
       >
         {filtered.length === 0 ? (
           <div className={styles.list}>
-            <div className={sharedStyles.empty}>
-              <div className={sharedStyles.emptyIcon}>
-                <TbClipboardList size={20} />
-              </div>
-              <div className={sharedStyles.emptyTitle}>
-                {statusFilter === 'default'
+            <EmptyState
+              framed
+              icon={<TbClipboardList size={20} />}
+              title={
+                statusFilter === 'default'
                   ? 'No open or closed assessments'
                   : statusFilter === 'draft'
                     ? 'No draft assessments'
                     : statusFilter === 'archived'
                       ? 'No archived assessments'
-                      : 'No assessments yet'}
-              </div>
-              <div className={sharedStyles.emptySub}>
-                Assessments collect structured scores and notes on entities in this project.
-              </div>
-              {project.canEdit && statusFilter !== 'archived' && (
-                <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setCreating(true)}>
-                  New assessment
-                </Button>
-              )}
-            </div>
+                      : 'No assessments yet'
+              }
+              subtitle="Assessments collect structured scores and notes on entities in this project."
+              action={
+                project.canEdit &&
+                statusFilter !== 'archived' && (
+                  <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setCreating(true)}>
+                    New assessment
+                  </Button>
+                )
+              }
+            />
           </div>
         ) : (
           <div className={styles.list}>

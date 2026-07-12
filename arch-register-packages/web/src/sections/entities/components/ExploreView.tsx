@@ -7,6 +7,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { exploreViewConfigSchema, type ExploreViewConfig } from '@arch-register/api-types/viewContract';
 import styles from './ExploreView.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 import {
   buildDefaultRelationFieldNames,
   buildExploreGraph,
@@ -313,10 +314,10 @@ export const ExploreView = ({
             </div>
           </div>
         )}
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No entities found</div>
-          <div>Try adjusting your search or filters.</div>
-        </div>
+        <EmptyState
+          title="No entities found"
+          subtitle="Try adjusting your search or filters."
+        />
       </div>
     );
   }

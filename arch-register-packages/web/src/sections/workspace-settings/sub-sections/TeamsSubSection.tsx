@@ -24,6 +24,7 @@ import {
   useUpdateTeams
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './TeamsSubSection.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 import { WorkspaceUserInfo } from '@arch-register/api-types/workspaceContract';
 
 type TeamDraft = {
@@ -216,9 +217,9 @@ export const TeamsSubSection = ({
   return (
     <div className={styles.container}>
       {isLoadingTeams || isLoadingAssignments ? (
-        <div className={styles.empty}>Loading teams…</div>
+        <EmptyState compact title="Loading teams…" />
       ) : teamDrafts.length === 0 ? (
-        <div className={styles.empty}>No owner teams have been created for this workspace.</div>
+        <EmptyState compact title="No owner teams have been created for this workspace." />
       ) : (
         <div className={styles.teamList}>
           {teamDrafts.map(team => {

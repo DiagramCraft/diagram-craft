@@ -7,6 +7,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../../hooks/useEnums';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { EmptyState } from '../../components/EmptyState';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
@@ -232,10 +233,10 @@ export const EnumEditorScreen = () => {
           </div>
         </div>
       ) : (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No enum selected</div>
-          <div>Select an enum from the sidebar or create a new one.</div>
-        </div>
+        <EmptyState
+          title="No enum selected"
+          subtitle="Select an enum from the sidebar or create a new one."
+        />
       )}
 
       <DeleteConfirmationDialog

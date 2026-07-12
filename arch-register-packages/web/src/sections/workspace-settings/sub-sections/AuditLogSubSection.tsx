@@ -12,6 +12,7 @@ import {
   projectDetailRoute
 } from '../../../routes/publicObjectRoutes';
 import { formatRelativeTime } from '../../../utils/dateFormat';
+import { EmptyState } from '../../../components/EmptyState';
 
 const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> = [
   { value: '', label: 'All object types' },
@@ -196,7 +197,7 @@ export const AuditLogSubSection = ({
         <div className={`${styles.sectionBody} ${styles.auditSectionBody}`}>
           <div className={styles.activityList}>
             {loading ? (
-              <div className={styles.emptyState}>Loading activity...</div>
+              <EmptyState compact title="Loading activity..." />
             ) : entries.length > 0 ? (
               entries.map(entry => (
                 <button
@@ -219,9 +220,7 @@ export const AuditLogSubSection = ({
                 </button>
               ))
             ) : (
-              <div className={styles.emptyState}>
-                No audit log entries match the current filters.
-              </div>
+              <EmptyState compact title="No audit log entries match the current filters." />
             )}
           </div>
         </div>

@@ -13,6 +13,7 @@ import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import type { ImageEmbedSlateElement } from './types';
 import { isEmbeddableImageAttachment } from './imageEmbedUtils';
 import styles from './ImageEmbedDialog.module.css';
+import { EmptyState } from '../../../../../components/EmptyState';
 
 type EmbedMode = 'upload' | 'existing';
 type ImageAlign = 'left' | 'center' | 'right';
@@ -150,7 +151,7 @@ export const ImageEmbedDialog = ({
         ) : (
           <DialogSection label="Image">
             {imageAttachments.length === 0 ? (
-              <div className={styles.empty}>No image attachments found.</div>
+              <EmptyState compact title="No image attachments found." />
             ) : (
               <div className={styles.list}>
                 {imageAttachments.map(attachment => (

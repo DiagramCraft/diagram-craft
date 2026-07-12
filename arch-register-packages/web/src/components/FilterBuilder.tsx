@@ -5,6 +5,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import styles from './FilterBuilder.module.css';
+import { EmptyState } from './EmptyState';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   WorkspaceLifecycleState,
@@ -215,7 +216,7 @@ export const FilterBuilder = ({
       </div>
 
       <div className={styles.rows}>
-        {conditions.length === 0 && <div className={styles.emptyState}>No filters applied.</div>}
+        {conditions.length === 0 && <EmptyState compact title="No filters applied." />}
         {conditions.map((c, i) => (
           <FilterRow
             key={i}

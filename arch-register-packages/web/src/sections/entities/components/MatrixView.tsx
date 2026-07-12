@@ -16,6 +16,7 @@ import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilt
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import type { JoinedAssessmentContext } from './RadarView';
+import { EmptyState } from '../../../components/EmptyState';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -523,20 +524,20 @@ export const MatrixView = ({
 
       {/* Matrix or empty state */}
       {isEmpty ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>
-            {colMode === 'entity' && noRelations
+        <EmptyState
+          title={
+            colMode === 'entity' && noRelations
               ? 'No relationships between these entity types'
               : isLoadingRelations
                 ? 'Loading relationships…'
-                : 'Nothing to display'}
-          </div>
-          <div className={styles.emptySub}>
-            {colMode === 'entity'
+                : 'Nothing to display'
+          }
+          subtitle={
+            colMode === 'entity'
               ? 'Try a different column type, or turn off sparse filtering.'
-              : 'Select an attribute to see value distribution.'}
-          </div>
-        </div>
+              : 'Select an attribute to see value distribution.'
+          }
+        />
       ) : (
         <div className={styles.scroll}>
           <table className={styles.table} cellSpacing="0" cellPadding="0">

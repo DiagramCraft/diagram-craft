@@ -15,13 +15,6 @@
   50% { opacity: 0.4; }
 }
 
-.empty {
-  font-size: 13px;
-  color: var(--base-fg-more-dim);
-  padding: 8px 0;
-  margin: 0;
-}
-
 .error {
   font-size: 13px;
   color: var(--danger-fg, #d32f2f);

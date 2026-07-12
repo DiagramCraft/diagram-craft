@@ -8,6 +8,7 @@ import type { EntityRecord, TreeNode } from '@arch-register/api-types/entityCont
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { hierarchyViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
+import { EmptyState } from '../../../components/EmptyState';
 import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -437,12 +438,10 @@ export const HierarchyView = ({
 
       {/* Content */}
       {isUnconfigured ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>Select a schema for Level 1</div>
-          <div className={styles.emptySub}>
-            Use the controls above to choose which entity types to display at each level.
-          </div>
-        </div>
+        <EmptyState
+          title="Select a schema for Level 1"
+          subtitle="Use the controls above to choose which entity types to display at each level."
+        />
       ) : (
         <div className={styles.scroll}>
           <div
@@ -578,10 +577,7 @@ export const HierarchyView = ({
           </div>
 
           {level1Items.length === 0 && (
-            <div className={styles.empty}>
-              <div className={styles.emptyTitle}>No entities found</div>
-              <div className={styles.emptySub}>Try adjusting your search or filters.</div>
-            </div>
+            <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
           )}
         </div>
       )}

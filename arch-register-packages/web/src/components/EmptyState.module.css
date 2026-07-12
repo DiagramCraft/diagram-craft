@@ -26,3 +26,40 @@
   color: var(--base-fg-more-dim);
   font-size: 13px;
 }
+
+.framed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 20px;
+  text-align: center;
+  border: 1px dashed var(--cmp-border);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+}
+
+.framedIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cmp-bg);
+  color: var(--base-fg-more-dim);
+  margin-bottom: 10px;
+}
+
+.framedTitle {
+  color: var(--base-fg);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.framedSub {
+  font-size: 12px;
+  max-width: 360px;
+  margin: 6px 0 14px;
+  color: var(--cmp-fg-disabled);
+}

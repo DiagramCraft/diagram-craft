@@ -6,16 +6,21 @@ export const EmptyState = (props: {
   subtitle?: string;
   action?: React.ReactNode;
   compact?: boolean;
+  framed?: boolean;
 }) => {
   if (props.compact) {
     return <div className={styles.compact}>{props.title}</div>;
   }
 
   return (
-    <div className={styles.empty}>
-      {props.icon && <div className={styles.emptyIcon}>{props.icon}</div>}
-      <div className={styles.emptyTitle}>{props.title}</div>
-      {props.subtitle && <div className={styles.emptySub}>{props.subtitle}</div>}
+    <div className={props.framed ? styles.framed : styles.empty}>
+      {props.icon && (
+        <div className={props.framed ? styles.framedIcon : styles.emptyIcon}>{props.icon}</div>
+      )}
+      <div className={props.framed ? styles.framedTitle : styles.emptyTitle}>{props.title}</div>
+      {props.subtitle && (
+        <div className={props.framed ? styles.framedSub : styles.emptySub}>{props.subtitle}</div>
+      )}
       {props.action}
     </div>
   );

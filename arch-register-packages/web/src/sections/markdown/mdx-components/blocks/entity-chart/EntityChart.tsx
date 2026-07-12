@@ -5,6 +5,7 @@ import { useEntities } from '../../../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { resolveSchemaColor, schemaColor } from '../../../../../lib/schemaPresentation';
 import styles from './EntityChart.module.css';
+import { EmptyState } from '../../../../../components/EmptyState';
 
 type ChartGroup = { key: string; label: string; count: number; color: string };
 
@@ -171,7 +172,7 @@ export const EntityChart = ({ schema, owner, lifecycle, groupBy = 'lifecycle', c
   if (!hasFilter) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No filters configured.</p>
+        <EmptyState compact title="No filters configured." />
       </div>
     );
   }
@@ -187,7 +188,7 @@ export const EntityChart = ({ schema, owner, lifecycle, groupBy = 'lifecycle', c
   if (groups.length === 0) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No entities match the current filters.</p>
+        <EmptyState compact title="No entities match the current filters." />
       </div>
     );
   }

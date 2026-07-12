@@ -10,6 +10,7 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { Relation, RelationGroup } from '../types/entityDetailTypes';
 import styles from './EntityTopologyTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 
 type EdgePath = {
   key: string;
@@ -322,10 +323,10 @@ export const EntityTopologyTab = ({
       )}
 
       {isEmpty && (
-        <div className={sharedStyles.empty}>
-          <div className={sharedStyles.emptyTitle}>No relationships defined</div>
-          <div>Add reference or containment fields to see the topology.</div>
-        </div>
+        <EmptyState
+          title="No relationships defined"
+          subtitle="Add reference or containment fields to see the topology."
+        />
       )}
     </div>
   );
