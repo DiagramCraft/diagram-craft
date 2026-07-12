@@ -234,6 +234,31 @@ export const EmptyRow: Story = {
   )
 };
 
+export const GroupHeaderRow: Story = {
+  render: () => (
+    <Table.Root>
+      <Table.Head>
+        <tr>
+          <Table.HeaderCell>Capability</Table.HeaderCell>
+          <Table.HeaderCell>Admin</Table.HeaderCell>
+        </tr>
+      </Table.Head>
+      <Table.Body>
+        <Table.GroupHeaderRow colSpan={2}>Workspace</Table.GroupHeaderRow>
+        <Table.Row>
+          <Table.Cell>Manage members</Table.Cell>
+          <Table.Cell>Yes</Table.Cell>
+        </Table.Row>
+        <Table.GroupHeaderRow colSpan={2}>Content</Table.GroupHeaderRow>
+        <Table.Row>
+          <Table.Cell>Edit documents</Table.Cell>
+          <Table.Cell>Yes</Table.Cell>
+        </Table.Row>
+      </Table.Body>
+    </Table.Root>
+  )
+};
+
 export const NumericAlignment: Story = {
   render: () => (
     <Table.Root>

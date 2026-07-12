@@ -63,6 +63,20 @@ describe('Table.EmptyRow', () => {
   });
 });
 
+describe('Table.GroupHeaderRow', () => {
+  it('renders a td with the given colSpan', () => {
+    const markup = renderToStaticMarkup(
+      <table>
+        <tbody>
+          <Table.GroupHeaderRow colSpan={4}>Workspace</Table.GroupHeaderRow>
+        </tbody>
+      </table>
+    );
+    expect(markup).toContain('colSpan="4"');
+    expect(markup).toContain('Workspace');
+  });
+});
+
 describe('Table.Row sticky offsets', () => {
   it('computes each sticky cell left offset from the widths of preceding sticky siblings', () => {
     const markup = renderToStaticMarkup(

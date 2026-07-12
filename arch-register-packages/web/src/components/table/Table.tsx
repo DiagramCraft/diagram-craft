@@ -305,6 +305,19 @@ const EmptyRow = ({ colSpan, title, children }: EmptyRowProps) => (
   </tr>
 );
 
+type GroupHeaderRowProps = { colSpan: number; children: ReactNode } & Omit<
+  ComponentPropsWithoutRef<'tr'>,
+  'children'
+>;
+
+const GroupHeaderRow = ({ colSpan, children, className, ...rest }: GroupHeaderRowProps) => (
+  <tr className={cx(styles.groupHeaderRow, className)} {...rest}>
+    <td className={styles.groupHeaderCell} colSpan={colSpan}>
+      {children}
+    </td>
+  </tr>
+);
+
 export const Table = {
   Root,
   Head,
@@ -318,5 +331,6 @@ export const Table = {
   CheckboxCell,
   ActionsCell,
   DotsButton,
-  EmptyRow
+  EmptyRow,
+  GroupHeaderRow
 };
