@@ -271,3 +271,14 @@
   color: var(--base-fg-more-dim);
   padding: 24px 10px;
 }
+
+/* Group header row */
+.groupHeaderCell {
+  background: var(--panel-bg);
+  font-weight: 600;
+  color: var(--base-fg-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 16px 6px 10px;
+}

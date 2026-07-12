@@ -92,54 +92,6 @@
   overflow: hidden;
 }
 
-.matrix {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.matrix th,
-.matrix td {
-  padding: 6px 12px;
-  text-align: center;
-  border-bottom: 1px solid var(--cmp-border);
-}
-
-.matrix th {
-  color: var(--base-fg-more-dim);
-  font-weight: 600;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.matrix td:first-child,
-.matrix th:first-child {
-  text-align: left;
-  padding-left: 16px;
-}
-
-.matrixHeaderRow th {
-  background: var(--base-bg);
-  padding: 10px 12px;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.matrixGroupRow td {
-  background: var(--panel-bg);
-  font-weight: 600;
-  color: var(--base-fg-dim);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 6px 16px;
-}
-
-.matrixCapRow td {
-  background: var(--base-bg);
-}
-
 .matrixCapName {
   color: var(--base-fg-dim);
 }
@@ -155,11 +107,9 @@
 }
 
 .matrixColHighlight {
+  /* Table.tsx's .table .th rule (two combined classes) outweighs a single local class on
+     specificity alone, so this needs !important to override the header cell background. */
   background: color-mix(in srgb, var(--accent-fg) 8%, transparent) !important;
-}
-
-.matrix tr:last-child td {
-  border-bottom: none;
 }
 
 .roleActions {

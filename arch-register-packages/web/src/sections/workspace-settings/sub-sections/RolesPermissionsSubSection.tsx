@@ -16,6 +16,7 @@ import { ColorPicker } from '../../../components/ColorPicker';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormGroup } from '@diagram-craft/app-components/FormGroup';
+import { Table } from '../../../components/table/Table';
 import { useWorkspaceMembers } from '../../../hooks/useWorkspaceMembers';
 import {
   useCreateWorkspaceRole,
@@ -155,37 +156,39 @@ export const RolesPermissionsSubSection = ({
       </div>
 
       <div className={styles.matrixWrap}>
-        <table className={styles.matrix}>
-          <thead>
-            <tr className={styles.matrixHeaderRow}>
-              <th>Capability</th>
+        <Table.Root stickyHeader bordered={false}>
+          <Table.Head>
+            <tr>
+              <Table.HeaderCell>Capability</Table.HeaderCell>
               {roles.map(role => (
-                <th
+                <Table.HeaderCell
                   key={role.id}
+                  align="center"
                   className={
                     selectedRoleDefinition?.id === role.id ? styles.matrixColHighlight : undefined
                   }
                 >
                   {role.name}
-                </th>
+                </Table.HeaderCell>
               ))}
             </tr>
-          </thead>
-          <tbody>
+          </Table.Head>
+          <Table.Body>
             {WORKSPACE_CAPABILITY_GROUPS.map(group => (
               <Fragment key={group.label}>
-                <tr className={styles.matrixGroupRow}>
-                  <td colSpan={roles.length + 1}>{group.label}</td>
-                </tr>
+                <Table.GroupHeaderRow colSpan={roles.length + 1}>
+                  {group.label}
+                </Table.GroupHeaderRow>
                 {group.caps.map(cap => (
-                  <tr key={cap.id} className={styles.matrixCapRow}>
-                    <td className={styles.matrixCapName}>{cap.name}</td>
+                  <Table.Row key={cap.id}>
+                    <Table.Cell className={styles.matrixCapName}>{cap.name}</Table.Cell>
                     {roles.map(role => {
                       const has = role.capabilities.includes(cap.id);
                       const highlight = selectedRoleDefinition?.id === role.id;
                       return (
-                        <td
+                        <Table.Cell
                           key={role.id}
+                          align="center"
                           className={highlight ? styles.matrixColHighlight : undefined}
                         >
                           {has ? (
@@ -195,15 +198,15 @@ export const RolesPermissionsSubSection = ({
                           ) : (
                             <span className={styles.matrixDash}>-</span>
                           )}
-                        </td>
+                        </Table.Cell>
                       );
                     })}
-                  </tr>
+                  </Table.Row>
                 ))}
               </Fragment>
             ))}
-          </tbody>
-        </table>
+          </Table.Body>
+        </Table.Root>
       </div>
 
       <RoleEditorDialog
