@@ -14,6 +14,8 @@ export type FieldOption = { id: string; label: string };
 
 export type JoinedAssessmentContext = { assessment: Assessment; enums: WorkspaceEnum[] };
 
+export const RATING_VALUES: FieldOption[] = ['1', '2', '3', '4', '5'].map(v => ({ id: v, label: v }));
+
 /**
  * Fields are deduped by id across the given schemas (first occurrence wins), the same way
  * MatrixView's attribute-column mode unions select fields across the row schemas present in
@@ -27,12 +29,20 @@ const findFieldAcrossSchemas = (schemas: EntitySchema[], fieldId: string) => {
   return undefined;
 };
 
-/** Categorical (discrete-value) fields selectable for an axis or colour mapping. */
+/**
+ * Categorical (discrete-value) fields selectable for an axis or colour mapping.
+ *
+ * `includeRatingFields` opts in rating-typed assessment fields as a discrete/bucketed axis
+ * (e.g. RadarView's quadrant/ring axes, which treat a 1-5 rating as 5 discrete values) —
+ * it defaults to false since most callers (e.g. BubbleView) treat rating fields as numeric
+ * via `getNumericFields` instead, and offering them in both places would be confusing.
+ */
 export const getCategoricalFields = (
   schemas: EntitySchema[],
   lifecycleStates: WorkspaceLifecycleState[],
   teams: WorkspaceTeam[],
-  joinedAssessment?: JoinedAssessmentContext | null
+  joinedAssessment?: JoinedAssessmentContext | null,
+  includeRatingFields = false
 ): FieldOption[] => {
   const seen = new Set<string>();
   const selectFields: FieldOption[] = [];
@@ -51,7 +61,7 @@ export const getCategoricalFields = (
     ...(teams.length > 0 ? [{ id: OWNER_FIELD_ID, label: 'Owner' }] : []),
     ...(joinedAssessment
       ? joinedAssessment.assessment.fields
-          .filter(f => f.type === 'enum')
+          .filter(f => f.type === 'enum' || (includeRatingFields && f.type === 'rating'))
           .map(f => ({ id: `${ASSESSMENT_FIELD_PREFIX}${f.id}`, label: f.label }))
       : [])
   ];
@@ -103,6 +113,7 @@ export const getCategoricalFieldValues = (
   if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) && joinedAssessment) {
     const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
     const field = joinedAssessment.assessment.fields.find(f => f.id === assessmentFieldId);
+    if (field?.type === 'rating') return RATING_VALUES;
     if (field?.type === 'enum') {
       const options = joinedAssessment.enums.find(e => e.id === field.enumId)?.options ?? [];
       return options.map(o => ({ id: o.value, label: o.label }));
