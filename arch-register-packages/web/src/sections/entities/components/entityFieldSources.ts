@@ -2,7 +2,7 @@ import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaCon
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
-import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
+import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import type { JoinedAssessmentContext } from './RadarView';
 
@@ -115,8 +115,7 @@ export const getCategoricalValue = (entity: EntityRecord, fieldId: string): stri
   if (fieldId === LIFECYCLE_FIELD_ID) return entity._lifecycle?.id ?? null;
   if (fieldId === OWNER_FIELD_ID) return entity._owner?.id ?? null;
   if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
-    const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
-    const value = (entity as BrowserEntityRecord)._assessment?.[assessmentFieldId];
+    const value = resolveAssessmentValue(entity as BrowserEntityRecord, fieldId);
     return value == null ? null : String(value);
   }
   const val = entity[fieldId];
@@ -125,8 +124,7 @@ export const getCategoricalValue = (entity: EntityRecord, fieldId: string): stri
 
 export const getNumericValue = (entity: EntityRecord, fieldId: string): number | null => {
   if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
-    const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
-    const value = (entity as BrowserEntityRecord)._assessment?.[assessmentFieldId];
+    const value = resolveAssessmentValue(entity as BrowserEntityRecord, fieldId);
     return typeof value === 'number' ? value : value != null ? Number(value) : null;
   }
   const val = entity[fieldId];

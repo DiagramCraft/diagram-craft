@@ -13,7 +13,7 @@ import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContr
 import { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
+import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
 
@@ -158,8 +158,7 @@ const getFieldValues = (
 const getEntityFieldValue = (entity: EntityRecord, fieldId: string): string | null => {
   if (fieldId === LIFECYCLE_FIELD_ID) return entity._lifecycle?.id ?? null;
   if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
-    const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
-    const value = (entity as BrowserEntityRecord)._assessment?.[assessmentFieldId];
+    const value = resolveAssessmentValue(entity as BrowserEntityRecord, fieldId);
     return value == null ? null : String(value);
   }
   const val = entity[fieldId];

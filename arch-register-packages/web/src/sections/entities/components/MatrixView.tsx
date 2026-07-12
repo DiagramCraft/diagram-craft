@@ -12,7 +12,7 @@ import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { matrixViewConfigSchema } from '@arch-register/api-types/viewContract';
-import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
+import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import type { JoinedAssessmentContext } from './RadarView';
@@ -325,9 +325,8 @@ export const MatrixView = ({
             if (!effColFieldId || !effAttrField) return false;
             let val: unknown;
             if (effColFieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
-              const assessmentFieldId = effColFieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
-              val = (row as BrowserEntityRecord)._assessment?.[assessmentFieldId];
-              val = val == null ? undefined : String(val);
+              const assessmentVal = resolveAssessmentValue(row as BrowserEntityRecord, effColFieldId);
+              val = assessmentVal == null ? undefined : String(assessmentVal);
             } else if (effAttrField.isMetadata) {
               val = getMetadataValue(row, effColFieldId);
             } else {
