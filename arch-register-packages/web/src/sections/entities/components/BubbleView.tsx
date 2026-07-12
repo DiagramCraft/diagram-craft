@@ -21,6 +21,7 @@ import {
   type JoinedAssessmentContext
 } from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
+import { TooltipChip, TooltipChips, TooltipRow } from './entityTooltipParts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -727,32 +728,22 @@ export const BubbleView = ({
                     </span>
                   </div>
                   {activeBubble.schemaName && (
-                    <div className={styles.tooltipChips}>
-                      <span className={styles.tooltipChip}>{activeBubble.schemaName}</span>
-                    </div>
+                    <TooltipChips>
+                      <TooltipChip>{activeBubble.schemaName}</TooltipChip>
+                    </TooltipChips>
                   )}
                   <div className={styles.tooltipRows}>
-                    <div className={styles.tooltipRow}>
-                      <span className={styles.tooltipLabel}>{xLabel}</span>
-                      <span className={styles.tooltipValue}>{activeBubble.xDisplay}</span>
-                    </div>
-                    <div className={styles.tooltipRow}>
-                      <span className={styles.tooltipLabel}>{yLabel}</span>
-                      <span className={styles.tooltipValue}>{activeBubble.yDisplay}</span>
-                    </div>
+                    <TooltipRow label={xLabel} value={activeBubble.xDisplay} />
+                    <TooltipRow label={yLabel} value={activeBubble.yDisplay} />
                     {activeBubble.sizeDisplay != null && (
-                      <div className={styles.tooltipRow}>
-                        <span className={styles.tooltipLabel}>{sizeLabel}</span>
-                        <span className={styles.tooltipValue}>{activeBubble.sizeDisplay}</span>
-                      </div>
+                      <TooltipRow label={sizeLabel} value={activeBubble.sizeDisplay} />
                     )}
                     {activeBubble.colorDisplay != null && (
-                      <div className={styles.tooltipRow}>
-                        <span className={styles.tooltipLabel}>{colorLabel}</span>
-                        <span className={styles.tooltipValue} style={{ color: activeBubble.color }}>
-                          {activeBubble.colorDisplay}
-                        </span>
-                      </div>
+                      <TooltipRow
+                        label={colorLabel}
+                        value={activeBubble.colorDisplay}
+                        valueStyle={{ color: activeBubble.color }}
+                      />
                     )}
                   </div>
                   {activeBubble.description && (

@@ -20,6 +20,7 @@ import {
   type JoinedAssessmentContext
 } from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
+import { TooltipChip, TooltipChips } from './entityTooltipParts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -987,14 +988,10 @@ const BlipTooltip = ({
           </button>
         )}
       </div>
-      <div className={styles.tooltipChips}>
-        <span className={styles.tooltipChip} style={{ borderColor: quad.color, color: quad.color }}>
-          {quad.label}
-        </span>
-        <span className={styles.tooltipChip} style={{ color: ring.color }}>
-          {ring.label}
-        </span>
-      </div>
+      <TooltipChips>
+        <TooltipChip style={{ borderColor: quad.color, color: quad.color }}>{quad.label}</TooltipChip>
+        <TooltipChip style={{ color: ring.color }}>{ring.label}</TooltipChip>
+      </TooltipChips>
       {blip.description && <div className={styles.tooltipDesc}>{blip.description}</div>}
       <button type="button" className={styles.tooltipOpen} onClick={onOpen}>
         Open entity →

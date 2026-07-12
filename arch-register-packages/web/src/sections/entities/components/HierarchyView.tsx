@@ -11,6 +11,7 @@ import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import { EmptyState } from '../../../components/EmptyState';
 import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 import { normalizeViewConfig } from './entityViewConfig';
+import { TooltipRow } from './entityTooltipParts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -159,17 +160,19 @@ const EntityTooltip = ({
             )}
 
             <div className={styles.tooltipRows}>
-              <div className={styles.tooltipRow}>
-                <span className={styles.tooltipLabel}>Type</span>
-                <span className={styles.tooltipValue}>
-                  <span className={styles.tooltipDot} style={{ background: color }} />
-                  {schemaName}
-                </span>
-              </div>
+              <TooltipRow
+                label="Type"
+                value={
+                  <>
+                    <span className={styles.tooltipDot} style={{ background: color }} />
+                    {schemaName}
+                  </>
+                }
+              />
               {displayFields.filter(f => f.id !== '_description' && f.id !== '_tags').map(option => {
                 const field = findEntityDisplayField(option.id, node, schemaMap, displayFields);
                 const value = field ? formatEntityDisplayValue(node as EntityRecord, field) : null;
-                return value == null ? null : <div key={option.id} className={styles.tooltipRow}><span className={styles.tooltipLabel}>{field!.label}</span><span className={styles.tooltipValue}>{value}</span></div>;
+                return value == null ? null : <TooltipRow key={option.id} label={field!.label} value={value} />;
               })}
             </div>
 

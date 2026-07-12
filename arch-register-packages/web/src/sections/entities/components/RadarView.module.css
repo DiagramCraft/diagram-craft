@@ -284,23 +284,6 @@
   color: var(--base-fg);
 }
 
-.tooltipChips {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-}
-
-.tooltipChip {
-  display: inline-flex;
-  align-items: center;
-  height: 18px;
-  padding: 0 6px;
-  border: 1px solid var(--panel-border);
-  border-radius: 9px;
-  font-size: 10px;
-}
-
 .tooltipDesc {
   font-size: 11px;
   color: var(--base-fg-dim);

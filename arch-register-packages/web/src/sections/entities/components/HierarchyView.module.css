@@ -217,37 +217,6 @@
   gap: 4px;
 }
 
-.tooltipRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-}
-
-.tooltipLabel {
-  color: var(--base-fg-more-dim);
-  min-width: 54px;
-  flex-shrink: 0;
-}
-
-.tooltipValue {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--base-fg-dim);
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-sm);
-  padding: 1px 7px;
-  font-size: 11px;
-  line-height: 1.6;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .tooltipDot {
   width: 6px;
   height: 6px;
