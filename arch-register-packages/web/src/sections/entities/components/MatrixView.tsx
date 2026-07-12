@@ -15,7 +15,7 @@ import { matrixViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import type { JoinedAssessmentContext } from './RadarView';
+import type { JoinedAssessmentContext } from './entityFieldSources';
 import { EmptyState } from '../../../components/EmptyState';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

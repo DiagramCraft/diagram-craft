@@ -3,13 +3,16 @@ import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContr
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
 import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import type { JoinedAssessmentContext } from './RadarView';
 
 export const LIFECYCLE_FIELD_ID = '_lifecycle';
 export const OWNER_FIELD_ID = '_owner';
 
 export type FieldOption = { id: string; label: string };
+
+export type JoinedAssessmentContext = { assessment: Assessment; enums: WorkspaceEnum[] };
 
 /**
  * Fields are deduped by id across the given schemas (first occurrence wins), the same way

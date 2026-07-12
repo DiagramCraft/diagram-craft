@@ -15,7 +15,7 @@ import { TimelineView } from './TimelineView';
 import { TreeView } from './TreeView';
 import type { BrowserEntityRecord, ProjectBrowserContext } from './entityBrowserState';
 import type { EntityDisplayField } from './entityDisplayFields';
-import type { JoinedAssessmentContext } from './RadarView';
+import type { JoinedAssessmentContext } from './entityFieldSources';
 
 const noopEntityAction = (_entity: EntityRecord) => {};
 const noopConfigChange = (_config: unknown) => {};

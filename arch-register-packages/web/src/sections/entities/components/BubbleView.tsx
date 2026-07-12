@@ -10,7 +10,6 @@ import { bubbleViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import type { JoinedAssessmentContext } from './RadarView';
 import {
   getCategoricalFields,
   getNumericFields,
@@ -18,7 +17,8 @@ import {
   getCategoricalValue,
   getNumericValue,
   getNumericFieldRange,
-  type FieldOption
+  type FieldOption,
+  type JoinedAssessmentContext
 } from './entityFieldSources';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

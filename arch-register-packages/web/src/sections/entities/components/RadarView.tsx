@@ -11,13 +11,10 @@ import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
-
-export type JoinedAssessmentContext = { assessment: Assessment; enums: WorkspaceEnum[] };
+import type { JoinedAssessmentContext } from './entityFieldSources';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
