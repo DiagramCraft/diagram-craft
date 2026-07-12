@@ -1,0 +1,42 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r);
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+
+.banner[data-variant="error"] {
+  color: var(--error-fg);
+  background: color-mix(in oklch, var(--error-fg) 6%, transparent);
+  border-color: color-mix(in oklch, var(--error-fg) 25%, transparent);
+}
+
+.banner[data-variant="warning"] {
+  color: var(--warning-fg);
+  background: color-mix(in oklch, var(--warning-fg) 6%, transparent);
+  border-color: color-mix(in oklch, var(--warning-fg) 25%, transparent);
+}
+
+.banner[data-variant="info"] {
+  color: var(--accent-fg);
+  background: color-mix(in oklch, var(--accent-fg) 6%, transparent);
+  border-color: color-mix(in oklch, var(--accent-fg) 25%, transparent);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.action {
+  flex-shrink: 0;
+}

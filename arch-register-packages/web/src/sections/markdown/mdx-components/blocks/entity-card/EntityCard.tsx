@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import type { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
+import { Banner } from '../../../../../components/Banner';
 import { TypeBadge } from '../../../../../components/TypeBadge';
 import { StatusChip } from '../../../../../components/StatusChip';
 import { useEntity } from '../../../../../hooks/useEntities';
@@ -55,11 +56,7 @@ export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
   }
 
   if (isError || !entity) {
-    return (
-      <div className={`${styles.card} ${styles.error}`}>
-        <span className={styles.errorText}>Entity not found: {id}</span>
-      </div>
-    );
+    return <Banner variant="error">Entity not found: {id}</Banner>;
   }
 
   const schemaIdx = schemas.findIndex(s => s.id === entity._schema?.id);

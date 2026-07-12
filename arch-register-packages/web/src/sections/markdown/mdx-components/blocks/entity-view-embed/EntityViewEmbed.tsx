@@ -16,6 +16,7 @@ import { ExploreView } from '../../../../entities/components/ExploreView';
 import type { BrowserEntityRecord } from '../../../../entities/components/entityBrowserState';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import styles from './EntityViewEmbed.module.css';
+import { Banner } from '../../../../../components/Banner';
 import { EmptyState } from '../../../../../components/EmptyState';
 import { buildEntityDisplayFields } from '../../../../entities/components/entityDisplayFields';
 
@@ -101,7 +102,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   if (!savedView) {
     return (
       <div className={styles.container}>
-        <p className={styles.error}>Saved view not found or was deleted.</p>
+        <Banner variant="error">Saved view not found or was deleted.</Banner>
       </div>
     );
   }

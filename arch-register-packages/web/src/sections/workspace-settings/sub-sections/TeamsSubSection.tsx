@@ -5,6 +5,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import { ColorPicker } from '../../../components/ColorPicker';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -209,7 +210,7 @@ export const TeamsSubSection = ({
   if (teamsError || assignmentsError) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>Failed to load teams.</div>
+        <Banner variant="error">Failed to load teams.</Banner>
       </div>
     );
   }

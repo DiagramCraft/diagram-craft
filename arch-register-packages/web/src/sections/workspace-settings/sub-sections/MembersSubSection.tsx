@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { TbSearch } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
@@ -118,7 +119,7 @@ export const MembersSubSection = ({
   if (error) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>Failed to load workspace members.</div>
+        <Banner variant="error">Failed to load workspace members.</Banner>
       </div>
     );
   }

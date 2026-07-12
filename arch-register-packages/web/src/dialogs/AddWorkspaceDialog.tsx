@@ -9,6 +9,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { orpcClient } from '../lib/orpcClient';
 import { ApiError } from '../lib/http';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
+import { Banner } from '../components/Banner';
 import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
@@ -397,7 +398,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
           )}
         </FormSection>
 
-        {error && <div className={styles.errorBar}>{error}</div>}
+        {error && <Banner variant="error">{error}</Banner>}
       </div>
     </Dialog>
   );

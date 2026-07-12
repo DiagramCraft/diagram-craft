@@ -142,11 +142,6 @@
   color: var(--cmp-fg-disabled);
 }
 
-.error {
-  color: var(--error-fg);
-  font-size: 12px;
-}
-
 /* Dialog */
 .dialogBody {
   display: flex;
@@ -198,4 +193,3 @@
   justify-content: flex-end;
   gap: 6px;
 }
-

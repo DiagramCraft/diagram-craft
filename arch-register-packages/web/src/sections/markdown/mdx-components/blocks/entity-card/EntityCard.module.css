@@ -14,20 +14,10 @@
   position: relative;
 }
 
-.card.error {
-  border-color: color-mix(in oklch, var(--error-fg) 30%, transparent);
-  background: color-mix(in oklch, var(--error-fg) 6%, transparent);
-}
-
 .loading {
   color: var(--cmp-fg-disabled);
   font-style: italic;
   padding: 2px 0;
-}
-
-.errorText {
-  color: var(--error-fg);
-  font-size: 12px;
 }
 
 .header {

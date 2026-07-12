@@ -284,28 +284,6 @@
   cursor: not-allowed;
 }
 
-/* ── Error ───────────────────────────────────────────────────── */
-
-.error {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: oklch(0.78 0.14 25);
-  background: color-mix(in oklch, var(--error-fg) 12%, transparent);
-  border: 1px solid color-mix(in oklch, var(--error-fg) 30%, var(--cmp-border));
-  border-radius: var(--r);
-  padding: 6px 8px;
-  margin-bottom: 2px;
-}
-
-.errorDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: oklch(0.72 0.18 25);
-  flex-shrink: 0;
-}
 
 /* ── Footer ──────────────────────────────────────────────────── */
 
