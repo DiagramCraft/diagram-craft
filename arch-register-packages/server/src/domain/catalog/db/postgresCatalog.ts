@@ -192,9 +192,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       );
     }
     for (const cond of filters?.conditions ?? []) {
-      const col =
-        ENTITY_BUILTIN_COLUMNS[cond.fieldId] ??
-        (isValidFieldId(cond.fieldId) ? `(e.data->>'${cond.fieldId}')` : null);
+      // Guard against prototype pollution: only accept own properties from ENTITY_BUILTIN_COLUMNS
+      // For custom fields, also verify they don't match Object.prototype property names
+      let col: string | null = null;
+      if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, cond.fieldId)) {
+        col = ENTITY_BUILTIN_COLUMNS[cond.fieldId] ?? null;
+      } else if (isValidFieldId(cond.fieldId) && !Object.hasOwn(Object.prototype, cond.fieldId)) {
+        col = `(e.data->>'${cond.fieldId}')`;
+      }
       if (!col) continue;
       const clause = buildConditionClause(col, cond, addParam, 'postgres');
       if (clause) whereParts.push(clause);

@@ -196,6 +196,50 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     });
   });
 
+    it('should ignore prototype property names in filter conditions', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Test Entity' });
+
+      // Test various prototype properties - should not cause SQL errors
+      const prototypeProps = ['toString', 'constructor', '__proto__', 'hasOwnProperty', 'valueOf'];
+
+      for (const prop of prototypeProps) {
+        const result = await db.catalog.listEntitiesPaginated(
+          workspace,
+          { conditions: [{ fieldId: prop, op: 'equals', value: 'test' }] },
+          { limit: 10, offset: 0 }
+        );
+        // Should return all entities (condition ignored) without SQL error
+        expect(result).toHaveLength(1);
+      }
+    });
+
+    it('should handle mixed valid and prototype property filters', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Match' });
+      await createFixtureCatalogEntity(db, workspace, schema, { name: 'NoMatch' });
+
+      // Mix valid filter with prototype property - should only apply valid filter
+      const result = await db.catalog.listEntitiesPaginated(
+        workspace,
+        {
+          conditions: [
+            { fieldId: '_name', op: 'equals', value: 'Match' },
+            { fieldId: 'toString', op: 'equals', value: 'ignored' }
+          ]
+        },
+        { limit: 10, offset: 0 }
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.name).toBe('Match');
+    });
+
+
   describe('entity grants', () => {
     it('replaces entity grants atomically', async () => {
       const db = getDb();
