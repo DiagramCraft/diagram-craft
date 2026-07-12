@@ -51,31 +51,36 @@ export class PermissionChecker {
    * Check if user has a specific assigned permission on a project.
    *
    * This checks:
-   * - Global admin_platform permission
-   * - Workspace role with proj.edit capability
+   * - Global admin_platform permission (grants all project actions)
+   * - Workspace role with proj.delete capability (for delete_project only)
+   * - Workspace role with proj.edit capability (for non-delete actions)
    * - Owner team membership
    *
    * @param context - Authorization context with user's roles and permissions
    * @param ownerTeamId - The team that owns the project (null for no owner)
-   * @param _action - The specific action to check (currently all actions treated uniformly)
+   * @param action - The specific action to check
    * @returns true if the user has the permission, false otherwise
    */
   hasProjectPermission(
     context: AuthorizationContext,
     ownerTeamId: string | null,
-    _action: ProjectAction
+    action: ProjectAction
   ): boolean {
     if (context.globalPermissions.has('admin_platform')) {
       return true;
     }
 
-    if (this.hasWorkspaceCapability(context, 'proj.edit')) {
+    if (action === 'delete_project') {
+      if (this.hasWorkspaceCapability(context, 'proj.delete')) {
+        return true;
+      }
+    } else if (this.hasWorkspaceCapability(context, 'proj.edit')) {
       return true;
     }
 
     if (ownerTeamId != null) {
       for (const role of this.getTeamRoles(context, ownerTeamId)) {
-        if (TEAM_ROLE_PERMISSIONS[role].projectActions.includes(_action)) {
+        if (TEAM_ROLE_PERMISSIONS[role].projectActions.includes(action)) {
           return true;
         }
       }
