@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
+import { defineOperation } from '../operation';
 import { buildApiAuthCtx, requireProjectAccess, requireProjectAction } from '../auth/authorization';
 import {
   logAudit,
@@ -30,8 +31,8 @@ import type {
 } from '@arch-register/api-types/projectContract';
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import {
-  handleError,
   listSiblingNodes,
+  projectDbErrorMessages,
   requireNonProjectContentAccess,
   storageScope
 } from './projectOperationHelpers';
@@ -315,24 +316,29 @@ export const getMarkdownContent = async (
   nodeId: string,
   event: AuthenticatedEvent
 ): Promise<MarkdownContent> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const node = await db.project.getAnyContentNodeById(ws, nodeId);
-    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-    httpAssert.true(node.type === 'markdown', {
-      status: 400,
-      message: 'Node is not a markdown document'
-    });
-    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
-    const siblingNodes = await listSiblingNodes(db, ws, node);
-    const attachments = getMarkdownAttachmentNodes(siblingNodes, node.id).map(toApiProjectFile);
-    const content = await storage.read(ws, storageScope(ws, node), node.id);
-    const parsed = JSON.parse(content.toString('utf8')) as { body?: string };
-    return { body: parsed.body ?? '', attachments };
-  } catch (e) {
-    return handleError(e, 'Failed to retrieve markdown content');
-  }
+  return defineOperation(
+    db,
+    workspace,
+    event,
+    {
+      fallback: 'Failed to retrieve markdown content',
+      dbErrorMessages: projectDbErrorMessages
+    },
+    async ({ ws, authCtx }) => {
+      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+      httpAssert.true(node.type === 'markdown', {
+        status: 400,
+        message: 'Node is not a markdown document'
+      });
+      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+      const siblingNodes = await listSiblingNodes(db, ws, node);
+      const attachments = getMarkdownAttachmentNodes(siblingNodes, node.id).map(toApiProjectFile);
+      const content = await storage.read(ws, storageScope(ws, node), node.id);
+      const parsed = JSON.parse(content.toString('utf8')) as { body?: string };
+      return { body: parsed.body ?? '', attachments };
+    }
+  );
 };
 
 export const uploadMarkdownAttachment = async (
@@ -346,103 +352,112 @@ export const uploadMarkdownAttachment = async (
   originalFilename: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const fileName = fileNameFromPath(filePath) || originalFilename;
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
-    httpAssert.present(markdownNode, {
-      status: 404,
-      message: `Markdown document '${nodeId}' not found`
-    });
-    httpAssert.true(markdownNode.type === 'markdown', {
-      status: 400,
-      message: 'Node is not a markdown document'
-    });
-    await requireMarkdownNodeAccess(db, ws, authCtx, markdownNode, 'edit');
+  return defineOperation(
+    db,
+    workspace,
+    event,
+    {
+      fallback: 'Failed to upload markdown attachment',
+      dbErrorMessages: projectDbErrorMessages
+    },
+    async ({ ws, authCtx }) => {
+      const fileName = fileNameFromPath(filePath) || originalFilename;
+      const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(markdownNode, {
+        status: 404,
+        message: `Markdown document '${nodeId}' not found`
+      });
+      httpAssert.true(markdownNode.type === 'markdown', {
+        status: 400,
+        message: 'Node is not a markdown document'
+      });
+      await requireMarkdownNodeAccess(db, ws, authCtx, markdownNode, 'edit');
 
-    const timestamp = new Date();
-    const container = await ensureMarkdownAttachmentContainer(
-      db,
-      ws,
-      markdownNode,
-      authCtx,
-      timestamp
-    );
-    const attachmentPath = `${container.path}/${fileName}`;
-    const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
-    const existingFile =
-      getMarkdownAttachmentNodes(siblingNodes, markdownNode.id).find(
-        node => node.path === attachmentPath && node.type === 'file'
-      ) ?? null;
-    const isUpdate = existingFile !== null;
+      const timestamp = new Date();
+      const container = await ensureMarkdownAttachmentContainer(
+        db,
+        ws,
+        markdownNode,
+        authCtx,
+        timestamp
+      );
+      const attachmentPath = `${container.path}/${fileName}`;
+      const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+      const existingFile =
+        getMarkdownAttachmentNodes(siblingNodes, markdownNode.id).find(
+          node => node.path === attachmentPath && node.type === 'file'
+        ) ?? null;
+      const isUpdate = existingFile !== null;
 
-    const attachmentId = existingFile?.id ?? randomUUID();
-    let row!: ContentNodeDbResult;
-    await coordinateContentWrite({
-      db,
-      storage,
-      operation: isUpdate ? 'update-attachment' : 'create-attachment',
-      scope: markdownNode.project_id ? 'project' : markdownNode.entity_id ? 'entity' : 'workspace',
-      nodeIds: [attachmentId],
-      storageChanges: [
-        {
-          type: 'write',
-          workspace: ws,
-          storageId: storageScope(ws, markdownNode),
-          nodeId: attachmentId,
-          content: buffer
-        }
-      ],
-      writeDatabase: async tx => {
-        row = await tx.project.upsertContentNode({
-          id: attachmentId,
-          workspace: ws,
-          project_id: markdownNode.project_id,
-          entity_id: markdownNode.entity_id,
-          parent_id: container.id,
-          path: attachmentPath,
-          name: originalFilename,
-          type: 'file',
-          size_bytes: buffer.length,
-          comment_count: 0,
-          unresolved_comment_count: 0,
-          created_atIfNew: existingFile?.created_at ?? timestamp,
-          updated_at: timestamp,
-          created_byIfNew: existingFile?.created_by ?? authCtx.userId,
-          updated_by: authCtx.userId,
-          mime_type: mimeType,
-          original_filename: originalFilename
-        });
-      },
-      afterCommit: [
-        {
-          name: 'audit',
-          run: () =>
-            writeAudit(db, {
-              userId: authCtx.userId,
-              workspace: ws,
-              operation: isUpdate ? 'update' : 'create',
-              entityType: 'content_node',
-              entityId: attachmentId,
-              entityName: row.name,
-              changes: isUpdate
-                ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
-                : { new: extractEntityFields(row) },
-              metadata: {
-                path: attachmentPath,
-                parent_markdown_node_id: markdownNode.id,
-                is_attachment: true
-              }
-            })
-        }
-      ]
-    });
+      const attachmentId = existingFile?.id ?? randomUUID();
+      let row!: ContentNodeDbResult;
+      await coordinateContentWrite({
+        db,
+        storage,
+        operation: isUpdate ? 'update-attachment' : 'create-attachment',
+        scope: markdownNode.project_id
+          ? 'project'
+          : markdownNode.entity_id
+            ? 'entity'
+            : 'workspace',
+        nodeIds: [attachmentId],
+        storageChanges: [
+          {
+            type: 'write',
+            workspace: ws,
+            storageId: storageScope(ws, markdownNode),
+            nodeId: attachmentId,
+            content: buffer
+          }
+        ],
+        writeDatabase: async tx => {
+          row = await tx.project.upsertContentNode({
+            id: attachmentId,
+            workspace: ws,
+            project_id: markdownNode.project_id,
+            entity_id: markdownNode.entity_id,
+            parent_id: container.id,
+            path: attachmentPath,
+            name: originalFilename,
+            type: 'file',
+            size_bytes: buffer.length,
+            comment_count: 0,
+            unresolved_comment_count: 0,
+            created_atIfNew: existingFile?.created_at ?? timestamp,
+            updated_at: timestamp,
+            created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+            updated_by: authCtx.userId,
+            mime_type: mimeType,
+            original_filename: originalFilename
+          });
+        },
+        afterCommit: [
+          {
+            name: 'audit',
+            run: () =>
+              writeAudit(db, {
+                userId: authCtx.userId,
+                workspace: ws,
+                operation: isUpdate ? 'update' : 'create',
+                entityType: 'content_node',
+                entityId: attachmentId,
+                entityName: row.name,
+                changes: isUpdate
+                  ? computeChanges(extractEntityFields(existingFile!), extractEntityFields(row))
+                  : { new: extractEntityFields(row) },
+                metadata: {
+                  path: attachmentPath,
+                  parent_markdown_node_id: markdownNode.id,
+                  is_attachment: true
+                }
+              })
+          }
+        ]
+      });
 
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to upload markdown attachment');
-  }
+      return toApiProjectFile(row);
+    }
+  );
 };
 
 export const createMarkdownDiagramAttachment = async (
@@ -454,104 +469,113 @@ export const createMarkdownDiagramAttachment = async (
   content: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
-    httpAssert.present(markdownNode, {
-      status: 404,
-      message: `Markdown document '${nodeId}' not found`
-    });
-    httpAssert.true(markdownNode.type === 'markdown', {
-      status: 400,
-      message: 'Node is not a markdown document'
-    });
-    await requireMarkdownNodeAccess(db, ws, authCtx, markdownNode, 'edit');
+  return defineOperation(
+    db,
+    workspace,
+    event,
+    {
+      fallback: 'Failed to create diagram attachment',
+      dbErrorMessages: projectDbErrorMessages
+    },
+    async ({ ws, authCtx }) => {
+      const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(markdownNode, {
+        status: 404,
+        message: `Markdown document '${nodeId}' not found`
+      });
+      httpAssert.true(markdownNode.type === 'markdown', {
+        status: 400,
+        message: 'Node is not a markdown document'
+      });
+      await requireMarkdownNodeAccess(db, ws, authCtx, markdownNode, 'edit');
 
-    const timestamp = new Date();
-    const container = await ensureMarkdownAttachmentContainer(
-      db,
-      ws,
-      markdownNode,
-      authCtx,
-      timestamp
-    );
+      const timestamp = new Date();
+      const container = await ensureMarkdownAttachmentContainer(
+        db,
+        ws,
+        markdownNode,
+        authCtx,
+        timestamp
+      );
 
-    const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
-    const existingDiagrams = getMarkdownAttachmentNodes(siblingNodes, markdownNode.id).filter(
-      n => n.type === 'diagram'
-    );
+      const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+      const existingDiagrams = getMarkdownAttachmentNodes(siblingNodes, markdownNode.id).filter(
+        n => n.type === 'diagram'
+      );
 
-    let diagramName = name;
-    let counter = 2;
-    while (existingDiagrams.some(n => n.path === `${container.path}/${diagramName}.json`)) {
-      diagramName = `${name} ${counter++}`;
+      let diagramName = name;
+      let counter = 2;
+      while (existingDiagrams.some(n => n.path === `${container.path}/${diagramName}.json`)) {
+        diagramName = `${name} ${counter++}`;
+      }
+      const diagramPath = `${container.path}/${diagramName}.json`;
+
+      const buffer = Buffer.from(JSON.stringify(content));
+      const attachmentId = randomUUID();
+      let row!: ContentNodeDbResult;
+      await coordinateContentWrite({
+        db,
+        storage,
+        operation: 'create-diagram-attachment',
+        scope: markdownNode.project_id
+          ? 'project'
+          : markdownNode.entity_id
+            ? 'entity'
+            : 'workspace',
+        nodeIds: [attachmentId],
+        storageChanges: [
+          {
+            type: 'write',
+            workspace: ws,
+            storageId: storageScope(ws, markdownNode),
+            nodeId: attachmentId,
+            content: buffer
+          }
+        ],
+        writeDatabase: async tx => {
+          row = await tx.project.upsertContentNode({
+            id: attachmentId,
+            workspace: ws,
+            project_id: markdownNode.project_id,
+            entity_id: markdownNode.entity_id,
+            parent_id: container.id,
+            path: diagramPath,
+            name: diagramName,
+            type: 'diagram',
+            size_bytes: buffer.length,
+            comment_count: 0,
+            unresolved_comment_count: 0,
+            created_atIfNew: timestamp,
+            updated_at: timestamp,
+            created_byIfNew: authCtx.userId,
+            updated_by: authCtx.userId
+          });
+        },
+        afterCommit: [
+          {
+            name: 'audit',
+            run: () =>
+              writeAudit(db, {
+                userId: authCtx.userId,
+                workspace: ws,
+                operation: 'create',
+                entityType: 'content_node',
+                entityId: attachmentId,
+                entityName: row.name,
+                changes: { new: extractEntityFields(row) },
+                metadata: {
+                  path: diagramPath,
+                  parent_markdown_node_id: markdownNode.id,
+                  is_attachment: true
+                }
+              })
+          }
+        ]
+      });
+
+      return toApiProjectFile(row);
     }
-    const diagramPath = `${container.path}/${diagramName}.json`;
-
-    const buffer = Buffer.from(JSON.stringify(content));
-    const attachmentId = randomUUID();
-    let row!: ContentNodeDbResult;
-    await coordinateContentWrite({
-      db,
-      storage,
-      operation: 'create-diagram-attachment',
-      scope: markdownNode.project_id ? 'project' : markdownNode.entity_id ? 'entity' : 'workspace',
-      nodeIds: [attachmentId],
-      storageChanges: [
-        {
-          type: 'write',
-          workspace: ws,
-          storageId: storageScope(ws, markdownNode),
-          nodeId: attachmentId,
-          content: buffer
-        }
-      ],
-      writeDatabase: async tx => {
-        row = await tx.project.upsertContentNode({
-          id: attachmentId,
-          workspace: ws,
-          project_id: markdownNode.project_id,
-          entity_id: markdownNode.entity_id,
-          parent_id: container.id,
-          path: diagramPath,
-          name: diagramName,
-          type: 'diagram',
-          size_bytes: buffer.length,
-          comment_count: 0,
-          unresolved_comment_count: 0,
-          created_atIfNew: timestamp,
-          updated_at: timestamp,
-          created_byIfNew: authCtx.userId,
-          updated_by: authCtx.userId
-        });
-      },
-      afterCommit: [
-        {
-          name: 'audit',
-          run: () =>
-            writeAudit(db, {
-              userId: authCtx.userId,
-              workspace: ws,
-              operation: 'create',
-              entityType: 'content_node',
-              entityId: attachmentId,
-              entityName: row.name,
-              changes: { new: extractEntityFields(row) },
-              metadata: {
-                path: diagramPath,
-                parent_markdown_node_id: markdownNode.id,
-                is_attachment: true
-              }
-            })
-        }
-      ]
-    });
-
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to create diagram attachment');
-  }
+  );
 };
 
 export const saveMarkdownContent = async (
@@ -563,95 +587,100 @@ export const saveMarkdownContent = async (
   name: string | undefined,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const node = await db.project.getAnyContentNodeById(ws, nodeId);
-    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-    httpAssert.true(node.type === 'markdown', {
-      status: 400,
-      message: 'Node is not a markdown document'
-    });
-    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
-    const content = Buffer.from(JSON.stringify({ body }), 'utf8');
-    const timestamp = new Date();
-    const nextName = name?.trim() ? name.trim() : node.name;
-    let row!: ContentNodeDbResult;
-    let revision: MarkdownRevisionDbResult | undefined;
-    await coordinateContentWrite({
-      db,
-      storage,
-      operation: 'update-markdown',
-      scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
-      nodeIds: [node.id],
-      storageChanges: [
-        {
-          type: 'write',
-          workspace: ws,
-          storageId: storageScope(ws, node),
-          nodeId: node.id,
-          content
-        }
-      ],
-      writeDatabase: async tx => {
-        row = await tx.project.upsertContentNode({
-          id: node.id,
-          workspace: ws,
-          project_id: node.project_id,
-          entity_id: node.entity_id,
-          parent_id: node.parent_id,
-          path: node.path,
-          name: nextName,
-          type: 'markdown',
-          size_bytes: content.length,
-          comment_count: 0,
-          unresolved_comment_count: 0,
-          created_atIfNew: node.created_at,
-          updated_at: timestamp,
-          created_byIfNew: node.created_by,
-          updated_by: authCtx.userId
-        });
-      },
-      afterCommit: [
-        {
-          name: 'revision',
-          run: async () => {
-            revision = await createContentNodeRevision(
-              db,
-              ws,
-              node.id,
-              body,
-              nextName,
-              authCtx.userId,
-              timestamp
-            );
+  return defineOperation(
+    db,
+    workspace,
+    event,
+    {
+      fallback: 'Failed to save markdown content',
+      dbErrorMessages: projectDbErrorMessages
+    },
+    async ({ ws, authCtx }) => {
+      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+      httpAssert.true(node.type === 'markdown', {
+        status: 400,
+        message: 'Node is not a markdown document'
+      });
+      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
+      const content = Buffer.from(JSON.stringify({ body }), 'utf8');
+      const timestamp = new Date();
+      const nextName = name?.trim() ? name.trim() : node.name;
+      let row!: ContentNodeDbResult;
+      let revision: MarkdownRevisionDbResult | undefined;
+      await coordinateContentWrite({
+        db,
+        storage,
+        operation: 'update-markdown',
+        scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
+        nodeIds: [node.id],
+        storageChanges: [
+          {
+            type: 'write',
+            workspace: ws,
+            storageId: storageScope(ws, node),
+            nodeId: node.id,
+            content
           }
+        ],
+        writeDatabase: async tx => {
+          row = await tx.project.upsertContentNode({
+            id: node.id,
+            workspace: ws,
+            project_id: node.project_id,
+            entity_id: node.entity_id,
+            parent_id: node.parent_id,
+            path: node.path,
+            name: nextName,
+            type: 'markdown',
+            size_bytes: content.length,
+            comment_count: 0,
+            unresolved_comment_count: 0,
+            created_atIfNew: node.created_at,
+            updated_at: timestamp,
+            created_byIfNew: node.created_by,
+            updated_by: authCtx.userId
+          });
         },
-        {
-          name: 'audit',
-          run: () =>
-            writeAudit(db, {
-              userId: authCtx.userId,
-              workspace: ws,
-              operation: 'update',
-              entityType: 'content_node',
-              entityId: row.id,
-              entityName: row.name,
-              changes: computeChanges(extractEntityFields(node), extractEntityFields(row)),
-              metadata: {
-                path: row.path,
-                ...(revision
-                  ? { revision_id: revision.id, revision_number: revision.revision_number }
-                  : {})
-              }
-            })
-        }
-      ]
-    });
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to save markdown content');
-  }
+        afterCommit: [
+          {
+            name: 'revision',
+            run: async () => {
+              revision = await createContentNodeRevision(
+                db,
+                ws,
+                node.id,
+                body,
+                nextName,
+                authCtx.userId,
+                timestamp
+              );
+            }
+          },
+          {
+            name: 'audit',
+            run: () =>
+              writeAudit(db, {
+                userId: authCtx.userId,
+                workspace: ws,
+                operation: 'update',
+                entityType: 'content_node',
+                entityId: row.id,
+                entityName: row.name,
+                changes: computeChanges(extractEntityFields(node), extractEntityFields(row)),
+                metadata: {
+                  path: row.path,
+                  ...(revision
+                    ? { revision_id: revision.id, revision_number: revision.revision_number }
+                    : {})
+                }
+              })
+          }
+        ]
+      });
+      return toApiProjectFile(row);
+    }
+  );
 };
 
 export const listMarkdownRevisions = async (
@@ -660,21 +689,26 @@ export const listMarkdownRevisions = async (
   nodeId: string,
   event: AuthenticatedEvent
 ): Promise<MarkdownRevisionSummary[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const node = await db.project.getAnyContentNodeById(ws, nodeId);
-    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-    httpAssert.true(node.type === 'markdown', {
-      status: 400,
-      message: 'Node is not a markdown document'
-    });
-    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
-    const revisions = await db.project.listMarkdownRevisions(ws, node.id);
-    return revisions.map(toApiMarkdownRevisionSummary);
-  } catch (e) {
-    return handleError(e, 'Failed to retrieve markdown revisions');
-  }
+  return defineOperation(
+    db,
+    workspace,
+    event,
+    {
+      fallback: 'Failed to retrieve markdown revisions',
+      dbErrorMessages: projectDbErrorMessages
+    },
+    async ({ ws, authCtx }) => {
+      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+      httpAssert.true(node.type === 'markdown', {
+        status: 400,
+        message: 'Node is not a markdown document'
+      });
+      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+      const revisions = await db.project.listMarkdownRevisions(ws, node.id);
+      return revisions.map(toApiMarkdownRevisionSummary);
+    }
+  );
 };
 
 export const getMarkdownRevision = async (
@@ -684,22 +718,27 @@ export const getMarkdownRevision = async (
   revisionId: string,
   event: AuthenticatedEvent
 ): Promise<MarkdownRevisionDetail> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const node = await db.project.getAnyContentNodeById(ws, nodeId);
-    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-    httpAssert.true(node.type === 'markdown', {
-      status: 400,
-      message: 'Node is not a markdown document'
-    });
-    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
-    const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
-    httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
-    return toApiMarkdownRevisionDetail(revision);
-  } catch (e) {
-    return handleError(e, 'Failed to retrieve markdown revision');
-  }
+  return defineOperation(
+    db,
+    workspace,
+    event,
+    {
+      fallback: 'Failed to retrieve markdown revision',
+      dbErrorMessages: projectDbErrorMessages
+    },
+    async ({ ws, authCtx }) => {
+      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+      httpAssert.true(node.type === 'markdown', {
+        status: 400,
+        message: 'Node is not a markdown document'
+      });
+      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+      const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
+      httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
+      return toApiMarkdownRevisionDetail(revision);
+    }
+  );
 };
 
 export const restoreMarkdownRevision = async (
@@ -710,103 +749,108 @@ export const restoreMarkdownRevision = async (
   revisionId: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  try {
-    const authCtx = await buildApiAuthCtx(db, ws, event);
-    const node = await db.project.getAnyContentNodeById(ws, nodeId);
-    httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-    httpAssert.true(node.type === 'markdown', {
-      status: 400,
-      message: 'Node is not a markdown document'
-    });
-    await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
-    const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
-    httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
+  return defineOperation(
+    db,
+    workspace,
+    event,
+    {
+      fallback: 'Failed to restore markdown revision',
+      dbErrorMessages: projectDbErrorMessages
+    },
+    async ({ ws, authCtx }) => {
+      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+      httpAssert.true(node.type === 'markdown', {
+        status: 400,
+        message: 'Node is not a markdown document'
+      });
+      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
+      const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
+      httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
 
-    const content = Buffer.from(JSON.stringify({ body: revision.body }), 'utf8');
-    const timestamp = new Date();
-    const nextName = revision.title?.trim() ? revision.title.trim() : node.name;
-    let row!: ContentNodeDbResult;
-    let restoredRevision: MarkdownRevisionDbResult | undefined;
-    await coordinateContentWrite({
-      db,
-      storage,
-      operation: 'restore-markdown',
-      scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
-      nodeIds: [node.id],
-      storageChanges: [
-        {
-          type: 'write',
-          workspace: ws,
-          storageId: storageScope(ws, node),
-          nodeId: node.id,
-          content
-        }
-      ],
-      writeDatabase: async tx => {
-        row = await tx.project.upsertContentNode({
-          id: node.id,
-          workspace: ws,
-          project_id: node.project_id,
-          entity_id: node.entity_id,
-          parent_id: node.parent_id,
-          path: node.path,
-          name: nextName,
-          type: 'markdown',
-          size_bytes: content.length,
-          comment_count: node.comment_count,
-          unresolved_comment_count: node.unresolved_comment_count,
-          created_atIfNew: node.created_at,
-          updated_at: timestamp,
-          created_byIfNew: node.created_by,
-          updated_by: authCtx.userId
-        });
-      },
-      afterCommit: [
-        {
-          name: 'revision',
-          run: async () => {
-            restoredRevision = await createContentNodeRevision(
-              db,
-              ws,
-              node.id,
-              revision.body,
-              nextName,
-              authCtx.userId,
-              timestamp,
-              revision.id
-            );
+      const content = Buffer.from(JSON.stringify({ body: revision.body }), 'utf8');
+      const timestamp = new Date();
+      const nextName = revision.title?.trim() ? revision.title.trim() : node.name;
+      let row!: ContentNodeDbResult;
+      let restoredRevision: MarkdownRevisionDbResult | undefined;
+      await coordinateContentWrite({
+        db,
+        storage,
+        operation: 'restore-markdown',
+        scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
+        nodeIds: [node.id],
+        storageChanges: [
+          {
+            type: 'write',
+            workspace: ws,
+            storageId: storageScope(ws, node),
+            nodeId: node.id,
+            content
           }
+        ],
+        writeDatabase: async tx => {
+          row = await tx.project.upsertContentNode({
+            id: node.id,
+            workspace: ws,
+            project_id: node.project_id,
+            entity_id: node.entity_id,
+            parent_id: node.parent_id,
+            path: node.path,
+            name: nextName,
+            type: 'markdown',
+            size_bytes: content.length,
+            comment_count: node.comment_count,
+            unresolved_comment_count: node.unresolved_comment_count,
+            created_atIfNew: node.created_at,
+            updated_at: timestamp,
+            created_byIfNew: node.created_by,
+            updated_by: authCtx.userId
+          });
         },
-        {
-          name: 'audit',
-          run: () =>
-            writeAudit(db, {
-              userId: authCtx.userId,
-              workspace: ws,
-              operation: 'update',
-              entityType: 'content_node',
-              entityId: row.id,
-              entityName: row.name,
-              changes: computeChanges(extractEntityFields(node), extractEntityFields(row)),
-              metadata: {
-                path: row.path,
-                ...(restoredRevision
-                  ? {
-                      revision_id: restoredRevision.id,
-                      revision_number: restoredRevision.revision_number
-                    }
-                  : {}),
-                restored_from_revision_id: revision.id
-              }
-            })
-        }
-      ]
-    });
-    return toApiProjectFile(row);
-  } catch (e) {
-    return handleError(e, 'Failed to restore markdown revision');
-  }
+        afterCommit: [
+          {
+            name: 'revision',
+            run: async () => {
+              restoredRevision = await createContentNodeRevision(
+                db,
+                ws,
+                node.id,
+                revision.body,
+                nextName,
+                authCtx.userId,
+                timestamp,
+                revision.id
+              );
+            }
+          },
+          {
+            name: 'audit',
+            run: () =>
+              writeAudit(db, {
+                userId: authCtx.userId,
+                workspace: ws,
+                operation: 'update',
+                entityType: 'content_node',
+                entityId: row.id,
+                entityName: row.name,
+                changes: computeChanges(extractEntityFields(node), extractEntityFields(row)),
+                metadata: {
+                  path: row.path,
+                  ...(restoredRevision
+                    ? {
+                        revision_id: restoredRevision.id,
+                        revision_number: restoredRevision.revision_number
+                      }
+                    : {}),
+                  restored_from_revision_id: revision.id
+                }
+              })
+          }
+        ]
+      });
+      return toApiProjectFile(row);
+    }
+  );
 };
 
 // ── Binary file upload / download ─────────────────────────────

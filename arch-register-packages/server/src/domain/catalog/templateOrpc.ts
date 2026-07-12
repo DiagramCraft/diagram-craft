@@ -2,9 +2,7 @@ import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
-import { buildApiAuthCtx } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listAllTemplates,
@@ -28,27 +26,26 @@ const templateRouter = implement(workspaceTemplateContract)
 export const workspaceTemplateORPCRouter = templateRouter.router({
   templates: {
     listAll: templateRouter.templates.listAll.handler(async ({ input, context }) => {
-      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-      return await listAllTemplates(context.db, workspace, authCtx);
+      return await listAllTemplates(context.db, input.params.workspace, context.event);
     }),
 
     listForProject: templateRouter.templates.listForProject.handler(async ({ input, context }) => {
-      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
-      return await listProjectTemplates(context.db, workspace, input.params.id, authCtx);
+      return await listProjectTemplates(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        context.event
+      );
     }),
     toggleStatus: templateRouter.templates.toggleStatus.handler(async ({ input, context }) => {
-      const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-      const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
       return await toggleTemplateStatus(
         context.db,
-        workspace,
+        input.params.workspace,
         input.params.id,
         input.params.path,
         input.body.is_template,
         input.body.is_workspace_template,
-        authCtx
+        context.event
       );
     }),
     createFromTemplate: templateRouter.templates.createFromTemplate.handler(
@@ -56,18 +53,16 @@ export const workspaceTemplateORPCRouter = templateRouter.router({
         if (!context.storage) {
           throw new Error('Storage adapter not available');
         }
-        const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
-        const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
         return await createFromTemplate(
           context.db,
           context.storage,
-          workspace,
+          input.params.workspace,
           input.params.id,
           input.body.name,
           input.body.templateProjectId,
           input.body.templatePath,
           input.body.folder,
-          authCtx
+          context.event
         );
       }
     )

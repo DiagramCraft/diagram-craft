@@ -1,15 +1,14 @@
+import type { AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
-import { handleDbError } from '../../utils/http';
+import { requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import type { ContentNodeDbResult } from './db/projectDatabase';
 import { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 
-export const handleError = (error: unknown, fallback: string): never =>
-  handleDbError(error, fallback, {
-    unique: 'A project with that name already exists in this workspace',
-    foreign: 'Foreign key constraint violation'
-  });
+export const projectDbErrorMessages = {
+  unique: 'A project with that name already exists in this workspace',
+  foreign: 'Foreign key constraint violation'
+} as const;
 
 const normalizeContentMetadataText = (value: unknown) => {
   if (typeof value !== 'string') return null;
@@ -98,7 +97,7 @@ export const storageScope = (
 ) => node.project_id ?? node.entity_id ?? ws;
 
 export const requireNonProjectContentAccess = (
-  authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
+  authCtx: AuthorizationContext,
   action: 'read' | 'edit'
 ) =>
   requireWorkspaceCapability(

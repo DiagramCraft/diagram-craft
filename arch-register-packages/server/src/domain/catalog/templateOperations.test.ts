@@ -1,7 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
+import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createFromTemplate } from './templateOperations';
+
+const authorizationMocks = vi.hoisted(() => ({
+  buildApiAuthCtx: vi.fn()
+}));
+
+vi.mock('../auth/authorization', async () => ({
+  ...(await vi.importActual<typeof import('../auth/authorization')>('../auth/authorization')),
+  buildApiAuthCtx: authorizationMocks.buildApiAuthCtx
+}));
+
+vi.mock('../workspace/resolveWorkspace', () => ({
+  resolveWorkspace: vi.fn(async () => 'ws-1')
+}));
 
 vi.mock('../diagram/serverDiagramRenderer', () => ({
   generateAccurateSvgPreview: vi.fn(async () => '<svg />')
@@ -28,6 +42,12 @@ const makeAuthContext = (teamIds: string[]) =>
     entities: [],
     grants: []
   });
+
+const event = {} as AuthenticatedEvent;
+const eventFor = (teamIds: string[]) => {
+  authorizationMocks.buildApiAuthCtx.mockResolvedValueOnce(makeAuthContext(teamIds));
+  return event;
+};
 
 const makeProject = (id: string, owner: string) => ({
   id,
@@ -89,35 +109,39 @@ const makeValidDocument = () => ({
 });
 
 const makeDb = () => {
-  const getContentNodeByPath = vi.fn(async (_workspace: string, projectId: string, path: string) => {
-    if (projectId === 'source-project' && path === 'templates/source.json') {
-      return makeTemplateFile();
+  const getContentNodeByPath = vi.fn(
+    async (_workspace: string, projectId: string, path: string) => {
+      if (projectId === 'source-project' && path === 'templates/source.json') {
+        return makeTemplateFile();
+      }
+      return null;
     }
-    return null;
-  });
+  );
 
-  const upsertContentNode = vi.fn(async (input: { path: string; name: string; size_bytes: number }) => ({
-    id: 'new-file',
-    workspace: 'ws-1',
-    project_id: 'dest-project',
-    entity_id: null,
-    parent_id: null,
-    path: input.path,
-    name: input.name,
-    type: 'diagram',
-    size_bytes: input.size_bytes,
-    comment_count: 0,
-    unresolved_comment_count: 0,
-    is_template: false,
-    is_workspace_template: false,
-    preview_svg: null,
-    created_at: now,
-    updated_at: now,
-    created_by: 'user-1',
-    updated_by: 'user-1',
-    mime_type: null,
-    original_filename: null
-  }));
+  const upsertContentNode = vi.fn(
+    async (input: { path: string; name: string; size_bytes: number }) => ({
+      id: 'new-file',
+      workspace: 'ws-1',
+      project_id: 'dest-project',
+      entity_id: null,
+      parent_id: null,
+      path: input.path,
+      name: input.name,
+      type: 'diagram',
+      size_bytes: input.size_bytes,
+      comment_count: 0,
+      unresolved_comment_count: 0,
+      is_template: false,
+      is_workspace_template: false,
+      preview_svg: null,
+      created_at: now,
+      updated_at: now,
+      created_by: 'user-1',
+      updated_by: 'user-1',
+      mime_type: null,
+      original_filename: null
+    })
+  );
 
   const db = {
     project: {
@@ -164,7 +188,7 @@ describe('createFromTemplate', () => {
         'source-project',
         'templates/source.json',
         null,
-        makeAuthContext(['team-dest'])
+        eventFor(['team-dest'])
       )
     ).rejects.toMatchObject({ status: 403 });
 
@@ -195,7 +219,7 @@ describe('createFromTemplate', () => {
         'source-project',
         'templates/source.json',
         null,
-        makeAuthContext(['team-dest', 'team-source'])
+        eventFor(['team-dest', 'team-source'])
       )
     ).rejects.toMatchObject({ status: 403 });
 
@@ -215,7 +239,7 @@ describe('createFromTemplate', () => {
         'source-project',
         'templates/source.json',
         null,
-        makeAuthContext(['team-dest', 'team-source'])
+        eventFor(['team-dest', 'team-source'])
       )
     ).rejects.toMatchObject({
       status: 403,
@@ -240,7 +264,7 @@ describe('createFromTemplate', () => {
         'source-project',
         'templates/source.json',
         null,
-        makeAuthContext(['team-source'])
+        eventFor(['team-source'])
       )
     ).rejects.toMatchObject({
       status: 400,
@@ -270,7 +294,7 @@ describe('createFromTemplate', () => {
         'source-project',
         'templates/source.json',
         null,
-        makeAuthContext(['team-source'])
+        eventFor(['team-source'])
       )
     ).rejects.toMatchObject({
       status: 500,
@@ -286,12 +310,14 @@ describe('createFromTemplate', () => {
 
   it('creates a new diagram from a workspace template in another project', async () => {
     const { db, getContentNodeByPath } = makeDb();
-    getContentNodeByPath.mockImplementation(async (_workspace: string, projectId: string, path: string) => {
-      if (projectId === 'source-project' && path === 'templates/source.json') {
-        return makeTemplateFile({ is_workspace_template: true });
+    getContentNodeByPath.mockImplementation(
+      async (_workspace: string, projectId: string, path: string) => {
+        if (projectId === 'source-project' && path === 'templates/source.json') {
+          return makeTemplateFile({ is_workspace_template: true });
+        }
+        return null;
       }
-      return null;
-    });
+    );
 
     const storage = {
       read: vi.fn(async () => Buffer.from(JSON.stringify(makeValidDocument()), 'utf8')),
@@ -307,7 +333,7 @@ describe('createFromTemplate', () => {
       'source-project',
       'templates/source.json',
       'folder-a',
-      makeAuthContext(['team-dest', 'team-source'])
+      eventFor(['team-dest', 'team-source'])
     );
 
     expect(storage.write).toHaveBeenCalled();
