@@ -123,12 +123,6 @@
   min-width: 210px;
 }
 
-/* Table.Cell's own padding would stack with .entName's own padding below; this column's
-   visual padding comes entirely from .entName, so the cell itself gets none. */
-.entNameCell {
-  padding: 0 !important;
-}
-
 .statusCol {
   min-width: 150px;
 }
@@ -137,7 +131,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 10px 7px 10px;
 }
 
 .entNameBtn {
@@ -159,9 +152,6 @@
 .cell {
   min-width: 148px;
   max-width: 220px;
-  /* Keeps the editable-field grid compact; Table.module.css's shared .table .td padding
-     is more specific (0,2,0) than this single class, so !important is needed to win. */
-  padding: 3px 10px !important;
 }
 
 .req {

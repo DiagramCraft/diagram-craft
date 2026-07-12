@@ -81,13 +81,13 @@ export const EntityChangeHistoryTab = ({
         {savedSnapshots.length > 0 && (
           <Table.Root>
             <Table.Head>
-              <tr>
+              <Table.Row>
                 <Table.HeaderCell>Date</Table.HeaderCell>
                 <Table.HeaderCell>Type</Table.HeaderCell>
                 <Table.HeaderCell>By</Table.HeaderCell>
                 <Table.HeaderCell>Message</Table.HeaderCell>
                 <Table.HeaderCell />
-              </tr>
+              </Table.Row>
             </Table.Head>
             <Table.Body>
               {savedSnapshots.map(snapshot => (

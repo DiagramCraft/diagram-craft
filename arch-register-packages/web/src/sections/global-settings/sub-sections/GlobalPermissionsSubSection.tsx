@@ -151,11 +151,11 @@ export const GlobalPermissionsSubSection = ({
       ) : (
         <Table.Root>
           <Table.Head>
-            <tr>
+            <Table.Row>
               <Table.HeaderCell style={{ minWidth: 240 }}>User</Table.HeaderCell>
               <Table.HeaderCell>Global roles</Table.HeaderCell>
               <Table.HeaderCell>Status</Table.HeaderCell>
-            </tr>
+            </Table.Row>
           </Table.Head>
           <Table.Body>
             {assignedUsers.map(assignedUser => {

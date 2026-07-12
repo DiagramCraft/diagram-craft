@@ -118,20 +118,6 @@
   text-align: right;
 }
 
-/* Section already supplies the bordered/rounded panel chrome around these tables — reset
-   Table.Root's own wrapper so it doesn't double up, and un-round header corners that no
-   longer sit flush against the top of that panel (sectionHead is above them). */
-.tableSurfaceWrap {
-  border: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-}
-
-.tableSurfaceWrap thead th:first-child,
-.tableSurfaceWrap thead th:last-child {
-  border-radius: 0 !important;
-}
-
 .linkButton {
   appearance: none;
   background: none;

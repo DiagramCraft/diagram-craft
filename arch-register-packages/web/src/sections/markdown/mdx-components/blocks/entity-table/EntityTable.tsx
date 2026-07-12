@@ -88,12 +88,12 @@ export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
     <div className={styles.tableWrapper}>
       <Table.Root className={styles.tableSurface}>
         <Table.Head>
-          <tr>
+          <Table.Row>
             <Table.HeaderCell>Name</Table.HeaderCell>
             <Table.HeaderCell>Type</Table.HeaderCell>
             <Table.HeaderCell>Owner</Table.HeaderCell>
             <Table.HeaderCell>Status</Table.HeaderCell>
-          </tr>
+          </Table.Row>
         </Table.Head>
         <Table.Body>
           {entities.map(entity => {

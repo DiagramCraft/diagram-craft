@@ -174,13 +174,13 @@ export const MembersSubSection = ({
       ) : (
         <Table.Root>
           <Table.Head>
-            <tr>
+            <Table.Row>
               <Table.HeaderCell style={{ minWidth: 240 }}>Member</Table.HeaderCell>
               <Table.HeaderCell>Role</Table.HeaderCell>
               <Table.HeaderCell>Teams</Table.HeaderCell>
               <Table.HeaderCell>Status</Table.HeaderCell>
               <Table.HeaderCell>Added</Table.HeaderCell>
-            </tr>
+            </Table.Row>
           </Table.Head>
           <Table.Body>
             {filteredMembers.length === 0 && (

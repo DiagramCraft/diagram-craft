@@ -484,12 +484,12 @@ const ProjectEntitiesTab = ({
     <div className={styles.entityTab}>
       <Table.Root>
         <Table.Head>
-          <tr>
+          <Table.Row>
             <Table.HeaderCell style={{ minWidth: 220 }}>Name</Table.HeaderCell>
             <Table.HeaderCell>Role</Table.HeaderCell>
             <Table.HeaderCell width={100}>Done</Table.HeaderCell>
             <Table.HeaderCell width={36} />
-          </tr>
+          </Table.Row>
         </Table.Head>
         <Table.Body>
           {groupedByRole.flatMap(([role, entities]) =>

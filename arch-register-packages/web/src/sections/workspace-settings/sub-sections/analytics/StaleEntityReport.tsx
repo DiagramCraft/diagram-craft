@@ -79,11 +79,11 @@ export const StaleEntityReport = ({
       ) : (
         <Table.Root>
           <Table.Head>
-            <tr>
+            <Table.Row>
               <Table.HeaderCell>Name</Table.HeaderCell>
               <Table.HeaderCell>Type</Table.HeaderCell>
               <Table.HeaderCell>Last updated</Table.HeaderCell>
-            </tr>
+            </Table.Row>
           </Table.Head>
           <Table.Body>
             {entities.map(entity => (

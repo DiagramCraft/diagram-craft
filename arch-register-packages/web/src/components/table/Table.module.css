@@ -10,6 +10,17 @@
   overscroll-behavior: none;
 }
 
+.wrapEmbedded {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.wrapEmbedded .table thead .th:first-child,
+.wrapEmbedded .table thead .th:last-child {
+  border-radius: 0;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

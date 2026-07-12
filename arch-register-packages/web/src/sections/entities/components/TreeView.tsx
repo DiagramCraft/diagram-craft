@@ -117,7 +117,7 @@ export const TreeView = ({
   return (
     <Table.Root>
       <Table.Head>
-        <tr>
+        <Table.Row>
           <Table.HeaderCell style={{ minWidth: 240 }}>Name</Table.HeaderCell>
           <Table.HeaderCell>Type</Table.HeaderCell>
           {columns
@@ -126,7 +126,7 @@ export const TreeView = ({
               <Table.HeaderCell key={c.id}>{c.label}</Table.HeaderCell>
             ))}
           {!readOnly && <Table.HeaderCell style={{ width: 28 }} />}
-        </tr>
+        </Table.Row>
       </Table.Head>
       <Table.Body>
         {roots.map(item => (

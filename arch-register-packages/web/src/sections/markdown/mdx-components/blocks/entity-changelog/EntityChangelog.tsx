@@ -99,13 +99,13 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
     <div className={styles.tableWrapper}>
       <Table.Root className={styles.tableSurface}>
         <Table.Head>
-          <tr>
+          <Table.Row>
             <Table.HeaderCell>When</Table.HeaderCell>
             <Table.HeaderCell>Entity</Table.HeaderCell>
             <Table.HeaderCell>Operation</Table.HeaderCell>
             <Table.HeaderCell>By</Table.HeaderCell>
             <Table.HeaderCell>Changed fields</Table.HeaderCell>
-          </tr>
+          </Table.Row>
         </Table.Head>
         <Table.Body>
           {entries.map(entry => {

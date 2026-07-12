@@ -48,6 +48,9 @@ type TableRootProps = {
   scroll?: boolean;
   stickyHeader?: boolean;
   layout?: 'auto' | 'fixed';
+  // false when the table already sits inside another bordered/rounded surface (e.g. a Section
+  // panel), so Table.Root's own border/radius/background don't double up against it.
+  bordered?: boolean;
   wrapClassName?: string;
   className?: string;
   children: ReactNode;
@@ -57,12 +60,20 @@ const Root = ({
   scroll = false,
   stickyHeader = false,
   layout = 'auto',
+  bordered = true,
   wrapClassName,
   className,
   children,
   ...rest
 }: TableRootProps) => (
-  <div className={cx(styles.wrap, scroll && styles.wrapScroll, wrapClassName)}>
+  <div
+    className={cx(
+      styles.wrap,
+      !bordered && styles.wrapEmbedded,
+      scroll && styles.wrapScroll,
+      wrapClassName
+    )}
+  >
     <table
       className={cx(
         styles.table,

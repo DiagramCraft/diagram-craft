@@ -85,11 +85,11 @@ export const RestoreSnapshotDialog = ({
             <h4>Changes that will be applied:</h4>
             <Table.Root>
               <Table.Head>
-                <tr>
+                <Table.Row>
                   <Table.HeaderCell>Field</Table.HeaderCell>
                   <Table.HeaderCell>Current Value</Table.HeaderCell>
                   <Table.HeaderCell>Restored Value</Table.HeaderCell>
-                </tr>
+                </Table.Row>
               </Table.Head>
               <Table.Body>
                 {changes.map((change, idx) => (

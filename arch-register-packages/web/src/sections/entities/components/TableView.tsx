@@ -46,7 +46,7 @@ export const TableView = ({
   return (
     <Table.Root>
       <Table.Head>
-        <tr>
+        <Table.Row>
           {!readOnly && (
             <Table.CheckboxCell
               as="th"
@@ -65,7 +65,7 @@ export const TableView = ({
             <Table.HeaderCell>{activeDateField.name}</Table.HeaderCell>
           )}
           {!readOnly && <Table.HeaderCell style={{ width: 28 }} />}
-        </tr>
+        </Table.Row>
       </Table.Head>
       <Table.Body>
         {rows.map(entity => {

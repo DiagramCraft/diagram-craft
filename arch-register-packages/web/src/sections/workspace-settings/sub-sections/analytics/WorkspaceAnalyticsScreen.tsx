@@ -93,12 +93,12 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
         {analytics.coverage.length === 0 ? (
           <EmptyState text="No schemas are available for this workspace." />
         ) : (
-          <Table.Root layout="fixed" wrapClassName={styles.tableSurfaceWrap}>
+          <Table.Root layout="fixed" bordered={false}>
             <Table.Head>
-              <tr>
+              <Table.Row>
                 <Table.HeaderCell width={160}>Schema</Table.HeaderCell>
                 <Table.HeaderCell>Lifecycle mix</Table.HeaderCell>
-              </tr>
+              </Table.Row>
             </Table.Head>
             <Table.Body>
               {analytics.coverage.map(row => (
@@ -129,12 +129,12 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
       </Section>
 
       <Section title="Completeness" sub="Field completeness distribution per schema.">
-        <Table.Root layout="fixed" wrapClassName={styles.tableSurfaceWrap}>
+        <Table.Root layout="fixed" bordered={false}>
           <Table.Head>
-            <tr>
+            <Table.Row>
               <Table.HeaderCell width={160}>Schema</Table.HeaderCell>
               <Table.HeaderCell>Completeness mix</Table.HeaderCell>
-            </tr>
+            </Table.Row>
           </Table.Head>
           <Table.Body>
             {analytics.completeness.map(row => (
@@ -196,15 +196,15 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
 
       <div className={styles.sideBySide}>
         <Section title="Ownership Gaps" sub="Schemas with the most unowned entities.">
-          <Table.Root wrapClassName={styles.tableSurfaceWrap}>
+          <Table.Root bordered={false}>
             <Table.Head>
-              <tr>
+              <Table.Row>
                 <Table.HeaderCell>Schema</Table.HeaderCell>
                 <Table.HeaderCell width={120}>Missing</Table.HeaderCell>
                 <Table.HeaderCell align="right" width={80}>
                   Percent
                 </Table.HeaderCell>
-              </tr>
+              </Table.Row>
             </Table.Head>
             <Table.Body>
               {analytics.ownershipGaps.map(row => (
@@ -231,14 +231,14 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
         </Section>
 
         <Section title="Schema Utilisation" sub="Entity counts, including empty schemas.">
-          <Table.Root wrapClassName={styles.tableSurfaceWrap}>
+          <Table.Root bordered={false}>
             <Table.Head>
-              <tr>
+              <Table.Row>
                 <Table.HeaderCell>Schema</Table.HeaderCell>
                 <Table.HeaderCell align="right" width={80}>
                   Entities
                 </Table.HeaderCell>
-              </tr>
+              </Table.Row>
             </Table.Head>
             <Table.Body>
               {analytics.schemaUtilization.map(row => (
