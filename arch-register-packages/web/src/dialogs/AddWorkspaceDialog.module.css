@@ -284,16 +284,6 @@
   transform: rotate(45deg);
 }
 
-/* ── Error ──────────────────────────────────────────────────── */
-
-.errorBar {
-  padding: 8px 16px;
-  font-size: 12px;
-  color: var(--error-fg);
-  background: color-mix(in oklch, var(--error-fg) 8%, var(--panel-bg));
-  border-top: 1px solid color-mix(in oklch, var(--error-fg) 25%, var(--cmp-border));
-}
-
 /* ── Footer ─────────────────────────────────────────────────── */
 
 .footer {

@@ -239,12 +239,6 @@
   font-family: var(--font-mono, monospace);
 }
 
-/* ============= States ============= */
-.error {
-  color: var(--error-fg);
-  font-size: 12px;
-}
-
 .emptyInline {
   color: var(--cmp-fg-disabled);
   font-size: 12px;
