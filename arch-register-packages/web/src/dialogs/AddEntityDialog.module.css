@@ -62,12 +62,6 @@
   margin-top: 8px;
 }
 
-
-.error {
-  font-size: 12px;
-  color: var(--error-fg);
-}
-
 @media (max-width: 900px) {
   .dialogPanel {
     width: min(100vw - 32px, 1040px);

@@ -4,6 +4,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { GLOBAL_ROLES, type GlobalRole } from '@arch-register/permissions';
 import { useAuth } from '../../../auth/AuthContext';
+import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
@@ -130,7 +131,7 @@ export const GlobalPermissionsSubSection = ({
   if (error) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>Failed to load users.</div>
+        <Banner variant="error">Failed to load users.</Banner>
       </div>
     );
   }
@@ -138,7 +139,7 @@ export const GlobalPermissionsSubSection = ({
   if (rolesError) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>Failed to load global role assignments.</div>
+        <Banner variant="error">Failed to load global role assignments.</Banner>
       </div>
     );
   }

@@ -7,6 +7,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { orpcClient } from '../lib/orpcClient';
 import { ApiError } from '../lib/http';
+import { Banner } from '../components/Banner';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
@@ -321,7 +322,7 @@ export const AddEntityDialog = ({
           </FormGroup>
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <Banner variant="error">{error}</Banner>}
       </form>
     </Dialog>
   );

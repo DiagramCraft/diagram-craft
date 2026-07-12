@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { fetchWithAuthResponse } from '../../../../../auth/authClient';
+import { Banner } from '../../../../../components/Banner';
 import { useProjectFile } from '../../../../../hooks/useProjectFiles';
 import { useMdxContext } from '../../../MdxContext';
 import { getMarkdownAttachmentDownloadUrl, isImageMimeType } from './imageEmbedUtils';
@@ -130,19 +131,11 @@ export const ImageEmbed = ({
   }
 
   if (isError || !file) {
-    return (
-      <figure className={`${styles.container} ${styles.error}`}>
-        <span className={styles.errorText}>Image not found: {id}</span>
-      </figure>
-    );
+    return <Banner variant="error">Image not found: {id}</Banner>;
   }
 
   if (loadError) {
-    return (
-      <figure className={`${styles.container} ${styles.error}`}>
-        <span className={styles.errorText}>{loadError}</span>
-      </figure>
-    );
+    return <Banner variant="error">{loadError}</Banner>;
   }
 
   if (!imageUrl) {

@@ -22,6 +22,7 @@ import {
   projectDiagramRoute
 } from '../../../../../routes/publicObjectRoutes';
 import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
+import { Banner } from '../../../../../components/Banner';
 import { EmptyState } from '../../../../../components/EmptyState';
 import styles from './DiagramEmbed.module.css';
 
@@ -105,11 +106,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   }
 
   if (isError || !file) {
-    return (
-      <figure className={`${styles.container} ${styles.error}`}>
-        <span className={styles.errorText}>Diagram not found: {id}</span>
-      </figure>
-    );
+    return <Banner variant="error">Diagram not found: {id}</Banner>;
   }
 
   if (diagram) {

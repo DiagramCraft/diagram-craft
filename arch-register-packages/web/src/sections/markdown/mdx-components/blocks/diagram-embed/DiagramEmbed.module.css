@@ -17,21 +17,11 @@
   border-color: var(--accent-fg);
 }
 
-.container.error {
-  border-color: color-mix(in oklch, var(--error-fg) 30%, transparent);
-  background: color-mix(in oklch, var(--error-fg) 6%, transparent);
-}
-
 .loading {
   color: var(--cmp-fg-disabled);
   font-style: italic;
   font-size: 13px;
   padding: 2px 0;
-}
-
-.errorText {
-  color: var(--error-fg);
-  font-size: 12px;
 }
 
 .svgWrapper {

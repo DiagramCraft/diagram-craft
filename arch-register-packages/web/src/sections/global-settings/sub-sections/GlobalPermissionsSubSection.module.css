@@ -50,10 +50,6 @@
   font-size: 12px;
 }
 
-.error {
-  color: var(--error-fg);
-}
-
 /* Dialog */
 .dialogBody {
   display: flex;
