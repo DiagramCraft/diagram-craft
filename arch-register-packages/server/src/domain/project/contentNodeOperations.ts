@@ -32,13 +32,8 @@ import type { ContentNodeDbResult } from './db/projectDatabase';
 import { HTTPError } from 'h3';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
-import {
-  buildFileTree,
-  deleteContentFile,
-  deleteContentFolder,
-  renameContentFolder
-} from './contentTreeOperations';
-import { ENTITY_SCOPE, PROJECT_SCOPE, WORKSPACE_SCOPE } from './contentScope';
+import { buildFileTree } from './contentTreeOperations';
+import { ENTITY_SCOPE, WORKSPACE_SCOPE } from './contentScope';
 import type { ContentScopeResolver } from './contentScope';
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
@@ -359,16 +354,6 @@ export const createEntityFile = async (
   return writeScopedDiagram(ENTITY_SCOPE, db, storage, workspace, entityId, filePath, body, event);
 };
 
-export const renameFolder = (
-  db: DatabaseAdapter,
-  workspace: string,
-  id: string,
-  oldPath: string,
-  newPath: string,
-  event: AuthenticatedEvent
-): Promise<{ success: boolean; message: string; count: number }> =>
-  renameContentFolder(PROJECT_SCOPE, db, workspace, id, oldPath, newPath, event);
-
 export const getFileContent = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
@@ -555,88 +540,7 @@ export const saveFile = async (
   );
 };
 
-export const deleteFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  id: string,
-  filePath: string,
-  event: AuthenticatedEvent
-): Promise<{ success: boolean }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to delete file',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, id);
-      httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-      const projectUuid = project.id;
-
-      requireProjectAction(
-        authCtx,
-        project.owner,
-        'edit_project',
-        'You do not have permission to modify this project'
-      );
-
-      const file = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
-      httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
-      const siblingNodes =
-        file.type === 'markdown' ? await db.project.listContentNodes(ws, projectUuid) : [];
-
-      const attachmentNodes =
-        file.type === 'markdown'
-          ? (() => {
-              const container = getAttachmentContainerForMarkdownNode(siblingNodes, file.id);
-              return container
-                ? [container, ...collectDescendantNodes(siblingNodes, container.id)]
-                : [];
-            })()
-          : [];
-      const blobNodes = [file, ...attachmentNodes].filter(node => node.type !== 'folder');
-      await coordinateContentWrite({
-        db,
-        storage,
-        operation: 'delete',
-        scope: 'project',
-        nodeIds: [file.id, ...attachmentNodes.map(node => node.id)],
-        storageChanges: blobNodes.map(node => ({
-          type: 'delete' as const,
-          workspace: ws,
-          storageId: projectUuid,
-          nodeId: node.id
-        })),
-        writeDatabase: async tx => {
-          await tx.project.deleteContentNodeByPath(ws, projectUuid, filePath);
-        },
-        afterCommit: [
-          {
-            name: 'audit',
-            run: () =>
-              writeAudit(db, {
-                userId: authCtx.userId,
-                workspace: ws,
-                operation: 'delete',
-                entityType: 'content_node',
-                entityId: file.id,
-                entityName: file.name,
-                changes: { old: extractEntityFields(file) },
-                metadata: { project_id: projectUuid, path: filePath }
-              })
-          }
-        ]
-      });
-
-      return { success: true };
-    }
-  );
-};
-
-const cloneScopedContentFile = async (
+export const cloneContentFile = async (
   scope: ContentScopeResolver,
   db: DatabaseAdapter,
   storage: StorageAdapter,
@@ -837,18 +741,7 @@ const cloneScopedContentFile = async (
   return toApiProjectFile(saved);
 };
 
-export const cloneFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  id: string,
-  filePath: string,
-  event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  return cloneScopedContentFile(PROJECT_SCOPE, db, storage, workspace, id, filePath, event);
-};
-
-const relocateScopedContentFile = async (
+export const relocateContentFile = async (
   scope: ContentScopeResolver,
   db: DatabaseAdapter,
   storage: StorageAdapter,
@@ -1054,37 +947,6 @@ const relocateScopedContentFile = async (
   });
   return toApiProjectFile(saved);
 };
-
-export const relocateFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  id: string,
-  filePath: string,
-  newPath: string,
-  event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  return relocateScopedContentFile(
-    PROJECT_SCOPE,
-    db,
-    storage,
-    workspace,
-    id,
-    filePath,
-    newPath,
-    event
-  );
-};
-
-export const deleteFolder = (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  id: string,
-  folderPath: string,
-  event: AuthenticatedEvent
-): Promise<{ success: boolean; count: number }> =>
-  deleteContentFolder(PROJECT_SCOPE, db, storage, workspace, id, folderPath, event);
 
 export const updateTemplateStatus = async (
   db: DatabaseAdapter,
@@ -1364,131 +1226,3 @@ export const getFileContentById = async (
   );
 };
 
-export const deleteEntityFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  entityId: string,
-  filePath: string,
-  event: AuthenticatedEvent
-): Promise<{ success: boolean }> => {
-  return deleteContentFile(ENTITY_SCOPE, db, storage, workspace, entityId, filePath, event);
-};
-
-export const deleteEntityFolder = (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  entityId: string,
-  folderPath: string,
-  event: AuthenticatedEvent
-): Promise<{ success: boolean; count: number }> =>
-  deleteContentFolder(ENTITY_SCOPE, db, storage, workspace, entityId, folderPath, event);
-
-export const renameEntityFolder = (
-  db: DatabaseAdapter,
-  workspace: string,
-  entityId: string,
-  oldPath: string,
-  newPath: string,
-  event: AuthenticatedEvent
-): Promise<{ success: boolean; message: string; count: number }> =>
-  renameContentFolder(ENTITY_SCOPE, db, workspace, entityId, oldPath, newPath, event);
-
-export const cloneEntityFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  entityId: string,
-  filePath: string,
-  event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  return cloneScopedContentFile(ENTITY_SCOPE, db, storage, workspace, entityId, filePath, event);
-};
-
-export const relocateEntityFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  entityId: string,
-  filePath: string,
-  newPath: string,
-  event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  return relocateScopedContentFile(
-    ENTITY_SCOPE,
-    db,
-    storage,
-    workspace,
-    entityId,
-    filePath,
-    newPath,
-    event
-  );
-};
-
-export const deleteWorkspaceFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  filePath: string,
-  event: AuthenticatedEvent
-): Promise<{ success: boolean }> => {
-  return deleteContentFile(WORKSPACE_SCOPE, db, storage, workspace, undefined, filePath, event);
-};
-
-export const deleteWorkspaceFolder = (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  folderPath: string,
-  event: AuthenticatedEvent
-): Promise<{ success: boolean; count: number }> =>
-  deleteContentFolder(WORKSPACE_SCOPE, db, storage, workspace, undefined, folderPath, event);
-
-export const renameWorkspaceFolder = (
-  db: DatabaseAdapter,
-  workspace: string,
-  oldPath: string,
-  newPath: string,
-  event: AuthenticatedEvent
-): Promise<{ success: boolean; message: string; count: number }> =>
-  renameContentFolder(WORKSPACE_SCOPE, db, workspace, undefined, oldPath, newPath, event);
-
-export const cloneWorkspaceFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  filePath: string,
-  event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  return cloneScopedContentFile(
-    WORKSPACE_SCOPE,
-    db,
-    storage,
-    workspace,
-    undefined,
-    filePath,
-    event
-  );
-};
-
-export const relocateWorkspaceFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  filePath: string,
-  newPath: string,
-  event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  return relocateScopedContentFile(
-    WORKSPACE_SCOPE,
-    db,
-    storage,
-    workspace,
-    undefined,
-    filePath,
-    newPath,
-    event
-  );
-};

@@ -126,12 +126,14 @@ export const deleteContentFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean }> => {
+  const fallback =
+    scope.kind === 'project' ? 'Failed to delete file' : `Failed to delete ${scope.kind} file`;
   return defineOperation(
     db,
     workspace,
     event,
     {
-      fallback: `Failed to delete ${scope.kind} file`,
+      fallback,
       dbErrorMessages: {
         unique: 'A project with that name already exists in this workspace',
         foreign: 'Foreign key constraint violation'

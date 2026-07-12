@@ -10,13 +10,13 @@ import { toApiProjectFile } from './projectHelpers';
 import type { ContentNodeDbResult } from './db/projectDatabase';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
-import { ENTITY_SCOPE, PROJECT_SCOPE, WORKSPACE_SCOPE } from './contentScope';
+import type { ContentScopeResolver } from './contentScope';
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { projectDbErrorMessages, requireNonProjectContentAccess } from './projectOperationHelpers';
 
-const uploadScopedFile = async (
-  scope: typeof PROJECT_SCOPE,
+export const uploadContentFile = async (
+  scope: ContentScopeResolver,
   db: DatabaseAdapter,
   storage: StorageAdapter,
   workspace: string,
@@ -98,31 +98,6 @@ const uploadScopedFile = async (
   return toApiProjectFile(row);
 };
 
-export const uploadProjectFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  id: string,
-  filePath: string,
-  buffer: Buffer,
-  mimeType: string,
-  originalFilename: string,
-  event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  return uploadScopedFile(
-    PROJECT_SCOPE,
-    db,
-    storage,
-    workspace,
-    id,
-    filePath,
-    buffer,
-    mimeType,
-    originalFilename,
-    event
-  );
-};
-
 export const downloadProjectFile = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
@@ -152,31 +127,6 @@ export const downloadProjectFile = async (
       const buffer = await storage.read(ws, projectUuid, file.id);
       return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
     }
-  );
-};
-
-export const uploadEntityFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  entityId: string,
-  filePath: string,
-  buffer: Buffer,
-  mimeType: string,
-  originalFilename: string,
-  event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  return uploadScopedFile(
-    ENTITY_SCOPE,
-    db,
-    storage,
-    workspace,
-    entityId,
-    filePath,
-    buffer,
-    mimeType,
-    originalFilename,
-    event
   );
 };
 
@@ -210,30 +160,6 @@ export const downloadEntityFile = async (
       const buffer = await storage.read(ws, entityUuid, file.id);
       return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
     }
-  );
-};
-
-export const uploadWorkspaceFile = async (
-  db: DatabaseAdapter,
-  storage: StorageAdapter,
-  workspace: string,
-  filePath: string,
-  buffer: Buffer,
-  mimeType: string,
-  originalFilename: string,
-  event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  return uploadScopedFile(
-    WORKSPACE_SCOPE,
-    db,
-    storage,
-    workspace,
-    undefined,
-    filePath,
-    buffer,
-    mimeType,
-    originalFilename,
-    event
   );
 };
 

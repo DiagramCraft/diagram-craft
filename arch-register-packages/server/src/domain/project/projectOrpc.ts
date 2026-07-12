@@ -15,35 +15,28 @@ import {
 import {
   listProjectFiles,
   createFolder,
-  renameFolder,
   getFileContent,
   saveFile,
-  deleteFile,
-  cloneFile,
-  relocateFile,
-  deleteFolder,
+  cloneContentFile,
+  relocateContentFile,
   updateTemplateStatus,
   listEntityContentNodes,
   createEntityFolder,
   createEntityFile,
-  deleteEntityFile,
-  deleteEntityFolder,
-  renameEntityFolder,
-  cloneEntityFile,
-  relocateEntityFile,
   listWorkspaceContentNodes,
   createWorkspaceFolder,
   createWorkspaceFile,
   getWorkspaceFileContent,
   saveWorkspaceFile,
-  deleteWorkspaceFile,
-  deleteWorkspaceFolder,
-  renameWorkspaceFolder,
-  cloneWorkspaceFile,
-  relocateWorkspaceFile,
   getProjectFile,
   getFileContentById
 } from './contentNodeOperations';
+import {
+  deleteContentFile,
+  deleteContentFolder,
+  renameContentFolder
+} from './contentTreeOperations';
+import { PROJECT_SCOPE, ENTITY_SCOPE, WORKSPACE_SCOPE } from './contentScope';
 import {
   listProjectEntities,
   addProjectEntity,
@@ -118,7 +111,8 @@ const projectHandlers = {
     );
   }),
   renameFolder: projectRouter.projects.renameFolder.handler(async ({ input, context }) => {
-    return await renameFolder(
+    return await renameContentFolder(
+      PROJECT_SCOPE,
       context.db,
       input.params.workspace,
       input.params.id,
@@ -131,7 +125,8 @@ const projectHandlers = {
     if (!context.storage) {
       throw new Error('Storage adapter not available');
     }
-    return await deleteFolder(
+    return await deleteContentFolder(
+      PROJECT_SCOPE,
       context.db,
       context.storage,
       input.params.workspace,
@@ -171,7 +166,8 @@ const projectHandlers = {
     if (!context.storage) {
       throw new Error('Storage adapter not available');
     }
-    return await deleteFile(
+    return await deleteContentFile(
+      PROJECT_SCOPE,
       context.db,
       context.storage,
       input.params.workspace,
@@ -184,7 +180,8 @@ const projectHandlers = {
     if (!context.storage) {
       throw new Error('Storage adapter not available');
     }
-    return await cloneFile(
+    return await cloneContentFile(
+      PROJECT_SCOPE,
       context.db,
       context.storage,
       input.params.workspace,
@@ -197,7 +194,8 @@ const projectHandlers = {
     if (!context.storage) {
       throw new Error('Storage adapter not available');
     }
-    return await relocateFile(
+    return await relocateContentFile(
+      PROJECT_SCOPE,
       context.db,
       context.storage,
       input.params.workspace,
@@ -304,7 +302,8 @@ const entityContentHandlers = {
   }),
   deleteEntityFile: projectRouter.projects.deleteEntityFile.handler(async ({ input, context }) => {
     if (!context.storage) throw new Error('Storage adapter not available');
-    return await deleteEntityFile(
+    return await deleteContentFile(
+      ENTITY_SCOPE,
       context.db,
       context.storage,
       input.params.workspace,
@@ -316,7 +315,8 @@ const entityContentHandlers = {
   deleteEntityFolder: projectRouter.projects.deleteEntityFolder.handler(
     async ({ input, context }) => {
       if (!context.storage) throw new Error('Storage adapter not available');
-      return await deleteEntityFolder(
+      return await deleteContentFolder(
+        ENTITY_SCOPE,
         context.db,
         context.storage,
         input.params.workspace,
@@ -328,7 +328,8 @@ const entityContentHandlers = {
   ),
   renameEntityFolder: projectRouter.projects.renameEntityFolder.handler(
     async ({ input, context }) => {
-      return await renameEntityFolder(
+      return await renameContentFolder(
+        ENTITY_SCOPE,
         context.db,
         input.params.workspace,
         input.params.entityId,
@@ -340,7 +341,8 @@ const entityContentHandlers = {
   ),
   cloneEntityFile: projectRouter.projects.cloneEntityFile.handler(async ({ input, context }) => {
     if (!context.storage) throw new Error('Storage adapter not available');
-    return await cloneEntityFile(
+    return await cloneContentFile(
+      ENTITY_SCOPE,
       context.db,
       context.storage,
       input.params.workspace,
@@ -352,7 +354,8 @@ const entityContentHandlers = {
   relocateEntityFile: projectRouter.projects.relocateEntityFile.handler(
     async ({ input, context }) => {
       if (!context.storage) throw new Error('Storage adapter not available');
-      return await relocateEntityFile(
+      return await relocateContentFile(
+        ENTITY_SCOPE,
         context.db,
         context.storage,
         input.params.workspace,
@@ -422,10 +425,12 @@ const workspaceContentHandlers = {
   deleteWorkspaceFile: projectRouter.projects.deleteWorkspaceFile.handler(
     async ({ input, context }) => {
       if (!context.storage) throw new Error('Storage adapter not available');
-      return await deleteWorkspaceFile(
+      return await deleteContentFile(
+        WORKSPACE_SCOPE,
         context.db,
         context.storage,
         input.params.workspace,
+        undefined,
         input.query.path,
         context.event
       );
@@ -434,10 +439,12 @@ const workspaceContentHandlers = {
   deleteWorkspaceFolder: projectRouter.projects.deleteWorkspaceFolder.handler(
     async ({ input, context }) => {
       if (!context.storage) throw new Error('Storage adapter not available');
-      return await deleteWorkspaceFolder(
+      return await deleteContentFolder(
+        WORKSPACE_SCOPE,
         context.db,
         context.storage,
         input.params.workspace,
+        undefined,
         input.query.path,
         context.event
       );
@@ -445,9 +452,11 @@ const workspaceContentHandlers = {
   ),
   renameWorkspaceFolder: projectRouter.projects.renameWorkspaceFolder.handler(
     async ({ input, context }) => {
-      return await renameWorkspaceFolder(
+      return await renameContentFolder(
+        WORKSPACE_SCOPE,
         context.db,
         input.params.workspace,
+        undefined,
         input.body.oldPath,
         input.body.newPath,
         context.event
@@ -457,10 +466,12 @@ const workspaceContentHandlers = {
   cloneWorkspaceFile: projectRouter.projects.cloneWorkspaceFile.handler(
     async ({ input, context }) => {
       if (!context.storage) throw new Error('Storage adapter not available');
-      return await cloneWorkspaceFile(
+      return await cloneContentFile(
+        WORKSPACE_SCOPE,
         context.db,
         context.storage,
         input.params.workspace,
+        undefined,
         input.query.path,
         context.event
       );
@@ -469,10 +480,12 @@ const workspaceContentHandlers = {
   relocateWorkspaceFile: projectRouter.projects.relocateWorkspaceFile.handler(
     async ({ input, context }) => {
       if (!context.storage) throw new Error('Storage adapter not available');
-      return await relocateWorkspaceFile(
+      return await relocateContentFile(
+        WORKSPACE_SCOPE,
         context.db,
         context.storage,
         input.params.workspace,
+        undefined,
         input.query.path,
         input.body.newPath,
         context.event
