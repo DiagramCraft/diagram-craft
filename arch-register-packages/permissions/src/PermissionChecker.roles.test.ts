@@ -18,7 +18,7 @@ const ALL_WORKSPACE_ROLES: BuiltinWorkspaceRole[] = ['owner', 'admin', 'editor',
 const ALL_CAPABILITIES: WorkspaceCapability[] = [
   'ws.view', 'ws.settings', 'ws.delete', 'ws.audit',
   'people.invite', 'people.role', 'people.remove', 'people.teams',
-  'proj.create', 'proj.edit', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
+  'proj.create', 'proj.edit', 'proj.delete', 'content.view', 'content.edit', 'ent.edit', 'ent.propose', 'comments', 'export',
   'schema.edit', 'schema.publish',
 ];
 
@@ -144,6 +144,52 @@ describe('PermissionChecker - Workspace Role Capabilities', () => {
       expect(checker.hasWorkspaceCapability(context, cap)).toBe(false);
     }
   });
+
+  it('editor role does not have proj.delete capability', () => {
+    const context = buildAuthorizationContext({
+      userId: 'editor-user',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: [],
+    });
+
+    expect(checker.hasWorkspaceCapability(context, 'proj.edit')).toBe(true);
+    expect(checker.hasWorkspaceCapability(context, 'proj.delete')).toBe(false);
+  });
+
+  it('owner role has proj.delete capability', () => {
+    const context = buildAuthorizationContext({
+      userId: 'owner-user',
+      globalRoles: [],
+      workspaceRole: 'owner',
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: [],
+    });
+
+    expect(checker.hasWorkspaceCapability(context, 'proj.delete')).toBe(true);
+  });
+
+  it('admin role has proj.delete capability', () => {
+    const context = buildAuthorizationContext({
+      userId: 'admin-user',
+      globalRoles: [],
+      workspaceRole: 'admin',
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: [],
+    });
+
+    expect(checker.hasWorkspaceCapability(context, 'proj.delete')).toBe(true);
+  });
 });
 
 // ── Team Role Differentiation ─────────────────────────────────────
@@ -246,6 +292,64 @@ describe('PermissionChecker - Team Role Differentiation', () => {
     expect(checker.hasEntityPermission(context, entity, 'create_child')).toBe(true);
     // admin_entity only comes from team_admin
     expect(checker.hasEntityPermission(context, entity, 'admin_entity')).toBe(false);
+  });
+});
+
+// ── Workspace Role Project Permissions ───────────────────────────
+
+describe('PermissionChecker - Workspace Role Project Permissions', () => {
+  const checker = new PermissionChecker();
+
+  it('proj.edit capability grants edit_project but not delete_project', () => {
+    // editor role has proj.edit but not proj.delete
+    const context = buildAuthorizationContext({
+      userId: 'editor-user',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: [],
+    });
+
+    expect(checker.hasProjectPermission(context, null, 'edit_project')).toBe(true);
+    expect(checker.hasProjectPermission(context, null, 'delete_project')).toBe(false);
+    expect(checker.hasProjectPermission(context, null, 'manage_files')).toBe(true);
+  });
+
+  it('proj.delete capability grants delete_project', () => {
+    // owner role has both proj.edit and proj.delete
+    const context = buildAuthorizationContext({
+      userId: 'owner-user',
+      globalRoles: [],
+      workspaceRole: 'owner',
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: [],
+    });
+
+    expect(checker.hasProjectPermission(context, null, 'edit_project')).toBe(true);
+    expect(checker.hasProjectPermission(context, null, 'delete_project')).toBe(true);
+  });
+
+  it('admin_platform bypasses all project action checks', () => {
+    const context = buildAuthorizationContext({
+      userId: 'platform-admin',
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      teamAssignments: [],
+      teams: [],
+      schemas: [],
+      entities: [],
+      grants: [],
+    });
+
+    expect(checker.hasProjectPermission(context, null, 'edit_project')).toBe(true);
+    expect(checker.hasProjectPermission(context, null, 'delete_project')).toBe(true);
+    expect(checker.hasProjectPermission(context, null, 'manage_files')).toBe(true);
   });
 });
 

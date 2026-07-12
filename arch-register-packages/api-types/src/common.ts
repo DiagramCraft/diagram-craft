@@ -37,6 +37,7 @@ export const workspaceCapabilitySchema = z.enum([
   'people.teams',
   'proj.create',
   'proj.edit',
+  'proj.delete',
   'content.view',
   'content.edit',
   'ent.edit',
