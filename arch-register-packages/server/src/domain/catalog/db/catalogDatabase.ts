@@ -10,6 +10,30 @@ import {
 } from '@arch-register/api-types/viewContract';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityLink, VisibilityMode } from '@arch-register/api-types/entityContract';
+import {
+  databaseDate,
+  parseDatabaseJson,
+  type DatabaseRow
+} from '../../../db/rowMappers';
+
+export const ENTITY_SELECT_SQL = `
+  SELECT e.*,
+    wo.name   AS owner_name,
+    ls.label  AS lifecycle_label,
+    tls.label AS target_lifecycle_label,
+    es.name   AS schema_name
+  FROM entity e
+  LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
+  LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
+  LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
+  JOIN entity_schema es ON es.id = e.schema_id
+`;
+
+export const ENTITY_SNAPSHOT_SELECT_SQL = `
+  SELECT s.*, u.display_name as created_by_name
+  FROM entity_snapshot s
+  LEFT JOIN users u ON u.id = s.created_by
+`;
 
 export type EntityListDbFilters = {
   schemaId?: string | null;
@@ -156,6 +180,95 @@ export type TimelineMarkerDbResult = {
   date: string;
   type: 'future_update' | 'saved_version' | 'applied';
   count: number;
+};
+
+export const catalogMappers = {
+  enrichedEntity: (row: DatabaseRow): EntityDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    public_id: String(row['public_id']),
+    slug: String(row['slug']),
+    namespace: String(row['namespace']),
+    name: String(row['name']),
+    description: String(row['description']),
+    owner: row['owner'] == null ? null : String(row['owner']),
+    lifecycle: row['lifecycle'] == null ? null : String(row['lifecycle']),
+    target_lifecycle: row['target_lifecycle'] == null ? null : String(row['target_lifecycle']),
+    target_lifecycle_date:
+      row['target_lifecycle_date'] == null ? null : String(row['target_lifecycle_date']),
+    tags: parseDatabaseJson<string[]>(row['tags'], [], 'entity.tags'),
+    links: parseDatabaseJson<EntityLink[]>(row['links'], [], 'entity.links'),
+    schema_id: String(row['schema_id']),
+    data: parseDatabaseJson<Record<string, unknown>>(row['data'], {}, 'entity.data'),
+    visibility_mode:
+      row['visibility_mode'] == null
+        ? null
+        : (String(row['visibility_mode']) as Entity['visibility_mode']),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at']),
+    owner_name: row['owner_name'] == null ? null : String(row['owner_name']),
+    lifecycle_label: row['lifecycle_label'] == null ? null : String(row['lifecycle_label']),
+    target_lifecycle_label:
+      row['target_lifecycle_label'] == null ? null : String(row['target_lifecycle_label']),
+    schema_name: String(row['schema_name'])
+  }),
+  entitySnapshot: (row: DatabaseRow): EntitySnapshotDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    status: String(row['status']) as EntitySnapshotDbResult['status'],
+    project_id: row['project_id'] == null ? null : String(row['project_id']),
+    target_date: row['target_date'] == null ? null : String(row['target_date']),
+    commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
+    created_at: databaseDate(row['created_at']),
+    created_by: String(row['created_by']),
+    created_by_name: row['created_by_name'] == null ? null : String(row['created_by_name']),
+    base_state: parseDatabaseJson<Record<string, unknown>>(
+      row['base_state'],
+      {},
+      'entity_snapshot.base_state'
+    ),
+    proposed_state:
+      row['proposed_state'] == null
+        ? null
+        : parseDatabaseJson<Record<string, unknown>>(
+            row['proposed_state'],
+            {},
+            'entity_snapshot.proposed_state'
+          )
+  }),
+  pinnedEntity: (row: DatabaseRow): PinnedEntityDbResult => ({
+    user_id: String(row['user_id']),
+    workspace: String(row['workspace']),
+    entity_id: String(row['entity_id']),
+    created_at: databaseDate(row['created_at'])
+  }),
+  schema: (row: DatabaseRow): SchemaDbResult => ({
+    id: String(row['id']), workspace: String(row['workspace']), name: String(row['name']),
+    description: String(row['description'] ?? ''), fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
+    color: row['color'] == null ? null : String(row['color']), icon: row['icon'] == null ? null : String(row['icon']),
+    default_owner: row['default_owner'] == null ? null : String(row['default_owner']), key_prefix: String(row['key_prefix']),
+    created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+  }),
+  workspaceEnum: (row: DatabaseRow): WorkspaceEnumDbResult => ({
+    id: String(row['id']), workspace: String(row['workspace']), name: String(row['name']),
+    options: parseDatabaseJson(row['options'], [], 'workspace_enum.options'), sort_order: Number(row['sort_order'] ?? 0),
+    created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+  }),
+  entityGrant: (row: DatabaseRow): EntityGrantDbResult => ({
+    id: String(row['id']), workspace: String(row['workspace']), entity_id: String(row['entity_id']),
+    principal_type: String(row['principal_type']) as EntityGrantDbResult['principal_type'], principal_id: String(row['principal_id']),
+    role: String(row['role']) as EntityGrantDbResult['role'], applies_to: String(row['applies_to']) as EntityGrantDbResult['applies_to'],
+    created_at: databaseDate(row['created_at'])
+  }),
+  savedView: (row: DatabaseRow): SavedViewDbResult => ({
+    id: String(row['id']), workspace: String(row['workspace']), project_id: row['project_id'] == null ? null : String(row['project_id']),
+    project_scope: row['project_scope'] == null ? null : (String(row['project_scope']) as 'project' | 'all'),
+    name: String(row['name']), description: row['description'] == null ? null : String(row['description']),
+    is_admin_view: row['is_admin_view'] === true || row['is_admin_view'] === 1 || row['is_admin_view'] === '1',
+    view_mode: String(row['view_mode']) as SavedViewDbResult['view_mode'], filters: parseDatabaseJson(row['filters'], {}, 'saved_view.filters'),
+    config: parseDatabaseJson(row['config'], null, 'saved_view.config'), created_at: databaseDate(row['created_at']), updated_at: databaseDate(row['updated_at'])
+  })
 };
 
 export type CatalogDatabase = {

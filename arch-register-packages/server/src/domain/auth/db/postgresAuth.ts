@@ -2,47 +2,47 @@ import type {
   AuthDatabase,
   UserDbCreate,
   GlobalRole,
-  GlobalRoleAssignmentDbResult,
-  UserDbUpdate,
-  UserDbResult
+  UserDbUpdate
 } from './authDatabase';
+import { authMappers } from './authDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 
 export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDatabase {
   async getUser(id: string) {
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!UUID_RE.test(id)) return null;
-    const [row] = await this.sql<UserDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM users WHERE id = ${id}
     `;
-    return row ?? null;
+    return row ? authMappers.user(row) : null;
   }
 
   async getUserByUserId(userId: string) {
-    const [row] = await this.sql<UserDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM users WHERE user_id = ${userId}
     `;
-    return row ?? null;
+    return row ? authMappers.user(row) : null;
   }
 
   async getUserByEmail(email: string) {
-    const [row] = await this.sql<UserDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM users WHERE email = ${email}
     `;
-    return row ?? null;
+    return row ? authMappers.user(row) : null;
   }
 
   async getUserByOidc(issuer: string, subject: string) {
-    const [row] = await this.sql<UserDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM users
       WHERE oidc_issuer = ${issuer} AND oidc_subject = ${subject}
     `;
-    return row ?? null;
+    return row ? authMappers.user(row) : null;
   }
 
   async createUser(input: UserDbCreate) {
     try {
-      const [row] = await this.sql<UserDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO users (id, user_id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at)
         VALUES (
           ${input.id},
@@ -61,7 +61,7 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
         )
         RETURNING *
       `;
-      return row!;
+      return authMappers.user(row!);
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -77,13 +77,13 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
       if (input.is_active !== undefined) sets.is_active = input.is_active;
       if (input.color !== undefined) sets.color = input.color;
 
-      const [row] = await this.sql<UserDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         UPDATE users
         SET ${this.sql(sets)}
         WHERE id = ${id}
         RETURNING *
       `;
-      return row ?? null;
+      return row ? authMappers.user(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -102,26 +102,29 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
   }
 
   async listUsers() {
-    return await this.sql<UserDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM users ORDER BY display_name
     `;
+    return mapDatabaseRows(rows, authMappers.user);
   }
 
   async listGlobalRoleAssignments(userId?: string) {
     if (userId) {
-      return await this.sql<GlobalRoleAssignmentDbResult[]>`
+      const rows = await this.sql<DatabaseRow[]>`
         SELECT user_id, role, created_at
         FROM global_role_assignment
         WHERE user_id = ${userId}
         ORDER BY role
       `;
+      return mapDatabaseRows(rows, authMappers.globalRoleAssignment);
     }
 
-    return await this.sql<GlobalRoleAssignmentDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT user_id, role, created_at
       FROM global_role_assignment
       ORDER BY user_id, role
     `;
+    return mapDatabaseRows(rows, authMappers.globalRoleAssignment);
   }
 
   async replaceGlobalRoleAssignments(userId: string, roles: GlobalRole[], createdAt: Date) {

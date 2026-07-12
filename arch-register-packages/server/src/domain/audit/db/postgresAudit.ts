@@ -1,18 +1,14 @@
 import type { AuditDatabase, AuditLogDbCreate } from './auditDatabase';
+import { AUDIT_LOG_SELECT_SQL, auditMappers } from './auditDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
-import { AuditLogDbResult } from './auditDatabase';
 
 export class PostgresAuditDatabase extends PostgresDatabaseBase implements AuditDatabase {
   async listAuditLogs(workspace: string) {
-    return await this.sql<AuditLogDbResult[]>`
-      SELECT 
-        audit_log.*,
-        users.display_name as user_display_name
-      FROM audit_log
-      LEFT JOIN users ON audit_log.user_id = users.id
-      WHERE audit_log.workspace = ${workspace}
-      ORDER BY audit_log.timestamp DESC
-    `;
+    const rows = await this.sql.unsafe<Record<string, unknown>[]>(
+      `${AUDIT_LOG_SELECT_SQL} WHERE audit_log.workspace = $1 ORDER BY audit_log.timestamp DESC`,
+      [workspace]
+    );
+    return rows.map(auditMappers.auditLog);
   }
 
   async createAuditLog(input: AuditLogDbCreate) {
@@ -35,15 +31,11 @@ export class PostgresAuditDatabase extends PostgresDatabaseBase implements Audit
         )
         RETURNING id
       `;
-      const [row] = await this.sql<AuditLogDbResult[]>`
-        SELECT
-          audit_log.*,
-          users.display_name as user_display_name
-        FROM audit_log
-        LEFT JOIN users ON audit_log.user_id = users.id
-        WHERE audit_log.id = ${inserted!.id}
-      `;
-      return row!;
+      const [row] = await this.sql.unsafe<Record<string, unknown>[]>(
+        `${AUDIT_LOG_SELECT_SQL} WHERE audit_log.id = $1`,
+        [inserted!.id]
+      );
+      return auditMappers.auditLog(row!);
     } catch (error) {
       return normalizePostgresError(error);
     }

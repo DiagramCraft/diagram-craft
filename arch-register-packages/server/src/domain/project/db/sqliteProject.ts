@@ -11,52 +11,24 @@ import type {
   AssessmentDbUpdate,
   AssessmentResponseDbUpsert
 } from './projectDatabase';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import {
+  CONTENT_NODE_SELECT_SQL,
+  PROJECT_ENTITY_SELECT_SQL,
+  PROJECT_SELECT_SQL,
+  MARKDOWN_REVISION_SELECT_SQL,
+  ASSESSMENT_RESPONSE_SELECT_SQL,
+  DIAGRAM_ENTITY_FILE_SELECT_SQL,
+  projectMappers
+} from './projectDatabase';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import { isUuidLike } from '../../../utils/publicIds';
-
-const PROJECT_ENTITY_JOIN_SQL = `
-  SELECT
-    pe.workspace,
-    pe.project_id,
-    pe.entity_id,
-    e.name        AS entity_name,
-    e.slug        AS entity_slug,
-    e.description AS entity_description,
-    e.schema_id   AS entity_schema_id,
-    es.name       AS entity_schema_name,
-    pe.entity_type AS entity_type_id,
-    pet.label     AS entity_type_label,
-    pe.is_done
-  FROM project_entity pe
-  JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
-  LEFT JOIN entity_schema es ON es.id = e.schema_id
-  LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
-`;
-
-const PROJECT_JOIN_SQL = `
-  SELECT p.*, wo.name AS owner_name
-  FROM project p
-  LEFT JOIN workspace_owner wo ON wo.id = p.owner
-`;
-
-const CONTENT_NODE_SELECT_SQL = `
-  SELECT
-    cn.*,
-    cm.title AS metadata_title,
-    cm.description AS metadata_description,
-    cm.company AS metadata_company,
-    cm.category AS metadata_category,
-    cm.keywords AS metadata_keywords
-  FROM content_node cn
-  LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
-`;
 
 export class SqliteProjectDatabase extends SqliteDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
     return this.all(
-      `${PROJECT_JOIN_SQL} WHERE p.workspace = ? ORDER BY p.name`,
+      `${PROJECT_SELECT_SQL} WHERE p.workspace = ? ORDER BY p.name`,
       [workspace],
-      sqliteMappers.enrichedProject
+      projectMappers.project
     );
   }
 
@@ -66,17 +38,17 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       return row?.workspace === workspace ? row : null;
     }
     return this.get(
-      `${PROJECT_JOIN_SQL} WHERE p.workspace = ? AND p.id = ?`,
+      `${PROJECT_SELECT_SQL} WHERE p.workspace = ? AND p.id = ?`,
       [workspace, identifier],
-      sqliteMappers.enrichedProject
+      projectMappers.project
     );
   }
 
   private async getProjectByPublicId(publicId: string) {
     return this.get(
-      `${PROJECT_JOIN_SQL} WHERE p.public_id = ?`,
+      `${PROJECT_SELECT_SQL} WHERE p.public_id = ?`,
       [publicId],
-      sqliteMappers.enrichedProject
+      projectMappers.project
     );
   }
 
@@ -130,7 +102,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.all(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? ORDER BY cn.path`,
       [workspace, projectId],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -138,7 +110,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.all(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? ORDER BY cn.path`,
       [workspace],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -146,7 +118,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.all(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.entity_id = ? ORDER BY cn.path`,
       [workspace, entityId],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -154,7 +126,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.all(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id IS NULL AND cn.entity_id IS NULL ORDER BY cn.path`,
       [workspace],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -162,7 +134,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.get(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? AND cn.path = ?`,
       [workspace, projectId, path],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -170,7 +142,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.get(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? AND cn.id = ?`,
       [workspace, projectId, id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -178,30 +150,26 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.get(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.id = ?`,
       [workspace, id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
   async listMarkdownRevisions(workspace: string, nodeId: string) {
     return this.all(
-      `SELECT mr.*, u.display_name AS created_by_name
-       FROM content_node_revision mr
-       LEFT JOIN users u ON u.id = mr.created_by
+      `${MARKDOWN_REVISION_SELECT_SQL}
        WHERE mr.workspace = ? AND mr.node_id = ?
        ORDER BY mr.revision_number DESC`,
       [workspace, nodeId],
-      sqliteMappers.markdownRevision
+      projectMappers.markdownRevision
     );
   }
 
   async getMarkdownRevision(workspace: string, nodeId: string, revisionId: string) {
     return this.get(
-      `SELECT mr.*, u.display_name AS created_by_name
-       FROM content_node_revision mr
-       LEFT JOIN users u ON u.id = mr.created_by
+      `${MARKDOWN_REVISION_SELECT_SQL}
        WHERE mr.workspace = ? AND mr.node_id = ? AND mr.id = ?`,
       [workspace, nodeId, revisionId],
-      sqliteMappers.markdownRevision
+      projectMappers.markdownRevision
     );
   }
 
@@ -547,7 +515,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
        LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
        WHERE cn.id IN (SELECT id FROM desc_tree)`,
       [folder.id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
 
     const tx = this.db.transaction(() => {
@@ -638,7 +606,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
        LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
        WHERE cn.id IN (SELECT id FROM desc_tree)`,
       [folder.id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
 
     const tx = this.db.transaction(() => {
@@ -726,7 +694,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
        LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
        WHERE cn.id IN (SELECT id FROM desc_tree)`,
       [folder.id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
 
     const tx = this.db.transaction(() => {
@@ -742,9 +710,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async listProjectEntities(workspace: string, projectId: string) {
     return this.all(
-      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? ORDER BY e.name`,
+      `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = ? AND pe.project_id = ? ORDER BY e.name`,
       [workspace, projectId],
-      sqliteMappers.projectEntity
+      projectMappers.projectEntity
     );
   }
 
@@ -761,9 +729,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async getEntityProjects(workspace: string, entityId: string) {
     return this.all(
-      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.entity_id = ? ORDER BY e.name`,
+      `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = ? AND pe.entity_id = ? ORDER BY e.name`,
       [workspace, entityId],
-      sqliteMappers.projectEntity
+      projectMappers.projectEntity
     );
   }
 
@@ -780,9 +748,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       ]
     );
     return this.get(
-      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
+      `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
       [input.workspace, input.project_id, input.entity_id],
-      sqliteMappers.projectEntity
+      projectMappers.projectEntity
     )!;
   }
 
@@ -798,9 +766,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       [entityTypeId ?? null, isDone ? 1 : 0, workspace, projectId, entityId]
     );
     return this.get(
-      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
+      `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
       [workspace, projectId, entityId],
-      sqliteMappers.projectEntity
+      projectMappers.projectEntity
     );
   }
 
@@ -828,58 +796,11 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async getEntityDiagramFiles(workspace: string, entityId: string) {
     return this.all(
-      `SELECT
-        pf.id          AS file_id,
-        pf.path        AS file_path,
-        pf.name        AS file_name,
-        pf.size_bytes  AS file_size_bytes,
-        pf.type        AS file_type,
-        pf.preview_svg AS file_preview_svg,
-        pf.comment_count AS file_comment_count,
-        pf.unresolved_comment_count AS file_unresolved_comment_count,
-        pf.created_at  AS file_created_at,
-        pf.updated_at  AS file_updated_at,
-        cm.title       AS file_metadata_title,
-        cm.description AS file_metadata_description,
-        cm.company     AS file_metadata_company,
-        cm.category    AS file_metadata_category,
-        cm.keywords    AS file_metadata_keywords,
-        p.id           AS project_id,
-        p.public_id    AS project_public_id,
-        p.name         AS project_name
-      FROM diagram_entity_ref der
-      JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
-      LEFT JOIN content_metadata cm ON cm.workspace = pf.workspace AND cm.node_id = pf.id
-      LEFT JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
+      `${DIAGRAM_ENTITY_FILE_SELECT_SQL}
       WHERE der.workspace = ? AND der.entity_id = ?
       ORDER BY COALESCE(p.name, ''), pf.name`,
       [workspace, entityId],
-      row => ({
-        file_id: String(row['file_id']),
-        file_path: String(row['file_path']),
-        file_name: String(row['file_name']),
-        file_size_bytes: Number(row['file_size_bytes']),
-        file_type: String(row['file_type']) as 'diagram' | 'folder' | 'markdown' | 'file',
-        file_preview_svg: row['file_preview_svg'] != null ? String(row['file_preview_svg']) : null,
-        file_comment_count: Number(row['file_comment_count'] ?? 0),
-        file_unresolved_comment_count: Number(row['file_unresolved_comment_count'] ?? 0),
-        file_created_at: new Date(String(row['file_created_at'])),
-        file_updated_at: new Date(String(row['file_updated_at'])),
-        file_metadata_title:
-          row['file_metadata_title'] != null ? String(row['file_metadata_title']) : null,
-        file_metadata_description:
-          row['file_metadata_description'] != null
-            ? String(row['file_metadata_description'])
-            : null,
-        file_metadata_company:
-          row['file_metadata_company'] != null ? String(row['file_metadata_company']) : null,
-        file_metadata_category:
-          row['file_metadata_category'] != null ? String(row['file_metadata_category']) : null,
-        file_metadata_keywords: JSON.parse(String(row['file_metadata_keywords'] ?? '[]')) as string[],
-        project_id: String(row['project_id']),
-        project_public_id: String(row['project_public_id']),
-        project_name: String(row['project_name'])
-      })
+      projectMappers.diagramEntityFile
     );
   }
 
@@ -887,7 +808,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.all(
       'SELECT * FROM assessment WHERE workspace = ? AND project_id = ? ORDER BY name',
       [workspace, projectId],
-      sqliteMappers.assessment
+      projectMappers.assessment
     );
   }
 
@@ -895,7 +816,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.get(
       'SELECT * FROM assessment WHERE workspace = ? AND project_id = ? AND id = ?',
       [workspace, projectId, id],
-      sqliteMappers.assessment
+      projectMappers.assessment
     );
   }
 
@@ -903,7 +824,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.get(
       'SELECT * FROM assessment WHERE workspace = ? AND id = ?',
       [workspace, id],
-      sqliteMappers.assessment
+      projectMappers.assessment
     );
   }
 
@@ -962,23 +883,19 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async listAssessmentResponses(workspace: string, assessmentId: string) {
     return this.all(
-      `SELECT ar.*, u.display_name as updated_by_name
-       FROM assessment_response ar
-       LEFT JOIN users u ON u.id = ar.updated_by
+      `${ASSESSMENT_RESPONSE_SELECT_SQL}
        WHERE ar.workspace = ? AND ar.assessment_id = ?`,
       [workspace, assessmentId],
-      sqliteMappers.assessmentResponse
+      projectMappers.assessmentResponse
     );
   }
 
   async getAssessmentResponse(workspace: string, assessmentId: string, entityId: string) {
     return this.get(
-      `SELECT ar.*, u.display_name as updated_by_name
-       FROM assessment_response ar
-       LEFT JOIN users u ON u.id = ar.updated_by
+      `${ASSESSMENT_RESPONSE_SELECT_SQL}
        WHERE ar.workspace = ? AND ar.assessment_id = ? AND ar.entity_id = ?`,
       [workspace, assessmentId, entityId],
-      sqliteMappers.assessmentResponse
+      projectMappers.assessmentResponse
     );
   }
 

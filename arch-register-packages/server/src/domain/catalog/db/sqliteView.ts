@@ -1,5 +1,6 @@
 import type { SavedViewDbCreate, SavedViewDbUpdate, ViewDatabase } from './catalogDatabase';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
+import { catalogMappers } from './catalogDatabase';
 
 export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDatabase {
   async listSavedViews(
@@ -16,7 +17,7 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
       return this.all(
         'SELECT * FROM saved_view WHERE workspace = ? AND project_id IS NULL ORDER BY name',
         [workspace],
-        sqliteMappers.savedView
+        catalogMappers.savedView
       );
     }
 
@@ -29,7 +30,7 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
          )
        ORDER BY CASE WHEN project_id IS NULL THEN 1 ELSE 0 END, name`,
       [workspace, projectId, includeWorkspace ? 1 : 0],
-      sqliteMappers.savedView
+      catalogMappers.savedView
     );
   }
 
@@ -37,7 +38,7 @@ export class SqliteViewDatabase extends SqliteDatabaseBase implements ViewDataba
     return this.get(
       'SELECT * FROM saved_view WHERE workspace = ? AND id = ?',
       [workspace, id],
-      sqliteMappers.savedView
+      catalogMappers.savedView
     );
   }
 

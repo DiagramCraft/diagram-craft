@@ -1,4 +1,5 @@
 import type { AuthProvider } from '../../../types';
+import { databaseDate, databaseBoolean, type DatabaseRow } from '../../../db/rowMappers';
 
 // -- Global Role Assignment
 
@@ -45,6 +46,29 @@ export type UserDbUpdate = {
   is_active?: boolean;
   color?: string | null;
   updated_at: Date;
+};
+
+export const authMappers = {
+  user: (row: DatabaseRow): UserDbResult => ({
+    id: String(row['id']),
+    user_id: String(row['user_id']),
+    email: row['email'] == null ? null : String(row['email']),
+    display_name: String(row['display_name']),
+    auth_provider: String(row['auth_provider']) as UserDbResult['auth_provider'],
+    password_hash: row['password_hash'] == null ? null : String(row['password_hash']),
+    oidc_issuer: row['oidc_issuer'] == null ? null : String(row['oidc_issuer']),
+    oidc_subject: row['oidc_subject'] == null ? null : String(row['oidc_subject']),
+    is_active: databaseBoolean(row['is_active']),
+    color: row['color'] == null ? null : String(row['color']),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at']),
+    last_login_at: row['last_login_at'] == null ? null : databaseDate(row['last_login_at'])
+  }),
+  globalRoleAssignment: (row: DatabaseRow): GlobalRoleAssignmentDbResult => ({
+    user_id: String(row['user_id']),
+    role: String(row['role']) as GlobalRoleAssignmentDbResult['role'],
+    created_at: databaseDate(row['created_at'])
+  })
 };
 
 export type AuthDatabase = {

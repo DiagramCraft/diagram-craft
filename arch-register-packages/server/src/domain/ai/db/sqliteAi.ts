@@ -4,14 +4,15 @@ import type {
   AiMessageDbCreate,
   AiConfigInputDbUpsert
 } from './aiDatabase';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import { aiMappers } from './aiDatabase';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 
 export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
   async getAiConfig(ws: string) {
     return this.get(
       'SELECT * FROM workspace_ai_config WHERE workspace = ?',
       [ws],
-      sqliteMappers.aiConfig
+      aiMappers.config
     );
   }
 
@@ -69,7 +70,7 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
     return this.all(
       'SELECT * FROM ai_conversation WHERE workspace = ? AND user_id = ? ORDER BY updated_at DESC',
       [ws, userId],
-      sqliteMappers.aiConversation
+      aiMappers.conversation
     );
   }
 
@@ -77,7 +78,7 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
     return this.get(
       'SELECT * FROM ai_conversation WHERE id = ? AND workspace = ?',
       [id, ws],
-      sqliteMappers.aiConversation
+      aiMappers.conversation
     );
   }
 
@@ -122,7 +123,7 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
     return this.all(
       'SELECT * FROM ai_message WHERE conversation_id = ? ORDER BY created_at ASC',
       [conversationId],
-      sqliteMappers.aiMessage
+      aiMappers.message
     );
   }
 
@@ -141,7 +142,7 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
     return (await this.get(
       'SELECT * FROM ai_message WHERE id = ?',
       [input.id],
-      sqliteMappers.aiMessage
+      aiMappers.message
     ))!;
   }
 }
