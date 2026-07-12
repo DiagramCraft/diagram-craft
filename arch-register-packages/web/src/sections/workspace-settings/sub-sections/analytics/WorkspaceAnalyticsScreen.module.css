@@ -216,13 +216,6 @@
   color: var(--base-fg-more-dim);
 }
 
-
-.empty {
-  padding: 18px 16px;
-  color: var(--base-fg-more-dim);
-  font-size: 13px;
-}
-
 .trendControls {
   display: flex;
   align-items: center;

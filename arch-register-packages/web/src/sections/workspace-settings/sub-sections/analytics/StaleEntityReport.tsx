@@ -4,10 +4,10 @@ import { useEntities } from '../../../../hooks/useEntities';
 import { useWorkspaceAnalytics } from '../../../../hooks/useWorkspaceAnalytics';
 import { asEntityPublicId, entityDetailRoute } from '../../../../routes/publicObjectRoutes';
 import styles from './WorkspaceAnalyticsScreen.module.css';
-import { EmptyState } from './analyticsPrimitives';
 import { AnalyticsTabs } from './AnalyticsTabs';
 import { formatDate } from '../../../../utils/dateFormat';
 import { Table } from '../../../../components/table/Table';
+import { EmptyState } from '../../../../components/EmptyState';
 
 export const StaleEntityReport = ({
   workspaceSlug,
@@ -40,8 +40,8 @@ export const StaleEntityReport = ({
     }
   };
 
-  if (isLoading) return <EmptyState text="Loading stale entities…" />;
-  if (isError || analytics == null) return <EmptyState text="Stale entities could not be loaded." />;
+  if (isLoading) return <EmptyState compact title="Loading stale entities…" />;
+  if (isError || analytics == null) return <EmptyState compact title="Stale entities could not be loaded." />;
 
   return (
     <div className={styles.stack}>
@@ -73,9 +73,9 @@ export const StaleEntityReport = ({
       </div>
 
       {isLoadingEntities ? (
-        <EmptyState text="Loading entities…" />
+        <EmptyState compact title="Loading entities…" />
       ) : entities.length === 0 ? (
-        <EmptyState text="No entities match this age threshold." />
+        <EmptyState compact title="No entities match this age threshold." />
       ) : (
         <Table.Root>
           <Table.Head>
