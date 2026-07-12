@@ -77,6 +77,49 @@ describe('Table.GroupHeaderRow', () => {
   });
 });
 
+describe('Table.DetailRow', () => {
+  it('infers colSpan from the header cell count', () => {
+    const markup = renderToStaticMarkup(
+      <Table.Root>
+        <Table.Head>
+          <tr>
+            <Table.HeaderCell>Name</Table.HeaderCell>
+            <Table.HeaderCell>Role</Table.HeaderCell>
+            <Table.HeaderCell>Email</Table.HeaderCell>
+          </tr>
+        </Table.Head>
+        <Table.Body>
+          <Table.Row>
+            <Table.Cell>Ada</Table.Cell>
+            <Table.Cell>Engineer</Table.Cell>
+            <Table.Cell>ada@example.com</Table.Cell>
+          </Table.Row>
+          <Table.DetailRow>Details</Table.DetailRow>
+        </Table.Body>
+      </Table.Root>
+    );
+    expect(markup).toContain('colSpan="3"');
+    expect(markup).toContain('Details');
+  });
+
+  it('allows an explicit colSpan to override inference', () => {
+    const markup = renderToStaticMarkup(
+      <Table.Root>
+        <Table.Head>
+          <tr>
+            <Table.HeaderCell>Name</Table.HeaderCell>
+            <Table.HeaderCell>Role</Table.HeaderCell>
+          </tr>
+        </Table.Head>
+        <Table.Body>
+          <Table.DetailRow colSpan={5}>Details</Table.DetailRow>
+        </Table.Body>
+      </Table.Root>
+    );
+    expect(markup).toContain('colSpan="5"');
+  });
+});
+
 describe('Table.Row sticky offsets', () => {
   it('computes each sticky cell left offset from the widths of preceding sticky siblings', () => {
     const markup = renderToStaticMarkup(

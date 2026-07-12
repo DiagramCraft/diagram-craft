@@ -1,9 +1,12 @@
 import {
   Children,
   cloneElement,
+  createContext,
   forwardRef,
   isValidElement,
+  useContext,
   useEffect,
+  useMemo,
   useRef,
   type ComponentPropsWithoutRef,
   type CSSProperties,
@@ -44,6 +47,36 @@ const withStickyOffsets = (children: ReactNode): ReactNode => {
   });
 };
 
+// Published by Root and consumed by DetailRow so its colSpan can be inferred from the header's
+// cell count instead of being hardcoded by callers.
+const ColumnCountContext = createContext<number | undefined>(undefined);
+
+const countHeaderCells = (children: ReactNode): number => {
+  let count = 0;
+  Children.forEach(children, child => {
+    if (!isValidElement(child)) return;
+    if (child.type === HeaderCell || child.type === SortableHeaderCell || child.type === CheckboxCell) {
+      count++;
+    } else if ((child.props as { children?: ReactNode } | undefined)?.children) {
+      count += countHeaderCells((child.props as { children?: ReactNode }).children);
+    }
+  });
+  return count;
+};
+
+const findHeaderColumnCount = (children: ReactNode): number | undefined => {
+  let result: number | undefined;
+  Children.forEach(children, child => {
+    if (result !== undefined || !isValidElement(child)) return;
+    if (child.type === Head) {
+      result = countHeaderCells((child.props as { children?: ReactNode }).children);
+    } else if ((child.props as { children?: ReactNode } | undefined)?.children) {
+      result = findHeaderColumnCount((child.props as { children?: ReactNode }).children);
+    }
+  });
+  return result;
+};
+
 type TableRootProps = {
   scroll?: boolean;
   // vertical scroll on Table.Root's own wrap div, for a table with a bounded height and an
@@ -71,29 +104,32 @@ const Root = ({
   className,
   children,
   ...rest
-}: TableRootProps) => (
-  <div
-    className={cx(
-      styles.wrap,
-      !bordered && styles.wrapEmbedded,
-      scroll && styles.wrapScroll,
-      scrollY && styles.wrapScrollY,
-      wrapClassName
-    )}
-  >
-    <table
+}: TableRootProps) => {
+  const columnCount = useMemo(() => findHeaderColumnCount(children), [children]);
+  return (
+    <div
       className={cx(
-        styles.table,
-        stickyHeader && styles.stickyHeader,
-        layout === 'fixed' && styles.fixedLayout,
-        className
+        styles.wrap,
+        !bordered && styles.wrapEmbedded,
+        scroll && styles.wrapScroll,
+        scrollY && styles.wrapScrollY,
+        wrapClassName
       )}
-      {...rest}
     >
-      {children}
-    </table>
-  </div>
-);
+      <table
+        className={cx(
+          styles.table,
+          stickyHeader && styles.stickyHeader,
+          layout === 'fixed' && styles.fixedLayout,
+          className
+        )}
+        {...rest}
+      >
+        <ColumnCountContext.Provider value={columnCount}>{children}</ColumnCountContext.Provider>
+      </table>
+    </div>
+  );
+};
 
 const Head = (props: ComponentPropsWithoutRef<'thead'>) => <thead {...props} />;
 const Body = (props: ComponentPropsWithoutRef<'tbody'>) => <tbody {...props} />;
@@ -318,6 +354,25 @@ const GroupHeaderRow = ({ colSpan, children, className, ...rest }: GroupHeaderRo
   </tr>
 );
 
+type DetailRowProps = { colSpan?: number; children?: ReactNode } & Omit<
+  ComponentPropsWithoutRef<'tr'>,
+  'children'
+>;
+
+// Pairs with the preceding Table.Row (typically both wrapped in a per-row React.Fragment) to
+// render an expandable detail panel. colSpan defaults to the header's cell count via
+// ColumnCountContext; pass an explicit colSpan to override for non-standard headers.
+const DetailRow = ({ colSpan, children, className, ...rest }: DetailRowProps) => {
+  const inferredColSpan = useContext(ColumnCountContext);
+  return (
+    <tr className={cx(styles.detailRow, className)} {...rest}>
+      <td className={styles.detailCell} colSpan={colSpan ?? inferredColSpan ?? 1}>
+        {children}
+      </td>
+    </tr>
+  );
+};
+
 export const Table = {
   Root,
   Head,
@@ -332,5 +387,6 @@ export const Table = {
   ActionsCell,
   DotsButton,
   EmptyRow,
-  GroupHeaderRow
+  GroupHeaderRow,
+  DetailRow
 };

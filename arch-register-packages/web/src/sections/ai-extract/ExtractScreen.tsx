@@ -490,11 +490,9 @@ export const ExtractScreen = () => {
                       </Table.Cell>
                     </Table.Row>
                     {r.expanded && (
-                      <tr className={styles.detailRow}>
-                        <td colSpan={8}>
-                          <ExpandedDetail row={r} />
-                        </td>
-                      </tr>
+                      <Table.DetailRow className={styles.detailRow}>
+                        <ExpandedDetail row={r} />
+                      </Table.DetailRow>
                     )}
                   </React.Fragment>
                 ))}

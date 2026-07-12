@@ -282,3 +282,14 @@
   letter-spacing: 0.04em;
   padding: 6px 16px 6px 10px;
 }
+
+/* Detail row */
+.detailRow {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.detailCell {
+  padding: 12px 16px !important;
+  background: var(--panel-bg);
+  box-shadow: inset 2px 0 0 var(--accent-fg);
+}
