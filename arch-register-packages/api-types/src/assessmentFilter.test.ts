@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   ASSESSMENT_PRESENCE_FIELD_ID,
   isAssessmentCondition,
+  isAssessmentFieldId,
   matchesAssessmentConditions,
+  resolveAssessmentValue,
   splitAssessmentConditions
 } from '@arch-register/api-types/assessmentFilter';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
@@ -80,5 +82,32 @@ describe('matchesAssessmentConditions', () => {
     expect(
       matchesAssessmentConditions({ text1: 'x' }, [{ fieldId: '_assessment:text1', op: 'not_empty', value: undefined }], fields)
     ).toBe(true);
+  });
+});
+
+describe('isAssessmentFieldId', () => {
+  it('identifies prefixed field ids', () => {
+    expect(isAssessmentFieldId('_assessment:rating1')).toBe(true);
+    expect(isAssessmentFieldId('_schemaId')).toBe(false);
+    expect(isAssessmentFieldId(ASSESSMENT_PRESENCE_FIELD_ID)).toBe(false);
+  });
+});
+
+describe('resolveAssessmentValue', () => {
+  it('returns null for non-assessment field ids', () => {
+    expect(resolveAssessmentValue({ _assessment: { rating1: 3 } }, '_schemaId')).toBeNull();
+  });
+
+  it('returns null when the entity has no joined assessment', () => {
+    expect(resolveAssessmentValue({}, '_assessment:rating1')).toBeNull();
+  });
+
+  it('returns null when the field has no response', () => {
+    expect(resolveAssessmentValue({ _assessment: { enum1: 'a' } }, '_assessment:rating1')).toBeNull();
+  });
+
+  it('returns the raw response value when present', () => {
+    expect(resolveAssessmentValue({ _assessment: { rating1: 3 } }, '_assessment:rating1')).toBe(3);
+    expect(resolveAssessmentValue({ _assessment: { enum1: 'a' } }, '_assessment:enum1')).toBe('a');
   });
 });

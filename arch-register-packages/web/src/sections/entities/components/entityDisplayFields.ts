@@ -3,7 +3,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
+import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { formatDate } from '../../../utils/dateFormat';
 
@@ -127,8 +127,7 @@ export const formatEntityDisplayValue = (
   field: EntityDisplayField
 ): string | null => {
   if (field.assessmentField) {
-    const fieldId = field.id.slice(ASSESSMENT_FIELD_PREFIX.length);
-    const value = (entity as BrowserEntityRecord)._assessment?.[fieldId];
+    const value = resolveAssessmentValue(entity as BrowserEntityRecord, field.id);
     if (value == null) return null;
     if (field.assessmentField.type === 'enum') {
       return field.assessmentField.options?.find(o => o.value === String(value))?.label ?? String(value);

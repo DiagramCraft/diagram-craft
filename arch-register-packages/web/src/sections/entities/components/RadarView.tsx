@@ -8,16 +8,19 @@ import { SearchInput } from '../../../components/SearchInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities } from '../../../hooks/useEntities';
 import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
-import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
-
-export type JoinedAssessmentContext = { assessment: Assessment; enums: WorkspaceEnum[] };
+import {
+  getCategoricalFields,
+  getCategoricalFieldValues,
+  getCategoricalValue,
+  type JoinedAssessmentContext
+} from './entityFieldSources';
+import { normalizeViewConfig } from './entityViewConfig';
+import { TooltipChip, TooltipChips } from './entityTooltipParts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -26,6 +29,18 @@ export type RadarConfig = {
   quadrantFieldId: string;
   ringFieldId: string;
   ringOrder: string[];
+};
+
+// radarViewConfigSchema has no sensible non-empty defaults (schemaId/quadrantFieldId/ringFieldId
+// are workspace-specific selections, not universal fallbacks), so normalizeViewConfig is given
+// an empty sentinel here and the result is treated as "unconfigured" (converted back to null)
+// wherever schemaId is empty, preserving the existing all-or-nothing `config: RadarConfig | null`
+// semantics used throughout this component.
+const EMPTY_RADAR_CONFIG: RadarConfig = {
+  schemaId: '',
+  quadrantFieldId: '',
+  ringFieldId: '',
+  ringOrder: []
 };
 
 type Quadrant = {
@@ -89,8 +104,6 @@ const RING_BG = [
   'oklch(0.12 0.005 260)'
 ];
 
-const LIFECYCLE_FIELD_ID = '_lifecycle';
-
 // ── Config helpers ────────────────────────────────────────────────────────────
 
 const configKey = (workspaceSlug: string) => `ar-radar-config-${workspaceSlug}`;
@@ -109,62 +122,31 @@ const saveConfig = (workspaceSlug: string, config: RadarConfig) => {
 };
 
 // ── Field helpers ─────────────────────────────────────────────────────────────
-
-type FieldOption = { id: string; label: string };
-
-const RATING_VALUES = ['1', '2', '3', '4', '5'].map(v => ({ value: v, label: v }));
+//
+// Thin adapters over entityFieldSources.ts: Radar operates on a single schema (wrapped in an
+// array for the shared, multi-schema-aware functions) and has no team/owner concept (`teams: []`
+// keeps the shared "Owner" option inert). Radar treats rating-typed assessment fields as a
+// discrete/bucketed axis (5 values), unlike other views that treat them as numeric — hence
+// `includeRatingFields: true` here only.
 
 const getSelectableFields = (
   schema: EntitySchema,
   lifecycleStates: WorkspaceLifecycleState[],
   joinedAssessment?: JoinedAssessmentContext | null
-): FieldOption[] => [
-  ...schema.fields
-    .filter((f): f is Extract<typeof f, { type: 'select' }> => f.type === 'select')
-    .map(f => ({ id: f.id, label: f.name })),
-  ...(lifecycleStates.length > 0 ? [{ id: LIFECYCLE_FIELD_ID, label: 'Lifecycle' }] : []),
-  ...(joinedAssessment
-    ? joinedAssessment.assessment.fields
-        .filter(f => f.type === 'rating' || f.type === 'enum')
-        .map(f => ({ id: `${ASSESSMENT_FIELD_PREFIX}${f.id}`, label: f.label }))
-    : [])
-];
+) => getCategoricalFields([schema], lifecycleStates, [], joinedAssessment, true);
 
 const getFieldValues = (
   schema: EntitySchema,
   fieldId: string,
   lifecycleStates: WorkspaceLifecycleState[],
   joinedAssessment?: JoinedAssessmentContext | null
-): Array<{ value: string; label: string }> => {
-  if (fieldId === LIFECYCLE_FIELD_ID) {
-    return [...lifecycleStates]
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map(s => ({ value: s.id, label: s.label }));
-  }
-  if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) && joinedAssessment) {
-    const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
-    const field = joinedAssessment.assessment.fields.find(f => f.id === assessmentFieldId);
-    if (field?.type === 'rating') return RATING_VALUES;
-    if (field?.type === 'enum') {
-      return joinedAssessment.enums.find(e => e.id === field.enumId)?.options ?? [];
-    }
-    return [];
-  }
-  const field = schema.fields.find(f => f.id === fieldId);
-  if (field?.type !== 'select') return [];
-  return (field as ApiSelectField).options ?? [];
-};
+): Array<{ value: string; label: string }> =>
+  getCategoricalFieldValues([schema], fieldId, lifecycleStates, [], joinedAssessment).map(f => ({
+    value: f.id,
+    label: f.label
+  }));
 
-const getEntityFieldValue = (entity: EntityRecord, fieldId: string): string | null => {
-  if (fieldId === LIFECYCLE_FIELD_ID) return entity._lifecycle?.id ?? null;
-  if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
-    const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
-    const value = (entity as BrowserEntityRecord)._assessment?.[assessmentFieldId];
-    return value == null ? null : String(value);
-  }
-  const val = entity[fieldId];
-  return typeof val === 'string' ? val : null;
-};
+const getEntityFieldValue = getCategoricalValue;
 
 // ── Geometry ──────────────────────────────────────────────────────────────────
 
@@ -279,8 +261,8 @@ export const RadarView = ({
     loadConfig(workspaceSlug)
   );
   const parsedConfig = useMemo(() => {
-    const result = radarViewConfigSchema.safeParse(configProp);
-    return result.success ? result.data : null;
+    const normalized = normalizeViewConfig(radarViewConfigSchema, configProp, EMPTY_RADAR_CONFIG);
+    return normalized.schemaId ? normalized : null;
   }, [configProp]);
   const config = parsedConfig ?? internalConfig;
 
@@ -1006,14 +988,10 @@ const BlipTooltip = ({
           </button>
         )}
       </div>
-      <div className={styles.tooltipChips}>
-        <span className={styles.tooltipChip} style={{ borderColor: quad.color, color: quad.color }}>
-          {quad.label}
-        </span>
-        <span className={styles.tooltipChip} style={{ color: ring.color }}>
-          {ring.label}
-        </span>
-      </div>
+      <TooltipChips>
+        <TooltipChip style={{ borderColor: quad.color, color: quad.color }}>{quad.label}</TooltipChip>
+        <TooltipChip style={{ color: ring.color }}>{ring.label}</TooltipChip>
+      </TooltipChips>
       {blip.description && <div className={styles.tooltipDesc}>{blip.description}</div>}
       <button type="button" className={styles.tooltipOpen} onClick={onOpen}>
         Open entity →

@@ -2,14 +2,20 @@ import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaCon
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
-import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
+import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
+import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import type { JoinedAssessmentContext } from './RadarView';
+import { parseTimelineDate } from '../../../components/timeline/timelineUtils';
 
 export const LIFECYCLE_FIELD_ID = '_lifecycle';
 export const OWNER_FIELD_ID = '_owner';
 
 export type FieldOption = { id: string; label: string };
+
+export type JoinedAssessmentContext = { assessment: Assessment; enums: WorkspaceEnum[] };
+
+export const RATING_VALUES: FieldOption[] = ['1', '2', '3', '4', '5'].map(v => ({ id: v, label: v }));
 
 /**
  * Fields are deduped by id across the given schemas (first occurrence wins), the same way
@@ -24,12 +30,20 @@ const findFieldAcrossSchemas = (schemas: EntitySchema[], fieldId: string) => {
   return undefined;
 };
 
-/** Categorical (discrete-value) fields selectable for an axis or colour mapping. */
+/**
+ * Categorical (discrete-value) fields selectable for an axis or colour mapping.
+ *
+ * `includeRatingFields` opts in rating-typed assessment fields as a discrete/bucketed axis
+ * (e.g. RadarView's quadrant/ring axes, which treat a 1-5 rating as 5 discrete values) —
+ * it defaults to false since most callers (e.g. BubbleView) treat rating fields as numeric
+ * via `getNumericFields` instead, and offering them in both places would be confusing.
+ */
 export const getCategoricalFields = (
   schemas: EntitySchema[],
   lifecycleStates: WorkspaceLifecycleState[],
   teams: WorkspaceTeam[],
-  joinedAssessment?: JoinedAssessmentContext | null
+  joinedAssessment?: JoinedAssessmentContext | null,
+  includeRatingFields = false
 ): FieldOption[] => {
   const seen = new Set<string>();
   const selectFields: FieldOption[] = [];
@@ -48,7 +62,7 @@ export const getCategoricalFields = (
     ...(teams.length > 0 ? [{ id: OWNER_FIELD_ID, label: 'Owner' }] : []),
     ...(joinedAssessment
       ? joinedAssessment.assessment.fields
-          .filter(f => f.type === 'enum')
+          .filter(f => f.type === 'enum' || (includeRatingFields && f.type === 'rating'))
           .map(f => ({ id: `${ASSESSMENT_FIELD_PREFIX}${f.id}`, label: f.label }))
       : [])
   ];
@@ -100,6 +114,7 @@ export const getCategoricalFieldValues = (
   if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) && joinedAssessment) {
     const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
     const field = joinedAssessment.assessment.fields.find(f => f.id === assessmentFieldId);
+    if (field?.type === 'rating') return RATING_VALUES;
     if (field?.type === 'enum') {
       const options = joinedAssessment.enums.find(e => e.id === field.enumId)?.options ?? [];
       return options.map(o => ({ id: o.value, label: o.label }));
@@ -115,8 +130,7 @@ export const getCategoricalValue = (entity: EntityRecord, fieldId: string): stri
   if (fieldId === LIFECYCLE_FIELD_ID) return entity._lifecycle?.id ?? null;
   if (fieldId === OWNER_FIELD_ID) return entity._owner?.id ?? null;
   if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
-    const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
-    const value = (entity as BrowserEntityRecord)._assessment?.[assessmentFieldId];
+    const value = resolveAssessmentValue(entity as BrowserEntityRecord, fieldId);
     return value == null ? null : String(value);
   }
   const val = entity[fieldId];
@@ -125,13 +139,36 @@ export const getCategoricalValue = (entity: EntityRecord, fieldId: string): stri
 
 export const getNumericValue = (entity: EntityRecord, fieldId: string): number | null => {
   if (fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
-    const assessmentFieldId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
-    const value = (entity as BrowserEntityRecord)._assessment?.[assessmentFieldId];
+    const value = resolveAssessmentValue(entity as BrowserEntityRecord, fieldId);
     return typeof value === 'number' ? value : value != null ? Number(value) : null;
   }
   const val = entity[fieldId];
   return typeof val === 'number' ? val : null;
 };
+
+/**
+ * Date-typed fields selectable for a date mapping. `extraFields` lets callers append
+ * view-specific pseudo-fields (e.g. TimelineView's "Target Lifecycle Date") that aren't a
+ * declared schema field.
+ */
+export const getDateFields = (schemas: EntitySchema[], extraFields: FieldOption[] = []): FieldOption[] => {
+  const seen = new Set<string>();
+  const dateFields: FieldOption[] = [];
+  schemas.forEach(schema => {
+    schema.fields.forEach(f => {
+      if (f.type === 'date' && !seen.has(f.id)) {
+        seen.add(f.id);
+        dateFields.push({ id: f.id, label: f.name });
+      }
+    });
+  });
+  return [...dateFields, ...extraFields];
+};
+
+export const getRawDateValue = (entity: EntityRecord, fieldId: string): unknown => entity[fieldId];
+
+export const getDateValue = (entity: EntityRecord, fieldId: string): Date | null =>
+  parseTimelineDate(getRawDateValue(entity, fieldId));
 
 export const getNumericFieldRange = (
   schemas: EntitySchema[],

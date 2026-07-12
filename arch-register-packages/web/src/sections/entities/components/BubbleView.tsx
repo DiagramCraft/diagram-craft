@@ -10,7 +10,6 @@ import { bubbleViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import type { BrowserEntityRecord } from './entityBrowserState';
-import type { JoinedAssessmentContext } from './RadarView';
 import {
   getCategoricalFields,
   getNumericFields,
@@ -18,8 +17,11 @@ import {
   getCategoricalValue,
   getNumericValue,
   getNumericFieldRange,
-  type FieldOption
+  type FieldOption,
+  type JoinedAssessmentContext
 } from './entityFieldSources';
+import { normalizeViewConfig } from './entityViewConfig';
+import { TooltipChip, TooltipChips, TooltipRow } from './entityTooltipParts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -28,6 +30,17 @@ export type BubbleConfig = {
   yFieldId: string;
   sizeFieldId: string | null;
   colorFieldId: string | null;
+};
+
+// bubbleViewConfigSchema has no sensible non-empty defaults (all fields are workspace-specific
+// selections), so normalizeViewConfig is given an empty sentinel here and the result is treated
+// as "unconfigured" (converted back to null) whenever xFieldId is empty, preserving the existing
+// all-or-nothing `config: BubbleConfig | null` semantics used throughout this component.
+const EMPTY_BUBBLE_CONFIG: BubbleConfig = {
+  xFieldId: '',
+  yFieldId: '',
+  sizeFieldId: null,
+  colorFieldId: null
 };
 
 type Bubble = {
@@ -145,8 +158,8 @@ export const BubbleView = ({
     loadConfig(workspaceSlug)
   );
   const parsedConfig = useMemo(() => {
-    const result = bubbleViewConfigSchema.safeParse(configProp);
-    return result.success ? result.data : null;
+    const normalized = normalizeViewConfig(bubbleViewConfigSchema, configProp, EMPTY_BUBBLE_CONFIG);
+    return normalized.xFieldId ? normalized : null;
   }, [configProp]);
   const config = parsedConfig ?? internalConfig;
 
@@ -715,32 +728,22 @@ export const BubbleView = ({
                     </span>
                   </div>
                   {activeBubble.schemaName && (
-                    <div className={styles.tooltipChips}>
-                      <span className={styles.tooltipChip}>{activeBubble.schemaName}</span>
-                    </div>
+                    <TooltipChips>
+                      <TooltipChip>{activeBubble.schemaName}</TooltipChip>
+                    </TooltipChips>
                   )}
                   <div className={styles.tooltipRows}>
-                    <div className={styles.tooltipRow}>
-                      <span className={styles.tooltipLabel}>{xLabel}</span>
-                      <span className={styles.tooltipValue}>{activeBubble.xDisplay}</span>
-                    </div>
-                    <div className={styles.tooltipRow}>
-                      <span className={styles.tooltipLabel}>{yLabel}</span>
-                      <span className={styles.tooltipValue}>{activeBubble.yDisplay}</span>
-                    </div>
+                    <TooltipRow label={xLabel} value={activeBubble.xDisplay} />
+                    <TooltipRow label={yLabel} value={activeBubble.yDisplay} />
                     {activeBubble.sizeDisplay != null && (
-                      <div className={styles.tooltipRow}>
-                        <span className={styles.tooltipLabel}>{sizeLabel}</span>
-                        <span className={styles.tooltipValue}>{activeBubble.sizeDisplay}</span>
-                      </div>
+                      <TooltipRow label={sizeLabel} value={activeBubble.sizeDisplay} />
                     )}
                     {activeBubble.colorDisplay != null && (
-                      <div className={styles.tooltipRow}>
-                        <span className={styles.tooltipLabel}>{colorLabel}</span>
-                        <span className={styles.tooltipValue} style={{ color: activeBubble.color }}>
-                          {activeBubble.colorDisplay}
-                        </span>
-                      </div>
+                      <TooltipRow
+                        label={colorLabel}
+                        value={activeBubble.colorDisplay}
+                        valueStyle={{ color: activeBubble.color }}
+                      />
                     )}
                   </div>
                   {activeBubble.description && (

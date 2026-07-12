@@ -10,6 +10,24 @@ export const isAssessmentCondition = (condition: FilterCondition): boolean =>
 export const assessmentFieldIdOf = (condition: FilterCondition): string =>
   condition.fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
 
+export const isAssessmentFieldId = (fieldId: string): boolean =>
+  fieldId.startsWith(ASSESSMENT_FIELD_PREFIX);
+
+/**
+ * Resolves the raw assessment value for a display/axis field id (e.g. `_assessment:riskLevel`)
+ * off a joined entity record. Returns `null` for non-assessment field ids, missing responses,
+ * or entities with no joined assessment.
+ */
+export const resolveAssessmentValue = (
+  entity: { _assessment?: Record<string, unknown> | null },
+  fieldId: string
+): unknown | null => {
+  if (!isAssessmentFieldId(fieldId)) return null;
+  const rawId = fieldId.slice(ASSESSMENT_FIELD_PREFIX.length);
+  const value = entity._assessment?.[rawId];
+  return value == null ? null : value;
+};
+
 export const splitAssessmentConditions = (
   conditions: FilterCondition[]
 ): { assessmentConditions: FilterCondition[]; otherConditions: FilterCondition[] } => {
