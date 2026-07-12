@@ -3,14 +3,15 @@ import type {
   DiscussionObjectType,
   DiscussionPostDbCreate
 } from './discussionDatabase';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import { discussionMappers } from './discussionDatabase';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 
 export class SqliteDiscussionDatabase extends SqliteDatabaseBase implements DiscussionDatabase {
   async listByObject(ws: string, objectType: DiscussionObjectType, objectId: string) {
     return this.all(
       'SELECT * FROM discussion_post WHERE workspace = ? AND object_type = ? AND object_id = ? ORDER BY created_at ASC',
       [ws, objectType, objectId],
-      sqliteMappers.discussionPost
+      discussionMappers.post
     );
   }
 
@@ -18,7 +19,7 @@ export class SqliteDiscussionDatabase extends SqliteDatabaseBase implements Disc
     return this.all(
       'SELECT * FROM discussion_post WHERE workspace = ? ORDER BY created_at ASC',
       [ws],
-      sqliteMappers.discussionPost
+      discussionMappers.post
     );
   }
 
@@ -26,7 +27,7 @@ export class SqliteDiscussionDatabase extends SqliteDatabaseBase implements Disc
     return this.get(
       'SELECT * FROM discussion_post WHERE workspace = ? AND id = ?',
       [ws, id],
-      sqliteMappers.discussionPost
+      discussionMappers.post
     );
   }
 
