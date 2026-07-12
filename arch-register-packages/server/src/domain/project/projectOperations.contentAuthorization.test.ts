@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
-import { getMarkdownContent, listWorkspaceContentNodes, uploadEntityFile } from './projectOperations';
+import { listWorkspaceContentNodes } from './contentNodeOperations';
+import { getMarkdownContent } from './markdownOperations';
+import { uploadEntityFile } from './fileTransferOperations';
 
 const { requireWorkspaceCapability } = vi.hoisted(() => ({
   requireWorkspaceCapability: vi.fn()
@@ -55,7 +57,17 @@ describe('entity/workspace content authorization', () => {
     });
 
     await expect(
-      uploadEntityFile(db, storage, 'ws-1', 'entity-1', 'file.txt', Buffer.from('x'), 'text/plain', 'file.txt', event)
+      uploadEntityFile(
+        db,
+        storage,
+        'ws-1',
+        'entity-1',
+        'file.txt',
+        Buffer.from('x'),
+        'text/plain',
+        'file.txt',
+        event
+      )
     ).rejects.toThrow();
     expect(requireWorkspaceCapability).toHaveBeenCalledWith(expect.anything(), 'content.edit');
     expect(getEntity).not.toHaveBeenCalled();

@@ -10,7 +10,9 @@ import {
   getProject,
   createProject,
   updateProject,
-  deleteProject,
+  deleteProject
+} from './projectCrudOperations';
+import {
   listProjectFiles,
   createFolder,
   renameFolder,
@@ -21,11 +23,6 @@ import {
   relocateFile,
   deleteFolder,
   updateTemplateStatus,
-  listProjectEntities,
-  addProjectEntity,
-  updateProjectEntity,
-  removeProjectEntity,
-  getEntityDiagramFiles,
   listEntityContentNodes,
   createEntityFolder,
   createEntityFile,
@@ -44,18 +41,27 @@ import {
   renameWorkspaceFolder,
   cloneWorkspaceFile,
   relocateWorkspaceFile,
+  getProjectFile,
+  getFileContentById
+} from './contentNodeOperations';
+import {
+  listProjectEntities,
+  addProjectEntity,
+  updateProjectEntity,
+  removeProjectEntity,
+  getEntityDiagramFiles
+} from './projectEntityOperations';
+import {
   createProjectMarkdownDoc,
   createEntityMarkdownDoc,
   createWorkspaceMarkdownDoc,
-  getProjectFile,
-  getFileContentById,
   getMarkdownContent,
   saveMarkdownContent,
   listMarkdownRevisions,
   getMarkdownRevision,
   restoreMarkdownRevision,
   createMarkdownDiagramAttachment
-} from './projectOperations';
+} from './markdownOperations';
 import { projectContract } from '@arch-register/api-types/projectContract';
 
 type ORPCContext = {

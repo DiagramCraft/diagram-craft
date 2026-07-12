@@ -15,13 +15,11 @@ import {
   uploadEntityFile,
   downloadEntityFile,
   uploadWorkspaceFile,
-  downloadWorkspaceFile,
-  uploadMarkdownAttachment,
-  createMarkdownDiagramAttachment
-} from './projectOperations';
+  downloadWorkspaceFile
+} from './fileTransferOperations';
+import { uploadMarkdownAttachment, createMarkdownDiagramAttachment } from './markdownOperations';
 
-const MAX_SIZE_BYTES =
-  parseInt(process.env['UPLOAD_MAX_SIZE_MB'] ?? '50', 10) * 1024 * 1024;
+const MAX_SIZE_BYTES = parseInt(process.env['UPLOAD_MAX_SIZE_MB'] ?? '50', 10) * 1024 * 1024;
 
 const readUpload = async (
   event: AuthenticatedEvent
@@ -44,11 +42,7 @@ const readUpload = async (
   };
 };
 
-
-export const createProjectFileRoutesHandler = (
-  db: DatabaseAdapter,
-  storage: StorageAdapter
-) => {
+export const createProjectFileRoutesHandler = (db: DatabaseAdapter, storage: StorageAdapter) => {
   const router = createRouter();
 
   // ── Project-scoped ─────────────────────────────────────────
@@ -74,9 +68,14 @@ export const createProjectFileRoutesHandler = (
   router.post('/api/:workspace/markdown/:nodeId/attachments/diagram', async event => {
     const workspace = getRouterParam(event, 'workspace')!;
     const nodeId = getRouterParam(event, 'nodeId')!;
-    const body = await readBody(event) as { name: string; content: Record<string, unknown> };
+    const body = (await readBody(event)) as { name: string; content: Record<string, unknown> };
     return createMarkdownDiagramAttachment(
-      db, storage, workspace, nodeId, body.name, body.content,
+      db,
+      storage,
+      workspace,
+      nodeId,
+      body.name,
+      body.content,
       event as AuthenticatedEvent
     );
   });
@@ -87,7 +86,14 @@ export const createProjectFileRoutesHandler = (
     const { path } = getQuery(event) as { path: string };
     const { buffer, mimeType, originalFilename } = await readUpload(event as AuthenticatedEvent);
     return uploadProjectFile(
-      db, storage, workspace, id, path, buffer, mimeType, originalFilename,
+      db,
+      storage,
+      workspace,
+      id,
+      path,
+      buffer,
+      mimeType,
+      originalFilename,
       event as AuthenticatedEvent
     );
   });
@@ -97,7 +103,12 @@ export const createProjectFileRoutesHandler = (
     const id = getRouterParam(event, 'id')!;
     const { path } = getQuery(event) as { path: string };
     const result = await downloadProjectFile(
-      db, storage, workspace, id, path, event as AuthenticatedEvent
+      db,
+      storage,
+      workspace,
+      id,
+      path,
+      event as AuthenticatedEvent
     );
     return new Response(new Uint8Array(result.buffer), {
       headers: {
@@ -115,7 +126,14 @@ export const createProjectFileRoutesHandler = (
     const { path } = getQuery(event) as { path: string };
     const { buffer, mimeType, originalFilename } = await readUpload(event as AuthenticatedEvent);
     return uploadEntityFile(
-      db, storage, workspace, entityId, path, buffer, mimeType, originalFilename,
+      db,
+      storage,
+      workspace,
+      entityId,
+      path,
+      buffer,
+      mimeType,
+      originalFilename,
       event as AuthenticatedEvent
     );
   });
@@ -125,7 +143,12 @@ export const createProjectFileRoutesHandler = (
     const entityId = getRouterParam(event, 'entityId')!;
     const { path } = getQuery(event) as { path: string };
     const result = await downloadEntityFile(
-      db, storage, workspace, entityId, path, event as AuthenticatedEvent
+      db,
+      storage,
+      workspace,
+      entityId,
+      path,
+      event as AuthenticatedEvent
     );
     return new Response(new Uint8Array(result.buffer), {
       headers: {
@@ -142,7 +165,13 @@ export const createProjectFileRoutesHandler = (
     const { path } = getQuery(event) as { path: string };
     const { buffer, mimeType, originalFilename } = await readUpload(event as AuthenticatedEvent);
     return uploadWorkspaceFile(
-      db, storage, workspace, path, buffer, mimeType, originalFilename,
+      db,
+      storage,
+      workspace,
+      path,
+      buffer,
+      mimeType,
+      originalFilename,
       event as AuthenticatedEvent
     );
   });
@@ -151,7 +180,11 @@ export const createProjectFileRoutesHandler = (
     const workspace = getRouterParam(event, 'workspace')!;
     const { path } = getQuery(event) as { path: string };
     const result = await downloadWorkspaceFile(
-      db, storage, workspace, path, event as AuthenticatedEvent
+      db,
+      storage,
+      workspace,
+      path,
+      event as AuthenticatedEvent
     );
     return new Response(new Uint8Array(result.buffer), {
       headers: {
