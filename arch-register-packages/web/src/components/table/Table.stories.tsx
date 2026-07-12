@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
+import { TbChevronRight } from 'react-icons/tb';
 import { Table } from './Table';
 import { DropdownMenu } from '../DropdownMenu';
 import { TypeBadge } from '../TypeBadge';
@@ -257,6 +258,66 @@ export const GroupHeaderRow: Story = {
       </Table.Body>
     </Table.Root>
   )
+};
+
+export const DetailRow: Story = {
+  render: () => {
+    const [expanded, setExpanded] = useState<Set<string>>(new Set(['1']));
+    const toggle = (id: string) =>
+      setExpanded(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    return (
+      <Table.Root>
+        <Table.Head>
+          <tr>
+            <Table.HeaderCell style={{ width: 28 }} />
+            <Table.HeaderCell>Name</Table.HeaderCell>
+            <Table.HeaderCell>Role</Table.HeaderCell>
+            <Table.HeaderCell>Email</Table.HeaderCell>
+          </tr>
+        </Table.Head>
+        <Table.Body>
+          {PEOPLE.map(p => {
+            const isExpanded = expanded.has(p.id);
+            return (
+              <Fragment key={p.id}>
+                <Table.Row>
+                  <Table.Cell>
+                    <button
+                      type="button"
+                      aria-expanded={isExpanded}
+                      aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                      onClick={() => toggle(p.id)}
+                      style={{
+                        display: 'inline-flex',
+                        transform: isExpanded ? 'rotate(90deg)' : undefined,
+                        transition: 'transform 100ms'
+                      }}
+                    >
+                      <TbChevronRight size={12} />
+                    </button>
+                  </Table.Cell>
+                  <Table.Cell>{p.name}</Table.Cell>
+                  <Table.Cell>{p.role}</Table.Cell>
+                  <Table.Cell>{p.email}</Table.Cell>
+                </Table.Row>
+                {isExpanded && (
+                  <Table.DetailRow>
+                    Additional detail for {p.name}, spanning the full width of the table via an
+                    inferred colSpan.
+                  </Table.DetailRow>
+                )}
+              </Fragment>
+            );
+          })}
+        </Table.Body>
+      </Table.Root>
+    );
+  }
 };
 
 export const NumericAlignment: Story = {

@@ -582,12 +582,10 @@
   border-color: var(--cmp-border);
 }
 
-/* Expanded detail row */
-
+/* Expanded detail row: base row/cell look comes from Table.DetailRow; this screen additionally
+   indents content to align under its chevron + checkbox columns. */
 .detailRow td {
-  padding: 4px 16px 16px 36px !important;
-  background: var(--panel-bg);
-  box-shadow: inset 2px 0 0 var(--accent-fg);
+  padding-left: 36px !important;
 }
 
 .detailGrid {
