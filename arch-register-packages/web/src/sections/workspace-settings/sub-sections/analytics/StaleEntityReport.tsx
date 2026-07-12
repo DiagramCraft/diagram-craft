@@ -7,6 +7,7 @@ import styles from './WorkspaceAnalyticsScreen.module.css';
 import { EmptyState } from './analyticsPrimitives';
 import { AnalyticsTabs } from './AnalyticsTabs';
 import { formatDate } from '../../../../utils/dateFormat';
+import { Table } from '../../../../components/table/Table';
 
 export const StaleEntityReport = ({
   workspaceSlug,
@@ -71,38 +72,35 @@ export const StaleEntityReport = ({
         </button>
       </div>
 
-      <div className={styles.entityTableWrap}>
-        {isLoadingEntities ? (
-          <EmptyState text="Loading entities…" />
-        ) : entities.length === 0 ? (
-          <EmptyState text="No entities match this age threshold." />
-        ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Last updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entities.map(entity => (
-                <tr
-                  key={entity._uid}
-                  className={styles.entityRow}
-                  onClick={() =>
-                    navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
-                  }
-                >
-                  <td>{entity._name}</td>
-                  <td>{entity._schema.name}</td>
-                  <td>{formatDate(entity._updatedAt)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {isLoadingEntities ? (
+        <EmptyState text="Loading entities…" />
+      ) : entities.length === 0 ? (
+        <EmptyState text="No entities match this age threshold." />
+      ) : (
+        <Table.Root>
+          <Table.Head>
+            <Table.Row>
+              <Table.HeaderCell>Name</Table.HeaderCell>
+              <Table.HeaderCell>Type</Table.HeaderCell>
+              <Table.HeaderCell>Last updated</Table.HeaderCell>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
+            {entities.map(entity => (
+              <Table.Row
+                key={entity._uid}
+                onClick={() =>
+                  navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
+                }
+              >
+                <Table.Cell>{entity._name}</Table.Cell>
+                <Table.Cell>{entity._schema.name}</Table.Cell>
+                <Table.Cell>{formatDate(entity._updatedAt)}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      )}
 
       {analytics.stale.totalCount > pageSize && (
         <div className={styles.pagination}>

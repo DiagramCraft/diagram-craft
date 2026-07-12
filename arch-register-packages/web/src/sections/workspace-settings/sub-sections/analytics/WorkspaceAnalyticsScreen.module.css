@@ -118,40 +118,6 @@
   text-align: right;
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.fixedTable {
-  table-layout: fixed;
-}
-
-.table th,
-.table td {
-  padding: 10px 16px;
-  border-top: 1px solid var(--panel-border);
-  text-align: left;
-  font-size: 13px;
-}
-
-.table thead th {
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--base-fg-more-dim);
-  border-top: 0;
-  background: var(--base-bg);
-}
-
-.table tbody tr {
-  cursor: default;
-}
-
-.right {
-  text-align: right;
-}
-
 .linkButton {
   appearance: none;
   background: none;
@@ -465,21 +431,6 @@
 .reportSub {
   color: var(--base-fg-more-dim);
   font-size: 12px;
-}
-
-.entityTableWrap {
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  background: var(--panel-bg);
-  overflow: hidden;
-}
-
-.entityRow {
-  cursor: pointer;
-}
-
-.entityRow:hover {
-  background: var(--cmp-bg-hover);
 }
 
 .pagination {

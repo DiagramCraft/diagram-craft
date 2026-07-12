@@ -14,6 +14,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Chip } from '../../components/Chip';
 import { DropdownMenu } from '../../components/DropdownMenu';
+import { Table } from '../../components/table/Table';
 import styles from './ImportScreen.module.css';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { downloadCsvTemplate, parseCsvImport, commitCsvImport } from '../../lib/entityCsv';
@@ -550,25 +551,27 @@ export const ImportScreen = () => {
           </div>
 
           <div className={styles.tableScroll}>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th className={styles.thExp} />
-                    <th className={styles.thCheck} />
-                    <th>Row</th>
-                    <th>Name</th>
-                    <th>Action</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(r => (
+            <Table.Root scroll scrollY stickyHeader wrapClassName={styles.tableWrap}>
+              <Table.Head>
+                <Table.Row>
+                  <Table.HeaderCell className={styles.thExp} />
+                  <Table.HeaderCell />
+                  <Table.HeaderCell>Row</Table.HeaderCell>
+                  <Table.HeaderCell>Name</Table.HeaderCell>
+                  <Table.HeaderCell>Action</Table.HeaderCell>
+                  <Table.HeaderCell>Status</Table.HeaderCell>
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
+                {rows.map(r => {
+                  const pendingDecision = r.matchType === 'name' && !r.userChoice;
+                  return (
                     <React.Fragment key={r.rowNumber}>
-                      <tr
-                        className={`${r.accepted || (r.matchType === 'name' && !r.userChoice) ? '' : styles.rowRejected} ${r.expanded ? styles.rowExpanded : ''}`}
+                      <Table.Row
+                        muted={!r.accepted && !pendingDecision}
+                        className={r.expanded ? styles.rowExpanded : undefined}
                       >
-                        <td className={styles.tdExp}>
+                        <Table.Cell className={styles.tdExp}>
                           {r.entity && (r.hasChanges || r.matchType === 'name' || !r.isUpdate) && (
                             <Button
                               variant="icon-only"
@@ -580,18 +583,18 @@ export const ImportScreen = () => {
                               <TbChevronRight size={12} />
                             </Button>
                           )}
-                        </td>
-                        <td className={styles.tdCheck}>
-                          <input
-                            type="checkbox"
-                            checked={r.accepted}
-                            onChange={() => toggleRow(r.rowNumber)}
-                            disabled={r.errors.length > 0}
-                          />
-                        </td>
-                        <td>{r.rowNumber}</td>
-                        <td>{r.entity?._name ? String(r.entity._name) : <em>No name</em>}</td>
-                        <td>
+                        </Table.Cell>
+                        <Table.CheckboxCell
+                          aria-label={`Include row ${r.rowNumber}`}
+                          checked={r.accepted}
+                          onChange={() => toggleRow(r.rowNumber)}
+                          disabled={r.errors.length > 0}
+                        />
+                        <Table.Cell>{r.rowNumber}</Table.Cell>
+                        <Table.Cell>
+                          {r.entity?._name ? String(r.entity._name) : <em>No name</em>}
+                        </Table.Cell>
+                        <Table.Cell>
                           {r.matchType === 'name' && !r.userChoice ? (
                             <DropdownMenu
                               trigger={
@@ -641,8 +644,8 @@ export const ImportScreen = () => {
                               Create
                             </Chip>
                           )}
-                        </td>
-                        <td>
+                        </Table.Cell>
+                        <Table.Cell>
                           {r.errors.length > 0 ||
                           (r.constraintViolations && r.constraintViolations.length > 0) ? (
                             <span className={styles.errorList}>
@@ -662,8 +665,8 @@ export const ImportScreen = () => {
                               <TbCheck size={10} /> Valid
                             </span>
                           )}
-                        </td>
-                      </tr>
+                        </Table.Cell>
+                      </Table.Row>
                       {r.expanded && (
                         <tr className={styles.detailRow}>
                           <td colSpan={7}>
@@ -672,10 +675,10 @@ export const ImportScreen = () => {
                         </tr>
                       )}
                     </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+              </Table.Body>
+            </Table.Root>
           </div>
 
           <div className={styles.reviewFoot}>

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Button } from '@diagram-craft/app-components/Button';
 import type { EntityRecord, EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -10,6 +9,8 @@ import { formatDateTime } from '../../../utils/dateFormat';
 import { RestoreSnapshotDialog } from './RestoreSnapshotDialog';
 import styles from './EntityChangeHistoryTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
+import { Table } from '../../../components/table/Table';
+import { DropdownMenu } from '../../../components/DropdownMenu';
 
 type Props = {
   workspaceId: string;
@@ -78,52 +79,49 @@ export const EntityChangeHistoryTab = ({
     <>
       <div className={styles.changeHistory}>
         {savedSnapshots.length > 0 && (
-          <div>
-            <div className={styles.chTableWrap}>
-              <table className={styles.chTable}>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>By</th>
-                    <th>Message</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {savedSnapshots.map(snapshot => (
-                    <tr key={snapshot.id}>
-                      <td className={styles.chDim}>{formatDateTime(snapshot.created_at)}</td>
-                      <td>
-                        <span
-                          className={`${styles.snapshotTypeBadge} ${snapshot.status !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}
-                        >
-                          {snapshot.status === 'saved_version'
-                            ? 'saved'
-                            : snapshot.status === 'applied'
-                              ? 'applied'
-                              : 'autosave'}
-                        </span>
-                      </td>
-                      <td>{snapshot.created_by_name ?? '—'}</td>
-                      <td className={styles.chDim}>{snapshot.commit_message ?? '—'}</td>
-                      <td className={styles.chActionsCell}>
-                        {snapshot.status !== 'future_update' && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setRestoreDialogSnapshot(snapshot)}
-                          >
-                            Restore
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <Table.Root>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Date</Table.HeaderCell>
+                <Table.HeaderCell>Type</Table.HeaderCell>
+                <Table.HeaderCell>By</Table.HeaderCell>
+                <Table.HeaderCell>Message</Table.HeaderCell>
+                <Table.HeaderCell />
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
+              {savedSnapshots.map(snapshot => (
+                <Table.Row key={snapshot.id}>
+                  <Table.Cell className={styles.chDim}>
+                    {formatDateTime(snapshot.created_at)}
+                  </Table.Cell>
+                  <Table.Cell>
+                    <span
+                      className={`${styles.snapshotTypeBadge} ${snapshot.status !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}
+                    >
+                      {snapshot.status === 'saved_version'
+                        ? 'saved'
+                        : snapshot.status === 'applied'
+                          ? 'applied'
+                          : 'autosave'}
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell>{snapshot.created_by_name ?? '—'}</Table.Cell>
+                  <Table.Cell className={styles.chDim}>{snapshot.commit_message ?? '—'}</Table.Cell>
+                  <Table.ActionsCell>
+                    {snapshot.status !== 'future_update' && (
+                      <DropdownMenu
+                        trigger={<Table.DotsButton />}
+                        items={[
+                          { label: 'Restore', onClick: () => setRestoreDialogSnapshot(snapshot) }
+                        ]}
+                      />
+                    )}
+                  </Table.ActionsCell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
         )}
       </div>
 

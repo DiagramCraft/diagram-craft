@@ -422,52 +422,20 @@
   color: var(--green);
 }
 
+/* Outer padded flex column; Table.Root's own wrap div (see .tableWrap below) is the actual
+   bordered card + vertical scroll container, matching the pattern used elsewhere so the
+   border/scroll chrome doesn't need to be re-fought against Table.module.css's defaults. */
 .tableScroll {
   flex: 1;
-  overflow: auto;
-  padding: 0 24px;
   min-height: 0;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .tableWrap {
-  overflow: hidden;
-  margin: 0;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md, var(--r));
-  background: var(--panel-bg);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12.5px;
-}
-
-.table thead th {
-  text-align: left;
-  padding: 9px 10px;
-  font-weight: 500;
-  color: var(--cmp-fg-disabled);
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  border-bottom: 1px solid var(--cmp-border);
-  position: sticky;
-  top: 0;
-  background: var(--panel-bg);
-  white-space: nowrap;
-  z-index: 1;
-}
-
-.table tbody td {
-  padding: 7px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  color: var(--base-fg-dim);
-  vertical-align: middle;
-}
-
-.table tbody tr:last-child td {
-  border-bottom: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .thExp,
@@ -476,19 +444,6 @@
   padding-left: 6px !important;
   padding-right: 0 !important;
   text-align: center;
-}
-
-.thCheck,
-.tdCheck {
-  width: 30px;
-  text-align: center;
-}
-
-.tdCheck input,
-.table input[type='checkbox'] {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--accent-fg);
 }
 
 .actionUpdate {
@@ -562,10 +517,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.rowRejected {
-  opacity: 0.45;
 }
 
 .rowExpanded td {

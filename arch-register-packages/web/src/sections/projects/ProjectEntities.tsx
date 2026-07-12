@@ -23,6 +23,7 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import { Chip } from '../../components/Chip';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { TypeBadge } from '../../components/TypeBadge';
+import { Table } from '../../components/table/Table';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
@@ -480,80 +481,63 @@ const ProjectEntitiesTab = ({
   }
 
   return (
-    <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
-      <div className={styles.projectEntityTableWrap}>
-        <table className={styles.projectEntityTable}>
-          <thead>
-            <tr>
-              <th style={{ minWidth: 220 }}>Name</th>
-              <th>Role</th>
-              <th style={{ width: 100 }}>Done</th>
-              <th style={{ width: 36 }} />
-            </tr>
-          </thead>
-          <tbody>
-            {groupedByRole.flatMap(([role, entities]) =>
-              entities.map(entity => (
-                <tr key={entity.entity_id}>
-                  <td>
-                    <div className={styles.projectEntityTableName}>
-                      {entity.entity_schema && schemaMap.get(entity.entity_schema.id) && (
-                        <TypeBadge
-                          color={schemaMap.get(entity.entity_schema.id)!.color}
-                          icon={schemaMap.get(entity.entity_schema.id)!.icon}
-                          name={entity.entity_schema.name}
-                          size={18}
-                        />
-                      )}
-                      <div>
-                        <div className={styles.projectEntityTableNameMain}>
-                          {entity.entity_name}
-                        </div>
-                        {entity.entity_description && (
-                          <div className={styles.projectEntityTableNameSub}>
-                            {entity.entity_description}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    {entity.entity_type?.name ? (
-                      <Chip
-                        tone="ghost"
-                        dot={entityTypeColorMap.get(entity.entity_type.id) ?? undefined}
-                      >
-                        {role}
-                      </Chip>
-                    ) : (
-                      <span className="dim">No role</span>
-                    )}
-                  </td>
-                  <td>
-                    <Chip tone="ghost">{entity.is_done ? 'Done' : 'Open'}</Chip>
-                  </td>
-                  <td>
-                    {project.canEdit && (
-                      <DropdownMenu
-                        trigger={
-                          <button
-                            type="button"
-                            className={styles.projectEntityDotsBtn}
-                            aria-label="Entity actions"
-                          >
-                            <TbDots size={14} />
-                          </button>
-                        }
-                        items={entityMenuItems(entity)}
+    <div className={styles.entityTab}>
+      <Table.Root>
+        <Table.Head>
+          <Table.Row>
+            <Table.HeaderCell style={{ minWidth: 220 }}>Name</Table.HeaderCell>
+            <Table.HeaderCell>Role</Table.HeaderCell>
+            <Table.HeaderCell width={100}>Done</Table.HeaderCell>
+            <Table.HeaderCell width={36} />
+          </Table.Row>
+        </Table.Head>
+        <Table.Body>
+          {groupedByRole.flatMap(([role, entities]) =>
+            entities.map(entity => (
+              <Table.Row key={entity.entity_id}>
+                <Table.NameCell
+                  icon={
+                    entity.entity_schema &&
+                    schemaMap.get(entity.entity_schema.id) && (
+                      <TypeBadge
+                        color={schemaMap.get(entity.entity_schema.id)!.color}
+                        icon={schemaMap.get(entity.entity_schema.id)!.icon}
+                        name={entity.entity_schema.name}
+                        size={18}
                       />
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                    )
+                  }
+                  title={entity.entity_name}
+                  subtitle={entity.entity_description}
+                />
+                <Table.Cell>
+                  {entity.entity_type?.name ? (
+                    <Chip
+                      tone="ghost"
+                      dot={entityTypeColorMap.get(entity.entity_type.id) ?? undefined}
+                    >
+                      {role}
+                    </Chip>
+                  ) : (
+                    <span className="dim">No role</span>
+                  )}
+                </Table.Cell>
+                <Table.Cell>
+                  <Chip tone="ghost">{entity.is_done ? 'Done' : 'Open'}</Chip>
+                </Table.Cell>
+                <Table.ActionsCell>
+                  {project.canEdit && (
+                    <DropdownMenu
+                      trigger={<Table.DotsButton aria-label="Entity actions" />}
+                      items={entityMenuItems(entity)}
+                    />
+                  )}
+                </Table.ActionsCell>
+              </Table.Row>
+            ))
+          )}
+        </Table.Body>
+      </Table.Root>
     </div>
   );
 };

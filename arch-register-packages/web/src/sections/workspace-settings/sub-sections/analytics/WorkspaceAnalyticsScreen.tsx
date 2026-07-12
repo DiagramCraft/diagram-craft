@@ -14,6 +14,7 @@ import { AnalyticsTabs } from './AnalyticsTabs';
 import { ActivityTrendsSection } from './ActivityTrendsSection';
 import { LifecycleSection } from './LifecycleSection';
 import { StaleEntityReport } from './StaleEntityReport';
+import { Table } from '../../../../components/table/Table';
 
 export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 'stale' }) => {
   const navigate = useNavigate();
@@ -92,17 +93,17 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
         {analytics.coverage.length === 0 ? (
           <EmptyState text="No schemas are available for this workspace." />
         ) : (
-          <table className={`${styles.table} ${styles.fixedTable}`}>
-            <thead>
-              <tr>
-                <th style={{ width: 160 }}>Schema</th>
-                <th>Lifecycle mix</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table.Root layout="fixed" bordered={false}>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell width={160}>Schema</Table.HeaderCell>
+                <Table.HeaderCell>Lifecycle mix</Table.HeaderCell>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
               {analytics.coverage.map(row => (
-                <tr key={row.schemaId}>
-                  <td>
+                <Table.Row key={row.schemaId}>
+                  <Table.Cell>
                     <button
                       type="button"
                       className={styles.linkButton}
@@ -110,8 +111,8 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
                     >
                       {row.schemaName}
                     </button>
-                  </td>
-                  <td>
+                  </Table.Cell>
+                  <Table.Cell>
                     <StackedBar
                       buckets={row.lifecycleBuckets.map(b => ({
                         ...b,
@@ -119,26 +120,26 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
                           navigateToEntities(schemaLifecycleSearch(row.schemaId, b.lifecycleId))
                       }))}
                     />
-                  </td>
-                </tr>
+                  </Table.Cell>
+                </Table.Row>
               ))}
-            </tbody>
-          </table>
+            </Table.Body>
+          </Table.Root>
         )}
       </Section>
 
       <Section title="Completeness" sub="Field completeness distribution per schema.">
-        <table className={`${styles.table} ${styles.fixedTable}`}>
-          <thead>
-            <tr>
-              <th style={{ width: 160 }}>Schema</th>
-              <th>Completeness mix</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table.Root layout="fixed" bordered={false}>
+          <Table.Head>
+            <Table.Row>
+              <Table.HeaderCell width={160}>Schema</Table.HeaderCell>
+              <Table.HeaderCell>Completeness mix</Table.HeaderCell>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
             {analytics.completeness.map(row => (
-              <tr key={row.schemaId}>
-                <td>
+              <Table.Row key={row.schemaId}>
+                <Table.Cell>
                   {row.totalCount > 0 ? (
                     <button
                       type="button"
@@ -150,8 +151,8 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
                   ) : (
                     row.schemaName
                   )}
-                </td>
-                <td>
+                </Table.Cell>
+                <Table.Cell>
                   <StackedBar
                     buckets={[
                       {
@@ -186,29 +187,29 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
                       }
                     ]}
                   />
-                </td>
-              </tr>
+                </Table.Cell>
+              </Table.Row>
             ))}
-          </tbody>
-        </table>
+          </Table.Body>
+        </Table.Root>
       </Section>
 
       <div className={styles.sideBySide}>
         <Section title="Ownership Gaps" sub="Schemas with the most unowned entities.">
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Schema</th>
-                <th style={{ width: 120 }}>Missing</th>
-                <th className={styles.right} style={{ width: 80 }}>
+          <Table.Root bordered={false}>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Schema</Table.HeaderCell>
+                <Table.HeaderCell width={120}>Missing</Table.HeaderCell>
+                <Table.HeaderCell align="right" width={80}>
                   Percent
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                </Table.HeaderCell>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
               {analytics.ownershipGaps.map(row => (
-                <tr key={row.schemaId}>
-                  <td>
+                <Table.Row key={row.schemaId}>
+                  <Table.Cell>
                     {row.missingOwnerCount > 0 ? (
                       <button
                         type="button"
@@ -220,29 +221,29 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
                     ) : (
                       row.schemaName
                     )}
-                  </td>
-                  <td>{row.missingOwnerCount}</td>
-                  <td className={styles.right}>{formatPercent(row.missingOwnerPercent)}</td>
-                </tr>
+                  </Table.Cell>
+                  <Table.Cell>{row.missingOwnerCount}</Table.Cell>
+                  <Table.Cell align="right">{formatPercent(row.missingOwnerPercent)}</Table.Cell>
+                </Table.Row>
               ))}
-            </tbody>
-          </table>
+            </Table.Body>
+          </Table.Root>
         </Section>
 
         <Section title="Schema Utilisation" sub="Entity counts, including empty schemas.">
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Schema</th>
-                <th className={styles.right} style={{ width: 80 }}>
+          <Table.Root bordered={false}>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell>Schema</Table.HeaderCell>
+                <Table.HeaderCell align="right" width={80}>
                   Entities
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                </Table.HeaderCell>
+              </Table.Row>
+            </Table.Head>
+            <Table.Body>
               {analytics.schemaUtilization.map(row => (
-                <tr key={row.schemaId}>
-                  <td>
+                <Table.Row key={row.schemaId}>
+                  <Table.Cell>
                     {row.count > 0 ? (
                       <button
                         type="button"
@@ -254,12 +255,12 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
                     ) : (
                       row.schemaName
                     )}
-                  </td>
-                  <td className={styles.right}>{row.count}</td>
-                </tr>
+                  </Table.Cell>
+                  <Table.Cell align="right">{row.count}</Table.Cell>
+                </Table.Row>
               ))}
-            </tbody>
-          </table>
+            </Table.Body>
+          </Table.Root>
         </Section>
       </div>
     </div>

@@ -77,119 +77,6 @@
   background: var(--accent-bg) !important;
 }
 
-/* Table view */
-:global(.tableWrap) {
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  overflow: visible;
-  background: var(--panel-bg);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.table thead th {
-  text-align: left;
-  font-weight: 500;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
-  background: var(--base-bg);
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--cmp-border);
-  white-space: nowrap;
-
-  &:first-child {
-    border-radius: 4px 0 0 0;
-  }
-
-  &:last-child {
-    border-radius: 0 4px 0 0;
-  }
-}
-
-.table tbody tr {
-  border-bottom: 1px solid var(--panel-border);
-  cursor: pointer;
-}
-
-.table tbody tr:last-child {
-  border-bottom: 0;
-}
-
-.table tbody tr:hover {
-  background: var(--cmp-bg);
-}
-
-.tableRowSelected {
-  background: color-mix(in oklch, var(--accent-fg) 7%, var(--base-bg));
-}
-
-.tableRowSelected td {
-  border-bottom-color: color-mix(in oklch, var(--accent-fg) 15%, var(--panel-border));
-}
-
-.table td {
-  padding: 8px 10px;
-  vertical-align: middle;
-}
-
-.tableCheckbox {
-  width: 32px;
-}
-
-.tableCheckbox input {
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border: 1px solid var(--base-fg-more-dim);
-  border-radius: 3px;
-  background: transparent;
-  cursor: pointer;
-  position: relative;
-}
-
-.tableCheckbox input:checked {
-  background: var(--accent-fg);
-  border-color: var(--accent-fg);
-}
-
-.tableCheckbox input:checked::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 1.5px 1.5px 0;
-  transform: rotate(45deg);
-}
-
-.tableName {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tableNameMain {
-  color: var(--base-fg);
-  font-weight: 500;
-}
-
-.tableNameSub {
-  font-size: 11px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 340px;
-  color: var(--base-fg-more-dim);
-}
-
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -266,10 +153,6 @@
 }
 
 /* Tree view */
-.treeRowAncestor td {
-  opacity: 0.45;
-}
-
 .treeToggle {
   width: 18px;
   height: 18px;

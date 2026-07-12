@@ -5,66 +5,10 @@
   gap: 20px;
 }
 
-.chTableWrap {
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  background: var(--panel-bg);
-}
-
-.chTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.chTable thead th {
-  text-align: left;
-  font-weight: 500;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
-  background: var(--base-bg);
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--cmp-border);
-  white-space: nowrap;
-
-  &:first-child {
-    border-radius: 4px 0 0 0;
-  }
-
-  &:last-child {
-    border-radius: 0 4px 0 0;
-  }
-}
-
-.chTable tbody tr {
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.chTable tbody tr:last-child {
-  border-bottom: 0;
-}
-
-.chTable tbody tr:hover {
-  background: var(--cmp-bg);
-}
-
-.chTable td {
-  padding: 8px 10px;
-  vertical-align: middle;
-}
-
 .chDim {
   color: var(--cmp-fg-disabled);
   white-space: nowrap;
   font-size: 11px;
-}
-
-.chActionsCell {
-  width: 80px;
-  text-align: right;
 }
 
 .snapshotTypeBadge {

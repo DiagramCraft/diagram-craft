@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { TbChevronDown, TbChevronRight, TbDots } from 'react-icons/tb';
+import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { TypeBadge } from '../../../components/TypeBadge';
@@ -19,6 +19,7 @@ import type {
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import styles from '../EntityBrowserScreen.module.css';
 import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
+import { Table } from '../../../components/table/Table';
 
 export type TreeViewProps = {
   workspaceId: string;
@@ -114,36 +115,38 @@ export const TreeView = ({
   }
 
   return (
-    <div className={styles.tableWrap}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th style={{ minWidth: 240 }}>Name</th>
-            <th>Type</th>
-            {columns.filter(c => c.id !== '_description').map(c => <th key={c.id}>{c.label}</th>)}
-            {!readOnly && <th style={{ width: 28 }} />}
-          </tr>
-        </thead>
-        <tbody>
-          {roots.map(item => (
-            <TreeNodeRow
-              key={item._uid}
-              item={item}
-              depth={0}
-              schemaMap={schemaMap}
-              onEntityClick={onEntityClick}
-              onDelete={onDelete}
-              onClone={onClone}
-              lifecycleStates={lifecycleStates}
-              projectContext={projectContext}
-              readOnly={readOnly}
-              columns={columns}
-              displayFields={displayFields}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table.Root>
+      <Table.Head>
+        <Table.Row>
+          <Table.HeaderCell style={{ minWidth: 240 }}>Name</Table.HeaderCell>
+          <Table.HeaderCell>Type</Table.HeaderCell>
+          {columns
+            .filter(c => c.id !== '_description')
+            .map(c => (
+              <Table.HeaderCell key={c.id}>{c.label}</Table.HeaderCell>
+            ))}
+          {!readOnly && <Table.HeaderCell style={{ width: 28 }} />}
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {roots.map(item => (
+          <TreeNodeRow
+            key={item._uid}
+            item={item}
+            depth={0}
+            schemaMap={schemaMap}
+            onEntityClick={onEntityClick}
+            onDelete={onDelete}
+            onClone={onClone}
+            lifecycleStates={lifecycleStates}
+            projectContext={projectContext}
+            readOnly={readOnly}
+            columns={columns}
+            displayFields={displayFields}
+          />
+        ))}
+      </Table.Body>
+    </Table.Root>
   );
 };
 
@@ -183,13 +186,11 @@ const TreeNodeRow = ({
 
   return (
     <>
-      <tr
-        className={isAncestor ? styles.treeRowAncestor : undefined}
-        onClick={() => onEntityClick(item._publicId)}
-      >
-        <td>
-          <div className={styles.tableName} style={{ paddingLeft: depth * 20 }}>
-            {hasChildren ? (
+      <Table.Row muted={isAncestor} onClick={() => onEntityClick(item._publicId)}>
+        <Table.NameCell
+          indentLevel={depth}
+          prefix={
+            hasChildren ? (
               <button
                 type="button"
                 className={styles.treeToggle}
@@ -202,50 +203,48 @@ const TreeNodeRow = ({
               </button>
             ) : (
               <span className={styles.treeToggleSpacer} />
-            )}
-            {schemaEntry && (
+            )
+          }
+          icon={
+            schemaEntry && (
               <TypeBadge
                 color={resolveSchemaColor(schemaEntry.schema, schemaEntry.index)}
                 name={schemaEntry.schema.name}
                 icon={schemaEntry.schema.icon}
                 size={18}
               />
-            )}
-            <div>
-              <div
-                className={styles.tableNameMain}
-                style={
-                  projectContext && item._projectLink?.linked === false
-                    ? { color: 'var(--base-fg-more-dim)' }
-                    : undefined
-                }
-              >
-                {item._name || item._slug}
-              </div>
-              {columns.some(c => c.id === '_description') && item._description && <div className={styles.tableNameSub}>{item._description}</div>}
-            </div>
-          </div>
-        </td>
-        <td>{schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}</td>
-        {columns.filter(c => c.id !== '_description').map(column => {
-          const field = findEntityDisplayField(column.id, item, schemaMap, displayFields) ?? column;
-          return <td key={column.id}><span className="dim">{formatEntityDisplayValue(item, field) ?? '—'}</span></td>;
-        })}
+            )
+          }
+          title={item._name || item._slug}
+          titleMuted={!!(projectContext && item._projectLink?.linked === false)}
+          subtitle={
+            columns.some(c => c.id === '_description') && item._description
+              ? item._description
+              : undefined
+          }
+        />
+        <Table.Cell>
+          {schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}
+        </Table.Cell>
+        {columns
+          .filter(c => c.id !== '_description')
+          .map(column => {
+            const field =
+              findEntityDisplayField(column.id, item, schemaMap, displayFields) ?? column;
+            return (
+              <Table.Cell key={column.id}>
+                <span className="dim">{formatEntityDisplayValue(item, field) ?? '—'}</span>
+              </Table.Cell>
+            );
+          })}
         {!readOnly && (
-          <td onClick={event => event.stopPropagation()}>
+          <Table.ActionsCell>
             {menuItems.length > 0 && (
-              <DropdownMenu
-                trigger={
-                  <button type="button" className={styles.dotsBtn}>
-                    <TbDots size={14} />
-                  </button>
-                }
-                items={menuItems}
-              />
+              <DropdownMenu trigger={<Table.DotsButton />} items={menuItems} />
             )}
-          </td>
+          </Table.ActionsCell>
         )}
-      </tr>
+      </Table.Row>
       {expanded &&
         item.children.map(child => (
           <TreeNodeRow

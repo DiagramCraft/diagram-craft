@@ -10,6 +10,7 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import { diffSnapshotState } from './entityTimelineHelpers';
 import styles from './RestoreSnapshotDialog.module.css';
 import { formatDateTime } from '../../../utils/dateFormat';
+import { Table } from '../../../components/table/Table';
 
 type RestoreSnapshotDialogProps = {
   isOpen: boolean;
@@ -82,24 +83,24 @@ export const RestoreSnapshotDialog = ({
         {changes.length > 0 && (
           <div className={styles.changes}>
             <h4>Changes that will be applied:</h4>
-            <table className={styles.changesTable}>
-              <thead>
-                <tr>
-                  <th>Field</th>
-                  <th>Current Value</th>
-                  <th>Restored Value</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table.Root>
+              <Table.Head>
+                <Table.Row>
+                  <Table.HeaderCell>Field</Table.HeaderCell>
+                  <Table.HeaderCell>Current Value</Table.HeaderCell>
+                  <Table.HeaderCell>Restored Value</Table.HeaderCell>
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
                 {changes.map((change, idx) => (
-                  <tr key={idx}>
-                    <td className={styles.fieldName}>{change.label}</td>
-                    <td className={styles.oldValue}>{change.from}</td>
-                    <td className={styles.newValue}>{change.to}</td>
-                  </tr>
+                  <Table.Row key={idx}>
+                    <Table.Cell className={styles.fieldName}>{change.label}</Table.Cell>
+                    <Table.Cell className={styles.oldValue}>{change.from}</Table.Cell>
+                    <Table.Cell className={styles.newValue}>{change.to}</Table.Cell>
+                  </Table.Row>
                 ))}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table.Root>
           </div>
         )}
 
