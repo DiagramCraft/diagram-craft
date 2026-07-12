@@ -127,12 +127,6 @@
   min-width: 150px;
 }
 
-.entName {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .entNameBtn {
   font-size: 12.5px;
   font-weight: 500;

@@ -467,18 +467,19 @@ export const AssessmentDetailsScreen = ({
 
                         return (
                           <Table.Row key={entity._uid}>
-                            <Table.Cell
+                            <Table.NameCell
                               sticky
-                              className={`${styles.entCol} ${styles.entNameCell}`}
+                              className={styles.entCol}
                               width={210}
-                            >
-                              <div className={styles.entName}>
+                              icon={
                                 <TypeBadge
                                   color={color}
                                   name={meta?.name}
                                   icon={meta?.icon}
                                   size={16}
                                 />
+                              }
+                              title={
                                 <button
                                   type="button"
                                   className={styles.entNameBtn}
@@ -494,8 +495,8 @@ export const AssessmentDetailsScreen = ({
                                 >
                                   {entity._name || entity._slug}
                                 </button>
-                              </div>
-                            </Table.Cell>
+                              }
+                            />
                             <Table.Cell className={styles.cell}>
                               {entity._owner?.name ?? '—'}
                             </Table.Cell>
