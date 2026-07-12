@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization';
+import { requireGlobalPermission } from '../auth/authorization';
+import { defineGlobalOperation } from '../operation';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { HTTPError } from 'h3';
 import { handleDbError, slugify } from '../../utils/http';
@@ -12,9 +13,6 @@ import { instantiateTemplate } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { validatePublicIdPrefix } from '../../utils/publicIds';
-
-const handleError = (error: unknown, fallback: string): never =>
-  handleDbError(error, fallback, { unique: 'A workspace with that name already exists' });
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -43,10 +41,7 @@ const buildCreateInput = (
     id: randomUUID(),
     name: input.name,
     url_slug: urlSlug,
-    short_code: validatePublicIdPrefix(
-      input.badge ?? shortCodeFrom(input.name),
-      'short_code'
-    )!,
+    short_code: validatePublicIdPrefix(input.badge ?? shortCodeFrom(input.name), 'short_code')!,
     color: input.color ?? '',
     description: input.description ?? '',
     created_at: createdAt,
@@ -157,7 +152,9 @@ export const listWorkspaces = async (db: DatabaseAdapter): Promise<Workspace[]> 
     const workspaces = await db.workspace.listWorkspaces();
     return workspaces.map(toApiWorkspace);
   } catch (e) {
-    return handleError(e, 'Failed to retrieve workspaces');
+    return handleDbError(e, 'Failed to retrieve workspaces', {
+      unique: 'A workspace with that name already exists'
+    });
   }
 };
 
@@ -175,48 +172,97 @@ export const createWorkspace = async (
   },
   event: AuthenticatedEvent
 ): Promise<Workspace> => {
-  const authCtx = await buildApiAuthCtx(db, '__global__', event);
-  requireGlobalPermission(authCtx, 'admin_platform');
+  return defineGlobalOperation(
+    db,
+    event,
+    {
+      fallback: 'Failed to create workspace',
+      dbErrorMessages: { unique: 'A workspace with that name already exists' }
+    },
+    async ({ authCtx }) => {
+      requireGlobalPermission(authCtx, 'admin_platform');
+      const timestamp = new Date();
+      const row = await db.workspace.createWorkspace(buildCreateInput(input, timestamp));
+      await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
 
-  try {
-    const timestamp = new Date();
-    const row = await db.workspace.createWorkspace(buildCreateInput(input, timestamp));
-    await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
+      const { template, replicate_from, include } = input;
 
-    const { template, replicate_from, include } = input;
+      if (typeof replicate_from === 'string' && replicate_from) {
+        const includeSet = normalizeInclude(include);
 
-    if (typeof replicate_from === 'string' && replicate_from) {
-      const includeSet = normalizeInclude(include);
+        const [srcLifecycle, srcTeams, srcRoles, srcSchemas] = await Promise.all([
+          db.workspace.listLifecycleStates(replicate_from),
+          db.workspace.listTeams(replicate_from),
+          db.workspace.listCustomWorkspaceRoles(replicate_from),
+          db.catalog.listSchemas(replicate_from)
+        ]);
 
-      const [srcLifecycle, srcTeams, srcRoles, srcSchemas] = await Promise.all([
-        db.workspace.listLifecycleStates(replicate_from),
-        db.workspace.listTeams(replicate_from),
-        db.workspace.listCustomWorkspaceRoles(replicate_from),
-        db.catalog.listSchemas(replicate_from)
-      ]);
+        if (includeSet.has('settings')) {
+          const lifecycleStates =
+            srcLifecycle.length > 0
+              ? srcLifecycle.map(s => ({ ...s, workspace: row.id, created_at: timestamp }))
+              : buildDefaultLifecycleStates(row.id, timestamp);
+          await db.workspace.replaceLifecycleStates(row.id, lifecycleStates);
+          await db.workspace.replaceProjectEntityTypes(
+            row.id,
+            buildDefaultProjectEntityTypes(row.id, timestamp)
+          );
+          await db.workspace.replaceTeams(
+            row.id,
+            srcTeams.map(t => ({ ...t, workspace: row.id, created_at: timestamp }))
+          );
+          for (const role of srcRoles) {
+            await db.workspace.createCustomWorkspaceRole({
+              ...role,
+              id: randomUUID(),
+              workspace: row.id,
+              created_at: timestamp,
+              updated_at: timestamp
+            });
+          }
+        } else {
+          await db.workspace.replaceLifecycleStates(
+            row.id,
+            buildDefaultLifecycleStates(row.id, timestamp)
+          );
+          await db.workspace.replaceProjectEntityTypes(
+            row.id,
+            buildDefaultProjectEntityTypes(row.id, timestamp)
+          );
+          await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
+        }
 
-      if (includeSet.has('settings')) {
-        const lifecycleStates =
-          srcLifecycle.length > 0
-            ? srcLifecycle.map(s => ({ ...s, workspace: row.id, created_at: timestamp }))
-            : buildDefaultLifecycleStates(row.id, timestamp);
-        await db.workspace.replaceLifecycleStates(row.id, lifecycleStates);
-        await db.workspace.replaceProjectEntityTypes(
-          row.id,
-          buildDefaultProjectEntityTypes(row.id, timestamp)
-        );
-        await db.workspace.replaceTeams(
-          row.id,
-          srcTeams.map(t => ({ ...t, workspace: row.id, created_at: timestamp }))
-        );
-        for (const role of srcRoles) {
-          await db.workspace.createCustomWorkspaceRole({
-            ...role,
-            id: randomUUID(),
-            workspace: row.id,
-            created_at: timestamp,
-            updated_at: timestamp
-          });
+        if (includeSet.has('schemas')) {
+          const idMap = new Map<string, string>(srcSchemas.map(s => [s.id, randomUUID()]));
+          for (const schema of srcSchemas) {
+            const remappedFields = schema.fields.map(field => {
+              if (field.type === 'reference' || field.type === 'containment') {
+                return { ...field, schemaId: idMap.get(field.schemaId) ?? field.schemaId };
+              }
+              return field;
+            });
+            await db.catalog.createSchema({
+              id: idMap.get(schema.id)!,
+              workspace: row.id,
+              name: schema.name,
+              description: schema.description,
+              key_prefix: schema.key_prefix,
+              color: schema.color,
+              icon: schema.icon,
+              fields: remappedFields,
+              default_owner: null,
+              created_at: timestamp,
+              updated_at: timestamp
+            });
+            if (schema.key_prefix) {
+              await db.workspace.registerPublicIdPrefix(
+                schema.key_prefix,
+                'schema',
+                idMap.get(schema.id)!,
+                timestamp
+              );
+            }
+          }
         }
       } else {
         await db.workspace.replaceLifecycleStates(
@@ -228,73 +274,38 @@ export const createWorkspace = async (
           buildDefaultProjectEntityTypes(row.id, timestamp)
         );
         await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
-      }
 
-      if (includeSet.has('schemas')) {
-        const idMap = new Map<string, string>(srcSchemas.map(s => [s.id, randomUUID()]));
-        for (const schema of srcSchemas) {
-          const remappedFields = schema.fields.map(field => {
-            if (field.type === 'reference' || field.type === 'containment') {
-              return { ...field, schemaId: idMap.get(field.schemaId) ?? field.schemaId };
+        if (typeof template === 'string' && template && template !== 'blank') {
+          const schemas = instantiateTemplate(row.id, template);
+          for (const schema of schemas) {
+            await db.catalog.createSchema(schema);
+            if (schema.key_prefix) {
+              await db.workspace.registerPublicIdPrefix(
+                schema.key_prefix,
+                'schema',
+                schema.id,
+                timestamp
+              );
             }
-            return field;
-          });
-          await db.catalog.createSchema({
-            id: idMap.get(schema.id)!,
-            workspace: row.id,
-            name: schema.name,
-            description: schema.description,
-            key_prefix: schema.key_prefix,
-            color: schema.color,
-            icon: schema.icon,
-            fields: remappedFields,
-            default_owner: null,
-            created_at: timestamp,
-            updated_at: timestamp
-          });
-          if (schema.key_prefix) {
-            await db.workspace.registerPublicIdPrefix(schema.key_prefix, 'schema', idMap.get(schema.id)!, timestamp);
           }
         }
       }
-    } else {
-      await db.workspace.replaceLifecycleStates(
-        row.id,
-        buildDefaultLifecycleStates(row.id, timestamp)
-      );
-      await db.workspace.replaceProjectEntityTypes(
-        row.id,
-        buildDefaultProjectEntityTypes(row.id, timestamp)
-      );
-      await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
 
-      if (typeof template === 'string' && template && template !== 'blank') {
-        const schemas = instantiateTemplate(row.id, template);
-        for (const schema of schemas) {
-          await db.catalog.createSchema(schema);
-          if (schema.key_prefix) {
-            await db.workspace.registerPublicIdPrefix(schema.key_prefix, 'schema', schema.id, timestamp);
-          }
-        }
-      }
+      await db.ai.upsertAiConfig(row.id, { enabled: false });
+
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: row.id,
+        operation: 'create',
+        entityType: 'workspace',
+        entityId: row.id,
+        entityName: row.name,
+        changes: { new: extractEntityFields(row) }
+      });
+
+      return toApiWorkspace(row);
     }
-
-    await db.ai.upsertAiConfig(row.id, { enabled: false });
-
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: row.id,
-      operation: 'create',
-      entityType: 'workspace',
-      entityId: row.id,
-      entityName: row.name,
-      changes: { new: extractEntityFields(row) }
-    });
-
-    return toApiWorkspace(row);
-  } catch (e) {
-    return handleError(e, 'Failed to create workspace');
-  }
+  );
 };
 
 export const updateWorkspace = async (
@@ -309,53 +320,57 @@ export const updateWorkspace = async (
   },
   event: AuthenticatedEvent
 ): Promise<Workspace> => {
-  const authCtx = await buildApiAuthCtx(db, '__global__', event);
-  requireGlobalPermission(authCtx, 'admin_platform');
+  return defineGlobalOperation(
+    db,
+    event,
+    {
+      fallback: 'Failed to update workspace',
+      dbErrorMessages: { unique: 'A workspace with that name already exists' }
+    },
+    async ({ authCtx }) => {
+      requireGlobalPermission(authCtx, 'admin_platform');
+      const oldRow = await db.workspace.getWorkspace(id);
+      if (oldRow == null)
+        throw new HTTPError({
+          status: 404,
+          statusText: 'Not Found',
+          message: `Workspace '${id}' not found`
+        });
 
-  try {
-    const oldRow = await db.workspace.getWorkspace(id);
-    if (oldRow == null)
-      throw new HTTPError({
-        status: 404,
-        statusText: 'Not Found',
-        message: `Workspace '${id}' not found`
+      const updatedAt = new Date();
+      const updateInput = buildUpdateInput(input, oldRow, updatedAt);
+      const row = await db.workspace.updateWorkspace(id, updateInput);
+      if (row == null)
+        throw new HTTPError({
+          status: 404,
+          statusText: 'Not Found',
+          message: `Workspace '${id}' not found`
+        });
+
+      if (oldRow.short_code !== row.short_code) {
+        await db.workspace.updatePublicIdPrefix(
+          oldRow.short_code,
+          row.short_code,
+          'workspace',
+          row.id,
+          updatedAt
+        );
+      }
+
+      const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: id,
+        operation: 'update',
+        entityType: 'workspace',
+        entityId: id,
+        entityName: row.name,
+        changes
       });
 
-    const updatedAt = new Date();
-    const updateInput = buildUpdateInput(input, oldRow, updatedAt);
-    const row = await db.workspace.updateWorkspace(id, updateInput);
-    if (row == null)
-      throw new HTTPError({
-        status: 404,
-        statusText: 'Not Found',
-        message: `Workspace '${id}' not found`
-      });
-
-    if (oldRow.short_code !== row.short_code) {
-      await db.workspace.updatePublicIdPrefix(
-        oldRow.short_code,
-        row.short_code,
-        'workspace',
-        row.id,
-        updatedAt
-      );
+      return toApiWorkspace(row);
     }
-
-    const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
-    await logAudit(db, {
-      userId: authCtx.userId,
-      workspace: id,
-      operation: 'update',
-      entityType: 'workspace',
-      entityId: id,
-      entityName: row.name,
-      changes
-    });
-
-    return toApiWorkspace(row);
-  } catch (e) {
-    return handleError(e, 'Failed to update workspace');
-  }
+  );
 };
 
 export const deleteWorkspace = async (
@@ -364,26 +379,30 @@ export const deleteWorkspace = async (
   event: AuthenticatedEvent,
   storage?: StorageAdapter
 ): Promise<{ success: boolean; message: string }> => {
-  const authCtx = await buildApiAuthCtx(db, '__global__', event);
-  requireGlobalPermission(authCtx, 'admin_platform');
+  return defineGlobalOperation(
+    db,
+    event,
+    {
+      fallback: 'Failed to delete workspace',
+      dbErrorMessages: { unique: 'A workspace with that name already exists' }
+    },
+    async ({ authCtx }) => {
+      requireGlobalPermission(authCtx, 'admin_platform');
+      const { workspace, projectIds } = await db.workspace.deleteWorkspace(id);
+      if (workspace == null)
+        throw new HTTPError({
+          status: 404,
+          statusText: 'Not Found',
+          message: `Workspace '${id}' not found`
+        });
 
-  try {
-    const { workspace, projectIds } = await db.workspace.deleteWorkspace(id);
-    if (workspace == null)
-      throw new HTTPError({
-        status: 404,
-        statusText: 'Not Found',
-        message: `Workspace '${id}' not found`
-      });
+      if (storage) {
+        await Promise.all(
+          projectIds.map(projectId => storage.deleteAll(id, projectId).catch(() => {}))
+        );
+      }
 
-    if (storage) {
-      await Promise.all(
-        projectIds.map(projectId => storage.deleteAll(id, projectId).catch(() => {}))
-      );
+      return { success: true, message: `Workspace '${workspace.name}' deleted` };
     }
-
-    return { success: true, message: `Workspace '${workspace.name}' deleted` };
-  } catch (e) {
-    return handleError(e, 'Failed to delete workspace');
-  }
+  );
 };
