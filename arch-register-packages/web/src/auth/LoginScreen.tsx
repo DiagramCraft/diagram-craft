@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '../auth/AuthContext';
 import { Banner } from '../components/Banner';
+import { LoadingState } from '../components/LoadingState';
 import { useAuthConfig } from '../hooks/useAuthConfig';
 import styles from './LoginScreen.module.css';
 
@@ -75,8 +76,9 @@ export const LoginScreen = () => {
                 <div className={styles.brandName}>Arch Register</div>
               </div>
             </div>
-            <div className={styles.spinner} />
-            <p className={styles.loadingText}>Loading...</p>
+            <div className={styles.loadingWrap}>
+              <LoadingState text="Loading..." size="sm" />
+            </div>
           </div>
         </main>
         <div className={styles.statusbar} />

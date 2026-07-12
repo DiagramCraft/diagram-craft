@@ -41,22 +41,10 @@
   height: 100%;
   gap: 1rem;
   font-size: 1rem;
+}
+
+.error {
   color: #333;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e5e5e5;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .button {

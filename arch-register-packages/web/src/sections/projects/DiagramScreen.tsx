@@ -32,6 +32,7 @@ import {
 } from '../../hooks/queryKeys';
 import { searchKeys } from '../../hooks/useSearch';
 import { stableHue } from '../../components/MemberAvatar';
+import { LoadingState } from '../../components/LoadingState';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -454,8 +455,7 @@ export const DiagramScreen = () => {
     return (
       <div className={styles.diagramScreen}>
         <div className={styles.loading}>
-          <div className={styles.spinner} />
-          <p>Loading diagram...</p>
+          <LoadingState text="Loading diagram..." />
         </div>
       </div>
     );
