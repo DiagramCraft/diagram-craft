@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { readdir, stat, unlink } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 import { createDatabase } from '../db/factory';
-import { storageScope } from '../domain/project/projectOperations';
+import { storageScope } from '../domain/project/projectOperationHelpers';
 import type { ContentNodeDbResult } from '../domain/project/db/projectDatabase';
 import { STORAGE_DEFAULTS } from '../constants';
 
@@ -107,7 +107,9 @@ async function main() {
   const resolvedBase = resolve(process.env['STORAGE_FS_BASE'] ?? STORAGE_DEFAULTS.FS_BASE_DIR);
 
   console.log(`Scanning ${resolvedBase} for files not referenced in the database...`);
-  console.log(`Age threshold: ${maxAgeDays} day(s). Mode: ${apply ? 'APPLY (will delete)' : 'DRY RUN'}`);
+  console.log(
+    `Age threshold: ${maxAgeDays} day(s). Mode: ${apply ? 'APPLY (will delete)' : 'DRY RUN'}`
+  );
 
   const db = await createDatabase({ initialize: false });
 
