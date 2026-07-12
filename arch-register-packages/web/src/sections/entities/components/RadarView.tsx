@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import styles from './RadarView.module.css';
-import { TbSearch, TbChevronUp, TbChevronDown } from 'react-icons/tb';
+import { TbChevronUp, TbChevronDown } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { EmptyState } from '../../../components/EmptyState';
+import { SearchInput } from '../../../components/SearchInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities } from '../../../hooks/useEntities';
 import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
@@ -635,14 +636,14 @@ export const RadarView = ({
           <>
             {!hideToolbar && (
               <div className={styles.toolbar}>
-                <div className={styles.searchInline}>
-                  <TbSearch size={12} />
-                  <input
-                    placeholder="Find an entry…"
-                    value={q}
-                    onChange={e => setQ(e.target.value)}
-                  />
-                </div>
+                <SearchInput
+                  size="sm"
+                  className={styles.searchInline}
+                  placeholder="Find an entry…"
+                  value={q}
+                  onChange={setQ}
+                  onClear={() => setQ('')}
+                />
                 <div className={styles.pills}>
                   {rings.map(ring => (
                     <button

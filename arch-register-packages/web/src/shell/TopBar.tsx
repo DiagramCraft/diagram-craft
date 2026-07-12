@@ -8,7 +8,6 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import {
   TbChevronDown,
   TbChevronRight,
-  TbSearch,
   TbSettings,
   TbCheck,
   TbPlus,
@@ -28,6 +27,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../hooks/useTheme';
 import { resolveAvatarBackground } from '../components/MemberAvatar';
+import { SearchInput } from '../components/SearchInput';
 import {
   useClearNotifications,
   useDeleteNotification,
@@ -148,17 +148,17 @@ export const TopBar = ({
       </div>
       <div className={styles.center}>
         {!hideSearch && (
-          <div className={styles.search}>
-            <TbSearch size={12} />
-            <input
-              ref={searchRef}
-              placeholder="Search entities, diagrams, projects..."
-              value={query}
-              onChange={e => onQueryChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
+          <SearchInput
+            ref={searchRef}
+            size="sm"
+            className={styles.search}
+            placeholder="Search entities, diagrams, projects..."
+            value={query}
+            onChange={onQueryChange}
+            onKeyDown={handleKeyDown}
+          >
             <span className={styles.kbd}>&#8984;K</span>
-          </div>
+          </SearchInput>
         )}
       </div>
       <div className={styles.right}>

@@ -17,58 +17,6 @@
   border-bottom: 1px solid var(--panel-border);
 }
 
-.searchInput {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  height: 36px;
-  background: var(--panel-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r-md);
-  transition: border-color 80ms, box-shadow 80ms;
-}
-
-.searchInput:focus-within {
-  border-color: var(--accent-fg);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent-fg) 18%, transparent);
-}
-
-.searchInput svg {
-  color: var(--cmp-fg-disabled);
-  flex-shrink: 0;
-}
-
-.searchInput input {
-  flex: 1;
-  min-width: 0;
-  background: transparent;
-  border: 0;
-  outline: 0;
-  color: var(--base-fg);
-  font-size: 14px;
-}
-
-.searchInput input::placeholder {
-  color: var(--cmp-fg-disabled);
-}
-
-.clearBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: var(--r-sm);
-  color: var(--cmp-fg-disabled);
-  background: transparent;
-}
-
-.clearBtn:hover {
-  background: var(--cmp-bg-hover);
-  color: var(--base-fg);
-}
-
 .kbdHints {
   display: inline-flex;
   align-items: center;

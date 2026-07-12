@@ -89,6 +89,10 @@
   overflow: hidden;
 }
 
+.searchInput {
+  width: 220px;
+}
+
 .filterPill {
   height: 26px;
   padding: 0 10px;

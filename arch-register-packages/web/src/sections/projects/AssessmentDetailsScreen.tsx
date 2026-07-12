@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { TbEdit, TbDots, TbTrash, TbFilter, TbDownload } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
@@ -49,6 +48,7 @@ import { AssessmentSummaryTab } from './components/AssessmentSummaryTab';
 import { Table } from '../../components/table/Table';
 import { useTableSort } from '../../components/table/useTableSort';
 import { EmptyState } from '../../components/EmptyState';
+import { SearchInput } from '../../components/SearchInput';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './AssessmentDetailsScreen.module.css';
 
@@ -395,11 +395,13 @@ export const AssessmentDetailsScreen = ({
                     </Popover.Content>
                   </Popover.Root>
                   <div style={{ flex: 1 }} />
-                  <TextInput
+                  <SearchInput
+                    size="sm"
+                    className={styles.searchInput}
                     value={search}
-                    onChange={v => setSearch(v ?? '')}
+                    onChange={setSearch}
+                    onClear={() => setSearch('')}
                     placeholder="Search entities…"
-                    style={{ width: 220 }}
                   />
                 </div>
 

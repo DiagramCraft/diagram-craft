@@ -11,38 +11,6 @@
   flex-wrap: wrap;
 }
 
-.search {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 26px;
-  max-width: 280px;
-  min-width: 180px;
-  padding: 0 8px;
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-  background: var(--cmp-bg);
-  color: var(--base-fg-more-dim);
-}
-
-.search:focus-within {
-  border-color: var(--accent-fg);
-}
-
-.searchInput {
-  background: transparent;
-  border: 0;
-  outline: 0;
-  flex: 1;
-  color: var(--base-fg);
-  font-size: 12px;
-  min-width: 0;
-}
-
-.searchInput::placeholder {
-  color: var(--cmp-fg-disabled);
-}
-
 .filter {
   display: inline-flex;
   align-items: center;

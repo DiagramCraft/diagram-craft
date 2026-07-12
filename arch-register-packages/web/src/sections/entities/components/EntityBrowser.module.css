@@ -19,30 +19,8 @@
 }
 
 .searchInline {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 26px;
   max-width: 280px;
   min-width: 260px;
-  padding: 0 10px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  color: var(--base-fg-more-dim);
-}
-
-.searchInline input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--base-fg);
-  font-size: 12px;
-  width: 100%;
-}
-
-.searchInline input::placeholder {
-  color: var(--cmp-fg-disabled);
 }
 
 .filterCount {
