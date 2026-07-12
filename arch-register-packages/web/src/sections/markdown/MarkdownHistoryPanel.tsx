@@ -6,7 +6,7 @@ import {
   TbX
 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { useMarkdownRevision } from '../../hooks/useProjectFiles';
+import { useMarkdownRevision } from '../../hooks/useMarkdownContent';
 import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectContract';
 import { MdxPreview } from './preview/MdxPreview';
 import { renderMarkdownPreview } from './preview/mdxRenderNode';

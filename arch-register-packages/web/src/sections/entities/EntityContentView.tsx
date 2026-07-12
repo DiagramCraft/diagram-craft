@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { getRouteApi } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
@@ -21,7 +21,9 @@ import {
   entityMarkdownRoute,
   projectDiagramRoute
 } from '../../routes/publicObjectRoutes';
-import { useUploadEntityFile, useCreateEntityMarkdown } from '../../hooks/useProjectFiles';
+import { useUploadFile } from '../../hooks/useFileOperations';
+import { useCreateMarkdown } from '../../hooks/useMarkdownContent';
+import type { ContentScope } from '../../hooks/contentScope';
 
 type EntityContentViewProps = {
   workspaceSlug: string;
@@ -35,8 +37,12 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
-  const uploadFileMutation = useUploadEntityFile(workspaceSlug, entityId);
-  const createMarkdownMutation = useCreateEntityMarkdown(workspaceSlug, entityId);
+  const scope: ContentScope = useMemo(
+    () => ({ kind: 'entity', workspaceId: workspaceSlug, entityId }),
+    [workspaceSlug, entityId]
+  );
+  const uploadFileMutation = useUploadFile(scope);
+  const createMarkdownMutation = useCreateMarkdown(scope);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);

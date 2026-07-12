@@ -6,10 +6,9 @@ import {
   useMarkdownContent,
   useMarkdownRevisions,
   useRestoreMarkdownRevision,
-  useSaveMarkdownContent,
-  useUploadMarkdownAttachment,
-  useDeleteMarkdownAttachment
-} from '../../hooks/useProjectFiles';
+  useSaveMarkdownContent
+} from '../../hooks/useMarkdownContent';
+import { useUploadMarkdownAttachment, useDeleteMarkdownAttachment } from '../../hooks/useAttachments';
 import { RenameDialog } from '../../components/RenameDialog';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { newid } from '@diagram-craft/utils/id';

@@ -1,5 +1,5 @@
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
-import { useCreateFolder } from '../../hooks/useProjectFiles';
+import { useCreateFolder } from '../../hooks/useFileOperations';
 
 type AddFolderDialogProps = {
   open: boolean;
@@ -18,7 +18,7 @@ export const AddFolderDialog = ({
   projectId,
   parentFolder
 }: AddFolderDialogProps) => {
-  const createFolderMutation = useCreateFolder(workspaceId, projectId);
+  const createFolderMutation = useCreateFolder({ kind: 'project', workspaceId, projectId });
 
   return (
     <ContentFolderDialog

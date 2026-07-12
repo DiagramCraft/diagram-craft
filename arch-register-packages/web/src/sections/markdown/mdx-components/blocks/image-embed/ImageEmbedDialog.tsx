@@ -3,10 +3,8 @@ import { useEditorRef } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
-import {
-  useMarkdownContent,
-  useUploadMarkdownAttachment
-} from '../../../../../hooks/useProjectFiles';
+import { useMarkdownContent } from '../../../../../hooks/useMarkdownContent';
+import { useUploadMarkdownAttachment } from '../../../../../hooks/useAttachments';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';

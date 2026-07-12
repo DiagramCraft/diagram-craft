@@ -1,13 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import {
-  useDeleteWorkspaceFile,
-  useRenameWorkspaceFile,
-  useDeleteProjectFile,
-  useRenameProjectFile,
-  useDeleteEntityFile,
-  useRenameEntityFile,
-  useWorkspaceContentNodes
-} from '../../hooks/useProjectFiles';
+import { useDeleteFile, useRenameFile, useFiles } from '../../hooks/useFileOperations';
+import type { ContentScope } from '../../hooks/contentScope';
 import { useProject, useEntityContentNodes } from '../../hooks/useProjects';
 import { useEntity } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -37,16 +30,22 @@ export const useMarkdownDocumentScope = (params: {
   const { data: entityFiles } = useEntityContentNodes(workspaceSlug, entityId ?? '', {
     enabled: !!entityId
   });
-  const { data: workspaceFiles } = useWorkspaceContentNodes(workspaceSlug, {
-    enabled: !projectId && !entityId
-  });
+  const { data: workspaceFiles } = useFiles(
+    { kind: 'workspace', workspaceId: workspaceSlug },
+    { enabled: !projectId && !entityId }
+  );
 
-  const deleteWorkspaceFile = useDeleteWorkspaceFile(workspaceSlug);
-  const renameWorkspaceFile = useRenameWorkspaceFile(workspaceSlug);
-  const deleteProjectFile = useDeleteProjectFile(workspaceSlug, projectId ?? '');
-  const renameProjectFile = useRenameProjectFile(workspaceSlug, projectId ?? '');
-  const deleteEntityFile = useDeleteEntityFile(workspaceSlug, entityId ?? '');
-  const renameEntityFile = useRenameEntityFile(workspaceSlug, entityId ?? '');
+  const scope: ContentScope = useMemo(
+    () =>
+      projectId
+        ? { kind: 'project', workspaceId: workspaceSlug, projectId }
+        : entityId
+          ? { kind: 'entity', workspaceId: workspaceSlug, entityId }
+          : { kind: 'workspace', workspaceId: workspaceSlug },
+    [workspaceSlug, projectId, entityId]
+  );
+  const deleteFileMutation = useDeleteFile(scope);
+  const renameFileMutation = useRenameFile(scope);
 
   const file = useMemo(() => {
     return projectId
@@ -67,27 +66,15 @@ export const useMarkdownDocumentScope = (params: {
       if (!file) return;
       const trimmed = newName.trim();
       if (!trimmed || trimmed === file.name) return;
-      if (projectId) {
-        await renameProjectFile.mutateAsync({ file, newName: trimmed });
-      } else if (entityId) {
-        await renameEntityFile.mutateAsync({ file, newName: trimmed });
-      } else {
-        await renameWorkspaceFile.mutateAsync({ file, newName: trimmed });
-      }
+      await renameFileMutation.mutateAsync({ file, newName: trimmed });
     },
-    [file, projectId, entityId, renameProjectFile, renameEntityFile, renameWorkspaceFile]
+    [file, renameFileMutation]
   );
 
   const deleteFile = useCallback(async () => {
     if (!file) return;
-    if (projectId) {
-      await deleteProjectFile.mutateAsync(file.path);
-    } else if (entityId) {
-      await deleteEntityFile.mutateAsync(file.path);
-    } else {
-      await deleteWorkspaceFile.mutateAsync(file.path);
-    }
-  }, [file, projectId, entityId, deleteProjectFile, deleteEntityFile, deleteWorkspaceFile]);
+    await deleteFileMutation.mutateAsync(file.path);
+  }, [file, deleteFileMutation]);
 
   return { file, parentLabel, renameFile, deleteFile };
 };

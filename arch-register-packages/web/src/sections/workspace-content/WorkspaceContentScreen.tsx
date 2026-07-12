@@ -1,9 +1,11 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { Title } from '../../components/Title';
-import { useWorkspaceContentNodes, useCreateWorkspaceFolder, useCreateWorkspaceMarkdown, useUploadWorkspaceFile } from '../../hooks/useProjectFiles';
+import { useFiles, useCreateFolder, useUploadFile } from '../../hooks/useFileOperations';
+import { useCreateMarkdown } from '../../hooks/useMarkdownContent';
+import type { ContentScope } from '../../hooks/contentScope';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Button } from '@diagram-craft/app-components/Button';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
@@ -27,10 +29,14 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const { workspace } = useWorkspaceContext();
-  const { data } = useWorkspaceContentNodes(workspaceSlug);
-  const createFolderMutation = useCreateWorkspaceFolder(workspaceSlug);
-  const createMarkdownMutation = useCreateWorkspaceMarkdown(workspaceSlug);
-  const uploadFileMutation = useUploadWorkspaceFile(workspaceSlug);
+  const scope: ContentScope = useMemo(
+    () => ({ kind: 'workspace', workspaceId: workspaceSlug }),
+    [workspaceSlug]
+  );
+  const { data } = useFiles(scope);
+  const createFolderMutation = useCreateFolder(scope);
+  const createMarkdownMutation = useCreateMarkdown(scope);
+  const uploadFileMutation = useUploadFile(scope);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);

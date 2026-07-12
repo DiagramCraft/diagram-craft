@@ -8,7 +8,7 @@ import { ImageEmbed } from './ImageEmbed';
 const useProjectFileMock = vi.fn();
 const fetchWithAuthResponseMock = vi.fn();
 
-vi.mock('../../../../../hooks/useProjectFiles', () => ({
+vi.mock('../../../../../hooks/useFileOperations', () => ({
   useProjectFile: (...args: unknown[]) => useProjectFileMock(...args)
 }));
 
