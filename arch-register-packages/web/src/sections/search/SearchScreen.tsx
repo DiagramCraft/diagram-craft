@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { TbSearch, TbX } from 'react-icons/tb';
+import { TbSearch } from 'react-icons/tb';
 import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { ProjectFileSearchResult } from '@arch-register/api-types/searchContract';
 import { useSearch } from '../../hooks/useSearch';
+import { SearchInput } from '../../components/SearchInput';
 import styles from './SearchScreen.module.css';
 import { EmptyState } from '../../components/EmptyState';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -320,34 +321,24 @@ export const SearchScreen = () => {
     <div className={styles.screen}>
       {/* ── Header ── */}
       <div className={styles.header}>
-        <div className={styles.searchInput}>
-          <TbSearch size={14} />
-          <input
-            ref={inputRef}
-            placeholder="Search entities, diagrams, projects, schema…"
-            value={localQ}
-            onChange={e => handleInputChange(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                handleInputSubmit();
-                inputRef.current?.blur();
-              }
-            }}
-          />
-          {localQ && (
-            <button
-              type="button"
-              className={styles.clearBtn}
-              onClick={() => {
-                handleInputChange('');
-                navigateToSearch('');
-                inputRef.current?.focus();
-              }}
-              title="Clear (Esc)"
-            >
-              <TbX size={11} />
-            </button>
-          )}
+        <SearchInput
+          ref={inputRef}
+          size="md"
+          placeholder="Search entities, diagrams, projects, schema…"
+          value={localQ}
+          onChange={handleInputChange}
+          onClear={() => {
+            handleInputChange('');
+            navigateToSearch('');
+            inputRef.current?.focus();
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              handleInputSubmit();
+              inputRef.current?.blur();
+            }
+          }}
+        >
           <span className={styles.kbdHints}>
             <kbd className={styles.kbd}>↑</kbd>
             <kbd className={styles.kbd}>↓</kbd>
@@ -355,7 +346,7 @@ export const SearchScreen = () => {
             <kbd className={styles.kbd}>⏎</kbd>
             <span className={styles.dim}> open</span>
           </span>
-        </div>
+        </SearchInput>
 
         <div className={styles.summary}>
           {trimmed ? (

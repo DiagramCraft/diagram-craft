@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TbSearch } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Banner } from '../../../components/Banner';
@@ -7,6 +6,7 @@ import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
+import { SearchInput } from '../../../components/SearchInput';
 import { useAuth } from '../../../auth/AuthContext';
 import { getUserLabel } from '../../../utils/userLabel';
 import { formatDate } from '../../../utils/dateFormat';
@@ -128,15 +128,13 @@ export const MembersSubSection = ({
     <div className={styles.container}>
       {!isLoading && members.length > 0 && (
         <div className={styles.toolbar}>
-          <div className={styles.search}>
-            <TbSearch size={12} />
-            <input
-              className={styles.searchInput}
-              placeholder="Search by name or email…"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-            />
-          </div>
+          <SearchInput
+            size="sm"
+            placeholder="Search by name or email…"
+            value={query}
+            onChange={setQuery}
+            onClear={() => setQuery('')}
+          />
           <label className={styles.filter}>
             <span className={styles.filterLabel}>Role</span>
             <select

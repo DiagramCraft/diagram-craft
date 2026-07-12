@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { TbSearch, TbFilter, TbHistory } from 'react-icons/tb';
+import { TbFilter, TbHistory } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -12,6 +12,7 @@ import type { BrowserView, FilterCondition } from '@arch-register/api-types/view
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { FilterBuilder } from '../../../components/FilterBuilder';
 import { FilterDropdown } from '../../../components/FilterDropdown';
+import { SearchInput } from '../../../components/SearchInput';
 import styles from './EntityBrowser.module.css';
 import { ManageFieldsPopover } from './ManageFieldsPopover';
 import { AssessmentJoinPicker } from './AssessmentJoinPicker';
@@ -85,14 +86,14 @@ export const EntityBrowserToolbar = ({
 
   return (
     <div className={styles.toolbar}>
-      <div className={styles.searchInline}>
-        <TbSearch size={12} />
-        <input
-          placeholder="Search by name, owner…"
-          value={q}
-          onChange={e => setQ(e.target.value)}
-        />
-      </div>
+      <SearchInput
+        size="sm"
+        className={styles.searchInline}
+        placeholder="Search by name, owner…"
+        value={q}
+        onChange={setQ}
+        onClear={() => setQ('')}
+      />
       <Popover.Root actionsRef={filterPopoverRef}>
         <Popover.Trigger
           element={
