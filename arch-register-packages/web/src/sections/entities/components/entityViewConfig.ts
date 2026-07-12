@@ -1,9 +1,12 @@
 /**
  * Structural subset of a zod schema's `safeParse` - avoids web depending on the `zod` package
- * directly (only api-types does); any zod object schema satisfies this shape.
+ * directly (only api-types does); any zod object schema satisfies this shape. `P` (the parsed
+ * type) is a separate type param from the output type so callers whose local config type is
+ * stricter than the zod-inferred type (e.g. optional fields normalized to always-defined) don't
+ * hit an assignability error - the merge only ever reads `parsed` via bracket access at runtime.
  */
-type SafeParseable<T> = {
-  safeParse: (raw: unknown) => { success: true; data: T } | { success: false };
+type SafeParseable<P> = {
+  safeParse: (raw: unknown) => { success: true; data: P } | { success: false };
 };
 
 /**
@@ -13,8 +16,8 @@ type SafeParseable<T> = {
  * relying on zod `.default()` since the view-config schemas don't uniformly carry complete
  * defaults for every field.
  */
-export const normalizeViewConfig = <T extends Record<string, unknown>>(
-  schema: SafeParseable<T>,
+export const normalizeViewConfig = <T extends Record<string, unknown>, P = T>(
+  schema: SafeParseable<P>,
   raw: unknown,
   defaults: T
 ): T => {

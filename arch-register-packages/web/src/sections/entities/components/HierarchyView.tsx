@@ -10,6 +10,7 @@ import { hierarchyViewConfigSchema } from '@arch-register/api-types/viewContract
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import { EmptyState } from '../../../components/EmptyState';
 import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
+import { normalizeViewConfig } from './entityViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,8 @@ type HierarchyViewProps = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// `fieldIds` is explicitly included (as undefined) so normalizeViewConfig's field-merge loop
+// picks it up from a parsed config when present, matching the previous pass-through behavior.
 const DEFAULT_CONFIG: HierarchyConfig = {
   levels: 2,
   level1SchemaId: null,
@@ -49,33 +52,9 @@ const DEFAULT_CONFIG: HierarchyConfig = {
   level2SchemaId: null,
   level2Columns: 3,
   level3SchemaId: null,
-  level3Columns: 3
+  level3Columns: 3,
+  fieldIds: undefined
 };
-
-const normalizeHierarchyConfig = (
-  config:
-    | {
-        levels: number;
-        level1SchemaId: string | null;
-        level1Columns: number;
-        level2SchemaId?: string | null;
-        level2Columns?: number;
-        level3SchemaId?: string | null;
-        level3Columns?: number;
-        fieldIds?: string[];
-      }
-    | null
-    | undefined
-): HierarchyConfig => ({
-  levels: config?.levels ?? DEFAULT_CONFIG.levels,
-  level1SchemaId: config?.level1SchemaId ?? DEFAULT_CONFIG.level1SchemaId,
-  level1Columns: config?.level1Columns ?? DEFAULT_CONFIG.level1Columns,
-  level2SchemaId: config?.level2SchemaId ?? DEFAULT_CONFIG.level2SchemaId,
-  level2Columns: config?.level2Columns ?? DEFAULT_CONFIG.level2Columns,
-  level3SchemaId: config?.level3SchemaId ?? DEFAULT_CONFIG.level3SchemaId,
-  level3Columns: config?.level3Columns ?? DEFAULT_CONFIG.level3Columns,
-  fieldIds: config?.fieldIds
-});
 
 const OPEN_DELAY_MS = 250;
 const CLOSE_DELAY_MS = 120;
@@ -292,21 +271,17 @@ export const HierarchyView = ({
     ownerFilter,
     statusFilter
   });
-  const parsedConfig = useMemo(() => {
-    const result = hierarchyViewConfigSchema.safeParse(config);
-    return result.success ? normalizeHierarchyConfig(result.data) : null;
-  }, [config]);
-  const [localConfig, setLocalConfig] = useState<HierarchyConfig>(parsedConfig ?? DEFAULT_CONFIG);
+  const cfg = useMemo(
+    () => normalizeViewConfig(hierarchyViewConfigSchema, config, DEFAULT_CONFIG),
+    [config]
+  );
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
-  const cfg = parsedConfig ?? localConfig;
   const selectedDisplayFields = getDisplayFieldIds('hierarchy', cfg).map(id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' });
 
   const notify = useCallback(
     (patch: Partial<HierarchyConfig>) => {
-      const next = { ...cfg, ...patch };
-      setLocalConfig(next);
-      onConfigChange(next);
+      onConfigChange({ ...cfg, ...patch });
     },
     [cfg, onConfigChange]
   );

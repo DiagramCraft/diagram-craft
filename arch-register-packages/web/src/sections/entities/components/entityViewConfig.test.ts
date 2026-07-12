@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { tableViewConfigSchema, timelineViewConfigSchema } from '@arch-register/api-types/viewContract';
+import {
+  hierarchyViewConfigSchema,
+  tableViewConfigSchema,
+  timelineViewConfigSchema
+} from '@arch-register/api-types/viewContract';
 import { normalizeViewConfig } from './entityViewConfig';
 
 const defaults = {
@@ -36,5 +40,26 @@ describe('normalizeViewConfig', () => {
   it('fills every field from defaults when given an empty object against an all-optional schema', () => {
     const tableDefaults = { fieldIds: ['_description', '_owner'] };
     expect(normalizeViewConfig(tableViewConfigSchema, {}, tableDefaults)).toEqual(tableDefaults);
+  });
+
+  it('passes through an optional field from the parsed config when defaults declares it as undefined', () => {
+    const hierarchyDefaults = {
+      levels: 2,
+      level1SchemaId: null as string | null,
+      level1Columns: 3,
+      level2SchemaId: null as string | null,
+      level2Columns: 3,
+      level3SchemaId: null as string | null,
+      level3Columns: 3,
+      fieldIds: undefined as string[] | undefined
+    };
+    const raw = { levels: 1, level1SchemaId: 'service', level1Columns: 2, fieldIds: ['_owner'] };
+    expect(normalizeViewConfig(hierarchyViewConfigSchema, raw, hierarchyDefaults)).toEqual({
+      ...hierarchyDefaults,
+      levels: 1,
+      level1SchemaId: 'service',
+      level1Columns: 2,
+      fieldIds: ['_owner']
+    });
   });
 });
