@@ -10,6 +10,14 @@
   overscroll-behavior: none;
 }
 
+/* .wrap's own `overflow: visible` shorthand sets overflow-y too; declaring this after .wrap in
+   the same file resolves the tie deterministically, unlike overriding it from a consumer's own
+   CSS module where load order between modules isn't guaranteed. */
+.wrapScrollY {
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
 .wrapEmbedded {
   border: none;
   border-radius: 0;

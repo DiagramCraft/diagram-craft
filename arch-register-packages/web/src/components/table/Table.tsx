@@ -46,6 +46,11 @@ const withStickyOffsets = (children: ReactNode): ReactNode => {
 
 type TableRootProps = {
   scroll?: boolean;
+  // vertical scroll on Table.Root's own wrap div, for a table with a bounded height and an
+  // internally-scrolling body (e.g. alongside stickyHeader). Wrap div is `overflow: visible` by
+  // default, so this is the supported way to get `overflow-y: auto` there instead of consumers
+  // fighting that default from their own CSS module.
+  scrollY?: boolean;
   stickyHeader?: boolean;
   layout?: 'auto' | 'fixed';
   // false when the table already sits inside another bordered/rounded surface (e.g. a Section
@@ -58,6 +63,7 @@ type TableRootProps = {
 
 const Root = ({
   scroll = false,
+  scrollY = false,
   stickyHeader = false,
   layout = 'auto',
   bordered = true,
@@ -71,6 +77,7 @@ const Root = ({
       styles.wrap,
       !bordered && styles.wrapEmbedded,
       scroll && styles.wrapScroll,
+      scrollY && styles.wrapScrollY,
       wrapClassName
     )}
   >

@@ -414,7 +414,7 @@ export const ExtractScreen = () => {
           </div>
 
           <div className={styles.tableScroll}>
-            <Table.Root scroll stickyHeader wrapClassName={styles.tableWrap}>
+            <Table.Root scroll scrollY stickyHeader wrapClassName={styles.tableWrap}>
               <Table.Head>
                 <Table.Row>
                   <Table.HeaderCell className={styles.thExp} />
