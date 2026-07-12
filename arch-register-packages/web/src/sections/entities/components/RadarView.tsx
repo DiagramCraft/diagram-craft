@@ -19,6 +19,7 @@ import {
   getCategoricalValue,
   type JoinedAssessmentContext
 } from './entityFieldSources';
+import { normalizeViewConfig } from './entityViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,18 @@ export type RadarConfig = {
   quadrantFieldId: string;
   ringFieldId: string;
   ringOrder: string[];
+};
+
+// radarViewConfigSchema has no sensible non-empty defaults (schemaId/quadrantFieldId/ringFieldId
+// are workspace-specific selections, not universal fallbacks), so normalizeViewConfig is given
+// an empty sentinel here and the result is treated as "unconfigured" (converted back to null)
+// wherever schemaId is empty, preserving the existing all-or-nothing `config: RadarConfig | null`
+// semantics used throughout this component.
+const EMPTY_RADAR_CONFIG: RadarConfig = {
+  schemaId: '',
+  quadrantFieldId: '',
+  ringFieldId: '',
+  ringOrder: []
 };
 
 type Quadrant = {
@@ -247,8 +260,8 @@ export const RadarView = ({
     loadConfig(workspaceSlug)
   );
   const parsedConfig = useMemo(() => {
-    const result = radarViewConfigSchema.safeParse(configProp);
-    return result.success ? result.data : null;
+    const normalized = normalizeViewConfig(radarViewConfigSchema, configProp, EMPTY_RADAR_CONFIG);
+    return normalized.schemaId ? normalized : null;
   }, [configProp]);
   const config = parsedConfig ?? internalConfig;
 

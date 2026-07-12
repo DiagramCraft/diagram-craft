@@ -20,6 +20,7 @@ import {
   type FieldOption,
   type JoinedAssessmentContext
 } from './entityFieldSources';
+import { normalizeViewConfig } from './entityViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,17 @@ export type BubbleConfig = {
   yFieldId: string;
   sizeFieldId: string | null;
   colorFieldId: string | null;
+};
+
+// bubbleViewConfigSchema has no sensible non-empty defaults (all fields are workspace-specific
+// selections), so normalizeViewConfig is given an empty sentinel here and the result is treated
+// as "unconfigured" (converted back to null) whenever xFieldId is empty, preserving the existing
+// all-or-nothing `config: BubbleConfig | null` semantics used throughout this component.
+const EMPTY_BUBBLE_CONFIG: BubbleConfig = {
+  xFieldId: '',
+  yFieldId: '',
+  sizeFieldId: null,
+  colorFieldId: null
 };
 
 type Bubble = {
@@ -145,8 +157,8 @@ export const BubbleView = ({
     loadConfig(workspaceSlug)
   );
   const parsedConfig = useMemo(() => {
-    const result = bubbleViewConfigSchema.safeParse(configProp);
-    return result.success ? result.data : null;
+    const normalized = normalizeViewConfig(bubbleViewConfigSchema, configProp, EMPTY_BUBBLE_CONFIG);
+    return normalized.xFieldId ? normalized : null;
   }, [configProp]);
   const config = parsedConfig ?? internalConfig;
 

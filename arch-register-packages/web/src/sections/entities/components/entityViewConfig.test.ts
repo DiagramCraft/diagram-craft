@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   hierarchyViewConfigSchema,
+  radarViewConfigSchema,
   tableViewConfigSchema,
   timelineViewConfigSchema
 } from '@arch-register/api-types/viewContract';
@@ -61,5 +62,23 @@ describe('normalizeViewConfig', () => {
       level1Columns: 2,
       fieldIds: ['_owner']
     });
+  });
+
+  it('supports an empty-sentinel default for views with no natural default value (e.g. Radar)', () => {
+    const emptyRadarConfig = { schemaId: '', quadrantFieldId: '', ringFieldId: '', ringOrder: [] as string[] };
+
+    // Invalid/missing config -> caller can treat the empty sentinel as "unconfigured".
+    const unconfigured = normalizeViewConfig(radarViewConfigSchema, undefined, emptyRadarConfig);
+    expect(unconfigured).toEqual(emptyRadarConfig);
+    expect(unconfigured.schemaId).toBe('');
+
+    // Fully valid config -> passed straight through, non-empty schemaId signals "configured".
+    const raw = {
+      schemaId: 'service',
+      quadrantFieldId: 'phase',
+      ringFieldId: 'tier',
+      ringOrder: ['a', 'b']
+    };
+    expect(normalizeViewConfig(radarViewConfigSchema, raw, emptyRadarConfig)).toEqual(raw);
   });
 });
