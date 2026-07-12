@@ -4,7 +4,8 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import { listWorkspaceContentNodes } from './contentNodeOperations';
 import { getMarkdownContent } from './markdownOperations';
-import { uploadEntityFile } from './fileTransferOperations';
+import { uploadContentFile } from './fileTransferOperations';
+import { ENTITY_SCOPE } from './contentScope';
 
 const { requireWorkspaceCapability } = vi.hoisted(() => ({
   requireWorkspaceCapability: vi.fn()
@@ -57,7 +58,8 @@ describe('entity/workspace content authorization', () => {
     });
 
     await expect(
-      uploadEntityFile(
+      uploadContentFile(
+        ENTITY_SCOPE,
         db,
         storage,
         'ws-1',

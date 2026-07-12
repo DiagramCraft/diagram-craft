@@ -10,13 +10,12 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
-  uploadProjectFile,
+  uploadContentFile,
   downloadProjectFile,
-  uploadEntityFile,
   downloadEntityFile,
-  uploadWorkspaceFile,
   downloadWorkspaceFile
 } from './fileTransferOperations';
+import { PROJECT_SCOPE, ENTITY_SCOPE, WORKSPACE_SCOPE } from './contentScope';
 import { uploadMarkdownAttachment, createMarkdownDiagramAttachment } from './markdownOperations';
 
 const MAX_SIZE_BYTES = parseInt(process.env['UPLOAD_MAX_SIZE_MB'] ?? '50', 10) * 1024 * 1024;
@@ -85,7 +84,8 @@ export const createProjectFileRoutesHandler = (db: DatabaseAdapter, storage: Sto
     const id = getRouterParam(event, 'id')!;
     const { path } = getQuery(event) as { path: string };
     const { buffer, mimeType, originalFilename } = await readUpload(event as AuthenticatedEvent);
-    return uploadProjectFile(
+    return uploadContentFile(
+      PROJECT_SCOPE,
       db,
       storage,
       workspace,
@@ -125,7 +125,8 @@ export const createProjectFileRoutesHandler = (db: DatabaseAdapter, storage: Sto
     const entityId = getRouterParam(event, 'entityId')!;
     const { path } = getQuery(event) as { path: string };
     const { buffer, mimeType, originalFilename } = await readUpload(event as AuthenticatedEvent);
-    return uploadEntityFile(
+    return uploadContentFile(
+      ENTITY_SCOPE,
       db,
       storage,
       workspace,
@@ -164,10 +165,12 @@ export const createProjectFileRoutesHandler = (db: DatabaseAdapter, storage: Sto
     const workspace = getRouterParam(event, 'workspace')!;
     const { path } = getQuery(event) as { path: string };
     const { buffer, mimeType, originalFilename } = await readUpload(event as AuthenticatedEvent);
-    return uploadWorkspaceFile(
+    return uploadContentFile(
+      WORKSPACE_SCOPE,
       db,
       storage,
       workspace,
+      undefined,
       path,
       buffer,
       mimeType,
