@@ -3,6 +3,7 @@ import { TbChartLine, TbChevronDown, TbChevronRight, TbFolder } from 'react-icon
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import styles from './DiagramPicker.module.css';
 import { EmptyState } from './EmptyState';
+import { LoadingState } from './LoadingState';
 
 const DiagramRow = ({
   file,
@@ -72,7 +73,7 @@ export const DiagramPicker = ({
   onSelect: (file: ProjectFile) => void;
 }) => {
   if (!fileTree) {
-    return <EmptyState compact title="Loading…" />;
+    return <LoadingState text="Loading…" size="sm" />;
   }
 
   const rootDiagrams = fileTree.rootFiles.filter(f => f.type === 'diagram');

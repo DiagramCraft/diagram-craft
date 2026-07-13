@@ -20,6 +20,7 @@ import { useWorkspaceRoles } from '../../../hooks/useWorkspaceRoles';
 import { Table } from '../../../components/table/Table';
 import styles from './MembersSubSection.module.css';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 import { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaceContract';
 
 const TeamChip = ({ teamId, label }: { teamId: string; label: string }) => {
@@ -168,7 +169,7 @@ export const MembersSubSection = ({
         </div>
       )}
       {isLoading ? (
-        <EmptyState compact title="Loading members…" />
+        <LoadingState text="Loading members…" size="sm" />
       ) : members.length === 0 ? (
         <EmptyState compact title="No members have been added to this workspace." />
       ) : (

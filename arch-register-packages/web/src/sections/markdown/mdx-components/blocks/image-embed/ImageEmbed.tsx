@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { fetchWithAuthResponse } from '../../../../../auth/authClient';
 import { Banner } from '../../../../../components/Banner';
+import { LoadingState } from '../../../../../components/LoadingState';
 import { useContentFile } from '../../../../../hooks/useContentScope';
 import { useMdxContext } from '../../../MdxContext';
 import { getMarkdownAttachmentDownloadUrl, isImageMimeType } from './imageEmbedUtils';
@@ -125,7 +126,7 @@ export const ImageEmbed = ({
   if (isLoading) {
     return (
       <figure className={styles.container}>
-        <div className={styles.loading}>Loading…</div>
+        <LoadingState text="Loading…" size="sm" />
       </figure>
     );
   }
@@ -141,7 +142,7 @@ export const ImageEmbed = ({
   if (!imageUrl) {
     return (
       <figure className={styles.container}>
-        <div className={styles.loading}>Loading…</div>
+        <LoadingState text="Loading…" size="sm" />
       </figure>
     );
   }

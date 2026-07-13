@@ -7,6 +7,7 @@ import { useEntity } from '../../../../../hooks/useEntities';
 import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
+import { LoadingState } from '../../../../../components/LoadingState';
 import styles from './EntityCard.module.css';
 import { formatDate } from '../../../../../utils/dateFormat';
 
@@ -50,7 +51,7 @@ export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
   if (isLoading) {
     return (
       <div className={styles.card}>
-        <div className={styles.loading}>Loading…</div>
+        <LoadingState text="Loading…" size="sm" />
       </div>
     );
   }

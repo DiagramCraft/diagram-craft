@@ -14,6 +14,7 @@ import {
 } from '../../../routes/publicObjectRoutes';
 import { formatRelativeTime } from '../../../utils/dateFormat';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 
 const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> = [
   { value: '', label: 'All object types' },
@@ -203,7 +204,7 @@ export const AuditLogSubSection = ({
         <div className={`${styles.sectionBody} ${styles.auditSectionBody}`}>
           <div className={styles.activityList}>
             {loading ? (
-              <EmptyState compact title="Loading activity..." />
+              <LoadingState text="Loading activity..." size="sm" />
             ) : entries.length > 0 ? (
               entries.map(entry => (
                 <button

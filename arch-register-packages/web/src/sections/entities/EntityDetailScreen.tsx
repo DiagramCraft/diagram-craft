@@ -44,6 +44,7 @@ import { EntityDependentsTab } from './components/EntityDependentsTab';
 import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
 import { DiscussionThread } from '../discussions/DiscussionThread';
 import { EmptyState } from '../../components/EmptyState';
+import { LoadingState } from '../../components/LoadingState';
 import type { TabId, Relation } from './types/entityDetailTypes';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
@@ -199,7 +200,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   };
 
   if (loading) {
-    return <div className={styles.loading}>Loading...</div>;
+    return <LoadingState text="Loading..." />;
   }
 
   if (!entity) {

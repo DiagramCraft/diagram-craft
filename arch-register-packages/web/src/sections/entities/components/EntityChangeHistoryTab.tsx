@@ -8,10 +8,10 @@ import { useRestoreSnapshot } from '../../../hooks/useSnapshots';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { RestoreSnapshotDialog } from './RestoreSnapshotDialog';
 import styles from './EntityChangeHistoryTab.module.css';
-import sharedStyles from '../EntityDetailScreen.module.css';
 import { Table } from '../../../components/table/Table';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 
 type Props = {
   workspaceId: string;
@@ -64,7 +64,7 @@ export const EntityChangeHistoryTab = ({
   };
 
   if (loadingAudit) {
-    return <div className={sharedStyles.loading}>Loading change history...</div>;
+    return <LoadingState text="Loading change history..." size="sm" />;
   }
 
   if (savedSnapshots.length === 0) {

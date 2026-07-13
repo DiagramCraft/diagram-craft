@@ -18,6 +18,7 @@ import {
 import { orpcClient } from '../../../lib/orpcClient';
 import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 import styles from './GlobalPermissionsSubSection.module.css';
 
 type AuthUserInfo = {
@@ -147,7 +148,7 @@ export const GlobalPermissionsSubSection = ({
   return (
     <div className={styles.container}>
       {isLoadingUsers || isLoadingRoles ? (
-        <EmptyState compact title="Loading global role assignments…" />
+        <LoadingState text="Loading global role assignments…" size="sm" />
       ) : assignedUsers.length === 0 ? (
         <EmptyState compact title="No users currently have global roles." />
       ) : (

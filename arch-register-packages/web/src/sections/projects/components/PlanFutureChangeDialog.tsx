@@ -10,6 +10,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import styles from './PlanFutureChangeDialog.module.css';
+import { LoadingState } from '../../../components/LoadingState';
 
 type Props = {
   open: boolean;
@@ -106,7 +107,7 @@ export const PlanFutureChangeDialog = ({
       ]}
     >
       {!entity ? (
-        <div style={{ color: 'var(--cmp-fg-disabled)', fontSize: 13 }}>Loading...</div>
+        <LoadingState text="Loading..." size="sm" />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <FormElement label="Target date">

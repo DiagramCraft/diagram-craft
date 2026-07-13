@@ -8,6 +8,7 @@ import { AnalyticsTabs } from './AnalyticsTabs';
 import { formatDate } from '../../../../utils/dateFormat';
 import { Table } from '../../../../components/table/Table';
 import { EmptyState } from '../../../../components/EmptyState';
+import { LoadingState } from '../../../../components/LoadingState';
 
 export const StaleEntityReport = ({
   workspaceSlug,
@@ -40,7 +41,7 @@ export const StaleEntityReport = ({
     }
   };
 
-  if (isLoading) return <EmptyState compact title="Loading stale entities…" />;
+  if (isLoading) return <LoadingState text="Loading stale entities…" size="sm" />;
   if (isError || analytics == null) return <EmptyState compact title="Stale entities could not be loaded." />;
 
   return (
@@ -73,7 +74,7 @@ export const StaleEntityReport = ({
       </div>
 
       {isLoadingEntities ? (
-        <EmptyState compact title="Loading entities…" />
+        <LoadingState text="Loading entities…" size="sm" />
       ) : entities.length === 0 ? (
         <EmptyState compact title="No entities match this age threshold." />
       ) : (

@@ -45,6 +45,7 @@ import { ProjectSettingsForm } from './components/ProjectSettingsForm';
 import { PlanFutureChangeDialog } from './components/PlanFutureChangeDialog';
 import { buildFolderTree, type FolderTreeNode } from '../../lib/folderTree';
 import { EmptyState } from '../../components/EmptyState';
+import { LoadingState } from '../../components/LoadingState';
 import { useProjectDetailController } from './useProjectDetailController';
 
 export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
@@ -112,7 +113,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
   if (isLoading) {
     return (
       <div className={styles.screen}>
-        <EmptyState framed title="Loading project..." />
+        <LoadingState text="Loading project..." />
       </div>
     );
   }

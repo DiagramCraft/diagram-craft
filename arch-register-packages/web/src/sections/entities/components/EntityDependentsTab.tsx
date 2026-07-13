@@ -9,6 +9,7 @@ import { getRelationDisplayLabel } from '../../../lib/entityRelations';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { useEntityDependents } from '../../../hooks/useEntities';
 import { EmptyState } from '../../../components/EmptyState';
+import { LoadingState } from '../../../components/LoadingState';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { EntityDependent } from '@arch-register/api-types/entityContract';
@@ -69,7 +70,7 @@ export const EntityDependentsTab = ({
   if (isLoading) {
     return (
       <div className={styles.page}>
-        <div className={styles.dim}>Loading…</div>
+        <LoadingState text="Loading…" size="sm" />
       </div>
     );
   }
