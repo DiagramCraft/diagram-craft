@@ -1,4 +1,7 @@
-import { defaultEdgeRegistry, defaultNodeRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
+import {
+  defaultEdgeRegistry,
+  defaultNodeRegistry
+} from '@diagram-craft/canvas-app/defaultRegistry';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { makeDefaultDiagramFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
@@ -10,6 +13,7 @@ import { Marquee } from '@diagram-craft/canvas/marquee';
 import { model } from '@diagram-craft/canvas/modelState';
 import type { Context } from '@diagram-craft/canvas/context';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
+import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
 import { vnodeToString } from './vnodeSerializer';
 import type { ToolType } from '@diagram-craft/canvas/tool';
 
@@ -42,6 +46,22 @@ const getRegistry = () => {
     edges: _edgeRegistry,
     stencils: new StencilRegistry()
   };
+};
+
+const inlineBlobUrls = async (svg: string): Promise<string> => {
+  const urls = [...new Set(svg.match(/blob:nodedata:[0-9a-f-]+/g) ?? [])];
+  const replacements = await Promise.all(
+    urls.map(async url => {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to read server-rendered attachment: ${response.status}`);
+      }
+
+      return [url, await blobToDataURL(await response.blob())] as const;
+    })
+  );
+
+  return replacements.reduce((result, [url, dataUrl]) => result.replaceAll(url, dataUrl), svg);
 };
 
 /**
@@ -82,14 +102,15 @@ export const generateAccurateSvgPreview = async (
       context: ssrContext,
       width: 800,
       height: 600,
-      viewbox: viewBox
+      viewbox: viewBox,
+      includeDocumentBounds: true
     };
 
     // Pass props to constructor so this.currentProps is set before render() is called,
     // as BaseCanvasComponent.renderLayer() accesses this.currentProps directly.
     const component = new StaticCanvasComponent(props);
     const vnode = component.render(props);
-    return vnodeToString(vnode);
+    return await inlineBlobUrls(vnodeToString(vnode));
   } catch {
     return null;
   }
