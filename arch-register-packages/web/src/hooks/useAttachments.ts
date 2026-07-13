@@ -2,20 +2,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invalidateAuditQueries, invalidateProjectQueries, entityContentKeys, workspaceContentKeys } from './queryKeys';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
-import { fetchWithAuthResponse } from '../auth/authClient';
+import { apiFetchResponse } from '../lib/http';
 import { markdownContentKeys } from './useMarkdownContent';
 
 export const uploadFile = async (url: string, file: File, filePath: string): Promise<ProjectFile> => {
   const formData = new FormData();
   formData.append('file', file, file.name);
-  const response = await fetchWithAuthResponse(`${url}?path=${encodeURIComponent(filePath)}`, {
+  const response = await apiFetchResponse(`${url}?path=${encodeURIComponent(filePath)}`, {
     method: 'POST',
     body: formData
   });
-  if (!response.ok) {
-    const text = await response.text().catch(() => response.statusText);
-    throw new Error(text);
-  }
   return response.json() as Promise<ProjectFile>;
 };
 

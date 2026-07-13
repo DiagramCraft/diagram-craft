@@ -21,6 +21,7 @@ import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfi
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
+import { normalizeApiError } from './http';
 
 const ORPC_BASE_PATH = '/api';
 
@@ -62,6 +63,16 @@ const webContracts = {
 
 const clientLink = new OpenAPILink(webContracts, {
   url: resolveORPCBaseUrl,
+  interceptors: [
+    async options => {
+      try {
+        return await options.next();
+      } catch (error) {
+        if (options.signal?.aborted) throw error;
+        throw normalizeApiError(error);
+      }
+    }
+  ],
   fetch: async (request, init) => {
     const raw = request.url;
     const method = request.method;
