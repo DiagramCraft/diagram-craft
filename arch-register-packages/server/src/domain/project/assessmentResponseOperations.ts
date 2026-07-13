@@ -110,6 +110,7 @@ export const upsertAssessmentResponse = async (
         entityType: 'assessment_response',
         entityId: row.id,
         entityName: `${assessment.name} / ${entityId}`,
+        metadata: { subject_entity_id: entityId },
         changes: existing
           ? computeChanges(extractEntityFields(existing), extractEntityFields(row))
           : { new: extractEntityFields(row) }

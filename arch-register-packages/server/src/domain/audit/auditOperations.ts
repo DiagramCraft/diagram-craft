@@ -6,6 +6,31 @@ import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } fro
 import { listEntities } from '../catalog/entityOperations';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 
+const resolveAssessmentResponseEntityName = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entry: AuditLogEntry
+): Promise<AuditLogEntry> => {
+  const separator = entry.entity_name.lastIndexOf(' / ');
+  const legacySubjectEntityId = separator >= 0 ? entry.entity_name.slice(separator + 3) : null;
+  const metadataSubjectEntityId = entry.metadata['subject_entity_id'];
+  const subjectEntityId =
+    typeof metadataSubjectEntityId === 'string' && metadataSubjectEntityId.length > 0
+      ? metadataSubjectEntityId
+      : legacySubjectEntityId;
+
+  if (subjectEntityId == null || subjectEntityId.length === 0) return entry;
+
+  const entity = await db.catalog.getEntity(workspace, subjectEntityId);
+  if (!entity) return entry;
+
+  const assessmentName = separator >= 0 ? entry.entity_name.slice(0, separator) : entry.entity_name;
+  return {
+    ...entry,
+    entity_name: `${assessmentName} / ${entity.name}`
+  };
+};
+
 const resolveAuditPublicIds = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -38,6 +63,10 @@ const resolveAuditPublicIds = async (
         project_public_id: project?.public_id ?? null
       }
     };
+  }
+
+  if (entry.entity_type === 'assessment_response') {
+    return resolveAssessmentResponseEntityName(db, workspace, entry);
   }
 
   return entry;
