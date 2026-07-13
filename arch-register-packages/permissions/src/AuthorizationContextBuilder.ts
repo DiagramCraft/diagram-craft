@@ -5,6 +5,7 @@ import type {
   EntitySchema,
   GlobalRole,
   TeamAssignment,
+  WorkspaceAuthorizationContext,
   WorkspaceTeam,
   WorkspaceRole,
   WorkspaceRoleDefinition
@@ -57,29 +58,29 @@ export interface PermissionDataProvider {
   getWorkspaceRoles?(workspaceId: string): Promise<WorkspaceRoleDefinition[]>;
 }
 
-export type AuthorizationContextData = {
+export type WorkspaceAuthorizationContextData = {
   userId: string;
   globalRoles: GlobalRole[];
   workspaceRole: WorkspaceRole | null;
   workspaceRoles?: WorkspaceRoleDefinition[];
   teamAssignments?: TeamAssignment[];
   teams?: WorkspaceTeam[];
+};
+
+export type AuthorizationContextData = WorkspaceAuthorizationContextData & {
   schemas: EntitySchema[];
   entities: Entity[];
   grants: EntityGrant[];
 };
 
-export const buildAuthorizationContext = ({
+export const buildWorkspaceAuthorizationContext = ({
   userId,
   globalRoles,
   workspaceRole,
   workspaceRoles,
   teamAssignments,
-  teams,
-  schemas,
-  entities,
-  grants
-}: AuthorizationContextData): AuthorizationContext => {
+  teams
+}: WorkspaceAuthorizationContextData): WorkspaceAuthorizationContext => {
   const normalizedTeams = teams ?? [];
   const normalizedWorkspaceRoles = resolveWorkspaceRoleDefinitions(workspaceRoles ?? []);
   const globalRolesSet = new Set(globalRoles);
@@ -101,7 +102,18 @@ export const buildAuthorizationContext = ({
     teamIds: new Set(normalizedAssignments.map(assignment => assignment.teamId)),
     teamAssignments: normalizedAssignments,
     teamRolesByTeam,
-    teams: normalizedTeams,
+    teams: normalizedTeams
+  };
+};
+
+export const buildAuthorizationContext = ({
+  schemas,
+  entities,
+  grants,
+  ...workspaceData
+}: AuthorizationContextData): AuthorizationContext => {
+  return {
+    ...buildWorkspaceAuthorizationContext(workspaceData),
     schemas: new Map(schemas.map(schema => [schema.id, schema])),
     entities: new Map(entities.map(entity => [entity.id, entity])),
     grants
@@ -113,17 +125,25 @@ export const fetchAuthorizationContextData = async (
   workspaceId: string,
   userId: string
 ): Promise<AuthorizationContextData> => {
-  const [globalRoles, workspaceRole, workspaceRoles, teamAssignments, teams, schemas, entities, grants] =
-    await Promise.all([
-      dataProvider.getGlobalRoles(userId),
-      dataProvider.getWorkspaceRole(workspaceId, userId),
-      dataProvider.getWorkspaceRoles?.(workspaceId) ?? Promise.resolve([]),
-      dataProvider.getTeamAssignments(workspaceId, userId),
-      dataProvider.getTeams(workspaceId),
-      dataProvider.getSchemas(workspaceId),
-      dataProvider.getEntities(workspaceId),
-      dataProvider.getEntityGrants(workspaceId)
-    ]);
+  const [
+    globalRoles,
+    workspaceRole,
+    workspaceRoles,
+    teamAssignments,
+    teams,
+    schemas,
+    entities,
+    grants
+  ] = await Promise.all([
+    dataProvider.getGlobalRoles(userId),
+    dataProvider.getWorkspaceRole(workspaceId, userId),
+    dataProvider.getWorkspaceRoles?.(workspaceId) ?? Promise.resolve([]),
+    dataProvider.getTeamAssignments(workspaceId, userId),
+    dataProvider.getTeams(workspaceId),
+    dataProvider.getSchemas(workspaceId),
+    dataProvider.getEntities(workspaceId),
+    dataProvider.getEntityGrants(workspaceId)
+  ]);
 
   return {
     userId,

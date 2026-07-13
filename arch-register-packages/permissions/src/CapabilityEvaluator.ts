@@ -1,4 +1,4 @@
-import type { AuthorizationContext } from './types.js';
+import type { WorkspaceAuthorizationContext } from './types.js';
 import { PermissionChecker } from './PermissionChecker.js';
 import { TEAM_ROLE_PERMISSIONS } from './constants.js';
 
@@ -30,7 +30,7 @@ export class CapabilityEvaluator {
    * - They are a global admin, OR
    * - The owner is a team they are a member of (and they have view access)
    */
-  canCreateProject(context: AuthorizationContext, ownerTeamId: string | null): boolean {
+  canCreateProject(context: WorkspaceAuthorizationContext, ownerTeamId: string | null): boolean {
     if (this.checker.hasWorkspaceCapability(context, 'proj.create')) {
       return true;
     }
@@ -55,7 +55,10 @@ export class CapabilityEvaluator {
    * - They are a global admin, OR
    * - The owner is a team they are a member of (and they have schema view)
    */
-  canCreateTopLevelEntity(context: AuthorizationContext, ownerTeamId: string | null): boolean {
+  canCreateTopLevelEntity(
+    context: WorkspaceAuthorizationContext,
+    ownerTeamId: string | null
+  ): boolean {
     if (this.checker.hasWorkspaceCapability(context, 'ent.edit')) {
       return true;
     }
