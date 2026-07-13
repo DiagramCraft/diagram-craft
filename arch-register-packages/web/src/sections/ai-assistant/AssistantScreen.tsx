@@ -1,71 +1,15 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { getRouteApi } from '@tanstack/react-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbSparkles, TbPlus, TbMessageCircle, TbDots, TbPencil, TbTrash } from 'react-icons/tb';
 import styles from './AssistantScreen.module.css';
-import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { useAuth } from '../../auth/AuthContext';
 import { resolveAvatarBackground } from '../../components/MemberAvatar';
-import { useAiChat } from '../../hooks/useAiChat';
-import {
-  useAiConversations,
-  useCreateConversation,
-  useRenameConversation,
-  useDeleteConversation,
-  useConversationMessages,
-  aiKeys
-} from '../../hooks/useAiConversations';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import { AiConversation } from '@arch-register/api-types/aiContract';
-import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
+import type { AiConversation } from '@arch-register/api-types/aiContract';
 import { EmptyState } from '../../components/EmptyState';
+import { SafeMarkdown } from '../../components/SafeMarkdown';
+import { useAssistantController } from './useAssistantController';
 
 // ── Markdown renderer ──
-
-const fmtInline = (s: string, onEntityLink?: (entityId: string) => void): React.ReactNode[] =>
-  s
-    .split(/(\[[^\]]+\]\((?:entity:[^)]+|https?:\/\/[^)]+)\)|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g)
-    .map((p, i) => {
-      const entityLinkMatch = /^\[([^\]]+)\]\(entity:([^)]+)\)$/.exec(p);
-      if (entityLinkMatch) {
-        return (
-          <button
-            key={i}
-            type="button"
-            className={styles.inlineEntityLink}
-            onClick={() => onEntityLink?.(entityLinkMatch[2]!)}
-          >
-            {entityLinkMatch[1]}
-          </button>
-        );
-      }
-
-      const externalLinkMatch = /^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/.exec(p);
-      if (externalLinkMatch) {
-        return (
-          <a
-            key={i}
-            className={styles.inlineEntityLink}
-            href={externalLinkMatch[2]}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {externalLinkMatch[1]}
-          </a>
-        );
-      }
-
-      if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={i}>{p.slice(2, -2)}</strong>;
-      if (/^\*[^*]+\*$/.test(p)) return <em key={i}>{p.slice(1, -1)}</em>;
-      if (/^`[^`]+`$/.test(p))
-        return (
-          <code key={i} className={styles.inlineCode}>
-            {p.slice(1, -1)}
-          </code>
-        );
-      return p;
-    });
 
 const AiMarkdown = ({
   text,
@@ -74,127 +18,25 @@ const AiMarkdown = ({
   text: string;
   onEntityLink?: (entityId: string) => void;
 }) => {
-  const lines = text.split('\n');
-  const nodes: React.ReactNode[] = [];
-  let i = 0;
-  while (i < lines.length) {
-    const ln = lines[i]!;
-    // Fenced code block
-    if (ln.startsWith('```')) {
-      const lang = ln.slice(3).trim();
-      const codeLines: string[] = [];
-      i++;
-      while (i < lines.length && !lines[i]!.startsWith('```')) {
-        codeLines.push(lines[i]!);
-        i++;
-      }
-      nodes.push(
-        <pre key={i} className={styles.codeBlock}>
-          <code>
-            {lang ? <span className={styles.codeLang}>{lang}</span> : null}
-            {codeLines.join('\n')}
-          </code>
-        </pre>
-      );
-      i++;
-      continue;
-    }
-    // Heading
-    const headMatch = /^(#{1,3})\s+(.+)$/.exec(ln);
-    if (headMatch) {
-      const level = headMatch[1]!.length;
-      const Tag = `h${level}` as 'h1' | 'h2' | 'h3';
-      nodes.push(
-        <Tag key={i} className={styles[`heading${level}` as keyof typeof styles]}>
-          {fmtInline(headMatch[2]!, onEntityLink)}
-        </Tag>
-      );
-      i++;
-      continue;
-    }
-    // Bullet list item
-    if (/^[-*•]\s+/.test(ln)) {
-      const items: React.ReactNode[] = [];
-      while (i < lines.length && /^[-*•]\s+/.test(lines[i]!)) {
-        items.push(<li key={i}>{fmtInline(lines[i]!.replace(/^[-*•]\s+/, ''), onEntityLink)}</li>);
-        i++;
-      }
-      nodes.push(
-        <ul key={`ul-${i}`} className={styles.mdList}>
-          {items}
-        </ul>
-      );
-      continue;
-    }
-    // Numbered list item
-    if (/^\d+\.\s+/.test(ln)) {
-      const items: React.ReactNode[] = [];
-      while (i < lines.length && /^\d+\.\s+/.test(lines[i]!)) {
-        items.push(<li key={i}>{fmtInline(lines[i]!.replace(/^\d+\.\s+/, ''), onEntityLink)}</li>);
-        i++;
-      }
-      nodes.push(
-        <ol key={`ol-${i}`} className={styles.mdList}>
-          {items}
-        </ol>
-      );
-      continue;
-    }
-    // Table: detect a pipe-delimited row
-    if (/^\|.+\|/.test(ln)) {
-      const tableLines: string[] = [];
-      while (i < lines.length && /^\|.+\|/.test(lines[i]!)) {
-        tableLines.push(lines[i]!);
-        i++;
-      }
-      const parseRow = (row: string) =>
-        row
-          .split('|')
-          .slice(1, -1)
-          .map(c => c.trim());
-      const isSeparator = (row: string) => /^[\s|:-]+$/.test(row);
-      const [headerRow, ...rest] = tableLines;
-      const bodyRows = rest.filter(r => !isSeparator(r));
-      const headers = headerRow ? parseRow(headerRow) : [];
-      nodes.push(
-        <div key={`tbl-${i}`} className={styles.tableWrap}>
-          <table className={styles.mdTable}>
-            <thead>
-              <tr>
-                {headers.map((h, ci) => (
-                  <th key={ci}>{fmtInline(h, onEntityLink)}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {bodyRows.map((row, ri) => (
-                <tr key={ri}>
-                  {parseRow(row).map((cell, ci) => (
-                    <td key={ci}>{fmtInline(cell, onEntityLink)}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-      continue;
-    }
-    // Blank line
-    if (ln.trim() === '') {
-      nodes.push(<div key={i} className={styles.mdGap} />);
-      i++;
-      continue;
-    }
-    // Paragraph
-    nodes.push(
-      <p key={i} className={styles.mdPara}>
-        {fmtInline(ln, onEntityLink)}
-      </p>
-    );
-    i++;
-  }
-  return <div className={styles.aiText}>{nodes}</div>;
+  return (
+    <SafeMarkdown
+      text={text}
+      onEntityLink={onEntityLink}
+      classNames={{
+        root: styles.aiText,
+        paragraph: styles.mdPara,
+        list: styles.mdList,
+        inlineCode: styles.inlineCode,
+        link: styles.inlineEntityLink,
+        codeBlock: styles.codeBlock,
+        heading1: styles.heading1,
+        heading2: styles.heading2,
+        heading3: styles.heading3,
+        tableWrap: styles.tableWrap,
+        table: styles.mdTable
+      }}
+    />
+  );
 };
 
 const SUGGESTIONS = [
@@ -205,23 +47,6 @@ const SUGGESTIONS = [
 ];
 
 const isApprovalTool = (name: string) => name === 'create_entity' || name === 'update_entity';
-
-const hasRenderableParts = (
-  parts: Array<{
-    type: string;
-    content?: string;
-    name?: string;
-    approval?: { needsApproval: boolean };
-  }>
-) =>
-  parts.some(
-    part =>
-      (part.type === 'text' && (part.content?.trim().length ?? 0) > 0) ||
-      (part.type === 'tool-call' &&
-        !!part.name &&
-        isApprovalTool(part.name) &&
-        part.approval?.needsApproval)
-  );
 
 const safeJsonParse = (value: string) => {
   try {
@@ -522,174 +347,28 @@ const ChatHistory = ({
 
 // ── Main Screen ──
 
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/assistant');
-
 export const AssistantScreen = () => {
-  const { workspaceSlug, teams } = useWorkspaceContext();
-  const { user } = useAuth();
-  const navigate = routeApi.useNavigate();
-  const search = routeApi.useSearch();
-  const queryClient = useQueryClient();
-
-  const [draft, setDraft] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const conversationId = search.conversation;
-
-  // Conversations
-  const { data: conversations = [] } = useAiConversations(workspaceSlug);
-  const createConversation = useCreateConversation(workspaceSlug);
-  const renameConversation = useRenameConversation(workspaceSlug);
-  const deleteConversation = useDeleteConversation(workspaceSlug);
-
-  // Historical messages — shown only when the live chat has no messages yet
-  // (e.g. user just selected an old conversation from the sidebar).
-  const { data: historicalMessages } = useConversationMessages(workspaceSlug, conversationId);
-
-  // conversationId (from URL) is passed so the connection factory can include it
-  // in the x-ar-conversation-id header on every request.
-  const chat = useAiChat(workspaceSlug, conversationId ?? 'new', conversationId);
-
-  // Invalidate sidebar and messages queries when a streaming response finishes.
-  const wasLoadingRef = useRef(false);
-  useEffect(() => {
-    if (wasLoadingRef.current && !chat.isLoading && conversationId) {
-      void queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
-      void queryClient.invalidateQueries({
-        queryKey: aiKeys.messages(workspaceSlug, conversationId)
-      });
-    }
-    wasLoadingRef.current = chat.isLoading;
-  });
-
-  // Display live messages if we have them; otherwise fall back to historical messages
-  // from the database (for when the user opens an old conversation).
-  const visibleMessages = useMemo(() => {
-    if (chat.messages.length > 0) {
-      return chat.messages.filter(message =>
-        hasRenderableParts(
-          message.parts as Array<{
-            type: string;
-            content?: string;
-            name?: string;
-            approval?: { needsApproval: boolean };
-          }>
-        )
-      );
-    }
-    return (historicalMessages ?? []).map(msg => ({
-      id: msg.id,
-      role: msg.role as 'user' | 'assistant' | 'system',
-      parts: [{ type: 'text' as const, content: msg.content }],
-      createdAt: new Date(msg.created_at)
-    }));
-  }, [chat.messages, historicalMessages]);
-
-  // Auto-scroll — deps are triggers, not values consumed by the effect
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional trigger-only deps
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [visibleMessages.length, chat.isLoading]);
-
-  const selectConversation = useCallback(
-    (id: string) => {
-      navigate({
-        to: '/$workspaceSlug/assistant',
-        params: { workspaceSlug },
-        search: { conversation: id }
-      });
-    },
-    [navigate, workspaceSlug]
-  );
-
-  const navigateToEntity = useCallback(
-    (entityId: string) => {
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
-    },
-    [navigate, workspaceSlug]
-  );
-
-  const respondToApproval = useCallback(
-    (approvalId: string, approved: boolean) => {
-      void chat.addToolApprovalResponse({ id: approvalId, approved });
-    },
-    [chat]
-  );
-
-  const handleNew = useCallback(async () => {
-    const conv = await createConversation.mutateAsync(undefined);
-    navigate({
-      to: '/$workspaceSlug/assistant',
-      params: { workspaceSlug },
-      search: { conversation: conv.id }
-    });
-    chat.clear();
-  }, [createConversation, navigate, workspaceSlug, chat]);
-
-  const handleRename = useCallback(
-    (id: string, title: string) => {
-      const trimmed = title.trim();
-      if (trimmed) renameConversation.mutate({ id, title: trimmed });
-    },
-    [renameConversation]
-  );
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      deleteConversation.mutate(id);
-      if (id === conversationId) {
-        navigate({
-          to: '/$workspaceSlug/assistant',
-          params: { workspaceSlug }
-        });
-        chat.clear();
-      }
-    },
-    [deleteConversation, conversationId, navigate, workspaceSlug, chat]
-  );
-
-  const sendMessage = useCallback(
-    (text: string) => {
-      if (!text || chat.isLoading || !conversationId) return;
-
-      // Optimistically update the sidebar title as soon as the user sends their first message,
-      // without waiting for the server round-trip or stream to complete.
-      const cachedConvs = queryClient.getQueryData<AiConversation[]>(
-        aiKeys.conversations(workspaceSlug)
-      );
-      const conv = cachedConvs?.find(c => c.id === conversationId);
-      if (conv?.title === 'New conversation') {
-        const title = text.length > 50 ? `${text.substring(0, 47)}...` : text;
-        queryClient.setQueryData<AiConversation[]>(
-          aiKeys.conversations(workspaceSlug),
-          cachedConvs?.map(c => (c.id === conversationId ? { ...c, title } : c))
-        );
-      }
-
-      chat.sendMessage(text);
-    },
-    [chat, conversationId, queryClient, workspaceSlug]
-  );
-
-  const submit = useCallback(() => {
-    const text = draft.trim();
-    if (!text) return;
-    sendMessage(text);
-    setDraft('');
-  }, [draft, sendMessage]);
-
-  const onKey = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        submit();
-      }
-    },
-    [submit]
-  );
-
-  const isEmpty = visibleMessages.length === 0;
+  const {
+    teams,
+    user,
+    conversations,
+    conversationId,
+    chat,
+    visibleMessages,
+    draft,
+    setDraft,
+    scrollRef,
+    isEmpty,
+    selectConversation,
+    navigateToEntity,
+    respondToApproval,
+    handleNew,
+    handleRename,
+    handleDelete,
+    sendMessage,
+    submit,
+    onKeyDown
+  } = useAssistantController();
 
   return (
     <div className={styles.assistant}>
@@ -816,7 +495,7 @@ export const AssistantScreen = () => {
                 value={draft}
                 rows={1}
                 onChange={e => setDraft(e.target.value)}
-                onKeyDown={onKey}
+                onKeyDown={onKeyDown}
               />
               <button
                 type="button"

@@ -1,8 +1,9 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useRef } from 'react';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import type { ContentMetadata } from '@arch-register/api-types/projectContract';
 import { TbCheck } from 'react-icons/tb';
 import styles from './DiagramMetadataPopover.module.css';
+import { useDelayedDisclosure } from '../hooks/useDelayedDisclosure';
 
 const OPEN_DELAY_MS = 250;
 const CLOSE_DELAY_MS = 120;
@@ -23,34 +24,12 @@ export const DiagramMetadataPopover = ({
   unresolvedCommentCount?: number | null;
 }) => {
   const anchorRef = useRef<HTMLSpanElement | null>(null);
-  const openTimerRef = useRef<number | null>(null);
-  const closeTimerRef = useRef<number | null>(null);
-  const [open, setOpen] = useState(false);
-
-  useEffect(
-    () => () => {
-      if (openTimerRef.current !== null) window.clearTimeout(openTimerRef.current);
-      if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-    },
-    []
+  const { open, setOpen, scheduleOpen, scheduleClose } = useDelayedDisclosure(
+    OPEN_DELAY_MS,
+    CLOSE_DELAY_MS
   );
 
   if (type !== 'diagram') return <>{children}</>;
-
-  const clearTimers = () => {
-    if (openTimerRef.current !== null) window.clearTimeout(openTimerRef.current);
-    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-  };
-
-  const scheduleOpen = () => {
-    clearTimers();
-    openTimerRef.current = window.setTimeout(() => setOpen(true), OPEN_DELAY_MS);
-  };
-
-  const scheduleClose = () => {
-    clearTimers();
-    closeTimerRef.current = window.setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
-  };
 
   const totalComments = commentCount ?? 0;
   const unresolved = unresolvedCommentCount ?? 0;

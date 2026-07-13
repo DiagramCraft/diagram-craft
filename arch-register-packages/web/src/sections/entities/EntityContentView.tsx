@@ -28,6 +28,7 @@ import {
   type ContentScope
 } from '../../hooks/useContentScope';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
+import { downloadUrl } from '../../lib/browserDownload';
 
 type EntityContentViewProps = {
   workspaceSlug: string;
@@ -52,11 +53,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   const viewMode = search.contentView ?? 'grid';
 
   const setFilter = (value: string) => {
-    const route = entityContentFolderRoute(
-      workspaceSlug,
-      asEntityPublicId(entityId),
-      folder
-    );
+    const route = entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), folder);
     navigate({
       ...route,
       search: {
@@ -68,11 +65,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   };
 
   const setViewMode = (value: 'grid' | 'list') => {
-    const route = entityContentFolderRoute(
-      workspaceSlug,
-      asEntityPublicId(entityId),
-      folder
-    );
+    const route = entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), folder);
     navigate({
       ...route,
       search: {
@@ -95,12 +88,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   };
 
   const handleDownloadClick = (path: string, name: string, originalFilename: string | null) => {
-    const a = document.createElement('a');
-    a.href = contentDownloadUrl(scope, path);
-    a.download = originalFilename ?? name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadUrl(contentDownloadUrl(scope, path), originalFilename ?? name);
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +114,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
           title={folderName}
           buttons={
             <MenuButton.Root>
-              <MenuButton.Trigger element={<Button variant="primary" icon={<TbPlus size={12} />}>New</Button>} />
+              <MenuButton.Trigger
+                element={
+                  <Button variant="primary" icon={<TbPlus size={12} />}>
+                    New
+                  </Button>
+                }
+              />
               <MenuButton.Menu align="end">
                 <Menu.Item
                   leftSlot={<TbFolderOpen size={13} />}
@@ -140,10 +134,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
                 >
                   Upload file
                 </Menu.Item>
-                <Menu.Item
-                  leftSlot={<TbPlus size={13} />}
-                  onClick={() => setAddDiagramOpen(true)}
-                >
+                <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddDiagramOpen(true)}>
                   New diagram
                 </Menu.Item>
                 <Menu.Item
@@ -185,9 +176,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
             showAddButton: false
           }
         ]}
-        onOpenDiagram={file => handleDiagramClick(file.id, file.project_public_id ?? file.project_id)}
+        onOpenDiagram={file =>
+          handleDiagramClick(file.id, file.project_public_id ?? file.project_id)
+        }
         onOpenMarkdown={file => handleMarkdownClick(file.id)}
-        onDownloadFile={file => handleDownloadClick(file.path, file.name, file.original_filename ?? null)}
+        onDownloadFile={file =>
+          handleDownloadClick(file.path, file.name, file.original_filename ?? null)
+        }
         emptyState={{
           title: 'No content in this folder',
           sub: 'Diagrams and documents will appear here when added to this folder.'

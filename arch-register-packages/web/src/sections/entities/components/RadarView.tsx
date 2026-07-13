@@ -6,13 +6,10 @@ import { Popover } from '@diagram-craft/app-components/Popover';
 import { EmptyState } from '../../../components/EmptyState';
 import { SearchInput } from '../../../components/SearchInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { useEntities } from '../../../hooks/useEntities';
 import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
-import type { BrowserEntityRecord } from './entityBrowserState';
 import {
   getCategoricalFields,
   getCategoricalFieldValues,
@@ -33,6 +30,8 @@ import {
   type Quadrant,
   type Ring
 } from './radarViewState';
+import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
+import { usePersistedViewConfig } from '../../../hooks/usePersistedViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -56,21 +55,6 @@ const EMPTY_RADAR_CONFIG: RadarConfig = {
 };
 
 // ── Config helpers ────────────────────────────────────────────────────────────
-
-const configKey = (workspaceSlug: string) => `ar-radar-config-${workspaceSlug}`;
-
-const loadConfig = (workspaceSlug: string): RadarConfig | null => {
-  try {
-    const raw = localStorage.getItem(configKey(workspaceSlug));
-    return raw ? (JSON.parse(raw) as RadarConfig) : null;
-  } catch {
-    return null;
-  }
-};
-
-const saveConfig = (workspaceSlug: string, config: RadarConfig) => {
-  localStorage.setItem(configKey(workspaceSlug), JSON.stringify(config));
-};
 
 // ── Field helpers ─────────────────────────────────────────────────────────────
 //
@@ -114,14 +98,15 @@ export const RadarView = ({
   joinedAssessment?: JoinedAssessmentContext | null;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
-  const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() =>
-    loadConfig(workspaceSlug)
-  );
   const parsedConfig = useMemo(() => {
     const normalized = normalizeViewConfig(radarViewConfigSchema, configProp, EMPTY_RADAR_CONFIG);
     return normalized.schemaId ? normalized : null;
   }, [configProp]);
-  const config = parsedConfig ?? internalConfig;
+  const [config, setConfig] = usePersistedViewConfig({
+    storageKey: `ar-radar-config-${workspaceSlug}`,
+    externalConfig: parsedConfig,
+    onChange: onConfigChange
+  });
 
   const [ringOrderOpen, setRingOrderOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -136,24 +121,7 @@ export const RadarView = ({
   // Rows arrive in 'summary' view (no custom select field values), but the quadrant/ring
   // axes are often custom Select fields — fetch the full-view records for the radar's
   // schema and use those in place of the summary rows wherever available.
-  const { data: fullSchemaEntities = [] } = useEntities(
-    workspaceSlug,
-    { schemaId: config?.schemaId, view: 'full' },
-    { enabled: !!workspaceSlug && !!config?.schemaId }
-  );
-  const fullEntityMap = useMemo(() => {
-    const m = new Map<string, EntityRecord>();
-    fullSchemaEntities.forEach(e => m.set(e._uid, e));
-    return m;
-  }, [fullSchemaEntities]);
-  const entities = useMemo(
-    () =>
-      rows.map(r => {
-        const full = fullEntityMap.get(r._uid);
-        return full ? ({ ...full, _assessment: r._assessment } as BrowserEntityRecord) : r;
-      }),
-    [rows, fullEntityMap]
-  );
+  const entities = useHydratedEntityRows(workspaceSlug, rows, !!config?.schemaId);
 
   const schema = config ? (schemas.find(s => s.id === config.schemaId) ?? null) : null;
 
@@ -228,12 +196,7 @@ export const RadarView = ({
   const onBlipClick = (id: string) => setPinned(p => (p === id ? null : id));
 
   const applyConfig = (newConfig: RadarConfig) => {
-    if (onConfigChange) {
-      onConfigChange(newConfig);
-    } else {
-      saveConfig(workspaceSlug, newConfig);
-      setInternalConfig(newConfig);
-    }
+    setConfig(newConfig);
     setQuadFilter(null);
     setRingFilter(null);
     setQ('');
@@ -846,7 +809,9 @@ const BlipTooltip = ({
         )}
       </div>
       <TooltipChips>
-        <TooltipChip style={{ borderColor: quad.color, color: quad.color }}>{quad.label}</TooltipChip>
+        <TooltipChip style={{ borderColor: quad.color, color: quad.color }}>
+          {quad.label}
+        </TooltipChip>
         <TooltipChip style={{ color: ring.color }}>{ring.label}</TooltipChip>
       </TooltipChips>
       {blip.description && <div className={styles.tooltipDesc}>{blip.description}</div>}

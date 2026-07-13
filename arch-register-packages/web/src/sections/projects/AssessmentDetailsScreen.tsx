@@ -8,7 +8,6 @@ import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import type { AssessmentEntityStatus } from '@arch-register/api-types/assessmentStatus';
-import { computeAssessmentStatus } from '@arch-register/api-types/assessmentStatus';
 import type {
   Assessment,
   CreateAssessmentRequest
@@ -17,6 +16,7 @@ import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { exportAssessmentResponsesToCSV } from '../../lib/assessmentCsv';
+import { downloadBlob } from '../../lib/browserDownload';
 import { TypeBadge } from '../../components/TypeBadge';
 import { Chip } from '../../components/Chip';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
@@ -41,7 +41,6 @@ import { AssessmentEditorDialog } from './ProjectAssessments';
 import { AssessmentFieldCell } from './components/AssessmentFieldCells';
 import {
   AssessmentFilterBuilder,
-  matchesAssessmentFilterConditions,
   type AssessmentFilterCondition
 } from './components/AssessmentFilterBuilder';
 import { AssessmentSummaryTab } from './components/AssessmentSummaryTab';
@@ -52,7 +51,10 @@ import { SearchInput } from '../../components/SearchInput';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './AssessmentDetailsScreen.module.css';
 
-type StatusFilter = 'all' | AssessmentEntityStatus;
+import {
+  deriveAssessmentDetails,
+  type AssessmentStatusFilter as StatusFilter
+} from './assessmentDetailsViewModel';
 
 const STATUS_LABEL: Record<AssessmentEntityStatus, string> = {
   not_started: 'Not started',
@@ -132,55 +134,19 @@ export const AssessmentDetailsScreen = ({
   const [tab, setTab] = useState<'details' | 'summary' | 'discussion'>(initialTab ?? 'details');
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
-  const responseByEntity = useMemo(
-    () => new Map(responses.map(r => [r.entity_id, r])),
-    [responses]
-  );
-  const inScopeResponses = useMemo(() => {
-    const entityIds = new Set(entities.map(entity => entity._uid));
-    return responses.filter(response => entityIds.has(response.entity_id));
-  }, [responses, entities]);
-
-  const assessors = useMemo(() => {
-    const byId = new Map<string, string | null>();
-    for (const response of inScopeResponses) {
-      if (response.updated_by) byId.set(response.updated_by, response.updated_by_name);
-    }
-    return [...byId.entries()].map(([userId, name]) => ({ userId, name }));
-  }, [inScopeResponses]);
-
   const [historyFor, setHistoryFor] = useState<AssessmentResponse | null>(null);
-
-  const statusFor = (entityId: string): AssessmentEntityStatus =>
-    responseByEntity.get(entityId)?.status ??
-    computeAssessmentStatus(assessment?.fields ?? [], undefined);
-
-  const counts = useMemo(() => {
-    const result: Record<StatusFilter, number> = {
-      all: entities.length,
-      not_started: 0,
-      in_progress: 0,
-      complete: 0
-    };
-    entities.forEach(e => {
-      const status =
-        responseByEntity.get(e._uid)?.status ??
-        computeAssessmentStatus(assessment?.fields ?? [], undefined);
-      result[status]++;
-    });
-    return result;
-  }, [entities, responseByEntity, assessment]);
-
-  const filtered = entities.filter(e => {
-    if (statusFilter !== 'all' && statusFor(e._uid) !== statusFilter) return false;
-    if (search && !e._name.toLowerCase().includes(search.toLowerCase())) return false;
-    if (
-      conditions.length > 0 &&
-      !matchesAssessmentFilterConditions(e, responseByEntity.get(e._uid)?.values ?? {}, conditions)
-    )
-      return false;
-    return true;
-  });
+  const { responseByEntity, inScopeResponses, assessors, statusFor, counts, filtered } = useMemo(
+    () =>
+      deriveAssessmentDetails({
+        entities,
+        responses,
+        fields: assessment?.fields ?? [],
+        statusFilter,
+        search,
+        conditions
+      }),
+    [assessment?.fields, conditions, entities, responses, search, statusFilter]
+  );
 
   const schemaNameFor = (entity: EntitySummary): string =>
     schemas.find(s => s.id === entity._schema.id)?.name ?? entity._schema.id;
@@ -219,14 +185,10 @@ export const AssessmentDetailsScreen = ({
   const handleExport = async () => {
     try {
       const blob = await exportAssessmentResponsesToCSV(workspaceSlug, projectId, assessmentId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${assessment?.name ?? 'assessment'}-results-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(
+        blob,
+        `${assessment?.name ?? 'assessment'}-results-${new Date().toISOString().split('T')[0]}.csv`
+      );
     } catch (error) {
       console.error('Export failed:', error);
       alert('Failed to export assessment results. Please try again.');

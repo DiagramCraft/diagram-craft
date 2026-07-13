@@ -1,6 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 import {
   TbWand,
   TbTextCaption,
@@ -12,31 +10,9 @@ import {
   TbX
 } from 'react-icons/tb';
 import styles from './ExtractScreen.module.css';
-import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { orpcClient } from '../../lib/orpcClient';
-import { createExtractedEntities } from '../../lib/extractOperations';
-import { invalidateEntityQueries, schemaKeys } from '../../hooks/queryKeys';
 import { Table } from '../../components/table/Table';
-
-type Phase = 'input' | 'scanning' | 'review' | 'done';
-type InputTab = 'paste' | 'upload';
-
-type ExtractedEntity = {
-  id: string;
-  name: string;
-  schema_id: string;
-  fields: Record<string, unknown>;
-  confidence: number;
-  source: string;
-  accepted: boolean;
-  expanded: boolean;
-};
-
-type CommittedEntity = {
-  id: string;
-  name: string;
-  schema_id: string;
-};
+import { useExtractController } from './useExtractController';
+import type { ExtractedEntity, ExtractPhase } from './extractReviewState';
 
 const STEPS = [
   { key: 'input', label: 'Provide' },
@@ -44,7 +20,7 @@ const STEPS = [
   { key: 'done', label: 'Add' }
 ] as const;
 
-const Stepper = ({ phase }: { phase: Phase }) => {
+const Stepper = ({ phase }: { phase: ExtractPhase }) => {
   const phaseIdx = phase === 'scanning' ? 0 : STEPS.findIndex(s => s.key === phase);
   return (
     <div className={styles.stepper}>
@@ -85,108 +61,29 @@ const ExpandedDetail = ({ row }: { row: ExtractedEntity }) => {
 };
 
 export const ExtractScreen = () => {
-  const { workspaceSlug, schemas } = useWorkspaceContext();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  const [tab, setTab] = useState<InputTab>('paste');
-  const [text, setText] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [phase, setPhase] = useState<Phase>('input');
-  const [rows, setRows] = useState<ExtractedEntity[]>([]);
-  const [committed, setCommitted] = useState<CommittedEntity[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const readFile = useCallback((f: File) => {
-    setFile(f);
-    if (/\.(txt|md|markdown)$/i.test(f.name)) {
-      const reader = new FileReader();
-      reader.onload = () => setText(String(reader.result ?? ''));
-      reader.readAsText(f);
-    }
-  }, []);
-
-  const runExtract = useCallback(async () => {
-    setPhase('scanning');
-    try {
-      const result = await orpcClient.ai.extract({
-        params: { workspace: workspaceSlug },
-        body: { text }
-      });
-
-      // biome-ignore lint/suspicious/noExplicitAny: AI extraction response entity type is dynamic and varies by schema
-      const extracted: ExtractedEntity[] = (result.entities ?? []).map((e: any, i) => ({
-        id: `extract-${i}`,
-        name: e.name ?? '',
-        schema_id: e.schema_id ?? '',
-        fields: e.fields ?? {},
-        confidence: e.confidence ?? 0,
-        source: e.source ?? '',
-        accepted: true,
-        expanded: false
-      }));
-      setRows(extracted);
-      setPhase('review');
-    } catch {
-      setPhase('input');
-    }
-  }, [workspaceSlug, text]);
-
-  const toggleRow = useCallback((id: string) => {
-    setRows(rs => rs.map(r => (r.id === id ? { ...r, accepted: !r.accepted } : r)));
-  }, []);
-
-  const toggleExpand = useCallback((id: string) => {
-    setRows(rs => rs.map(r => (r.id === id ? { ...r, expanded: !r.expanded } : r)));
-  }, []);
-
-  const updateRowName = useCallback((id: string, name: string) => {
-    setRows(rs => rs.map(r => (r.id === id ? { ...r, name } : r)));
-  }, []);
-
-  const commit = useCallback(async () => {
-    const accepted = rows.filter(r => r.accepted);
-
-    try {
-      const createdEntities = await createExtractedEntities(
-        workspaceSlug,
-        accepted.map(row => ({
-          name: row.name,
-          schemaId: row.schema_id,
-          fields: row.fields
-        }))
-      );
-
-      setCommitted(
-        createdEntities.map(entity => ({
-          id: entity._uid,
-          name: entity._name,
-          schema_id: entity._schema.id
-        }))
-      );
-
-      // Invalidate entity and schema queries to update counts and lists
-      await invalidateEntityQueries(queryClient, workspaceSlug);
-      await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceSlug) });
-
-      setPhase('done');
-    } catch (error) {
-      console.error('Failed to create entities:', error);
-      alert('Failed to create entities. Please try again.');
-    }
-  }, [rows, workspaceSlug, queryClient]);
-
-  const reset = useCallback(() => {
-    setText('');
-    setFile(null);
-    setRows([]);
-    setCommitted([]);
-    setPhase('input');
-    setTab('paste');
-  }, []);
-
-  const acceptedCount = rows.filter(r => r.accepted).length;
-  const schemaMap = new Map(schemas.map(s => [s.id, s]));
+  const {
+    tab,
+    setTab,
+    text,
+    setText,
+    file,
+    phase,
+    setPhase,
+    rows,
+    committed,
+    fileRef,
+    readFile,
+    runExtract,
+    toggleRow,
+    toggleExpand,
+    updateRowName,
+    acceptAll,
+    commit,
+    reset,
+    viewEntities,
+    acceptedCount,
+    schemaMap
+  } = useExtractController();
 
   return (
     <div className={styles.extract}>
@@ -245,7 +142,7 @@ export const ExtractScreen = () => {
               <input
                 ref={fileRef}
                 type="file"
-                accept=".txt,.md,.markdown,.pdf"
+                accept=".txt,.md,.markdown"
                 style={{ display: 'none' }}
                 onChange={e => e.target.files?.[0] && readFile(e.target.files[0])}
               />
@@ -262,7 +159,7 @@ export const ExtractScreen = () => {
               ) : (
                 <>
                   <div className={styles.dropFileName}>Drop a file or click to browse</div>
-                  <div className={styles.dropSub}>.txt, .md or .pdf</div>
+                  <div className={styles.dropSub}>.txt, .md or .markdown</div>
                 </>
               )}
             </div>
@@ -303,11 +200,7 @@ export const ExtractScreen = () => {
                 <b>{acceptedCount}</b> to add
               </span>
             </div>
-            <button
-              type="button"
-              className={styles.ghostBtn}
-              onClick={() => setRows(rs => rs.map(r => ({ ...r, accepted: true })))}
-            >
+            <button type="button" className={styles.ghostBtn} onClick={acceptAll}>
               Reset selection
             </button>
           </div>
@@ -429,17 +322,7 @@ export const ExtractScreen = () => {
           </div>
           <div className={styles.doneList}>
             {committed.map(e => (
-              <button
-                key={e.id}
-                type="button"
-                className={styles.doneItem}
-                onClick={() =>
-                  navigate({
-                    to: '/$workspaceSlug/entities',
-                    params: { workspaceSlug }
-                  })
-                }
-              >
+              <button key={e.id} type="button" className={styles.doneItem} onClick={viewEntities}>
                 <span className={`${styles.actionPill} ${styles.actionAdd}`}>
                   <TbPlus size={10} /> Add
                 </span>
@@ -452,16 +335,7 @@ export const ExtractScreen = () => {
             ))}
           </div>
           <div className={styles.doneActions}>
-            <button
-              type="button"
-              className={styles.primaryBtn}
-              onClick={() =>
-                navigate({
-                  to: '/$workspaceSlug/entities',
-                  params: { workspaceSlug }
-                })
-              }
-            >
+            <button type="button" className={styles.primaryBtn} onClick={viewEntities}>
               View in Entities
             </button>
             <button type="button" className={styles.ghostBtn} onClick={reset}>

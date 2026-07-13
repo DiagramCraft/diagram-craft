@@ -42,15 +42,9 @@ import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { NotificationItem, WatchedEntity } from '@arch-register/api-types/watchContract';
 import type { DiscussionSummaryEntry } from '@arch-register/api-types/discussionContract';
 import type { BreadcrumbItem } from './shellTypes';
-import {
-  asEntityPublicId,
-  asProjectPublicId,
-  entityDetailRoute,
-  entityMarkdownRoute,
-  projectDetailRoute,
-  projectMarkdownRoute,
-  workspaceMarkdownRoute
-} from '../routes/publicObjectRoutes';
+import { asEntityPublicId, entityDetailRoute } from '../routes/publicObjectRoutes';
+import { useDismissibleMenu } from '../hooks/useDismissibleMenu';
+import { discussionRoute } from './topBarViewModel';
 
 type TopBarProps = {
   workspaces: Workspace[];
@@ -192,25 +186,8 @@ const WorkspaceSwitcher = ({
   onAddWorkspace: () => void;
   canAddWorkspace: boolean;
 }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const { open, setOpen, ref } = useDismissibleMenu<HTMLDivElement>();
   const ws = workspaces.find(w => w.id === current) ?? workspaces[0];
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [open]);
 
   if (!ws) return null;
 
@@ -423,46 +400,12 @@ const AccountMenu = () => {
 
 const DiscussionsMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const { open, setOpen, ref } = useDismissibleMenu<HTMLDivElement>();
   const { data: entries = [] } = useDiscussionSummary(workspaceSlug, !!workspaceSlug);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
-    };
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [open]);
 
   const openEntry = (entry: DiscussionSummaryEntry) => {
     setOpen(false);
-    const { nav } = entry;
-    if (nav.type === 'entity') {
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(nav.entityPublicId), { tab: 'discussions' }));
-    } else if (nav.type === 'assessment') {
-      navigate(
-        projectDetailRoute(workspaceSlug, asProjectPublicId(nav.projectPublicId), {
-          section: 'assessments',
-          assessmentId: entry.objectId,
-          assessmentTab: 'discussion'
-        })
-      );
-    } else if (nav.entityPublicId) {
-      navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(nav.entityPublicId), entry.objectId));
-    } else if (nav.projectPublicId) {
-      navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(nav.projectPublicId), entry.objectId));
-    } else {
-      navigate(workspaceMarkdownRoute(workspaceSlug, entry.objectId));
-    }
+    navigate(discussionRoute(workspaceSlug, entry));
   };
 
   return (
@@ -525,8 +468,7 @@ const DiscussionsMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
 const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<'notifications' | 'watching'>('notifications');
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const { open, setOpen, ref } = useDismissibleMenu<HTMLDivElement>();
   const { data: count } = useNotificationCount(workspaceSlug, !!workspaceSlug);
   const { data: notifications = [] } = useNotifications(workspaceSlug, open && !!workspaceSlug);
   const { data: watched = [] } = useWatchedEntities(workspaceSlug, open && !!workspaceSlug);
@@ -534,22 +476,6 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const deleteNotificationMutation = useDeleteNotification(workspaceSlug);
   const deleteWatchMutation = useDeleteWatch(workspaceSlug);
   const notificationCount = count?.count ?? 0;
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
-    };
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [open]);
 
   const openEntity = (entityId: string) => {
     setOpen(false);

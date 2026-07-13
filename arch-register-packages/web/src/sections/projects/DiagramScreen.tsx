@@ -1,23 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearch, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import styles from './DiagramScreen.module.css';
 import '@diagram-craft/main/embed/embed.css';
-import { TbArrowLeft } from 'react-icons/tb';
 import { initializeDiagramCraft } from '../../diagramcraft-initial-config';
-import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
 import { loadDocument } from '@diagram-craft/main/embed/loadDocument';
 import { registerDocumentStencils } from '@diagram-craft/main/embed/registerStencils';
-import {
-  UrlDataProvider,
-  UrlDataProviderId
-} from '@diagram-craft/model/data-providers/dataProviderUrl';
-import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { UrlDataProvider } from '@diagram-craft/model/data-providers/dataProviderUrl';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
-import type {
-  SerializedDiagramDocument,
-  SerializedOverride
-} from '@diagram-craft/model/serialization/serializedTypes';
+import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
@@ -32,7 +22,6 @@ import {
 } from '../../hooks/queryKeys';
 import { searchKeys } from '../../hooks/useSearch';
 import { stableHue } from '../../components/MemberAvatar';
-import { LoadingState } from '../../components/LoadingState';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -47,21 +36,22 @@ import {
   rememberMarkdownDiagramOriginal,
   updateMarkdownDiagramSessionRecord
 } from '../markdown/markdownDiagramSession';
-
-const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
-type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
-type SerializedOverrides = Record<string, Record<string, SerializedOverride>>;
+import {
+  ARCH_REGISTER_PUBLIC_PROVIDER_ID,
+  deriveDiagramScope,
+  injectPublicDiagramProvider,
+  normalizePublicSchemas,
+  type PublicDiagramSchema
+} from './diagramScreenState';
+import { DiagramScreenView } from './DiagramScreenView';
 
 export const DiagramScreen = () => {
   const params = useParams({ strict: false });
   // workspaceSlug/diagramId are always present: this screen only mounts under
   // the entity/project/content diagram routes, all of which define both params.
   const workspaceSlug = params.workspaceSlug!;
-  const diagramId = params.diagramId!;
-  const workspaceId = workspaceSlug;
-  const isEntityDiagram = !!params.entityId;
-  const isWorkspaceContent = !params.projectId && !params.entityId;
-  const projectId = params.projectId ?? params.entityId ?? workspaceId;
+  const { diagramId, workspaceId, isEntityDiagram, isWorkspaceContent, projectId } =
+    deriveDiagramScope(params);
 
   const navigate = useNavigate();
   const router = useRouter();
@@ -85,17 +75,8 @@ export const DiagramScreen = () => {
     dirtyRef.current = dirty;
   }, [dirty]);
 
-  const normalizePublicSchemas = useCallback(
-    (publicSchemas: PublicSchema[]) =>
-      publicSchemas.map(schema => ({
-        ...schema,
-        providerId: ARCH_REGISTER_PUBLIC_PROVIDER_ID
-      })),
-    []
-  );
-
   const makePublicProvider = useCallback(
-    (publicSchemas: PublicSchema[]) => {
+    (publicSchemas: PublicDiagramSchema[]) => {
       const normalizedSchemas = normalizePublicSchemas(publicSchemas);
       const provider = new UrlDataProvider(
         JSON.stringify({
@@ -108,46 +89,13 @@ export const DiagramScreen = () => {
       provider.id = ARCH_REGISTER_PUBLIC_PROVIDER_ID;
       return provider;
     },
-    [normalizePublicSchemas, workspaceId]
+    [workspaceId]
   );
 
   const injectPublicProvider = useCallback(
-    (
-      diagramData: SerializedDiagramDocument,
-      publicSchemas: PublicSchema[]
-    ): SerializedDiagramDocument => {
-      const currentData =
-        typeof diagramData.data === 'object' && diagramData.data !== null
-          ? (diagramData.data as Record<string, unknown>)
-          : {};
-      const normalizedSchemas = normalizePublicSchemas(publicSchemas);
-
-      return {
-        ...diagramData,
-        schemas: normalizedSchemas,
-        data: {
-          ...currentData,
-          providers: [
-            {
-              id: ARCH_REGISTER_PUBLIC_PROVIDER_ID,
-              providerId: UrlDataProviderId,
-              data: JSON.stringify({
-                schemas: normalizedSchemas,
-                data: [],
-                schemaUrl: `/api/public/${workspaceId}/schemas`,
-                dataUrl: `/api/public/${workspaceId}/data`
-              })
-            }
-          ],
-          templates: Array.isArray(currentData.templates) ? currentData.templates : [],
-          overrides:
-            typeof currentData.overrides === 'object' && currentData.overrides !== null
-              ? (currentData.overrides as SerializedOverrides)
-              : {}
-        }
-      };
-    },
-    [normalizePublicSchemas, workspaceId]
+    (diagramData: SerializedDiagramDocument, publicSchemas: PublicDiagramSchema[]) =>
+      injectPublicDiagramProvider(diagramData, publicSchemas, workspaceId),
+    [workspaceId]
   );
 
   // Save on close as a safety net (server auto-save handles ongoing persistence)
@@ -205,8 +153,12 @@ export const DiagramScreen = () => {
     }
 
     await queryClient.invalidateQueries({ queryKey: searchKeys.all });
-    await queryClient.invalidateQueries({ queryKey: projectFileKeys.detail(workspaceId, diagramId) });
-    await queryClient.invalidateQueries({ queryKey: projectFileKeys.content(workspaceId, diagramId) });
+    await queryClient.invalidateQueries({
+      queryKey: projectFileKeys.detail(workspaceId, diagramId)
+    });
+    await queryClient.invalidateQueries({
+      queryKey: projectFileKeys.content(workspaceId, diagramId)
+    });
   }, [isWorkspaceContent, isEntityDiagram, queryClient, workspaceId, projectId, diagramId]);
 
   const handleClose = useCallback(async () => {
@@ -234,11 +186,7 @@ export const DiagramScreen = () => {
         : undefined;
 
       if (folderPath) {
-        navigate(entityContentFolderRoute(
-          workspaceSlug,
-          asEntityPublicId(projectId),
-          folderPath
-        ));
+        navigate(entityContentFolderRoute(workspaceSlug, asEntityPublicId(projectId), folderPath));
       } else {
         navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(projectId)));
       }
@@ -248,16 +196,16 @@ export const DiagramScreen = () => {
         ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
         : undefined;
       if (folderPath) {
-        navigate(projectContentFolderRoute(
-          workspaceSlug,
-          asProjectPublicId(projectId),
-          folderPath
-        ));
+        navigate(
+          projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folderPath)
+        );
       } else {
-        navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-          tab: 'projects' as const,
-          section: 'home' as const
-        }));
+        navigate(
+          projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+            tab: 'projects' as const,
+            section: 'home' as const
+          })
+        );
       }
     }
   }, [
@@ -379,9 +327,13 @@ export const DiagramScreen = () => {
 
         const publicSchemasResponse = await fetch(`/api/public/${workspaceId}/schemas`);
         if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
-        const publicSchemas = (await publicSchemasResponse.json()) as PublicSchema[];
+        const publicSchemas = (await publicSchemasResponse.json()) as PublicDiagramSchema[];
 
-        const { doc: document, disconnect: docDisconnect, awareness } = await loadDocument({
+        const {
+          doc: document,
+          disconnect: docDisconnect,
+          awareness
+        } = await loadDocument({
           url: roomName,
           userState,
           documentFactory,
@@ -465,52 +417,16 @@ export const DiagramScreen = () => {
     search.markdownSessionId
   ]);
 
-  const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);
-
-  if (loading) {
-    return (
-      <div className={styles.diagramScreen}>
-        <div className={styles.loading}>
-          <LoadingState text="Loading diagram..." />
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !fileInfo || !doc) {
-    return (
-      <div className={styles.diagramScreen}>
-        <div className={styles.error}>
-          <p>Error: {error ?? 'Failed to load diagram'}</p>
-          <button type="button" onClick={handleClose} className={styles.button}>
-            Back to Project
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={`dc ${styles.diagramScreen}`}>
-      <EmbeddableEditor
-        doc={doc}
-        documentFactory={documentFactory}
-        diagramFactory={diagramFactory}
-        documentName={fileInfo.name}
-        dirty={dirty}
-        onDirtyChange={setDirty}
-        headerLeft={
-          <button
-            type={'button'}
-            className={'embeddable-back-button'}
-            onClick={handleClose}
-            title={'Back'}
-          >
-            <TbArrowLeft size={'13px'} />
-            <span>Back</span>
-          </button>
-        }
-      />
-    </div>
+    <DiagramScreenView
+      workspaceId={workspaceId}
+      loading={loading}
+      error={error}
+      fileInfo={fileInfo}
+      doc={doc}
+      dirty={dirty}
+      onDirtyChange={setDirty}
+      onClose={handleClose}
+    />
   );
 };

@@ -1,28 +1,23 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { useProjectFutureSnapshots } from '../../hooks/useSnapshots';
-import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import styles from './ProjectDetailScreen.module.css';
 import { AddFolderDialog } from './AddFolderDialog';
 import { AddDiagramDialog } from './AddDiagramDialog';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { TbPlus, TbFileText, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil, TbDownload } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../lib/schemaPresentation';
-import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { ApiError } from '../../lib/http';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import {
-  useProject,
-  useUpdateProject,
-  useProjectEntities,
-  useUpdateProjectEntity,
-  useRemoveProjectEntity
-} from '../../hooks/useProjects';
-import { useContentScopeOperations, type ContentScope } from '../../hooks/useContentScope';
-import { useToggleTemplateStatus } from '../../hooks/useTemplates';
+  TbPlus,
+  TbFileText,
+  TbFolder,
+  TbFolderOpen,
+  TbTrash,
+  TbCopy,
+  TbStar,
+  TbPencil,
+  TbDownload
+} from 'react-icons/tb';
+import { ApiError } from '../../lib/http';
+import { downloadUrl } from '../../lib/browserDownload';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import {
   asProjectPublicId,
   projectContentFolderRoute,
@@ -50,87 +45,69 @@ import { ProjectSettingsForm } from './components/ProjectSettingsForm';
 import { PlanFutureChangeDialog } from './components/PlanFutureChangeDialog';
 import { buildFolderTree, type FolderTreeNode } from '../../lib/folderTree';
 import { EmptyState } from '../../components/EmptyState';
-import type { ProjectSearchParams } from '../../routes/searchParams';
-
-type ProjectSection = 'home' | 'entities' | 'assessments';
+import { useProjectDetailController } from './useProjectDetailController';
 
 export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
-  const navigate = useNavigate();
-  const { projectId: routeProjectId } = useParams({ strict: false });
-  const projectId = routeProjectId!;
-  const search = useSearch({ strict: false }) as ProjectSearchParams;
-  const { workspaceSlug, teams, projectEntityTypes, schemas, lifecycleStates } = useWorkspaceContext();
-  const workspaceId = workspaceSlug;
-  const folderFilter = folder ?? null;
-  const section: ProjectSection =
-    search.section === 'entities' ? 'entities' : search.section === 'assessments' ? 'assessments' : 'home';
-  const pendingDialog = search.dialog;
-  const contentFolderFilter = section === 'home' ? folderFilter : null;
-  const filter = search.contentQuery ?? '';
-  const viewMode = search.contentView ?? 'grid';
-
-  const [editing, setEditing] = useState(false);
-  const [addFolderOpen, setAddFolderOpen] = useState(false);
-  const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
-  const [addDiagramOpen, setAddDiagramOpen] = useState(false);
-  const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
-  const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
-  const [addMarkdownFolder, setAddMarkdownFolder] = useState<string | null>(null);
-  const [pinError, setPinError] = useState('');
-  const [addEntityOpen, setAddEntityOpen] = useState(false);
-
-  // Plan future change state
-  const [planEntityId, setPlanEntityId] = useState<string | null>(null);
-
-  // Apply snapshot state
-  const [applySnapshot, setApplySnapshot] = useState<EntitySnapshot | null>(null);
-
-  // Context menu state
-  const [menu, setMenu] = useState<{ x: number; y: number; target: ProjectMenuTarget } | null>(null);
-  const [renameTarget, setRenameTarget] = useState<ProjectMenuTarget | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<ProjectMenuTarget | null>(null);
-
-  // Query hooks
-  const { data: project, isLoading } = useProject(workspaceId, projectId);
-  const updateProject = useUpdateProject(workspaceId);
-
-  // File mutation hooks
-  const scope: ContentScope = useMemo(
-    () => ({ kind: 'project', workspaceId, projectId }),
-    [workspaceId, projectId]
-  );
-  const contentOperations = useContentScopeOperations(scope);
-  const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
-  const mainAreaFileInputRef = useRef<HTMLInputElement>(null);
-
-  // Entity hooks
-  const { data: projectEntities = [] } = useProjectEntities(workspaceId, projectId);
-  const updateEntityMutation = useUpdateProjectEntity(workspaceId, projectId);
-  const removeEntityMutation = useRemoveProjectEntity(workspaceId, projectId);
-  const { data: projectSnapshots = [] } = useProjectFutureSnapshots(workspaceId, projectId);
-  const futureSnapshots = useMemo(
-    () => projectSnapshots.filter(snapshot => snapshot.status === 'future_update'),
-    [projectSnapshots]
-  );
-
-  const schemaMap = useMemo(() => {
-    const m = new Map<string, { color: string; icon: string | null }>();
-    schemas.forEach((s, i) =>
-      m.set(s.id, { color: resolveSchemaColor(s, i), icon: s.icon ?? null })
-    );
-    return m;
-  }, [schemas]);
-
-  const entityTypeColorMap = useMemo(() => {
-    const m = new Map<string, string>();
-    projectEntityTypes.forEach((t, i) => m.set(t.id, SCHEMA_COLORS[i % SCHEMA_COLORS.length]!));
-    return m;
-  }, [projectEntityTypes]);
-
-  useEffect(() => {
-    if (pendingDialog !== 'add-entity') return;
-    setAddEntityOpen(true);
-  }, [pendingDialog]);
+  const {
+    navigate,
+    projectId,
+    search,
+    workspaceSlug,
+    workspaceId,
+    teams,
+    projectEntityTypes,
+    schemas,
+    lifecycleStates,
+    folderFilter,
+    section,
+    pendingDialog,
+    contentFolderFilter,
+    filter,
+    viewMode,
+    editing,
+    setEditing,
+    addFolderOpen,
+    setAddFolderOpen,
+    addFolderParent,
+    setAddFolderParent,
+    addDiagramOpen,
+    setAddDiagramOpen,
+    addDiagramFolder,
+    setAddDiagramFolder,
+    addMarkdownOpen,
+    setAddMarkdownOpen,
+    addMarkdownFolder,
+    setAddMarkdownFolder,
+    pinError,
+    setPinError,
+    addEntityOpen,
+    setAddEntityOpen,
+    planEntityId,
+    setPlanEntityId,
+    applySnapshot,
+    setApplySnapshot,
+    menu,
+    setMenu,
+    renameTarget,
+    setRenameTarget,
+    deleteTarget,
+    setDeleteTarget,
+    project,
+    isLoading,
+    updateProject,
+    contentOperations,
+    toggleTemplateStatusMutation,
+    mainAreaFileInputRef,
+    projectEntities,
+    updateEntityMutation,
+    removeEntityMutation,
+    projectSnapshots,
+    futureSnapshots,
+    schemaMap,
+    entityTypeColorMap,
+    allFiles,
+    visibleFiles
+  } = useProjectDetailController(folder);
 
   if (isLoading) {
     return (
@@ -147,17 +124,6 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
       </div>
     );
   }
-
-  const allFiles = [
-    ...project.files.rootFiles,
-    ...project.files.folders.flatMap(f => f.files)
-  ];
-
-  const activeFolder = contentFolderFilter
-    ? project.files.folders.find(f => f.path === contentFolderFilter)
-    : null;
-
-  const visibleFiles = activeFolder ? activeFolder.files : allFiles;
 
   const handleTogglePinned = async () => {
     setPinError('');
@@ -241,7 +207,12 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
       contentView: search.contentView
     };
     const nextLocation = folderFilter
-      ? projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folderFilter, nextSearch)
+      ? projectContentFolderRoute(
+          workspaceSlug,
+          asProjectPublicId(projectId),
+          folderFilter,
+          nextSearch
+        )
       : projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), nextSearch);
     navigate({ ...nextLocation, replace: true });
   };
@@ -346,7 +317,10 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
     return (
       <>
-        <Menu.Item leftSlot={<TbCopy size={13} />} onClick={() => contentOperations.cloneFile.mutate(file)}>
+        <Menu.Item
+          leftSlot={<TbCopy size={13} />}
+          onClick={() => contentOperations.cloneFile.mutate(file)}
+        >
           Clone
         </Menu.Item>
         <Menu.Item
@@ -432,12 +406,10 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
   };
 
   const triggerDownload = (file: ProjectFile) => {
-    const a = document.createElement('a');
-    a.href = `/api/${workspaceId}/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`;
-    a.download = file.original_filename ?? file.name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadUrl(
+      `/api/${workspaceId}/projects/${projectId}/files/download?path=${encodeURIComponent(file.path)}`,
+      file.original_filename ?? file.name
+    );
   };
 
   const renderFileMenu = (file: ProjectFile) => {
@@ -557,7 +529,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
       }
     } else {
       if (trimmed !== renameTarget.path) {
-      contentOperations.renameFolder.mutate({ oldPath: renameTarget.path, newPath: trimmed });
+        contentOperations.renameFolder.mutate({ oldPath: renameTarget.path, newPath: trimmed });
       }
     }
     setRenameTarget(null);
@@ -635,13 +607,21 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             setAddDiagramFolder(contentFolderFilter);
             setAddDiagramOpen(true);
           }}
-          onAddMarkdown={project.canManageFiles ? () => {
-            setAddMarkdownFolder(contentFolderFilter);
-            setAddMarkdownOpen(true);
-          } : undefined}
-          onUploadFile={project.canManageFiles ? () => {
-            mainAreaFileInputRef.current?.click();
-          } : undefined}
+          onAddMarkdown={
+            project.canManageFiles
+              ? () => {
+                  setAddMarkdownFolder(contentFolderFilter);
+                  setAddMarkdownOpen(true);
+                }
+              : undefined
+          }
+          onUploadFile={
+            project.canManageFiles
+              ? () => {
+                  mainAreaFileInputRef.current?.click();
+                }
+              : undefined
+          }
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
       ) : (
@@ -671,13 +651,21 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             setAddDiagramFolder(contentFolderFilter);
             setAddDiagramOpen(true);
           }}
-          onAddMarkdown={project.canManageFiles ? () => {
-            setAddMarkdownFolder(contentFolderFilter);
-            setAddMarkdownOpen(true);
-          } : undefined}
-          onUploadFile={project.canManageFiles ? () => {
-            mainAreaFileInputRef.current?.click();
-          } : undefined}
+          onAddMarkdown={
+            project.canManageFiles
+              ? () => {
+                  setAddMarkdownFolder(contentFolderFilter);
+                  setAddMarkdownOpen(true);
+                }
+              : undefined
+          }
+          onUploadFile={
+            project.canManageFiles
+              ? () => {
+                  mainAreaFileInputRef.current?.click();
+                }
+              : undefined
+          }
           onContextMenu={project.canManageFiles ? openContextMenu : undefined}
         />
       )}
@@ -733,7 +721,9 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             setAddMarkdownFolder(null);
           }}
           onCreated={file => handleNavigateMarkdown(file.id, 'edit')}
-          onCreate={name => contentOperations.createMarkdown.mutateAsync({ name, folder: addMarkdownFolder })}
+          onCreate={name =>
+            contentOperations.createMarkdown.mutateAsync({ name, folder: addMarkdownFolder })
+          }
           isPending={contentOperations.createMarkdown.isPending}
         />
       )}
