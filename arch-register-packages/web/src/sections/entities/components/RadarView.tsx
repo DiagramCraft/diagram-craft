@@ -16,11 +16,23 @@ import type { BrowserEntityRecord } from './entityBrowserState';
 import {
   getCategoricalFields,
   getCategoricalFieldValues,
-  getCategoricalValue,
   type JoinedAssessmentContext
 } from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
 import { TooltipChip, TooltipChips } from './entityTooltipParts';
+import {
+  buildBlips,
+  buildQuadrants,
+  buildRings,
+  CX,
+  CY,
+  MAX_R,
+  RING_BG,
+  RING_COLORS,
+  type Blip,
+  type Quadrant,
+  type Ring
+} from './radarViewState';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -42,67 +54,6 @@ const EMPTY_RADAR_CONFIG: RadarConfig = {
   ringFieldId: '',
   ringOrder: []
 };
-
-type Quadrant = {
-  value: string;
-  label: string;
-  startAngle: number;
-  endAngle: number;
-  color: string;
-};
-
-type Ring = {
-  value: string;
-  label: string;
-  innerR: number;
-  outerR: number;
-  color: string;
-};
-
-type Blip = {
-  id: string;
-  name: string;
-  description: string;
-  quadrantValue: string;
-  ringValue: string;
-  num: number;
-  x: number;
-  y: number;
-};
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const CX = 420;
-const CY = 420;
-const MAX_R = 385;
-
-const QUADRANT_COLORS = [
-  'var(--tag-api)',
-  'var(--tag-component)',
-  'var(--tag-database)',
-  'var(--tag-system)',
-  'var(--tag-service)',
-  'var(--accent-fg)',
-  'var(--warning-fg)',
-  'oklch(0.62 0.14 180)'
-];
-
-const RING_COLORS = [
-  'var(--tag-component)',
-  'var(--accent-fg)',
-  'var(--tag-system)',
-  'var(--warning-fg)',
-  'var(--tag-service)'
-];
-
-// Alternating backgrounds from inner (lighter) to outer (darker)
-const RING_BG = [
-  'var(--cmp-bg-hover)',
-  'var(--cmp-bg)',
-  'var(--panel-bg)',
-  'var(--base-bg)',
-  'oklch(0.12 0.005 260)'
-];
 
 // ── Config helpers ────────────────────────────────────────────────────────────
 
@@ -145,100 +96,6 @@ const getFieldValues = (
     value: f.id,
     label: f.label
   }));
-
-const getEntityFieldValue = getCategoricalValue;
-
-// ── Geometry ──────────────────────────────────────────────────────────────────
-
-function buildQuadrants(values: Array<{ value: string; label: string }>): Quadrant[] {
-  const N = Math.min(values.length, 8);
-  return values.slice(0, N).map((v, i) => ({
-    value: v.value,
-    label: v.label,
-    startAngle: (i / N) * 2 * Math.PI - Math.PI / 2,
-    endAngle: ((i + 1) / N) * 2 * Math.PI - Math.PI / 2,
-    color: QUADRANT_COLORS[i % QUADRANT_COLORS.length]!
-  }));
-}
-
-function buildRings(values: Array<{ value: string; label: string }>): Ring[] {
-  const M = Math.min(values.length, 5);
-  return values.slice(0, M).map((v, i) => ({
-    value: v.value,
-    label: v.label,
-    innerR: (i / M) * MAX_R,
-    outerR: ((i + 1) / M) * MAX_R,
-    color: RING_COLORS[i % RING_COLORS.length]!
-  }));
-}
-
-// Deterministic hash for stable blip placement
-function rHash(s: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-}
-
-function getBlipXY(entityId: string, quad: Quadrant, ring: Ring): { x: number; y: number } {
-  const h1 = rHash(`${entityId}~a`);
-  const h2 = rHash(`${entityId}~b`);
-  const aSpread = (quad.endAngle - quad.startAngle) * 0.78;
-  const angle =
-    quad.startAngle + (quad.endAngle - quad.startAngle) * 0.11 + ((h1 % 9973) / 9973) * aSpread;
-  const rMin = ring.innerR < 10 ? 14 : ring.innerR + 10;
-  const rMax = ring.outerR - 10;
-  const r = rMin + ((h2 % 9871) / 9871) * (rMax - rMin);
-  return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) };
-}
-
-function buildBlips(
-  entities: EntityRecord[],
-  quadrantFieldId: string,
-  ringFieldId: string,
-  quadrants: Quadrant[],
-  rings: Ring[]
-): Blip[] {
-  const quadMap = new Map(quadrants.map(q => [q.value, q]));
-  const ringMap = new Map(rings.map(r => [r.value, r]));
-
-  const valid = entities.filter(e => {
-    const qv = getEntityFieldValue(e, quadrantFieldId);
-    const rv = getEntityFieldValue(e, ringFieldId);
-    return qv != null && rv != null && quadMap.has(qv) && ringMap.has(rv);
-  });
-
-  const quadIdx = new Map(quadrants.map((q, i) => [q.value, i]));
-  const ringIdx = new Map(rings.map((r, i) => [r.value, i]));
-
-  valid.sort((a, b) => {
-    const qa = quadIdx.get(getEntityFieldValue(a, quadrantFieldId)!) ?? 0;
-    const qb = quadIdx.get(getEntityFieldValue(b, quadrantFieldId)!) ?? 0;
-    if (qa !== qb) return qa - qb;
-    const ra = ringIdx.get(getEntityFieldValue(a, ringFieldId)!) ?? 0;
-    const rb = ringIdx.get(getEntityFieldValue(b, ringFieldId)!) ?? 0;
-    if (ra !== rb) return ra - rb;
-    return (a._name ?? '').localeCompare(b._name ?? '');
-  });
-
-  return valid.map((e, i) => {
-    const qv = getEntityFieldValue(e, quadrantFieldId)!;
-    const rv = getEntityFieldValue(e, ringFieldId)!;
-    const quad = quadMap.get(qv)!;
-    const ring = ringMap.get(rv)!;
-    return {
-      id: e._uid,
-      name: e._name ?? e._slug,
-      description: e._description ?? '',
-      quadrantValue: qv,
-      ringValue: rv,
-      num: i + 1,
-      ...getBlipXY(e._uid, quad, ring)
-    };
-  });
-}
 
 // ── RadarView ─────────────────────────────────────────────────────────────────
 

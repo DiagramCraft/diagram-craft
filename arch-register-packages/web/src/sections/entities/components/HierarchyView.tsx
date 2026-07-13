@@ -12,6 +12,12 @@ import { EmptyState } from '../../../components/EmptyState';
 import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 import { normalizeViewConfig } from './entityViewConfig';
 import { TooltipRow } from './entityTooltipParts';
+import {
+  buildHierarchyTreeIndex,
+  getChildSchemas,
+  getHierarchyChildren,
+  sortHierarchyNodes
+} from './hierarchyViewState';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -59,18 +65,6 @@ const DEFAULT_CONFIG: HierarchyConfig = {
 
 const OPEN_DELAY_MS = 250;
 const CLOSE_DELAY_MS = 120;
-
-const getChildSchemas = (schemas: EntitySchema[], parentSchemaId: string | null): EntitySchema[] => {
-  if (!parentSchemaId) return schemas;
-  // The containment field lives on the CHILD schema and its schemaId points to the parent schema.
-  // So child schemas of parentSchemaId are those that have a containment field referencing it.
-  return schemas.filter(s =>
-    s.fields.some(
-      (f): f is Extract<(typeof s.fields)[number], { type: 'containment' }> =>
-        f.type === 'containment' && f.schemaId === parentSchemaId
-    )
-  );
-};
 
 const nodeName = (n: TreeNode) => n._name || n._slug;
 
@@ -299,47 +293,28 @@ export const HierarchyView = ({
     [schemas, cfg.level2SchemaId]
   );
 
-  const { nodeMap, childrenOf } = useMemo(() => {
-    const nodeMap = new Map<string, TreeNode>();
-    for (const n of nodes) nodeMap.set(n._uid, n);
-
-    const childrenOf = new Map<string, string[]>();
-    for (const { childId, parentId } of edges) {
-      const arr = childrenOf.get(parentId) ?? [];
-      arr.push(childId);
-      childrenOf.set(parentId, arr);
-    }
-    return { nodeMap, childrenOf };
-  }, [nodes, edges]);
+  const treeIndex = useMemo(() => buildHierarchyTreeIndex(nodes, edges), [nodes, edges]);
 
   const level1Items = useMemo(
     () =>
-      nodes
-        .filter(n => n._schema.id === cfg.level1SchemaId && n._isMatch)
-        .sort((a, b) => nodeName(a).localeCompare(nodeName(b))),
+      sortHierarchyNodes(nodes, cfg.level1SchemaId),
     [nodes, cfg.level1SchemaId]
   );
 
   const getLevel2Children = useCallback(
     (parentUid: string): TreeNode[] => {
       if (!cfg.level2SchemaId) return [];
-      return (childrenOf.get(parentUid) ?? [])
-        .map(id => nodeMap.get(id))
-        .filter((n): n is TreeNode => !!n && n._schema.id === cfg.level2SchemaId && n._isMatch)
-        .sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
+      return getHierarchyChildren(parentUid, cfg.level2SchemaId, treeIndex);
     },
-    [childrenOf, nodeMap, cfg.level2SchemaId]
+    [treeIndex, cfg.level2SchemaId]
   );
 
   const getLevel3Children = useCallback(
     (parentUid: string): TreeNode[] => {
       if (!cfg.level3SchemaId) return [];
-      return (childrenOf.get(parentUid) ?? [])
-        .map(id => nodeMap.get(id))
-        .filter((n): n is TreeNode => !!n && n._schema.id === cfg.level3SchemaId && n._isMatch)
-        .sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
+      return getHierarchyChildren(parentUid, cfg.level3SchemaId, treeIndex);
     },
-    [childrenOf, nodeMap, cfg.level3SchemaId]
+    [treeIndex, cfg.level3SchemaId]
   );
 
   const schemaMap = useMemo(() => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  parseJsonConfig,
   parseViewConfigs,
   pruneAssessmentReferences,
   serializeViewConfigs,
@@ -16,6 +17,22 @@ describe('entity browser view field persistence', () => {
   it('round trips independent selections through the URL payload', () => {
     const configs = { table: { fieldIds: ['a'] }, cards: { fieldIds: ['b'] } };
     expect(parseViewConfigs(serializeViewConfigs(configs))).toEqual(configs);
+  });
+
+  it('rejects malformed and non-object view-config payloads', () => {
+    expect(parseViewConfigs('{')).toEqual({});
+    expect(parseViewConfigs('[]')).toEqual({});
+    expect(parseViewConfigs('null')).toEqual({});
+    expect(serializeViewConfigs({})).toBeUndefined();
+  });
+
+  it('returns null for missing or malformed individual JSON configs', () => {
+    expect(parseJsonConfig(undefined)).toBeNull();
+    expect(parseJsonConfig('')).toBeNull();
+    expect(parseJsonConfig('{')).toBeNull();
+    expect(parseJsonConfig<{ fieldIds: string[] }>(JSON.stringify({ fieldIds: ['a'] }))).toEqual({
+      fieldIds: ['a']
+    });
   });
 });
 

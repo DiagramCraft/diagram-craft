@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { toEntityListQuery } from './useEntities';
+import { toEntityListQuery } from './entityListQuery';
 
 describe('toEntityListQuery', () => {
-  it('maps shared entity-list options to typed query values', () => {
+  it('maps all shared entity-list options without React or query dependencies', () => {
     const conditions = [{ fieldId: '_name', op: 'contains' as const, value: 'Auth' }];
 
     expect(
@@ -57,5 +57,11 @@ describe('toEntityListQuery', () => {
       asOf: undefined,
       includeProjectSnapshots: undefined
     });
+  });
+
+  it('preserves false boolean filters', () => {
+    expect(toEntityListQuery({ includeProjectSnapshots: false }).includeProjectSnapshots).toBe(
+      false
+    );
   });
 });

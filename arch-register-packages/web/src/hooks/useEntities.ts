@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { EntityRelation } from '@arch-register/api-types/entityContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityRelation } from '@arch-register/api-types/entityContract';
+import { toEntityListQuery, type EntityListOptions } from './entityListQuery';
 import {
   entityKeys,
   schemaKeys,
@@ -12,35 +13,6 @@ import {
 } from './queryKeys';
 import { invalidateNotificationQueries } from './useNotifications';
 import { orpcClient } from '../lib/orpcClient';
-
-export type EntityListOptions = {
-  schemaId?: string | null;
-  owner?: string | null;
-  lifecycle?: string | null;
-  q?: string | null;
-  conditions?: FilterCondition[];
-  assessmentId?: string | null;
-  projectId?: string | null;
-  projectScope?: 'project' | 'all';
-  view?: 'summary' | 'full';
-  limit?: number | null;
-  offset?: number | null;
-  asOf?: string | null;
-  includeProjectSnapshots?: boolean | null;
-};
-
-export const toEntityListQuery = (options: EntityListOptions) => ({
-  _schemaId: options.schemaId ?? undefined,
-  owner: options.owner ?? undefined,
-  lifecycle: options.lifecycle ?? undefined,
-  q: options.q ?? undefined,
-  conditions: options.conditions?.length ? options.conditions : undefined,
-  assessmentId: options.assessmentId ?? undefined,
-  projectId: options.projectId ?? undefined,
-  projectScope: options.projectScope ?? undefined,
-  asOf: options.asOf ?? undefined,
-  includeProjectSnapshots: options.includeProjectSnapshots ?? undefined
-});
 
 export const useEntities = (
   workspaceId: string,

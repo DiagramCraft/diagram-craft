@@ -20,6 +20,9 @@ import {
 import {
   CATEGORY_DEFS,
   EMPTY_RESULTS,
+  buildSearchGroups,
+  findSearchPreview,
+  getSearchCategoryCounts,
   type RowId,
   type SearchFilter,
   type SearchPreview
@@ -74,60 +77,11 @@ export const SearchScreen = () => {
     return map;
   }, [schemas]);
 
-  // Build flat row list for keyboard navigation
-  const groups = useMemo(() => {
-    const g: Array<{
-      id: string;
-      label: string;
-      rows: Array<{ kind: string; id: string; data: unknown }>;
-    }> = [];
-    if (filter === 'all' || filter === 'entities') {
-      g.push({
-        id: 'entities',
-        label: 'Entities',
-        rows: results.entities.map(e => ({ kind: 'entity', id: e.publicId, data: e }))
-      });
-    }
-    if (filter === 'all' || filter === 'projects') {
-      g.push({
-        id: 'projects',
-        label: 'Projects',
-        rows: results.projects.map(p => ({ kind: 'project', id: p.id, data: p }))
-      });
-    }
-    if (filter === 'all' || filter === 'files') {
-      g.push({
-        id: 'files',
-        label: 'Diagrams',
-        rows: results.files.map(f => ({ kind: 'file', id: f.fileId, data: f }))
-      });
-    }
-    if (filter === 'all' || filter === 'schemas') {
-      g.push({
-        id: 'schemas',
-        label: 'Schemas',
-        rows: results.schemas.map(s => ({ kind: 'schema', id: s.schemaId, data: s }))
-      });
-    }
-    return g.filter(g => g.rows.length > 0);
-  }, [results, filter]);
+  const groups = useMemo(() => buildSearchGroups(results, filter), [results, filter]);
 
   const flatRows = useMemo(() => groups.flatMap(g => g.rows), [groups]);
 
-  const categoryCounts = useMemo(
-    () => ({
-      all:
-        results.entities.length +
-        results.projects.length +
-        results.files.length +
-        results.schemas.length,
-      entities: results.entities.length,
-      projects: results.projects.length,
-      files: results.files.length,
-      schemas: results.schemas.length
-    }),
-    [results]
-  );
+  const categoryCounts = useMemo(() => getSearchCategoryCounts(results), [results]);
 
   const totalResults = categoryCounts.all;
 
@@ -141,26 +95,10 @@ export const SearchScreen = () => {
   }, [flatRows]);
 
   // Preview from selected
-  const preview = useMemo<SearchPreview | null>(() => {
-    if (!selected) return null;
-    if (selected.kind === 'entity') {
-      const data = results.entities.find(e => e.entityId === selected.id);
-      return data ? { type: 'entity', data } : null;
-    }
-    if (selected.kind === 'project') {
-      const data = results.projects.find(p => p.id === selected.id);
-      return data ? { type: 'project', data } : null;
-    }
-    if (selected.kind === 'file') {
-      const data = results.files.find(f => f.fileId === selected.id);
-      return data ? { type: 'file', data } : null;
-    }
-    if (selected.kind === 'schema') {
-      const data = results.schemas.find(s => s.schemaId === selected.id);
-      return data ? { type: 'schema', data } : null;
-    }
-    return null;
-  }, [selected, results]);
+  const preview = useMemo<SearchPreview | null>(
+    () => findSearchPreview(selected, results),
+    [selected, results]
+  );
 
   const navigateToSearch = useCallback(
     (q: string) => {

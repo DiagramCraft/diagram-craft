@@ -12,19 +12,21 @@ import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { matrixViewConfigSchema } from '@arch-register/api-types/viewContract';
-import { ASSESSMENT_FIELD_PREFIX, resolveAssessmentValue } from '@arch-register/api-types/assessmentFilter';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
-import type { BrowserEntityRecord } from './entityBrowserState';
 import {
   getCategoricalFields,
   getCategoricalFieldValues,
-  getCategoricalValue,
   LIFECYCLE_FIELD_ID,
   OWNER_FIELD_ID,
   type JoinedAssessmentContext
 } from './entityFieldSources';
 import { normalizeViewConfig } from './entityViewConfig';
 import { EmptyState } from '../../../components/EmptyState';
+import {
+  autoPickColSchemaId,
+  buildMatrixData,
+  type MatrixAttrField
+} from './matrixViewState';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -56,47 +58,12 @@ type MatrixViewProps = EntityBrowserRowViewProps & {
 
 type ColMode = 'entity' | 'attribute';
 
-type AttrField = {
-  fieldId: string;
-  label: string;
-  options: { value: string; label: string }[];
-  isMetadata: boolean;
-};
-
 type RelationFieldOption = {
   value: string;
   label: string;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const autoPickColSchemaId = (
-  rows: EntityRecord[],
-  relationsMap: Map<
-    string,
-    { outgoing: { entitySchemaId: string }[]; incoming: { entitySchemaId: string }[] }
-  >,
-  rowSchemaIds: Set<string>,
-  allSchemaIds: string[]
-): string | null => {
-  const counts: Record<string, number> = {};
-  rows.forEach(row => {
-    const rel = relationsMap.get(row._uid);
-    if (!rel) return;
-    [...rel.outgoing, ...rel.incoming].forEach(r => {
-      if (!rowSchemaIds.has(r.entitySchemaId)) {
-        counts[r.entitySchemaId] = (counts[r.entitySchemaId] ?? 0) + 1;
-      }
-    });
-  });
-
-  const candidates = allSchemaIds.filter(id => !rowSchemaIds.has(id) && counts[id]);
-  if (candidates.length) {
-    return candidates.sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0))[0] ?? null;
-  }
-  const fallback = allSchemaIds.find(id => !rowSchemaIds.has(id));
-  return fallback ?? allSchemaIds[0] ?? null;
-};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -204,7 +171,7 @@ export const MatrixView = ({
   // rating/enum assessment fields - same relative order as before the entityFieldSources.ts
   // migration (getCategoricalFields itself orders select fields before Lifecycle/Owner, so its
   // output is reordered here to put the two metadata fields first).
-  const attrFields = useMemo((): AttrField[] => {
+  const attrFields = useMemo((): MatrixAttrField[] => {
     const fieldOptions = getCategoricalFields(rowSchemas, lifecycleStates, teams, joinedAssessment, true);
     const metadataIds = new Set([LIFECYCLE_FIELD_ID, OWNER_FIELD_ID]);
     const ordered = [
@@ -254,79 +221,19 @@ export const MatrixView = ({
 
   // ── Matrix computation ─────────────────────────────────────────────────────
 
-  const { displayRows, displayCols, cellMatrix, totalFilled, rowCounts, colCounts } =
-    useMemo(() => {
-      if (!rows.length)
-        return {
-          displayRows: [],
-          displayCols: [] as { id: string; publicId: string; label: string }[],
-          cellMatrix: [] as boolean[][],
-          totalFilled: 0,
-          rowCounts: [] as number[],
-          colCounts: [] as number[]
-        };
-
-      let allCols: { id: string; publicId: string; label: string }[];
-      if (colMode === 'entity') {
-        allCols = colEntitiesRaw.map(e => ({ id: e._uid, publicId: e._publicId, label: e._name }));
-      } else {
-        allCols = (effAttrField?.options ?? []).map(o => ({ id: o.value, publicId: o.value, label: o.label }));
-      }
-
-      if (!allCols.length)
-        return {
-          displayRows: [] as EntityRecord[],
-          displayCols: [] as { id: string; publicId: string; label: string }[],
-          cellMatrix: [] as boolean[][],
-          totalFilled: 0,
-          rowCounts: [] as number[],
-          colCounts: [] as number[]
-        };
-
-      const full = rows.map(row => {
-        const rel = relationsMap.get(row._uid);
-        return allCols.map(col => {
-          if (colMode === 'entity') {
-            if (!rel) return false;
-            const matchesField = (fieldName: string) =>
-              filterFieldName === null || fieldName === filterFieldName;
-            return (
-              rel.outgoing.some(r => r.entityId === col.id && matchesField(r.fieldName)) ||
-              rel.incoming.some(r => r.entityId === col.id && matchesField(r.fieldName))
-            );
-          } else {
-            if (!effColFieldId || !effAttrField) return false;
-            let val: unknown;
-            if (effColFieldId.startsWith(ASSESSMENT_FIELD_PREFIX)) {
-              const assessmentVal = resolveAssessmentValue(row as BrowserEntityRecord, effColFieldId);
-              val = assessmentVal == null ? undefined : String(assessmentVal);
-            } else if (effAttrField.isMetadata) {
-              val = getCategoricalValue(row, effColFieldId);
-            } else {
-              // Use full-view entity if available for custom select fields
-              const fullRow = fullRowsMap.get(row._uid) ?? row;
-              val = fullRow[effColFieldId];
-            }
-            return Array.isArray(val) ? val.includes(col.id) : val === col.id;
-          }
-        });
-      });
-
-      const rMask = rows.map((_, ri) => !hideEmptyRows || full[ri]!.some(Boolean));
-      const cMask = allCols.map((_, ci) => !hideEmptyCols || rows.some((_, ri) => full[ri]![ci]));
-
-      const rIdx = rows.flatMap((_, i) => (rMask[i] ? [i] : []));
-      const cIdx = allCols.flatMap((_, i) => (cMask[i] ? [i] : []));
-
-      const displayRows = rIdx.map(i => rows[i]!);
-      const displayCols = cIdx.map(i => allCols[i]!);
-      const cellMatrix = rIdx.map(ri => cIdx.map(ci => full[ri]![ci]!));
-      const totalFilled = cellMatrix.flat().filter(Boolean).length;
-      const rowCounts = cellMatrix.map(row => row.filter(Boolean).length);
-      const colCounts = displayCols.map((_, ci) => cellMatrix.filter(row => row[ci]).length);
-
-      return { displayRows, displayCols, cellMatrix, totalFilled, rowCounts, colCounts };
-    }, [
+  const { displayRows, displayCols, cellMatrix, totalFilled, rowCounts, colCounts } = useMemo(
+    () => buildMatrixData({
+      rows,
+      colMode,
+      colEntities: colEntitiesRaw,
+      attrField: effAttrField,
+      colFieldId: effColFieldId,
+      relationsMap,
+      filterFieldName,
+      hideEmptyRows,
+      hideEmptyCols,
+      fullRowsMap
+    }), [
       rows,
       colMode,
       colEntitiesRaw,
