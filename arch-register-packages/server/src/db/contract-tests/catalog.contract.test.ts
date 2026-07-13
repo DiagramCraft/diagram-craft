@@ -194,6 +194,30 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const all = await db.catalog.listEntitiesPaginated(workspace, {}, { limit: 100, offset: 0 });
       expect(all).toHaveLength(6);
     });
+
+    it('rejects invalid pagination limit/offset values', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+
+      await expect(
+        db.catalog.listEntitiesPaginated(workspace, {}, { limit: 0, offset: 0 })
+      ).rejects.toThrow();
+      await expect(
+        db.catalog.listEntitiesPaginated(workspace, {}, { limit: -1, offset: 0 })
+      ).rejects.toThrow();
+      await expect(
+        db.catalog.listEntitiesPaginated(workspace, {}, { limit: 1.5, offset: 0 })
+      ).rejects.toThrow();
+      await expect(
+        db.catalog.listEntitiesPaginated(workspace, {}, { limit: NaN, offset: 0 })
+      ).rejects.toThrow();
+      await expect(
+        db.catalog.listEntitiesPaginated(workspace, {}, { limit: 10, offset: -1 })
+      ).rejects.toThrow();
+      await expect(
+        db.catalog.listEntitiesPaginated(workspace, {}, { limit: 10, offset: 1.5 })
+      ).rejects.toThrow();
+    });
   });
 
     it('should ignore prototype property names in filter conditions', async () => {
