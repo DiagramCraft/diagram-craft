@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import styles from './WorkspaceSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { getRouteApi } from '@tanstack/react-router';
@@ -14,7 +14,13 @@ import { MembersSubSection } from './sub-sections/MembersSubSection';
 import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
 import { ExportImportSubSection } from './sub-sections/ExportImportSubSection';
-import { WorkspaceAnalyticsScreen } from './sub-sections/analytics/WorkspaceAnalyticsScreen';
+import { RoutePendingComponent } from '../../routes/RoutePendingComponent';
+
+const WorkspaceAnalyticsScreen = lazy(() =>
+  import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
+    default: module.WorkspaceAnalyticsScreen
+  }))
+);
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   'general': { title: 'General', sub: 'Name, description, and identity for this workspace.' },
@@ -95,7 +101,10 @@ export const WorkspaceSettingsScreen = () => {
   if (!workspace) return null;
 
   const breadcrumb = [
-    { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
+    {
+      label: 'Home',
+      onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+    },
     { label: 'Settings' }
   ];
 
@@ -117,15 +126,27 @@ export const WorkspaceSettingsScreen = () => {
 
   const sectionButton =
     section === 'members' ? (
-      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setMembersAddDialogOpen(true)}>
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setMembersAddDialogOpen(true)}
+      >
         Add user
       </Button>
     ) : section === 'teams' ? (
-      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setTeamsAddDialogOpen(true)}>
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setTeamsAddDialogOpen(true)}
+      >
         Add team
       </Button>
     ) : section === 'roles' ? (
-      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setRolesAddDialogOpen(true)}>
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setRolesAddDialogOpen(true)}
+      >
         New custom role
       </Button>
     ) : undefined;
@@ -168,7 +189,11 @@ export const WorkspaceSettingsScreen = () => {
       )}
       {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
       {section === 'export-import' && <ExportImportSubSection />}
-      {section === 'analytics' && <WorkspaceAnalyticsScreen analyticsView={search.analyticsView} />}
+      {section === 'analytics' && (
+        <Suspense fallback={<RoutePendingComponent />}>
+          <WorkspaceAnalyticsScreen analyticsView={search.analyticsView} />
+        </Suspense>
+      )}
       {section === 'audit' && (
         <AuditLogSubSection
           key={`${search.auditEntityType ?? ''}:${search.auditOperation ?? ''}:${search.auditStartDate ?? ''}:${search.auditEndDate ?? ''}`}

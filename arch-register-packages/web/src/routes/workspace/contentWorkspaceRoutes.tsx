@@ -1,24 +1,17 @@
-import { createRoute, getRouteApi, type AnyRoute } from '@tanstack/react-router';
-import { DiagramScreen } from '../../sections/projects/DiagramScreen';
-import { MarkdownEditorScreen } from '../../sections/markdown/MarkdownEditorScreen';
+import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { WorkspaceContentSidebar } from '../../sections/workspace-content/WorkspaceContentSidebar';
-import { WorkspaceContentScreen } from '../../sections/workspace-content/WorkspaceContentScreen';
-import { validateDiagramSearch, validateEntityDetailSearch, validateMarkdownSearch } from '../searchParams';
+import {
+  validateDiagramSearch,
+  validateEntityDetailSearch,
+  validateMarkdownSearch
+} from '../searchParams';
 import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
-
-const contentRouteApi = getRouteApi('/authenticated/$workspaceSlug/content');
-
-const WorkspaceContentRoute = () => {
-  const { workspaceSlug } = contentRouteApi.useParams();
-  const search = contentRouteApi.useSearch();
-  return (
-    <WorkspaceContentScreen
-      workspaceSlug={workspaceSlug}
-      folder={search.contentFolder ?? ''}
-    />
-  );
-};
+import {
+  LazyDiagramScreen,
+  LazyMarkdownEditorScreen,
+  LazyWorkspaceContentRoute
+} from './lazyWorkspaceScreens';
 
 export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -28,7 +21,7 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: 'content',
       validateSearch: validateEntityDetailSearch,
-      component: WorkspaceContentRoute
+      component: LazyWorkspaceContentRoute
     }),
     ctx => ({
       variant: 'standard',
@@ -43,7 +36,7 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: 'content/diagrams/$diagramId',
       validateSearch: validateDiagramSearch,
-      component: DiagramScreen
+      component: LazyDiagramScreen
     }),
     () => ({ variant: 'overlay' })
   );
@@ -53,7 +46,7 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: 'content/wiki/$nodeId',
       validateSearch: validateMarkdownSearch,
-      component: MarkdownEditorScreen
+      component: LazyMarkdownEditorScreen
     }),
     ctx => ({
       variant: 'standard',
