@@ -3,11 +3,11 @@ import { createDiagramFromTemplate, emptyDiagram } from '../lib/diagramDocuments
 import { projectFileKeys, workspaceContentKeys } from './queryKeys';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
-import { fetchWithAuthResponse } from '../auth/authClient';
+import { apiFetchResponse, ApiError } from '../lib/http';
 import { type ContentScope, invalidateScope, uploadUrl } from './contentScope';
 
 const noRetryOnClientError = (_: number, error: unknown) => {
-  const status = (error as { status?: number })?.status;
+  const status = error instanceof ApiError ? error.status : undefined;
   return status === undefined || status >= 500;
 };
 
@@ -276,14 +276,10 @@ export const useMoveFile = (scope: ContentScope) => {
 const uploadFile = async (url: string, file: File, filePath: string): Promise<ProjectFile> => {
   const formData = new FormData();
   formData.append('file', file, file.name);
-  const response = await fetchWithAuthResponse(`${url}?path=${encodeURIComponent(filePath)}`, {
+  const response = await apiFetchResponse(`${url}?path=${encodeURIComponent(filePath)}`, {
     method: 'POST',
     body: formData
   });
-  if (!response.ok) {
-    const text = await response.text().catch(() => response.statusText);
-    throw new Error(text);
-  }
   return response.json() as Promise<ProjectFile>;
 };
 
