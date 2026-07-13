@@ -123,4 +123,22 @@ test.describe('projects section', () => {
     await expect(page).toHaveURL(/viewMode=timeline/);
     await expect(gridViewButton).toHaveClass(/iconBtnActive/);
   });
+
+  test('navigates directly to project content folders, including nested folders', async ({ page }) => {
+    await page.goto(`/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test?contentQuery=migration&contentView=list`);
+
+    await expect(page).toHaveURL(/\/projects\/DW-2\/folders\/Test\?contentQuery=migration&contentView=list/);
+    await expect(page.getByPlaceholder('Filter diagrams…')).toHaveValue('migration');
+    await expect(page.locator('button[title="List view"]')).toHaveClass(/iconBtnActive/);
+
+    await page.goto(`/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/Test`);
+
+    await expect(page).toHaveURL(/\/projects\/DW-2\/folders\/Test$/);
+    await expect(page.getByText(authMigrationProject.name, { exact: true })).toBeVisible();
+
+    await page.goto(`/${defaultWorkspace.slug}/projects/${authMigrationProject.id}/folders/docs/guides`);
+
+    await expect(page).toHaveURL(/\/projects\/DW-2\/folders\/docs\/guides$/);
+    await expect(page.getByRole('heading', { name: 'docs/guides', exact: true })).toBeVisible();
+  });
 });

@@ -36,8 +36,11 @@ import { LoadingState } from '../../components/LoadingState';
 import {
   asEntityPublicId,
   asProjectPublicId,
+  entityContentFolderRoute,
+  projectContentFolderRoute,
   entityDetailRoute,
-  projectDetailRoute
+  projectDetailRoute,
+  workspaceContentFolderRoute
 } from '../../routes/publicObjectRoutes';
 import {
   hashDiagramContent,
@@ -219,30 +222,43 @@ export const DiagramScreen = () => {
       const folderPath = fileInfoRef.current?.path.includes('/')
         ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
         : undefined;
-      navigate({
-        to: '/$workspaceSlug/content',
-        params: { workspaceSlug },
-        search: folderPath ? { contentFolder: folderPath } : {}
-      });
+      if (folderPath) {
+        navigate(workspaceContentFolderRoute(workspaceSlug, folderPath));
+      } else {
+        navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } });
+      }
     } else if (isEntityDiagram) {
       // Navigate back to entity detail page with folder context
       const folderPath = fileInfoRef.current?.path.includes('/')
         ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
         : undefined;
 
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(projectId), folderPath ? { contentFolder: folderPath } : {}));
+      if (folderPath) {
+        navigate(entityContentFolderRoute(
+          workspaceSlug,
+          asEntityPublicId(projectId),
+          folderPath
+        ));
+      } else {
+        navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(projectId)));
+      }
     } else {
       // Navigate back to project detail page
-      navigate(
-        projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+      const folderPath = fileInfoRef.current?.path.includes('/')
+        ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
+        : undefined;
+      if (folderPath) {
+        navigate(projectContentFolderRoute(
+          workspaceSlug,
+          asProjectPublicId(projectId),
+          folderPath
+        ));
+      } else {
+        navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
           tab: 'projects' as const,
-          section: 'home' as const,
-          folder:
-            fileInfoRef.current?.path.includes('/')
-              ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
-              : undefined
-        })
-      );
+          section: 'home' as const
+        }));
+      }
     }
   }, [
     save,

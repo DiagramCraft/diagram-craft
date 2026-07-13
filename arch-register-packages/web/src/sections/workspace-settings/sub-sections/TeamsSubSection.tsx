@@ -331,11 +331,13 @@ export const TeamsSubSection = ({
                                   {user?.email ?? ''}
                                 </div>
                               </div>
-                              <RoleMenu
-                                current={a.role}
-                                disabled={isSaving}
-                                onSelect={newRole => void changeRole(team.id, a.user_id, newRole)}
-                              />
+                              <div className={styles.roleCell}>
+                                <RoleMenu
+                                  current={a.role}
+                                  disabled={isSaving}
+                                  onSelect={newRole => void changeRole(team.id, a.user_id, newRole)}
+                                />
+                              </div>
                               <button
                                 type="button"
                                 className={styles.removeMemberBtn}

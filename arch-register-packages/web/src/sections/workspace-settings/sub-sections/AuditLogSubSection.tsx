@@ -9,6 +9,7 @@ import {
   asEntityPublicId,
   asProjectPublicId,
   entityDetailRoute,
+  projectContentFolderRoute,
   projectDetailRoute
 } from '../../../routes/publicObjectRoutes';
 import { formatRelativeTime } from '../../../utils/dateFormat';
@@ -125,13 +126,18 @@ export const AuditLogSubSection = ({
         const path = typeof entry.metadata['path'] === 'string' ? entry.metadata['path'] : null;
         const folderFilter = path?.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
         if (projectId) {
-          navigate(
-            projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+          if (folderFilter) {
+            navigate(projectContentFolderRoute(
+              workspaceSlug,
+              asProjectPublicId(projectId),
+              folderFilter
+            ));
+          } else {
+            navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
               tab: 'projects' as const,
-              section: 'home' as const,
-              folder: folderFilter ?? undefined
-            })
-          );
+              section: 'home' as const
+            }));
+          }
         }
       }
     }

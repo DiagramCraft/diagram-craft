@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
-import { getRouteApi } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { useEntityContentNodes } from '../../hooks/useProjects';
@@ -17,6 +17,7 @@ import {
 import {
   asEntityPublicId,
   asProjectPublicId,
+  entityContentFolderRoute,
   entityDiagramRoute,
   entityMarkdownRoute,
   projectDiagramRoute
@@ -24,6 +25,7 @@ import {
 import { useUploadFile } from '../../hooks/useFileOperations';
 import { useCreateMarkdown } from '../../hooks/useMarkdownContent';
 import type { ContentScope } from '../../hooks/contentScope';
+import type { EntityDetailSearchParams } from '../../routes/searchParams';
 
 type EntityContentViewProps = {
   workspaceSlug: string;
@@ -31,11 +33,9 @@ type EntityContentViewProps = {
   folder: string;
 };
 
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities/$entityId');
-
 export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
-  const navigate = routeApi.useNavigate();
-  const search = routeApi.useSearch();
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const { data } = useEntityContentNodes(workspaceSlug, entityId);
   const scope: ContentScope = useMemo(
     () => ({ kind: 'entity', workspaceId: workspaceSlug, entityId }),
@@ -51,21 +51,33 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   const viewMode = search.contentView ?? 'grid';
 
   const setFilter = (value: string) => {
+    const route = entityContentFolderRoute(
+      workspaceSlug,
+      asEntityPublicId(entityId),
+      folder
+    );
     navigate({
-      search: previous => ({
-        ...previous,
+      ...route,
+      search: {
+        ...search,
         contentQuery: value === '' ? undefined : value
-      }),
+      },
       replace: true
     });
   };
 
   const setViewMode = (value: 'grid' | 'list') => {
+    const route = entityContentFolderRoute(
+      workspaceSlug,
+      asEntityPublicId(entityId),
+      folder
+    );
     navigate({
-      search: previous => ({
-        ...previous,
+      ...route,
+      search: {
+        ...search,
         contentView: value === 'grid' ? undefined : value
-      })
+      }
     });
   };
 

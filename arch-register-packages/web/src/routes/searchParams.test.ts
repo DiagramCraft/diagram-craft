@@ -5,8 +5,26 @@ import {
   validateModelOverviewSearch,
   validateMarkdownSearch,
   validateProjectSearch,
-  validateSearchSearch
+  validateSearchSearch,
+  validateWorkspaceContentSearch
 } from './searchParams';
+
+describe('validateWorkspaceContentSearch', () => {
+  it('accepts content filter state and excludes folder selection from search', () => {
+    expect(validateWorkspaceContentSearch({
+      contentFolder: 'docs/guides',
+      contentQuery: 'api',
+      contentView: 'list'
+    })).toEqual({ contentQuery: 'api', contentView: 'list' });
+  });
+
+  it('drops invalid content filter state', () => {
+    expect(validateWorkspaceContentSearch({ contentQuery: 123, contentView: 'table' })).toEqual({
+      contentQuery: undefined,
+      contentView: undefined
+    });
+  });
+});
 
 describe('validateEntityDetailSearch', () => {
   it('accepts reloadable entity tabs and rejects unknown tabs', () => {
@@ -17,19 +35,16 @@ describe('validateEntityDetailSearch', () => {
       contentView: 'list'
     })).toEqual({
       tab: 'topology',
-      contentFolder: 'Operations',
       contentQuery: 'guide',
       contentView: 'list'
     });
-    expect(validateEntityDetailSearch({ tab: 'unknown', contentView: 'kanban' })).toEqual({
+    expect(validateEntityDetailSearch({ tab: 'unknown', contentFolder: 'legacy', contentView: 'kanban' })).toEqual({
       tab: undefined,
-      contentFolder: undefined,
       contentQuery: undefined,
       contentView: undefined
     });
     expect(validateEntityDetailSearch({ tab: 'discussions' })).toEqual({
       tab: 'discussions',
-      contentFolder: undefined,
       contentQuery: undefined,
       contentView: undefined
     });
@@ -110,6 +125,7 @@ describe('validateProjectSearch', () => {
       validateProjectSearch({
         tab: 'projects',
         section: 'entities',
+        folder: 'legacy-folder',
         q: 'auth',
         viewMode: 'timeline',
         sort: 'date:goLive',
@@ -120,7 +136,6 @@ describe('validateProjectSearch', () => {
       })
     ).toEqual({
       tab: 'projects',
-      folder: undefined,
       section: 'entities',
       dialog: undefined,
       type: undefined,

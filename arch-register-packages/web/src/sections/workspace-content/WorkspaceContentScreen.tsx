@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { getRouteApi } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { Title } from '../../components/Title';
@@ -17,17 +17,17 @@ import {
   DiagramBrowserToolbar,
   DiagramBrowserView
 } from '../../components/diagram-browser/DiagramBrowserView';
+import type { WorkspaceContentSearchParams } from '../../routes/searchParams';
+import { workspaceContentFolderRoute } from '../../routes/publicObjectRoutes';
 
 type WorkspaceContentScreenProps = {
   workspaceSlug: string;
   folder: string;
 };
 
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/content');
-
 export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceContentScreenProps) => {
-  const navigate = routeApi.useNavigate();
-  const search = routeApi.useSearch();
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as WorkspaceContentSearchParams;
   const { workspace } = useWorkspaceContext();
   const scope: ContentScope = useMemo(
     () => ({ kind: 'workspace', workspaceId: workspaceSlug }),
@@ -45,21 +45,29 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const viewMode = search.contentView ?? 'grid';
 
   const setFilter = (value: string) => {
+    const route = folder
+      ? workspaceContentFolderRoute(workspaceSlug, folder)
+      : { to: '/$workspaceSlug/content' as const, params: { workspaceSlug } };
     navigate({
-      search: previous => ({
-        ...previous,
+      ...route,
+      search: {
+        ...search,
         contentQuery: value === '' ? undefined : value
-      }),
+      },
       replace: true
     });
   };
 
   const setViewMode = (value: 'grid' | 'list') => {
+    const route = folder
+      ? workspaceContentFolderRoute(workspaceSlug, folder)
+      : { to: '/$workspaceSlug/content' as const, params: { workspaceSlug } };
     navigate({
-      search: previous => ({
-        ...previous,
+      ...route,
+      search: {
+        ...search,
         contentView: value === 'grid' ? undefined : value
-      })
+      }
     });
   };
 

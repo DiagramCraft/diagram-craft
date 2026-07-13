@@ -11,8 +11,11 @@ import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   asEntityPublicId,
   asProjectPublicId,
+  entityContentFolderRoute,
   entityDetailRoute,
-  projectDetailRoute
+  projectContentFolderRoute,
+  projectDetailRoute,
+  workspaceContentFolderRoute
 } from '../../routes/publicObjectRoutes';
 import {
   CATEGORY_DEFS,
@@ -144,13 +147,18 @@ export const SearchScreen = () => {
 
   const navigateToProjectFolder = useCallback(
     (projectId: string, folder: string | null) => {
-      routerNavigate(
-        projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+      if (folder) {
+        routerNavigate(projectContentFolderRoute(
+          workspaceSlug,
+          asProjectPublicId(projectId),
+          folder
+        ));
+      } else {
+        routerNavigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
           tab: 'projects' as const,
-          section: 'home' as const,
-          folder: folder ?? undefined
-        })
-      );
+          section: 'home' as const
+        }));
+      }
     },
     [routerNavigate, workspaceSlug]
   );
@@ -168,22 +176,26 @@ export const SearchScreen = () => {
 
   const navigateToEntityFolder = useCallback(
     (entityId: string, folder: string | null) => {
-      routerNavigate(
-        entityDetailRoute(workspaceSlug, asEntityPublicId(entityId), {
-          contentFolder: folder ?? undefined
-        })
-      );
+      if (folder) {
+        routerNavigate(entityContentFolderRoute(
+          workspaceSlug,
+          asEntityPublicId(entityId),
+          folder
+        ));
+      } else {
+        routerNavigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
+      }
     },
     [routerNavigate, workspaceSlug]
   );
 
   const navigateToWorkspaceFolder = useCallback(
     (folder: string | null) => {
-      routerNavigate({
-        to: '/$workspaceSlug/content',
-        params: { workspaceSlug },
-        search: { contentFolder: folder ?? undefined }
-      });
+      if (folder) {
+        routerNavigate(workspaceContentFolderRoute(workspaceSlug, folder));
+      } else {
+        routerNavigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } });
+      }
     },
     [routerNavigate, workspaceSlug]
   );

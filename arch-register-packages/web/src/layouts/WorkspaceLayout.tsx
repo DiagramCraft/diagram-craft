@@ -21,10 +21,10 @@ import { WorkspaceContext } from './WorkspaceContext';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import {
+  TbBriefcase2,
   TbDatabase,
   TbFileAi,
   TbFiles,
-  TbFolders,
   TbHome,
   TbMessageCircleStar,
   TbSearch
@@ -44,7 +44,7 @@ import {
 const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'home', icon: TbHome, tooltip: 'Workspace overview' },
   { id: 'content', icon: TbFiles, tooltip: 'Workspace content' },
-  { id: 'projects', icon: TbFolders, tooltip: 'Projects' },
+  { id: 'projects', icon: TbBriefcase2, tooltip: 'Projects' },
   { id: 'entities', icon: TbDatabase, tooltip: 'Entities' },
   { id: 'search', icon: TbSearch, tooltip: 'Search' },
   { id: 'assistant', icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },

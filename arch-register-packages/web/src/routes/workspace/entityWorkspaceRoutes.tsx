@@ -1,4 +1,4 @@
-import { createRoute, type AnyRoute } from '@tanstack/react-router';
+import { createRoute, useParams, type AnyRoute } from '@tanstack/react-router';
 import { EntityBrowserScreen } from '../../sections/entities/EntityBrowserScreen';
 import { EntityDetailScreen } from '../../sections/entities/EntityDetailScreen';
 import { DiagramScreen } from '../../sections/projects/DiagramScreen';
@@ -17,6 +17,13 @@ import {
   getAllParams
 } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
+
+const EntityDetailRoute = () => <EntityDetailScreen />;
+
+const EntityContentFolderRoute = () => {
+  const { _splat } = useParams({ strict: false });
+  return <EntityDetailScreen folder={_splat ?? ''} />;
+};
 
 export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -43,7 +50,34 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     getParentRoute: () => workspaceRoute,
     path: 'entities/$entityId',
     validateSearch: validateEntityDetailSearch,
-    component: EntityDetailScreen
+    component: EntityDetailRoute
+  }), ctx => {
+    const params = getAllParams(ctx.matches);
+    return {
+      variant: 'detail',
+      activeRailItem: 'entities',
+      breadcrumbs: buildEntityBreadcrumbs(ctx, true),
+      navigationLabel: 'Entities',
+      renderNavigation: controls => (
+        <EntitiesSidebar
+          schemas={ctx.schemas}
+          lifecycleStates={ctx.lifecycleStates}
+          workspaceSlug={ctx.workspaceSlug}
+          onCollapse={controls.expanded ? controls.collapse : undefined}
+          onExpand={controls.expanded ? undefined : controls.expand}
+        />
+      ),
+      secondarySidebar: params.entityId ? (
+        <EntityContentSidebar workspaceSlug={ctx.workspaceSlug} entityId={params.entityId} />
+      ) : undefined
+    };
+  });
+
+  const entityContentFolderRoute = withWorkspaceShell(createRoute({
+    getParentRoute: () => workspaceRoute,
+    path: 'entities/$entityId/folders/$',
+    validateSearch: validateEntityDetailSearch,
+    component: EntityContentFolderRoute
   }), ctx => {
     const params = getAllParams(ctx.matches);
     return {
@@ -120,5 +154,5 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     };
   });
 
-  return [entityBrowserRoute, importRoute, entityDetailRoute, entityDiagramRoute, entityMarkdownRoute] as const;
+  return [entityBrowserRoute, importRoute, entityDetailRoute, entityContentFolderRoute, entityDiagramRoute, entityMarkdownRoute] as const;
 };

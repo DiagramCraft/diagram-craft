@@ -1,4 +1,4 @@
-import { createRoute, type AnyRoute } from '@tanstack/react-router';
+import { createRoute, useParams, type AnyRoute } from '@tanstack/react-router';
 import { ProjectsScreen } from '../../sections/projects/ProjectsScreen';
 import { ProjectDetailScreen } from '../../sections/projects/ProjectDetailScreen';
 import { DiagramScreen } from '../../sections/projects/DiagramScreen';
@@ -8,6 +8,13 @@ import { ProjectContentSidebar } from '../../sections/projects/ProjectContentSid
 import { validateDiagramSearch, validateMarkdownSearch, validateProjectSearch } from '../searchParams';
 import { buildProjectBreadcrumbs, getAllParams } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
+
+const ProjectDetailRoute = () => <ProjectDetailScreen />;
+
+const ProjectContentFolderRoute = () => {
+  const { _splat } = useParams({ strict: false });
+  return <ProjectDetailScreen folder={_splat ?? ''} />;
+};
 
 export const createProjectWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -30,7 +37,33 @@ export const createProjectWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     getParentRoute: () => workspaceRoute,
     path: 'projects/$projectId',
     validateSearch: validateProjectSearch,
-    component: ProjectDetailScreen
+    component: ProjectDetailRoute
+  }), ctx => {
+    const params = getAllParams(ctx.matches);
+    return {
+      variant: 'detail',
+      activeRailItem: 'projects',
+      breadcrumbs: buildProjectBreadcrumbs(ctx),
+      navigationLabel: 'Projects',
+      renderNavigation: controls => (
+        <ProjectsSidebar
+          projects={ctx.projects}
+          workspaceSlug={ctx.workspaceSlug}
+          onCollapse={controls.expanded ? controls.collapse : undefined}
+          onExpand={controls.expanded ? undefined : controls.expand}
+        />
+      ),
+      secondarySidebar: params.projectId ? (
+        <ProjectContentSidebar workspaceSlug={ctx.workspaceSlug} projectId={params.projectId} />
+      ) : undefined
+    };
+  });
+
+  const projectContentFolderRoute = withWorkspaceShell(createRoute({
+    getParentRoute: () => workspaceRoute,
+    path: 'projects/$projectId/folders/$',
+    validateSearch: validateProjectSearch,
+    component: ProjectContentFolderRoute
   }), ctx => {
     const params = getAllParams(ctx.matches);
     return {
@@ -87,5 +120,5 @@ export const createProjectWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     };
   });
 
-  return [projectsRoute, projectDetailRoute, diagramRoute, markdownRoute] as const;
+  return [projectsRoute, projectDetailRoute, projectContentFolderRoute, diagramRoute, markdownRoute] as const;
 };
