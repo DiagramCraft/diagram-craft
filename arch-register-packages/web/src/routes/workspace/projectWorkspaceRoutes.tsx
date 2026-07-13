@@ -1,48 +1,48 @@
 import { createRoute, useParams, type AnyRoute } from '@tanstack/react-router';
-import { ProjectsScreen } from '../../sections/projects/ProjectsScreen';
-import { ProjectDetailScreen } from '../../sections/projects/ProjectDetailScreen';
-import { DiagramScreen } from '../../sections/projects/DiagramScreen';
-import { MarkdownEditorScreen } from '../../sections/markdown/MarkdownEditorScreen';
 import { ProjectsSidebar } from '../../sections/projects/ProjectsSidebar';
 import { ProjectContentSidebar } from '../../sections/projects/ProjectContentSidebar';
-import { validateDiagramSearch, validateMarkdownSearch, validateProjectSearch } from '../searchParams';
+import {
+  validateDiagramSearch,
+  validateMarkdownSearch,
+  validateProjectSearch
+} from '../searchParams';
 import { buildProjectBreadcrumbs, getAllParams } from '../../layouts/workspaceShellDescriptors';
-import { withWorkspaceShell } from './workspaceShellRoute';
-
-const ProjectDetailRoute = () => <ProjectDetailScreen />;
+import { withWorkspaceShell, type WorkspaceShellBuilder } from './workspaceShellRoute';
+import {
+  LazyDiagramScreen,
+  LazyMarkdownEditorScreen,
+  LazyProjectDetailScreen,
+  LazyProjectsScreen
+} from './lazyWorkspaceScreens';
 
 const ProjectContentFolderRoute = () => {
   const { _splat } = useParams({ strict: false });
-  return <ProjectDetailScreen folder={_splat ?? ''} />;
+  return <LazyProjectDetailScreen folder={_splat ?? ''} />;
 };
 
 export const createProjectWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
 ) => {
-  const projectsRoute = withWorkspaceShell(createRoute({
-    getParentRoute: () => workspaceRoute,
-    path: 'projects',
-    validateSearch: validateProjectSearch,
-    component: ProjectsScreen
-  }), ctx => ({
-    variant: 'standard',
-    activeRailItem: 'projects',
-    breadcrumbs: buildProjectBreadcrumbs(ctx),
-    primarySidebar: (
-      <ProjectsSidebar projects={ctx.projects} workspaceSlug={ctx.workspaceSlug} />
-    )
-  }));
+  const projectsRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'projects',
+      validateSearch: validateProjectSearch,
+      component: LazyProjectsScreen
+    }),
+    ctx => ({
+      variant: 'standard',
+      activeRailItem: 'projects',
+      breadcrumbs: buildProjectBreadcrumbs(ctx),
+      primarySidebar: <ProjectsSidebar projects={ctx.projects} workspaceSlug={ctx.workspaceSlug} />
+    })
+  );
 
-  const projectDetailRoute = withWorkspaceShell(createRoute({
-    getParentRoute: () => workspaceRoute,
-    path: 'projects/$projectId',
-    validateSearch: validateProjectSearch,
-    component: ProjectDetailRoute
-  }), ctx => {
+  const buildDetailShell: WorkspaceShellBuilder = ctx => {
     const params = getAllParams(ctx.matches);
     return {
-      variant: 'detail',
-      activeRailItem: 'projects',
+      variant: 'detail' as const,
+      activeRailItem: 'projects' as const,
       breadcrumbs: buildProjectBreadcrumbs(ctx),
       navigationLabel: 'Projects',
       renderNavigation: controls => (
@@ -57,68 +57,53 @@ export const createProjectWorkspaceRoutes = <TParentRoute extends AnyRoute>(
         <ProjectContentSidebar workspaceSlug={ctx.workspaceSlug} projectId={params.projectId} />
       ) : undefined
     };
-  });
+  };
 
-  const projectContentFolderRoute = withWorkspaceShell(createRoute({
-    getParentRoute: () => workspaceRoute,
-    path: 'projects/$projectId/folders/$',
-    validateSearch: validateProjectSearch,
-    component: ProjectContentFolderRoute
-  }), ctx => {
-    const params = getAllParams(ctx.matches);
-    return {
-      variant: 'detail',
-      activeRailItem: 'projects',
-      breadcrumbs: buildProjectBreadcrumbs(ctx),
-      navigationLabel: 'Projects',
-      renderNavigation: controls => (
-        <ProjectsSidebar
-          projects={ctx.projects}
-          workspaceSlug={ctx.workspaceSlug}
-          onCollapse={controls.expanded ? controls.collapse : undefined}
-          onExpand={controls.expanded ? undefined : controls.expand}
-        />
-      ),
-      secondarySidebar: params.projectId ? (
-        <ProjectContentSidebar workspaceSlug={ctx.workspaceSlug} projectId={params.projectId} />
-      ) : undefined
-    };
-  });
+  const projectDetailRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'projects/$projectId',
+      validateSearch: validateProjectSearch,
+      component: LazyProjectDetailScreen
+    }),
+    buildDetailShell
+  );
 
-  const diagramRoute = withWorkspaceShell(createRoute({
-    getParentRoute: () => workspaceRoute,
-    path: 'projects/$projectId/diagrams/$diagramId',
-    validateSearch: validateDiagramSearch,
-    component: DiagramScreen
-  }), () => ({
-    variant: 'overlay'
-  }));
+  const projectContentFolderRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'projects/$projectId/folders/$',
+      validateSearch: validateProjectSearch,
+      component: ProjectContentFolderRoute
+    }),
+    buildDetailShell
+  );
 
-  const markdownRoute = withWorkspaceShell(createRoute({
-    getParentRoute: () => workspaceRoute,
-    path: 'projects/$projectId/wiki/$nodeId',
-    validateSearch: validateMarkdownSearch,
-    component: MarkdownEditorScreen
-  }), ctx => {
-    const params = getAllParams(ctx.matches);
-    return {
-      variant: 'detail',
-      activeRailItem: 'projects',
-      breadcrumbs: buildProjectBreadcrumbs(ctx),
-      navigationLabel: 'Projects',
-      renderNavigation: controls => (
-        <ProjectsSidebar
-          projects={ctx.projects}
-          workspaceSlug={ctx.workspaceSlug}
-          onCollapse={controls.expanded ? controls.collapse : undefined}
-          onExpand={controls.expanded ? undefined : controls.expand}
-        />
-      ),
-      secondarySidebar: params.projectId ? (
-        <ProjectContentSidebar workspaceSlug={ctx.workspaceSlug} projectId={params.projectId} />
-      ) : undefined
-    };
-  });
+  const diagramRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'projects/$projectId/diagrams/$diagramId',
+      validateSearch: validateDiagramSearch,
+      component: LazyDiagramScreen
+    }),
+    () => ({ variant: 'overlay' })
+  );
 
-  return [projectsRoute, projectDetailRoute, projectContentFolderRoute, diagramRoute, markdownRoute] as const;
+  const markdownRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'projects/$projectId/wiki/$nodeId',
+      validateSearch: validateMarkdownSearch,
+      component: LazyMarkdownEditorScreen
+    }),
+    buildDetailShell
+  );
+
+  return [
+    projectsRoute,
+    projectDetailRoute,
+    projectContentFolderRoute,
+    diagramRoute,
+    markdownRoute
+  ] as const;
 };

@@ -1,9 +1,8 @@
 import { createRoute, type AnyRoute } from '@tanstack/react-router';
-import { AssistantScreen } from '../../sections/ai-assistant/AssistantScreen';
-import { ExtractScreen } from '../../sections/ai-extract/ExtractScreen';
 import { validateAssistantSearch } from '../searchParams';
 import { buildHomeBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell } from './workspaceShellRoute';
+import { LazyAssistantScreen, LazyExtractScreen } from './lazyWorkspaceScreens';
 
 export const createAssistantWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -14,7 +13,7 @@ export const createAssistantWorkspaceRoutes = <TParentRoute extends AnyRoute>(
         getParentRoute: () => workspaceRoute,
         path: 'assistant',
         validateSearch: validateAssistantSearch,
-        component: AssistantScreen
+        component: LazyAssistantScreen
       }),
       ctx => ({
         variant: 'full-bleed',
@@ -36,7 +35,7 @@ export const createAssistantWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       createRoute({
         getParentRoute: () => workspaceRoute,
         path: 'extract',
-        component: ExtractScreen
+        component: LazyExtractScreen
       }),
       ctx => ({
         variant: 'full-bleed',

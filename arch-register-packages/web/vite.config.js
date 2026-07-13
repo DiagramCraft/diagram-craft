@@ -17,6 +17,9 @@ export default defineConfig(({ mode }) => {
         localsConvention: 'camelCase'
       }
     },
+    build: {
+      manifest: true
+    },
     server: {
       port: parseInt(process.env['PORT'] ?? '5174'),
       proxy: {

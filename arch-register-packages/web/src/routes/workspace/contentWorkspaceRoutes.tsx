@@ -1,52 +1,37 @@
-import { createRoute, useParams, type AnyRoute } from '@tanstack/react-router';
-import { DiagramScreen } from '../../sections/projects/DiagramScreen';
-import { MarkdownEditorScreen } from '../../sections/markdown/MarkdownEditorScreen';
+import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { WorkspaceContentSidebar } from '../../sections/workspace-content/WorkspaceContentSidebar';
-import { WorkspaceContentScreen } from '../../sections/workspace-content/WorkspaceContentScreen';
 import {
   validateDiagramSearch,
   validateMarkdownSearch,
   validateWorkspaceContentSearch
 } from '../searchParams';
 import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
-import { withWorkspaceShell } from './workspaceShellRoute';
-
-const WorkspaceContentRoute = () => {
-  const { workspaceSlug } = useParams({ strict: false });
-  return (
-    <WorkspaceContentScreen
-      workspaceSlug={workspaceSlug!}
-      folder=""
-    />
-  );
-};
-
-const WorkspaceContentFolderRoute = () => {
-  const { workspaceSlug, _splat } = useParams({ strict: false });
-  return (
-    <WorkspaceContentScreen
-      workspaceSlug={workspaceSlug!}
-      folder={_splat ?? ''}
-    />
-  );
-};
+import { withWorkspaceShell, type WorkspaceShellBuilder } from './workspaceShellRoute';
+import {
+  LazyDiagramScreen,
+  LazyMarkdownEditorScreen,
+  LazyWorkspaceContentFolderRoute,
+  LazyWorkspaceContentRoute
+} from './lazyWorkspaceScreens';
 
 export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
 ) => {
+  const buildShell: WorkspaceShellBuilder = ctx => ({
+    variant: 'standard' as const,
+    activeRailItem: 'content' as const,
+    breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
+    primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
+  });
+
   const contentRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: 'content',
       validateSearch: validateWorkspaceContentSearch,
-      component: WorkspaceContentRoute
+      component: LazyWorkspaceContentRoute
     }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: 'content',
-      breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
-      primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
-    })
+    buildShell
   );
 
   const contentFolderRoute = withWorkspaceShell(
@@ -54,14 +39,9 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: 'content/folders/$',
       validateSearch: validateWorkspaceContentSearch,
-      component: WorkspaceContentFolderRoute
+      component: LazyWorkspaceContentFolderRoute
     }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: 'content',
-      breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
-      primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
-    })
+    buildShell
   );
 
   const contentDiagramRoute = withWorkspaceShell(
@@ -69,7 +49,7 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: 'content/diagrams/$diagramId',
       validateSearch: validateDiagramSearch,
-      component: DiagramScreen
+      component: LazyDiagramScreen
     }),
     () => ({ variant: 'overlay' })
   );
@@ -79,14 +59,9 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       getParentRoute: () => workspaceRoute,
       path: 'content/wiki/$nodeId',
       validateSearch: validateMarkdownSearch,
-      component: MarkdownEditorScreen
+      component: LazyMarkdownEditorScreen
     }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: 'content',
-      breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
-      primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
-    })
+    buildShell
   );
 
   return [contentRoute, contentFolderRoute, contentDiagramRoute, contentMarkdownRoute] as const;
