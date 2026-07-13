@@ -8,6 +8,7 @@ import {
 } from './queryKeys';
 import { Project, ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
+import { fetchEntityProjects } from '../lib/projectOperations';
 
 // Hook for fetching project list
 export const useProjects = (workspaceId: string) => {
@@ -86,6 +87,9 @@ export const useUpdateProject = (workspaceId: string) => {
         projectKeys.detail(workspaceId, updatedProject.public_id),
         (old: ProjectDetail | undefined) => (old ? { ...old, ...updatedProject } : updatedProject)
       );
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.entityProjectsAll(workspaceId)
+      });
       await invalidateAuditQueries(queryClient, workspaceId);
     }
   });
@@ -118,18 +122,7 @@ export const useProjectEntities = (workspaceId: string, projectId: string) => {
 export const useEntityProjects = (workspaceId: string, entityId: string) => {
   return useQuery({
     queryKey: projectEntityKeys.entityProjects(workspaceId, entityId),
-    queryFn: async () => {
-      const all = await orpcClient.projects.list({ params: { workspace: workspaceId } });
-      const entityEntries = await Promise.all(
-        all.map(p =>
-          orpcClient.projects.listEntities({ params: { workspace: workspaceId, id: p.id } })
-            .then(entities => ({ project: p, entity: entities.find(e => e.entity_id === entityId) }))
-        )
-      );
-      return entityEntries
-        .filter(e => e.entity !== undefined)
-        .map(e => ({ project: e.project, entity_type: e.entity!.entity_type }));
-    },
+    queryFn: () => fetchEntityProjects(workspaceId, entityId),
     enabled: !!workspaceId && !!entityId
   });
 };
@@ -179,9 +172,12 @@ export const useUpdateProjectEntity = (workspaceId: string, projectId: string) =
         params: { workspace: workspaceId, id: projectId, entityId },
         body: { entity_type, is_done }
       }),
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
         queryKey: projectEntityKeys.all(workspaceId, projectId)
+      });
+      await queryClient.invalidateQueries({
+        queryKey: projectEntityKeys.entityProjects(workspaceId, variables.entityId)
       });
       await invalidateEntityQueries(queryClient, workspaceId);
     }

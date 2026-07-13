@@ -1,11 +1,20 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { defineOperation } from '../operation';
-import { requireProjectAccess, requireProjectAction } from '../auth/authorization';
+import {
+  canAccessProject,
+  requireEntityAction,
+  requireProjectAccess,
+  requireProjectAction
+} from '../auth/authorization';
 import { projectDbErrorMessages } from './projectOperationHelpers';
 import { httpAssert } from '../../utils/httpAssert';
-import { toApiProjectEntity } from './projectHelpers';
-import type { DiagramEntityFile, ProjectEntity } from '@arch-register/api-types/projectContract';
+import { toApiProject, toApiProjectEntity } from './projectHelpers';
+import type {
+  DiagramEntityFile,
+  EntityProject,
+  ProjectEntity
+} from '@arch-register/api-types/projectContract';
 
 export const listProjectEntities = async (
   db: DatabaseAdapter,
@@ -151,7 +160,7 @@ export const getEntityProjects = async (
   workspace: string,
   entityId: string,
   event: AuthenticatedEvent
-): Promise<ProjectEntity[]> => {
+): Promise<EntityProject[]> => {
   return defineOperation(
     db,
     workspace,
@@ -160,9 +169,24 @@ export const getEntityProjects = async (
       fallback: 'Failed to retrieve entity projects',
       dbErrorMessages: projectDbErrorMessages
     },
-    async ({ ws }) => {
-      const rows = await db.project.getEntityProjects(ws, entityId);
-      return rows.map(toApiProjectEntity);
+    async ({ ws, authCtx }) => {
+      const entity = await db.catalog.getEntity(ws, entityId);
+      httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to view this entity'
+      );
+      const rows = await db.project.getEntityProjects(ws, entity.id);
+      return rows
+        .filter(row => canAccessProject(authCtx, row.project.owner))
+        .map(row => ({
+          project: toApiProject(row.project, row.file_count, authCtx),
+          entity_type: row.entity_type_id
+            ? { id: row.entity_type_id, name: row.entity_type_label ?? row.entity_type_id }
+            : null
+        }));
     }
   );
 };

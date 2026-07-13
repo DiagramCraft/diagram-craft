@@ -27,6 +27,7 @@ import {
   getBatchEntityRelations,
   getEntityDependents,
   createEntity,
+  bulkCreateEntities,
   updateEntity,
   cloneEntity,
   deleteEntity
@@ -157,6 +158,19 @@ const entityHandlers = {
       context.db,
       workspace,
       input.body as Record<string, unknown>,
+      authCtx,
+      { id: auditUser.id, displayName: auditUser.display_name }
+    );
+  }),
+
+  bulkCreate: entityRouter.entities.bulkCreate.handler(async ({ input, context }) => {
+    const workspace = await resolveWorkspace(context.db.catalog, input.params.workspace);
+    const authCtx = await buildApiAuthCtx(context.db, workspace, context.event);
+    const auditUser = context.event.context.user;
+    return await bulkCreateEntities(
+      context.db,
+      workspace,
+      input.body.entities as Record<string, unknown>[],
       authCtx,
       { id: auditUser.id, displayName: auditUser.display_name }
     );

@@ -239,6 +239,13 @@ export type ProjectEntityDbCreate = {
   created_at: Date;
 };
 
+export type EntityProjectDbResult = {
+  project: ProjectDbResult;
+  file_count: number;
+  entity_type_id: string | null;
+  entity_type_label: string | null;
+};
+
 // -- Diagram Entity Ref
 
 export type DiagramEntityFileDbResult = {
@@ -379,6 +386,13 @@ export const projectMappers = {
     entity_type_id: row['entity_type_id'] == null ? null : String(row['entity_type_id']),
     entity_type_label: row['entity_type_label'] == null ? null : String(row['entity_type_label']),
     is_done: databaseBoolean(row['is_done'])
+  }),
+  entityProject: (row: DatabaseRow): EntityProjectDbResult => ({
+    project: projectMappers.project(row),
+    file_count: Number(row['file_count'] ?? 0),
+    entity_type_id: row['entity_type_id'] == null ? null : String(row['entity_type_id']),
+    entity_type_label:
+      row['entity_type_label'] == null ? null : String(row['entity_type_label'])
   }),
   diagramEntityFile: (row: DatabaseRow): DiagramEntityFileDbResult => ({
     file_id: String(row['file_id']),
@@ -568,7 +582,7 @@ export type ProjectDatabase = {
     isDone: boolean
   ): Promise<ProjectEntityDbResult | null>;
   removeProjectEntity(ws: string, projectId: string, entityId: string): Promise<void>;
-  getEntityProjects(ws: string, entityId: string): Promise<ProjectEntityDbResult[]>;
+  getEntityProjects(ws: string, entityId: string): Promise<EntityProjectDbResult[]>;
 
   syncDiagramEntityRefs(ws: string, fileId: string, entityIds: string[]): Promise<void>;
   getEntityDiagramFiles(ws: string, entityId: string): Promise<DiagramEntityFileDbResult[]>;

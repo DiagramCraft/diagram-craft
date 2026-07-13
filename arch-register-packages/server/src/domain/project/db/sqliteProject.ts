@@ -729,9 +729,23 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async getEntityProjects(workspace: string, entityId: string) {
     return this.all(
-      `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = ? AND pe.entity_id = ? ORDER BY e.name`,
+      `SELECT
+         p.*,
+         wo.name AS owner_name,
+         pe.entity_type AS entity_type_id,
+         pet.label AS entity_type_label,
+         (SELECT COUNT(*) FROM content_node cn
+          WHERE cn.workspace = p.workspace AND cn.project_id = p.id AND cn.type = 'diagram') AS file_count
+       FROM project_entity pe
+       JOIN project p ON p.workspace = pe.workspace AND p.id = pe.project_id
+       LEFT JOIN workspace_owner wo ON wo.id = p.owner
+       LEFT JOIN project_entity_type pet ON pet.workspace = pe.workspace AND pet.id = pe.entity_type
+       WHERE pe.workspace = ? AND pe.entity_id = ?
+       ORDER BY p.pinned DESC,
+         CASE p.status WHEN 'draft' THEN 0 WHEN 'active' THEN 1 WHEN 'complete' THEN 2 ELSE 3 END,
+         p.name`,
       [workspace, entityId],
-      projectMappers.projectEntity
+      projectMappers.entityProject
     );
   }
 
