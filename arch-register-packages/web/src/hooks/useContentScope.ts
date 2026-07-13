@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
-import { fetchWithAuthResponse } from '../auth/authClient';
+import { apiFetchResponse, ApiError } from '../lib/http';
 import { orpcClient } from '../lib/orpcClient';
 import { emptyDiagram, prepareTemplateDiagramDocument } from '../lib/diagramDocuments';
 import { movePath, renamePath } from '../lib/contentPath';
@@ -20,7 +20,7 @@ export type ContentScope =
   | { kind: 'workspace'; workspaceId: string };
 
 const noRetryOnClientError = (_: number, error: unknown) => {
-  const status = (error as { status?: number })?.status;
+  const status = error instanceof ApiError ? error.status : undefined;
   return status === undefined || status >= 500;
 };
 
@@ -31,11 +31,10 @@ export const uploadContentFile = async (
 ): Promise<ProjectFile> => {
   const body = new FormData();
   body.append('file', file, file.name);
-  const response = await fetchWithAuthResponse(`${url}?path=${encodeURIComponent(path)}`, {
+  const response = await apiFetchResponse(`${url}?path=${encodeURIComponent(path)}`, {
     method: 'POST',
     body
   });
-  if (!response.ok) throw new Error(await response.text().catch(() => response.statusText));
   return response.json() as Promise<ProjectFile>;
 };
 
