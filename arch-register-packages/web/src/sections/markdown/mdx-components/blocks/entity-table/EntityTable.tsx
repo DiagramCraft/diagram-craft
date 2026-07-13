@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { TypeBadge } from '../../../../../components/TypeBadge';
 import { StatusChip } from '../../../../../components/StatusChip';
 import { useEntities } from '../../../../../hooks/useEntities';
@@ -36,7 +36,6 @@ type Props = {
 };
 
 export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
-  const navigate = useNavigate();
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
 
   const hasFilter = hasEntityTableFilter({ schema, owner, lifecycle });
@@ -103,12 +102,7 @@ export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
             const schemaColorIndex = schemaIndex.get(schemaId) ?? 0;
 
             return (
-              <Table.Row
-                key={entity._uid}
-                onClick={() =>
-                  navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
-                }
-              >
+              <Table.Row key={entity._uid}>
                 <Table.NameCell
                   icon={
                     schemaDef && (
@@ -120,7 +114,14 @@ export const EntityTable = ({ schema, owner, lifecycle, limit }: Props) => {
                       />
                     )
                   }
-                  title={entity._name ?? entity._slug}
+                  title={
+                    <Link
+                      {...entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId))}
+                      style={{ color: 'inherit', textDecoration: 'none' }}
+                    >
+                      {entity._name ?? entity._slug}
+                    </Link>
+                  }
                   subtitle={entity._description}
                 />
                 <Table.Cell>{schemaDef?.name ?? entity._schema.name}</Table.Cell>

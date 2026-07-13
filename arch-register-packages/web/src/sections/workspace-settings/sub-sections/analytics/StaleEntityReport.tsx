@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useEntities } from '../../../../hooks/useEntities';
 import { useWorkspaceAnalytics } from '../../../../hooks/useWorkspaceAnalytics';
 import { asEntityPublicId, entityDetailRoute } from '../../../../routes/publicObjectRoutes';
@@ -17,7 +17,6 @@ export const StaleEntityReport = ({
   workspaceSlug: string;
   onSelectView: (view: 'overview' | 'stale') => void;
 }) => {
-  const navigate = useNavigate();
   const [thresholdInput, setThresholdInput] = useState('90');
   const [staleAfterDays, setStaleAfterDays] = useState(90);
   const [pageIndex, setPageIndex] = useState(0);
@@ -88,13 +87,15 @@ export const StaleEntityReport = ({
           </Table.Head>
           <Table.Body>
             {entities.map(entity => (
-              <Table.Row
-                key={entity._uid}
-                onClick={() =>
-                  navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId)))
-                }
-              >
-                <Table.Cell>{entity._name}</Table.Cell>
+              <Table.Row key={entity._uid}>
+                <Table.Cell>
+                  <Link
+                    {...entityDetailRoute(workspaceSlug, asEntityPublicId(entity._publicId))}
+                    className={styles.linkButton}
+                  >
+                    {entity._name}
+                  </Link>
+                </Table.Cell>
                 <Table.Cell>{entity._schema.name}</Table.Cell>
                 <Table.Cell>{formatDate(entity._updatedAt)}</Table.Cell>
               </Table.Row>

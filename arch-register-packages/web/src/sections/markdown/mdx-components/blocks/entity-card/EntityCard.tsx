@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import type { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
 import { Banner } from '../../../../../components/Banner';
 import { TypeBadge } from '../../../../../components/TypeBadge';
@@ -44,7 +44,6 @@ export const renderSchemaFieldValue = (
 export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
   const { data: entity, isLoading, isError } = useEntity(workspaceSlug, id);
-  const navigate = useNavigate();
 
   if (!id) return null;
 
@@ -123,13 +122,12 @@ export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
         </dl>
       )}
 
-      <button
-        type="button"
+      <Link
+        {...entityDetailRoute(workspaceSlug, asEntityPublicId(id))}
         className={styles.link}
-        onClick={() => navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(id)))}
       >
         View in catalog →
-      </button>
+      </Link>
     </div>
   );
 };

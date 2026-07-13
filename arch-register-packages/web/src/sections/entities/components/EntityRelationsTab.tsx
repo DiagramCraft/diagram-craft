@@ -8,15 +8,15 @@ import type { Relation } from '../types/entityDetailTypes';
 import styles from './EntityRelationsTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import { EmptyState } from '../../../components/EmptyState';
+import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 
 type Props = {
   outgoing: Relation[];
   incoming: Relation[];
   schemas: EntitySchema[];
-  onEntityClick: (entityId: string) => void;
 };
 
-export const EntityRelationsTab = ({ outgoing, incoming, schemas, onEntityClick }: Props) => {
+export const EntityRelationsTab = ({ outgoing, incoming, schemas }: Props) => {
   const relationCount = outgoing.length + incoming.length;
 
   if (relationCount === 0) {
@@ -40,7 +40,6 @@ export const EntityRelationsTab = ({ outgoing, incoming, schemas, onEntityClick 
             relation={r}
             direction="outgoing"
             schemas={schemas}
-            onEntityClick={onEntityClick}
           />
         ))}
         {outgoing.length === 0 && (
@@ -57,7 +56,6 @@ export const EntityRelationsTab = ({ outgoing, incoming, schemas, onEntityClick 
             relation={r}
             direction="incoming"
             schemas={schemas}
-            onEntityClick={onEntityClick}
           />
         ))}
         {incoming.length === 0 && (
@@ -73,13 +71,11 @@ export const EntityRelationsTab = ({ outgoing, incoming, schemas, onEntityClick 
 const RelationRow = ({
   relation,
   direction,
-  schemas,
-  onEntityClick
+  schemas
 }: {
   relation: Relation;
   direction: 'outgoing' | 'incoming';
   schemas: EntitySchema[];
-  onEntityClick: (entityId: string) => void;
 }) => {
   const targetSchemaId = relation.entitySchemaId;
   const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
@@ -89,10 +85,9 @@ const RelationRow = ({
     : 'var(--accent-fg)';
 
   return (
-    <button
-      type="button"
+    <EntityNavigationLink
+      publicId={relation.publicId}
       className={styles.relation}
-      onClick={() => onEntityClick(relation.publicId)}
     >
       <span className={styles.relationLead}>
         {direction === 'incoming' ? (
@@ -122,6 +117,6 @@ const RelationRow = ({
         )}
       </span>
       <span className={sharedStyles.dim}>{relation.entitySlug}</span>
-    </button>
+    </EntityNavigationLink>
   );
 };

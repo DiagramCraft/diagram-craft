@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { TbChevronRight, TbExternalLink } from 'react-icons/tb';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -101,23 +101,12 @@ const AssessmentFillCard = ({
   assessment: Assessment;
   entityId: string;
 }) => {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const { data: responses = [] } = useAssessmentResponses(workspaceId, projectId, assessment.id);
   const upsertResponse = useUpsertAssessmentResponse(workspaceId, projectId, assessment.id, assessment.fields);
 
   const response = responses.find(r => r.entity_id === entityId);
   const status = response?.status ?? computeAssessmentStatus(assessment.fields, undefined);
-
-  const goToAssessment = () => {
-    if (!projectPublicId) return;
-    navigate(
-      projectDetailRoute(workspaceId, asProjectPublicId(projectPublicId), {
-        section: 'assessments',
-        assessmentId: assessment.id
-      })
-    );
-  };
 
   return (
     <div className={styles.card}>
@@ -141,9 +130,17 @@ const AssessmentFillCard = ({
       {open && (
         <div className={styles.body}>
           <div className={styles.viewLinkRow}>
-            <button type="button" className={styles.viewLink} onClick={goToAssessment}>
-              <TbExternalLink size={11} /> View in Assessments
-            </button>
+            {projectPublicId && (
+              <Link
+                {...projectDetailRoute(workspaceId, asProjectPublicId(projectPublicId), {
+                  section: 'assessments',
+                  assessmentId: assessment.id
+                })}
+                className={styles.viewLink}
+              >
+                <TbExternalLink size={11} /> View in Assessments
+              </Link>
+            )}
           </div>
           {assessment.fields.map(field => (
             <div key={field.id} className={styles.row}>

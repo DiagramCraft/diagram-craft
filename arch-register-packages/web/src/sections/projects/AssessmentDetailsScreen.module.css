@@ -135,6 +135,7 @@
   max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-decoration: none;
 }
 
 .entNameBtn:hover {

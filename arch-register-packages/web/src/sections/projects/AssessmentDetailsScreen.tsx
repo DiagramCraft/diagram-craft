@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { TbEdit, TbDots, TbTrash, TbFilter, TbDownload } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -439,21 +439,16 @@ export const AssessmentDetailsScreen = ({
                                 />
                               }
                               title={
-                                <button
-                                  type="button"
+                                <Link
+                                  {...entityDetailRoute(
+                                    workspaceSlug,
+                                    asEntityPublicId(entity._publicId)
+                                  )}
                                   className={styles.entNameBtn}
                                   title={entity._name}
-                                  onClick={() =>
-                                    navigate(
-                                      entityDetailRoute(
-                                        workspaceSlug,
-                                        asEntityPublicId(entity._publicId)
-                                      )
-                                    )
-                                  }
                                 >
                                   {entity._name || entity._slug}
-                                </button>
+                                </Link>
                               }
                             />
                             <Table.Cell className={styles.cell}>
