@@ -8,8 +8,21 @@ import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import {
-  TbBinaryTree2, TbCalendarWeek, TbChartRadar, TbClipboardList, TbColumns3, TbFileText,
-  TbFolderOpen, TbHome, TbLayoutBoard, TbLayoutGrid, TbList, TbPencil, TbPlus, TbTrash, TbUpload
+  TbBinaryTree2,
+  TbCalendarWeek,
+  TbChartRadar,
+  TbClipboardList,
+  TbColumns3,
+  TbFileText,
+  TbFolderOpen,
+  TbHome,
+  TbLayoutBoard,
+  TbLayoutGrid,
+  TbList,
+  TbPencil,
+  TbPlus,
+  TbTrash,
+  TbUpload
 } from 'react-icons/tb';
 import { ContentTree, type ContentTreeHandle } from '../../components/ContentTree';
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
@@ -18,7 +31,11 @@ import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/Sideb
 import { TreeRow } from '../../components/TreeRow';
 import { useAssessments } from '../../hooks/useAssessments';
 import { useDeleteSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
-import { contentDownloadUrl, useContentScopeOperations, type ContentScope } from '../../hooks/useContentScope';
+import {
+  contentDownloadUrl,
+  useContentScopeOperations,
+  type ContentScope
+} from '../../hooks/useContentScope';
 import { useProject, useProjectEntities } from '../../hooks/useProjects';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
@@ -33,11 +50,18 @@ import styles from '../../shell/SidePanel.module.css';
 import { toSavedViewSearch } from '../entities/components/entityBrowserState';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import { AddDiagramDialog } from './AddDiagramDialog';
+import { downloadUrl } from '../../lib/browserDownload';
 
 type ProjectSection = 'home' | 'entities' | 'assessments';
 type SidebarTab = 'content' | 'views';
 
-export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceSlug: string; projectId: string }) => {
+export const ProjectContentSidebar = ({
+  workspaceSlug,
+  projectId
+}: {
+  workspaceSlug: string;
+  projectId: string;
+}) => {
   const scope: ContentScope = { kind: 'project', workspaceId: workspaceSlug, projectId };
   const operations = useContentScopeOperations(scope);
   const { permissions } = useWorkspaceContext();
@@ -50,7 +74,10 @@ export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceS
   const updateView = useUpdateSavedView(workspaceSlug);
   const treeRef = useRef<ContentTreeHandle>(null);
   const [tab, setTab] = useState<SidebarTab>('content');
-  const [folderDialog, setFolderDialog] = useState<{ open: boolean; parent: string | null }>({ open: false, parent: null });
+  const [folderDialog, setFolderDialog] = useState<{ open: boolean; parent: string | null }>({
+    open: false,
+    parent: null
+  });
   const [diagramFolder, setDiagramFolder] = useState<string | null | undefined>(undefined);
   const [markdownFolder, setMarkdownFolder] = useState<string | null | undefined>(undefined);
   const [viewMenu, setViewMenu] = useState<{ x: number; y: number; view: SavedView } | null>(null);
@@ -59,8 +86,9 @@ export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceS
   const navigate = useNavigate();
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false }) as ProjectSearchParams;
-  const section: ProjectSection = search.section === 'entities' || search.section === 'assessments' ? search.section : 'home';
-  const contentFolder = section === 'home' ? params._splat ?? null : null;
+  const section: ProjectSection =
+    search.section === 'entities' || search.section === 'assessments' ? search.section : 'home';
+  const contentFolder = section === 'home' ? (params._splat ?? null) : null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
 
   const navigateProject = (next: { section?: ProjectSection; folder?: string }) => {
@@ -78,40 +106,57 @@ export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceS
         tab: search.tab === 'archive' ? search.tab : undefined,
         section: nextSection === 'home' ? undefined : nextSection
       };
-      navigate(projectContentFolderRoute(
-        workspaceSlug,
-        asProjectPublicId(projectId),
-        next.folder,
-        folderSearch
-      ));
+      navigate(
+        projectContentFolderRoute(
+          workspaceSlug,
+          asProjectPublicId(projectId),
+          next.folder,
+          folderSearch
+        )
+      );
     } else {
       navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), nextSearch));
     }
   };
-  const openFile = (file: ProjectFile) => navigate(file.type === 'markdown'
-    ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
-    : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id));
+  const openFile = (file: ProjectFile) =>
+    navigate(
+      file.type === 'markdown'
+        ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+        : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
+    );
   const download = (file: ProjectFile) => {
-    const anchor = document.createElement('a');
-    anchor.href = contentDownloadUrl(scope, file.path); anchor.download = file.original_filename ?? file.name;
-    document.body.appendChild(anchor); anchor.click(); document.body.removeChild(anchor);
+    downloadUrl(contentDownloadUrl(scope, file.path), file.original_filename ?? file.name);
   };
   const viewIcon = (mode: SavedView['viewMode']) => {
     switch (mode) {
-      case 'table': return <TbList size={12} />;
-      case 'cards': return <TbLayoutGrid size={12} />;
-      case 'tree': return <TbBinaryTree2 size={12} />;
-      case 'radar': return <TbChartRadar size={12} />;
-      case 'timeline': return <TbCalendarWeek size={12} />;
-      case 'hierarchy': return <TbLayoutBoard size={12} />;
-      case 'explore': return <TbColumns3 size={12} />;
-      default: return <TbHome size={12} />;
+      case 'table':
+        return <TbList size={12} />;
+      case 'cards':
+        return <TbLayoutGrid size={12} />;
+      case 'tree':
+        return <TbBinaryTree2 size={12} />;
+      case 'radar':
+        return <TbChartRadar size={12} />;
+      case 'timeline':
+        return <TbCalendarWeek size={12} />;
+      case 'hierarchy':
+        return <TbLayoutBoard size={12} />;
+      case 'explore':
+        return <TbColumns3 size={12} />;
+      default:
+        return <TbHome size={12} />;
     }
   };
-  const applyView = (view: SavedView) => navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-    tab: search.tab, section: 'entities', contentQuery: search.contentQuery,
-    contentView: search.contentView, ...toSavedViewSearch(view)
-  }));
+  const applyView = (view: SavedView) =>
+    navigate(
+      projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+        tab: search.tab,
+        section: 'entities',
+        contentQuery: search.contentQuery,
+        contentView: search.contentView,
+        ...toSavedViewSearch(view)
+      })
+    );
   const openAddEntity = () => {
     const nextSearch = {
       tab: search.tab === 'archive' ? search.tab : undefined,
@@ -121,89 +166,237 @@ export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceS
       contentView: search.contentView
     };
     if (contentFolder) {
-      navigate(projectContentFolderRoute(
-        workspaceSlug,
-        asProjectPublicId(projectId),
-        contentFolder,
-        nextSearch
-      ));
+      navigate(
+        projectContentFolderRoute(
+          workspaceSlug,
+          asProjectPublicId(projectId),
+          contentFolder,
+          nextSearch
+        )
+      );
     } else {
       navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), nextSearch));
     }
   };
-  const contentRows = <>
-    <TreeRow testId="project-secondary-home" label="Home" icon={<TbHome size={13} />}
-      active={section === 'home' && !contentFolder && !activeFileId}
-      onClick={() => navigateProject({ section: 'home' })} />
-    <TreeRow testId="project-secondary-entities" label={`Entities (${projectEntities.length})`}
-      icon={<TbBinaryTree2 size={13} />} active={section === 'entities'}
-      onClick={() => navigateProject({ section: 'entities' })} />
-    <TreeRow testId="project-secondary-assessments" label={`Assessments (${assessments.length})`}
-      icon={<TbClipboardList size={13} />} active={section === 'assessments'}
-      onClick={() => navigateProject({ section: 'assessments' })} />
-  </>;
+  const contentRows = (
+    <>
+      <TreeRow
+        testId="project-secondary-home"
+        label="Home"
+        icon={<TbHome size={13} />}
+        active={section === 'home' && !contentFolder && !activeFileId}
+        onClick={() => navigateProject({ section: 'home' })}
+      />
+      <TreeRow
+        testId="project-secondary-entities"
+        label={`Entities (${projectEntities.length})`}
+        icon={<TbBinaryTree2 size={13} />}
+        active={section === 'entities'}
+        onClick={() => navigateProject({ section: 'entities' })}
+      />
+      <TreeRow
+        testId="project-secondary-assessments"
+        label={`Assessments (${assessments.length})`}
+        icon={<TbClipboardList size={13} />}
+        active={section === 'assessments'}
+        onClick={() => navigateProject({ section: 'assessments' })}
+      />
+    </>
+  );
 
   const renderViews = (admin: boolean, label: string) => {
     const views = projectViews.filter(view => view.isAdminView === admin);
-    return views.length ? <><SidebarGroupLabel>{label}</SidebarGroupLabel>{views.map(view =>
-      <TreeRow key={view.id} icon={viewIcon(view.viewMode)} label={view.name} active={search.viewId === view.id}
-        onClick={() => applyView(view)} onContextMenu={event => {
-          if (admin ? !permissions.canManageAdminViews : !project?.canEdit) return;
-          event.preventDefault(); event.stopPropagation();
-          setViewMenu({ x: event.clientX, y: event.clientY, view });
-        }} />)}</> : null;
+    return views.length ? (
+      <>
+        <SidebarGroupLabel>{label}</SidebarGroupLabel>
+        {views.map(view => (
+          <TreeRow
+            key={view.id}
+            icon={viewIcon(view.viewMode)}
+            label={view.name}
+            active={search.viewId === view.id}
+            onClick={() => applyView(view)}
+            onContextMenu={event => {
+              if (admin ? !permissions.canManageAdminViews : !project?.canEdit) return;
+              event.preventDefault();
+              event.stopPropagation();
+              setViewMenu({ x: event.clientX, y: event.clientY, view });
+            }}
+          />
+        ))}
+      </>
+    ) : null;
   };
 
-  return <>
-    <SidebarHeader actions={tab === 'content' ? <MenuButton.Root>
-      <MenuButton.Trigger element={<button type="button" className={styles.action} title="Add"><TbPlus size={13} /></button>} />
-      <MenuButton.Menu>
-        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbFolderOpen size={13} />} onClick={() => setFolderDialog({ open: true, parent: contentFolder })}>New folder</Menu.Item>
-        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbPlus size={13} />} onClick={() => setDiagramFolder(contentFolder)}>New diagram</Menu.Item>
-        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbUpload size={13} />} onClick={() => treeRef.current?.openUpload(contentFolder)}>Upload file</Menu.Item>
-        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbFileText size={13} />} onClick={() => setMarkdownFolder(contentFolder)}>New wiki page</Menu.Item>
-        <Menu.Item disabled={!project?.canEdit} leftSlot={<TbBinaryTree2 size={13} />} onClick={openAddEntity}>Add entity</Menu.Item>
-      </MenuButton.Menu>
-    </MenuButton.Root> : null}>
-      <Tabs.Root value={tab} onValueChange={value => setTab(value as SidebarTab)}><Tabs.List>
-        <Tabs.Trigger value="content">Content</Tabs.Trigger><Tabs.Trigger value="views">Views</Tabs.Trigger>
-      </Tabs.List></Tabs.Root>
-    </SidebarHeader>
-    <div className={styles.scroll}>{tab === 'content' ?
-      <ContentTree ref={treeRef} rootFiles={project?.files.rootFiles ?? []} folders={project?.files.folders ?? []}
-        activeFileId={activeFileId} activeFolder={contentFolder}
-        operations={operations} initiallyExpanded beforeTree={contentRows}
-        onFolderClick={folder => navigateProject({ section: 'home', folder })}
-        onFileClick={openFile} onDownload={download}
-        onCreateFolder={parent => setFolderDialog({ open: true, parent })}
-        onCreateDiagram={setDiagramFolder} onCreateMarkdown={setMarkdownFolder} />
-      : <>{renderViews(true, 'Workspace views')}{renderViews(false, 'Views')}
-          {!projectViews.length && <div className={`${styles.emptyState} dim`}>No saved views yet.</div>}</>}
-    </div>
-    {viewMenu && <ContextMenu.Imperative x={viewMenu.x} y={viewMenu.y} onClose={() => setViewMenu(null)}>
-      <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameView(viewMenu.view)}>Rename</Menu.Item>
-      <Menu.Separator /><Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => setDeleteViewTarget(viewMenu.view)}>Delete</Menu.Item>
-    </ContextMenu.Imperative>}
-    {renameView && <RenameDialog open currentName={renameView.name} entityType="view"
-      onRename={name => { updateView.mutate({ id: renameView.id, body: { name } }); setRenameView(null); }}
-      onCancel={() => setRenameView(null)} />}
-    <DeleteConfirmationDialog open={!!deleteViewTarget} title="Delete view?"
-      message={<>The view <b>{deleteViewTarget?.name}</b> will be permanently deleted.</>}
-      detail="This can't be undone." confirmLabel="Delete view"
-      onConfirm={() => { if (deleteViewTarget) deleteView.mutate(deleteViewTarget.id); setDeleteViewTarget(null); }}
-      onCancel={() => setDeleteViewTarget(null)} />
-    {project?.canManageFiles && <ContentFolderDialog open={folderDialog.open}
-      onClose={() => setFolderDialog({ open: false, parent: null })} onCreated={() => setFolderDialog({ open: false, parent: null })}
-      onSubmit={path => operations.createFolder.mutateAsync(path)} isPending={operations.createFolder.isPending}
-      parentFolder={folderDialog.parent ?? undefined} placeholder="e.g. Architecture" />}
-    {project?.canManageFiles && <AddDiagramDialog open={diagramFolder !== undefined}
-      onClose={() => setDiagramFolder(undefined)} onCreated={() => setDiagramFolder(undefined)}
-      workspaceId={workspaceSlug} context="project" projectId={projectId} projectName={project.name}
-      folder={diagramFolder ?? null} />}
-    {project?.canManageFiles && <AddMarkdownDialog open={markdownFolder !== undefined}
-      onClose={() => setMarkdownFolder(undefined)}
-      onCreated={file => { setMarkdownFolder(undefined); openFile(file); }}
-      onCreate={name => operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })}
-      isPending={operations.createMarkdown.isPending} />}
-  </>;
+  return (
+    <>
+      <SidebarHeader
+        actions={
+          tab === 'content' ? (
+            <MenuButton.Root>
+              <MenuButton.Trigger
+                element={
+                  <button type="button" className={styles.action} title="Add">
+                    <TbPlus size={13} />
+                  </button>
+                }
+              />
+              <MenuButton.Menu>
+                <Menu.Item
+                  disabled={!project?.canManageFiles}
+                  leftSlot={<TbFolderOpen size={13} />}
+                  onClick={() => setFolderDialog({ open: true, parent: contentFolder })}
+                >
+                  New folder
+                </Menu.Item>
+                <Menu.Item
+                  disabled={!project?.canManageFiles}
+                  leftSlot={<TbPlus size={13} />}
+                  onClick={() => setDiagramFolder(contentFolder)}
+                >
+                  New diagram
+                </Menu.Item>
+                <Menu.Item
+                  disabled={!project?.canManageFiles}
+                  leftSlot={<TbUpload size={13} />}
+                  onClick={() => treeRef.current?.openUpload(contentFolder)}
+                >
+                  Upload file
+                </Menu.Item>
+                <Menu.Item
+                  disabled={!project?.canManageFiles}
+                  leftSlot={<TbFileText size={13} />}
+                  onClick={() => setMarkdownFolder(contentFolder)}
+                >
+                  New wiki page
+                </Menu.Item>
+                <Menu.Item
+                  disabled={!project?.canEdit}
+                  leftSlot={<TbBinaryTree2 size={13} />}
+                  onClick={openAddEntity}
+                >
+                  Add entity
+                </Menu.Item>
+              </MenuButton.Menu>
+            </MenuButton.Root>
+          ) : null
+        }
+      >
+        <Tabs.Root value={tab} onValueChange={value => setTab(value as SidebarTab)}>
+          <Tabs.List>
+            <Tabs.Trigger value="content">Content</Tabs.Trigger>
+            <Tabs.Trigger value="views">Views</Tabs.Trigger>
+          </Tabs.List>
+        </Tabs.Root>
+      </SidebarHeader>
+      <div className={styles.scroll}>
+        {tab === 'content' ? (
+          <ContentTree
+            ref={treeRef}
+            rootFiles={project?.files.rootFiles ?? []}
+            folders={project?.files.folders ?? []}
+            activeFileId={activeFileId}
+            activeFolder={contentFolder}
+            operations={operations}
+            initiallyExpanded
+            beforeTree={contentRows}
+            onFolderClick={folder => navigateProject({ section: 'home', folder })}
+            onFileClick={openFile}
+            onDownload={download}
+            onCreateFolder={parent => setFolderDialog({ open: true, parent })}
+            onCreateDiagram={setDiagramFolder}
+            onCreateMarkdown={setMarkdownFolder}
+          />
+        ) : (
+          <>
+            {renderViews(true, 'Workspace views')}
+            {renderViews(false, 'Views')}
+            {!projectViews.length && (
+              <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
+            )}
+          </>
+        )}
+      </div>
+      {viewMenu && (
+        <ContextMenu.Imperative x={viewMenu.x} y={viewMenu.y} onClose={() => setViewMenu(null)}>
+          <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameView(viewMenu.view)}>
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item
+            type="danger"
+            leftSlot={<TbTrash size={13} />}
+            onClick={() => setDeleteViewTarget(viewMenu.view)}
+          >
+            Delete
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
+      {renameView && (
+        <RenameDialog
+          open
+          currentName={renameView.name}
+          entityType="view"
+          onRename={name => {
+            updateView.mutate({ id: renameView.id, body: { name } });
+            setRenameView(null);
+          }}
+          onCancel={() => setRenameView(null)}
+        />
+      )}
+      <DeleteConfirmationDialog
+        open={!!deleteViewTarget}
+        title="Delete view?"
+        message={
+          <>
+            The view <b>{deleteViewTarget?.name}</b> will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete view"
+        onConfirm={() => {
+          if (deleteViewTarget) deleteView.mutate(deleteViewTarget.id);
+          setDeleteViewTarget(null);
+        }}
+        onCancel={() => setDeleteViewTarget(null)}
+      />
+      {project?.canManageFiles && (
+        <ContentFolderDialog
+          open={folderDialog.open}
+          onClose={() => setFolderDialog({ open: false, parent: null })}
+          onCreated={() => setFolderDialog({ open: false, parent: null })}
+          onSubmit={path => operations.createFolder.mutateAsync(path)}
+          isPending={operations.createFolder.isPending}
+          parentFolder={folderDialog.parent ?? undefined}
+          placeholder="e.g. Architecture"
+        />
+      )}
+      {project?.canManageFiles && (
+        <AddDiagramDialog
+          open={diagramFolder !== undefined}
+          onClose={() => setDiagramFolder(undefined)}
+          onCreated={() => setDiagramFolder(undefined)}
+          workspaceId={workspaceSlug}
+          context="project"
+          projectId={projectId}
+          projectName={project.name}
+          folder={diagramFolder ?? null}
+        />
+      )}
+      {project?.canManageFiles && (
+        <AddMarkdownDialog
+          open={markdownFolder !== undefined}
+          onClose={() => setMarkdownFolder(undefined)}
+          onCreated={file => {
+            setMarkdownFolder(undefined);
+            openFile(file);
+          }}
+          onCreate={name =>
+            operations.createMarkdown.mutateAsync({ name, folder: markdownFolder ?? null })
+          }
+          isPending={operations.createMarkdown.isPending}
+        />
+      )}
+    </>
+  );
 };

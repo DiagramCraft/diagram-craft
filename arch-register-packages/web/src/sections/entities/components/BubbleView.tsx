@@ -1,15 +1,10 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { useQueries } from '@tanstack/react-query';
 import styles from './BubbleView.module.css';
 import { TbChevronDown } from 'react-icons/tb';
 import { EmptyState } from '../../../components/EmptyState';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { entityKeys } from '../../../hooks/queryKeys';
-import { orpcClient } from '../../../lib/orpcClient';
 import { bubbleViewConfigSchema } from '@arch-register/api-types/viewContract';
-import { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
-import type { BrowserEntityRecord } from './entityBrowserState';
 import {
   getCategoricalFields,
   getNumericFields,
@@ -31,6 +26,9 @@ import {
   buildBubbles,
   type BubbleConfig
 } from './bubbleViewState';
+import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
+import { useDelayedDisclosure } from '../../../hooks/useDelayedDisclosure';
+import { usePersistedViewConfig } from '../../../hooks/usePersistedViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,21 +52,6 @@ const LABEL_DENSITY_THRESHOLD = 40;
 
 // ── Config helpers ────────────────────────────────────────────────────────────
 
-const configKey = (workspaceSlug: string) => `ar-bubble-config-${workspaceSlug}`;
-
-const loadConfig = (workspaceSlug: string): BubbleConfig | null => {
-  try {
-    const raw = localStorage.getItem(configKey(workspaceSlug));
-    return raw ? (JSON.parse(raw) as BubbleConfig) : null;
-  } catch {
-    return null;
-  }
-};
-
-const saveConfig = (workspaceSlug: string, config: BubbleConfig) => {
-  localStorage.setItem(configKey(workspaceSlug), JSON.stringify(config));
-};
-
 // ── BubbleView ────────────────────────────────────────────────────────────────
 
 export const BubbleView = ({
@@ -86,44 +69,29 @@ export const BubbleView = ({
   joinedAssessment?: JoinedAssessmentContext | null;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates, teams } = useWorkspaceContext();
-  const [internalConfig, setInternalConfig] = useState<BubbleConfig | null>(() =>
-    loadConfig(workspaceSlug)
-  );
   const parsedConfig = useMemo(() => {
     const normalized = normalizeViewConfig(bubbleViewConfigSchema, configProp, EMPTY_BUBBLE_CONFIG);
     return normalized.xFieldId ? normalized : null;
   }, [configProp]);
-  const config = parsedConfig ?? internalConfig;
+  const [config, setConfig] = usePersistedViewConfig({
+    storageKey: `ar-bubble-config-${workspaceSlug}`,
+    externalConfig: parsedConfig,
+    onChange: onConfigChange
+  });
 
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [tipPos, setTipPos] = useState({ x: 0, y: 0 });
   const wrapRef = useRef<HTMLDivElement>(null);
-  const openTimerRef = useRef<number | null>(null);
-  const closeTimerRef = useRef<number | null>(null);
+  const hoverTargetRef = useRef<string | null>(null);
+  const hoverDisclosure = useDelayedDisclosure(OPEN_DELAY_MS, CLOSE_DELAY_MS);
+  const hoveredId = hoverDisclosure.open ? hoverTargetRef.current : null;
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
-  useEffect(
-    () => () => {
-      if (openTimerRef.current !== null) window.clearTimeout(openTimerRef.current);
-      if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-    },
-    []
-  );
-
-  const clearTimers = () => {
-    if (openTimerRef.current !== null) window.clearTimeout(openTimerRef.current);
-    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-  };
-
   const scheduleOpen = (id: string) => {
-    clearTimers();
-    openTimerRef.current = window.setTimeout(() => setHoveredId(id), OPEN_DELAY_MS);
+    hoverTargetRef.current = id;
+    hoverDisclosure.scheduleOpen();
   };
 
-  const scheduleClose = () => {
-    clearTimers();
-    closeTimerRef.current = window.setTimeout(() => setHoveredId(null), CLOSE_DELAY_MS);
-  };
+  const scheduleClose = hoverDisclosure.scheduleClose;
 
   // Rows arrive in 'summary' view; custom select/number fields need the full-view records.
   // Fields are unioned across every schema present in the current rows (not schema-scoped),
@@ -134,38 +102,7 @@ export const BubbleView = ({
     [schemas, rowSchemaIds]
   );
 
-  const fullEntityResults = useQueries({
-    queries: rowSchemaIds.map(schemaId => ({
-      queryKey: entityKeys.list(workspaceSlug, { schemaId, view: 'full' }),
-      queryFn: () =>
-        orpcClient.entities.list({
-          params: { workspace: workspaceSlug },
-          query: { _schemaId: schemaId, view: 'full' }
-        }),
-      enabled: !!workspaceSlug
-    }))
-  });
-
-  const fullEntityMap = useMemo(() => {
-    const rowUids = new Set(rows.map(r => r._uid));
-    const m = new Map<string, EntityRecord>();
-    fullEntityResults.forEach(result => {
-      result.data?.forEach(e => {
-        if (rowUids.has(e._uid)) m.set(e._uid, e);
-      });
-    });
-    return m;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fullEntityResults, rows]);
-
-  const entities = useMemo(
-    () =>
-      rows.map(r => {
-        const full = fullEntityMap.get(r._uid);
-        return full ? ({ ...full, _assessment: r._assessment } as BrowserEntityRecord) : r;
-      }),
-    [rows, fullEntityMap]
-  );
+  const entities = useHydratedEntityRows(workspaceSlug, rows);
 
   const categoricalFields = useMemo(
     () => getCategoricalFields(schemasInScope, lifecycleStates, teams, joinedAssessment),
@@ -187,15 +124,10 @@ export const BubbleView = ({
 
   const applyConfig = useCallback(
     (newConfig: BubbleConfig) => {
-      if (onConfigChange) {
-        onConfigChange(newConfig);
-      } else {
-        saveConfig(workspaceSlug, newConfig);
-        setInternalConfig(newConfig);
-      }
-      setHoveredId(null);
+      setConfig(newConfig);
+      hoverDisclosure.setOpen(false);
     },
-    [onConfigChange, workspaceSlug]
+    [setConfig, hoverDisclosure]
   );
 
   useEffect(() => {

@@ -4,24 +4,12 @@ import styles from './EntityBrowserScreen.module.css';
 import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
-import {
-  TbPlus,
-  TbDownload,
-  TbUpload,
-  TbDots,
-  TbCheck,
-  TbCopy
-} from 'react-icons/tb';
-import {
-  useTimelineMarkers
-} from '../../hooks/useEntities';
+import { TbPlus, TbDownload, TbUpload, TbDots, TbCheck, TbCopy } from 'react-icons/tb';
+import { useTimelineMarkers } from '../../hooks/useEntities';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
-import {
-  EntityBrowser,
-  SaveViewDialog
-} from './components/EntityBrowser';
+import { EntityBrowser, SaveViewDialog } from './components/EntityBrowser';
 import {
   buildSavedViewPayload,
   getFilterValue,
@@ -30,6 +18,7 @@ import {
   toSavedViewConfig
 } from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/entityCsv';
+import { downloadBlob } from '../../lib/browserDownload';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities');
 
@@ -138,14 +127,7 @@ export const EntityBrowserScreen = () => {
         q
       });
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `entities-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `entities-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
       console.error('Export failed:', error);
       alert('Failed to export entities. Please try again.');
@@ -207,7 +189,12 @@ export const EntityBrowserScreen = () => {
     <div className={styles.screen}>
       <div className={styles.header}>
         <Title
-          breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
+          breadcrumb={[
+            {
+              label: 'Home',
+              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+            }
+          ]}
           title={typeName}
           titleTestId="entity-browser-title"
           chips={

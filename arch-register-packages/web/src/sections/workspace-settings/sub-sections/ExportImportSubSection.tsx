@@ -6,6 +6,7 @@ import { TbDownload, TbUpload, TbFileZip, TbAlertCircle, TbAlertTriangle } from 
 import { orpcClient } from '../../../lib/orpcClient';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import styles from './ExportImportSubSection.module.css';
+import { downloadBlob } from '../../../lib/browserDownload';
 
 type ImportConflict = {
   type: 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes';
@@ -67,7 +68,9 @@ export const ExportImportSubSection = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importSummary, setImportSummary] = useState<ImportParseResult | null>(null);
   const [importId, setImportId] = useState<string | null>(null);
-  const [conflictResolutions, setConflictResolutions] = useState<Record<string, ConflictResolution>>({});
+  const [conflictResolutions, setConflictResolutions] = useState<
+    Record<string, ConflictResolution>
+  >({});
 
   const handleExport = async () => {
     if (!workspace) return;
@@ -97,16 +100,10 @@ export const ExportImportSubSection = () => {
       });
 
       const blob = response.body as Blob;
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download =
+      const filename =
         response.headers['Content-Disposition']?.split('filename=')[1]?.replace(/"/g, '') ??
         `workspace-${workspace.url_slug}-export.zip`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      downloadBlob(blob, filename);
     } catch (error) {
       console.error('Export failed:', error);
       setExportError(error instanceof Error ? error.message : 'Export failed');
@@ -239,10 +236,11 @@ export const ExportImportSubSection = () => {
   };
 
   const busy = importStatus === 'parsing' || importStatus === 'executing';
-  const unresolvedConflicts = importSummary?.conflicts.filter(conflict => {
-    const resolution = conflictResolutions[conflict.item_id];
-    return !resolution || (resolution.action === 'rename' && !resolution.new_name?.trim());
-  }) ?? [];
+  const unresolvedConflicts =
+    importSummary?.conflicts.filter(conflict => {
+      const resolution = conflictResolutions[conflict.item_id];
+      return !resolution || (resolution.action === 'rename' && !resolution.new_name?.trim());
+    }) ?? [];
 
   return (
     <div className={styles.blockList}>
@@ -324,9 +322,7 @@ export const ExportImportSubSection = () => {
                         }
                       />
                       <span>Include content files</span>
-                      <span className={styles.checkboxHint}>
-                        actual diagram and document data
-                      </span>
+                      <span className={styles.checkboxHint}>actual diagram and document data</span>
                     </label>
                   )}
                 </div>
@@ -444,7 +440,9 @@ export const ExportImportSubSection = () => {
               <div className={styles.field}>
                 <div className={styles.fieldLeft}>
                   <div className={styles.fieldLabel}>Conflicts</div>
-                  <div className={styles.fieldHint}>Choose how each matching item should be handled.</div>
+                  <div className={styles.fieldHint}>
+                    Choose how each matching item should be handled.
+                  </div>
                 </div>
                 <div className={styles.fieldRight}>
                   <div className={styles.checkboxGroup}>
@@ -453,13 +451,19 @@ export const ExportImportSubSection = () => {
                         <span>{conflict.item_name}</span>
                         <select
                           value={conflictResolutions[conflict.item_id]?.action ?? ''}
-                          onChange={event => setConflictResolutions(previous => ({
-                            ...previous,
-                            [conflict.item_id]: { action: event.target.value as ConflictResolution['action'] }
-                          }))}
+                          onChange={event =>
+                            setConflictResolutions(previous => ({
+                              ...previous,
+                              [conflict.item_id]: {
+                                action: event.target.value as ConflictResolution['action']
+                              }
+                            }))
+                          }
                           disabled={busy}
                         >
-                          <option value="" disabled>Choose resolution</option>
+                          <option value="" disabled>
+                            Choose resolution
+                          </option>
                           <option value="skip">Skip</option>
                           <option value="merge">Merge</option>
                           <option value="overwrite">Overwrite</option>
@@ -468,13 +472,15 @@ export const ExportImportSubSection = () => {
                         {conflictResolutions[conflict.item_id]?.action === 'rename' && (
                           <input
                             value={conflictResolutions[conflict.item_id]?.new_name ?? ''}
-                            onChange={event => setConflictResolutions(previous => ({
-                              ...previous,
-                              [conflict.item_id]: {
-                                action: 'rename',
-                                new_name: event.target.value
-                              }
-                            }))}
+                            onChange={event =>
+                              setConflictResolutions(previous => ({
+                                ...previous,
+                                [conflict.item_id]: {
+                                  action: 'rename',
+                                  new_name: event.target.value
+                                }
+                              }))
+                            }
                             placeholder="New name"
                             disabled={busy}
                           />

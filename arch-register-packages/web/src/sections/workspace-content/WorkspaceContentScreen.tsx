@@ -22,6 +22,7 @@ import {
 } from '../../components/diagram-browser/DiagramBrowserView';
 import type { WorkspaceContentSearchParams } from '../../routes/searchParams';
 import { workspaceContentFolderRoute } from '../../routes/publicObjectRoutes';
+import { downloadUrl } from '../../lib/browserDownload';
 
 type WorkspaceContentScreenProps = {
   workspaceSlug: string;
@@ -88,12 +89,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   };
 
   const handleDownloadClick = (path: string, name: string, originalFilename: string | null) => {
-    const a = document.createElement('a');
-    a.href = contentDownloadUrl(scope, path);
-    a.download = originalFilename ?? name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadUrl(contentDownloadUrl(scope, path), originalFilename ?? name);
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,9 +102,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
 
   // If folder is set, show that folder's files; otherwise show root files
   const folderData = folder ? data?.folders.find(f => f.path === folder) : undefined;
-  const files = folder
-    ? (folderData?.files ?? [])
-    : (data?.rootFiles ?? []);
+  const files = folder ? (folderData?.files ?? []) : (data?.rootFiles ?? []);
 
   const lc = filter.toLowerCase();
   const filtered = lc ? files.filter(f => f.name.toLowerCase().includes(lc)) : files;
@@ -117,11 +111,22 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
     <div className={styles.screen}>
       <div className={styles.header}>
         <Title
-          breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
+          breadcrumb={[
+            {
+              label: 'Home',
+              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+            }
+          ]}
           title={workspace?.name ?? workspaceSlug}
           buttons={
             <MenuButton.Root>
-              <MenuButton.Trigger element={<Button variant="primary" icon={<TbPlus size={12} />}>New</Button>} />
+              <MenuButton.Trigger
+                element={
+                  <Button variant="primary" icon={<TbPlus size={12} />}>
+                    New
+                  </Button>
+                }
+              />
               <MenuButton.Menu align="end">
                 <Menu.Item
                   leftSlot={<TbFolderOpen size={13} />}
@@ -135,10 +140,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
                 >
                   Upload file
                 </Menu.Item>
-                <Menu.Item
-                  leftSlot={<TbPlus size={13} />}
-                  onClick={() => setAddDiagramOpen(true)}
-                >
+                <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddDiagramOpen(true)}>
                   New diagram
                 </Menu.Item>
                 <Menu.Item
@@ -173,14 +175,21 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
         hasFilter={filter.length > 0}
         viewMode={viewMode}
         listItems={filtered.map(file => ({ file, folder }))}
-        gridSections={[{ key: 'workspace-content', items: filtered, showAddButton: false }].map(section => ({
-          ...section,
-          items: section.items.map(file => ({ file }))
-        }))}
+        gridSections={[{ key: 'workspace-content', items: filtered, showAddButton: false }].map(
+          section => ({
+            ...section,
+            items: section.items.map(file => ({ file }))
+          })
+        )}
         onOpenDiagram={file => handleDiagramClick(file.id)}
         onOpenMarkdown={file => handleMarkdownClick(file.id)}
-        onDownloadFile={file => handleDownloadClick(file.path, file.name, file.original_filename ?? null)}
-        emptyState={{ title: 'No content here', sub: 'Diagrams and documents will appear here when added.' }}
+        onDownloadFile={file =>
+          handleDownloadClick(file.path, file.name, file.original_filename ?? null)
+        }
+        emptyState={{
+          title: 'No content here',
+          sub: 'Diagrams and documents will appear here when added.'
+        }}
         noMatchState={{ title: 'No matches', sub: `No items match "${filter}".` }}
       />
 
@@ -210,7 +219,9 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
         }}
-        onCreate={name => contentOperations.createMarkdown.mutateAsync({ name, folder: folder || null })}
+        onCreate={name =>
+          contentOperations.createMarkdown.mutateAsync({ name, folder: folder || null })
+        }
         isPending={contentOperations.createMarkdown.isPending}
       />
 

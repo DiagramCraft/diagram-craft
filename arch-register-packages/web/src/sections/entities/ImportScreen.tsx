@@ -1,6 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { getRouteApi } from '@tanstack/react-router';
-import { useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 import {
   TbFileImport,
   TbFileUpload,
@@ -16,28 +14,17 @@ import { Chip } from '../../components/Chip';
 import { DropdownMenu } from '../../components/DropdownMenu';
 import { Table } from '../../components/table/Table';
 import styles from './ImportScreen.module.css';
-import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { downloadCsvTemplate, parseCsvImport, commitCsvImport } from '../../lib/entityCsv';
-import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
 import {
-  buildImportCommitEntities,
   formatImportFieldLabel,
   formatImportValue,
   getChangedImportFields,
   getImportDetailEntries,
   isEmptyImportValue,
-  toImportReviewRow,
   type ImportReviewRow
 } from './importReviewState';
-
-type Phase = 'upload' | 'parsing' | 'review' | 'done';
+import { useImportController, type ImportPhase } from './useImportController';
 
 type ParsedRow = ImportReviewRow;
-
-type CommittedEntity = {
-  id: string;
-  name: string;
-};
 
 const STEPS = [
   { key: 'upload', label: 'Upload' },
@@ -45,7 +32,7 @@ const STEPS = [
   { key: 'done', label: 'Import' }
 ] as const;
 
-const Stepper = ({ phase }: { phase: Phase }) => {
+const Stepper = ({ phase }: { phase: ImportPhase }) => {
   const phaseIdx = phase === 'parsing' ? 0 : STEPS.findIndex(s => s.key === phase);
   return (
     <div className={styles.stepper}>
@@ -194,115 +181,32 @@ const ExpandedDetail = ({ row }: { row: ParsedRow }) => {
   );
 };
 
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities/import');
-
 export const ImportScreen = () => {
-  const { workspaceSlug, schemas } = useWorkspaceContext();
-  const navigate = routeApi.useNavigate();
-  const queryClient = useQueryClient();
-  const search = routeApi.useSearch();
-
-  const [phase, setPhase] = useState<Phase>('upload');
-  const [selectedSchemaId, setSelectedSchemaId] = useState<string>(search.type ?? '');
-  const [file, setFile] = useState<File | null>(null);
-  const [rows, setRows] = useState<ParsedRow[]>([]);
-  const [totalRows, setTotalRows] = useState(0);
-  const [committed, setCommitted] = useState<CommittedEntity[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const schemaName = schemas.find(s => s.id === selectedSchemaId)?.name ?? '';
-
-  const handleDownloadTemplate = useCallback(async () => {
-    if (!selectedSchemaId) return;
-    try {
-      const blob = await downloadCsvTemplate(workspaceSlug, selectedSchemaId);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${schemaName.toLowerCase().replace(/\s+/g, '-')}-import-template.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Failed to download template:', error);
-      alert('Failed to download template. Please try again.');
-    }
-  }, [workspaceSlug, selectedSchemaId, schemaName]);
-
-  const runParse = useCallback(async () => {
-    if (!file || !selectedSchemaId) return;
-    setPhase('parsing');
-    try {
-      const text = await file.text();
-      const result = await parseCsvImport(workspaceSlug, selectedSchemaId, text);
-      setRows(
-        result.entities.map(toImportReviewRow)
-      );
-      setTotalRows(result.totalRows);
-      setPhase('review');
-    } catch (error) {
-      console.error('Failed to parse CSV:', error);
-      alert('Failed to parse CSV. Please check the file format and try again.');
-      setPhase('upload');
-    }
-  }, [workspaceSlug, selectedSchemaId, file]);
-
-  const toggleRow = useCallback((rowNumber: number) => {
-    setRows(rs => rs.map(r => (r.rowNumber === rowNumber ? { ...r, accepted: !r.accepted } : r)));
-  }, []);
-
-  const toggleExpand = useCallback((rowNumber: number) => {
-    setRows(rs => rs.map(r => (r.rowNumber === rowNumber ? { ...r, expanded: !r.expanded } : r)));
-  }, []);
-
-  const setUserChoice = useCallback((rowNumber: number, choice: 'update' | 'create') => {
-    setRows(rs =>
-      rs.map(r => {
-        if (r.rowNumber === rowNumber) {
-          return {
-            ...r,
-            userChoice: choice,
-            accepted: true, // Auto-accept once user makes a choice
-            isUpdate: choice === 'update'
-          };
-        }
-        return r;
-      })
-    );
-  }, []);
-
-  const commit = useCallback(async () => {
-    try {
-      const accepted = rows.filter(r => r.accepted && r.entity);
-      const entities = buildImportCommitEntities(rows, selectedSchemaId);
-      const result = await commitCsvImport(workspaceSlug, selectedSchemaId, entities);
-      setCommitted(
-        accepted.map((r, i) => ({
-          id: result.ids[i] ?? `imported-${i}`,
-          name: (r.entity!._name as string) ?? `Row ${r.rowNumber}`
-        }))
-      );
-      await queryClient.invalidateQueries({ queryKey: entityKeys.all });
-      await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceSlug) });
-      setPhase('done');
-    } catch (error) {
-      console.error('Failed to import entities:', error);
-      alert('Failed to import entities. Please try again.');
-    }
-  }, [rows, workspaceSlug, selectedSchemaId, queryClient]);
-
-  const reset = useCallback(() => {
-    setFile(null);
-    setRows([]);
-    setCommitted([]);
-    setSelectedSchemaId('');
-    setPhase('upload');
-  }, []);
-
-  const acceptedCount = rows.filter(r => r.accepted).length;
-  const updateCount = rows.filter(r => r.accepted && r.isUpdate).length;
-  const createCount = acceptedCount - updateCount;
+  const {
+    schemas,
+    phase,
+    setPhase,
+    selectedSchemaId,
+    setSelectedSchemaId,
+    file,
+    setFile,
+    rows,
+    totalRows,
+    committed,
+    fileRef,
+    schemaName,
+    handleDownloadTemplate,
+    runParse,
+    toggleRow,
+    toggleExpand,
+    setUserChoice,
+    commit,
+    reset,
+    viewEntities,
+    acceptedCount,
+    updateCount,
+    createCount
+  } = useImportController();
 
   return (
     <div className={styles.extract}>
@@ -616,15 +520,7 @@ export const ImportScreen = () => {
             )}
           </div>
           <div className={styles.doneActions}>
-            <Button
-              variant="primary"
-              onClick={() =>
-                navigate({
-                  to: '/$workspaceSlug/entities',
-                  params: { workspaceSlug }
-                })
-              }
-            >
+            <Button variant="primary" onClick={viewEntities}>
               View in Entities
             </Button>
             <Button onClick={reset}>Import more</Button>
