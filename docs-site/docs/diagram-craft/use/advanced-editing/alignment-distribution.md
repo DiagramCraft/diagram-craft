@@ -1,12 +1,19 @@
 ---
 sidebar_position: 1
+related_reading:
+  - label: Selection and Manipulation
+    to: /diagram-craft/diagram-craft/use/core-diagramming/selection-manipulation
+  - label: Snapping and Guides
+    to: /diagram-craft/diagram-craft/use/advanced-editing/snapping-guides
+  - label: Geometry Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/geometry-operations
 ---
 
 import ThemedImage from '@theme/ThemedImage';
 
 # Alignment and Distribution
 
-Alignment and distribution are the fastest way to turn a loose draft into something that looks intentional. In Diagram Craft, these tools live in the selection context menu and are designed for cleanup passes after the main structure is already on the canvas.
+Alignment and distribution commands are available from the selection context menu when the current selection contains enough compatible elements.
 
 <ThemedImage
   alt="Diagram Craft selection context menu with align and distribute actions visible"
@@ -16,7 +23,7 @@ Alignment and distribution are the fastest way to turn a loose draft into someth
   }}
 />
 
-## Align First, Distribute Second
+## Choose An Alignment Command
 
 Treat these as two separate jobs:
 
@@ -25,17 +32,9 @@ Treat these as two separate jobs:
 
 If shapes are still drifting vertically or horizontally, align them before you distribute them.
 
-## A Practical Cleanup Sequence
+## Distribute A Selection
 
-For a row or column of related shapes:
-
-1. Select the shapes that belong together.
-2. Use **Align** to line up their top, bottom, left, right, or center.
-3. If needed, use **Align Width** or **Align Height** to normalize the shape sizes.
-4. Use **Distribute Horizontally** or **Distribute Vertically** once the edges are consistent.
-5. Recheck the connected edges after the move.
-
-This keeps the spacing fix from introducing new visual noise.
+Select three or more elements, open **Distribute**, and choose **Horizontally** or **Vertically**. Diagram Craft keeps the outer elements in place and evens the spacing between the selected elements.
 
 ## The First Selected Item Matters
 
@@ -63,15 +62,3 @@ Diagram Craft includes keyboard shortcuts for the common alignment and distribut
 - `Alt+Ctrl+M` align centers horizontally
 - `Alt+Ctrl+H` distribute horizontally
 - `Alt+Ctrl+V` distribute vertically
-
-## Real Diagram Examples
-
-- Align service boxes before distributing them across a sequence diagram lane.
-- Equalize the width of repeated callout cards before spacing them under a heading.
-- Select a single group and distribute only its internal steps while keeping the group anchored.
-
-## Related Reading
-
-- [Selection and Manipulation](../core-diagramming/selection-manipulation)
-- [Snapping and Guides](snapping-guides)
-- [Geometry Operations](geometry-operations)

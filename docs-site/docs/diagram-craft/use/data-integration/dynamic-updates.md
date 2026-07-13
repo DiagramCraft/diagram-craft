@@ -1,5 +1,12 @@
 ---
 sidebar_position: 4
+related_reading:
+  - label: Data Sources
+    to: /diagram-craft/diagram-craft/use/data-integration/data-sources
+  - label: Data Binding
+    to: /diagram-craft/diagram-craft/use/data-integration/data-binding
+  - label: Query Language (DJQL)
+    to: /diagram-craft/diagram-craft/use/data-integration/query-language
 ---
 
 # Dynamic Updates
@@ -55,7 +62,7 @@ This is useful when:
 
 Treat overrides as intentional local state, not as a silent sync mechanism.
 
-## Good Fits For Dynamic Diagrams
+## Features That Use Refreshed Data
 
 The current feature set works well for:
 
@@ -79,26 +86,8 @@ Plan for:
 
 A small validation pass after significant schema changes is worth the time.
 
-## Practical Example
-
-For a service dependency view backed by a REST provider:
-
-1. link service nodes to shared records
-2. use labels and queries that depend on service fields
-3. refresh after the catalog changes
-4. rerun saved queries to find items missing owners, statuses, or comments
-5. manually refine the diagram if the changed data affects readability
-
-That produces a current diagram without pretending the layout engine is a monitoring system.
-
 ## Limits To Call Out
 
 - “real-time” depends on the provider and deployment setup; not every data source pushes changes automatically
 - provider refresh updates data availability, not presentation quality
 - diagram behavior can be data-driven without being continuously synchronized every second
-
-## Related Reading
-
-- [Data Sources](data-sources)
-- [Data Binding](data-binding)
-- [Query Language (DJQL)](query-language)

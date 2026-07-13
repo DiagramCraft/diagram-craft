@@ -1,5 +1,12 @@
 ---
 sidebar_position: 4
+related_reading:
+  - label: Drawio Import
+    to: /diagram-craft/diagram-craft/use/import-export/drawio-import
+  - label: Image Export
+    to: /diagram-craft/diagram-craft/use/import-export/image-export
+  - label: SVG Export
+    to: /diagram-craft/diagram-craft/use/import-export/svg-export
 ---
 
 # File Formats
@@ -48,9 +55,3 @@ Neither should replace your editable source file when continued editing matters.
 - Publish to docs or the web: exported SVG
 - Paste into chat, tickets, or slides: PNG
 - Bring a Draw.io diagram into Diagram Craft: `.drawio`, then save as a native Diagram Craft format
-
-## Related Reading
-
-- [Drawio Import](drawio-import)
-- [Image Export](image-export)
-- [SVG Export](svg-export)

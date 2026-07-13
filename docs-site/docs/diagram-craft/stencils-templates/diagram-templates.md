@@ -1,5 +1,10 @@
 ---
 sidebar_position: 3
+related_reading:
+  - label: Data Binding
+    to: /diagram-craft/diagram-craft/use/data-integration/data-binding
+  - label: Dynamic Updates
+    to: /diagram-craft/diagram-craft/use/data-integration/dynamic-updates
 ---
 
 # Diagram Templates
@@ -50,18 +55,3 @@ Templates are document assets, so you should maintain them when the underlying v
 - **Rename** templates from the Model tab when the label is no longer clear.
 - **Remove** templates when they are obsolete.
 - **Update template** from a linked node when you want existing template-based elements to inherit new default props where they have not been customized away.
-
-## When Templates Help Most
-
-Templates are worth the effort when:
-
-- you repeatedly drag items from the same schema
-- consistency matters more than one-off local styling
-- linked shapes need more structure than a plain name field node
-
-If you only need a few manually styled nodes, a template may be unnecessary overhead.
-
-## Related Reading
-
-- [Data Binding](../use/data-integration/data-binding)
-- [Dynamic Updates](../use/data-integration/dynamic-updates)

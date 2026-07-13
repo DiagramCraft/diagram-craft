@@ -1,5 +1,10 @@
 ---
 sidebar_position: 3
+related_reading:
+  - label: Tool Windows
+    to: /diagram-craft/diagram-craft/user-interface/tool-windows
+  - label: Keyboard Shortcuts
+    to: /diagram-craft/diagram-craft/user-interface/keyboard-shortcuts
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -58,8 +63,3 @@ That split keeps the top-level chrome compact while still giving the editor room
 ## Shortcut Relationship
 
 Many toolbar actions have keyboard equivalents. Tooltips expose those bindings, so the toolbar is also a good place to learn which actions are worth memorizing.
-
-## Related Reading
-
-- [Tool Windows](./tool-windows)
-- [Keyboard Shortcuts](./keyboard-shortcuts)

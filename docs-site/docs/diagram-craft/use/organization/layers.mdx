@@ -1,12 +1,19 @@
 ---
 sidebar_position: 1
+related_reading:
+  - label: Groups
+    to: /diagram-craft/diagram-craft/use/organization/groups
+  - label: Tabs and Documents
+    to: /diagram-craft/diagram-craft/use/organization/tabs-documents
+  - label: Document Structure
+    to: /diagram-craft/diagram-craft/use/organization/document-structure
 ---
 
 import ThemedImage from '@theme/ThemedImage';
 
 # Layers
 
-Layers are the fastest way to control visibility and editing safety inside one diagram. Use them when the audience still needs one shared canvas, but you do not want every detail visible or editable at the same time.
+Layers control element stacking, visibility, and editing access inside the active diagram. Manage them from the **Layer** tab in the left-side **Structure** window.
 
 <ThemedImage
   alt="Diagram Craft structure panel showing a larger layer stack with regular, rule, and reference layers"
@@ -16,58 +23,25 @@ Layers are the fastest way to control visibility and editing safety inside one d
   }}
 />
 
-## What Layers Are For
+## Add And Reorder Layers
 
-Treat layers as view management, not as document structure.
+Use the layer actions in the Structure window to create a regular, rule, or reference layer. Drag layers in the list to change their order; that order determines how their content is stacked on the canvas.
 
-- Use a layer when content belongs to the same diagram but should be shown, hidden, or protected independently.
-- Use a separate tab when the diagram needs a different scope or audience.
-- Use a group when you want to move a local cluster together.
+Selecting a layer makes it active. Newly created elements are added to the active regular layer.
 
-That distinction matters on larger diagrams. If a single canvas has baseline flow, annotations, review overlays, and optional detail, layers let you keep those concerns together without turning the canvas into noise.
+## Hide And Lock Layers
 
-## A Practical Layer Strategy
+Use the visibility action to hide or show all content on a layer. Use the lock action to prevent its elements from being changed through normal canvas editing. Both states are controlled independently from the layer row.
 
-For a large working diagram, a reliable pattern is:
+## Inspect Layer Contents
 
-1. Keep the core flow on one regular layer.
-2. Put optional callouts or supporting notes on separate layers.
-3. Lock layers that should not move during cleanup passes.
-4. Hide layers that are distracting while you work on one concern at a time.
+Expand a layer in the Structure window to inspect its nodes, edges, and nested groups. Select an item in the tree when direct selection on a crowded canvas is difficult.
 
-This gives you one source diagram while still letting you narrow the editor to the part you are actively maintaining.
-
-## When Layers Work Better Than Tabs
-
-Choose a layer instead of a new tab when:
-
-- the same elements must stay spatially aligned with each other
-- reviewers need to compare multiple concerns in the same canvas
-- the extra content is optional detail rather than a separate viewpoint
-
-Choose a new tab instead when the diagram is becoming hard to read even after hiding non-essential layers.
-
-## Lock And Hide Aggressively
-
-Locking is useful during maintenance, not just at the end:
-
-- lock stable background structure before a manual refinement pass
-- hide annotation or review layers while running cleanup actions
-- reorder layers when labels, highlights, or reference material need to sit visually above the main flow
-
-If you are constantly selecting the wrong elements, that is usually a sign that the diagram needs more layer discipline.
-
-## Rule And Reference Layers
+## Use Rule And Reference Layers
 
 The layer stack can hold more than plain drawing layers:
 
 - **Reference layers** help reuse context from another diagram without copying everything into the current canvas.
 - **Rule layers** are useful when visibility or styling depends on diagram data or query results.
 
-Those are advanced tools, but they still fit the same idea: keep one diagram manageable by separating responsibilities.
-
-## Related Reading
-
-- [Groups](groups)
-- [Tabs and Documents](tabs-documents)
-- [Document Structure](document-structure)
+Rule and reference layers have different configuration from regular drawing layers. Select the layer in the Structure window to inspect the properties available for its type.

@@ -1,5 +1,12 @@
 ---
 sidebar_position: 4
+related_reading:
+  - label: Boolean Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/boolean-operations
+  - label: Alignment and Distribution
+    to: /diagram-craft/diagram-craft/use/advanced-editing/alignment-distribution
+  - label: Connectors and Edges
+    to: /diagram-craft/diagram-craft/use/core-diagramming/connectors-edges
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -57,23 +64,3 @@ Advanced editing also includes connector geometry:
 - refining bezier handles when a connection path needs to flow around nearby elements
 
 That is often the difference between a readable diagram and one where lines feel accidental.
-
-## A Practical Geometry Workflow
-
-1. Finish the general layout with normal shapes and connectors.
-2. Use alignment, distribution, and snapping to stabilize the page.
-3. Apply routine transforms such as rotation or flip where they improve clarity.
-4. Only then use boolean operations or convert shapes to curves for special cases.
-5. Recheck labels and connector routes after every structural edit.
-
-## Real Diagram Examples
-
-- Flip an arrow-shaped node so a repeated motif points in the correct direction without rebuilding it.
-- Switch a connector to bezier and adjust its handles when a straight path crosses too much content.
-- Convert a combined shape to curves after a boolean operation so you can refine the final silhouette manually.
-
-## Related Reading
-
-- [Boolean Operations](boolean-operations)
-- [Alignment and Distribution](alignment-distribution)
-- [Connectors and Edges](../core-diagramming/connectors-edges)

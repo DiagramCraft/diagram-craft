@@ -1,5 +1,12 @@
 ---
 sidebar_position: 3
+related_reading:
+  - label: DJQL Reference
+    to: /diagram-craft/diagram-craft/reference/djql-reference
+  - label: Data Binding
+    to: /diagram-craft/diagram-craft/use/data-integration/data-binding
+  - label: Dynamic Updates
+    to: /diagram-craft/diagram-craft/use/data-integration/dynamic-updates
 ---
 
 # Query Language (DJQL)
@@ -50,16 +57,9 @@ That makes DJQL practical for iterative work:
 3. tighten the filter
 4. confirm the highlighted elements are the ones you meant
 
-## Useful Query Patterns
+## Query Implemented Document Data
 
-Common examples include:
-
-- elements with unresolved comments
-- elements linked to a specific schema
-- elements missing expected data
-- selection-scoped checks before bulk editing
-
-For example, if you are reviewing feedback, you might query for elements whose serialized comment data includes unresolved discussion instead of manually scanning the whole diagram.
+Queries can inspect element types, text, styles, metadata, attached schemas, and comments exposed by the selected scope. Use the [DJQL Reference](../../reference/djql-reference) for supported syntax and query examples.
 
 ## Save Queries That You Reuse
 
@@ -98,9 +98,3 @@ That distinction keeps the tool choice simple:
 - DJQL is powerful, but it is still only as good as the underlying document structure and attached data
 - broad document-scoped queries can return noisy results if your document mixes many diagram types
 - this page focuses on workflow; use the reference page for syntax details
-
-## Related Reading
-
-- [DJQL Reference](../../reference/djql-reference)
-- [Data Binding](data-binding)
-- [Dynamic Updates](dynamic-updates)

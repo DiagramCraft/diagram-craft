@@ -1,5 +1,10 @@
 ---
 sidebar_position: 4
+related_reading:
+  - label: Real-time Editing
+    to: /diagram-craft/diagram-craft/use/collaboration/real-time-editing
+  - label: Comments and Review
+    to: /diagram-craft/diagram-craft/use/collaboration/comments-review
 ---
 
 # Version History
@@ -73,8 +78,3 @@ This is a strong use case for working history because the goal is immediate reco
 - current docs should not promise full version snapshots or named restore points
 - current docs should not describe the placeholder **Document History** tab as a complete feature
 - undo history is an editing aid, not a substitute for external versioning or review process
-
-## Related Reading
-
-- [Real-time Editing](real-time-editing)
-- [Comments and Review](comments-review)

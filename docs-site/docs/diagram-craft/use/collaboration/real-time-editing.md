@@ -1,5 +1,12 @@
 ---
 sidebar_position: 1
+related_reading:
+  - label: Presence Awareness
+    to: /diagram-craft/diagram-craft/use/collaboration/presence-awareness
+  - label: Comments and Review
+    to: /diagram-craft/diagram-craft/use/collaboration/comments-review
+  - label: Version History
+    to: /diagram-craft/diagram-craft/use/collaboration/version-history
 ---
 
 # Real-time Editing
@@ -89,9 +96,3 @@ That is where real-time editing is strongest: fast alignment without duplicate o
 - collaboration requires explicit backend/server configuration
 - “same file name” does not guarantee “same session”; users must open the same shared document context
 - real-time editing does not replace versioning policy, review discipline, or diagram decomposition for very large canvases
-
-## Related Reading
-
-- [Presence Awareness](presence-awareness)
-- [Comments and Review](comments-review)
-- [Version History](version-history)

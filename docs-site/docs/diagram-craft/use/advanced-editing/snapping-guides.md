@@ -1,5 +1,12 @@
 ---
 sidebar_position: 2
+related_reading:
+  - label: Alignment and Distribution
+    to: /diagram-craft/diagram-craft/use/advanced-editing/alignment-distribution
+  - label: Canvas Navigation
+    to: /diagram-craft/diagram-craft/use/core-diagramming/canvas-navigation
+  - label: Document Structure
+    to: /diagram-craft/diagram-craft/use/organization/document-structure
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -29,15 +36,9 @@ In the **Grid** tab, the **Snap** panel lets you turn snapping on or off and cho
 
 You can also adjust the snap **Threshold** to control how aggressively elements lock into place.
 
-## When To Use Each Magnet Type
+## Configure Magnet Types
 
-A good default setup is:
-
-- grid snapping on while roughing out a layout
-- object bounds snapping on during cleanup
-- guides on for larger pages or repeated structures
-
-Object size and distance magnets are especially helpful when you are trying to make repeated cards or columns feel consistent without measuring everything manually.
+Enable only the snap targets needed for the current edit. **Object size** and **Object distance** provide equal-size and equal-spacing targets, while **Object bounds** aligns element edges. Lower the threshold if several nearby targets compete for the cursor.
 
 ## Use Guides For Long-Running Layout Work
 
@@ -61,18 +62,4 @@ The ruler toggle is useful when you need to place elements at specific positions
 
 For smaller flowcharts, rulers are optional. Guides and object snapping are often enough.
 
-## Snapping Is A Helper, Not A Rule
-
-If snapping keeps pulling an element to the wrong target, reduce the enabled magnet types instead of fighting the cursor. It is often faster to disable one magnet category temporarily than to keep nudging an element away from unwanted snap points.
-
-## Real Diagram Examples
-
-- Use grid snapping for the first pass of a process flow, then switch to object bounds and distance snapping for final cleanup.
-- Add vertical guides for swimlane columns so new elements drop into the same structure automatically.
-- Turn on rulers before building a title area, legend, and content block that all need to share margins.
-
-## Related Reading
-
-- [Alignment and Distribution](alignment-distribution)
-- [Canvas Navigation](../core-diagramming/canvas-navigation)
-- [Document Structure](../organization/document-structure)
+If snapping pulls an element to an unwanted target, temporarily disable that magnet type or reduce the threshold in the **Snap** panel.

@@ -17,7 +17,7 @@ Keyboard shortcuts matter most when you are:
 
 If you only learn a small set first, start with the tools you use every session.
 
-## Good First Shortcuts
+## Core Shortcuts
 
 | Shortcut | Why it matters |
 | --- | --- |
@@ -48,7 +48,7 @@ If you spend time in search, data binding, comments, or style editing, the sideb
 - The command palette is useful when you remember the action but not the shortcut.
 - Some windows expose their shortcut directly through the sidebar action tooltip.
 
-## Good Learning Order
+## Add Shortcuts To Your Workflow
 
 If you are adopting shortcuts gradually, learn them in this order:
 

@@ -1,5 +1,12 @@
 ---
 sidebar_position: 3
+related_reading:
+  - label: Custom Shapes
+    to: /diagram-craft/diagram-craft/use/styling/custom-shapes
+  - label: Geometry Operations
+    to: /diagram-craft/diagram-craft/use/advanced-editing/geometry-operations
+  - label: Effects
+    to: /diagram-craft/diagram-craft/use/styling/effects
 ---
 
 import ThemedImage from '@theme/ThemedImage';
@@ -28,17 +35,7 @@ Diagram Craft exposes these commands in the selection context menu under **Geome
 
 These tools operate on two selected nodes at a time.
 
-## Build The Rough Composition First
-
-Before you run a boolean operation:
-
-1. place the two shapes so their overlap is intentional
-2. style them simply
-3. confirm the combined outline is really what the diagram needs
-
-This avoids extra cleanup after the operation replaces the original shapes with a new path-based result.
-
-## A Safe Boolean Workflow
+## Run A Boolean Operation
 
 1. Select exactly two shapes.
 2. Open the selection context menu.
@@ -46,7 +43,7 @@ This avoids extra cleanup after the operation replaces the original shapes with 
 4. Choose the operation that matches the final silhouette.
 5. Inspect the new result before continuing with additional edits.
 
-If you are exploring alternatives, duplicate the source shapes first so you can compare versions quickly.
+The operation replaces the source nodes with its result. Duplicate the source nodes first if you need to keep an editable copy.
 
 ## Choose The Right Operation
 
@@ -59,19 +56,3 @@ Use **Intersect** when only the common overlap matters.
 Use **Exclusive Or** when you want the surrounding remainder without the overlap.
 
 Use **Divide** when you want the overlap to become separate editable pieces.
-
-## Boolean Editing Is More Advanced Than Styling
-
-Once you use boolean tools, you are changing geometry rather than just changing appearance. That is why these commands belong in an advanced-editing workflow: they affect the diagram's shape vocabulary, not just its polish.
-
-## Real Diagram Examples
-
-- Union a badge circle with a card base when the combined outline should read as one component.
-- Subtract a small rectangle from a larger panel to create a file-tab shape.
-- Divide an overlapped pair when you want separate regions to recolor independently afterward.
-
-## Related Reading
-
-- [Custom Shapes](../styling/custom-shapes)
-- [Geometry Operations](geometry-operations)
-- [Effects](../styling/effects)
