@@ -1,15 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { TbCheck } from 'react-icons/tb';
 import { Dialog, KbdHints } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../../lib/http';
-import { useCreateDiagram, useCreateDiagramFromTemplate } from '../../hooks/useFileOperations';
+import { useContentScopeOperations, type ContentScope } from '../../hooks/useContentScope';
 import { useProjectTemplates, useWorkspaceOnlyTemplates } from '../../hooks/useTemplates';
-import {
-  useCreateEntityDiagram,
-  useCreateEntityDiagramFromTemplate
-} from '../../hooks/useProjects';
 import styles from './AddDiagramDialog.module.css';
 import { ProjectFile } from '@arch-register/api-types/projectContract';
 
@@ -103,7 +99,6 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
   const { open, onClose, onCreated, workspaceId, folder } = props;
   const projectId = props.context === 'project' ? props.projectId : '';
   const entityId = props.context === 'entity' ? props.entityId : '';
-  const isWorkspace = props.context === 'workspace';
 
   const [selected, setSelected] = useState<ProjectFile | 'blank'>('blank');
   const [name, setName] = useState('');
@@ -119,16 +114,16 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
   const { data: workspaceOnlyTemplates, isLoading: workspaceTemplatesLoading } =
     useWorkspaceOnlyTemplates(workspaceId);
 
-  // Project creation mutations (no-ops when projectId is empty due to enabled checks)
-  const createDiagramMutation = useCreateDiagram({ kind: 'project', workspaceId, projectId });
-  const createFromTemplateMutation = useCreateDiagramFromTemplate(workspaceId, projectId);
-
-  // Entity creation mutations (unused when entityId is empty)
-  const createEntityDiagramMutation = useCreateEntityDiagram(workspaceId, entityId);
-  const createEntityFromTemplateMutation = useCreateEntityDiagramFromTemplate(workspaceId, entityId);
-
-  // Workspace creation mutation
-  const createWorkspaceDiagramMutation = useCreateDiagram({ kind: 'workspace', workspaceId });
+  const scope: ContentScope = useMemo(
+    () =>
+      props.context === 'project'
+        ? { kind: 'project', workspaceId, projectId }
+        : props.context === 'entity'
+          ? { kind: 'entity', workspaceId, entityId }
+          : { kind: 'workspace', workspaceId },
+    [props.context, workspaceId, projectId, entityId]
+  );
+  const contentOperations = useContentScopeOperations(scope);
 
   const allTemplates =
     props.context === 'project'
@@ -182,25 +177,25 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
       let file: ProjectFile;
       if (props.context === 'project') {
         if (selected !== 'blank') {
-          file = await createFromTemplateMutation.mutateAsync({
+          file = await contentOperations.createDiagramFromTemplate.mutateAsync({
             name: finalName,
             templateFile: selected,
             folder
           });
         } else {
-          file = await createDiagramMutation.mutateAsync({ name: finalName, folder });
+          file = await contentOperations.createDiagram.mutateAsync({ name: finalName, folder });
         }
       } else if (props.context === 'workspace') {
-        file = await createWorkspaceDiagramMutation.mutateAsync({ name: finalName, folder });
+        file = await contentOperations.createDiagram.mutateAsync({ name: finalName, folder });
       } else {
         if (selected !== 'blank') {
-          file = await createEntityFromTemplateMutation.mutateAsync({
+          file = await contentOperations.createDiagramFromTemplate.mutateAsync({
             name: finalName,
             templateFile: selected,
             folder
           });
         } else {
-          file = await createEntityDiagramMutation.mutateAsync({ name: finalName, folder });
+          file = await contentOperations.createDiagram.mutateAsync({ name: finalName, folder });
         }
       }
       onCreated(file);
@@ -214,11 +209,9 @@ export const AddDiagramDialog = (props: AddDiagramDialogProps) => {
     }
   };
 
-  const isPending = isWorkspace
-    ? createWorkspaceDiagramMutation.isPending
-    : props.context === 'project'
-      ? createDiagramMutation.isPending || createFromTemplateMutation.isPending
-      : createEntityDiagramMutation.isPending || createEntityFromTemplateMutation.isPending;
+  const isPending =
+    contentOperations.createDiagram.isPending ||
+    contentOperations.createDiagramFromTemplate.isPending;
 
   const sub =
     props.context === 'project' && props.projectName ? (

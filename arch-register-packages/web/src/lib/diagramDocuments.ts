@@ -1,4 +1,3 @@
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import type {
   SerializedDiagram,
   SerializedDiagramDocument,
@@ -153,54 +152,4 @@ export const prepareTemplateDiagramDocument = <
     diagrams: nextDiagrams,
     activeDiagramId: nextDiagrams[0]!.id
   } as T & { name: string };
-};
-
-export const createDiagramFromTemplate = async (
-  workspace: string,
-  projectId: string,
-  name: string,
-  templateFile: ProjectFile,
-  folder?: string | null
-) => {
-  const { orpcClient } = await import('./orpcClient');
-  const templateContent = await orpcClient.projects.getFileContent({
-    params: { workspace, id: templateFile.project_id! },
-    query: { path: templateFile.path }
-  });
-  const newContent = prepareTemplateDiagramDocument(
-    templateContent as unknown as SerializedDiagramDocument & { name?: string },
-    name
-  );
-  const fileName = `${name}.json`;
-  const filePath = folder ? `${folder}/${fileName}` : fileName;
-  return orpcClient.projects.saveFile({
-    params: { workspace, id: projectId },
-    query: { path: filePath },
-    body: newContent as unknown as Record<string, unknown>
-  });
-};
-
-export const createEntityDiagramFromTemplate = async (
-  workspace: string,
-  entityId: string,
-  name: string,
-  templateFile: ProjectFile,
-  folder?: string | null
-) => {
-  const { orpcClient } = await import('./orpcClient');
-  const templateContent = await orpcClient.projects.getFileContent({
-    params: { workspace, id: templateFile.project_id! },
-    query: { path: templateFile.path }
-  });
-  const newContent = prepareTemplateDiagramDocument(
-    templateContent as unknown as SerializedDiagramDocument & { name?: string },
-    name
-  );
-  const fileName = `${name}.json`;
-  const filePath = folder ? `${folder}/${fileName}` : fileName;
-  return orpcClient.projects.createEntityFile({
-    params: { workspace, entityId },
-    query: { path: filePath },
-    body: newContent as unknown as Record<string, unknown>
-  });
 };
