@@ -4,7 +4,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '../../../lib/api';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { BulkFieldInput } from './BulkFieldInput';
 import { canClearBulkField, type BulkEditableField } from './bulkEditFields';
 import type { BulkEditResult, BulkEditStep, BulkFieldRow } from './useEntityBrowserSelection';

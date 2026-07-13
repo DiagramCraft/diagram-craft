@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { computeWorkspaceAnalytics } from './workspaceAnalyticsOperations';
+import { computeActivityTrend, computeWorkspaceAnalytics } from './workspaceAnalyticsOperations';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
+import type { AuditLogDbResult } from '../audit/db/auditDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -76,6 +77,23 @@ const makeEntity = (overrides: Partial<EntityDbResult>): EntityDbResult => ({
   lifecycle_label: 'Production',
   target_lifecycle_label: null,
   schema_name: 'Service',
+  ...overrides
+});
+
+const makeAuditRow = (overrides: Partial<AuditLogDbResult>): AuditLogDbResult => ({
+  id: 'audit-1',
+  workspace: 'default',
+  timestamp: new Date('2026-01-01T12:00:00.000Z'),
+  user_id: null,
+  user_display_name: null,
+  operation: 'create',
+  entity_type: 'entity',
+  entity_id: 'entity-1',
+  entity_name: 'Entity 1',
+  entity_slug: 'entity-1',
+  schema_id: 'schema-service',
+  changes: {},
+  metadata: {},
   ...overrides
 });
 
@@ -167,6 +185,90 @@ describe('computeWorkspaceAnalytics', () => {
       color: null,
       count: 0,
       percent: 0
+    });
+  });
+
+  it('builds zero-filled UTC activity buckets from entity creates and updates only', () => {
+    const trend = computeActivityTrend(
+      [
+        makeAuditRow({ timestamp: new Date('2025-12-30T23:59:59.000Z'), operation: 'create' }),
+        makeAuditRow({ id: 'audit-2', timestamp: new Date('2025-12-31T00:00:00.000Z'), operation: 'update' }),
+        makeAuditRow({ id: 'audit-3', timestamp: new Date('2026-01-01T20:00:00.000Z'), operation: 'create' }),
+        makeAuditRow({ id: 'audit-4', operation: 'delete' }),
+        makeAuditRow({ id: 'audit-5', entity_type: 'project' })
+      ],
+      3,
+      new Date('2026-01-01T23:00:00.000Z')
+    );
+
+    expect(trend).toEqual([
+      {
+        date: '2025-12-30',
+        startDate: '2025-12-30T00:00:00.000Z',
+        endDate: '2025-12-30T23:59:59.999Z',
+        created: 1,
+        updated: 0
+      },
+      {
+        date: '2025-12-31',
+        startDate: '2025-12-31T00:00:00.000Z',
+        endDate: '2025-12-31T23:59:59.999Z',
+        created: 0,
+        updated: 1
+      },
+      {
+        date: '2026-01-01',
+        startDate: '2026-01-01T00:00:00.000Z',
+        endDate: '2026-01-01T23:59:59.999Z',
+        created: 1,
+        updated: 0
+      }
+    ]);
+  });
+
+  it('reports stale entities by schema using a strict updated-at cutoff', () => {
+    const analytics = computeWorkspaceAnalytics(
+      [
+        makeEntity({ id: 'old-service', updated_at: new Date('2025-09-30T00:00:00.000Z') }),
+        makeEntity({
+          id: 'at-cutoff-service',
+          updated_at: new Date('2025-10-03T00:00:00.000Z')
+        }),
+        makeEntity({
+          id: 'old-team',
+          schema_id: 'schema-team',
+          schema_name: 'Team',
+          updated_at: new Date('2025-09-01T00:00:00.000Z')
+        })
+      ],
+      schemas,
+      lifecycleStates,
+      90,
+      [],
+      new Date('2026-01-01T00:00:00.000Z')
+    );
+
+    expect(analytics.stale).toEqual({
+      thresholdDays: 90,
+      cutoffAt: '2025-10-03T00:00:00.000Z',
+      totalCount: 2,
+      percent: 66.7,
+      schemas: [
+        {
+          schemaId: 'schema-service',
+          schemaName: 'Service',
+          totalCount: 2,
+          staleCount: 1,
+          stalePercent: 50
+        },
+        {
+          schemaId: 'schema-team',
+          schemaName: 'Team',
+          totalCount: 1,
+          staleCount: 1,
+          stalePercent: 100
+        }
+      ]
     });
   });
 });

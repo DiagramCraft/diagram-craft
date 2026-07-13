@@ -1,0 +1,303 @@
+.wrap {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: visible;
+  background: var(--panel-bg);
+}
+
+.wrapScroll {
+  overflow-x: auto;
+  overscroll-behavior: none;
+}
+
+/* .wrap's own `overflow: visible` shorthand sets overflow-y too; declaring this after .wrap in
+   the same file resolves the tie deterministically, unlike overriding it from a consumer's own
+   CSS module where load order between modules isn't guaranteed. */
+.wrapScrollY {
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
+.wrapEmbedded {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.wrapEmbedded .table thead .th:first-child,
+.wrapEmbedded .table thead .th:last-child {
+  border-radius: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+/* Keep contextual table typography from adding a second surface around Table.Root. */
+.wrap .table {
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  margin: 0;
+}
+
+/* border-collapse: separate is required in scroll mode — collapse breaks sticky column/header borders */
+.wrapScroll .table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.fixedLayout {
+  table-layout: fixed;
+}
+
+/* .table .th / .table .td at (0,2,0) beats :global(th/td) rules elsewhere in the app (0,1,1) */
+.table .th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--cmp-fg-disabled);
+  background: var(--base-bg);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  white-space: nowrap;
+}
+
+.table thead .th:first-child {
+  border-radius: 4px 0 0 0;
+}
+
+.table thead .th:last-child {
+  border-radius: 0 4px 0 0;
+}
+
+.table .td {
+  padding: 8px 10px;
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.wrapScroll .table tbody tr {
+  border-bottom: 0;
+}
+
+.wrapScroll .table .td {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.table tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.wrapScroll .table tbody tr:last-child .td {
+  border-bottom: 0;
+}
+
+.rowClickable {
+  cursor: pointer;
+}
+
+.rowClickable:hover {
+  background: var(--cmp-bg);
+}
+
+.rowClickable:hover .stickyCol {
+  background: var(--cmp-bg);
+}
+
+.rowSelected {
+  background: color-mix(in oklch, var(--accent-fg) 7%, var(--base-bg));
+}
+
+.table .rowSelected .td {
+  border-bottom-color: color-mix(in oklch, var(--accent-fg) 15%, var(--panel-border));
+}
+
+.rowSelected .stickyCol {
+  background: color-mix(in oklch, var(--accent-fg) 7%, var(--base-bg));
+}
+
+.rowMuted .td {
+  opacity: 0.45;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.stickyCol {
+  position: sticky;
+  background: var(--panel-bg);
+  z-index: 1;
+  box-shadow: inset -1px 0 0 var(--panel-border);
+  /* Forces its own compositing layer — without this, Safari/WebKit drops sticky
+     positioning on descendants of a scroll container that has overscroll-behavior set. */
+  transform: translateZ(0);
+}
+
+.table .th.stickyCol {
+  background: var(--base-bg);
+  z-index: 3;
+}
+
+.stickyHeader .th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.stickyHeader .th.stickyCol {
+  z-index: 3;
+}
+
+/* Checkbox */
+.checkbox {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--base-fg-more-dim);
+  border-radius: 3px;
+  background: transparent;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.checkbox:checked {
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
+}
+
+.checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox:indeterminate {
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
+}
+
+.checkbox:indeterminate::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 5px;
+  width: 6px;
+  height: 1.5px;
+  background: white;
+}
+
+.checkboxCell {
+  width: 32px;
+}
+
+/* Name cell */
+.name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nameMain {
+  color: var(--base-fg);
+  font-weight: 500;
+}
+
+.nameMuted {
+  color: var(--base-fg-more-dim);
+}
+
+.nameSub {
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 340px;
+  color: var(--base-fg-more-dim);
+}
+
+/* Actions */
+.actionsCell {
+  width: 28px;
+  text-align: right;
+}
+
+.dotsBtn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--cmp-fg-disabled);
+}
+
+.dotsBtn:hover {
+  color: var(--base-fg-dim);
+  background: var(--cmp-bg);
+}
+
+/* Sort button */
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+
+/* Empty row */
+.emptyRow .td {
+  text-align: center;
+  color: var(--base-fg-more-dim);
+  padding: 24px 10px;
+}
+
+/* Group header row */
+.groupHeaderCell {
+  background: var(--panel-bg);
+  font-weight: 600;
+  color: var(--base-fg-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 16px 6px 10px;
+}
+
+/* Detail row */
+.detailRow {
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.detailCell {
+  padding: 12px 16px !important;
+  background: var(--panel-bg);
+  box-shadow: inset 2px 0 0 var(--accent-fg);
+}

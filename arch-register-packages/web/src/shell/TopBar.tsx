@@ -8,7 +8,6 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import {
   TbChevronDown,
   TbChevronRight,
-  TbSearch,
   TbSettings,
   TbCheck,
   TbPlus,
@@ -20,6 +19,7 @@ import {
   TbMoon,
   TbUser,
   TbBell,
+  TbMessageCircle,
   TbX
 } from 'react-icons/tb';
 import { useNavigate } from '@tanstack/react-router';
@@ -27,6 +27,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../hooks/useTheme';
 import { resolveAvatarBackground } from '../components/MemberAvatar';
+import { SearchInput } from '../components/SearchInput';
 import {
   useClearNotifications,
   useDeleteNotification,
@@ -35,10 +36,15 @@ import {
   useNotifications,
   useWatchedEntities
 } from '../hooks/useNotifications';
+import { useDiscussionSummary } from '../hooks/useDiscussions';
+import { formatRelativeTime } from '../utils/dateFormat';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { NotificationItem, WatchedEntity } from '@arch-register/api-types/watchContract';
+import type { DiscussionSummaryEntry } from '@arch-register/api-types/discussionContract';
 import type { BreadcrumbItem } from './shellTypes';
 import { asEntityPublicId, entityDetailRoute } from '../routes/publicObjectRoutes';
+import { useDismissibleMenu } from '../hooks/useDismissibleMenu';
+import { discussionRoute } from './topBarViewModel';
 
 type TopBarProps = {
   workspaces: Workspace[];
@@ -136,20 +142,21 @@ export const TopBar = ({
       </div>
       <div className={styles.center}>
         {!hideSearch && (
-          <div className={styles.search}>
-            <TbSearch size={12} />
-            <input
-              ref={searchRef}
-              placeholder="Search entities, diagrams, projects..."
-              value={query}
-              onChange={e => onQueryChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
+          <SearchInput
+            ref={searchRef}
+            size="sm"
+            className={styles.search}
+            placeholder="Search entities, diagrams, projects..."
+            value={query}
+            onChange={onQueryChange}
+            onKeyDown={handleKeyDown}
+          >
             <span className={styles.kbd}>&#8984;K</span>
-          </div>
+          </SearchInput>
         )}
       </div>
       <div className={styles.right}>
+        <DiscussionsMenu workspaceSlug={workspaceSlug} />
         <NotificationMenu workspaceSlug={workspaceSlug} />
         <AccountMenu />
       </div>
@@ -179,25 +186,8 @@ const WorkspaceSwitcher = ({
   onAddWorkspace: () => void;
   canAddWorkspace: boolean;
 }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const { open, setOpen, ref } = useDismissibleMenu<HTMLDivElement>();
   const ws = workspaces.find(w => w.id === current) ?? workspaces[0];
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [open]);
 
   if (!ws) return null;
 
@@ -408,11 +398,77 @@ const AccountMenu = () => {
   );
 };
 
+const DiscussionsMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const navigate = useNavigate();
+  const { open, setOpen, ref } = useDismissibleMenu<HTMLDivElement>();
+  const { data: entries = [] } = useDiscussionSummary(workspaceSlug, !!workspaceSlug);
+
+  const openEntry = (entry: DiscussionSummaryEntry) => {
+    setOpen(false);
+    navigate(discussionRoute(workspaceSlug, entry));
+  };
+
+  return (
+    <div className={styles.notificationMenu} ref={ref}>
+      <button
+        type="button"
+        className={styles.notificationTrigger}
+        aria-label="Discussions"
+        title="Discussions"
+        onClick={() => setOpen(value => !value)}
+      >
+        <TbMessageCircle size={15} />
+        {entries.length > 0 && <span className={styles.notificationBadge}>{entries.length}</span>}
+      </button>
+      {open && (
+        <div className={styles.notificationDrop}>
+          <div className={styles.discussionsHeader}>
+            <span>Discussions</span>
+          </div>
+          <div className={styles.notificationPanel}>
+            {entries.length === 0 ? (
+              <div className={styles.notificationEmpty}>
+                <span>No discussions yet</span>
+                <span>Threads on entities, assessments, and pages show up here.</span>
+              </div>
+            ) : (
+              <div className={styles.notificationList}>
+                {entries.map(entry => (
+                  <button
+                    key={`${entry.objectType}:${entry.objectId}`}
+                    type="button"
+                    className={styles.notificationRow}
+                    aria-label={`Discussion: ${entry.objectTitle}`}
+                    onClick={() => openEntry(entry)}
+                  >
+                    <div className={styles.notificationRowMain}>
+                      <div className={styles.notificationEntity}>{entry.objectTitle}</div>
+                      <div className={styles.notificationMeta}>
+                        <span>{entry.lastPost.authorName}</span>
+                        <span className={styles.notificationSep}>·</span>
+                        <span>
+                          {entry.postCount} post{entry.postCount !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.notificationWhen}>
+                      {formatRelativeTime(entry.lastPost.createdAt)}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<'notifications' | 'watching'>('notifications');
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const { open, setOpen, ref } = useDismissibleMenu<HTMLDivElement>();
   const { data: count } = useNotificationCount(workspaceSlug, !!workspaceSlug);
   const { data: notifications = [] } = useNotifications(workspaceSlug, open && !!workspaceSlug);
   const { data: watched = [] } = useWatchedEntities(workspaceSlug, open && !!workspaceSlug);
@@ -420,22 +476,6 @@ const NotificationMenu = ({ workspaceSlug }: { workspaceSlug: string }) => {
   const deleteNotificationMutation = useDeleteNotification(workspaceSlug);
   const deleteWatchMutation = useDeleteWatch(workspaceSlug);
   const notificationCount = count?.count ?? 0;
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
-    };
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [open]);
 
   const openEntity = (entityId: string) => {
     setOpen(false);
@@ -554,7 +594,7 @@ const NotificationList = ({
               <span className={styles.notificationOp}>{item.operation}</span>
             </div>
           </div>
-          <div className={styles.notificationWhen}>{formatRelativeTimestamp(item.timestamp)}</div>
+          <div className={styles.notificationWhen}>{formatRelativeTime(item.timestamp)}</div>
           <button
             type="button"
             className={styles.notificationClear}
@@ -632,18 +672,6 @@ const WatchingList = ({
       ))}
     </div>
   );
-};
-
-const formatRelativeTimestamp = (timestamp: string) => {
-  const date = new Date(timestamp);
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.max(1, Math.round(diffMs / 60000));
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.round(diffHours / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
 };
 
 const ThemeToggle = ({ theme, onSetTheme }: { theme: Theme; onSetTheme: (t: Theme) => void }) => {

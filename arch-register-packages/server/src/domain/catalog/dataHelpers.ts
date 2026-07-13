@@ -46,6 +46,19 @@ export const matchesFilterCondition = (
   condition: FilterCondition,
   completeness: number | null
 ): boolean => {
+  if (condition.fieldId === '_tags') {
+    const tags = entity.tags;
+    if (condition.op === 'empty') return tags.length === 0;
+    if (condition.op === 'not_empty') return tags.length > 0;
+    const expected = String(condition.value ?? '');
+    switch (condition.op) {
+      case 'equals': return tags.some(t => t === expected);
+      case 'not_equals': return !tags.some(t => t === expected);
+      case 'contains': return tags.some(t => t.toLowerCase().includes(expected.toLowerCase()));
+      default: return true;
+    }
+  }
+
   let value: unknown;
   switch (condition.fieldId) {
     case '_schemaId': value = entity.schema_id; break;
@@ -56,6 +69,7 @@ export const matchesFilterCondition = (
     case '_description': value = entity.description; break;
     case '_namespace': value = entity.namespace; break;
     case '_completeness': value = completeness; break;
+    case '_updatedAt': value = entity.updated_at; break;
     default: value = entity.data[condition.fieldId];
   }
 
@@ -72,6 +86,13 @@ export const matchesFilterCondition = (
     case 'ends_with': return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
     case 'gt': return Number(value) > Number(expected);
     case 'lt': return Number(value) < Number(expected);
+    case 'gte': return Number(value) >= Number(expected);
+    case 'lte': return Number(value) <= Number(expected);
+    case 'before': {
+      const valueTime = value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
+      const expectedTime = new Date(String(expected)).getTime();
+      return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime < expectedTime;
+    }
     default: return true;
   }
 };

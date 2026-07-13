@@ -4,7 +4,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
+import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { getWorkspaceAnalytics } from './workspaceAnalyticsOperations';
 
 type ORPCContext = {
@@ -12,16 +12,19 @@ type ORPCContext = {
   event: AuthenticatedEvent;
 };
 
-const analyticsRouter = implement(workspaceAnalyticsContract).$context<ORPCContext>();
+const analyticsRouter = implement(workspaceAnalyticsContract)
+  .$context<ORPCContext>()
+  .use(orpcErrorMiddleware);
 
 export const workspaceAnalyticsORPCRouter = analyticsRouter.router({
   analytics: {
     get: analyticsRouter.analytics.get.handler(async ({ input, context }) => {
-      try {
-        return await getWorkspaceAnalytics(context.db, input.params.workspace, context.event);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await getWorkspaceAnalytics(
+        context.db,
+        input.params.workspace,
+        context.event,
+        input.query.staleAfterDays
+      );
     })
   }
 });

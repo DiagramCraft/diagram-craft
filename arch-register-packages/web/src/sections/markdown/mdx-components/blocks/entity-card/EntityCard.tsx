@@ -1,12 +1,14 @@
 import { useNavigate } from '@tanstack/react-router';
 import type { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
+import { Banner } from '../../../../../components/Banner';
 import { TypeBadge } from '../../../../../components/TypeBadge';
 import { StatusChip } from '../../../../../components/StatusChip';
 import { useEntity } from '../../../../../hooks/useEntities';
-import { resolveSchemaColor } from '../../../../../lib/api';
+import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
 import styles from './EntityCard.module.css';
+import { formatDate } from '../../../../../utils/dateFormat';
 
 export const filterSchemaFields = <T extends { type: string }>(fields: T[]): T[] =>
   fields.filter(f => f.type !== 'containment' && f.type !== 'reference');
@@ -33,13 +35,7 @@ export const renderSchemaFieldValue = (
     const opt = selectField.options.find(o => o.value === String(value));
     return opt?.label ?? String(value);
   }
-  if (field.type === 'date') {
-    try {
-      return new Date(String(value)).toLocaleDateString();
-    } catch {
-      return String(value);
-    }
-  }
+  if (field.type === 'date') return formatDate(value, String(value));
   if (field.type === 'reference' || field.type === 'containment') return null;
   return String(value);
 };
@@ -60,11 +56,7 @@ export const EntityCard = ({ id, fields }: { id: string; fields?: string }) => {
   }
 
   if (isError || !entity) {
-    return (
-      <div className={`${styles.card} ${styles.error}`}>
-        <span className={styles.errorText}>Entity not found: {id}</span>
-      </div>
-    );
+    return <Banner variant="error">Entity not found: {id}</Banner>;
   }
 
   const schemaIdx = schemas.findIndex(s => s.id === entity._schema?.id);

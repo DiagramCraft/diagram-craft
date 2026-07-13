@@ -1,44 +1,52 @@
 import {
   WorkspaceDbCreate,
   WorkspaceDbUpdate,
-  WorkspaceDbResult,
-  LifecycleStateDbResult,
   WorkspaceDatabase,
-  OwnerDbResult,
   LifecycleStateDbCreate,
-  MemberDbResult,
-  TeamMembershipDbResult,
   OwnerDbCreate,
-  RoleDefinitionDbResult,
   TeamMembershipDbCreate,
   RoleDefinitionDbCreate,
   RoleDefinitionDbUpdate,
-  ProjectEntityTypeDbResult,
   ProjectEntityTypeDbCreate
 } from './workspaceDatabase';
+import { workspaceMappers } from './workspaceDatabase';
 import type { ImportCacheEntry } from '../importCache';
-import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  type PostgresSqlClient
+} from '../../../db/postgresBase';
+import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
+
+const withTransaction = async <T>(
+  sql: PostgresSqlClient,
+  callback: (tx: PostgresSqlClient) => Promise<T>
+) => {
+  const begin = (sql as unknown as { begin?: (fn: typeof callback) => Promise<T> }).begin;
+  return typeof begin === 'function' ? await begin.call(sql, callback) : await callback(sql);
+};
 
 export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements WorkspaceDatabase {
   async listWorkspaces() {
-    return await this.sql<WorkspaceDbResult[]>`SELECT *FROM workspace ORDER BY name`;
+    const rows = await this.sql<DatabaseRow[]>`SELECT *FROM workspace ORDER BY name`;
+    return mapDatabaseRows(rows, workspaceMappers.workspace);
   }
 
   async getWorkspace(id: string) {
-    const [row] = await this.sql<WorkspaceDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM workspace WHERE id = ${id}
     `;
-    return row ?? null;
+    return row ? workspaceMappers.workspace(row) : null;
   }
 
   async createWorkspace(input: WorkspaceDbCreate) {
     try {
-      const [row] = await this.sql<WorkspaceDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO workspace (id, name, url_slug, short_code, color, description, created_at, updated_at)
         VALUES (${input.id}, ${input.name}, ${input.url_slug}, ${input.short_code}, ${input.color}, ${input.description}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
-      return row!;
+      return workspaceMappers.workspace(row!);
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -46,7 +54,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async updateWorkspace(id: string, input: WorkspaceDbUpdate) {
     try {
-      const [row] = await this.sql<WorkspaceDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         UPDATE workspace
         SET name = ${input.name},
             url_slug = ${input.url_slug},
@@ -57,7 +65,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         WHERE id = ${id}
         RETURNING *
       `;
-      return row ?? null;
+      return row ? workspaceMappers.workspace(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -65,7 +73,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async deleteWorkspace(id: string) {
     try {
-      const [workspace] = await this.sql<WorkspaceDbResult[]>`
+      const [workspace] = await this.sql<DatabaseRow[]>`
         SELECT * FROM workspace WHERE id = ${id}
       `;
       if (!workspace) return { workspace: null, projectIds: [] };
@@ -74,7 +82,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         SELECT id FROM project WHERE workspace = ${id}
       `;
 
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         await tx`DELETE FROM public_id_prefix WHERE owner_type = 'schema' AND owner_id IN (SELECT id FROM entity_schema WHERE workspace = ${id})`;
         await tx`DELETE FROM public_id_prefix WHERE owner_type = 'workspace' AND owner_id = ${id}`;
         await tx`DELETE FROM content_node WHERE workspace = ${id}`;
@@ -91,24 +99,25 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         await tx`DELETE FROM workspace WHERE id = ${id}`;
       });
 
-      return { workspace, projectIds: projects.map(project => project.id) };
+      return { workspace: workspace ? workspaceMappers.workspace(workspace) : null, projectIds: projects.map(project => project.id) };
     } catch (error) {
       return normalizePostgresError(error);
     }
   }
 
   async listLifecycleStates(workspace: string) {
-    return await this.sql<LifecycleStateDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT id, workspace, label, color, sort_order, created_at
       FROM workspace_lifecycle_state
       WHERE workspace = ${workspace}
       ORDER BY sort_order, id
     `;
+    return mapDatabaseRows(rows, workspaceMappers.lifecycleState);
   }
 
   async replaceLifecycleStates(workspace: string, states: LifecycleStateDbCreate[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         const stateIds = states.map(state => state.id);
 
         if (stateIds.length === 0) {
@@ -160,17 +169,18 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listProjectEntityTypes(workspace: string) {
-    return await this.sql<ProjectEntityTypeDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT id, workspace, label, sort_order, created_at
       FROM project_entity_type
       WHERE workspace = ${workspace}
       ORDER BY sort_order, id
     `;
+    return mapDatabaseRows(rows, workspaceMappers.projectEntityType);
   }
 
   async replaceProjectEntityTypes(workspace: string, types: ProjectEntityTypeDbCreate[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         await tx`DELETE FROM project_entity_type WHERE workspace = ${workspace}`;
         for (const type of types) {
           await tx`
@@ -186,17 +196,18 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listTeams(workspace: string) {
-    return await this.sql<OwnerDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT id, workspace, name, sort_order, color, description, created_at
       FROM workspace_owner
       WHERE workspace = ${workspace}
       ORDER BY sort_order, id
     `;
+    return mapDatabaseRows(rows, workspaceMappers.owner);
   }
 
   async replaceTeams(workspace: string, owners: OwnerDbCreate[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         const ownerIds = owners.map(owner => owner.id);
 
         if (ownerIds.length === 0) {
@@ -234,17 +245,18 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listTeamAssignments(workspace: string) {
-    return await this.sql<TeamMembershipDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT workspace, team_id, user_id, role, created_at
       FROM team_membership
       WHERE workspace = ${workspace}
       ORDER BY team_id, user_id
     `;
+    return mapDatabaseRows(rows, workspaceMappers.teamMembership);
   }
 
   async replaceTeamAssignments(workspace: string, memberships: TeamMembershipDbCreate[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withTransaction(this.sql, async tx => {
         await tx`DELETE FROM team_membership WHERE workspace = ${workspace}`;
         for (const membership of memberships) {
           await tx`
@@ -260,41 +272,42 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listWorkspaceMembers(workspace: string) {
-    return await this.sql<MemberDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT workspace, user_id, role, created_at
       FROM workspace_member
       WHERE workspace = ${workspace}
       ORDER BY role, user_id
     `;
+    return mapDatabaseRows(rows, workspaceMappers.member);
   }
 
   async getWorkspaceMember(workspace: string, userId: string) {
-    const [row] = await this.sql<MemberDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT workspace, user_id, role, created_at
       FROM workspace_member
       WHERE workspace = ${workspace} AND user_id = ${userId}
     `;
-    return row ?? null;
+    return row ? workspaceMappers.member(row) : null;
   }
 
   async setWorkspaceMemberRole(workspace: string, userId: string, role: string, createdAt: Date) {
-    const [row] = await this.sql<MemberDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       INSERT INTO workspace_member (workspace, user_id, role, created_at)
       VALUES (${workspace}, ${userId}, ${role}, ${createdAt})
       ON CONFLICT (workspace, user_id) DO UPDATE
       SET role = EXCLUDED.role
       RETURNING *
     `;
-    return row!;
+    return workspaceMappers.member(row!);
   }
 
   async removeWorkspaceMember(workspace: string, userId: string) {
-    const [row] = await this.sql<MemberDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       DELETE FROM workspace_member
       WHERE workspace = ${workspace} AND user_id = ${userId}
       RETURNING *
     `;
-    return row ?? null;
+    return row ? workspaceMappers.member(row) : null;
   }
 
   async registerPublicIdPrefix(
@@ -370,31 +383,32 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   }
 
   async listCustomWorkspaceRoles(workspace: string) {
-    return await this.sql<RoleDefinitionDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
       FROM workspace_role
       WHERE workspace = ${workspace}
       ORDER BY name, id
     `;
+    return mapDatabaseRows(rows, workspaceMappers.roleDefinition);
   }
 
   async getCustomWorkspaceRole(workspace: string, roleId: string) {
-    const [row] = await this.sql<RoleDefinitionDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
       FROM workspace_role
       WHERE workspace = ${workspace} AND id = ${roleId}
     `;
-    return row ?? null;
+    return row ? workspaceMappers.roleDefinition(row) : null;
   }
 
   async createCustomWorkspaceRole(input: RoleDefinitionDbCreate) {
     try {
-      const [row] = await this.sql<RoleDefinitionDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO workspace_role (id, workspace, name, description, tone, capabilities, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.tone}, ${this.json(input.capabilities)}, ${input.created_at}, ${input.updated_at})
         RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
       `;
-      return row!;
+      return workspaceMappers.roleDefinition(row!);
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -406,7 +420,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     input: RoleDefinitionDbUpdate
   ) {
     try {
-      const [row] = await this.sql<RoleDefinitionDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         UPDATE workspace_role
         SET name = ${input.name},
             description = ${input.description},
@@ -416,19 +430,19 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         WHERE workspace = ${workspace} AND id = ${roleId}
         RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
       `;
-      return row ?? null;
+      return row ? workspaceMappers.roleDefinition(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
   }
 
   async deleteCustomWorkspaceRole(workspace: string, roleId: string) {
-    const [row] = await this.sql<RoleDefinitionDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       DELETE FROM workspace_role
       WHERE workspace = ${workspace} AND id = ${roleId}
       RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
     `;
-    return row ?? null;
+    return row ? workspaceMappers.roleDefinition(row) : null;
   }
 
   async countWorkspaceMembersByRole(workspace: string, roleId: string) {

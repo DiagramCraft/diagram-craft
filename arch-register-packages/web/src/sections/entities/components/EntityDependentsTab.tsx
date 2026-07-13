@@ -5,8 +5,10 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { StatusChip } from '../../../components/StatusChip';
 import { Chip } from '../../../components/Chip';
 import { FilterDropdown } from '../../../components/FilterDropdown';
-import { getRelationDisplayLabel, resolveSchemaColor } from '../../../lib/api';
+import { getRelationDisplayLabel } from '../../../lib/entityRelations';
+import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { useEntityDependents } from '../../../hooks/useEntities';
+import { EmptyState } from '../../../components/EmptyState';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { EntityDependent } from '@arch-register/api-types/entityContract';
@@ -103,10 +105,10 @@ export const EntityDependentsTab = ({
       </div>
 
       {filtered.length === 0 ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No dependents</div>
-          <div>No entities reference this one{transitive ? ' (directly or transitively)' : ' directly'}.</div>
-        </div>
+        <EmptyState
+          title="No dependents"
+          subtitle={`No entities reference this one${transitive ? ' (directly or transitively)' : ' directly'}.`}
+        />
       ) : (
         <>
           <div className={styles.list}>

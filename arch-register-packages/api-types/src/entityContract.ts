@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId, foreignKeySchema, UUID_REGEX } from '@arch-register/api-types/common';
+import { filterConditionSchema } from '@arch-register/api-types/viewContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -40,6 +41,7 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
   _targetLifecycleDate: z.string().nullable().describe('Target date for lifecycle transition (ISO 8601)'),
   _tags: z.array(z.string()).describe('Entity tags'),
   _links: z.array(entityLinkSchema).describe('External links associated with the entity'),
+  _updatedAt: z.string().optional().describe('ISO 8601 timestamp of the entity\'s most recent update'),
   _visibilityMode: visibilityModeSchema.nullable().describe('Entity visibility mode'),
   _completeness: z.number().nullable().describe('Field completeness percentage (0-100)'),
   _projectLink: projectLinkSchema.optional().describe('Project linkage information')
@@ -77,12 +79,32 @@ const entityMutationBodySchema = z
 
 // ── Query / filter input ──────────────────────────────────────
 
-const listFiltersSchema = z.object({
+const conditionsQuerySchema = z.preprocess(value => {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return undefined;
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}, z.array(filterConditionSchema).optional());
+
+const booleanQuerySchema = z.preprocess(value => {
+  if (typeof value === 'boolean') return value;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+}, z.boolean().optional());
+
+export const entityListFiltersSchema = z.object({
   _schemaId: z.string().optional().describe('Filter by schema identifier'),
   owner: z.string().optional().describe('Filter by owner identifier'),
   lifecycle: z.string().optional().describe('Filter by lifecycle state'),
   q: z.string().optional().describe('Search query string'),
-  conditions: z.string().optional().describe('JSON-encoded filter conditions'),
+  conditions: conditionsQuerySchema.describe('Additional filter conditions'),
+  assessmentId: z.string().optional().describe('Joined assessment identifier — required when conditions reference assessment fields'),
   projectId: z.string().optional().describe('Filter by project identifier'),
   projectScope: z.enum(['project', 'all']).optional().describe('Project scope filter'),
   asOf: z
@@ -91,8 +113,7 @@ const listFiltersSchema = z.object({
     .describe(
       'ISO 8601 date/time — if set, return entities reconstructed as they existed/will exist at this point in time (read-only snapshot mode)'
     ),
-  includeProjectSnapshots: z
-    .enum(['true', 'false'])
+  includeProjectSnapshots: booleanQuerySchema
     .optional()
     .describe(
       'When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true.'
@@ -140,7 +161,7 @@ const entityFacetsSchema = z.object({
 // ── Tree ──────────────────────────────────────────────────────
 
 const treeResponseSchema = z.object({
-  nodes: z.array(entitySummarySchema.extend({
+  nodes: z.array(entityRecordSchema.extend({
     _isMatch: z.boolean().describe('Whether this node matches the search criteria')
   })).describe('Tree nodes'),
   edges: z.array(z.object({
@@ -289,7 +310,7 @@ export const workspaceEntityContract = oc
           z.object({
             params: ws,
             query: z.object({
-              ...listFiltersSchema.shape,
+              ...entityListFiltersSchema.shape,
               ...z.object({
                 limit: z.preprocess(
                   v => (v !== undefined ? Number(v) : undefined),
@@ -317,7 +338,7 @@ export const workspaceEntityContract = oc
         .input(
           z.object({
             params: ws,
-            query: listFiltersSchema
+            query: entityListFiltersSchema
           })
         )
         .output(entityCountResponseSchema),
@@ -355,7 +376,7 @@ export const workspaceEntityContract = oc
         .input(
           z.object({
             params: ws,
-            query: listFiltersSchema
+            query: entityListFiltersSchema
           })
         )
         .output(treeResponseSchema),
@@ -428,6 +449,25 @@ export const workspaceEntityContract = oc
           })
         )
         .output(entityRecordSchema),
+      bulkCreate: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/data/bulk',
+          inputStructure: 'detailed',
+          summary: 'Create multiple entities',
+          description:
+            'Creates a batch of entities transactionally and resolves symbolic references within the batch.',
+          tags: ['Entities']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({
+              entities: z.array(entityMutationBodySchema).describe('Entities to create')
+            })
+          })
+        )
+        .output(z.array(entityRecordSchema)),
       update: oc
         .route({
           method: 'PUT',
@@ -546,7 +586,7 @@ export const workspaceEntityContract = oc
         .input(
           z.object({
             params: ws,
-            query: listFiltersSchema
+            query: entityListFiltersSchema
           })
         )
         .output(
@@ -706,9 +746,12 @@ export type VisibilityMode = z.infer<typeof visibilityModeSchema>;
 export type EntitySummary = z.infer<typeof entitySummarySchema>;
 export type EntityRecord = z.infer<typeof entityRecordSchema>;
 export type EntityFacets = z.infer<typeof entityFacetsSchema>;
+export type EntityRelation = z.infer<typeof entityRelationSchema>;
 export type EntityRelations = z.infer<typeof entityRelationsSchema>;
 export type EntityDependent = z.infer<typeof entityDependentSchema>;
 export type EntityDependents = z.infer<typeof entityDependentsSchema>;
 export type TreeResponse = z.infer<typeof treeResponseSchema>;
+export type TreeNode = TreeResponse['nodes'][number];
+export type TreeEdge = TreeResponse['edges'][number];
 export type EntitySnapshot = z.infer<typeof entitySnapshotSchema>;
 export type TimelineMarker = z.infer<typeof timelineMarkerSchema>;

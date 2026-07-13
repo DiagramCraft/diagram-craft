@@ -5,7 +5,7 @@ type ResolvedSchemaField = EntitySchema['fields'][number];
 
 export type BulkSchemaField = Extract<
   ResolvedSchemaField,
-  { type: 'text' | 'longtext' | 'boolean' | 'date' | 'select' | 'reference' }
+  { type: 'text' | 'longtext' | 'boolean' | 'date' | 'number' | 'select' | 'reference' }
 >;
 
 export type BulkEditableField =
@@ -18,6 +18,7 @@ const BULK_EDITABLE_TYPES = new Set<ResolvedSchemaField['type']>([
   'longtext',
   'boolean',
   'date',
+  'number',
   'select',
   'reference'
 ]);

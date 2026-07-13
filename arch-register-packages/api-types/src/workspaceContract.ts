@@ -50,7 +50,7 @@ const exportRequestSchema = z.object({
 const importParseResponseSchema = z.object({
   valid: z.boolean().describe('Whether the import file is valid'),
   version: z.string().describe('Export format version'),
-  import_id: z.string().describe('Unique identifier for this import session'),
+  import_id: z.string().optional().describe('Unique identifier for a valid import session'),
   source_workspace: z.object({
     id: z.string().describe('Source workspace identifier'),
     name: z.string().describe('Source workspace name'),
@@ -90,7 +90,13 @@ const importParseResponseSchema = z.object({
     suggested_resolution: z.enum(['skip', 'merge', 'overwrite', 'rename']).describe('Suggested resolution strategy')
   })).describe('List of conflicts that need resolution'),
   errors: z.array(z.string()).describe('Import validation errors'),
-  warnings: z.array(z.string()).describe('Import validation warnings')
+  warnings: z.array(z.string()).describe('Import validation warnings'),
+  diagnostics: z.array(z.object({
+    code: z.enum(['invalid_archive', 'invalid_manifest', 'checksum_mismatch', 'duplicate_import_item', 'missing_reference', 'missing_content_file', 'unresolved_conflict']),
+    item_type: exportDataTypeSchema.optional(),
+    item_id: z.string().optional(),
+    message: z.string()
+  })).optional()
 });
 
 const importExecuteRequestSchema = z.object({
@@ -133,7 +139,14 @@ const importExecuteResponseSchema = z.object({
     }).optional().describe('Content node import results')
   }).describe('Summary of imported items'),
   errors: z.array(z.string()).describe('Import execution errors'),
-  warnings: z.array(z.string()).describe('Import execution warnings')
+  warnings: z.array(z.string()).describe('Import execution warnings'),
+  failure: z.object({
+    stage: z.enum(['validation', 'planning', 'storage', 'persistence']),
+    message: z.string(),
+    affected_items: z.array(z.string()),
+    compensation: z.enum(['not_required', 'completed', 'failed']),
+    recovery: z.literal('reupload_archive')
+  }).optional()
 });
 
 // ── Contract ──────────────────────────────────────────────────
@@ -317,6 +330,9 @@ export type WorkspaceRoleCapability =
   | 'people.teams'
   | 'proj.create'
   | 'proj.edit'
+  | 'proj.delete'
+  | 'content.view'
+  | 'content.edit'
   | 'ent.edit'
   | 'ent.propose'
   | 'comments'

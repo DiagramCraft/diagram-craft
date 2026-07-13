@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '../auth/AuthContext';
+import { Banner } from '../components/Banner';
+import { LoadingState } from '../components/LoadingState';
 import { useAuthConfig } from '../hooks/useAuthConfig';
 import styles from './LoginScreen.module.css';
 
@@ -74,8 +76,9 @@ export const LoginScreen = () => {
                 <div className={styles.brandName}>Arch Register</div>
               </div>
             </div>
-            <div className={styles.spinner} />
-            <p className={styles.loadingText}>Loading...</p>
+            <div className={styles.loadingWrap}>
+              <LoadingState text="Loading..." size="sm" />
+            </div>
           </div>
         </main>
         <div className={styles.statusbar} />
@@ -101,18 +104,8 @@ export const LoginScreen = () => {
 
           {authMode === 'local' ? (
             <div className={styles.form}>
-              {sessionMessage && !error && (
-                <output className={styles.error} aria-live="polite">
-                  <span className={styles.errorDot} />
-                  <span>{sessionMessage}</span>
-                </output>
-              )}
-              {error && (
-                <div className={styles.error} role="alert" aria-live="polite">
-                  <span className={styles.errorDot} />
-                  <span>{error}</span>
-                </div>
-              )}
+              {sessionMessage && !error && <Banner variant="error">{sessionMessage}</Banner>}
+              {error && <Banner variant="error">{error}</Banner>}
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="lg-user">Username</label>
@@ -191,18 +184,8 @@ export const LoginScreen = () => {
             </div>
           ) : (
             <div className={styles.oidcContainer}>
-              {sessionMessage && !error && (
-                <output className={styles.error} aria-live="polite">
-                  <span className={styles.errorDot} />
-                  <span>{sessionMessage}</span>
-                </output>
-              )}
-              {error && (
-                <div className={styles.error} role="alert" aria-live="polite">
-                  <span className={styles.errorDot} />
-                  <span>{error}</span>
-                </div>
-              )}
+              {sessionMessage && !error && <Banner variant="error">{sessionMessage}</Banner>}
+              {error && <Banner variant="error">{error}</Banner>}
               <button
                 type="button"
                 onClick={handleOidcLogin}

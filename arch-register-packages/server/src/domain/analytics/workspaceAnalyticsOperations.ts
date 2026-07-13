@@ -1,4 +1,4 @@
-import type { WorkspaceAnalytics } from '@arch-register/api-types/analyticsContract';
+import type { ActivityTrendBucket, WorkspaceAnalytics } from '@arch-register/api-types/analyticsContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, filterVisibleEntities, requireWorkspaceCapability } from '../auth/authorization';
@@ -7,6 +7,7 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
+import type { AuditLogDbResult } from '../audit/db/auditDatabase';
 
 const roundPercent = (count: number, total: number) =>
   total === 0 ? 0 : Math.round((count / total) * 1000) / 10;
@@ -42,10 +43,46 @@ const summarizeCompleteness = (entities: EntityDbResult[], schemaMap: Map<string
   return { below50Count, between50And79Count, above80Count };
 };
 
+const dayMs = 24 * 60 * 60 * 1000;
+
+const startOfUtcDay = (date: Date) =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+
+export const computeActivityTrend = (
+  auditRows: AuditLogDbResult[],
+  days: number,
+  now = new Date()
+): ActivityTrendBucket[] => {
+  const today = startOfUtcDay(now);
+  const firstDay = new Date(today.getTime() - (days - 1) * dayMs);
+  const buckets = Array.from({ length: days }, (_, index) => {
+    const start = new Date(firstDay.getTime() + index * dayMs);
+    return {
+      date: start.toISOString().slice(0, 10),
+      startDate: start.toISOString(),
+      endDate: new Date(start.getTime() + dayMs - 1).toISOString(),
+      created: 0,
+      updated: 0
+    };
+  });
+  const bucketByDate = new Map(buckets.map(bucket => [bucket.date, bucket]));
+
+  for (const row of auditRows) {
+    if (row.entity_type !== 'entity' || (row.operation !== 'create' && row.operation !== 'update')) continue;
+    const bucket = bucketByDate.get(row.timestamp.toISOString().slice(0, 10));
+    if (bucket) bucket[row.operation === 'create' ? 'created' : 'updated']++;
+  }
+
+  return buckets;
+};
+
 export const computeWorkspaceAnalytics = (
   entities: EntityDbResult[],
   schemas: SchemaDbResult[],
-  lifecycleStates: LifecycleStateDbResult[]
+  lifecycleStates: LifecycleStateDbResult[],
+  staleAfterDays = 90,
+  auditRows: AuditLogDbResult[] = [],
+  now = new Date()
 ): WorkspaceAnalytics => {
   const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
   const totalEntities = entities.length;
@@ -156,6 +193,30 @@ export const computeWorkspaceAnalytics = (
     }))
     .sort((a, b) => b.count - a.count || a.schemaName.localeCompare(b.schemaName));
 
+  const cutoffAt = new Date(now.getTime() - staleAfterDays * 24 * 60 * 60 * 1000);
+  const staleEntityIds = new Set(
+    entities.filter(entity => entity.updated_at < cutoffAt).map(entity => entity.id)
+  );
+  const stale = {
+    thresholdDays: staleAfterDays,
+    cutoffAt: cutoffAt.toISOString(),
+    totalCount: staleEntityIds.size,
+    percent: roundPercent(staleEntityIds.size, totalEntities),
+    schemas: schemas
+      .map(schema => {
+        const schemaEntities = entitiesBySchema.get(schema.id) ?? [];
+        const staleCount = schemaEntities.filter(entity => staleEntityIds.has(entity.id)).length;
+        return {
+          schemaId: schema.id,
+          schemaName: schema.name,
+          totalCount: schemaEntities.length,
+          staleCount,
+          stalePercent: roundPercent(staleCount, schemaEntities.length)
+        };
+      })
+      .sort((a, b) => b.staleCount - a.staleCount || a.schemaName.localeCompare(b.schemaName))
+  };
+
   return {
     summary: {
       totalEntities,
@@ -166,24 +227,37 @@ export const computeWorkspaceAnalytics = (
     coverage,
     ownershipGaps,
     completeness,
-    schemaUtilization
+    schemaUtilization,
+    activityTrends: {
+      days30: computeActivityTrend(auditRows, 30, now),
+      days90: computeActivityTrend(auditRows, 90, now)
+    },
+    stale
   };
 };
 
 export const getWorkspaceAnalytics = async (
   db: DatabaseAdapter,
   workspace: string,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  staleAfterDays = 90
 ): Promise<WorkspaceAnalytics> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.audit');
 
-  const [entities, schemas, lifecycleStates] = await Promise.all([
+  const [entities, schemas, lifecycleStates, auditRows] = await Promise.all([
     listAllCatalogEntities(db, ws),
     db.catalog.listSchemas(ws),
-    db.workspace.listLifecycleStates(ws)
+    db.workspace.listLifecycleStates(ws),
+    db.audit.listAuditLogs(ws)
   ]);
 
-  return computeWorkspaceAnalytics(filterVisibleEntities(authCtx, entities), schemas, lifecycleStates);
+  return computeWorkspaceAnalytics(
+    filterVisibleEntities(authCtx, entities),
+    schemas,
+    lifecycleStates,
+    staleAfterDays,
+    auditRows
+  );
 };

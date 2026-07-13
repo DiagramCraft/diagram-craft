@@ -6,7 +6,9 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { orpcClient } from '../lib/orpcClient';
-import { ApiError, WorkspaceTeam } from '../lib/api';
+import { ApiError } from '../lib/http';
+import { Banner } from '../components/Banner';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
@@ -137,6 +139,8 @@ export const AddEntityDialog = ({
         if (val !== undefined && val !== '' && !isEmptyArray) {
           if (f.type === 'boolean') {
             dataFields[f.id] = val === 'true';
+          } else if (f.type === 'number') {
+            dataFields[f.id] = Number(val);
           } else {
             dataFields[f.id] = val;
           }
@@ -318,7 +322,7 @@ export const AddEntityDialog = ({
           </FormGroup>
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <Banner variant="error">{error}</Banner>}
       </form>
     </Dialog>
   );
@@ -432,6 +436,22 @@ const FieldInput = ({
       <FormElement label={field.name}>
         <input
           type="date"
+          value={typeof value === 'string' ? value : ''}
+          onChange={e => onChange(e.target.value)}
+          style={{ width: '100%' }}
+        />
+      </FormElement>
+    );
+  }
+
+  if (field.type === 'number') {
+    return (
+      <FormElement label={field.name}>
+        <input
+          type="number"
+          step="1"
+          min={field.min}
+          max={field.max}
           value={typeof value === 'string' ? value : ''}
           onChange={e => onChange(e.target.value)}
           style={{ width: '100%' }}

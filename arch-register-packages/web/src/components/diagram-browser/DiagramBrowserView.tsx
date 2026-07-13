@@ -2,14 +2,15 @@ import type React from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbFolder, TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
-import type { FileEntry } from '../../lib/api';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { DiagramCard, DiagramRow } from '../DiagramCard';
+import { EmptyState } from '../EmptyState';
 import styles from '../../sections/projects/ProjectDetailScreen.module.css';
 
 export type DiagramViewMode = 'grid' | 'list';
 
 export type DiagramBrowserItem = {
-  file: FileEntry;
+  file: ProjectFile;
   folder?: string;
 };
 
@@ -31,18 +32,19 @@ const DiagramBrowserEmptyState = ({
   actionLabel?: string;
   onAction?: () => void;
 }) => (
-  <div className={styles.empty}>
-    <div className={styles.emptyIcon}>
-      <TbPlus size={18} />
-    </div>
-    <div className={styles.emptyTitle}>{title}</div>
-    <div className={styles.emptySub}>{sub}</div>
-    {actionLabel ? (
-      <Button variant="primary" onClick={onAction}>
-        {actionLabel}
-      </Button>
-    ) : null}
-  </div>
+  <EmptyState
+    framed
+    icon={<TbPlus size={18} />}
+    title={title}
+    subtitle={sub}
+    action={
+      actionLabel ? (
+        <Button variant="primary" onClick={onAction}>
+          {actionLabel}
+        </Button>
+      ) : null
+    }
+  />
 );
 
 const AddDiagramCard = ({ onClick }: { onClick: () => void }) => (
@@ -116,10 +118,10 @@ export const DiagramBrowserView = ({
   viewMode: DiagramViewMode;
   listItems: DiagramBrowserItem[];
   gridSections: DiagramBrowserGridSection[];
-  onOpenDiagram: (file: FileEntry) => void;
-  onOpenMarkdown?: (file: FileEntry) => void;
-  onDownloadFile?: (file: FileEntry) => void;
-  onContextMenu?: (event: React.MouseEvent, file: FileEntry) => void;
+  onOpenDiagram: (file: ProjectFile) => void;
+  onOpenMarkdown?: (file: ProjectFile) => void;
+  onDownloadFile?: (file: ProjectFile) => void;
+  onContextMenu?: (event: React.MouseEvent, file: ProjectFile) => void;
   onNewDiagram?: () => void;
   emptyState: { title: string; sub: string };
   noMatchState: { title: string; sub: string };

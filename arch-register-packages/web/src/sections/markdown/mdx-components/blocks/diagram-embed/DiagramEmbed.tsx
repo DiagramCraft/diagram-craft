@@ -13,7 +13,7 @@ import { Marquee } from '@diagram-craft/canvas/marquee';
 import type { Context } from '@diagram-craft/canvas/context';
 import type { ToolType } from '@diagram-craft/canvas/tool';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { useProjectFile, useProjectFileContent } from '../../../../../hooks/useProjectFiles';
+import { useContentFile, useContentFileContent } from '../../../../../hooks/useContentScope';
 import { initializeDiagramCraft } from '../../../../../diagramcraft-initial-config';
 import {
   asEntityPublicId,
@@ -22,6 +22,8 @@ import {
   projectDiagramRoute
 } from '../../../../../routes/publicObjectRoutes';
 import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
+import { Banner } from '../../../../../components/Banner';
+import { EmptyState } from '../../../../../components/EmptyState';
 import styles from './DiagramEmbed.module.css';
 
 const boundsViewbox = (diagram: Diagram): string => {
@@ -45,12 +47,12 @@ const VIEWER_CONTEXT: Context = {
 
 export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) => {
   const { workspaceSlug } = useWorkspaceContext();
-  const { data: file, isLoading, isError } = useProjectFile(workspaceSlug, id);
-  const { data: rawContent } = useProjectFileContent(workspaceSlug, id);
+  const { data: file, isLoading, isError } = useContentFile(workspaceSlug, id);
+  const { data: rawContent } = useContentFileContent(workspaceSlug, id);
   const [diagram, setDiagram] = useState<Diagram | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const params = useParams({ strict: false }) as { projectId?: string; entityId?: string };
+  const params = useParams({ strict: false });
   const { sessionId } = useMarkdownDiagramSession();
 
   useEffect(() => {
@@ -104,11 +106,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   }
 
   if (isError || !file) {
-    return (
-      <figure className={`${styles.container} ${styles.error}`}>
-        <span className={styles.errorText}>Diagram not found: {id}</span>
-      </figure>
-    );
+    return <Banner variant="error">Diagram not found: {id}</Banner>;
   }
 
   if (diagram) {
@@ -138,7 +136,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
 
   return (
     <figure className={`${styles.container} ${styles.clickable}`} onClick={handleClick}>
-      <span className={styles.empty}>No preview available</span>
+      <EmptyState compact title="No preview available" />
       {caption && <figcaption className={styles.caption}>{caption}</figcaption>}
     </figure>
   );

@@ -5,7 +5,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Project } from '@arch-register/api-types/projectContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '../lib/api';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 
 type MatchLike = {
   routeId: string;

@@ -1,3 +1,5 @@
+import { databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
+
 export type AuditLogDbResult = {
   id: string;
   workspace: string;
@@ -21,7 +23,38 @@ export type AuditLogDbCreate = Omit<AuditLogDbResult, 'id' | 'user_display_name'
 
 export type AuditOperation = 'create' | 'update' | 'delete';
 
-export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'content_node';
+export type AuditEntityType =
+  | 'workspace'
+  | 'entity_schema'
+  | 'entity'
+  | 'project'
+  | 'content_node'
+  | 'assessment'
+  | 'assessment_response';
+
+export const AUDIT_LOG_SELECT_SQL = `
+  SELECT audit_log.*, users.display_name as user_display_name
+  FROM audit_log
+  LEFT JOIN users ON audit_log.user_id = users.id
+`;
+
+export const auditMappers = {
+  auditLog: (row: DatabaseRow): AuditLogDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    timestamp: databaseDate(row['timestamp']),
+    user_id: row['user_id'] == null ? null : String(row['user_id']),
+    user_display_name: row['user_display_name'] == null ? null : String(row['user_display_name']),
+    operation: row['operation'] as AuditLogDbResult['operation'],
+    entity_type: row['entity_type'] as AuditLogDbResult['entity_type'],
+    entity_id: String(row['entity_id']),
+    entity_name: String(row['entity_name']),
+    entity_slug: row['entity_slug'] == null ? null : String(row['entity_slug']),
+    schema_id: row['schema_id'] == null ? null : String(row['schema_id']),
+    changes: parseDatabaseJson(row['changes'], {}, 'audit_log.changes'),
+    metadata: parseDatabaseJson(row['metadata'], {}, 'audit_log.metadata')
+  })
+};
 
 export type AuditDatabase = {
   listAuditLogs(ws: string): Promise<AuditLogDbResult[]>;

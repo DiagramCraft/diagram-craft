@@ -1,5 +1,5 @@
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
-import { useCreateFolder } from '../../hooks/useProjectFiles';
+import { useContentScopeOperations } from '../../hooks/useContentScope';
 
 type AddFolderDialogProps = {
   open: boolean;
@@ -18,15 +18,15 @@ export const AddFolderDialog = ({
   projectId,
   parentFolder
 }: AddFolderDialogProps) => {
-  const createFolderMutation = useCreateFolder(workspaceId, projectId);
+  const { createFolder } = useContentScopeOperations({ kind: 'project', workspaceId, projectId });
 
   return (
     <ContentFolderDialog
       open={open}
       onClose={onClose}
       onCreated={onCreated}
-      onSubmit={path => createFolderMutation.mutateAsync(path)}
-      isPending={createFolderMutation.isPending}
+      onSubmit={path => createFolder.mutateAsync(path)}
+      isPending={createFolder.isPending}
       parentFolder={parentFolder}
       placeholder="e.g. Current state"
     />

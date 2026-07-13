@@ -12,6 +12,7 @@ type UseEntityBrowserDataProps = {
   schemas: EntitySchema[];
   q: string;
   conditions: FilterCondition[];
+  joinAssessmentId?: string | null;
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
@@ -33,6 +34,7 @@ export const useEntityBrowserData = ({
   schemas,
   q,
   conditions,
+  joinAssessmentId,
   typeFilter,
   ownerFilter,
   statusFilter,
@@ -64,9 +66,10 @@ export const useEntityBrowserData = ({
       lifecycle: statusFilter,
       q,
       conditions,
+      assessmentId: joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
-      view: 'summary',
+      view: 'full',
       limit: isPagedBrowse ? pageSize : undefined,
       offset: isPagedBrowse ? pagedOffset : undefined,
       asOf,
@@ -87,9 +90,10 @@ export const useEntityBrowserData = ({
       lifecycle: statusFilter,
       q,
       conditions,
+      assessmentId: joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
-      view: 'summary',
+      view: 'full',
       asOf,
       includeProjectSnapshots
     },
@@ -106,6 +110,7 @@ export const useEntityBrowserData = ({
       lifecycle: statusFilter,
       q,
       conditions,
+      assessmentId: joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? effectiveProjectScope : undefined,
       asOf,

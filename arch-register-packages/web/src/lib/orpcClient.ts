@@ -3,6 +3,8 @@ import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import { aiContract } from '@arch-register/api-types/aiContract';
+import { assessmentContract } from '@arch-register/api-types/assessmentContract';
+import { assessmentResponseContract } from '@arch-register/api-types/assessmentResponseContract';
 import { auditContract } from '@arch-register/api-types/auditContract';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
@@ -14,10 +16,12 @@ import { searchContract } from '@arch-register/api-types/searchContract';
 import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
 import { watchContract } from '@arch-register/api-types/watchContract';
+import { discussionContract } from '@arch-register/api-types/discussionContract';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
+import { normalizeApiError } from './http';
 
 const ORPC_BASE_PATH = '/api';
 
@@ -48,14 +52,27 @@ const webContracts = {
   ...workspaceManagementContract,
   ...workspaceConfigContract,
   ...projectContract,
+  ...assessmentContract,
+  ...assessmentResponseContract,
   ...auditContract,
   ...watchContract,
+  ...discussionContract,
   ...searchContract,
   ...workspaceTemplateContract
 };
 
 const clientLink = new OpenAPILink(webContracts, {
   url: resolveORPCBaseUrl,
+  interceptors: [
+    async options => {
+      try {
+        return await options.next();
+      } catch (error) {
+        if (options.signal?.aborted) throw error;
+        throw normalizeApiError(error);
+      }
+    }
+  ],
   fetch: async (request, init) => {
     const raw = request.url;
     const method = request.method;

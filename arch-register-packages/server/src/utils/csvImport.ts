@@ -187,6 +187,11 @@ export const validateCsvData = (rows: ParsedCsvRow[], fields: SchemaField[]): Pa
               errors.push(`${field.name} must be a date in YYYY-MM-DD format`);
             }
             break;
+          case 'number':
+            if (!Number.isInteger(Number(value))) {
+              errors.push(`${field.name} must be a whole number`);
+            }
+            break;
         }
       }
     }
@@ -276,6 +281,9 @@ export const csvRowToEntity = (
       case 'text':
       case 'longtext':
         entity[field.id] = trimmedValue;
+        break;
+      case 'number':
+        entity[field.id] = Number(trimmedValue);
         break;
     }
   }

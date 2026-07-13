@@ -9,14 +9,6 @@
   min-height: 80px;
 }
 
-.empty {
-  padding: 16px;
-  font-size: 13px;
-  color: var(--cmp-fg-disabled);
-  font-style: italic;
-  text-align: center;
-}
-
 .folder {
   display: flex;
   flex-direction: column;

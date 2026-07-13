@@ -251,6 +251,19 @@ export class ListHandler implements BlockParser {
     const items: Array<ASTNodeOfType<'item'>> = [];
     let lineMatch: RegExpMatchArray | null = m;
 
+    const createItem = (content: string, followedByEmpty: boolean): ASTNodeOfType<'item'> => {
+      const checklistMatch = content.match(/^ {0,3}\[([ xX])\](?:[ \t]+|$)/);
+      const itemContent = checklistMatch ? content.slice(checklistMatch[0].length) : content;
+
+      return {
+        type: 'item',
+        children: parser.subparser('list').parse(itemContent),
+        ...(checklistMatch ? { checked: checklistMatch[1]!.toLowerCase() === 'x' } : {}),
+        containsEmpty,
+        followedByEmpty
+      };
+    };
+
     while (true) {
       const current = stream.peek();
       const next = stream.peek(1);
@@ -259,13 +272,7 @@ export class ListHandler implements BlockParser {
         s.trim() !== '' && (lineMatch || (current.isEmpty() && !next.match(rC)));
 
       if (itemCompleted) {
-        const parsedContent = parser.subparser('list').parse(s);
-        items.push({
-          type: 'item',
-          children: parsedContent,
-          containsEmpty,
-          followedByEmpty: current.isEmpty()
-        });
+        items.push(createItem(s, current.isEmpty()));
         s = '';
         containsEmpty = false;
       }
@@ -286,13 +293,7 @@ export class ListHandler implements BlockParser {
 
     // Process final item if there's content
     if (s.trim() !== '') {
-      const parsedContent = parser.subparser('list').parse(s);
-      items.push({
-        type: 'item',
-        children: parsedContent,
-        containsEmpty,
-        followedByEmpty: false
-      });
+      items.push(createItem(s, false));
     }
 
     // Ignore followed by empty for last row
@@ -355,153 +356,58 @@ export class InlineEmphasisHandler extends InlineParser {
   }
 
   parse(parser: Parser, s: string, parserState: ParserState): ASTNode[] {
-    const LENGTHS = { e: 1, s: 2 };
+    const escapedSym = this.sym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(
+      `(?<!${escapedSym})${escapedSym}{3}(?=\\S)([\\s\\S]*?\\S)${escapedSym}{2}(?!${escapedSym})([\\s\\S]*?\\S)${escapedSym}(?!${escapedSym})|` +
+        `(?<!${escapedSym})${escapedSym}{3}(?=\\S)([\\s\\S]*?\\S)${escapedSym}(?!${escapedSym})([\\s\\S]*?\\S)${escapedSym}{2}(?!${escapedSym})|` +
+        `(?<!${escapedSym})${escapedSym}{3}(?=\\S)([\\s\\S]*?\\S)${escapedSym}{3}(?!${escapedSym})|` +
+        `(?<!${escapedSym})${escapedSym}{2}(?!${escapedSym})(?=\\S)([\\s\\S]*?\\S)${escapedSym}{2}(?!${escapedSym})|` +
+        `${escapedSym}(?=\\S)([\\s\\S]*?\\S)${escapedSym}`,
+      'g'
+    );
 
-    // Count mark occurrences
-    let markCount = 0;
-    for (let i = 0; i < s.length; i++) {
-      if (s[i] === this.sym) markCount++;
-    }
-
-    if (markCount < 2) {
-      return parser.parseInlines(s, parserState);
-    }
-
-    interface ParseState {
-      tag: string;
-      arr: MarkingOperation[];
-    }
-
-    interface MarkingOperation {
-      op: number; // 1 = open, 0 = close
-      type: string; // 'e' = emphasis, 's' = strong
-      idx: number;
-    }
-
-    interface ParseResult {
-      score: number;
-      markings: MarkingOperation[];
-    }
-
-    const parseMarkings = (i: number = 0, state?: ParseState, p: number = 0): ParseResult[] => {
-      if (!state) state = { tag: '', arr: [] };
-
-      const open = (t: string): ParseState => ({
-        tag: `${state.tag}/${t}`,
-        arr: state.arr.concat([{ op: 1, type: t, idx: i }])
-      });
-
-      const close = (t: string): ParseState => ({
-        tag: state.tag.slice(0, -2),
-        arr: state.arr.concat([{ op: 0, type: t, idx: i }])
-      });
-
-      const dest: (ParseResult | undefined)[] = [];
-
-      if (i >= s.length) {
-        return state.tag === '' ? [{ score: p, markings: state.arr }] : [];
-      } else if (s[i] === this.sym) {
-        // Calculate distance from open tag to not allow empty strong/em tags
-        let dis = 0;
-        const last = state.arr.length > 0 ? state.arr[state.arr.length - 1] : undefined;
-        if (last) dis = i - last.idx - LENGTHS[last.type as keyof typeof LENGTHS];
-
-        if (i + 1 < s.length && s[i + 1] === this.sym) {
-          // Two consecutive symbols (**)
-
-          // <strong> if not in <strong>
-          if (state.tag === '' || state.tag === '/e')
-            dest.push(...parseMarkings(i + LENGTHS['s'], open('s'), p));
-
-          // </strong> if in <strong>
-          if ((state.tag === '/s' || state.tag === '/e/s') && dis > 0)
-            dest.push(...parseMarkings(i + LENGTHS['s'], close('s'), p));
-
-          // </em> if in <em>
-          if ((state.tag === '/e' || state.tag === '/s/e') && dis > 0)
-            dest.push(...parseMarkings(i + LENGTHS['e'], close('e'), p));
-
-          // <em> if not in <em>
-          if (state.tag === '' || state.tag === '/s')
-            dest.push(...parseMarkings(i + LENGTHS['e'], open('e'), p));
-
-          // literal *
-          dest.push(...parseMarkings(i + 1, state, p + 10));
-        } else {
-          // Single symbol (*)
-
-          // </em> if in <em>
-          if ((state.tag === '/e' || state.tag === '/s/e') && dis > 0)
-            dest.push(...parseMarkings(i + LENGTHS['e'], close('e'), p));
-
-          // <em> if not in <em>
-          if (state.tag === '' || state.tag === '/s')
-            dest.push(...parseMarkings(i + LENGTHS['e'], open('e'), p));
-
-          // literal *
-          dest.push(...parseMarkings(i + 1, state, p + 10));
-        }
-      } else {
-        // Skip to next symbol
-        let nextI = i;
-        do {
-          nextI++;
-        } while (nextI < s.length && s[nextI] !== this.sym);
-        dest.push(...parseMarkings(nextI, state, p));
+    return this.applyInlineRegExp(parser, parserState, s, re, match => {
+      if (match[1] !== undefined) {
+        return {
+          type: 'emphasis',
+          children: parser.parseInlines(
+            `${this.sym}${this.sym}${match[1]}${this.sym}${this.sym}${match[2]}`,
+            parserState,
+            ['emphasis']
+          )
+        };
       }
 
-      return dest.filter((o): o is ParseResult => o !== undefined);
-    };
-
-    const allResults = parseMarkings(0);
-    if (allResults.length === 0) {
-      return parser.parseInlines(s, parserState);
-    }
-
-    const markings = allResults.sort((a, b) => a.score - b.score)[0]!.markings;
-    const outer: MarkingOperation[] = [];
-
-    // Filter out only outer markings
-    for (let i = 0; i < markings.length; i++) {
-      if (outer.length === 0 || markings[i]!.type === outer[0]!.type) {
-        outer.push(markings[i]!);
-      }
-    }
-
-    if (outer.length === 0) {
-      return parser.parseInlines(s, parserState);
-    }
-
-    const l = LENGTHS[outer[0]!.type as keyof typeof LENGTHS];
-    const type = outer[0]!.type === 'e' ? 'emphasis' : 'strong';
-    let dest = '';
-    let lastIndex = 0;
-
-    for (let i = 0; i < outer.length - 1; i++) {
-      if (outer[i]!.idx > lastIndex) {
-        dest += s.substring(lastIndex, outer[i]!.idx);
+      if (match[3] !== undefined) {
+        return {
+          type: 'strong',
+          children: parser.parseInlines(
+            `${this.sym}${match[3]}${this.sym}${match[4]}`,
+            parserState,
+            ['strong']
+          )
+        };
       }
 
-      lastIndex = outer[i + 1]!.idx;
-      if (outer[i]!.op === 1) {
-        dest += parser.addInline(parserState, {
-          type: type,
-          children: parser.parseInlines(s.substring(outer[i]!.idx + l, lastIndex), parserState, [
-            type
-          ])
-        });
+      if (match[5] !== undefined) {
+        return {
+          type: 'emphasis',
+          children: [
+            {
+              type: 'strong',
+              children: parser.parseInlines(match[5], parserState, ['strong', 'emphasis'])
+            }
+          ]
+        };
       }
-    }
 
-    if (lastIndex > 0) {
-      if (lastIndex + l < s.length) {
-        dest += s.slice(lastIndex + l);
-      }
-    } else {
-      dest += s.slice(l);
-    }
-
-    return parser.parseInlines(dest, parserState);
+      const type = match[6] !== undefined ? 'strong' : 'emphasis';
+      const content = match[6] ?? match[7] ?? '';
+      return {
+        type,
+        children: parser.parseInlines(content, parserState, [type])
+      };
+    });
   }
 }
 

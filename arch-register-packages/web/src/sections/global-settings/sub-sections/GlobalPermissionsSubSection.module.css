@@ -18,49 +18,6 @@
   flex-shrink: 0;
 }
 
-.tableWrap {
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  overflow: visible;
-  background: var(--panel-bg);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.table th {
-  text-align: left;
-  font-weight: 500;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
-  background: var(--base-bg);
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--cmp-border);
-  white-space: nowrap;
-}
-
-.table tbody tr {
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.table tbody tr:last-child {
-  border-bottom: 0;
-}
-
-.table tbody tr:hover {
-  background: var(--cmp-bg);
-}
-
-.table td {
-  padding: 8px 10px;
-  vertical-align: middle;
-}
-
 .roleBtn {
   background: none;
   border: none;
@@ -77,28 +34,6 @@
   flex-shrink: 0;
 }
 
-/* Member name + avatar */
-.memberName {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.memberNameMain {
-  color: var(--base-fg);
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.memberNameSub {
-  font-size: 11px;
-  line-height: 1.3;
-  color: var(--cmp-fg-disabled);
-  font-family: var(--font-mono, monospace);
-}
-
 .avatar {
   color: var(--base-fg);
   border-radius: 50%;
@@ -113,16 +48,6 @@
 .noRoles {
   color: var(--cmp-fg-disabled);
   font-size: 12px;
-}
-
-.empty {
-  padding: 18px 16px;
-  color: var(--cmp-fg-disabled);
-  font-size: 12px;
-}
-
-.error {
-  color: var(--error-fg);
 }
 
 /* Dialog */

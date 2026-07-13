@@ -1,118 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { App, DiagramRef } from './App';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
-import { assert } from '@diagram-craft/utils/assert';
-import { newid } from '@diagram-craft/utils/id';
-import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import { UserState } from './UserState';
-import { AppConfig, getDefaultStencilPackages, type StencilRegistryConfig } from './appConfig';
-import { Autosave } from './react-app/autosave/Autosave';
+import { getDefaultStencilPackages, type StencilRegistryConfig } from './appConfig';
 import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
-import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
-import { stencilLoaderRegistry } from '@diagram-craft/model/stencilRegistry';
-
-const loadInitialDocument = async (
-  diagram: DiagramRef | undefined,
-  userState: AwarenessUserState,
-  documentFactory: DocumentFactory,
-  diagramFactory: DiagramFactory,
-  progress: ProgressCallback,
-  opts?: {
-    forceLoadFromServer?: boolean;
-    forceClearServerState?: boolean;
-  }
-): Promise<{ doc?: DiagramDocument; url?: string }> => {
-  const root = await documentFactory.loadCRDT(diagram?.url, userState, progress);
-  if (opts?.forceClearServerState || AppConfig.get().collaboration.forceClearServerState()) {
-    console.log('Clear server state');
-    root.clear();
-  }
-
-  if (diagram) {
-    if (
-      opts?.forceLoadFromServer ||
-      root.hasData() ||
-      AppConfig.get().collaboration.forceLoadFromServer()
-    ) {
-      console.log('Load from server');
-      const v = await documentFactory.createDocument(root, diagram.url, progress);
-      return { doc: v, url: diagram.url };
-    } else {
-      // Try multi-window autosave first
-      const multiWindowAutosaved = await Autosave.get().load(
-        root,
-        progress,
-        documentFactory,
-        diagramFactory,
-        true
-      );
-
-      if (multiWindowAutosaved) {
-        console.log('Load from auto save');
-        const restoredUrl = multiWindowAutosaved.url ?? diagram.url;
-        multiWindowAutosaved.document.url = restoredUrl;
-        return { doc: multiWindowAutosaved.document, url: restoredUrl };
-      } else {
-        console.log('Load from url');
-        const defDiagram = await loadFileFromUrl(
-          diagram.url,
-          userState,
-          progress,
-          documentFactory,
-          diagramFactory,
-          { root }
-        );
-        defDiagram.url = diagram?.url;
-        return { doc: defDiagram, url: diagram?.url };
-      }
-    }
-  } else {
-    const margin = 30;
-
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    const rightIndent = 50;
-    const leftIndent = 50;
-
-    const availableWidth = windowWidth - (leftIndent + rightIndent) - margin * 2;
-    const availableHeight = windowHeight - margin * 2 - 110;
-
-    const rulerWidth = 20;
-
-    const offset = {
-      x: -(margin + rulerWidth / 2) - 10,
-      y: -(margin + rulerWidth / 2)
-    };
-
-    const doc = await documentFactory.createDocument(root, undefined, progress);
-
-    const diagram = new Diagram(
-      newid(),
-      'Untitled',
-      doc,
-      undefined,
-      {
-        w: availableWidth,
-        h: availableHeight
-      },
-      offset
-    );
-    UnitOfWork.execute(diagram, uow =>
-      diagram.layers.add(new RegularLayer(newid(), 'Default', [], diagram), uow)
-    );
-    doc.addDiagram(diagram);
-
-    progress('complete', {});
-
-    return { doc };
-  }
-};
+import { loadDocument } from './embed/loadDocument';
+import { registerDocumentStencils } from './embed/registerStencils';
 
 export const AppLoader = (props: Props) => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
@@ -127,14 +22,14 @@ export const AppLoader = (props: Props) => {
 
   const load = useCallback(
     (ref?: DiagramRef) => {
-      loadInitialDocument(
-        ref,
-        UserState.get().awarenessState,
-        props.documentFactory,
-        props.diagramFactory,
-        progressCallback
-      ).then(({ doc, url }) => {
-        if (doc) setDoc(doc);
+      loadDocument({
+        url: ref?.url,
+        userState: UserState.get().awarenessState,
+        documentFactory: props.documentFactory,
+        diagramFactory: props.diagramFactory,
+        progress: progressCallback
+      }).then(({ doc, url }) => {
+        setDoc(doc);
         if (url) setUrl(url);
       });
     },
@@ -146,22 +41,7 @@ export const AppLoader = (props: Props) => {
     if (doc.props.activeStencilPackages.ids.length === 0) {
       doc.props.activeStencilPackages.set(getDefaultStencilPackages());
     }
-    for (const def of props.stencils) {
-      if (doc.registry.stencils.getStencils().some(pkg => pkg.id === def.id)) continue;
-      const typeLoader = stencilLoaderRegistry[def.loader];
-      assert.present(typeLoader, `Stencil loader ${def.loader} not found`);
-
-      doc.registry.stencils.preRegister(def.id, def.name, async () => {
-        const stencilLoader = await typeLoader();
-        // biome-ignore lint/suspicious/noExplicitAny: false positive
-        const pkg = await stencilLoader(doc.registry, def.opts as any);
-        doc.registry.stencils.register(
-          pkg.name ?? def.name,
-          pkg,
-          def.id === pkg.id ? [] : [def.id]
-        );
-      });
-    }
+    registerDocumentStencils(doc, props.stencils);
   }, [props.stencils, doc]);
 
   useEffect(() => {

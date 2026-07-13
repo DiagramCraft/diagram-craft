@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PlateElement, useEditorRef, type PlateElementProps } from 'platejs/react';
 import type { TElement } from 'platejs';
 import { useDraggable, useDropLine } from '@platejs/dnd';
+import { deserializeMd, serializeMd } from '@platejs/markdown';
 import { TbChevronDown, TbChevronUp, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
@@ -24,6 +25,10 @@ export const getNodeText = (node: Record<string, unknown>): string => {
 export const isListParagraph = (element: TElement) =>
   element.type === 'p' &&
   typeof (element as TElement & { listStyleType?: unknown }).listStyleType === 'string';
+
+export const isTodoListParagraph = (element: TElement) =>
+  isListParagraph(element) &&
+  (element as TElement & { listStyleType?: string }).listStyleType === 'todo';
 
 export const createListParagraph = (text: string, listStyleType: 'disc' | 'decimal') => ({
   type: 'p',
@@ -52,6 +57,46 @@ export const wrapBlock = (
   if (!node) return;
   editor.tf.removeNodes({ at: [idx] });
   editor.tf.insertNodes(createWrapper(node), { at: [idx] });
+};
+
+// ── Clipboard ─────────────────────────────────────────────────────────────────
+
+type ClipboardWriter = { writeText: (text: string) => Promise<void> };
+type ClipboardReader = { readText: () => Promise<string> };
+
+export const copyBlockToClipboard = async (
+  editor: PlateEditorRef,
+  idx: number,
+  clipboard: ClipboardWriter
+): Promise<boolean> => {
+  const node = editor.children[idx] as TElement | undefined;
+  if (!node) return false;
+  try {
+    const md = serializeMd(editor, { value: [node] });
+    await clipboard.writeText(md);
+    return true;
+  } catch (err) {
+    console.error('Failed to copy block to clipboard', err);
+    return false;
+  }
+};
+
+export const pasteBlockFromClipboard = async (
+  editor: PlateEditorRef,
+  idx: number,
+  clipboard: ClipboardReader
+): Promise<boolean> => {
+  try {
+    const text = await clipboard.readText();
+    if (text.trim() === '') return false;
+    const nodes = deserializeMd(editor, text);
+    if (!nodes || nodes.length === 0) return false;
+    editor.tf.insertNodes(nodes, { at: [idx + 1] });
+    return true;
+  } catch (err) {
+    console.error('Failed to paste block from clipboard', err);
+    return false;
+  }
 };
 
 // ── Drag handle ───────────────────────────────────────────────────────────────
@@ -207,6 +252,36 @@ const BlockContextMenu = ({
     onClose();
   };
 
+  const handleCopy = async () => {
+    const idx = currentIdx();
+    if (idx !== null) await copyBlockToClipboard(editor, idx, navigator.clipboard);
+    onClose();
+  };
+
+  const handleCut = async () => {
+    const idx = currentIdx();
+    if (idx !== null) {
+      const copied = await copyBlockToClipboard(editor, idx, navigator.clipboard);
+      if (copied) editor.tf.removeNodes({ at: [idx] });
+    }
+    onClose();
+  };
+
+  const handlePaste = async () => {
+    const idx = currentIdx();
+    if (idx !== null) {
+      const pasted = await pasteBlockFromClipboard(editor, idx, navigator.clipboard);
+      if (pasted) {
+        const path = [idx + 1];
+        setTimeout(() => {
+          editor.tf.select(path);
+          editor.tf.focus();
+        }, 50);
+      }
+    }
+    onClose();
+  };
+
   const handleAddBefore = () => {
     const idx = currentIdx();
     if (idx !== null) {
@@ -293,7 +368,10 @@ const BlockContextMenu = ({
       {extraItems && <Menu.Separator />}
       <Menu.Item onClick={handleAddBefore}>Add block before</Menu.Item>
       <Menu.Item onClick={handleAddAfter}>Add block after</Menu.Item>
+      <Menu.Item onClick={handlePaste}>Paste</Menu.Item>
       <Menu.Separator />
+      <Menu.Item onClick={handleCopy}>Copy block</Menu.Item>
+      <Menu.Item onClick={handleCut}>Cut block</Menu.Item>
       <Menu.Item onClick={handleDuplicate}>Duplicate block</Menu.Item>
       <Menu.Item type="danger" onClick={handleRemove}>
         Remove block

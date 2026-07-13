@@ -1,9 +1,8 @@
-import { TbDots } from 'react-icons/tb';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
-import { StatusChip } from '../../../components/StatusChip';
+import { Table } from '../../../components/table/Table';
 import { TypeBadge } from '../../../components/TypeBadge';
-import { resolveSchemaColor } from '../../../lib/api';
+import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
   entityMenuItems,
@@ -11,8 +10,8 @@ import {
   type EntityBrowserBaseViewProps,
   projectEntityMenuItems
 } from './entityBrowserViewShared';
-import { formatDateValue } from './entityBrowserState';
-import styles from '../EntityBrowserScreen.module.css';
+import { formatDate } from '../../../utils/dateFormat';
+import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 
 type DateField = Extract<EntitySchema['fields'][number], { type: 'date' }>;
 
@@ -21,33 +20,8 @@ export type TableViewProps = EntityBrowserBaseViewProps & {
   selectedIds?: Set<string>;
   onSelectAll?: () => void;
   onSelectRow?: (uid: string) => void;
-};
-
-const CompletenessCell = ({ value }: { value: number | null }) => {
-  if (value == null) return <span className="dim">—</span>;
-  const barColor = value <= 75 ? '#f59e0b' : '#22c55e';
-
-  return (
-    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span
-        style={{
-          display: 'inline-block',
-          width: 36,
-          height: 4,
-          borderRadius: 2,
-          background: 'var(--cmp-border)',
-          overflow: 'hidden'
-        }}
-      >
-        <span
-          style={{ display: 'block', width: `${value}%`, height: '100%', background: barColor }}
-        />
-      </span>
-      <span className="dim" style={{ fontSize: 11 }}>
-        {value}%
-      </span>
-    </span>
-  );
+  config: unknown;
+  displayFields: EntityDisplayField[];
 };
 
 export const TableView = ({
@@ -57,157 +31,106 @@ export const TableView = ({
   onEntityClick,
   onDelete,
   onClone,
-  lifecycleStates,
   projectContext,
   selectedIds,
   onSelectAll,
   onSelectRow,
-  readOnly
+  readOnly, config, displayFields
 }: TableViewProps) => {
   const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
   const someSelected =
     !readOnly && (selectedIds?.size ?? 0) > 0 && (selectedIds?.size ?? 0) < rows.length;
+  const fieldIds = getDisplayFieldIds('table', config);
+  const columns = fieldIds.map(id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' });
 
   return (
-    <div className={styles.tableWrap}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            {!readOnly && (
-              <th style={{ width: 32 }}>
-                <input
-                  type="checkbox"
-                  className={styles.checkbox}
-                  checked={allSelected}
-                  ref={el => {
-                    if (el) el.indeterminate = someSelected;
-                  }}
-                  onChange={onSelectAll}
-                />
-              </th>
-            )}
-            <th style={{ minWidth: 200 }}>Name</th>
-            <th>Type</th>
-            <th>Owner</th>
-            <th>Status</th>
-            {projectContext && <th>Role</th>}
-            {activeDateField && <th>{activeDateField.name}</th>}
-            <th style={{ width: 80 }}>NS</th>
-            <th style={{ width: 80 }} />
-            {!readOnly && <th style={{ width: 28 }} />}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(entity => {
-            const schemaEntry = schemaMap.get(entity._schema.id);
-            const menuItems = readOnly
-              ? []
-              : [
-                  ...entityMenuItems(entity, onClone, onDelete),
-                  ...projectEntityMenuItems(entity, projectContext)
-                ];
+    <Table.Root scroll>
+      <Table.Head>
+        <Table.Row>
+          {!readOnly && (
+            <Table.CheckboxCell
+              as="th"
+              aria-label="Select all"
+              checked={allSelected}
+              indeterminate={someSelected}
+              onChange={onSelectAll}
+            />
+          )}
+          <Table.HeaderCell style={{ minWidth: 200 }}>Name</Table.HeaderCell>
+          <Table.HeaderCell>Type</Table.HeaderCell>
+          {columns.filter(c => c.id !== '_description').map(c => (
+            <Table.HeaderCell key={c.id}>{c.label}</Table.HeaderCell>
+          ))}
+          {activeDateField && !fieldIds.includes(activeDateField.id) && (
+            <Table.HeaderCell>{activeDateField.name}</Table.HeaderCell>
+          )}
+          {!readOnly && <Table.HeaderCell style={{ width: 28 }} />}
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {rows.map(entity => {
+          const schemaEntry = schemaMap.get(entity._schema.id);
+          const menuItems = readOnly
+            ? []
+            : [
+                ...entityMenuItems(entity, onClone, onDelete),
+                ...projectEntityMenuItems(entity, projectContext)
+              ];
 
-            return (
-              <tr
-                key={entity._uid}
-                aria-label={`Entity row: ${entityName(entity)}`}
-                className={selectedIds?.has(entity._uid) ? styles.tableRowSelected : undefined}
-                onClick={() => onEntityClick(entity._publicId)}
-              >
-                {!readOnly && (
-                  <td onClick={ev => ev.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      className={styles.checkbox}
-                      checked={selectedIds?.has(entity._uid) ?? false}
-                      onChange={() => onSelectRow?.(entity._uid)}
+          return (
+            <Table.Row
+              key={entity._uid}
+              aria-label={`Entity row: ${entityName(entity)}`}
+              selected={selectedIds?.has(entity._uid)}
+              onClick={() => onEntityClick(entity._publicId)}
+            >
+              {!readOnly && (
+                <Table.CheckboxCell
+                  aria-label={`Select ${entityName(entity)}`}
+                  checked={selectedIds?.has(entity._uid) ?? false}
+                  onChange={() => onSelectRow?.(entity._uid)}
+                />
+              )}
+              <Table.NameCell
+                icon={
+                  schemaEntry && (
+                    <TypeBadge
+                      color={resolveSchemaColor(schemaEntry.schema, schemaEntry.index)}
+                      name={schemaEntry.schema.name}
+                      icon={schemaEntry.schema.icon}
+                      size={18}
                     />
-                  </td>
-                )}
-                <td>
-                  <div className={styles.tableName}>
-                    {schemaEntry && (
-                      <TypeBadge
-                        color={resolveSchemaColor(schemaEntry.schema, schemaEntry.index)}
-                        name={schemaEntry.schema.name}
-                        icon={schemaEntry.schema.icon}
-                        size={18}
-                      />
-                    )}
-                    <div>
-                      <div
-                        className={styles.tableNameMain}
-                        style={
-                          projectContext && entity._projectLink?.linked === false
-                            ? { color: 'var(--base-fg-more-dim)' }
-                            : undefined
-                        }
-                      >
-                        {entityName(entity)}
-                      </div>
-                      {entity._description && (
-                        <div className={styles.tableNameSub}>{entity._description}</div>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td>{schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}</td>
-                <td>
-                  <span className="dim">{entity._owner?.name ?? '—'}</span>
-                </td>
-                <td>
-                  {entity._lifecycle && (
-                    <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
+                  )
+                }
+                title={entityName(entity)}
+                titleMuted={projectContext && entity._projectLink?.linked === false}
+                subtitle={fieldIds.includes('_description') && entity._description ? entity._description : undefined}
+              />
+              <Table.Cell>{schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}</Table.Cell>
+              {columns.filter(c => c.id !== '_description').map(column => {
+                const field = findEntityDisplayField(column.id, entity, schemaMap, displayFields) ?? column;
+                return (
+                  <Table.Cell key={column.id}>
+                    <span className="dim">{formatEntityDisplayValue(entity, field) ?? '—'}</span>
+                  </Table.Cell>
+                );
+              })}
+              {activeDateField && !fieldIds.includes(activeDateField.id) && (
+                <Table.Cell>
+                  <span className="dim">{formatDate(entity[activeDateField.id])}</span>
+                </Table.Cell>
+              )}
+              {!readOnly && (
+                <Table.ActionsCell>
+                  {menuItems.length > 0 && (
+                    <DropdownMenu trigger={<Table.DotsButton />} items={menuItems} />
                   )}
-                </td>
-                {projectContext && (
-                  <td>
-                    {entity._projectLink?.entityType?.name ? (
-                      <Chip
-                        tone="ghost"
-                        dot={
-                          entity._projectLink.entityType.id
-                            ? projectContext.entityTypeColorMap.get(entity._projectLink.entityType.id)
-                            : undefined
-                        }
-                      >
-                        {entity._projectLink.entityType.name}
-                      </Chip>
-                    ) : (
-                      <span className="dim">—</span>
-                    )}
-                  </td>
-                )}
-                {activeDateField && (
-                  <td>
-                    <span className="dim">{formatDateValue(entity[activeDateField.id])}</span>
-                  </td>
-                )}
-                <td>
-                  <span className="dim">{entity._namespace}</span>
-                </td>
-                <td>
-                  <CompletenessCell value={entity._completeness} />
-                </td>
-                {!readOnly && (
-                  <td onClick={ev => ev.stopPropagation()}>
-                    {menuItems.length > 0 && (
-                      <DropdownMenu
-                        trigger={
-                          <button type="button" className={styles.dotsBtn}>
-                            <TbDots size={14} />
-                          </button>
-                        }
-                        items={menuItems}
-                      />
-                    )}
-                  </td>
-                )}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                </Table.ActionsCell>
+              )}
+            </Table.Row>
+          );
+        })}
+      </Table.Body>
+    </Table.Root>
   );
 };

@@ -1,45 +1,21 @@
-import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../components/TypeBadge';
 import { StatusChip } from '../../components/StatusChip';
-import { Chip } from '../../components/Chip';
-import {
-  TbChevronLeft,
-  TbChevronRight,
-  TbEdit,
-  TbDots,
-  TbExternalLink,
-  TbTrash,
-  TbPlus,
-  TbX,
-  TbCopy,
-  TbBell,
-  TbPinned
-} from 'react-icons/tb';
-import { getRelationDisplayLabel, resolveSchemaColor, WorkspaceTeam } from '../../lib/api';
+import { TbChevronLeft, TbEdit, TbDots, TbTrash, TbCopy, TbBell, TbPinned } from 'react-icons/tb';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { DateInput } from '@diagram-craft/app-components/DateInput';
-import {
-  useEntity,
-  useEntityRelations,
-  useUpdateEntity,
-  useDeleteEntity,
-  useCloneEntity,
-  useEntitiesBySchema,
-  useEntitySnapshots,
-  usePromoteSnapshot,
-  useRestoreSnapshot
-} from '../../hooks/useEntities';
+import { useEntity, useEntityRelations, useCloneEntity, useEntitiesBySchema } from '../../hooks/useEntities';
+import { useEntitySnapshots } from '../../hooks/useSnapshots';
+import { useEntityEditController } from '../../hooks/useEntityEditController';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
-import { useAuditLog } from '../../hooks/useAudit';
 import {
   useCreatePinnedEntity,
   useCreateWatch,
@@ -50,72 +26,37 @@ import {
 } from '../../hooks/useNotifications';
 import {
   asEntityPublicId,
-  asProjectPublicId,
-  entityDetailRoute,
-  projectDiagramHref
+  entityContentFolderRoute,
+  entityDetailRoute
 } from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
-import {
-  EntityRecord,
-  EntitySummary,
-  EntitySnapshot
-} from '@arch-register/api-types/entityContract';
-import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { AuditLogEntry } from '@arch-register/api-types/auditContract';
+import { EntitySummary } from '@arch-register/api-types/entityContract';
+import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
-import { EntityTimelineTab } from './EntityTimelineTab';
+import { EntityOverviewTab } from './components/EntityOverviewTab';
+import { EntityTopologyTab } from './components/EntityTopologyTab';
+import { EntityRelationsTab } from './components/EntityRelationsTab';
+import { EntityTimelineTab } from './components/EntityTimelineTab';
+import { EntityChangeHistoryTab } from './components/EntityChangeHistoryTab';
 import { Title } from '../../components/Title';
-import { DiagramMetadataPopover } from '../../components/DiagramMetadataPopover';
-import { RestoreSnapshotDialog } from './components/RestoreSnapshotDialog';
 import { EntityDependentsTab } from './components/EntityDependentsTab';
+import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
+import { DiscussionThread } from '../discussions/DiscussionThread';
+import { EmptyState } from '../../components/EmptyState';
+import type { TabId, Relation } from './types/entityDetailTypes';
+import type { EntityDetailSearchParams } from '../../routes/searchParams';
+import { buildEntityRefLookup } from './entityDetailHelpers';
 
-type TabId = 'overview' | 'topology' | 'graph' | 'relations' | 'dependents' | 'changes' | 'timeline';
-
-type Relation = {
-  entityId: string;
-  publicId: string;
-  entitySlug: string;
-  entityName: string;
-  entitySchemaId: string;
-  fieldName: string;
-  fieldPredicate?: string;
-  kind: 'reference' | 'containment';
-};
-
-type RelationGroup = {
-  key: string;
-  label: string;
-  relations: Relation[];
-};
-
-type RefLookup = Map<string, EntitySummary>;
-
-const slugify = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
-const formatDateValue = (value: unknown) => {
-  if (typeof value !== 'string' || value === '') return '—';
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
-};
-
-const getRelationIds = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
-
-export const EntityDetailScreen = () => {
+export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigate = useNavigate();
-  const { entityId } = useParams({ strict: false }) as { entityId: string };
-  const search = useSearch({ strict: false }) as { contentFolder?: string; tab?: TabId };
+  const { entityId: routeEntityId } = useParams({ strict: false });
+  const entityId = routeEntityId!;
+  const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const canViewAudit = permissions.canViewAudit;
-  const contentFolder = search.contentFolder;
+  const contentFolder = folder ?? null;
 
   const navigateToEntity = useCallback(
     (id: string) => {
@@ -130,36 +71,24 @@ export const EntityDetailScreen = () => {
   const tab = search.tab ?? 'overview';
   const setTab = useCallback(
     (nextTab: TabId) => {
+      const route = contentFolder
+        ? entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), contentFolder)
+        : entityDetailRoute(workspaceSlug, asEntityPublicId(entityId));
       navigate({
-        search: ((previous: Record<string, unknown>) => ({
-          ...previous,
+        ...route,
+        search: {
+          ...search,
           tab: nextTab === 'overview' ? undefined : nextTab
-        })) as never
+        }
       });
     },
-    [navigate]
+    [contentFolder, entityId, navigate, search, workspaceSlug]
   );
-  const [editing, setEditing] = useState(false);
-  const [editState, setEditState] = useState<Record<string, unknown>>({});
-  const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
-  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
-  const [saveConfirmMessage, setSaveConfirmMessage] = useState('');
-  const [saveConfirmSignificant, setSaveConfirmSignificant] = useState(false);
-  const [pendingSaveBody, setPendingSaveBody] = useState<Record<string, unknown> | null>(null);
-
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
-  const auditEntityId = entity?._uid ?? null;
   const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(
     workspaceId,
     entityId
-  );
-  const { data: auditLog = [], isLoading: loadingAudit } = useAuditLog(
-    workspaceId,
-    { entityId: auditEntityId, limit: 100 },
-    { enabled: canViewAudit && tab === 'changes' && !!auditEntityId }
   );
 
   // Project association hooks
@@ -167,11 +96,7 @@ export const EntityDetailScreen = () => {
   const { data: entityDiagramFiles = [] } = useEntityDiagramFiles(workspaceId, entityId);
 
   // Mutation hooks
-  const updateEntity = useUpdateEntity(workspaceId);
-  const deleteEntity = useDeleteEntity(workspaceId);
   const cloneEntity = useCloneEntity(workspaceId);
-  const promoteSnapshot = usePromoteSnapshot(workspaceId, entityId);
-  const restoreSnapshot = useRestoreSnapshot(workspaceId, entityId);
   const { data: allSnapshots = [] } = useEntitySnapshots(workspaceId, entityId, true);
   const futureSnapshots = allSnapshots.filter(s => s.status === 'future_update');
   const createWatch = useCreateWatch(workspaceId);
@@ -230,154 +155,42 @@ export const EntityDetailScreen = () => {
   }, [referenceSchemaIds, referenceQueries]);
 
   // Build reference lookup from relations
-  const refLookup = useMemo(() => {
-    const lookup: RefLookup = new Map();
-    relations.outgoing.forEach(relation => {
-      lookup.set(relation.entityId, {
-        _uid: relation.entityId,
-        _publicId: relation.publicId,
-        _schema: { id: relation.entitySchemaId, name: '' },
-        _name: relation.entityName,
-        _slug: relation.entitySlug,
-        _namespace: '',
-        _description: '',
-        _owner: null,
-        _lifecycle: null,
-        _targetLifecycle: null,
-        _targetLifecycleDate: null,
-        _tags: [],
-        _links: [],
-        _visibilityMode: null,
-        _completeness: null,
-        canView: true,
-        canEdit: false,
-        canDelete: false,
-        canAdmin: false,
-        canCreateChild: false
-      });
-    });
-    return lookup;
-  }, [relations]);
+  const refLookup = useMemo(() => buildEntityRefLookup(relations), [relations]);
 
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
   const relationCount = outgoing.length + incoming.length;
 
-  const startEdit = () => {
-    if (!entity || !schema) return;
-    const state: Record<string, unknown> = {
-      _name: entity._name ?? '',
-      _slug: entity._slug ?? '',
-      _description: entity._description ?? '',
-      _owner: entity._owner?.id ?? '',
-      _lifecycle: entity._lifecycle?.id ?? '',
-      _targetLifecycle: entity._targetLifecycle?.id ?? '',
-      _targetLifecycleDate: entity._targetLifecycleDate ?? '',
-      _namespace: entity._namespace ?? '',
-      _tags: (entity._tags ?? []).join(', ')
-    };
-    for (const f of schema.fields) {
-      state[f.id] =
-        f.type === 'reference' || f.type === 'containment'
-          ? getRelationIds(entity[f.id])
-          : (entity[f.id] ?? '');
-    }
-    setEditState(state);
-    setEditLinks(entity._links.map(l => ({ ...l })));
-    setEditing(true);
-  };
-
-  const cancelEdit = () => {
-    setEditing(false);
-    setEditState({});
-    setEditLinks([]);
-    setValidationErrors(new Set());
-  };
-
-  const saveEdit = async () => {
-    if (!entity || !schema) return;
-
-    const errors = new Set<string>();
-    for (const f of schema.fields) {
-      if (f.requirementLevel === 'required') {
-        const val = editState[f.id];
-        const isEmpty =
-          val == null ||
-          (typeof val === 'string' && val.trim() === '') ||
-          (Array.isArray(val) && val.length === 0);
-        if (isEmpty) errors.add(f.id);
-      }
-    }
-    if (errors.size > 0) {
-      setValidationErrors(errors);
-      return;
-    }
-    setValidationErrors(new Set());
-
-    const dataFields: Record<string, unknown> = {};
-    for (const f of schema.fields) {
-      dataFields[f.id] =
-        f.type === 'reference' || f.type === 'containment'
-          ? getRelationIds(editState[f.id])
-          : (editState[f.id] ?? '');
-    }
-
-    const tagsStr = (editState['_tags'] as string) ?? '';
-    const tags = tagsStr
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
-    const body = {
-      _schemaId: entity._schema.id,
-      _name: (editState['_name'] as string) ?? '',
-      _slug: (editState['_slug'] as string) || entity._slug,
-      _namespace: (editState['_namespace'] as string) || entity._namespace,
-      _description: (editState['_description'] as string) ?? '',
-      _owner: (editState['_owner'] as string) || null,
-      _lifecycle: (editState['_lifecycle'] as string) || null,
-      _targetLifecycle: (editState['_targetLifecycle'] as string) || null,
-      _targetLifecycleDate: (editState['_targetLifecycleDate'] as string) || null,
-      _tags: tags,
-      _links: editLinks.filter(l => l.url.trim() !== ''),
-      ...dataFields
-    };
-
-    setPendingSaveBody(body);
-    setSaveConfirmMessage('');
-    setSaveConfirmSignificant(false);
-    setSaveConfirmOpen(true);
-  };
-
-  const executeSave = () => {
-    if (!pendingSaveBody) return;
-    setSaveConfirmOpen(false);
-    updateEntity.mutate(
-      { entityId, data: pendingSaveBody },
-      {
-        onSuccess: () => {
-          if (saveConfirmSignificant) {
-            promoteSnapshot.mutate({ commitMessage: saveConfirmMessage || undefined });
-          }
-          setEditing(false);
-          setEditState({});
-          setEditLinks([]);
-          setPendingSaveBody(null);
-        }
-      }
-    );
-  };
-
-  const handleDelete = () => {
-    setConfirmDelete(true);
-  };
-
-  const doDelete = () => {
-    setConfirmDelete(false);
-    deleteEntity.mutate(entityId, {
-      onSuccess: () => navigateToEntities()
-    });
-  };
+  const {
+    editing,
+    editState,
+    setEditState,
+    editLinks,
+    setEditLinks,
+    validationErrors,
+    setValidationErrors,
+    startEdit,
+    cancelEdit,
+    saveEdit,
+    isSaving,
+    saveConfirmOpen,
+    setSaveConfirmOpen,
+    saveConfirmMessage,
+    setSaveConfirmMessage,
+    saveConfirmSignificant,
+    setSaveConfirmSignificant,
+    executeSave,
+    confirmDelete,
+    setConfirmDelete,
+    handleDelete,
+    doDelete
+  } = useEntityEditController({
+    workspaceId,
+    entityId,
+    entity,
+    schema,
+    onDeleted: navigateToEntities
+  });
 
   const handleClone = async () => {
     cloneEntity.mutate(entityId, {
@@ -391,13 +204,15 @@ export const EntityDetailScreen = () => {
 
   if (!entity) {
     return (
-      <div className={styles.empty}>
-        <div className={styles.emptyTitle}>Entity not found</div>
-        <div>The entity may have been deleted.</div>
-        <Button icon={<TbChevronLeft size={12} />} onClick={() => navigateToEntities()}>
-          Back to entities
-        </Button>
-      </div>
+      <EmptyState
+        title="Entity not found"
+        subtitle="The entity may have been deleted."
+        action={
+          <Button icon={<TbChevronLeft size={12} />} onClick={() => navigateToEntities()}>
+            Back to entities
+          </Button>
+        }
+      />
     );
   }
 
@@ -503,9 +318,9 @@ export const EntityDetailScreen = () => {
                   <Button
                     variant="primary"
                     onClick={saveEdit}
-                    disabled={updateEntity.isPending || saveConfirmOpen}
+                    disabled={isSaving || saveConfirmOpen}
                   >
-                    {updateEntity.isPending ? 'Saving...' : 'Save'}
+                    {isSaving ? 'Saving...' : 'Save'}
                   </Button>
                 </>
               )
@@ -530,7 +345,7 @@ export const EntityDetailScreen = () => {
       {!contentFolder && (
         <div className={styles.tabBar}>
           <Tabs.Root value={tab} onValueChange={value => setTab(value as TabId)}>
-            <Tabs.List>
+            <Tabs.List overflow>
               <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
               <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
               <Tabs.Trigger value="graph">Graph</Tabs.Trigger>
@@ -540,6 +355,8 @@ export const EntityDetailScreen = () => {
               <Tabs.Trigger value="dependents">
                 Dependents{incoming.length > 0 ? ` (${incoming.length})` : ''}
               </Tabs.Trigger>
+              <Tabs.Trigger value="assessments">Assessments</Tabs.Trigger>
+              <Tabs.Trigger value="discussions">Discussions</Tabs.Trigger>
               {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
               <Tabs.Trigger value="timeline">Timeline</Tabs.Trigger>
             </Tabs.List>
@@ -558,376 +375,31 @@ export const EntityDetailScreen = () => {
 
       {/* Overview */}
       {!contentFolder && tab === 'overview' && (
-        <div className={styles.overviewGrid}>
-          <div className={styles.propsPanel}>
-            {schema && schema.fields.length > 0 && (
-              <>
-                <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
-                  Properties
-                </div>
-                <div className={styles.propList}>
-                  {schema.fields.map(f => (
-                    <PropertyRow
-                      key={f.id}
-                      field={f}
-                      value={entity[f.id]}
-                      editing={editing}
-                      editValue={editState[f.id]}
-                      onChange={v => {
-                        setEditState(s => ({ ...s, [f.id]: v }));
-                        if (validationErrors.has(f.id))
-                          setValidationErrors(s => {
-                            const n = new Set(s);
-                            n.delete(f.id);
-                            return n;
-                          });
-                      }}
-                      refLookup={refLookup}
-                      referenceOptions={referenceOptions}
-                      onEntityClick={navigateToEntity}
-                      hasError={validationErrors.has(f.id)}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className={styles.sidePanel}>
-            <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
-              Metadata
-            </div>
-            {schema && <MetaPropRow label="Schema" value={schema.name} />}
-            <MetaPropRow label="Public ID" value={entity._publicId} />
-            <MetaPropRow label="Namespace" value={entity._namespace} />
-
-            <hr className={styles.divider} />
-
-            <MetaPropRow
-              label="Name"
-              value={entity._name || '—'}
-              editing={editing}
-              editValue={editState['_name'] as string}
-              onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugify(v) }))}
-            />
-            <MetaPropRow
-              label="Slug"
-              value={entity._slug}
-              editing={editing}
-              editValue={editState['_slug'] as string}
-              onChange={v => setEditState(s => ({ ...s, _slug: v }))}
-            />
-            {(entity._description || editing) && (
-              <div className={styles.metaPropRow}>
-                <span className={styles.metaPropLabel}>Description</span>
-                <span className={styles.metaPropValue}>
-                  {editing ? (
-                    <textarea
-                      className={styles.textareaInline}
-                      value={editState['_description'] as string}
-                      onChange={e => setEditState(s => ({ ...s, _description: e.target.value }))}
-                    />
-                  ) : (
-                    entity._description
-                  )}
-                </span>
-              </div>
-            )}
-            <MetaPropRow
-              label="Owner"
-              value={entity._owner?.name ?? '—'}
-              editing={editing}
-              editValue={editState['_owner'] as string}
-              onChange={v => setEditState(s => ({ ...s, _owner: v }))}
-              selectOptions={[
-                { value: '', label: '—' },
-                ...teams.map(team => ({ value: team.id, label: team.name }))
-              ]}
-            />
-            <MetaPropRow
-              label="Lifecycle"
-              value={entity._lifecycle?.name ?? '—'}
-              editing={editing}
-              editValue={editState['_lifecycle'] as string}
-              onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))}
-              selectOptions={[
-                { value: '', label: '—' },
-                ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
-              ]}
-            />
-            <MetaPropRow
-              label="Target Lifecycle"
-              value={entity._targetLifecycle?.name ?? '—'}
-              editing={editing}
-              editValue={editState['_targetLifecycle'] as string}
-              onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))}
-              selectOptions={[
-                { value: '', label: '—' },
-                ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
-              ]}
-            />
-            <MetaPropRow
-              label="Target Date"
-              value={entity._targetLifecycleDate ?? '—'}
-              editing={editing}
-              editValue={editState['_targetLifecycleDate'] as string}
-              onChange={v => setEditState(s => ({ ...s, _targetLifecycleDate: v }))}
-              type="date"
-            />
-            {(entity._tags.length > 0 || editing) && (
-              <div className={styles.metaPropRow}>
-                <span className={styles.metaPropLabel}>Tags</span>
-                <span className={styles.metaPropValue}>
-                  {editing ? (
-                    <input
-                      className={styles.inputInline}
-                      value={editState['_tags'] as string}
-                      onChange={e => setEditState(s => ({ ...s, _tags: e.target.value }))}
-                      placeholder="comma-separated"
-                    />
-                  ) : (
-                    <span className={styles.tags}>
-                      {entity._tags.map(t => (
-                        <Chip key={t} tone="ghost">
-                          {t}
-                        </Chip>
-                      ))}
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
-            {editing ? (
-              <div className={styles.linksEdit}>
-                <div className={styles.metaPropLabel}>Links</div>
-                {editLinks.map((l, i) => (
-                  <div key={i} className={styles.linkRow}>
-                    <input
-                      className={styles.inputInline}
-                      value={l.type ?? ''}
-                      onChange={e =>
-                        setEditLinks(ls =>
-                          ls.map((x, j) => (j === i ? { ...x, type: e.target.value } : x))
-                        )
-                      }
-                      placeholder="Type"
-                      style={{ width: 70, flex: 'none' }}
-                    />
-                    <input
-                      className={styles.inputInline}
-                      value={l.title}
-                      onChange={e =>
-                        setEditLinks(ls =>
-                          ls.map((x, j) => (j === i ? { ...x, title: e.target.value } : x))
-                        )
-                      }
-                      placeholder="Title"
-                    />
-                    <input
-                      className={styles.inputInline}
-                      value={l.url}
-                      onChange={e =>
-                        setEditLinks(ls =>
-                          ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x))
-                        )
-                      }
-                      placeholder="URL"
-                    />
-                    <button
-                      type="button"
-                      className={styles.iconBtn}
-                      onClick={() => setEditLinks(ls => ls.filter((_, j) => j !== i))}
-                    >
-                      <TbX size={12} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className={styles.addLinkBtn}
-                  onClick={() => setEditLinks(ls => [...ls, { url: '', title: '', type: '' }])}
-                >
-                  <TbPlus size={11} /> Add link
-                </button>
-              </div>
-            ) : (
-              entity._links.length > 0 &&
-              entity._links.map((l, i) => (
-                <div key={i} className={styles.metaPropRow}>
-                  <span className={styles.metaPropLabel}>
-                    {l.type ? l.type.charAt(0).toUpperCase() + l.type.slice(1) : 'Link'}
-                  </span>
-                  <span className={styles.metaPropValue}>
-                    <a
-                      className={styles.propLink}
-                      href={l.url.startsWith('http') ? l.url : `https://${l.url}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <TbExternalLink size={11} /> {l.title || l.url}
-                    </a>
-                  </span>
-                </div>
-              ))
-            )}
-
-            <hr className={styles.divider} />
-
-            <div className={styles.sectionLabel}>Projects</div>
-            {entityProjects.length === 0 ? (
-              <div className={styles.metaPropRow}>
-                <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
-                  Not in any project
-                </span>
-              </div>
-            ) : (
-              entityProjects.map(({ project, entity_type }) => (
-                <div key={project.id} className={styles.metaPropRow}>
-                  <span className={styles.metaPropLabel}>{project.name}</span>
-                  <span className={styles.metaPropValue}>
-                    {entity_type ? (
-                      entity_type.name
-                    ) : (
-                      <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
-                    )}
-                  </span>
-                </div>
-              ))
-            )}
-
-            {futureSnapshots.length > 0 && (
-              <>
-                <hr className={styles.divider} />
-                <div className={styles.sectionLabel}>Future plans</div>
-                {futureSnapshots.map(snap => {
-                  const projectName =
-                    entityProjects.find(ep => ep.project.id === snap.project_id)?.project.name ??
-                    snap.project_id;
-                  return (
-                    <div key={snap.id} className={styles.futurePlan}>
-                      <div className={styles.futurePlanMeta}>
-                        <span className={styles.futurePlanProject}>{projectName}</span>
-                        {snap.target_date && (
-                          <span className={styles.futurePlanDate}>
-                            {new Date(`${snap.target_date}T00:00:00`).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                      {snap.commit_message && (
-                        <div className={styles.futurePlanNote}>{snap.commit_message}</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </>
-            )}
-
-            <hr className={styles.divider} />
-
-            <div className={styles.sectionLabel}>Diagrams</div>
-            {entityDiagramFiles.length === 0 ? (
-              <div className={styles.metaPropRow}>
-                <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
-                  Not in any diagram
-                </span>
-              </div>
-            ) : (
-              <div className={styles.miniDiagramList}>
-                {entityDiagramFiles.map(({ file, project }) => (
-                  <DiagramMetadataPopover
-                    key={file.id}
-                    type={file.type}
-                    fallbackTitle={file.name}
-                    contentMetadata={file.content_metadata}
-                    commentCount={file.comment_count}
-                    unresolvedCommentCount={file.unresolved_comment_count}
-                  >
-                    <a
-                      className={styles.miniDiagramRow}
-                      href={projectDiagramHref(
-                        workspaceSlug,
-                        asProjectPublicId(project.public_id),
-                        file.id
-                      )}
-                    >
-                      <div className={styles.miniDiagramThumb}>
-                        <div className={styles.miniDiagramThumbGrid} />
-                        {file.preview_svg ? (
-                          <div
-                            className={styles.miniDiagramThumbPreview}
-                            dangerouslySetInnerHTML={{ __html: file.preview_svg }}
-                          />
-                        ) : (
-                          <svg
-                            className={styles.miniDiagramThumbSvg}
-                            viewBox="0 0 60 30"
-                            preserveAspectRatio="none"
-                          >
-                            <rect
-                              x="3"
-                              y="7"
-                              width="12"
-                              height="7"
-                              rx="1"
-                              fill="var(--cmp-bg)"
-                              stroke="var(--base-fg-more-dim)"
-                              strokeWidth="0.7"
-                            />
-                            <rect
-                              x="23"
-                              y="3"
-                              width="12"
-                              height="7"
-                              rx="1"
-                              fill="var(--cmp-bg)"
-                              stroke="var(--base-fg-more-dim)"
-                              strokeWidth="0.7"
-                            />
-                            <rect
-                              x="23"
-                              y="20"
-                              width="12"
-                              height="7"
-                              rx="1"
-                              fill="var(--cmp-bg)"
-                              stroke="var(--base-fg-more-dim)"
-                              strokeWidth="0.7"
-                            />
-                            <rect
-                              x="43"
-                              y="10"
-                              width="12"
-                              height="7"
-                              rx="1"
-                              fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
-                              stroke="var(--tag-component)"
-                              strokeWidth="0.7"
-                            />
-                            <path
-                              d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14"
-                              stroke="var(--cmp-fg-disabled)"
-                              fill="none"
-                              strokeWidth="0.7"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                      <div className={styles.miniDiagramBody}>
-                        <div className={styles.miniDiagramName}>{file.content_metadata?.title ?? file.name}</div>
-                        <div className={styles.miniDiagramSub}>{project.name}</div>
-                      </div>
-                    </a>
-                  </DiagramMetadataPopover>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <EntityOverviewTab
+          workspaceSlug={workspaceSlug}
+          entity={entity}
+          schema={schema}
+          editing={editing}
+          editState={editState}
+          setEditState={setEditState}
+          editLinks={editLinks}
+          setEditLinks={setEditLinks}
+          validationErrors={validationErrors}
+          setValidationErrors={setValidationErrors}
+          refLookup={refLookup}
+          referenceOptions={referenceOptions}
+          onEntityClick={navigateToEntity}
+          teams={teams}
+          lifecycleStates={lifecycleStates}
+          entityProjects={entityProjects}
+          futureSnapshots={futureSnapshots}
+          entityDiagramFiles={entityDiagramFiles}
+        />
       )}
 
       {/* Topology */}
       {!contentFolder && tab === 'topology' && (
-        <TopologyView
+        <EntityTopologyTab
           entity={entity}
           schema={schema}
           color={color}
@@ -955,51 +427,12 @@ export const EntityDetailScreen = () => {
 
       {/* Relationships */}
       {!contentFolder && tab === 'relations' && (
-        <div className={styles.relationsPage}>
-          {relationCount === 0 ? (
-            <div className={styles.empty}>
-              <div className={styles.emptyTitle}>No relationships</div>
-              <div>Add reference or containment fields to connect entities.</div>
-            </div>
-          ) : (
-            <>
-              <div className={styles.sectionLabel}>Outgoing ({outgoing.length})</div>
-              <div className={styles.relationsList}>
-                {outgoing.map((r, i) => (
-                  <RelationRow
-                    key={`o-${i}`}
-                    relation={r}
-                    direction="outgoing"
-                    schemas={schemas}
-                    onEntityClick={navigateToEntity}
-                  />
-                ))}
-                {outgoing.length === 0 && (
-                  <div className={styles.dim} style={{ padding: 8 }}>
-                    None
-                  </div>
-                )}
-              </div>
-              <div className={styles.sectionLabel}>Incoming ({incoming.length})</div>
-              <div className={styles.relationsList}>
-                {incoming.map((r, i) => (
-                  <RelationRow
-                    key={`i-${i}`}
-                    relation={r}
-                    direction="incoming"
-                    schemas={schemas}
-                    onEntityClick={navigateToEntity}
-                  />
-                ))}
-                {incoming.length === 0 && (
-                  <div className={styles.dim} style={{ padding: 8 }}>
-                    None
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+        <EntityRelationsTab
+          outgoing={outgoing}
+          incoming={incoming}
+          schemas={schemas}
+          onEntityClick={navigateToEntity}
+        />
       )}
 
       {/* Dependents (impact analysis) */}
@@ -1013,20 +446,29 @@ export const EntityDetailScreen = () => {
         />
       )}
 
+      {/* Assessments */}
+      {!contentFolder && tab === 'assessments' && (
+        <EntityAssessmentsTab workspaceId={workspaceId} entity={entity} schema={schema} />
+      )}
+
+      {/* Discussions */}
+      {!contentFolder && tab === 'discussions' && (
+        <div className={styles.tabPane}>
+          <DiscussionThread workspaceId={workspaceId} objectType="entity" objectId={entity._uid} />
+        </div>
+      )}
+
       {/* Change history */}
       {!contentFolder && tab === 'changes' && (
-        <ChangeHistory
-          auditLog={auditLog}
-          loading={loadingAudit}
-          snapshots={allSnapshots}
-          onRestore={(snapshotId, commitMessage) =>
-            restoreSnapshot.mutateAsync({ snapshotId, commitMessage })
-          }
-          isRestoring={restoreSnapshot.isPending}
+        <EntityChangeHistoryTab
+          workspaceId={workspaceId}
+          entityId={entityId}
           entity={entity}
           schema={schema}
+          snapshots={allSnapshots}
           lifecycleStates={lifecycleStates}
           teams={teams}
+          canViewAudit={canViewAudit}
         />
       )}
 
@@ -1048,9 +490,9 @@ export const EntityDetailScreen = () => {
         buttons={[
           { label: 'Cancel', type: 'cancel', onClick: () => setSaveConfirmOpen(false) },
           {
-            label: updateEntity.isPending ? 'Saving...' : 'Save',
+            label: isSaving ? 'Saving...' : 'Save',
             type: 'default',
-            disabled: updateEntity.isPending,
+            disabled: isSaving,
             onClick: executeSave
           }
         ]}
@@ -1088,743 +530,6 @@ export const EntityDetailScreen = () => {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-    </div>
-  );
-};
-
-const MetaPropRow = ({
-  label,
-  value,
-  editing,
-  editValue,
-  onChange,
-  selectOptions,
-  type = 'text'
-}: {
-  label: string;
-  value: string;
-  editing?: boolean;
-  editValue?: string;
-  onChange?: (v: string) => void;
-  selectOptions?: Array<{ value: string; label: string }>;
-  type?: 'text' | 'date';
-}) => (
-  <div className={styles.metaPropRow}>
-    <span className={styles.metaPropLabel}>{label}</span>
-    <span className={styles.metaPropValue}>
-      {editing && onChange ? (
-        selectOptions ? (
-          <select
-            className={styles.selectInline}
-            value={editValue ?? ''}
-            onChange={e => onChange(e.target.value)}
-          >
-            {selectOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        ) : type === 'date' ? (
-          <DateInput
-            value={editValue ?? ''}
-            onChange={v => onChange(v ?? '')}
-            style={{ width: '100%' }}
-          />
-        ) : (
-          <input
-            className={styles.inputInline}
-            value={editValue ?? ''}
-            onChange={e => onChange(e.target.value)}
-          />
-        )
-      ) : (
-        value
-      )}
-    </span>
-  </div>
-);
-
-const PropertyRow = ({
-  field,
-  value,
-  editing,
-  editValue,
-  onChange,
-  refLookup,
-  referenceOptions,
-  onEntityClick,
-  hasError
-}: {
-  field: EntitySchema['fields'][number];
-  value: unknown;
-  editing: boolean;
-  editValue: unknown;
-  onChange: (v: unknown) => void;
-  refLookup: RefLookup;
-  referenceOptions: Record<string, EntitySummary[]>;
-  onEntityClick: (entityId: string) => void;
-  hasError?: boolean;
-}) => {
-  const renderEditor = () => {
-    if (field.type === 'reference') {
-      const candidates = referenceOptions[field.schemaId] ?? [];
-      const availableItems: MultiSelectItem[] = candidates.map(entity => ({
-        value: entity._uid,
-        label: entity._name || entity._slug
-      }));
-      return (
-        <MultiSelect
-          selectedValues={getRelationIds(editValue)}
-          availableItems={availableItems}
-          onSelectionChange={onChange}
-          placeholder={`Search ${field.name.toLowerCase()}...`}
-          style={{ width: '100%' }}
-        />
-      );
-    }
-    if (field.type === 'containment') {
-      const candidates = referenceOptions[field.schemaId] ?? [];
-      return (
-        <select
-          className={styles.selectInline}
-          value={getRelationIds(editValue)[0] ?? ''}
-          onChange={e => onChange(e.target.value ? [e.target.value] : [])}
-        >
-          <option value="">—</option>
-          {candidates.map(e => (
-            <option key={e._uid} value={e._uid}>
-              {e._name || e._slug}
-            </option>
-          ))}
-        </select>
-      );
-    }
-    if (field.type === 'select') {
-      return (
-        <select
-          className={styles.selectInline}
-          value={(editValue as string) ?? ''}
-          onChange={e => onChange(e.target.value)}
-        >
-          <option value="">—</option>
-          {field.options.map(o => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      );
-    }
-    if (field.type === 'longtext') {
-      return (
-        <textarea
-          className={styles.textareaInline}
-          value={(editValue as string) ?? ''}
-          onChange={e => onChange(e.target.value)}
-        />
-      );
-    }
-    if (field.type === 'boolean') {
-      return (
-        <input type="checkbox" checked={!!editValue} onChange={e => onChange(e.target.checked)} />
-      );
-    }
-    if (field.type === 'date') {
-      return (
-        <input
-          className={styles.inputInline}
-          type="date"
-          value={(editValue as string) ?? ''}
-          onChange={e => onChange(e.target.value)}
-        />
-      );
-    }
-    return (
-      <input
-        className={styles.inputInline}
-        value={(editValue as string) ?? ''}
-        onChange={e => onChange(e.target.value)}
-      />
-    );
-  };
-
-  const renderDisplay = () => {
-    if (value == null || value === '') return <span className={styles.dim}>—</span>;
-    if (field.type === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
-    if (field.type === 'select') {
-      const opt = field.options.find(o => o.value === value);
-      return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
-    }
-    if (field.type === 'reference' || field.type === 'containment') {
-      const ids = getRelationIds(value);
-      if (ids.length === 0) return <span className={styles.dim}>—</span>;
-      return (
-        <>
-          {ids.map((id, index) => {
-            const ref = refLookup.get(id);
-            const label = ref?._name ?? ref?._slug ?? id;
-            return (
-              <span key={id}>
-                {index > 0 && ', '}
-                <button
-                  type="button"
-                  className={styles.propLink}
-                  onClick={() => onEntityClick(ref?._publicId ?? id)}
-                >
-                  {label}
-                </button>
-              </span>
-            );
-          })}
-        </>
-      );
-    }
-    if (field.type === 'date') return <span>{formatDateValue(value)}</span>;
-    return <span>{String(value)}</span>;
-  };
-
-  const typeLabel = field.type.charAt(0).toUpperCase() + field.type.slice(1);
-
-  return (
-    <div className={`${styles.propRow} ${hasError ? styles.propRowError : ''}`}>
-      <div className={styles.propLabel}>
-        {field.name}
-        <span className={styles.propType}>{typeLabel}</span>
-        {field.requirementLevel === 'required' && <span className={styles.propReq}>Required</span>}
-        {field.requirementLevel === 'expected' && (
-          <span className={styles.propExpected}>Expected</span>
-        )}
-      </div>
-      <div
-        className={styles.propValue}
-        style={hasError ? { flexDirection: 'column', alignItems: 'flex-start' } : undefined}
-      >
-        {editing ? renderEditor() : renderDisplay()}
-        {hasError && <span className={styles.propErrorMsg}>This field is required</span>}
-      </div>
-    </div>
-  );
-};
-
-const RelationRow = ({
-  relation,
-  direction,
-  schemas,
-  onEntityClick
-}: {
-  relation: Relation;
-  direction: 'outgoing' | 'incoming';
-  schemas: EntitySchema[];
-  onEntityClick: (entityId: string) => void;
-}) => {
-  const targetSchemaId =
-    direction === 'outgoing' ? relation.entitySchemaId : relation.entitySchemaId;
-  const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
-  const targetSchema = schemaIdx >= 0 ? schemas[schemaIdx] : null;
-  const targetColor = targetSchema
-    ? resolveSchemaColor(targetSchema, schemaIdx)
-    : 'var(--accent-fg)';
-
-  return (
-    <button
-      type="button"
-      className={styles.relation}
-      onClick={() => onEntityClick(relation.publicId)}
-    >
-      <span className={styles.relationLead}>
-        {direction === 'incoming' ? (
-          <>
-            <TypeBadge
-              color={targetColor}
-              name={targetSchema?.name}
-              icon={targetSchema?.icon}
-              size={16}
-            />
-            <span className={styles.relationName}>{relation.entityName}</span>
-            <TbChevronRight size={10} className={styles.dim} />
-            <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
-          </>
-        ) : (
-          <>
-            <Chip tone="ghost">{getRelationDisplayLabel(relation)}</Chip>
-            <TbChevronRight size={10} className={styles.dim} />
-            <TypeBadge
-              color={targetColor}
-              name={targetSchema?.name}
-              icon={targetSchema?.icon}
-              size={16}
-            />
-            <span className={styles.relationName}>{relation.entityName}</span>
-          </>
-        )}
-      </span>
-      <span className={styles.dim}>{relation.entitySlug}</span>
-    </button>
-  );
-};
-
-const ChangeHistory = ({
-  auditLog,
-  loading,
-  snapshots,
-  onRestore,
-  isRestoring,
-  entity,
-  schema,
-  lifecycleStates,
-  teams
-}: {
-  auditLog: AuditLogEntry[];
-  loading: boolean;
-  snapshots: EntitySnapshot[];
-  onRestore: (snapshotId: string, commitMessage?: string) => Promise<unknown>;
-  isRestoring: boolean;
-  entity: EntityRecord | null;
-  schema: EntitySchema | null;
-  lifecycleStates: WorkspaceLifecycleState[];
-  teams: WorkspaceTeam[];
-}) => {
-  const [restoreDialogSnapshot, setRestoreDialogSnapshot] = useState<EntitySnapshot | null>(null);
-
-  const savedSnapshots = useMemo(
-    () =>
-      snapshots.filter(
-        s => s.status === 'autosave' || s.status === 'saved_version' || s.status === 'applied'
-      ),
-    [snapshots]
-  );
-
-  const handleRestore = async (commitMessage?: string) => {
-    if (restoreDialogSnapshot) {
-      try {
-        await onRestore(restoreDialogSnapshot.id, commitMessage);
-        setRestoreDialogSnapshot(null);
-      } catch {
-        // keep dialog open so the user can retry
-      }
-    }
-  };
-
-  if (loading) {
-    return <div className={styles.loading}>Loading change history...</div>;
-  }
-
-  if (auditLog.length === 0 && savedSnapshots.length === 0) {
-    return (
-      <div className={styles.empty}>
-        <div className={styles.emptyTitle}>No change history yet</div>
-        <div>Changes will appear here as properties are edited.</div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className={styles.changeHistory}>
-        {savedSnapshots.length > 0 && (
-          <div>
-            <div className={styles.chTableWrap}>
-              <table className={styles.chTable}>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>By</th>
-                    <th>Message</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {savedSnapshots.map(snapshot => (
-                    <tr key={snapshot.id}>
-                      <td className={styles.chDim}>
-                        {new Date(snapshot.created_at).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </td>
-                      <td>
-                        <span
-                          className={`${styles.snapshotTypeBadge} ${snapshot.status !== 'autosave' ? styles.snapshotTypeBadgeSaved : ''}`}
-                        >
-                          {snapshot.status === 'saved_version'
-                            ? 'saved'
-                            : snapshot.status === 'applied'
-                              ? 'applied'
-                              : 'autosave'}
-                        </span>
-                      </td>
-                      <td>{snapshot.created_by_name ?? '—'}</td>
-                      <td className={styles.chDim}>{snapshot.commit_message ?? '—'}</td>
-                      <td className={styles.chActionsCell}>
-                        {snapshot.status !== 'future_update' && (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setRestoreDialogSnapshot(snapshot)}
-                          >
-                            Restore
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {restoreDialogSnapshot && entity && (
-        <RestoreSnapshotDialog
-          isOpen={true}
-          onClose={() => setRestoreDialogSnapshot(null)}
-          onConfirm={handleRestore}
-          snapshot={restoreDialogSnapshot}
-          currentState={{
-            name: entity._name,
-            description: entity._description,
-            lifecycle: entity._lifecycle?.id ?? null,
-            target_lifecycle: entity._targetLifecycle?.id ?? null,
-            target_lifecycle_date: entity._targetLifecycleDate,
-            owner: entity._owner?.id ?? null,
-            data: schema ? Object.fromEntries(schema.fields.map(f => [f.id, entity[f.id]])) : {}
-          }}
-          schema={schema}
-          lifecycleStates={lifecycleStates}
-          teams={teams}
-          isRestoring={isRestoring}
-        />
-      )}
-    </>
-  );
-};
-
-// =========================================================
-// Topology View
-// =========================================================
-
-type EdgePath = {
-  key: string;
-  d: string;
-};
-
-type TopologyViewProps = {
-  entity: EntityRecord;
-  schema: EntitySchema | null;
-  color: string;
-  outgoing: Relation[];
-  incoming: Relation[];
-  schemas: EntitySchema[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  onEntityClick: (entityId: string) => void;
-};
-
-const groupByField = (rels: Relation[]): RelationGroup[] => {
-  const groups = new Map<string, RelationGroup>();
-  for (const r of rels) {
-    const key = r.fieldName;
-    const group = groups.get(key);
-    if (group) {
-      group.relations.push(r);
-    } else {
-      groups.set(key, {
-        key,
-        label: getRelationDisplayLabel(r),
-        relations: [r]
-      });
-    }
-  }
-  return [...groups.values()];
-};
-
-const TopologyView = ({
-  entity,
-  schema,
-  color,
-  outgoing,
-  incoming,
-  schemas,
-  lifecycleStates,
-  onEntityClick
-}: TopologyViewProps) => {
-  const parents = useMemo(() => outgoing.filter(r => r.kind === 'containment'), [outgoing]);
-  const children = useMemo(() => incoming.filter(r => r.kind === 'containment'), [incoming]);
-  const consumesRefs = useMemo(() => outgoing.filter(r => r.kind === 'reference'), [outgoing]);
-  const usedByRefs = useMemo(() => incoming.filter(r => r.kind === 'reference'), [incoming]);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const entityBoxRef = useRef<HTMLDivElement>(null);
-  const refCardRefs = useRef<Map<string, HTMLElement>>(new Map());
-  const [edges, setEdges] = useState<EdgePath[]>([]);
-  const topologyVersion = `${parents.length}:${children.length}:${consumesRefs.length}:${usedByRefs.length}`;
-
-  const resolveRelColor = useCallback(
-    (rel: Relation) => {
-      const idx = schemas.findIndex(s => s.id === rel.entitySchemaId);
-      const s = idx >= 0 ? schemas[idx] : null;
-      return { schema: s, color: s ? resolveSchemaColor(s, idx) : 'var(--accent-fg)' };
-    },
-    [schemas]
-  );
-
-  const setCardRef = useCallback(
-    (key: string) => (el: HTMLElement | null) => {
-      if (el) refCardRefs.current.set(key, el);
-      else refCardRefs.current.delete(key);
-    },
-    []
-  );
-
-  useLayoutEffect(() => {
-    void topologyVersion;
-    const container = containerRef.current;
-    const entityBox = entityBoxRef.current;
-    if (!container || !entityBox) {
-      setEdges([]);
-      return;
-    }
-
-    const compute = () => {
-      if (!containerRef.current || !entityBoxRef.current) return;
-      const cRect = containerRef.current.getBoundingClientRect();
-      const eRect = entityBoxRef.current.getBoundingClientRect();
-      const next: EdgePath[] = [];
-
-      const entityBottom = eRect.bottom - cRect.top;
-
-      // Compute trunk X for each side based on actual card positions
-      let inMaxRight = -Infinity;
-      let outMinLeft = Infinity;
-
-      refCardRefs.current.forEach((el, key) => {
-        const r = el.getBoundingClientRect();
-        if (key.startsWith('in-')) inMaxRight = Math.max(inMaxRight, r.right - cRect.left);
-        else outMinLeft = Math.min(outMinLeft, r.left - cRect.left);
-      });
-
-      const inTrunkX =
-        inMaxRight !== -Infinity ? inMaxRight + 28 : eRect.left - cRect.left + eRect.width * 0.35;
-      const outTrunkX =
-        outMinLeft !== Infinity ? outMinLeft - 28 : eRect.left - cRect.left + eRect.width * 0.65;
-
-      refCardRefs.current.forEach((el, key) => {
-        const r = el.getBoundingClientRect();
-        const cardMidY = r.top - cRect.top + r.height / 2;
-
-        if (key.startsWith('out-')) {
-          // Consumes: down from entity, right to card
-          const cardLeft = r.left - cRect.left - 4;
-          const d =
-            `M ${outTrunkX} ${entityBottom} L ${outTrunkX} ${cardMidY} L ${cardLeft} ${cardMidY}` +
-            ` M ${cardLeft - 4} ${cardMidY - 4} L ${cardLeft} ${cardMidY} L ${cardLeft - 4} ${cardMidY + 4}`;
-          next.push({ key, d });
-        } else {
-          // Used by: from card right, up to entity
-          const cardRight = r.right - cRect.left + 4;
-          const d =
-            `M ${cardRight} ${cardMidY} L ${inTrunkX} ${cardMidY} L ${inTrunkX} ${entityBottom}` +
-            ` M ${inTrunkX - 4} ${entityBottom + 4} L ${inTrunkX} ${entityBottom} L ${inTrunkX + 4} ${entityBottom + 4}`;
-          next.push({ key, d });
-        }
-      });
-
-      setEdges(next);
-    };
-
-    let raf: number;
-    const debouncedCompute = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(compute);
-    };
-
-    debouncedCompute();
-    const observer = new ResizeObserver(debouncedCompute);
-    observer.observe(container);
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(raf);
-    };
-  }, [topologyVersion]);
-
-  const isEmpty = parents.length + children.length + consumesRefs.length + usedByRefs.length === 0;
-
-  return (
-    <div className={styles.topologyPage} ref={containerRef}>
-      <svg className={styles.topoEdgeSvg}>
-        {edges.map(edge => (
-          <path
-            key={edge.key}
-            d={edge.d}
-            stroke="var(--base-fg-more-dim)"
-            strokeWidth={1.2}
-            fill="none"
-            opacity={0.7}
-          />
-        ))}
-      </svg>
-
-      {parents.length > 0 && (
-        <div className={styles.topoParents}>
-          <div className={styles.topoParentsItems}>
-            {parents.map((p, i) => {
-              const { schema: ps, color: pc } = resolveRelColor(p);
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  className={styles.topoParentChip}
-                  onClick={() => onEntityClick(p.publicId)}
-                >
-                  <TypeBadge color={pc} name={ps?.name} icon={ps?.icon} size={14} />
-                  <span className={styles.topoParentName}>{p.entityName}</span>
-                </button>
-              );
-            })}
-          </div>
-          <div className={styles.topoParentArrowWrap}>
-            <svg width="12" height="18" viewBox="0 3 12 18" className={styles.topoParentArrow}>
-              <path
-                d="M 6 18 L 6 4 M 2 8 L 6 4 L 10 8"
-                stroke="var(--base-fg-more-dim)"
-                strokeWidth="1.2"
-                fill="none"
-              />
-            </svg>
-            <span className={styles.topoParentPredicate}>
-              {getRelationDisplayLabel(parents[0]!)}
-            </span>
-          </div>
-        </div>
-      )}
-
-      <div className={styles.topoEntityBox} ref={entityBoxRef}>
-        <div className={styles.topoEntityAccent} />
-        <div className={styles.topoEntityHead}>
-          <TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={28} />
-          <div className={styles.topoEntityMeta}>
-            <div className={styles.topoEntityEyebrow}>{schema?.name ?? 'Entity'}</div>
-            <div className={styles.topoEntityName}>{entity._name || entity._slug}</div>
-          </div>
-          {entity._lifecycle && (
-            <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
-          )}
-        </div>
-
-        {children.length > 0 ? (
-          <>
-            <div className={styles.topoEntitySection}>
-              <span>Contains</span>
-              <span className={styles.dim}>({children.length})</span>
-            </div>
-            <div className={styles.topoChildrenGrid}>
-              {children.map((c, i) => {
-                const { schema: cs, color: cc } = resolveRelColor(c);
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    className={styles.topoChildCard}
-                    onClick={() => onEntityClick(c.publicId)}
-                  >
-                    <span className={styles.topoCardBar} style={{ background: cc }} />
-                    <div className={styles.topoChildHead}>
-                      <TypeBadge color={cc} name={cs?.name} icon={cs?.icon} size={14} />
-                      <span className={styles.topoCardName}>{c.entityName}</span>
-                    </div>
-                    <div className={styles.topoChildMeta}>
-                      {cs && <Chip tone="ghost">{cs.name}</Chip>}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          !isEmpty && (
-            <div className={`${styles.topoEntityEmpty} ${styles.dim}`}>No contained entities</div>
-          )
-        )}
-      </div>
-
-      {(usedByRefs.length > 0 || consumesRefs.length > 0) && (
-        <div className={styles.topoRefsGrid}>
-          <div className={`${styles.topoRefsCol} ${styles.topoRefsColIn}`}>
-            {usedByRefs.length === 0 && (
-              <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No incoming references</div>
-            )}
-            {groupByField(usedByRefs).map(group => (
-              <div key={group.key} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>{group.label}</div>
-                {group.relations.map((r, i) => {
-                  const { schema: rs, color: rc } = resolveRelColor(r);
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      ref={setCardRef(`in-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
-                      className={styles.topoRefCard}
-                      onClick={() => onEntityClick(r.publicId)}
-                    >
-                      <span className={styles.topoCardBar} style={{ background: rc }} />
-                      <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
-                      <div className={styles.topoRefBody}>
-                        <div className={styles.topoCardName}>{r.entityName}</div>
-                        {rs && (
-                          <div className={`${styles.topoRefKind} ${styles.dim}`}>{rs.name}</div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-          <div className={`${styles.topoRefsCol} ${styles.topoRefsColOut}`}>
-            {consumesRefs.length === 0 && (
-              <div className={`${styles.topoRefsEmpty} ${styles.dim}`}>No outgoing references</div>
-            )}
-            {groupByField(consumesRefs).map(group => (
-              <div key={group.key} className={styles.topoRefGroup}>
-                <div className={styles.topoAxisLabel}>{group.label}</div>
-                {group.relations.map((r, i) => {
-                  const { schema: rs, color: rc } = resolveRelColor(r);
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      ref={setCardRef(`out-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
-                      className={styles.topoRefCard}
-                      onClick={() => onEntityClick(r.publicId)}
-                    >
-                      <span className={styles.topoCardBar} style={{ background: rc }} />
-                      <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
-                      <div className={styles.topoRefBody}>
-                        <div className={styles.topoCardName}>{r.entityName}</div>
-                        {rs && (
-                          <div className={`${styles.topoRefKind} ${styles.dim}`}>{rs.name}</div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {isEmpty && (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No relationships defined</div>
-          <div>Add reference or containment fields to see the topology.</div>
-        </div>
-      )}
     </div>
   );
 };

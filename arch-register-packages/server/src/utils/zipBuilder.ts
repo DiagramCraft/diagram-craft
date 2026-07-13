@@ -200,6 +200,7 @@ export class ZipExtractor {
     projects?: unknown;
     content_nodes?: unknown;
     contentFiles?: Map<string, Buffer>;
+    jsonFiles: Map<string, string>;
   }> {
     const directory = await unzipper.Open.buffer(zipBuffer);
     
@@ -226,8 +227,10 @@ export class ZipExtractor {
       projects?: unknown;
       content_nodes?: unknown;
       contentFiles?: Map<string, Buffer>;
+      jsonFiles: Map<string, string>;
     } = {
-      manifest: JSON.parse(manifestStr)
+      manifest: JSON.parse(manifestStr),
+      jsonFiles: files
     };
 
     const configStr = files.get('config.json');

@@ -2,25 +2,15 @@ import { createContext, useContext, useCallback, useMemo, type ReactNode } from 
 import {
   PermissionChecker,
   CapabilityEvaluator,
-  buildAuthorizationContext,
-  type AuthorizationContext,
-  type Entity,
-  type EntityAction,
   type ProjectAction,
   type GlobalPermission,
-  type TeamAssignment,
-  WorkspaceRole
+  type WorkspaceAuthorizationContext
 } from '@arch-register/permissions';
 import { useAuth } from './AuthContext';
 import { useAuthorizationData } from './AuthorizationDataContext';
+import { buildWorkspaceAuthorizationContextFromAuthData } from './authorizationContextAdapter';
 
 type PermissionContextType = {
-  /**
-   * Check if user has a specific permission on an entity.
-   * Returns false if user is not authenticated or authorization data is not loaded.
-   */
-  hasEntityPermission: (workspaceId: string, entity: Entity, action: EntityAction) => boolean;
-
   /**
    * Check if user has a specific permission on a project.
    * Returns false if user is not authenticated or authorization data is not loaded.
@@ -48,15 +38,6 @@ type PermissionContextType = {
    * Returns false if user is not authenticated or authorization data is not loaded.
    */
   canCreateTopLevelEntity: (workspaceId: string, ownerTeamId: string | null) => boolean;
-
-  /**
-   * Build authorization context for a workspace.
-   * Returns null if user is not authenticated or authorization data is not loaded.
-   *
-   * Note: This requires entity and schema data which is not available in the base auth data.
-   * For now, this returns a partial context that can be used for global and project permissions.
-   */
-  buildContext: (workspaceId: string) => AuthorizationContext | null;
 };
 
 const PermissionContext = createContext<PermissionContextType | null>(null);
@@ -68,9 +49,7 @@ const PermissionContext = createContext<PermissionContextType | null>(null);
  * This context focuses solely on permission evaluation, separate from authentication
  * lifecycle and authorization data management.
  *
- * Note: Currently provides a simplified context without entity/schema data.
- * For full entity permission checks, components should fetch entity data separately
- * and use the permission checker directly.
+ * Entity permissions are evaluated on the server and returned with entity API responses.
  */
 export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
@@ -80,54 +59,13 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   const checker = useMemo(() => new PermissionChecker(), []);
   const capabilities = useMemo(() => new CapabilityEvaluator(), []);
 
-  /**
-   * Build a partial authorization context for the workspace.
-   * This context can be used for global and project permissions,
-   * but not for entity permissions (which require entity/schema data).
-   */
   const buildContext = useCallback(
-    (workspaceId: string): AuthorizationContext | null => {
+    (workspaceId: string | null): WorkspaceAuthorizationContext | null => {
       if (!user || !authData) return null;
 
-      const teamAssignments =
-        (authData.team_assignments_by_workspace?.[workspaceId] ?? []).map(
-          assignment =>
-            ({
-              teamId: assignment.team_id,
-              role: assignment.role
-            }) satisfies TeamAssignment
-        ) ?? [];
-      const teams = authData.teams_by_workspace?.[workspaceId] ?? [];
-      const workspaceRoles = authData.workspace_role_definitions_by_workspace?.[workspaceId] ?? [];
-
-      const workspaceRole = (authData.workspace_roles?.[workspaceId] ??
-        null) as WorkspaceRole | null;
-
-      return buildAuthorizationContext({
-        userId: user.id,
-        globalRoles: authData.global_roles,
-        workspaceRole,
-        workspaceRoles,
-        teamAssignments,
-        teams,
-        schemas: [],
-        entities: [],
-        grants: []
-      });
+      return buildWorkspaceAuthorizationContextFromAuthData(user.id, authData, workspaceId);
     },
     [user, authData]
-  );
-
-  const hasEntityPermission = useCallback(
-    (workspaceId: string, entity: Entity, action: EntityAction): boolean => {
-      const context = buildContext(workspaceId);
-      if (!context) return false;
-
-      // Note: This will work for basic checks but may not have full entity hierarchy
-      // For production use, entity/schema data should be fetched and included in context
-      return checker.hasEntityPermission(context, entity, action);
-    },
-    [buildContext, checker]
   );
 
   const hasProjectPermission = useCallback(
@@ -142,24 +80,12 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
 
   const hasGlobalPermission = useCallback(
     (permission: GlobalPermission): boolean => {
-      if (!user || !authData) return false;
-
-      // For global permissions, we don't need workspace-specific context
-      const context = buildAuthorizationContext({
-        userId: user.id,
-        globalRoles: authData.global_roles,
-        workspaceRole: null,
-        workspaceRoles: [],
-        teamAssignments: [],
-        teams: [],
-        schemas: [],
-        entities: [],
-        grants: []
-      });
+      const context = buildContext(null);
+      if (!context) return false;
 
       return checker.hasGlobalPermission(context, permission);
     },
-    [user, authData, checker]
+    [buildContext, checker]
   );
 
   const canCreateProject = useCallback(
@@ -183,12 +109,10 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const value: PermissionContextType = {
-    hasEntityPermission,
     hasProjectPermission,
     hasGlobalPermission,
     canCreateProject,
-    canCreateTopLevelEntity,
-    buildContext
+    canCreateTopLevelEntity
   };
 
   return <PermissionContext.Provider value={value}>{children}</PermissionContext.Provider>;

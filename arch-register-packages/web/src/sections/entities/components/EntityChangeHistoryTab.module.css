@@ -1,0 +1,30 @@
+.changeHistory {
+  padding: 16px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chDim {
+  color: var(--cmp-fg-disabled);
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.snapshotTypeBadge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: capitalize;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--cmp-fg-disabled);
+}
+
+.snapshotTypeBadgeSaved {
+  background: color-mix(in oklch, var(--accent-fg) 12%, transparent);
+  border-color: color-mix(in oklch, var(--accent-fg) 35%, transparent);
+  color: var(--accent-fg);
+}

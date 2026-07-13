@@ -44,12 +44,6 @@
   color: var(--warning-fg);
 }
 
-.errorText {
-  font-size: 12px;
-  color: var(--error-fg);
-  margin-top: 6px;
-}
-
 /* Meta bar */
 .meta {
   display: flex;
@@ -482,85 +476,6 @@
   min-height: 0;
 }
 
-.projectEntityTableWrap {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r-md);
-  background: var(--panel-bg);
-}
-
-.projectEntityTable {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.projectEntityTable thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  text-align: left;
-  padding: 10px 12px;
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--cmp-fg-disabled);
-  background: var(--base-bg);
-  border-bottom: 1px solid var(--cmp-border);
-}
-
-.projectEntityTable tbody td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--panel-border);
-  vertical-align: top;
-}
-
-.projectEntityTable tbody tr:hover {
-  background: var(--cmp-bg);
-}
-
-.projectEntityTableName {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.projectEntityTableNameMain {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--base-fg);
-}
-
-.projectEntityTableNameSub {
-  font-size: 11px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 340px;
-  color: var(--base-fg-more-dim);
-}
-
-.projectEntityDotsBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r);
-  border: 1px solid transparent;
-  background: none;
-  color: var(--base-fg-more-dim);
-  cursor: pointer;
-}
-
-.projectEntityDotsBtn:hover {
-  background: var(--cmp-bg);
-  border-color: var(--cmp-border);
-  color: var(--base-fg);
-}
-
 .screenBody {
   display: flex;
   flex-direction: column;
@@ -703,24 +618,6 @@
   color: var(--base-fg);
 }
 
-.inlineSelect {
-  height: 28px;
-  padding: 0 6px;
-  font-size: 12px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-  color: var(--base-fg);
-  outline: none;
-  font-family: var(--font-sans);
-  appearance: none;
-  cursor: pointer;
-}
-
-.inlineSelect:focus {
-  border-color: var(--accent-fg);
-}
-
 .pentRowMenu {
   display: flex;
   align-items: center;
@@ -756,92 +653,6 @@
   gap: 6px;
 }
 
-/* Add entity dialog */
-.aedBody {
-  padding: 16px 20px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.aedSection {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.aedLabel {
-  font-size: 10.5px;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-  color: var(--base-fg-more-dim);
-  font-weight: 500;
-}
-
-.aedSearch {
-  width: 100%;
-}
-
-.aedList {
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-  background: var(--cmp-bg);
-  height: 148px;
-  overflow-y: auto;
-}
-
-.aedItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 6px 10px;
-  text-align: left;
-  font-size: 13px;
-  color: var(--base-fg-dim);
-  border: none;
-  border-bottom: 1px solid var(--panel-border);
-  background: none;
-  cursor: pointer;
-  transition: background 60ms;
-}
-
-.aedItem:last-child {
-  border-bottom: none;
-}
-
-.aedItem:hover {
-  background: var(--panel-bg);
-  color: var(--base-fg);
-}
-
-.aedItemSelected {
-  background: color-mix(in oklch, var(--accent-fg) 16%, var(--cmp-bg));
-  color: var(--base-fg);
-}
-
-.aedItemSelected:hover {
-  background: color-mix(in oklch, var(--accent-fg) 20%, var(--cmp-bg));
-}
-
-.aedItemName {
-  flex: 1;
-  min-width: 0;
-}
-
-.aedItemType {
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-  flex-shrink: 0;
-}
-
-.aedListEmpty {
-  padding: 18px 12px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--base-fg-more-dim);
-}
-
 .aedRoleWrap {
   position: relative;
 }
@@ -863,44 +674,6 @@
   align-items: center;
 }
 
-/* Empty state */
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 20px;
-  text-align: center;
-  border: 1px dashed var(--cmp-border);
-  border-radius: var(--r-md);
-  background: var(--panel-bg);
-}
-
-.emptyIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--cmp-bg);
-  color: var(--base-fg-more-dim);
-  margin-bottom: 10px;
-}
-
-.emptyTitle {
-  color: var(--base-fg);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.emptySub {
-  font-size: 12px;
-  max-width: 360px;
-  margin: 6px 0 14px;
-  color: var(--cmp-fg-disabled);
-}
-
 /* Settings form */
 .settings {
   max-width: 580px;
@@ -911,54 +684,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.formRow {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.formLabel {
-  font-size: 11px;
-  color: var(--base-fg-more-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.formInput {
-  height: 28px;
-  padding: 0 8px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--cmp-border);
-  border-radius: var(--r);
-  color: var(--base-fg);
-  font-size: 12.5px;
-  font-family: var(--font-sans);
-  outline: none;
-}
-
-.formInput:focus {
-  border-color: var(--accent-fg);
-}
-
-.formTextarea {
-  height: auto;
-  min-height: 60px;
-  padding: 6px 8px;
-  resize: vertical;
-}
-
-.formActions {
-  display: flex;
-  gap: 6px;
-  padding-top: 8px;
-  border-top: 1px solid var(--panel-border);
-}
-
-.formSpacer {
-  flex: 1;
 }
 
 /* Entity/Future tabs nav */
@@ -1598,37 +1323,3 @@
   max-width: 320px;
 }
 
-/* Apply snapshot conflict dialog */
-.applySnapshotDateField {
-  margin-bottom: 4px;
-}
-
-.conflictList {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.conflictRow {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.conflictLabel {
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--base-fg);
-}
-
-.conflictOption {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.conflictOptionLabel {
-  font-size: 12px;
-  color: var(--base-fg-dim);
-}

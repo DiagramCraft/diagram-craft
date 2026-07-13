@@ -3,7 +3,8 @@ import type {
   WatchDbCreate,
   WatchDatabase
 } from './watchDatabase';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import { watchMappers } from './watchDatabase';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import { newid } from '@diagram-craft/utils/id';
 
 export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchDatabase {
@@ -19,7 +20,7 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
     return this.all(
       'SELECT * FROM user_watch WHERE user_id = ? AND workspace = ? ORDER BY created_at DESC',
       [userId, workspace],
-      sqliteMappers.userWatch
+      watchMappers.watch
     );
   }
 
@@ -27,7 +28,7 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
     return await this.get(
       'SELECT * FROM user_watch WHERE user_id = ? AND workspace = ? AND entity_id = ?',
       [userId, workspace, entityId],
-      sqliteMappers.userWatch
+      watchMappers.watch
     );
   }
 
@@ -39,7 +40,7 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
     return (await this.get(
       'SELECT * FROM user_watch WHERE user_id = ? AND workspace = ? AND entity_id = ?',
       [input.user_id, input.workspace, input.entity_id],
-      sqliteMappers.userWatch
+      watchMappers.watch
     ))!;
   }
 
@@ -58,7 +59,7 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
     return this.all(
       'SELECT * FROM user_notification WHERE user_id = ? AND workspace = ? ORDER BY timestamp DESC, created_at DESC',
       [userId, workspace],
-      sqliteMappers.userNotification
+      watchMappers.notification
     );
   }
 
@@ -66,7 +67,7 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
     const existing = await this.get(
       'SELECT * FROM user_notification WHERE id = ? AND user_id = ? AND workspace = ?',
       [notificationId, userId, workspace],
-      sqliteMappers.userNotification
+      watchMappers.notification
     );
     if (!existing) return null;
     this.run('DELETE FROM user_notification WHERE id = ? AND user_id = ? AND workspace = ?', [
@@ -108,7 +109,7 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
           auditLog.id,
           auditLog.operation,
           auditLog.entity_name,
-          auditLog.entity_slug,
+          auditLog.entity_slug ?? auditLog.entity_id,
           auditLog.schema_id,
           auditLog.user_id,
           changedByDisplayName,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -7,10 +7,13 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../../hooks/useEnums';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
+import { EmptyState } from '../../components/EmptyState';
+
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
 export const EnumEditorScreen = () => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { tab?: string; enumId?: string };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const selectedEnumId = search.enumId ?? null;
   const { workspaceSlug, enums, permissions } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
@@ -230,10 +233,10 @@ export const EnumEditorScreen = () => {
           </div>
         </div>
       ) : (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No enum selected</div>
-          <div>Select an enum from the sidebar or create a new one.</div>
-        </div>
+        <EmptyState
+          title="No enum selected"
+          subtitle="Select an enum from the sidebar or create a new one."
+        />
       )}
 
       <DeleteConfirmationDialog

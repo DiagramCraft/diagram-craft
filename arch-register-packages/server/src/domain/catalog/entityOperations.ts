@@ -5,7 +5,9 @@ import { PermissionChecker } from '@arch-register/permissions';
 import { slugify } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { computeEntityCompleteness } from '../../utils/completeness';
-import { requireEntityAction, requireCanCreateTopLevelEntity } from '../auth/authorization';
+import { requireEntityAction, requireCanCreateTopLevelEntity, requireProjectAccess } from '../auth/authorization';
+import { splitAssessmentConditions, matchesAssessmentConditions } from '@arch-register/api-types/assessmentFilter';
+import type { AssessmentDbResult } from '../project/db/projectDatabase';
 import type { EntityMutationActor } from './entityMutations';
 import { createEntityWithAudit, updateEntityWithAudit, entityToBaseState } from './entityMutations';
 import { logAudit, flattenEntityAuditFields } from '../audit/db/auditLogging';
@@ -22,7 +24,8 @@ import {
   getEntityParentsFromPayload,
   getLifecycleValues,
   getTeamIds,
-  normalizeEntityRelationFields
+  normalizeEntityRelationFields,
+  relationFields
 } from './dataHelpers';
 import { formatPublicId } from '../../utils/publicIds';
 import { ENTITY_DEFAULTS } from '../../constants';
@@ -36,7 +39,12 @@ import {
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { listAllCatalogEntities } from './entityLoader';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
-import type { EntityDbResult } from './db/catalogDatabase';
+import type {
+  Entity,
+  EntityDbCreate,
+  EntityDbResult,
+  SchemaDbResult
+} from './db/catalogDatabase';
 
 const checker = new PermissionChecker();
 
@@ -67,6 +75,34 @@ const attachProjectLink = (
   };
 };
 
+/**
+ * Resolves the joined assessment's bulk response map when the query includes assessment
+ * conditions. Exactly one `listAssessmentResponses` call per request — never per-entity.
+ */
+const resolveJoinedAssessment = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext | null,
+  assessmentId: string | null,
+  hasAssessmentConditions: boolean
+): Promise<{ assessment: AssessmentDbResult; responsesByEntity: Map<string, Record<string, string | number>> } | null> => {
+  if (!hasAssessmentConditions) return null;
+  httpAssert.present(assessmentId, {
+    status: 400,
+    message: 'Assessment filter conditions require assessmentId'
+  });
+  const assessment = await db.project.getAssessmentById(workspace, assessmentId);
+  httpAssert.present(assessment, { status: 404, message: `Assessment '${assessmentId}' not found` });
+  if (authCtx) {
+    const project = await db.project.getProject(workspace, assessment.project_id);
+    httpAssert.present(project, { status: 404, message: `Project '${assessment.project_id}' not found` });
+    requireProjectAccess(authCtx, project.owner);
+  }
+  const responses = await db.project.listAssessmentResponses(workspace, assessmentId);
+  const responsesByEntity = new Map(responses.map(r => [r.entity_id, r.values]));
+  return { assessment, responsesByEntity };
+};
+
 const allocateEntityPublicId = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -90,6 +126,7 @@ export const listEntities = async (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     view?: 'summary' | 'full';
@@ -105,6 +142,7 @@ export const listEntities = async (
     lifecycle = null,
     q = '',
     conditions = [],
+    assessmentId = null,
     projectId = null,
     projectScope = 'all',
     view = 'full',
@@ -122,6 +160,7 @@ export const listEntities = async (
       lifecycle,
       q,
       conditions,
+      assessmentId,
       projectId,
       projectScope,
       view,
@@ -146,6 +185,7 @@ export const countEntities = async (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     asOf?: Date | null;
@@ -158,6 +198,7 @@ export const countEntities = async (
     lifecycle: options.lifecycle ?? null,
     q: options.q ?? '',
     conditions: options.conditions ?? [],
+    assessmentId: options.assessmentId ?? null,
     projectId: options.projectId ?? null,
     projectScope: options.projectScope ?? 'all',
     view: 'full',
@@ -177,6 +218,7 @@ const collectEntities = async (
     lifecycle?: string | null;
     q?: string | null;
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     view?: 'summary' | 'full';
@@ -190,18 +232,22 @@ const collectEntities = async (
     lifecycle = null,
     q = '',
     conditions = [],
+    assessmentId = null,
     projectId = null,
     projectScope = 'all',
     view = 'full',
     asOf = null,
     includeProjectSnapshots = true
   } = options;
-  // _completeness is computed post-fetch; all other conditions can be evaluated in SQL
-  const sqlConditions = conditions.filter(c => c.fieldId !== '_completeness');
-  const completenessConditions = conditions.filter(c => c.fieldId === '_completeness');
-  const [schemas, projectEntities] = await Promise.all([
+  // _completeness is computed post-fetch; assessment conditions are evaluated against the
+  // joined assessment's bulk response map; all remaining conditions can be evaluated in SQL
+  const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
+  const sqlConditions = otherConditions.filter(c => c.fieldId !== '_completeness');
+  const completenessConditions = otherConditions.filter(c => c.fieldId === '_completeness');
+  const [schemas, projectEntities, joinedAssessment] = await Promise.all([
     db.catalog.listSchemas(workspace),
-    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
+    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+    resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0)
   ]);
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
@@ -218,6 +264,16 @@ const collectEntities = async (
     if (
       extraConditions.length > 0 &&
       !extraConditions.every(c => matchesFilterCondition(entity, c, completeness))
+    ) {
+      return;
+    }
+    if (
+      joinedAssessment &&
+      !matchesAssessmentConditions(
+        joinedAssessment.responsesByEntity.get(entity.id),
+        assessmentConditions,
+        joinedAssessment.assessment.fields
+      )
     ) {
       return;
     }
@@ -381,6 +437,7 @@ export const getEntityTree = async (
     projectId?: string | null;
     projectScope?: 'project' | 'all';
     conditions?: FilterCondition[];
+    assessmentId?: string | null;
   }
 ): Promise<TreeResponse> => {
   const {
@@ -390,13 +447,16 @@ export const getEntityTree = async (
     q = '',
     projectId = null,
     projectScope = 'all',
-    conditions = []
+    conditions = [],
+    assessmentId = null
   } = options;
   try {
-    const [schemas, allEntitiesRaw, projectEntities] = await Promise.all([
+    const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
+    const [schemas, allEntitiesRaw, projectEntities, joinedAssessment] = await Promise.all([
       db.catalog.listSchemas(workspace),
       listAllCatalogEntities(db, workspace),
-      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
+      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+      resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0)
     ]);
     const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
     const allEntities = allEntitiesRaw.filter(
@@ -419,7 +479,7 @@ export const getEntityTree = async (
     }
 
     const schemaMap = new Map(schemas.map(s => [s.id, s]));
-    const hasCompletenessCondition = conditions.some(c => c.fieldId === '_completeness');
+    const hasCompletenessCondition = otherConditions.some(c => c.fieldId === '_completeness');
 
     const matchRows = filterEntities(scopedEntities, {
       schemaId,
@@ -428,13 +488,24 @@ export const getEntityTree = async (
       q: q ?? ''
     })
       .filter(entity => {
-        if (conditions.length === 0) return true;
+        if (otherConditions.length === 0 && !joinedAssessment) return true;
         const schema = schemaMap.get(entity.schema_id) ?? null;
         const completeness =
           hasCompletenessCondition && schema != null
             ? computeEntityCompleteness(entity, schema)
             : null;
-        return conditions.every(c => matchesFilterCondition(entity, c, completeness));
+        if (!otherConditions.every(c => matchesFilterCondition(entity, c, completeness))) return false;
+        if (
+          joinedAssessment &&
+          !matchesAssessmentConditions(
+            joinedAssessment.responsesByEntity.get(entity.id),
+            assessmentConditions,
+            joinedAssessment.assessment.fields
+          )
+        ) {
+          return false;
+        }
+        return true;
       })
       .sort((a, b) => a.name.localeCompare(b.name));
     const matchIds = new Set(matchRows.map(r => r.id));
@@ -463,7 +534,7 @@ export const getEntityTree = async (
 
     return {
       nodes: [...allIncluded.values()].map(row => ({
-        ...attachProjectLink(toApiEntitySummary(row, authCtx) as EntityRecord, row.id, projectId, projectEntityMap),
+        ...attachProjectLink(toApiEntity(row, authCtx), row.id, projectId, projectEntityMap),
         _isMatch: matchIds.has(row.id)
       })),
       edges
@@ -683,6 +754,220 @@ export const createEntity = async (
     return toApiEntity(row, authCtx);
   } catch (error) {
     return handleError(error, 'Failed to create data record');
+  }
+};
+
+type BulkEntityDraft = {
+  payload: ReturnType<typeof parseEntityMutationPayload>;
+  schema: SchemaDbResult;
+  entity: EntityDbCreate;
+};
+
+const canonicalizeBulkRelationFields = (
+  fields: Record<string, unknown>,
+  schema: SchemaDbResult,
+  nameToId: Map<string, string>
+) => {
+  const normalized = { ...fields };
+  for (const field of relationFields(schema.fields)) {
+    let value = normalized[field.id];
+    if (value == null && normalized[field.name] != null) {
+      value = normalized[field.name];
+      delete normalized[field.name];
+    }
+
+    if (typeof value !== 'string') continue;
+    const names = value
+      .split(',')
+      .map(name => name.trim())
+      .filter(Boolean);
+    normalized[field.id] = names.map(name => {
+      const id = nameToId.get(name.toLowerCase());
+      httpAssert.present(id, {
+        status: 400,
+        message: `${field.name} references unknown batch entity '${name}'`
+      });
+      return id;
+    });
+  }
+  return normalized;
+};
+
+const resolveBulkOwners = (
+  drafts: BulkEntityDraft[],
+  existingEntities: EntityDbResult[],
+  teamIds: Set<string>,
+  fallbackOwner: string | null
+) => {
+  const existingById = new Map(existingEntities.map(entity => [entity.id, entity]));
+  const draftById = new Map(drafts.map(draft => [draft.entity.id, draft]));
+  const resolving = new Set<string>();
+
+  const resolveOwner = (draft: BulkEntityDraft): string | null => {
+    const explicit = draft.payload.requestedOwner;
+    if (explicit && teamIds.has(explicit)) return explicit;
+    if (draft.entity.owner) return draft.entity.owner;
+    if (resolving.has(draft.entity.id)) {
+      return draft.schema.default_owner && teamIds.has(draft.schema.default_owner)
+        ? draft.schema.default_owner
+        : fallbackOwner;
+    }
+
+    resolving.add(draft.entity.id);
+    const parentIds = relationFields(draft.schema.fields)
+      .filter(field => field.type === 'containment')
+      .flatMap(field => {
+        const value = draft.entity.data[field.id];
+        return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [];
+      });
+    for (const parentId of parentIds) {
+      const parent = existingById.get(parentId);
+      const owner = parent?.owner ?? (draftById.get(parentId) ? resolveOwner(draftById.get(parentId)!) : null);
+      if (owner && teamIds.has(owner)) {
+        draft.entity.owner = owner;
+        resolving.delete(draft.entity.id);
+        return owner;
+      }
+    }
+    resolving.delete(draft.entity.id);
+    const owner =
+      draft.schema.default_owner && teamIds.has(draft.schema.default_owner)
+        ? draft.schema.default_owner
+        : fallbackOwner && teamIds.has(fallbackOwner)
+          ? fallbackOwner
+          : null;
+    draft.entity.owner = owner;
+    return owner;
+  };
+
+  drafts.forEach(resolveOwner);
+};
+
+export const bulkCreateEntities = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  bodies: Record<string, unknown>[],
+  authCtx: AuthorizationContext | null,
+  actor: EntityMutationActor
+): Promise<EntityRecord[]> => {
+  try {
+    return await db.core.transaction(async tx => {
+      const payloads = bodies.map(parseEntityMutationPayload);
+      const nameToId = new Map<string, string>();
+      for (const payload of payloads) {
+        const key = payload.name.trim().toLowerCase();
+        httpAssert.string(key, { message: '_name is required' });
+        httpAssert.true(!nameToId.has(key), {
+          status: 400,
+          message: `Duplicate batch entity name '${payload.name}'`
+        });
+        nameToId.set(key, randomUUID());
+      }
+
+      const [schemas, existingEntities, lifecycleValues, teamRows] = await Promise.all([
+        tx.catalog.listSchemas(workspace),
+        listAllCatalogEntities(tx, workspace),
+        getLifecycleValues(tx, workspace),
+        tx.workspace.listTeams(workspace)
+      ]);
+      const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+      const teamIds = new Set(teamRows.map(team => team.id));
+      const fallbackOwner = teamRows[0]?.id ?? null;
+      const timestamp = new Date();
+
+      const drafts: BulkEntityDraft[] = payloads.map(payload => {
+        const schema = schemaById.get(payload.schemaId);
+        httpAssert.present(schema, {
+          status: 404,
+          message: `Schema '${payload.schemaId}' not found`
+        });
+        const lifecycle =
+          payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
+            ? payload.requestedLifecycle
+            : null;
+        const targetLifecycle =
+          payload.requestedTargetLifecycle && lifecycleValues.has(payload.requestedTargetLifecycle)
+            ? payload.requestedTargetLifecycle
+            : null;
+        return {
+          payload,
+          schema,
+          entity: {
+            id: nameToId.get(payload.name.trim().toLowerCase())!,
+            workspace,
+            public_id: '',
+            slug: payload.slug,
+            namespace: payload.namespace,
+            name: payload.name,
+            description: payload.description,
+            owner: null,
+            lifecycle,
+            target_lifecycle: targetLifecycle,
+            target_lifecycle_date: payload.requestedTargetLifecycleDate,
+            tags: payload.tags,
+            links: payload.links,
+            schema_id: payload.schemaId,
+            data: canonicalizeBulkRelationFields(payload.fields, schema, nameToId),
+            visibility_mode: payload.visibilityMode,
+            created_at: timestamp,
+            updated_at: timestamp
+          }
+        };
+      });
+
+      resolveBulkOwners(drafts, existingEntities, teamIds, fallbackOwner);
+      const allEntities: Entity[] = [...existingEntities, ...drafts.map(draft => draft.entity)];
+      const entityLookup = new Map(allEntities.map(entity => [entity.id, entity]));
+
+      for (const draft of drafts) {
+        draft.entity.data = normalizeEntityRelationFields({
+          schema: draft.schema,
+          fields: draft.entity.data,
+          entities: allEntities
+        });
+        const parents = getEntityParentsFromPayload(draft.schema, draft.entity.data, entityLookup);
+        if (authCtx) {
+          if (parents.length > 0) {
+            parents.forEach(parent =>
+              requireEntityAction(
+                authCtx,
+                parent,
+                'create_child',
+                'You do not have permission to add children under one or more parent entities'
+              )
+            );
+          } else {
+            requireCanCreateTopLevelEntity(
+              authCtx,
+              draft.entity.owner,
+              'Top-level entity creation requires membership in the resolved owner team or a platform admin role'
+            );
+          }
+        }
+      }
+
+      for (const draft of drafts) {
+        draft.entity.public_id = await allocateEntityPublicId(
+          tx,
+          workspace,
+          draft.entity.schema_id,
+          timestamp
+        );
+      }
+
+      const created: EntityRecord[] = [];
+      for (const draft of drafts) {
+        const row = await createEntityWithAudit(tx, {
+          workspace,
+          actor,
+          entity: draft.entity
+        });
+        created.push(toApiEntity(row, authCtx));
+      }
+      return created;
+    });
+  } catch (error) {
+    return handleError(error, 'Failed to create data records');
   }
 };
 

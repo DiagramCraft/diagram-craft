@@ -26,7 +26,7 @@ export class HTMLRenderer {
     for (let i = 0; i < renderedChildren.length; i++) {
       const rendered = renderedChildren[i]!;
 
-      if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|code)/)) {
+      if (i === 0 && !rendered.match(/^<(?!em|a|img|strong|del|code)/)) {
         isText = true;
       }
 
@@ -70,7 +70,12 @@ export class HTMLRenderer {
       case 'list':
         return this.makeTag(
           astNode.subtype === 'ordered' ? 'ol' : 'ul',
-          this.processNodeArray(astNode.children ?? [])
+          this.processNodeArray(astNode.children ?? []),
+          astNode.children?.some(
+            child => child.type === 'item' && typeof child.checked === 'boolean'
+          )
+            ? { class: 'task-list' }
+            : {}
         );
 
       case 'code':
@@ -92,8 +97,12 @@ export class HTMLRenderer {
 
       case 'item': {
         const itemContent = this.processNodeArray(astNode.children ?? []);
+        const checkbox =
+          typeof astNode.checked === 'boolean'
+            ? `<input type="checkbox" disabled${astNode.checked ? ' checked' : ''} />`
+            : '';
         // Remove trailing newlines from list item content
-        return this.makeTag('li', itemContent.replace(/\n+$/, ''));
+        return this.makeTag('li', `${checkbox}${itemContent.replace(/\n+$/, '')}`);
       }
 
       case 'line-break':
@@ -125,6 +134,9 @@ export class HTMLRenderer {
 
       case 'strong':
         return this.makeTag('strong', this.processNodeArray(astNode.children ?? []));
+
+      case 'strikethrough':
+        return this.makeTag('del', this.processNodeArray(astNode.children ?? []));
 
       case 'small':
         return this.makeTag('small', this.processNodeArray(astNode.children ?? []));

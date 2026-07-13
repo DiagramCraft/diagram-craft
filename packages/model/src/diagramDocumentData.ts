@@ -82,6 +82,19 @@ const makeUpdateSchemaListener = (document: DiagramDocument) => (s: DataSchema) 
   }
 };
 
+/**
+ * A host-owned policy for which data providers a document should use, bypassing the
+ * default behavior of deserializing providers from CRDT state. `providers()` is called
+ * on-demand (construction, and whenever a remote client writes to the CRDT `provider`
+ * key) so the host can recreate providers cheaply rather than the policy object needing
+ * to be kept in sync by hand.
+ */
+export type DataProviderPolicy = {
+  providers: () => DataProvider[];
+  /** Whether to unshift a DefaultDataProvider ahead of the policy's providers. Default true. */
+  includeDefaultProvider?: boolean;
+};
+
 // TODO: To be loaded from file
 const DEFAULT_SCHEMA: DataSchema[] = [
   {
@@ -111,6 +124,7 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> implemen
 
   // Transient properties
   #providers: Array<DataProvider> = [];
+  #policy: DataProviderPolicy | undefined;
   readonly #crdt: CRDTMap<Record<string, string>>;
   readonly #releasables = new Releasables();
 
@@ -121,13 +135,14 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> implemen
   readonly #deleteSchemaListener: (s: DataSchema) => void;
   readonly #updateSchemaListener: (s: DataSchema) => void;
 
-  constructor(root: CRDTRoot, document: DiagramDocument) {
+  constructor(root: CRDTRoot, document: DiagramDocument, policy?: DataProviderPolicy) {
     super();
 
     this.#root = root;
     this.#crdt = root.getMap('documentData');
     this.#schemas = new DiagramDocumentDataSchemas(root, document, DEFAULT_SCHEMA);
     this.#templates = new DiagramDocumentDataTemplates(root);
+    this.#policy = policy;
 
     this.#updateDataListener = makeDataListener(document, 'update');
     this.#deleteDataListener = makeDataListener(document, 'delete');
@@ -143,6 +158,16 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> implemen
 
     const updateProvider = (e: CRDTMapEvents['remoteUpdate'] | CRDTMapEvents['remoteInsert']) => {
       if (e.key !== 'provider') return;
+
+      // A policy owns provider selection — the CRDT `provider` key is host-owned
+      // config in this mode, not collaborative state, so remote writes (from a
+      // client without a policy) must not override it. Re-derive from the policy
+      // instead of parsing what was written remotely.
+      if (this.#policy) {
+        this.applyPolicy(this.#policy);
+        return;
+      }
+
       if (e.value.length === 0) {
         this.setProviderInternal([]);
       } else {
@@ -157,7 +182,11 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> implemen
       }
     };
 
-    if (this.#providers.length === 0) this.setProviders([]);
+    if (this.#policy) {
+      this.applyPolicy(this.#policy);
+    } else if (this.#providers.length === 0) {
+      this.setProviders([]);
+    }
 
     this.#releasables.add(this.#crdt.on('remoteUpdate', updateProvider));
     this.#releasables.add(this.#crdt.on('remoteInsert', updateProvider));
@@ -199,7 +228,40 @@ export class DiagramDocumentData extends EventEmitter<{ change: void }> implemen
     this.#providers.forEach(p => p.on('deleteSchema', this.#deleteSchemaListener));
   }
 
+  /**
+   * Sets (or clears) the host-owned data provider policy. When a policy is set, it is
+   * applied immediately via setProviderInternal (no CRDT write), and future remote
+   * updates to the CRDT `provider` key re-derive from the policy rather than being
+   * deserialized. Clearing the policy (passing undefined) does not itself change the
+   * current providers — call setProviders() to fall back to CRDT-backed behavior.
+   */
+  setProviderPolicy(policy: DataProviderPolicy | undefined) {
+    this.#policy = policy;
+    if (policy) this.applyPolicy(policy);
+  }
+
+  private applyPolicy(policy: DataProviderPolicy) {
+    const providers = policy.providers();
+    const includeDefault = policy.includeDefaultProvider ?? true;
+
+    if (includeDefault && providers[0]?.providerId !== DefaultDataProviderId) {
+      providers.unshift(
+        new DefaultDataProvider(`{ "schemas": ${JSON.stringify(DEFAULT_SCHEMA)} }`)
+      );
+    }
+
+    this.setProviderInternal(providers);
+  }
+
   setProviders(dataProviders: Array<DataProvider>, initial = false) {
+    // A policy owns provider selection — callers that don't know about it (e.g.
+    // deserializeDiagramDocument, which sets providers from serialized document data)
+    // must not be able to override it or write it into the CRDT.
+    if (this.#policy) {
+      this.applyPolicy(this.#policy);
+      return;
+    }
+
     if (dataProviders[0]?.providerId !== DefaultDataProviderId) {
       dataProviders.unshift(
         new DefaultDataProvider(`{ "schemas": ${JSON.stringify(DEFAULT_SCHEMA)} }`)

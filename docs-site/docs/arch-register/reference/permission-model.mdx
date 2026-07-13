@@ -11,7 +11,7 @@ This page summarizes the implemented permission model without repeating the full
 ## Practical Meaning
 
 - global permissions control platform-wide administration
-- workspace roles control workspace shell and governance capabilities
+- workspace roles control workspace-wide capabilities, including entity/workspace content access
 - team roles control owned entities and projects
 
 ## Important Separations
@@ -19,6 +19,8 @@ This page summarizes the implemented permission model without repeating the full
 - lifecycle is classification, not permission
 - ownership is not the same as workspace membership
 - project access depends on the wider permission model; it is not an isolated project ACL system
+- entity- and workspace-scoped content requires `content.view` for reads and `content.edit` for mutations
+- project-scoped content continues to use project authorization rather than the `content.*` capabilities
 
 ## Related Pages
 

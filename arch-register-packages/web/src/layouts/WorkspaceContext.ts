@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { WorkspaceTeam } from '../lib/api';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { Project } from '@arch-register/api-types/projectContract';

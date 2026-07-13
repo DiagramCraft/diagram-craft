@@ -1,42 +1,38 @@
 import type {
   ProjectDbCreate,
-  ProjectDbResult,
   ProjectDatabase,
   ProjectEntityDbCreate,
-  ProjectEntityDbResult,
   ProjectEntityLinkDbResult,
   ContentNodeDbResult,
   ProjectDbUpdate,
   ContentNodeDbUpsert,
-  DiagramEntityFileDbResult,
   MarkdownRevisionDbCreate,
-  MarkdownRevisionDbResult
+  MarkdownRevisionDbResult,
+  AssessmentDbCreate,
+  AssessmentDbUpdate,
+  AssessmentResponseDbUpsert
+} from './projectDatabase';
+import {
+  PROJECT_SELECT_SQL,
+  CONTENT_NODE_SELECT_SQL,
+  PROJECT_ENTITY_SELECT_SQL,
+  MARKDOWN_REVISION_SELECT_SQL,
+  ASSESSMENT_RESPONSE_SELECT_SQL,
+  DIAGRAM_ENTITY_FILE_SELECT_SQL,
+  projectMappers
 } from './projectDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { randomUUID } from 'node:crypto';
 import { isUuidLike } from '../../../utils/publicIds';
 
-const CONTENT_NODE_SELECT_SQL = `
-  SELECT
-    cn.*,
-    cm.title AS metadata_title,
-    cm.description AS metadata_description,
-    cm.company AS metadata_company,
-    cm.category AS metadata_category,
-    COALESCE(cm.keywords, '[]'::jsonb) AS metadata_keywords
-  FROM content_node cn
-  LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
-`;
-
 export class PostgresProjectDatabase extends PostgresDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
-    return await this.sql<ProjectDbResult[]>`
-      SELECT p.*, wo.name AS owner_name
-      FROM project p
-      LEFT JOIN workspace_owner wo ON wo.id = p.owner
-      WHERE p.workspace = ${workspace}
-      ORDER BY p.name
-    `;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${PROJECT_SELECT_SQL} WHERE p.workspace = $1 ORDER BY p.name`,
+      [workspace]
+    );
+    return mapDatabaseRows(rows, projectMappers.project);
   }
 
   async getProject(workspace: string, identifier: string) {
@@ -44,23 +40,19 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       const row = await this.getProjectByPublicId(identifier);
       return row?.workspace === workspace ? row : null;
     }
-    const [row] = await this.sql<ProjectDbResult[]>`
-      SELECT p.*, wo.name AS owner_name
-      FROM project p
-      LEFT JOIN workspace_owner wo ON wo.id = p.owner
-      WHERE p.workspace = ${workspace} AND p.id = ${identifier}
-    `;
-    return row ?? null;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${PROJECT_SELECT_SQL} WHERE p.workspace = $1 AND p.id = $2`,
+      [workspace, identifier]
+    );
+    return rows[0] ? projectMappers.project(rows[0]) : null;
   }
 
   private async getProjectByPublicId(publicId: string) {
-    const [row] = await this.sql<ProjectDbResult[]>`
-      SELECT p.*, wo.name AS owner_name
-      FROM project p
-      LEFT JOIN workspace_owner wo ON wo.id = p.owner
-      WHERE p.public_id = ${publicId}
-    `;
-    return row ?? null;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${PROJECT_SELECT_SQL} WHERE p.public_id = $1`,
+      [publicId]
+    );
+    return rows[0] ? projectMappers.project(rows[0]) : null;
   }
 
   async createProject(input: ProjectDbCreate) {
@@ -109,86 +101,89 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async listContentNodes(workspace: string, projectId: string) {
-    return await this.sql.unsafe<ContentNodeDbResult[]>(
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
       `${CONTENT_NODE_SELECT_SQL}
        WHERE cn.workspace = $1 AND cn.project_id = $2
        ORDER BY cn.path`,
       [workspace, projectId]
     );
+    return mapDatabaseRows(rows, projectMappers.contentNode);
   }
 
   async listAllContentNodes(workspace: string) {
-    return await this.sql.unsafe<ContentNodeDbResult[]>(
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
       `${CONTENT_NODE_SELECT_SQL}
        WHERE cn.workspace = $1
        ORDER BY cn.path`,
       [workspace]
     );
+    return mapDatabaseRows(rows, projectMappers.contentNode);
   }
 
   async listEntityContentNodes(workspace: string, entityId: string) {
-    return await this.sql.unsafe<ContentNodeDbResult[]>(
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
       `${CONTENT_NODE_SELECT_SQL}
        WHERE cn.workspace = $1 AND cn.entity_id = $2
        ORDER BY cn.path`,
       [workspace, entityId]
     );
+    return mapDatabaseRows(rows, projectMappers.contentNode);
   }
 
   async listWorkspaceContentNodes(workspace: string) {
-    return await this.sql.unsafe<ContentNodeDbResult[]>(
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
       `${CONTENT_NODE_SELECT_SQL}
        WHERE cn.workspace = $1 AND cn.project_id IS NULL AND cn.entity_id IS NULL
        ORDER BY cn.path`,
       [workspace]
     );
+    return mapDatabaseRows(rows, projectMappers.contentNode);
   }
 
   async getContentNodeByPath(workspace: string, projectId: string, path: string) {
-    const [row] = await this.sql.unsafe<ContentNodeDbResult[]>(
+    const [row] = await this.sql.unsafe<DatabaseRow[]>(
       `${CONTENT_NODE_SELECT_SQL}
        WHERE cn.workspace = $1 AND cn.project_id = $2 AND cn.path = $3`,
       [workspace, projectId, path]
     );
-    return row ?? null;
+    return row ? projectMappers.contentNode(row) : null;
   }
 
   async getContentNodeById(workspace: string, projectId: string, id: string) {
-    const [row] = await this.sql.unsafe<ContentNodeDbResult[]>(
+    const [row] = await this.sql.unsafe<DatabaseRow[]>(
       `${CONTENT_NODE_SELECT_SQL}
        WHERE cn.workspace = $1 AND cn.project_id = $2 AND cn.id = $3`,
       [workspace, projectId, id]
     );
-    return row ?? null;
+    return row ? projectMappers.contentNode(row) : null;
   }
 
   async getAnyContentNodeById(workspace: string, id: string) {
-    const [row] = await this.sql.unsafe<ContentNodeDbResult[]>(
+    const [row] = await this.sql.unsafe<DatabaseRow[]>(
       `${CONTENT_NODE_SELECT_SQL}
        WHERE cn.workspace = $1 AND cn.id = $2`,
       [workspace, id]
     );
-    return row ?? null;
+    return row ? projectMappers.contentNode(row) : null;
   }
 
   async listMarkdownRevisions(workspace: string, nodeId: string) {
-    return await this.sql<MarkdownRevisionDbResult[]>`
-      SELECT mr.*, u.display_name AS created_by_name
-      FROM content_node_revision mr
-      LEFT JOIN users u ON u.id = mr.created_by
-      WHERE mr.workspace = ${workspace} AND mr.node_id = ${nodeId}
-      ORDER BY mr.revision_number DESC
-    `;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${MARKDOWN_REVISION_SELECT_SQL}
+       WHERE mr.workspace = $1 AND mr.node_id = $2
+       ORDER BY mr.revision_number DESC`,
+      [workspace, nodeId]
+    );
+    return mapDatabaseRows(rows, projectMappers.markdownRevision);
   }
 
   async getMarkdownRevision(workspace: string, nodeId: string, revisionId: string) {
-    const [row] = await this.sql<MarkdownRevisionDbResult[]>`
-      SELECT mr.*, u.display_name AS created_by_name
-      FROM content_node_revision mr
-      LEFT JOIN users u ON u.id = mr.created_by
-      WHERE mr.workspace = ${workspace} AND mr.node_id = ${nodeId} AND mr.id = ${revisionId}
-    `;
-    return row ?? null;
+    const [row] = await this.sql.unsafe<DatabaseRow[]>(
+      `${MARKDOWN_REVISION_SELECT_SQL}
+       WHERE mr.workspace = $1 AND mr.node_id = $2 AND mr.id = $3`,
+      [workspace, nodeId, revisionId]
+    );
+    return row ? projectMappers.markdownRevision(row) : null;
   }
 
   async createMarkdownRevision(input: MarkdownRevisionDbCreate) {
@@ -371,9 +366,8 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       const id = input.id ?? randomUUID();
       const isWorkspaceOwned = input.project_id == null && input.entity_id == null;
       // Partial unique indexes require ON CONFLICT (cols) WHERE condition, not ON CONSTRAINT
-      let row: ContentNodeDbResult | undefined;
       if (input.entity_id != null) {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        await this.sql`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, entity_id, path) WHERE entity_id IS NOT NULL
@@ -388,10 +382,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
             original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename)
-          RETURNING *
         `;
       } else if (isWorkspaceOwned) {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        await this.sql`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, null, null, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, path) WHERE project_id IS NULL AND entity_id IS NULL
@@ -406,10 +399,9 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
             original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename)
-          RETURNING *
         `;
       } else {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        await this.sql`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, project_id, path) WHERE project_id IS NOT NULL
@@ -424,10 +416,19 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
             updated_by = EXCLUDED.updated_by,
             mime_type = COALESCE(EXCLUDED.mime_type, content_node.mime_type),
             original_filename = COALESCE(EXCLUDED.original_filename, content_node.original_filename)
-          RETURNING *
         `;
       }
-      return row!;
+      if (input.project_id != null) {
+        return (await this.getContentNodeByPath(input.workspace, input.project_id, input.path))!;
+      }
+      if (input.entity_id != null) {
+        return (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
+          n => n.path === input.path
+        )!;
+      }
+      return (await this.listWorkspaceContentNodes(input.workspace)).find(
+        n => n.path === input.path
+      )!;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -440,30 +441,44 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       const id = input.id ?? randomUUID();
       const isWorkspaceOwned = input.project_id == null && input.entity_id == null;
       // Partial unique indexes require ON CONFLICT (cols) WHERE condition, not ON CONSTRAINT
-      let row: ContentNodeDbResult | undefined;
+      let inserted: { id: string } | undefined;
       if (input.entity_id != null) {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        [inserted] = await this.sql<{ id: string }[]>`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, entity_id, path) WHERE entity_id IS NOT NULL DO NOTHING
-          RETURNING *
+          RETURNING id
         `;
       } else if (isWorkspaceOwned) {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        [inserted] = await this.sql<{ id: string }[]>`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, null, null, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, path) WHERE project_id IS NULL AND entity_id IS NULL DO NOTHING
-          RETURNING *
+          RETURNING id
         `;
       } else {
-        [row] = await this.sql<ContentNodeDbResult[]>`
+        [inserted] = await this.sql<{ id: string }[]>`
           INSERT INTO content_node (id, workspace, project_id, entity_id, parent_id, path, name, role, type, size_bytes, comment_count, unresolved_comment_count, is_template, is_workspace_template, created_at, updated_at, created_by, updated_by, mime_type, original_filename)
           VALUES (${id}, ${input.workspace}, ${input.project_id ?? null}, ${input.entity_id ?? null}, ${input.parent_id ?? null}, ${input.path}, ${input.name}, ${input.role ?? null}, ${input.type ?? 'diagram'}, ${input.size_bytes}, ${input.comment_count}, ${input.unresolved_comment_count}, false, false, ${input.created_atIfNew}, ${input.updated_at}, ${input.created_byIfNew ?? null}, ${input.updated_by ?? null}, ${input.mime_type ?? null}, ${input.original_filename ?? null})
           ON CONFLICT (workspace, project_id, path) WHERE project_id IS NOT NULL DO NOTHING
-          RETURNING *
+          RETURNING id
         `;
       }
-      return row ?? null;
+      if (!inserted) return null;
+      if (input.project_id != null) {
+        return await this.getContentNodeByPath(input.workspace, input.project_id, input.path);
+      }
+      if (input.entity_id != null) {
+        return (
+          (await this.listEntityContentNodes(input.workspace, input.entity_id)).find(
+            n => n.path === input.path
+          ) ?? null
+        );
+      }
+      return (
+        (await this.listWorkspaceContentNodes(input.workspace)).find(n => n.path === input.path) ??
+        null
+      );
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -476,7 +491,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
         RETURNING *
       `;
-      return row ?? null;
+      return row ? projectMappers.contentNode(row as unknown as DatabaseRow) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -499,7 +514,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       `;
       const childRows = await this.sql<{ id: string }[]>`
         UPDATE content_node
-        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+        SET path = ${newPath} || substring(path from (${oldPath.length + 1})::int),
             updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${oldPath}/%`}
         RETURNING id
@@ -512,16 +527,16 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteContentNodeFolder(workspace: string, projectId: string, folderPath: string) {
     try {
-      const [folder] = await this.sql<ContentNodeDbResult[]>`
+      const [folder] = await this.sql<DatabaseRow[]>`
         SELECT * FROM content_node
         WHERE workspace = ${workspace} AND project_id = ${projectId}
           AND path = ${folderPath} AND type = 'folder'
       `;
       if (!folder) return [];
 
-      const descendants = await this.sql<ContentNodeDbResult[]>`
+      const descendants = await this.sql<DatabaseRow[]>`
         WITH RECURSIVE desc_tree AS (
-          SELECT * FROM content_node WHERE parent_id = ${folder.id}
+          SELECT * FROM content_node WHERE parent_id = ${String(folder['id'])}
           UNION ALL
           SELECT cn.* FROM content_node cn
           JOIN desc_tree dt ON cn.parent_id = dt.id
@@ -531,10 +546,10 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
       await this.sql`
         DELETE FROM content_node
-        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${folder.id}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${String(folder['id'])}
       `;
 
-      return [folder, ...descendants];
+      return [projectMappers.contentNode(folder), ...mapDatabaseRows(descendants, projectMappers.contentNode)];
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -570,7 +585,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       `;
       const childRows = await this.sql<{ id: string }[]>`
         UPDATE content_node
-        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+        SET path = ${newPath} || substring(path from (${oldPath.length + 1})::int),
             updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND entity_id = ${entityId} AND path LIKE ${`${oldPath}/%`}
         RETURNING id
@@ -583,16 +598,16 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteEntityContentNodeFolder(workspace: string, entityId: string, folderPath: string) {
     try {
-      const [folder] = await this.sql<ContentNodeDbResult[]>`
+      const [folder] = await this.sql<DatabaseRow[]>`
         SELECT * FROM content_node
         WHERE workspace = ${workspace} AND entity_id = ${entityId}
           AND path = ${folderPath} AND type = 'folder'
       `;
       if (!folder) return [];
 
-      const descendants = await this.sql<ContentNodeDbResult[]>`
+      const descendants = await this.sql<DatabaseRow[]>`
         WITH RECURSIVE desc_tree AS (
-          SELECT * FROM content_node WHERE parent_id = ${folder.id}
+          SELECT * FROM content_node WHERE parent_id = ${String(folder['id'])}
           UNION ALL
           SELECT cn.* FROM content_node cn
           JOIN desc_tree dt ON cn.parent_id = dt.id
@@ -602,10 +617,10 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
       await this.sql`
         DELETE FROM content_node
-        WHERE workspace = ${workspace} AND entity_id = ${entityId} AND id = ${folder.id}
+        WHERE workspace = ${workspace} AND entity_id = ${entityId} AND id = ${String(folder['id'])}
       `;
 
-      return [folder, ...descendants];
+      return [projectMappers.contentNode(folder), ...mapDatabaseRows(descendants, projectMappers.contentNode)];
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -640,7 +655,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
       `;
       const childRows = await this.sql<{ id: string }[]>`
         UPDATE content_node
-        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+        SET path = ${newPath} || substring(path from (${oldPath.length + 1})::int),
             updated_at = ${updated_at}
         WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
           AND path LIKE ${`${oldPath}/%`}
@@ -654,16 +669,16 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteWorkspaceContentNodeFolder(workspace: string, folderPath: string) {
     try {
-      const [folder] = await this.sql<ContentNodeDbResult[]>`
+      const [folder] = await this.sql<DatabaseRow[]>`
         SELECT * FROM content_node
         WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL
           AND path = ${folderPath} AND type = 'folder'
       `;
       if (!folder) return [];
 
-      const descendants = await this.sql<ContentNodeDbResult[]>`
+      const descendants = await this.sql<DatabaseRow[]>`
         WITH RECURSIVE desc_tree AS (
-          SELECT * FROM content_node WHERE parent_id = ${folder.id}
+          SELECT * FROM content_node WHERE parent_id = ${String(folder['id'])}
           UNION ALL
           SELECT cn.* FROM content_node cn
           JOIN desc_tree dt ON cn.parent_id = dt.id
@@ -673,67 +688,52 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
       await this.sql`
         DELETE FROM content_node
-        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL AND id = ${folder.id}
+        WHERE workspace = ${workspace} AND project_id IS NULL AND entity_id IS NULL AND id = ${String(folder['id'])}
       `;
 
-      return [folder, ...descendants];
+      return [projectMappers.contentNode(folder), ...mapDatabaseRows(descendants, projectMappers.contentNode)];
     } catch (error) {
       return normalizePostgresError(error);
     }
   }
 
   async listProjectEntities(workspace: string, projectId: string) {
-    return await this.sql<ProjectEntityDbResult[]>`
-      SELECT
-        pe.workspace,
-        pe.project_id,
-        pe.entity_id,
-        e.name        AS entity_name,
-        e.slug        AS entity_slug,
-        e.description AS entity_description,
-        e.schema_id   AS entity_schema_id,
-        es.name       AS entity_schema_name,
-        pe.entity_type AS entity_type_id,
-        pet.label     AS entity_type_label,
-        pe.is_done
-      FROM project_entity pe
-      JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
-      LEFT JOIN entity_schema es ON es.id = e.schema_id
-      LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
-      WHERE pe.workspace = ${workspace} AND pe.project_id = ${projectId}
-      ORDER BY e.name
-    `;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = $1 AND pe.project_id = $2 ORDER BY e.name`,
+      [workspace, projectId]
+    );
+    return mapDatabaseRows(rows, projectMappers.projectEntity);
   }
 
   async listProjectEntityLinks(workspace: string, projectId: string) {
-    return await this.sql<ProjectEntityLinkDbResult[]>`
+    const rows = await this.sql<ProjectEntityLinkDbResult[]>`
       SELECT entity_id, created_at
       FROM project_entity
       WHERE workspace = ${workspace} AND project_id = ${projectId}
     `;
+    return rows.map(row => ({ entity_id: row.entity_id, created_at: new Date(row.created_at) }));
   }
 
   async getEntityProjects(workspace: string, entityId: string) {
-    return await this.sql<ProjectEntityDbResult[]>`
-      SELECT
-        pe.workspace,
-        pe.project_id,
-        pe.entity_id,
-        e.name        AS entity_name,
-        e.slug        AS entity_slug,
-        e.description AS entity_description,
-        e.schema_id   AS entity_schema_id,
-        es.name       AS entity_schema_name,
-        pe.entity_type AS entity_type_id,
-        pet.label     AS entity_type_label,
-        pe.is_done
-      FROM project_entity pe
-      JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
-      LEFT JOIN entity_schema es ON es.id = e.schema_id
-      LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
-      WHERE pe.workspace = ${workspace} AND pe.entity_id = ${entityId}
-      ORDER BY e.name
-    `;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `SELECT
+         p.*,
+         wo.name AS owner_name,
+         pe.entity_type AS entity_type_id,
+         pet.label AS entity_type_label,
+         (SELECT COUNT(*) FROM content_node cn
+          WHERE cn.workspace = p.workspace AND cn.project_id = p.id AND cn.type = 'diagram') AS file_count
+       FROM project_entity pe
+       JOIN project p ON p.workspace = pe.workspace AND p.id = pe.project_id
+       LEFT JOIN workspace_owner wo ON wo.id = p.owner
+       LEFT JOIN project_entity_type pet ON pet.workspace = pe.workspace AND pet.id = pe.entity_type
+       WHERE pe.workspace = $1 AND pe.entity_id = $2
+       ORDER BY p.pinned DESC,
+         CASE p.status WHEN 'draft' THEN 0 WHEN 'active' THEN 1 WHEN 'complete' THEN 2 ELSE 3 END,
+         p.name`,
+      [workspace, entityId]
+    );
+    return mapDatabaseRows(rows, projectMappers.entityProject);
   }
 
   async addProjectEntity(input: ProjectEntityDbCreate) {
@@ -742,26 +742,11 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         INSERT INTO project_entity (workspace, project_id, entity_id, entity_type, is_done, created_at)
         VALUES (${input.workspace}, ${input.project_id}, ${input.entity_id}, ${input.entity_type_id}, ${input.is_done ?? false}, ${input.created_at})
       `;
-      const [row] = await this.sql<ProjectEntityDbResult[]>`
-        SELECT
-          pe.workspace,
-          pe.project_id,
-          pe.entity_id,
-          e.name       AS entity_name,
-          e.slug       AS entity_slug,
-          e.description AS entity_description,
-          e.schema_id  AS entity_schema_id,
-          es.name      AS entity_schema_name,
-          pe.entity_type AS entity_type_id,
-          pet.label    AS entity_type_label,
-          pe.is_done
-        FROM project_entity pe
-        JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
-        LEFT JOIN entity_schema es ON es.id = e.schema_id
-        LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
-        WHERE pe.workspace = ${input.workspace} AND pe.project_id = ${input.project_id} AND pe.entity_id = ${input.entity_id}
-      `;
-      return row!;
+      const [row] = await this.sql.unsafe<DatabaseRow[]>(
+        `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = $1 AND pe.project_id = $2 AND pe.entity_id = $3`,
+        [input.workspace, input.project_id, input.entity_id]
+      );
+      return projectMappers.projectEntity(row!);
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -781,26 +766,11 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND entity_id = ${entityId}
       `;
       if (result.count === 0) return null;
-      const [row] = await this.sql<ProjectEntityDbResult[]>`
-        SELECT
-          pe.workspace,
-          pe.project_id,
-          pe.entity_id,
-          e.name       AS entity_name,
-          e.slug       AS entity_slug,
-          e.description AS entity_description,
-          e.schema_id  AS entity_schema_id,
-          es.name      AS entity_schema_name,
-          pe.entity_type AS entity_type_id,
-          pet.label    AS entity_type_label,
-          pe.is_done
-        FROM project_entity pe
-        JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
-        LEFT JOIN entity_schema es ON es.id = e.schema_id
-        LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
-        WHERE pe.workspace = ${workspace} AND pe.project_id = ${projectId} AND pe.entity_id = ${entityId}
-      `;
-      return row ?? null;
+      const [row] = await this.sql.unsafe<DatabaseRow[]>(
+        `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = $1 AND pe.project_id = $2 AND pe.entity_id = $3`,
+        [workspace, projectId, entityId]
+      );
+      return row ? projectMappers.projectEntity(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -838,32 +808,115 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
   }
 
   async getEntityDiagramFiles(workspace: string, entityId: string) {
-    return await this.sql<DiagramEntityFileDbResult[]>`
-      SELECT
-        pf.id          AS file_id,
-        pf.path        AS file_path,
-        pf.name        AS file_name,
-        pf.size_bytes  AS file_size_bytes,
-        pf.type        AS file_type,
-        pf.preview_svg AS file_preview_svg,
-        pf.comment_count AS file_comment_count,
-        pf.unresolved_comment_count AS file_unresolved_comment_count,
-        pf.created_at  AS file_created_at,
-        pf.updated_at  AS file_updated_at,
-        cm.title       AS file_metadata_title,
-        cm.description AS file_metadata_description,
-        cm.company     AS file_metadata_company,
-        cm.category    AS file_metadata_category,
-        COALESCE(cm.keywords, '[]'::jsonb) AS file_metadata_keywords,
-        p.id           AS project_id,
-        p.public_id    AS project_public_id,
-        p.name         AS project_name
-      FROM diagram_entity_ref der
-      JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
-      LEFT JOIN content_metadata cm ON cm.workspace = pf.workspace AND cm.node_id = pf.id
-      LEFT JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
-      WHERE der.workspace = ${workspace} AND der.entity_id = ${entityId}
-      ORDER BY COALESCE(p.name, ''), pf.name
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${DIAGRAM_ENTITY_FILE_SELECT_SQL}
+       WHERE der.workspace = $1 AND der.entity_id = $2
+       ORDER BY COALESCE(p.name, ''), pf.name`,
+      [workspace, entityId]
+    );
+    return mapDatabaseRows(rows, projectMappers.diagramEntityFile);
+  }
+
+  async listAssessments(workspace: string, projectId: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM assessment WHERE workspace = ${workspace} AND project_id = ${projectId} ORDER BY name
     `;
+    return mapDatabaseRows(rows, projectMappers.assessment);
+  }
+
+  async getAssessment(workspace: string, projectId: string, id: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM assessment WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+    `;
+    return row ? projectMappers.assessment(row) : null;
+  }
+
+  async getAssessmentById(workspace: string, id: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM assessment WHERE workspace = ${workspace} AND id = ${id}
+    `;
+    return row ? projectMappers.assessment(row) : null;
+  }
+
+  async createAssessment(input: AssessmentDbCreate) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO assessment (id, workspace, project_id, name, description, status, scope, scope_conditions, fields, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.project_id}, ${input.name}, ${input.description}, ${input.status}, ${this.json(input.scope)}, ${this.json(input.scope_conditions)}, ${this.json(input.fields)}, ${input.created_at}, ${input.updated_at})
+        RETURNING *
+      `;
+      return projectMappers.assessment(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateAssessment(workspace: string, projectId: string, id: string, input: AssessmentDbUpdate) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        UPDATE assessment
+        SET name = ${input.name},
+            description = ${input.description},
+            status = ${input.status},
+            scope = ${this.json(input.scope)},
+            scope_conditions = ${this.json(input.scope_conditions)},
+            fields = ${this.json(input.fields)},
+            updated_at = ${input.updated_at}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+        RETURNING *
+      `;
+      return row ? projectMappers.assessment(row) : null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteAssessment(workspace: string, projectId: string, id: string) {
+    const row = await this.getAssessment(workspace, projectId, id);
+    if (!row) return null;
+    await this.sql`
+      DELETE FROM assessment WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${id}
+    `;
+    return row;
+  }
+
+  async listAssessmentResponses(workspace: string, assessmentId: string) {
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${ASSESSMENT_RESPONSE_SELECT_SQL}
+       WHERE ar.workspace = $1 AND ar.assessment_id = $2`,
+      [workspace, assessmentId]
+    );
+    return mapDatabaseRows(rows, projectMappers.assessmentResponse);
+  }
+
+  async getAssessmentResponse(workspace: string, assessmentId: string, entityId: string) {
+    const [row] = await this.sql.unsafe<DatabaseRow[]>(
+      `${ASSESSMENT_RESPONSE_SELECT_SQL}
+       WHERE ar.workspace = $1 AND ar.assessment_id = $2 AND ar.entity_id = $3`,
+      [workspace, assessmentId, entityId]
+    );
+    return row ? projectMappers.assessmentResponse(row) : null;
+  }
+
+  async upsertAssessmentResponse(input: AssessmentResponseDbUpsert) {
+    try {
+      await this.sql`
+        INSERT INTO assessment_response (id, workspace, assessment_id, entity_id, "values", created_at, updated_at, updated_by)
+        VALUES (${randomUUID()}, ${input.workspace}, ${input.assessment_id}, ${input.entity_id}, ${this.json(input.values)}, now(), now(), ${input.updated_by})
+        ON CONFLICT (workspace, assessment_id, entity_id)
+        DO UPDATE SET "values" = ${this.json(input.values)}, updated_at = now(), updated_by = ${input.updated_by}
+      `;
+      return (await this.getAssessmentResponse(input.workspace, input.assessment_id, input.entity_id))!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async countAssessmentResponses(workspace: string, assessmentId: string) {
+    const [row] = await this.sql<{ count: string }[]>`
+      SELECT COUNT(*) AS count FROM assessment_response
+      WHERE workspace = ${workspace} AND assessment_id = ${assessmentId}
+    `;
+    return Number(row?.count ?? 0);
   }
 }

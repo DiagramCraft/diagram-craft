@@ -1,13 +1,29 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import styles from './HierarchyView.module.css';
 import { TbChevronDown } from 'react-icons/tb';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { resolveSchemaColor } from '../../../lib/api';
-import type { TreeNode } from '../../../lib/api';
+import { resolveSchemaColor } from '../../../lib/schemaPresentation';
+import type { EntityRecord, TreeNode } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { hierarchyViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
+import { EmptyState } from '../../../components/EmptyState';
+import {
+  findEntityDisplayField,
+  formatEntityDisplayValue,
+  getDisplayFieldIds,
+  type EntityDisplayField
+} from './entityDisplayFields';
+import { normalizeViewConfig } from './entityViewConfig';
+import { TooltipRow } from './entityTooltipParts';
+import {
+  buildHierarchyTreeIndex,
+  getChildSchemas,
+  getHierarchyChildren,
+  sortHierarchyNodes
+} from './hierarchyViewState';
+import { useDelayedDisclosure } from '../../../hooks/useDelayedDisclosure';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -19,6 +35,7 @@ export type HierarchyConfig = {
   level2Columns: number;
   level3SchemaId: string | null;
   level3Columns: number;
+  fieldIds?: string[];
 };
 
 type HierarchyViewProps = {
@@ -34,10 +51,13 @@ type HierarchyViewProps = {
   onConfigChange: (cfg: HierarchyConfig) => void;
   linkedEntityIds?: string[];
   hideToolbar?: boolean;
+  displayFields: EntityDisplayField[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// `fieldIds` is explicitly included (as undefined) so normalizeViewConfig's field-merge loop
+// picks it up from a parsed config when present, matching the previous pass-through behavior.
 const DEFAULT_CONFIG: HierarchyConfig = {
   levels: 2,
   level1SchemaId: null,
@@ -45,46 +65,12 @@ const DEFAULT_CONFIG: HierarchyConfig = {
   level2SchemaId: null,
   level2Columns: 3,
   level3SchemaId: null,
-  level3Columns: 3
+  level3Columns: 3,
+  fieldIds: undefined
 };
-
-const normalizeHierarchyConfig = (
-  config:
-    | {
-        levels: number;
-        level1SchemaId: string | null;
-        level1Columns: number;
-        level2SchemaId?: string | null;
-        level2Columns?: number;
-        level3SchemaId?: string | null;
-        level3Columns?: number;
-      }
-    | null
-    | undefined
-): HierarchyConfig => ({
-  levels: config?.levels ?? DEFAULT_CONFIG.levels,
-  level1SchemaId: config?.level1SchemaId ?? DEFAULT_CONFIG.level1SchemaId,
-  level1Columns: config?.level1Columns ?? DEFAULT_CONFIG.level1Columns,
-  level2SchemaId: config?.level2SchemaId ?? DEFAULT_CONFIG.level2SchemaId,
-  level2Columns: config?.level2Columns ?? DEFAULT_CONFIG.level2Columns,
-  level3SchemaId: config?.level3SchemaId ?? DEFAULT_CONFIG.level3SchemaId,
-  level3Columns: config?.level3Columns ?? DEFAULT_CONFIG.level3Columns
-});
 
 const OPEN_DELAY_MS = 250;
 const CLOSE_DELAY_MS = 120;
-
-const getChildSchemas = (schemas: EntitySchema[], parentSchemaId: string | null): EntitySchema[] => {
-  if (!parentSchemaId) return schemas;
-  // The containment field lives on the CHILD schema and its schemaId points to the parent schema.
-  // So child schemas of parentSchemaId are those that have a containment field referencing it.
-  return schemas.filter(s =>
-    s.fields.some(
-      (f): f is Extract<(typeof s.fields)[number], { type: 'containment' }> =>
-        f.type === 'containment' && f.schemaId === parentSchemaId
-    )
-  );
-};
 
 const nodeName = (n: TreeNode) => n._name || n._slug;
 
@@ -95,41 +81,23 @@ const EntityTooltip = ({
   color,
   schemaName,
   isLinked,
-  children
+  children,
+  displayFields,
+  schemaMap
 }: {
   node: TreeNode;
   color: string;
   schemaName: string;
   isLinked: boolean;
   children: React.ReactNode;
+  displayFields: EntityDisplayField[];
+  schemaMap: Map<string, { schema: EntitySchema; index: number }>;
 }) => {
   const anchorRef = useRef<HTMLSpanElement | null>(null);
-  const openTimerRef = useRef<number | null>(null);
-  const closeTimerRef = useRef<number | null>(null);
-  const [open, setOpen] = useState(false);
-
-  useEffect(
-    () => () => {
-      if (openTimerRef.current !== null) window.clearTimeout(openTimerRef.current);
-      if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-    },
-    []
+  const { open, setOpen, scheduleOpen, scheduleClose } = useDelayedDisclosure(
+    OPEN_DELAY_MS,
+    CLOSE_DELAY_MS
   );
-
-  const clearTimers = () => {
-    if (openTimerRef.current !== null) window.clearTimeout(openTimerRef.current);
-    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
-  };
-
-  const scheduleOpen = () => {
-    clearTimers();
-    openTimerRef.current = window.setTimeout(() => setOpen(true), OPEN_DELAY_MS);
-  };
-
-  const scheduleClose = () => {
-    clearTimers();
-    closeTimerRef.current = window.setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
-  };
 
   return (
     <>
@@ -167,33 +135,34 @@ const EntityTooltip = ({
               {nodeName(node)}
             </h4>
 
-            {node._description && (
+            {displayFields.some(f => f.id === '_description') && node._description && (
               <p className={styles.tooltipDesc}>{node._description}</p>
             )}
 
             <div className={styles.tooltipRows}>
-              <div className={styles.tooltipRow}>
-                <span className={styles.tooltipLabel}>Type</span>
-                <span className={styles.tooltipValue}>
-                  <span className={styles.tooltipDot} style={{ background: color }} />
-                  {schemaName}
-                </span>
-              </div>
-              {node._lifecycle && (
-                <div className={styles.tooltipRow}>
-                  <span className={styles.tooltipLabel}>Status</span>
-                  <span className={styles.tooltipValue}>{node._lifecycle.name}</span>
-                </div>
-              )}
-              {node._owner && (
-                <div className={styles.tooltipRow}>
-                  <span className={styles.tooltipLabel}>Owner</span>
-                  <span className={styles.tooltipValue}>{node._owner.name}</span>
-                </div>
-              )}
+              <TooltipRow
+                label="Type"
+                value={
+                  <>
+                    <span className={styles.tooltipDot} style={{ background: color }} />
+                    {schemaName}
+                  </>
+                }
+              />
+              {displayFields
+                .filter(f => f.id !== '_description' && f.id !== '_tags')
+                .map(option => {
+                  const field = findEntityDisplayField(option.id, node, schemaMap, displayFields);
+                  const value = field
+                    ? formatEntityDisplayValue(node as EntityRecord, field)
+                    : null;
+                  return value == null ? null : (
+                    <TooltipRow key={option.id} label={field!.label} value={value} />
+                  );
+                })}
             </div>
 
-            {node._tags.length > 0 && (
+            {displayFields.some(f => f.id === '_tags') && node._tags.length > 0 && (
               <div className={styles.tooltipTags}>
                 {node._tags.map(tag => (
                   <span key={tag} className={styles.tooltipTag}>
@@ -242,13 +211,7 @@ const SchemaSelect = ({
   </div>
 );
 
-const ColsSelect = ({
-  value,
-  onChange
-}: {
-  value: number;
-  onChange: (n: number) => void;
-}) => (
+const ColsSelect = ({ value, onChange }: { value: number; onChange: (n: number) => void }) => (
   <div className={styles.selectWrap}>
     <select
       className={styles.select}
@@ -279,7 +242,8 @@ export const HierarchyView = ({
   config,
   onConfigChange,
   linkedEntityIds,
-  hideToolbar
+  hideToolbar,
+  displayFields
 }: HierarchyViewProps) => {
   const { schemas } = useWorkspaceContext();
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
@@ -291,20 +255,19 @@ export const HierarchyView = ({
     ownerFilter,
     statusFilter
   });
-  const parsedConfig = useMemo(() => {
-    const result = hierarchyViewConfigSchema.safeParse(config);
-    return result.success ? normalizeHierarchyConfig(result.data) : null;
-  }, [config]);
-  const [localConfig, setLocalConfig] = useState<HierarchyConfig>(parsedConfig ?? DEFAULT_CONFIG);
+  const cfg = useMemo(
+    () => normalizeViewConfig(hierarchyViewConfigSchema, config, DEFAULT_CONFIG),
+    [config]
+  );
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
-  const cfg = parsedConfig ?? localConfig;
+  const selectedDisplayFields = getDisplayFieldIds('hierarchy', cfg).map(
+    id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' }
+  );
 
   const notify = useCallback(
     (patch: Partial<HierarchyConfig>) => {
-      const next = { ...cfg, ...patch };
-      setLocalConfig(next);
-      onConfigChange(next);
+      onConfigChange({ ...cfg, ...patch });
     },
     [cfg, onConfigChange]
   );
@@ -319,47 +282,27 @@ export const HierarchyView = ({
     [schemas, cfg.level2SchemaId]
   );
 
-  const { nodeMap, childrenOf } = useMemo(() => {
-    const nodeMap = new Map<string, TreeNode>();
-    for (const n of nodes) nodeMap.set(n._uid, n);
-
-    const childrenOf = new Map<string, string[]>();
-    for (const { childId, parentId } of edges) {
-      const arr = childrenOf.get(parentId) ?? [];
-      arr.push(childId);
-      childrenOf.set(parentId, arr);
-    }
-    return { nodeMap, childrenOf };
-  }, [nodes, edges]);
+  const treeIndex = useMemo(() => buildHierarchyTreeIndex(nodes, edges), [nodes, edges]);
 
   const level1Items = useMemo(
-    () =>
-      nodes
-        .filter(n => n._schema.id === cfg.level1SchemaId && n._isMatch)
-        .sort((a, b) => nodeName(a).localeCompare(nodeName(b))),
+    () => sortHierarchyNodes(nodes, cfg.level1SchemaId),
     [nodes, cfg.level1SchemaId]
   );
 
   const getLevel2Children = useCallback(
     (parentUid: string): TreeNode[] => {
       if (!cfg.level2SchemaId) return [];
-      return (childrenOf.get(parentUid) ?? [])
-        .map(id => nodeMap.get(id))
-        .filter((n): n is TreeNode => !!n && n._schema.id === cfg.level2SchemaId && n._isMatch)
-        .sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
+      return getHierarchyChildren(parentUid, cfg.level2SchemaId, treeIndex);
     },
-    [childrenOf, nodeMap, cfg.level2SchemaId]
+    [treeIndex, cfg.level2SchemaId]
   );
 
   const getLevel3Children = useCallback(
     (parentUid: string): TreeNode[] => {
       if (!cfg.level3SchemaId) return [];
-      return (childrenOf.get(parentUid) ?? [])
-        .map(id => nodeMap.get(id))
-        .filter((n): n is TreeNode => !!n && n._schema.id === cfg.level3SchemaId && n._isMatch)
-        .sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
+      return getHierarchyChildren(parentUid, cfg.level3SchemaId, treeIndex);
     },
-    [childrenOf, nodeMap, cfg.level3SchemaId]
+    [treeIndex, cfg.level3SchemaId]
   );
 
   const schemaMap = useMemo(() => {
@@ -374,74 +317,72 @@ export const HierarchyView = ({
     <div className={styles.wrap}>
       {/* Config bar */}
       {!hideToolbar && (
-      <div className={styles.config}>
-        <div className={styles.axisPill}>
-          <span className={styles.axisKicker}>Levels</span>
-          <div className={styles.selectWrap}>
-            <select
-              className={styles.select}
-              value={cfg.levels}
-              onChange={e => {
-                const n = Number(e.target.value);
-                notify({ levels: n, level3SchemaId: n < 3 ? null : cfg.level3SchemaId });
-              }}
-            >
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-              <option value={3}>3</option>
-            </select>
-            <TbChevronDown size={11} />
+        <div className={styles.config}>
+          <div className={styles.axisPill}>
+            <span className={styles.axisKicker}>Levels</span>
+            <div className={styles.selectWrap}>
+              <select
+                className={styles.select}
+                value={cfg.levels}
+                onChange={e => {
+                  const n = Number(e.target.value);
+                  notify({ levels: n, level3SchemaId: n < 3 ? null : cfg.level3SchemaId });
+                }}
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+              </select>
+              <TbChevronDown size={11} />
+            </div>
           </div>
+
+          <span className={styles.cross}>|</span>
+
+          <SchemaSelect
+            label="L1"
+            value={cfg.level1SchemaId}
+            options={schemas}
+            onChange={id =>
+              notify({ level1SchemaId: id, level2SchemaId: null, level3SchemaId: null })
+            }
+          />
+          <ColsSelect value={cfg.level1Columns} onChange={n => notify({ level1Columns: n })} />
+
+          {cfg.levels >= 2 && (
+            <>
+              <span className={styles.cross}>›</span>
+              <SchemaSelect
+                label="L2"
+                value={cfg.level2SchemaId ?? null}
+                options={level2SchemaOptions}
+                onChange={id => notify({ level2SchemaId: id, level3SchemaId: null })}
+              />
+              <ColsSelect value={cfg.level2Columns} onChange={n => notify({ level2Columns: n })} />
+            </>
+          )}
+
+          {cfg.levels >= 3 && (
+            <>
+              <span className={styles.cross}>›</span>
+              <SchemaSelect
+                label="L3"
+                value={cfg.level3SchemaId ?? null}
+                options={level3SchemaOptions}
+                onChange={id => notify({ level3SchemaId: id })}
+              />
+              <ColsSelect value={cfg.level3Columns} onChange={n => notify({ level3Columns: n })} />
+            </>
+          )}
         </div>
-
-        <span className={styles.cross}>|</span>
-
-        <SchemaSelect
-          label="L1"
-          value={cfg.level1SchemaId}
-          options={schemas}
-          onChange={id =>
-            notify({ level1SchemaId: id, level2SchemaId: null, level3SchemaId: null })
-          }
-        />
-        <ColsSelect value={cfg.level1Columns} onChange={n => notify({ level1Columns: n })} />
-
-        {cfg.levels >= 2 && (
-          <>
-            <span className={styles.cross}>›</span>
-            <SchemaSelect
-              label="L2"
-              value={cfg.level2SchemaId ?? null}
-              options={level2SchemaOptions}
-              onChange={id => notify({ level2SchemaId: id, level3SchemaId: null })}
-            />
-            <ColsSelect value={cfg.level2Columns} onChange={n => notify({ level2Columns: n })} />
-          </>
-        )}
-
-        {cfg.levels >= 3 && (
-          <>
-            <span className={styles.cross}>›</span>
-            <SchemaSelect
-              label="L3"
-              value={cfg.level3SchemaId ?? null}
-              options={level3SchemaOptions}
-              onChange={id => notify({ level3SchemaId: id })}
-            />
-            <ColsSelect value={cfg.level3Columns} onChange={n => notify({ level3Columns: n })} />
-          </>
-        )}
-      </div>
       )}
 
       {/* Content */}
       {isUnconfigured ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>Select a schema for Level 1</div>
-          <div className={styles.emptySub}>
-            Use the controls above to choose which entity types to display at each level.
-          </div>
-        </div>
+        <EmptyState
+          title="Select a schema for Level 1"
+          subtitle="Use the controls above to choose which entity types to display at each level."
+        />
       ) : (
         <div className={styles.scroll}>
           <div
@@ -464,6 +405,8 @@ export const HierarchyView = ({
                       color={color}
                       schemaName={schemaEntry?.schema.name ?? l1._schema.name}
                       isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l1._uid)}
+                      displayFields={selectedDisplayFields}
+                      schemaMap={schemaMap}
                     >
                       <button
                         type="button"
@@ -501,6 +444,8 @@ export const HierarchyView = ({
                                 color={l2Color}
                                 schemaName={l2SchemaEntry?.schema.name ?? l2._schema.name}
                                 isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l2._uid)}
+                                displayFields={selectedDisplayFields}
+                                schemaMap={schemaMap}
                               >
                                 <button
                                   type="button"
@@ -540,14 +485,19 @@ export const HierarchyView = ({
                                         node={l3}
                                         color={l3Color}
                                         schemaName={l3SchemaEntry?.schema.name ?? l3._schema.name}
-                                        isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l3._uid)}
+                                        isLinked={
+                                          linkedEntityIds == null || linkedEntityIdSet.has(l3._uid)
+                                        }
+                                        displayFields={selectedDisplayFields}
+                                        schemaMap={schemaMap}
                                       >
                                         <button
                                           type="button"
                                           className={styles.entityLink}
                                           onClick={() => onEntityClick(l3._publicId)}
                                           style={
-                                            linkedEntityIds != null && !linkedEntityIdSet.has(l3._uid)
+                                            linkedEntityIds != null &&
+                                            !linkedEntityIdSet.has(l3._uid)
                                               ? { color: 'var(--base-fg-more-dim)' }
                                               : undefined
                                           }
@@ -571,10 +521,10 @@ export const HierarchyView = ({
           </div>
 
           {level1Items.length === 0 && (
-            <div className={styles.empty}>
-              <div className={styles.emptyTitle}>No entities found</div>
-              <div className={styles.emptySub}>Try adjusting your search or filters.</div>
-            </div>
+            <EmptyState
+              title="No entities found"
+              subtitle="Try adjusting your search or filters."
+            />
           )}
         </div>
       )}

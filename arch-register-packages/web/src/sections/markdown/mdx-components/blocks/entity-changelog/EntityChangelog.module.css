@@ -15,18 +15,19 @@
   50% { opacity: 0.4; }
 }
 
-.empty {
-  font-size: 13px;
-  color: var(--base-fg-more-dim);
-  padding: 8px 0;
-  margin: 0;
+/* The .article container this renders into composes articleTypography.module.css, whose
+   `:global(table)` rule (specificity 0,1,1) would otherwise double up borders/margin against
+   Table.Root's own wrapper div. `.tableWrapper .tableSurface` at (0,2,0) beats it and resets
+   the <table> itself, while .tableWrapper supplies the block-gap margin that rule used to give. */
+.tableWrapper {
+  margin: 0 0 var(--article-block-gap);
 }
 
-/* .tableWrapper .th/.td — specificity (0,2,0) beats the editor's
-   .plateContent :global(th/td) at (0,1,1), restoring our padding. */
-.tableWrapper .th,
-.tableWrapper .td {
-  padding: 8px 12px;
+.tableWrapper .tableSurface {
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  margin: 0;
 }
 
 .op {

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import styles from '../workspace-settings/WorkspaceSettingsScreen.module.css';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import styles from '../workspace-settings/sub-sections/GeneralSubSection.module.css';
+import screenStyles from '../workspace-settings/WorkspaceSettingsScreen.module.css';
+import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbCheck } from 'react-icons/tb';
 import { Title } from '../../components/Title';
 import { useAuth } from '../../auth/AuthContext';
@@ -21,9 +23,11 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   },
 };
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/account/$section');
+
 export const AccountSettingsScreen = () => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { section?: string };
+  const navigate = routeApi.useNavigate();
+  const params = routeApi.useParams();
   const { user, reloadUser } = useAuth();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;
@@ -34,6 +38,8 @@ export const AccountSettingsScreen = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  const section = params.section === 'appearance' ? 'appearance' : 'profile';
+
   useEffect(() => {
     if (user) {
       setSelectedColor(user.color ?? null);
@@ -43,7 +49,6 @@ export const AccountSettingsScreen = () => {
 
   if (!user) return null;
 
-  const section = search.section === 'appearance' ? 'appearance' : 'profile';
   const meta = SECTION_META[section] ?? SECTION_META['profile']!;
 
   const handleSave = async () => {
@@ -73,8 +78,8 @@ export const AccountSettingsScreen = () => {
   const hasChanges = selectedColor !== user.color || displayName.trim() !== user.display_name;
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.head}>
+    <div className={screenStyles.screen}>
+      <div className={screenStyles.head}>
         <Title
           breadcrumb={[
             { label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) },
@@ -121,13 +126,12 @@ export const AccountSettingsScreen = () => {
                     <div className={styles.fieldHint}>Your name as it appears throughout the application.</div>
                   </div>
                   <div className={styles.fieldRight}>
-                    <input
-                      type="text"
+                    <TextInput
                       aria-label="Display name"
-                      className={styles.input}
                       value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
+                      onChange={value => setDisplayName(value ?? '')}
                       placeholder="Enter display name"
+                      style={{ maxWidth: 340 }}
                     />
                   </div>
                 </div>

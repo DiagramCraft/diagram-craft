@@ -1,22 +1,24 @@
-import type React from 'react';
 import { TbLayoutGrid } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityViewEmbed } from './EntityViewEmbed';
 import {
   ENTITY_VIEW_EMBED_TYPE,
   EntityViewEmbedEditable,
   entityViewEmbedMdxRule
 } from './EntityViewEmbedEditable';
+import type { EntityViewEmbedSlateElement } from './types';
 
-export const entityViewEmbedSpec = {
-  component: EntityViewEmbed as unknown as React.ComponentType<Record<string, string>>,
+export const entityViewEmbedSpec = defineMdxComponent<
+  EntityViewEmbedSlateElement,
+  { viewId?: string },
+  'block'
+>({
+  component: EntityViewEmbed,
   mode: 'block',
   allowedProps: ['viewId'],
   editorSpec: {
-    editableComponent: EntityViewEmbedEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const },
+    editableComponent: EntityViewEmbedEditable,
+    nodeOptions: { isVoid: true },
     mdxRule: entityViewEmbedMdxRule,
     slashCommand: {
       key: 'entity-view-embed',
@@ -33,4 +35,4 @@ export const entityViewEmbedSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

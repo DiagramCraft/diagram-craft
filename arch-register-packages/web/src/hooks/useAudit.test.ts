@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { auditKeys, invalidateAuditQueries, workspaceAnalyticsKeys } from './queryKeys';
+import { auditKeys, invalidateAuditQueries } from '../queries/audit';
+import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
 
 describe('auditKeys', () => {
   it('nests log queries under a workspace-scoped prefix', () => {
@@ -29,7 +30,7 @@ describe('invalidateAuditQueries', () => {
       queryKey: auditKeys.stats('ws-1'),
     });
     expect(invalidateQueries).toHaveBeenNthCalledWith(3, {
-      queryKey: workspaceAnalyticsKeys.detail('ws-1'),
+      queryKey: workspaceAnalyticsKeys.workspace('ws-1'),
     });
   });
 });

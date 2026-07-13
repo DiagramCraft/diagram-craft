@@ -1,9 +1,9 @@
-import { TbDots, TbUsers } from 'react-icons/tb';
+import { TbDots } from 'react-icons/tb';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { StatusChip } from '../../../components/StatusChip';
 import { TypeBadge } from '../../../components/TypeBadge';
-import { resolveSchemaColor } from '../../../lib/api';
+import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import {
   entityMenuItems,
   entityName,
@@ -11,6 +11,9 @@ import {
   projectEntityMenuItems
 } from './entityBrowserViewShared';
 import styles from '../EntityBrowserScreen.module.css';
+import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
+
+type CardsViewProps = EntityBrowserBaseViewProps & { config: unknown; displayFields: EntityDisplayField[] };
 
 export const CardsView = ({
   rows,
@@ -20,8 +23,10 @@ export const CardsView = ({
   onClone,
   lifecycleStates,
   projectContext,
-  readOnly
-}: EntityBrowserBaseViewProps) => (
+  readOnly, config, displayFields
+}: CardsViewProps) => {
+  const fieldIds = getDisplayFieldIds('cards', config);
+  return (
   <div className={styles.cardGrid}>
     {rows.map(entity => {
       const schemaEntry = schemaMap.get(entity._schema.id);
@@ -41,7 +46,7 @@ export const CardsView = ({
           <div className={styles.cardHead}>
             {schemaEntry && <TypeBadge color={color} name={schemaEntry.schema.name} size={22} />}
             <div className={styles.cardHeadRight}>
-              {entity._lifecycle && (
+              {fieldIds.includes('_lifecycle') && entity._lifecycle && (
                 <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
               )}
               {menuItems.length > 0 && (
@@ -68,28 +73,16 @@ export const CardsView = ({
           >
             {entityName(entity)}
           </div>
-          {entity._description && <div className={styles.cardDesc}>{entity._description}</div>}
+          {fieldIds.includes('_description') && entity._description && <div className={styles.cardDesc}>{entity._description}</div>}
           <div className={styles.cardMeta}>
-            <Chip tone="ghost" icon={<TbUsers size={10} />}>
-              {entity._owner?.name ?? '—'}
-            </Chip>
-            {schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}
-            {projectContext && entity._projectLink?.entityType?.name && (
-              <Chip
-                tone="ghost"
-                dot={
-                  projectContext.entityTypeColorMap.get(entity._projectLink.entityType.id) ?? undefined
-                }
-              >
-                {entity._projectLink.entityType.name}
-              </Chip>
-            )}
-            {projectContext && entity._projectLink?.linked && (
-              <Chip tone="ghost">{entity._projectLink.isDone ? 'Done' : 'Open'}</Chip>
-            )}
+            {fieldIds.filter(id => id !== '_description' && id !== '_lifecycle').map(id => {
+              const field = findEntityDisplayField(id, entity, schemaMap, displayFields);
+              const value = field ? formatEntityDisplayValue(entity, field) : null;
+              return value == null ? null : <Chip key={id} tone="ghost">{field!.label}: {value}</Chip>;
+            })}
           </div>
         </div>
       );
     })}
-  </div>
-);
+  </div>);
+};

@@ -2,7 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbFileText, TbFolderOpen, TbPencil, TbPlus, TbStar, TbUpload } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
-import type { FileEntry } from '../../lib/api';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import styles from './ProjectDetailScreen.module.css';
 import { DiagramBrowserToolbar } from '../../components/diagram-browser/DiagramBrowserView';
 import { ProjectDiagramsView, type ProjectMenuTarget } from './ProjectDiagramsView';
@@ -10,6 +10,7 @@ import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { formatDate } from '../../utils/dateFormat';
 
 export const ProjectDetails = ({
   project,
@@ -36,7 +37,7 @@ export const ProjectDetails = ({
   onContextMenu
 }: {
   project: ProjectDetailData;
-  visibleFiles: FileEntry[];
+  visibleFiles: ProjectFile[];
   allFilesCount: number;
   folderCount: number;
   filter: string;
@@ -51,7 +52,7 @@ export const ProjectDetails = ({
   onSetViewMode: (value: 'grid' | 'list') => void;
   onOpenDiagram: (diagramId: string) => void;
   onOpenMarkdown?: (nodeId: string) => void;
-  onDownloadFile?: (file: FileEntry) => void;
+  onDownloadFile?: (file: ProjectFile) => void;
   onAddFolder: () => void;
   onAddDiagram: () => void;
   onAddMarkdown?: () => void;
@@ -121,7 +122,7 @@ export const ProjectDetails = ({
           <ProjectMetaItem label="Diagrams" value={<span className="mono tabular">{allFilesCount}</span>} />
           <ProjectMetaItem label="Folders" value={<span className="mono tabular">{folderCount}</span>} />
           <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
-          <ProjectMetaItem label="Last edit" value={new Date(project.updated_at).toLocaleDateString()} />
+          <ProjectMetaItem label="Last edit" value={formatDate(project.updated_at)} />
         </>
       }
       toolbar={

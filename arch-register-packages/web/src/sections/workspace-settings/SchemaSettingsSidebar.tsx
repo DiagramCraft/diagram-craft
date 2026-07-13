@@ -1,13 +1,15 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TbTable } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
+
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
 export const SchemaSettingsSidebar = ({
   schemas,
@@ -18,12 +20,8 @@ export const SchemaSettingsSidebar = ({
   enums: WorkspaceEnum[];
   workspaceSlug: string;
 }) => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as {
-    tab?: 'types' | 'enums';
-    schema?: string;
-    enumId?: string;
-  };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
 
   const activeTab = search.tab === 'enums' ? 'enums' : 'types';
   const schemaId = search.schema ?? null;

@@ -6,6 +6,10 @@ import type {
 } from '@arch-register/api-types/viewContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
+import {
+  isAssessmentCondition,
+  ASSESSMENT_FIELD_PREFIX
+} from '@arch-register/api-types/assessmentFilter';
 import type { EntitySearchParams, ProjectSearchParams } from '../../../routes/searchParams';
 
 export type BrowserSearch = EntitySearchParams &
@@ -21,6 +25,7 @@ export type ProjectLinkState = {
 
 export type BrowserEntityRecord = EntityRecord & {
   _projectLink?: ProjectLinkState;
+  _assessment?: Record<string, string | number> | null;
 };
 
 export type ProjectBrowserContext = {
@@ -39,13 +44,6 @@ export const parseDateValue = (value: unknown) => {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
 };
 
-export const formatDateValue = (value: unknown) => {
-  const parsed = parseDateValue(value);
-  if (parsed == null) return '—';
-  const date = new Date(`${parsed}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? parsed : date.toLocaleDateString();
-};
-
 export const parseConditionsFromSearch = (search: BrowserSearch): FilterCondition[] => {
   if (search.filters) {
     try {
@@ -61,7 +59,7 @@ export const parseConditionsFromSearch = (search: BrowserSearch): FilterConditio
   return initial;
 };
 
-export const parseJsonConfig = <T,>(value: string | undefined): T | null => {
+export const parseJsonConfig = <T>(value: string | undefined): T | null => {
   if (!value) return null;
   try {
     return JSON.parse(value) as T;
@@ -70,7 +68,7 @@ export const parseJsonConfig = <T,>(value: string | undefined): T | null => {
   }
 };
 
-export const serializeConfig = <T,>(value: T | null) => (value ? JSON.stringify(value) : undefined);
+export const serializeConfig = <T>(value: T | null) => (value ? JSON.stringify(value) : undefined);
 
 export const parseViewConfigs = (value: string | undefined): BrowserViewConfigMap => {
   if (!value) return {};
@@ -89,6 +87,43 @@ export const serializeViewConfigs = (value: BrowserViewConfigMap): string | unde
   return JSON.stringify(Object.fromEntries(entries));
 };
 
+const isAssessmentFieldId = (value: unknown): value is string =>
+  typeof value === 'string' && value.startsWith(ASSESSMENT_FIELD_PREFIX);
+
+/**
+ * Strips references to the joined assessment's fields from filter conditions and view
+ * configs. Called whenever the join is cleared or switched to a different assessment, so
+ * stale `_assessment*` field ids never linger in the URL or a saved view.
+ */
+export const pruneAssessmentReferences = (
+  conditions: FilterCondition[],
+  viewConfigs: BrowserViewConfigMap
+): { conditions: FilterCondition[]; viewConfigs: BrowserViewConfigMap } => {
+  const prunedConditions = conditions.filter(c => !isAssessmentCondition(c));
+
+  const prunedViewConfigs: BrowserViewConfigMap = {};
+  for (const [view, config] of Object.entries(viewConfigs)) {
+    if (config == null || typeof config !== 'object') {
+      prunedViewConfigs[view as BrowserView] = config;
+      continue;
+    }
+    const next: Record<string, unknown> = { ...(config as Record<string, unknown>) };
+    if (Array.isArray(next.fieldIds)) {
+      next.fieldIds = (next.fieldIds as unknown[]).filter(id => !isAssessmentFieldId(id));
+    }
+    if (isAssessmentFieldId(next.quadrantFieldId)) next.quadrantFieldId = '';
+    if (isAssessmentFieldId(next.ringFieldId)) next.ringFieldId = '';
+    if (isAssessmentFieldId(next.colEnumFieldId)) next.colEnumFieldId = null;
+    if (isAssessmentFieldId(next.xFieldId)) next.xFieldId = '';
+    if (isAssessmentFieldId(next.yFieldId)) next.yFieldId = '';
+    if (isAssessmentFieldId(next.sizeFieldId)) next.sizeFieldId = null;
+    if (isAssessmentFieldId(next.colorFieldId)) next.colorFieldId = null;
+    prunedViewConfigs[view as BrowserView] = next;
+  }
+
+  return { conditions: prunedConditions, viewConfigs: prunedViewConfigs };
+};
+
 const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.config == null) return null;
   if (view.viewMode === 'radar') return view.config.radar ?? null;
@@ -96,6 +131,10 @@ const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.viewMode === 'matrix') return view.config.matrix ?? null;
   if (view.viewMode === 'hierarchy') return view.config.hierarchy ?? null;
   if (view.viewMode === 'explore') return view.config.explore ?? null;
+  if (view.viewMode === 'bubble') return view.config.bubble ?? null;
+  if (view.viewMode === 'table') return view.config.table ?? null;
+  if (view.viewMode === 'cards') return view.config.cards ?? null;
+  if (view.viewMode === 'tree') return view.config.tree ?? null;
   return null;
 };
 
@@ -111,7 +150,8 @@ export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
   viewConfigs: serializeViewConfigs(
     getSavedViewConfig(view) == null ? {} : { [view.viewMode]: getSavedViewConfig(view) }
   ),
-  filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined
+  filters: view.filters.conditions ? JSON.stringify(view.filters.conditions) : undefined,
+  joinAssessmentId: view.filters.assessmentId ?? undefined
 });
 
 export const getFilterValue = (conditions: FilterCondition[], fieldId: string) =>
@@ -128,6 +168,10 @@ export const toSavedViewConfig = (
   if (view === 'matrix') return { matrix: config as never };
   if (view === 'hierarchy') return { hierarchy: config as never };
   if (view === 'explore') return { explore: config as never };
+  if (view === 'bubble') return { bubble: config as never };
+  if (view === 'table') return { table: config as never };
+  if (view === 'cards') return { cards: config as never };
+  if (view === 'tree') return { tree: config as never };
   return null;
 };
 
@@ -145,7 +189,8 @@ export const buildSavedViewPayload = ({
   q,
   sort,
   conditions,
-  viewConfigs
+  viewConfigs,
+  joinAssessmentId
 }: {
   scope: 'workspace' | 'project';
   projectId?: string;
@@ -161,6 +206,7 @@ export const buildSavedViewPayload = ({
   sort: string;
   conditions: FilterCondition[];
   viewConfigs: BrowserViewConfigMap;
+  joinAssessmentId?: string | null;
 }): CreateSavedViewRequest => ({
   scope,
   projectId: scope === 'project' ? (projectId ?? null) : null,
@@ -175,7 +221,8 @@ export const buildSavedViewPayload = ({
     owner: ownerFilter,
     q,
     sort,
-    conditions
+    conditions,
+    assessmentId: joinAssessmentId ?? null
   },
   config: toSavedViewConfig(view, viewConfigs)
 });

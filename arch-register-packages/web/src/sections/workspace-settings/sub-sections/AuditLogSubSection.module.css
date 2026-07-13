@@ -1,0 +1,205 @@
+/* Block list */
+.blockList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 24px 32px;
+}
+
+.auditFilters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Section (Block) */
+.section {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.sectionBody {
+  padding: 8px 16px 14px;
+}
+
+.auditSectionBody {
+  padding: 4px 4px 8px;
+}
+
+/* Input */
+.input {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg);
+  border-radius: var(--r);
+  outline: none;
+  width: 100%;
+  font-family: var(--font-sans);
+}
+
+.input:focus {
+  border-color: var(--accent-fg);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.activityRow {
+  display: grid;
+  grid-template-columns: 104px 88px 96px 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 6px;
+  border-radius: var(--r);
+  color: var(--base-fg-dim);
+  text-align: left;
+  border: 1px solid transparent;
+  border-bottom-color: var(--panel-border);
+}
+
+.activityRow:last-child {
+  border-bottom-color: transparent;
+}
+
+.activityRow:hover {
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  border-color: var(--panel-border);
+}
+
+.activityTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  min-height: 20px;
+  height: auto;
+  padding: 0 6px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.typeWorkspace {
+  background: color-mix(in oklch, var(--accent-fg) 16%, transparent);
+  border-color: color-mix(in oklch, var(--accent-fg) 45%, var(--cmp-border));
+  color: oklch(0.82 0.07 250);
+}
+
+.typeSchema {
+  background: color-mix(in oklch, var(--tag-system) 18%, transparent);
+  border-color: color-mix(in oklch, var(--tag-system) 50%, var(--cmp-border));
+  color: var(--tag-system);
+}
+
+.typeEntity {
+  background: color-mix(in oklch, var(--tag-component) 18%, transparent);
+  border-color: color-mix(in oklch, var(--tag-component) 50%, var(--cmp-border));
+  color: var(--tag-component);
+}
+
+.typeProject {
+  background: color-mix(in oklch, var(--green) 18%, transparent);
+  border-color: color-mix(in oklch, var(--green) 50%, var(--cmp-border));
+  color: var(--green);
+}
+
+.typeFile {
+  background: color-mix(in oklch, var(--warning-fg) 20%, transparent);
+  border-color: color-mix(in oklch, var(--warning-fg) 55%, var(--cmp-border));
+  color: var(--warning-fg);
+}
+
+.typeAssessment {
+  background: color-mix(in oklch, var(--tag-database) 18%, transparent);
+  border-color: color-mix(in oklch, var(--tag-database) 50%, var(--cmp-border));
+  color: var(--tag-database);
+}
+
+.activityDate {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.activityWho {
+  color: var(--base-fg);
+  font-weight: 500;
+}
+
+.activityVerb,
+.activityDate,
+.activityVerb {
+  color: var(--cmp-fg-disabled);
+  text-transform: capitalize;
+}
+
+.activityTarget {
+  color: var(--base-fg);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .filterGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .activityRow {
+    grid-template-columns: 104px 80px 88px 76px minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .activityRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .activityTypeBadge {
+    width: 96px;
+  }
+
+  .activityDate,
+  .activityWho,
+  .activityVerb,
+  .activityTarget {
+    white-space: normal;
+  }
+}

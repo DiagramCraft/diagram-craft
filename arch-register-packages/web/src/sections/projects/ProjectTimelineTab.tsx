@@ -5,7 +5,7 @@ import type { ProjectDetail as ProjectDetailData, ProjectEntity } from '@arch-re
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '../../lib/api';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { TimelineScaffold } from '../../components/timeline/TimelineScaffold';
 import {
   buildTimelineRange,
@@ -16,7 +16,7 @@ import {
   type TimelineZoom
 } from '../../components/timeline/timelineUtils';
 import { TypeBadge } from '../../components/TypeBadge';
-import { diffSnapshotState } from '../entities/EntityTimelineTab';
+import { diffSnapshotState } from '../entities/components/entityTimelineHelpers';
 import styles from './ProjectDetailScreen.module.css';
 
 type SchemaInfo = { color: string; icon: string | null };

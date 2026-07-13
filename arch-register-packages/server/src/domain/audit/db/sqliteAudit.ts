@@ -1,19 +1,16 @@
 import { newid } from '@diagram-craft/utils/id';
 import type { AuditDatabase, AuditLogDbCreate } from './auditDatabase';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import { AUDIT_LOG_SELECT_SQL, auditMappers } from './auditDatabase';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 
 export class SqliteAuditDatabase extends SqliteDatabaseBase implements AuditDatabase {
   async listAuditLogs(workspace: string) {
     return this.all(
-      `SELECT 
-        audit_log.*,
-        users.display_name as user_display_name
-      FROM audit_log
-      LEFT JOIN users ON audit_log.user_id = users.id
+      `${AUDIT_LOG_SELECT_SQL}
       WHERE audit_log.workspace = ?
       ORDER BY audit_log.timestamp DESC`,
       [workspace],
-      sqliteMappers.auditLog
+      auditMappers.auditLog
     );
   }
 
@@ -36,6 +33,11 @@ export class SqliteAuditDatabase extends SqliteDatabaseBase implements AuditData
         JSON.stringify(input.metadata)
       ]
     );
-    return (await this.get('SELECT * FROM audit_log WHERE id = ?', [id], sqliteMappers.auditLog))!;
+    return (await this.get(
+      `${AUDIT_LOG_SELECT_SQL}
+      WHERE audit_log.id = ?`,
+      [id],
+      auditMappers.auditLog
+    ))!;
   }
 }

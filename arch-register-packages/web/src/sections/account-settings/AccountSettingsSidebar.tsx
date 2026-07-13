@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useLocation } from '@tanstack/react-router';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
 import { TbPalette, TbUser } from 'react-icons/tb';
@@ -23,12 +23,10 @@ const ACCOUNT_SETTINGS_SECTIONS: AccountSettingsNavItem[] = [
 
 export const AccountSettingsSidebar = () => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { section?: string };
+  const location = useLocation();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;
-  const section = ACCOUNT_SETTINGS_SECTIONS.some(item => item.id === search.section)
-    ? search.section ?? 'profile'
-    : 'profile';
+  const section = location.pathname.split('/').pop() || 'profile';
 
   const groups = useMemo(() => {
     const g: Record<string, AccountSettingsNavItem[]> = {};
@@ -53,9 +51,8 @@ export const AccountSettingsSidebar = () => {
                 active={section === s.id}
                 onClick={() =>
                   navigate({
-                    to: '/$workspaceSlug/account',
-                    params: { workspaceSlug },
-                    search: { section: s.id },
+                    to: '/$workspaceSlug/account/$section',
+                    params: { workspaceSlug, section: s.id },
                   })
                 }
               />

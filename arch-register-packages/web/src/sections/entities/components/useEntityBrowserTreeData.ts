@@ -8,6 +8,7 @@ type UseEntityBrowserTreeDataProps = {
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
+  joinAssessmentId?: string | null;
 };
 
 export const useEntityBrowserTreeData = ({
@@ -17,13 +18,15 @@ export const useEntityBrowserTreeData = ({
   q,
   typeFilter,
   ownerFilter,
-  statusFilter
+  statusFilter,
+  joinAssessmentId
 }: UseEntityBrowserTreeDataProps) => {
   const { data: treeData } = useEntityTree(workspaceId, {
     schemaId: typeFilter,
     owner: ownerFilter,
     lifecycle: statusFilter,
     q,
+    assessmentId: joinAssessmentId,
     projectId: projectId ?? undefined,
     projectScope: projectId ? projectScope : undefined
   });

@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), yaml()],
     resolve: {
+      dedupe: ['@platejs/core'],
       tsconfigPaths: true
     },
     css: {
@@ -16,6 +17,9 @@ export default defineConfig(({ mode }) => {
         exportGlobals: true,
         localsConvention: 'camelCase'
       }
+    },
+    build: {
+      manifest: true
     },
     server: {
       port: parseInt(process.env['PORT'] ?? '5174'),

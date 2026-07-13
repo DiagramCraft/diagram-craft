@@ -57,6 +57,34 @@ test.describe('project routes', () => {
     );
   });
 
+  test('GET /api/:workspace/entities/:entityId/projects returns linked projects directly', async ({
+    orpc,
+    server
+  }) => {
+    await seedCatalogEntities(server.db);
+    const project = await createProject(orpc, {
+      name: 'Entity Lookup Project',
+      owner: seedIds.teams.design
+    });
+    await orpc.projects.addEntity({
+      params: { workspace: 'default', id: project.id },
+      body: { entity_id: systemId }
+    });
+
+    const projects = await orpc.projects.listEntityProjects({
+      params: { workspace: 'default', entityId: systemId }
+    });
+
+    expect(projects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          project: expect.objectContaining({ id: project.id, name: 'Entity Lookup Project' }),
+          entity_type: null
+        })
+      ])
+    );
+  });
+
   test('GET /api/:workspace/projects returns 401 without authentication', async ({ server }) => {
     const anonOrpc = createTestORPCClient(server.baseUrl);
     await expect(

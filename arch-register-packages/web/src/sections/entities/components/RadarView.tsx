@@ -1,15 +1,37 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import styles from './RadarView.module.css';
-import { TbSearch, TbChevronUp, TbChevronDown } from 'react-icons/tb';
+import { TbChevronUp, TbChevronDown } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover } from '@diagram-craft/app-components/Popover';
+import { EmptyState } from '../../../components/EmptyState';
+import { SearchInput } from '../../../components/SearchInput';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { useEntities } from '../../../hooks/useEntities';
 import { radarViewConfigSchema } from '@arch-register/api-types/viewContract';
-import { ApiSelectField, EntitySchema } from '@arch-register/api-types/schemaContract';
-import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
+import {
+  getCategoricalFields,
+  getCategoricalFieldValues,
+  type JoinedAssessmentContext
+} from './entityFieldSources';
+import { normalizeViewConfig } from './entityViewConfig';
+import { TooltipChip, TooltipChips } from './entityTooltipParts';
+import {
+  buildBlips,
+  buildQuadrants,
+  buildRings,
+  CX,
+  CY,
+  MAX_R,
+  RING_BG,
+  RING_COLORS,
+  type Blip,
+  type Quadrant,
+  type Ring
+} from './radarViewState';
+import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
+import { usePersistedViewConfig } from '../../../hooks/usePersistedViewConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,212 +42,44 @@ export type RadarConfig = {
   ringOrder: string[];
 };
 
-type Quadrant = {
-  value: string;
-  label: string;
-  startAngle: number;
-  endAngle: number;
-  color: string;
+// radarViewConfigSchema has no sensible non-empty defaults (schemaId/quadrantFieldId/ringFieldId
+// are workspace-specific selections, not universal fallbacks), so normalizeViewConfig is given
+// an empty sentinel here and the result is treated as "unconfigured" (converted back to null)
+// wherever schemaId is empty, preserving the existing all-or-nothing `config: RadarConfig | null`
+// semantics used throughout this component.
+const EMPTY_RADAR_CONFIG: RadarConfig = {
+  schemaId: '',
+  quadrantFieldId: '',
+  ringFieldId: '',
+  ringOrder: []
 };
-
-type Ring = {
-  value: string;
-  label: string;
-  innerR: number;
-  outerR: number;
-  color: string;
-};
-
-type Blip = {
-  id: string;
-  name: string;
-  description: string;
-  quadrantValue: string;
-  ringValue: string;
-  num: number;
-  x: number;
-  y: number;
-};
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const CX = 420;
-const CY = 420;
-const MAX_R = 385;
-
-const QUADRANT_COLORS = [
-  'var(--tag-api)',
-  'var(--tag-component)',
-  'var(--tag-database)',
-  'var(--tag-system)',
-  'var(--tag-service)',
-  'var(--accent-fg)',
-  'var(--warning-fg)',
-  'oklch(0.62 0.14 180)'
-];
-
-const RING_COLORS = [
-  'var(--tag-component)',
-  'var(--accent-fg)',
-  'var(--tag-system)',
-  'var(--warning-fg)',
-  'var(--tag-service)'
-];
-
-// Alternating backgrounds from inner (lighter) to outer (darker)
-const RING_BG = [
-  'var(--cmp-bg-hover)',
-  'var(--cmp-bg)',
-  'var(--panel-bg)',
-  'var(--base-bg)',
-  'oklch(0.12 0.005 260)'
-];
-
-const LIFECYCLE_FIELD_ID = '_lifecycle';
 
 // ── Config helpers ────────────────────────────────────────────────────────────
 
-const configKey = (workspaceSlug: string) => `ar-radar-config-${workspaceSlug}`;
-
-const loadConfig = (workspaceSlug: string): RadarConfig | null => {
-  try {
-    const raw = localStorage.getItem(configKey(workspaceSlug));
-    return raw ? (JSON.parse(raw) as RadarConfig) : null;
-  } catch {
-    return null;
-  }
-};
-
-const saveConfig = (workspaceSlug: string, config: RadarConfig) => {
-  localStorage.setItem(configKey(workspaceSlug), JSON.stringify(config));
-};
-
 // ── Field helpers ─────────────────────────────────────────────────────────────
-
-type FieldOption = { id: string; label: string };
+//
+// Thin adapters over entityFieldSources.ts: Radar operates on a single schema (wrapped in an
+// array for the shared, multi-schema-aware functions) and has no team/owner concept (`teams: []`
+// keeps the shared "Owner" option inert). Radar treats rating-typed assessment fields as a
+// discrete/bucketed axis (5 values), unlike other views that treat them as numeric — hence
+// `includeRatingFields: true` here only.
 
 const getSelectableFields = (
   schema: EntitySchema,
-  lifecycleStates: WorkspaceLifecycleState[]
-): FieldOption[] => [
-  ...schema.fields
-    .filter((f): f is Extract<typeof f, { type: 'select' }> => f.type === 'select')
-    .map(f => ({ id: f.id, label: f.name })),
-  ...(lifecycleStates.length > 0 ? [{ id: LIFECYCLE_FIELD_ID, label: 'Lifecycle' }] : [])
-];
+  lifecycleStates: WorkspaceLifecycleState[],
+  joinedAssessment?: JoinedAssessmentContext | null
+) => getCategoricalFields([schema], lifecycleStates, [], joinedAssessment, true);
 
 const getFieldValues = (
   schema: EntitySchema,
   fieldId: string,
-  lifecycleStates: WorkspaceLifecycleState[]
-): Array<{ value: string; label: string }> => {
-  if (fieldId === LIFECYCLE_FIELD_ID) {
-    return [...lifecycleStates]
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map(s => ({ value: s.id, label: s.label }));
-  }
-  const field = schema.fields.find(f => f.id === fieldId);
-  if (field?.type !== 'select') return [];
-  return (field as ApiSelectField).options ?? [];
-};
-
-const getEntityFieldValue = (entity: EntityRecord, fieldId: string): string | null => {
-  if (fieldId === LIFECYCLE_FIELD_ID) return entity._lifecycle?.id ?? null;
-  const val = entity[fieldId];
-  return typeof val === 'string' ? val : null;
-};
-
-// ── Geometry ──────────────────────────────────────────────────────────────────
-
-function buildQuadrants(values: Array<{ value: string; label: string }>): Quadrant[] {
-  const N = Math.min(values.length, 8);
-  return values.slice(0, N).map((v, i) => ({
-    value: v.value,
-    label: v.label,
-    startAngle: (i / N) * 2 * Math.PI - Math.PI / 2,
-    endAngle: ((i + 1) / N) * 2 * Math.PI - Math.PI / 2,
-    color: QUADRANT_COLORS[i % QUADRANT_COLORS.length]!
+  lifecycleStates: WorkspaceLifecycleState[],
+  joinedAssessment?: JoinedAssessmentContext | null
+): Array<{ value: string; label: string }> =>
+  getCategoricalFieldValues([schema], fieldId, lifecycleStates, [], joinedAssessment).map(f => ({
+    value: f.id,
+    label: f.label
   }));
-}
-
-function buildRings(values: Array<{ value: string; label: string }>): Ring[] {
-  const M = Math.min(values.length, 5);
-  return values.slice(0, M).map((v, i) => ({
-    value: v.value,
-    label: v.label,
-    innerR: (i / M) * MAX_R,
-    outerR: ((i + 1) / M) * MAX_R,
-    color: RING_COLORS[i % RING_COLORS.length]!
-  }));
-}
-
-// Deterministic hash for stable blip placement
-function rHash(s: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-}
-
-function getBlipXY(entityId: string, quad: Quadrant, ring: Ring): { x: number; y: number } {
-  const h1 = rHash(`${entityId}~a`);
-  const h2 = rHash(`${entityId}~b`);
-  const aSpread = (quad.endAngle - quad.startAngle) * 0.78;
-  const angle =
-    quad.startAngle + (quad.endAngle - quad.startAngle) * 0.11 + ((h1 % 9973) / 9973) * aSpread;
-  const rMin = ring.innerR < 10 ? 14 : ring.innerR + 10;
-  const rMax = ring.outerR - 10;
-  const r = rMin + ((h2 % 9871) / 9871) * (rMax - rMin);
-  return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) };
-}
-
-function buildBlips(
-  entities: EntityRecord[],
-  quadrantFieldId: string,
-  ringFieldId: string,
-  quadrants: Quadrant[],
-  rings: Ring[]
-): Blip[] {
-  const quadMap = new Map(quadrants.map(q => [q.value, q]));
-  const ringMap = new Map(rings.map(r => [r.value, r]));
-
-  const valid = entities.filter(e => {
-    const qv = getEntityFieldValue(e, quadrantFieldId);
-    const rv = getEntityFieldValue(e, ringFieldId);
-    return qv != null && rv != null && quadMap.has(qv) && ringMap.has(rv);
-  });
-
-  const quadIdx = new Map(quadrants.map((q, i) => [q.value, i]));
-  const ringIdx = new Map(rings.map((r, i) => [r.value, i]));
-
-  valid.sort((a, b) => {
-    const qa = quadIdx.get(getEntityFieldValue(a, quadrantFieldId)!) ?? 0;
-    const qb = quadIdx.get(getEntityFieldValue(b, quadrantFieldId)!) ?? 0;
-    if (qa !== qb) return qa - qb;
-    const ra = ringIdx.get(getEntityFieldValue(a, ringFieldId)!) ?? 0;
-    const rb = ringIdx.get(getEntityFieldValue(b, ringFieldId)!) ?? 0;
-    if (ra !== rb) return ra - rb;
-    return (a._name ?? '').localeCompare(b._name ?? '');
-  });
-
-  return valid.map((e, i) => {
-    const qv = getEntityFieldValue(e, quadrantFieldId)!;
-    const rv = getEntityFieldValue(e, ringFieldId)!;
-    const quad = quadMap.get(qv)!;
-    const ring = ringMap.get(rv)!;
-    return {
-      id: e._uid,
-      name: e._name ?? e._slug,
-      description: e._description ?? '',
-      quadrantValue: qv,
-      ringValue: rv,
-      num: i + 1,
-      ...getBlipXY(e._uid, quad, ring)
-    };
-  });
-}
 
 // ── RadarView ─────────────────────────────────────────────────────────────────
 
@@ -235,21 +89,24 @@ export const RadarView = ({
   onEntityClick,
   config: configProp,
   onConfigChange,
-  hideToolbar
+  hideToolbar,
+  joinedAssessment
 }: EntityBrowserRowViewProps & {
   config?: unknown;
   onConfigChange?: (config: RadarConfig) => void;
   hideToolbar?: boolean;
+  joinedAssessment?: JoinedAssessmentContext | null;
 }) => {
   const { workspaceSlug, schemas, lifecycleStates } = useWorkspaceContext();
-  const [internalConfig, setInternalConfig] = useState<RadarConfig | null>(() =>
-    loadConfig(workspaceSlug)
-  );
   const parsedConfig = useMemo(() => {
-    const result = radarViewConfigSchema.safeParse(configProp);
-    return result.success ? result.data : null;
+    const normalized = normalizeViewConfig(radarViewConfigSchema, configProp, EMPTY_RADAR_CONFIG);
+    return normalized.schemaId ? normalized : null;
   }, [configProp]);
-  const config = parsedConfig ?? internalConfig;
+  const [config, setConfig] = usePersistedViewConfig({
+    storageKey: `ar-radar-config-${workspaceSlug}`,
+    externalConfig: parsedConfig,
+    onChange: onConfigChange
+  });
 
   const [ringOrderOpen, setRingOrderOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -264,36 +121,23 @@ export const RadarView = ({
   // Rows arrive in 'summary' view (no custom select field values), but the quadrant/ring
   // axes are often custom Select fields — fetch the full-view records for the radar's
   // schema and use those in place of the summary rows wherever available.
-  const { data: fullSchemaEntities = [] } = useEntities(
-    workspaceSlug,
-    { schemaId: config?.schemaId, view: 'full' },
-    { enabled: !!workspaceSlug && !!config?.schemaId }
-  );
-  const fullEntityMap = useMemo(() => {
-    const m = new Map<string, EntityRecord>();
-    fullSchemaEntities.forEach(e => m.set(e._uid, e));
-    return m;
-  }, [fullSchemaEntities]);
-  const entities = useMemo(
-    () => rows.map(r => fullEntityMap.get(r._uid) ?? r),
-    [rows, fullEntityMap]
-  );
+  const entities = useHydratedEntityRows(workspaceSlug, rows, !!config?.schemaId);
 
   const schema = config ? (schemas.find(s => s.id === config.schemaId) ?? null) : null;
 
   const fieldOptions = useMemo(
-    () => (schema ? getSelectableFields(schema, lifecycleStates) : []),
-    [schema, lifecycleStates]
+    () => (schema ? getSelectableFields(schema, lifecycleStates, joinedAssessment) : []),
+    [schema, lifecycleStates, joinedAssessment]
   );
 
   const quadrantValues = useMemo(() => {
     if (!config || !schema) return [];
-    return getFieldValues(schema, config.quadrantFieldId, lifecycleStates);
-  }, [config, schema, lifecycleStates]);
+    return getFieldValues(schema, config.quadrantFieldId, lifecycleStates, joinedAssessment);
+  }, [config, schema, lifecycleStates, joinedAssessment]);
 
   const ringValues = useMemo(() => {
     if (!config || !schema) return [];
-    const all = getFieldValues(schema, config.ringFieldId, lifecycleStates);
+    const all = getFieldValues(schema, config.ringFieldId, lifecycleStates, joinedAssessment);
     if (config.ringOrder.length === 0) return all.slice(0, 5);
     const ordered: Array<{ value: string; label: string }> = [];
     for (const v of config.ringOrder) {
@@ -301,7 +145,7 @@ export const RadarView = ({
       if (found) ordered.push(found);
     }
     return ordered;
-  }, [config, schema, lifecycleStates]);
+  }, [config, schema, lifecycleStates, joinedAssessment]);
 
   const quadrants = useMemo(() => buildQuadrants(quadrantValues), [quadrantValues]);
   const rings = useMemo(() => buildRings(ringValues), [ringValues]);
@@ -352,12 +196,7 @@ export const RadarView = ({
   const onBlipClick = (id: string) => setPinned(p => (p === id ? null : id));
 
   const applyConfig = (newConfig: RadarConfig) => {
-    if (onConfigChange) {
-      onConfigChange(newConfig);
-    } else {
-      saveConfig(workspaceSlug, newConfig);
-      setInternalConfig(newConfig);
-    }
+    setConfig(newConfig);
     setQuadFilter(null);
     setRingFilter(null);
     setQ('');
@@ -368,7 +207,7 @@ export const RadarView = ({
   const handleSchemaChange = (newSchemaId: string) => {
     const newSchema = schemas.find(s => s.id === newSchemaId);
     if (!newSchema) return;
-    const opts = getSelectableFields(newSchema, lifecycleStates);
+    const opts = getSelectableFields(newSchema, lifecycleStates, joinedAssessment);
     const quadrantFieldId = opts[0]?.id ?? '';
     const ringFieldId = opts[1]?.id ?? quadrantFieldId;
     applyConfig({ schemaId: newSchemaId, quadrantFieldId, ringFieldId, ringOrder: [] });
@@ -386,8 +225,8 @@ export const RadarView = ({
 
   const ringFieldAllValues = useMemo(() => {
     if (!schema || !config) return [];
-    return getFieldValues(schema, config.ringFieldId, lifecycleStates);
-  }, [schema, config, lifecycleStates]);
+    return getFieldValues(schema, config.ringFieldId, lifecycleStates, joinedAssessment);
+  }, [schema, config, lifecycleStates, joinedAssessment]);
 
   const ringOrderDisplay = useMemo(() => {
     const checkedSet = new Set(ringValues.map(v => v.value));
@@ -591,22 +430,22 @@ export const RadarView = ({
         </div>
 
         {!config ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyTitle}>Radar not configured</div>
-            <div>Choose a schema above to map a schema and fields to the radar axes.</div>
-          </div>
+          <EmptyState
+            title="Radar not configured"
+            subtitle="Choose a schema above to map a schema and fields to the radar axes."
+          />
         ) : (
           <>
             {!hideToolbar && (
               <div className={styles.toolbar}>
-                <div className={styles.searchInline}>
-                  <TbSearch size={12} />
-                  <input
-                    placeholder="Find an entry…"
-                    value={q}
-                    onChange={e => setQ(e.target.value)}
-                  />
-                </div>
+                <SearchInput
+                  size="sm"
+                  className={styles.searchInline}
+                  placeholder="Find an entry…"
+                  value={q}
+                  onChange={setQ}
+                  onClear={() => setQ('')}
+                />
                 <div className={styles.pills}>
                   {rings.map(ring => (
                     <button
@@ -969,14 +808,12 @@ const BlipTooltip = ({
           </button>
         )}
       </div>
-      <div className={styles.tooltipChips}>
-        <span className={styles.tooltipChip} style={{ borderColor: quad.color, color: quad.color }}>
+      <TooltipChips>
+        <TooltipChip style={{ borderColor: quad.color, color: quad.color }}>
           {quad.label}
-        </span>
-        <span className={styles.tooltipChip} style={{ color: ring.color }}>
-          {ring.label}
-        </span>
-      </div>
+        </TooltipChip>
+        <TooltipChip style={{ color: ring.color }}>{ring.label}</TooltipChip>
+      </TooltipChips>
       {blip.description && <div className={styles.tooltipDesc}>{blip.description}</div>}
       <button type="button" className={styles.tooltipOpen} onClick={onOpen}>
         Open entity →

@@ -1,9 +1,8 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
-import { useEntityContentNodes } from '../../hooks/useProjects';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Title } from '../../components/Title';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
@@ -17,11 +16,19 @@ import {
 import {
   asEntityPublicId,
   asProjectPublicId,
+  entityContentFolderRoute,
   entityDiagramRoute,
   entityMarkdownRoute,
   projectDiagramRoute
 } from '../../routes/publicObjectRoutes';
-import { useUploadEntityFile, useCreateEntityMarkdown } from '../../hooks/useProjectFiles';
+import {
+  contentDownloadUrl,
+  useContentScopeOperations,
+  useContentTree,
+  type ContentScope
+} from '../../hooks/useContentScope';
+import type { EntityDetailSearchParams } from '../../routes/searchParams';
+import { downloadUrl } from '../../lib/browserDownload';
 
 type EntityContentViewProps = {
   workspaceSlug: string;
@@ -31,15 +38,42 @@ type EntityContentViewProps = {
 
 export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityContentViewProps) => {
   const navigate = useNavigate();
-  const { data } = useEntityContentNodes(workspaceSlug, entityId);
-  const uploadFileMutation = useUploadEntityFile(workspaceSlug, entityId);
-  const createMarkdownMutation = useCreateEntityMarkdown(workspaceSlug, entityId);
+  const search = useSearch({ strict: false }) as EntityDetailSearchParams;
+  const scope: ContentScope = useMemo(
+    () => ({ kind: 'entity', workspaceId: workspaceSlug, entityId }),
+    [workspaceSlug, entityId]
+  );
+  const { data } = useContentTree(scope);
+  const contentOperations = useContentScopeOperations(scope);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [filter, setFilter] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
   const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const filter = search.contentQuery ?? '';
+  const viewMode = search.contentView ?? 'grid';
+
+  const setFilter = (value: string) => {
+    const route = entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), folder);
+    navigate({
+      ...route,
+      search: {
+        ...search,
+        contentQuery: value === '' ? undefined : value
+      },
+      replace: true
+    });
+  };
+
+  const setViewMode = (value: 'grid' | 'list') => {
+    const route = entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), folder);
+    navigate({
+      ...route,
+      search: {
+        ...search,
+        contentView: value === 'grid' ? undefined : value
+      }
+    });
+  };
 
   const handleDiagramClick = (fileId: string, projectId: string | null) => {
     if (projectId) {
@@ -54,18 +88,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
   };
 
   const handleDownloadClick = (path: string, name: string, originalFilename: string | null) => {
-    const a = document.createElement('a');
-    a.href = `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(path)}`;
-    a.download = originalFilename ?? name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadUrl(contentDownloadUrl(scope, path), originalFilename ?? name);
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
-      uploadFileMutation.mutate({ file: f, folder });
+      contentOperations.upload.mutate({ file: f, folder });
     }
     e.target.value = '';
   };
@@ -85,7 +114,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
           title={folderName}
           buttons={
             <MenuButton.Root>
-              <MenuButton.Trigger element={<Button variant="primary" icon={<TbPlus size={12} />}>New</Button>} />
+              <MenuButton.Trigger
+                element={
+                  <Button variant="primary" icon={<TbPlus size={12} />}>
+                    New
+                  </Button>
+                }
+              />
               <MenuButton.Menu align="end">
                 <Menu.Item
                   leftSlot={<TbFolderOpen size={13} />}
@@ -99,10 +134,7 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
                 >
                   Upload file
                 </Menu.Item>
-                <Menu.Item
-                  leftSlot={<TbPlus size={13} />}
-                  onClick={() => setAddDiagramOpen(true)}
-                >
+                <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddDiagramOpen(true)}>
                   New diagram
                 </Menu.Item>
                 <Menu.Item
@@ -144,9 +176,13 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
             showAddButton: false
           }
         ]}
-        onOpenDiagram={file => handleDiagramClick(file.id, file.project_public_id ?? file.project_id)}
+        onOpenDiagram={file =>
+          handleDiagramClick(file.id, file.project_public_id ?? file.project_id)
+        }
         onOpenMarkdown={file => handleMarkdownClick(file.id)}
-        onDownloadFile={file => handleDownloadClick(file.path, file.name, file.original_filename ?? null)}
+        onDownloadFile={file =>
+          handleDownloadClick(file.path, file.name, file.original_filename ?? null)
+        }
         emptyState={{
           title: 'No content in this folder',
           sub: 'Diagrams and documents will appear here when added to this folder.'
@@ -181,8 +217,8 @@ export const EntityContentView = ({ workspaceSlug, entityId, folder }: EntityCon
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
         }}
-        onCreate={name => createMarkdownMutation.mutateAsync({ name, folder })}
-        isPending={createMarkdownMutation.isPending}
+        onCreate={name => contentOperations.createMarkdown.mutateAsync({ name, folder })}
+        isPending={contentOperations.createMarkdown.isPending}
       />
 
       <AddEntityFolderDialog

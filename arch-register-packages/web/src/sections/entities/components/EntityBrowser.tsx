@@ -10,27 +10,24 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { FilterDropdown } from '../../../components/FilterDropdown';
-import type { WorkspaceTeam } from '../../../lib/api';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
-import { RadarView } from '../components/RadarView';
-import { TimelineView } from '../components/TimelineView';
-import { MatrixView } from '../components/MatrixView';
-import { HierarchyView } from '../components/HierarchyView';
-import { ExploreView } from '../components/ExploreView';
 import { BulkEditToolbar } from './BulkEditToolbar';
-import { CardsView } from './CardsView';
-import { TableView } from './TableView';
-import { TreeView } from './TreeView';
 import { type ProjectBrowserContext } from './entityBrowserState';
+import { EntityBrowserView } from './EntityBrowserView';
 import { EntityBrowserToolbar } from './EntityBrowserToolbar';
 import { useEntityBrowserData } from './useEntityBrowserData';
 import { useEntityBrowserEntityActions } from './useEntityBrowserEntityActions';
 import { useEntityBrowserPagination } from './useEntityBrowserPagination';
 import { useEntityBrowserSearchState } from './useEntityBrowserSearchState';
 import { useEntityBrowserSelection } from './useEntityBrowserSelection';
+import { useJoinedAssessment } from './useJoinedAssessment';
 import { TimelineStrip, type AsOfMarker } from '../../../components/timeline/TimelineStrip';
+import { EmptyState } from '../../../components/EmptyState';
 import styles from './EntityBrowser.module.css';
+import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from './entityDisplayFields';
+import type { BrowserEntityRecord } from './entityBrowserState';
 
 type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
@@ -161,11 +158,13 @@ export const EntityBrowser = ({
     setIncludeProjectSnapshots,
     conditions,
     activeViewConfig,
+    joinAssessmentId,
     ownerFilter,
     projectScope,
     q,
     setConditions,
     setActiveViewConfig,
+    setJoinAssessmentId,
     setProjectScope,
     setQ,
     setSort,
@@ -178,6 +177,10 @@ export const EntityBrowser = ({
     workspaceSlug,
     projectId
   });
+  const { options: joinOptions, joined, responsesByEntity } = useJoinedAssessment(
+    workspaceId,
+    joinAssessmentId
+  );
   const readOnly = !!asOf;
   const [tlOpen, setTlOpen] = useState(!!asOf);
   const isPagedBrowse = (view === 'table' || view === 'cards') && sort === 'name';
@@ -208,6 +211,7 @@ export const EntityBrowser = ({
     schemas,
     q,
     conditions,
+    joinAssessmentId,
     typeFilter,
     ownerFilter,
     statusFilter,
@@ -282,6 +286,21 @@ export const EntityBrowser = ({
         : undefined,
     [filtered, projectContext]
   );
+  const displayFieldSchemas = useMemo(() => typeFilter ? schemas.filter(schema => schema.id === typeFilter) : schemas, [schemas, typeFilter]);
+  const joinedAssessmentContext = useMemo(
+    () => (joined ? { assessment: joined.assessment, enums } : null),
+    [joined, enums]
+  );
+  const displayFields = useMemo(
+    () => buildEntityDisplayFields(displayFieldSchemas, !!projectContext, joinedAssessmentContext),
+    [displayFieldSchemas, projectContext, joinedAssessmentContext]
+  );
+  const displayView = DISPLAY_FIELD_VIEWS.has(view) ? view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore' : null;
+  const selectedDisplayFieldIds = displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined;
+  const joinedRows = useMemo<BrowserEntityRecord[]>(() => {
+    if (!joined) return filtered;
+    return filtered.map(row => ({ ...row, _assessment: responsesByEntity.get(row._uid) ?? null }));
+  }, [filtered, joined, responsesByEntity]);
 
   return (
     <>
@@ -307,6 +326,14 @@ export const EntityBrowser = ({
         tlOpen={tlOpen}
         onToggleTimeline={() => setTlOpen(o => !o)}
         asOf={asOf}
+        displayFields={displayView && !readOnly ? displayFields : undefined}
+        selectedDisplayFieldIds={!readOnly ? selectedDisplayFieldIds : undefined}
+        onDisplayFieldsChange={displayView && !readOnly ? fieldIds => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, fieldIds)) : undefined}
+        onDisplayFieldsReset={displayView && !readOnly ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig)) : undefined}
+        joinOptions={joinOptions}
+        joinAssessmentId={joinAssessmentId}
+        onJoinAssessmentChange={setJoinAssessmentId}
+        joinedAssessment={joined?.assessment}
       />
       {tlOpen && (
         <TimelineStrip
@@ -320,79 +347,11 @@ export const EntityBrowser = ({
         />
       )}
 
-      {view === 'hierarchy' ? (
-        <HierarchyView
-          workspaceId={workspaceId}
-          projectId={projectId}
-          projectScope={projectScope}
-          q={q}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
-          statusFilter={statusFilter}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-          linkedEntityIds={linkedEntityIds}
+      {(view === 'table' || view === 'cards') && filtered.length === 0 ? (
+        <EmptyState
+          title="No entities found"
+          subtitle="Try adjusting your search or filters."
         />
-      ) : view === 'explore' ? (
-        <ExploreView
-          rows={filtered}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-          linkedEntityIds={linkedEntityIds}
-        />
-      ) : view === 'matrix' ? (
-        <MatrixView
-          rows={filtered}
-          schemaMap={schemaMap}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-          linkedEntityIds={linkedEntityIds}
-        />
-      ) : view === 'timeline' ? (
-        <TimelineView
-          rows={filtered}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-          workspaceId={workspaceId}
-          projects={projects}
-          linkedEntityIds={linkedEntityIds}
-        />
-      ) : view === 'radar' ? (
-        <RadarView
-          rows={filtered}
-          linkedEntityIds={linkedEntityIds}
-          onEntityClick={navigateToEntity}
-          config={activeViewConfig}
-          onConfigChange={setActiveViewConfig}
-        />
-      ) : view === 'tree' ? (
-        <TreeView
-          workspaceId={workspaceId}
-          projectId={projectId}
-          projectScope={projectScope}
-          q={q}
-          typeFilter={typeFilter}
-          ownerFilter={ownerFilter}
-          statusFilter={statusFilter}
-          schemaMap={schemaMap}
-          onEntityClick={navigateToEntity}
-          onDelete={handleDeleteEntity}
-          onClone={handleCloneEntity}
-          lifecycleStates={lifecycleStates}
-          projectContext={projectContext}
-          readOnly={readOnly}
-        />
-      ) : filtered.length === 0 ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No entities found</div>
-          <div>Try adjusting your search or filters.</div>
-        </div>
       ) : (
         <>
           {view === 'table' && !readOnly && selectedIds.size > 0 && (
@@ -414,34 +373,47 @@ export const EntityBrowser = ({
               onConfirm={handleConfirm}
             />
           )}
-          {view === 'table' && (
-            <TableView
-              rows={filtered}
-              schemaMap={schemaMap}
-              activeDateField={dateBrowserEnabled ? activeDateField : null}
-              onEntityClick={navigateToEntity}
-              onDelete={handleDeleteEntity}
-              onClone={handleCloneEntity}
-              selectedIds={selectedIds}
-              onSelectAll={handleSelectAll}
-              onSelectRow={handleSelectRow}
-              lifecycleStates={lifecycleStates}
-              projectContext={projectContext}
-              readOnly={readOnly}
-            />
-          )}
-          {view === 'cards' && (
-            <CardsView
-              rows={filtered}
-              schemaMap={schemaMap}
-              onEntityClick={navigateToEntity}
-              onDelete={handleDeleteEntity}
-              onClone={handleCloneEntity}
-              lifecycleStates={lifecycleStates}
-              projectContext={projectContext}
-              readOnly={readOnly}
-            />
-          )}
+          <EntityBrowserView
+            view={view}
+            rows={joinedRows}
+            schemaMap={schemaMap}
+            schemas={schemas}
+            lifecycleStates={lifecycleStates}
+            projects={projects}
+            workspaceId={workspaceId}
+            projectId={projectId}
+            projectScope={projectScope}
+            q={q}
+            typeFilter={typeFilter}
+            ownerFilter={ownerFilter}
+            statusFilter={statusFilter}
+            activeViewConfig={activeViewConfig}
+            displayFields={displayFields}
+            projectContext={projectContext}
+            linkedEntityIds={linkedEntityIds}
+            activeDateField={dateBrowserEnabled ? activeDateField : null}
+            joinAssessmentId={joinAssessmentId}
+            joinedAssessment={joinedAssessmentContext}
+            responsesByEntity={responsesByEntity}
+            mode={
+              readOnly
+                ? {
+                    kind: 'snapshot',
+                    onConfigChange: setActiveViewConfig,
+                    onEntityClick: navigateToEntity
+                  }
+                : {
+                    kind: 'interactive',
+                    onConfigChange: setActiveViewConfig,
+                    onEntityClick: navigateToEntity,
+                    onDelete: handleDeleteEntity,
+                    onClone: handleCloneEntity,
+                    selectedIds,
+                    onSelectAll: handleSelectAll,
+                    onSelectRow: handleSelectRow
+                  }
+            }
+          />
         </>
       )}
       {isPagedBrowse && (

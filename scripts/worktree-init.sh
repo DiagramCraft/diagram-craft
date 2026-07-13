@@ -206,6 +206,7 @@ procs:
   "DC web :${PORT_DC_WEB}":
     shell: |
       PORT=${PORT_DC_WEB} pnpm client:dev
+    autostart: false
     stop: SIGKILL
     log:
       file: dc-web.log
@@ -213,6 +214,7 @@ procs:
     shell: |
       cd packages/server-main && \\
       PORT=${PORT_DC_SERVER} pnpm run dev --data-dir ./data --fs-root ../main/public --bootstrap-data ${BOOTSTRAP_DATA} --bootstrap-schemas ${BOOTSTRAP_SCHEMAS}
+    autostart: false
     stop: SIGKILL
     log:
       file: dc-server.log
@@ -220,6 +222,7 @@ procs:
     shell: |
       cd arch-register-packages/web && \\
       PORT=${PORT_AR_WEB} pnpm dev
+    autostart: false
     stop: SIGKILL
     log:
       file: ar-web.log
@@ -227,6 +230,7 @@ procs:
     shell: |
       cd arch-register-packages/server && \\
       PORT=${PORT_AR_SERVER} pnpm dev
+    autostart: false
     stop: SIGKILL
     log:
       file: ar-server.log

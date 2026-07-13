@@ -770,6 +770,56 @@
                                   "description": "Whether the field is required, expected, or optional"
                                 },
                                 "type": {
+                                  "const": "number",
+                                  "description": "Integer number field"
+                                },
+                                "min": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum allowed value"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Maximum allowed value"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "type": {
                                   "const": "select",
                                   "description": "Single-select dropdown field"
                                 },
@@ -1226,6 +1276,56 @@
                               "description": "Whether the field is required, expected, or optional"
                             },
                             "type": {
+                              "const": "number",
+                              "description": "Integer number field"
+                            },
+                            "min": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Minimum allowed value"
+                            },
+                            "max": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Maximum allowed value"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "type"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique field identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Field name"
+                            },
+                            "requirementLevel": {
+                              "anyOf": [
+                                {
+                                  "enum": [
+                                    "required",
+                                    "expected",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Whether the field is required, expected, or optional"
+                            },
+                            "type": {
                               "const": "select",
                               "description": "Single-select dropdown field"
                             },
@@ -1599,6 +1699,56 @@
                               "type": {
                                 "const": "date",
                                 "description": "Date field"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "type": {
+                                "const": "number",
+                                "description": "Integer number field"
+                              },
+                              "min": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum allowed value"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Maximum allowed value"
                               }
                             },
                             "required": [
@@ -2110,6 +2260,56 @@
                                 "description": "Whether the field is required, expected, or optional"
                               },
                               "type": {
+                                "const": "number",
+                                "description": "Integer number field"
+                              },
+                              "min": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum allowed value"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Maximum allowed value"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "type": {
                                 "const": "select",
                                 "description": "Single-select dropdown field"
                               },
@@ -2574,6 +2774,56 @@
                               "description": "Whether the field is required, expected, or optional"
                             },
                             "type": {
+                              "const": "number",
+                              "description": "Integer number field"
+                            },
+                            "min": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Minimum allowed value"
+                            },
+                            "max": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Maximum allowed value"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "type"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique field identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "Field name"
+                            },
+                            "requirementLevel": {
+                              "anyOf": [
+                                {
+                                  "enum": [
+                                    "required",
+                                    "expected",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Whether the field is required, expected, or optional"
+                            },
+                            "type": {
                               "const": "select",
                               "description": "Single-select dropdown field"
                             },
@@ -2983,6 +3233,56 @@
                                 "description": "Whether the field is required, expected, or optional"
                               },
                               "type": {
+                                "const": "number",
+                                "description": "Integer number field"
+                              },
+                              "min": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum allowed value"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Maximum allowed value"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "type": {
                                 "const": "select",
                                 "description": "Single-select dropdown field"
                               },
@@ -3334,8 +3634,56 @@
             "name": "conditions",
             "in": "query",
             "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fieldId": {
+                    "type": "string",
+                    "description": "Field identifier to filter on"
+                  },
+                  "op": {
+                    "enum": [
+                      "equals",
+                      "not_equals",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "empty",
+                      "not_empty",
+                      "before",
+                      "after",
+                      "on",
+                      "gt",
+                      "lt",
+                      "gte",
+                      "lte"
+                    ],
+                    "type": "string",
+                    "description": "Filter operation"
+                  },
+                  "value": {
+                    "description": "Filter value (type depends on field and operation)"
+                  }
+                },
+                "required": [
+                  "fieldId",
+                  "op"
+                ]
+              },
+              "description": "Additional filter conditions"
+            },
+            "style": "deepObject",
+            "explode": true,
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "assessmentId",
+            "in": "query",
+            "schema": {
               "type": "string",
-              "description": "JSON-encoded filter conditions"
+              "description": "Joined assessment identifier — required when conditions reference assessment fields"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -3378,11 +3726,7 @@
             "name": "includeProjectSnapshots",
             "in": "query",
             "schema": {
-              "enum": [
-                "true",
-                "false"
-              ],
-              "type": "string",
+              "type": "boolean",
               "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
@@ -3609,6 +3953,10 @@
                           ]
                         },
                         "description": "External links associated with the entity"
+                      },
+                      "_updatedAt": {
+                        "type": "string",
+                        "description": "ISO 8601 timestamp of the entity's most recent update"
                       },
                       "_visibilityMode": {
                         "anyOf": [
@@ -4098,6 +4446,10 @@
                       },
                       "description": "External links associated with the entity"
                     },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 timestamp of the entity's most recent update"
+                    },
                     "_visibilityMode": {
                       "anyOf": [
                         {
@@ -4261,8 +4613,56 @@
             "name": "conditions",
             "in": "query",
             "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fieldId": {
+                    "type": "string",
+                    "description": "Field identifier to filter on"
+                  },
+                  "op": {
+                    "enum": [
+                      "equals",
+                      "not_equals",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "empty",
+                      "not_empty",
+                      "before",
+                      "after",
+                      "on",
+                      "gt",
+                      "lt",
+                      "gte",
+                      "lte"
+                    ],
+                    "type": "string",
+                    "description": "Filter operation"
+                  },
+                  "value": {
+                    "description": "Filter value (type depends on field and operation)"
+                  }
+                },
+                "required": [
+                  "fieldId",
+                  "op"
+                ]
+              },
+              "description": "Additional filter conditions"
+            },
+            "style": "deepObject",
+            "explode": true,
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "assessmentId",
+            "in": "query",
+            "schema": {
               "type": "string",
-              "description": "JSON-encoded filter conditions"
+              "description": "Joined assessment identifier — required when conditions reference assessment fields"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -4305,11 +4705,7 @@
             "name": "includeProjectSnapshots",
             "in": "query",
             "schema": {
-              "enum": [
-                "true",
-                "false"
-              ],
-              "type": "string",
+              "type": "boolean",
               "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
@@ -4635,8 +5031,56 @@
             "name": "conditions",
             "in": "query",
             "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fieldId": {
+                    "type": "string",
+                    "description": "Field identifier to filter on"
+                  },
+                  "op": {
+                    "enum": [
+                      "equals",
+                      "not_equals",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "empty",
+                      "not_empty",
+                      "before",
+                      "after",
+                      "on",
+                      "gt",
+                      "lt",
+                      "gte",
+                      "lte"
+                    ],
+                    "type": "string",
+                    "description": "Filter operation"
+                  },
+                  "value": {
+                    "description": "Filter value (type depends on field and operation)"
+                  }
+                },
+                "required": [
+                  "fieldId",
+                  "op"
+                ]
+              },
+              "description": "Additional filter conditions"
+            },
+            "style": "deepObject",
+            "explode": true,
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "assessmentId",
+            "in": "query",
+            "schema": {
               "type": "string",
-              "description": "JSON-encoded filter conditions"
+              "description": "Joined assessment identifier — required when conditions reference assessment fields"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -4679,11 +5123,7 @@
             "name": "includeProjectSnapshots",
             "in": "query",
             "schema": {
-              "enum": [
-                "true",
-                "false"
-              ],
-              "type": "string",
+              "type": "boolean",
               "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
@@ -4875,6 +5315,10 @@
                             },
                             "description": "External links associated with the entity"
                           },
+                          "_updatedAt": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp of the entity's most recent update"
+                          },
                           "_visibilityMode": {
                             "anyOf": [
                               {
@@ -4971,7 +5415,8 @@
                           "_visibilityMode",
                           "_completeness",
                           "_isMatch"
-                        ]
+                        ],
+                        "additionalProperties": {}
                       },
                       "description": "Tree nodes"
                     },
@@ -5214,6 +5659,10 @@
                         ]
                       },
                       "description": "External links associated with the entity"
+                    },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 timestamp of the entity's most recent update"
                     },
                     "_visibilityMode": {
                       "anyOf": [
@@ -5709,6 +6158,10 @@
                         ]
                       },
                       "description": "External links associated with the entity"
+                    },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 timestamp of the entity's most recent update"
                     },
                     "_visibilityMode": {
                       "anyOf": [
@@ -6369,6 +6822,514 @@
         }
       }
     },
+    "/{workspace}/data/bulk": {
+      "post": {
+        "operationId": "entities.bulkCreate",
+        "summary": "Create multiple entities",
+        "description": "Creates a batch of entities transactionally and resolves symbolic references within the batch.",
+        "tags": [
+          "Entities",
+          "Entities"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entities": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "_schemaId": {
+                          "type": "string",
+                          "description": "Schema identifier"
+                        },
+                        "_schema": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ],
+                          "description": "Schema reference"
+                        },
+                        "_name": {
+                          "type": "string",
+                          "description": "Entity name"
+                        },
+                        "_slug": {
+                          "type": "string",
+                          "description": "Entity URL slug"
+                        },
+                        "_namespace": {
+                          "type": "string",
+                          "description": "Entity namespace"
+                        },
+                        "_description": {
+                          "type": "string",
+                          "description": "Entity description"
+                        },
+                        "_owner": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id"
+                                  ],
+                                  "additionalProperties": {}
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Entity owner"
+                        },
+                        "_lifecycle": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id"
+                                  ],
+                                  "additionalProperties": {}
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Current lifecycle state"
+                        },
+                        "_targetLifecycle": {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id"
+                                  ],
+                                  "additionalProperties": {}
+                                }
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Target lifecycle state"
+                        },
+                        "_targetLifecycleDate": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Target date for lifecycle transition (ISO 8601)"
+                        },
+                        "_tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Entity tags"
+                        },
+                        "_links": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string",
+                                "description": "Link URL"
+                              },
+                              "title": {
+                                "type": "string",
+                                "description": "Link title/label"
+                              },
+                              "type": {
+                                "type": "string",
+                                "description": "Link type (e.g., \"documentation\", \"repository\")"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "title"
+                            ]
+                          },
+                          "description": "External links"
+                        },
+                        "_visibilityMode": {
+                          "anyOf": [
+                            {
+                              "enum": [
+                                "public",
+                                "restricted"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Entity visibility mode"
+                        }
+                      },
+                      "additionalProperties": {},
+                      "description": "Entity mutation data with schema-specific fields"
+                    },
+                    "description": "Entities to create"
+                  }
+                },
+                "required": [
+                  "entities"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "canView": {
+                        "type": "boolean",
+                        "description": "Whether the user can view this entity"
+                      },
+                      "canEdit": {
+                        "type": "boolean",
+                        "description": "Whether the user can edit this entity"
+                      },
+                      "canDelete": {
+                        "type": "boolean",
+                        "description": "Whether the user can delete this entity"
+                      },
+                      "canAdmin": {
+                        "type": "boolean",
+                        "description": "Whether the user can manage entity permissions"
+                      },
+                      "canCreateChild": {
+                        "type": "boolean",
+                        "description": "Whether the user can create child entities"
+                      },
+                      "_uid": {
+                        "type": "string",
+                        "description": "Unique entity identifier"
+                      },
+                      "_publicId": {
+                        "type": "string",
+                        "description": "Public entity identifier (e.g., APP-001)"
+                      },
+                      "_schema": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ],
+                        "description": "Entity schema reference"
+                      },
+                      "_name": {
+                        "type": "string",
+                        "description": "Entity name"
+                      },
+                      "_slug": {
+                        "type": "string",
+                        "description": "Entity URL slug"
+                      },
+                      "_namespace": {
+                        "type": "string",
+                        "description": "Entity namespace for organization"
+                      },
+                      "_description": {
+                        "type": "string",
+                        "description": "Entity description"
+                      },
+                      "_owner": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Entity owner"
+                      },
+                      "_lifecycle": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Current lifecycle state"
+                      },
+                      "_targetLifecycle": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Target lifecycle state"
+                      },
+                      "_targetLifecycleDate": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Target date for lifecycle transition (ISO 8601)"
+                      },
+                      "_tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Entity tags"
+                      },
+                      "_links": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "url": {
+                              "type": "string",
+                              "description": "Link URL"
+                            },
+                            "title": {
+                              "type": "string",
+                              "description": "Link title/label"
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "Link type (e.g., \"documentation\", \"repository\")"
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "title"
+                          ]
+                        },
+                        "description": "External links associated with the entity"
+                      },
+                      "_updatedAt": {
+                        "type": "string",
+                        "description": "ISO 8601 timestamp of the entity's most recent update"
+                      },
+                      "_visibilityMode": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "public",
+                              "restricted"
+                            ],
+                            "type": "string",
+                            "description": "Entity visibility mode"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Entity visibility mode"
+                      },
+                      "_completeness": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Field completeness percentage (0-100)"
+                      },
+                      "_projectLink": {
+                        "type": "object",
+                        "properties": {
+                          "linked": {
+                            "type": "boolean",
+                            "description": "Whether the entity is linked to a project"
+                          },
+                          "entityType": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Project entity type classification"
+                          },
+                          "isDone": {
+                            "type": "boolean",
+                            "description": "Whether the entity is marked as done in the project"
+                          }
+                        },
+                        "required": [
+                          "linked",
+                          "entityType",
+                          "isDone"
+                        ],
+                        "description": "Project linkage information"
+                      }
+                    },
+                    "required": [
+                      "canView",
+                      "canEdit",
+                      "canDelete",
+                      "canAdmin",
+                      "canCreateChild",
+                      "_uid",
+                      "_publicId",
+                      "_schema",
+                      "_name",
+                      "_slug",
+                      "_namespace",
+                      "_description",
+                      "_owner",
+                      "_lifecycle",
+                      "_targetLifecycle",
+                      "_targetLifecycleDate",
+                      "_tags",
+                      "_links",
+                      "_visibilityMode",
+                      "_completeness"
+                    ],
+                    "additionalProperties": {},
+                    "description": "Complete entity record with schema-specific fields"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/data/{id}/clone": {
       "post": {
         "operationId": "entities.clone",
@@ -6575,6 +7536,10 @@
                         ]
                       },
                       "description": "External links associated with the entity"
+                    },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 timestamp of the entity's most recent update"
                     },
                     "_visibilityMode": {
                       "anyOf": [
@@ -7389,8 +8354,56 @@
             "name": "conditions",
             "in": "query",
             "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fieldId": {
+                    "type": "string",
+                    "description": "Field identifier to filter on"
+                  },
+                  "op": {
+                    "enum": [
+                      "equals",
+                      "not_equals",
+                      "contains",
+                      "starts_with",
+                      "ends_with",
+                      "empty",
+                      "not_empty",
+                      "before",
+                      "after",
+                      "on",
+                      "gt",
+                      "lt",
+                      "gte",
+                      "lte"
+                    ],
+                    "type": "string",
+                    "description": "Filter operation"
+                  },
+                  "value": {
+                    "description": "Filter value (type depends on field and operation)"
+                  }
+                },
+                "required": [
+                  "fieldId",
+                  "op"
+                ]
+              },
+              "description": "Additional filter conditions"
+            },
+            "style": "deepObject",
+            "explode": true,
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "assessmentId",
+            "in": "query",
+            "schema": {
               "type": "string",
-              "description": "JSON-encoded filter conditions"
+              "description": "Joined assessment identifier — required when conditions reference assessment fields"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -7433,11 +8446,7 @@
             "name": "includeProjectSnapshots",
             "in": "query",
             "schema": {
-              "enum": [
-                "true",
-                "false"
-              ],
-              "type": "string",
+              "type": "boolean",
               "description": "When asOf is set, whether to apply future_update snapshots planned under projects on top of the reconstructed state. Defaults to true."
             },
             "allowEmptyValue": true,
@@ -8881,7 +9890,8 @@
                           "timeline",
                           "matrix",
                           "hierarchy",
-                          "explore"
+                          "explore",
+                          "bubble"
                         ],
                         "type": "string",
                         "description": "View display mode"
@@ -8970,7 +9980,9 @@
                                     "after",
                                     "on",
                                     "gt",
-                                    "lt"
+                                    "lt",
+                                    "gte",
+                                    "lte"
                                   ],
                                   "type": "string",
                                   "description": "Filter operation"
@@ -8985,6 +9997,17 @@
                               ]
                             },
                             "description": "Additional filter conditions"
+                          },
+                          "assessmentId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Joined assessment identifier for display, filtering, and view attributes"
                           }
                         },
                         "description": "Entity filters applied in this view"
@@ -8994,6 +10017,45 @@
                           {
                             "type": "object",
                             "properties": {
+                              "table": {
+                                "type": "object",
+                                "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  }
+                                },
+                                "description": "Configuration for table view"
+                              },
+                              "cards": {
+                                "type": "object",
+                                "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  }
+                                },
+                                "description": "Configuration for cards view"
+                              },
+                              "tree": {
+                                "type": "object",
+                                "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  }
+                                },
+                                "description": "Configuration for tree view"
+                              },
                               "radar": {
                                 "type": "object",
                                 "properties": {
@@ -9143,10 +10205,18 @@
                               "hierarchy": {
                                 "type": "object",
                                 "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  },
                                   "levels": {
                                     "type": "integer",
                                     "minimum": 1,
                                     "maximum": 3,
+                                    "default": 2,
                                     "description": "Number of hierarchy levels (1-3)"
                                   },
                                   "level1SchemaId": {
@@ -9158,12 +10228,14 @@
                                         "type": "null"
                                       }
                                     ],
+                                    "default": null,
                                     "description": "Schema identifier for level 1"
                                   },
                                   "level1Columns": {
                                     "type": "integer",
                                     "minimum": 1,
                                     "maximum": 4,
+                                    "default": 3,
                                     "description": "Number of columns for level 1 (1-4)"
                                   },
                                   "level2SchemaId": {
@@ -9201,26 +10273,30 @@
                                     "description": "Number of columns for level 3 (1-4)"
                                   }
                                 },
-                                "required": [
-                                  "levels",
-                                  "level1SchemaId",
-                                  "level1Columns"
-                                ],
                                 "description": "Configuration for hierarchy view"
                               },
                               "explore": {
                                 "type": "object",
                                 "properties": {
+                                  "fieldIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Ordered fields displayed for each entity"
+                                  },
                                   "leftDepth": {
                                     "type": "integer",
                                     "minimum": 0,
                                     "maximum": 9007199254740991,
+                                    "default": 1,
                                     "description": "Depth of relationships to explore on the left"
                                   },
                                   "rightDepth": {
                                     "type": "integer",
                                     "minimum": 0,
                                     "maximum": 9007199254740991,
+                                    "default": 1,
                                     "description": "Depth of relationships to explore on the right"
                                   },
                                   "relationFieldNames": {
@@ -9228,15 +10304,53 @@
                                     "items": {
                                       "type": "string"
                                     },
+                                    "default": [],
                                     "description": "Relationship field names to include"
                                   }
                                 },
-                                "required": [
-                                  "leftDepth",
-                                  "rightDepth",
-                                  "relationFieldNames"
-                                ],
                                 "description": "Configuration for explore view"
+                              },
+                              "bubble": {
+                                "type": "object",
+                                "properties": {
+                                  "xFieldId": {
+                                    "type": "string",
+                                    "description": "Field identifier mapped to the X axis"
+                                  },
+                                  "yFieldId": {
+                                    "type": "string",
+                                    "description": "Field identifier mapped to the Y axis"
+                                  },
+                                  "sizeFieldId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Field identifier mapped to bubble size (null for uniform size)"
+                                  },
+                                  "colorFieldId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Field identifier mapped to bubble color (null for uniform color)"
+                                  }
+                                },
+                                "required": [
+                                  "xFieldId",
+                                  "yFieldId",
+                                  "sizeFieldId",
+                                  "colorFieldId"
+                                ],
+                                "description": "Configuration for bubble view"
                               }
                             }
                           },
@@ -9364,7 +10478,8 @@
                       "timeline",
                       "matrix",
                       "hierarchy",
-                      "explore"
+                      "explore",
+                      "bubble"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -9453,7 +10568,9 @@
                                 "after",
                                 "on",
                                 "gt",
-                                "lt"
+                                "lt",
+                                "gte",
+                                "lte"
                               ],
                               "type": "string",
                               "description": "Filter operation"
@@ -9468,6 +10585,17 @@
                           ]
                         },
                         "description": "Additional filter conditions"
+                      },
+                      "assessmentId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Joined assessment identifier for display, filtering, and view attributes"
                       }
                     },
                     "description": "Entity filters to apply"
@@ -9477,6 +10605,45 @@
                       {
                         "type": "object",
                         "properties": {
+                          "table": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for table view"
+                          },
+                          "cards": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for cards view"
+                          },
+                          "tree": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for tree view"
+                          },
                           "radar": {
                             "type": "object",
                             "properties": {
@@ -9626,10 +10793,18 @@
                           "hierarchy": {
                             "type": "object",
                             "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
                               "levels": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 3,
+                                "default": 2,
                                 "description": "Number of hierarchy levels (1-3)"
                               },
                               "level1SchemaId": {
@@ -9641,12 +10816,14 @@
                                     "type": "null"
                                   }
                                 ],
+                                "default": null,
                                 "description": "Schema identifier for level 1"
                               },
                               "level1Columns": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 4,
+                                "default": 3,
                                 "description": "Number of columns for level 1 (1-4)"
                               },
                               "level2SchemaId": {
@@ -9684,26 +10861,30 @@
                                 "description": "Number of columns for level 3 (1-4)"
                               }
                             },
-                            "required": [
-                              "levels",
-                              "level1SchemaId",
-                              "level1Columns"
-                            ],
                             "description": "Configuration for hierarchy view"
                           },
                           "explore": {
                             "type": "object",
                             "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
                               "leftDepth": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 9007199254740991,
+                                "default": 1,
                                 "description": "Depth of relationships to explore on the left"
                               },
                               "rightDepth": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 9007199254740991,
+                                "default": 1,
                                 "description": "Depth of relationships to explore on the right"
                               },
                               "relationFieldNames": {
@@ -9711,15 +10892,53 @@
                                 "items": {
                                   "type": "string"
                                 },
+                                "default": [],
                                 "description": "Relationship field names to include"
                               }
                             },
-                            "required": [
-                              "leftDepth",
-                              "rightDepth",
-                              "relationFieldNames"
-                            ],
                             "description": "Configuration for explore view"
+                          },
+                          "bubble": {
+                            "type": "object",
+                            "properties": {
+                              "xFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the X axis"
+                              },
+                              "yFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the Y axis"
+                              },
+                              "sizeFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Field identifier mapped to bubble size (null for uniform size)"
+                              },
+                              "colorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Field identifier mapped to bubble color (null for uniform color)"
+                              }
+                            },
+                            "required": [
+                              "xFieldId",
+                              "yFieldId",
+                              "sizeFieldId",
+                              "colorFieldId"
+                            ],
+                            "description": "Configuration for bubble view"
                           }
                         }
                       },
@@ -9817,7 +11036,8 @@
                         "timeline",
                         "matrix",
                         "hierarchy",
-                        "explore"
+                        "explore",
+                        "bubble"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -9906,7 +11126,9 @@
                                   "after",
                                   "on",
                                   "gt",
-                                  "lt"
+                                  "lt",
+                                  "gte",
+                                  "lte"
                                 ],
                                 "type": "string",
                                 "description": "Filter operation"
@@ -9921,6 +11143,17 @@
                             ]
                           },
                           "description": "Additional filter conditions"
+                        },
+                        "assessmentId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Joined assessment identifier for display, filtering, and view attributes"
                         }
                       },
                       "description": "Entity filters applied in this view"
@@ -9930,6 +11163,45 @@
                         {
                           "type": "object",
                           "properties": {
+                            "table": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for table view"
+                            },
+                            "cards": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for cards view"
+                            },
+                            "tree": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for tree view"
+                            },
                             "radar": {
                               "type": "object",
                               "properties": {
@@ -10079,10 +11351,18 @@
                             "hierarchy": {
                               "type": "object",
                               "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
                                 "levels": {
                                   "type": "integer",
                                   "minimum": 1,
                                   "maximum": 3,
+                                  "default": 2,
                                   "description": "Number of hierarchy levels (1-3)"
                                 },
                                 "level1SchemaId": {
@@ -10094,12 +11374,14 @@
                                       "type": "null"
                                     }
                                   ],
+                                  "default": null,
                                   "description": "Schema identifier for level 1"
                                 },
                                 "level1Columns": {
                                   "type": "integer",
                                   "minimum": 1,
                                   "maximum": 4,
+                                  "default": 3,
                                   "description": "Number of columns for level 1 (1-4)"
                                 },
                                 "level2SchemaId": {
@@ -10137,26 +11419,30 @@
                                   "description": "Number of columns for level 3 (1-4)"
                                 }
                               },
-                              "required": [
-                                "levels",
-                                "level1SchemaId",
-                                "level1Columns"
-                              ],
                               "description": "Configuration for hierarchy view"
                             },
                             "explore": {
                               "type": "object",
                               "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
                                 "leftDepth": {
                                   "type": "integer",
                                   "minimum": 0,
                                   "maximum": 9007199254740991,
+                                  "default": 1,
                                   "description": "Depth of relationships to explore on the left"
                                 },
                                 "rightDepth": {
                                   "type": "integer",
                                   "minimum": 0,
                                   "maximum": 9007199254740991,
+                                  "default": 1,
                                   "description": "Depth of relationships to explore on the right"
                                 },
                                 "relationFieldNames": {
@@ -10164,15 +11450,53 @@
                                   "items": {
                                     "type": "string"
                                   },
+                                  "default": [],
                                   "description": "Relationship field names to include"
                                 }
                               },
-                              "required": [
-                                "leftDepth",
-                                "rightDepth",
-                                "relationFieldNames"
-                              ],
                               "description": "Configuration for explore view"
+                            },
+                            "bubble": {
+                              "type": "object",
+                              "properties": {
+                                "xFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the X axis"
+                                },
+                                "yFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the Y axis"
+                                },
+                                "sizeFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Field identifier mapped to bubble size (null for uniform size)"
+                                },
+                                "colorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Field identifier mapped to bubble color (null for uniform color)"
+                                }
+                              },
+                              "required": [
+                                "xFieldId",
+                                "yFieldId",
+                                "sizeFieldId",
+                                "colorFieldId"
+                              ],
+                              "description": "Configuration for bubble view"
                             }
                           }
                         },
@@ -10291,7 +11615,8 @@
                       "timeline",
                       "matrix",
                       "hierarchy",
-                      "explore"
+                      "explore",
+                      "bubble"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -10380,7 +11705,9 @@
                                 "after",
                                 "on",
                                 "gt",
-                                "lt"
+                                "lt",
+                                "gte",
+                                "lte"
                               ],
                               "type": "string",
                               "description": "Filter operation"
@@ -10395,6 +11722,17 @@
                           ]
                         },
                         "description": "Additional filter conditions"
+                      },
+                      "assessmentId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Joined assessment identifier for display, filtering, and view attributes"
                       }
                     },
                     "description": "Entity filters to apply"
@@ -10404,6 +11742,45 @@
                       {
                         "type": "object",
                         "properties": {
+                          "table": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for table view"
+                          },
+                          "cards": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for cards view"
+                          },
+                          "tree": {
+                            "type": "object",
+                            "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              }
+                            },
+                            "description": "Configuration for tree view"
+                          },
                           "radar": {
                             "type": "object",
                             "properties": {
@@ -10553,10 +11930,18 @@
                           "hierarchy": {
                             "type": "object",
                             "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
                               "levels": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 3,
+                                "default": 2,
                                 "description": "Number of hierarchy levels (1-3)"
                               },
                               "level1SchemaId": {
@@ -10568,12 +11953,14 @@
                                     "type": "null"
                                   }
                                 ],
+                                "default": null,
                                 "description": "Schema identifier for level 1"
                               },
                               "level1Columns": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 4,
+                                "default": 3,
                                 "description": "Number of columns for level 1 (1-4)"
                               },
                               "level2SchemaId": {
@@ -10611,26 +11998,30 @@
                                 "description": "Number of columns for level 3 (1-4)"
                               }
                             },
-                            "required": [
-                              "levels",
-                              "level1SchemaId",
-                              "level1Columns"
-                            ],
                             "description": "Configuration for hierarchy view"
                           },
                           "explore": {
                             "type": "object",
                             "properties": {
+                              "fieldIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Ordered fields displayed for each entity"
+                              },
                               "leftDepth": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 9007199254740991,
+                                "default": 1,
                                 "description": "Depth of relationships to explore on the left"
                               },
                               "rightDepth": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 9007199254740991,
+                                "default": 1,
                                 "description": "Depth of relationships to explore on the right"
                               },
                               "relationFieldNames": {
@@ -10638,15 +12029,53 @@
                                 "items": {
                                   "type": "string"
                                 },
+                                "default": [],
                                 "description": "Relationship field names to include"
                               }
                             },
-                            "required": [
-                              "leftDepth",
-                              "rightDepth",
-                              "relationFieldNames"
-                            ],
                             "description": "Configuration for explore view"
+                          },
+                          "bubble": {
+                            "type": "object",
+                            "properties": {
+                              "xFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the X axis"
+                              },
+                              "yFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the Y axis"
+                              },
+                              "sizeFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Field identifier mapped to bubble size (null for uniform size)"
+                              },
+                              "colorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Field identifier mapped to bubble color (null for uniform color)"
+                              }
+                            },
+                            "required": [
+                              "xFieldId",
+                              "yFieldId",
+                              "sizeFieldId",
+                              "colorFieldId"
+                            ],
+                            "description": "Configuration for bubble view"
                           }
                         }
                       },
@@ -10739,7 +12168,8 @@
                         "timeline",
                         "matrix",
                         "hierarchy",
-                        "explore"
+                        "explore",
+                        "bubble"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -10828,7 +12258,9 @@
                                   "after",
                                   "on",
                                   "gt",
-                                  "lt"
+                                  "lt",
+                                  "gte",
+                                  "lte"
                                 ],
                                 "type": "string",
                                 "description": "Filter operation"
@@ -10843,6 +12275,17 @@
                             ]
                           },
                           "description": "Additional filter conditions"
+                        },
+                        "assessmentId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Joined assessment identifier for display, filtering, and view attributes"
                         }
                       },
                       "description": "Entity filters applied in this view"
@@ -10852,6 +12295,45 @@
                         {
                           "type": "object",
                           "properties": {
+                            "table": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for table view"
+                            },
+                            "cards": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for cards view"
+                            },
+                            "tree": {
+                              "type": "object",
+                              "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                }
+                              },
+                              "description": "Configuration for tree view"
+                            },
                             "radar": {
                               "type": "object",
                               "properties": {
@@ -11001,10 +12483,18 @@
                             "hierarchy": {
                               "type": "object",
                               "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
                                 "levels": {
                                   "type": "integer",
                                   "minimum": 1,
                                   "maximum": 3,
+                                  "default": 2,
                                   "description": "Number of hierarchy levels (1-3)"
                                 },
                                 "level1SchemaId": {
@@ -11016,12 +12506,14 @@
                                       "type": "null"
                                     }
                                   ],
+                                  "default": null,
                                   "description": "Schema identifier for level 1"
                                 },
                                 "level1Columns": {
                                   "type": "integer",
                                   "minimum": 1,
                                   "maximum": 4,
+                                  "default": 3,
                                   "description": "Number of columns for level 1 (1-4)"
                                 },
                                 "level2SchemaId": {
@@ -11059,26 +12551,30 @@
                                   "description": "Number of columns for level 3 (1-4)"
                                 }
                               },
-                              "required": [
-                                "levels",
-                                "level1SchemaId",
-                                "level1Columns"
-                              ],
                               "description": "Configuration for hierarchy view"
                             },
                             "explore": {
                               "type": "object",
                               "properties": {
+                                "fieldIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Ordered fields displayed for each entity"
+                                },
                                 "leftDepth": {
                                   "type": "integer",
                                   "minimum": 0,
                                   "maximum": 9007199254740991,
+                                  "default": 1,
                                   "description": "Depth of relationships to explore on the left"
                                 },
                                 "rightDepth": {
                                   "type": "integer",
                                   "minimum": 0,
                                   "maximum": 9007199254740991,
+                                  "default": 1,
                                   "description": "Depth of relationships to explore on the right"
                                 },
                                 "relationFieldNames": {
@@ -11086,15 +12582,53 @@
                                   "items": {
                                     "type": "string"
                                   },
+                                  "default": [],
                                   "description": "Relationship field names to include"
                                 }
                               },
-                              "required": [
-                                "leftDepth",
-                                "rightDepth",
-                                "relationFieldNames"
-                              ],
                               "description": "Configuration for explore view"
+                            },
+                            "bubble": {
+                              "type": "object",
+                              "properties": {
+                                "xFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the X axis"
+                                },
+                                "yFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the Y axis"
+                                },
+                                "sizeFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Field identifier mapped to bubble size (null for uniform size)"
+                                },
+                                "colorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Field identifier mapped to bubble color (null for uniform color)"
+                                }
+                              },
+                              "required": [
+                                "xFieldId",
+                                "yFieldId",
+                                "sizeFieldId",
+                                "colorFieldId"
+                              ],
+                              "description": "Configuration for bubble view"
                             }
                           }
                         },
@@ -11946,7 +13480,7 @@
                     },
                     "import_id": {
                       "type": "string",
-                      "description": "Unique identifier for this import session"
+                      "description": "Unique identifier for a valid import session"
                     },
                     "source_workspace": {
                       "type": "object",
@@ -12194,12 +13728,52 @@
                         "type": "string"
                       },
                       "description": "Import validation warnings"
+                    },
+                    "diagnostics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "invalid_archive",
+                              "invalid_manifest",
+                              "checksum_mismatch",
+                              "duplicate_import_item",
+                              "missing_reference",
+                              "missing_content_file",
+                              "unresolved_conflict"
+                            ],
+                            "type": "string"
+                          },
+                          "item_type": {
+                            "enum": [
+                              "config",
+                              "schemas",
+                              "entities",
+                              "projects",
+                              "content_nodes"
+                            ],
+                            "type": "string",
+                            "description": "Type of data to export/import"
+                          },
+                          "item_id": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ]
+                      }
                     }
                   },
                   "required": [
                     "valid",
                     "version",
-                    "import_id",
                     "source_workspace",
                     "available_data_types",
                     "summary",
@@ -12467,6 +14041,47 @@
                         "type": "string"
                       },
                       "description": "Import execution warnings"
+                    },
+                    "failure": {
+                      "type": "object",
+                      "properties": {
+                        "stage": {
+                          "enum": [
+                            "validation",
+                            "planning",
+                            "storage",
+                            "persistence"
+                          ],
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "affected_items": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "compensation": {
+                          "enum": [
+                            "not_required",
+                            "completed",
+                            "failed"
+                          ],
+                          "type": "string"
+                        },
+                        "recovery": {
+                          "const": "reupload_archive"
+                        }
+                      },
+                      "required": [
+                        "stage",
+                        "message",
+                        "affected_items",
+                        "compensation",
+                        "recovery"
+                      ]
                     }
                   },
                   "required": [
@@ -13128,6 +14743,9 @@
                             "people.teams",
                             "proj.create",
                             "proj.edit",
+                            "proj.delete",
+                            "content.view",
+                            "content.edit",
                             "ent.edit",
                             "ent.propose",
                             "comments",
@@ -13213,6 +14831,9 @@
                         "people.teams",
                         "proj.create",
                         "proj.edit",
+                        "proj.delete",
+                        "content.view",
+                        "content.edit",
                         "ent.edit",
                         "ent.propose",
                         "comments",
@@ -13280,6 +14901,9 @@
                           "people.teams",
                           "proj.create",
                           "proj.edit",
+                          "proj.delete",
+                          "content.view",
+                          "content.edit",
                           "ent.edit",
                           "ent.propose",
                           "comments",
@@ -13376,6 +15000,9 @@
                         "people.teams",
                         "proj.create",
                         "proj.edit",
+                        "proj.delete",
+                        "content.view",
+                        "content.edit",
                         "ent.edit",
                         "ent.propose",
                         "comments",
@@ -13443,6 +15070,9 @@
                           "people.teams",
                           "proj.create",
                           "proj.edit",
+                          "proj.delete",
+                          "content.view",
+                          "content.edit",
                           "ent.edit",
                           "ent.propose",
                           "comments",
@@ -13550,6 +15180,9 @@
                           "people.teams",
                           "proj.create",
                           "proj.edit",
+                          "proj.delete",
+                          "content.view",
+                          "content.edit",
                           "ent.edit",
                           "ent.propose",
                           "comments",
@@ -17910,6 +19543,207 @@
                     "entity_type",
                     "is_done"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities/{entityId}/projects": {
+      "get": {
+        "operationId": "projects.listEntityProjects",
+        "summary": "List projects containing an entity",
+        "description": "Retrieves accessible projects linked to an entity in a single request.",
+        "tags": [
+          "Projects",
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Entity identifier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "project": {
+                        "type": "object",
+                        "properties": {
+                          "canEdit": {
+                            "type": "boolean",
+                            "description": "Whether the user can edit this project"
+                          },
+                          "canDelete": {
+                            "type": "boolean",
+                            "description": "Whether the user can delete this project"
+                          },
+                          "canManageFiles": {
+                            "type": "boolean",
+                            "description": "Whether the user can manage files in this project"
+                          },
+                          "id": {
+                            "type": "string",
+                            "description": "Unique project identifier"
+                          },
+                          "public_id": {
+                            "type": "string",
+                            "description": "Public project identifier"
+                          },
+                          "workspace": {
+                            "type": "string",
+                            "description": "Parent workspace identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Project name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Project description"
+                          },
+                          "owner": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Project owner"
+                          },
+                          "status": {
+                            "enum": [
+                              "draft",
+                              "active",
+                              "complete",
+                              "cancelled"
+                            ],
+                            "type": "string",
+                            "description": "Project status"
+                          },
+                          "color": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Project color (hex format)"
+                          },
+                          "target_date": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Target completion date (ISO 8601)"
+                          },
+                          "pinned": {
+                            "type": "boolean",
+                            "description": "Whether the project is pinned"
+                          },
+                          "file_count": {
+                            "type": "number",
+                            "description": "Number of files in the project"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "description": "ISO 8601 last update timestamp"
+                          }
+                        },
+                        "required": [
+                          "canEdit",
+                          "canDelete",
+                          "canManageFiles",
+                          "id",
+                          "public_id",
+                          "workspace",
+                          "name",
+                          "description",
+                          "owner",
+                          "status",
+                          "color",
+                          "target_date",
+                          "pinned",
+                          "file_count",
+                          "created_at",
+                          "updated_at"
+                        ],
+                        "description": "Linked project"
+                      },
+                      "entity_type": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Project entity type classification"
+                      }
+                    },
+                    "required": [
+                      "project",
+                      "entity_type"
+                    ]
+                  }
                 }
               }
             }
@@ -25117,7 +26951,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "description": "Filter by entity type (workspace, entity_schema, entity, project, content_node)"
+              "description": "Filter by entity type (workspace, entity_schema, entity, project, content_node, assessment)"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -25277,7 +27111,9 @@
                           "entity_schema",
                           "entity",
                           "project",
-                          "content_node"
+                          "content_node",
+                          "assessment",
+                          "assessment_response"
                         ],
                         "type": "string",
                         "description": "Type of entity affected"
@@ -28485,6 +30321,9 @@
                                   "people.teams",
                                   "proj.create",
                                   "proj.edit",
+                                  "proj.delete",
+                                  "content.view",
+                                  "content.edit",
                                   "ent.edit",
                                   "ent.propose",
                                   "comments",
@@ -30117,6 +31956,18 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "staleAfterDays",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3650,
+              "default": 90
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -30406,6 +32257,169 @@
                         ]
                       },
                       "description": "Number of entities per schema"
+                    },
+                    "activityTrends": {
+                      "type": "object",
+                      "properties": {
+                        "days30": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "date": {
+                                "type": "string",
+                                "description": "UTC calendar date for this activity bucket (YYYY-MM-DD)"
+                              },
+                              "startDate": {
+                                "type": "string",
+                                "description": "Inclusive ISO 8601 start timestamp for this bucket"
+                              },
+                              "endDate": {
+                                "type": "string",
+                                "description": "Inclusive ISO 8601 end timestamp for this bucket"
+                              },
+                              "created": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities created during this bucket"
+                              },
+                              "updated": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities updated during this bucket"
+                              }
+                            },
+                            "required": [
+                              "date",
+                              "startDate",
+                              "endDate",
+                              "created",
+                              "updated"
+                            ]
+                          },
+                          "description": "Daily entity create/update activity for the last 30 days"
+                        },
+                        "days90": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "date": {
+                                "type": "string",
+                                "description": "UTC calendar date for this activity bucket (YYYY-MM-DD)"
+                              },
+                              "startDate": {
+                                "type": "string",
+                                "description": "Inclusive ISO 8601 start timestamp for this bucket"
+                              },
+                              "endDate": {
+                                "type": "string",
+                                "description": "Inclusive ISO 8601 end timestamp for this bucket"
+                              },
+                              "created": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities created during this bucket"
+                              },
+                              "updated": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities updated during this bucket"
+                              }
+                            },
+                            "required": [
+                              "date",
+                              "startDate",
+                              "endDate",
+                              "created",
+                              "updated"
+                            ]
+                          },
+                          "description": "Daily entity create/update activity for the last 90 days"
+                        }
+                      },
+                      "required": [
+                        "days30",
+                        "days90"
+                      ],
+                      "description": "Entity activity trends derived from audit history"
+                    },
+                    "stale": {
+                      "type": "object",
+                      "properties": {
+                        "thresholdDays": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Age in days used to classify stale entities"
+                        },
+                        "cutoffAt": {
+                          "type": "string",
+                          "description": "ISO 8601 cutoff; entities updated before this time are stale"
+                        },
+                        "totalCount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Number of stale entities in the workspace"
+                        },
+                        "percent": {
+                          "type": "number",
+                          "description": "Percentage of workspace entities that are stale"
+                        },
+                        "schemas": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Schema identifier"
+                              },
+                              "schemaName": {
+                                "type": "string",
+                                "description": "Schema name"
+                              },
+                              "totalCount": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Total number of entities using this schema"
+                              },
+                              "staleCount": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities updated before the stale cutoff"
+                              },
+                              "stalePercent": {
+                                "type": "number",
+                                "description": "Percentage of this schema's entities that are stale"
+                              }
+                            },
+                            "required": [
+                              "schemaId",
+                              "schemaName",
+                              "totalCount",
+                              "staleCount",
+                              "stalePercent"
+                            ]
+                          },
+                          "description": "Stale-entity breakdown by schema"
+                        }
+                      },
+                      "required": [
+                        "thresholdDays",
+                        "cutoffAt",
+                        "totalCount",
+                        "percent",
+                        "schemas"
+                      ],
+                      "description": "Entities whose last update predates the selected cutoff"
                     }
                   },
                   "required": [
@@ -30414,7 +32428,9 @@
                     "coverage",
                     "ownershipGaps",
                     "completeness",
-                    "schemaUtilization"
+                    "schemaUtilization",
+                    "activityTrends",
+                    "stale"
                   ]
                 }
               }

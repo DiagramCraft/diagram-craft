@@ -79,4 +79,43 @@ test.describe('entities section', () => {
     await entitiesPage.expectLoaded();
     await entitiesPage.openNewEntityDialog();
   });
+
+  test('restores entity content filter and view mode through reload and browser history', async ({ page }) => {
+    await page.goto(
+      `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}/folders/security`
+    );
+
+    const filterInput = page.getByPlaceholder('Filter diagrams…');
+    const listViewButton = page.locator('button[title="List view"]');
+
+    await expect(page.getByRole('heading', { name: 'Security' })).toBeVisible();
+
+    await filterInput.fill('Threat');
+    await expect(page).toHaveURL(/contentQuery=Threat/);
+
+    await listViewButton.click();
+    await expect(page).toHaveURL(/contentView=list/);
+    await expect(page.getByText('Threat Model')).toBeVisible();
+    await expect(page.getByText('Name')).toBeVisible();
+
+    await page.reload();
+    await expect(filterInput).toHaveValue('Threat');
+    await expect(page.getByText('Threat Model')).toBeVisible();
+    await expect(page.getByText('Name')).toBeVisible();
+
+    await page.goBack();
+    await expect(filterInput).toHaveValue('Threat');
+    await expect(page).not.toHaveURL(/contentView=list/);
+    await expect(page.getByText('Name')).toHaveCount(0);
+    await expect(page.getByText('Threat Model')).toBeVisible();
+  });
+
+  test('navigates directly to nested entity content folders', async ({ page }) => {
+    await page.goto(
+      `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}/folders/security/guides`
+    );
+
+    await expect(page).toHaveURL(/\/entities\/API-2\/folders\/security\/guides$/);
+    await expect(page.getByRole('heading', { name: 'security/guides', exact: true })).toBeVisible();
+  });
 });

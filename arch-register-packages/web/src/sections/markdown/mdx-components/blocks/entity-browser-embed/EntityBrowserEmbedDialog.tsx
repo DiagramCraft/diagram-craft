@@ -6,20 +6,12 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
-import { TableView } from '../../../../entities/components/TableView';
-import { CardsView } from '../../../../entities/components/CardsView';
-import { TreeView } from '../../../../entities/components/TreeView';
-import { RadarView } from '../../../../entities/components/RadarView';
-import { TimelineView } from '../../../../entities/components/TimelineView';
-import { MatrixView } from '../../../../entities/components/MatrixView';
-import { HierarchyView } from '../../../../entities/components/HierarchyView';
-import { ExploreView } from '../../../../entities/components/ExploreView';
 import { EntityBrowserToolbar } from '../../../../entities/components/EntityBrowserToolbar';
+import { EntityBrowserView } from '../../../../entities/components/EntityBrowserView';
 import { useEntityBrowserLocalState } from '../../../../entities/components/useEntityBrowserLocalState';
 import { useEntityBrowserData } from '../../../../entities/components/useEntityBrowserData';
 import { useEntityBrowserPagination } from '../../../../entities/components/useEntityBrowserPagination';
 import { FilterDropdown } from '../../../../../components/FilterDropdown';
-import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityBrowserEmbedSlateElement } from './types';
 import {
   decodeEntityBrowserEmbedConfig,
@@ -27,8 +19,7 @@ import {
   type EntityBrowserEmbedConfig
 } from './EntityBrowserEmbedCodec';
 import styles from './EntityBrowserEmbedDialog.module.css';
-
-const noop = () => {};
+import { buildEntityDisplayFields, DISPLAY_FIELD_VIEWS, getDisplayFieldIds, withDisplayFieldIds, withoutDisplayFieldIds } from '../../../../entities/components/entityDisplayFields';
 
 export const EntityBrowserEmbedDialog = ({
   element,
@@ -79,6 +70,8 @@ export const EntityBrowserEmbedDialog = ({
         }
       : undefined
   });
+  const displayFields = useMemo(() => buildEntityDisplayFields(typeFilter ? schemas.filter(s => s.id === typeFilter) : schemas, !!projectId), [schemas, typeFilter, projectId]);
+  const displayView = DISPLAY_FIELD_VIEWS.has(view) ? view as 'table' | 'cards' | 'tree' | 'hierarchy' | 'explore' : null;
 
   useEffect(() => {
     if (!open) return;
@@ -187,91 +180,30 @@ export const EntityBrowserEmbedDialog = ({
           sortOptions={sortOptions}
           view={view}
           setView={setView}
+          displayFields={displayView ? displayFields : undefined}
+          selectedDisplayFieldIds={displayView ? getDisplayFieldIds(displayView, activeViewConfig) : undefined}
+          onDisplayFieldsChange={displayView ? ids => setActiveViewConfig(withDisplayFieldIds(activeViewConfig, ids)) : undefined}
+          onDisplayFieldsReset={displayView ? () => setActiveViewConfig(withoutDisplayFieldIds(activeViewConfig)) : undefined}
         />
         <div className={styles.viewArea}>
-          {view === 'hierarchy' ? (
-            <HierarchyView
-              workspaceId={workspaceSlug}
-              projectId={projectId}
-              projectScope={projectScope}
-              q={q}
-              typeFilter={typeFilter}
-              ownerFilter={ownerFilter}
-              statusFilter={statusFilter}
-              onEntityClick={noop}
-              config={activeViewConfig}
-              onConfigChange={setActiveViewConfig}
-            />
-          ) : view === 'explore' ? (
-            <ExploreView
-              rows={filtered}
-              onEntityClick={noop}
-              config={activeViewConfig}
-              onConfigChange={setActiveViewConfig}
-            />
-          ) : view === 'matrix' ? (
-            <MatrixView
-              rows={filtered}
-              schemaMap={schemaMap}
-              onEntityClick={noop}
-              config={activeViewConfig}
-              onConfigChange={setActiveViewConfig}
-            />
-          ) : view === 'timeline' ? (
-            <TimelineView
-              rows={filtered}
-              schemas={schemas}
-              lifecycleStates={lifecycleStates}
-              onEntityClick={noop}
-              config={activeViewConfig}
-              onConfigChange={setActiveViewConfig}
-              workspaceId={workspaceSlug}
-              projects={projects}
-            />
-          ) : view === 'radar' ? (
-            <RadarView
-              rows={filtered}
-              onEntityClick={noop}
-              config={activeViewConfig}
-              onConfigChange={setActiveViewConfig}
-            />
-          ) : view === 'tree' ? (
-            <TreeView
-              workspaceId={workspaceSlug}
-              projectId={projectId}
-              projectScope={projectScope}
-              q={q}
-              typeFilter={typeFilter}
-              ownerFilter={ownerFilter}
-              statusFilter={statusFilter}
-              schemaMap={schemaMap}
-              onEntityClick={noop}
-              onDelete={noop as (entity: EntityRecord) => void}
-              onClone={noop as (entity: EntityRecord) => void}
-              lifecycleStates={lifecycleStates}
-              readOnly
-            />
-          ) : view === 'cards' ? (
-            <CardsView
-              rows={filtered}
-              schemaMap={schemaMap}
-              onEntityClick={noop}
-              onDelete={noop as (entity: EntityRecord) => void}
-              onClone={noop as (entity: EntityRecord) => void}
-              lifecycleStates={lifecycleStates}
-              readOnly
-            />
-          ) : (
-            <TableView
-              rows={filtered}
-              schemaMap={schemaMap}
-              onEntityClick={noop}
-              onDelete={noop as (entity: EntityRecord) => void}
-              onClone={noop as (entity: EntityRecord) => void}
-              lifecycleStates={lifecycleStates}
-              readOnly
-            />
-          )}
+          <EntityBrowserView
+            view={view}
+            rows={filtered}
+            schemaMap={schemaMap}
+            schemas={schemas}
+            lifecycleStates={lifecycleStates}
+            projects={projects}
+            workspaceId={workspaceSlug}
+            projectId={projectId}
+            projectScope={projectScope}
+            q={q}
+            typeFilter={typeFilter}
+            ownerFilter={ownerFilter}
+            statusFilter={statusFilter}
+            activeViewConfig={activeViewConfig}
+            displayFields={displayFields}
+            mode={{ kind: 'configure', onConfigChange: setActiveViewConfig }}
+          />
         </div>
         {isPagedBrowse && (
           <div className={styles.pagination}>

@@ -6,54 +6,29 @@ import type {
   ProjectEntityLinkDbResult,
   ProjectDbUpdate,
   ContentNodeDbUpsert,
-  MarkdownRevisionDbCreate
+  MarkdownRevisionDbCreate,
+  AssessmentDbCreate,
+  AssessmentDbUpdate,
+  AssessmentResponseDbUpsert
 } from './projectDatabase';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import {
+  CONTENT_NODE_SELECT_SQL,
+  PROJECT_ENTITY_SELECT_SQL,
+  PROJECT_SELECT_SQL,
+  MARKDOWN_REVISION_SELECT_SQL,
+  ASSESSMENT_RESPONSE_SELECT_SQL,
+  DIAGRAM_ENTITY_FILE_SELECT_SQL,
+  projectMappers
+} from './projectDatabase';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import { isUuidLike } from '../../../utils/publicIds';
-
-const PROJECT_ENTITY_JOIN_SQL = `
-  SELECT
-    pe.workspace,
-    pe.project_id,
-    pe.entity_id,
-    e.name        AS entity_name,
-    e.slug        AS entity_slug,
-    e.description AS entity_description,
-    e.schema_id   AS entity_schema_id,
-    es.name       AS entity_schema_name,
-    pe.entity_type AS entity_type_id,
-    pet.label     AS entity_type_label,
-    pe.is_done
-  FROM project_entity pe
-  JOIN entity e ON e.id = pe.entity_id AND e.deleted_at IS NULL
-  LEFT JOIN entity_schema es ON es.id = e.schema_id
-  LEFT JOIN project_entity_type pet ON pet.id = pe.entity_type AND pet.workspace = pe.workspace
-`;
-
-const PROJECT_JOIN_SQL = `
-  SELECT p.*, wo.name AS owner_name
-  FROM project p
-  LEFT JOIN workspace_owner wo ON wo.id = p.owner
-`;
-
-const CONTENT_NODE_SELECT_SQL = `
-  SELECT
-    cn.*,
-    cm.title AS metadata_title,
-    cm.description AS metadata_description,
-    cm.company AS metadata_company,
-    cm.category AS metadata_category,
-    cm.keywords AS metadata_keywords
-  FROM content_node cn
-  LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
-`;
 
 export class SqliteProjectDatabase extends SqliteDatabaseBase implements ProjectDatabase {
   async listProjects(workspace: string) {
     return this.all(
-      `${PROJECT_JOIN_SQL} WHERE p.workspace = ? ORDER BY p.name`,
+      `${PROJECT_SELECT_SQL} WHERE p.workspace = ? ORDER BY p.name`,
       [workspace],
-      sqliteMappers.enrichedProject
+      projectMappers.project
     );
   }
 
@@ -63,17 +38,17 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       return row?.workspace === workspace ? row : null;
     }
     return this.get(
-      `${PROJECT_JOIN_SQL} WHERE p.workspace = ? AND p.id = ?`,
+      `${PROJECT_SELECT_SQL} WHERE p.workspace = ? AND p.id = ?`,
       [workspace, identifier],
-      sqliteMappers.enrichedProject
+      projectMappers.project
     );
   }
 
   private async getProjectByPublicId(publicId: string) {
     return this.get(
-      `${PROJECT_JOIN_SQL} WHERE p.public_id = ?`,
+      `${PROJECT_SELECT_SQL} WHERE p.public_id = ?`,
       [publicId],
-      sqliteMappers.enrichedProject
+      projectMappers.project
     );
   }
 
@@ -127,7 +102,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.all(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? ORDER BY cn.path`,
       [workspace, projectId],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -135,7 +110,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.all(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? ORDER BY cn.path`,
       [workspace],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -143,7 +118,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.all(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.entity_id = ? ORDER BY cn.path`,
       [workspace, entityId],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -151,7 +126,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.all(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id IS NULL AND cn.entity_id IS NULL ORDER BY cn.path`,
       [workspace],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -159,7 +134,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.get(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? AND cn.path = ?`,
       [workspace, projectId, path],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -167,7 +142,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.get(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.project_id = ? AND cn.id = ?`,
       [workspace, projectId, id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
@@ -175,30 +150,26 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
     return this.get(
       `${CONTENT_NODE_SELECT_SQL} WHERE cn.workspace = ? AND cn.id = ?`,
       [workspace, id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
   }
 
   async listMarkdownRevisions(workspace: string, nodeId: string) {
     return this.all(
-      `SELECT mr.*, u.display_name AS created_by_name
-       FROM content_node_revision mr
-       LEFT JOIN users u ON u.id = mr.created_by
+      `${MARKDOWN_REVISION_SELECT_SQL}
        WHERE mr.workspace = ? AND mr.node_id = ?
        ORDER BY mr.revision_number DESC`,
       [workspace, nodeId],
-      sqliteMappers.markdownRevision
+      projectMappers.markdownRevision
     );
   }
 
   async getMarkdownRevision(workspace: string, nodeId: string, revisionId: string) {
     return this.get(
-      `SELECT mr.*, u.display_name AS created_by_name
-       FROM content_node_revision mr
-       LEFT JOIN users u ON u.id = mr.created_by
+      `${MARKDOWN_REVISION_SELECT_SQL}
        WHERE mr.workspace = ? AND mr.node_id = ? AND mr.id = ?`,
       [workspace, nodeId, revisionId],
-      sqliteMappers.markdownRevision
+      projectMappers.markdownRevision
     );
   }
 
@@ -544,7 +515,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
        LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
        WHERE cn.id IN (SELECT id FROM desc_tree)`,
       [folder.id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
 
     const tx = this.db.transaction(() => {
@@ -635,7 +606,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
        LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
        WHERE cn.id IN (SELECT id FROM desc_tree)`,
       [folder.id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
 
     const tx = this.db.transaction(() => {
@@ -723,7 +694,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
        LEFT JOIN content_metadata cm ON cm.workspace = cn.workspace AND cm.node_id = cn.id
        WHERE cn.id IN (SELECT id FROM desc_tree)`,
       [folder.id],
-      sqliteMappers.contentNode
+      projectMappers.contentNode
     );
 
     const tx = this.db.transaction(() => {
@@ -739,9 +710,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async listProjectEntities(workspace: string, projectId: string) {
     return this.all(
-      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? ORDER BY e.name`,
+      `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = ? AND pe.project_id = ? ORDER BY e.name`,
       [workspace, projectId],
-      sqliteMappers.projectEntity
+      projectMappers.projectEntity
     );
   }
 
@@ -758,9 +729,23 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async getEntityProjects(workspace: string, entityId: string) {
     return this.all(
-      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.entity_id = ? ORDER BY e.name`,
+      `SELECT
+         p.*,
+         wo.name AS owner_name,
+         pe.entity_type AS entity_type_id,
+         pet.label AS entity_type_label,
+         (SELECT COUNT(*) FROM content_node cn
+          WHERE cn.workspace = p.workspace AND cn.project_id = p.id AND cn.type = 'diagram') AS file_count
+       FROM project_entity pe
+       JOIN project p ON p.workspace = pe.workspace AND p.id = pe.project_id
+       LEFT JOIN workspace_owner wo ON wo.id = p.owner
+       LEFT JOIN project_entity_type pet ON pet.workspace = pe.workspace AND pet.id = pe.entity_type
+       WHERE pe.workspace = ? AND pe.entity_id = ?
+       ORDER BY p.pinned DESC,
+         CASE p.status WHEN 'draft' THEN 0 WHEN 'active' THEN 1 WHEN 'complete' THEN 2 ELSE 3 END,
+         p.name`,
       [workspace, entityId],
-      sqliteMappers.projectEntity
+      projectMappers.entityProject
     );
   }
 
@@ -777,9 +762,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       ]
     );
     return this.get(
-      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
+      `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
       [input.workspace, input.project_id, input.entity_id],
-      sqliteMappers.projectEntity
+      projectMappers.projectEntity
     )!;
   }
 
@@ -795,9 +780,9 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
       [entityTypeId ?? null, isDone ? 1 : 0, workspace, projectId, entityId]
     );
     return this.get(
-      `${PROJECT_ENTITY_JOIN_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
+      `${PROJECT_ENTITY_SELECT_SQL} WHERE pe.workspace = ? AND pe.project_id = ? AND pe.entity_id = ?`,
       [workspace, projectId, entityId],
-      sqliteMappers.projectEntity
+      projectMappers.projectEntity
     );
   }
 
@@ -825,58 +810,143 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async getEntityDiagramFiles(workspace: string, entityId: string) {
     return this.all(
-      `SELECT
-        pf.id          AS file_id,
-        pf.path        AS file_path,
-        pf.name        AS file_name,
-        pf.size_bytes  AS file_size_bytes,
-        pf.type        AS file_type,
-        pf.preview_svg AS file_preview_svg,
-        pf.comment_count AS file_comment_count,
-        pf.unresolved_comment_count AS file_unresolved_comment_count,
-        pf.created_at  AS file_created_at,
-        pf.updated_at  AS file_updated_at,
-        cm.title       AS file_metadata_title,
-        cm.description AS file_metadata_description,
-        cm.company     AS file_metadata_company,
-        cm.category    AS file_metadata_category,
-        cm.keywords    AS file_metadata_keywords,
-        p.id           AS project_id,
-        p.public_id    AS project_public_id,
-        p.name         AS project_name
-      FROM diagram_entity_ref der
-      JOIN content_node pf ON pf.id = der.file_id AND pf.workspace = der.workspace
-      LEFT JOIN content_metadata cm ON cm.workspace = pf.workspace AND cm.node_id = pf.id
-      LEFT JOIN project p ON p.id = pf.project_id AND p.workspace = pf.workspace
+      `${DIAGRAM_ENTITY_FILE_SELECT_SQL}
       WHERE der.workspace = ? AND der.entity_id = ?
       ORDER BY COALESCE(p.name, ''), pf.name`,
       [workspace, entityId],
-      row => ({
-        file_id: String(row['file_id']),
-        file_path: String(row['file_path']),
-        file_name: String(row['file_name']),
-        file_size_bytes: Number(row['file_size_bytes']),
-        file_type: String(row['file_type']) as 'diagram' | 'folder' | 'markdown' | 'file',
-        file_preview_svg: row['file_preview_svg'] != null ? String(row['file_preview_svg']) : null,
-        file_comment_count: Number(row['file_comment_count'] ?? 0),
-        file_unresolved_comment_count: Number(row['file_unresolved_comment_count'] ?? 0),
-        file_created_at: new Date(String(row['file_created_at'])),
-        file_updated_at: new Date(String(row['file_updated_at'])),
-        file_metadata_title:
-          row['file_metadata_title'] != null ? String(row['file_metadata_title']) : null,
-        file_metadata_description:
-          row['file_metadata_description'] != null
-            ? String(row['file_metadata_description'])
-            : null,
-        file_metadata_company:
-          row['file_metadata_company'] != null ? String(row['file_metadata_company']) : null,
-        file_metadata_category:
-          row['file_metadata_category'] != null ? String(row['file_metadata_category']) : null,
-        file_metadata_keywords: JSON.parse(String(row['file_metadata_keywords'] ?? '[]')) as string[],
-        project_id: String(row['project_id']),
-        project_public_id: String(row['project_public_id']),
-        project_name: String(row['project_name'])
-      })
+      projectMappers.diagramEntityFile
+    );
+  }
+
+  async listAssessments(workspace: string, projectId: string) {
+    return this.all(
+      'SELECT * FROM assessment WHERE workspace = ? AND project_id = ? ORDER BY name',
+      [workspace, projectId],
+      projectMappers.assessment
+    );
+  }
+
+  async getAssessment(workspace: string, projectId: string, id: string) {
+    return this.get(
+      'SELECT * FROM assessment WHERE workspace = ? AND project_id = ? AND id = ?',
+      [workspace, projectId, id],
+      projectMappers.assessment
+    );
+  }
+
+  async getAssessmentById(workspace: string, id: string) {
+    return this.get(
+      'SELECT * FROM assessment WHERE workspace = ? AND id = ?',
+      [workspace, id],
+      projectMappers.assessment
+    );
+  }
+
+  async createAssessment(input: AssessmentDbCreate) {
+    this.run(
+      `INSERT INTO assessment (id, workspace, project_id, name, description, status, scope, scope_conditions, fields, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        input.id,
+        input.workspace,
+        input.project_id,
+        input.name,
+        input.description,
+        input.status,
+        JSON.stringify(input.scope),
+        JSON.stringify(input.scope_conditions),
+        JSON.stringify(input.fields),
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getAssessment(input.workspace, input.project_id, input.id))!;
+  }
+
+  async updateAssessment(workspace: string, projectId: string, id: string, input: AssessmentDbUpdate) {
+    this.run(
+      `UPDATE assessment
+       SET name = ?, description = ?, status = ?, scope = ?, scope_conditions = ?, fields = ?, updated_at = ?
+       WHERE workspace = ? AND project_id = ? AND id = ?`,
+      [
+        input.name,
+        input.description,
+        input.status,
+        JSON.stringify(input.scope),
+        JSON.stringify(input.scope_conditions),
+        JSON.stringify(input.fields),
+        input.updated_at.toISOString(),
+        workspace,
+        projectId,
+        id
+      ]
+    );
+    return await this.getAssessment(workspace, projectId, id);
+  }
+
+  async deleteAssessment(workspace: string, projectId: string, id: string) {
+    const row = await this.getAssessment(workspace, projectId, id);
+    if (!row) return null;
+    this.run('DELETE FROM assessment WHERE workspace = ? AND project_id = ? AND id = ?', [
+      workspace,
+      projectId,
+      id
+    ]);
+    return row;
+  }
+
+  async listAssessmentResponses(workspace: string, assessmentId: string) {
+    return this.all(
+      `${ASSESSMENT_RESPONSE_SELECT_SQL}
+       WHERE ar.workspace = ? AND ar.assessment_id = ?`,
+      [workspace, assessmentId],
+      projectMappers.assessmentResponse
+    );
+  }
+
+  async getAssessmentResponse(workspace: string, assessmentId: string, entityId: string) {
+    return this.get(
+      `${ASSESSMENT_RESPONSE_SELECT_SQL}
+       WHERE ar.workspace = ? AND ar.assessment_id = ? AND ar.entity_id = ?`,
+      [workspace, assessmentId, entityId],
+      projectMappers.assessmentResponse
+    );
+  }
+
+  async upsertAssessmentResponse(input: AssessmentResponseDbUpsert) {
+    const now = new Date().toISOString();
+    const existing = await this.getAssessmentResponse(
+      input.workspace,
+      input.assessment_id,
+      input.entity_id
+    );
+    const id = existing?.id ?? newid();
+    this.run(
+      `INSERT INTO assessment_response (id, workspace, assessment_id, entity_id, "values", created_at, updated_at, updated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (workspace, assessment_id, entity_id)
+       DO UPDATE SET "values" = excluded."values", updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+      [
+        id,
+        input.workspace,
+        input.assessment_id,
+        input.entity_id,
+        JSON.stringify(input.values),
+        now,
+        now,
+        input.updated_by
+      ]
+    );
+    return (await this.getAssessmentResponse(input.workspace, input.assessment_id, input.entity_id))!;
+  }
+
+  async countAssessmentResponses(workspace: string, assessmentId: string) {
+    return (
+      this.get(
+        'SELECT COUNT(*) AS count FROM assessment_response WHERE workspace = ? AND assessment_id = ?',
+        [workspace, assessmentId],
+        (r: Record<string, unknown>) => Number(r['count'] ?? 0)
+      ) ?? 0
     );
   }
 }

@@ -124,6 +124,21 @@ export const seededProjects = {
   }
 } as const;
 
+export const seededAssessments = {
+  checkoutRevamp: {
+    securityReadiness: {
+      id: '00000000-0000-0000-0011-000000000001',
+      projectId: seededProjects.checkoutRevamp.id,
+      name: 'Security Readiness'
+    },
+    apiFitness: {
+      id: '00000000-0000-0000-0011-000000000002',
+      projectId: seededProjects.checkoutRevamp.id,
+      name: 'API Fitness'
+    }
+  }
+} as const;
+
 export const seededSchemas = {
   default: {
     domain: {

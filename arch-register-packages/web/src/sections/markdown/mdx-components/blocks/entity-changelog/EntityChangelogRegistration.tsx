@@ -1,22 +1,31 @@
-import type React from 'react';
 import { TbHistory } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityChangelog } from './EntityChangelog';
 import {
   ENTITY_CHANGELOG_TYPE,
   EntityChangelogEditable,
   entityChangelogMdxRule
 } from './EntityChangelogEditable';
+import type { EntityChangelogSlateElement } from './types';
 
-export const entityChangelogSpec = {
-  component: EntityChangelog as unknown as React.ComponentType<Record<string, string>>,
+export const entityChangelogSpec = defineMdxComponent<
+  EntityChangelogSlateElement,
+  {
+    id?: string;
+    schema?: string;
+    owner?: string;
+    lifecycle?: string;
+    limit?: string;
+    since?: string;
+  },
+  'block'
+>({
+  component: EntityChangelog,
   mode: 'block',
   allowedProps: ['id', 'schema', 'owner', 'lifecycle', 'limit', 'since'],
   editorSpec: {
-    editableComponent: EntityChangelogEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const },
+    editableComponent: EntityChangelogEditable,
+    nodeOptions: { isVoid: true },
     mdxRule: entityChangelogMdxRule,
     slashCommand: {
       key: 'entity-changelog',
@@ -38,4 +47,4 @@ export const entityChangelogSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

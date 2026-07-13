@@ -6,14 +6,10 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { ModeSwitcher } from '@diagram-craft/app-components/ModeSwitcher';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
-import { useEntityContentNodes } from '../../../../../hooks/useProjects';
-import {
-  useProjectFiles,
-  useWorkspaceContentNodes,
-  useCreateMarkdownDiagramAttachment
-} from '../../../../../hooks/useProjectFiles';
-import { emptyDiagram } from '../../../../../lib/api';
-import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
+import { useContentTree, type ContentScope } from '../../../../../hooks/useContentScope';
+import { useCreateMarkdownDiagramAttachment } from '../../../../../hooks/useAttachments';
+import { emptyDiagram } from '../../../../../lib/diagramDocuments';
+import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
 import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
 import type { DiagramEmbedSlateElement } from './types';
@@ -40,11 +36,7 @@ export const DiagramEmbedDialog = ({
   const editor = useEditorRef();
   const { workspaceSlug } = useWorkspaceContext();
   const { trackCreatedDiagram } = useMarkdownDiagramSession();
-  const params = useParams({ strict: false }) as {
-    projectId?: string;
-    entityId?: string;
-    nodeId?: string;
-  };
+  const params = useParams({ strict: false });
   const { projectId, entityId, nodeId } = params;
 
   const el = element as DiagramEmbedSlateElement;
@@ -54,25 +46,13 @@ export const DiagramEmbedDialog = ({
   const [diagramName, setDiagramName] = useState('Diagram');
   const [caption, setCaption] = useState(el.caption ?? '');
 
-  const { data: entityFiles } = useEntityContentNodes(workspaceSlug, entityId ?? '', {
-    enabled: !!entityId
-  });
-  // useProjectFiles is naturally disabled when projectId is '' (its own enabled guard)
-  const { data: projectFiles } = useProjectFiles(workspaceSlug, projectId ?? '');
-  const { data: workspaceFiles } = useWorkspaceContentNodes(workspaceSlug, {
-    enabled: !projectId && !entityId
-  });
-  const createDiagramAttachment = useCreateMarkdownDiagramAttachment(
-    workspaceSlug,
-    nodeId ?? '',
-    { projectId, entityId }
-  );
-
-  const fileTree: FileTree | undefined = entityId
-    ? entityFiles
-    : projectId
-      ? projectFiles
-      : workspaceFiles;
+  const contentScope: ContentScope = projectId
+    ? { kind: 'project', workspaceId: workspaceSlug, projectId }
+    : entityId
+      ? { kind: 'entity', workspaceId: workspaceSlug, entityId }
+      : { kind: 'workspace', workspaceId: workspaceSlug };
+  const { data: fileTree } = useContentTree(contentScope);
+  const createDiagramAttachment = useCreateMarkdownDiagramAttachment(contentScope, nodeId ?? '');
 
   const handleSelectFile = (file: ProjectFile) => {
     setFileId(file.id);

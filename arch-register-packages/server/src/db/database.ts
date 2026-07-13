@@ -1,42 +1,22 @@
-
 import type { AiDatabase } from '../domain/ai/db/aiDatabase';
 import type { AuditDatabase } from '../domain/audit/db/auditDatabase';
 import type { AuthDatabase } from '../domain/auth/db/authDatabase';
 import type { CatalogDatabase, ViewDatabase } from '../domain/catalog/db/catalogDatabase';
 import type { ProjectDatabase } from '../domain/project/db/projectDatabase';
 import type { WatchDatabase } from '../domain/watch/db/watchDatabase';
+import type { DiscussionDatabase } from '../domain/discussion/db/discussionDatabase';
 import type { WorkspaceDatabase } from '../domain/workspace/db/workspaceDatabase';
+// Keep the existing import path stable for database consumers.
+// biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
+export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
 
 export type DbDriver = 'postgres' | 'sqlite';
-
-export type NormalizedDbErrorCode =
-  | 'unique'          // Unique constraint violation
-  | 'foreign'         // Foreign key constraint violation
-  | 'check'           // Check constraint violation
-  | 'notnull'         // Not null constraint violation
-  | 'deadlock'        // Deadlock detected
-  | 'timeout'         // Query timeout
-  | 'connection'      // Connection error
-  | 'serialization'   // Serialization failure (concurrent update)
-  | 'disk_full'       // Disk full error
-  | 'unknown';        // Unknown error
-
-export class DatabaseError extends Error {
-  constructor(
-    readonly code: NormalizedDbErrorCode,
-    message: string,
-    readonly cause?: unknown,
-    readonly details?: Record<string, unknown>  // Additional error details
-  ) {
-    super(message);
-    this.name = 'DatabaseError';
-  }
-}
 
 export type CoreDatabase = {
   driver: DbDriver;
   close(): Promise<void>;
   reset(): Promise<void>;
+  transaction<T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T>;
 };
 
 export type DatabaseAdapter = {
@@ -49,6 +29,7 @@ export type DatabaseAdapter = {
   watch: WatchDatabase;
   auth: AuthDatabase;
   ai: AiDatabase;
+  discussion: DiscussionDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -61,6 +42,12 @@ export type {
 export type { AuditDatabase, AuditLogDbCreate } from '../domain/audit/db/auditDatabase';
 export type { AuthDatabase, UserDbCreate, UserDbUpdate } from '../domain/auth/db/authDatabase';
 export type { WatchDatabase, WatchDbCreate } from '../domain/watch/db/watchDatabase';
+export type {
+  DiscussionDatabase,
+  DiscussionObjectType,
+  DiscussionPostDbCreate,
+  DiscussionPostDbResult
+} from '../domain/discussion/db/discussionDatabase';
 export type {
   CatalogDatabase,
   ViewDatabase,

@@ -13,32 +13,24 @@ import type {
   EntitySnapshotDbCreate,
   TimelineMarkerDbResult
 } from './catalogDatabase';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
-import { ENTITY_DEFAULTS } from '../../../constants';
+import {
+  ENTITY_SELECT_SQL,
+  ENTITY_SNAPSHOT_SELECT_SQL,
+  catalogMappers,
+  resolveEntityListPagination
+} from './catalogDatabase';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import { isUuidLike } from '../../../utils/publicIds';
 import {
   ENTITY_BUILTIN_COLUMNS,
+  ENTITY_ARRAY_COLUMNS,
   isValidFieldId,
   escapeLike,
   buildConditionClause
 } from './filterBuilder';
 
-// SELECT + JOINs only — no WHERE clause (callers add it dynamically)
-const ENTITY_JOINS_SQL = `
-  SELECT e.*,
-    wo.name   AS owner_name,
-    ls.label  AS lifecycle_label,
-    tls.label AS target_lifecycle_label,
-    es.name   AS schema_name
-  FROM entity e
-  LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
-  LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
-  LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
-  JOIN entity_schema es ON es.id = e.schema_id
-`;
-
-// Convenience for single-entity lookups that always need deleted_at filtering
-const ENTITY_JOIN_SQL = `${ENTITY_JOINS_SQL}  WHERE e.deleted_at IS NULL\n`;
+const ENTITY_JOINS_SQL = ENTITY_SELECT_SQL;
+const ENTITY_JOIN_SQL = `${ENTITY_SELECT_SQL}  WHERE e.deleted_at IS NULL\n`;
 
 export class SqliteCatalogDatabase extends SqliteDatabaseBase implements CatalogDatabase {
   async resolveWorkspaceSlug(slug: string) {
@@ -50,7 +42,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.all(
       'SELECT * FROM entity_schema WHERE workspace = ? ORDER BY name',
       [workspace],
-      sqliteMappers.schema
+      catalogMappers.schema
     );
   }
 
@@ -58,7 +50,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.get(
       'SELECT * FROM entity_schema WHERE workspace = ? AND id = ?',
       [workspace, id],
-      sqliteMappers.schema
+      catalogMappers.schema
     );
   }
 
@@ -66,7 +58,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.get(
       'SELECT * FROM entity_schema WHERE key_prefix = ?',
       [prefix],
-      sqliteMappers.schema
+      catalogMappers.schema
     );
   }
 
@@ -120,7 +112,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.all(
       'SELECT * FROM workspace_enum WHERE workspace = ? ORDER BY sort_order, name',
       [workspace],
-      sqliteMappers.workspaceEnum
+      catalogMappers.workspaceEnum
     );
   }
 
@@ -128,7 +120,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.get(
       'SELECT * FROM workspace_enum WHERE workspace = ? AND id = ?',
       [workspace, id],
-      sqliteMappers.workspaceEnum
+      catalogMappers.workspaceEnum
     );
   }
 
@@ -174,7 +166,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.all(
       `${ENTITY_JOINS_SQL} WHERE e.workspace = ? AND e.deleted_at IS NULL ORDER BY e.name, e.id`,
       [workspace],
-      sqliteMappers.enrichedEntity
+      catalogMappers.enrichedEntity
     );
   }
 
@@ -183,8 +175,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     filters?: EntityListDbFilters,
     pagination?: EntityListDbPagination
   ) {
-    const limit = pagination?.limit ?? ENTITY_DEFAULTS.PAGE_SIZE;
-    const offset = pagination?.offset ?? 0;
+    const { limit, offset } = resolveEntityListPagination(pagination);
     const whereParts: string[] = ['e.workspace = ? AND e.deleted_at IS NULL'];
     const params: unknown[] = [workspace];
     const addParam = (v: unknown) => {
@@ -202,18 +193,27 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       );
     }
     for (const cond of filters?.conditions ?? []) {
-      const col =
-        ENTITY_BUILTIN_COLUMNS[cond.fieldId] ??
-        (isValidFieldId(cond.fieldId) ? `json_extract(e.data, '$.${cond.fieldId}')` : null);
+      // Guard against prototype pollution: only accept own properties from ENTITY_BUILTIN_COLUMNS
+      // For custom fields, also verify they don't match Object.prototype property names
+      let col: string | null = null;
+      let kind: 'scalar' | 'array' = 'scalar';
+      if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, cond.fieldId)) {
+        col = ENTITY_BUILTIN_COLUMNS[cond.fieldId] ?? null;
+      } else if (Object.hasOwn(ENTITY_ARRAY_COLUMNS, cond.fieldId)) {
+        col = ENTITY_ARRAY_COLUMNS[cond.fieldId] ?? null;
+        kind = 'array';
+      } else if (isValidFieldId(cond.fieldId) && !Object.hasOwn(Object.prototype, cond.fieldId)) {
+        col = `json_extract(e.data, '$.${cond.fieldId}')`;
+      }
       if (!col) continue;
-      const clause = buildConditionClause(col, cond, addParam, 'sqlite');
+      const clause = buildConditionClause(col, cond, addParam, 'sqlite', kind);
       if (clause) whereParts.push(clause);
     }
 
     return this.all(
       `${ENTITY_JOINS_SQL} WHERE ${whereParts.join(' AND ')} ORDER BY e.name, e.id LIMIT ? OFFSET ?`,
       [...params, limit, offset],
-      sqliteMappers.enrichedEntity
+      catalogMappers.enrichedEntity
     );
   }
 
@@ -224,7 +224,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.get(
       `${ENTITY_JOIN_SQL} AND e.workspace = ? AND e.id = ?`,
       [workspace, identifier],
-      sqliteMappers.enrichedEntity
+      catalogMappers.enrichedEntity
     );
   }
 
@@ -232,7 +232,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.get(
       `${ENTITY_JOIN_SQL} AND e.public_id = ? AND e.workspace = ?`,
       [publicId, workspace],
-      sqliteMappers.enrichedEntity
+      catalogMappers.enrichedEntity
     );
   }
 
@@ -302,7 +302,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.all(
       'SELECT * FROM entity_grant WHERE workspace = ? ORDER BY entity_id, principal_type, principal_id',
       [workspace],
-      sqliteMappers.entityGrant
+      catalogMappers.entityGrant
     );
   }
 
@@ -310,7 +310,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.all(
       'SELECT * FROM entity_grant WHERE workspace = ? AND entity_id = ? ORDER BY principal_type, principal_id',
       [workspace, entityId],
-      sqliteMappers.entityGrant
+      catalogMappers.entityGrant
     );
   }
 
@@ -345,7 +345,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.all(
       'SELECT * FROM user_pinned_entity WHERE user_id = ? AND workspace = ? ORDER BY created_at DESC',
       [userId, workspace],
-      sqliteMappers.userPinnedEntity
+      catalogMappers.pinnedEntity
     );
   }
 
@@ -353,7 +353,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return await this.get(
       'SELECT * FROM user_pinned_entity WHERE user_id = ? AND workspace = ? AND entity_id = ?',
       [userId, workspace, entityId],
-      sqliteMappers.userPinnedEntity
+      catalogMappers.pinnedEntity
     );
   }
 
@@ -365,7 +365,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return (await this.get(
       'SELECT * FROM user_pinned_entity WHERE user_id = ? AND workspace = ? AND entity_id = ?',
       [input.user_id, input.workspace, input.entity_id],
-      sqliteMappers.userPinnedEntity
+      catalogMappers.pinnedEntity
     ))!;
   }
 
@@ -398,52 +398,44 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       ]
     );
     return (await this.get(
-      `SELECT s.*, u.display_name as created_by_name
-       FROM entity_snapshot s
-       LEFT JOIN users u ON u.id = s.created_by
+      `${ENTITY_SNAPSHOT_SELECT_SQL}
        WHERE s.id = ?`,
       [input.id],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     ))!;
   }
 
 
   async getSnapshot(workspace: string, snapshotId: string) {
     return await this.get(
-      `SELECT s.*, u.display_name as created_by_name
-       FROM entity_snapshot s
-       LEFT JOIN users u ON u.id = s.created_by
+      `${ENTITY_SNAPSHOT_SELECT_SQL}
        WHERE s.workspace = ? AND s.id = ?`,
       [workspace, snapshotId],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
   }
 
   async listSnapshots(workspace: string, entityId: string) {
     return this.all(
-      `SELECT s.*, u.display_name as created_by_name
-       FROM entity_snapshot s
-       LEFT JOIN users u ON u.id = s.created_by
+      `${ENTITY_SNAPSHOT_SELECT_SQL}
        WHERE s.workspace = ? AND s.entity_id = ?
        ORDER BY s.created_at DESC`,
       [workspace, entityId],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
   }
 
   async listSnapshotsByProject(workspace: string, projectId: string) {
     return this.all(
-      `SELECT s.*, u.display_name as created_by_name
-       FROM entity_snapshot s
+      `${ENTITY_SNAPSHOT_SELECT_SQL}
        INNER JOIN project p ON p.id = s.project_id
-       LEFT JOIN users u ON u.id = s.created_by
        WHERE s.workspace = ?
          AND p.workspace = ?
          AND (p.id = ? OR p.public_id = ?)
          AND s.status IN ('future_update', 'applied')
        ORDER BY CASE WHEN s.target_date IS NULL THEN 1 ELSE 0 END, s.target_date ASC, s.created_at DESC`,
       [workspace, workspace, projectId, projectId],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
   }
 
@@ -453,9 +445,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     const entityFilter =
       entityIds != null ? `AND s.entity_id IN (${entityIds.map(() => '?').join(',')})` : '';
     return this.all(
-      `SELECT s.*, u.display_name as created_by_name
-       FROM entity_snapshot s
-       LEFT JOIN users u ON u.id = s.created_by
+      `${ENTITY_SNAPSHOT_SELECT_SQL}
        WHERE s.workspace = ?
          AND (
            (s.status IN ('autosave', 'saved_version', 'deleted') AND s.created_at <= ?)
@@ -464,7 +454,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
          ${entityFilter}
        ORDER BY s.entity_id, s.created_at ASC`,
       [workspace, asOfIso, asOfIso, asOfIso, ...(entityIds ?? [])],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
   }
 
@@ -527,7 +517,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     const existing = await this.get(
       'SELECT * FROM entity_snapshot WHERE id = ? AND workspace = ?',
       [snapshotId, workspace],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
     if (existing?.status !== 'autosave') return null;
 
@@ -536,12 +526,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [commitMessage, snapshotId]
     );
     return await this.get(
-      `SELECT s.*, u.display_name as created_by_name
-       FROM entity_snapshot s
-       LEFT JOIN users u ON u.id = s.created_by
+      `${ENTITY_SNAPSHOT_SELECT_SQL}
        WHERE s.id = ?`,
       [snapshotId],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
   }
 
@@ -557,7 +545,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     const existing = await this.get(
       'SELECT * FROM entity_snapshot WHERE id = ? AND workspace = ?',
       [snapshotId, workspace],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
     if (existing?.status !== 'future_update') return null;
 
@@ -587,7 +575,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return await this.get(
       'SELECT * FROM entity_snapshot WHERE id = ?',
       [snapshotId],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
   }
 
@@ -595,7 +583,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     const existing = await this.get(
       'SELECT * FROM entity_snapshot WHERE id = ? AND workspace = ?',
       [snapshotId, workspace],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
     if (existing?.status !== 'future_update') return null;
 
@@ -606,7 +594,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return await this.get(
       'SELECT * FROM entity_snapshot WHERE id = ?',
       [snapshotId],
-      sqliteMappers.entitySnapshot
+      catalogMappers.entitySnapshot
     );
   }
 }

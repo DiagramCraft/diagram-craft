@@ -44,7 +44,7 @@ import {
   TbPalette,
   TbMicroscope
 } from 'react-icons/tb';
-import type { SchemaIconId } from '../lib/api';
+import type { SchemaIconId } from '../lib/schemaPresentation';
 
 const ICON_MAP: Record<SchemaIconId, React.ComponentType<{ size: number }>> = {
   'box': TbBox,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -8,9 +8,9 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TypeBadge } from '../../components/TypeBadge';
 import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { Title } from '../../components/Title';
-import { resolveSchemaColor, FIELD_TYPES, SCHEMA_ICONS } from '../../lib/api';
+import { resolveSchemaColor, FIELD_TYPES, SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import type { FieldType } from '../../lib/api';
+import type { FieldType } from '../../lib/schemaPresentation';
 import { ICON_MAP } from '../../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../../hooks/useSchemas';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
@@ -19,6 +19,7 @@ import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { EnumEditorScreen } from './EnumEditorScreen';
 import { EntitySchema, SchemaField } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import { EmptyState } from '../../components/EmptyState';
 
 const toFieldId = (name: string) =>
   name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
@@ -29,13 +30,11 @@ const deriveKeyPrefix = (value: string) =>
     .toUpperCase()
     .slice(0, 5);
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
+
 export const SchemaSettingsScreen = () => {
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as {
-    tab?: 'types' | 'enums';
-    schema?: string;
-    enumId?: string;
-  };
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
   const selectedSchemaId = search.schema;
   const activeTab = search.tab ?? 'types';
   const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();
@@ -159,6 +158,8 @@ export const SchemaSettingsScreen = () => {
           case 'longtext':
           case 'date':
             return { ...base, type: newType };
+          case 'number':
+            return { ...base, type: 'number' };
           case 'boolean':
             return { ...base, type: 'boolean' };
           case 'select':
@@ -374,21 +375,18 @@ export const SchemaSettingsScreen = () => {
           </div>
         </div>
       ) : (
-        <div className={styles.empty}>
-          <TbCode size={22} />
-          <div className={styles.emptyTitle}>No type selected</div>
-          <div>Select an entity type from the sidebar to edit its schema.</div>
-          {canEdit && (
-            <Button 
-              variant="primary" 
-              icon={<TbPlus size={12} />} 
-              onClick={handleCreateType}
-              style={{ marginTop: 16 }}
-            >
-              New entity type
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={<TbCode size={22} />}
+          title="No type selected"
+          subtitle="Select an entity type from the sidebar to edit its schema."
+          action={
+            canEdit && (
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateType}>
+                New entity type
+              </Button>
+            )
+          }
+        />
       )}
 
       <DeleteConfirmationDialog
@@ -528,6 +526,56 @@ const FieldRow = ({
               </div>
             </div>
           ) : null}
+        </div>
+      );
+    }
+    if (field.type === 'number') {
+      return (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gap: 4 }}>
+            <span className="dim" style={{ fontSize: 11 }}>
+              Min
+            </span>
+            <TextInput
+              value={field.min === undefined ? '' : String(field.min)}
+              disabled={!canEdit}
+              onChange={value => {
+                const raw = value ?? '';
+                if (raw.trim() === '') {
+                  onUpdate({ min: undefined } as Partial<SchemaField>);
+                  return;
+                }
+                const next = Number(raw);
+                if (!Number.isNaN(next)) {
+                  onUpdate({ min: Math.trunc(next) } as Partial<SchemaField>);
+                }
+              }}
+              style={{ width: '100%' }}
+              placeholder="Unbounded"
+            />
+          </div>
+          <div style={{ display: 'grid', gap: 4 }}>
+            <span className="dim" style={{ fontSize: 11 }}>
+              Max
+            </span>
+            <TextInput
+              value={field.max === undefined ? '' : String(field.max)}
+              disabled={!canEdit}
+              onChange={value => {
+                const raw = value ?? '';
+                if (raw.trim() === '') {
+                  onUpdate({ max: undefined } as Partial<SchemaField>);
+                  return;
+                }
+                const next = Number(raw);
+                if (!Number.isNaN(next)) {
+                  onUpdate({ max: Math.trunc(next) } as Partial<SchemaField>);
+                }
+              }}
+              style={{ width: '100%' }}
+              placeholder="Unbounded"
+            />
+          </div>
         </div>
       );
     }

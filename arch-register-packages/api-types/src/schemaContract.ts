@@ -26,6 +26,12 @@ const dateFieldSchema = baseFieldSchema.extend({
   type: z.literal('date').describe('Date field')
 });
 
+const numberFieldSchema = baseFieldSchema.extend({
+  type: z.literal('number').describe('Integer number field'),
+  min: z.number().int().optional().describe('Minimum allowed value'),
+  max: z.number().int().optional().describe('Maximum allowed value')
+});
+
 const selectFieldInputSchema = baseFieldSchema.extend({
   type: z.literal('select').describe('Single-select dropdown field'),
   enumId: z.string().describe('Enumeration identifier for dropdown options')
@@ -52,6 +58,7 @@ const schemaFieldInputSchema = z.discriminatedUnion('type', [
   longtextFieldSchema,
   booleanFieldSchema,
   dateFieldSchema,
+  numberFieldSchema,
   selectFieldInputSchema,
   referenceFieldSchema,
   containmentFieldSchema
@@ -71,6 +78,7 @@ const schemaFieldResponseSchema = z.discriminatedUnion('type', [
   longtextFieldSchema,
   booleanFieldSchema,
   dateFieldSchema,
+  numberFieldSchema,
   selectFieldResponseSchema,
   referenceFieldSchema,
   containmentFieldSchema

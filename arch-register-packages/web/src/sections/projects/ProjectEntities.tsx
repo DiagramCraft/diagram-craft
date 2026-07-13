@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import {
   TbCalendarEvent,
@@ -19,25 +19,29 @@ import type {
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '../../lib/api';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { Chip } from '../../components/Chip';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { TypeBadge } from '../../components/TypeBadge';
+import { Table } from '../../components/table/Table';
+import { EmptyState } from '../../components/EmptyState';
 import styles from './ProjectDetailScreen.module.css';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { ProjectTimelineTab } from './ProjectTimelineTab';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useEntities';
+import { useCreateSavedView, useSavedViews, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,
   getFilterValue,
   parseConditionsFromSearch,
-  parseViewConfigs,
-  type BrowserSearch
+  parseViewConfigs
 } from '../entities/components/entityBrowserState';
 import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
 import type { AsOfMarker } from '../../components/timeline/TimelineStrip';
+import { formatDate } from '../../utils/dateFormat';
+
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
 
 type ViewTab = 'entities' | 'project-entities' | 'future-changes' | 'timeline';
 type GroupBy = 'entity' | 'date';
@@ -82,9 +86,9 @@ export const ProjectEntities = ({
   const [isSavingView, setIsSavingView] = useState(false);
 
   const pendingCount = futureSnapshots.length;
-  const navigate = useNavigate();
+  const navigate = routeApi.useNavigate();
   const { workspaceSlug, permissions } = useWorkspaceContext();
-  const search = useSearch({ strict: false }) as BrowserSearch;
+  const search = routeApi.useSearch();
   const asOf = search.asOf;
   const readOnly = !!asOf;
 
@@ -157,7 +161,8 @@ export const ProjectEntities = ({
           q,
           sort,
           conditions,
-          viewConfigs
+          viewConfigs,
+          joinAssessmentId: search.joinAssessmentId ?? null
         })
       );
     } catch {
@@ -181,7 +186,8 @@ export const ProjectEntities = ({
             owner: ownerFilter,
             q,
             sort,
-            conditions
+            conditions,
+            assessmentId: search.joinAssessmentId ?? null
           },
           config: buildSavedViewPayload({
             scope: activeSavedView.scope,
@@ -196,7 +202,8 @@ export const ProjectEntities = ({
             q,
             sort,
             conditions,
-            viewConfigs
+            viewConfigs,
+            joinAssessmentId: search.joinAssessmentId ?? null
           }).config
         }
       });
@@ -216,6 +223,7 @@ export const ProjectEntities = ({
     sort,
     conditions,
     viewConfigs,
+    search.joinAssessmentId,
     updateSavedViewMutation
   ]);
 
@@ -286,10 +294,7 @@ export const ProjectEntities = ({
             value={<span className="mono tabular">{projectEntities.length}</span>}
           />
           <ProjectMetaItem label="Owner" value={project.owner?.name ?? '—'} />
-          <ProjectMetaItem
-            label="Last edit"
-            value={new Date(project.updated_at).toLocaleDateString()}
-          />
+          <ProjectMetaItem label="Last edit" value={formatDate(project.updated_at)} />
         </>
       }
       toolbar={
@@ -466,98 +471,75 @@ const ProjectEntitiesTab = ({
   if (projectEntities.length === 0) {
     return (
       <div className={styles.entityTab}>
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No entities in project</div>
-          <div className={styles.emptySub}>
-            Add entities from the Entities tab to see them here.
-          </div>
-        </div>
+        <EmptyState
+          framed
+          title="No entities in project"
+          subtitle="Add entities from the Entities tab to see them here."
+        />
       </div>
     );
   }
 
   return (
-    <div className={`${styles.entityTab} ${styles.entityTabFill}`}>
-      <div className={styles.projectEntityTableWrap}>
-        <table className={styles.projectEntityTable}>
-          <thead>
-            <tr>
-              <th style={{ minWidth: 220 }}>Name</th>
-              <th>Role</th>
-              <th style={{ width: 100 }}>Done</th>
-              <th style={{ width: 36 }} />
-            </tr>
-          </thead>
-          <tbody>
-            {groupedByRole.flatMap(([role, entities]) =>
-              entities.map(entity => (
-                <tr key={entity.entity_id}>
-                  <td>
-                    <div className={styles.projectEntityTableName}>
-                      {entity.entity_schema && schemaMap.get(entity.entity_schema.id) && (
-                        <TypeBadge
-                          color={schemaMap.get(entity.entity_schema.id)!.color}
-                          icon={schemaMap.get(entity.entity_schema.id)!.icon}
-                          name={entity.entity_schema.name}
-                          size={18}
-                        />
-                      )}
-                      <div>
-                        <div className={styles.projectEntityTableNameMain}>
-                          {entity.entity_name}
-                        </div>
-                        {entity.entity_description && (
-                          <div className={styles.projectEntityTableNameSub}>
-                            {entity.entity_description}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    {entity.entity_type?.name ? (
-                      <Chip
-                        tone="ghost"
-                        dot={entityTypeColorMap.get(entity.entity_type.id) ?? undefined}
-                      >
-                        {role}
-                      </Chip>
-                    ) : (
-                      <span className="dim">No role</span>
-                    )}
-                  </td>
-                  <td>
-                    <Chip tone="ghost">{entity.is_done ? 'Done' : 'Open'}</Chip>
-                  </td>
-                  <td>
-                    {project.canEdit && (
-                      <DropdownMenu
-                        trigger={
-                          <button
-                            type="button"
-                            className={styles.projectEntityDotsBtn}
-                            aria-label="Entity actions"
-                          >
-                            <TbDots size={14} />
-                          </button>
-                        }
-                        items={entityMenuItems(entity)}
+    <div className={styles.entityTab}>
+      <Table.Root>
+        <Table.Head>
+          <Table.Row>
+            <Table.HeaderCell style={{ minWidth: 220 }}>Name</Table.HeaderCell>
+            <Table.HeaderCell>Role</Table.HeaderCell>
+            <Table.HeaderCell width={100}>Done</Table.HeaderCell>
+            <Table.HeaderCell width={36} />
+          </Table.Row>
+        </Table.Head>
+        <Table.Body>
+          {groupedByRole.flatMap(([role, entities]) =>
+            entities.map(entity => (
+              <Table.Row key={entity.entity_id}>
+                <Table.NameCell
+                  icon={
+                    entity.entity_schema &&
+                    schemaMap.get(entity.entity_schema.id) && (
+                      <TypeBadge
+                        color={schemaMap.get(entity.entity_schema.id)!.color}
+                        icon={schemaMap.get(entity.entity_schema.id)!.icon}
+                        name={entity.entity_schema.name}
+                        size={18}
                       />
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                    )
+                  }
+                  title={entity.entity_name}
+                  subtitle={entity.entity_description}
+                />
+                <Table.Cell>
+                  {entity.entity_type?.name ? (
+                    <Chip
+                      tone="ghost"
+                      dot={entityTypeColorMap.get(entity.entity_type.id) ?? undefined}
+                    >
+                      {role}
+                    </Chip>
+                  ) : (
+                    <span className="dim">No role</span>
+                  )}
+                </Table.Cell>
+                <Table.Cell>
+                  <Chip tone="ghost">{entity.is_done ? 'Done' : 'Open'}</Chip>
+                </Table.Cell>
+                <Table.ActionsCell>
+                  {project.canEdit && (
+                    <DropdownMenu
+                      trigger={<Table.DotsButton aria-label="Entity actions" />}
+                      items={entityMenuItems(entity)}
+                    />
+                  )}
+                </Table.ActionsCell>
+              </Table.Row>
+            ))
+          )}
+        </Table.Body>
+      </Table.Root>
     </div>
   );
-};
-
-const formatDate = (dateStr: string | null) => {
-  if (!dateStr) return null;
-  return new Date(`${dateStr}T00:00:00`).toLocaleDateString();
 };
 
 const FutureChangesTab = ({
@@ -578,15 +560,12 @@ const FutureChangesTab = ({
   if (futureSnapshots.length === 0) {
     return (
       <div className={styles.entityTab}>
-        <div className={styles.empty}>
-          <div className={styles.emptyIcon}>
-            <TbCalendarEvent size={22} />
-          </div>
-          <div className={styles.emptyTitle}>No future changes planned</div>
-          <div className={styles.emptySub}>
-            Use the entity menu to plan future changes for entities in this project.
-          </div>
-        </div>
+        <EmptyState
+          framed
+          icon={<TbCalendarEvent size={22} />}
+          title="No future changes planned"
+          subtitle="Use the entity menu to plan future changes for entities in this project."
+        />
       </div>
     );
   }
@@ -653,7 +632,7 @@ const FutureChangesTab = ({
       <div className={styles.futureChangesGroups}>
         {sortedKeys.map(key => {
           const snaps = groups.get(key)!;
-          const label = key === '__no-date__' ? 'No target date' : (formatDate(key) ?? key);
+          const label = key === '__no-date__' ? 'No target date' : formatDate(key, key);
           return (
             <div key={key} className={styles.futureGroup}>
               <div className={styles.futureGroupHead}>

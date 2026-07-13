@@ -1,5 +1,3 @@
-import './App.css';
-import './EmbeddableEditor.css';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
@@ -10,7 +8,7 @@ import { useEventListener } from './react-app/hooks/useEventListener';
 import { useRedraw } from './react-app/hooks/useRedraw';
 import { DocumentTabs } from './react-app/DocumentTabs';
 import { Ruler } from './react-app/Ruler';
-import { ConfigurationContext } from './react-app/context/ConfigurationContext';
+import { ConfigurationContext, type ConfigurationContextType } from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
 import { LayerIndicator } from './react-app/LayerIndicator';
 import {
@@ -99,6 +97,25 @@ const defaultFileActions: FileActions = {
 
 const noopProgressCallback: ProgressCallback = () => {};
 
+const defaultConfiguration: ConfigurationContextType = {
+  palette: {
+    primary: defaultPalette
+  },
+  fonts: {
+    'Times': 'Times',
+    'Arial': 'Arial',
+    'Sans Serif': 'sans-serif',
+    'Helvetica': 'Helvetica',
+    'Verdana': 'Verdana',
+    'Courier': 'Courier',
+    'Comic Sans': 'Comic Sans MS',
+    'Impact': 'Impact',
+    'Tahoma': 'Tahoma',
+    'Trebuchet': 'Trebuchet MS',
+    'Georgia': 'Georgia'
+  }
+};
+
 export type EmbeddableEditorProps = {
   doc: DiagramDocument;
   documentFactory: DocumentFactory;
@@ -114,6 +131,9 @@ export type EmbeddableEditorProps = {
 
   // Wrapper
   wrapperClassName?: string | null;
+
+  // Theming
+  configuration?: ConfigurationContextType;
 
   // Application lifecycle
   application?: Application;
@@ -138,7 +158,8 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
     documentName,
     dirty: externalDirty,
     headerLeft,
-    wrapperClassName = 'dc-embeddable-editor',
+    wrapperClassName = 'dc dc-embeddable-editor',
+    configuration = defaultConfiguration,
     onApplicationReady,
     fileActions = defaultFileActions,
     onDiagramChange: externalDiagramChange,
@@ -312,26 +333,7 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
         <ApplicationContext.Provider value={{ application }}>
           {overlay}
 
-          <ConfigurationContext.Provider
-            value={{
-              palette: {
-                primary: defaultPalette
-              },
-              fonts: {
-                'Times': 'Times',
-                'Arial': 'Arial',
-                'Sans Serif': 'sans-serif',
-                'Helvetica': 'Helvetica',
-                'Verdana': 'Verdana',
-                'Courier': 'Courier',
-                'Comic Sans': 'Comic Sans MS',
-                'Impact': 'Impact',
-                'Tahoma': 'Tahoma',
-                'Trebuchet': 'Trebuchet MS',
-                'Georgia': 'Georgia'
-              }
-            }}
-          >
+          <ConfigurationContext.Provider value={configuration}>
             {/* Dialogs */}
             {dialogStack.map(item => {
               if (item.dialog.id !== 'imageInsert') return null;

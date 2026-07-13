@@ -1,71 +1,56 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearch, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import styles from './DiagramScreen.module.css';
-import { TbArrowLeft } from 'react-icons/tb';
-import { initializeDiagramCraft, getIncludedPackages } from '../../diagramcraft-initial-config';
-import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
-import { DefaultDataProvider } from '@diagram-craft/model/data-providers/dataProviderDefault';
-import {
-  UrlDataProvider,
-  UrlDataProviderId
-} from '@diagram-craft/model/data-providers/dataProviderUrl';
-import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import '@diagram-craft/main/embed/embed.css';
+import { initializeDiagramCraft } from '../../diagramcraft-initial-config';
+import { loadDocument } from '@diagram-craft/main/embed/loadDocument';
+import { registerDocumentStencils } from '@diagram-craft/main/embed/registerStencils';
+import { UrlDataProvider } from '@diagram-craft/model/data-providers/dataProviderUrl';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
-import type {
-  SerializedDiagramDocument,
-  SerializedOverride
-} from '@diagram-craft/model/serialization/serializedTypes';
+import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
-import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../../auth/AuthContext';
 import { orpcClient } from '../../lib/orpcClient';
-import {
-  entityContentKeys,
-  projectEntityKeys,
-  projectFileKeys,
-  projectKeys,
-  workspaceContentKeys
-} from '../../hooks/queryKeys';
+import { entityContentKeys, projectFileKeys, workspaceContentKeys } from '../../queries/content';
+import { projectEntityKeys, projectKeys } from '../../queries/projects';
 import { searchKeys } from '../../hooks/useSearch';
 import { stableHue } from '../../components/MemberAvatar';
 import {
   asEntityPublicId,
   asProjectPublicId,
+  entityContentFolderRoute,
+  projectContentFolderRoute,
   entityDetailRoute,
-  projectDetailRoute
+  projectDetailRoute,
+  workspaceContentFolderRoute
 } from '../../routes/publicObjectRoutes';
 import {
   hashDiagramContent,
   rememberMarkdownDiagramOriginal,
   updateMarkdownDiagramSessionRecord
 } from '../markdown/markdownDiagramSession';
-
-const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
-type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
-type SerializedOverrides = Record<string, Record<string, SerializedOverride>>;
+import {
+  ARCH_REGISTER_PUBLIC_PROVIDER_ID,
+  deriveDiagramScope,
+  injectPublicDiagramProvider,
+  normalizePublicSchemas,
+  type PublicDiagramSchema
+} from './diagramScreenState';
+import { DiagramScreenView } from './DiagramScreenView';
 
 export const DiagramScreen = () => {
-  const params = useParams({ strict: false }) as {
-    workspaceSlug: string;
-    projectId?: string;
-    entityId?: string;
-    diagramId: string;
-  };
-  const { workspaceSlug, diagramId } = params;
-  const workspaceId = workspaceSlug;
-  const isEntityDiagram = !!params.entityId;
-  const isWorkspaceContent = !params.projectId && !params.entityId;
-  const projectId = params.projectId ?? params.entityId ?? workspaceId;
+  const params = useParams({ strict: false });
+  // workspaceSlug/diagramId are always present: this screen only mounts under
+  // the entity/project/content diagram routes, all of which define both params.
+  const workspaceSlug = params.workspaceSlug!;
+  const { diagramId, workspaceId, isEntityDiagram, isWorkspaceContent, projectId } =
+    deriveDiagramScope(params);
 
   const navigate = useNavigate();
   const router = useRouter();
-  const search = useSearch({ strict: false }) as {
-    returnTo?: string;
-    markdownSessionId?: string;
-  };
+  const search = useSearch({ strict: false });
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const userId = user?.id;
@@ -85,17 +70,8 @@ export const DiagramScreen = () => {
     dirtyRef.current = dirty;
   }, [dirty]);
 
-  const normalizePublicSchemas = useCallback(
-    (publicSchemas: PublicSchema[]) =>
-      publicSchemas.map(schema => ({
-        ...schema,
-        providerId: ARCH_REGISTER_PUBLIC_PROVIDER_ID
-      })),
-    []
-  );
-
   const makePublicProvider = useCallback(
-    (publicSchemas: PublicSchema[]) => {
+    (publicSchemas: PublicDiagramSchema[]) => {
       const normalizedSchemas = normalizePublicSchemas(publicSchemas);
       const provider = new UrlDataProvider(
         JSON.stringify({
@@ -108,46 +84,13 @@ export const DiagramScreen = () => {
       provider.id = ARCH_REGISTER_PUBLIC_PROVIDER_ID;
       return provider;
     },
-    [normalizePublicSchemas, workspaceId]
+    [workspaceId]
   );
 
   const injectPublicProvider = useCallback(
-    (
-      diagramData: SerializedDiagramDocument,
-      publicSchemas: PublicSchema[]
-    ): SerializedDiagramDocument => {
-      const currentData =
-        typeof diagramData.data === 'object' && diagramData.data !== null
-          ? (diagramData.data as Record<string, unknown>)
-          : {};
-      const normalizedSchemas = normalizePublicSchemas(publicSchemas);
-
-      return {
-        ...diagramData,
-        schemas: normalizedSchemas,
-        data: {
-          ...currentData,
-          providers: [
-            {
-              id: ARCH_REGISTER_PUBLIC_PROVIDER_ID,
-              providerId: UrlDataProviderId,
-              data: JSON.stringify({
-                schemas: normalizedSchemas,
-                data: [],
-                schemaUrl: `/api/public/${workspaceId}/schemas`,
-                dataUrl: `/api/public/${workspaceId}/data`
-              })
-            }
-          ],
-          templates: Array.isArray(currentData.templates) ? currentData.templates : [],
-          overrides:
-            typeof currentData.overrides === 'object' && currentData.overrides !== null
-              ? (currentData.overrides as SerializedOverrides)
-              : {}
-        }
-      };
-    },
-    [normalizePublicSchemas, workspaceId]
+    (diagramData: SerializedDiagramDocument, publicSchemas: PublicDiagramSchema[]) =>
+      injectPublicDiagramProvider(diagramData, publicSchemas, workspaceId),
+    [workspaceId]
   );
 
   // Save on close as a safety net (server auto-save handles ongoing persistence)
@@ -204,9 +147,13 @@ export const DiagramScreen = () => {
       ]);
     }
 
-    await queryClient.invalidateQueries({ queryKey: searchKeys.all });
-    await queryClient.invalidateQueries({ queryKey: projectFileKeys.detail(workspaceId, diagramId) });
-    await queryClient.invalidateQueries({ queryKey: projectFileKeys.content(workspaceId, diagramId) });
+    await queryClient.invalidateQueries({ queryKey: searchKeys.workspaceSearches(workspaceId) });
+    await queryClient.invalidateQueries({
+      queryKey: projectFileKeys.detail(workspaceId, diagramId)
+    });
+    await queryClient.invalidateQueries({
+      queryKey: projectFileKeys.content(workspaceId, diagramId)
+    });
   }, [isWorkspaceContent, isEntityDiagram, queryClient, workspaceId, projectId, diagramId]);
 
   const handleClose = useCallback(async () => {
@@ -222,30 +169,39 @@ export const DiagramScreen = () => {
       const folderPath = fileInfoRef.current?.path.includes('/')
         ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
         : undefined;
-      navigate({
-        to: '/$workspaceSlug/content',
-        params: { workspaceSlug },
-        search: folderPath ? { contentFolder: folderPath } : {}
-      });
+      if (folderPath) {
+        navigate(workspaceContentFolderRoute(workspaceSlug, folderPath));
+      } else {
+        navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } });
+      }
     } else if (isEntityDiagram) {
       // Navigate back to entity detail page with folder context
       const folderPath = fileInfoRef.current?.path.includes('/')
         ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
         : undefined;
 
-      navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(projectId), folderPath ? { contentFolder: folderPath } : {}));
+      if (folderPath) {
+        navigate(entityContentFolderRoute(workspaceSlug, asEntityPublicId(projectId), folderPath));
+      } else {
+        navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(projectId)));
+      }
     } else {
       // Navigate back to project detail page
-      navigate(
-        projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-          tab: 'projects' as const,
-          section: 'home' as const,
-          folder:
-            fileInfoRef.current?.path.includes('/')
-              ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
-              : undefined
-        })
-      );
+      const folderPath = fileInfoRef.current?.path.includes('/')
+        ? fileInfoRef.current.path.substring(0, fileInfoRef.current.path.lastIndexOf('/'))
+        : undefined;
+      if (folderPath) {
+        navigate(
+          projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folderPath)
+        );
+      } else {
+        navigate(
+          projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+            tab: 'projects' as const,
+            section: 'home' as const
+          })
+        );
+      }
     }
   }, [
     save,
@@ -260,64 +216,17 @@ export const DiagramScreen = () => {
   ]);
 
   useEffect(() => {
-    let releaseDataChange = () => {};
+    let disconnect = () => {};
     let releaseAwarenessChange = () => {};
+    let cancelled = false;
 
     const loadDiagram = async () => {
       try {
         setLoading(true);
         sawCollaboratorsRef.current = false;
 
-        const suppressDefaultProvider = async (document: DiagramDocument) => {
-          const defaultProvider = document.data.providers.find(
-            provider => provider instanceof DefaultDataProvider
-          );
-
-          if (!defaultProvider) return;
-
-          for (const schema of [...defaultProvider.schemas]) {
-            await defaultProvider.deleteSchema(schema);
-          }
-        };
-
-        let reconcileInFlight = false;
-
-        const reconcilePublicProvider = async (
-          document: DiagramDocument,
-          publicSchemas: PublicSchema[]
-        ) => {
-          if (reconcileInFlight) return;
-          reconcileInFlight = true;
-
-          try {
-            document.data.setProviders([makePublicProvider(publicSchemas)]);
-            await suppressDefaultProvider(document);
-          } finally {
-            reconcileInFlight = false;
-          }
-        };
-
-        const hasExpectedSchemas = (document: DiagramDocument, publicSchemas: PublicSchema[]) => {
-          const currentSchemaIds = document.data.db.schemas.map(schema => schema.id).sort();
-          const expectedSchemaIds = publicSchemas.map(schema => schema.id).sort();
-
-          return (
-            currentSchemaIds.length === expectedSchemaIds.length &&
-            currentSchemaIds.every((schemaId, index) => schemaId === expectedSchemaIds[index])
-          );
-        };
-
-        const enforcePublicProvider = async (
-          document: DiagramDocument,
-          publicSchemas: PublicSchema[]
-        ) => {
-          if (hasExpectedSchemas(document, publicSchemas)) return;
-
-          await reconcilePublicProvider(document, publicSchemas);
-        };
-
-        const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);
-        const includedPackages = getIncludedPackages();
+        const { documentFactory, diagramFactory, includedPackages, stencilConfig } =
+          initializeDiagramCraft(workspaceId);
 
         // biome-ignore lint/suspicious/noExplicitAny: API response
         const findFileInFolders = (folders: any[], rootFiles?: any[]) => {
@@ -411,40 +320,56 @@ export const DiagramScreen = () => {
                 avatar: config.awareness.avatar()
               };
 
-        const root = await documentFactory.loadCRDT(roomName, userState, () => {});
-        const document = await documentFactory.createDocument(root, roomName, () => {});
-
         const publicSchemasResponse = await fetch(`/api/public/${workspaceId}/schemas`);
         if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
-        const publicSchemas = (await publicSchemasResponse.json()) as PublicSchema[];
+        const publicSchemas = (await publicSchemasResponse.json()) as PublicDiagramSchema[];
 
-        // If the CRDT already has state (another client is connected), use it directly.
-        // Otherwise, this is the first client — load from REST and deserialize.
-        if (document.diagrams.length === 0) {
-          const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas);
+        const {
+          doc: document,
+          disconnect: docDisconnect,
+          awareness
+        } = await loadDocument({
+          url: roomName,
+          userState,
+          documentFactory,
+          diagramFactory,
+          // roomName is a CRDT identifier, not a fetchable file URL — always create the
+          // document straight from the CRDT root rather than falling back to the
+          // autosave/file-URL loading path (which is standalone-only).
+          forceLoadFromServer: true,
+          // Only the first client to connect sees an empty CRDT — subsequent
+          // clients sync existing collaborative state instead of re-seeding it.
+          seedContent: async doc => {
+            const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas);
+            await deserializeDiagramDocument(diagramData, doc, diagramFactory, {
+              includedPackages
+            });
+          },
+          dataProviders: {
+            providers: () => [makePublicProvider(publicSchemas)],
+            includeDefaultProvider: false
+          }
+        });
 
-          await deserializeDiagramDocument(diagramData, document, diagramFactory, {
-            includedPackages
-          });
+        // The effect was cleaned up (unmount/navigation/dep change) while loadDocument
+        // was still pending — the cleanup below already ran with the no-op `disconnect`,
+        // so it never closed the connection loadDocument just opened. Close it now
+        // instead of wiring it up for a component that's already gone.
+        if (cancelled) {
+          docDisconnect();
+          document.release();
+          return;
         }
+        disconnect = docDisconnect;
 
-        await document.load();
-        await reconcilePublicProvider(document, publicSchemas);
-
-        const handleDataChange = () => {
-          void enforcePublicProvider(document, publicSchemas);
-        };
-        releaseDataChange = document.data.on('change', handleDataChange);
+        registerDocumentStencils(document, stencilConfig);
 
         const handleAwarenessChange = () => {
-          if ((CollaborationConfig.Backend.awareness?.getUserStates().length ?? 0) > 1) {
+          if ((awareness?.getUserStates().length ?? 0) > 1) {
             sawCollaboratorsRef.current = true;
           }
         };
-        releaseAwarenessChange = CollaborationConfig.Backend.awareness?.on(
-          'changeUser',
-          handleAwarenessChange
-        ) ?? (() => {});
+        releaseAwarenessChange = awareness?.on('changeUser', handleAwarenessChange) ?? (() => {});
         handleAwarenessChange();
 
         if (document.diagrams.length === 0) {
@@ -455,6 +380,7 @@ export const DiagramScreen = () => {
         setDoc(document);
         setLoading(false);
       } catch (err) {
+        console.error('Failed to load diagram:', err);
         setError(err instanceof Error ? err.message : 'Failed to load diagram');
         setLoading(false);
       }
@@ -463,9 +389,9 @@ export const DiagramScreen = () => {
     loadDiagram();
 
     return () => {
-      CollaborationConfig.Backend.disconnect(() => {});
+      cancelled = true;
+      disconnect();
       releaseAwarenessChange();
-      releaseDataChange();
       if (docRef.current) {
         docRef.current.deactivate(() => {});
         docRef.current.release();
@@ -486,53 +412,16 @@ export const DiagramScreen = () => {
     search.markdownSessionId
   ]);
 
-  const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);
-
-  if (loading) {
-    return (
-      <div className={styles.diagramScreen}>
-        <div className={styles.loading}>
-          <div className={styles.spinner} />
-          <p>Loading diagram...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !fileInfo || !doc) {
-    return (
-      <div className={styles.diagramScreen}>
-        <div className={styles.error}>
-          <p>Error: {error ?? 'Failed to load diagram'}</p>
-          <button type="button" onClick={handleClose} className={styles.button}>
-            Back to Project
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={`dc ${styles.diagramScreen}`}>
-      <EmbeddableEditor
-        doc={doc}
-        documentFactory={documentFactory}
-        diagramFactory={diagramFactory}
-        documentName={fileInfo.name}
-        dirty={dirty}
-        onDirtyChange={setDirty}
-        headerLeft={
-          <button
-            type={'button'}
-            className={'embeddable-back-button'}
-            onClick={handleClose}
-            title={'Back'}
-          >
-            <TbArrowLeft size={'13px'} />
-            <span>Back</span>
-          </button>
-        }
-      />
-    </div>
+    <DiagramScreenView
+      workspaceId={workspaceId}
+      loading={loading}
+      error={error}
+      fileInfo={fileInfo}
+      doc={doc}
+      dirty={dirty}
+      onDirtyChange={setDirty}
+      onClose={handleClose}
+    />
   );
 };

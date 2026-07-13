@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { TeamAssignmentInfo, WorkspaceTeam } from '../lib/api';
+import type { TeamAssignmentInfo, WorkspaceTeamInput } from '@arch-register/api-types/workspaceConfigContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
-import { workspaceAnalyticsKeys } from './queryKeys';
+import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
 
 // Query keys factory
 export const workspaceConfigKeys = {
@@ -57,7 +57,7 @@ export const useUpdateLifecycleStates = (workspaceId: string) => {
     onSuccess: updatedStates => {
       // Update the cache with the new states
       queryClient.setQueryData(workspaceConfigKeys.lifecycleStates(workspaceId), updatedStates);
-      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) });
+      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) });
     }
   });
 };
@@ -66,14 +66,14 @@ export const useUpdateTeams = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (teams: WorkspaceTeam[]) =>
+    mutationFn: (teams: WorkspaceTeamInput[]) =>
       orpcClient.config.teams.replace({
         params: { workspace: workspaceId },
         body: { teams }
       }),
     onSuccess: updatedTeams => {
       queryClient.setQueryData(workspaceConfigKeys.teams(workspaceId), updatedTeams);
-      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.detail(workspaceId) });
+      void queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) });
     }
   });
 };

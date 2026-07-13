@@ -2,28 +2,29 @@ import type {
   CatalogDatabase,
   EntityGrantDbCretae,
   EntityDbCreate,
-  EntityDbResult,
   EntityListDbFilters,
   EntityListDbPagination,
-  SchemaDbResult,
   EntityDbUpdate,
   WorkspaceEnumDbCreate,
-  WorkspaceEnumDbResult,
   WorkspaceEnumDbUpdate,
   SchemaDbCreate,
   SchemaDbUpdate,
-  EntityGrantDbResult,
-  PinnedEntityDbResult,
   PinnedEntityDbCreate,
   EntitySnapshotDbCreate,
-  EntitySnapshotDbResult,
   TimelineMarkerDbResult
 } from './catalogDatabase';
+import {
+  ENTITY_SELECT_SQL,
+  ENTITY_SNAPSHOT_SELECT_SQL,
+  catalogMappers,
+  resolveEntityListPagination
+} from './catalogDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
-import { ENTITY_DEFAULTS } from '../../../constants';
+import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { isUuidLike } from '../../../utils/publicIds';
 import {
   ENTITY_BUILTIN_COLUMNS,
+  ENTITY_ARRAY_COLUMNS,
   isValidFieldId,
   escapeLike,
   buildConditionClause
@@ -38,23 +39,24 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async listSchemas(workspace: string) {
-    return await this.sql<SchemaDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM entity_schema WHERE workspace = ${workspace} ORDER BY name
     `;
+    return mapDatabaseRows(rows, catalogMappers.schema);
   }
 
   async getSchema(workspace: string, id: string) {
-    const [row] = await this.sql<SchemaDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM entity_schema WHERE workspace = ${workspace} AND id = ${id}
     `;
-    return row ?? null;
+    return row ? catalogMappers.schema(row) : null;
   }
 
   async getSchemaByKeyPrefix(prefix: string) {
-    const [row] = await this.sql<SchemaDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM entity_schema WHERE key_prefix = ${prefix}
     `;
-    return row ?? null;
+    return row ? catalogMappers.schema(row) : null;
   }
 
   async createSchema(input: SchemaDbCreate) {
@@ -63,9 +65,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, key_prefix, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
         RETURNING *
-      `) as SchemaDbResult[];
+      `) as DatabaseRow[];
       const [row] = rows;
-      return row!;
+      return catalogMappers.schema(row!);
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -85,9 +87,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
-      `) as SchemaDbResult[];
+      `) as DatabaseRow[];
       const [row] = rows;
-      return row ?? null;
+      return row ? catalogMappers.schema(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -95,38 +97,39 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async deleteSchema(workspace: string, id: string) {
     try {
-      const [row] = await this.sql<SchemaDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         DELETE FROM entity_schema
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
       `;
-      return row ?? null;
+      return row ? catalogMappers.schema(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
   }
 
   async listEnums(workspace: string) {
-    return await this.sql<WorkspaceEnumDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM workspace_enum WHERE workspace = ${workspace} ORDER BY sort_order, name
     `;
+    return mapDatabaseRows(rows, catalogMappers.workspaceEnum);
   }
 
   async getEnum(workspace: string, id: string) {
-    const [row] = await this.sql<WorkspaceEnumDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM workspace_enum WHERE workspace = ${workspace} AND id = ${id}
     `;
-    return row ?? null;
+    return row ? catalogMappers.workspaceEnum(row) : null;
   }
 
   async createEnum(input: WorkspaceEnumDbCreate) {
     try {
-      const [row] = await this.sql<WorkspaceEnumDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO workspace_enum (id, workspace, name, options, sort_order, created_at, updated_at)
         VALUES (${input.id}, ${input.workspace}, ${input.name}, ${this.json(input.options)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
-      return row!;
+      return catalogMappers.workspaceEnum(row!);
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -134,7 +137,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async updateEnum(workspace: string, id: string, input: WorkspaceEnumDbUpdate) {
     try {
-      const [row] = await this.sql<WorkspaceEnumDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         UPDATE workspace_enum
         SET name = ${input.name},
             options = ${this.json(input.options)},
@@ -143,7 +146,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
       `;
-      return row ?? null;
+      return row ? catalogMappers.workspaceEnum(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -151,33 +154,23 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async deleteEnum(workspace: string, id: string) {
     try {
-      const [row] = await this.sql<WorkspaceEnumDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         DELETE FROM workspace_enum
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
       `;
-      return row ?? null;
+      return row ? catalogMappers.workspaceEnum(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
   }
 
   async listEntities(workspace: string) {
-    return this.sql.unsafe<EntityDbResult[]>(
-      `SELECT e.*,
-        wo.name   AS owner_name,
-        ls.label  AS lifecycle_label,
-        tls.label AS target_lifecycle_label,
-        es.name   AS schema_name
-       FROM entity e
-       LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
-       LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
-       LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
-       JOIN entity_schema es ON es.id = e.schema_id
-       WHERE e.workspace = $1 AND e.deleted_at IS NULL
-       ORDER BY e.name, e.id`,
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${ENTITY_SELECT_SQL} WHERE e.workspace = $1 AND e.deleted_at IS NULL ORDER BY e.name, e.id`,
       [workspace]
     );
+    return mapDatabaseRows(rows, catalogMappers.enrichedEntity);
   }
 
   async listEntitiesPaginated(
@@ -185,8 +178,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     filters?: EntityListDbFilters,
     pagination?: EntityListDbPagination
   ) {
-    const limit = pagination?.limit ?? ENTITY_DEFAULTS.PAGE_SIZE;
-    const offset = pagination?.offset ?? 0;
+    const { limit, offset } = resolveEntityListPagination(pagination);
     const whereParts: string[] = ['e.workspace = $1 AND e.deleted_at IS NULL'];
     const params: unknown[] = [workspace];
     const addParam = (v: unknown) => {
@@ -204,70 +196,54 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       );
     }
     for (const cond of filters?.conditions ?? []) {
-      const col =
-        ENTITY_BUILTIN_COLUMNS[cond.fieldId] ??
-        (isValidFieldId(cond.fieldId) ? `(e.data->>'${cond.fieldId}')` : null);
+      // Guard against prototype pollution: only accept own properties from ENTITY_BUILTIN_COLUMNS
+      // For custom fields, also verify they don't match Object.prototype property names
+      let col: string | null = null;
+      let kind: 'scalar' | 'array' = 'scalar';
+      if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, cond.fieldId)) {
+        col = ENTITY_BUILTIN_COLUMNS[cond.fieldId] ?? null;
+      } else if (Object.hasOwn(ENTITY_ARRAY_COLUMNS, cond.fieldId)) {
+        col = ENTITY_ARRAY_COLUMNS[cond.fieldId] ?? null;
+        kind = 'array';
+      } else if (isValidFieldId(cond.fieldId) && !Object.hasOwn(Object.prototype, cond.fieldId)) {
+        col = `(e.data->>'${cond.fieldId}')`;
+      }
       if (!col) continue;
-      const clause = buildConditionClause(col, cond, addParam, 'postgres');
+      const clause = buildConditionClause(col, cond, addParam, 'postgres', kind);
       if (clause) whereParts.push(clause);
     }
 
-    return this.sql.unsafe<EntityDbResult[]>(
-      `SELECT e.*,
-        wo.name   AS owner_name,
-        ls.label  AS lifecycle_label,
-        tls.label AS target_lifecycle_label,
-        es.name   AS schema_name
-       FROM entity e
-       LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
-       LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
-       LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
-       JOIN entity_schema es ON es.id = e.schema_id
-       WHERE ${whereParts.join(' AND ')}
+    const limitParam = addParam(limit);
+    const offsetParam = addParam(offset);
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${ENTITY_SELECT_SQL} WHERE ${whereParts.join(' AND ')}
        ORDER BY e.name, e.id
-       LIMIT ${limit}
-       OFFSET ${offset}`,
+       LIMIT ${limitParam}
+       OFFSET ${offsetParam}`,
       // postgres.js accepts string | number | boolean | null | Date; cast from unknown[] is safe
       // because all values we push are those types
       params as Parameters<typeof this.sql.unsafe>[1]
     );
+    return mapDatabaseRows(rows, catalogMappers.enrichedEntity);
   }
 
   async getEntity(workspace: string, identifier: string) {
     if (!isUuidLike(identifier)) {
       return this.getEntityByPublicId(workspace, identifier);
     }
-    const [row] = await this.sql<EntityDbResult[]>`
-      SELECT e.*,
-        wo.name   AS owner_name,
-        ls.label  AS lifecycle_label,
-        tls.label AS target_lifecycle_label,
-        es.name   AS schema_name
-      FROM entity e
-      LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
-      LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
-      LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
-      JOIN entity_schema es ON es.id = e.schema_id
-      WHERE e.workspace = ${workspace} AND e.id = ${identifier} AND e.deleted_at IS NULL
-    `;
-    return row ?? null;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${ENTITY_SELECT_SQL} WHERE e.workspace = $1 AND e.id = $2 AND e.deleted_at IS NULL`,
+      [workspace, identifier]
+    );
+    return rows[0] ? catalogMappers.enrichedEntity(rows[0]) : null;
   }
 
   private async getEntityByPublicId(workspace: string, publicId: string) {
-    const [row] = await this.sql<EntityDbResult[]>`
-      SELECT e.*,
-        wo.name   AS owner_name,
-        ls.label  AS lifecycle_label,
-        tls.label AS target_lifecycle_label,
-        es.name   AS schema_name
-      FROM entity e
-      LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
-      LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
-      LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
-      JOIN entity_schema es ON es.id = e.schema_id
-      WHERE e.public_id = ${publicId} AND e.workspace = ${workspace} AND e.deleted_at IS NULL
-    `;
-    return row ?? null;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${ENTITY_SELECT_SQL} WHERE e.public_id = $1 AND e.workspace = $2 AND e.deleted_at IS NULL`,
+      [publicId, workspace]
+    );
+    return rows[0] ? catalogMappers.enrichedEntity(rows[0]) : null;
   }
 
   async createEntity(input: EntityDbCreate) {
@@ -344,19 +320,21 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async listEntityGrants(workspace: string) {
-    return await this.sql<EntityGrantDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM entity_grant
       WHERE workspace = ${workspace}
       ORDER BY entity_id, principal_type, principal_id
     `;
+    return mapDatabaseRows(rows, catalogMappers.entityGrant);
   }
 
   async getEntityGrants(workspace: string, entityId: string) {
-    return await this.sql<EntityGrantDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM entity_grant
       WHERE workspace = ${workspace} AND entity_id = ${entityId}
       ORDER BY principal_type, principal_id
     `;
+    return mapDatabaseRows(rows, catalogMappers.entityGrant);
   }
 
   async replaceEntityGrants(workspace: string, entityId: string, grants: EntityGrantDbCretae[]) {
@@ -377,31 +355,32 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async listPinnedEntities(userId: string, workspace: string) {
-    return await this.sql<PinnedEntityDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM user_pinned_entity
       WHERE user_id = ${userId} AND workspace = ${workspace}
       ORDER BY created_at DESC
     `;
+    return mapDatabaseRows(rows, catalogMappers.pinnedEntity);
   }
 
   async getPinnedEntity(userId: string, workspace: string, entityId: string) {
-    const [row] = await this.sql<PinnedEntityDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM user_pinned_entity
       WHERE user_id = ${userId} AND workspace = ${workspace} AND entity_id = ${entityId}
     `;
-    return row ?? null;
+    return row ? catalogMappers.pinnedEntity(row) : null;
   }
 
   async createPinnedEntity(input: PinnedEntityDbCreate) {
     try {
-      const [row] = await this.sql<PinnedEntityDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO user_pinned_entity (user_id, workspace, entity_id, created_at)
         VALUES (${input.user_id}, ${input.workspace}, ${input.entity_id}, ${input.created_at})
         ON CONFLICT (user_id, workspace, entity_id) DO UPDATE
         SET created_at = user_pinned_entity.created_at
         RETURNING *
       `;
-      return row!;
+      return catalogMappers.pinnedEntity(row!);
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -409,12 +388,12 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async deletePinnedEntity(userId: string, workspace: string, entityId: string) {
     try {
-      const [row] = await this.sql<PinnedEntityDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         DELETE FROM user_pinned_entity
         WHERE user_id = ${userId} AND workspace = ${workspace} AND entity_id = ${entityId}
         RETURNING *
       `;
-      return row ?? null;
+      return row ? catalogMappers.pinnedEntity(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -422,55 +401,51 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async createSnapshot(input: EntitySnapshotDbCreate) {
     try {
-      const [row] = await this.sql<EntitySnapshotDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO entity_snapshot (id, workspace, entity_id, status, project_id, target_date, commit_message, created_at, created_by, created_by_name, base_state, proposed_state)
         VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.status}, ${input.project_id}, ${input.target_date}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${input.created_by_name}, ${this.json(input.base_state)}, ${input.proposed_state != null ? this.json(input.proposed_state) : null})
         RETURNING *
       `;
-      return row!;
+      return catalogMappers.entitySnapshot(row!);
     } catch (error) {
       return normalizePostgresError(error);
     }
   }
 
   async getSnapshot(workspace: string, snapshotId: string) {
-    const [row] = await this.sql<EntitySnapshotDbResult[]>`
-      SELECT s.*, u.display_name as created_by_name
-      FROM entity_snapshot s
-      LEFT JOIN users u ON u.id = s.created_by
-      WHERE s.workspace = ${workspace} AND s.id = ${snapshotId}
-    `;
-    return row ?? null;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${ENTITY_SNAPSHOT_SELECT_SQL} WHERE s.workspace = $1 AND s.id = $2`,
+      [workspace, snapshotId]
+    );
+    return rows[0] ? catalogMappers.entitySnapshot(rows[0]) : null;
   }
 
 
   async listSnapshots(workspace: string, entityId: string) {
-    return await this.sql<EntitySnapshotDbResult[]>`
-      SELECT s.*, u.display_name as created_by_name
-      FROM entity_snapshot s
-      LEFT JOIN users u ON u.id = s.created_by
-      WHERE s.workspace = ${workspace} AND s.entity_id = ${entityId}
-      ORDER BY s.created_at DESC
-    `;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${ENTITY_SNAPSHOT_SELECT_SQL} WHERE s.workspace = $1 AND s.entity_id = $2 ORDER BY s.created_at DESC`,
+      [workspace, entityId]
+    );
+    return mapDatabaseRows(rows, catalogMappers.entitySnapshot);
   }
 
   async listSnapshotsByProject(workspace: string, projectId: string) {
-    return await this.sql<EntitySnapshotDbResult[]>`
-      SELECT s.*, u.display_name as created_by_name
-      FROM entity_snapshot s
-      INNER JOIN project p ON p.id = s.project_id
-      LEFT JOIN users u ON u.id = s.created_by
-      WHERE s.workspace = ${workspace}
-        AND p.workspace = ${workspace}
-        AND (p.id::text = ${projectId} OR p.public_id = ${projectId})
-        AND s.status IN ('future_update', 'applied')
-      ORDER BY s.target_date ASC NULLS LAST, s.created_at DESC
-    `;
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      `${ENTITY_SNAPSHOT_SELECT_SQL}
+       INNER JOIN project p ON p.id = s.project_id
+       WHERE s.workspace = $1
+         AND p.workspace = $1
+         AND (p.id::text = $2 OR p.public_id = $2)
+         AND s.status IN ('future_update', 'applied')
+       ORDER BY s.target_date ASC NULLS LAST, s.created_at DESC`,
+      [workspace, projectId]
+    );
+    return mapDatabaseRows(rows, catalogMappers.entitySnapshot);
   }
 
   async listSnapshotsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
-    return await this.sql<EntitySnapshotDbResult[]>`
+    const rows = await this.sql<DatabaseRow[]>`
       SELECT s.*, u.display_name as created_by_name
       FROM entity_snapshot s
       LEFT JOIN users u ON u.id = s.created_by
@@ -482,6 +457,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         ${entityIds != null ? this.sql`AND s.entity_id = ANY(${entityIds})` : this.sql``}
       ORDER BY s.entity_id, s.created_at ASC
     `;
+    return mapDatabaseRows(rows, catalogMappers.entitySnapshot);
   }
 
   async listEntityIdsWithAnySnapshot(workspace: string, entityIds?: string[]) {
@@ -532,7 +508,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async promoteSnapshot(workspace: string, snapshotId: string, commitMessage: string | null) {
-    const [row] = await this.sql<EntitySnapshotDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       WITH updated AS (
         UPDATE entity_snapshot
         SET status = 'saved_version', commit_message = ${commitMessage}
@@ -543,7 +519,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       FROM updated u
       LEFT JOIN users us ON us.id = u.created_by
     `;
-    return row ?? null;
+    return row ? catalogMappers.entitySnapshot(row) : null;
   }
 
   async updateSnapshot(
@@ -555,12 +531,12 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       commit_message?: string | null;
     }
   ) {
-    const existing = await this.sql<EntitySnapshotDbResult[]>`
+    const existing = await this.sql<DatabaseRow[]>`
       SELECT * FROM entity_snapshot WHERE id = ${snapshotId} AND workspace = ${workspace}
     `;
-    if (existing[0]?.status !== 'future_update') return null;
+    if (String(existing[0]?.['status']) !== 'future_update') return null;
 
-    const [row] = await this.sql<EntitySnapshotDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       UPDATE entity_snapshot
       SET
         proposed_state = ${updates.proposed_state !== undefined ? this.json(updates.proposed_state) : this.sql`proposed_state`},
@@ -569,16 +545,16 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'future_update'
       RETURNING *
     `;
-    return row ?? null;
+    return row ? catalogMappers.entitySnapshot(row) : null;
   }
 
   async applySnapshot(workspace: string, snapshotId: string) {
-    const [row] = await this.sql<EntitySnapshotDbResult[]>`
+    const [row] = await this.sql<DatabaseRow[]>`
       UPDATE entity_snapshot
       SET status = 'applied'
       WHERE id = ${snapshotId} AND workspace = ${workspace} AND status = 'future_update'
       RETURNING *
     `;
-    return row ?? null;
+    return row ? catalogMappers.entitySnapshot(row) : null;
   }
 }

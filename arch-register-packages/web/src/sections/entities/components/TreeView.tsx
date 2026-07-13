@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
-import { TbChevronDown, TbChevronRight, TbDots } from 'react-icons/tb';
+import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import { Chip } from '../../../components/Chip';
 import { DropdownMenu } from '../../../components/DropdownMenu';
-import { StatusChip } from '../../../components/StatusChip';
 import { TypeBadge } from '../../../components/TypeBadge';
-import { resolveSchemaColor } from '../../../lib/api';
-import type { TreeNode } from '../../../lib/api';
+import { resolveSchemaColor } from '../../../lib/schemaPresentation';
+import type { TreeNode } from '@arch-register/api-types/entityContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -19,6 +18,9 @@ import type {
 } from './entityBrowserState';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import styles from '../EntityBrowserScreen.module.css';
+import { findEntityDisplayField, formatEntityDisplayValue, getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
+import { Table } from '../../../components/table/Table';
+import { EmptyState } from '../../../components/EmptyState';
 
 export type TreeViewProps = {
   workspaceId: string;
@@ -35,9 +37,15 @@ export type TreeViewProps = {
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
   readOnly?: boolean;
+  config: unknown;
+  displayFields: EntityDisplayField[];
+  joinAssessmentId?: string | null;
+  responsesByEntity?: Map<string, Record<string, string | number>>;
 };
 
-type TreeItem = (TreeNode & { _projectLink?: ProjectLinkState }) & { children: TreeItem[] };
+type TreeItem = (TreeNode & { _projectLink?: ProjectLinkState; _assessment?: Record<string, string | number> | null }) & {
+  children: TreeItem[];
+};
 
 export const TreeView = ({
   workspaceId,
@@ -53,7 +61,9 @@ export const TreeView = ({
   onClone,
   lifecycleStates,
   projectContext,
-  readOnly
+  readOnly, config, displayFields,
+  joinAssessmentId,
+  responsesByEntity
 }: TreeViewProps) => {
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
@@ -62,12 +72,19 @@ export const TreeView = ({
     q,
     typeFilter,
     ownerFilter,
-    statusFilter
+    statusFilter,
+    joinAssessmentId
   });
 
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();
-    for (const node of nodes) nodeMap.set(node._uid, { ...node, children: [] });
+    for (const node of nodes) {
+      nodeMap.set(node._uid, {
+        ...node,
+        _assessment: responsesByEntity?.get(node._uid) ?? null,
+        children: []
+      });
+    }
 
     const childIds = new Set<string>();
     for (const { childId, parentId } of edges) {
@@ -86,48 +103,48 @@ export const TreeView = ({
     return [...nodeMap.values()]
       .filter(node => !childIds.has(node._uid))
       .sort((a, b) => (a._name || a._slug).localeCompare(b._name || b._slug));
-  }, [nodes, edges]);
+  }, [nodes, edges, responsesByEntity]);
+  const columns = getDisplayFieldIds('tree', config).map(id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' });
 
   if (nodes.length === 0) {
     return (
-      <div className={styles.empty}>
-        <div className={styles.emptyTitle}>No entities found</div>
-        <div>Try adjusting your search or filters.</div>
-      </div>
+      <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
     );
   }
 
   return (
-    <div className={styles.tableWrap}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th style={{ minWidth: 240 }}>Name</th>
-            <th>Type</th>
-            <th>Owner</th>
-            <th>Status</th>
-            <th style={{ width: 110 }}>Namespace</th>
-            {!readOnly && <th style={{ width: 28 }} />}
-          </tr>
-        </thead>
-        <tbody>
-          {roots.map(item => (
-            <TreeNodeRow
-              key={item._uid}
-              item={item}
-              depth={0}
-              schemaMap={schemaMap}
-              onEntityClick={onEntityClick}
-              onDelete={onDelete}
-              onClone={onClone}
-              lifecycleStates={lifecycleStates}
-              projectContext={projectContext}
-              readOnly={readOnly}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table.Root>
+      <Table.Head>
+        <Table.Row>
+          <Table.HeaderCell style={{ minWidth: 240 }}>Name</Table.HeaderCell>
+          <Table.HeaderCell>Type</Table.HeaderCell>
+          {columns
+            .filter(c => c.id !== '_description')
+            .map(c => (
+              <Table.HeaderCell key={c.id}>{c.label}</Table.HeaderCell>
+            ))}
+          {!readOnly && <Table.HeaderCell style={{ width: 28 }} />}
+        </Table.Row>
+      </Table.Head>
+      <Table.Body>
+        {roots.map(item => (
+          <TreeNodeRow
+            key={item._uid}
+            item={item}
+            depth={0}
+            schemaMap={schemaMap}
+            onEntityClick={onEntityClick}
+            onDelete={onDelete}
+            onClone={onClone}
+            lifecycleStates={lifecycleStates}
+            projectContext={projectContext}
+            readOnly={readOnly}
+            columns={columns}
+            displayFields={displayFields}
+          />
+        ))}
+      </Table.Body>
+    </Table.Root>
   );
 };
 
@@ -140,7 +157,7 @@ const TreeNodeRow = ({
   onClone,
   lifecycleStates,
   projectContext,
-  readOnly
+  readOnly, columns, displayFields
 }: {
   item: TreeItem;
   depth: number;
@@ -151,6 +168,8 @@ const TreeNodeRow = ({
   lifecycleStates: WorkspaceLifecycleState[];
   projectContext?: ProjectBrowserContext;
   readOnly?: boolean;
+  columns: EntityDisplayField[];
+  displayFields: EntityDisplayField[];
 }) => {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = item.children.length > 0;
@@ -165,13 +184,11 @@ const TreeNodeRow = ({
 
   return (
     <>
-      <tr
-        className={isAncestor ? styles.treeRowAncestor : undefined}
-        onClick={() => onEntityClick(item._publicId)}
-      >
-        <td>
-          <div className={styles.tableName} style={{ paddingLeft: depth * 20 }}>
-            {hasChildren ? (
+      <Table.Row muted={isAncestor} onClick={() => onEntityClick(item._publicId)}>
+        <Table.NameCell
+          indentLevel={depth}
+          prefix={
+            hasChildren ? (
               <button
                 type="button"
                 className={styles.treeToggle}
@@ -184,57 +201,48 @@ const TreeNodeRow = ({
               </button>
             ) : (
               <span className={styles.treeToggleSpacer} />
-            )}
-            {schemaEntry && (
+            )
+          }
+          icon={
+            schemaEntry && (
               <TypeBadge
                 color={resolveSchemaColor(schemaEntry.schema, schemaEntry.index)}
                 name={schemaEntry.schema.name}
                 icon={schemaEntry.schema.icon}
                 size={18}
               />
-            )}
-            <div>
-              <div
-                className={styles.tableNameMain}
-                style={
-                  projectContext && item._projectLink?.linked === false
-                    ? { color: 'var(--base-fg-more-dim)' }
-                    : undefined
-                }
-              >
-                {item._name || item._slug}
-              </div>
-              {item._description && <div className={styles.tableNameSub}>{item._description}</div>}
-            </div>
-          </div>
-        </td>
-        <td>{schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}</td>
-        <td>
-          <span className="dim">{item._owner?.name ?? '—'}</span>
-        </td>
-        <td>
-          {item._lifecycle && (
-            <StatusChip value={item._lifecycle.id} lifecycleStates={lifecycleStates} />
-          )}
-        </td>
-        <td>
-          <span className="dim">{item._namespace}</span>
-        </td>
+            )
+          }
+          title={item._name || item._slug}
+          titleMuted={!!(projectContext && item._projectLink?.linked === false)}
+          subtitle={
+            columns.some(c => c.id === '_description') && item._description
+              ? item._description
+              : undefined
+          }
+        />
+        <Table.Cell>
+          {schemaEntry && <Chip tone="ghost">{schemaEntry.schema.name}</Chip>}
+        </Table.Cell>
+        {columns
+          .filter(c => c.id !== '_description')
+          .map(column => {
+            const field =
+              findEntityDisplayField(column.id, item, schemaMap, displayFields) ?? column;
+            return (
+              <Table.Cell key={column.id}>
+                <span className="dim">{formatEntityDisplayValue(item, field) ?? '—'}</span>
+              </Table.Cell>
+            );
+          })}
         {!readOnly && (
-          <td onClick={event => event.stopPropagation()}>
+          <Table.ActionsCell>
             {menuItems.length > 0 && (
-              <DropdownMenu
-                trigger={
-                  <button type="button" className={styles.dotsBtn}>
-                    <TbDots size={14} />
-                  </button>
-                }
-                items={menuItems}
-              />
+              <DropdownMenu trigger={<Table.DotsButton />} items={menuItems} />
             )}
-          </td>
+          </Table.ActionsCell>
         )}
-      </tr>
+      </Table.Row>
       {expanded &&
         item.children.map(child => (
           <TreeNodeRow
@@ -248,6 +256,8 @@ const TreeNodeRow = ({
             lifecycleStates={lifecycleStates}
             projectContext={projectContext}
             readOnly={readOnly}
+            columns={columns}
+            displayFields={displayFields}
           />
         ))}
     </>

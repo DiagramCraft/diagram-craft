@@ -1,14 +1,17 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useParams, useSearch, useNavigate } from '@tanstack/react-router';
+import type { MarkdownSearchParams } from '../../routes/searchParams';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import {
   useMarkdownContent,
   useMarkdownRevisions,
   useRestoreMarkdownRevision,
-  useSaveMarkdownContent,
+  useSaveMarkdownContent
+} from '../../hooks/useMarkdownContent';
+import {
   useUploadMarkdownAttachment,
   useDeleteMarkdownAttachment
-} from '../../hooks/useProjectFiles';
+} from '../../hooks/useAttachments';
 import { RenameDialog } from '../../components/RenameDialog';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { newid } from '@diagram-craft/utils/id';
@@ -41,6 +44,8 @@ import { MarkdownCloseDialog } from './MarkdownCloseDialog';
 import { useMarkdownDiagramSessionTracking } from './useMarkdownDiagramSessionTracking';
 import { useMarkdownCloseFlow } from './useMarkdownCloseFlow';
 import { useMarkdownDocumentScope } from './useMarkdownDocumentScope';
+import type { ContentScope } from '../../hooks/useContentScope';
+import { downloadUrl } from '../../lib/browserDownload';
 
 const extractToc = (markdown: string): string[] =>
   markdown.match(/^## .+$/gm)?.map(l => l.slice(3).trim()) ?? [];
@@ -63,45 +68,33 @@ const relativeDate = (iso: string): string => {
 };
 
 export const MarkdownEditorScreen = () => {
-  const params = useParams({ strict: false }) as {
-    workspaceSlug: string;
-    nodeId: string;
-    projectId?: string;
-    entityId?: string;
-  };
-  const search = useSearch({ strict: false }) as {
-    mode?: MarkdownScreenMode;
-    panel?: MarkdownViewPanel;
-    revisionId?: string;
-    historyMode?: 'preview' | 'compare';
-    compareMode?: 'to-current' | 'changes-in-version';
-    diagramSessionId?: string;
-  };
-  const { workspaceSlug, nodeId, projectId, entityId } = params;
+  const params = useParams({ strict: false });
+  const search = useSearch({ strict: false });
+  // workspaceSlug/nodeId are always present: this screen only mounts under
+  // the entity/project/content wiki routes, all of which define both params.
+  const workspaceSlug = params.workspaceSlug!;
+  const nodeId = params.nodeId!;
+  const { projectId, entityId } = params;
   const navigate = useNavigate();
   const requestedMode = search.mode;
   const requestedPanel = search.panel;
   const historyMode = search.historyMode === 'compare' ? 'compare' : 'preview';
   const compareMode = search.compareMode ?? 'to-current';
+  const contentScope: ContentScope = projectId
+    ? { kind: 'project', workspaceId: workspaceSlug, projectId }
+    : entityId
+      ? { kind: 'entity', workspaceId: workspaceSlug, entityId }
+      : { kind: 'workspace', workspaceId: workspaceSlug };
 
   const { data, isLoading, isError } = useMarkdownContent(workspaceSlug, nodeId);
   const { data: revisions = [], isLoading: revisionsLoading } = useMarkdownRevisions(
     workspaceSlug,
     nodeId
   );
-  const saveMutation = useSaveMarkdownContent(workspaceSlug, nodeId, { projectId, entityId });
-  const restoreMutation = useRestoreMarkdownRevision(workspaceSlug, nodeId, {
-    projectId,
-    entityId
-  });
-  const uploadAttachmentMutation = useUploadMarkdownAttachment(workspaceSlug, nodeId, {
-    projectId,
-    entityId
-  });
-  const deleteAttachmentMutation = useDeleteMarkdownAttachment(workspaceSlug, nodeId, {
-    projectId,
-    entityId
-  });
+  const saveMutation = useSaveMarkdownContent(contentScope, nodeId);
+  const restoreMutation = useRestoreMarkdownRevision(contentScope, nodeId);
+  const uploadAttachmentMutation = useUploadMarkdownAttachment(contentScope, nodeId);
+  const deleteAttachmentMutation = useDeleteMarkdownAttachment(contentScope, nodeId);
   const { file, parentLabel, renameFile, deleteFile } = useMarkdownDocumentScope({
     workspaceSlug,
     nodeId,
@@ -157,12 +150,14 @@ export const MarkdownEditorScreen = () => {
       }>,
       replace = false
     ) => {
+      // This screen is shared across three sibling wiki routes with identical
+      // search schemas; there's no single static route to scope `navigate` to,
+      // so the search-updater type can't be inferred and needs a manual cast.
       navigate({
-        search: (prev: Record<string, unknown>) =>
-          ({
-            ...prev,
-            ...next
-          }) as never,
+        search: ((prev: MarkdownSearchParams) => ({
+          ...prev,
+          ...next
+        })) as never,
         replace
       });
     },
@@ -309,7 +304,15 @@ export const MarkdownEditorScreen = () => {
     setDirty(false);
     rotateDiagramSession();
     clearCloseSummary();
-  }, [body, dirty, hasPendingDiagramChanges, headingTitle, saveMutation, rotateDiagramSession, clearCloseSummary]);
+  }, [
+    body,
+    dirty,
+    hasPendingDiagramChanges,
+    headingTitle,
+    saveMutation,
+    rotateDiagramSession,
+    clearCloseSummary
+  ]);
 
   const handleSaveAndClose = useCallback(async () => {
     if (dirty) {
@@ -320,7 +323,15 @@ export const MarkdownEditorScreen = () => {
     clearDiagramSessionState();
     clearCloseSummary();
     exitMarkdownEditor();
-  }, [body, dirty, headingTitle, saveMutation, clearDiagramSessionState, clearCloseSummary, exitMarkdownEditor]);
+  }, [
+    body,
+    dirty,
+    headingTitle,
+    saveMutation,
+    clearDiagramSessionState,
+    clearCloseSummary,
+    exitMarkdownEditor
+  ]);
 
   const handleEnterEdit = useCallback(() => {
     setPaneMode('edit');
@@ -440,18 +451,15 @@ export const MarkdownEditorScreen = () => {
           : entityId
             ? `/api/${workspaceSlug}/entities/${entityId}/content/files/download?path=${encodeURIComponent(attachment.path)}`
             : `/api/${workspaceSlug}/content/files/download?path=${encodeURIComponent(attachment.path)}`;
-        const a = document.createElement('a');
-        a.href = href;
-        a.download = attachment.original_filename ?? attachment.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        downloadUrl(href, attachment.original_filename ?? attachment.name);
         return;
       }
 
       if (attachment.type === 'markdown') {
         if (projectId) {
-          navigate(projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), attachment.id));
+          navigate(
+            projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), attachment.id)
+          );
         } else if (entityId) {
           navigate(entityMarkdownRoute(workspaceSlug, asEntityPublicId(entityId), attachment.id));
         } else {
@@ -506,132 +514,137 @@ export const MarkdownEditorScreen = () => {
 
   return (
     <MdxContext.Provider value={{ workspaceSlug, projectId, entityId, nodeId }}>
-    <MarkdownDiagramSessionContext.Provider value={{ sessionId, trackCreatedDiagram }}>
-    <div className={styles.screen}>
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className={styles.hiddenInput}
-        onChange={handleAttachmentInputChange}
-      />
+      <MarkdownDiagramSessionContext.Provider value={{ sessionId, trackCreatedDiagram }}>
+        <div className={styles.screen}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className={styles.hiddenInput}
+            onChange={handleAttachmentInputChange}
+          />
 
-      <MarkdownEditorHeader
-        workspaceSlug={workspaceSlug}
-        projectId={projectId}
-        entityId={entityId}
-        parentLabel={parentLabel}
-        resolvedTitle={resolvedTitle}
-        description={titleView.description}
-        isViewMode={titleView.isViewMode}
-        attachDisabled={titleView.attachDisabled}
-        isUploadingAttachment={uploadAttachmentMutation.isPending}
-        onNavigateBack={handleNavigateBack}
-        actions={{
-          onAttachClick: () => fileInputRef.current?.click(),
-          onEnterEdit: handleEnterEdit,
-          onOpenHistory: handleOpenHistory,
-          onRenameRequest: () => setRenameOpen(true),
-          onDeleteRequest: () => setDeleteOpen(true)
-        }}
-      />
+          <MarkdownEditorHeader
+            workspaceSlug={workspaceSlug}
+            projectId={projectId}
+            entityId={entityId}
+            parentLabel={parentLabel}
+            resolvedTitle={resolvedTitle}
+            description={titleView.description}
+            isViewMode={titleView.isViewMode}
+            attachDisabled={titleView.attachDisabled}
+            isUploadingAttachment={uploadAttachmentMutation.isPending}
+            onNavigateBack={handleNavigateBack}
+            actions={{
+              onAttachClick: () => fileInputRef.current?.click(),
+              onEnterEdit: handleEnterEdit,
+              onOpenHistory: handleOpenHistory,
+              onRenameRequest: () => setRenameOpen(true),
+              onDeleteRequest: () => setDeleteOpen(true)
+            }}
+          />
 
-      {screenState.screenMode === 'edit' && (
-        <MarkdownEditorToolbar
-          paneMode={screenState.paneMode}
-          hasUnsavedChanges={hasUnsavedChanges}
-          onSelectPane={handleSelectPane}
-          onSave={handleSave}
-          onSaveAndClose={handleSaveAndClose}
-          onClose={handleClose}
-        />
-      )}
+          {screenState.screenMode === 'edit' && (
+            <MarkdownEditorToolbar
+              paneMode={screenState.paneMode}
+              hasUnsavedChanges={hasUnsavedChanges}
+              onSelectPane={handleSelectPane}
+              onSave={handleSave}
+              onSaveAndClose={handleSaveAndClose}
+              onClose={handleClose}
+            />
+          )}
 
-      {/* viewPanel is only ever 'history' while screenMode is 'preview' (see MarkdownEditorScreen.state.ts) */}
-      {screenState.viewPanel === 'history' ? (
-        <MarkdownHistoryPanel
-          workspaceSlug={workspaceSlug}
-          nodeId={nodeId}
-          currentBody={body}
-          revisions={revisions}
-          revisionsLoading={revisionsLoading}
-          selectedRevisionId={selectedRevisionId}
-          historyMode={historyMode}
-          compareMode={compareMode}
-          isRestoring={restoreMutation.isPending}
-          onSelectRevision={handleSelectRevision}
-          onViewVersion={handleViewVersion}
-          onEnterCompare={handleEnterCompare}
-          onRestore={handleRestore}
-          onClose={handlePreview}
-        />
-      ) : (
-        <MarkdownEditorPane
-          screenMode={screenState.screenMode}
-          paneMode={screenState.paneMode}
-          body={body}
-          onChange={handleChange}
-          toc={toc}
-          updatedLabel={updatedLabel}
-          readTime={readTime}
-          attachments={{
-            items: attachments,
-            onOpen: handleOpenAttachment,
-            onDeleteRequest: setAttachmentDeleteTarget,
-            isDeleting: deleteAttachmentMutation.isPending
-          }}
-        />
-      )}
+          {/* viewPanel is only ever 'history' while screenMode is 'preview' (see MarkdownEditorScreen.state.ts) */}
+          {screenState.viewPanel === 'history' ? (
+            <MarkdownHistoryPanel
+              workspaceSlug={workspaceSlug}
+              nodeId={nodeId}
+              currentBody={body}
+              revisions={revisions}
+              revisionsLoading={revisionsLoading}
+              selectedRevisionId={selectedRevisionId}
+              historyMode={historyMode}
+              compareMode={compareMode}
+              isRestoring={restoreMutation.isPending}
+              onSelectRevision={handleSelectRevision}
+              onViewVersion={handleViewVersion}
+              onEnterCompare={handleEnterCompare}
+              onRestore={handleRestore}
+              onClose={handlePreview}
+            />
+          ) : (
+            <MarkdownEditorPane
+              screenMode={screenState.screenMode}
+              paneMode={screenState.paneMode}
+              body={body}
+              onChange={handleChange}
+              toc={toc}
+              updatedLabel={updatedLabel}
+              readTime={readTime}
+              workspaceId={workspaceSlug}
+              nodeId={nodeId}
+              attachments={{
+                items: attachments,
+                onOpen: handleOpenAttachment,
+                onDeleteRequest: setAttachmentDeleteTarget,
+                isDeleting: deleteAttachmentMutation.isPending
+              }}
+            />
+          )}
 
-      <RenameDialog
-        open={renameOpen}
-        currentName={file?.name ?? ''}
-        entityType="document"
-        onRename={handleRenameConfirm}
-        onCancel={() => setRenameOpen(false)}
-      />
+          <RenameDialog
+            open={renameOpen}
+            currentName={file?.name ?? ''}
+            entityType="document"
+            onRename={handleRenameConfirm}
+            onCancel={() => setRenameOpen(false)}
+          />
 
-      <DeleteConfirmationDialog
-        open={deleteOpen}
-        title="Delete document?"
-        message={
-          <>
-            The document <b>{file?.name ?? ''}</b> will be permanently deleted.
-          </>
-        }
-        detail="This can't be undone."
-        confirmLabel="Delete document"
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setDeleteOpen(false)}
-      />
+          <DeleteConfirmationDialog
+            open={deleteOpen}
+            title="Delete document?"
+            message={
+              <>
+                The document <b>{file?.name ?? ''}</b> will be permanently deleted.
+              </>
+            }
+            detail="This can't be undone."
+            confirmLabel="Delete document"
+            onConfirm={handleDeleteConfirm}
+            onCancel={() => setDeleteOpen(false)}
+          />
 
-      <DeleteConfirmationDialog
-        open={attachmentDeleteTarget !== null}
-        title="Delete attachment?"
-        message={
-          <>
-            The attachment <b>{attachmentDeleteTarget?.original_filename ?? attachmentDeleteTarget?.name ?? ''}</b>{' '}
-            will be permanently deleted.
-          </>
-        }
-        detail="This can't be undone."
-        confirmLabel="Delete attachment"
-        onConfirm={handleAttachmentDeleteConfirm}
-        onCancel={() => setAttachmentDeleteTarget(null)}
-      />
+          <DeleteConfirmationDialog
+            open={attachmentDeleteTarget !== null}
+            title="Delete attachment?"
+            message={
+              <>
+                The attachment{' '}
+                <b>
+                  {attachmentDeleteTarget?.original_filename ?? attachmentDeleteTarget?.name ?? ''}
+                </b>{' '}
+                will be permanently deleted.
+              </>
+            }
+            detail="This can't be undone."
+            confirmLabel="Delete attachment"
+            onConfirm={handleAttachmentDeleteConfirm}
+            onCancel={() => setAttachmentDeleteTarget(null)}
+          />
 
-      <MarkdownCloseDialog
-        open={closeDialogOpen}
-        summary={closeSummary}
-        onCancel={handleCancelClose}
-        onCloseWithSelection={diagramIds =>
-          void (diagramIds.length > 0
-            ? handleRevertEligibleDiagramChanges(diagramIds)
-            : handleKeepDiagramChanges())
-        }
-      />
-    </div>
-    </MarkdownDiagramSessionContext.Provider>
+          <MarkdownCloseDialog
+            open={closeDialogOpen}
+            summary={closeSummary}
+            onCancel={handleCancelClose}
+            onCloseWithSelection={diagramIds =>
+              void (diagramIds.length > 0
+                ? handleRevertEligibleDiagramChanges(diagramIds)
+                : handleKeepDiagramChanges())
+            }
+          />
+        </div>
+      </MarkdownDiagramSessionContext.Provider>
     </MdxContext.Provider>
   );
 };

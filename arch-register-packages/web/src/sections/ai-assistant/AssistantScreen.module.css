@@ -709,20 +709,3 @@ ol.mdList li::before {
   letter-spacing: 0.03em;
 }
 
-/* ── Empty state ── */
-
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 40px 20px;
-  color: var(--cmp-fg-disabled);
-  font-size: 13px;
-}
-
-.emptyIcon {
-  color: var(--accent-fg);
-  opacity: 0.6;
-}

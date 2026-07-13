@@ -34,6 +34,8 @@ describe('captionMdxRule', () => {
   it('deserializes caption/align/numbered attributes and the single valid child', () => {
     const node = captionMdxRule.deserialize(
       {
+        type: 'mdxJsxFlowElement',
+        name: 'Caption',
         attributes: [
           { type: 'mdxJsxAttribute', name: 'caption', value: 'A diagram' },
           { type: 'mdxJsxAttribute', name: 'align', value: 'left' },
@@ -48,8 +50,8 @@ describe('captionMdxRule', () => {
           }
         ]
       },
-      undefined,
-      baseOptions
+      {},
+      baseOptions as unknown as Parameters<typeof captionMdxRule.deserialize>[2]
     );
 
     expect(node.type).toBe('Caption');
@@ -63,9 +65,9 @@ describe('captionMdxRule', () => {
 
   it('degrades to a placeholder paragraph child when there are zero children', () => {
     const node = captionMdxRule.deserialize(
-      { attributes: [], children: [] },
-      undefined,
-      baseOptions
+      { type: 'mdxJsxFlowElement', name: 'Caption', attributes: [], children: [] },
+      {},
+      baseOptions as unknown as Parameters<typeof captionMdxRule.deserialize>[2]
     );
     expect(node.children).toEqual([{ type: 'p', children: [{ text: '' }] }]);
   });
@@ -73,12 +75,13 @@ describe('captionMdxRule', () => {
   it('serializes caption/align/numbered and the child via its own serializer', () => {
     const result = captionMdxRule.serialize(
       {
+        type: 'Caption',
         caption: 'A diagram',
         align: 'left',
         numbered: true,
-        children: [{ type: 'DiagramEmbed', fileId: 'd1' }]
+        children: [{ type: 'DiagramEmbed', fileId: 'd1', children: [{ text: '' }] } as never]
       },
-      baseOptions
+      baseOptions as unknown as Parameters<typeof captionMdxRule.serialize>[1]
     );
 
     expect(result).toEqual({
@@ -101,7 +104,10 @@ describe('captionMdxRule', () => {
   });
 
   it('omits align/numbered attributes when not set', () => {
-    const result = captionMdxRule.serialize({ caption: 'x', children: [] }, baseOptions);
+    const result = captionMdxRule.serialize(
+      { type: 'Caption', caption: 'x', children: [] },
+      baseOptions as unknown as Parameters<typeof captionMdxRule.serialize>[1]
+    );
     expect(result.attributes).toEqual([{ type: 'mdxJsxAttribute', name: 'caption', value: 'x' }]);
   });
 });

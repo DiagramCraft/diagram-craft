@@ -3,7 +3,7 @@ import { implement } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { toORPCError, orpcErrorInterceptors } from '../../utils/orpcErrors';
+import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { listAuditLog, getAuditStats } from './auditOperations';
 import { auditContract } from '@arch-register/api-types/auditContract';
 
@@ -12,23 +12,15 @@ type ORPCContext = {
   event: AuthenticatedEvent;
 };
 
-const auditRouter = implement(auditContract).$context<ORPCContext>();
+const auditRouter = implement(auditContract).$context<ORPCContext>().use(orpcErrorMiddleware);
 
 export const auditORPCRouter = auditRouter.router({
   audit: {
     list: auditRouter.audit.list.handler(async ({ input, context }) => {
-      try {
-        return await listAuditLog(context.db, input.params.workspace, input.query, context.event);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await listAuditLog(context.db, input.params.workspace, input.query, context.event);
     }),
     stats: auditRouter.audit.stats.handler(async ({ input, context }) => {
-      try {
-        return await getAuditStats(context.db, input.params.workspace, context.event);
-      } catch (error) {
-        return toORPCError(error);
-      }
+      return await getAuditStats(context.db, input.params.workspace, context.event);
     })
   }
 });

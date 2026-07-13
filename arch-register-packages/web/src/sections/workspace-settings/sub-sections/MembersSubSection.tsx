@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TbSearch } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
+import { SearchInput } from '../../../components/SearchInput';
 import { useAuth } from '../../../auth/AuthContext';
 import { getUserLabel } from '../../../utils/userLabel';
+import { formatDate } from '../../../utils/dateFormat';
 import {
   useWorkspaceMembers,
   useWorkspaceUsers,
@@ -15,7 +17,9 @@ import {
 } from '../../../hooks/useWorkspaceMembers';
 import { useTeamAssignments, useTeams } from '../../../hooks/useWorkspaceConfig';
 import { useWorkspaceRoles } from '../../../hooks/useWorkspaceRoles';
+import { Table } from '../../../components/table/Table';
 import styles from './MembersSubSection.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 import { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaceContract';
 
 const TeamChip = ({ teamId, label }: { teamId: string; label: string }) => {
@@ -115,7 +119,7 @@ export const MembersSubSection = ({
   if (error) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>Failed to load workspace members.</div>
+        <Banner variant="error">Failed to load workspace members.</Banner>
       </div>
     );
   }
@@ -124,15 +128,13 @@ export const MembersSubSection = ({
     <div className={styles.container}>
       {!isLoading && members.length > 0 && (
         <div className={styles.toolbar}>
-          <div className={styles.search}>
-            <TbSearch size={12} />
-            <input
-              className={styles.searchInput}
-              placeholder="Search by name or email…"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-            />
-          </div>
+          <SearchInput
+            size="sm"
+            placeholder="Search by name or email…"
+            value={query}
+            onChange={setQuery}
+            onClear={() => setQuery('')}
+          />
           <label className={styles.filter}>
             <span className={styles.filterLabel}>Role</span>
             <select
@@ -165,103 +167,91 @@ export const MembersSubSection = ({
           </label>
         </div>
       )}
-      <div className={styles.tableWrap}>
-        {isLoading ? (
-          <div className={styles.empty}>Loading members…</div>
-        ) : members.length === 0 ? (
-          <div className={styles.empty}>No members have been added to this workspace.</div>
-        ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th style={{ minWidth: 240 }}>Member</th>
-                <th>Role</th>
-                <th>Teams</th>
-                <th>Status</th>
-                <th>Added</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMembers.length === 0 && (
-                <tr>
-                  <td colSpan={5} className={styles.empty}>
-                    No members match these filters.
-                  </td>
-                </tr>
-              )}
-              {filteredMembers.map(member => {
-                const userInfo = usersById.get(member.user_id);
-                const memberTeams = teamsByUser.get(member.user_id) ?? [];
-                return (
-                  <tr key={member.user_id}>
-                    <td>
-                      <div className={styles.memberName}>
-                        <MemberAvatar
-                          name={member.display_name}
-                          email={member.email}
-                          userId={member.user_id}
-                          color={userInfo?.color ?? null}
-                        />
-                        <div>
-                          <div className={styles.memberNameMain}>{member.display_name}</div>
-                          <div className={styles.memberNameSub}>
-                            {member.email ?? member.user_id}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <RoleMenu
-                        current={member.role}
-                        roles={roles}
-                        onSelect={role => {
-                          void updateMemberRole
-                            .mutateAsync({ userId: member.user_id, role })
-                            .then(() => {
-                              if (member.user_id === user?.id) {
-                                void reloadUser();
-                              }
-                            });
-                        }}
+      {isLoading ? (
+        <EmptyState compact title="Loading members…" />
+      ) : members.length === 0 ? (
+        <EmptyState compact title="No members have been added to this workspace." />
+      ) : (
+        <Table.Root>
+          <Table.Head>
+            <Table.Row>
+              <Table.HeaderCell style={{ minWidth: 240 }}>Member</Table.HeaderCell>
+              <Table.HeaderCell>Role</Table.HeaderCell>
+              <Table.HeaderCell>Teams</Table.HeaderCell>
+              <Table.HeaderCell>Status</Table.HeaderCell>
+              <Table.HeaderCell>Added</Table.HeaderCell>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
+            {filteredMembers.length === 0 && (
+              <Table.EmptyRow colSpan={5} title="No members match these filters." />
+            )}
+            {filteredMembers.map(member => {
+              const userInfo = usersById.get(member.user_id);
+              const memberTeams = teamsByUser.get(member.user_id) ?? [];
+              return (
+                <Table.Row key={member.user_id}>
+                  <Table.NameCell
+                    icon={
+                      <MemberAvatar
+                        name={member.display_name}
+                        email={member.email}
+                        userId={member.user_id}
+                        color={userInfo?.color ?? null}
                       />
-                    </td>
-                    <td>
-                      <div className={styles.tags}>
-                        {memberTeams.length === 0 && <span className={styles.dim}>—</span>}
-                        {memberTeams.slice(0, 2).map(teamId => (
-                          <TeamChip
-                            key={teamId}
-                            teamId={teamId}
-                            label={teamsById.get(teamId)?.name ?? teamId}
-                          />
-                        ))}
-                        {memberTeams.length > 2 && (
-                          <span className={styles.teamChipOverflow}>+{memberTeams.length - 2}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      {userInfo ? (
-                        <Chip
-                          tone="ghost"
-                          dot={userInfo.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
-                        >
-                          {userInfo.is_active ? 'Active' : 'Inactive'}
-                        </Chip>
-                      ) : (
-                        <span className={styles.dim}>—</span>
+                    }
+                    title={member.display_name}
+                    subtitle={member.email ?? member.user_id}
+                  />
+                  <Table.Cell>
+                    <RoleMenu
+                      current={member.role}
+                      roles={roles}
+                      onSelect={role => {
+                        void updateMemberRole
+                          .mutateAsync({ userId: member.user_id, role })
+                          .then(() => {
+                            if (member.user_id === user?.id) {
+                              void reloadUser();
+                            }
+                          });
+                      }}
+                    />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div className={styles.tags}>
+                      {memberTeams.length === 0 && <span className={styles.dim}>—</span>}
+                      {memberTeams.slice(0, 2).map(teamId => (
+                        <TeamChip
+                          key={teamId}
+                          teamId={teamId}
+                          label={teamsById.get(teamId)?.name ?? teamId}
+                        />
+                      ))}
+                      {memberTeams.length > 2 && (
+                        <span className={styles.teamChipOverflow}>+{memberTeams.length - 2}</span>
                       )}
-                    </td>
-                    <td className={styles.dim}>
-                      {new Date(member.created_at).toLocaleDateString()}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {userInfo ? (
+                      <Chip
+                        tone="ghost"
+                        dot={userInfo.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}
+                      >
+                        {userInfo.is_active ? 'Active' : 'Inactive'}
+                      </Chip>
+                    ) : (
+                      <span className={styles.dim}>—</span>
+                    )}
+                  </Table.Cell>
+                  <Table.Cell className={styles.dim}>{formatDate(member.created_at)}</Table.Cell>
+                </Table.Row>
+              );
+            })}
+          </Table.Body>
+        </Table.Root>
+      )}
       <AddMemberDialog
         open={addDialogOpen}
         users={availableUsers}
@@ -318,11 +308,9 @@ const AddMemberDialog = ({
     <Dialog open={open} onClose={onClose} title="Add workspace member">
       <div className={styles.dialogBody}>
         {loading ? (
-          <div className={styles.empty}>Loading users…</div>
+          <EmptyState compact title="Loading users…" />
         ) : users.length === 0 ? (
-          <div className={styles.empty}>
-            All existing users are already members of this workspace.
-          </div>
+          <EmptyState compact title="All existing users are already members of this workspace." />
         ) : (
           <>
             <div className={styles.field}>

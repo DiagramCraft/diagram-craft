@@ -141,29 +141,7 @@
 }
 
 .searchInline {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 26px;
   min-width: 200px;
-  padding: 0 10px;
-  background: var(--cmp-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  color: var(--base-fg-more-dim);
-}
-
-.searchInline input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--base-fg);
-  font-size: 12px;
-  width: 100%;
-}
-
-.searchInline input::placeholder {
-  color: var(--cmp-fg-disabled);
 }
 
 /* Filter pills */
@@ -304,23 +282,6 @@
 .tooltipClose:hover {
   background: var(--cmp-bg-hover);
   color: var(--base-fg);
-}
-
-.tooltipChips {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-}
-
-.tooltipChip {
-  display: inline-flex;
-  align-items: center;
-  height: 18px;
-  padding: 0 6px;
-  border: 1px solid var(--panel-border);
-  border-radius: 9px;
-  font-size: 10px;
 }
 
 .tooltipDesc {
@@ -464,24 +425,6 @@
   font-family: var(--font-mono);
   text-transform: uppercase;
   flex-shrink: 0;
-}
-
-/* Empty state */
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 24px;
-  gap: 8px;
-  color: var(--base-fg-more-dim);
-  flex: 1;
-}
-
-.emptyTitle {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--base-fg-dim);
 }
 
 /* Settings dialog body */

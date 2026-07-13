@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TbChartLine, TbChevronDown, TbChevronRight, TbFolder } from 'react-icons/tb';
 import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
 import styles from './DiagramPicker.module.css';
+import { EmptyState } from './EmptyState';
 
 const DiagramRow = ({
   file,
@@ -71,7 +72,7 @@ export const DiagramPicker = ({
   onSelect: (file: ProjectFile) => void;
 }) => {
   if (!fileTree) {
-    return <div className={styles.empty}>Loading…</div>;
+    return <EmptyState compact title="Loading…" />;
   }
 
   const rootDiagrams = fileTree.rootFiles.filter(f => f.type === 'diagram');
@@ -80,7 +81,7 @@ export const DiagramPicker = ({
     .filter(folder => folder.files.length > 0);
 
   if (rootDiagrams.length === 0 && foldersWithDiagrams.length === 0) {
-    return <div className={styles.empty}>No diagrams found</div>;
+    return <EmptyState compact title="No diagrams found" />;
   }
 
   return (

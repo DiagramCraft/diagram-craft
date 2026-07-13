@@ -1,22 +1,29 @@
-import type React from 'react';
 import { TbChartDonut } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityChart } from './EntityChart';
 import {
   ENTITY_CHART_TYPE,
   EntityChartEditable,
   entityChartMdxRule
 } from './EntityChartEditable';
+import type { EntityChartSlateElement } from './types';
 
-export const entityChartSpec = {
-  component: EntityChart as unknown as React.ComponentType<Record<string, string>>,
+/**
+ * `type` is the wire/MDX attribute name for the chart type; the preview
+ * component's own prop is `chartType`. Preserves the pre-existing external
+ * (`type`) vs internal (`chartType`) naming split without changing behavior.
+ */
+export const entityChartSpec = defineMdxComponent<
+  EntityChartSlateElement,
+  { schema?: string; owner?: string; lifecycle?: string; groupBy?: string; type?: string },
+  'block'
+>({
+  component: EntityChart,
   mode: 'block',
   allowedProps: ['schema', 'owner', 'lifecycle', 'groupBy', 'type'],
   editorSpec: {
-    editableComponent: EntityChartEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const },
+    editableComponent: EntityChartEditable,
+    nodeOptions: { isVoid: true },
     mdxRule: entityChartMdxRule,
     slashCommand: {
       key: 'entity-chart',
@@ -37,4 +44,4 @@ export const entityChartSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

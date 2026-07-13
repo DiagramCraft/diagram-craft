@@ -1,33 +1,20 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { DependencyGraph } from '../../../components/DependencyGraph';
-import type {
-  LayoutAlgorithm,
-  DependencyGraphEdge,
-  DependencyGraphNode,
-  LayoutOptions
-} from '../../../components/DependencyGraph';
+import type { LayoutAlgorithm, DependencyGraphNode } from '../../../components/DependencyGraph';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { getRelationDisplayLabel, resolveSchemaColor } from '../../../lib/api';
-import { useMultipleEntityRelations } from '../../../hooks/useEntities';
+import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import { TbEyeOff, TbFileExport, TbPlus, TbVectorTriangle } from 'react-icons/tb';
 import styles from './EntityGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
-import { createDiagramFromGraph } from '../../../lib/diagramFromGraph';
-import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
-
-type EntityNodeData = {
-  entityId: string;
-  entityName: string;
-  entitySchemaId: string;
-  isRoot: boolean;
-};
+import { type EntityNodeData } from './entityGraphState';
+import { useEntityGraphController } from './useEntityGraphController';
 
 type Props = {
   workspaceId: string;
@@ -46,151 +33,35 @@ export const EntityGraphView = ({
   schemas,
   onEntityClick
 }: Props) => {
-  const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
-  const [saveDiagramOpen, setSaveDiagramOpen] = useState(false);
-  const [pendingDiagramContent, setPendingDiagramContent] =
-    useState<SerializedDiagramDocument | null>(null);
-  const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>({
-    horizontalSpacing: 230,
-    verticalSpacing: 108,
-    iterations: 300,
-    springStrength: 0.5,
-    repulsionStrength: 1.0,
-    idealEdgeLength: 160,
-    crossingMinimizationIterations: 10
-  });
-  const [maxDepth, setMaxDepth] = useState(2);
-  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
-  const [manuallyExpanded, setManuallyExpanded] = useState<Set<string>>(new Set());
-  const [contextMenu, setContextMenu] = useState<{ id: string; x: number; y: number } | null>(null);
-  const [fetchIds, setFetchIds] = useState<string[]>(() => [rootEntityId]);
-
-  // Reset when navigating to a different entity
-  useEffect(() => {
-    setFetchIds([rootEntityId]);
-    setExcludedIds(new Set());
-    setManuallyExpanded(new Set());
-  }, [rootEntityId]);
-
-  const relationsData = useMultipleEntityRelations(workspaceId, fetchIds);
-
-  // Reactively expand fetchIds as relation data arrives (BFS waterfall)
-  useEffect(() => {
-    const ids = new Set<string>([rootEntityId]);
-    const queue: Array<{ id: string; depth: number }> = [{ id: rootEntityId, depth: 0 }];
-    const visited = new Set<string>([rootEntityId]);
-
-    while (queue.length > 0) {
-      const { id, depth } = queue.shift()!;
-      const data = relationsData.get(id);
-      if (!data || data.isLoading) continue;
-
-      const shouldExpand = depth < maxDepth || manuallyExpanded.has(id);
-      if (!shouldExpand) continue;
-
-      const neighbors = [...data.outgoing, ...data.incoming];
-      for (const rel of neighbors) {
-        if (excludedIds.has(rel.entityId) || visited.has(rel.entityId)) continue;
-        visited.add(rel.entityId);
-        ids.add(rel.entityId);
-        queue.push({ id: rel.entityId, depth: depth + 1 });
-      }
-    }
-
-    const next = Array.from(ids);
-    setFetchIds(prev => {
-      const prevSet = new Set(prev);
-      return next.some(id => !prevSet.has(id)) ? next : prev;
-    });
-  }, [rootEntityId, relationsData, maxDepth, excludedIds, manuallyExpanded]);
-
-  // Build the visible graph via BFS
-  const { nodes, edges, hiddenCountMap } = useMemo(() => {
-    const visibleNodes = new Map<string, EntityNodeData>();
-    const queue: Array<{ id: string; depth: number }> = [{ id: rootEntityId, depth: 0 }];
-    const visited = new Set<string>([rootEntityId]);
-
-    visibleNodes.set(rootEntityId, {
-      entityId: rootEntityId,
-      entityName: rootEntityName,
-      entitySchemaId: rootEntitySchemaId,
-      isRoot: true
-    });
-
-    while (queue.length > 0) {
-      const { id, depth } = queue.shift()!;
-      const data = relationsData.get(id);
-      if (!data || data.isLoading) continue;
-
-      const shouldExpand = depth < maxDepth || manuallyExpanded.has(id);
-      if (!shouldExpand) continue;
-
-      const neighbors = [...data.outgoing, ...data.incoming];
-      for (const rel of neighbors) {
-        if (excludedIds.has(rel.entityId)) continue;
-        if (!visited.has(rel.entityId)) {
-          visited.add(rel.entityId);
-          visibleNodes.set(rel.entityId, {
-            entityId: rel.entityId,
-            entityName: rel.entityName,
-            entitySchemaId: rel.entitySchemaId,
-            isRoot: false
-          });
-          queue.push({ id: rel.entityId, depth: depth + 1 });
-        }
-      }
-    }
-
-    // Build edges (deduplicating by from::to::fieldName) and hidden counts in one pass
-    const edgeSet = new Set<string>();
-    const visibleEdges: DependencyGraphEdge[] = [];
-    const hiddenCountMap = new Map<string, number>();
-    for (const [id] of visibleNodes) {
-      const data = relationsData.get(id);
-      if (!data || data.isLoading) {
-        hiddenCountMap.set(id, 0);
-        continue;
-      }
-      let hiddenCount = 0;
-      for (const rel of data.outgoing) {
-        if (visibleNodes.has(rel.entityId)) {
-          const edgeId = `${id}::${rel.entityId}::${rel.fieldName}`;
-          if (!edgeSet.has(edgeId)) {
-            edgeSet.add(edgeId);
-            visibleEdges.push({
-              id: edgeId,
-              from: id,
-              to: rel.entityId,
-              label: getRelationDisplayLabel(rel),
-              kind: rel.kind
-            });
-          }
-        } else {
-          hiddenCount++;
-        }
-      }
-      for (const rel of data.incoming) {
-        if (!visibleNodes.has(rel.entityId)) hiddenCount++;
-      }
-      hiddenCountMap.set(id, hiddenCount);
-    }
-
-    const nodeArray: DependencyGraphNode<EntityNodeData>[] = Array.from(visibleNodes.entries()).map(
-      ([id, data]) => ({ id, data })
-    );
-
-    return { nodes: nodeArray, edges: visibleEdges, hiddenCountMap };
-  }, [
+  const controller = useEntityGraphController({
+    workspaceId,
     rootEntityId,
     rootEntityName,
-    rootEntitySchemaId,
-    relationsData,
+    rootEntitySchemaId
+  });
+  const {
+    layout,
+    setLayout,
+    layoutOptions,
+    setLayoutOptions,
     maxDepth,
+    setMaxDepth,
     excludedIds,
-    manuallyExpanded
-  ]);
-
-  const isAnyLoading = Array.from(relationsData.values()).some(d => d.isLoading);
+    manuallyExpanded,
+    contextMenu,
+    setContextMenu,
+    saveDiagramOpen,
+    setSaveDiagramOpen,
+    pendingDiagramContent,
+    nodes,
+    edges,
+    hiddenCountMap,
+    isAnyLoading,
+    resetGraph,
+    excludeEntity,
+    expandEntity,
+    createDiagram
+  } = controller;
 
   const schemaMap = useMemo(
     () => new Map(schemas.map((s, i) => [s.id, { schema: s, idx: i }])),
@@ -215,9 +86,12 @@ export const EntityGraphView = ({
     [schemaMap, hiddenCountMap]
   );
 
-  const handleNodeContextMenu = useCallback((id: string, e: React.MouseEvent) => {
-    setContextMenu({ id, x: e.clientX, y: e.clientY });
-  }, []);
+  const handleNodeContextMenu = useCallback(
+    (id: string, e: React.MouseEvent) => {
+      setContextMenu({ id, x: e.clientX, y: e.clientY });
+    },
+    [setContextMenu]
+  );
 
   const rootHighlight = useMemo(() => new Set([rootEntityId]), [rootEntityId]);
 
@@ -339,29 +213,12 @@ export const EntityGraphView = ({
           className={styles.eResetButton}
           disabled={excludedIds.size === 0 && manuallyExpanded.size === 0}
           size={'sm'}
-          onClick={() => {
-            setExcludedIds(new Set());
-            setManuallyExpanded(new Set());
-          }}
+          onClick={resetGraph}
         >
           Reset
         </Button>
 
-        <Button
-          size={'sm'}
-          onClick={() => {
-            const graphNodes = nodes.map(n => ({ id: n.id, label: n.data.entityName || n.id }));
-            const graphEdges = edges.map(e => ({ id: e.id, from: e.from, to: e.to, label: e.label, kind: e.kind }));
-            const content = createDiagramFromGraph(rootEntityName, graphNodes, graphEdges, {
-              layout,
-              ...layoutOptions,
-              nodeWidth: 200,
-              nodeHeight: 52
-            });
-            setPendingDiagramContent(content);
-            setSaveDiagramOpen(true);
-          }}
-        >
+        <Button size={'sm'} onClick={createDiagram}>
           <TbFileExport size={14} />
           Create diagram
         </Button>
@@ -399,32 +256,11 @@ export const EntityGraphView = ({
           <Menu.Item
             leftSlot={<TbEyeOff size={13} />}
             disabled={contextMenu.id === rootEntityId}
-            onClick={() => {
-              setExcludedIds(prev => new Set([...prev, contextMenu.id]));
-              setContextMenu(null);
-            }}
+            onClick={() => excludeEntity(contextMenu.id)}
           >
             Exclude from graph
           </Menu.Item>
-          <Menu.Item
-            leftSlot={<TbPlus size={13} />}
-            onClick={() => {
-              const id = contextMenu.id;
-              setManuallyExpanded(prev => new Set([...prev, id]));
-              const nodeData = relationsData.get(id);
-              if (nodeData) {
-                const neighborIds = new Set(
-                  [...nodeData.outgoing, ...nodeData.incoming].map(r => r.entityId)
-                );
-                setExcludedIds(prev => {
-                  const next = new Set(prev);
-                  for (const nid of neighborIds) next.delete(nid);
-                  return next;
-                });
-              }
-              setContextMenu(null);
-            }}
-          >
+          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => expandEntity(contextMenu.id)}>
             Expand one level deeper
           </Menu.Item>
         </ContextMenu.Imperative>
@@ -438,7 +274,11 @@ export const EntityGraphView = ({
           workspaceId={workspaceId}
           diagramContent={pendingDiagramContent}
           defaultName={rootEntityName}
-          initialDestination={{ type: 'entity', entityId: rootEntityId, entityName: rootEntityName }}
+          initialDestination={{
+            type: 'entity',
+            entityId: rootEntityId,
+            entityName: rootEntityName
+          }}
         />
       )}
     </div>

@@ -1,43 +1,31 @@
 import { useMemo, useState, useCallback } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { getRouteApi } from '@tanstack/react-router';
 import styles from './EntityBrowserScreen.module.css';
 import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
-import {
-  TbPlus,
-  TbDownload,
-  TbUpload,
-  TbDots,
-  TbCheck,
-  TbCopy
-} from 'react-icons/tb';
-import {
-  useSavedViews,
-  useCreateSavedView,
-  useUpdateSavedView,
-  useTimelineMarkers
-} from '../../hooks/useEntities';
+import { TbPlus, TbDownload, TbUpload, TbDots, TbCheck, TbCopy } from 'react-icons/tb';
+import { useTimelineMarkers } from '../../hooks/useEntities';
+import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
+import { EntityBrowser, SaveViewDialog } from './components/EntityBrowser';
 import {
-  EntityBrowser,
-  SaveViewDialog
-} from './components/EntityBrowser';
-import {
-  type BrowserSearch,
   buildSavedViewPayload,
   getFilterValue,
   parseConditionsFromSearch,
   parseViewConfigs,
   toSavedViewConfig
 } from './components/entityBrowserState';
-import { exportEntitiesToCSV } from '../../lib/api';
+import { exportEntitiesToCSV } from '../../lib/entityCsv';
+import { downloadBlob } from '../../lib/browserDownload';
+
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities');
 
 export const EntityBrowserScreen = () => {
-  const navigate = useNavigate();
+  const navigate = routeApi.useNavigate();
   const { workspaceSlug, schemas, permissions, openAddEntityDialog } = useWorkspaceContext();
-  const search = useSearch({ strict: false }) as BrowserSearch;
+  const search = routeApi.useSearch();
   const workspaceId = workspaceSlug;
   const [count, setCount] = useState(0);
   const [isSavingView, setIsSavingView] = useState(false);
@@ -83,7 +71,8 @@ export const EntityBrowserScreen = () => {
           q,
           sort,
           conditions,
-          viewConfigs
+          viewConfigs,
+          joinAssessmentId: search.joinAssessmentId ?? null
         })
       );
     } catch {
@@ -105,7 +94,8 @@ export const EntityBrowserScreen = () => {
             owner: ownerFilter,
             q,
             sort,
-            conditions
+            conditions,
+            assessmentId: search.joinAssessmentId ?? null
           },
           config: toSavedViewConfig(view as BrowserView, viewConfigs)
         }
@@ -119,6 +109,7 @@ export const EntityBrowserScreen = () => {
     ownerFilter,
     permissions.canManageViews,
     q,
+    search.joinAssessmentId,
     sort,
     statusFilter,
     typeFilter,
@@ -136,14 +127,7 @@ export const EntityBrowserScreen = () => {
         q
       });
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `entities-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `entities-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
       console.error('Export failed:', error);
       alert('Failed to export entities. Please try again.');
@@ -205,7 +189,12 @@ export const EntityBrowserScreen = () => {
     <div className={styles.screen}>
       <div className={styles.header}>
         <Title
-          breadcrumb={[{ label: 'Home', onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } }) }]}
+          breadcrumb={[
+            {
+              label: 'Home',
+              onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+            }
+          ]}
           title={typeName}
           titleTestId="entity-browser-title"
           chips={

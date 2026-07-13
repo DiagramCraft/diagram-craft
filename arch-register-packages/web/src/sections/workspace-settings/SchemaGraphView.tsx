@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { DependencyGraph } from '../../components/DependencyGraph';
 import type {
@@ -11,7 +11,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { resolveSchemaColor } from '../../lib/api';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TbFileExport, TbVectorTriangle } from 'react-icons/tb';
 import styles from './SchemaGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -19,23 +19,139 @@ import { SaveDiagramFromGraphDialog } from '../entities/components/SaveDiagramFr
 import { createDiagramFromGraph } from '../../lib/diagramFromGraph';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ModelOverviewSearchParams } from '../../routes/searchParams';
+
+const DEFAULT_LAYOUT: LayoutAlgorithm = 'hierarchy';
+
+const DEFAULT_LAYOUT_OPTIONS: Required<LayoutOptions> = {
+  horizontalSpacing: 200,
+  verticalSpacing: 108,
+  iterations: 300,
+  springStrength: 0.5,
+  repulsionStrength: 1.0,
+  idealEdgeLength: 160,
+  crossingMinimizationIterations: 10
+};
+
+const SHARED_LAYOUT_KEYS = ['horizontalSpacing', 'verticalSpacing'] as const;
+const HIERARCHY_LAYOUT_KEYS = [...SHARED_LAYOUT_KEYS, 'crossingMinimizationIterations'] as const;
+const FORCE_LAYOUT_KEYS = [
+  'iterations',
+  'springStrength',
+  'repulsionStrength',
+  'idealEdgeLength'
+] as const;
+const TREE_LAYOUT_KEYS = SHARED_LAYOUT_KEYS;
+
+type LayoutOptionKey = keyof LayoutOptions;
+type LayoutOptionCache = Record<LayoutAlgorithm, Required<LayoutOptions>>;
+
+const getApplicableKeys = (layout: LayoutAlgorithm): readonly LayoutOptionKey[] => {
+  switch (layout) {
+    case 'hierarchy':
+    case 'layered':
+      return HIERARCHY_LAYOUT_KEYS;
+    case 'force':
+      return FORCE_LAYOUT_KEYS;
+    case 'tree':
+      return TREE_LAYOUT_KEYS;
+  }
+};
+
+const buildDefaultLayoutOptionCache = (): LayoutOptionCache => ({
+  hierarchy: { ...DEFAULT_LAYOUT_OPTIONS },
+  layered: { ...DEFAULT_LAYOUT_OPTIONS },
+  force: { ...DEFAULT_LAYOUT_OPTIONS },
+  tree: { ...DEFAULT_LAYOUT_OPTIONS }
+});
+
+const getRouteLayoutOptions = (
+  layout: LayoutAlgorithm,
+  search: ModelOverviewSearchParams
+): Required<LayoutOptions> => ({
+  ...DEFAULT_LAYOUT_OPTIONS,
+  ...(getApplicableKeys(layout).includes('horizontalSpacing')
+    ? { horizontalSpacing: search.horizontalSpacing ?? DEFAULT_LAYOUT_OPTIONS.horizontalSpacing }
+    : {}),
+  ...(getApplicableKeys(layout).includes('verticalSpacing')
+    ? { verticalSpacing: search.verticalSpacing ?? DEFAULT_LAYOUT_OPTIONS.verticalSpacing }
+    : {}),
+  ...(getApplicableKeys(layout).includes('crossingMinimizationIterations')
+    ? {
+        crossingMinimizationIterations:
+          search.crossingMinimizationIterations ??
+          DEFAULT_LAYOUT_OPTIONS.crossingMinimizationIterations
+      }
+    : {}),
+  ...(getApplicableKeys(layout).includes('iterations')
+    ? { iterations: search.iterations ?? DEFAULT_LAYOUT_OPTIONS.iterations }
+    : {}),
+  ...(getApplicableKeys(layout).includes('springStrength')
+    ? { springStrength: search.springStrength ?? DEFAULT_LAYOUT_OPTIONS.springStrength }
+    : {}),
+  ...(getApplicableKeys(layout).includes('repulsionStrength')
+    ? { repulsionStrength: search.repulsionStrength ?? DEFAULT_LAYOUT_OPTIONS.repulsionStrength }
+    : {}),
+  ...(getApplicableKeys(layout).includes('idealEdgeLength')
+    ? { idealEdgeLength: search.idealEdgeLength ?? DEFAULT_LAYOUT_OPTIONS.idealEdgeLength }
+    : {})
+});
+
+const areLayoutOptionsEqual = (
+  a: Required<LayoutOptions>,
+  b: Required<LayoutOptions>,
+  keys: readonly LayoutOptionKey[]
+) => keys.every(key => a[key] === b[key]);
+
+const serializeSearch = (
+  layout: LayoutAlgorithm,
+  options: Required<LayoutOptions>
+): ModelOverviewSearchParams => {
+  const search: ModelOverviewSearchParams = {
+    layout: layout === DEFAULT_LAYOUT ? undefined : layout
+  };
+
+  for (const key of getApplicableKeys(layout)) {
+    const value = options[key];
+    if (value !== DEFAULT_LAYOUT_OPTIONS[key]) {
+      search[key] = value;
+    }
+  }
+
+  return search;
+};
+
+const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/model-overview');
 
 export const SchemaGraphView = () => {
   const { schemas, workspaceSlug, workspace } = useWorkspaceContext();
-  const navigate = useNavigate();
-  const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
+  const navigate = routeApi.useNavigate();
+  const search = routeApi.useSearch();
+  const layout = search.layout ?? DEFAULT_LAYOUT;
   const [saveDiagramOpen, setSaveDiagramOpen] = useState(false);
   const [pendingDiagramContent, setPendingDiagramContent] =
     useState<SerializedDiagramDocument | null>(null);
-  const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>({
-    horizontalSpacing: 200,
-    verticalSpacing: 108,
-    iterations: 300,
-    springStrength: 0.5,
-    repulsionStrength: 1.0,
-    idealEdgeLength: 160,
-    crossingMinimizationIterations: 10
-  });
+  const [layoutOptionCache, setLayoutOptionCache] = useState<LayoutOptionCache>(
+    buildDefaultLayoutOptionCache
+  );
+  const layoutOptions = getRouteLayoutOptions(layout, search);
+
+  useEffect(() => {
+    setLayoutOptionCache(previous => {
+      const nextOptions = getRouteLayoutOptions(layout, search);
+      if (areLayoutOptionsEqual(previous[layout], nextOptions, getApplicableKeys(layout))) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        [layout]: {
+          ...previous[layout],
+          ...nextOptions
+        }
+      };
+    });
+  }, [layout, search]);
 
   const nodes = useMemo(() => schemas.map(s => ({ id: s.id, data: s })), [schemas]);
 
@@ -87,6 +203,45 @@ export const SchemaGraphView = () => {
     [navigate, workspaceSlug]
   );
 
+  const updateSearch = useCallback(
+    (nextLayout: LayoutAlgorithm, nextOptions: Required<LayoutOptions>, replace: boolean) => {
+      navigate({
+        to: '/$workspaceSlug/settings/model-overview',
+        params: { workspaceSlug },
+        search: serializeSearch(nextLayout, nextOptions),
+        replace
+      });
+    },
+    [navigate, workspaceSlug]
+  );
+
+  const setLayoutOption = useCallback(
+    (key: LayoutOptionKey, value: number | undefined) => {
+      const nextOptions = {
+        ...layoutOptions,
+        [key]: value ?? DEFAULT_LAYOUT_OPTIONS[key]
+      };
+
+      setLayoutOptionCache(previous => ({
+        ...previous,
+        [layout]: {
+          ...previous[layout],
+          ...nextOptions
+        }
+      }));
+      updateSearch(layout, nextOptions, true);
+    },
+    [layout, layoutOptions, updateSearch]
+  );
+
+  const setActiveLayout = useCallback(
+    (nextLayout: LayoutAlgorithm) => {
+      const nextOptions = layoutOptionCache[nextLayout];
+      updateSearch(nextLayout, nextOptions, false);
+    },
+    [layoutOptionCache, updateSearch]
+  );
+
   const schemaIndexMap = useMemo(() => new Map(schemas.map((s, i) => [s.id, i])), [schemas]);
 
   if (schemas.length === 0) {
@@ -104,9 +259,10 @@ export const SchemaGraphView = () => {
       <div className={styles.eToolbar}>
         <span className={styles.eToolbarLabel}>Layout</span>
         <Select.Root
+          data-testid="model-overview-layout"
           value={layout}
           onChange={v => {
-            if (v) setLayout(v as LayoutAlgorithm);
+            if (v) setActiveLayout(v as LayoutAlgorithm);
           }}
         >
           <Select.Item value="hierarchy">Hierarchy</Select.Item>
@@ -121,8 +277,9 @@ export const SchemaGraphView = () => {
           <>
             <span className={styles.eToolbarLabel}>H-Space</span>
             <NumberInput
+              data-testid="model-overview-horizontal-spacing"
               value={layoutOptions.horizontalSpacing ?? 200}
-              onChange={v => setLayoutOptions(prev => ({ ...prev, horizontalSpacing: v }))}
+              onChange={v => setLayoutOption('horizontalSpacing', v)}
               min={50}
               max={500}
               step={10}
@@ -130,8 +287,9 @@ export const SchemaGraphView = () => {
             />
             <span className={styles.eToolbarLabel}>V-Space</span>
             <NumberInput
+              data-testid="model-overview-vertical-spacing"
               value={layoutOptions.verticalSpacing ?? 108}
-              onChange={v => setLayoutOptions(prev => ({ ...prev, verticalSpacing: v }))}
+              onChange={v => setLayoutOption('verticalSpacing', v)}
               min={50}
               max={300}
               step={10}
@@ -144,10 +302,9 @@ export const SchemaGraphView = () => {
           <>
             <span className={styles.eToolbarLabel}>Crossings</span>
             <NumberInput
+              data-testid="model-overview-crossings"
               value={layoutOptions.crossingMinimizationIterations ?? 10}
-              onChange={v =>
-                setLayoutOptions(prev => ({ ...prev, crossingMinimizationIterations: v }))
-              }
+              onChange={v => setLayoutOption('crossingMinimizationIterations', v)}
               min={1}
               max={50}
               step={1}
@@ -160,8 +317,9 @@ export const SchemaGraphView = () => {
           <>
             <span className={styles.eToolbarLabel}>Iterations</span>
             <NumberInput
+              data-testid="model-overview-iterations"
               value={layoutOptions.iterations ?? 300}
-              onChange={v => setLayoutOptions(prev => ({ ...prev, iterations: v }))}
+              onChange={v => setLayoutOption('iterations', v)}
               min={50}
               max={1000}
               step={50}
@@ -169,8 +327,9 @@ export const SchemaGraphView = () => {
             />
             <span className={styles.eToolbarLabel}>Spring</span>
             <NumberInput
+              data-testid="model-overview-spring-strength"
               value={layoutOptions.springStrength ?? 0.5}
-              onChange={v => setLayoutOptions(prev => ({ ...prev, springStrength: v }))}
+              onChange={v => setLayoutOption('springStrength', v)}
               min={0.1}
               max={2.0}
               step={0.1}
@@ -178,8 +337,9 @@ export const SchemaGraphView = () => {
             />
             <span className={styles.eToolbarLabel}>Repulsion</span>
             <NumberInput
+              data-testid="model-overview-repulsion-strength"
               value={layoutOptions.repulsionStrength ?? 1.0}
-              onChange={v => setLayoutOptions(prev => ({ ...prev, repulsionStrength: v }))}
+              onChange={v => setLayoutOption('repulsionStrength', v)}
               min={0.1}
               max={3.0}
               step={0.1}
@@ -187,8 +347,9 @@ export const SchemaGraphView = () => {
             />
             <span className={styles.eToolbarLabel}>Length</span>
             <NumberInput
+              data-testid="model-overview-ideal-edge-length"
               value={layoutOptions.idealEdgeLength ?? 160}
-              onChange={v => setLayoutOptions(prev => ({ ...prev, idealEdgeLength: v }))}
+              onChange={v => setLayoutOption('idealEdgeLength', v)}
               min={50}
               max={500}
               step={10}

@@ -1,22 +1,24 @@
-import type React from 'react';
 import { TbHash } from 'react-icons/tb';
-import type { MdxComponentSpec } from '../../types';
+import { defineMdxComponent } from '../../defineMdxComponent';
 import { EntityMetric } from './EntityMetric';
 import {
   ENTITY_METRIC_TYPE,
   EntityMetricEditable,
   entityMetricMdxRule
 } from './EntityMetricEditable';
+import type { EntityMetricSlateElement } from './types';
 
-export const entityMetricSpec = {
-  component: EntityMetric as unknown as React.ComponentType<Record<string, string>>,
+export const entityMetricSpec = defineMdxComponent<
+  EntityMetricSlateElement,
+  { schema?: string; owner?: string; lifecycle?: string; label?: string },
+  'block'
+>({
+  component: EntityMetric,
   mode: 'block',
   allowedProps: ['schema', 'owner', 'lifecycle', 'label'],
   editorSpec: {
-    editableComponent: EntityMetricEditable as unknown as React.ComponentType<
-      Record<string, unknown>
-    >,
-    nodeOptions: { isVoid: true as const },
+    editableComponent: EntityMetricEditable,
+    nodeOptions: { isVoid: true },
     mdxRule: entityMetricMdxRule,
     slashCommand: {
       key: 'entity-metric',
@@ -36,4 +38,4 @@ export const entityMetricSpec = {
       }
     }
   }
-} satisfies MdxComponentSpec;
+});

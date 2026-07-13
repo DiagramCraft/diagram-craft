@@ -15,46 +15,17 @@
   50% { opacity: 0.4; }
 }
 
-.empty {
-  font-size: 13px;
-  color: var(--base-fg-more-dim);
-  padding: 8px 0;
+/* The .article container this renders into composes articleTypography.module.css, whose
+   `:global(table)` rule (specificity 0,1,1) would otherwise double up borders/margin against
+   Table.Root's own wrapper div. `.tableWrapper .tableSurface` at (0,2,0) beats it and resets
+   the <table> itself, while .tableWrapper supplies the block-gap margin that rule used to give. */
+.tableWrapper {
+  margin: 0 0 var(--article-block-gap);
+}
+
+.tableWrapper .tableSurface {
+  border: none;
+  border-radius: 0;
+  overflow: visible;
   margin: 0;
-}
-
-.table {
-  width: 100%;
-}
-
-.tableWrapper .th,
-.tableWrapper .td {
-  padding: 9px 12px;
-}
-
-.row {
-  cursor: pointer;
-
-  &:hover {
-    background: color-mix(in srgb, var(--accent-bg) 18%, transparent);
-  }
-}
-
-.entityCell {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.entityText {
-  min-width: 0;
-}
-
-.entityName {
-  font-weight: 600;
-}
-
-.entityDescription {
-  font-size: 12px;
-  color: var(--base-fg-more-dim);
-  margin-top: 2px;
 }

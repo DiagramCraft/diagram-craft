@@ -1,17 +1,25 @@
 import { useState, useMemo, useCallback } from 'react';
-import { useQueries } from '@tanstack/react-query';
 import styles from './MatrixView.module.css';
 import { TbChevronDown, TbRowRemove, TbColumnRemove } from 'react-icons/tb';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { useEntities, useMultipleEntityRelations } from '../../../hooks/useEntities';
-import { entityKeys } from '../../../hooks/queryKeys';
-import { orpcClient } from '../../../lib/orpcClient';
-import { getRelationDisplayLabel, resolveSchemaColor } from '../../../lib/api';
-import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import { getRelationDisplayLabel } from '../../../lib/entityRelations';
+import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { matrixViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
+import {
+  getCategoricalFields,
+  getCategoricalFieldValues,
+  LIFECYCLE_FIELD_ID,
+  OWNER_FIELD_ID,
+  type JoinedAssessmentContext
+} from './entityFieldSources';
+import { normalizeViewConfig } from './entityViewConfig';
+import { EmptyState } from '../../../components/EmptyState';
+import { autoPickColSchemaId, buildMatrixData, type MatrixAttrField } from './matrixViewState';
+import { useHydratedEntityRows } from '../../../hooks/useHydratedEntityRows';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -24,67 +32,31 @@ export type MatrixConfig = {
   hideEmptyCols: boolean;
 };
 
+const DEFAULT_MATRIX_CONFIG: MatrixConfig = {
+  colMode: 'entity',
+  colSchemaId: null,
+  colEnumFieldId: null,
+  filterFieldName: null,
+  hideEmptyRows: false,
+  hideEmptyCols: false
+};
+
 type MatrixViewProps = EntityBrowserRowViewProps & {
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   config: unknown;
   onConfigChange: (cfg: MatrixConfig) => void;
   hideToolbar?: boolean;
+  joinedAssessment?: JoinedAssessmentContext | null;
 };
 
 type ColMode = 'entity' | 'attribute';
-
-type AttrField = {
-  fieldId: string;
-  label: string;
-  options: { value: string; label: string }[];
-  isMetadata: boolean;
-};
 
 type RelationFieldOption = {
   value: string;
   label: string;
 };
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const LIFECYCLE_FIELD_ID = '_lifecycle';
-const OWNER_FIELD_ID = '_owner';
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const autoPickColSchemaId = (
-  rows: EntityRecord[],
-  relationsMap: Map<
-    string,
-    { outgoing: { entitySchemaId: string }[]; incoming: { entitySchemaId: string }[] }
-  >,
-  rowSchemaIds: Set<string>,
-  allSchemaIds: string[]
-): string | null => {
-  const counts: Record<string, number> = {};
-  rows.forEach(row => {
-    const rel = relationsMap.get(row._uid);
-    if (!rel) return;
-    [...rel.outgoing, ...rel.incoming].forEach(r => {
-      if (!rowSchemaIds.has(r.entitySchemaId)) {
-        counts[r.entitySchemaId] = (counts[r.entitySchemaId] ?? 0) + 1;
-      }
-    });
-  });
-
-  const candidates = allSchemaIds.filter(id => !rowSchemaIds.has(id) && counts[id]);
-  if (candidates.length) {
-    return candidates.sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0))[0] ?? null;
-  }
-  const fallback = allSchemaIds.find(id => !rowSchemaIds.has(id));
-  return fallback ?? allSchemaIds[0] ?? null;
-};
-
-const getMetadataValue = (row: EntityRecord, fieldId: string): string | null => {
-  if (fieldId === LIFECYCLE_FIELD_ID) return row._lifecycle?.id ?? null;
-  if (fieldId === OWNER_FIELD_ID) return row._owner?.id ?? null;
-  return null;
-};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -95,45 +67,52 @@ export const MatrixView = ({
   config,
   onConfigChange,
   linkedEntityIds,
-  hideToolbar
+  hideToolbar,
+  joinedAssessment
 }: MatrixViewProps) => {
-  const {
-    workspaceSlug: workspaceId,
-    schemas,
-    enums,
-    lifecycleStates,
-    teams
-  } = useWorkspaceContext();
-  const parsedConfig = useMemo(() => {
-    const result = matrixViewConfigSchema.safeParse(config);
-    return result.success ? result.data : null;
-  }, [config]);
+  const { workspaceSlug: workspaceId, schemas, lifecycleStates, teams } = useWorkspaceContext();
+  const parsedConfig = useMemo(
+    () => normalizeViewConfig(matrixViewConfigSchema, config, DEFAULT_MATRIX_CONFIG),
+    [config]
+  );
 
-  const [colMode, setColMode] = useState<ColMode>(parsedConfig?.colMode ?? 'entity');
-  const [colSchemaId, setColSchemaId] = useState<string | null>(parsedConfig?.colSchemaId ?? null);
-  const [colEnumFieldId, setColEnumFieldId] = useState<string | null>(parsedConfig?.colEnumFieldId ?? null);
-  const [filterFieldName, setFilterFieldName] = useState<string | null>(parsedConfig?.filterFieldName ?? null);
-  const [hideEmptyRows, setHideEmptyRows] = useState(parsedConfig?.hideEmptyRows ?? false);
-  const [hideEmptyCols, setHideEmptyCols] = useState(parsedConfig?.hideEmptyCols ?? false);
+  const [colMode, setColMode] = useState<ColMode>(parsedConfig.colMode);
+  const [colSchemaId, setColSchemaId] = useState<string | null>(parsedConfig.colSchemaId);
+  const [colEnumFieldId, setColEnumFieldId] = useState<string | null>(parsedConfig.colEnumFieldId);
+  const [filterFieldName, setFilterFieldName] = useState<string | null>(
+    parsedConfig.filterFieldName
+  );
+  const [hideEmptyRows, setHideEmptyRows] = useState(parsedConfig.hideEmptyRows);
+  const [hideEmptyCols, setHideEmptyCols] = useState(parsedConfig.hideEmptyCols);
 
-  const notifyConfigChange = useCallback((patch: Partial<MatrixConfig>) => {
-    onConfigChange({
+  const notifyConfigChange = useCallback(
+    (patch: Partial<MatrixConfig>) => {
+      onConfigChange({
+        colMode,
+        colSchemaId,
+        colEnumFieldId,
+        filterFieldName,
+        hideEmptyRows,
+        hideEmptyCols,
+        ...patch
+      });
+    },
+    [
+      onConfigChange,
       colMode,
       colSchemaId,
       colEnumFieldId,
       filterFieldName,
       hideEmptyRows,
-      hideEmptyCols,
-      ...patch
-    });
-  }, [onConfigChange, colMode, colSchemaId, colEnumFieldId, filterFieldName, hideEmptyRows, hideEmptyCols]);
+      hideEmptyCols
+    ]
+  );
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
   const rowEntityIds = useMemo(() => rows.map(r => r._uid), [rows]);
   const rowSchemaIds = useMemo(() => new Set(rows.map(r => r._schema.id)), [rows]);
   const allSchemaIds = useMemo(() => schemas.map(s => s.id), [schemas]);
-  const rowSchemaIdsArray = useMemo(() => [...rowSchemaIds], [rowSchemaIds]);
 
   const relationsMap = useMultipleEntityRelations(workspaceId, rowEntityIds);
 
@@ -144,29 +123,11 @@ export const MatrixView = ({
 
   // Fetch full-view entities for each row schema when in attribute mode so
   // custom select field values (absent in summary view) are available.
-  const fullEntityResults = useQueries({
-    queries: rowSchemaIdsArray.map(schemaId => ({
-      queryKey: entityKeys.list(workspaceId, { schemaId, view: 'full' }),
-      queryFn: () =>
-        orpcClient.entities.list({
-          params: { workspace: workspaceId },
-          query: { _schemaId: schemaId, view: 'full' }
-        }),
-      enabled: colMode === 'attribute' && !!workspaceId
-    }))
-  });
-
-  // Map from uid → full-view EntityRecord (only for entities in current rows)
-  const fullRowsMap = useMemo(() => {
-    const rowUids = new Set(rows.map(r => r._uid));
-    const m = new Map<string, EntityRecord>();
-    fullEntityResults.forEach(result => {
-      result.data?.forEach(e => {
-        if (rowUids.has(e._uid)) m.set(e._uid, e);
-      });
-    });
-    return m;
-  }, [fullEntityResults, rows]);
+  const hydratedRows = useHydratedEntityRows(workspaceId, rows, colMode === 'attribute');
+  const fullRowsMap = useMemo(
+    () => new Map(hydratedRows.map(row => [row._uid, row])),
+    [hydratedRows]
+  );
 
   // Auto-pick column schema
   const effColSchemaId = useMemo(() => {
@@ -180,52 +141,50 @@ export const MatrixView = ({
     colMode === 'entity' && effColSchemaId ? { schemaId: effColSchemaId } : {}
   );
 
-  // Attribute fields: metadata first, then custom select fields from row schemas
-  const attrFields = useMemo((): AttrField[] => {
-    const out: AttrField[] = [];
+  const rowSchemas = useMemo(
+    () =>
+      [...rowSchemaIds]
+        .map(schemaId => schemaMap.get(schemaId)?.schema)
+        .filter((s): s is EntitySchema => !!s),
+    [rowSchemaIds, schemaMap]
+  );
 
-    if (lifecycleStates.length > 0) {
-      out.push({
-        fieldId: LIFECYCLE_FIELD_ID,
-        label: 'Lifecycle',
-        options: [...lifecycleStates]
-          .sort((a, b) => a.sort_order - b.sort_order)
-          .map(s => ({ value: s.id, label: s.label })),
-        isMetadata: true
-      });
-    }
+  // Attribute fields: metadata first, then custom select fields from row schemas, then
+  // rating/enum assessment fields - same relative order as before the entityFieldSources.ts
+  // migration (getCategoricalFields itself orders select fields before Lifecycle/Owner, so its
+  // output is reordered here to put the two metadata fields first).
+  const attrFields = useMemo((): MatrixAttrField[] => {
+    const fieldOptions = getCategoricalFields(
+      rowSchemas,
+      lifecycleStates,
+      teams,
+      joinedAssessment,
+      true
+    );
+    const metadataIds = new Set([LIFECYCLE_FIELD_ID, OWNER_FIELD_ID]);
+    const ordered = [
+      ...fieldOptions.filter(f => metadataIds.has(f.id)),
+      ...fieldOptions.filter(f => !metadataIds.has(f.id))
+    ];
 
-    if (teams.length > 0) {
-      out.push({
-        fieldId: OWNER_FIELD_ID,
-        label: 'Owner',
-        options: [...teams]
-          .sort((a, b) => a.sort_order - b.sort_order)
-          .map(t => ({ value: t.id, label: t.name })),
-        isMetadata: true
-      });
-    }
-
-    const seen = new Set<string>();
-    rowSchemaIds.forEach(schemaId => {
-      const entry = schemaMap.get(schemaId);
-      if (!entry) return;
-      entry.schema.fields.forEach(f => {
-        if (f.type === 'select' && !seen.has(f.id)) {
-          seen.add(f.id);
-          const enumDef = enums.find(e => e.id === f.enumId);
-          const options =
-            enumDef?.options ??
-            ('options' in f ? (f as { options: { value: string; label: string }[] }).options : []);
-          if (options.length > 0) {
-            out.push({ fieldId: f.id, label: f.name, options, isMetadata: false });
-          }
-        }
-      });
-    });
-
-    return out;
-  }, [lifecycleStates, teams, rowSchemaIds, schemaMap, enums]);
+    return ordered
+      .map(f => ({
+        fieldId: f.id,
+        label: f.label,
+        options: getCategoricalFieldValues(
+          rowSchemas,
+          f.id,
+          lifecycleStates,
+          teams,
+          joinedAssessment
+        ).map(o => ({
+          value: o.id,
+          label: o.label
+        })),
+        isMetadata: metadataIds.has(f.id)
+      }))
+      .filter(f => f.isMetadata || f.options.length > 0);
+  }, [lifecycleStates, teams, rowSchemas, joinedAssessment]);
 
   const effColFieldId = colEnumFieldId ?? attrFields[0]?.fieldId ?? null;
   const effAttrField = attrFields.find(f => f.fieldId === effColFieldId) ?? null;
@@ -256,76 +215,21 @@ export const MatrixView = ({
 
   // ── Matrix computation ─────────────────────────────────────────────────────
 
-  const { displayRows, displayCols, cellMatrix, totalFilled, rowCounts, colCounts } =
-    useMemo(() => {
-      if (!rows.length)
-        return {
-          displayRows: [],
-          displayCols: [] as { id: string; publicId: string; label: string }[],
-          cellMatrix: [] as boolean[][],
-          totalFilled: 0,
-          rowCounts: [] as number[],
-          colCounts: [] as number[]
-        };
-
-      let allCols: { id: string; publicId: string; label: string }[];
-      if (colMode === 'entity') {
-        allCols = colEntitiesRaw.map(e => ({ id: e._uid, publicId: e._publicId, label: e._name }));
-      } else {
-        allCols = (effAttrField?.options ?? []).map(o => ({ id: o.value, publicId: o.value, label: o.label }));
-      }
-
-      if (!allCols.length)
-        return {
-          displayRows: [] as EntityRecord[],
-          displayCols: [] as { id: string; publicId: string; label: string }[],
-          cellMatrix: [] as boolean[][],
-          totalFilled: 0,
-          rowCounts: [] as number[],
-          colCounts: [] as number[]
-        };
-
-      const full = rows.map(row => {
-        const rel = relationsMap.get(row._uid);
-        return allCols.map(col => {
-          if (colMode === 'entity') {
-            if (!rel) return false;
-            const matchesField = (fieldName: string) =>
-              filterFieldName === null || fieldName === filterFieldName;
-            return (
-              rel.outgoing.some(r => r.entityId === col.id && matchesField(r.fieldName)) ||
-              rel.incoming.some(r => r.entityId === col.id && matchesField(r.fieldName))
-            );
-          } else {
-            if (!effColFieldId || !effAttrField) return false;
-            let val: unknown;
-            if (effAttrField.isMetadata) {
-              val = getMetadataValue(row, effColFieldId);
-            } else {
-              // Use full-view entity if available for custom select fields
-              const fullRow = fullRowsMap.get(row._uid) ?? row;
-              val = fullRow[effColFieldId];
-            }
-            return Array.isArray(val) ? val.includes(col.id) : val === col.id;
-          }
-        });
-      });
-
-      const rMask = rows.map((_, ri) => !hideEmptyRows || full[ri]!.some(Boolean));
-      const cMask = allCols.map((_, ci) => !hideEmptyCols || rows.some((_, ri) => full[ri]![ci]));
-
-      const rIdx = rows.flatMap((_, i) => (rMask[i] ? [i] : []));
-      const cIdx = allCols.flatMap((_, i) => (cMask[i] ? [i] : []));
-
-      const displayRows = rIdx.map(i => rows[i]!);
-      const displayCols = cIdx.map(i => allCols[i]!);
-      const cellMatrix = rIdx.map(ri => cIdx.map(ci => full[ri]![ci]!));
-      const totalFilled = cellMatrix.flat().filter(Boolean).length;
-      const rowCounts = cellMatrix.map(row => row.filter(Boolean).length);
-      const colCounts = displayCols.map((_, ci) => cellMatrix.filter(row => row[ci]).length);
-
-      return { displayRows, displayCols, cellMatrix, totalFilled, rowCounts, colCounts };
-    }, [
+  const { displayRows, displayCols, cellMatrix, totalFilled, rowCounts, colCounts } = useMemo(
+    () =>
+      buildMatrixData({
+        rows,
+        colMode,
+        colEntities: colEntitiesRaw,
+        attrField: effAttrField,
+        colFieldId: effColFieldId,
+        relationsMap,
+        filterFieldName,
+        hideEmptyRows,
+        hideEmptyCols,
+        fullRowsMap
+      }),
+    [
       rows,
       colMode,
       colEntitiesRaw,
@@ -336,7 +240,8 @@ export const MatrixView = ({
       hideEmptyRows,
       hideEmptyCols,
       fullRowsMap
-    ]);
+    ]
+  );
 
   // ── Derived display values ─────────────────────────────────────────────────
 
@@ -367,148 +272,165 @@ export const MatrixView = ({
     <div className={styles.wrap}>
       {/* Config bar */}
       {!hideToolbar && (
-      <div className={styles.config}>
-        {/* Rows pill */}
-        <div className={styles.axisPill}>
-          <span className={styles.axisKicker}>Rows</span>
-          <span className={styles.typeTag}>
-            <span>Entities</span>
-          </span>
-        </div>
-
-        {/* Cols pill */}
-        <div className={styles.axisPill}>
-          <span className={styles.axisKicker}>Cols</span>
-
-          <div className={styles.segmented}>
-            <button
-              type="button"
-              className={colMode === 'entity' ? styles.segmentedActive : ''}
-              onClick={() => { setColMode('entity'); notifyConfigChange({ colMode: 'entity' }); }}
-            >
-              Entity
-            </button>
-            <button
-              type="button"
-              className={colMode === 'attribute' ? styles.segmentedActive : ''}
-              onClick={() => { setColMode('attribute'); notifyConfigChange({ colMode: 'attribute' }); }}
-            >
-              Attribute
-            </button>
+        <div className={styles.config}>
+          {/* Rows pill */}
+          <div className={styles.axisPill}>
+            <span className={styles.axisKicker}>Rows</span>
+            <span className={styles.typeTag}>
+              <span>Entities</span>
+            </span>
           </div>
 
-          {colMode === 'entity' ? (
-            <>
-              <label className={styles.selectWrap}>
-                <select
-                  className={styles.select}
-                  value={effColSchemaId ?? ''}
-                  onChange={e => handleColSchemaChange(e.target.value)}
-                >
-                  {schemas.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-                <TbChevronDown size={10} />
-              </label>
+          {/* Cols pill */}
+          <div className={styles.axisPill}>
+            <span className={styles.axisKicker}>Cols</span>
 
-              {availableFieldNames.length > 1 && (
+            <div className={styles.segmented}>
+              <button
+                type="button"
+                className={colMode === 'entity' ? styles.segmentedActive : ''}
+                onClick={() => {
+                  setColMode('entity');
+                  notifyConfigChange({ colMode: 'entity' });
+                }}
+              >
+                Entity
+              </button>
+              <button
+                type="button"
+                className={colMode === 'attribute' ? styles.segmentedActive : ''}
+                onClick={() => {
+                  setColMode('attribute');
+                  notifyConfigChange({ colMode: 'attribute' });
+                }}
+              >
+                Attribute
+              </button>
+            </div>
+
+            {colMode === 'entity' ? (
+              <>
                 <label className={styles.selectWrap}>
-                  <span className={styles.selectVia}>via</span>
                   <select
                     className={styles.select}
-                    value={filterFieldName ?? 'any'}
-                    onChange={e => {
-                      const v = e.target.value === 'any' ? null : e.target.value;
-                      setFilterFieldName(v);
-                      notifyConfigChange({ filterFieldName: v });
-                    }}
+                    value={effColSchemaId ?? ''}
+                    onChange={e => handleColSchemaChange(e.target.value)}
                   >
-                    <option value="any">any relation</option>
-                    {availableFieldNames.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
+                    {schemas.map(s => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
                       </option>
                     ))}
                   </select>
                   <TbChevronDown size={10} />
                 </label>
-              )}
 
-              {noRelations && (
-                <span className={styles.noRel}>— no relations between these types</span>
-              )}
-            </>
-          ) : attrFields.length > 0 ? (
-            <label className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={effColFieldId ?? ''}
-                onChange={e => { setColEnumFieldId(e.target.value); notifyConfigChange({ colEnumFieldId: e.target.value }); }}
-              >
-                {attrFields.map(f => (
-                  <option key={f.fieldId} value={f.fieldId}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-              <TbChevronDown size={10} />
-            </label>
-          ) : (
-            <span className={styles.noRel}>No attributes available</span>
+                {availableFieldNames.length > 1 && (
+                  <label className={styles.selectWrap}>
+                    <span className={styles.selectVia}>via</span>
+                    <select
+                      className={styles.select}
+                      value={filterFieldName ?? 'any'}
+                      onChange={e => {
+                        const v = e.target.value === 'any' ? null : e.target.value;
+                        setFilterFieldName(v);
+                        notifyConfigChange({ filterFieldName: v });
+                      }}
+                    >
+                      <option value="any">any relation</option>
+                      {availableFieldNames.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <TbChevronDown size={10} />
+                  </label>
+                )}
+
+                {noRelations && (
+                  <span className={styles.noRel}>— no relations between these types</span>
+                )}
+              </>
+            ) : attrFields.length > 0 ? (
+              <label className={styles.selectWrap}>
+                <select
+                  className={styles.select}
+                  value={effColFieldId ?? ''}
+                  onChange={e => {
+                    setColEnumFieldId(e.target.value);
+                    notifyConfigChange({ colEnumFieldId: e.target.value });
+                  }}
+                >
+                  {attrFields.map(f => (
+                    <option key={f.fieldId} value={f.fieldId}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+                <TbChevronDown size={10} />
+              </label>
+            ) : (
+              <span className={styles.noRel}>No attributes available</span>
+            )}
+          </div>
+
+          <div style={{ flex: 1 }} />
+
+          {!isEmpty && (
+            <span className={styles.stat}>
+              {totalFilled} filled&thinsp;·&thinsp;{displayRows.length}&thinsp;×&thinsp;
+              {displayCols.length}
+            </span>
           )}
+
+          <div style={{ flex: 1 }} />
+
+          <div className={styles.toggles}>
+            <button
+              type="button"
+              data-active={hideEmptyRows ? 'true' : 'false'}
+              title="Hide empty rows"
+              onClick={() => {
+                const next = !hideEmptyRows;
+                setHideEmptyRows(next);
+                notifyConfigChange({ hideEmptyRows: next });
+              }}
+            >
+              <TbRowRemove size={10} />
+            </button>
+            <button
+              type="button"
+              data-active={hideEmptyCols ? 'true' : 'false'}
+              title="Hide empty cols"
+              onClick={() => {
+                const next = !hideEmptyCols;
+                setHideEmptyCols(next);
+                notifyConfigChange({ hideEmptyCols: next });
+              }}
+            >
+              <TbColumnRemove size={10} />
+            </button>
+          </div>
         </div>
-
-        <div style={{ flex: 1 }} />
-
-        {!isEmpty && (
-          <span className={styles.stat}>
-            {totalFilled} filled&thinsp;·&thinsp;{displayRows.length}&thinsp;×&thinsp;
-            {displayCols.length}
-          </span>
-        )}
-
-        <div style={{ flex: 1 }} />
-
-        <div className={styles.toggles}>
-          <button
-            type="button"
-            data-active={hideEmptyRows ? 'true' : 'false'}
-            title="Hide empty rows"
-            onClick={() => { const next = !hideEmptyRows; setHideEmptyRows(next); notifyConfigChange({ hideEmptyRows: next }); }}
-          >
-            <TbRowRemove size={10} />
-          </button>
-          <button
-            type="button"
-            data-active={hideEmptyCols ? 'true' : 'false'}
-            title="Hide empty cols"
-            onClick={() => { const next = !hideEmptyCols; setHideEmptyCols(next); notifyConfigChange({ hideEmptyCols: next }); }}
-          >
-            <TbColumnRemove size={10} />
-          </button>
-        </div>
-      </div>
       )}
 
       {/* Matrix or empty state */}
       {isEmpty ? (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>
-            {colMode === 'entity' && noRelations
+        <EmptyState
+          title={
+            colMode === 'entity' && noRelations
               ? 'No relationships between these entity types'
               : isLoadingRelations
                 ? 'Loading relationships…'
-                : 'Nothing to display'}
-          </div>
-          <div className={styles.emptySub}>
-            {colMode === 'entity'
+                : 'Nothing to display'
+          }
+          subtitle={
+            colMode === 'entity'
               ? 'Try a different column type, or turn off sparse filtering.'
-              : 'Select an attribute to see value distribution.'}
-          </div>
-        </div>
+              : 'Select an attribute to see value distribution.'
+          }
+        />
       ) : (
         <div className={styles.scroll}>
           <table className={styles.table} cellSpacing="0" cellPadding="0">

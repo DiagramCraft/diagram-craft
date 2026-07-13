@@ -14,6 +14,7 @@ import { PostgresAiDatabase } from '../domain/ai/db/postgresAi';
 import { SERVER_DEFAULTS } from '../constants';
 import { PostgresViewDatabase } from '../domain/catalog/db/postgresView';
 import { PostgresWatchDatabase } from '../domain/watch/db/postgresWatch';
+import { PostgresDiscussionDatabase } from '../domain/discussion/db/postgresDiscussion';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
@@ -30,7 +31,35 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly watch: PostgresWatchDatabase;
   readonly auth: PostgresAuthDatabase;
   readonly ai: PostgresAiDatabase;
+  readonly discussion: PostgresDiscussionDatabase;
   readonly core;
+
+  private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
+    const adapter = {
+      workspace: new PostgresWorkspaceDatabase(sql),
+      catalog: new PostgresCatalogDatabase(sql),
+      view: new PostgresViewDatabase(sql),
+      project: new PostgresProjectDatabase(sql),
+      audit: new PostgresAuditDatabase(sql),
+      watch: new PostgresWatchDatabase(sql),
+      auth: new PostgresAuthDatabase(sql),
+      ai: new PostgresAiDatabase(sql),
+      discussion: new PostgresDiscussionDatabase(sql)
+    };
+    let bound!: DatabaseAdapter;
+    bound = {
+      ...adapter,
+      core: {
+        driver: 'postgres',
+        close: async () => {},
+        reset: async () => {
+          throw new Error('Cannot reset a transaction-bound database adapter');
+        },
+        transaction: async callback => callback(bound)
+      }
+    };
+    return bound;
+  }
 
   constructor(connectionString: string, schema?: string) {
     this.sql = postgres(connectionString, {
@@ -54,6 +83,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.watch = new PostgresWatchDatabase(this.sql);
     this.auth = new PostgresAuthDatabase(this.sql);
     this.ai = new PostgresAiDatabase(this.sql);
+    this.discussion = new PostgresDiscussionDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,
@@ -97,7 +127,11 @@ export class PostgresDatabase implements DatabaseAdapter {
         } catch (error) {
           throw normalizePostgresError(error);
         }
-      }
+      },
+      transaction: async <T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T> =>
+        (await this.sql.begin(async sql =>
+          callback(this.adapterFor(sql as unknown as PostgresSqlClient))
+        )) as unknown as T
     };
   }
 

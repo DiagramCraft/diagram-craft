@@ -4,11 +4,11 @@ import type { TElement } from 'platejs';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
 import { DialogContent, DialogSection } from '../../../editor/BlockDialog';
-import { useSavedViews } from '../../../../../hooks/useEntities';
+import { useSavedViews } from '../../../../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import type { EntityViewEmbedSlateElement } from './types';
-import styles from './EntityViewEmbedDialog.module.css';
+import { EmptyState } from '../../../../../components/EmptyState';
 
 export const EntityViewEmbedDialog = ({
   element,
@@ -76,7 +76,7 @@ export const EntityViewEmbedDialog = ({
       <DialogContent>
         <DialogSection label="View">
           {adminViews.length === 0 ? (
-            <p className={styles.empty}>No saved views available. Create an admin view in the entity browser first.</p>
+            <EmptyState compact title="No saved views available. Create an admin view in the entity browser first." />
           ) : (
             <Select.Root value={viewId} onChange={value => setViewId(value ?? '')}>
               {adminViews.map(view => (

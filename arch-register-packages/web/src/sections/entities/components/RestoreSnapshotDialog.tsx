@@ -6,9 +6,11 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '../../../lib/api';
-import { diffSnapshotState } from '../EntityTimelineTab';
+import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
+import { diffSnapshotState } from './entityTimelineHelpers';
 import styles from './RestoreSnapshotDialog.module.css';
+import { formatDateTime } from '../../../utils/dateFormat';
+import { Table } from '../../../components/table/Table';
 
 type RestoreSnapshotDialogProps = {
   isOpen: boolean;
@@ -47,16 +49,6 @@ export const RestoreSnapshotDialog = ({
     onConfirm(commitMessage || undefined);
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   return (
     <Dialog
       open={isOpen}
@@ -72,7 +64,7 @@ export const RestoreSnapshotDialog = ({
         <div className={styles.snapshotInfo}>
           <div className={styles.infoRow}>
             <span className={styles.label}>Snapshot Date:</span>
-            <span>{formatDate(snapshot.created_at)}</span>
+            <span>{formatDateTime(snapshot.created_at)}</span>
           </div>
           {snapshot.created_by_name && (
             <div className={styles.infoRow}>
@@ -91,24 +83,24 @@ export const RestoreSnapshotDialog = ({
         {changes.length > 0 && (
           <div className={styles.changes}>
             <h4>Changes that will be applied:</h4>
-            <table className={styles.changesTable}>
-              <thead>
-                <tr>
-                  <th>Field</th>
-                  <th>Current Value</th>
-                  <th>Restored Value</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table.Root>
+              <Table.Head>
+                <Table.Row>
+                  <Table.HeaderCell>Field</Table.HeaderCell>
+                  <Table.HeaderCell>Current Value</Table.HeaderCell>
+                  <Table.HeaderCell>Restored Value</Table.HeaderCell>
+                </Table.Row>
+              </Table.Head>
+              <Table.Body>
                 {changes.map((change, idx) => (
-                  <tr key={idx}>
-                    <td className={styles.fieldName}>{change.label}</td>
-                    <td className={styles.oldValue}>{change.from}</td>
-                    <td className={styles.newValue}>{change.to}</td>
-                  </tr>
+                  <Table.Row key={idx}>
+                    <Table.Cell className={styles.fieldName}>{change.label}</Table.Cell>
+                    <Table.Cell className={styles.oldValue}>{change.from}</Table.Cell>
+                    <Table.Cell className={styles.newValue}>{change.to}</Table.Cell>
+                  </Table.Row>
                 ))}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table.Root>
           </div>
         )}
 

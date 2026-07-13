@@ -5,17 +5,15 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { FolderPickerTree } from '../../../components/FolderPickerTree';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { useProjectFiles } from '../../../hooks/useProjectFiles';
-import { useEntityContentNodes } from '../../../hooks/useProjects';
 import {
-  useWorkspaceContentNodes,
-  useCreateWorkspaceDiagramWithContent,
-  useCreateProjectDiagramWithContent
-} from '../../../hooks/useProjectFiles';
-import { useCreateEntityDiagramWithContent } from '../../../hooks/useProjects';
+  useContentScopeOperations,
+  useContentTree,
+  type ContentScope
+} from '../../../hooks/useContentScope';
 import { useEntities } from '../../../hooks/useEntities';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import { ApiError } from '../../../lib/http';
 
 type DestinationType = 'workspace' | 'entity' | 'project';
 
@@ -87,29 +85,16 @@ export const SaveDiagramFromGraphDialog = ({
   // Effective project id
   const effectiveProjectId = selectedProjectId;
 
-  // Fetch folders for the active destination
-  const { data: workspaceContent } = useWorkspaceContentNodes(workspaceId, {
-    enabled: destType === 'workspace'
-  });
-  const { data: projectContent } = useProjectFiles(workspaceId, effectiveProjectId);
-  const { data: entityContent } = useEntityContentNodes(workspaceId, effectiveEntityId, {
-    enabled: destType === 'entity' && !!effectiveEntityId
-  });
-
-  const activeFolders =
+  const scope: ContentScope =
     destType === 'workspace'
-      ? (workspaceContent?.folders ?? [])
+      ? { kind: 'workspace', workspaceId }
       : destType === 'project'
-        ? (projectContent?.folders ?? [])
-        : (entityContent?.folders ?? []);
-
-  // Mutations
-  const createWorkspace = useCreateWorkspaceDiagramWithContent(workspaceId);
-  const createProject = useCreateProjectDiagramWithContent(workspaceId, effectiveProjectId);
-  const createEntity = useCreateEntityDiagramWithContent(workspaceId, effectiveEntityId);
-
-  const isPending =
-    createWorkspace.isPending || createProject.isPending || createEntity.isPending;
+        ? { kind: 'project', workspaceId, projectId: effectiveProjectId }
+        : { kind: 'entity', workspaceId, entityId: effectiveEntityId };
+  const { data: contentTree } = useContentTree(scope);
+  const contentOperations = useContentScopeOperations(scope);
+  const activeFolders = contentTree?.folders ?? [];
+  const isPending = contentOperations.createDiagram.isPending;
 
   const handleSubmit = async () => {
     const finalName = name.trim() || defaultName;
@@ -130,18 +115,15 @@ export const SaveDiagramFromGraphDialog = ({
     const content = { ...(diagramContent as unknown as Record<string, unknown>), name: finalName };
 
     try {
-      let file: ProjectFile;
-      if (destType === 'workspace') {
-        file = await createWorkspace.mutateAsync({ name: finalName, folder: selectedFolder, content });
-      } else if (destType === 'project') {
-        file = await createProject.mutateAsync({ name: finalName, folder: selectedFolder, content });
-      } else {
-        file = await createEntity.mutateAsync({ name: finalName, folder: selectedFolder, content });
-      }
+      const file = await contentOperations.createDiagram.mutateAsync({
+        name: finalName,
+        folder: selectedFolder,
+        content
+      });
       onCreated(file);
       onClose();
-    } catch {
-      setError('Something went wrong');
+    } catch (error) {
+      setError(error instanceof ApiError ? error.message : 'Something went wrong');
     }
   };
 

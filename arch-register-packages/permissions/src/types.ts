@@ -36,6 +36,9 @@ export type WorkspaceCapability =
   | 'people.teams'
   | 'proj.create'
   | 'proj.edit'
+  | 'proj.delete'
+  | 'content.view'
+  | 'content.edit'
   | 'ent.edit'
   | 'ent.propose'
   | 'comments'
@@ -125,7 +128,7 @@ export type WorkspaceMember = {
 
 // ── Authorization Context ─────────────────────────────────────
 
-export type AuthorizationContext = {
+export type WorkspaceAuthorizationContext = {
   userId: string;
   globalRoles: Set<GlobalRole>;
   globalPermissions: Set<GlobalPermission>;
@@ -135,6 +138,9 @@ export type AuthorizationContext = {
   teamAssignments: TeamAssignment[];
   teamRolesByTeam: Map<string, Set<TeamRole>>;
   teams: WorkspaceTeam[];
+};
+
+export type AuthorizationContext = WorkspaceAuthorizationContext & {
   schemas: Map<string, EntitySchema>;
   entities: Map<string, Entity>;
   grants: EntityGrant[];

@@ -12,6 +12,7 @@ import { SqliteWorkspaceDatabase } from '../domain/workspace/db/sqliteWorkspace'
 import { SqliteAiDatabase } from '../domain/ai/db/sqliteAi';
 import { SqliteViewDatabase } from '../domain/catalog/db/sqliteView';
 import { SqliteWatchDatabase } from '../domain/watch/db/sqliteWatch';
+import { SqliteDiscussionDatabase } from '../domain/discussion/db/sqliteDiscussion';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -26,6 +27,8 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly watch;
   readonly auth;
   readonly ai;
+  readonly discussion;
+  private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
     this.filePath = filePath;
@@ -41,6 +44,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.watch = new SqliteWatchDatabase(() => this.db);
     this.auth = new SqliteAuthDatabase(() => this.db);
     this.ai = new SqliteAiDatabase(() => this.db);
+    this.discussion = new SqliteDiscussionDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -58,6 +62,27 @@ export class SqliteDatabase implements DatabaseAdapter {
         const schemaSql = await readFile(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
         this.db.exec(schemaSql);
         runSqliteMigrations(this.db);
+      },
+      transaction: async <T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T> => {
+        const previous = this.transactionTail;
+        let release!: () => void;
+        this.transactionTail = new Promise<void>(resolve => {
+          release = resolve;
+        });
+        await previous;
+        try {
+          this.db.exec('BEGIN IMMEDIATE');
+          try {
+            const result = await callback(this);
+            this.db.exec('COMMIT');
+            return result;
+          } catch (error) {
+            this.db.exec('ROLLBACK');
+            throw error;
+          }
+        } finally {
+          release();
+        }
       }
     };
   }

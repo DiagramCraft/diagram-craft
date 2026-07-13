@@ -51,6 +51,46 @@ export const projectMarkdownRoute = <TSearch = undefined>(
     params: { workspaceSlug, projectId, nodeId }
   }, search);
 
+export const projectContentFolderRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  projectId: ProjectPublicId,
+  folderPath: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/projects/$projectId/folders/$' as const,
+      params: { workspaceSlug, projectId, _splat: folderPath }
+    },
+    search
+  );
+
+export const workspaceMarkdownRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  nodeId: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/content/wiki/$nodeId' as const,
+      params: { workspaceSlug, nodeId }
+    },
+    search
+  );
+
+export const workspaceContentFolderRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  folderPath: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/content/folders/$' as const,
+      params: { workspaceSlug, _splat: folderPath }
+    },
+    search
+  );
+
 export const entityMarkdownRoute = <TSearch = undefined>(
   workspaceSlug: string,
   entityId: EntityPublicId,
@@ -71,6 +111,20 @@ export const entityDetailRoute = <TSearch = undefined>(
     {
       to: '/$workspaceSlug/entities/$entityId' as const,
       params: { workspaceSlug, entityId }
+    },
+    search
+  );
+
+export const entityContentFolderRoute = <TSearch = undefined>(
+  workspaceSlug: string,
+  entityId: EntityPublicId,
+  folderPath: string,
+  search?: TSearch
+) =>
+  withSearch(
+    {
+      to: '/$workspaceSlug/entities/$entityId/folders/$' as const,
+      params: { workspaceSlug, entityId, _splat: folderPath }
     },
     search
   );

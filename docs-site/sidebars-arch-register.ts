@@ -30,6 +30,7 @@ const sidebars: SidebarsConfig = {
         'use/entities',
         'use/entity-views',
         'use/projects',
+        'use/assessments',
         'use/content',
         'use/ai-assistant-extract',
         'use/account-settings'

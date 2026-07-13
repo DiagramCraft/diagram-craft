@@ -1,7 +1,7 @@
 import { HTTPError } from 'h3';
 import { DatabaseError } from '../db/database';
 
-type DbErrorMapping = Partial<Record<DatabaseError['code'], string>>;
+export type DbErrorMapping = Partial<Record<DatabaseError['code'], string>>;
 
 /**
  * Handles route errors by mapping normalized database errors to HTTP responses.

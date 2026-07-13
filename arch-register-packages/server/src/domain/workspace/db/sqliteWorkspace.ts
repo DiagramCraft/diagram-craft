@@ -7,21 +7,19 @@ import {
   WorkspaceDbUpdate,
   RoleDefinitionDbUpdate,
   WorkspaceDatabase,
-  MemberDbResult,
   ProjectEntityTypeDbCreate
 } from './workspaceDatabase';
+import { workspaceMappers } from './workspaceDatabase';
 import type { ImportCacheEntry } from '../importCache';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
-
-type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 
 export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements WorkspaceDatabase {
   async listWorkspaces() {
-    return this.all('SELECT * FROM workspace ORDER BY name', [], sqliteMappers.workspace);
+    return this.all('SELECT * FROM workspace ORDER BY name', [], workspaceMappers.workspace);
   }
 
   async getWorkspace(id: string) {
-    return this.get('SELECT * FROM workspace WHERE id = ?', [id], sqliteMappers.workspace);
+    return this.get('SELECT * FROM workspace WHERE id = ?', [id], workspaceMappers.workspace);
   }
 
   async createWorkspace(input: WorkspaceDbCreate) {
@@ -90,7 +88,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return this.all(
       'SELECT id, workspace, label, color, sort_order, created_at FROM workspace_lifecycle_state WHERE workspace = ? ORDER BY sort_order, id',
       [workspace],
-      sqliteMappers.lifecycleState
+      workspaceMappers.lifecycleState
     );
   }
 
@@ -152,7 +150,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return this.all(
       'SELECT id, workspace, label, sort_order, created_at FROM project_entity_type WHERE workspace = ? ORDER BY sort_order, id',
       [workspace],
-      sqliteMappers.projectEntityType
+      workspaceMappers.projectEntityType
     );
   }
 
@@ -174,7 +172,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return this.all(
       'SELECT id, workspace, name, sort_order, color, description, created_at FROM workspace_owner WHERE workspace = ? ORDER BY sort_order, id',
       [workspace],
-      sqliteMappers.owner
+      workspaceMappers.owner
     );
   }
 
@@ -229,7 +227,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return this.all(
       'SELECT workspace, team_id, user_id, role, created_at FROM team_membership WHERE workspace = ? ORDER BY team_id, user_id',
       [workspace],
-      sqliteMappers.teamMembership
+      workspaceMappers.teamMembership
     );
   }
 
@@ -255,28 +253,18 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
   }
 
   async listWorkspaceMembers(workspace: string) {
-    return this.all<MemberDbResult>(
+    return this.all(
       'SELECT workspace, user_id, role, created_at FROM workspace_member WHERE workspace = ? ORDER BY role, user_id',
       [workspace],
-      (row: Record<string, unknown>) => ({
-        workspace: String(row.workspace),
-        user_id: String(row.user_id),
-        role: String(row.role) as WorkspaceRole,
-        created_at: new Date(String(row.created_at))
-      })
+      workspaceMappers.member
     );
   }
 
   async getWorkspaceMember(workspace: string, userId: string) {
-    return this.get<MemberDbResult>(
+    return this.get(
       'SELECT workspace, user_id, role, created_at FROM workspace_member WHERE workspace = ? AND user_id = ?',
       [workspace, userId],
-      (row: Record<string, unknown>) => ({
-        workspace: String(row.workspace),
-        user_id: String(row.user_id),
-        role: String(row.role) as WorkspaceRole,
-        created_at: new Date(String(row.created_at))
-      })
+      workspaceMappers.member
     );
   }
 
@@ -365,7 +353,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return this.all(
       'SELECT id, workspace, name, description, tone, 0 as builtin, capabilities, created_at, updated_at FROM workspace_role WHERE workspace = ? ORDER BY name, id',
       [workspace],
-      sqliteMappers.workspaceRoleDefinition
+      workspaceMappers.roleDefinition
     );
   }
 
@@ -373,7 +361,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return this.get(
       'SELECT id, workspace, name, description, tone, 0 as builtin, capabilities, created_at, updated_at FROM workspace_role WHERE workspace = ? AND id = ?',
       [workspace, roleId],
-      sqliteMappers.workspaceRoleDefinition
+      workspaceMappers.roleDefinition
     );
   }
 
@@ -427,7 +415,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       const role = this.get(
         'SELECT id, workspace, name, description, tone, 0 as builtin, capabilities, created_at, updated_at FROM workspace_role WHERE workspace = ? AND id = ?',
         [ws, rid],
-        sqliteMappers.workspaceRoleDefinition
+        workspaceMappers.roleDefinition
       );
       if (!role) return null;
 
@@ -506,9 +494,9 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
   }
 
   async cleanupExpiredImportCache(): Promise<number> {
-    const result = this.run(
-      'DELETE FROM import_cache WHERE expires_at < datetime("now")'
-    );
+    const result = this.run('DELETE FROM import_cache WHERE expires_at < ?', [
+      new Date().toISOString()
+    ]);
     return result.changes ?? 0;
   }
 }

@@ -5,8 +5,8 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TbDownload, TbUpload, TbFileZip, TbAlertCircle, TbAlertTriangle } from 'react-icons/tb';
 import { orpcClient } from '../../../lib/orpcClient';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import styles from '../WorkspaceSettingsScreen.module.css';
-import localStyles from './ExportImportSubSection.module.css';
+import styles from './ExportImportSubSection.module.css';
+import { downloadBlob } from '../../../lib/browserDownload';
 
 type ImportConflict = {
   type: 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes';
@@ -46,6 +46,7 @@ type ExportOptions = {
 };
 
 type ImportStatus = 'idle' | 'uploading' | 'parsing' | 'executing' | 'success' | 'error';
+type ConflictResolution = { action: 'skip' | 'merge' | 'overwrite' | 'rename'; new_name?: string };
 
 export const ExportImportSubSection = () => {
   const { workspace } = useWorkspaceContext();
@@ -67,6 +68,9 @@ export const ExportImportSubSection = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importSummary, setImportSummary] = useState<ImportParseResult | null>(null);
   const [importId, setImportId] = useState<string | null>(null);
+  const [conflictResolutions, setConflictResolutions] = useState<
+    Record<string, ConflictResolution>
+  >({});
 
   const handleExport = async () => {
     if (!workspace) return;
@@ -96,16 +100,10 @@ export const ExportImportSubSection = () => {
       });
 
       const blob = response.body as Blob;
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download =
+      const filename =
         response.headers['Content-Disposition']?.split('filename=')[1]?.replace(/"/g, '') ??
         `workspace-${workspace.url_slug}-export.zip`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      downloadBlob(blob, filename);
     } catch (error) {
       console.error('Export failed:', error);
       setExportError(error instanceof Error ? error.message : 'Export failed');
@@ -137,6 +135,7 @@ export const ExportImportSubSection = () => {
       setImportSummary(null);
       setImportStatus('idle');
       setImportId(null);
+      setConflictResolutions({});
     }
   };
 
@@ -171,6 +170,7 @@ export const ExportImportSubSection = () => {
       }
 
       setImportSummary(result);
+      setConflictResolutions({});
       setImportStatus('idle');
     } catch (error) {
       console.error('Import parse failed:', error);
@@ -198,7 +198,7 @@ export const ExportImportSubSection = () => {
         body: {
           import_id: importId,
           include: ['config', 'schemas', 'entities', 'projects', 'content_nodes'],
-          conflict_resolutions: {},
+          conflict_resolutions: conflictResolutions,
           options: { preserve_ids: false, update_references: true }
         }
       });
@@ -221,6 +221,7 @@ export const ExportImportSubSection = () => {
       setImportFile(null);
       setImportSummary(null);
       setImportId(null);
+      setConflictResolutions({});
 
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
@@ -235,6 +236,11 @@ export const ExportImportSubSection = () => {
   };
 
   const busy = importStatus === 'parsing' || importStatus === 'executing';
+  const unresolvedConflicts =
+    importSummary?.conflicts.filter(conflict => {
+      const resolution = conflictResolutions[conflict.item_id];
+      return !resolution || (resolution.action === 'rename' && !resolution.new_name?.trim());
+    }) ?? [];
 
   return (
     <div className={styles.blockList}>
@@ -256,8 +262,8 @@ export const ExportImportSubSection = () => {
                 </div>
               </div>
               <div className={styles.fieldRight}>
-                <div className={localStyles.checkboxGroup}>
-                  <label className={localStyles.checkboxRow}>
+                <div className={styles.checkboxGroup}>
+                  <label className={styles.checkboxRow}>
                     <Checkbox
                       value={exportOptions.include_config}
                       onChange={v =>
@@ -265,9 +271,9 @@ export const ExportImportSubSection = () => {
                       }
                     />
                     <span>Configuration</span>
-                    <span className={localStyles.checkboxHint}>lifecycle states, teams, roles</span>
+                    <span className={styles.checkboxHint}>lifecycle states, teams, roles</span>
                   </label>
-                  <label className={localStyles.checkboxRow}>
+                  <label className={styles.checkboxRow}>
                     <Checkbox
                       value={exportOptions.include_schemas}
                       onChange={v =>
@@ -275,9 +281,9 @@ export const ExportImportSubSection = () => {
                       }
                     />
                     <span>Schemas</span>
-                    <span className={localStyles.checkboxHint}>entity types and fields</span>
+                    <span className={styles.checkboxHint}>entity types and fields</span>
                   </label>
-                  <label className={localStyles.checkboxRow}>
+                  <label className={styles.checkboxRow}>
                     <Checkbox
                       value={exportOptions.include_entities}
                       onChange={v =>
@@ -285,9 +291,9 @@ export const ExportImportSubSection = () => {
                       }
                     />
                     <span>Entities</span>
-                    <span className={localStyles.checkboxHint}>catalog data</span>
+                    <span className={styles.checkboxHint}>catalog data</span>
                   </label>
-                  <label className={localStyles.checkboxRow}>
+                  <label className={styles.checkboxRow}>
                     <Checkbox
                       value={exportOptions.include_projects}
                       onChange={v =>
@@ -295,9 +301,9 @@ export const ExportImportSubSection = () => {
                       }
                     />
                     <span>Projects</span>
-                    <span className={localStyles.checkboxHint}>project metadata</span>
+                    <span className={styles.checkboxHint}>project metadata</span>
                   </label>
-                  <label className={localStyles.checkboxRow}>
+                  <label className={styles.checkboxRow}>
                     <Checkbox
                       value={exportOptions.include_content_nodes}
                       onChange={v =>
@@ -305,10 +311,10 @@ export const ExportImportSubSection = () => {
                       }
                     />
                     <span>Content nodes</span>
-                    <span className={localStyles.checkboxHint}>diagrams and markdown</span>
+                    <span className={styles.checkboxHint}>diagrams and markdown</span>
                   </label>
                   {exportOptions.include_content_nodes && (
-                    <label className={`${localStyles.checkboxRow} ${localStyles.checkboxRowNested}`}>
+                    <label className={`${styles.checkboxRow} ${styles.checkboxRowNested}`}>
                       <Checkbox
                         value={exportOptions.include_content}
                         onChange={v =>
@@ -316,18 +322,16 @@ export const ExportImportSubSection = () => {
                         }
                       />
                       <span>Include content files</span>
-                      <span className={localStyles.checkboxHint}>
-                        actual diagram and document data
-                      </span>
+                      <span className={styles.checkboxHint}>actual diagram and document data</span>
                     </label>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className={localStyles.actionRow}>
+            <div className={styles.actionRow}>
               {exportError && (
-                <div className={localStyles.inlineError}>
+                <div className={styles.inlineError}>
                   <TbAlertCircle size={13} />
                   <span>{exportError}</span>
                 </div>
@@ -351,26 +355,26 @@ export const ExportImportSubSection = () => {
                 </div>
               </div>
               <div className={styles.fieldRight}>
-                <div className={localStyles.fileDropArea}>
-                  <TbFileZip size={16} className={localStyles.fileDropIcon} />
+                <div className={styles.fileDropArea}>
+                  <TbFileZip size={16} className={styles.fileDropIcon} />
                   {importFile ? (
-                    <span className={localStyles.fileName}>{importFile.name}</span>
+                    <span className={styles.fileName}>{importFile.name}</span>
                   ) : (
-                    <span className={localStyles.filePlaceholder}>No file selected</span>
+                    <span className={styles.filePlaceholder}>No file selected</span>
                   )}
                   {importFile && (
-                    <span className={localStyles.fileSize}>
+                    <span className={styles.fileSize}>
                       {(importFile.size / 1024 / 1024).toFixed(1)}&thinsp;MB
                     </span>
                   )}
-                  <label className={localStyles.fileBrowse}>
+                  <label className={styles.fileBrowse}>
                     Browse
                     <input
                       type="file"
                       accept=".zip"
                       onChange={handleFileSelect}
                       disabled={busy}
-                      className={localStyles.fileInputHidden}
+                      className={styles.fileInputHidden}
                     />
                   </label>
                 </div>
@@ -384,47 +388,47 @@ export const ExportImportSubSection = () => {
                   <div className={styles.fieldHint}>Items found in the archive.</div>
                 </div>
                 <div className={styles.fieldRight}>
-                  <div className={localStyles.summaryGrid}>
+                  <div className={styles.summaryGrid}>
                     {importSummary.summary.config && (
-                      <div className={localStyles.summaryItem}>
-                        <span className={localStyles.summaryCount}>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryCount}>
                           {importSummary.summary.config.lifecycle_states +
                             importSummary.summary.config.teams +
                             importSummary.summary.config.roles}
                         </span>
-                        <span className={localStyles.summaryLabel}>config items</span>
+                        <span className={styles.summaryLabel}>config items</span>
                       </div>
                     )}
                     {importSummary.summary.schemas && (
-                      <div className={localStyles.summaryItem}>
-                        <span className={localStyles.summaryCount}>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryCount}>
                           {importSummary.summary.schemas.count}
                         </span>
-                        <span className={localStyles.summaryLabel}>schemas</span>
+                        <span className={styles.summaryLabel}>schemas</span>
                       </div>
                     )}
                     {importSummary.summary.entities && (
-                      <div className={localStyles.summaryItem}>
-                        <span className={localStyles.summaryCount}>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryCount}>
                           {importSummary.summary.entities.count}
                         </span>
-                        <span className={localStyles.summaryLabel}>entities</span>
+                        <span className={styles.summaryLabel}>entities</span>
                       </div>
                     )}
                     {importSummary.summary.projects && (
-                      <div className={localStyles.summaryItem}>
-                        <span className={localStyles.summaryCount}>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryCount}>
                           {importSummary.summary.projects.count}
                         </span>
-                        <span className={localStyles.summaryLabel}>projects</span>
+                        <span className={styles.summaryLabel}>projects</span>
                       </div>
                     )}
                     {importSummary.summary.content_nodes && (
-                      <div className={localStyles.summaryItem}>
-                        <span className={localStyles.summaryCount}>
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryCount}>
                           {importSummary.summary.content_nodes.count}
                         </span>
-                        <span className={localStyles.summaryLabel}>content nodes</span>
+                        <span className={styles.summaryLabel}>content nodes</span>
                       </div>
                     )}
                   </div>
@@ -432,17 +436,73 @@ export const ExportImportSubSection = () => {
               </div>
             )}
 
-            <div className={localStyles.actionRow}>
+            {importSummary && importSummary.conflicts.length > 0 && (
+              <div className={styles.field}>
+                <div className={styles.fieldLeft}>
+                  <div className={styles.fieldLabel}>Conflicts</div>
+                  <div className={styles.fieldHint}>
+                    Choose how each matching item should be handled.
+                  </div>
+                </div>
+                <div className={styles.fieldRight}>
+                  <div className={styles.checkboxGroup}>
+                    {importSummary.conflicts.map(conflict => (
+                      <label key={conflict.item_id} className={styles.checkboxRow}>
+                        <span>{conflict.item_name}</span>
+                        <select
+                          value={conflictResolutions[conflict.item_id]?.action ?? ''}
+                          onChange={event =>
+                            setConflictResolutions(previous => ({
+                              ...previous,
+                              [conflict.item_id]: {
+                                action: event.target.value as ConflictResolution['action']
+                              }
+                            }))
+                          }
+                          disabled={busy}
+                        >
+                          <option value="" disabled>
+                            Choose resolution
+                          </option>
+                          <option value="skip">Skip</option>
+                          <option value="merge">Merge</option>
+                          <option value="overwrite">Overwrite</option>
+                          <option value="rename">Rename</option>
+                        </select>
+                        {conflictResolutions[conflict.item_id]?.action === 'rename' && (
+                          <input
+                            value={conflictResolutions[conflict.item_id]?.new_name ?? ''}
+                            onChange={event =>
+                              setConflictResolutions(previous => ({
+                                ...previous,
+                                [conflict.item_id]: {
+                                  action: 'rename',
+                                  new_name: event.target.value
+                                }
+                              }))
+                            }
+                            placeholder="New name"
+                            disabled={busy}
+                          />
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.actionRow}>
               {importError && (
-                <div className={localStyles.inlineError}>
+                <div className={styles.inlineError}>
                   <TbAlertCircle size={13} />
                   <span>{importError}</span>
                 </div>
               )}
               {importStatus === 'success' && (
-                <div className={localStyles.inlineSuccess}>Import completed. Reloading…</div>
+                <div className={styles.inlineSuccess}>Import completed. Reloading…</div>
               )}
-              <div className={localStyles.actionButtons}>
+              <div className={styles.actionButtons}>
                 {!importSummary && importFile && (
                   <Button
                     onClick={handleImportParse}
@@ -455,7 +515,7 @@ export const ExportImportSubSection = () => {
                 {importSummary && (
                   <Button
                     onClick={handleImportExecute}
-                    disabled={importStatus === 'executing'}
+                    disabled={importStatus === 'executing' || unresolvedConflicts.length > 0}
                     variant="primary"
                     icon={<TbUpload size={13} />}
                   >
@@ -463,7 +523,7 @@ export const ExportImportSubSection = () => {
                   </Button>
                 )}
               </div>
-              <div className={localStyles.warningNote}>
+              <div className={styles.warningNote}>
                 <TbAlertTriangle size={13} />
                 <span>Importing will overwrite existing data. This cannot be undone.</span>
               </div>

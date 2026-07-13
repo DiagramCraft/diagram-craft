@@ -1,24 +1,25 @@
 import type { AuthDatabase, UserDbCreate, GlobalRole, UserDbUpdate } from './authDatabase';
-import { SqliteDatabaseBase, sqliteMappers } from '../../../db/sqliteBase';
+import { authMappers } from './authDatabase';
+import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 
 export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDatabase {
   async getUser(id: string) {
-    return this.get('SELECT * FROM users WHERE id = ?', [id], sqliteMappers.user);
+    return this.get('SELECT * FROM users WHERE id = ?', [id], authMappers.user);
   }
 
   async getUserByUserId(userId: string) {
-    return this.get('SELECT * FROM users WHERE user_id = ?', [userId], sqliteMappers.user);
+    return this.get('SELECT * FROM users WHERE user_id = ?', [userId], authMappers.user);
   }
 
   async getUserByEmail(email: string) {
-    return this.get('SELECT * FROM users WHERE email = ?', [email], sqliteMappers.user);
+    return this.get('SELECT * FROM users WHERE email = ?', [email], authMappers.user);
   }
 
   async getUserByOidc(issuer: string, subject: string) {
     return this.get(
       'SELECT * FROM users WHERE oidc_issuer = ? AND oidc_subject = ?',
       [issuer, subject],
-      sqliteMappers.user
+      authMappers.user
     );
   }
 
@@ -82,7 +83,7 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
   }
 
   async listUsers() {
-    return this.all('SELECT * FROM users ORDER BY display_name', [], sqliteMappers.user);
+    return this.all('SELECT * FROM users ORDER BY display_name', [], authMappers.user);
   }
 
   async listGlobalRoleAssignments(userId?: string) {
@@ -90,14 +91,14 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
       return this.all(
         'SELECT user_id, role, created_at FROM global_role_assignment WHERE user_id = ? ORDER BY role',
         [userId],
-        sqliteMappers.globalRoleAssignment
+        authMappers.globalRoleAssignment
       );
     }
 
     return this.all(
       'SELECT user_id, role, created_at FROM global_role_assignment ORDER BY user_id, role',
       [],
-      sqliteMappers.globalRoleAssignment
+      authMappers.globalRoleAssignment
     );
   }
 

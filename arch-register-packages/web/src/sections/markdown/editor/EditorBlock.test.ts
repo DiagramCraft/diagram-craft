@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { unnestBlock, wrapBlock } from './EditorBlock';
+import { copyBlockToClipboard, pasteBlockFromClipboard, unnestBlock, wrapBlock } from './EditorBlock';
 
 // The real mdxRegistry.tsx transitively imports packages/main's MultiWindowDetector,
 // which crashes on localStorage in the vitest/Node environment (a pre-existing,
@@ -15,6 +15,13 @@ vi.mock('../mdx-components/mdxRegistry', () => ({
 }));
 
 const { MDX_COMPONENTS } = await import('../mdx-components/mdxRegistry');
+
+vi.mock('@platejs/markdown', () => ({
+  serializeMd: vi.fn(() => 'serialized-md'),
+  deserializeMd: vi.fn(() => [{ type: 'p', children: [{ text: 'pasted' }] }])
+}));
+
+const { serializeMd, deserializeMd } = await import('@platejs/markdown');
 
 const makeFakeEditor = (children: unknown[]) => ({
   children,
@@ -87,6 +94,89 @@ describe('wrapBlock', () => {
     expect(createWrapper).not.toHaveBeenCalled();
     expect(editor.tf.removeNodes).not.toHaveBeenCalled();
     expect(editor.tf.insertNodes).not.toHaveBeenCalled();
+  });
+});
+
+describe('copyBlockToClipboard', () => {
+  it('serializes the node and writes it to the clipboard, returning true on success', async () => {
+    const node = { type: 'p', children: [{ text: 'hello' }] };
+    const editor = makeFakeEditor([node]);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+
+    const result = await copyBlockToClipboard(editor, 0, { writeText });
+
+    expect(serializeMd).toHaveBeenCalledWith(editor, { value: [node] });
+    expect(writeText).toHaveBeenCalledWith('serialized-md');
+    expect(result).toBe(true);
+  });
+
+  it('returns false and does not throw when writeText rejects', async () => {
+    const editor = makeFakeEditor([{ type: 'p', children: [{ text: '' }] }]);
+    const writeText = vi.fn().mockRejectedValue(new Error('permission denied'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await copyBlockToClipboard(editor, 0, { writeText });
+
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to copy block to clipboard',
+      expect.any(Error)
+    );
+    expect(result).toBe(false);
+
+    consoleError.mockRestore();
+  });
+
+  it('is a no-op returning false when there is no node at the given index', async () => {
+    const editor = makeFakeEditor([]);
+    const writeText = vi.fn();
+
+    const result = await copyBlockToClipboard(editor, 0, { writeText });
+
+    expect(writeText).not.toHaveBeenCalled();
+    expect(result).toBe(false);
+  });
+});
+
+describe('pasteBlockFromClipboard', () => {
+  it('deserializes clipboard text and inserts it after the given index', async () => {
+    const editor = makeFakeEditor([{ type: 'p', children: [{ text: 'existing' }] }]);
+    const readText = vi.fn().mockResolvedValue('# some markdown');
+
+    const result = await pasteBlockFromClipboard(editor, 0, { readText });
+
+    expect(deserializeMd).toHaveBeenCalledWith(editor, '# some markdown');
+    expect(editor.tf.insertNodes).toHaveBeenCalledWith(
+      [{ type: 'p', children: [{ text: 'pasted' }] }],
+      { at: [1] }
+    );
+    expect(result).toBe(true);
+  });
+
+  it('no-ops when the clipboard is blank', async () => {
+    const editor = makeFakeEditor([{ type: 'p', children: [{ text: '' }] }]);
+    const readText = vi.fn().mockResolvedValue('   ');
+
+    const result = await pasteBlockFromClipboard(editor, 0, { readText });
+
+    expect(editor.tf.insertNodes).not.toHaveBeenCalled();
+    expect(result).toBe(false);
+  });
+
+  it('no-ops without throwing when readText rejects', async () => {
+    const editor = makeFakeEditor([{ type: 'p', children: [{ text: '' }] }]);
+    const readText = vi.fn().mockRejectedValue(new Error('permission denied'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await pasteBlockFromClipboard(editor, 0, { readText });
+
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to paste block from clipboard',
+      expect.any(Error)
+    );
+    expect(editor.tf.insertNodes).not.toHaveBeenCalled();
+    expect(result).toBe(false);
+
+    consoleError.mockRestore();
   });
 });
 

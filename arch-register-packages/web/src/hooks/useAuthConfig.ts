@@ -1,9 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 
+export const authConfigKeys = {
+  detail: ['auth', 'config'] as const
+};
+
 export const useAuthConfig = () => {
   return useQuery({
-    queryKey: ['auth', 'config'],
+    queryKey: authConfigKeys.detail,
     queryFn: async () => {
       return await orpcClient.auth.config();
     },

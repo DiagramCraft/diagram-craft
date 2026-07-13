@@ -1,112 +1,34 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  TbArrowRight,
-  TbChevronRight,
-  TbCode,
-  TbDatabase,
-  TbFolder,
-  TbHome,
-  TbSearch,
-  TbFolders,
-  TbX
-} from 'react-icons/tb';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { TbSearch } from 'react-icons/tb';
 import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { resolveSchemaColor } from '../../lib/api';
-import type {
-  EntitySearchResult,
-  ProjectFileSearchResult,
-  ProjectSearchResult,
-  SchemaSearchResult,
-  SearchResponse
-} from '../../lib/api';
-import { TypeBadge } from '../../components/TypeBadge';
-import { Chip } from '../../components/Chip';
-import { StatusChip } from '../../components/StatusChip';
+import type { ProjectFileSearchResult } from '@arch-register/api-types/searchContract';
 import { useSearch } from '../../hooks/useSearch';
+import { SearchInput } from '../../components/SearchInput';
 import styles from './SearchScreen.module.css';
+import { EmptyState } from '../../components/EmptyState';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import { DiagramMetadataPopover } from '../../components/DiagramMetadataPopover';
 import {
   asEntityPublicId,
   asProjectPublicId,
+  entityContentFolderRoute,
   entityDetailRoute,
-  projectDetailRoute
+  projectContentFolderRoute,
+  projectDetailRoute,
+  workspaceContentFolderRoute
 } from '../../routes/publicObjectRoutes';
-
-type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas';
-type SearchPreview =
-  | { type: 'project'; data: ProjectSearchResult }
-  | { type: 'file'; data: ProjectFileSearchResult }
-  | { type: 'entity'; data: EntitySearchResult }
-  | { type: 'schema'; data: SchemaSearchResult };
-
-type RowId = { kind: string; id: string };
-
-const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: typeof TbFolders }> = [
-  { value: 'all', label: 'All', icon: TbFolders },
-  { value: 'entities', label: 'Entities', icon: TbDatabase },
-  { value: 'projects', label: 'Projects', icon: TbFolders },
-  { value: 'files', label: 'Diagrams', icon: TbFolder },
-  { value: 'schemas', label: 'Schemas', icon: TbCode }
-];
-
-const EMPTY_RESULTS: SearchResponse = {
-  query: '',
-  projects: [],
-  files: [],
-  entities: [],
-  schemas: []
-};
-
-// ── Match highlighting ───────────────────────────────────────
-
-const Hi = ({ s, q }: { s: string; q: string }) => {
-  if (!q) return <>{s}</>;
-  const text = String(s ?? '');
-  const needle = q.toLowerCase();
-  const lower = text.toLowerCase();
-  const parts: ReactNode[] = [];
-  let cur = 0;
-  let idx = lower.indexOf(needle, 0);
-  while (idx >= 0) {
-    if (idx > cur) parts.push(<span key={`t${cur}`}>{text.slice(cur, idx)}</span>);
-    parts.push(<mark key={`m${idx}`}>{text.slice(idx, idx + needle.length)}</mark>);
-    cur = idx + needle.length;
-    idx = lower.indexOf(needle, cur);
-  }
-  if (cur < text.length) parts.push(<span key="tail">{text.slice(cur)}</span>);
-  return parts.length ? parts : text;
-};
-
-const snippetAround = (text: string | null | undefined, q: string, max = 140) => {
-  if (!text) return '';
-  const t = String(text);
-  if (!q) return t.length > max ? `${t.slice(0, max)}…` : t;
-  const k = t.toLowerCase().indexOf(q.toLowerCase());
-  if (k < 0) return t.length > max ? `${t.slice(0, max)}…` : t;
-  const start = Math.max(0, k - 40);
-  const end = Math.min(t.length, k + q.length + 80);
-  return (start > 0 ? '…' : '') + t.slice(start, end) + (end < t.length ? '…' : '');
-};
-
-const getFileMetadataSummary = (file: ProjectFileSearchResult, q: string) => {
-  const parts: string[] = [];
-  const description = snippetAround(file.content_metadata?.description, q, 110);
-  if (description) parts.push(description);
-  if (file.content_metadata?.category) parts.push(`Category: ${file.content_metadata.category}`);
-  return parts.join(' · ');
-};
-
-const getFileFolder = (path: string) =>
-  path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : 'Root';
-
-const getFileContextLabel = (file: ProjectFileSearchResult) => {
-  if (file.scope === 'project') return file.projectName ?? 'Project';
-  if (file.scope === 'entity') return file.entityName ?? 'Entity';
-  return 'Workspace';
-};
+import {
+  CATEGORY_DEFS,
+  EMPTY_RESULTS,
+  buildSearchGroups,
+  findSearchPreview,
+  getSearchCategoryCounts,
+  type RowId,
+  type SearchFilter,
+  type SearchPreview
+} from './searchScreenHelpers';
+import { ResultRow } from './components/ResultRow';
+import { PreviewPane } from './components/PreviewPane';
 
 // ── Screen ───────────────────────────────────────────────────
 
@@ -155,60 +77,11 @@ export const SearchScreen = () => {
     return map;
   }, [schemas]);
 
-  // Build flat row list for keyboard navigation
-  const groups = useMemo(() => {
-    const g: Array<{
-      id: string;
-      label: string;
-      rows: Array<{ kind: string; id: string; data: unknown }>;
-    }> = [];
-    if (filter === 'all' || filter === 'entities') {
-      g.push({
-        id: 'entities',
-        label: 'Entities',
-        rows: results.entities.map(e => ({ kind: 'entity', id: e.publicId, data: e }))
-      });
-    }
-    if (filter === 'all' || filter === 'projects') {
-      g.push({
-        id: 'projects',
-        label: 'Projects',
-        rows: results.projects.map(p => ({ kind: 'project', id: p.id, data: p }))
-      });
-    }
-    if (filter === 'all' || filter === 'files') {
-      g.push({
-        id: 'files',
-        label: 'Diagrams',
-        rows: results.files.map(f => ({ kind: 'file', id: f.fileId, data: f }))
-      });
-    }
-    if (filter === 'all' || filter === 'schemas') {
-      g.push({
-        id: 'schemas',
-        label: 'Schemas',
-        rows: results.schemas.map(s => ({ kind: 'schema', id: s.schemaId, data: s }))
-      });
-    }
-    return g.filter(g => g.rows.length > 0);
-  }, [results, filter]);
+  const groups = useMemo(() => buildSearchGroups(results, filter), [results, filter]);
 
   const flatRows = useMemo(() => groups.flatMap(g => g.rows), [groups]);
 
-  const categoryCounts = useMemo(
-    () => ({
-      all:
-        results.entities.length +
-        results.projects.length +
-        results.files.length +
-        results.schemas.length,
-      entities: results.entities.length,
-      projects: results.projects.length,
-      files: results.files.length,
-      schemas: results.schemas.length
-    }),
-    [results]
-  );
+  const categoryCounts = useMemo(() => getSearchCategoryCounts(results), [results]);
 
   const totalResults = categoryCounts.all;
 
@@ -222,26 +95,10 @@ export const SearchScreen = () => {
   }, [flatRows]);
 
   // Preview from selected
-  const preview = useMemo<SearchPreview | null>(() => {
-    if (!selected) return null;
-    if (selected.kind === 'entity') {
-      const data = results.entities.find(e => e.entityId === selected.id);
-      return data ? { type: 'entity', data } : null;
-    }
-    if (selected.kind === 'project') {
-      const data = results.projects.find(p => p.id === selected.id);
-      return data ? { type: 'project', data } : null;
-    }
-    if (selected.kind === 'file') {
-      const data = results.files.find(f => f.fileId === selected.id);
-      return data ? { type: 'file', data } : null;
-    }
-    if (selected.kind === 'schema') {
-      const data = results.schemas.find(s => s.schemaId === selected.id);
-      return data ? { type: 'schema', data } : null;
-    }
-    return null;
-  }, [selected, results]);
+  const preview = useMemo<SearchPreview | null>(
+    () => findSearchPreview(selected, results),
+    [selected, results]
+  );
 
   const navigateToSearch = useCallback(
     (q: string) => {
@@ -290,13 +147,18 @@ export const SearchScreen = () => {
 
   const navigateToProjectFolder = useCallback(
     (projectId: string, folder: string | null) => {
-      routerNavigate(
-        projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
+      if (folder) {
+        routerNavigate(projectContentFolderRoute(
+          workspaceSlug,
+          asProjectPublicId(projectId),
+          folder
+        ));
+      } else {
+        routerNavigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
           tab: 'projects' as const,
-          section: 'home' as const,
-          folder: folder ?? undefined
-        })
-      );
+          section: 'home' as const
+        }));
+      }
     },
     [routerNavigate, workspaceSlug]
   );
@@ -314,22 +176,26 @@ export const SearchScreen = () => {
 
   const navigateToEntityFolder = useCallback(
     (entityId: string, folder: string | null) => {
-      routerNavigate(
-        entityDetailRoute(workspaceSlug, asEntityPublicId(entityId), {
-          contentFolder: folder ?? undefined
-        })
-      );
+      if (folder) {
+        routerNavigate(entityContentFolderRoute(
+          workspaceSlug,
+          asEntityPublicId(entityId),
+          folder
+        ));
+      } else {
+        routerNavigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
+      }
     },
     [routerNavigate, workspaceSlug]
   );
 
   const navigateToWorkspaceFolder = useCallback(
     (folder: string | null) => {
-      routerNavigate({
-        to: '/$workspaceSlug/content',
-        params: { workspaceSlug },
-        search: { contentFolder: folder ?? undefined }
-      });
+      if (folder) {
+        routerNavigate(workspaceContentFolderRoute(workspaceSlug, folder));
+      } else {
+        routerNavigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } });
+      }
     },
     [routerNavigate, workspaceSlug]
   );
@@ -405,34 +271,24 @@ export const SearchScreen = () => {
     <div className={styles.screen}>
       {/* ── Header ── */}
       <div className={styles.header}>
-        <div className={styles.searchInput}>
-          <TbSearch size={14} />
-          <input
-            ref={inputRef}
-            placeholder="Search entities, diagrams, projects, schema…"
-            value={localQ}
-            onChange={e => handleInputChange(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                handleInputSubmit();
-                inputRef.current?.blur();
-              }
-            }}
-          />
-          {localQ && (
-            <button
-              type="button"
-              className={styles.clearBtn}
-              onClick={() => {
-                handleInputChange('');
-                navigateToSearch('');
-                inputRef.current?.focus();
-              }}
-              title="Clear (Esc)"
-            >
-              <TbX size={11} />
-            </button>
-          )}
+        <SearchInput
+          ref={inputRef}
+          size="md"
+          placeholder="Search entities, diagrams, projects, schema…"
+          value={localQ}
+          onChange={handleInputChange}
+          onClear={() => {
+            handleInputChange('');
+            navigateToSearch('');
+            inputRef.current?.focus();
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              handleInputSubmit();
+              inputRef.current?.blur();
+            }
+          }}
+        >
           <span className={styles.kbdHints}>
             <kbd className={styles.kbd}>↑</kbd>
             <kbd className={styles.kbd}>↓</kbd>
@@ -440,7 +296,7 @@ export const SearchScreen = () => {
             <kbd className={styles.kbd}>⏎</kbd>
             <span className={styles.dim}> open</span>
           </span>
-        </div>
+        </SearchInput>
 
         <div className={styles.summary}>
           {trimmed ? (
@@ -489,18 +345,21 @@ export const SearchScreen = () => {
         <div className={styles.resultsList}>
           {trimmed === '' ? (
             <EmptyState
+              icon={<TbSearch size={18} />}
               title="Start searching"
-              sub="Search across entities, projects, diagrams, and schemas."
+              subtitle="Search across entities, projects, diagrams, and schemas."
             />
           ) : loading ? (
             <EmptyState
+              icon={<TbSearch size={18} />}
               title="Searching…"
-              sub="Looking through projects, files, entities, and schemas."
+              subtitle="Looking through projects, files, entities, and schemas."
             />
           ) : totalResults === 0 ? (
             <EmptyState
+              icon={<TbSearch size={18} />}
               title={`No results for "${trimmed}"`}
-              sub="Try a different keyword or remove filters."
+              subtitle="Try a different keyword or remove filters."
             />
           ) : (
             groups.map(g => (
@@ -555,587 +414,3 @@ export const SearchScreen = () => {
     </div>
   );
 };
-
-// ── Result row ───────────────────────────────────────────────
-
-const ResultRow = ({
-  row,
-  q,
-  isSelected,
-  onSelect,
-  onOpen,
-  schemaMap,
-  lifecycleStates
-}: {
-  row: { kind: string; id: string; data: unknown };
-  q: string;
-  isSelected: boolean;
-  onSelect: () => void;
-  onOpen: () => void;
-  schemaMap: Map<string, { schema: EntitySchema; index: number }>;
-  lifecycleStates: WorkspaceLifecycleState[];
-}) => {
-  if (row.kind === 'entity') {
-    const e = row.data as EntitySearchResult;
-    const schemaMeta = schemaMap.get(e.schemaId);
-    return (
-      <div
-        className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
-        onMouseEnter={onSelect}
-        onClick={onSelect}
-        onDoubleClick={onOpen}
-      >
-        {schemaMeta ? (
-          <TypeBadge
-            color={resolveSchemaColor(schemaMeta.schema, schemaMeta.index)}
-            name={e.schemaName}
-            icon={schemaMeta.schema.icon}
-            size={22}
-          />
-        ) : (
-          <span className={styles.rowIcon}>
-            <TbDatabase size={14} />
-          </span>
-        )}
-        <div className={styles.rowBody}>
-          <div className={styles.rowTitle}>
-            <button
-              type="button"
-              className={styles.rowName}
-              aria-label={`Search result: ${e._name || e._slug}`}
-              onClick={ev => {
-                ev.stopPropagation();
-                onOpen();
-              }}
-            >
-              <Hi s={e._name || e._slug} q={q} />
-            </button>
-            <Chip tone="ghost">{e.schemaName}</Chip>
-            {e._lifecycle && (
-              <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />
-            )}
-          </div>
-          {e._description && (
-            <div className={styles.rowSnippet}>
-              <Hi s={snippetAround(e._description, q)} q={q} />
-            </div>
-          )}
-          <div className={styles.rowMeta}>
-            <span className={styles.rowPath}>
-              <TbHome size={10} /> Entities
-              <span className={styles.dim}>/</span>
-              <Hi s={e.schemaName} q={q} />
-              <span className={styles.dim}>/</span>
-              <Hi s={e._slug} q={q} />
-            </span>
-            {e._owner && <Chip tone="ghost">{e._owner.name}</Chip>}
-            {e.matchedFields.slice(0, 3).map(f => (
-              <Chip key={f} tone="ghost">
-                field:{f}
-              </Chip>
-            ))}
-          </div>
-        </div>
-        <RowGo onOpen={onOpen} />
-      </div>
-    );
-  }
-
-  if (row.kind === 'project') {
-    const p = row.data as ProjectSearchResult;
-    return (
-      <div
-        className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
-        onMouseEnter={onSelect}
-        onClick={onSelect}
-        onDoubleClick={onOpen}
-      >
-        <span className={styles.rowIcon}>
-          <TbFolders size={14} />
-        </span>
-        <div className={styles.rowBody}>
-          <div className={styles.rowTitle}>
-            <button
-              type="button"
-              className={styles.rowName}
-              onClick={ev => {
-                ev.stopPropagation();
-                onOpen();
-              }}
-            >
-              <Hi s={p.name} q={q} />
-            </button>
-            <StatusChip value={p.status} />
-          </div>
-          {p.description && (
-            <div className={styles.rowSnippet}>
-              <Hi s={snippetAround(p.description, q)} q={q} />
-            </div>
-          )}
-          <div className={styles.rowMeta}>
-            <span className={styles.rowPath}>
-              <TbHome size={10} /> Projects
-            </span>
-          </div>
-        </div>
-        <RowGo onOpen={onOpen} />
-      </div>
-    );
-  }
-
-  if (row.kind === 'file') {
-    const f = row.data as ProjectFileSearchResult;
-    const metadataSummary = getFileMetadataSummary(f, q);
-    return (
-      <DiagramMetadataPopover
-        type="diagram"
-        fallbackTitle={f.name}
-        contentMetadata={f.content_metadata}
-        commentCount={f.comment_count}
-        unresolvedCommentCount={f.unresolved_comment_count}
-      >
-        <div
-          className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
-          onMouseEnter={onSelect}
-          onClick={onSelect}
-          onDoubleClick={onOpen}
-        >
-          <span className={styles.rowIcon}>
-            <TbFolder size={14} />
-          </span>
-          <div className={styles.rowBody}>
-            <div className={styles.rowTitle}>
-              <button
-                type="button"
-                className={styles.rowName}
-                onClick={ev => {
-                  ev.stopPropagation();
-                  onOpen();
-                }}
-              >
-                <Hi s={f.content_metadata?.title ?? f.name} q={q} />
-              </button>
-              <Chip tone="ghost">Diagram</Chip>
-            </div>
-            {metadataSummary && (
-              <div className={styles.rowSnippet}>
-                <Hi s={metadataSummary} q={q} />
-              </div>
-            )}
-            <div className={styles.rowMeta}>
-              <span className={styles.rowPath}>
-                <TbHome size={10} /> <Hi s={getFileContextLabel(f)} q={q} />
-                {f.path.includes('/') && (
-                  <>
-                    <span className={styles.dim}>/</span>
-                    {f.path.slice(0, f.path.lastIndexOf('/'))}
-                  </>
-                )}
-              </span>
-              {f.content_metadata?.keywords.slice(0, 4).map(keyword => (
-                <Chip key={keyword} tone="ghost">
-                  <Hi s={keyword} q={q} />
-                </Chip>
-              ))}
-            </div>
-          </div>
-          <RowGo onOpen={onOpen} />
-        </div>
-      </DiagramMetadataPopover>
-    );
-  }
-
-  if (row.kind === 'schema') {
-    const s = row.data as SchemaSearchResult;
-    const schemaMeta = schemaMap.get(s.schemaId);
-    return (
-      <div
-        className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
-        onMouseEnter={onSelect}
-        onClick={onSelect}
-        onDoubleClick={onOpen}
-      >
-        {schemaMeta ? (
-          <TypeBadge
-            color={resolveSchemaColor(schemaMeta.schema, schemaMeta.index)}
-            name={s.name}
-            icon={schemaMeta.schema.icon}
-            size={22}
-          />
-        ) : (
-          <span className={styles.rowIcon}>
-            <TbCode size={14} />
-          </span>
-        )}
-        <div className={styles.rowBody}>
-          <div className={styles.rowTitle}>
-            <button
-              type="button"
-              className={styles.rowName}
-              onClick={ev => {
-                ev.stopPropagation();
-                onOpen();
-              }}
-            >
-              <Hi s={s.name} q={q} />
-            </button>
-            <Chip tone="ghost">{s.fieldMatches.length} field matches</Chip>
-          </div>
-          {s.fieldMatches.length > 0 && (
-            <div className={styles.rowSnippet}>
-              Fields: {s.fieldMatches.map(f => f.fieldName).join(', ')}
-            </div>
-          )}
-          <div className={styles.rowMeta}>
-            <span className={styles.rowPath}>
-              <TbCode size={10} /> Data model
-              <span className={styles.dim}>/</span>
-              <Hi s={s.name} q={q} />
-              <span className={styles.dim}>/</span>
-              fields
-            </span>
-          </div>
-        </div>
-        <RowGo onOpen={onOpen} />
-      </div>
-    );
-  }
-
-  return null;
-};
-
-const RowGo = ({ onOpen }: { onOpen: () => void }) => (
-  <button
-    type="button"
-    className={styles.rowGo}
-    onClick={e => {
-      e.stopPropagation();
-      onOpen();
-    }}
-    title="Open"
-  >
-    <TbChevronRight size={12} />
-  </button>
-);
-
-// ── Preview pane ─────────────────────────────────────────────
-
-const PreviewPane = ({
-  preview,
-  schemaMap,
-  onEntityClick,
-  onProjectClick,
-  onProjectFolderClick,
-  onEntityFolderClick,
-  onWorkspaceFolderClick,
-  onSchemaClick,
-  q,
-  lifecycleStates
-}: {
-  preview: SearchPreview | null;
-  schemaMap: Map<string, { schema: EntitySchema; index: number }>;
-  onEntityClick: (entityId: string) => void;
-  onProjectClick: (projectId: string) => void;
-  onProjectFolderClick: (projectId: string, folder: string | null) => void;
-  onEntityFolderClick: (entityId: string, folder: string | null) => void;
-  onWorkspaceFolderClick: (folder: string | null) => void;
-  onSchemaClick: (schemaId: string) => void;
-  q: string;
-  lifecycleStates: WorkspaceLifecycleState[];
-}) => {
-  if (!preview) {
-    return (
-      <div className={styles.previewEmpty}>
-        Hover or use <kbd className={styles.kbd}>↑</kbd>
-        <kbd className={styles.kbd}>↓</kbd> to preview a result.
-      </div>
-    );
-  }
-
-  if (preview.type === 'entity') {
-    const e = preview.data;
-    const schemaMeta = schemaMap.get(e.schemaId);
-    return (
-      <div className={styles.previewBody}>
-        <div className={styles.previewHead}>
-          {schemaMeta ? (
-            <TypeBadge
-              color={resolveSchemaColor(schemaMeta.schema, schemaMeta.index)}
-              name={e.schemaName}
-              icon={schemaMeta.schema.icon}
-              size={28}
-            />
-          ) : (
-            <span className={styles.previewIcon}>
-              <TbDatabase size={16} />
-            </span>
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className={styles.previewEyebrow}>{e.schemaName}</div>
-            <div className={styles.previewTitle}>
-              <Hi s={e._name || e._slug} q={q} />
-            </div>
-          </div>
-          {e._lifecycle && <StatusChip value={e._lifecycle.id} lifecycleStates={lifecycleStates} />}
-        </div>
-        {e._description && (
-          <div className={styles.previewDesc}>
-            <Hi s={e._description} q={q} />
-          </div>
-        )}
-        <dl className={styles.previewProps}>
-          <dt>Name</dt>
-          <dd>
-            <Hi s={e._name} q={q} />
-          </dd>
-          <dt>Slug</dt>
-          <dd className={styles.mono}>
-            <Hi s={e._slug} q={q} />
-          </dd>
-          <dt>Schema</dt>
-          <dd>
-            <Hi s={e.schemaName} q={q} />
-          </dd>
-          <dt>Owner</dt>
-          <dd>
-            <Hi s={e._owner?.name ?? '—'} q={q} />
-          </dd>
-          <dt>Lifecycle</dt>
-          <dd>
-            <Hi s={e._lifecycle?.name ?? '—'} q={q} />
-          </dd>
-        </dl>
-        <div className={styles.previewActions}>
-          <button
-            type="button"
-            className={styles.previewBtn}
-            onClick={() => onEntityClick(e.publicId)}
-          >
-            Open entity <TbArrowRight size={11} />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (preview.type === 'project') {
-    const p = preview.data;
-    return (
-      <div className={styles.previewBody}>
-        <div className={styles.previewHead}>
-          <span className={styles.previewIcon}>
-            <TbFolders size={16} />
-          </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className={styles.previewEyebrow}>Project</div>
-            <div className={styles.previewTitle}>
-              <Hi s={p.name} q={q} />
-            </div>
-          </div>
-          <StatusChip value={p.status} />
-        </div>
-        {p.description && (
-          <div className={styles.previewDesc}>
-            <Hi s={p.description} q={q} />
-          </div>
-        )}
-        <dl className={styles.previewProps}>
-          <dt>Name</dt>
-          <dd>
-            <Hi s={p.name} q={q} />
-          </dd>
-          <dt>Status</dt>
-          <dd>
-            <Hi s={p.status} q={q} />
-          </dd>
-          {p.description && (
-            <>
-              <dt>Description</dt>
-              <dd>
-                <Hi s={p.description} q={q} />
-              </dd>
-            </>
-          )}
-        </dl>
-        <div className={styles.previewActions}>
-          <button type="button" className={styles.previewBtn} onClick={() => onProjectClick(p.id)}>
-            Open project <TbArrowRight size={11} />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (preview.type === 'file') {
-    const f = preview.data;
-    const folder = getFileFolder(f.path);
-    const locationLabel =
-      f.scope === 'project' ? 'Project' : f.scope === 'entity' ? 'Entity' : 'Workspace';
-    return (
-      <div className={styles.previewBody}>
-        <div className={styles.previewHead}>
-          <span className={styles.previewIcon}>
-            <TbFolder size={14} />
-          </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className={styles.previewEyebrow}>Diagram</div>
-            <div className={styles.previewTitle}>
-              <Hi s={f.name} q={q} />
-            </div>
-          </div>
-        </div>
-        <dl className={styles.previewProps}>
-          <dt>Name</dt>
-          <dd>
-            <Hi s={f.name} q={q} />
-          </dd>
-          {f.content_metadata?.title && (
-            <>
-              <dt>Metadata title</dt>
-              <dd>
-                <Hi s={f.content_metadata.title} q={q} />
-              </dd>
-            </>
-          )}
-          <dt>{locationLabel}</dt>
-          <dd>
-            <Hi s={getFileContextLabel(f)} q={q} />
-          </dd>
-          <dt>Folder</dt>
-          <dd>
-            <Hi s={folder} q={q} />
-          </dd>
-          <dt>Path</dt>
-          <dd className={styles.mono}>
-            <Hi s={f.path} q={q} />
-          </dd>
-          {f.content_metadata?.description && (
-            <>
-              <dt>Description</dt>
-              <dd>
-                <Hi s={f.content_metadata.description} q={q} />
-              </dd>
-            </>
-          )}
-          {f.content_metadata?.category && (
-            <>
-              <dt>Category</dt>
-              <dd>
-                <Hi s={f.content_metadata.category} q={q} />
-              </dd>
-            </>
-          )}
-          {f.content_metadata?.keywords.length ? (
-            <>
-              <dt>Keywords</dt>
-              <dd className={styles.tags}>
-                {f.content_metadata.keywords.map(keyword => (
-                  <Chip key={keyword} tone="ghost">
-                    <Hi s={keyword} q={q} />
-                  </Chip>
-                ))}
-              </dd>
-            </>
-          ) : null}
-        </dl>
-        <div className={styles.previewActions}>
-          <button
-            type="button"
-            className={styles.previewBtn}
-            onClick={() => {
-              if (f.scope === 'project' && f.projectId) {
-                onProjectFolderClick(f.projectId!, f.path.includes('/') ? folder : null);
-                return;
-              }
-              if (f.scope === 'entity' && f.entityPublicId) {
-                onEntityFolderClick(f.entityPublicId, f.path.includes('/') ? folder : null);
-                return;
-              }
-              if (f.scope === 'workspace') {
-                onWorkspaceFolderClick(f.path.includes('/') ? folder : null);
-              }
-            }}
-          >
-            Open {f.scope === 'project' ? 'in project' : f.scope === 'entity' ? 'entity' : 'workspace'} <TbArrowRight size={11} />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // schema
-  const s = preview.data;
-  const schemaMeta = schemaMap.get(s.schemaId);
-  const allFields = schemaMeta?.schema.fields ?? [];
-  return (
-    <div className={styles.previewBody}>
-      <div className={styles.previewHead}>
-        {schemaMeta ? (
-          <TypeBadge
-            color={resolveSchemaColor(schemaMeta.schema, schemaMeta.index)}
-            name={s.name}
-            icon={schemaMeta.schema.icon}
-            size={28}
-          />
-        ) : (
-          <span className={styles.previewIcon}>
-            <TbCode size={14} />
-          </span>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className={styles.previewEyebrow}>Schema</div>
-          <div className={styles.previewTitle}>
-            <Hi s={s.name} q={q} />
-          </div>
-        </div>
-      </div>
-      <dl className={styles.previewProps}>
-        <dt>Name</dt>
-        <dd>
-          <Hi s={s.name} q={q} />
-        </dd>
-        <dt>Fields</dt>
-        <dd>{allFields.length}</dd>
-      </dl>
-      {allFields.length > 0 && (
-        <>
-          <div className={styles.sectionLabel}>Fields</div>
-          <div className={styles.fieldList}>
-            {allFields.map(f => (
-              <div key={f.id} className={styles.fieldRow}>
-                <span className={styles.fieldName}>
-                  <Hi s={f.name} q={q} />
-                </span>
-                <span className={styles.fieldId}>
-                  <Hi s={f.id} q={q} />
-                </span>
-                <span className={styles.fieldType}>{f.type}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-      <div className={styles.previewActions}>
-        <button
-          type="button"
-          className={styles.previewBtn}
-          onClick={() => onSchemaClick(s.schemaId)}
-        >
-          Open in data model <TbArrowRight size={11} />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ── Empty states ─────────────────────────────────────────────
-
-const EmptyState = ({ title, sub }: { title: string; sub: string }) => (
-  <div className={styles.empty}>
-    <div className={styles.emptyIcon}>
-      <TbSearch size={18} />
-    </div>
-    <div className={styles.emptyTitle}>{title}</div>
-    <div className={styles.emptySub}>{sub}</div>
-  </div>
-);

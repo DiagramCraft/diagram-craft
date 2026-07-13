@@ -3,7 +3,7 @@ import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useEntity } from '../../../../../hooks/useEntities';
 import { TypeBadge } from '../../../../../components/TypeBadge';
 import { StatusChip } from '../../../../../components/StatusChip';
-import { resolveSchemaColor } from '../../../../../lib/api';
+import { resolveSchemaColor } from '../../../../../lib/schemaPresentation';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
 import styles from './EntityMention.module.css';
 

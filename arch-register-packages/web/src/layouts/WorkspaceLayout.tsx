@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Outlet, useParams, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
+import { Outlet, getRouteApi, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from './WorkspaceLayout.module.css';
 import sidePanelStyles from '../shell/SidePanel.module.css';
@@ -9,7 +9,7 @@ import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
 import { useWorkspaces, workspaceKeys } from '../hooks/useWorkspaces';
-import { projectKeys } from '../hooks/queryKeys';
+import { projectKeys } from '../queries/projects';
 import { useSchemas } from '../hooks/useSchemas';
 import { useEnums } from '../hooks/useEnums';
 import { useProjects } from '../hooks/useProjects';
@@ -21,10 +21,10 @@ import { WorkspaceContext } from './WorkspaceContext';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import {
+  TbBriefcase2,
   TbDatabase,
   TbFileAi,
   TbFiles,
-  TbFolders,
   TbHome,
   TbMessageCircleStar,
   TbSearch
@@ -33,6 +33,7 @@ import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { navigateFromRailItem, resolveWorkspaceShellDescriptor } from './workspaceShellDescriptors';
 import type { WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
+import { settingsSectionTarget } from '../routes/settingsNavigation';
 import {
   asEntityPublicId,
   asProjectPublicId,
@@ -43,15 +44,17 @@ import {
 const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'home', icon: TbHome, tooltip: 'Workspace overview' },
   { id: 'content', icon: TbFiles, tooltip: 'Workspace content' },
-  { id: 'projects', icon: TbFolders, tooltip: 'Projects' },
+  { id: 'projects', icon: TbBriefcase2, tooltip: 'Projects' },
   { id: 'entities', icon: TbDatabase, tooltip: 'Entities' },
   { id: 'search', icon: TbSearch, tooltip: 'Search' },
   { id: 'assistant', icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
   { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' }
 ];
 
+const routeApi = getRouteApi('/authenticated/$workspaceSlug');
+
 export const WorkspaceLayout = () => {
-  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
+  const { workspaceSlug } = routeApi.useParams();
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -143,11 +146,7 @@ export const WorkspaceLayout = () => {
 
   const handleOpenSettings = useCallback(() => {
     if (defaultSettingsSection) {
-      navigate({
-        to: '/$workspaceSlug/settings',
-        params: { workspaceSlug },
-        search: { section: defaultSettingsSection }
-      });
+      navigate(settingsSectionTarget(workspaceSlug, defaultSettingsSection));
     }
   }, [defaultSettingsSection, navigate, workspaceSlug]);
 
@@ -330,7 +329,7 @@ export const WorkspaceLayout = () => {
           open={addWsOpen}
           onClose={() => setAddWsOpen(false)}
           onCreated={newWs => {
-            void queryClient.invalidateQueries({ queryKey: workspaceKeys.all });
+            void queryClient.invalidateQueries({ queryKey: workspaceKeys.list() });
             navigate({ to: '/$workspaceSlug', params: { workspaceSlug: newWs.url_slug } });
           }}
         />

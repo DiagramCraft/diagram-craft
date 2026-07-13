@@ -17,6 +17,7 @@ export type {
   Entity,
   EntityGrant,
   WorkspaceTeam,
+  WorkspaceAuthorizationContext,
   AuthorizationContext
 } from './types.js';
 
@@ -43,8 +44,10 @@ export {
 // Export authorization context builder helpers
 export {
   buildAuthorizationContext,
+  buildWorkspaceAuthorizationContext,
   fetchAuthorizationContextData,
   type AuthorizationContextData,
+  type WorkspaceAuthorizationContextData,
   type PermissionDataProvider
 } from './AuthorizationContextBuilder.js';
 

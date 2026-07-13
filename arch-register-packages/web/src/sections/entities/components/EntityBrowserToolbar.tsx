@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { TbSearch, TbFilter, TbHistory } from 'react-icons/tb';
+import { TbFilter, TbHistory } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -9,9 +9,15 @@ import type {
 } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
+import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { FilterBuilder } from '../../../components/FilterBuilder';
 import { FilterDropdown } from '../../../components/FilterDropdown';
+import { SearchInput } from '../../../components/SearchInput';
 import styles from './EntityBrowser.module.css';
+import { ManageFieldsPopover } from './ManageFieldsPopover';
+import { AssessmentJoinPicker } from './AssessmentJoinPicker';
+import type { EntityDisplayField } from './entityDisplayFields';
+import type { AssessmentJoinOption } from './useJoinedAssessment';
 
 type EntityBrowserToolbarProps = {
   q: string;
@@ -35,6 +41,14 @@ type EntityBrowserToolbarProps = {
   tlOpen?: boolean;
   onToggleTimeline?: () => void;
   asOf?: string;
+  displayFields?: EntityDisplayField[];
+  selectedDisplayFieldIds?: string[];
+  onDisplayFieldsChange?: (fieldIds: string[]) => void;
+  onDisplayFieldsReset?: () => void;
+  joinOptions?: AssessmentJoinOption[];
+  joinAssessmentId?: string | null;
+  onJoinAssessmentChange?: (assessmentId: string | null) => void;
+  joinedAssessment?: Assessment | null;
 };
 
 export const EntityBrowserToolbar = ({
@@ -58,20 +72,28 @@ export const EntityBrowserToolbar = ({
   readOnly,
   tlOpen,
   onToggleTimeline,
-  asOf
+  asOf,
+  displayFields,
+  selectedDisplayFieldIds,
+  onDisplayFieldsChange,
+  onDisplayFieldsReset,
+  joinOptions,
+  joinAssessmentId,
+  onJoinAssessmentChange,
+  joinedAssessment
 }: EntityBrowserToolbarProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
 
   return (
     <div className={styles.toolbar}>
-      <div className={styles.searchInline}>
-        <TbSearch size={12} />
-        <input
-          placeholder="Search by name, owner…"
-          value={q}
-          onChange={e => setQ(e.target.value)}
-        />
-      </div>
+      <SearchInput
+        size="sm"
+        className={styles.searchInline}
+        placeholder="Search by name, owner…"
+        value={q}
+        onChange={setQ}
+        onClear={() => setQ('')}
+      />
       <Popover.Root actionsRef={filterPopoverRef}>
         <Popover.Trigger
           element={
@@ -100,9 +122,17 @@ export const EntityBrowserToolbar = ({
             owners={owners}
             enums={enums}
             selectedSchemaId={typeFilter}
+            joinedAssessment={joinedAssessment}
           />
         </Popover.Content>
       </Popover.Root>
+      {joinOptions && onJoinAssessmentChange && !readOnly && (
+        <AssessmentJoinPicker
+          options={joinOptions}
+          value={joinAssessmentId ?? null}
+          onChange={onJoinAssessmentChange}
+        />
+      )}
       {projectId && !readOnly && (
         <FilterDropdown
           label="Scope"
@@ -125,11 +155,19 @@ export const EntityBrowserToolbar = ({
           { value: 'cards', label: 'Cards' },
           { value: 'tree', label: 'Tree' },
           { value: 'radar', label: 'Radar' },
+          { value: 'bubble', label: 'Bubble' },
           { value: 'timeline', label: 'Timeline' },
           { value: 'matrix', label: 'Matrix' },
           { value: 'hierarchy', label: 'Hierarchy' },
           { value: 'explore', label: 'Explore' }
         ]}
+      />
+      <ManageFieldsPopover
+        fields={displayFields ?? []}
+        selectedIds={selectedDisplayFieldIds ?? []}
+        onChange={onDisplayFieldsChange ?? (() => {})}
+        onReset={onDisplayFieldsReset}
+        disabled={!displayFields || !selectedDisplayFieldIds || !onDisplayFieldsChange}
       />
       {onToggleTimeline && (
         <Button

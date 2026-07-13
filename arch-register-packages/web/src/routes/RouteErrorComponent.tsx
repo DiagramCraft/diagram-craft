@@ -1,9 +1,17 @@
 import type { ErrorComponentProps } from '@tanstack/react-router';
-import { ApiError } from '../lib/api';
+import { ApiError } from '../lib/http';
 import { AppErrorState } from '../components/AppErrorState';
 
-const getMessage = (error: unknown) => {
+export const getRouteErrorMessage = (error: unknown) => {
   if (error instanceof ApiError) {
+    if (error.kind === 'network') {
+      return {
+        title: 'The server could not be reached',
+        message: 'Check your connection and try again.',
+        details: error.message
+      };
+    }
+
     if (error.status === 403) {
       return {
         title: 'You do not have access to this view',
@@ -13,7 +21,7 @@ const getMessage = (error: unknown) => {
       };
     }
 
-    if (error.status >= 500) {
+    if (error.status !== undefined && error.status >= 500) {
       return {
         title: 'The server could not complete this request',
         message: 'Try again in a moment. If the problem persists, reload the page and retry.',
@@ -31,7 +39,7 @@ const getMessage = (error: unknown) => {
 };
 
 export const RouteErrorComponent = ({ error, reset }: ErrorComponentProps) => {
-  const copy = getMessage(error);
+  const copy = getRouteErrorMessage(error);
 
   return (
     <AppErrorState

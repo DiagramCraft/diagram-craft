@@ -5,7 +5,8 @@ import {
   type ExploreViewConfig
 } from '@arch-register/api-types/viewContract';
 import type { EntityRelationData } from '../../../hooks/useEntities';
-import { getRelationDisplayLabel, type EntityRelation } from '../../../lib/api';
+import { getRelationDisplayLabel } from '../../../lib/entityRelations';
+import type { EntityRelation } from '@arch-register/api-types/entityContract';
 
 export type ExploreEntity = {
   entityId: string;
@@ -16,6 +17,7 @@ export type ExploreEntity = {
   description?: string;
   ownerName?: string | null;
   lifecycleId?: string | null;
+  record?: EntityRecord;
 };
 
 export type ExploreColumn = {
@@ -52,7 +54,7 @@ export type ExploreGraph = {
 export const DEFAULT_EXPLORE_CONFIG: ExploreViewConfig = {
   leftDepth: 1,
   rightDepth: 1,
-  relationFieldNames: []
+  relationFieldNames: [], fieldIds: undefined
 };
 
 export const normalizeExploreConfig = (
@@ -60,7 +62,8 @@ export const normalizeExploreConfig = (
 ): ExploreViewConfig => ({
   leftDepth: Math.max(0, Math.trunc(config?.leftDepth ?? DEFAULT_EXPLORE_CONFIG.leftDepth)),
   rightDepth: Math.max(0, Math.trunc(config?.rightDepth ?? DEFAULT_EXPLORE_CONFIG.rightDepth)),
-  relationFieldNames: [...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)]
+  relationFieldNames: [...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)],
+  fieldIds: config?.fieldIds
 });
 
 export const parseExploreConfigValue = (raw: string | undefined): ExploreViewConfig | null => {
@@ -115,7 +118,8 @@ const toCenterEntity = (entity: EntityRecord): ExploreEntity => ({
   schemaId: entity._schema.id,
   description: entity._description,
   ownerName: entity._owner?.name,
-  lifecycleId: entity._lifecycle?.id
+  lifecycleId: entity._lifecycle?.id,
+  record: entity
 });
 
 const toRelatedEntity = (relation: EntityRelation): ExploreEntity => ({

@@ -5,6 +5,9 @@ import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { entityDetailRoute, asEntityPublicId } from '../../../../../routes/publicObjectRoutes';
 import type { AuditLogEntry } from '@arch-register/api-types/auditContract';
 import styles from './EntityChangelog.module.css';
+import { formatRelativeTime } from '../../../../../utils/dateFormat';
+import { Table } from '../../../../../components/table/Table';
+import { EmptyState } from '../../../../../components/EmptyState';
 
 const OPERATION_LABELS: Record<string, string> = {
   create: 'created',
@@ -23,18 +26,6 @@ const parseSince = (since: string | undefined): string | undefined => {
 const parseLimit = (limit: string | undefined): number => {
   const n = limit ? parseInt(limit, 10) : 10;
   return Math.min(Math.max(Number.isFinite(n) ? n : 10, 1), 50);
-};
-
-const formatRelative = (isoDate: string) => {
-  const diffMs = Date.now() - new Date(isoDate).getTime();
-  const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  return new Date(isoDate).toLocaleDateString();
 };
 
 const changedFields = (entry: AuditLogEntry): string[] => {
@@ -82,7 +73,7 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
   if (!hasFilter) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No entity or filter configured.</p>
+        <EmptyState compact title="No entity or filter configured." />
       </div>
     );
   }
@@ -100,32 +91,32 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
   if (!entries || entries.length === 0) {
     return (
       <div className={styles.container}>
-        <p className={styles.empty}>No recent changes.</p>
+        <EmptyState compact title="No recent changes." />
       </div>
     );
   }
 
   return (
     <div className={styles.tableWrapper}>
-      <table>
-        <thead>
-          <tr>
-            <th className={styles.th}>When</th>
-            <th className={styles.th}>Entity</th>
-            <th className={styles.th}>Operation</th>
-            <th className={styles.th}>By</th>
-            <th className={styles.th}>Changed fields</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table.Root className={styles.tableSurface}>
+        <Table.Head>
+          <Table.Row>
+            <Table.HeaderCell>When</Table.HeaderCell>
+            <Table.HeaderCell>Entity</Table.HeaderCell>
+            <Table.HeaderCell>Operation</Table.HeaderCell>
+            <Table.HeaderCell>By</Table.HeaderCell>
+            <Table.HeaderCell>Changed fields</Table.HeaderCell>
+          </Table.Row>
+        </Table.Head>
+        <Table.Body>
           {entries.map(entry => {
             const fields = changedFields(entry);
             return (
-              <tr key={entry.id}>
-                <td className={styles.td}>
-                  <span title={entry.timestamp}>{formatRelative(entry.timestamp)}</span>
-                </td>
-                <td className={styles.td}>
+              <Table.Row key={entry.id}>
+                <Table.Cell>
+                  <span title={entry.timestamp}>{formatRelativeTime(entry.timestamp)}</span>
+                </Table.Cell>
+                <Table.Cell>
                   {entry.public_id ? (
                     <button
                       type="button"
@@ -141,19 +132,19 @@ export const EntityChangelog = ({ id, schema, owner, lifecycle, limit, since }: 
                   ) : (
                     entry.entity_name
                   )}
-                </td>
-                <td className={styles.td}>
+                </Table.Cell>
+                <Table.Cell>
                   <span className={`${styles.op} ${styles[`op_${entry.operation}`]}`}>
                     {OPERATION_LABELS[entry.operation] ?? entry.operation}
                   </span>
-                </td>
-                <td className={styles.td}>{entry.user_display_name ?? '—'}</td>
-                <td className={styles.td}>{fields.length > 0 ? fields.join(', ') : '—'}</td>
-              </tr>
+                </Table.Cell>
+                <Table.Cell>{entry.user_display_name ?? '—'}</Table.Cell>
+                <Table.Cell>{fields.length > 0 ? fields.join(', ') : '—'}</Table.Cell>
+              </Table.Row>
             );
           })}
-        </tbody>
-      </table>
+        </Table.Body>
+      </Table.Root>
     </div>
   );
 };

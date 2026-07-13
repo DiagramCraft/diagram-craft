@@ -137,4 +137,31 @@ test.describe('data permission routes', () => {
     expect(rows).toContain('Customer API');
     expect(rows).not.toContain('Auth API');
   });
+
+  test('authorization: bulk creation rejects the complete batch when create-child is denied', async ({
+    personas,
+    restrictedSeed: _,
+    resources
+  }) => {
+    await expect(
+      personas.workspaceViewer.orpc.entities.bulkCreate({
+        params: { workspace: 'default' },
+        body: {
+          entities: [
+            {
+              _schemaId: '00000000-0000-0000-0000-000000000003',
+              _name: 'Forbidden Bulk Component',
+              system: [resources.entityIds.customerPortal]
+            }
+          ]
+        }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    const matches = await personas.globalAdmin.orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { q: 'Forbidden Bulk Component', view: 'summary' }
+    });
+    expect(matches).toEqual([]);
+  });
 });

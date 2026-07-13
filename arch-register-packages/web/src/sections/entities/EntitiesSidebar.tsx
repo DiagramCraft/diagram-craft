@@ -21,9 +21,12 @@ import {
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarLeftExpand
 } from 'react-icons/tb';
-import { EntityFacets, fetchEntityFacets, resolveSchemaColor, SavedView } from '../../lib/api';
+import type { EntityFacets } from '@arch-register/api-types/entityContract';
+import { fetchEntityFacets } from '../../lib/entityOperations';
+import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import type { SavedView } from '@arch-register/api-types/viewContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
-import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useEntities';
+import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { usePinnedEntities } from '../../hooks/useNotifications';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { RenameDialog } from '../../components/RenameDialog';
@@ -50,25 +53,9 @@ export const EntitiesSidebar = ({
   onExpand?: () => void;
 }) => {
   const navigate = useNavigate();
-  const { entityId: routeEntityId } = useParams({ strict: false }) as { entityId?: string };
+  const { entityId: routeEntityId } = useParams({ strict: false });
   const { permissions } = useWorkspaceContext();
-  const search = useSearch({ strict: false }) as {
-    type?: string;
-    status?: string;
-    owner?: string;
-    q?: string;
-    viewId?: string;
-    viewMode?: string;
-    sort?: string;
-    radarConfig?: string;
-    timelineConfig?: string;
-    matrixConfig?: string;
-    hierarchyConfig?: string;
-    exploreConfig?: string;
-    sidebarTab?: 'filters' | 'views' | 'pinned';
-    filters?: string;
-    entityId?: string;
-  };
+  const search = useSearch({ strict: false });
   const sidebarTab = search.sidebarTab ?? 'filters';
 
   // Parse active filters from the filters JSON string

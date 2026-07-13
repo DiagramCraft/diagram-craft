@@ -14,11 +14,6 @@
   font-size: 13px;
 }
 
-.errorText {
-  color: var(--error-fg);
-  font-size: 12px;
-}
-
 .image {
   display: block;
   max-width: 100%;

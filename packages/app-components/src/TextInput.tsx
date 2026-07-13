@@ -35,11 +35,13 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
         type={props.type}
         value={props.isIndeterminate ? '' : currentValue}
         disabled={props.disabled}
-        onFocus={() => {
+        onFocus={ev => {
           hasFocus.current = true;
+          props.onFocus?.(ev);
         }}
-        onBlur={() => {
+        onBlur={ev => {
           hasFocus.current = false;
+          props.onBlur?.(ev);
         }}
         onChange={ev => {
           const p = ev.target.value;

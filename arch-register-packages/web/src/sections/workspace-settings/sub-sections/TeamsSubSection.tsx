@@ -5,13 +5,18 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import { ColorPicker } from '../../../components/ColorPicker';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { getUserLabel } from '../../../utils/userLabel';
-import type { TeamAssignmentInfo, WorkspaceTeam } from '../../../lib/api';
+import type {
+  TeamAssignmentInfo,
+  WorkspaceTeam,
+  WorkspaceTeamInput
+} from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceUsers } from '../../../hooks/useWorkspaceMembers';
 import {
   useTeamAssignments,
@@ -20,6 +25,7 @@ import {
   useUpdateTeams
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './TeamsSubSection.module.css';
+import { EmptyState } from '../../../components/EmptyState';
 import { WorkspaceUserInfo } from '@arch-register/api-types/workspaceContract';
 
 type TeamDraft = {
@@ -80,7 +86,7 @@ const buildTeamDrafts = (teams: WorkspaceTeam[], assignments: TeamAssignmentInfo
     )
   }));
 
-const toOwnerPayload = (teams: TeamDraft[]): WorkspaceTeam[] =>
+const toOwnerPayload = (teams: TeamDraft[]): WorkspaceTeamInput[] =>
   teams.map((team, index) => ({
     id: team.id,
     name: team.name.trim(),
@@ -204,7 +210,7 @@ export const TeamsSubSection = ({
   if (teamsError || assignmentsError) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>Failed to load teams.</div>
+        <Banner variant="error">Failed to load teams.</Banner>
       </div>
     );
   }
@@ -212,9 +218,9 @@ export const TeamsSubSection = ({
   return (
     <div className={styles.container}>
       {isLoadingTeams || isLoadingAssignments ? (
-        <div className={styles.empty}>Loading teams…</div>
+        <EmptyState compact title="Loading teams…" />
       ) : teamDrafts.length === 0 ? (
-        <div className={styles.empty}>No owner teams have been created for this workspace.</div>
+        <EmptyState compact title="No owner teams have been created for this workspace." />
       ) : (
         <div className={styles.teamList}>
           {teamDrafts.map(team => {
@@ -325,11 +331,13 @@ export const TeamsSubSection = ({
                                   {user?.email ?? ''}
                                 </div>
                               </div>
-                              <RoleMenu
-                                current={a.role}
-                                disabled={isSaving}
-                                onSelect={newRole => void changeRole(team.id, a.user_id, newRole)}
-                              />
+                              <div className={styles.roleCell}>
+                                <RoleMenu
+                                  current={a.role}
+                                  disabled={isSaving}
+                                  onSelect={newRole => void changeRole(team.id, a.user_id, newRole)}
+                                />
+                              </div>
                               <button
                                 type="button"
                                 className={styles.removeMemberBtn}
@@ -413,7 +421,7 @@ export const TeamsSubSection = ({
 
 const persistTeams = async (
   teams: TeamDraft[],
-  saveOwners: (owners: WorkspaceTeam[]) => Promise<unknown>,
+  saveOwners: (owners: WorkspaceTeamInput[]) => Promise<unknown>,
   saveMemberships: (
     memberships: Array<{ team_id: string; user_id: string; role: TeamRole }>
   ) => Promise<unknown>

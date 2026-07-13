@@ -1,41 +1,47 @@
-import { createRoute } from '@tanstack/react-router';
-import { useParams, useSearch } from '@tanstack/react-router';
-import { DiagramScreen } from '../../sections/projects/DiagramScreen';
-import { MarkdownEditorScreen } from '../../sections/markdown/MarkdownEditorScreen';
+import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { WorkspaceContentSidebar } from '../../sections/workspace-content/WorkspaceContentSidebar';
-import { WorkspaceContentScreen } from '../../sections/workspace-content/WorkspaceContentScreen';
-import { validateDiagramSearch, validateEntityDetailSearch, validateMarkdownSearch } from '../searchParams';
+import {
+  validateDiagramSearch,
+  validateMarkdownSearch,
+  validateWorkspaceContentSearch
+} from '../searchParams';
 import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
-import { withWorkspaceShell } from './workspaceShellRoute';
+import { withWorkspaceShell, type WorkspaceShellBuilder } from './workspaceShellRoute';
+import {
+  LazyDiagramScreen,
+  LazyMarkdownEditorScreen,
+  LazyWorkspaceContentFolderRoute,
+  LazyWorkspaceContentRoute
+} from './lazyWorkspaceScreens';
 
-const WorkspaceContentRoute = () => {
-  const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
-  const search = useSearch({ strict: false }) as { contentFolder?: string };
-  return (
-    <WorkspaceContentScreen
-      workspaceSlug={workspaceSlug}
-      folder={search.contentFolder ?? ''}
-    />
-  );
-};
+export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
+  workspaceRoute: TParentRoute
+) => {
+  const buildShell: WorkspaceShellBuilder = ctx => ({
+    variant: 'standard' as const,
+    activeRailItem: 'content' as const,
+    breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
+    primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
+  });
 
-export const createContentWorkspaceRoutes = (
-  // biome-ignore lint/suspicious/noExplicitAny: TanStack route parent generics are cumbersome to thread through these factories
-  workspaceRoute: any
-): object[] => {
   const contentRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: 'content',
-      validateSearch: validateEntityDetailSearch,
-      component: WorkspaceContentRoute
+      validateSearch: validateWorkspaceContentSearch,
+      component: LazyWorkspaceContentRoute
     }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: 'content',
-      breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
-      primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
-    })
+    buildShell
+  );
+
+  const contentFolderRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'content/folders/$',
+      validateSearch: validateWorkspaceContentSearch,
+      component: LazyWorkspaceContentFolderRoute
+    }),
+    buildShell
   );
 
   const contentDiagramRoute = withWorkspaceShell(
@@ -43,7 +49,7 @@ export const createContentWorkspaceRoutes = (
       getParentRoute: () => workspaceRoute,
       path: 'content/diagrams/$diagramId',
       validateSearch: validateDiagramSearch,
-      component: DiagramScreen
+      component: LazyDiagramScreen
     }),
     () => ({ variant: 'overlay' })
   );
@@ -53,15 +59,10 @@ export const createContentWorkspaceRoutes = (
       getParentRoute: () => workspaceRoute,
       path: 'content/wiki/$nodeId',
       validateSearch: validateMarkdownSearch,
-      component: MarkdownEditorScreen
+      component: LazyMarkdownEditorScreen
     }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: 'content',
-      breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
-      primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
-    })
+    buildShell
   );
 
-  return [contentRoute, contentDiagramRoute, contentMarkdownRoute];
+  return [contentRoute, contentFolderRoute, contentDiagramRoute, contentMarkdownRoute] as const;
 };

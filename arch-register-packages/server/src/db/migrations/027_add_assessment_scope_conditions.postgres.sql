@@ -1,0 +1,2 @@
+ALTER TABLE assessment
+  ADD COLUMN IF NOT EXISTS scope_conditions JSONB NOT NULL DEFAULT '[]';

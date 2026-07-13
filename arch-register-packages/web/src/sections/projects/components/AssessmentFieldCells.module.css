@@ -1,0 +1,15 @@
+.stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  color: var(--cmp-fg-disabled);
+  padding: 0 1px;
+  line-height: 1;
+  transition: color 80ms;
+}
+
+.star:hover {
+  color: var(--warn, orange);
+}
