@@ -14,8 +14,8 @@ import {
 import styles from './ExtractScreen.module.css';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { orpcClient } from '../../lib/orpcClient';
-import { createEntity } from '../../lib/entityOperations';
-import { entityKeys, schemaKeys } from '../../hooks/queryKeys';
+import { createExtractedEntities } from '../../lib/extractOperations';
+import { invalidateEntityQueries, schemaKeys } from '../../hooks/queryKeys';
 import { Table } from '../../components/table/Table';
 
 type Phase = 'input' | 'scanning' | 'review' | 'done';
@@ -148,126 +148,25 @@ export const ExtractScreen = () => {
     const accepted = rows.filter(r => r.accepted);
 
     try {
-      // Build a map of entity names for reference resolution
-      const nameToRow = new Map(accepted.map(row => [row.name.toLowerCase(), row]));
-      const createdEntities: typeof accepted = [];
-      const nameToId = new Map<string, string>();
-
-      // Helper to check if an entity has unresolved references
-      const hasUnresolvedRefs = (row: (typeof accepted)[0]) => {
-        const schema = schemas.find(s => s.id === row.schema_id);
-        if (!schema) return false;
-
-        const refFields = schema.fields.filter(
-          f => f.type === 'reference' || f.type === 'containment'
-        );
-        return refFields.some(field => {
-          const value = row.fields[field.id];
-          if (!value || typeof value !== 'string') return false;
-
-          // Check if any referenced entity names haven't been created yet
-          const refNames = value
-            .split(',')
-            .map(n => n.trim().toLowerCase())
-            .filter(Boolean);
-          return refNames.some(name => nameToRow.has(name) && !nameToId.has(name));
-        });
-      };
-
-      // Create entities in order, resolving references as we go
-      const remaining = [...accepted];
-      let lastCount = remaining.length;
-
-      while (remaining.length > 0) {
-        // Find entities that can be created (no unresolved references)
-        const canCreate = remaining.filter(row => !hasUnresolvedRefs(row));
-
-        if (canCreate.length === 0) {
-          // No progress possible - create remaining entities without resolving refs
-          console.warn('Circular or unresolvable references detected, creating remaining entities');
-          for (const row of remaining) {
-            const entity = await createEntity(workspaceSlug, {
-              _schemaId: row.schema_id,
-              _name: row.name,
-              _description: '',
-              ...row.fields
-            });
-            nameToId.set(row.name.toLowerCase(), entity._uid);
-            createdEntities.push(row);
-          }
-          break;
-        }
-
-        // Create entities that are ready
-        for (const row of canCreate) {
-          const schema = schemas.find(s => s.id === row.schema_id);
-          const fields = { ...row.fields };
-
-          // Resolve reference/containment fields to IDs
-          if (schema) {
-            const refFields = schema.fields.filter(
-              f => f.type === 'reference' || f.type === 'containment'
-            );
-
-            for (const field of refFields) {
-              // Check both field.id and field.name as keys (AI might use either)
-              let value = fields[field.id];
-              if (!value) {
-                // Try field name as fallback
-                value = fields[field.name];
-                if (value) {
-                  // Move from name key to id key
-                  delete fields[field.name];
-                  fields[field.id] = value;
-                }
-              }
-
-              if (value && typeof value === 'string') {
-                const refNames = value
-                  .split(',')
-                  .map(n => n.trim())
-                  .filter(Boolean);
-                const refIds = refNames
-                  .map(name => nameToId.get(name.toLowerCase()))
-                  .filter((id): id is string => id !== undefined);
-
-                if (refIds.length > 0) {
-                  fields[field.id] = refIds;
-                } else {
-                  fields[field.id] = [];
-                }
-              }
-            }
-          }
-
-          const entity = await createEntity(workspaceSlug, {
-            _schemaId: row.schema_id,
-            _name: row.name,
-            _description: '',
-            ...fields
-          });
-          nameToId.set(row.name.toLowerCase(), entity._uid);
-          createdEntities.push(row);
-          remaining.splice(remaining.indexOf(row), 1);
-        }
-
-        // Safety check for infinite loops
-        if (remaining.length === lastCount) {
-          throw new Error('Unable to resolve entity references');
-        }
-        lastCount = remaining.length;
-      }
+      const createdEntities = await createExtractedEntities(
+        workspaceSlug,
+        accepted.map(row => ({
+          name: row.name,
+          schemaId: row.schema_id,
+          fields: row.fields
+        }))
+      );
 
       setCommitted(
-        createdEntities.map(row => ({
-          id: nameToId.get(row.name.toLowerCase()) ?? row.id,
-          name: row.name,
-          schema_id: row.schema_id
+        createdEntities.map(entity => ({
+          id: entity._uid,
+          name: entity._name,
+          schema_id: entity._schema.id
         }))
       );
 
       // Invalidate entity and schema queries to update counts and lists
-      await queryClient.invalidateQueries({ queryKey: entityKeys.all });
+      await invalidateEntityQueries(queryClient, workspaceSlug);
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceSlug) });
 
       setPhase('done');
@@ -275,7 +174,7 @@ export const ExtractScreen = () => {
       console.error('Failed to create entities:', error);
       alert('Failed to create entities. Please try again.');
     }
-  }, [rows, workspaceSlug, schemas, queryClient]);
+  }, [rows, workspaceSlug, queryClient]);
 
   const reset = useCallback(() => {
     setText('');

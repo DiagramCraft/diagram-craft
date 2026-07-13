@@ -341,6 +341,28 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       expect(updated!.is_done).toBe(true);
     });
 
+    it('lists projects containing an entity with project metadata in one projection', async () => {
+      const db = getDb();
+      const { workspace, project, entity } = await createFullFixtureSet(db);
+      await db.project.addProjectEntity({
+        workspace,
+        project_id: project,
+        entity_id: entity,
+        entity_type_id: null,
+        created_at: new Date()
+      });
+
+      const rows = await db.project.getEntityProjects(workspace, entity);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        project: { id: project, workspace },
+        file_count: 0,
+        entity_type_id: null,
+        entity_type_label: null
+      });
+    });
+
     it('rejects a duplicate project/entity link as a unique DatabaseError', async () => {
       const db = getDb();
       const { workspace, project, entity } = await createFullFixtureSet(db);

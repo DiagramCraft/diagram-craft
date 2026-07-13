@@ -24,7 +24,8 @@ import {
   getEntityParentsFromPayload,
   getLifecycleValues,
   getTeamIds,
-  normalizeEntityRelationFields
+  normalizeEntityRelationFields,
+  relationFields
 } from './dataHelpers';
 import { formatPublicId } from '../../utils/publicIds';
 import { ENTITY_DEFAULTS } from '../../constants';
@@ -38,7 +39,12 @@ import {
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { listAllCatalogEntities } from './entityLoader';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
-import type { EntityDbResult } from './db/catalogDatabase';
+import type {
+  Entity,
+  EntityDbCreate,
+  EntityDbResult,
+  SchemaDbResult
+} from './db/catalogDatabase';
 
 const checker = new PermissionChecker();
 
@@ -748,6 +754,220 @@ export const createEntity = async (
     return toApiEntity(row, authCtx);
   } catch (error) {
     return handleError(error, 'Failed to create data record');
+  }
+};
+
+type BulkEntityDraft = {
+  payload: ReturnType<typeof parseEntityMutationPayload>;
+  schema: SchemaDbResult;
+  entity: EntityDbCreate;
+};
+
+const canonicalizeBulkRelationFields = (
+  fields: Record<string, unknown>,
+  schema: SchemaDbResult,
+  nameToId: Map<string, string>
+) => {
+  const normalized = { ...fields };
+  for (const field of relationFields(schema.fields)) {
+    let value = normalized[field.id];
+    if (value == null && normalized[field.name] != null) {
+      value = normalized[field.name];
+      delete normalized[field.name];
+    }
+
+    if (typeof value !== 'string') continue;
+    const names = value
+      .split(',')
+      .map(name => name.trim())
+      .filter(Boolean);
+    normalized[field.id] = names.map(name => {
+      const id = nameToId.get(name.toLowerCase());
+      httpAssert.present(id, {
+        status: 400,
+        message: `${field.name} references unknown batch entity '${name}'`
+      });
+      return id;
+    });
+  }
+  return normalized;
+};
+
+const resolveBulkOwners = (
+  drafts: BulkEntityDraft[],
+  existingEntities: EntityDbResult[],
+  teamIds: Set<string>,
+  fallbackOwner: string | null
+) => {
+  const existingById = new Map(existingEntities.map(entity => [entity.id, entity]));
+  const draftById = new Map(drafts.map(draft => [draft.entity.id, draft]));
+  const resolving = new Set<string>();
+
+  const resolveOwner = (draft: BulkEntityDraft): string | null => {
+    const explicit = draft.payload.requestedOwner;
+    if (explicit && teamIds.has(explicit)) return explicit;
+    if (draft.entity.owner) return draft.entity.owner;
+    if (resolving.has(draft.entity.id)) {
+      return draft.schema.default_owner && teamIds.has(draft.schema.default_owner)
+        ? draft.schema.default_owner
+        : fallbackOwner;
+    }
+
+    resolving.add(draft.entity.id);
+    const parentIds = relationFields(draft.schema.fields)
+      .filter(field => field.type === 'containment')
+      .flatMap(field => {
+        const value = draft.entity.data[field.id];
+        return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [];
+      });
+    for (const parentId of parentIds) {
+      const parent = existingById.get(parentId);
+      const owner = parent?.owner ?? (draftById.get(parentId) ? resolveOwner(draftById.get(parentId)!) : null);
+      if (owner && teamIds.has(owner)) {
+        draft.entity.owner = owner;
+        resolving.delete(draft.entity.id);
+        return owner;
+      }
+    }
+    resolving.delete(draft.entity.id);
+    const owner =
+      draft.schema.default_owner && teamIds.has(draft.schema.default_owner)
+        ? draft.schema.default_owner
+        : fallbackOwner && teamIds.has(fallbackOwner)
+          ? fallbackOwner
+          : null;
+    draft.entity.owner = owner;
+    return owner;
+  };
+
+  drafts.forEach(resolveOwner);
+};
+
+export const bulkCreateEntities = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  bodies: Record<string, unknown>[],
+  authCtx: AuthorizationContext | null,
+  actor: EntityMutationActor
+): Promise<EntityRecord[]> => {
+  try {
+    return await db.core.transaction(async tx => {
+      const payloads = bodies.map(parseEntityMutationPayload);
+      const nameToId = new Map<string, string>();
+      for (const payload of payloads) {
+        const key = payload.name.trim().toLowerCase();
+        httpAssert.string(key, { message: '_name is required' });
+        httpAssert.true(!nameToId.has(key), {
+          status: 400,
+          message: `Duplicate batch entity name '${payload.name}'`
+        });
+        nameToId.set(key, randomUUID());
+      }
+
+      const [schemas, existingEntities, lifecycleValues, teamRows] = await Promise.all([
+        tx.catalog.listSchemas(workspace),
+        listAllCatalogEntities(tx, workspace),
+        getLifecycleValues(tx, workspace),
+        tx.workspace.listTeams(workspace)
+      ]);
+      const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+      const teamIds = new Set(teamRows.map(team => team.id));
+      const fallbackOwner = teamRows[0]?.id ?? null;
+      const timestamp = new Date();
+
+      const drafts: BulkEntityDraft[] = payloads.map(payload => {
+        const schema = schemaById.get(payload.schemaId);
+        httpAssert.present(schema, {
+          status: 404,
+          message: `Schema '${payload.schemaId}' not found`
+        });
+        const lifecycle =
+          payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
+            ? payload.requestedLifecycle
+            : null;
+        const targetLifecycle =
+          payload.requestedTargetLifecycle && lifecycleValues.has(payload.requestedTargetLifecycle)
+            ? payload.requestedTargetLifecycle
+            : null;
+        return {
+          payload,
+          schema,
+          entity: {
+            id: nameToId.get(payload.name.trim().toLowerCase())!,
+            workspace,
+            public_id: '',
+            slug: payload.slug,
+            namespace: payload.namespace,
+            name: payload.name,
+            description: payload.description,
+            owner: null,
+            lifecycle,
+            target_lifecycle: targetLifecycle,
+            target_lifecycle_date: payload.requestedTargetLifecycleDate,
+            tags: payload.tags,
+            links: payload.links,
+            schema_id: payload.schemaId,
+            data: canonicalizeBulkRelationFields(payload.fields, schema, nameToId),
+            visibility_mode: payload.visibilityMode,
+            created_at: timestamp,
+            updated_at: timestamp
+          }
+        };
+      });
+
+      resolveBulkOwners(drafts, existingEntities, teamIds, fallbackOwner);
+      const allEntities: Entity[] = [...existingEntities, ...drafts.map(draft => draft.entity)];
+      const entityLookup = new Map(allEntities.map(entity => [entity.id, entity]));
+
+      for (const draft of drafts) {
+        draft.entity.data = normalizeEntityRelationFields({
+          schema: draft.schema,
+          fields: draft.entity.data,
+          entities: allEntities
+        });
+        const parents = getEntityParentsFromPayload(draft.schema, draft.entity.data, entityLookup);
+        if (authCtx) {
+          if (parents.length > 0) {
+            parents.forEach(parent =>
+              requireEntityAction(
+                authCtx,
+                parent,
+                'create_child',
+                'You do not have permission to add children under one or more parent entities'
+              )
+            );
+          } else {
+            requireCanCreateTopLevelEntity(
+              authCtx,
+              draft.entity.owner,
+              'Top-level entity creation requires membership in the resolved owner team or a platform admin role'
+            );
+          }
+        }
+      }
+
+      for (const draft of drafts) {
+        draft.entity.public_id = await allocateEntityPublicId(
+          tx,
+          workspace,
+          draft.entity.schema_id,
+          timestamp
+        );
+      }
+
+      const created: EntityRecord[] = [];
+      for (const draft of drafts) {
+        const row = await createEntityWithAudit(tx, {
+          workspace,
+          actor,
+          entity: draft.entity
+        });
+        created.push(toApiEntity(row, authCtx));
+      }
+      return created;
+    });
+  } catch (error) {
+    return handleError(error, 'Failed to create data records');
   }
 };
 

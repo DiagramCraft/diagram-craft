@@ -36,6 +36,11 @@ const projectEntitySchema = z.object({
   is_done: z.boolean().describe('Whether the entity is marked as done')
 });
 
+const entityProjectSchema = z.object({
+  project: projectSchema.describe('Linked project'),
+  entity_type: foreignKeySchema.nullable().describe('Project entity type classification')
+});
+
 export const contentMetadataSchema = z.object({
   title: z.string().nullable().describe('Content title'),
   description: z.string().nullable().describe('Content description'),
@@ -426,6 +431,17 @@ export const projectContract = oc
         })
         .input(z.object({ params: wsAndId }))
         .output(z.array(projectEntitySchema)),
+      listEntityProjects: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/entities/{entityId}/projects',
+          inputStructure: 'detailed',
+          summary: 'List projects containing an entity',
+          description: 'Retrieves accessible projects linked to an entity in a single request.',
+          tags: ['Projects']
+        })
+        .input(z.object({ params: ws.extend({ entityId: z.string().describe('Entity identifier') }) }))
+        .output(z.array(entityProjectSchema)),
       addEntity: oc
         .route({
           method: 'POST',
@@ -925,4 +941,5 @@ export type MarkdownRevisionDetail = z.infer<typeof markdownRevisionDetailSchema
 export type FileTree = z.infer<typeof fileTreeSchema>;
 export type ProjectDetail = z.infer<typeof projectDetailSchema>;
 export type ProjectEntity = z.infer<typeof projectEntitySchema>;
+export type EntityProject = z.infer<typeof entityProjectSchema>;
 export type DiagramEntityFile = z.infer<typeof diagramEntityFileSchema>;

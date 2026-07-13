@@ -449,6 +449,25 @@ export const workspaceEntityContract = oc
           })
         )
         .output(entityRecordSchema),
+      bulkCreate: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/data/bulk',
+          inputStructure: 'detailed',
+          summary: 'Create multiple entities',
+          description:
+            'Creates a batch of entities transactionally and resolves symbolic references within the batch.',
+          tags: ['Entities']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({
+              entities: z.array(entityMutationBodySchema).describe('Entities to create')
+            })
+          })
+        )
+        .output(z.array(entityRecordSchema)),
       update: oc
         .route({
           method: 'PUT',

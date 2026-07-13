@@ -42,6 +42,7 @@ import {
   addProjectEntity,
   updateProjectEntity,
   removeProjectEntity,
+  getEntityProjects,
   getEntityDiagramFiles
 } from './projectEntityOperations';
 import {
@@ -229,6 +230,16 @@ const entityContentHandlers = {
       context.event
     );
   }),
+  listEntityProjects: projectRouter.projects.listEntityProjects.handler(
+    async ({ input, context }) => {
+      return await getEntityProjects(
+        context.db,
+        input.params.workspace,
+        input.params.entityId,
+        context.event
+      );
+    }
+  ),
   addEntity: projectRouter.projects.addEntity.handler(async ({ input, context }) => {
     return await addProjectEntity(
       context.db,

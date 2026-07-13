@@ -64,8 +64,9 @@ export const projectKeys = {
 export const projectEntityKeys = {
   all: (workspaceId: string, projectId: string) =>
     ['project-entities', workspaceId, projectId] as const,
+  entityProjectsAll: (workspaceId: string) => ['entity-projects', workspaceId] as const,
   entityProjects: (workspaceId: string, entityId: string) =>
-    ['entity-projects', workspaceId, entityId] as const,
+    [...projectEntityKeys.entityProjectsAll(workspaceId), entityId] as const,
   entityDiagramFiles: (workspaceId: string, entityId: string) =>
     ['entity-diagram-files', workspaceId, entityId] as const,
 };
@@ -205,6 +206,7 @@ export const invalidateProjectQueries = async (
 export const invalidateAllProjectCaches = async (queryClient: QueryClient, workspaceId: string) => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: projectKeys.all }),
+    queryClient.invalidateQueries({ queryKey: projectEntityKeys.entityProjectsAll(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.workspaceLogs(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: auditKeys.stats(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) }),

@@ -177,6 +177,101 @@ test.describe('data routes', () => {
     });
   });
 
+  test('POST /api/:workspace/data/bulk resolves circular references transactionally', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const created = await orpc.entities.bulkCreate({
+      params: { workspace: 'default' },
+      body: {
+        entities: [
+          {
+            _schemaId: componentSchemaId,
+            _name: 'Bulk Component A',
+            system: [systemId],
+            'Depends On': 'Bulk Component B'
+          },
+          {
+            _schemaId: componentSchemaId,
+            _name: 'Bulk Component B',
+            system: [systemId],
+            depends_on: 'Bulk Component A'
+          }
+        ]
+      }
+    });
+
+    expect(created).toHaveLength(2);
+    expect(created[0]).toMatchObject({
+      _name: 'Bulk Component A',
+      depends_on: [created[1]!._uid]
+    });
+    expect(created[1]).toMatchObject({
+      _name: 'Bulk Component B',
+      depends_on: [created[0]!._uid]
+    });
+  });
+
+  test('POST /api/:workspace/data/bulk rolls back every entity when a later write fails', async ({
+    orpc,
+    seeded: _
+  }) => {
+    await expect(
+      orpc.entities.bulkCreate({
+        params: { workspace: 'default' },
+        body: {
+          entities: [
+            {
+              _schemaId: componentSchemaId,
+              _name: 'Rollback Component A',
+              _slug: 'bulk-rollback-collision',
+              system: [systemId]
+            },
+            {
+              _schemaId: componentSchemaId,
+              _name: 'Rollback Component B',
+              _slug: 'bulk-rollback-collision',
+              system: [systemId]
+            }
+          ]
+        }
+      })
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+
+    const matches = await orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { q: 'Rollback Component', view: 'summary' }
+    });
+    expect(matches).toEqual([]);
+  });
+
+  test('POST /api/:workspace/data/bulk rejects unresolved symbolic references without writes', async ({
+    orpc,
+    seeded: _
+  }) => {
+    await expect(
+      orpc.entities.bulkCreate({
+        params: { workspace: 'default' },
+        body: {
+          entities: [
+            {
+              _schemaId: componentSchemaId,
+              _name: 'Unresolved Component',
+              system: [systemId],
+              depends_on: 'Missing Component'
+            }
+          ]
+        }
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    const matches = await orpc.entities.list({
+      params: { workspace: 'default' },
+      query: { q: 'Unresolved Component', view: 'summary' }
+    });
+    expect(matches).toEqual([]);
+  });
+
   test('GET /api/:workspace/data/:id returns entity detail', async ({
     orpc,
     seeded: _
