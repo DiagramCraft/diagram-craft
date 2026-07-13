@@ -371,7 +371,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
       {!contentFolder && (
         <div className={styles.tabBar}>
           <Tabs.Root value={tab} onValueChange={value => setTab(value as TabId)}>
-            <Tabs.List>
+            <Tabs.List overflow>
               <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
               <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
               <Tabs.Trigger value="graph">Graph</Tabs.Trigger>

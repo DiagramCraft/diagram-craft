@@ -55,6 +55,22 @@ const CHILDREN = [
   </Tabs.Content>
 ];
 
+const OVERFLOW_CHILDREN = [
+  <Tabs.List key="list" overflow>
+    <Tabs.Trigger value="tab1">Account settings</Tabs.Trigger>
+    <Tabs.Trigger value="tab2">Password and security</Tabs.Trigger>
+    <Tabs.Trigger value="tab3">Notification preferences</Tabs.Trigger>
+    <Tabs.Trigger value="tab4">Connected applications</Tabs.Trigger>
+    <Tabs.Trigger value="tab5">Privacy</Tabs.Trigger>
+    <Tabs.Trigger value="tab6">Advanced settings</Tabs.Trigger>
+  </Tabs.List>,
+  <Tabs.Content key="content1" value="tab1">
+    <div style={{ padding: '20px' }}>
+      <p>Make changes to your account here.</p>
+    </div>
+  </Tabs.Content>
+];
+
 export const Primary: Story = {
   render,
   args: {
@@ -99,5 +115,17 @@ export const WithDisabledTab: Story = {
         </div>
       </Tabs.Content>
     ]
+  }
+};
+
+export const WithOverflow: Story = {
+  render: args => (
+    <div style={{ width: '320px' }}>
+      <Tabs.Root {...args}>{args.children}</Tabs.Root>
+    </div>
+  ),
+  args: {
+    defaultValue: 'tab1',
+    children: OVERFLOW_CHILDREN
   }
 };
