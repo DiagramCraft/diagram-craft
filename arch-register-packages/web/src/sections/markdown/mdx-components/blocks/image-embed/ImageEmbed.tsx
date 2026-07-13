@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { fetchWithAuthResponse } from '../../../../../auth/authClient';
 import { Banner } from '../../../../../components/Banner';
-import { useProjectFile } from '../../../../../hooks/useFileOperations';
+import { useContentFile } from '../../../../../hooks/useContentScope';
 import { useMdxContext } from '../../../MdxContext';
 import { getMarkdownAttachmentDownloadUrl, isImageMimeType } from './imageEmbedUtils';
 import styles from './ImageEmbed.module.css';
@@ -48,7 +48,7 @@ export const ImageEmbed = ({
   align?: string;
 }) => {
   const { workspaceSlug, projectId, entityId } = useMdxContext();
-  const { data: file, isLoading, isError } = useProjectFile(workspaceSlug ?? '', id);
+  const { data: file, isLoading, isError } = useContentFile(workspaceSlug ?? '', id);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);

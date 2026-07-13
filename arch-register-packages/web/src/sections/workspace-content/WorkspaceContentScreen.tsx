@@ -3,9 +3,12 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { TbFileText, TbFolderOpen, TbPlus, TbUpload } from 'react-icons/tb';
 import styles from '../projects/ProjectDetailScreen.module.css';
 import { Title } from '../../components/Title';
-import { useFiles, useCreateFolder, useUploadFile } from '../../hooks/useFileOperations';
-import { useCreateMarkdown } from '../../hooks/useMarkdownContent';
-import type { ContentScope } from '../../hooks/contentScope';
+import {
+  contentDownloadUrl,
+  useContentScopeOperations,
+  useContentTree,
+  type ContentScope
+} from '../../hooks/useContentScope';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { Button } from '@diagram-craft/app-components/Button';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
@@ -33,10 +36,8 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
     () => ({ kind: 'workspace', workspaceId: workspaceSlug }),
     [workspaceSlug]
   );
-  const { data } = useFiles(scope);
-  const createFolderMutation = useCreateFolder(scope);
-  const createMarkdownMutation = useCreateMarkdown(scope);
-  const uploadFileMutation = useUploadFile(scope);
+  const { data } = useContentTree(scope);
+  const contentOperations = useContentScopeOperations(scope);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
   const [addMarkdownOpen, setAddMarkdownOpen] = useState(false);
@@ -88,7 +89,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
 
   const handleDownloadClick = (path: string, name: string, originalFilename: string | null) => {
     const a = document.createElement('a');
-    a.href = `/api/${workspaceSlug}/content/files/download?path=${encodeURIComponent(path)}`;
+    a.href = contentDownloadUrl(scope, path);
     a.download = originalFilename ?? name;
     document.body.appendChild(a);
     a.click();
@@ -98,7 +99,7 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
-      uploadFileMutation.mutate({ file: f, folder: folder || null });
+      contentOperations.upload.mutate({ file: f, folder: folder || null });
     }
     e.target.value = '';
   };
@@ -209,16 +210,16 @@ export const WorkspaceContentScreen = ({ workspaceSlug, folder }: WorkspaceConte
           setAddMarkdownOpen(false);
           handleMarkdownClick(file.id, 'edit');
         }}
-        onCreate={name => createMarkdownMutation.mutateAsync({ name, folder: folder || null })}
-        isPending={createMarkdownMutation.isPending}
+        onCreate={name => contentOperations.createMarkdown.mutateAsync({ name, folder: folder || null })}
+        isPending={contentOperations.createMarkdown.isPending}
       />
 
       <ContentFolderDialog
         open={addFolderOpen}
         onClose={() => setAddFolderOpen(false)}
         onCreated={() => setAddFolderOpen(false)}
-        onSubmit={path => createFolderMutation.mutateAsync(path)}
-        isPending={createFolderMutation.isPending}
+        onSubmit={path => contentOperations.createFolder.mutateAsync(path)}
+        isPending={contentOperations.createFolder.isPending}
         parentFolder={folder || undefined}
         placeholder="e.g. Architecture"
       />

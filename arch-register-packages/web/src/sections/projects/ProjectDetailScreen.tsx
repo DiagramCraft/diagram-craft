@@ -21,19 +21,8 @@ import {
   useUpdateProjectEntity,
   useRemoveProjectEntity
 } from '../../hooks/useProjects';
-import {
-  useDeleteFile,
-  useDeleteFolder,
-  useRenameFolder,
-  useCloneFile,
-  useRenameFile,
-  useRenameBinaryFile,
-  useMoveFile,
-  useUploadFile
-} from '../../hooks/useFileOperations';
+import { useContentScopeOperations, type ContentScope } from '../../hooks/useContentScope';
 import { useToggleTemplateStatus } from '../../hooks/useTemplates';
-import { useCreateMarkdown } from '../../hooks/useMarkdownContent';
-import type { ContentScope } from '../../hooks/contentScope';
 import {
   asProjectPublicId,
   projectContentFolderRoute,
@@ -110,16 +99,8 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
     () => ({ kind: 'project', workspaceId, projectId }),
     [workspaceId, projectId]
   );
-  const deleteFileMutation = useDeleteFile(scope);
-  const deleteFolderMutation = useDeleteFolder(scope);
-  const renameFolderMutation = useRenameFolder(scope);
-  const cloneFileMutation = useCloneFile(scope);
-  const renameFileMutation = useRenameFile(scope);
-  const renameBinaryFileMutation = useRenameBinaryFile(scope);
-  const moveFileMutation = useMoveFile(scope);
+  const contentOperations = useContentScopeOperations(scope);
   const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
-  const createMarkdownMutation = useCreateMarkdown(scope);
-  const uploadFileMutation = useUploadFile(scope);
   const mainAreaFileInputRef = useRef<HTMLInputElement>(null);
 
   // Entity hooks
@@ -319,7 +300,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
               <Menu.Item
                 leftSlot={<TbFolder size={13} />}
                 disabled={isCurrentFolder}
-                onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+                onClick={() => contentOperations.moveFile.mutate({ file, targetFolder: node.path })}
               >
                 {node.name}
               </Menu.Item>
@@ -332,7 +313,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             key={node.path}
             leftSlot={<TbFolder size={13} />}
             disabled={isCurrentFolder}
-            onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+            onClick={() => contentOperations.moveFile.mutate({ file, targetFolder: node.path })}
           >
             {node.name}
           </Menu.Item>
@@ -345,7 +326,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
         <Menu.Item
           leftSlot={<TbFolderOpen size={13} />}
           disabled={currentFolder === null}
-          onClick={() => moveFileMutation.mutate({ file, targetFolder: null })}
+          onClick={() => contentOperations.moveFile.mutate({ file, targetFolder: null })}
         >
           Root
         </Menu.Item>
@@ -365,7 +346,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
     return (
       <>
-        <Menu.Item leftSlot={<TbCopy size={13} />} onClick={() => cloneFileMutation.mutate(file)}>
+        <Menu.Item leftSlot={<TbCopy size={13} />} onClick={() => contentOperations.cloneFile.mutate(file)}>
           Clone
         </Menu.Item>
         <Menu.Item
@@ -552,9 +533,9 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
     if (deleteTarget.type !== 'folder') {
-      deleteFileMutation.mutate(deleteTarget.file.path);
+      contentOperations.deleteFile.mutate(deleteTarget.file.path);
     } else {
-      deleteFolderMutation.mutate(deleteTarget.path);
+      contentOperations.deleteFolder.mutate(deleteTarget.path);
     }
     setDeleteTarget(null);
   };
@@ -568,15 +549,15 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
     }
     if (renameTarget.type === 'file') {
       if (trimmed !== renameTarget.file.name) {
-        renameBinaryFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
+        contentOperations.renameFile.mutate({ file: renameTarget.file, newName: trimmed });
       }
     } else if (renameTarget.type !== 'folder') {
       if (trimmed !== renameTarget.file.name) {
-        renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
+        contentOperations.renameFile.mutate({ file: renameTarget.file, newName: trimmed });
       }
     } else {
       if (trimmed !== renameTarget.path) {
-        renameFolderMutation.mutate({ oldPath: renameTarget.path, newPath: trimmed });
+      contentOperations.renameFolder.mutate({ oldPath: renameTarget.path, newPath: trimmed });
       }
     }
     setRenameTarget(null);
@@ -752,8 +733,8 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
             setAddMarkdownFolder(null);
           }}
           onCreated={file => handleNavigateMarkdown(file.id, 'edit')}
-          onCreate={name => createMarkdownMutation.mutateAsync({ name, folder: addMarkdownFolder })}
-          isPending={createMarkdownMutation.isPending}
+          onCreate={name => contentOperations.createMarkdown.mutateAsync({ name, folder: addMarkdownFolder })}
+          isPending={contentOperations.createMarkdown.isPending}
         />
       )}
 
@@ -765,7 +746,7 @@ export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
           onChange={e => {
             const f = e.target.files?.[0];
             if (f) {
-              uploadFileMutation.mutate({ file: f, folder: contentFolderFilter });
+              contentOperations.upload.mutate({ file: f, folder: contentFolderFilter });
             }
             e.target.value = '';
           }}

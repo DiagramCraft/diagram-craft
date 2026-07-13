@@ -2,14 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   projectKeys,
   projectEntityKeys,
-  entityContentKeys,
   invalidateAuditQueries,
   invalidateAllProjectCaches,
   invalidateEntityQueries
 } from './queryKeys';
-import { Project, ProjectDetail, ProjectEntity, ProjectFile } from '@arch-register/api-types/projectContract';
+import { Project, ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
 import { orpcClient } from '../lib/orpcClient';
-import { emptyDiagram, createEntityDiagramFromTemplate } from '../lib/diagramDocuments';
 
 // Hook for fetching project list
 export const useProjects = (workspaceId: string) => {
@@ -220,141 +218,5 @@ export const useEntityDiagramFiles = (workspaceId: string, entityId: string) => 
         params: { workspace: workspaceId, entityId }
       }),
     enabled: !!workspaceId && !!entityId
-  });
-};
-
-// Hook for fetching content nodes owned by an entity
-export const useEntityContentNodes = (
-  workspaceId: string,
-  entityId: string,
-  options?: { enabled?: boolean }
-) => {
-  return useQuery({
-    queryKey: entityContentKeys.all(workspaceId, entityId),
-    queryFn: () =>
-      orpcClient.projects.listEntityFiles({
-        params: { workspace: workspaceId, entityId }
-      }),
-    enabled: (options?.enabled ?? true) && !!workspaceId && !!entityId
-  });
-};
-
-
-
-export const useCreateEntityFolder = (workspaceId: string, entityId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (path: string) =>
-      orpcClient.projects.createEntityFolder({
-        params: { workspace: workspaceId, entityId },
-        body: { path }
-      }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: entityContentKeys.all(workspaceId, entityId)
-      });
-    }
-  });
-};
-
-
-
-export const useCreateEntityFile = (workspaceId: string, entityId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ path, body }: { path: string; body: Record<string, unknown> }) =>
-      orpcClient.projects.createEntityFile({
-        params: { workspace: workspaceId, entityId },
-        query: { path },
-        body
-      }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: entityContentKeys.all(workspaceId, entityId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId)
-      });
-    }
-  });
-};
-
-// Higher-level hook for creating a blank diagram in entity content (accepts name/folder, builds path)
-export const useCreateEntityDiagram = (workspaceId: string, entityId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ name, folder }: { name: string; folder?: string | null }) => {
-      const filePath = folder ? `${folder}/${name}.json` : `${name}.json`;
-      return orpcClient.projects.createEntityFile({
-        params: { workspace: workspaceId, entityId },
-        query: { path: filePath },
-        body: emptyDiagram(name)
-      });
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: entityContentKeys.all(workspaceId, entityId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId)
-      });
-    }
-  });
-};
-
-export const useCreateEntityDiagramWithContent = (workspaceId: string, entityId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      name,
-      folder,
-      content
-    }: {
-      name: string;
-      folder?: string | null;
-      content: Record<string, unknown>;
-    }) => {
-      const filePath = folder ? `${folder}/${name}.json` : `${name}.json`;
-      return orpcClient.projects.createEntityFile({
-        params: { workspace: workspaceId, entityId },
-        query: { path: filePath },
-        body: content
-      });
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: entityContentKeys.all(workspaceId, entityId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId)
-      });
-    }
-  });
-};
-
-export const useCreateEntityDiagramFromTemplate = (workspaceId: string, entityId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      name,
-      templateFile,
-      folder
-    }: {
-      name: string;
-      templateFile: ProjectFile;
-      folder?: string | null;
-    }) => createEntityDiagramFromTemplate(workspaceId, entityId, name, templateFile, folder),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: entityContentKeys.all(workspaceId, entityId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId)
-      });
-    }
   });
 };

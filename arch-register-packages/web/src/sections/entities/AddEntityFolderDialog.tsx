@@ -1,5 +1,5 @@
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
-import { useCreateEntityFolder } from '../../hooks/useProjects';
+import { useContentScopeOperations } from '../../hooks/useContentScope';
 
 type AddEntityFolderDialogProps = {
   open: boolean;
@@ -18,15 +18,19 @@ export const AddEntityFolderDialog = ({
   entityId,
   parentFolder
 }: AddEntityFolderDialogProps) => {
-  const createFolderMutation = useCreateEntityFolder(workspaceSlug, entityId);
+  const { createFolder } = useContentScopeOperations({
+    kind: 'entity',
+    workspaceId: workspaceSlug,
+    entityId
+  });
 
   return (
     <ContentFolderDialog
       open={open}
       onClose={onClose}
       onCreated={onCreated}
-      onSubmit={path => createFolderMutation.mutateAsync(path)}
-      isPending={createFolderMutation.isPending}
+      onSubmit={path => createFolder.mutateAsync(path)}
+      isPending={createFolder.isPending}
       parentFolder={parentFolder}
       placeholder="e.g. Architecture diagrams"
     />
