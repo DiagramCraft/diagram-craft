@@ -24,6 +24,7 @@ import {
 import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
 import { Banner } from '../../../../../components/Banner';
 import { EmptyState } from '../../../../../components/EmptyState';
+import { LoadingState } from '../../../../../components/LoadingState';
 import styles from './DiagramEmbed.module.css';
 
 const boundsViewbox = (diagram: Diagram): string => {
@@ -100,7 +101,7 @@ export const DiagramEmbed = ({ id, caption }: { id: string; caption?: string }) 
   if (isLoading) {
     return (
       <figure className={styles.container}>
-        <div className={styles.loading}>Loading…</div>
+        <LoadingState text="Loading…" size="sm" />
       </figure>
     );
   }

@@ -16,6 +16,7 @@ import { LifecycleSection } from './LifecycleSection';
 import { StaleEntityReport } from './StaleEntityReport';
 import { Table } from '../../../../components/table/Table';
 import { EmptyState } from '../../../../components/EmptyState';
+import { LoadingState } from '../../../../components/LoadingState';
 
 export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 'stale' }) => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
       search: activityAuditSearch(operation, startDate, endDate)
     });
 
-  if (isLoading) return <EmptyState compact title="Loading analytics…" />;
+  if (isLoading) return <LoadingState text="Loading analytics…" size="sm" />;
   if (isError || analytics == null) return <EmptyState compact title="Analytics could not be loaded." />;
 
   const selectView = (view: 'overview' | 'stale') =>

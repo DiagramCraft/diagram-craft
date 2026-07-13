@@ -22,6 +22,7 @@ import { MarkdownEditorHeader } from './MarkdownEditorHeader';
 import { MarkdownEditorToolbar } from './MarkdownEditorToolbar';
 import { MarkdownEditorPane } from './MarkdownEditorPane';
 import { MarkdownHistoryPanel } from './MarkdownHistoryPanel';
+import { LoadingState } from '../../components/LoadingState';
 import {
   projectDetailRoute,
   entityDetailRoute,
@@ -499,7 +500,7 @@ export const MarkdownEditorScreen = () => {
   if (isLoading) {
     return (
       <div className={styles.screen}>
-        <div className={styles.loading}>Loading…</div>
+        <LoadingState text="Loading…" />
       </div>
     );
   }

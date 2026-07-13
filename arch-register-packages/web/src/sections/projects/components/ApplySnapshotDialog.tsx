@@ -8,6 +8,7 @@ import { findSnapshotConflicts, resolveSnapshotEntityData } from '../projectSnap
 import type { EntitySnapshot } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import styles from './ApplySnapshotDialog.module.css';
+import { LoadingState } from '../../../components/LoadingState';
 
 type Props = {
   open: boolean;
@@ -84,7 +85,7 @@ export const ApplySnapshotDialog = ({ open, snapshot, workspaceId, projectId, sc
       ]}
     >
       {!entity ? (
-        <div style={{ color: 'var(--cmp-fg-disabled)', fontSize: 13 }}>Loading entity...</div>
+        <LoadingState text="Loading entity..." size="sm" />
       ) : (
         <>
           <div className={styles.applySnapshotDateField}>
