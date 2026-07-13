@@ -5,8 +5,12 @@ import * as svg from '../component/vdom-svg';
 import { rawHTML } from '../component/vdom';
 import styles from './canvas.css?inline';
 import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { DocumentBoundsComponent } from '../components/DocumentBoundsComponent';
 
-export type StaticCanvasProps = Omit<InteractiveCanvasProps, 'viewbox'> & { viewbox?: string };
+export type StaticCanvasProps = Omit<InteractiveCanvasProps, 'viewbox'> & {
+  viewbox?: string;
+  includeDocumentBounds?: boolean;
+};
 
 /**
  * The StaticCanvasComponent is intended for displaying a canvas that neither updates
@@ -48,6 +52,13 @@ export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps
         svg.style({}, rawHTML(styles)),
         this.svgFilterDefs(),
 
+        props.includeDocumentBounds
+          ? this.subComponent(() => new DocumentBoundsComponent(), {
+              context: props.context,
+              diagram
+            })
+          : null,
+
         svg.g(
           {},
           ...diagram.layers.visible.flatMap(layer => {
@@ -66,7 +77,8 @@ export class StaticCanvasComponent extends BaseCanvasComponent<StaticCanvasProps
       height: props.height,
       viewBox: props.viewbox,
       onClick: props.onClick,
-      className: props.className
+      className: props.className,
+      includeDocumentBounds: props.includeDocumentBounds
     };
   }
 }

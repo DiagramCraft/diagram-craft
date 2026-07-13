@@ -102,7 +102,8 @@ export const generateAccurateSvgPreview = async (
       context: ssrContext,
       width: 800,
       height: 600,
-      viewbox: viewBox
+      viewbox: viewBox,
+      includeDocumentBounds: true
     };
 
     // Pass props to constructor so this.currentProps is set before render() is called,

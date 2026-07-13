@@ -52,6 +52,15 @@ const makeImageDoc = (): SerializedDiagramDocument => {
 };
 
 describe('generateAccurateSvgPreview', () => {
+  it('includes the diagram canvas background', async () => {
+    const svg = await generateAccurateSvgPreview(makeImageDoc());
+
+    expect(svg).not.toBeNull();
+    expect(svg).toContain('class="svg-doc-bounds"');
+    expect(svg).toContain('style="fill: var(--canvas-bg2);"');
+    expect(svg!.indexOf('class="svg-doc-bounds"')).toBeLessThan(svg!.indexOf('id="node-n1"'));
+  });
+
   it('inlines embedded images instead of returning process-local blob URLs', async () => {
     const svg = await generateAccurateSvgPreview(makeImageDoc());
 
