@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { auditKeys } from './queryKeys';
+import { auditKeys } from '../queries/audit';
 import { orpcClient } from '../lib/orpcClient';
 
 // Hook for fetching audit log

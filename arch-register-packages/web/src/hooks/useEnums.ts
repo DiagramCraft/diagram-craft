@@ -1,14 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
-
-export const enumKeys = {
-  all: ['enums'] as const,
-  lists: () => [...enumKeys.all, 'list'] as const,
-  list: (workspaceId: string) => [...enumKeys.lists(), workspaceId] as const,
-  details: () => [...enumKeys.all, 'detail'] as const,
-  detail: (workspaceId: string, enumId: string) =>
-    [...enumKeys.details(), workspaceId, enumId] as const
-};
+import { enumKeys, invalidateDeletedEnum } from '../queries/enums';
 
 export const useEnums = (workspaceSlug: string, enabled = true) => {
   return useQuery({
@@ -55,8 +47,6 @@ export const useDeleteEnum = (workspaceSlug: string) => {
   return useMutation({
     mutationFn: (enumId: string) =>
       orpcClient.enums.remove({ params: { workspace: workspaceSlug, id: enumId } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: enumKeys.all });
-    }
+    onSuccess: (_, enumId) => invalidateDeletedEnum(queryClient, workspaceSlug, enumId)
   });
 };

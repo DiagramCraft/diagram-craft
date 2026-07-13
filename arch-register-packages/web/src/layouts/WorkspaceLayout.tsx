@@ -9,7 +9,7 @@ import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
 import { useWorkspaces, workspaceKeys } from '../hooks/useWorkspaces';
-import { projectKeys } from '../hooks/queryKeys';
+import { projectKeys } from '../queries/projects';
 import { useSchemas } from '../hooks/useSchemas';
 import { useEnums } from '../hooks/useEnums';
 import { useProjects } from '../hooks/useProjects';
@@ -329,7 +329,7 @@ export const WorkspaceLayout = () => {
           open={addWsOpen}
           onClose={() => setAddWsOpen(false)}
           onCreated={newWs => {
-            void queryClient.invalidateQueries({ queryKey: workspaceKeys.all });
+            void queryClient.invalidateQueries({ queryKey: workspaceKeys.list() });
             navigate({ to: '/$workspaceSlug', params: { workspaceSlug: newWs.url_slug } });
           }}
         />

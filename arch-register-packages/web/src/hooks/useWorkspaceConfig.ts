@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TeamAssignmentInfo, WorkspaceTeamInput } from '@arch-register/api-types/workspaceConfigContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
-import { workspaceAnalyticsKeys } from './queryKeys';
+import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
 
 // Query keys factory
 export const workspaceConfigKeys = {

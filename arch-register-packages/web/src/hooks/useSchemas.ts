@@ -1,10 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  schemaKeys,
-  invalidateEntityQueries,
-  invalidateAuditQueries,
-  workspaceAnalyticsKeys
-} from './queryKeys';
+import { invalidateDeletedSchema, schemaKeys } from '../queries/schemas';
+import { invalidateEntityQueries } from '../queries/entities';
+import { invalidateAuditQueries } from '../queries/audit';
+import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -72,8 +70,8 @@ export const useDeleteSchema = (workspaceId: string) => {
   return useMutation({
     mutationFn: (schemaId: string) =>
       orpcClient.schemas.remove({ params: { workspace: workspaceId, id: schemaId } }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: schemaKeys.all });
+    onSuccess: async (_, schemaId) => {
+      await invalidateDeletedSchema(queryClient, workspaceId, schemaId);
       await invalidateEntityQueries(queryClient, workspaceId);
       await queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) });
     }

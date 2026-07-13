@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
-import { workspaceAnalyticsKeys } from './queryKeys';
+import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
 
 export const useWorkspaceAnalytics = (
   workspaceSlug: string,

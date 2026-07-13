@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { auditKeys, invalidateAuditQueries } from './queryKeys';
+import { queryOptions, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { invalidateAuditQueries } from '../queries/audit';
 import { orpcClient } from '../lib/orpcClient';
 
 // Query keys factory
@@ -12,12 +12,15 @@ export const workspaceKeys = {
 };
 
 // Hook for fetching workspaces
-export const useWorkspaces = () => {
-  return useQuery({
+export const workspacesQueryOptions = () =>
+  queryOptions({
     queryKey: workspaceKeys.list(),
     queryFn: () => orpcClient.workspaces.list({}),
-    staleTime: 5 * 60 * 1000 // 5 minutes
+    staleTime: 5 * 60 * 1000
   });
+
+export const useWorkspaces = () => {
+  return useQuery(workspacesQueryOptions());
 };
 
 // Hook for updating a workspace
@@ -43,9 +46,11 @@ export const useUpdateWorkspace = () => {
       queryClient.setQueryData(workspaceKeys.detail(variables.workspaceId), updatedWorkspace);
       // Invalidate workspace list to reflect changes
       await queryClient.invalidateQueries({ queryKey: workspaceKeys.list() });
-      // Workspace audit keys are slug-based, so slug changes require a broad invalidation.
-      await queryClient.invalidateQueries({ queryKey: auditKeys.all });
-      await invalidateAuditQueries(queryClient, updatedWorkspace.url_slug);
+      // Audit keys are slug-based, so refresh both sides of a slug rename.
+      await invalidateAuditQueries(queryClient, variables.workspaceId);
+      if (updatedWorkspace.url_slug !== variables.workspaceId) {
+        await invalidateAuditQueries(queryClient, updatedWorkspace.url_slug);
+      }
     }
   });
 };
@@ -57,9 +62,9 @@ export const useDeleteWorkspace = () => {
   return useMutation({
     mutationFn: (workspaceId: string) =>
       orpcClient.workspaces.remove({ params: { workspace: workspaceId } }),
-    onSuccess: () => {
-      // Invalidate all workspace queries
-      queryClient.invalidateQueries({ queryKey: workspaceKeys.all });
+    onSuccess: (_, workspaceId) => {
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.list() });
+      queryClient.removeQueries({ queryKey: workspaceKeys.detail(workspaceId) });
     }
   });
 };

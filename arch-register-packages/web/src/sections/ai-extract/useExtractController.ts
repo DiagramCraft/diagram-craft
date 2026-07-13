@@ -4,7 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { orpcClient } from '../../lib/orpcClient';
 import { createExtractedEntities } from '../../lib/extractOperations';
-import { invalidateEntityQueries, schemaKeys } from '../../hooks/queryKeys';
+import { invalidateEntityQueries } from '../../queries/entities';
+import { schemaKeys } from '../../queries/schemas';
 import {
   buildExtractCommitInput,
   normalizeExtractedEntities,

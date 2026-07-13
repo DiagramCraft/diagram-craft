@@ -2,8 +2,7 @@ import { createRootRouteWithContext, createRoute, redirect } from '@tanstack/rea
 import type { RouterContext } from '../routerContext';
 import { LoginScreen } from '../auth/LoginScreen';
 import { WorkspaceLayout } from '../layouts/WorkspaceLayout';
-import { orpcClient } from '../lib/orpcClient';
-import { workspaceKeys } from '../hooks/useWorkspaces';
+import { workspacesQueryOptions } from '../hooks/useWorkspaces';
 import { RootLayout } from '../layouts/RootLayout';
 import { RouteErrorComponent } from './RouteErrorComponent';
 import { createWorkspaceRouteEntries } from './workspace/createWorkspaceRouteEntries';
@@ -46,10 +45,7 @@ const indexRoute = createRoute({
     if (!context.auth.isAuthenticated) {
       throw redirect({ to: '/login', search: {} as { redirect?: string } });
     }
-    const workspaces = await context.queryClient.ensureQueryData({
-      queryKey: workspaceKeys.list(),
-      queryFn: () => orpcClient.workspaces.list()
-    });
+    const workspaces = await context.queryClient.ensureQueryData(workspacesQueryOptions());
     if (workspaces.length > 0) {
       throw redirect({
         to: '/$workspaceSlug',

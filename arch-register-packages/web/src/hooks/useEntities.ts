@@ -5,12 +5,12 @@ import type { EntityRelation } from '@arch-register/api-types/entityContract';
 import { toEntityListQuery, type EntityListOptions } from './entityListQuery';
 import {
   entityKeys,
-  schemaKeys,
   invalidateEntityDetails,
   invalidateEntityQueries,
-  invalidateAllEntityCaches,
-  invalidateSnapshotQueries
-} from './queryKeys';
+  invalidateDeletedEntity
+} from '../queries/entities';
+import { schemaKeys } from '../queries/schemas';
+import { invalidateSnapshotQueries } from '../queries/snapshots';
 import { invalidateNotificationQueries } from './useNotifications';
 import { orpcClient } from '../lib/orpcClient';
 
@@ -122,8 +122,8 @@ export const useDeleteEntity = (workspaceId: string) => {
   return useMutation({
     mutationFn: (entityId: string) =>
       orpcClient.entities.remove({ params: { workspace: workspaceId, id: entityId } }),
-    onSuccess: async () => {
-      await invalidateAllEntityCaches(queryClient, workspaceId);
+    onSuccess: async (_, entityId) => {
+      await invalidateDeletedEntity(queryClient, workspaceId, entityId);
       // Schema counts change when an entity is removed
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
       await invalidateNotificationQueries(queryClient, workspaceId);

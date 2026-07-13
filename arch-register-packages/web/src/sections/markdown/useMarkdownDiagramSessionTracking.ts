@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { newid } from '@diagram-craft/utils/id';
 import { orpcClient } from '../../lib/orpcClient';
-import { projectFileKeys } from '../../hooks/queryKeys';
+import { projectFileKeys } from '../../queries/content';
 import {
   clearMarkdownDiagramSession,
   getMarkdownDiagramRollbackRecords,

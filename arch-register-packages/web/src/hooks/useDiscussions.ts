@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { discussionKeys } from './queryKeys';
+import { discussionKeys } from '../queries/discussions';
 import type {
   CreateDiscussionPostRequest,
   DiscussionObjectType,

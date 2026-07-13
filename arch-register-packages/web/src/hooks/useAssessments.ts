@@ -1,5 +1,6 @@
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import { assessmentKeys, invalidateAuditQueries } from './queryKeys';
+import { assessmentKeys } from '../queries/assessments';
+import { invalidateAuditQueries } from '../queries/audit';
 import type {
   Assessment,
   CreateAssessmentRequest,

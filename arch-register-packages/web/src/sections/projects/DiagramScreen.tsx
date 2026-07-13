@@ -13,13 +13,8 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../../auth/AuthContext';
 import { orpcClient } from '../../lib/orpcClient';
-import {
-  entityContentKeys,
-  projectEntityKeys,
-  projectFileKeys,
-  projectKeys,
-  workspaceContentKeys
-} from '../../hooks/queryKeys';
+import { entityContentKeys, projectFileKeys, workspaceContentKeys } from '../../queries/content';
+import { projectEntityKeys, projectKeys } from '../../queries/projects';
 import { searchKeys } from '../../hooks/useSearch';
 import { stableHue } from '../../components/MemberAvatar';
 import {
@@ -152,7 +147,7 @@ export const DiagramScreen = () => {
       ]);
     }
 
-    await queryClient.invalidateQueries({ queryKey: searchKeys.all });
+    await queryClient.invalidateQueries({ queryKey: searchKeys.workspaceSearches(workspaceId) });
     await queryClient.invalidateQueries({
       queryKey: projectFileKeys.detail(workspaceId, diagramId)
     });

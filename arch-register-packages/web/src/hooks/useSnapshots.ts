@@ -1,11 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  entityKeys,
-  snapshotKeys,
-  invalidateEntityDetails,
-  invalidateEntityQueries,
-  invalidateSnapshotQueries
-} from './queryKeys';
+import { entityKeys, invalidateEntityDetails, invalidateEntityQueries } from '../queries/entities';
+import { snapshotKeys, invalidateSnapshotQueries } from '../queries/snapshots';
 import { orpcClient } from '../lib/orpcClient';
 
 export const useEntitySnapshots = (workspaceId: string, entityId: string, enabled = false) =>
