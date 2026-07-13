@@ -7,6 +7,7 @@ import type {
   GlobalPermission,
   ProjectAction,
   TeamRole,
+  WorkspaceAuthorizationContext,
   WorkspaceCapability
 } from './types.js';
 import { decodeRefs } from './utils.js';
@@ -62,7 +63,7 @@ export class PermissionChecker {
    * @returns true if the user has the permission, false otherwise
    */
   hasProjectPermission(
-    context: AuthorizationContext,
+    context: WorkspaceAuthorizationContext,
     ownerTeamId: string | null,
     action: ProjectAction
   ): boolean {
@@ -94,7 +95,10 @@ export class PermissionChecker {
    *
    * global_admin users implicitly have all workspace capabilities.
    */
-  hasWorkspaceCapability(context: AuthorizationContext, capability: WorkspaceCapability): boolean {
+  hasWorkspaceCapability(
+    context: WorkspaceAuthorizationContext,
+    capability: WorkspaceCapability
+  ): boolean {
     if (context.globalPermissions.has('admin_platform')) {
       return true;
     }
@@ -118,7 +122,10 @@ export class PermissionChecker {
    * @param permission - The specific global permission to check
    * @returns true if the user has the permission, false otherwise
    */
-  hasGlobalPermission(context: AuthorizationContext, permission: GlobalPermission): boolean {
+  hasGlobalPermission(
+    context: WorkspaceAuthorizationContext,
+    permission: GlobalPermission
+  ): boolean {
     return (
       context.globalPermissions.has(permission) || context.globalPermissions.has('admin_platform')
     );
@@ -293,7 +300,7 @@ export class PermissionChecker {
     );
   }
 
-  protected getTeamRoles(context: AuthorizationContext, teamId: string): Set<TeamRole> {
+  protected getTeamRoles(context: WorkspaceAuthorizationContext, teamId: string): Set<TeamRole> {
     return context.teamRolesByTeam.get(teamId) ?? new Set<TeamRole>();
   }
 }

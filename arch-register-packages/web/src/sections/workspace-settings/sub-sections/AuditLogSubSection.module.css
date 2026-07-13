@@ -99,14 +99,18 @@
   align-items: center;
   justify-content: center;
   width: 104px;
-  height: 20px;
+  min-height: 20px;
+  height: auto;
   padding: 0 6px;
   border-radius: 4px;
   border: 1px solid;
   font-size: 10px;
   font-weight: 400;
   text-transform: uppercase;
-  white-space: nowrap;
+  text-align: center;
+  line-height: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .typeWorkspace {

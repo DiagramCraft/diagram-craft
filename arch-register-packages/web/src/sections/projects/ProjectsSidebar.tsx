@@ -7,7 +7,11 @@ import { TreeRow } from '../../components/TreeRow';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import styles from '../../shell/SidePanel.module.css';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
-import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
+import {
+  asProjectPublicId,
+  projectContentFolderRoute,
+  projectDetailRoute
+} from '../../routes/publicObjectRoutes';
 
 type ProjectSidebarTab = 'projects' | 'archive';
 
@@ -44,6 +48,7 @@ export const ProjectsSidebar = ({
   const matches = useMatches();
   const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
   const projectId = allParams.projectId ?? null;
+  const projectFolder = allParams._splat ?? null;
   const projectSidebarTab: ProjectSidebarTab = search.tab === 'archive' ? 'archive' : 'projects';
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const selectedProject =
@@ -61,15 +66,22 @@ export const ProjectsSidebar = ({
         ? 'archive'
         : 'projects';
     if (nextTab !== projectSidebarTab) {
-      navigate(
-        projectDetailRoute(workspaceSlug, asProjectPublicId(selectedProject.public_id), {
-          tab: nextTab as 'projects' | 'archive',
-          folder: search.folder ?? undefined,
-          section: search.section === 'entities' ? 'entities' : 'home'
-        })
-      );
+      const nextSearch = {
+        tab: nextTab as 'projects' | 'archive',
+        section: search.section === 'entities' ? 'entities' as const : 'home' as const,
+        contentQuery: search.contentQuery,
+        contentView: search.contentView
+      };
+      navigate(projectFolder
+        ? projectContentFolderRoute(
+            workspaceSlug,
+            asProjectPublicId(selectedProject.public_id),
+            projectFolder,
+            nextSearch
+          )
+        : projectDetailRoute(workspaceSlug, asProjectPublicId(selectedProject.public_id), nextSearch));
     }
-  }, [selectedProject, projectSidebarTab, navigate, workspaceSlug, search.folder, search.section]);
+  }, [selectedProject, projectSidebarTab, navigate, workspaceSlug, projectFolder, search.section, search.contentQuery, search.contentView]);
 
   const navigateToProject = (project: Project) => {
     navigate(
@@ -96,7 +108,6 @@ export const ProjectsSidebar = ({
       navigate(
         projectDetailRoute(workspaceSlug, asProjectPublicId(selectedProject.public_id), {
           tab,
-          folder: search.folder ?? undefined,
           section: search.section === 'entities' ? 'entities' : 'home'
         })
       );

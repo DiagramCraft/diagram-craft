@@ -11,6 +11,8 @@ import { TreeRow } from '../../components/TreeRow';
 import {
   contentDownloadUrl, useContentScopeOperations, useContentTree, type ContentScope
 } from '../../hooks/useContentScope';
+import { workspaceContentFolderRoute } from '../../routes/publicObjectRoutes';
+import type { WorkspaceContentSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
@@ -25,13 +27,18 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
   const [markdownFolder, setMarkdownFolder] = useState<string | null | undefined>(undefined);
   const navigate = useNavigate();
   const params = useParams({ strict: false });
-  const search = useSearch({ strict: false });
+  const search = useSearch({ strict: false }) as WorkspaceContentSearchParams;
+  const contentFolder = params._splat ?? null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
 
-  const navigateHome = (contentFolder?: string) => navigate({
-    to: '/$workspaceSlug/content', params: { workspaceSlug },
-    search: { contentFolder, contentQuery: search.contentQuery, contentView: search.contentView }
-  });
+  const navigateHome = (folder?: string) => {
+    const nextSearch = { contentQuery: search.contentQuery, contentView: search.contentView };
+    if (folder) {
+      navigate(workspaceContentFolderRoute(workspaceSlug, folder, nextSearch));
+    } else {
+      navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug }, search: nextSearch });
+    }
+  };
   const download = (file: ProjectFile) => {
     const anchor = document.createElement('a');
     anchor.href = contentDownloadUrl(scope, file.path); anchor.download = file.original_filename ?? file.name;
@@ -44,17 +51,17 @@ export const WorkspaceContentSidebar = ({ workspaceSlug }: { workspaceSlug: stri
       <div className={styles.headerActions}><MenuButton.Root>
         <MenuButton.Trigger element={<button type="button" className={styles.action} title="New"><TbPlus size={13} /></button>} />
         <MenuButton.Menu>
-          <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={() => setFolderDialog({ open: true, parent: search.contentFolder ?? null })}>New folder</Menu.Item>
-          <Menu.Item leftSlot={<TbUpload size={13} />} onClick={() => treeRef.current?.openUpload(search.contentFolder ?? null)}>Upload file</Menu.Item>
-          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setDiagramFolder(search.contentFolder ?? null)}>New diagram</Menu.Item>
-          <Menu.Item leftSlot={<TbFileText size={13} />} onClick={() => setMarkdownFolder(search.contentFolder ?? null)}>New wiki page</Menu.Item>
+          <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={() => setFolderDialog({ open: true, parent: contentFolder })}>New folder</Menu.Item>
+          <Menu.Item leftSlot={<TbUpload size={13} />} onClick={() => treeRef.current?.openUpload(contentFolder)}>Upload file</Menu.Item>
+          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setDiagramFolder(contentFolder)}>New diagram</Menu.Item>
+          <Menu.Item leftSlot={<TbFileText size={13} />} onClick={() => setMarkdownFolder(contentFolder)}>New wiki page</Menu.Item>
         </MenuButton.Menu>
       </MenuButton.Root></div>
     </div>
     <div className={styles.scroll}>
       <ContentTree ref={treeRef} rootFiles={data?.rootFiles ?? []} folders={data?.folders ?? []}
-        activeFileId={activeFileId} activeFolder={search.contentFolder ?? null} operations={operations}
-        beforeTree={<TreeRow label="Home" icon={<TbHome size={13} />} active={!search.contentFolder && !activeFileId} onClick={() => navigateHome()} />}
+        activeFileId={activeFileId} activeFolder={contentFolder} operations={operations}
+        beforeTree={<TreeRow label="Home" icon={<TbHome size={13} />} active={!contentFolder && !activeFileId} onClick={() => navigateHome()} />}
         onFolderClick={navigateHome} onDownload={download}
         onFileClick={file => navigate(file.type === 'markdown'
           ? { to: '/$workspaceSlug/content/wiki/$nodeId', params: { workspaceSlug, nodeId: file.id } }

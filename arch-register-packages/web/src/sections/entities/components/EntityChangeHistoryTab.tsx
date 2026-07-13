@@ -35,7 +35,7 @@ export const EntityChangeHistoryTab = ({
   canViewAudit
 }: Props) => {
   const auditEntityId = entity?._uid ?? null;
-  const { data: auditLog = [], isLoading: loadingAudit } = useAuditLog(
+  const { isLoading: loadingAudit } = useAuditLog(
     workspaceId,
     { entityId: auditEntityId, limit: 100 },
     { enabled: canViewAudit && !!auditEntityId }
@@ -67,7 +67,7 @@ export const EntityChangeHistoryTab = ({
     return <div className={sharedStyles.loading}>Loading change history...</div>;
   }
 
-  if (auditLog.length === 0 && savedSnapshots.length === 0) {
+  if (savedSnapshots.length === 0) {
     return (
       <EmptyState
         title="No change history yet"

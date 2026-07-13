@@ -2,33 +2,46 @@ import { createRoute, type AnyRoute } from '@tanstack/react-router';
 import { WorkspaceContentSidebar } from '../../sections/workspace-content/WorkspaceContentSidebar';
 import {
   validateDiagramSearch,
-  validateEntityDetailSearch,
-  validateMarkdownSearch
+  validateMarkdownSearch,
+  validateWorkspaceContentSearch
 } from '../searchParams';
 import { buildWorkspaceContentBreadcrumbs } from '../../layouts/workspaceShellDescriptors';
-import { withWorkspaceShell } from './workspaceShellRoute';
+import { withWorkspaceShell, type WorkspaceShellBuilder } from './workspaceShellRoute';
 import {
   LazyDiagramScreen,
   LazyMarkdownEditorScreen,
+  LazyWorkspaceContentFolderRoute,
   LazyWorkspaceContentRoute
 } from './lazyWorkspaceScreens';
 
 export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
 ) => {
+  const buildShell: WorkspaceShellBuilder = ctx => ({
+    variant: 'standard' as const,
+    activeRailItem: 'content' as const,
+    breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
+    primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
+  });
+
   const contentRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: 'content',
-      validateSearch: validateEntityDetailSearch,
+      validateSearch: validateWorkspaceContentSearch,
       component: LazyWorkspaceContentRoute
     }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: 'content',
-      breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
-      primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
-    })
+    buildShell
+  );
+
+  const contentFolderRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'content/folders/$',
+      validateSearch: validateWorkspaceContentSearch,
+      component: LazyWorkspaceContentFolderRoute
+    }),
+    buildShell
   );
 
   const contentDiagramRoute = withWorkspaceShell(
@@ -48,13 +61,8 @@ export const createContentWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       validateSearch: validateMarkdownSearch,
       component: LazyMarkdownEditorScreen
     }),
-    ctx => ({
-      variant: 'standard',
-      activeRailItem: 'content',
-      breadcrumbs: buildWorkspaceContentBreadcrumbs(ctx),
-      primarySidebar: <WorkspaceContentSidebar workspaceSlug={ctx.workspaceSlug} />
-    })
+    buildShell
   );
 
-  return [contentRoute, contentDiagramRoute, contentMarkdownRoute] as const;
+  return [contentRoute, contentFolderRoute, contentDiagramRoute, contentMarkdownRoute] as const;
 };

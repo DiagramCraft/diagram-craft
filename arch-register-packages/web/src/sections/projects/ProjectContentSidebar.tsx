@@ -22,8 +22,13 @@ import { contentDownloadUrl, useContentScopeOperations, type ContentScope } from
 import { useProject, useProjectEntities } from '../../hooks/useProjects';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {
-  asProjectPublicId, projectDetailRoute, projectDiagramRoute, projectMarkdownRoute
+  asProjectPublicId,
+  projectContentFolderRoute,
+  projectDetailRoute,
+  projectDiagramRoute,
+  projectMarkdownRoute
 } from '../../routes/publicObjectRoutes';
+import type { ProjectSearchParams } from '../../routes/searchParams';
 import styles from '../../shell/SidePanel.module.css';
 import { toSavedViewSearch } from '../entities/components/entityBrowserState';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
@@ -53,16 +58,36 @@ export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceS
   const [deleteViewTarget, setDeleteViewTarget] = useState<SavedView | null>(null);
   const navigate = useNavigate();
   const params = useParams({ strict: false });
-  const search = useSearch({ strict: false });
+  const search = useSearch({ strict: false }) as ProjectSearchParams;
   const section: ProjectSection = search.section === 'entities' || search.section === 'assessments' ? search.section : 'home';
+  const contentFolder = section === 'home' ? params._splat ?? null : null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
 
-  const navigateProject = (next: { section?: ProjectSection; folder?: string }) => navigate(projectDetailRoute(
-    workspaceSlug, asProjectPublicId(projectId), {
-      tab: search.tab, section: next.section ?? section, folder: next.folder, dialog: search.dialog,
-      contentQuery: search.contentQuery, contentView: search.contentView
+  const navigateProject = (next: { section?: ProjectSection; folder?: string }) => {
+    const nextSection = next.section ?? section;
+    const nextSearch = {
+      tab: search.tab,
+      section: nextSection,
+      dialog: search.dialog,
+      contentQuery: search.contentQuery,
+      contentView: search.contentView
+    };
+    if (nextSection === 'home' && next.folder) {
+      const folderSearch = {
+        ...nextSearch,
+        tab: search.tab === 'archive' ? search.tab : undefined,
+        section: nextSection === 'home' ? undefined : nextSection
+      };
+      navigate(projectContentFolderRoute(
+        workspaceSlug,
+        asProjectPublicId(projectId),
+        next.folder,
+        folderSearch
+      ));
+    } else {
+      navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), nextSearch));
     }
-  ));
+  };
   const openFile = (file: ProjectFile) => navigate(file.type === 'markdown'
     ? projectMarkdownRoute(workspaceSlug, asProjectPublicId(projectId), file.id)
     : projectDiagramRoute(workspaceSlug, asProjectPublicId(projectId), file.id));
@@ -87,20 +112,35 @@ export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceS
     tab: search.tab, section: 'entities', contentQuery: search.contentQuery,
     contentView: search.contentView, ...toSavedViewSearch(view)
   }));
-  const openAddEntity = () => navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-    tab: search.tab, section: 'entities', folder: search.folder, dialog: 'add-entity',
-    contentQuery: search.contentQuery, contentView: search.contentView
-  }));
+  const openAddEntity = () => {
+    const nextSearch = {
+      tab: search.tab === 'archive' ? search.tab : undefined,
+      section: 'entities' as const,
+      dialog: 'add-entity' as const,
+      contentQuery: search.contentQuery,
+      contentView: search.contentView
+    };
+    if (contentFolder) {
+      navigate(projectContentFolderRoute(
+        workspaceSlug,
+        asProjectPublicId(projectId),
+        contentFolder,
+        nextSearch
+      ));
+    } else {
+      navigate(projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), nextSearch));
+    }
+  };
   const contentRows = <>
     <TreeRow testId="project-secondary-home" label="Home" icon={<TbHome size={13} />}
-      active={section === 'home' && !search.folder && !activeFileId}
+      active={section === 'home' && !contentFolder && !activeFileId}
       onClick={() => navigateProject({ section: 'home' })} />
     <TreeRow testId="project-secondary-entities" label={`Entities (${projectEntities.length})`}
       icon={<TbBinaryTree2 size={13} />} active={section === 'entities'}
-      onClick={() => navigateProject({ section: 'entities', folder: search.folder })} />
+      onClick={() => navigateProject({ section: 'entities' })} />
     <TreeRow testId="project-secondary-assessments" label={`Assessments (${assessments.length})`}
       icon={<TbClipboardList size={13} />} active={section === 'assessments'}
-      onClick={() => navigateProject({ section: 'assessments', folder: search.folder })} />
+      onClick={() => navigateProject({ section: 'assessments' })} />
   </>;
 
   const renderViews = (admin: boolean, label: string) => {
@@ -118,10 +158,10 @@ export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceS
     <SidebarHeader actions={tab === 'content' ? <MenuButton.Root>
       <MenuButton.Trigger element={<button type="button" className={styles.action} title="Add"><TbPlus size={13} /></button>} />
       <MenuButton.Menu>
-        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbFolderOpen size={13} />} onClick={() => setFolderDialog({ open: true, parent: section === 'home' ? search.folder ?? null : null })}>New folder</Menu.Item>
-        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbPlus size={13} />} onClick={() => setDiagramFolder(section === 'home' ? search.folder ?? null : null)}>New diagram</Menu.Item>
-        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbUpload size={13} />} onClick={() => treeRef.current?.openUpload(section === 'home' ? search.folder ?? null : null)}>Upload file</Menu.Item>
-        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbFileText size={13} />} onClick={() => setMarkdownFolder(section === 'home' ? search.folder ?? null : null)}>New wiki page</Menu.Item>
+        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbFolderOpen size={13} />} onClick={() => setFolderDialog({ open: true, parent: contentFolder })}>New folder</Menu.Item>
+        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbPlus size={13} />} onClick={() => setDiagramFolder(contentFolder)}>New diagram</Menu.Item>
+        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbUpload size={13} />} onClick={() => treeRef.current?.openUpload(contentFolder)}>Upload file</Menu.Item>
+        <Menu.Item disabled={!project?.canManageFiles} leftSlot={<TbFileText size={13} />} onClick={() => setMarkdownFolder(contentFolder)}>New wiki page</Menu.Item>
         <Menu.Item disabled={!project?.canEdit} leftSlot={<TbBinaryTree2 size={13} />} onClick={openAddEntity}>Add entity</Menu.Item>
       </MenuButton.Menu>
     </MenuButton.Root> : null}>
@@ -131,7 +171,7 @@ export const ProjectContentSidebar = ({ workspaceSlug, projectId }: { workspaceS
     </SidebarHeader>
     <div className={styles.scroll}>{tab === 'content' ?
       <ContentTree ref={treeRef} rootFiles={project?.files.rootFiles ?? []} folders={project?.files.folders ?? []}
-        activeFileId={activeFileId} activeFolder={section === 'home' ? search.folder ?? null : null}
+        activeFileId={activeFileId} activeFolder={contentFolder}
         operations={operations} initiallyExpanded beforeTree={contentRows}
         onFolderClick={folder => navigateProject({ section: 'home', folder })}
         onFileClick={openFile} onDownload={download}

@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { AssessmentDbResult } from './db/projectDatabase';
 import { upsertAssessmentResponse } from './assessmentResponseOperations';
+import { logAudit } from '../audit/db/auditLogging';
 
 vi.mock('../auth/authorization', () => ({
   buildApiAuthCtx: vi.fn(async () => ({
@@ -99,5 +100,12 @@ describe('upsertAssessmentResponse', () => {
     expect(result.updated_by).toBe('user-1');
     expect(result.updated_by_name).toBe('User One');
     expect(db.project.upsertAssessmentResponse).toHaveBeenCalledTimes(1);
+    expect(logAudit).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({
+        entityName: 'Security Readiness / entity-1',
+        metadata: { subject_entity_id: 'entity-1' }
+      })
+    );
   });
 });

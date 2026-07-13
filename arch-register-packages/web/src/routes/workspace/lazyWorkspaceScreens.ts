@@ -20,6 +20,10 @@ export const LazyWorkspaceContentRoute = lazyRouteComponent(
   () => import('./WorkspaceContentRoute'),
   'WorkspaceContentRoute'
 );
+export const LazyWorkspaceContentFolderRoute = lazyRouteComponent(
+  () => import('./WorkspaceContentRoute'),
+  'WorkspaceContentFolderRoute'
+);
 export const LazyEntityBrowserScreen = lazyRouteComponent(
   () => import('../../sections/entities/EntityBrowserScreen'),
   'EntityBrowserScreen'

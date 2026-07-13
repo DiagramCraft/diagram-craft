@@ -82,7 +82,7 @@ test.describe('entities section', () => {
 
   test('restores entity content filter and view mode through reload and browser history', async ({ page }) => {
     await page.goto(
-      `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}?contentFolder=security`
+      `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}/folders/security`
     );
 
     const filterInput = page.getByPlaceholder('Filter diagrams…');
@@ -108,5 +108,14 @@ test.describe('entities section', () => {
     await expect(page).not.toHaveURL(/contentView=list/);
     await expect(page.getByText('Name')).toHaveCount(0);
     await expect(page.getByText('Threat Model')).toBeVisible();
+  });
+
+  test('navigates directly to nested entity content folders', async ({ page }) => {
+    await page.goto(
+      `/${defaultWorkspace.slug}/entities/${authApiEntity.publicId}/folders/security/guides`
+    );
+
+    await expect(page).toHaveURL(/\/entities\/API-2\/folders\/security\/guides$/);
+    await expect(page.getByRole('heading', { name: 'security/guides', exact: true })).toBeVisible();
   });
 });

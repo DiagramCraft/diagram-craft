@@ -10,7 +10,7 @@ import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { TbPlus, TbFileText, TbFolder, TbFolderOpen, TbTrash, TbCopy, TbStar, TbPencil, TbDownload } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import { getRouteApi } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { ApiError } from '../../lib/http';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
@@ -36,6 +36,7 @@ import { useCreateMarkdown } from '../../hooks/useMarkdownContent';
 import type { ContentScope } from '../../hooks/contentScope';
 import {
   asProjectPublicId,
+  projectContentFolderRoute,
   projectDetailRoute,
   projectDiagramRoute,
   projectMarkdownRoute
@@ -60,18 +61,18 @@ import { ProjectSettingsForm } from './components/ProjectSettingsForm';
 import { PlanFutureChangeDialog } from './components/PlanFutureChangeDialog';
 import { buildFolderTree, type FolderTreeNode } from '../../lib/folderTree';
 import { EmptyState } from '../../components/EmptyState';
+import type { ProjectSearchParams } from '../../routes/searchParams';
 
 type ProjectSection = 'home' | 'entities' | 'assessments';
 
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/projects/$projectId');
-
-export const ProjectDetailScreen = () => {
-  const navigate = routeApi.useNavigate();
-  const { projectId } = routeApi.useParams();
-  const search = routeApi.useSearch();
+export const ProjectDetailScreen = ({ folder }: { folder?: string } = {}) => {
+  const navigate = useNavigate();
+  const { projectId: routeProjectId } = useParams({ strict: false });
+  const projectId = routeProjectId!;
+  const search = useSearch({ strict: false }) as ProjectSearchParams;
   const { workspaceSlug, teams, projectEntityTypes, schemas, lifecycleStates } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
-  const folderFilter = search.folder ?? null;
+  const folderFilter = folder ?? null;
   const section: ProjectSection =
     search.section === 'entities' ? 'entities' : search.section === 'assessments' ? 'assessments' : 'home';
   const pendingDialog = search.dialog;
@@ -214,21 +215,29 @@ export const ProjectDetailScreen = () => {
   };
 
   const setFilter = (value: string) => {
+    const route = folderFilter
+      ? projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folderFilter)
+      : projectDetailRoute(workspaceSlug, asProjectPublicId(projectId));
     navigate({
-      search: previous => ({
-        ...previous,
+      ...route,
+      search: {
+        ...search,
         contentQuery: value === '' ? undefined : value
-      }),
+      },
       replace: true
     });
   };
 
   const setViewMode = (value: 'grid' | 'list') => {
+    const route = folderFilter
+      ? projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folderFilter)
+      : projectDetailRoute(workspaceSlug, asProjectPublicId(projectId));
     navigate({
-      search: previous => ({
-        ...previous,
+      ...route,
+      search: {
+        ...search,
         contentView: value === 'grid' ? undefined : value
-      })
+      }
     });
   };
 
@@ -243,17 +252,17 @@ export const ProjectDetailScreen = () => {
   const closeAddEntityDialog = () => {
     setAddEntityOpen(false);
     if (pendingDialog !== 'add-entity') return;
-    navigate({
-      ...projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), {
-        tab: search.tab,
-        folder: folderFilter ?? undefined,
-        section,
-        dialog: undefined,
-        contentQuery: search.contentQuery,
-        contentView: search.contentView
-      }),
-      replace: true
-    });
+    const nextSearch = {
+      tab: search.tab === 'archive' ? search.tab : undefined,
+      section: section === 'home' ? undefined : section,
+      dialog: undefined,
+      contentQuery: search.contentQuery,
+      contentView: search.contentView
+    };
+    const nextLocation = folderFilter
+      ? projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folderFilter, nextSearch)
+      : projectDetailRoute(workspaceSlug, asProjectPublicId(projectId), nextSearch);
+    navigate({ ...nextLocation, replace: true });
   };
 
   const openContextMenu = (e: React.MouseEvent, target: ProjectMenuTarget) => {
@@ -586,10 +595,10 @@ export const ProjectDetailScreen = () => {
           onNavigateProject={handleNavigateProject}
           onBack={() =>
             navigate({
-              search: previous => ({
-                ...previous,
-                assessmentId: undefined
-              })
+              ...(folder
+                ? projectContentFolderRoute(workspaceSlug, asProjectPublicId(projectId), folder)
+                : projectDetailRoute(workspaceSlug, asProjectPublicId(projectId))),
+              search: { ...search, assessmentId: undefined }
             })
           }
         />
@@ -637,7 +646,10 @@ export const ProjectDetailScreen = () => {
           onOpenDiagram={handleNavigateDiagram}
           onOpenMarkdown={handleNavigateMarkdown}
           onDownloadFile={triggerDownload}
-          onAddFolder={() => setAddFolderOpen(true)}
+          onAddFolder={() => {
+            setAddFolderParent(contentFolderFilter);
+            setAddFolderOpen(true);
+          }}
           onAddDiagram={() => {
             setAddDiagramFolder(contentFolderFilter);
             setAddDiagramOpen(true);
@@ -670,7 +682,10 @@ export const ProjectDetailScreen = () => {
           onOpenDiagram={handleNavigateDiagram}
           onOpenMarkdown={handleNavigateMarkdown}
           onDownloadFile={triggerDownload}
-          onAddFolder={() => setAddFolderOpen(true)}
+          onAddFolder={() => {
+            setAddFolderParent(contentFolderFilter);
+            setAddFolderOpen(true);
+          }}
           onAddDiagram={() => {
             setAddDiagramFolder(contentFolderFilter);
             setAddDiagramOpen(true);

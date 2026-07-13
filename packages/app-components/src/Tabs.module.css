@@ -62,3 +62,87 @@
     }
   }
 }
+
+.eOverflowContainer {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.eOverflowViewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.eOverflowList {
+  width: max-content !important;
+  min-width: 100%;
+}
+
+.eOverflowButton {
+  flex: 0 0 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--base-fg-more-dim);
+  background: none;
+  border: 0;
+  border-bottom: 1.5px solid transparent;
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+
+  &:first-child {
+    margin-left: -8px;
+    margin-right: 2px;
+  }
+
+  &:last-child {
+    margin-left: 2px;
+  }
+
+  &:hover:not(:disabled) {
+    color: var(--panel-fg);
+  }
+
+  &:disabled {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 1.5px;
+    width: 14px;
+    pointer-events: none;
+  }
+
+  &:disabled::after {
+    display: none;
+  }
+
+  &:first-child::after {
+    left: 100%;
+    background: linear-gradient(to right, var(--panel-bg), transparent);
+  }
+
+  &:last-child::after {
+    right: 100%;
+    background: linear-gradient(to left, var(--panel-bg), transparent);
+  }
+
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+}

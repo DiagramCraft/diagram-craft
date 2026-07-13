@@ -1,4 +1,4 @@
-import { createRoute, type AnyRoute } from '@tanstack/react-router';
+import { createRoute, useParams, type AnyRoute } from '@tanstack/react-router';
 import { EntitiesSidebar } from '../../sections/entities/EntitiesSidebar';
 import { EntityContentSidebar } from '../../sections/entities/EntityContentSidebar';
 import {
@@ -8,7 +8,7 @@ import {
   validateMarkdownSearch
 } from '../searchParams';
 import { buildEntityBreadcrumbs, getAllParams } from '../../layouts/workspaceShellDescriptors';
-import { withWorkspaceShell } from './workspaceShellRoute';
+import { withWorkspaceShell, type WorkspaceShellBuilder } from './workspaceShellRoute';
 import {
   LazyDiagramScreen,
   LazyEntityBrowserScreen,
@@ -16,6 +16,11 @@ import {
   LazyImportScreen,
   LazyMarkdownEditorScreen
 } from './lazyWorkspaceScreens';
+
+const EntityContentFolderRoute = () => {
+  const { _splat } = useParams({ strict: false });
+  return <LazyEntityDetailScreen folder={_splat ?? ''} />;
+};
 
 export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -41,6 +46,28 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     })
   );
 
+  const buildDetailShell: WorkspaceShellBuilder = ctx => {
+    const params = getAllParams(ctx.matches);
+    return {
+      variant: 'detail' as const,
+      activeRailItem: 'entities' as const,
+      breadcrumbs: buildEntityBreadcrumbs(ctx, true),
+      navigationLabel: 'Entities',
+      renderNavigation: controls => (
+        <EntitiesSidebar
+          schemas={ctx.schemas}
+          lifecycleStates={ctx.lifecycleStates}
+          workspaceSlug={ctx.workspaceSlug}
+          onCollapse={controls.expanded ? controls.collapse : undefined}
+          onExpand={controls.expanded ? undefined : controls.expand}
+        />
+      ),
+      secondarySidebar: params.entityId ? (
+        <EntityContentSidebar workspaceSlug={ctx.workspaceSlug} entityId={params.entityId} />
+      ) : undefined
+    };
+  };
+
   const entityDetailRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -48,27 +75,17 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       validateSearch: validateEntityDetailSearch,
       component: LazyEntityDetailScreen
     }),
-    ctx => {
-      const params = getAllParams(ctx.matches);
-      return {
-        variant: 'detail',
-        activeRailItem: 'entities',
-        breadcrumbs: buildEntityBreadcrumbs(ctx, true),
-        navigationLabel: 'Entities',
-        renderNavigation: controls => (
-          <EntitiesSidebar
-            schemas={ctx.schemas}
-            lifecycleStates={ctx.lifecycleStates}
-            workspaceSlug={ctx.workspaceSlug}
-            onCollapse={controls.expanded ? controls.collapse : undefined}
-            onExpand={controls.expanded ? undefined : controls.expand}
-          />
-        ),
-        secondarySidebar: params.entityId ? (
-          <EntityContentSidebar workspaceSlug={ctx.workspaceSlug} entityId={params.entityId} />
-        ) : undefined
-      };
-    }
+    buildDetailShell
+  );
+
+  const entityContentFolderRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'entities/$entityId/folders/$',
+      validateSearch: validateEntityDetailSearch,
+      component: EntityContentFolderRoute
+    }),
+    buildDetailShell
   );
 
   const entityDiagramRoute = withWorkspaceShell(
@@ -78,9 +95,7 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       validateSearch: validateDiagramSearch,
       component: LazyDiagramScreen
     }),
-    () => ({
-      variant: 'overlay'
-    })
+    () => ({ variant: 'overlay' })
   );
 
   const importRoute = withWorkspaceShell(
@@ -111,33 +126,14 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
       validateSearch: validateMarkdownSearch,
       component: LazyMarkdownEditorScreen
     }),
-    ctx => {
-      const params = getAllParams(ctx.matches);
-      return {
-        variant: 'detail',
-        activeRailItem: 'entities',
-        breadcrumbs: buildEntityBreadcrumbs(ctx, true),
-        navigationLabel: 'Entities',
-        renderNavigation: controls => (
-          <EntitiesSidebar
-            schemas={ctx.schemas}
-            lifecycleStates={ctx.lifecycleStates}
-            workspaceSlug={ctx.workspaceSlug}
-            onCollapse={controls.expanded ? controls.collapse : undefined}
-            onExpand={controls.expanded ? undefined : controls.expand}
-          />
-        ),
-        secondarySidebar: params.entityId ? (
-          <EntityContentSidebar workspaceSlug={ctx.workspaceSlug} entityId={params.entityId} />
-        ) : undefined
-      };
-    }
+    buildDetailShell
   );
 
   return [
     entityBrowserRoute,
     importRoute,
     entityDetailRoute,
+    entityContentFolderRoute,
     entityDiagramRoute,
     entityMarkdownRoute
   ] as const;

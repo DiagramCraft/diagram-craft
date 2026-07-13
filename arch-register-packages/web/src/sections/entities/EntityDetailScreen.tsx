@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import { getRouteApi } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -24,7 +24,11 @@ import {
   usePinnedEntities,
   useWatchedEntities
 } from '../../hooks/useNotifications';
-import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
+import {
+  asEntityPublicId,
+  entityContentFolderRoute,
+  entityDetailRoute
+} from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { EntityGraphView } from './components/EntityGraphView';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
@@ -41,18 +45,18 @@ import { EntityAssessmentsTab } from './components/EntityAssessmentsTab';
 import { DiscussionThread } from '../discussions/DiscussionThread';
 import { EmptyState } from '../../components/EmptyState';
 import type { TabId, Relation } from './types/entityDetailTypes';
+import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
 
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities/$entityId');
-
-export const EntityDetailScreen = () => {
-  const navigate = routeApi.useNavigate();
-  const { entityId } = routeApi.useParams();
-  const search = routeApi.useSearch();
+export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
+  const navigate = useNavigate();
+  const { entityId: routeEntityId } = useParams({ strict: false });
+  const entityId = routeEntityId!;
+  const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const { workspaceSlug, schemas, lifecycleStates, teams, permissions } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const canViewAudit = permissions.canViewAudit;
-  const contentFolder = search.contentFolder;
+  const contentFolder = folder ?? null;
 
   const navigateToEntity = useCallback(
     (id: string) => {
@@ -67,14 +71,18 @@ export const EntityDetailScreen = () => {
   const tab = search.tab ?? 'overview';
   const setTab = useCallback(
     (nextTab: TabId) => {
+      const route = contentFolder
+        ? entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), contentFolder)
+        : entityDetailRoute(workspaceSlug, asEntityPublicId(entityId));
       navigate({
-        search: previous => ({
-          ...previous,
+        ...route,
+        search: {
+          ...search,
           tab: nextTab === 'overview' ? undefined : nextTab
-        })
+        }
       });
     },
-    [navigate]
+    [contentFolder, entityId, navigate, search, workspaceSlug]
   );
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
@@ -337,7 +345,7 @@ export const EntityDetailScreen = () => {
       {!contentFolder && (
         <div className={styles.tabBar}>
           <Tabs.Root value={tab} onValueChange={value => setTab(value as TabId)}>
-            <Tabs.List>
+            <Tabs.List overflow>
               <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
               <Tabs.Trigger value="topology">Topology</Tabs.Trigger>
               <Tabs.Trigger value="graph">Graph</Tabs.Trigger>
