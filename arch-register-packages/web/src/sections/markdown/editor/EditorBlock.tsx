@@ -26,6 +26,10 @@ export const isListParagraph = (element: TElement) =>
   element.type === 'p' &&
   typeof (element as TElement & { listStyleType?: unknown }).listStyleType === 'string';
 
+export const isTodoListParagraph = (element: TElement) =>
+  isListParagraph(element) &&
+  (element as TElement & { listStyleType?: string }).listStyleType === 'todo';
+
 export const createListParagraph = (text: string, listStyleType: 'disc' | 'decimal') => ({
   type: 'p',
   indent: 1,

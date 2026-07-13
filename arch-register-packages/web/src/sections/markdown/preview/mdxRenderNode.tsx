@@ -44,17 +44,34 @@ const renderNode = (node: ASTNode, key: string): ReactNode[] => {
       return [<p key={key}>{renderNodes(node.children ?? [], key)}</p>];
 
     case 'list': {
+      const isChecklist = node.children?.some(
+        child => child.type === 'item' && typeof child.checked === 'boolean'
+      );
       return [
         React.createElement(
           node.subtype === 'ordered' ? 'ol' : 'ul',
-          { key },
+          { key, className: isChecklist ? 'task-list' : undefined },
           renderNodes(node.children ?? [], key)
         )
       ];
     }
 
-    case 'item':
-      return [<li key={key}>{renderNodes(node.children ?? [], key)}</li>];
+    case 'item': {
+      const isChecklistItem = typeof node.checked === 'boolean';
+      return [
+        <li key={key} className={isChecklistItem ? 'task-list-item' : undefined}>
+          {isChecklistItem && (
+            <input
+              type="checkbox"
+              checked={node.checked}
+              disabled
+              aria-label={node.checked ? 'Completed task' : 'Incomplete task'}
+            />
+          )}
+          {renderNodes(node.children ?? [], key)}
+        </li>
+      ];
+    }
 
     case 'code':
       if (node.inline) {

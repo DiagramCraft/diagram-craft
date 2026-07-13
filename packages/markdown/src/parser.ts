@@ -83,6 +83,7 @@ interface ListASTNode extends BaseASTNode {
 
 interface ItemASTNode extends BaseASTNode {
   type: 'item';
+  checked?: boolean;
   containsEmpty?: boolean;
   followedByEmpty?: boolean;
   loose?: boolean;

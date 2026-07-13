@@ -73,20 +73,48 @@ const renderNode = (node: ASTNode, key: string, options: RenderOptions): ReactNo
         )
       ];
     }
-    case 'list':
+    case 'list': {
+      const isChecklist = children.some(
+        child => child.type === 'item' && typeof child.checked === 'boolean'
+      );
       return [
         node.subtype === 'ordered' ? (
-          <ol key={key} className={classes.list}>
+          <ol
+            key={key}
+            className={
+              `${classes.list ?? ''}${isChecklist ? ' task-list' : ''}`.trim() || undefined
+            }
+          >
             {rendered()}
           </ol>
         ) : (
-          <ul key={key} className={classes.list}>
+          <ul
+            key={key}
+            className={
+              `${classes.list ?? ''}${isChecklist ? ' task-list' : ''}`.trim() || undefined
+            }
+          >
             {rendered()}
           </ul>
         )
       ];
-    case 'item':
-      return [<li key={key}>{rendered()}</li>];
+    }
+    case 'item': {
+      const isChecklistItem = typeof node.checked === 'boolean';
+      return [
+        <li key={key} className={isChecklistItem ? 'task-list-item' : undefined}>
+          {isChecklistItem && (
+            <input
+              type="checkbox"
+              checked={node.checked}
+              disabled
+              aria-label={node.checked ? 'Completed task' : 'Incomplete task'}
+            />
+          )}
+          {rendered()}
+        </li>
+      ];
+    }
     case 'code':
       return node.inline
         ? [

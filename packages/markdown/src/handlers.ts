@@ -251,6 +251,19 @@ export class ListHandler implements BlockParser {
     const items: Array<ASTNodeOfType<'item'>> = [];
     let lineMatch: RegExpMatchArray | null = m;
 
+    const createItem = (content: string, followedByEmpty: boolean): ASTNodeOfType<'item'> => {
+      const checklistMatch = content.match(/^ {0,3}\[([ xX])\](?:[ \t]+|$)/);
+      const itemContent = checklistMatch ? content.slice(checklistMatch[0].length) : content;
+
+      return {
+        type: 'item',
+        children: parser.subparser('list').parse(itemContent),
+        ...(checklistMatch ? { checked: checklistMatch[1]!.toLowerCase() === 'x' } : {}),
+        containsEmpty,
+        followedByEmpty
+      };
+    };
+
     while (true) {
       const current = stream.peek();
       const next = stream.peek(1);
@@ -259,13 +272,7 @@ export class ListHandler implements BlockParser {
         s.trim() !== '' && (lineMatch || (current.isEmpty() && !next.match(rC)));
 
       if (itemCompleted) {
-        const parsedContent = parser.subparser('list').parse(s);
-        items.push({
-          type: 'item',
-          children: parsedContent,
-          containsEmpty,
-          followedByEmpty: current.isEmpty()
-        });
+        items.push(createItem(s, current.isEmpty()));
         s = '';
         containsEmpty = false;
       }
@@ -286,13 +293,7 @@ export class ListHandler implements BlockParser {
 
     // Process final item if there's content
     if (s.trim() !== '') {
-      const parsedContent = parser.subparser('list').parse(s);
-      items.push({
-        type: 'item',
-        children: parsedContent,
-        containsEmpty,
-        followedByEmpty: false
-      });
+      items.push(createItem(s, false));
     }
 
     // Ignore followed by empty for last row

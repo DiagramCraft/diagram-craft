@@ -44,7 +44,7 @@ export const TableView = ({
   const columns = fieldIds.map(id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' });
 
   return (
-    <Table.Root>
+    <Table.Root scroll>
       <Table.Head>
         <Table.Row>
           {!readOnly && (
