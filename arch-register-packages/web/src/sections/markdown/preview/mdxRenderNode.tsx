@@ -113,6 +113,9 @@ const renderNode = (node: ASTNode, key: string): ReactNode[] => {
     case 'strong':
       return [<strong key={key}>{renderNodes(node.children ?? [], key)}</strong>];
 
+    case 'strikethrough':
+      return [<del key={key}>{renderNodes(node.children ?? [], key)}</del>];
+
     case 'small':
       return [<small key={key}>{renderNodes(node.children ?? [], key)}</small>];
 

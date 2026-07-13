@@ -97,4 +97,20 @@ describe('renderNodes — component children threading', () => {
     expect(markup).toContain('checked=""');
     expect(markup.match(/disabled=""/g)).toHaveLength(2);
   });
+
+  it('renders strikethrough text in view mode', () => {
+    const markup = renderToStaticMarkup(
+      renderNodes(
+        [
+          {
+            type: 'strikethrough',
+            children: [{ type: 'literal', value: 'Removed text' }]
+          }
+        ],
+        'root'
+      )
+    );
+
+    expect(markup).toBe('<del>Removed text</del>');
+  });
 });
